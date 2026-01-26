@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # Mailhog - Email testing server
+  # Web UI: http://localhost:8025
+  # SMTP: localhost:1025
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: etudesk-mailhog
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  # PostgreSQL (optional - if not using local installation)
+  # Uncomment to use Docker PostgreSQL
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: etudesk-postgres
+  #   environment:
+  #     POSTGRES_USER: etudesk
+  #     POSTGRES_PASSWORD: etudesk
+  #     POSTGRES_DB: etudesk
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+# volumes:
+#   postgres_data:

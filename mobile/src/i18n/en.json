@@ -1,0 +1,564 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "done": "Done",
+    "close": "Close",
+    "search": "Search...",
+    "seeMore": "See more",
+    "seeAll": "See all",
+    "noResults": "No results",
+    "retry": "Retry",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "and": "and",
+    "optional": "Optional",
+    "required": "Required"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "subtitle": "Your future starts here",
+      "continueWith": "Continue with",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Password",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up",
+      "orContinueWith": "Or continue with",
+      "termsPrefix": "By continuing, you agree to our"
+    },
+    "welcome": {
+      "congrats": "Congratulations!",
+      "title": "Your profile is ready",
+      "subtitle": "You're now part of the Etudesk community",
+      "getStarted": "Let's go!",
+      "whatYouCanDo": "What you can do",
+      "features": {
+        "explore": {
+          "title": "Explore opportunities",
+          "description": "Jobs, internships, trainings and events tailored to your profile."
+        },
+        "connect": {
+          "title": "Connect",
+          "description": "Join communities and grow your network."
+        },
+        "assistant": {
+          "title": "Your personal assistant",
+          "description": "Get personalized advice for your career and projects."
+        }
+      }
+    },
+    "createProfile": {
+      "title": "Create my profile",
+      "tellUsAboutYou": "Tell us a bit about yourself",
+      "step1Title": "Personal Information",
+      "step2Title": "Location",
+      "step3Title": "Areas of Interest",
+      "step4Title": "Profile Photo",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "phone": "Phone",
+      "birthDate": "Date of Birth",
+      "selectDate": "Select a date",
+      "gender": "Gender",
+      "yourProfile": "Your profile",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell us a bit about yourself in a few words...",
+      "country": "Country",
+      "region": "Region",
+      "city": "City/Town",
+      "commune": "City / Town",
+      "useMyLocation": "Use my current location",
+      "locating": "Locating...",
+      "selectInterests": "Select your interests",
+      "addPhoto": "Add a photo",
+      "photoHint": "Tap to add your profile photo",
+      "complete": "Complete",
+      "continue": "Continue",
+      "workPreferences": "Work preferences",
+      "remoteAvailable": "Available for remote",
+      "remoteAvailableDesc": "I can work remotely",
+      "willingToRelocate": "Willing to relocate",
+      "willingToRelocateDesc": "I can move for an opportunity",
+      "yourSectors": "Your sectors",
+      "sectorsHint": "Choose up to {{max}} sectors that interest you",
+      "selected": "{{count}}/{{max}} selected",
+      "yourGoals": "Your goals",
+      "goalsHint": "Choose up to {{max}} priority goals",
+      "permissionRequired": "Permission required",
+      "photoPermissionMessage": "We need your permission to access your photos.",
+      "photoError": "An error occurred while selecting the image. Please try again."
+    },
+    "emailLogin": {
+      "title": "Login with Email",
+      "subtitle": "Enter your email address to receive a verification code",
+      "emailLabel": "Email address",
+      "sendCode": "Send code",
+      "infoText": "We'll send you a 6-digit code to log in without a password",
+      "sendError": "Unable to send code. Check your email address and try again."
+    },
+    "verifyOtp": {
+      "title": "Check your email",
+      "subtitle": "Enter the 6-digit code sent to",
+      "verify": "Verify",
+      "resendCode": "Resend code",
+      "resendIn": "Resend in {{seconds}}s",
+      "incompleteCode": "Enter the full 6-digit code",
+      "invalidCode": "Invalid code. Check and try again.",
+      "verifyError": "Verification error. Please try again.",
+      "codeSent": "A new code has been sent to your email",
+      "verified": "Email verified!",
+      "redirecting": "Redirecting..."
+    }
+  },
+  "tabs": {
+    "assistant": "Copilot",
+    "explore": "Explore",
+    "ecosystem": "Ecosystem",
+    "management": "Management",
+    "settings": "Settings"
+  },
+  "assistant": {
+    "title": "Copilot",
+    "greeting": "How can I help you",
+    "inputPlaceholder": "Type your message...",
+    "suggestions": "Suggestions",
+    "modes": {
+      "explore": "Explore",
+      "study": "Study"
+    },
+    "prompts": {
+      "explore": {
+        "opportunities": "What opportunities match my profile?",
+        "hubs": "What hubs are available in Abidjan?",
+        "communities": "Recommend me some tech communities"
+      },
+      "study": {
+        "skills": "How to improve my React Native skills?",
+        "plan": "Create a learning plan for UX Design",
+        "certifications": "What certifications are recommended for my field?",
+        "basics": "Explain the basics of Product Management"
+      }
+    }
+  },
+  "explore": {
+    "title": "Explore",
+    "categories": {
+      "opportunities": "Opportunities",
+      "hubs": "Hubs",
+      "communities": "Communities"
+    },
+    "filters": "Filters",
+    "sortBy": "Sort by",
+    "sortOptions": {
+      "relevance": "Relevance",
+      "relevanceDesc": "Results matching your profile",
+      "proximity": "Proximity",
+      "proximityDesc": "From nearest to farthest",
+      "recent": "Most Recent",
+      "recentDesc": "Latest publications",
+      "popularity": "Popularity",
+      "popularityDesc": "Most viewed"
+    },
+    "noResultsSearch": "No results for \"{{query}}\"",
+    "resultsCount": "{{count}} result(s)",
+    "remote": "Remote",
+    "members": "members",
+    "create": "Create",
+    "whatToCreate": "What would you like to create for {{name}}?",
+    "opportunity": "Opportunity",
+    "space": "Space",
+    "community": "Community"
+  },
+  "ecosystem": {
+    "title": "Home",
+    "weeklyInsight": "{{name}}, you had a busy week! You gained {{skills}} new skills and completed {{modules}} training modules.",
+    "train": "Learn",
+    "notifications": "Notifications",
+    "agenda": "Agenda",
+    "documents": "Documents",
+    "skills": "skills",
+    "talent": "Talent",
+    "relations": {
+      "applications": "applications",
+      "member": "member",
+      "frequents": "frequents",
+      "connected": "connected",
+      "owns": "owns"
+    },
+    "status": {
+      "active": "Active",
+      "pending": "Pending",
+      "completed": "Completed",
+      "saved": "Saved"
+    },
+    "nodes": {
+      "opportunities": "Opportunities",
+      "communities": "Communities",
+      "hubs": "Hubs",
+      "documents": "Documents"
+    }
+  },
+  "management": {
+    "title": "Management",
+    "offers": "Offers",
+    "overview": "Overview",
+    "recentActivity": "Recent Activity",
+    "noOrganization": "No organization selected",
+    "selectOrganization": "Select an organization in settings to access management.",
+    "goToSettings": "Go to settings",
+    "myApplications": "My Applications",
+    "myBookings": "My Bookings",
+    "myCommunities": "My Communities",
+    "empty": {
+      "applications": "No active applications",
+      "bookings": "No bookings",
+      "communities": "No communities joined"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "editProfile": "Edit Profile",
+    "viewProfile": "View Profile",
+    "spaces": {
+      "title": "Spaces",
+      "talent": "My talent space",
+      "organization": "Organization"
+    },
+    "menu": {
+      "team": "Team",
+      "teamDesc": "Manage members and permissions",
+      "kyc": "Identity Verification",
+      "kycDesc": "Verify your identity",
+      "payment": "Payment Methods",
+      "paymentDesc": "Manage your payment methods",
+      "preferences": "Preferences",
+      "preferencesDesc": "Language, theme and notifications",
+      "help": "Help",
+      "helpDesc": "FAQ and support",
+      "legal": "Legal",
+      "legalDesc": "Terms and privacy"
+    },
+    "logout": "Log out",
+    "logoutConfirm": "Are you sure you want to log out?",
+    "version": "Version"
+  },
+  "preferences": {
+    "title": "Preferences",
+    "display": "Display",
+    "theme": "Theme",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "language": "Language",
+    "notifications": {
+      "title": "Notifications",
+      "push": "Push Notifications",
+      "pushDesc": "Receive notifications on your device",
+      "email": "Email Notifications",
+      "emailDesc": "Receive email summaries",
+      "opportunities": "New Opportunities",
+      "opportunitiesDesc": "Be notified of new offers",
+      "messages": "Messages",
+      "messagesDesc": "Notifications for new messages"
+    }
+  },
+  "profile": {
+    "title": "Edit Profile",
+    "personalInfo": "Personal Information",
+    "location": "Location",
+    "interests": "Interests",
+    "photo": "Profile Photo",
+    "changePhoto": "Tap to change photo",
+    "saved": "Profile saved successfully"
+  },
+  "organization": {
+    "title": "Organization",
+    "create": "Create an Organization",
+    "edit": "Edit Organization",
+    "name": "Organization Name",
+    "type": "Organization Type",
+    "size": "Size",
+    "description": "Description",
+    "website": "Website",
+    "logo": "Logo",
+    "changeLogo": "Tap to change logo",
+    "location": "Location",
+    "industries": "Industries",
+    "saved": "Organization saved successfully",
+    "members": {
+      "title": "Team",
+      "members": "Members",
+      "invitations": "Invitations",
+      "invite": "Invite",
+      "inviteMember": "Invite a Member",
+      "email": "Email Address",
+      "role": "Role",
+      "roles": {
+        "owner": "Owner",
+        "admin": "Administrator",
+        "manager": "Manager",
+        "member": "Member"
+      },
+      "status": {
+        "active": "Active",
+        "pending": "Pending",
+        "expired": "Expired"
+      },
+      "actions": {
+        "changeRole": "Change Role",
+        "remove": "Remove from Team",
+        "resend": "Resend Invitation",
+        "cancel": "Cancel Invitation"
+      },
+      "empty": {
+        "members": "No team members",
+        "invitations": "No pending invitations"
+      },
+      "inviteSent": "Invitation sent successfully",
+      "memberRemoved": "Member removed successfully",
+      "roleUpdated": "Role updated successfully"
+    }
+  },
+  "kyc": {
+    "title": "Identity Verification",
+    "subtitle": "Verify your identity to access all features",
+    "status": {
+      "notStarted": "Not Started",
+      "pending": "Under Review",
+      "verified": "Verified",
+      "rejected": "Rejected"
+    },
+    "steps": {
+      "identity": "ID Document",
+      "selfie": "Selfie Photo",
+      "address": "Proof of Address"
+    },
+    "start": "Start Verification",
+    "uploadDocument": "Upload Document"
+  },
+  "payment": {
+    "title": "Payment Methods",
+    "addMethod": "Add Payment Method",
+    "methods": {
+      "card": "Credit Card",
+      "mobileMoney": "Mobile Money",
+      "bankTransfer": "Bank Transfer"
+    },
+    "empty": "No payment methods saved",
+    "default": "Default",
+    "setDefault": "Set as Default",
+    "remove": "Remove"
+  },
+  "help": {
+    "title": "Help",
+    "faq": "Frequently Asked Questions",
+    "contact": "Contact Support",
+    "email": "Email",
+    "phone": "Phone",
+    "chat": "Live Chat"
+  },
+  "legal": {
+    "title": "Legal",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "cookies": "Cookie Policy"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications",
+    "markAllRead": "Mark all as read",
+    "types": {
+      "application": "Application",
+      "message": "Message",
+      "system": "System"
+    }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "today": "Today",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "noEvents": "No events",
+    "eventTypes": {
+      "interview": "Interview",
+      "deadline": "Deadline",
+      "booking": "Booking"
+    }
+  },
+  "documents": {
+    "title": "Documents",
+    "upload": "Upload a Document",
+    "types": {
+      "cv": "Resume",
+      "certificate": "Certificate",
+      "portfolio": "Portfolio",
+      "other": "Other"
+    },
+    "empty": "No documents",
+    "skills": "skills"
+  },
+  "opportunity": {
+    "apply": "Apply",
+    "applied": "Application Sent",
+    "save": "Save",
+    "saved": "Saved",
+    "share": "Share",
+    "deadline": "Deadline",
+    "postedAt": "Posted",
+    "description": "Description",
+    "requirements": "Requirements",
+    "benefits": "Benefits",
+    "views": "Views",
+    "applications": "Applications",
+    "location": "Location",
+    "salary": "Salary",
+    "startDate": "Start Date",
+    "duration": "Duration",
+    "niceToHave": "Nice to Have",
+    "aboutOrg": "About {{name}}",
+    "types": {
+      "employment": "Employment",
+      "internship": "Internship",
+      "consultancy": "Consultancy",
+      "volunteer": "Volunteer",
+      "gig": "Gig",
+      "apprenticeship": "Apprenticeship",
+      "fellowship": "Fellowship"
+    },
+    "workTypes": {
+      "fullTime": "Full Time",
+      "partTime": "Part Time",
+      "contract": "Contract",
+      "freelance": "Freelance",
+      "internship": "Internship",
+      "apprenticeship": "Apprenticeship"
+    },
+    "locationTypes": {
+      "onSite": "On Site",
+      "remote": "Remote",
+      "hybrid": "Hybrid"
+    }
+  },
+  "space": {
+    "book": "Book",
+    "visit": "Visit",
+    "about": "About",
+    "amenities": "Amenities",
+    "pricing": "Pricing",
+    "location": "Location",
+    "accessTypes": {
+      "public": "Public Access",
+      "membership": "Membership Required",
+      "private": "Private"
+    },
+    "types": {
+      "coworking": "Coworking",
+      "incubator": "Incubator",
+      "accelerator": "Accelerator",
+      "lab": "Lab",
+      "hub": "Hub"
+    }
+  },
+  "community": {
+    "join": "Join",
+    "joined": "Member",
+    "leave": "Leave",
+    "about": "About",
+    "members": "Members",
+    "events": "Events",
+    "discussions": "Discussions",
+    "types": {
+      "online": "Online",
+      "offline": "In-Person",
+      "hybrid": "Hybrid"
+    }
+  },
+  "date": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "tomorrow": "Tomorrow",
+    "daysAgo": "{{days}} days ago",
+    "hoursAgo": "{{hours}} hours ago",
+    "minutesAgo": "{{minutes}} minutes ago",
+    "justNow": "Just now",
+    "inDays": "In {{days}} days",
+    "expired": "Expired",
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "monthsShort": {
+      "january": "Jan",
+      "february": "Feb",
+      "march": "Mar",
+      "april": "Apr",
+      "may": "May",
+      "june": "Jun",
+      "july": "Jul",
+      "august": "Aug",
+      "september": "Sep",
+      "october": "Oct",
+      "november": "Nov",
+      "december": "Dec"
+    }
+  },
+  "errors": {
+    "generic": "An error occurred",
+    "network": "Connection error",
+    "unauthorized": "Unauthorized",
+    "notFound": "Not found",
+    "validation": "Invalid data",
+    "required": "This field is required",
+    "invalidEmail": "Invalid email",
+    "invalidPhone": "Invalid phone number",
+    "photoSelection": "Error selecting photo",
+    "location": "Geolocation error"
+  },
+  "alert": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close",
+    "delete": "Delete",
+    "deleteConfirm": "Are you sure you want to delete?",
+    "deleteSuccess": "Deleted successfully",
+    "saveSuccess": "Saved successfully",
+    "updateSuccess": "Updated successfully",
+    "actionSuccess": "Action completed successfully",
+    "actionError": "An error occurred",
+    "networkError": "Connection error. Please check your internet connection.",
+    "sessionExpired": "Session expired",
+    "sessionExpiredMessage": "Your session has expired. Please log in again.",
+    "permissionDenied": "Permission denied",
+    "permissionDeniedMessage": "You don't have permission to perform this action."
+  }
+}

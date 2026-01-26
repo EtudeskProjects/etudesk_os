@@ -1,0 +1,252 @@
+/**
+ * Application (Candidature) Service
+ * Handles all application-related API calls for talents and organizations
+ */
+
+import { api, ApiResponse } from './api';
+import {
+  Application,
+  ApplicationStatus,
+  ApplicationAnswer,
+} from '../types/models';
+
+// ═══════════════════════════════════════════════════════════════
+// INTERFACES
+// ═══════════════════════════════════════════════════════════════
+
+export interface ApplicationFilters {
+  status?: ApplicationStatus;
+  opportunity_id?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface CreateApplicationData {
+  opportunity_id: string;
+  resume_url?: string;
+  answers?: ApplicationAnswer[];
+}
+
+export interface UpdateApplicationData {
+  status?: ApplicationStatus;
+  internal_notes?: string;
+  rating?: number;
+}
+
+export interface ScheduleInterviewData {
+  interview_scheduled_at: string;
+  interview_type: 'PHONE' | 'VIDEO' | 'IN_PERSON';
+  interview_location?: string;
+  interview_notes?: string;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SERVICE CLASS
+// ═══════════════════════════════════════════════════════════════
+
+class ApplicationService {
+  // ─────────────────────────────────────────────────────────────
+  // TALENT ENDPOINTS
+  // ─────────────────────────────────────────────────────────────
+
+  /**
+   * Create a new application (for talents)
+   */
+  async apply(data: CreateApplicationData): Promise<ApiResponse<Application>> {
+    return api.post<Application>('/api/applications', data);
+  }
+
+  /**
+   * Get all applications for the current talent
+   */
+  async getMyApplications(filters?: ApplicationFilters): Promise<ApiResponse<Application[]>> {
+    return api.get<Application[]>('/api/applications/me', filters);
+  }
+
+  /**
+   * Get a specific application by ID (for talent)
+   */
+  async getApplication(id: string): Promise<ApiResponse<Application>> {
+    return api.get<Application>(`/api/applications/${id}`);
+  }
+
+  /**
+   * Withdraw an application (for talents)
+   */
+  async withdraw(id: string): Promise<ApiResponse<Application>> {
+    return api.put<Application>(`/api/applications/${id}/withdraw`, {});
+  }
+
+  /**
+   * Delete an application (for talents - hard delete, allows reapplying)
+   */
+  async delete(id: string): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    return api.delete(`/api/applications/${id}`);
+  }
+
+  /**
+   * Check if talent has already applied to an opportunity
+   */
+  async hasApplied(opportunityId: string): Promise<ApiResponse<{ hasApplied: boolean; application?: { id: string; status: string; applied_at: string } }>> {
+    return api.get(`/api/applications/check/${opportunityId}`);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // ORGANIZATION ENDPOINTS
+  // ─────────────────────────────────────────────────────────────
+
+  /**
+   * Get all applications for an organization
+   */
+  async getOrganizationApplications(
+    orgId: string,
+    filters?: ApplicationFilters
+  ): Promise<ApiResponse<Application[]>> {
+    return api.get<Application[]>(`/api/organizations/${orgId}/applications`, filters);
+  }
+
+  /**
+   * Get applications for a specific opportunity
+   */
+  async getOpportunityApplications(
+    opportunityId: string,
+    filters?: { status?: ApplicationStatus; limit?: number; offset?: number }
+  ): Promise<ApiResponse<Application[]>> {
+    return api.get<Application[]>(`/api/opportunities/${opportunityId}/applications`, filters);
+  }
+
+  /**
+   * Get application counts by status for an opportunity
+   */
+  async getApplicationCounts(opportunityId: string): Promise<ApiResponse<Record<ApplicationStatus, number>>> {
+    return api.get(`/api/opportunities/${opportunityId}/applications/counts`);
+  }
+
+  /**
+   * Update application status (for organizations)
+   */
+  async updateStatus(id: string, status: ApplicationStatus): Promise<ApiResponse<Application>> {
+    return api.put<Application>(`/api/applications/${id}/status`, { status });
+  }
+
+  /**
+   * Mark application as viewed (for organizations)
+   */
+  async markAsViewed(id: string): Promise<ApiResponse<Application>> {
+    return api.put<Application>(`/api/applications/${id}/view`, {});
+  }
+
+  /**
+   * Add/update internal notes (for organizations)
+   */
+  async updateNotes(id: string, notes: string): Promise<ApiResponse<Application>> {
+    return api.put<Application>(`/api/applications/${id}/notes`, { notes });
+  }
+
+  /**
+   * Add/update rating (for organizations, 1-5 stars)
+   */
+  async updateRating(id: string, rating: number): Promise<ApiResponse<Application>> {
+    if (rating < 1 || rating > 5) {
+      throw new Error('Rating must be between 1 and 5');
+    }
+    return api.put<Application>(`/api/applications/${id}/rating`, { rating });
+  }
+
+  /**
+   * Schedule an interview (for organizations)
+   */
+  async scheduleInterview(id: string, data: ScheduleInterviewData): Promise<ApiResponse<Application>> {
+    return api.put<Application>(`/api/applications/${id}/interview`, data);
+  }
+
+  /**
+   * Cancel an interview (for organizations)
+   */
+  async cancelInterview(id: string): Promise<ApiResponse<Application>> {
+    return api.delete(`/api/applications/${id}/interview`);
+  }
+
+  /**
+   * Delete an application (for organizations - hard delete)
+   */
+  async deleteAsOrganization(id: string): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    return api.delete(`/api/applications/${id}/organization`);
+  }
+
+  /**
+   * Bulk update status for multiple applications (for organizations)
+   */
+  async bulkUpdateStatus(
+    applicationIds: string[],
+    status: ApplicationStatus
+  ): Promise<ApiResponse<{ updated: number; failed: number }>> {
+    return api.put('/api/applications/bulk/status', { application_ids: applicationIds, status });
+  }
+
+  /**
+   * Export applications to PDF (for organizations)
+   */
+  async exportToPdf(opportunityId: string, applicationIds?: string[]): Promise<ApiResponse<{ pdf_url: string }>> {
+    return api.post(`/api/opportunities/${opportunityId}/applications/export`, {
+      application_ids: applicationIds,
+      format: 'pdf',
+    });
+  }
+
+  /**
+   * Get CSV export URL for applications (for organizations)
+   * Returns the URL to download the CSV file
+   */
+  getExportCsvUrl(opportunityId: string, options?: { status?: ApplicationStatus; matchCategory?: string }): string {
+    const baseUrl = api.getBaseUrl();
+    let url = `${baseUrl}/api/applications/opportunity/${opportunityId}/export-csv`;
+    const params = new URLSearchParams();
+    if (options?.status) params.append('status', options.status);
+    if (options?.matchCategory) params.append('matchCategory', options.matchCategory);
+    const queryString = params.toString();
+    return queryString ? `${url}?${queryString}` : url;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // MATCHING & RECOMMENDATIONS
+  // ─────────────────────────────────────────────────────────────
+
+  /**
+   * Get ranked applications for an opportunity (sorted by match score)
+   * Applications are returned within each status group, sorted by relevance
+   */
+  async getRankedApplications(
+    opportunityId: string,
+    status?: ApplicationStatus
+  ): Promise<ApiResponse<{
+    data: RankedApplication[];
+    grouped: Record<string, RankedApplication[]>;
+    count: number;
+    statusCounts: Record<string, number>;
+  }>> {
+    const params: Record<string, string> = {};
+    if (status) params.status = status;
+    return api.get(`/api/applications/opportunity/${opportunityId}/ranked`, params);
+  }
+
+  /**
+   * Get AI recommendation for a specific application
+   * Returns a ~30 word recommendation cached for 24h
+   */
+  async getRecommendation(applicationId: string): Promise<ApiResponse<{
+    application_id: string;
+    recommendation: string;
+  }>> {
+    return api.get(`/api/applications/${applicationId}/recommendation`);
+  }
+}
+
+// Extended application type with matching data
+export interface RankedApplication extends Application {
+  matchScore?: number;
+  matchCategory?: 'excellent' | 'good' | 'average' | 'low';
+  ai_recommendation?: string;
+}
+
+export const applicationService = new ApplicationService();

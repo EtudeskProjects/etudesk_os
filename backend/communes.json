@@ -1,0 +1,1898 @@
+{
+  "pays": [
+    {
+      "nom": "Bénin",
+      "code_iso": "BJ",
+      "regions": [
+        {
+          "nom": "Alibori",
+          "communes": ["Banikoara", "Gogounou", "Kandi", "Karimama", "Malanville", "Ségbana"]
+        },
+        {
+          "nom": "Atacora",
+          "communes": ["Boukoumbé", "Cobly", "Kérou", "Kouandé", "Matéri", "Natitingou", "Péhunco", "Tanguiéta", "Toucountouna"]
+        },
+        {
+          "nom": "Atlantique",
+          "communes": ["Abomey-Calavi", "Allada", "Kpomassè", "Ouidah", "Sô-Ava", "Toffo", "Tori-Bossito", "Zè"]
+        },
+        {
+          "nom": "Borgou",
+          "communes": ["Bembéréké", "Kalalé", "N'Dali", "Nikki", "Parakou", "Pèrèrè", "Sinendé", "Tchaourou"]
+        },
+        {
+          "nom": "Collines",
+          "communes": ["Bantè", "Dassa-Zoumé", "Glazoué", "Ouèssè", "Savalou", "Savé"]
+        },
+        {
+          "nom": "Couffo",
+          "communes": ["Aplahoué", "Djakotomey", "Dogbo", "Klouékanmè", "Lalo", "Toviklin"]
+        },
+        {
+          "nom": "Donga",
+          "communes": ["Bassila", "Copargo", "Djougou", "Ouaké"]
+        },
+        {
+          "nom": "Littoral",
+          "communes": ["Cotonou"]
+        },
+        {
+          "nom": "Mono",
+          "communes": ["Athiémé", "Bopa", "Comè", "Grand-Popo", "Houéyogbé", "Lokossa"]
+        },
+        {
+          "nom": "Ouémé",
+          "communes": ["Adjarra", "Adjohoun", "Aguégués", "Akpro-Missérété", "Avrankou", "Bonou", "Dangbo", "Porto-Novo", "Sèmè-Kpodji"]
+        },
+        {
+          "nom": "Plateau",
+          "communes": ["Adja-Ouèrè", "Ifangni", "Kétou", "Pobè", "Sakété"]
+        },
+        {
+          "nom": "Zou",
+          "communes": ["Abomey", "Agbangnizoun", "Bohicon", "Covè", "Djidja", "Ouinhi", "Za-Kpota", "Zagnanado", "Zogbodomey"]
+        }
+      ]
+    },
+    {
+      "nom": "Burkina Faso",
+      "code_iso": "BF",
+      "regions": [
+        {
+          "nom": "Boucle du Mouhoun",
+          "communes": ["Bagassi", "Bana", "Boromo", "Fara", "Oury", "Pâ", "Pompoï", "Poura", "Siby", "Yaho", "Balavé", "Kouka", "Sami", "Sanaba", "Solenzo", "Tansila", "Barani", "Bomborokuy", "Bourasso", "Djibasso", "Dokuy", "Doumbala", "Kombori", "Madouba", "Nouna", "Sono", "Bondokuy", "Dédougou", "Douroula", "Kona", "Ouarkoye", "Safané", "Tchériba", "Gassan", "Gossina", "Kougny", "Toma", "Yaba", "Yé", "Di", "Gomboro", "Kassoum", "Kiembara", "Lanfièra", "Lankoué", "Toéni", "Tougan"]
+        },
+        {
+          "nom": "Cascades",
+          "communes": ["Banfora", "Bérégadougou", "Mangodara", "Moussodougou", "Niangoloko", "Ouo", "Sidéradougou", "Soubakaniédougou", "Tiéfora", "Dakoro", "Douna", "Kankalaba", "Loumana", "Niankorodougou", "Ouéléni", "Sindou", "Wolonkoto"]
+        },
+        {
+          "nom": "Centre",
+          "communes": ["Komki-Ipala", "Komsilga", "Koubri", "Ouagadougou", "Pabré", "Saaba", "Tanghin-Dassouri"]
+        },
+        {
+          "nom": "Centre-Est",
+          "communes": ["Bagré", "Bané", "Béguédo", "Bissiga", "Bittou", "Boussouma", "Garango", "Komtoèga", "Niaogho", "Tenkodogo", "Zabré", "Zoaga", "Zonsé", "Comin-Yanga", "Dourtenga", "Lalgaye", "Ouargaye", "Sangha", "Soudougui", "Yargatenga", "Yondé", "Andemtenga", "Baskouré", "Dialgaye", "Gounghin", "Kando", "Koupéla", "Pouytenga", "Tensobentenga", "Yargo"]
+        },
+        {
+          "nom": "Centre-Nord",
+          "communes": ["Bourzanga", "Guibaré", "Kongoussi", "Nasséré", "Rollo", "Rouko", "Sabcé", "Tikaré", "Zimtanga", "Boala", "Boulsa", "Bouroum", "Dargo", "Nagbingou", "Tougouri", "Yalgo", "Zéguédéguin", "Barsalogho", "Boussouma", "Dablo", "Kaya", "Korsimoro", "Mané", "Namissiguima", "Pensa", "Pibaoré", "Pissila", "Ziga"]
+        },
+        {
+          "nom": "Centre-Ouest",
+          "communes": ["Bingo", "Imasgo", "Kindi", "Kokologo", "Koudougou", "Nandala", "Nanoro", "Pella", "Poa", "Ramongo", "Sabou", "Siglé", "Soaw", "Sourgou", "Thyou", "Dassa", "Didyr", "Godyr", "Kordié", "Kyon", "Pouni", "Réo", "Ténado", "Zamo", "Zawara", "Biéha", "Boura", "Léo", "Nebiélianayou", "Niambouri", "Silly", "Tô", "Bakata", "Bougnounou", "Cassou", "Dalo", "Gao", "Sapouy"]
+        },
+        {
+          "nom": "Centre-Sud",
+          "communes": ["Doulougou", "Gaongo", "Ipelcé", "Kayao", "Kombissiri", "Saponé", "Toécé", "Guiaro", "Pô", "Tiébélé", "Zecco", "Ziou", "Béré", "Bindé", "Gogo", "Guiba", "Gomboussougou", "Manga", "Nobéré"]
+        },
+        {
+          "nom": "Est",
+          "communes": ["Bilanga", "Bogandé", "Coalla", "Liptougou", "Mani", "Piéla", "Thion", "Diabo", "Diapangou", "Fada N'gourma", "Matiacoali", "Tibga", "Yamba", "Batiébougou", "Foutouri", "Gayéri", "Kompienga", "Madjoari", "Pama", "Botou", "Diapaga", "Kantchari", "Logobou", "Namounou", "Partiaga", "Tambaga", "Tansarga"]
+        },
+        {
+          "nom": "Hauts-Bassins",
+          "communes": ["Bama", "Bobo-Dioulasso", "Dandé", "Faramana", "Fo", "Karangasso-Sambla", "Karangasso-Vigué", "Koundougou", "Lena", "Padéma", "Péni", "Satiri", "Toussiana", "Banzon", "Djigouéra", "Kangala", "Kayan", "Koloko", "Kourignon", "Kourouma", "Morolaba", "N'dorola", "Orodara", "Samogohiri", "Samorogouan", "Sindo", "Békuy", "Béréba", "Boni", "Founzan", "Houndé", "Koti", "Koumbia"]
+        },
+        {
+          "nom": "Nord",
+          "communes": ["Banh", "Ouidigui", "Sollé", "Titao", "Arbolé", "Bagaré", "Bokin", "Gomponsom", "Kirsi", "Lâ-Todin", "Pilimpikou", "Samba", "Yako", "Barga", "Kain", "Kalsaga", "Kossouka", "Koumbri", "Namissiguima", "Oula", "Ouahigouya", "Rambo", "Séguénéga", "Tangaye", "Thiou", "Zogoré", "Bassi", "Boussou", "Gourcy", "Léba", "Tougo"]
+        },
+        {
+          "nom": "Plateau Central",
+          "communes": ["Boudry", "Kogo", "Méguet", "Mogtédo", "Salogo", "Zam", "Zorgho", "Zoungou", "Boussé", "Laye", "Niou", "Sourgoubila", "Toèghin", "Absouya", "Dapélogo", "Loumbila", "Nagréongo", "Ourgou-Manéga", "Ziniaré", "Ziténga"]
+        },
+        {
+          "nom": "Sahel",
+          "communes": ["Déou", "Gorom-Gorom", "Markoye", "Oursi", "Tin-Akoff", "Bani", "Dori", "Falagountou", "Gorgadji", "Sampelga", "Seytenga", "Arbinda", "Baraboulé", "Djibo", "Djiguel", "Kelbo", "Koutougou", "Nassoumbou", "Pobé-Mengao", "Tongomayel", "Boundoré", "Mansila", "Sébba", "Solhan", "Tankougounadié", "Titabé"]
+        },
+        {
+          "nom": "Sud-Ouest",
+          "communes": ["Bondigui", "Diébougou", "Dolo", "Iolonioro", "Tiankoura", "Dano", "Dissin", "Guégueré", "Koper", "Niégo", "Oronkua", "Ouessa", "Zambo", "Batié", "Boussoukoula", "Kpuéré", "Legmoin", "Midébdo", "Boussera", "Bouroum-Bouroum", "Djigoué", "Gaoua", "Gbomblora", "Kampti", "Loropéni", "Malba", "Nako", "Périgban"]
+        }
+      ]
+    },
+    {
+      "nom": "Côte d'Ivoire",
+      "code_iso": "CI",
+      "regions": [
+        {
+          "nom": "District Autonome d'Abidjan",
+          "communes": ["Abobo", "Adjamé", "Anyama", "Attécoubé", "Bingerville", "Cocody", "Koumassi", "Marcory", "Plateau", "Port-Bouët", "Songon", "Treichville", "Yopougon", "Alépé", "Grand-Bassam"]
+        },
+        {
+          "nom": "District Autonome de Yamoussoukro",
+          "communes": ["Yamoussoukro"]
+        },
+        {
+          "nom": "N'Zi",
+          "communes": ["Dimbokro", "Bocanda"]
+        },
+        {
+          "nom": "Iffou",
+          "communes": ["Daoukro", "M'Bahiakro"]
+        },
+        {
+          "nom": "Bélier",
+          "communes": ["Toumodi", "Tiébissou"]
+        },
+        {
+          "nom": "Moronou",
+          "communes": ["Bongouanou", "Arrah"]
+        },
+        {
+          "nom": "Indénié-Djuablin",
+          "communes": ["Abengourou", "Agnibilékrou", "Bettié"]
+        },
+        {
+          "nom": "Sud-Comoé",
+          "communes": ["Aboisso", "Adiaké", "Grand-Bassam", "Tiapoum"]
+        },
+        {
+          "nom": "Folon",
+          "communes": ["Minignan", "Kaniasso", "Tienko"]
+        },
+        {
+          "nom": "Kabadougou",
+          "communes": ["Odienné", "Gbéléban", "Madinani", "Samatiguila", "Séguelon"]
+        },
+        {
+          "nom": "Gôh",
+          "communes": ["Gagnoa", "Oumé", "Bayota"]
+        },
+        {
+          "nom": "Lôh-Djiboua",
+          "communes": ["Divo", "Lakota", "Guitry"]
+        },
+        {
+          "nom": "Agnéby-Tiassa",
+          "communes": ["Agboville", "Azaguié", "Rubino", "Sikensi", "Taabo"]
+        },
+        {
+          "nom": "Mé",
+          "communes": ["Adzopé", "Akoupé", "Yakassé-Attobrou"]
+        },
+        {
+          "nom": "Grands-Ponts",
+          "communes": ["Dabou", "Jacqueville", "Grand-Lahou"]
+        },
+        {
+          "nom": "Tonkpi",
+          "communes": ["Man", "Biankouma", "Danané", "Logoualé", "Sipilou", "Zouan-Hounien"]
+        },
+        {
+          "nom": "Cavally",
+          "communes": ["Guiglo", "Bloléquin", "Taï", "Toulépleu"]
+        },
+        {
+          "nom": "Guémon",
+          "communes": ["Duékoué", "Bangolo", "Facobly"]
+        },
+        {
+          "nom": "Haut-Sassandra",
+          "communes": ["Daloa", "Issia", "Vavoua", "Zoukougbeu"]
+        },
+        {
+          "nom": "Marahoué",
+          "communes": ["Bouaflé", "Sinfra", "Zuenoula"]
+        },
+        {
+          "nom": "Poro",
+          "communes": ["Korhogo", "Dikodougou", "M'Bengué", "Sinématiali"]
+        },
+        {
+          "nom": "Tchologo",
+          "communes": ["Ferkessédougou", "Kaouara", "Kong", "Ouangolodougou"]
+        },
+        {
+          "nom": "Bagoué",
+          "communes": ["Boundiali", "Kouto", "Tengréla", "Gbon"]
+        },
+        {
+          "nom": "Nawa",
+          "communes": ["Soubré", "Buyo", "Méagui"]
+        },
+        {
+          "nom": "San-Pédro",
+          "communes": ["San-Pédro", "Grand-Béréby", "Sassandra", "Tabou"]
+        },
+        {
+          "nom": "Gbôklé",
+          "communes": ["Sassandra", "Fresco"]
+        },
+        {
+          "nom": "Hambol",
+          "communes": ["Katiola", "Dabakala", "Niakara", "Niakaramandougou"]
+        },
+        {
+          "nom": "Gbêkê",
+          "communes": ["Bouaké", "Béoumi", "Botro", "Sakassou"]
+        },
+        {
+          "nom": "Béré",
+          "communes": ["Mankono", "Bouandougou", "Tiéningboué"]
+        },
+        {
+          "nom": "Bafing",
+          "communes": ["Touba", "Koro", "Ouaninou"]
+        },
+        {
+          "nom": "Worodougou",
+          "communes": ["Séguéla", "Kani"]
+        },
+        {
+          "nom": "Bounkani",
+          "communes": ["Bouna", "Doropo", "Nassian", "Téhini"]
+        },
+        {
+          "nom": "Gontougo",
+          "communes": ["Bondoukou", "Koun-Fao", "Sandégué", "Tanda", "Transua"]
+        }
+      ]
+    },
+    {
+      "nom": "Guinée-Bissau",
+      "code_iso": "GW",
+      "regions": [
+        {
+          "nom": "Bafatá",
+          "communes": ["Bafatá", "Bambadinca", "Contuboel", "Cossé", "Gamamudo", "Xitole"]
+        },
+        {
+          "nom": "Biombo",
+          "communes": ["Prábis", "Quinhamel", "Safim"]
+        },
+        {
+          "nom": "Bolama",
+          "communes": ["Bolama", "Bubaque", "Caravela", "Uno"]
+        },
+        {
+          "nom": "Cacheu",
+          "communes": ["Bigene", "Bula", "Cacheu", "Caió", "Canchungo", "São Domingos"]
+        },
+        {
+          "nom": "Gabú",
+          "communes": ["Boé", "Gabú", "Pirada", "Pitche", "Sonaco"]
+        },
+        {
+          "nom": "Oio",
+          "communes": ["Bissorã", "Farim", "Mansabá", "Mansoa", "Nhacra"]
+        },
+        {
+          "nom": "Quinara",
+          "communes": ["Buba", "Empada", "Fulacunda", "Tite"]
+        },
+        {
+          "nom": "Tombali",
+          "communes": ["Bedanda", "Cacine", "Catió", "Komo", "Quebo"]
+        },
+        {
+          "nom": "Bissau",
+          "communes": ["Bissau"]
+        }
+      ]
+    },
+    {
+      "nom": "Mali",
+      "code_iso": "ML",
+      "regions": [
+        {
+          "nom": "District de Bamako",
+          "communes": ["Commune I", "Commune II", "Commune III", "Commune IV", "Commune V", "Commune VI"]
+        },
+        {
+          "nom": "Kayes",
+          "communes": ["Bafoulabé", "Bamafélé", "Diakon", "Diokéli", "Gounfan", "Kontéla", "Koussan", "Mahina", "Niambé", "Oualia", "Sidibéla", "Toming", "Diéma", "Béma", "Diangounté Camara", "Dianguirdé", "Diéoura", "Dioumara Koussata", "Fassoudébé", "Fatao", "Goméra", "Guédébiné", "Lakamané", "Lambidou", "Madiga-Sacko", "Madina", "Sansankidé", "Sitakili", "Troungoumbé", "Kéniéba", "Dabia", "Dombia", "Faléa", "Faraba", "Guénégoré", "Kassama", "Kouroukoto", "Sagalo", "Sékoto", "Sitakilly", "Kita", "Badia", "Bangassi", "Boudofo", "Bougaribaya", "Didenko", "Djidian", "Djoulafoundou", "Gadougou I", "Gadougou II", "Guémoukouraba", "Kassaro", "Kita-Nord", "Kita-Ouest", "Koféba", "Kokofata", "Koulou", "Kourouninkoto", "Madina", "Makandiana", "Namala Guimba", "Niadiania", "Sébékoro", "Sénéké", "Sirakoro", "Souransan-Tomoto", "Tambaga", "Touba", "Toukoto", "Nioro du Sahel", "Gadiaba-Kadiel", "Gavinané", "Gogui", "Guétéma", "Kadié", "Karinia", "Kirané Kaniaga", "Koréra-Koré", "Loughéré", "Madina-Alahéry", "Nioro-Toucouleur", "Sandaré", "Simbi", "Soroma", "Yéréré", "Yélimané", "Diafounou-Gory", "Diafounou-Maga", "Fanga", "Gory", "Guidimé", "Kirididi", "Konsiga", "Kremis", "Marékha-Kaffo", "Soumpou", "Tringa", "Toyah"]
+        },
+        {
+          "nom": "Koulikoro",
+          "communes": ["Koulikoro", "Agglal", "Dinandougou", "Doumba", "Kenyé-Kénié", "Kola", "Kouloun", "Meguetan", "N'Gouraba", "Sirakorola", "Tienfala", "Kati", "Baguinéda-Camp", "Bancoumana", "Bossofala", "Bougoula", "Daban", "Diago", "Dialakoroba", "Dialakorodji", "Dio-Gare", "Dogodouman", "Dombila", "Doubabougou", "Farabana", "Kalabancoro", "Kalifabougou", "Kambila", "Kati-Ville", "Mandé", "Moutougoula", "N'Gabacoro", "N'Tjiba", "Niagadina", "Nioumamakana", "Ouolodo", "Safo", "Sananfara", "Sangarebougou", "Sibiribougou", "Sobra", "Tiakadougou-Dialakoro", "Tiélé", "Yélékébougou", "Kangaba", "Balan-Bakama", "Benkadi", "Kaniogo", "Karan", "Maramandougou", "Minidian", "Naréna", "Nouga", "Séléfougou", "Banamba", "Boro", "Duguwolowula", "Kiban", "Madina-Sacko", "Sébété", "Toubacoro", "Toukoroba", "Dioïla", "Binko", "Dégnékoro", "Diébé", "Diédougou", "Diouman", "Dolendougou", "Guéna", "Jékafo", "Kaladougou", "Kémékafo", "Kéréla", "Killidougou", "Massigui", "N'Dlondougou", "N'Garadougou", "N'Golobougou", "Niantjila", "Ténindougou", "Wacoro", "Wola", "Zan-Coulibaly", "Kolokani", "Didiéni", "Guihoyo", "Kolokani-Ville", "Massantola", "Nonkon", "Nossombougou", "Ouolodo", "Sagabala", "Sébécoro I", "Tioribougou", "Nara", "Allahina", "Dabo", "Dilly", "Dogofry", "Fallou", "Guéniébé", "Guiré", "Koronga", "Nara-Ville", "Niamana", "Ouagadougou"]
+        },
+        {
+          "nom": "Sikasso",
+          "communes": ["Sikasso", "Blendio", "Dembala", "Diomaténé", "Dogoni", "Doumbala", "Fama", "Farakala", "Finkolo", "Gongasso", "Kabaro", "Kignan", "Kléla", "Kofan", "Kolokoba", "Koumakane", "Kouoro", "Kou-Siné", "Lobougoula", "Miniko", "Miria", "Missirikoro", "N'Tjikouna", "Niena", "Pimperna", "Sankama", "San-Kourou", "Soukourani-Missirikoro", "Tella", "Tiankadi", "Tinzana", "Wateni", "Zanferebougou", "Zangaradougou", "Zanièna", "Bougouni", "Bladié-Tiémala", "Danou", "Débélin", "Défina", "Dogo", "Domba", "Faradiélé", "Farakoro", "Farani", "Garalo", "Kégné", "Kokélé", "Kola", "Koumantou", "Kouroulamini", "M'Pèssoba", "Ouroun", "Sanso", "Sibirilka", "Sido", "Syen-Toula", "Tiémala-Banimonotié", "Wola", "Yinindougou", "Yiridougou", "Zantiébougou", "Kadiolo", "Diou", "Fourou", "Kaï", "Kadiolo-Ville", "Loulouni", "N'Debougou", "N'Do", "Zégoua", "Kolondiéba", "Boussin", "Farako", "Kadiana", "Kébilia", "Kolondiéba-Ville", "Kolosso", "Kébila", "Mena", "N'Golodiana", "Tiongui", "Tousséguéla", "Koutiala", "Diédougou", "Diouradougou-Kafo", "Fagui", "Fakolo", "Gouadji-Kao", "Goudié-Sougouna", "Kafo-Faboli", "Karagouana-Mallé", "Kolonigué", "Konigué", "Konina", "Konséguéla", "Koromo", "Koutiala-Ville", "Logouana", "M'Pessoba", "N'Golonianasso", "N'Goutjina", "Nafanga", "Sincina", "Songoua", "Soun", "Tao", "Tionso", "Zanfigué", "Zangasso", "Yorosso", "Boura", "Kiffosso I", "Koury", "Mahou", "Ménamba I", "Nafanga", "Ourikéla", "Yorosso-Ville", "Ziouani", "Yanfolila", "Baya", "Bolo-Fouta", "Djallon-Foula", "Djiguiya de Koloni", "Gouandiaka", "Gouanan", "Gualé", "Koussan", "Sankarani", "Séré-Moussa-Ani-Samou", "Tagandougou", "Wassoulou-Ballé", "Yallankoro-Soloba"]
+        },
+        {
+          "nom": "Ségou",
+          "communes": ["Ségou", "Baguindadougou", "Bellen", "Boussin", "Cinzana", "Diédougou", "Digandougou", "Dioro", "Diouna", "Dougabougou", "Farako", "Farakou-Massa", "Fatiné", "Kamiandougou", "Katiéna", "Konodimini", "Markala", "Massala", "N'Gara", "N'Koumandougou", "Pelengana", "Sakoïba", "Sama-Foulala", "Saminé", "Sansanding", "Sébougou", "Sibila", "Soignébougou", "Souba", "Tougou", "Bla", "Beguené", "Bla-Ville", "Diena", "Dougouolo", "Falo", "Fani", "Kazangasso", "Kéméni", "Korodougou", "Koulandougou", "Niala", "Samabogo", "Somasso", "Tiemena", "Touna", "Yangasso", "Barouéli", "Barouéli-Ville", "Boidié", "Dougoufier", "Gouendo", "Kalabé", "Konobougou", "N'Gassola", "Sanando", "Somono", "Tamon", "Tesserela", "Macina", "Boky-Wéré", "Folomana", "Kolongo", "Kouma", "Macina-Ville", "Matomo", "Monimpébougou", "Salgna", "Sana", "Souleye", "Tongué", "Niono", "Diabaly", "Dogofry", "Kala-Siguida", "Mariko", "Nampalari", "Niono-Ville", "Pogo", "Siriwala", "Sokolo", "Toridaga-Ko", "Yeredon-Sana", "San", "Baramandougou", "Dah", "Diakourouna", "Diéli", "Djéguéna", "Fion", "Kaniegué", "Karaba", "Kassorola", "Kava", "Moribila", "N'Goa", "N'Torosso", "Niasso", "Niamana", "Ouolon", "San-Ville", "Siadougou", "Sommo", "Sourountouna", "Sy", "Téné", "Teneni", "Tourakolomba", "Waki", "Tominian", "Bénéna", "Diora", "Fangasso", "Koula", "Lanfiala", "Mafouné", "Mandiakuy", "Ouan", "Sanékuy", "Soura", "Timissa", "Tominian-Ville", "Yasso"]
+        },
+        {
+          "nom": "Mopti",
+          "communes": ["Mopti", "Bandiagara", "Bankass", "Djenné", "Douentza", "Koro", "Ténenkou", "Youwarou", "Bore", "Dialloubé", "Fatoma", "Konna", "Korombana", "Koubayé", "Ouro-Modi", "Ouroubé-Doudé", "Salsalbé", "Sio", "Socourra", "Soyé"]
+        },
+        {
+          "nom": "Tombouctou",
+          "communes": ["Tombouctou", "Al-Aflah", "Al-Djouf", "Ber", "Bourem-Inaly", "Diré", "Goundam", "Gourma-Rharous", "Léré", "Niafunké", "Salam", "Saraféré", "Tonka"]
+        },
+        {
+          "nom": "Gao",
+          "communes": ["Gao", "Ansongo", "Bourem", "Ménaka"]
+        },
+        {
+          "nom": "Kidal",
+          "communes": ["Kidal", "Abeibara", "Tessalit", "Tin-Essako"]
+        },
+        {
+          "nom": "Taoudénit",
+          "communes": ["Taoudénit", "Araouane"]
+        },
+        {
+          "nom": "Ménaka",
+          "communes": ["Ménaka", "Inékar", "Tidermène"]
+        },
+        {
+          "nom": "Nioro",
+          "communes": ["Nioro du Sahel", "Gadiaba-Kadiel", "Gavinané", "Gogui", "Guétéma", "Kadié", "Karinia", "Kirané Kaniaga", "Koréra-Koré", "Loughéré", "Madina-Alahéry", "Nioro-Toucouleur", "Sandaré", "Simbi", "Soroma", "Yéréré"]
+        },
+        {
+          "nom": "Kita",
+          "communes": ["Kita", "Badia", "Bangassi", "Boudofo", "Bougaribaya", "Didenko", "Djidian", "Djoulafoundou", "Gadougou I", "Gadougou II", "Guémoukouraba", "Kassaro", "Kita-Nord", "Kita-Ouest", "Koféba", "Kokofata", "Koulou", "Kourouninkoto", "Madina", "Makandiana", "Namala Guimba", "Niadiania", "Sébékoro", "Sénéké", "Sirakoro", "Souransan-Tomoto", "Tambaga", "Touba", "Toukoto"]
+        },
+        {
+          "nom": "Dioïla",
+          "communes": ["Dioïla", "Binko", "Dégnékoro", "Diébé", "Diédougou", "Diouman", "Dolendougou", "Guéna", "Jékafo", "Kaladougou", "Kémékafo", "Kéréla", "Killidougou", "Massigui", "N'Dlondougou", "N'Garadougou", "N'Golobougou", "Niantjila", "Ténindougou", "Wacoro", "Wola", "Zan-Coulibaly"]
+        },
+        {
+          "nom": "Nara",
+          "communes": ["Nara", "Allahina", "Dabo", "Dilly", "Dogofry", "Fallou", "Guéniébé", "Guiré", "Koronga", "Nara-Ville", "Niamana", "Ouagadougou"]
+        },
+        {
+          "nom": "Bougouni",
+          "communes": ["Bougouni", "Bladié-Tiémala", "Danou", "Débélin", "Défina", "Dogo", "Domba", "Faradiélé", "Farakoro", "Farani", "Garalo", "Kégné", "Kokélé", "Kola", "Koumantou", "Kouroulamini", "M'Pèssoba", "Ouroun", "Sanso", "Sibirilka", "Sido", "Syen-Toula", "Tiémala-Banimonotié", "Wola", "Yinindougou", "Yiridougou", "Zantiébougou"]
+        },
+        {
+          "nom": "Koutiala",
+          "communes": ["Koutiala", "Diédougou", "Diouradougou-Kafo", "Fagui", "Fakolo", "Gouadji-Kao", "Goudié-Sougouna", "Kafo-Faboli", "Karagouana-Mallé", "Kolonigué", "Konigué", "Konina", "Konséguéla", "Koromo", "Koutiala-Ville", "Logouana", "M'Pessoba", "N'Golonianasso", "N'Goutjina", "Nafanga", "Sincina", "Songoua", "Soun", "Tao", "Tionso", "Zanfigué", "Zangasso"]
+        },
+        {
+          "nom": "San",
+          "communes": ["San", "Baramandougou", "Dah", "Diakourouna", "Diéli", "Djéguéna", "Fion", "Kaniegué", "Karaba", "Kassorola", "Kava", "Moribila", "N'Goa", "N'Torosso", "Niasso", "Niamana", "Ouolon", "San-Ville", "Siadougou", "Sommo", "Sourountouna", "Sy", "Téné", "Teneni", "Tourakolomba", "Waki"]
+        },
+        {
+          "nom": "Douentza",
+          "communes": ["Douentza", "Boni", "Djaptodji", "Hombori", "Kérèna", "Mondoro"]
+        },
+        {
+          "nom": "Bandiagara",
+          "communes": ["Bandiagara", "Bankass", "Koro", "Madougou", "Sangha", "Dandoli", "Goundo", "Kendié", "Lowol-Guéou", "Pignari", "Soroly", "Timniri"]
+        },
+        {
+          "nom": "Kankan",
+          "communes": ["Kankan", "Balandougou", "Bate-Nafadji", "Boula", "Gberedou-Baranama", "Karifamoudouya", "Koumbân", "Mamouroudou", "Missamana", "Moribayah", "Sabadou-Baranama", "Tinti-Oulen", "Tokounou", "Kérouané", "Banankoro", "Damaro", "Kérouané-Centre", "Komodou", "Kounsankoro", "Linko", "Sibiribaro", "Soromaya", "Kouroussa", "Babila", "Babila", "Balato", "Banfélé", "Baro", "Cisséla", "Douako", "Doura", "Koumana", "Kouroussa-Centre", "Sanguiana", "Mandiana", "Balandougouba", "Dialakoro", "Faralako", "Firawa", "Kantoumania", "Kiniéran", "Kondianakoro", "Koundian", "Mandiana-Centre", "Morodou", "Niagalémadou", "Sansi", "Siguiri", "Bankon", "Doko", "Franwalia", "Kiniébakoura", "Kintinian", "Maléa", "Naboun", "Niagassola", "Niandankoro", "Norassoba", "Siguirini"]
+        },
+        {
+          "nom": "Faranah",
+          "communes": ["Faranah", "Banian", "Beindou", "Faranah-Centre", "Gnaléah", "Heremakonon", "Kobikoro", "Marela", "Passayah", "Sandjiré", "Tindo", "Dabola", "Arfamoussaya", "Banko", "Bissikrima", "Dabola-Centre", "Dogomet", "Kankama", "Kindoyé", "Konindou", "N'Déma", "Dinguiraye", "Banora", "Dialakoro", "Diatiféré", "Dinguiraye-Centre", "Gagnakali", "Kalinko", "Lansanya", "Selouma", "Kissidougou", "Albadaria", "Banama", "Bardou", "Beindou", "Ferme-la", "Firawa", "Gbangbadou", "Kissidougou-Centre", "Koundiatou", "Manfran", "Sangardo", "Yendé-Millimou", "Yombiro"]
+        },
+        {
+          "nom": "N'Zérékoré",
+          "communes": ["N'Zérékoré", "Bounouma", "Gouécké", "Kobéla", "Koropara", "N'Zérékoré-Centre", "Palé", "Samoé", "Soulouta", "Womey", "Yalenzou", "Beyla", "Boola", "Diara-Guerela", "Diassodou", "Fouala", "Gbakedou", "Gbessoba", "Karala", "Koumandou", "Moussadou", "Nionsomoridou", "Samana", "Sinko", "Sokourala", "Guéckédou", "Bolodou", "Fangamadou", "Guéckédou-Centre", "Guéndembou", "Kassadou", "Koundou", "Nongoa", "Ouéndé-Kénéma", "Tékoulo", "Termessadou-Dibo", "Lola", "Bossou", "Foumbadou", "Gama", "Guéassou", "Kokota", "Lann", "Lola-Centre", "N'Zoo", "Tounkarata", "Macenta", "Balizia", "Binikala", "Bofossou", "Daro", "Fassankoni", "Kouankan", "Koyamah", "Macenta-Centre", "N'Zébéla", "Ourémai", "Panziazou", "Sérédou", "Singuedou", "Vasérédou", "Watanka", "Yomou", "Banié", "Bhééta", "Bignamou", "Bowé", "Diécké", "Péla", "Yomou-Centre"]
+        }
+      ]
+    },
+    {
+      "nom": "Niger",
+      "code_iso": "NE",
+      "regions": [
+        {
+          "nom": "Agadez",
+          "communes": ["Agadez", "Arlit", "Bilma", "Tchirozérine", "Aderbissinat", "Dabaga", "Dannet", "Dirkou", "Djado", "Fachi", "Gougaram", "Iférouane", "Ingall", "Tabelott", "Timia"]
+        },
+        {
+          "nom": "Diffa",
+          "communes": ["Diffa", "Maïné-Soroa", "N'Guigmi", "Bosso", "Chétimari", "Foulatari", "Goudoumaria", "Gueskérou", "Kablewa", "N'Gourti", "N'Guelbety", "Toumour"]
+        },
+        {
+          "nom": "Dosso",
+          "communes": ["Dosso", "Gollé", "Goroubankassam", "Karguibangou", "Mokko", "Sambéra", "Téko", "Boboye", "Birni N'Gaouré", "Fakara", "Harikanassou", "Kiota", "Koygolo", "N'Gonga", "Dioundiou", "Guéchémé", "Karakara", "Zaboria", "Dogondoutchi", "Dan-Kassari", "Dogon-Kiria", "Guilladjé", "Kiéché", "Matankari", "Soucoucoutane", "Falmey", "Gaya", "Bana", "Bengou", "Tanda", "Tounouga", "Yélou", "Loga", "Falwel", "Loga-Ville", "Sokorbé", "Tibiri", "Douméga", "Guéchémé", "Koré-Maïroua", "Tibiri-Ville"]
+        },
+        {
+          "nom": "Maradi",
+          "communes": ["Maradi", "Aguié", "Tchadoua", "Dakoro", "Bermo", "Gazaoua", "Guidan-Roumdji", "Madarounfa", "Djiratawa", "Mayahi", "Tessaoua", "Korgom", "Maïssade"]
+        },
+        {
+          "nom": "Niamey",
+          "communes": ["Niamey I", "Niamey II", "Niamey III", "Niamey IV", "Niamey V"]
+        },
+        {
+          "nom": "Tahoua",
+          "communes": ["Tahoua", "Abalak", "Affala", "Akokan", "Aza", "Badaguichiri", "Bagaroua", "Bangui", "Bkonni", "Bouza", "Doguéraoua", "Galma", "Garhanga", "Illela", "Kao", "Keita", "Kalfou", "Madaoua", "Malbaza", "Matameye", "Tabalak", "Tamaské", "Tassara", "Tchintabaraden", "Tillia", "Tsernaoua", "Illéla", "Guidan-Sori"]
+        },
+        {
+          "nom": "Tillabéri",
+          "communes": ["Tillabéri", "Abala", "Anzourou", "Ayorou", "Balleyara", "Banibangou", "Bankilaré", "Bitinkodji", "Boubon", "Dargol", "Dessa", "Diagorou", "Diamou", "Diankiaré", "Dinga", "Filingué", "Gothèye", "Guésséré", "Hamdallaye", "Karma", "Kirtachi", "Kollo", "Kouré", "Kourteye", "Méhana", "Namaro", "Ouallam", "Say", "Simiri", "Sinder", "Téra", "Tagazar", "Torodi"]
+        },
+        {
+          "nom": "Zinder",
+          "communes": ["Zinder", "Albarkaram", "Bakin-Birgi", "Bandé", "Belbédji", "Boune", "Damagaram-Takaya", "Dantchiao", "Daouché", "Dogo", "Droum", "Dungass", "Gamou", "Garin-Goussou", "Gouchi", "Gouré", "Guidimouni", "Hamdara", "Hawandawaki", "Ichirnawa", "Issa-Wari", "Kagna", "Kantché", "Kelle", "Kolléram", "Kourni", "Magaria", "Maï-Adoua", "Malawa", "Matamèye", "Mazamni", "Mirriah", "Moa", "Oléléwa", "Ourafane", "Tanout", "Tarka", "Ténoudibi", "Tesker", "Tirmini", "Wacha", "Yaouri"]
+        }
+      ]
+    },
+    {
+      "nom": "Sénégal",
+      "code_iso": "SN",
+      "regions": [
+        {
+          "nom": "Dakar",
+          "communes": ["Almadies", "Dakar-Plateau", "Grand Dakar", "Parcelles Assainies", "Biscuiterie", "Dieuppeul-Derklé", "Gueule Tapée-Fass-Colobane", "HLM", "Hann Bel-Air", "Médina", "Mermoz-Sacré-Cœur", "Ngor", "Ouakam", "Patte d'Oie", "Plateau", "Point E", "Sicap-Liberté", "Yoff", "Gorée", "Pikine", "Guédiawaye", "Rufisque", "Bargny", "Diamniadio", "Sébikhotane"]
+        },
+        {
+          "nom": "Diourbel",
+          "communes": ["Diourbel", "Bambey", "Mbacké"]
+        },
+        {
+          "nom": "Fatick",
+          "communes": ["Fatick", "Diofior", "Foundiougne", "Karang Poste", "Passy", "Sokone", "Soum", "Gossas"]
+        },
+        {
+          "nom": "Kaffrine",
+          "communes": ["Kaffrine", "Nganda", "Birkelane", "Koungheul", "Malem-Hodar"]
+        },
+        {
+          "nom": "Kaolack",
+          "communes": ["Kaolack", "Gandiaye", "Kahone", "Ndoffane", "Sibassor", "Guinguinéo", "Mboss", "Fass", "Nioro du Rip", "Keur Madiabel"]
+        },
+        {
+          "nom": "Kédougou",
+          "communes": ["Kédougou", "Salemata", "Saraya"]
+        },
+        {
+          "nom": "Kolda",
+          "communes": ["Kolda", "Dabo", "Salikégné", "Saré Yoba Diéga", "Médina Yoro Foulah", "Pata", "Vélingara", "Kounkané", "Diaobé-Kabendou"]
+        },
+        {
+          "nom": "Louga",
+          "communes": ["Louga", "Ndiagne", "Niomré", "Kébémer", "Guéoul", "Linguère", "Dahra"]
+        },
+        {
+          "nom": "Matam",
+          "communes": ["Matam", "Ourossogui", "Thilogne", "Agnam Civol-Bokidiawé", "Kanel", "Dembakané", "Hamady Hounaré", "Semmé-Aouré-Bokiladji", "Sinthiou Bamambé-Banadji", "Waounde", "Odobéré", "Ranérou"]
+        },
+        {
+          "nom": "Saint-Louis",
+          "communes": ["Saint-Louis", "Richard-Toll", "Dagana", "Podor", "Rosso-Sénégal"]
+        },
+        {
+          "nom": "Sédhiou",
+          "communes": ["Sédhiou", "Diannah Malary", "Marsassoum", "Bounkiling", "Madina Wandifa", "Goudomp", "Diattacounda", "Samine", "Tanaff"]
+        },
+        {
+          "nom": "Tambacounda",
+          "communes": ["Tambacounda", "Bakel", "Diawara", "Kidira", "Goudiry", "Kothiary", "Koumpentoum", "Malem Niani"]
+        },
+        {
+          "nom": "Thiès",
+          "communes": ["Thiès", "Tivaouane", "Mbour", "Khombole", "Kayar", "Mboro", "Joal-Fadiouth", "Pout", "Popenguine", "Mékhé", "Nguekhokh", "Saly Portudal", "Somone"]
+        },
+        {
+          "nom": "Ziguinchor",
+          "communes": ["Ziguinchor", "Bignona", "Thionck-Essyl", "Diouloulou", "Oussouye"]
+        }
+      ]
+    },
+    {
+      "nom": "Togo",
+      "code_iso": "TG",
+      "regions": [
+        {
+          "nom": "Savanes",
+          "communes": ["Cinkassé 1", "Cinkassé 2", "Kpendjal 1", "Kpendjal 2", "Kpendjal-Ouest 1", "Kpendjal-Ouest 2", "Oti 1", "Oti 2", "Oti-Sud 1", "Oti-Sud 2", "Tandjouaré 1", "Tandjouaré 2", "Tône 1", "Tône 2", "Tône 3", "Tône 4"]
+        },
+        {
+          "nom": "Kara",
+          "communes": ["Assoli 1", "Assoli 2", "Assoli 3", "Bassar 1", "Bassar 2", "Bassar 3", "Bassar 4", "Binah 1", "Binah 2", "Dankpen 1", "Dankpen 2", "Dankpen 3", "Doufelgou 1", "Doufelgou 2", "Doufelgou 3", "Kéran 1", "Kéran 2", "Kéran 3", "Kozah 1", "Kozah 2", "Kozah 3", "Kozah 4"]
+        },
+        {
+          "nom": "Centrale",
+          "communes": ["Blitta 1", "Blitta 2", "Blitta 3", "Sotouboua 1", "Sotouboua 2", "Sotouboua 3", "Tchamba 1", "Tchamba 2", "Tchamba 3", "Tchaoudjo 1", "Tchaoudjo 2", "Tchaoudjo 3", "Tchaoudjo 4"]
+        },
+        {
+          "nom": "Plateaux",
+          "communes": ["Agou 1", "Agou 2", "Akébou 1", "Akébou 2", "Amou 1", "Amou 2", "Amou 3", "Anié 1", "Anié 2", "Danyi 1", "Danyi 2", "Est-Mono 1", "Est-Mono 2", "Est-Mono 3", "Haho 1", "Haho 2", "Haho 3", "Haho 4", "Kloto 1", "Kloto 2", "Kloto 3", "Kpélé 1", "Kpélé 2", "Moyen-Mono 1", "Moyen-Mono 2", "Ogou 1", "Ogou 2", "Ogou 3", "Ogou 4", "Wawa 1", "Wawa 2", "Wawa 3"]
+        },
+        {
+          "nom": "Maritime",
+          "communes": ["Golfe 1", "Golfe 2", "Golfe 3", "Golfe 4", "Golfe 5", "Golfe 6", "Golfe 7", "Agoè-Nyivé 1", "Agoè-Nyivé 2", "Agoè-Nyivé 3", "Agoè-Nyivé 4", "Agoè-Nyivé 5", "Agoè-Nyivé 6", "Zio 1", "Zio 2", "Zio 3", "Zio 4", "Lacs 1", "Lacs 2", "Lacs 3", "Lacs 4", "Vo 1", "Vo 2", "Vo 3", "Vo 4", "Yoto 1", "Yoto 2", "Yoto 3", "Bas-Mono 1", "Bas-Mono 2", "Avé 1", "Avé 2"]
+        }
+      ]
+    },
+    {
+      "nom": "Guinée",
+      "code_iso": "GN",
+      "regions": [
+        {
+          "nom": "Conakry",
+          "communes": ["Kaloum", "Matam", "Dixinn", "Kassa", "Matoto", "Ratoma"]
+        },
+        {
+          "nom": "Kindia",
+          "communes": ["Kindia", "Bangouyah", "Damelia", "Friguiagbé", "Madina-Oula", "Souguéta", "Coyah", "Kouriah", "Manéah", "Wonkifong", "Dubréka", "Badi", "Falessade", "Khorira", "Tanènè", "Toumaniah", "Forécariah", "Alassoya", "Benty", "Farmoriah", "Kaback", "Kakossa", "Kallia", "Mafèrinyah", "Moussaya", "Sikhourou", "Fria", "Baguinet", "Banguingny", "Tormelin", "Télimélé", "Bourouwal", "Daramagnaky", "Gougoudjé", "Koba", "Kollet", "Konsotamy", "Missira", "Santou", "Sinta", "Sogolon", "Thionthian"]
+        },
+        {
+          "nom": "Boké",
+          "communes": ["Boké", "Bintimodia", "Dabiss", "Kamsar", "Kanfarandé", "Kolaboui", "Malapouyah", "Sangarédi", "Sansalé", "Tanéné", "Boffa", "Colia", "Doupourou", "Koba-Tatema", "Lisso", "Mankountan", "Tamita", "Tougnifili", "Gaoual", "Foulamory", "Guéméyiré", "Kakoni", "Koumbia", "Touba", "Wendou M'Bour", "Koundara", "Guingan", "Kamaby", "Sambailo", "Saréboido", "Termessé", "Youkounkoun"]
+        },
+        {
+          "nom": "Mamou",
+          "communes": ["Mamou", "Bouliwel", "Dounet", "Gongoret", "Kégnéko", "Konkouré", "Nyagara", "Ouré-Kaba", "Saramoussaya", "Soyah", "Tolo", "Dalaba", "Bodié", "Dalaba-Centre", "Ditinn", "Kaala", "Kankalabé", "Kébali", "Koba", "Mafara", "Mitty", "Pita", "Bantignel", "Brouwal-Tappé", "Dongol-Touma", "Gongoré", "Guingan", "Ley-Miro", "Maciré", "Ninguélandé", "Pita-Centre", "Sangaréah", "Sintali", "Timbi-Madina", "Timbi-Touny"]
+        },
+        {
+          "nom": "Labé",
+          "communes": ["Labé", "Dalein", "Daralabe", "Diari", "Dionfo", "Garambé", "Hafia", "Kaalan", "Kouramangui", "Noussy", "Popodara", "Sannou", "Tountouroun", "Koubia", "Fafaya", "Gadaya", "Koubia-Centre", "Matakaou", "Missira", "Pilimini", "Lélouma", "Balaya", "Diountou", "Hérico", "Korbé", "Lafou", "Lélouma-Centre", "Parawol", "Sagalé", "Tyanguel-Bori", "Mali", "Balaki", "Donghol-Sigon", "Dougountouny", "Fougou", "Gayamba", "Lébékére", "Madina-Wora", "Mali-Centre", "Salambandé", "Téliré", "Touba", "Yimbéring", "Tougué", "Fello-Koundoua", "Kansangui", "Kolangui", "Kollet", "Konah", "Kouratongo", "Tangali", "Tougué-Centre"]
+        },
+        {
+          "nom": "Kankan",
+          "communes": ["Kankan", "Kérouané", "Kouroussa", "Mandiana", "Siguiri"]
+        },
+        {
+          "nom": "Faranah",
+          "communes": ["Faranah", "Dabola", "Dinguiraye", "Kissidougou"]
+        },
+        {
+          "nom": "N'Zérékoré",
+          "communes": ["N'Zérékoré", "Beyla", "Guéckédou", "Lola", "Macenta", "Yomou"]
+        }
+      ]
+    },
+    {
+      "nom": "Gabon",
+      "code_iso": "GA",
+      "regions": [
+        {
+          "nom": "Estuaire",
+          "communes": ["Libreville", "Owendo", "Akanda", "Ntoum", "Cocobeach", "Kango", "Ndzomoe"]
+        },
+        {
+          "nom": "Haut-Ogooué",
+          "communes": ["Franceville", "Moanda", "Mounana", "Okondja", "Akiéni", "Bongoville", "Lékoni", "Bakoumba"]
+        },
+        {
+          "nom": "Moyen-Ogooué",
+          "communes": ["Lambaréné", "Ndjolé"]
+        },
+        {
+          "nom": "Ngounié",
+          "communes": ["Mouila", "Ndendé", "Fougamou", "Lébamba", "Mbigou", "Mimongo", "Guiétsou", "Malinga", "Mandji"]
+        },
+        {
+          "nom": "Nyanga",
+          "communes": ["Tchibanga", "Mayumba", "Moabi", "Mabanda", "Moulèngui-Binza", "Ndindi"]
+        },
+        {
+          "nom": "Ogooué-Ivindo",
+          "communes": ["Makokou", "Booué", "Mékambo", "Ovan"]
+        },
+        {
+          "nom": "Ogooué-Lolo",
+          "communes": ["Koulamoutou", "Lastoursville", "Iboundji", "Pana"]
+        },
+        {
+          "nom": "Ogooué-Maritime",
+          "communes": ["Port-Gentil", "Gamba", "Omboué"]
+        },
+        {
+          "nom": "Woleu-Ntem",
+          "communes": ["Oyem", "Bitam", "Mitzic", "Médouneu", "Minvoul"]
+        }
+      ]
+    },
+    {
+      "nom": "République du Congo",
+      "code_iso": "CG",
+      "regions": [
+        {
+          "nom": "Bouenza",
+          "communes": ["Madingou", "Nkayi", "Loudima", "Mabombo", "Mfouati", "Mouyondzi", "Tsiaki", "Yamba"]
+        },
+        {
+          "nom": "Brazzaville",
+          "communes": ["Brazzaville", "Arrondissement 1 Makélékélé", "Arrondissement 2 Bacongo", "Arrondissement 3 Poto-Poto", "Arrondissement 4 Moungali", "Arrondissement 5 Ouenzé", "Arrondissement 6 Talangaï", "Arrondissement 7 Mfilou", "Arrondissement 8 Madibou", "Arrondissement 9 Djiri"]
+        },
+        {
+          "nom": "Cuvette",
+          "communes": ["Owando", "Boundji", "Loukoléla", "Makoua", "Mossaka", "Ngoko", "Ntokou", "Oyo", "Tchikapika"]
+        },
+        {
+          "nom": "Cuvette-Ouest",
+          "communes": ["Ewo", "Etoumbi", "Kéllé", "Mbama", "Mbomo", "Okoyo"]
+        },
+        {
+          "nom": "Kouilou",
+          "communes": ["Loango", "Hinda", "Madingo-Kayes", "Mvouti", "Kakamoeka", "Nzambi"]
+        },
+        {
+          "nom": "Lékoumou",
+          "communes": ["Sibiti", "Bambama", "Komono", "Mayéyé", "Zanaga"]
+        },
+        {
+          "nom": "Likouala",
+          "communes": ["Impfondo", "Bétou", "Dongou", "Enyellé", "Epéna", "Liranga", "Pokola"]
+        },
+        {
+          "nom": "Niari",
+          "communes": ["Dolisie", "Loubomo", "Banda", "Divénié", "Kibangou", "Kimongo", "Londéla-Kayes", "Louvakou", "Mbinda", "Makabana", "Mayoko", "Mossendjo", "Mougoundou-Sud", "Moutamba", "Nyanga", "Yaya"]
+        },
+        {
+          "nom": "Plateaux",
+          "communes": ["Djambala", "Abala", "Allembé", "Gamboma", "Lékana", "Makotimpoko", "Mbon", "Mpouya", "Ngo", "Ollombo", "Ongoni"]
+        },
+        {
+          "nom": "Pointe-Noire",
+          "communes": ["Pointe-Noire", "Arrondissement 1 Lumumba", "Arrondissement 2 Mvoumvou", "Arrondissement 3 Tié-Tié", "Arrondissement 4 Loandjili", "Arrondissement 5 Mongo-Poukou", "Arrondissement 6 Ngoyo"]
+        },
+        {
+          "nom": "Pool",
+          "communes": ["Kinkala", "Boko", "Goma-Tsétsé", "Igné", "Kindamba", "Kimba", "Louingui", "Loumo", "Mayama", "Mindouli", "Mbandza-Ndounga", "Ngabé", "Vindza"]
+        },
+        {
+          "nom": "Sangha",
+          "communes": ["Ouesso", "Mokéko", "Ngbala", "Pikounda", "Sembé", "Souanké"]
+        }
+      ]
+    },
+    {
+      "nom": "République Démocratique du Congo",
+      "code_iso": "CD",
+      "regions": [
+        {
+          "nom": "Kinshasa",
+          "communes": ["Bandalungwa", "Barumbu", "Bumbu", "Gombe", "Kalamu", "Kasa-Vubu", "Kimbanseke", "Kinshasa", "Kintambo", "Kisenso", "Lemba", "Limete", "Lingwala", "Makala", "Maluku", "Masina", "Matete", "Mont-Ngafula", "Ndjili", "Ngaba", "Ngaliema", "Ngiri-Ngiri", "Nsele", "Selembao"]
+        },
+        {
+          "nom": "Bas-Uele",
+          "communes": ["Buta", "Aketi", "Ango", "Bambesa", "Poko"]
+        },
+        {
+          "nom": "Équateur",
+          "communes": ["Mbandaka", "Bikoro", "Bomongo", "Ingende", "Lukolela", "Makanza"]
+        },
+        {
+          "nom": "Haut-Katanga",
+          "communes": ["Lubumbashi", "Annexe", "Kamalondo", "Kampemba", "Katuba", "Kenya", "Ruashi", "Likasi", "Panda", "Shituru", "Kambove", "Kasenga", "Kipushi", "Mitwaba", "Pweto", "Sakania"]
+        },
+        {
+          "nom": "Haut-Lomami",
+          "communes": ["Kamina", "Bukama", "Kaniama", "Malemba-Nkulu"]
+        },
+        {
+          "nom": "Haut-Uele",
+          "communes": ["Isiro", "Dungu", "Faradje", "Niangara", "Rungu", "Wamba", "Watsa", "Mungbere"]
+        },
+        {
+          "nom": "Ituri",
+          "communes": ["Bunia", "Aru", "Djugu", "Irumu", "Mahagi", "Mambasa"]
+        },
+        {
+          "nom": "Kasaï",
+          "communes": ["Tshikapa", "Dibumba I", "Dibumba II", "Kanzala", "Mabondo", "Mbumba", "Dekese", "Ilebo", "Kamonia", "Luebo", "Mweka"]
+        },
+        {
+          "nom": "Kasaï-Central",
+          "communes": ["Kananga", "Kananga", "Ndesha", "Nganza", "Katoka", "Lukonga", "Demba", "Dibaya", "Dimbelenge", "Kazumba", "Luiza"]
+        },
+        {
+          "nom": "Kasaï-Oriental",
+          "communes": ["Mbuji-Mayi", "Bipemba", "Diulu", "Kanshi", "Muya", "Dibindi", "Kabinda", "Kabeya-Kamwanga", "Kamiji", "Katanda", "Lupatapata", "Miabi", "Tshilenge", "Mwene-Ditu"]
+        },
+        {
+          "nom": "Kongo-Central",
+          "communes": ["Matadi", "Boma", "Mbanza-Ngungu", "Moanda", "Tshela", "Lukula", "Seke-Banza", "Nzanza", "Mvuzi"]
+        },
+        {
+          "nom": "Kwango",
+          "communes": ["Kenge", "Feshi", "Kahemba", "Kasongo-Lunda", "Popokabaka"]
+        },
+        {
+          "nom": "Kwilu",
+          "communes": ["Kikwit", "Bandundu", "Bagata", "Bulungu", "Gungu", "Idiofa", "Mangai", "Masimanimba", "Masi-Manimba", "Lukolela", "Kazamba", "Lukemi", "Nko"]
+        },
+        {
+          "nom": "Lomami",
+          "communes": ["Kabinda", "Kabalo", "Kamiji", "Lubao", "Luilu", "Masuika", "Ngandajika"]
+        },
+        {
+          "nom": "Lualaba",
+          "communes": ["Kolwezi", "Dilala", "Manika", "Dilolo", "Kapanga", "Lubudi", "Mutshatsha", "Sandoa"]
+        },
+        {
+          "nom": "Maï-Ndombe",
+          "communes": ["Inongo", "Kiri", "Kutu", "Oshwe", "Yumbi"]
+        },
+        {
+          "nom": "Maniema",
+          "communes": ["Kindu", "Alunguli", "Kasuku", "Mikelenge", "Kailo", "Kasongo", "Kibombo", "Lubutu", "Pangi", "Punia"]
+        },
+        {
+          "nom": "Mongala",
+          "communes": ["Lisala", "Bongandanga", "Bumba", "Yakoma"]
+        },
+        {
+          "nom": "Nord-Kivu",
+          "communes": ["Goma", "Beni", "Butembo", "Rutshuru", "Masisi", "Lubero", "Walikale", "Oicha", "Karisimbi", "Goma", "Beni", "Bulembo", "Bulengera", "Kimemi", "Mususa", "Vukaka"]
+        },
+        {
+          "nom": "Nord-Ubangi",
+          "communes": ["Gbadolite", "Bosobolo", "Businga", "Mobayi-Mbongo", "Yakoma"]
+        },
+        {
+          "nom": "Sankuru",
+          "communes": ["Lodja", "Kole", "Lomela", "Lusambo", "Katako-Kombe"]
+        },
+        {
+          "nom": "Sud-Kivu",
+          "communes": ["Bukavu", "Bagira", "Ibanda", "Kadutu", "Uvira", "Baraka", "Fizi", "Idjwi", "Kabare", "Kalehe", "Mwenga", "Shabunda", "Walungu"]
+        },
+        {
+          "nom": "Sud-Ubangi",
+          "communes": ["Gemena", "Budjala", "Kungu", "Libenge", "Zongo"]
+        },
+        {
+          "nom": "Tanganyika",
+          "communes": ["Kalemie", "Baudouinville", "Kabalo", "Kongolo", "Manono", "Moba", "Nyunzu"]
+        },
+        {
+          "nom": "Tshopo",
+          "communes": ["Kisangani", "Kabondo", "Kisangani", "Lubunga", "Makiso", "Mangobo", "Tshopo", "Banalia", "Basoko", "Isangi", "Opala", "Ubundu", "Yahuma"]
+        },
+        {
+          "nom": "Tshuapa",
+          "communes": ["Boende", "Befale", "Bokungu", "Djolu", "Ikela", "Monkoto"]
+        }
+      ]
+    },
+    {
+      "nom": "Cameroun",
+      "code_iso": "CM",
+      "regions": [
+        {
+          "nom": "Adamaoua",
+          "communes": ["Ngaoundéré I", "Ngaoundéré II", "Ngaoundéré III", "Meiganga", "Dir", "Djohong", "Ngaoui", "Banyo", "Bankim", "Mayo-Darlé", "Tignère", "Kontcha", "Galim-Tignère", "Tibati", "Nganha", "Martap"]
+        },
+        {
+          "nom": "Centre",
+          "communes": ["Yaoundé I", "Yaoundé II", "Yaoundé III", "Yaoundé IV", "Yaoundé V", "Yaoundé VI", "Yaoundé VII", "Mbandjock", "Nkoteng", "Lembe-Yezoum", "Elig-Mfomo", "Evodoula", "Obala", "Sa'a", "Batchenga", "Okola", "Monatélé", "Bafia", "Kiiki", "Ombessa", "Deuk", "Makénéné", "Bokito", "Ndikiniméki", "Nitoukou", "Minta", "Nsem", "Yoko", "Ngambe-Tikar", "Mfou", "Awaé", "Esse", "Soa", "Nkolafamba", "Afanloum", "Akono", "Ngoumou", "Bikok", "Mbankomo", "Eséka", "Ngog-Mapubi", "Makak", "Bot-Makak", "Messondo", "Matomb", "Dibang", "Okola", "Endom", "Ngomedzap", "Mbalmayo", "Akoeman", "Dzeng", "Mengueme", "Nkolmetet"]
+        },
+        {
+          "nom": "Est",
+          "communes": ["Bertoua I", "Bertoua II", "Dimako", "Doumé", "Nguelmendouka", "Abong-Mbang", "Mindourou", "Bebeng", "Ngoila", "Batouri", "Kette", "Ndelele", "Yokadouma", "Gari-Gombo", "Moloundou", "Salapoumbé", "Lomié", "Messamena", "Somaliomo", "Nguelebok", "Bélabo", "Diang", "Garoua-Boulaï", "Mandjou"]
+        },
+        {
+          "nom": "Extrême-Nord",
+          "communes": ["Maroua I", "Maroua II", "Maroua III", "Mokolo", "Mora", "Tokombéré", "Kolofata", "Kousséri", "Logone-Birni", "Goulfey", "Makary", "Waza", "Zina", "Dargala", "Yagoua", "Guidiguis", "Kaélé", "Moutourwa", "Petté", "Mindif", "Datcheka", "Touloum"]
+        },
+        {
+          "nom": "Littoral",
+          "communes": ["Douala I", "Douala II", "Douala III", "Douala IV", "Douala V", "Douala VI", "Edéa I", "Edéa II", "Dizangué", "Mouanko", "Nkongsamba I", "Nkongsamba II", "Nkongsamba III", "Manjo", "Loum", "Mbanga", "Mombo", "Penja", "Yabassi", "Yingui", "Ndom"]
+        },
+        {
+          "nom": "Nord",
+          "communes": ["Garoua I", "Garoua II", "Garoua III", "Tcholliré", "Lagdo", "Pitoa", "Demsa", "Guider", "Figuil", "Mayo-Oulo", "Poli", "Touboro", "Rey-Bouba"]
+        },
+        {
+          "nom": "Nord-Ouest",
+          "communes": ["Bamenda I", "Bamenda II", "Bamenda III", "Tuban", "Bali", "Bafut", "Santa", "Kumbo", "Jakiri", "Elak-Oku", "Nkor", "Mbiame", "Ndop", "Babessi", "Balikumbat", "Wum", "Fundong", "Benakuma", "Furu-Awa", "Zhoa", "Nkambé", "Ndu", "Ako", "Misaje", "Mbengwi", "Njinikom", "Ngie", "Andek"]
+        },
+        {
+          "nom": "Ouest",
+          "communes": ["Bafoussam I", "Bafoussam II", "Bafoussam III", "Dschang", "Fokoué", "Nkong-Zem", "Penka-Michel", "Santchou", "Mbouda", "Babadjou", "Batcham", "Galim", "Bangangté", "Bassamba", "Foumban", "Foumbot", "Kouoptamo", "Magba", "Massangam", "Bafang", "Bandja", "Kékem", "Baham", "Bamendjou", "Bayangam"]
+        },
+        {
+          "nom": "Sud",
+          "communes": ["Ebolowa I", "Ebolowa II", "Sangmélima", "Mvangan", "Oveng", "Djoum", "Meyomessala", "Meyomessi", "Bengbis", "Kribi I", "Kribi II", "Lolodorf", "Bipindi", "Niete", "Akom II", "Ambam", "Ma'an", "Olamze", "Kyé-Ossi", "Campo"]
+        },
+        {
+          "nom": "Sud-Ouest",
+          "communes": ["Buea", "Limbe I", "Limbe II", "Limbe III", "Tiko", "Muyuka", "Idenau", "Kumba I", "Kumba II", "Kumba III", "Mbonge", "Konye", "Bangem", "Nguti", "Tombel", "Mamfe", "Eyumodjock", "Akwaya", "Fontem", "Alou", "Wabane", "Mundemba", "Isangele", "Kombo-Itindi", "Bamusso"]
+        }
+      ]
+    },
+    {
+      "nom": "Ghana",
+      "code_iso": "GH",
+      "regions": [
+        {
+          "nom": "Greater Accra",
+          "communes": ["Accra", "Tema", "Ashaiman", "Madina", "Teshie", "Nungua", "Labadi", "Osu", "Dansoman", "Kaneshie", "Achimota", "Legon", "Adenta", "Dodowa", "Ningo", "Prampram"]
+        },
+        {
+          "nom": "Ashanti",
+          "communes": ["Kumasi", "Obuasi", "Ejisu", "Mampong", "Konongo", "Bekwai", "Asante-Akim", "Juaso", "Agogo", "Manso-Nkwanta", "Bibiani", "Sefwi-Wiawso"]
+        },
+        {
+          "nom": "Western",
+          "communes": ["Sekondi-Takoradi", "Tarkwa", "Axim", "Prestea", "Bogoso", "Elubo", "Half Assini", "Enchi", "Asankragua", "Wassa-Akropong"]
+        },
+        {
+          "nom": "Central",
+          "communes": ["Cape Coast", "Kasoa", "Winneba", "Mankessim", "Saltpond", "Elmina", "Agona Swedru", "Dunkwa", "Assin-Fosu", "Breman Asikuma"]
+        },
+        {
+          "nom": "Eastern",
+          "communes": ["Koforidua", "Nkawkaw", "Mpraeso", "Aburi", "Akropong", "Mampong-Akuapem", "Suhum", "Nsawam", "Akim Oda", "Asamankese"]
+        },
+        {
+          "nom": "Volta",
+          "communes": ["Ho", "Hohoe", "Keta", "Aflao", "Kpandu", "Jasikan", "Kadjebi", "Nkwanta", "Dambai", "Sogakope"]
+        },
+        {
+          "nom": "Northern",
+          "communes": ["Tamale", "Yendi", "Savelugu", "Bimbilla", "Gushegu", "Karaga", "Kpandae", "Saboba", "Chereponi", "Zabzugu"]
+        },
+        {
+          "nom": "Upper East",
+          "communes": ["Bolgatanga", "Bawku", "Navrongo", "Bongo", "Binde", "Zuarungu", "Paga", "Nangodi", "Sandema", "Fumbisi"]
+        },
+        {
+          "nom": "Upper West",
+          "communes": ["Wa", "Lawra", "Tumu", "Jirapa", "Nandom", "Hamile", "Funsi", "Lambussie", "Wechiau", "Gwollu"]
+        },
+        {
+          "nom": "Brong-Ahafo",
+          "communes": ["Sunyani", "Techiman", "Wenchi", "Bechem", "Goaso", "Dormaa-Ahenkro", "Atebubu", "Yeji", "Kintampo", "Nkoranza"]
+        },
+        {
+          "nom": "Western North",
+          "communes": ["Sefwi-Wiawso", "Bibiani", "Juabeso", "Enchi", "Asankragua", "Awaso", "Sefwi-Bekwai", "Adabokrom", "Bodi"]
+        },
+        {
+          "nom": "Ahafo",
+          "communes": ["Goaso", "Kenyasi", "Hwidiem", "Acherensua", "Duayaw-Nkwanta", "Bechem", "Kukuom"]
+        },
+        {
+          "nom": "Bono",
+          "communes": ["Sunyani", "Berekum", "Dormaa-Ahenkro", "Nkrankwanta", "Wamfie", "Nsawkaw", "Sampa", "Jinijini"]
+        },
+        {
+          "nom": "Bono East",
+          "communes": ["Techiman", "Kintampo", "Atebubu", "Yeji", "Prang", "Kwame-Danso", "Nkoranza", "Bomfa"]
+        },
+        {
+          "nom": "Oti",
+          "communes": ["Dambai", "Jasikan", "Kadjebi", "Nkwanta", "Kpassa", "Kete-Krachi", "Chinderi"]
+        },
+        {
+          "nom": "North East",
+          "communes": ["Nalerigu", "Walewale", "Gambaga", "Bunkpurugu", "Yagaba", "Chereponi", "Wulugu"]
+        },
+        {
+          "nom": "Savannah",
+          "communes": ["Damongo", "Bole", "Sawla", "Larabanga", "Daboya", "Mankarigu", "Yapei"]
+        }
+      ]
+    },
+    {
+      "nom": "Nigeria",
+      "code_iso": "NG",
+      "regions": [
+        {
+          "nom": "Abia",
+          "communes": ["Umuahia", "Aba", "Arochukwu", "Bende", "Ikwuano", "Isiala Ngwa", "Isuikwuato", "Obi Ngwa", "Ohafia", "Osisioma", "Ugwunagbo", "Ukwa East", "Ukwa West", "Umuahia North", "Umuahia South", "Umu Nneochi"]
+        },
+        {
+          "nom": "Adamawa",
+          "communes": ["Yola", "Ganye", "Girei", "Gombi", "Guyuk", "Hong", "Jada", "Lamurde", "Madagali", "Maiha", "Mayo-Belwa", "Michika", "Mubi North", "Mubi South", "Numan", "Shelleng", "Song", "Toungo", "Yola North", "Yola South"]
+        },
+        {
+          "nom": "Akwa Ibom",
+          "communes": ["Uyo", "Abak", "Eastern Obolo", "Eket", "Esit Eket", "Essien Udim", "Etim Ekpo", "Etinan", "Ibeno", "Ibesikpo Asutan", "Ibiono-Ibom", "Ika", "Ikono", "Ikot Abasi", "Ikot Ekpene", "Ini", "Itu", "Mbo", "Mkpat-Enin", "Nsit-Atai", "Nsit-Ibom", "Nsit-Ubium", "Obot Akara", "Okobo", "Onna", "Oron", "Oruk Anam", "Udung-Uko", "Ukanafun", "Uruan", "Urue-Offong/Oruko", "Uyo"]
+        },
+        {
+          "nom": "Anambra",
+          "communes": ["Awka", "Aguata", "Anambra East", "Anambra West", "Anaocha", "Ayamelum", "Dunukofia", "Ekwusigo", "Idemili North", "Idemili South", "Ihiala", "Njikoka", "Nnewi North", "Nnewi South", "Ogbaru", "Onitsha North", "Onitsha South", "Orumba North", "Orumba South", "Oyi"]
+        },
+        {
+          "nom": "Bauchi",
+          "communes": ["Bauchi", "Alkaleri", "Bauchi", "Bogoro", "Damban", "Darazo", "Dass", "Gamawa", "Ganjuwa", "Giade", "Itas/Gadau", "Jama'are", "Katagum", "Kirfi", "Misau", "Ningi", "Shira", "Tafawa Balewa", "Toro", "Warji", "Zaki"]
+        },
+        {
+          "nom": "Bayelsa",
+          "communes": ["Yenagoa", "Brass", "Ekeremor", "Kolokuma/Opokuma", "Nembe", "Ogbia", "Sagbama", "Southern Ijaw", "Yenagoa"]
+        },
+        {
+          "nom": "Benue",
+          "communes": ["Makurdi", "Ado", "Agatu", "Apa", "Buruku", "Gboko", "Guma", "Gwer East", "Gwer West", "Katsina-Ala", "Konshisha", "Kwande", "Logo", "Makurdi", "Obi", "Ogbadibo", "Ohimini", "Oju", "Okpokwu", "Otukpo", "Tarka", "Ukum", "Ushongo", "Vandeikya"]
+        },
+        {
+          "nom": "Borno",
+          "communes": ["Maiduguri", "Abadam", "Askira/Uba", "Bama", "Bayo", "Biu", "Chibok", "Damboa", "Dikwa", "Gubio", "Guzamala", "Gwoza", "Hawul", "Jere", "Kaga", "Kala/Balge", "Konduga", "Kukawa", "Kwaya Kusar", "Mafa", "Magumeri", "Maiduguri", "Marte", "Mobbar", "Monguno", "Ngala", "Nganzai", "Shani"]
+        },
+        {
+          "nom": "Cross River",
+          "communes": ["Calabar", "Abi", "Akpabuyo", "Akpamkpa", "Bakassi", "Bekwarra", "Biase", "Boki", "Calabar Municipal", "Calabar South", "Etung", "Ikom", "Obanliku", "Obubra", "Obudu", "Odukpani", "Ogoja", "Yakuur", "Yala"]
+        },
+        {
+          "nom": "Delta",
+          "communes": ["Asaba", "Aniocha North", "Aniocha South", "Bomadi", "Burutu", "Ethiope East", "Ethiope West", "Ika North East", "Ika South", "Isoko North", "Isoko South", "Ndokwa East", "Ndokwa West", "Okpe", "Oshimili North", "Oshimili South", "Patani", "Sapele", "Udu", "Ughelli North", "Ughelli South", "Ukwuani", "Uvwie", "Warri North", "Warri South", "Warri South West"]
+        },
+        {
+          "nom": "Ebonyi",
+          "communes": ["Abakaliki", "Abakaliki", "Afikpo North", "Afikpo South", "Ebonyi", "Ezza North", "Ezza South", "Ikwo", "Ishielu", "Ivo", "Izzi", "Ohaozara", "Ohaukwu", "Onicha"]
+        },
+        {
+          "nom": "Edo",
+          "communes": ["Benin City", "Akoko-Edo", "Egor", "Esan Central", "Esan North-East", "Esan South-East", "Esan West", "Etsako Central", "Etsako East", "Etsako West", "Igueben", "Ikpoba Okha", "Oredo", "Orhionmwon", "Ovia North-East", "Ovia South-West", "Owan East", "Owan West", "Uhunmwonde"]
+        },
+        {
+          "nom": "Ekiti",
+          "communes": ["Ado-Ekiti", "Ado Ekiti", "Efon", "Ekiti East", "Ekiti South-West", "Ekiti West", "Emure", "Gbonyin", "Ido Osi", "Ijero", "Ikere", "Ikole", "Ilejemeje", "Irepodun/Ifelodun", "Ise/Orun", "Moba", "Oye"]
+        },
+        {
+          "nom": "Enugu",
+          "communes": ["Enugu", "Aninri", "Awgu", "Enugu East", "Enugu North", "Enugu South", "Ezeagu", "Igbo Etiti", "Igbo Eze North", "Igbo Eze South", "Isi Uzo", "Nkanu East", "Nkanu West", "Nsukka", "Oji River", "Udenu", "Udi", "Uzo Uwani"]
+        },
+        {
+          "nom": "FCT Abuja",
+          "communes": ["Abuja", "Abaji", "Bwari", "Gwagwalada", "Kuje", "Kwali", "Municipal Area Council"]
+        },
+        {
+          "nom": "Gombe",
+          "communes": ["Gombe", "Akko", "Balanga", "Billiri", "Dukku", "Funakaye", "Gombe", "Kaltungo", "Kwami", "Nafada", "Shongom", "Yamaltu/Deba"]
+        },
+        {
+          "nom": "Imo",
+          "communes": ["Owerri", "Aboh Mbaise", "Ahiazu Mbaise", "Ehime Mbano", "Ezinihitte", "Ideato North", "Ideato South", "Ihitte/Uboma", "Ikeduru", "Isiala Mbano", "Isu", "Mbaitoli", "Ngor Okpala", "Njaba", "Nkwerre", "Nwangele", "Obowo", "Oguta", "Ohaji/Egbema", "Okigwe", "Orlu", "Orsu", "Oru East", "Oru West", "Owerri Municipal", "Owerri North", "Owerri West", "Unuimo"]
+        },
+        {
+          "nom": "Jigawa",
+          "communes": ["Dutse", "Auyo", "Babura", "Biriniwa", "Birnin Kudu", "Buji", "Dutse", "Gagarawa", "Garki", "Gumel", "Guri", "Gwaram", "Gwiwa", "Hadejia", "Jahun", "Kafin Hausa", "Kazaure", "Kiri Kasama", "Kiyawa", "Kaugama", "Maigatari", "Malam Madori", "Miga", "Ringim", "Roni", "Sule Tankarkar", "Taura", "Yankwashi"]
+        },
+        {
+          "nom": "Kaduna",
+          "communes": ["Kaduna", "Birnin Gwari", "Chikun", "Giwa", "Igabi", "Ikara", "Jaba", "Jema'a", "Kachia", "Kaduna North", "Kaduna South", "Kagarko", "Kajuru", "Kaura", "Kauru", "Kubau", "Kudan", "Lere", "Makarfi", "Sabon Gari", "Sanga", "Soba", "Zangon Kataf", "Zaria"]
+        },
+        {
+          "nom": "Kano",
+          "communes": ["Kano", "Ajingi", "Albasu", "Bagwai", "Bebeji", "Bichi", "Bunkure", "Dala", "Dambatta", "Dawakin Kudu", "Dawakin Tofa", "Doguwa", "Fagge", "Gabasawa", "Garko", "Garun Mallam", "Gaya", "Gezawa", "Gwale", "Gwarzo", "Kabo", "Kano Municipal", "Karaye", "Kibiya", "Kiru", "Kumbotso", "Kunchi", "Kura", "Madobi", "Makoda", "Minjibir", "Nasarawa", "Rano", "Rimin Gado", "Rogo", "Shanono", "Sumaila", "Takai", "Tarauni", "Tofa", "Tsanyawa", "Tudun Wada", "Ungogo", "Warawa", "Wudil"]
+        },
+        {
+          "nom": "Katsina",
+          "communes": ["Katsina", "Bakori", "Batagarawa", "Batsari", "Baure", "Bindawa", "Charanchi", "Dandume", "Danja", "Dan Musa", "Daura", "Dutsi", "Dutsin Ma", "Faskari", "Funtua", "Ingawa", "Jibia", "Kafur", "Kaita", "Kankara", "Kankia", "Katsina", "Kurfi", "Kusada", "Mai'Adua", "Malumfashi", "Mani", "Mashi", "Matazu", "Musawa", "Rimi", "Sabuwa", "Safana", "Sandamu", "Zango"]
+        },
+        {
+          "nom": "Kebbi",
+          "communes": ["Birnin Kebbi", "Aleiro", "Arewa Dandi", "Argungu", "Augie", "Bagudo", "Bunza", "Dandi", "Fakai", "Gwandu", "Jega", "Kalgo", "Koko/Besse", "Maiyama", "Ngaski", "Sakaba", "Shanga", "Suru", "Wasagu/Danko", "Yauri", "Zuru"]
+        },
+        {
+          "nom": "Kogi",
+          "communes": ["Lokoja", "Adavi", "Ajaokuta", "Ankpa", "Bassa", "Dekina", "Ibaji", "Idah", "Igalamela Odolu", "Ijumu", "Kabba/Bunu", "Kogi", "Lokoja", "Mopa Muro", "Ofu", "Ogori/Magongo", "Okehi", "Okene", "Olamaboro", "Omala", "Yagba East", "Yagba West"]
+        },
+        {
+          "nom": "Kwara",
+          "communes": ["Ilorin", "Asa", "Baruten", "Edu", "Ekiti", "Ifelodun", "Ilorin East", "Ilorin South", "Ilorin West", "Irepodun", "Isin", "Kaiama", "Moro", "Offa", "Oke Ero", "Oyun", "Pategi"]
+        },
+        {
+          "nom": "Lagos",
+          "communes": ["Ikeja", "Agege", "Ajeromi-Ifelodun", "Alimosho", "Amuwo-Odofin", "Apapa", "Badagry", "Epe", "Eti Osa", "Ibeju-Lekki", "Ifako-Ijaiye", "Ikeja", "Ikorodu", "Kosofe", "Lagos Island", "Lagos Mainland", "Mushin", "Ojo", "Oshodi-Isolo", "Shomolu", "Surulere"]
+        },
+        {
+          "nom": "Nasarawa",
+          "communes": ["Lafia", "Akwanga", "Awe", "Doma", "Karu", "Keana", "Keffi", "Kokona", "Lafia", "Nasarawa", "Nasarawa Egon", "Obi", "Toto", "Wamba"]
+        },
+        {
+          "nom": "Niger",
+          "communes": ["Minna", "Agaie", "Agwara", "Bida", "Borgu", "Bosso", "Chanchaga", "Edati", "Gbako", "Gurara", "Katcha", "Kontagora", "Lapai", "Lavun", "Magama", "Mariga", "Mashegu", "Mokwa", "Moya", "Paikoro", "Rafi", "Rijau", "Shiroro", "Suleja", "Tafa", "Wushishi"]
+        },
+        {
+          "nom": "Ogun",
+          "communes": ["Abeokuta", "Abeokuta North", "Abeokuta South", "Ado-Odo/Ota", "Egbado North", "Egbado South", "Ewekoro", "Ifo", "Ijebu East", "Ijebu North", "Ijebu North East", "Ijebu Ode", "Ikenne", "Imeko Afon", "Ipokia", "Obafemi Owode", "Odeda", "Odogbolu", "Ogun Waterside", "Remo North", "Shagamu", "Yewa North", "Yewa South"]
+        },
+        {
+          "nom": "Ondo",
+          "communes": ["Akure", "Akoko North-East", "Akoko North-West", "Akoko South-West", "Akoko South-East", "Akure North", "Akure South", "Ese Odo", "Idanre", "Ifedore", "Ilaje", "Ile Oluji/Okeigbo", "Irele", "Odigbo", "Okitipupa", "Ondo East", "Ondo West", "Ose", "Owo"]
+        },
+        {
+          "nom": "Osun",
+          "communes": ["Osogbo", "Atakunmosa East", "Atakunmosa West", "Aiyedaade", "Aiyedire", "Boluwaduro", "Boripe", "Ede North", "Ede South", "Ife Central", "Ife East", "Ife North", "Ife South", "Egbedore", "Ejigbo", "Ifedayo", "Ifelodun", "Ila", "Ilesa East", "Ilesa West", "Irepodun", "Irewole", "Isokan", "Iwo", "Obokun", "Odo Otin", "Ola Oluwa", "Olorunda", "Oriade", "Orolu", "Osogbo"]
+        },
+        {
+          "nom": "Oyo",
+          "communes": ["Ibadan", "Afijio", "Akinyele", "Atiba", "Atisbo", "Egbeda", "Ibadan North", "Ibadan North-East", "Ibadan North-West", "Ibadan South-East", "Ibadan South-West", "Ibarapa Central", "Ibarapa East", "Ibarapa North", "Ido", "Irepo", "Iseyin", "Itesiwaju", "Iwajowa", "Kajola", "Lagelu", "Ogbomoso North", "Ogbomoso South", "Ogo Oluwa", "Olorunsogo", "Oluyole", "Ona Ara", "Orelope", "Ori Ire", "Oyo", "Oyo East", "Saki East", "Saki West", "Surulere"]
+        },
+        {
+          "nom": "Plateau",
+          "communes": ["Jos", "Barkin Ladi", "Bassa", "Bokkos", "Jos East", "Jos North", "Jos South", "Kanam", "Kanke", "Langtang North", "Langtang South", "Mangu", "Mikang", "Pankshin", "Qua'an Pan", "Riyom", "Shendam", "Wase"]
+        },
+        {
+          "nom": "Rivers",
+          "communes": ["Port Harcourt", "Abua/Odual", "Ahoada East", "Ahoada West", "Akuku-Toru", "Andoni", "Asari-Toru", "Bonny", "Degema", "Eleme", "Emuoha", "Etche", "Gokana", "Ikwerre", "Khana", "Obio/Akpor", "Ogba/Egbema/Ndoni", "Ogu/Bolo", "Okrika", "Omuma", "Opobo/Nkoro", "Oyigbo", "Port Harcourt", "Tai"]
+        },
+        {
+          "nom": "Sokoto",
+          "communes": ["Sokoto", "Binji", "Bodinga", "Dange Shuni", "Gada", "Goronyo", "Gudu", "Gwadabawa", "Illela", "Isa", "Kebbe", "Kware", "Rabah", "Sabon Birni", "Shagari", "Silame", "Sokoto North", "Sokoto South", "Tambuwal", "Tangaza", "Tureta", "Wamako", "Wurno", "Yabo"]
+        },
+        {
+          "nom": "Taraba",
+          "communes": ["Jalingo", "Ardo Kola", "Bali", "Donga", "Gashaka", "Gassol", "Ibi", "Jalingo", "Karim Lamido", "Kumi", "Lau", "Sardauna", "Takum", "Ussa", "Wukari", "Yorro", "Zing"]
+        },
+        {
+          "nom": "Yobe",
+          "communes": ["Damaturu", "Bade", "Bursari", "Damaturu", "Fika", "Fune", "Geidam", "Gujba", "Gulani", "Jakusko", "Karasuwa", "Machina", "Nangere", "Nguru", "Potiskum", "Tarmuwa", "Yunusari", "Yusufari"]
+        },
+        {
+          "nom": "Zamfara",
+          "communes": ["Gusau", "Anka", "Bakura", "Birnin Magaji/Kiyaw", "Bukkuyum", "Bungudu", "Gummi", "Gusau", "Kaura Namoda", "Maradun", "Maru", "Shinkafi", "Talata Mafara", "Chafe", "Zurmi"]
+        }
+      ]
+    },
+    {
+      "nom": "France",
+      "code_iso": "FR",
+      "regions": [
+        {
+          "nom": "Île-de-France",
+          "communes": ["Paris", "Boulogne-Billancourt", "Saint-Denis", "Argenteuil", "Montreuil", "Nanterre", "Créteil", "Versailles", "Vitry-sur-Seine", "Colombes", "Asnières-sur-Seine", "Courbevoie", "Aubervilliers", "Aulnay-sous-Bois", "Rueil-Malmaison", "Champigny-sur-Marne", "Saint-Maur-des-Fossés", "Issy-les-Moulineaux", "Levallois-Perret", "Neuilly-sur-Seine"]
+        },
+        {
+          "nom": "Auvergne-Rhône-Alpes",
+          "communes": ["Lyon", "Grenoble", "Saint-Étienne", "Villeurbanne", "Clermont-Ferrand", "Valence", "Chambéry", "Annecy", "Vénissieux", "Saint-Priest", "Caluire-et-Cuire", "Bourg-en-Bresse", "Vaulx-en-Velin", "Annemasse", "Montélimar", "Roanne", "Romans-sur-Isère", "Thonon-les-Bains", "Oyonnax", "Aurillac"]
+        },
+        {
+          "nom": "Provence-Alpes-Côte d'Azur",
+          "communes": ["Marseille", "Nice", "Toulon", "Aix-en-Provence", "Avignon", "Antibes", "Cannes", "La Seyne-sur-Mer", "Hyères", "Arles", "Fréjus", "Grasse", "Martigues", "Aubagne", "Istres", "Gap", "Draguignan", "Salon-de-Provence", "Vitrolles", "Cagnes-sur-Mer"]
+        },
+        {
+          "nom": "Occitanie",
+          "communes": ["Toulouse", "Montpellier", "Nîmes", "Perpignan", "Béziers", "Narbonne", "Sète", "Carcassonne", "Albi", "Tarbes", "Castres", "Lunel", "Millau", "Agde", "Alès", "Rodez", "Cahors", "Montauban", "Auch", "Foix"]
+        },
+        {
+          "nom": "Nouvelle-Aquitaine",
+          "communes": ["Bordeaux", "Limoges", "Poitiers", "Mérignac", "Pessac", "La Rochelle", "Pau", "Angoulême", "Niort", "Bayonne", "Talence", "Brive-la-Gaillarde", "Villeneuve-sur-Lot", "Périgueux", "Agen", "Biarritz", "Saintes", "Rochefort", "Bergerac", "Dax"]
+        },
+        {
+          "nom": "Hauts-de-France",
+          "communes": ["Lille", "Amiens", "Roubaix", "Tourcoing", "Dunkerque", "Calais", "Villeneuve-d'Ascq", "Valenciennes", "Wattrelos", "Douai", "Lens", "Liévin", "Arras", "Cambrai", "Maubeuge", "Beauvais", "Compiègne", "Saint-Quentin", "Boulogne-sur-Mer", "Laon"]
+        },
+        {
+          "nom": "Grand Est",
+          "communes": ["Strasbourg", "Reims", "Metz", "Mulhouse", "Nancy", "Colmar", "Troyes", "Charleville-Mézières", "Châlons-en-Champagne", "Épinal", "Haguenau", "Thionville", "Saint-Dizier", "Sedan", "Verdun", "Forbach", "Sarreguemines", "Schiltigheim", "Illkirch-Graffenstaden", "Bar-le-Duc"]
+        },
+        {
+          "nom": "Pays de la Loire",
+          "communes": ["Nantes", "Angers", "Le Mans", "Saint-Nazaire", "Cholet", "La Roche-sur-Yon", "Laval", "Saint-Herblain", "Rezé", "Saumur", "Les Sables-d'Olonne", "Challans", "Mayenne", "Fontenay-le-Comte", "Château-Gontier", "Pornic", "La Flèche", "Chemillé", "Clisson", "Ancenis"]
+        },
+        {
+          "nom": "Bretagne",
+          "communes": ["Rennes", "Brest", "Quimper", "Lorient", "Vannes", "Saint-Brieuc", "Saint-Malo", "Lanester", "Fougères", "Concarneau", "Lannion", "Morlaix", "Vitré", "Ploemeur", "Cesson-Sévigné", "Bruz", "Pontivy", "Douarnenez", "Landerneau", "Dinan"]
+        },
+        {
+          "nom": "Normandie",
+          "communes": ["Le Havre", "Rouen", "Caen", "Cherbourg-en-Cotentin", "Évreux", "Dieppe", "Alençon", "Saint-Lô", "Lisieux", "Hérouville-Saint-Clair", "Argentan", "Fécamp", "Bayeux", "Granville", "Flers", "Coutances", "Vernon", "Bernay", "Louviers", "Val-de-Reuil"]
+        },
+        {
+          "nom": "Bourgogne-Franche-Comté",
+          "communes": ["Dijon", "Besançon", "Belfort", "Chalon-sur-Saône", "Auxerre", "Nevers", "Mâcon", "Montbéliard", "Sens", "Le Creusot", "Beaune", "Dole", "Autun", "Vesoul", "Pontarlier", "Lons-le-Saunier", "Joigny", "Montceau-les-Mines", "Saint-Claude", "Gray"]
+        },
+        {
+          "nom": "Centre-Val de Loire",
+          "communes": ["Tours", "Orléans", "Bourges", "Blois", "Chartres", "Châteauroux", "Joué-lès-Tours", "Dreux", "Vierzon", "Montargis", "Olivet", "Vendôme", "Amboise", "Saint-Jean-de-Braye", "Romorantin-Lanthenay", "Issoudun", "Saint-Avertin", "Gien", "Chinon", "Loches"]
+        },
+        {
+          "nom": "Corse",
+          "communes": ["Ajaccio", "Bastia", "Porto-Vecchio", "Corte", "Calvi", "Propriano", "Bonifacio", "Sartène", "Ghisonaccia", "Île-Rousse"]
+        },
+        {
+          "nom": "Guadeloupe",
+          "communes": ["Pointe-à-Pitre", "Les Abymes", "Baie-Mahault", "Le Gosier", "Sainte-Anne", "Petit-Bourg", "Le Moule", "Sainte-Rose", "Capesterre-Belle-Eau", "Basse-Terre"]
+        },
+        {
+          "nom": "Martinique",
+          "communes": ["Fort-de-France", "Le Lamentin", "Le Robert", "Schoelcher", "Sainte-Marie", "Le François", "Ducos", "Saint-Joseph", "La Trinité", "Rivière-Pilote"]
+        },
+        {
+          "nom": "Guyane",
+          "communes": ["Cayenne", "Saint-Laurent-du-Maroni", "Matoury", "Kourou", "Rémire-Montjoly", "Macouria", "Mana", "Maripasoula", "Apatou", "Grand-Santi"]
+        },
+        {
+          "nom": "La Réunion",
+          "communes": ["Saint-Denis", "Saint-Paul", "Saint-Pierre", "Le Tampon", "Saint-André", "Saint-Louis", "Le Port", "Saint-Benoît", "Saint-Joseph", "Sainte-Marie"]
+        },
+        {
+          "nom": "Mayotte",
+          "communes": ["Mamoudzou", "Koungou", "Dzaoudzi", "Dembeni", "Bandraboua", "Tsingoni", "Sada", "Chirongui", "Ouangani", "Mtsamboro"]
+        }
+      ]
+    },
+    {
+      "nom": "Belgique",
+      "code_iso": "BE",
+      "regions": [
+        {
+          "nom": "Bruxelles-Capitale",
+          "communes": ["Bruxelles", "Schaerbeek", "Anderlecht", "Molenbeek-Saint-Jean", "Ixelles", "Uccle", "Forest", "Saint-Gilles", "Etterbeek", "Jette", "Woluwe-Saint-Lambert", "Woluwe-Saint-Pierre", "Auderghem", "Watermael-Boitsfort", "Evere", "Koekelberg", "Berchem-Sainte-Agathe", "Ganshoren", "Saint-Josse-ten-Noode"]
+        },
+        {
+          "nom": "Anvers",
+          "communes": ["Anvers", "Malines", "Turnhout", "Heist-op-den-Berg", "Geel", "Brasschaat", "Schoten", "Mortsel", "Lier", "Mol", "Boom", "Willebroek", "Hoogstraten", "Herentals", "Westerlo", "Brecht", "Kontich"]
+        },
+        {
+          "nom": "Brabant flamand",
+          "communes": ["Louvain", "Vilvorde", "Hal", "Aarschot", "Diest", "Tirlemont", "Zaventem", "Dilbeek", "Grimbergen", "Machelen", "Overijse", "Tervuren", "Leeuw-Saint-Pierre", "Herent", "Landen"]
+        },
+        {
+          "nom": "Flandre occidentale",
+          "communes": ["Bruges", "Courtrai", "Ostende", "Roulers", "Knokke-Heist", "Ypres", "Mouscron", "Waregem", "Menin", "Harelbeke", "Izegem", "Dixmude", "Furnes", "La Panne", "Tielt"]
+        },
+        {
+          "nom": "Flandre orientale",
+          "communes": ["Gand", "Alost", "Saint-Nicolas", "Termonde", "Lokeren", "Beveren", "Eeklo", "Grammont", "Audenarde", "Zele", "Wetteren", "Tamise", "Deinze", "Zottegem", "Ninove"]
+        },
+        {
+          "nom": "Limbourg",
+          "communes": ["Hasselt", "Genk", "Beringen", "Saint-Trond", "Lommel", "Maasmechelen", "Tongres", "Heusden-Zolder", "Diepenbeek", "Bilzen", "Bree", "Houthalen-Helchteren", "Peer", "Maaseik", "Lanaken"]
+        },
+        {
+          "nom": "Brabant wallon",
+          "communes": ["Wavre", "Ottignies-Louvain-la-Neuve", "Braine-l'Alleud", "Nivelles", "Tubize", "Rixensart", "La Hulpe", "Waterloo", "Jodoigne", "Court-Saint-Étienne", "Genappe", "Perwez", "Walhain"]
+        },
+        {
+          "nom": "Hainaut",
+          "communes": ["Charleroi", "Mons", "La Louvière", "Tournai", "Mouscron", "Châtelet", "Binche", "Soignies", "Manage", "Quaregnon", "Frameries", "Colfontaine", "Braine-le-Comte", "Dour", "Fleurus", "Ath", "Lessines", "Comines-Warneton"]
+        },
+        {
+          "nom": "Liège",
+          "communes": ["Liège", "Seraing", "Verviers", "Herstal", "Ans", "Saint-Nicolas", "Grâce-Hollogne", "Flémalle", "Eupen", "Visé", "Waremme", "Spa", "Huy", "Malmedy", "Stavelot", "Hannut"]
+        },
+        {
+          "nom": "Luxembourg",
+          "communes": ["Arlon", "Aubange", "Marche-en-Famenne", "Bastogne", "Virton", "Durbuy", "Libramont-Chevigny", "Bertrix", "Saint-Vith", "Florenville", "Neufchâteau", "La Roche-en-Ardenne", "Bouillon", "Vielsalm"]
+        },
+        {
+          "nom": "Namur",
+          "communes": ["Namur", "Sambreville", "Andenne", "Gembloux", "Ciney", "Dinant", "Rochefort", "Philippeville", "Couvin", "Fosses-la-Ville", "Eghezée", "Jemeppe-sur-Sambre", "Floreffe", "Beauraing"]
+        }
+      ]
+    },
+    {
+      "nom": "Royaume-Uni",
+      "code_iso": "GB",
+      "regions": [
+        {
+          "nom": "England",
+          "communes": ["London", "Birmingham", "Manchester", "Leeds", "Liverpool", "Sheffield", "Bristol", "Newcastle upon Tyne", "Nottingham", "Leicester", "Southampton", "Brighton", "Portsmouth", "Plymouth", "Reading", "Wolverhampton", "Coventry", "Derby", "Stoke-on-Trent", "Bradford", "Cambridge", "Oxford", "Norwich", "York", "Bath"]
+        },
+        {
+          "nom": "Scotland",
+          "communes": ["Edinburgh", "Glasgow", "Aberdeen", "Dundee", "Inverness", "Perth", "Stirling", "Paisley", "Livingston", "Cumbernauld", "Hamilton", "Dunfermline", "Ayr", "Kirkcaldy", "Falkirk", "Greenock", "East Kilbride", "Motherwell", "St Andrews"]
+        },
+        {
+          "nom": "Wales",
+          "communes": ["Cardiff", "Swansea", "Newport", "Wrexham", "Barry", "Neath", "Cwmbran", "Port Talbot", "Llanelli", "Bridgend", "Rhondda", "Aberystwyth", "Bangor", "Colwyn Bay", "Carmarthen", "Merthyr Tydfil", "Pontypridd", "Caerphilly"]
+        },
+        {
+          "nom": "Northern Ireland",
+          "communes": ["Belfast", "Londonderry", "Lisburn", "Newtownabbey", "Bangor", "Craigavon", "Ballymena", "Newry", "Carrickfergus", "Coleraine", "Omagh", "Enniskillen", "Strabane", "Antrim", "Armagh", "Dungannon"]
+        }
+      ]
+    },
+    {
+      "nom": "États-Unis",
+      "code_iso": "US",
+      "regions": [
+        {
+          "nom": "California",
+          "communes": ["Los Angeles", "San Diego", "San Jose", "San Francisco", "Fresno", "Sacramento", "Long Beach", "Oakland", "Bakersfield", "Anaheim", "Santa Ana", "Riverside", "Stockton", "Irvine", "Chula Vista", "Santa Clara", "Fremont", "San Bernardino", "Modesto", "Fontana"]
+        },
+        {
+          "nom": "Texas",
+          "communes": ["Houston", "San Antonio", "Dallas", "Austin", "Fort Worth", "El Paso", "Arlington", "Corpus Christi", "Plano", "Laredo", "Lubbock", "Garland", "Irving", "Amarillo", "Grand Prairie", "McKinney", "Frisco", "Brownsville", "Pasadena", "Killeen"]
+        },
+        {
+          "nom": "Florida",
+          "communes": ["Jacksonville", "Miami", "Tampa", "Orlando", "St. Petersburg", "Hialeah", "Port St. Lucie", "Cape Coral", "Tallahassee", "Fort Lauderdale", "Pembroke Pines", "Hollywood", "Gainesville", "Miramar", "Coral Springs", "Palm Bay", "West Palm Beach", "Clearwater", "Lakeland", "Pompano Beach"]
+        },
+        {
+          "nom": "New York",
+          "communes": ["New York City", "Buffalo", "Rochester", "Yonkers", "Syracuse", "Albany", "New Rochelle", "Mount Vernon", "Schenectady", "Utica", "White Plains", "Hempstead", "Troy", "Niagara Falls", "Binghamton", "Freeport", "Valley Stream", "Long Beach", "Rome", "Ithaca"]
+        },
+        {
+          "nom": "Illinois",
+          "communes": ["Chicago", "Aurora", "Naperville", "Joliet", "Rockford", "Springfield", "Elgin", "Peoria", "Champaign", "Waukegan", "Cicero", "Bloomington", "Arlington Heights", "Evanston", "Decatur", "Schaumburg", "Bolingbrook", "Palatine", "Skokie", "Des Plaines"]
+        },
+        {
+          "nom": "Pennsylvania",
+          "communes": ["Philadelphia", "Pittsburgh", "Allentown", "Reading", "Scranton", "Bethlehem", "Lancaster", "Harrisburg", "Altoona", "Erie", "York", "Wilkes-Barre", "Chester", "State College", "Williamsport", "Easton", "Lebanon", "Hazleton"]
+        },
+        {
+          "nom": "Ohio",
+          "communes": ["Columbus", "Cleveland", "Cincinnati", "Toledo", "Akron", "Dayton", "Parma", "Canton", "Youngstown", "Lorain", "Hamilton", "Springfield", "Kettering", "Elyria", "Lakewood", "Cuyahoga Falls", "Euclid", "Middletown", "Mentor", "Newark"]
+        },
+        {
+          "nom": "Georgia",
+          "communes": ["Atlanta", "Augusta", "Columbus", "Macon", "Savannah", "Athens", "Sandy Springs", "South Fulton", "Roswell", "Johns Creek", "Albany", "Warner Robins", "Alpharetta", "Marietta", "Valdosta", "Smyrna", "Dunwoody", "Rome", "Peachtree City", "Gainesville"]
+        },
+        {
+          "nom": "North Carolina",
+          "communes": ["Charlotte", "Raleigh", "Greensboro", "Durham", "Winston-Salem", "Fayetteville", "Cary", "Wilmington", "High Point", "Concord", "Greenville", "Asheville", "Gastonia", "Jacksonville", "Chapel Hill", "Rocky Mount", "Burlington", "Huntersville", "Kannapolis", "Apex"]
+        },
+        {
+          "nom": "Michigan",
+          "communes": ["Detroit", "Grand Rapids", "Warren", "Sterling Heights", "Ann Arbor", "Lansing", "Flint", "Dearborn", "Livonia", "Clinton Township", "Canton", "Westland", "Troy", "Farmington Hills", "Kalamazoo", "Wyoming", "Southfield", "Rochester Hills", "Taylor", "Pontiac"]
+        },
+        {
+          "nom": "New Jersey",
+          "communes": ["Newark", "Jersey City", "Paterson", "Elizabeth", "Lakewood", "Edison", "Woodbridge", "Toms River", "Hamilton", "Trenton", "Clifton", "Camden", "Brick", "Cherry Hill", "Passaic", "Union City", "Franklin", "Old Bridge", "Middletown", "Bayonne"]
+        },
+        {
+          "nom": "Virginia",
+          "communes": ["Virginia Beach", "Norfolk", "Chesapeake", "Richmond", "Newport News", "Alexandria", "Hampton", "Roanoke", "Portsmouth", "Suffolk", "Lynchburg", "Harrisonburg", "Charlottesville", "Danville", "Manassas", "Petersburg", "Fredericksburg", "Winchester", "Salem", "Staunton"]
+        },
+        {
+          "nom": "Washington",
+          "communes": ["Seattle", "Spokane", "Tacoma", "Vancouver", "Bellevue", "Kent", "Everett", "Renton", "Federal Way", "Spokane Valley", "Kirkland", "Bellingham", "Auburn", "Kennewick", "Redmond", "Marysville", "Pasco", "Lakewood", "Sammamish", "Olympia"]
+        },
+        {
+          "nom": "Arizona",
+          "communes": ["Phoenix", "Tucson", "Mesa", "Chandler", "Gilbert", "Glendale", "Scottsdale", "Peoria", "Tempe", "Surprise", "San Tan Valley", "Yuma", "Avondale", "Goodyear", "Flagstaff", "Buckeye", "Lake Havasu City", "Casa Grande", "Maricopa", "Sierra Vista"]
+        },
+        {
+          "nom": "Massachusetts",
+          "communes": ["Boston", "Worcester", "Springfield", "Lowell", "Cambridge", "New Bedford", "Brockton", "Quincy", "Lynn", "Fall River", "Newton", "Lawrence", "Somerville", "Framingham", "Haverhill", "Waltham", "Malden", "Brookline", "Plymouth", "Medford"]
+        },
+        {
+          "nom": "Tennessee",
+          "communes": ["Nashville", "Memphis", "Knoxville", "Chattanooga", "Clarksville", "Murfreesboro", "Franklin", "Jackson", "Johnson City", "Bartlett", "Hendersonville", "Kingsport", "Collierville", "Smyrna", "Cleveland", "Brentwood", "Germantown", "Columbia", "Spring Hill", "La Vergne"]
+        },
+        {
+          "nom": "Colorado",
+          "communes": ["Denver", "Colorado Springs", "Aurora", "Fort Collins", "Lakewood", "Thornton", "Arvada", "Westminster", "Pueblo", "Centennial", "Boulder", "Greeley", "Longmont", "Loveland", "Grand Junction", "Broomfield", "Castle Rock", "Commerce City", "Parker", "Littleton"]
+        },
+        {
+          "nom": "Maryland",
+          "communes": ["Baltimore", "Columbia", "Germantown", "Silver Spring", "Waldorf", "Ellicott City", "Frederick", "Dundalk", "Rockville", "Bethesda", "Gaithersburg", "Towson", "Bowie", "Aspen Hill", "Wheaton", "Bel Air", "Potomac", "Odenton", "Catonsville", "Hagerstown"]
+        },
+        {
+          "nom": "Minnesota",
+          "communes": ["Minneapolis", "Saint Paul", "Rochester", "Duluth", "Bloomington", "Brooklyn Park", "Plymouth", "Maple Grove", "Woodbury", "St. Cloud", "Eagan", "Eden Prairie", "Coon Rapids", "Burnsville", "Blaine", "Lakeville", "Minnetonka", "Apple Valley", "Edina", "St. Louis Park"]
+        },
+        {
+          "nom": "Wisconsin",
+          "communes": ["Milwaukee", "Madison", "Green Bay", "Kenosha", "Racine", "Appleton", "Waukesha", "Eau Claire", "Oshkosh", "Janesville", "West Allis", "La Crosse", "Sheboygan", "Wauwatosa", "Fond du Lac", "New Berlin", "Wausau", "Brookfield", "Beloit", "Greenfield"]
+        },
+        {
+          "nom": "Missouri",
+          "communes": ["Kansas City", "St. Louis", "Springfield", "Columbia", "Independence", "Lee's Summit", "O'Fallon", "St. Joseph", "St. Charles", "St. Peters", "Blue Springs", "Florissant", "Joplin", "Chesterfield", "Jefferson City", "Cape Girardeau", "Wildwood", "University City", "Ballwin", "Raytown"]
+        },
+        {
+          "nom": "Indiana",
+          "communes": ["Indianapolis", "Fort Wayne", "Evansville", "South Bend", "Carmel", "Fishers", "Bloomington", "Hammond", "Gary", "Lafayette", "Muncie", "Terre Haute", "Kokomo", "Anderson", "Noblesville", "Greenwood", "Elkhart", "Mishawaka", "Lawrence", "Jeffersonville"]
+        },
+        {
+          "nom": "South Carolina",
+          "communes": ["Charleston", "Columbia", "North Charleston", "Mount Pleasant", "Rock Hill", "Greenville", "Summerville", "Goose Creek", "Hilton Head Island", "Sumter", "Florence", "Spartanburg", "Myrtle Beach", "Aiken", "Anderson", "Greer", "Mauldin", "North Augusta", "Easley", "Simpsonville"]
+        },
+        {
+          "nom": "Alabama",
+          "communes": ["Birmingham", "Montgomery", "Huntsville", "Mobile", "Tuscaloosa", "Hoover", "Dothan", "Auburn", "Decatur", "Madison", "Florence", "Gadsden", "Vestavia Hills", "Prattville", "Phenix City", "Alabaster", "Bessemer", "Enterprise", "Opelika", "Homewood"]
+        },
+        {
+          "nom": "Louisiana",
+          "communes": ["New Orleans", "Baton Rouge", "Shreveport", "Metairie", "Lafayette", "Lake Charles", "Kenner", "Bossier City", "Monroe", "Alexandria", "Prairieville", "Houma", "Marrero", "Laplace", "New Iberia", "Slidell", "Central", "Ruston", "Sulphur", "Hammond"]
+        },
+        {
+          "nom": "Kentucky",
+          "communes": ["Louisville", "Lexington", "Bowling Green", "Owensboro", "Covington", "Richmond", "Georgetown", "Florence", "Nicholasville", "Elizabethtown", "Henderson", "Frankfort", "Jeffersontown", "Hopkinsville", "Independence", "Paducah", "Radcliff", "Ashland", "Madisonville", "Murray"]
+        },
+        {
+          "nom": "Oregon",
+          "communes": ["Portland", "Salem", "Eugene", "Gresham", "Hillsboro", "Beaverton", "Bend", "Medford", "Springfield", "Corvallis", "Albany", "Tigard", "Lake Oswego", "Keizer", "Grants Pass", "Oregon City", "McMinnville", "Redmond", "Tualatin", "West Linn"]
+        },
+        {
+          "nom": "Oklahoma",
+          "communes": ["Oklahoma City", "Tulsa", "Norman", "Broken Arrow", "Edmond", "Lawton", "Moore", "Midwest City", "Enid", "Stillwater", "Muskogee", "Bartlesville", "Owasso", "Shawnee", "Ponca City", "Ardmore", "Duncan", "Del City", "Bixby", "Yukon"]
+        },
+        {
+          "nom": "Connecticut",
+          "communes": ["Bridgeport", "New Haven", "Hartford", "Stamford", "Waterbury", "Norwalk", "Danbury", "New Britain", "Bristol", "Meriden", "West Haven", "Milford", "Middletown", "Norwich", "Shelton", "Torrington", "New London", "Ansonia", "Derby", "Groton"]
+        },
+        {
+          "nom": "Iowa",
+          "communes": ["Des Moines", "Cedar Rapids", "Davenport", "Sioux City", "Iowa City", "Waterloo", "Ames", "West Des Moines", "Council Bluffs", "Ankeny", "Dubuque", "Urbandale", "Cedar Falls", "Marion", "Bettendorf", "Mason City", "Marshalltown", "Clinton", "Burlington", "Fort Dodge"]
+        },
+        {
+          "nom": "Nevada",
+          "communes": ["Las Vegas", "Henderson", "Reno", "North Las Vegas", "Sparks", "Carson City", "Fernley", "Elko", "Mesquite", "Boulder City", "Fallon", "Winnemucca", "West Wendover", "Ely"]
+        },
+        {
+          "nom": "Arkansas",
+          "communes": ["Little Rock", "Fort Smith", "Fayetteville", "Springdale", "Jonesboro", "Rogers", "Conway", "North Little Rock", "Bentonville", "Pine Bluff", "Hot Springs", "Benton", "Texarkana", "Sherwood", "Jacksonville", "Russellville", "Bella Vista", "West Memphis", "Paragould", "Cabot"]
+        },
+        {
+          "nom": "Utah",
+          "communes": ["Salt Lake City", "West Valley City", "Provo", "West Jordan", "Orem", "Sandy", "Ogden", "St. George", "Layton", "South Jordan", "Lehi", "Millcreek", "Taylorsville", "Logan", "Murray", "Draper", "Bountiful", "Riverton", "Herriman", "Spanish Fork"]
+        },
+        {
+          "nom": "Mississippi",
+          "communes": ["Jackson", "Gulfport", "Southaven", "Biloxi", "Hattiesburg", "Olive Branch", "Tupelo", "Meridian", "Greenville", "Horn Lake", "Pearl", "Madison", "Clinton", "Oxford", "Starkville", "Brandon", "Ridgeland", "Columbus", "Vicksburg", "Pascagoula"]
+        },
+        {
+          "nom": "Kansas",
+          "communes": ["Wichita", "Overland Park", "Kansas City", "Olathe", "Topeka", "Lawrence", "Shawnee", "Manhattan", "Lenexa", "Salina", "Hutchinson", "Leavenworth", "Leawood", "Dodge City", "Garden City", "Emporia", "Derby", "Prairie Village", "Junction City", "Hays"]
+        },
+        {
+          "nom": "New Mexico",
+          "communes": ["Albuquerque", "Las Cruces", "Rio Rancho", "Santa Fe", "Roswell", "Farmington", "Clovis", "Hobbs", "Alamogordo", "Carlsbad", "Gallup", "Deming", "Los Lunas", "Chaparral", "Sunland Park", "Las Vegas", "Portales", "Artesia", "Lovington", "Silver City"]
+        },
+        {
+          "nom": "Nebraska",
+          "communes": ["Omaha", "Lincoln", "Bellevue", "Grand Island", "Kearney", "Fremont", "Hastings", "Norfolk", "Columbus", "Papillion", "La Vista", "Scottsbluff", "South Sioux City", "Beatrice", "Lexington", "Alliance", "Gering", "Blair", "York", "McCook"]
+        },
+        {
+          "nom": "Idaho",
+          "communes": ["Boise", "Meridian", "Nampa", "Idaho Falls", "Caldwell", "Pocatello", "Coeur d'Alene", "Twin Falls", "Post Falls", "Lewiston", "Rexburg", "Eagle", "Kuna", "Moscow", "Ammon", "Chubbuck", "Mountain Home", "Hayden", "Blackfoot", "Garden City"]
+        },
+        {
+          "nom": "West Virginia",
+          "communes": ["Charleston", "Huntington", "Morgantown", "Parkersburg", "Wheeling", "Weirton", "Fairmont", "Martinsburg", "Beckley", "Clarksburg", "South Charleston", "St. Albans", "Vienna", "Bluefield", "Moundsville", "Bridgeport", "Oak Hill", "Dunbar", "Elkins", "Nitro"]
+        },
+        {
+          "nom": "Hawaii",
+          "communes": ["Honolulu", "East Honolulu", "Pearl City", "Hilo", "Kailua", "Waipahu", "Kaneohe", "Mililani Town", "Kahului", "Ewa Gentry", "Mililani Mauka", "Kihei", "Makakilo", "Wahiawa", "Schofield Barracks", "Kapolei", "Wailuku", "Ewa Beach", "Royal Kunia", "Halawa"]
+        },
+        {
+          "nom": "New Hampshire",
+          "communes": ["Manchester", "Nashua", "Concord", "Derry", "Dover", "Rochester", "Salem", "Merrimack", "Hudson", "Londonderry", "Keene", "Bedford", "Portsmouth", "Goffstown", "Laconia", "Hampton", "Durham", "Exeter", "Milford", "Lebanon"]
+        },
+        {
+          "nom": "Maine",
+          "communes": ["Portland", "Lewiston", "Bangor", "South Portland", "Auburn", "Biddeford", "Sanford", "Brunswick", "Augusta", "Scarborough", "Saco", "Westbrook", "Waterville", "Windham", "Gorham", "Kennebunk", "Falmouth", "Orono", "Presque Isle", "Bath"]
+        },
+        {
+          "nom": "Montana",
+          "communes": ["Billings", "Missoula", "Great Falls", "Bozeman", "Butte", "Helena", "Kalispell", "Havre", "Anaconda", "Miles City", "Belgrade", "Livingston", "Laurel", "Whitefish", "Lewistown", "Sidney", "Glendive", "Columbia Falls", "Polson", "Hamilton"]
+        },
+        {
+          "nom": "Rhode Island",
+          "communes": ["Providence", "Warwick", "Cranston", "Pawtucket", "East Providence", "Woonsocket", "Coventry", "Cumberland", "North Providence", "South Kingstown", "West Warwick", "Johnston", "North Kingstown", "Newport", "Bristol", "Westerly", "Smithfield", "Lincoln", "Central Falls", "Portsmouth"]
+        },
+        {
+          "nom": "Delaware",
+          "communes": ["Wilmington", "Dover", "Newark", "Middletown", "Bear", "Glasgow", "Brookside", "Hockessin", "Smyrna", "Milford", "Claymont", "Seaford", "Georgetown", "Elsmere", "New Castle", "Millsboro", "Laurel", "Harrington", "Camden", "Lewes"]
+        },
+        {
+          "nom": "South Dakota",
+          "communes": ["Sioux Falls", "Rapid City", "Aberdeen", "Brookings", "Watertown", "Mitchell", "Yankton", "Pierre", "Huron", "Vermillion", "Spearfish", "Brandon", "Box Elder", "Harrisburg", "Madison", "Sturgis", "Belle Fourche", "Tea", "Dell Rapids", "Mobridge"]
+        },
+        {
+          "nom": "North Dakota",
+          "communes": ["Fargo", "Bismarck", "Grand Forks", "Minot", "West Fargo", "Williston", "Dickinson", "Mandan", "Jamestown", "Wahpeton", "Devils Lake", "Valley City", "Grafton", "Beulah", "Rugby", "Watford City", "Lincoln", "Horace", "Casselton", "Bottineau"]
+        },
+        {
+          "nom": "Alaska",
+          "communes": ["Anchorage", "Fairbanks", "Juneau", "Badger", "Knik-Fairview", "College", "Lakes", "Sitka", "Tanaina", "Ketchikan", "Wasilla", "Bethel", "Palmer", "Kodiak", "Kenai", "Homer", "Soldotna", "Valdez", "Nome", "Barrow"]
+        },
+        {
+          "nom": "Vermont",
+          "communes": ["Burlington", "South Burlington", "Rutland", "Barre", "Montpelier", "Winooski", "St. Albans", "Newport", "Vergennes", "Middlebury", "Bennington", "Brattleboro", "Milton", "Colchester", "Essex Junction", "Hartford", "Williston", "Shelburne", "St. Johnsbury", "Morristown"]
+        },
+        {
+          "nom": "Wyoming",
+          "communes": ["Cheyenne", "Casper", "Laramie", "Gillette", "Rock Springs", "Sheridan", "Green River", "Evanston", "Riverton", "Jackson", "Cody", "Rawlins", "Lander", "Torrington", "Powell", "Douglas", "Worland", "Buffalo", "Wheatland", "Newcastle"]
+        },
+        {
+          "nom": "District of Columbia",
+          "communes": ["Washington"]
+        }
+      ]
+    },
+    {
+      "nom": "Canada",
+      "code_iso": "CA",
+      "regions": [
+        {
+          "nom": "Ontario",
+          "communes": ["Toronto", "Ottawa", "Mississauga", "Brampton", "Hamilton", "London", "Markham", "Vaughan", "Kitchener", "Windsor", "Richmond Hill", "Oakville", "Burlington", "Oshawa", "Barrie", "St. Catharines", "Cambridge", "Kingston", "Guelph", "Thunder Bay"]
+        },
+        {
+          "nom": "Québec",
+          "communes": ["Montréal", "Québec", "Laval", "Gatineau", "Longueuil", "Sherbrooke", "Saguenay", "Lévis", "Trois-Rivières", "Terrebonne", "Saint-Jean-sur-Richelieu", "Repentigny", "Brossard", "Drummondville", "Saint-Jérôme", "Granby", "Blainville", "Saint-Hyacinthe", "Shawinigan", "Dollard-des-Ormeaux"]
+        },
+        {
+          "nom": "British Columbia",
+          "communes": ["Vancouver", "Surrey", "Burnaby", "Richmond", "Abbotsford", "Coquitlam", "Kelowna", "Langley", "Saanich", "Delta", "Kamloops", "Nanaimo", "Victoria", "Chilliwack", "Maple Ridge", "New Westminster", "Prince George", "Port Coquitlam", "North Vancouver", "Vernon"]
+        },
+        {
+          "nom": "Alberta",
+          "communes": ["Calgary", "Edmonton", "Red Deer", "Lethbridge", "St. Albert", "Medicine Hat", "Grande Prairie", "Airdrie", "Spruce Grove", "Leduc", "Fort Saskatchewan", "Cochrane", "Lloydminster", "Camrose", "Fort McMurray", "Brooks", "Chestermere", "Okotoks", "Wetaskiwin", "Cold Lake"]
+        },
+        {
+          "nom": "Manitoba",
+          "communes": ["Winnipeg", "Brandon", "Steinbach", "Thompson", "Portage la Prairie", "Winkler", "Selkirk", "Morden", "Dauphin", "The Pas", "Flin Flon", "Swan River", "Stonewall", "Neepawa", "Gimli"]
+        },
+        {
+          "nom": "Saskatchewan",
+          "communes": ["Saskatoon", "Regina", "Prince Albert", "Moose Jaw", "Lloydminster", "Swift Current", "North Battleford", "Yorkton", "Estevan", "Warman", "Martensville", "Weyburn", "Meadow Lake", "Melfort", "Humboldt"]
+        },
+        {
+          "nom": "Nova Scotia",
+          "communes": ["Halifax", "Dartmouth", "Sydney", "Truro", "New Glasgow", "Glace Bay", "Kentville", "Amherst", "Bridgewater", "Yarmouth", "Antigonish", "Wolfville", "Lunenburg", "Stellarton"]
+        },
+        {
+          "nom": "New Brunswick",
+          "communes": ["Moncton", "Saint John", "Fredericton", "Dieppe", "Riverview", "Miramichi", "Edmundston", "Bathurst", "Campbellton", "Oromocto", "Shediac", "Grand Falls", "Woodstock", "Sackville"]
+        },
+        {
+          "nom": "Newfoundland and Labrador",
+          "communes": ["St. John's", "Mount Pearl", "Corner Brook", "Conception Bay South", "Paradise", "Grand Falls-Windsor", "Gander", "Happy Valley-Goose Bay", "Labrador City", "Torbay", "Stephenville", "Portugal Cove-St. Philip's", "Carbonear", "Clarenville"]
+        },
+        {
+          "nom": "Prince Edward Island",
+          "communes": ["Charlottetown", "Summerside", "Stratford", "Cornwall", "Montague", "Kensington", "Souris", "Alberton", "Georgetown", "O'Leary"]
+        },
+        {
+          "nom": "Yukon",
+          "communes": ["Whitehorse", "Dawson City", "Watson Lake", "Haines Junction", "Carmacks", "Faro", "Mayo", "Teslin", "Carcross"]
+        },
+        {
+          "nom": "Northwest Territories",
+          "communes": ["Yellowknife", "Hay River", "Inuvik", "Fort Smith", "Behchoko", "Norman Wells", "Fort Simpson", "Tuktoyaktuk", "Fort Providence", "Aklavik"]
+        },
+        {
+          "nom": "Nunavut",
+          "communes": ["Iqaluit", "Rankin Inlet", "Arviat", "Baker Lake", "Cambridge Bay", "Igloolik", "Pond Inlet", "Kugluktuk", "Pangnirtung", "Cape Dorset"]
+        }
+      ]
+    },
+    {
+      "nom": "Émirats Arabes Unis",
+      "code_iso": "AE",
+      "regions": [
+        {
+          "nom": "Abu Dhabi",
+          "communes": ["Abu Dhabi", "Al Ain", "Madinat Zayed", "Ruwais", "Liwa Oasis", "Ghayathi", "Delma Island", "Sweihan"]
+        },
+        {
+          "nom": "Dubai",
+          "communes": ["Dubai", "Jebel Ali", "Hatta", "Dubai Marina", "Jumeirah", "Deira", "Bur Dubai", "Al Barsha"]
+        },
+        {
+          "nom": "Sharjah",
+          "communes": ["Sharjah", "Khor Fakkan", "Kalba", "Dibba Al-Hisn", "Al Dhaid", "Mleiha", "Al Madam"]
+        },
+        {
+          "nom": "Ajman",
+          "communes": ["Ajman", "Masfout", "Manama"]
+        },
+        {
+          "nom": "Umm Al Quwain",
+          "communes": ["Umm Al Quwain", "Falaj Al Mualla", "Al Raas"]
+        },
+        {
+          "nom": "Ras Al Khaimah",
+          "communes": ["Ras Al Khaimah", "Al Jazirah Al Hamra", "Digdaga", "Khatt", "Masafi", "Rams"]
+        },
+        {
+          "nom": "Fujairah",
+          "communes": ["Fujairah", "Dibba", "Masafi", "Qidfa", "Al Bidya", "Mirbah"]
+        }
+      ]
+    },
+    {
+      "nom": "Arabie Saoudite",
+      "code_iso": "SA",
+      "regions": [
+        {
+          "nom": "Riyadh",
+          "communes": ["Riyadh", "Al Kharj", "Ad Diriyah", "Al Majma'ah", "Ad Dawadmi", "Az Zulfi", "Shaqra", "Wadi ad-Dawasir", "Al Aflaj", "Thadiq"]
+        },
+        {
+          "nom": "Makkah",
+          "communes": ["Jeddah", "Mecca", "Taif", "Rabigh", "Al Qunfudhah", "Al Lith", "Khulais", "Turubah", "Mina"]
+        },
+        {
+          "nom": "Madinah",
+          "communes": ["Medina", "Yanbu", "Al Ula", "Khaybar", "Badr", "Al Hanakiyah", "Al Mahd"]
+        },
+        {
+          "nom": "Eastern Province",
+          "communes": ["Dammam", "Al Khobar", "Dhahran", "Al Ahsa", "Jubail", "Al Qatif", "Hafar Al-Batin", "Ras Tanura", "Abqaiq", "Khafji"]
+        },
+        {
+          "nom": "Asir",
+          "communes": ["Abha", "Khamis Mushait", "Bisha", "An Namas", "Muhayil", "Sarat Abidah", "Ahad Rafidah", "Rijal Alma", "Tathlith"]
+        },
+        {
+          "nom": "Qassim",
+          "communes": ["Buraidah", "Unaizah", "Ar Rass", "Al Mithnab", "Al Bukayriyah", "Riyadh Al Khabra", "Al Badai", "Uyun Al Jiwa"]
+        },
+        {
+          "nom": "Tabuk",
+          "communes": ["Tabuk", "Duba", "Haql", "Umluj", "Tayma", "Al Wajh"]
+        },
+        {
+          "nom": "Hail",
+          "communes": ["Hail", "Baqaa", "Al Ghazalah", "Ash Shinan", "Samira"]
+        },
+        {
+          "nom": "Jazan",
+          "communes": ["Jizan", "Sabya", "Abu Arish", "Samtah", "Farasan", "Ad Darb", "Baish"]
+        },
+        {
+          "nom": "Najran",
+          "communes": ["Najran", "Sharurah", "Hubuna", "Badr Al Janub", "Yadamah"]
+        },
+        {
+          "nom": "Al Jawf",
+          "communes": ["Sakakah", "Dumat Al Jandal", "Al Qurayyat", "Tabarjal"]
+        },
+        {
+          "nom": "Northern Borders",
+          "communes": ["Arar", "Rafha", "Turaif", "Al Uwayqilah"]
+        },
+        {
+          "nom": "Al Bahah",
+          "communes": ["Al Bahah", "Baljurashi", "Al Mandaq", "Al Makhwah", "Al Aqiq", "Qilwah"]
+        }
+      ]
+    },
+    {
+      "nom": "Qatar",
+      "code_iso": "QA",
+      "regions": [
+        {
+          "nom": "Doha",
+          "communes": ["Doha", "West Bay", "Al Sadd", "Al Dafna", "Mushayrib", "Al Najada"]
+        },
+        {
+          "nom": "Al Rayyan",
+          "communes": ["Al Rayyan", "Education City", "Al Gharrafa", "Umm Al Seneem", "New Al Rayyan", "Muaither"]
+        },
+        {
+          "nom": "Al Wakrah",
+          "communes": ["Al Wakrah", "Al Wukair", "Mesaieed", "Al Mashaf"]
+        },
+        {
+          "nom": "Al Khor",
+          "communes": ["Al Khor", "Al Thakhira", "Ras Laffan"]
+        },
+        {
+          "nom": "Al Shamal",
+          "communes": ["Madinat Al Shamal", "Al Ruwais", "Abu Dhalouf"]
+        },
+        {
+          "nom": "Umm Salal",
+          "communes": ["Umm Salal Muhammad", "Umm Salal Ali", "Al Kheesa"]
+        },
+        {
+          "nom": "Al Daayen",
+          "communes": ["Lusail", "Al Khisah", "Umm Qarn", "Simaisma"]
+        },
+        {
+          "nom": "Al Shahaniya",
+          "communes": ["Al Shahaniya", "Dukhan", "Zekreet", "Al Karaana"]
+        }
+      ]
+    },
+    {
+      "nom": "Bahreïn",
+      "code_iso": "BH",
+      "regions": [
+        {
+          "nom": "Capital Governorate",
+          "communes": ["Manama", "Juffair", "Adliya", "Hoora", "Seef", "Diplomatic Area", "Gudaibiya", "Zinj"]
+        },
+        {
+          "nom": "Muharraq Governorate",
+          "communes": ["Muharraq", "Hidd", "Busaiteen", "Galali", "Arad", "Amwaj Islands", "Diyar Al Muharraq"]
+        },
+        {
+          "nom": "Northern Governorate",
+          "communes": ["Budaiya", "Jidhafs", "Saar", "Sanabis", "Barbar", "Hamad Town", "Al Markh"]
+        },
+        {
+          "nom": "Southern Governorate",
+          "communes": ["Riffa", "Isa Town", "Zallaq", "Awali", "Sakhir", "Durrat Al Bahrain", "Hawar Islands"]
+        }
+      ]
+    },
+    {
+      "nom": "Maroc",
+      "code_iso": "MA",
+      "regions": [
+        {
+          "nom": "Casablanca-Settat",
+          "communes": ["Casablanca", "Mohammedia", "El Jadida", "Settat", "Berrechid", "Khouribga", "Benslimane", "Beni Mellal", "Azemmour", "Sidi Bennour"]
+        },
+        {
+          "nom": "Rabat-Salé-Kénitra",
+          "communes": ["Rabat", "Salé", "Kénitra", "Témara", "Skhirat", "Sidi Kacem", "Sidi Slimane", "Khémisset", "Tiflet", "Mechraa Bel Ksiri"]
+        },
+        {
+          "nom": "Tanger-Tétouan-Al Hoceïma",
+          "communes": ["Tanger", "Tétouan", "Al Hoceïma", "Larache", "Asilah", "Chefchaouen", "Fnideq", "Martil", "M'diq", "Ouezzane"]
+        },
+        {
+          "nom": "Fès-Meknès",
+          "communes": ["Fès", "Meknès", "Taza", "Sefrou", "Ifrane", "Moulay Yacoub", "El Hajeb", "Azrou", "Boulemane", "Taounate"]
+        },
+        {
+          "nom": "Marrakech-Safi",
+          "communes": ["Marrakech", "Safi", "Essaouira", "El Kelâa des Sraghna", "Youssoufia", "Chichaoua", "Ben Guerir", "Rehamna", "Tahannaout"]
+        },
+        {
+          "nom": "L'Oriental",
+          "communes": ["Oujda", "Nador", "Berkane", "Taourirt", "Jerada", "Driouch", "Figuig", "Zaio", "Ahfir", "Guercif"]
+        },
+        {
+          "nom": "Souss-Massa",
+          "communes": ["Agadir", "Inezgane", "Taroudant", "Tiznit", "Ait Melloul", "Chtouka Ait Baha", "Ouled Teima", "Tata"]
+        },
+        {
+          "nom": "Béni Mellal-Khénifra",
+          "communes": ["Béni Mellal", "Khénifra", "Fquih Ben Salah", "Azilal", "Kasba Tadla", "Zawyat ech Cheikh", "El Ksiba", "Demnate"]
+        },
+        {
+          "nom": "Drâa-Tafilalet",
+          "communes": ["Errachidia", "Ouarzazate", "Tinghir", "Zagora", "Midelt", "Erfoud", "Rissani", "Goulmima", "Alnif"]
+        },
+        {
+          "nom": "Guelmim-Oued Noun",
+          "communes": ["Guelmim", "Tan-Tan", "Sidi Ifni", "Assa-Zag", "Bouizakarne"]
+        },
+        {
+          "nom": "Laâyoune-Sakia El Hamra",
+          "communes": ["Laâyoune", "Tarfaya", "Es-Semara", "Boujdour"]
+        },
+        {
+          "nom": "Dakhla-Oued Ed-Dahab",
+          "communes": ["Dakhla", "Aousserd", "Bir Gandouz"]
+        }
+      ]
+    },
+    {
+      "nom": "Égypte",
+      "code_iso": "EG",
+      "regions": [
+        {
+          "nom": "Cairo",
+          "communes": ["Cairo", "Heliopolis", "Nasr City", "Maadi", "New Cairo", "Shubra El Kheima", "Helwan", "Badr City"]
+        },
+        {
+          "nom": "Alexandria",
+          "communes": ["Alexandria", "Borg El Arab", "Abu Qir", "Montaza", "Dekheila", "Sidi Bishr"]
+        },
+        {
+          "nom": "Giza",
+          "communes": ["Giza", "6th of October City", "Sheikh Zayed City", "El Haram", "Dokki", "Mohandessin", "Imbaba", "El Ayyat"]
+        },
+        {
+          "nom": "Qalyubia",
+          "communes": ["Banha", "Shibin El Qanater", "Qalyub", "Khanka", "Toukh", "Kafr Shukr", "El Qanater El Khayreya", "Shubra El Kheima"]
+        },
+        {
+          "nom": "Dakahlia",
+          "communes": ["Mansoura", "Talkha", "Mit Ghamr", "Dekernes", "Belqas", "Aga", "Minyat El Nasr", "Sherbin"]
+        },
+        {
+          "nom": "Sharqia",
+          "communes": ["Zagazig", "10th of Ramadan City", "Belbeis", "Abu Hammad", "Fakous", "Minya El Qamh", "Kafr Saqr", "Husseiniya"]
+        },
+        {
+          "nom": "Gharbia",
+          "communes": ["Tanta", "El Mahalla El Kubra", "Kafr El Zayat", "Zifta", "Samannoud", "Basyoun", "Qutour"]
+        },
+        {
+          "nom": "Beheira",
+          "communes": ["Damanhour", "Kafr El Dawwar", "Rashid", "Edku", "Abu El Matamir", "Hosh Issa", "Itay El Barud", "Kom Hamada"]
+        },
+        {
+          "nom": "Kafr El Sheikh",
+          "communes": ["Kafr El Sheikh", "Desouk", "Fuwwah", "Baltim", "Sidi Salem", "Burullus", "Riyadh"]
+        },
+        {
+          "nom": "Monufia",
+          "communes": ["Shibin El Kom", "Menouf", "Ashmoun", "Sadat City", "Bagour", "Quesna", "Sers El Layan", "Tala"]
+        },
+        {
+          "nom": "Damietta",
+          "communes": ["Damietta", "New Damietta", "Ras El Bar", "Faraskur", "Kafr Saad", "El Zarqa"]
+        },
+        {
+          "nom": "Port Said",
+          "communes": ["Port Said", "Port Fouad", "El Arab", "El Zohour", "El Manakh", "El Shark"]
+        },
+        {
+          "nom": "Ismailia",
+          "communes": ["Ismailia", "Fayed", "El Qantara", "Abu Sultan", "El Tal El Kebir", "El Qassasin"]
+        },
+        {
+          "nom": "Suez",
+          "communes": ["Suez", "Ain Sokhna", "El Arbaeen", "Ataka", "Faisal", "El Ganayen"]
+        },
+        {
+          "nom": "Fayoum",
+          "communes": ["Fayoum", "Ibsheway", "Itsa", "Sinnuris", "Tamiya", "Yusuf El Seddik"]
+        },
+        {
+          "nom": "Beni Suef",
+          "communes": ["Beni Suef", "El Wasta", "Nasser", "Beba", "Ihnasya", "Somosta", "El Fashn"]
+        },
+        {
+          "nom": "Minya",
+          "communes": ["Minya", "Mallawi", "Beni Mazar", "Samalut", "Maghagha", "Abu Qurqas", "Deir Mawas", "Matay"]
+        },
+        {
+          "nom": "Assiut",
+          "communes": ["Assiut", "Abnub", "Abu Tig", "El Badari", "Dairut", "El Qusiya", "Manfalut", "Sahel Selim"]
+        },
+        {
+          "nom": "Sohag",
+          "communes": ["Sohag", "Girga", "Akhmim", "El Balyana", "Tahta", "Tima", "El Maragha", "Dar El Salam"]
+        },
+        {
+          "nom": "Qena",
+          "communes": ["Qena", "Nag Hammadi", "Qus", "Deshna", "Abu Tesht", "Farshut", "Nagada", "Qift"]
+        },
+        {
+          "nom": "Luxor",
+          "communes": ["Luxor", "Armant", "Esna", "El Tod", "El Qurna", "El Bayadiya"]
+        },
+        {
+          "nom": "Aswan",
+          "communes": ["Aswan", "Kom Ombo", "Edfu", "Daraw", "Nasr El Nuba", "Abu Simbel"]
+        },
+        {
+          "nom": "Red Sea",
+          "communes": ["Hurghada", "El Gouna", "Safaga", "Marsa Alam", "El Quseir", "Shalateen", "Ras Ghareb"]
+        },
+        {
+          "nom": "New Valley",
+          "communes": ["Kharga", "Dakhla", "Farafra", "Baris", "Balat"]
+        },
+        {
+          "nom": "Matrouh",
+          "communes": ["Mersa Matrouh", "El Alamein", "El Dabaa", "Siwa", "Sidi Barrani", "Salloum"]
+        },
+        {
+          "nom": "North Sinai",
+          "communes": ["El Arish", "Rafah", "Sheikh Zuweid", "Bir al-Abed", "Nakhl", "Hasana"]
+        },
+        {
+          "nom": "South Sinai",
+          "communes": ["Sharm El Sheikh", "Dahab", "Taba", "Nuweiba", "Saint Catherine", "El Tor", "Ras Sidr"]
+        }
+      ]
+    },
+    {
+      "nom": "Éthiopie",
+      "code_iso": "ET",
+      "regions": [
+        {
+          "nom": "Addis Ababa",
+          "communes": ["Addis Ababa", "Bole", "Kirkos", "Yeka", "Kolfe Keranio", "Akaky Kaliti", "Nifas Silk-Lafto", "Arada", "Lideta", "Gulele"]
+        },
+        {
+          "nom": "Dire Dawa",
+          "communes": ["Dire Dawa", "Gildessa", "Melka Jebdu"]
+        },
+        {
+          "nom": "Oromia",
+          "communes": ["Adama", "Jimma", "Bishoftu", "Shashamane", "Harar", "Nekemte", "Asella", "Ambo", "Bale Robe", "Ginir", "Awasa", "Dilla", "Yabello", "Negele Borana"]
+        },
+        {
+          "nom": "Amhara",
+          "communes": ["Bahir Dar", "Gondar", "Dessie", "Debre Markos", "Debre Birhan", "Kombolcha", "Lalibela", "Debre Tabor", "Woldia", "Finote Selam", "Dangila"]
+        },
+        {
+          "nom": "Tigray",
+          "communes": ["Mekelle", "Axum", "Adigrat", "Adwa", "Shire", "Wukro", "Humera", "Maychew", "Abiy Addi"]
+        },
+        {
+          "nom": "Sidama",
+          "communes": ["Hawassa", "Yirgalem", "Aleta Wendo", "Daye", "Bensa", "Dale"]
+        },
+        {
+          "nom": "SNNPR",
+          "communes": ["Arba Minch", "Wolkite", "Sodo", "Hosaena", "Bonga", "Mizan Teferi", "Jinka", "Dila"]
+        },
+        {
+          "nom": "Afar",
+          "communes": ["Semera", "Asaita", "Dubti", "Logiya", "Afdera", "Gewane", "Awash"]
+        },
+        {
+          "nom": "Somali",
+          "communes": ["Jijiga", "Gode", "Kebri Dahar", "Degehabur", "Shinile", "Aware", "Warder"]
+        },
+        {
+          "nom": "Benishangul-Gumuz",
+          "communes": ["Assosa", "Bambasi", "Kamashi", "Metekel", "Guba", "Menge"]
+        },
+        {
+          "nom": "Gambela",
+          "communes": ["Gambela", "Abobo", "Itang", "Lare", "Jikawo", "Gog"]
+        },
+        {
+          "nom": "Harari",
+          "communes": ["Harar", "Dire Teyara", "Sofi", "Abadir"]
+        }
+      ]
+    },
+    {
+      "nom": "Rwanda",
+      "code_iso": "RW",
+      "regions": [
+        {
+          "nom": "Kigali",
+          "communes": ["Kigali", "Gasabo", "Kicukiro", "Nyarugenge", "Remera", "Kimihurura", "Gisozi", "Nyamirambo"]
+        },
+        {
+          "nom": "Eastern Province",
+          "communes": ["Rwamagana", "Kayonza", "Kirehe", "Ngoma", "Bugesera", "Gatsibo", "Nyagatare"]
+        },
+        {
+          "nom": "Western Province",
+          "communes": ["Kibuye", "Karongi", "Rubavu", "Rusizi", "Nyamasheke", "Ngororero", "Rutsiro"]
+        },
+        {
+          "nom": "Northern Province",
+          "communes": ["Byumba", "Gicumbi", "Musanze", "Rulindo", "Gakenke", "Burera"]
+        },
+        {
+          "nom": "Southern Province",
+          "communes": ["Nyanza", "Huye", "Muhanga", "Ruhango", "Kamonyi", "Nyaruguru", "Gisagara", "Nyamagabe"]
+        }
+      ]
+    },
+    {
+      "nom": "Afrique du Sud",
+      "code_iso": "ZA",
+      "regions": [
+        {
+          "nom": "Gauteng",
+          "communes": ["Johannesburg", "Pretoria", "Soweto", "Benoni", "Boksburg", "Krugersdorp", "Randburg", "Centurion", "Sandton", "Roodepoort", "Germiston", "Alberton", "Midrand", "Vanderbijlpark", "Vereeniging"]
+        },
+        {
+          "nom": "KwaZulu-Natal",
+          "communes": ["Durban", "Pietermaritzburg", "Richards Bay", "Newcastle", "Ladysmith", "Pinetown", "Chatsworth", "Umhlanga", "Amanzimtoti", "Port Shepstone", "Empangeni", "Stanger", "Ballito", "Mtubatuba"]
+        },
+        {
+          "nom": "Western Cape",
+          "communes": ["Cape Town", "Stellenbosch", "Paarl", "George", "Worcester", "Somerset West", "Franschhoek", "Knysna", "Mossel Bay", "Hermanus", "Beaufort West", "Oudtshoorn", "Swellendam", "Robertson"]
+        },
+        {
+          "nom": "Eastern Cape",
+          "communes": ["Port Elizabeth", "East London", "Uitenhage", "Mthatha", "Grahamstown", "King William's Town", "Queenstown", "Bhisho", "Graaff-Reinet", "Cradock", "Somerset East", "Fort Beaufort", "Aliwal North"]
+        },
+        {
+          "nom": "Free State",
+          "communes": ["Bloemfontein", "Welkom", "Kroonstad", "Bethlehem", "Sasolburg", "Virginia", "Parys", "Harrismith", "Phuthaditjhaba", "Bothaville", "Frankfort", "Ficksburg"]
+        },
+        {
+          "nom": "Limpopo",
+          "communes": ["Polokwane", "Tzaneen", "Louis Trichardt", "Thohoyandou", "Mokopane", "Phalaborwa", "Musina", "Lephalale", "Giyani", "Bela-Bela", "Lebowakgomo", "Burgersfort"]
+        },
+        {
+          "nom": "Mpumalanga",
+          "communes": ["Mbombela", "Witbank", "Secunda", "Standerton", "Middelburg", "Ermelo", "Barberton", "White River", "Bethal", "Hazyview", "Lydenburg", "Piet Retief"]
+        },
+        {
+          "nom": "North West",
+          "communes": ["Mahikeng", "Klerksdorp", "Rustenburg", "Potchefstroom", "Brits", "Orkney", "Lichtenburg", "Vryburg", "Stilfontein", "Zeerust", "Hartbeespoort", "Sun City"]
+        },
+        {
+          "nom": "Northern Cape",
+          "communes": ["Kimberley", "Upington", "Springbok", "De Aar", "Kuruman", "Kathu", "Calvinia", "Colesberg", "Postmasburg", "Jan Kempdorp", "Douglas", "Sutherland"]
+        }
+      ]
+    }
+  ]
+}

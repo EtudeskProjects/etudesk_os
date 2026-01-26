@@ -1,0 +1,564 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "done": "Terminé",
+    "close": "Fermer",
+    "search": "Rechercher...",
+    "seeMore": "Voir plus",
+    "seeAll": "Voir tout",
+    "noResults": "Aucun résultat",
+    "retry": "Réessayer",
+    "yes": "Oui",
+    "no": "Non",
+    "or": "ou",
+    "and": "et",
+    "optional": "Optionnel",
+    "required": "Requis"
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "subtitle": "Ton avenir commence ici",
+      "continueWith": "Continuer avec",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Mot de passe",
+      "forgotPassword": "Mot de passe oublié ?",
+      "noAccount": "Pas encore de compte ?",
+      "signUp": "S'inscrire",
+      "orContinueWith": "Ou continuer avec",
+      "termsPrefix": "En continuant, tu acceptes nos"
+    },
+    "welcome": {
+      "congrats": "Félicitations !",
+      "title": "Ton profil est prêt",
+      "subtitle": "Tu fais maintenant partie de la communauté Etudesk",
+      "getStarted": "C'est parti !",
+      "whatYouCanDo": "Ce que tu peux faire",
+      "features": {
+        "explore": {
+          "title": "Explore les opportunités",
+          "description": "Offres d'emploi, stages, formations et événements adaptés à ton profil."
+        },
+        "connect": {
+          "title": "Connecte-toi",
+          "description": "Rejoins des communautés et développe ton réseau."
+        },
+        "assistant": {
+          "title": "Ton assistant personnel",
+          "description": "Obtiens des conseils personnalisés pour ta carrière et tes projets."
+        }
+      }
+    },
+    "createProfile": {
+      "title": "Créer mon profil",
+      "tellUsAboutYou": "Parle-nous un peu de toi",
+      "step1Title": "Informations personnelles",
+      "step2Title": "Localisation",
+      "step3Title": "Domaines d'intérêt",
+      "step4Title": "Photo de profil",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Email",
+      "phone": "Téléphone",
+      "birthDate": "Date de naissance",
+      "selectDate": "Sélectionner une date",
+      "gender": "Genre",
+      "yourProfile": "Ton profil",
+      "bio": "Bio",
+      "bioPlaceholder": "Parle-nous un peu de toi en quelques mots...",
+      "country": "Pays",
+      "region": "Région",
+      "city": "Ville/Commune",
+      "commune": "Commune / Ville",
+      "useMyLocation": "Utiliser ma position actuelle",
+      "locating": "Localisation en cours...",
+      "selectInterests": "Sélectionne tes centres d'intérêt",
+      "addPhoto": "Ajouter une photo",
+      "photoHint": "Appuie pour ajouter ta photo de profil",
+      "complete": "Terminer",
+      "continue": "Continuer",
+      "workPreferences": "Préférences de travail",
+      "remoteAvailable": "Disponible en remote",
+      "remoteAvailableDesc": "Je peux travailler à distance",
+      "willingToRelocate": "Ouvert à la relocalisation",
+      "willingToRelocateDesc": "Je peux déménager pour une opportunité",
+      "yourSectors": "Tes secteurs",
+      "sectorsHint": "Choisis jusqu'à {{max}} secteurs qui t'intéressent",
+      "selected": "{{count}}/{{max}} sélectionnés",
+      "yourGoals": "Tes objectifs",
+      "goalsHint": "Choisis jusqu'à {{max}} objectifs prioritaires",
+      "permissionRequired": "Permission requise",
+      "photoPermissionMessage": "Nous avons besoin de votre permission pour accéder à vos photos.",
+      "photoError": "Une erreur est survenue lors de la sélection de l'image. Veuillez réessayer."
+    },
+    "emailLogin": {
+      "title": "Connexion par email",
+      "subtitle": "Entre ton adresse email pour recevoir un code de vérification",
+      "emailLabel": "Adresse email",
+      "sendCode": "Envoyer le code",
+      "infoText": "Nous t'enverrons un code à 6 chiffres pour te connecter sans mot de passe",
+      "sendError": "Impossible d'envoyer le code. Vérifie ton adresse email et réessaie."
+    },
+    "verifyOtp": {
+      "title": "Vérifie ton email",
+      "subtitle": "Entre le code à 6 chiffres envoyé à",
+      "verify": "Vérifier",
+      "resendCode": "Renvoyer le code",
+      "resendIn": "Renvoyer dans {{seconds}}s",
+      "incompleteCode": "Entre le code complet à 6 chiffres",
+      "invalidCode": "Code invalide. Vérifie et réessaie.",
+      "verifyError": "Erreur lors de la vérification. Réessaie.",
+      "codeSent": "Un nouveau code a été envoyé à ton adresse email",
+      "verified": "Email vérifié !",
+      "redirecting": "Redirection en cours..."
+    }
+  },
+  "tabs": {
+    "assistant": "Copilote",
+    "explore": "Explorer",
+    "ecosystem": "Écosystème",
+    "management": "Gestion",
+    "settings": "Paramètres"
+  },
+  "assistant": {
+    "title": "Copilote",
+    "greeting": "Comment puis-je t'aider",
+    "inputPlaceholder": "Écris ton message...",
+    "suggestions": "Suggestions",
+    "modes": {
+      "explore": "Explorer",
+      "study": "Étudier"
+    },
+    "prompts": {
+      "explore": {
+        "opportunities": "Quelles opportunités correspondent à mon profil ?",
+        "hubs": "Quels hubs sont disponibles à Abidjan ?",
+        "communities": "Recommande-moi des communautés tech"
+      },
+      "study": {
+        "skills": "Comment améliorer mes compétences en React Native ?",
+        "plan": "Crée-moi un plan d'apprentissage en UX Design",
+        "certifications": "Quelles certifications sont recommandées pour mon domaine ?",
+        "basics": "Explique-moi les bases du Product Management"
+      }
+    }
+  },
+  "explore": {
+    "title": "Explorer",
+    "categories": {
+      "opportunities": "Opportunités",
+      "hubs": "Hubs",
+      "communities": "Communautés"
+    },
+    "filters": "Filtres",
+    "sortBy": "Trier par",
+    "sortOptions": {
+      "relevance": "Pertinence",
+      "relevanceDesc": "Résultats correspondant à ton profil",
+      "proximity": "Proximité",
+      "proximityDesc": "Du plus proche au plus éloigné",
+      "recent": "Plus récents",
+      "recentDesc": "Les dernières publications",
+      "popularity": "Popularité",
+      "popularityDesc": "Les plus consultés"
+    },
+    "noResultsSearch": "Aucun résultat pour \"{{query}}\"",
+    "resultsCount": "{{count}} résultat(s)",
+    "remote": "Remote",
+    "members": "membres",
+    "create": "Créer",
+    "whatToCreate": "Que souhaitez-vous créer pour {{name}} ?",
+    "opportunity": "Opportunité",
+    "space": "Espace",
+    "community": "Communauté"
+  },
+  "ecosystem": {
+    "title": "Accueil",
+    "weeklyInsight": "{{name}}, vous avez eu une semaine chargée ! Vous avez acquis {{skills}} nouvelles compétences et complété {{modules}} modules de formation.",
+    "train": "Se former",
+    "notifications": "Notifications",
+    "agenda": "Agenda",
+    "documents": "Documents",
+    "skills": "compétences",
+    "talent": "Talent",
+    "relations": {
+      "applications": "candidatures",
+      "member": "membre",
+      "frequents": "fréquente",
+      "connected": "connecté",
+      "owns": "possède"
+    },
+    "status": {
+      "active": "En cours",
+      "pending": "En attente",
+      "completed": "Terminé",
+      "saved": "Sauvegardé"
+    },
+    "nodes": {
+      "opportunities": "Opportunités",
+      "communities": "Communautés",
+      "hubs": "Hubs",
+      "documents": "Documents"
+    }
+  },
+  "management": {
+    "title": "Gestion",
+    "offers": "Offres",
+    "overview": "Vue d'ensemble",
+    "recentActivity": "Activité récente",
+    "noOrganization": "Aucune organisation sélectionnée",
+    "selectOrganization": "Sélectionne une organisation dans les paramètres pour accéder à la gestion.",
+    "goToSettings": "Aller aux paramètres",
+    "myApplications": "Mes candidatures",
+    "myBookings": "Mes réservations",
+    "myCommunities": "Mes communautés",
+    "empty": {
+      "applications": "Aucune candidature en cours",
+      "bookings": "Aucune réservation",
+      "communities": "Aucune communauté rejointe"
+    }
+  },
+  "settings": {
+    "title": "Paramètres",
+    "profile": "Profil",
+    "editProfile": "Modifier le profil",
+    "viewProfile": "Voir le profil",
+    "spaces": {
+      "title": "Espaces",
+      "talent": "Mon espace talent",
+      "organization": "Organisation"
+    },
+    "menu": {
+      "team": "Équipe",
+      "teamDesc": "Gérer les membres et les permissions",
+      "kyc": "Vérification d'identité",
+      "kycDesc": "Vérifier ton identité",
+      "payment": "Moyens de paiement",
+      "paymentDesc": "Gérer tes moyens de paiement",
+      "preferences": "Préférences",
+      "preferencesDesc": "Langue, thème et notifications",
+      "help": "Aide",
+      "helpDesc": "FAQ et support",
+      "legal": "Mentions légales",
+      "legalDesc": "Conditions et confidentialité"
+    },
+    "logout": "Déconnexion",
+    "logoutConfirm": "Êtes-vous sûr de vouloir vous déconnecter ?",
+    "version": "Version"
+  },
+  "preferences": {
+    "title": "Préférences",
+    "display": "Affichage",
+    "theme": "Thème",
+    "themes": {
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système"
+    },
+    "language": "Langue",
+    "notifications": {
+      "title": "Notifications",
+      "push": "Notifications push",
+      "pushDesc": "Recevoir des notifications sur ton appareil",
+      "email": "Notifications par email",
+      "emailDesc": "Recevoir des résumés par email",
+      "opportunities": "Nouvelles opportunités",
+      "opportunitiesDesc": "Être notifié des nouvelles offres",
+      "messages": "Messages",
+      "messagesDesc": "Notifications pour les nouveaux messages"
+    }
+  },
+  "profile": {
+    "title": "Modifier le profil",
+    "personalInfo": "Informations personnelles",
+    "location": "Localisation",
+    "interests": "Centres d'intérêt",
+    "photo": "Photo de profil",
+    "changePhoto": "Appuie pour changer la photo",
+    "saved": "Profil enregistré avec succès"
+  },
+  "organization": {
+    "title": "Organisation",
+    "create": "Créer une organisation",
+    "edit": "Modifier l'organisation",
+    "name": "Nom de l'organisation",
+    "type": "Type d'organisation",
+    "size": "Taille",
+    "description": "Description",
+    "website": "Site web",
+    "logo": "Logo",
+    "changeLogo": "Appuie pour changer le logo",
+    "location": "Localisation",
+    "industries": "Secteurs d'activité",
+    "saved": "Organisation enregistrée avec succès",
+    "members": {
+      "title": "Équipe",
+      "members": "Membres",
+      "invitations": "Invitations",
+      "invite": "Inviter",
+      "inviteMember": "Inviter un membre",
+      "email": "Adresse email",
+      "role": "Rôle",
+      "roles": {
+        "owner": "Propriétaire",
+        "admin": "Administrateur",
+        "manager": "Manager",
+        "member": "Membre"
+      },
+      "status": {
+        "active": "Actif",
+        "pending": "En attente",
+        "expired": "Expirée"
+      },
+      "actions": {
+        "changeRole": "Changer le rôle",
+        "remove": "Retirer de l'équipe",
+        "resend": "Renvoyer l'invitation",
+        "cancel": "Annuler l'invitation"
+      },
+      "empty": {
+        "members": "Aucun membre dans l'équipe",
+        "invitations": "Aucune invitation en attente"
+      },
+      "inviteSent": "Invitation envoyée avec succès",
+      "memberRemoved": "Membre retiré avec succès",
+      "roleUpdated": "Rôle mis à jour avec succès"
+    }
+  },
+  "kyc": {
+    "title": "Vérification d'identité",
+    "subtitle": "Vérifie ton identité pour accéder à toutes les fonctionnalités",
+    "status": {
+      "notStarted": "Non commencée",
+      "pending": "En cours de vérification",
+      "verified": "Vérifié",
+      "rejected": "Rejetée"
+    },
+    "steps": {
+      "identity": "Pièce d'identité",
+      "selfie": "Photo selfie",
+      "address": "Justificatif de domicile"
+    },
+    "start": "Commencer la vérification",
+    "uploadDocument": "Télécharger le document"
+  },
+  "payment": {
+    "title": "Moyens de paiement",
+    "addMethod": "Ajouter un moyen de paiement",
+    "methods": {
+      "card": "Carte bancaire",
+      "mobileMoney": "Mobile Money",
+      "bankTransfer": "Virement bancaire"
+    },
+    "empty": "Aucun moyen de paiement enregistré",
+    "default": "Par défaut",
+    "setDefault": "Définir par défaut",
+    "remove": "Supprimer"
+  },
+  "help": {
+    "title": "Aide",
+    "faq": "Questions fréquentes",
+    "contact": "Contacter le support",
+    "email": "Email",
+    "phone": "Téléphone",
+    "chat": "Chat en direct"
+  },
+  "legal": {
+    "title": "Mentions légales",
+    "terms": "Conditions d'utilisation",
+    "privacy": "Politique de confidentialité",
+    "cookies": "Politique des cookies"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Aucune notification",
+    "markAllRead": "Tout marquer comme lu",
+    "types": {
+      "application": "Candidature",
+      "message": "Message",
+      "system": "Système"
+    }
+  },
+  "calendar": {
+    "title": "Calendrier",
+    "today": "Aujourd'hui",
+    "upcoming": "À venir",
+    "past": "Passés",
+    "noEvents": "Aucun événement",
+    "eventTypes": {
+      "interview": "Entretien",
+      "deadline": "Date limite",
+      "booking": "Réservation"
+    }
+  },
+  "documents": {
+    "title": "Documents",
+    "upload": "Télécharger un document",
+    "types": {
+      "cv": "CV",
+      "certificate": "Certificat",
+      "portfolio": "Portfolio",
+      "other": "Autre"
+    },
+    "empty": "Aucun document",
+    "skills": "compétences"
+  },
+  "opportunity": {
+    "apply": "Postuler",
+    "applied": "Candidature envoyée",
+    "save": "Sauvegarder",
+    "saved": "Sauvegardé",
+    "share": "Partager",
+    "deadline": "Date limite",
+    "postedAt": "Publié",
+    "description": "Description",
+    "requirements": "Prérequis",
+    "benefits": "Avantages",
+    "views": "Vues",
+    "applications": "Candidatures",
+    "location": "Localisation",
+    "salary": "Salaire",
+    "startDate": "Début",
+    "duration": "Durée",
+    "niceToHave": "Atouts",
+    "aboutOrg": "À propos de {{name}}",
+    "types": {
+      "employment": "Emploi",
+      "internship": "Stage",
+      "consultancy": "Consultance",
+      "volunteer": "Bénévolat",
+      "gig": "Mission",
+      "apprenticeship": "Apprentissage",
+      "fellowship": "Bourse"
+    },
+    "workTypes": {
+      "fullTime": "Temps plein",
+      "partTime": "Temps partiel",
+      "contract": "Contrat",
+      "freelance": "Freelance",
+      "internship": "Stage",
+      "apprenticeship": "Apprentissage"
+    },
+    "locationTypes": {
+      "onSite": "Sur site",
+      "remote": "À distance",
+      "hybrid": "Hybride"
+    }
+  },
+  "space": {
+    "book": "Réserver",
+    "visit": "Visiter",
+    "about": "À propos",
+    "amenities": "Équipements",
+    "pricing": "Tarifs",
+    "location": "Localisation",
+    "accessTypes": {
+      "public": "Accès libre",
+      "membership": "Sur adhésion",
+      "private": "Privé"
+    },
+    "types": {
+      "coworking": "Coworking",
+      "incubator": "Incubateur",
+      "accelerator": "Accélérateur",
+      "lab": "Lab",
+      "hub": "Hub"
+    }
+  },
+  "community": {
+    "join": "Rejoindre",
+    "joined": "Membre",
+    "leave": "Quitter",
+    "about": "À propos",
+    "members": "Membres",
+    "events": "Événements",
+    "discussions": "Discussions",
+    "types": {
+      "online": "En ligne",
+      "offline": "Présentiel",
+      "hybrid": "Hybride"
+    }
+  },
+  "date": {
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "tomorrow": "Demain",
+    "daysAgo": "Il y a {{days}} jours",
+    "hoursAgo": "Il y a {{hours}} heures",
+    "minutesAgo": "Il y a {{minutes}} minutes",
+    "justNow": "À l'instant",
+    "inDays": "Dans {{days}} jours",
+    "expired": "Expiré",
+    "months": {
+      "january": "janvier",
+      "february": "février",
+      "march": "mars",
+      "april": "avril",
+      "may": "mai",
+      "june": "juin",
+      "july": "juillet",
+      "august": "août",
+      "september": "septembre",
+      "october": "octobre",
+      "november": "novembre",
+      "december": "décembre"
+    },
+    "monthsShort": {
+      "january": "jan.",
+      "february": "fév.",
+      "march": "mars",
+      "april": "avr.",
+      "may": "mai",
+      "june": "juin",
+      "july": "juil.",
+      "august": "août",
+      "september": "sept.",
+      "october": "oct.",
+      "november": "nov.",
+      "december": "déc."
+    }
+  },
+  "errors": {
+    "generic": "Une erreur est survenue",
+    "network": "Erreur de connexion",
+    "unauthorized": "Non autorisé",
+    "notFound": "Non trouvé",
+    "validation": "Données invalides",
+    "required": "Ce champ est requis",
+    "invalidEmail": "Email invalide",
+    "invalidPhone": "Numéro de téléphone invalide",
+    "photoSelection": "Erreur lors de la sélection de la photo",
+    "location": "Erreur de géolocalisation"
+  },
+  "alert": {
+    "ok": "OK",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "close": "Fermer",
+    "delete": "Supprimer",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ?",
+    "deleteSuccess": "Supprimé avec succès",
+    "saveSuccess": "Enregistré avec succès",
+    "updateSuccess": "Mis à jour avec succès",
+    "actionSuccess": "Action effectuée avec succès",
+    "actionError": "Une erreur est survenue",
+    "networkError": "Erreur de connexion. Vérifiez votre connexion internet.",
+    "sessionExpired": "Session expirée",
+    "sessionExpiredMessage": "Votre session a expiré. Veuillez vous reconnecter.",
+    "permissionDenied": "Permission refusée",
+    "permissionDeniedMessage": "Vous n'avez pas les droits pour effectuer cette action."
+  }
+}

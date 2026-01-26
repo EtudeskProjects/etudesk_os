@@ -1,0 +1,138 @@
+/**
+ * Services Index
+ * Central export for all API services
+ */
+
+export { api } from './api';
+export type { ApiResponse, ApiError } from './api';
+
+export { opportunityService } from './opportunityService';
+export type { OpportunityFilters, CreateOpportunityData, UpdateOpportunityData, GenerateOpportunityInput, GeneratedOpportunityData } from './opportunityService';
+
+export { communityService, DEFAULT_MEMBER_PERMISSIONS } from './communityService';
+export type {
+  CommunityFilters,
+  CreateCommunityData,
+  UpdateCommunityData,
+  GenerateCommunityInput,
+  GeneratedCommunityData,
+  MembershipAnswer,
+  MembershipStatus,
+  JoinCommunityData,
+  JoinResult,
+  MemberStatus,
+  CommunityMember,
+  CommunityMemberDetails,
+  MemberPermissions
+} from './communityService';
+
+export { hubService } from './hubService';
+export type { HubFilters, CreateHubData, UpdateHubData } from './hubService';
+
+export { otpService } from './otpService';
+
+export { talentService } from './talentService';
+export type { UpdateTalentData } from './talentService';
+
+export { organizationService } from './organizationService';
+export type { CreateOrganizationData, UpdateOrganizationData, OrganizationFilters } from './organizationService';
+
+export { organizationMemberService } from './organizationMemberService';
+export type { InviteMemberData, UpdateMemberData } from './organizationMemberService';
+
+export { kycService } from './kycService';
+export type { KYCDocumentType, KYCStatus, KYCVerification, SubmitKYCData } from './kycService';
+
+export { documentService } from './documentService';
+export type {
+  DocumentFilters,
+  CreateDocumentData,
+  SubmitIdentityData,
+  UpdateDocumentData,
+  UploadUrlResponse,
+  IdentityStatus,
+  RequirementsCheckResult
+} from './documentService';
+
+export { onboardingService } from './onboardingService';
+export type { OnboardingData, OnboardingStatus, OnboardingOptions, OnboardingResult } from './onboardingService';
+
+export { applicationService } from './applicationService';
+export type { ApplicationFilters, CreateApplicationData, UpdateApplicationData, ScheduleInterviewData } from './applicationService';
+
+export { applicationMessageService } from './applicationMessageService';
+export type { MessageFilters, SendMessageData } from './applicationMessageService';
+
+export { ecosystemService } from './ecosystemService';
+export type { EcosystemData, CalendarEvent, Document as EcosystemDocument } from './ecosystemService';
+
+export { bookmarkService } from './bookmarkService';
+export type {
+  EntityType as BookmarkEntityType,
+  BookmarkedOpportunity,
+  BookmarkedHub,
+  BookmarkedCommunity,
+  BookmarkIdsResponse,
+  BookmarkToggleResponse
+} from './bookmarkService';
+
+export { imageService } from './imageService';
+export type {
+  ImageType,
+  OptimizedImage,
+  UploadedImage,
+  PickImageOptions
+} from './imageService';
+
+export { paymentService } from './paymentService';
+export type {
+  PaymentProvider,
+  PaymentMethod,
+  AddPaymentMethodData
+} from './paymentService';
+
+export { notificationService } from './notificationService';
+export type {
+  NotificationType,
+  Notification,
+  NotificationPreferences,
+  NotificationsResponse
+} from './notificationService';
+
+export { communityActivityService } from './communityActivityService';
+
+export { communitySubscriptionService } from './communitySubscriptionService';
+export type {
+  SubscriptionStatus,
+  PaymentStatus,
+  CommunitySubscription,
+  CommunityPayment,
+  CommunityInvoice,
+  SubscriptionCheckResult,
+  PaywallInfo
+} from './communitySubscriptionService';
+
+export { communityNotificationService } from './communityNotificationService';
+export type {
+  CommunityNotificationType,
+  CommunityNotification,
+  NotificationFilters as CommunityNotificationFilters,
+  UnreadCount as CommunityUnreadCount
+} from './communityNotificationService';
+
+export { communityInvitationService } from './communityInvitationService';
+export type {
+  InvitationStatus,
+  InvitationRole,
+  CommunityInvitation,
+  SendInvitationData,
+  SendInvitationsResult,
+  AcceptInvitationResult
+} from './communityInvitationService';
+
+export { communityMembershipMessageService } from './communityMembershipMessageService';
+export type {
+  MembershipMessage,
+  MessageFilters as MembershipMessageFilters,
+  SendMessageData as MembershipSendMessageData
+} from './communityMembershipMessageService';

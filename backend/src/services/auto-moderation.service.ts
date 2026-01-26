@@ -1,0 +1,198 @@
+import dotenv from 'dotenv';
+import OpenAI from 'openai';
+import { ModerationStatus } from '../types/community-activity.types';
+
+dotenv.config();
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+// Category labels in French for user-facing messages
+const CATEGORY_LABELS: Record<string, string> = {
+    'hate': 'discours haineux',
+    'hate/threatening': 'menaces haineuses',
+    'harassment': 'harcèlement',
+    'harassment/threatening': 'harcèlement menaçant',
+    'self-harm': 'automutilation',
+    'self-harm/intent': 'intention d\'automutilation',
+    'self-harm/instructions': 'instructions d\'automutilation',
+    'sexual': 'contenu sexuel',
+    'sexual/minors': 'contenu sexuel impliquant des mineurs',
+    'violence': 'violence',
+    'violence/graphic': 'violence graphique',
+};
+
+// Field labels in French for error messages
+const FIELD_LABELS: Record<string, string> = {
+    'name': 'nom',
+    'display_name': 'nom d\'affichage',
+    'displayName': 'nom d\'affichage',
+    'title': 'titre',
+    'description': 'description',
+    'bio': 'bio',
+    'summary': 'résumé',
+    'requirements': 'prérequis',
+    'nice_to_have': 'atouts',
+    'rules': 'règles',
+    'content': 'contenu',
+    'notes': 'notes',
+    'answers': 'réponses',
+};
+
+export interface ModerationResult {
+    status: ModerationStatus;
+    reason?: string;
+    flaggedField?: string;
+}
+
+export class AutoModerationService {
+    private openai: OpenAI | null = null;
+
+    constructor() {
+        if (!OPENAI_API_KEY) {
+            console.warn('⚠️ OPENAI_API_KEY is not set. Auto-moderation will be disabled (always APPROVED).');
+        } else {
+            this.openai = new OpenAI({ 
+                apiKey: OPENAI_API_KEY,
+                timeout: 3000, // 3 second timeout for all requests
+            });
+        }
+    }
+
+    /**
+     * Screen content using OpenAI's dedicated Moderation API
+     * - Free to use
+     * - Fast (~200ms)
+     * - Highly accurate for detecting harmful content
+     * - Timeout: 3 seconds (fails open on timeout)
+     */
+    async screenContent(content: string): Promise<ModerationResult> {
+        if (!this.openai) {
+            return { status: 'APPROVED' };
+        }
+
+        // Skip empty content
+        if (!content || content.trim().length === 0) {
+            return { status: 'APPROVED' };
+        }
+
+        try {
+            // Add timeout to prevent long delays (3 seconds max)
+            const MODERATION_TIMEOUT_MS = 3000;
+            const timeoutPromise = new Promise<ModerationResult>((_, reject) => {
+                setTimeout(() => {
+                    reject(new Error('Moderation API timeout'));
+                }, MODERATION_TIMEOUT_MS);
+            });
+
+            const moderationPromise = this.openai.moderations.create({
+                model: 'omni-moderation-latest',
+                input: content,
+            }).then(response => {
+                const result = response.results[0];
+
+                if (result.flagged) {
+                    // Get flagged categories
+                    const flaggedCategories: string[] = [];
+                    const categories = result.categories as unknown as Record<string, boolean>;
+                    
+                    for (const [category, isFlagged] of Object.entries(categories)) {
+                        if (isFlagged) {
+                            flaggedCategories.push(CATEGORY_LABELS[category] || category);
+                        }
+                    }
+
+                    const reason = flaggedCategories.length > 0
+                        ? `Contenu inapproprié détecté: ${flaggedCategories.join(', ')}`
+                        : 'Contenu inapproprié détecté';
+
+                    console.log(`[Moderation] FLAGGED: "${content.substring(0, 50)}..." - ${reason}`);
+
+                    return { status: 'FLAGGED' as ModerationStatus, reason };
+                }
+
+                return { status: 'APPROVED' as ModerationStatus };
+            });
+
+            // Race between moderation and timeout
+            const result = await Promise.race([moderationPromise, timeoutPromise]);
+            return result;
+
+        } catch (error) {
+            // Handle timeout or other errors
+            if (error instanceof Error && error.message === 'Moderation API timeout') {
+                console.warn(`[Moderation] Timeout after 3s for content: "${content.substring(0, 50)}..." - Approving content`);
+            } else {
+                console.error('[Moderation] Error:', error);
+            }
+            // Fail open: approve content but log the error
+            // In production, you might want to fail closed (PENDING for manual review)
+            return { status: 'APPROVED' };
+        }
+    }
+
+    /**
+     * Screen multiple fields at once for efficiency
+     * Returns on first flagged field to provide specific feedback
+     * 
+     * @param fields - Object with field names as keys and content as values
+     * @returns ModerationResult with flaggedField if any field is flagged
+     */
+    async screenMultipleFields(fields: Record<string, string | undefined | null>): Promise<ModerationResult> {
+        if (!this.openai) {
+            return { status: 'APPROVED' };
+        }
+
+        // Filter out empty fields
+        const fieldsToCheck = Object.entries(fields).filter(
+            ([_, value]) => value && typeof value === 'string' && value.trim().length > 0
+        );
+
+        if (fieldsToCheck.length === 0) {
+            return { status: 'APPROVED' };
+        }
+
+        // For efficiency, combine all content and check once first
+        const combinedContent = fieldsToCheck.map(([_, value]) => value).join('\n---\n');
+        const quickCheck = await this.screenContent(combinedContent);
+
+        // If combined content is approved, all fields are approved
+        if (quickCheck.status === 'APPROVED') {
+            return { status: 'APPROVED' };
+        }
+
+        // If flagged, check each field individually to identify which one
+        for (const [fieldName, content] of fieldsToCheck) {
+            const result = await this.screenContent(content!);
+            if (result.status === 'FLAGGED') {
+                const fieldLabel = FIELD_LABELS[fieldName] || fieldName;
+                return {
+                    status: 'FLAGGED',
+                    reason: `Le champ "${fieldLabel}" contient du contenu inapproprié: ${result.reason}`,
+                    flaggedField: fieldName,
+                };
+            }
+        }
+
+        // Fallback (shouldn't reach here normally)
+        return quickCheck;
+    }
+
+    /**
+     * Helper to throw an error if content is flagged
+     * Use this in routes to simplify moderation checks
+     */
+    async assertContentApproved(fields: Record<string, string | undefined | null>): Promise<void> {
+        const result = await this.screenMultipleFields(fields);
+        if (result.status === 'FLAGGED') {
+            const error = new Error(result.reason || 'Contenu inapproprié détecté') as Error & { 
+                code: string; 
+                flaggedField?: string;
+            };
+            error.code = 'CONTENT_MODERATION_FAILED';
+            error.flaggedField = result.flaggedField;
+            throw error;
+        }
+    }
+}
+
+export const autoModerationService = new AutoModerationService();

@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Etudesk",
+    "slug": "etudesk",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "etudesk",
+    "icon": "./assets/etudesk_squared_icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/etudesk_logo_blue.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.etudesk.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/etudesk_squared_icon.png",
+        "backgroundColor": "#2F4ABF"
+      },
+      "package": "com.etudesk.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/etudesk_squared_icon.png",
+          "color": "#2F4ABF",
+          "sounds": []
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Etudesk a besoin d'accéder à vos photos pour mettre à jour votre photo de profil.",
+          "cameraPermission": "Etudesk a besoin d'accéder à votre caméra pour prendre une photo de profil."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Etudesk a besoin d'accéder à votre localisation pour remplir automatiquement votre adresse.",
+          "locationWhenInUsePermission": "Etudesk a besoin d'accéder à votre localisation pour remplir automatiquement votre adresse."
+        }
+      ],
+      "expo-localization",
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsDownloadToken": "pk.eyJ1IjoibGFtaW5lYmFycm8iLCJhIjoiY20zZHMzOW9zMDc5dzJsczgwdWVoZ2NqYyJ9.3baMsQ3_mpKlnBdHCeu0kg"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
