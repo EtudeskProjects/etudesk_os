@@ -25,7 +25,7 @@ import {
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ExpoCalendar from 'expo-calendar';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { formatRelativeTime, formatDate, formatTime } from '../../utils/date';
 
@@ -173,7 +173,7 @@ export function ChatMessage({
     const parts = content.split(URL_REGEX);
 
     return (
-      <Text style={[styles.messageText, { color: isMe ? COLORS.white : colors.textPrimary }]}>
+      <Text style={[styles.messageText, { color: isMe ? colors.textOnPrimary : colors.textPrimary }]}>
         {parts.map((part, index) => {
           if (URL_REGEX.test(part)) {
             // Reset regex lastIndex
@@ -213,7 +213,7 @@ export function ChatMessage({
       {renderContent()}
 
       {/* Attachments */}
-      {attachments.length > 0 && (
+      {attachments && attachments.length > 0 && (
         <View style={styles.attachmentsContainer}>
           {attachments.map((attachment, index) => {
             const FileIcon = getFileIcon(attachment.type);
@@ -228,12 +228,12 @@ export function ChatMessage({
               >
                 <FileIcon
                   size={16}
-                  color={isMe ? COLORS.white : colors.primary}
+                  color={isMe ? colors.textOnPrimary : colors.primary}
                   strokeWidth={ICON.strokeWidth}
                 />
                 <View style={styles.attachmentInfo}>
                   <Text
-                    style={[styles.attachmentName, { color: isMe ? COLORS.white : colors.textPrimary }]}
+                    style={[styles.attachmentName, { color: isMe ? colors.textOnPrimary : colors.textPrimary }]}
                     numberOfLines={1}
                     ellipsizeMode="middle"
                   >
@@ -261,7 +261,7 @@ export function ChatMessage({
         >
           <CalendarIcon
             size={16}
-            color={isMe ? COLORS.white : colors.primary}
+            color={isMe ? colors.textOnPrimary : colors.primary}
             strokeWidth={ICON.strokeWidth}
           />
           <View style={styles.datetimeInfo}>
@@ -270,13 +270,13 @@ export function ChatMessage({
                 {DATETIME_TYPE_LABELS[datetimeType] || 'Créneau proposé'}
               </Text>
             )}
-            <Text style={[styles.datetimeText, { color: isMe ? COLORS.white : colors.primary }]}>
+            <Text style={[styles.datetimeText, { color: isMe ? colors.textOnPrimary : colors.primary }]}>
               {formatDate(proposedDatetime)} à {formatTime(proposedDatetime)}
             </Text>
           </View>
           <Plus
             size={16}
-            color={isMe ? COLORS.white : colors.primary}
+            color={isMe ? colors.textOnPrimary : colors.primary}
             strokeWidth={ICON.strokeWidth}
           />
         </TouchableOpacity>

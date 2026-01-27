@@ -1,19 +1,20 @@
 /**
  * Bookmark Service
- * Handles bookmark operations for opportunities, hubs, and communities
+ * Handles bookmark operations for opportunities, spaces, and communities
  */
 
 import { api, ApiResponse } from './api';
-import type { Opportunity, Hub, Community } from '../types/models';
+import type { Opportunity, Community } from '../types/models';
+import type { Space } from './spaceService';
 
-export type EntityType = 'opportunities' | 'hubs' | 'communities';
+export type EntityType = 'opportunities' | 'spaces' | 'communities';
 
 export interface BookmarkedOpportunity extends Opportunity {
   bookmarked_at: string;
   notes?: string;
 }
 
-export interface BookmarkedHub extends Hub {
+export interface BookmarkedSpace extends Space {
   bookmarked_at: string;
   notes?: string;
 }
@@ -25,7 +26,7 @@ export interface BookmarkedCommunity extends Community {
 
 export interface BookmarkIdsResponse {
   opportunities: string[];
-  hubs: string[];
+  spaces: string[];
   communities: string[];
 }
 
@@ -98,45 +99,45 @@ class BookmarkService {
   }
 
   // ============================================================================
-  // HUBS
+  // SPACES
   // ============================================================================
 
   /**
-   * Get all bookmarked hubs
+   * Get all bookmarked spaces
    */
-  async getHubs(params?: { limit?: number; offset?: number }): Promise<ApiResponse<BookmarkedHub[]>> {
-    return api.get<BookmarkedHub[]>('/api/bookmarks/hubs', params);
+  async getSpaces(params?: { limit?: number; offset?: number }): Promise<ApiResponse<BookmarkedSpace[]>> {
+    return api.get<BookmarkedSpace[]>('/api/bookmarks/spaces', params);
   }
 
   /**
-   * Get hub bookmark IDs
+   * Get space bookmark IDs
    */
-  async getHubIds(): Promise<ApiResponse<string[]>> {
-    return api.get<string[]>('/api/bookmarks/hubs/ids');
+  async getSpaceIds(): Promise<ApiResponse<string[]>> {
+    return api.get<string[]>('/api/bookmarks/spaces/ids');
   }
 
   /**
-   * Add a hub to bookmarks
+   * Add a space to bookmarks
    */
-  async addHub(id: string): Promise<ApiResponse<BookmarkToggleResponse>> {
-    return api.post<BookmarkToggleResponse>(`/api/bookmarks/hubs/${id}`, {});
+  async addSpace(id: string): Promise<ApiResponse<BookmarkToggleResponse>> {
+    return api.post<BookmarkToggleResponse>(`/api/bookmarks/spaces/${id}`, {});
   }
 
   /**
-   * Remove a hub from bookmarks
+   * Remove a space from bookmarks
    */
-  async removeHub(id: string): Promise<ApiResponse<BookmarkToggleResponse>> {
-    return api.delete<BookmarkToggleResponse>(`/api/bookmarks/hubs/${id}`);
+  async removeSpace(id: string): Promise<ApiResponse<BookmarkToggleResponse>> {
+    return api.delete<BookmarkToggleResponse>(`/api/bookmarks/spaces/${id}`);
   }
 
   /**
-   * Toggle hub bookmark
+   * Toggle space bookmark
    */
-  async toggleHub(id: string, isCurrentlyBookmarked: boolean): Promise<ApiResponse<BookmarkToggleResponse>> {
+  async toggleSpace(id: string, isCurrentlyBookmarked: boolean): Promise<ApiResponse<BookmarkToggleResponse>> {
     if (isCurrentlyBookmarked) {
-      return this.removeHub(id);
+      return this.removeSpace(id);
     }
-    return this.addHub(id);
+    return this.addSpace(id);
   }
 
   // ============================================================================
@@ -196,8 +197,8 @@ class BookmarkService {
     switch (entityType) {
       case 'opportunities':
         return this.toggleOpportunity(id, isCurrentlyBookmarked);
-      case 'hubs':
-        return this.toggleHub(id, isCurrentlyBookmarked);
+      case 'spaces':
+        return this.toggleSpace(id, isCurrentlyBookmarked);
       case 'communities':
         return this.toggleCommunity(id, isCurrentlyBookmarked);
       default:
@@ -212,8 +213,8 @@ class BookmarkService {
     switch (entityType) {
       case 'opportunities':
         return this.getOpportunityIds();
-      case 'hubs':
-        return this.getHubIds();
+      case 'spaces':
+        return this.getSpaceIds();
       case 'communities':
         return this.getCommunityIds();
       default:

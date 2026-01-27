@@ -143,7 +143,7 @@
     "prompts": {
       "explore": {
         "opportunities": "What opportunities match my profile?",
-        "hubs": "What hubs are available in Abidjan?",
+        "spaces": "What spaces are available in Abidjan?",
         "communities": "Recommend me some tech communities"
       },
       "study": {
@@ -158,7 +158,7 @@
     "title": "Explore",
     "categories": {
       "opportunities": "Opportunities",
-      "hubs": "Hubs",
+      "spaces": "Spaces",
       "communities": "Communities"
     },
     "filters": "Filters",
@@ -208,7 +208,7 @@
     "nodes": {
       "opportunities": "Opportunities",
       "communities": "Communities",
-      "hubs": "Hubs",
+      "spaces": "Spaces",
       "documents": "Documents"
     }
   },
@@ -472,8 +472,7 @@
       "coworking": "Coworking",
       "incubator": "Incubator",
       "accelerator": "Accelerator",
-      "lab": "Lab",
-      "hub": "Hub"
+      "lab": "Lab"
     }
   },
   "community": {

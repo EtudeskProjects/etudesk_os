@@ -21,7 +21,7 @@ import {
   X,
   UserPlus,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useOrganizationMembers } from '../../../src/contexts/OrganizationMemberContext';
 import {
@@ -179,10 +179,10 @@ export default function InvitationDetailScreen() {
               {isExpired
                 ? 'Expirée'
                 : daysRemaining > 1
-                ? `Expire dans ${daysRemaining} jours`
-                : daysRemaining === 1
-                ? 'Expire demain'
-                : 'Expire aujourd\'hui'}
+                  ? `Expire dans ${daysRemaining} jours`
+                  : daysRemaining === 1
+                    ? 'Expire demain'
+                    : 'Expire aujourd\'hui'}
             </Text>
           </View>
 
@@ -241,7 +241,7 @@ export default function InvitationDetailScreen() {
             onPress={handleResend}
             disabled={isResending}
           >
-            <RefreshCw size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+            <RefreshCw size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
             <Text style={styles.actionButtonText}>
               {isResending ? 'Envoi...' : 'Renvoyer l\'invitation'}
             </Text>
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
 
   cancelButton: {

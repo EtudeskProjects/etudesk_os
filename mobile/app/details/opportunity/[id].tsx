@@ -22,8 +22,9 @@ import {
   Download,
   FileText,
   X,
+  Settings,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -371,7 +372,7 @@ export default function OpportunityDetailScreen() {
               <Image source={{ uri: opportunity.organization.logo_url }} style={styles.orgLogo} />
             ) : (
               <View style={[styles.orgLogoPlaceholder, { backgroundColor: colors.primary }]}>
-                <Text style={styles.orgLogoText}>
+                <Text style={[styles.orgLogoText, { color: colors.textOnPrimary }]}>
                   {getInitials(opportunity.organization?.name || '')}
                 </Text>
               </View>
@@ -382,7 +383,7 @@ export default function OpportunityDetailScreen() {
                   {opportunity.organization?.name}
                 </Text>
                 {opportunity.organization?.verification_status === 'VERIFIED' && (
-                  <CheckCircle size={ICON.size.sm} color={COLORS.success} fill={COLORS.success} strokeWidth={0} />
+                  <CheckCircle size={ICON.size.sm} color={colors.success} fill={colors.success} strokeWidth={0} />
                 )}
               </View>
               <View style={styles.orgTagsRow}>
@@ -486,7 +487,7 @@ export default function OpportunityDetailScreen() {
                 <Calendar size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                 <View>
                   <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('opportunity.deadline')}</Text>
-                  <Text style={[styles.metaValue, deadline?.isUrgent && styles.urgentText, { color: deadline?.isUrgent ? COLORS.error : colors.textPrimary }]}>
+                  <Text style={[styles.metaValue, deadline?.isUrgent && styles.urgentText, { color: deadline?.isUrgent ? colors.error : colors.textPrimary }]}>
                     {opportunity.deadline ? formatDate(opportunity.deadline) : '-'}
                   </Text>
                 </View>
@@ -725,10 +726,11 @@ export default function OpportunityDetailScreen() {
         <View style={styles.ctaContainer}>
           {canManageOpportunity ? (
             <Button
-              title="Gérer cette opportunité"
+              title="Gerer l'opportunite"
               onPress={() => router.push(`/gestion/opportunities/applications/${id}` as any)}
               fullWidth
               variant="outline"
+              icon={<Settings size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
             />
           ) : currentSpace !== 'organization' ? (
             <Button
@@ -736,6 +738,7 @@ export default function OpportunityDetailScreen() {
               onPress={handleApply}
               fullWidth
               variant={hasApplied ? 'outline' : 'primary'}
+              icon={<Briefcase size={ICON.size.md} color={hasApplied ? colors.primary : colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
             />
           ) : null}
         </View>
@@ -929,7 +932,6 @@ const styles = StyleSheet.create({
   },
 
   orgLogoText: {
-    color: COLORS.white,
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
@@ -980,7 +982,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: TYPOGRAPHY.fontSize.xxl,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
 
   slugContainer: {
@@ -1003,6 +1005,8 @@ const styles = StyleSheet.create({
   },
 
   tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
     borderRadius: BORDER.radius.xs,
@@ -1136,20 +1140,20 @@ const styles = StyleSheet.create({
   attachmentImage: {
     width: '100%',
     height: 300,
-    backgroundColor: COLORS.gray100,
+    // backgroundColor set dynamically via inline styles
   },
 
   attachmentPreviewContainer: {
     borderRadius: BORDER.radius.sm,
     overflow: 'hidden',
     borderWidth: BORDER.width.thin,
-    borderColor: COLORS.gray200,
+    // borderColor set dynamically via inline styles
     marginTop: SPACING.sm,
   },
 
   attachmentWebView: {
     height: 400,
-    backgroundColor: COLORS.gray100,
+    // backgroundColor set dynamically via inline styles
   },
 
   attachmentLoading: {
@@ -1160,7 +1164,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.gray50,
+    // backgroundColor set dynamically via inline styles
   },
 
   attachmentLoadingText: {
@@ -1187,7 +1191,7 @@ const styles = StyleSheet.create({
   attachmentOtherContainer: {
     padding: SPACING.md,
     borderRadius: BORDER.radius.sm,
-    backgroundColor: COLORS.gray50,
+    // backgroundColor set dynamically via inline styles
     marginTop: SPACING.sm,
   },
 
@@ -1250,7 +1254,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.gray50,
+    // backgroundColor set dynamically via inline styles
   },
 
   attachmentModalLoadingText: {

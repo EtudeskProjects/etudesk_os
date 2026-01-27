@@ -14,7 +14,7 @@ const router = Router();
 // Valid roles (synchronized with mobile)
 // OWNER: Full control (implicit)
 // ADMIN: Can do everything except delete organization
-// MANAGER: Can manage opportunities, communities, hubs (CRUD)
+// MANAGER: Can manage opportunities, communities, spaces (CRUD)
 // OBSERVATEUR: Can only view (read-only)
 const VALID_ROLES = ['OWNER', 'ADMIN', 'MANAGER', 'OBSERVATEUR'];
 

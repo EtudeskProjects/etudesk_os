@@ -25,6 +25,7 @@ import {
   FileText,
   Image as ImageIcon,
   Eye,
+  Lock,
   Upload,
   X,
   Plus,
@@ -39,8 +40,8 @@ import {
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
-import { Input, Button, Toggle } from '../../../src/components/ui';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../src/constants/theme';
+import { Input, Button, Toggle, StepIndicator } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
 import { SECTOR_DATA } from '../../../src/constants/talent';
@@ -51,6 +52,7 @@ import {
   LOCATION_TYPE_DATA,
   COMPENSATION_FREQUENCY_DATA,
   CURRENCY_DATA,
+  OPPORTUNITY_VISIBILITY_DATA,
   generateOpportunitySlug,
 } from '../../../src/constants/opportunity';
 import {
@@ -65,6 +67,7 @@ import {
   LOCATION_TYPE_LABELS,
   COMPENSATION_FREQUENCY_LABELS,
   ApplicationQuestion,
+  Visibility,
 } from '../../../src/types/models';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { opportunityService, CreateOpportunityData, imageService } from '../../../src/services';
@@ -140,6 +143,7 @@ export default function CreateOpportunityScreen() {
   const COUNTRY_CHIP_WIDTH = 80; // Approximate width of each country chip
 
   // Form state - Conditions
+  const [visibility, setVisibility] = useState<Visibility>('PUBLIC');
   const [contractType, setContractType] = useState<ContractType | null>(null);
   const [workRhythm, setWorkRhythm] = useState<WorkRhythm | null>(null);
   const [compensationMin, setCompensationMin] = useState('');
@@ -473,6 +477,8 @@ export default function CreateOpportunityScreen() {
     // Application settings
     cv_required: cvRequired,
     application_questions: applicationQuestions.filter(q => q.question.trim().length > 0),
+    // Visibility
+    visibility,
   });
 
   const handleSaveDraft = async () => {
@@ -569,43 +575,13 @@ export default function CreateOpportunityScreen() {
       .join(', ');
   };
 
-  const renderStepIndicator = () => (
-    <View style={styles.stepIndicator}>
-      {STEPS.map((step, index) => {
-        const isCompleted = STEPS.indexOf(currentStep) > index;
-        const isCurrent = currentStep === step;
-
-        return (
-          <View key={step} style={styles.stepItem}>
-            <View
-              style={[
-                styles.stepDot,
-                { backgroundColor: colors.gray200 },
-                (isCurrent || isCompleted) && { backgroundColor: colors.primary },
-              ]}
-            >
-              {isCompleted ? (
-                <Check size={12} color={COLORS.white} strokeWidth={ICON.strokeWidth + 0.5} />
-              ) : (
-                <Text style={[styles.stepNumber, isCurrent && { color: COLORS.white }]}>
-                  {index + 1}
-                </Text>
-              )}
-            </View>
-            <Text
-              style={[
-                styles.stepLabel,
-                { color: colors.gray500 },
-                isCurrent && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold },
-              ]}
-            >
-              {STEP_TITLES[step]}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  );
+  const renderStepIndicator = () => {
+    const stepsData = STEPS.map(step => ({
+      id: step,
+      label: STEP_TITLES[step],
+    }));
+    return <StepIndicator steps={stepsData} currentStepId={currentStep} />;
+  };
 
   const renderInfoStep = () => (
     <View style={styles.stepContent}>
@@ -674,9 +650,9 @@ export default function CreateOpportunityScreen() {
               activeOpacity={0.8}
             >
               {isGenerating ? (
-                <ActivityIndicator size="small" color={COLORS.white} />
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
               ) : (
-                <Wand2 size={16} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+                <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
               )}
               <Text style={styles.generateButtonText}>
                 {isGenerating ? 'Suggestion...' : 'Suggérer'}
@@ -822,7 +798,7 @@ export default function CreateOpportunityScreen() {
                   </Text>
                   {isSelected && (
                     <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={COLORS.white} strokeWidth={3} />
+                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -864,7 +840,7 @@ export default function CreateOpportunityScreen() {
                         style={[
                           styles.optionChipText,
                           { color: colors.gray700 },
-                          isSelected && { color: COLORS.white },
+                          isSelected && { color: colors.textOnPrimary },
                         ]}
                       >
                         {c.label}
@@ -904,7 +880,7 @@ export default function CreateOpportunityScreen() {
                           style={[
                             styles.optionChipText,
                             { color: colors.gray700 },
-                            isSelected && { color: COLORS.white },
+                            isSelected && { color: colors.textOnPrimary },
                           ]}
                         >
                           {r.label}
@@ -942,7 +918,7 @@ export default function CreateOpportunityScreen() {
                           style={[
                             styles.optionChipText,
                             { color: colors.gray700 },
-                            isSelected && { color: COLORS.white },
+                            isSelected && { color: colors.textOnPrimary },
                           ]}
                         >
                           {c.label}
@@ -1096,7 +1072,7 @@ export default function CreateOpportunityScreen() {
                     style={[
                       styles.optionChipText,
                       { color: colors.gray700 },
-                      isSelected && { color: COLORS.white },
+                      isSelected && { color: colors.textOnPrimary },
                     ]}
                   >
                     {c.symbol}
@@ -1134,6 +1110,50 @@ export default function CreateOpportunityScreen() {
                   >
                     {freq.label}
                   </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Visibility */}
+        <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
+        <View style={styles.fieldContainer}>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Visibilité *</Text>
+          <View style={styles.locationTypeRow}>
+            {OPPORTUNITY_VISIBILITY_DATA.map((type) => {
+              const isSelected = visibility === type.id;
+              const IconComponent = type.id === 'PUBLIC' ? Eye : type.id === 'PRIVATE' ? Lock : Eye;
+              return (
+                <TouchableOpacity
+                  key={type.id}
+                  style={[
+                    styles.locationTypeCard,
+                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
+                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                  ]}
+                  onPress={() => setVisibility(type.id)}
+                  activeOpacity={0.7}
+                >
+                  <IconComponent
+                    size={24}
+                    color={isSelected ? colors.primary : colors.gray500}
+                    strokeWidth={ICON.strokeWidth}
+                  />
+                  <Text
+                    style={[
+                      styles.locationTypeLabel,
+                      { color: colors.textPrimary },
+                      isSelected && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold },
+                    ]}
+                  >
+                    {type.label}
+                  </Text>
+                  {isSelected && (
+                    <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
+                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
+                    </View>
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -1358,7 +1378,7 @@ export default function CreateOpportunityScreen() {
                       style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
                       onPress={() => removeImage(image.id)}
                     >
-                      <X size={14} color={COLORS.white} strokeWidth={2.5} />
+                      <X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -1688,7 +1708,7 @@ export default function CreateOpportunityScreen() {
                 onPress={handlePublish}
                 disabled={isSubmitting}
                 fullWidth
-                icon={<Send size={18} color={COLORS.white} strokeWidth={ICON.strokeWidth} />}
+                icon={<Send size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
                 iconPosition="right"
               />
             </View>
@@ -1717,7 +1737,7 @@ export default function CreateOpportunityScreen() {
               onPress={handleNext}
               disabled={!canProceed()}
               fullWidth
-              icon={<ChevronRight size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />}
+              icon={<ChevronRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
               iconPosition="right"
             />
           </View>
@@ -1827,7 +1847,6 @@ const styles = StyleSheet.create({
   stepNumber: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.white,
   },
 
   stepLabel: {
@@ -1934,7 +1953,7 @@ const styles = StyleSheet.create({
   generateButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
 
   textAreaContainer: {
@@ -2209,6 +2228,7 @@ const styles = StyleSheet.create({
 
   footerButtons: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: SPACING.md,
   },
 
@@ -2377,7 +2397,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.xs,
-    paddingVertical: SPACING.md,
+    height: LAYOUT.buttonHeight,
     paddingHorizontal: SPACING.md,
     borderWidth: 1.5,
     borderRadius: BORDER.radius.sm,

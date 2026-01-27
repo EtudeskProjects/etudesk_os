@@ -86,9 +86,33 @@ async function verifyOTP(email: string, code: string): Promise<VerifyOTPResult> 
     }
 
     if (data.success && data.tokens) {
-      // Store tokens
+      // Validate tokens before storing
+      if (!data.tokens.accessToken || !data.tokens.refreshToken) {
+        logger.error(LOG_SOURCE, 'Invalid tokens received from server', {
+          hasAccessToken: !!data.tokens.accessToken,
+          hasRefreshToken: !!data.tokens.refreshToken,
+        });
+        return { success: false, needsOnboarding: false };
+      }
+
+      // Clear any existing tokens first to ensure clean state
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.ACCESS_TOKEN,
+        STORAGE_KEYS.REFRESH_TOKEN,
+        STORAGE_KEYS.USER,
+      ]);
+
+      // Store new tokens
       await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.tokens.accessToken);
       await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.tokens.refreshToken);
+
+      // Verify tokens were stored correctly
+      const storedRefresh = await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+      if (!storedRefresh) {
+        logger.error(LOG_SOURCE, 'Failed to store refresh token');
+        return { success: false, needsOnboarding: false };
+      }
+      logger.debug(LOG_SOURCE, 'Tokens stored successfully');
 
       // Store user info with needsOnboarding flag
       if (data.user) {
@@ -160,12 +184,14 @@ async function logout(allDevices: boolean = false): Promise<void> {
     // Continue with local logout even if API fails
   }
 
-  // Always clear local storage
+  // Clear auth-related storage keys
   await AsyncStorage.multiRemove([
     STORAGE_KEYS.ACCESS_TOKEN,
     STORAGE_KEYS.REFRESH_TOKEN,
     STORAGE_KEYS.USER,
+    STORAGE_KEYS.ONBOARDING_SEEN,
   ]);
+  logger.info(LOG_SOURCE, 'Cleared auth storage keys on logout');
 }
 
 /**

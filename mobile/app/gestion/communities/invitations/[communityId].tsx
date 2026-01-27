@@ -31,7 +31,7 @@ import {
   Users,
   Search,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Button } from '../../../../src/components/ui';
 import {
@@ -247,7 +247,7 @@ export default function CommunityInvitationsScreen() {
           style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => setShowInviteModal(true)}
         >
-          <Plus size={20} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+          <Plus size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
         </TouchableOpacity>
       </View>
 
@@ -276,7 +276,7 @@ export default function CommunityInvitationsScreen() {
               <Text
                 style={[
                   styles.tabText,
-                  { color: isActive ? COLORS.white : colors.textSecondary },
+                  { color: isActive ? colors.textOnPrimary : colors.textSecondary },
                 ]}
               >
                 {tab.label}
@@ -289,7 +289,7 @@ export default function CommunityInvitationsScreen() {
                   ]}
                 >
                   <Text
-                    style={[styles.tabBadgeText, { color: isActive ? COLORS.white : COLORS.white }]}
+                    style={[styles.tabBadgeText, { color: colors.textOnPrimary }]}
                   >
                     {count}
                   </Text>
@@ -317,7 +317,7 @@ export default function CommunityInvitationsScreen() {
             title="Envoyer une invitation"
             onPress={() => setShowInviteModal(true)}
             variant="primary"
-            icon={<Plus size={18} color={COLORS.white} />}
+            icon={<Plus size={18} color={colors.textOnPrimary} />}
             style={{ marginTop: SPACING.lg }}
           />
         </View>
@@ -469,7 +469,7 @@ export default function CommunityInvitationsScreen() {
                     <Text
                       style={[
                         styles.roleOptionText,
-                        { color: inviteRole === option.key ? COLORS.white : colors.textPrimary },
+                        { color: inviteRole === option.key ? colors.textOnPrimary : colors.textPrimary },
                       ]}
                     >
                       {option.label}
@@ -508,7 +508,7 @@ export default function CommunityInvitationsScreen() {
                 variant="primary"
                 loading={isSending}
                 disabled={!inviteEmail}
-                icon={<Send size={18} color={COLORS.white} />}
+                icon={<Send size={18} color={colors.textOnPrimary} />}
                 style={{ flex: 1 }}
               />
             </View>
@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     gap: SPACING.md,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: COLORS.gray200,
+    borderTopColor: '#E5E7EB',
   },
 
   actionButton: {
@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: SPACING.lg,
     borderBottomWidth: BORDER.width.thin,
-    borderBottomColor: COLORS.gray200,
+    borderBottomColor: '#E5E7EB',
   },
 
   modalTitle: {
@@ -781,6 +781,6 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     padding: SPACING.lg,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: COLORS.gray200,
+    borderTopColor: '#E5E7EB',
   },
 });

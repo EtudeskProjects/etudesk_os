@@ -19,7 +19,7 @@ import {
   ChevronRight,
   Inbox,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { FooterNav } from '../../../src/components/ui';
 import { applicationService } from '../../../src/services';
@@ -28,12 +28,12 @@ import type { Application, ApplicationStatus } from '../../../src/types/models';
 import { APPLICATION_STATUS_LABELS } from '../../../src/types/models';
 
 // Status configuration - Simplified to 4 statuses
-const STATUS_CONFIG: Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> = {
-  SUBMITTED: { color: COLORS.warning, icon: Clock, bgColor: COLORS.warning + '15' },
-  IN_REVIEW: { color: COLORS.info, icon: Eye, bgColor: COLORS.info + '15' },
-  ACCEPTED: { color: COLORS.success, icon: CheckCircle2, bgColor: COLORS.success + '15' },
-  REJECTED: { color: COLORS.error, icon: XCircle, bgColor: COLORS.error + '15' },
-};
+const getStatusConfig = (colors: any): Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> => ({
+  SUBMITTED: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15' },
+  IN_REVIEW: { color: colors.info, icon: Eye, bgColor: colors.info + '15' },
+  ACCEPTED: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15' },
+  REJECTED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15' },
+});
 
 type FilterStatus = 'all' | ApplicationStatus;
 
@@ -107,7 +107,7 @@ export default function MyApplicationsScreen() {
           style={[
             styles.filterChipText,
             { color: colors.gray700 },
-            isActive && { color: COLORS.white },
+            isActive && { color: colors.textOnPrimary },
           ]}
         >
           {label} ({count})
@@ -117,7 +117,7 @@ export default function MyApplicationsScreen() {
   };
 
   const renderApplicationItem = ({ item }: { item: Application }) => {
-    const statusConfig = STATUS_CONFIG[item.status];
+    const statusConfig = getStatusConfig(colors)[item.status];
     const StatusIcon = statusConfig.icon;
 
     return (
@@ -173,7 +173,7 @@ export default function MyApplicationsScreen() {
           style={[styles.exploreButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/(tabs)/explore')}
         >
-          <Text style={styles.exploreButtonText}>Explorer les opportunités</Text>
+          <Text style={[styles.exploreButtonText, { color: colors.textOnPrimary }]}>Explorer les opportunités</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -191,7 +191,7 @@ export default function MyApplicationsScreen() {
       </View>
 
       {/* Filters */}
-      <View style={styles.filtersContainer}>
+      <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
         <FlatList
           horizontal
           data={[
@@ -270,7 +270,6 @@ const styles = StyleSheet.create({
   filtersContainer: {
     paddingVertical: SPACING.sm,
     borderBottomWidth: BORDER.width.thin,
-    borderBottomColor: COLORS.gray200,
   },
 
   filtersContent: {
@@ -394,7 +393,6 @@ const styles = StyleSheet.create({
   },
 
   exploreButtonText: {
-    color: COLORS.white,
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },

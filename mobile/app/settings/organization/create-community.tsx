@@ -39,8 +39,8 @@ import {
   Calendar,
   BarChart2,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
-import { Input, Button, Toggle } from '../../../src/components/ui';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../src/constants/theme';
+import { Input, Button, Toggle, StepIndicator } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
 import {
@@ -50,16 +50,15 @@ import {
   MAX_COMMUNITY_TAGS,
   MAX_MEMBERSHIP_QUESTIONS,
 } from '../../../src/constants/community';
-import { SECTOR_DATA, MAX_SECTORS } from '../../../src/constants/talent';
 import { CURRENCY_DATA } from '../../../src/constants/opportunity';
 import {
   CommunityType,
   Visibility,
   COMMUNITY_TYPE_LABELS,
   VISIBILITY_LABELS,
-  Sector,
   ApplicationQuestion,
 } from '../../../src/types/models';
+import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../../src/constants/talent';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { communityService, CreateCommunityData, imageService, organizationService, MemberPermissions, DEFAULT_MEMBER_PERMISSIONS } from '../../../src/services';
 
@@ -259,7 +258,7 @@ export default function CreateCommunityScreen() {
         // Apply generated data to form fields
         if (data.suggested_name) setName(data.suggested_name);
         if (data.description) setDescription(data.description);
-        
+
         // Tags - apply up to 3 tags
         if (data.tags && data.tags.length > 0) {
           setSelectedTags(data.tags.slice(0, MAX_COMMUNITY_TAGS));
@@ -272,7 +271,7 @@ export default function CreateCommunityScreen() {
 
         if (data.rules) setRules(data.rules);
         if (data.visibility) setVisibility(data.visibility);
-        
+
         // Pricing
         if (data.is_paid !== undefined) setIsPaid(data.is_paid);
         if (data.monthly_price) setMonthlyPrice(Math.floor(data.monthly_price).toString());
@@ -486,43 +485,13 @@ export default function CreateCommunityScreen() {
     return currency?.symbol || currencyId;
   };
 
-  const renderStepIndicator = () => (
-    <View style={styles.stepIndicator}>
-      {STEPS.map((step, index) => {
-        const isCompleted = STEPS.indexOf(currentStep) > index;
-        const isCurrent = currentStep === step;
-
-        return (
-          <View key={step} style={styles.stepItem}>
-            <View
-              style={[
-                styles.stepDot,
-                { backgroundColor: colors.gray200 },
-                (isCurrent || isCompleted) && { backgroundColor: colors.primary },
-              ]}
-            >
-              {isCompleted ? (
-                <Check size={12} color={COLORS.white} strokeWidth={ICON.strokeWidth + 0.5} />
-              ) : (
-                <Text style={[styles.stepNumber, isCurrent && { color: COLORS.white }]}>
-                  {index + 1}
-                </Text>
-              )}
-            </View>
-            <Text
-              style={[
-                styles.stepLabel,
-                { color: colors.gray500 },
-                isCurrent && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold },
-              ]}
-            >
-              {STEP_TITLES[step]}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  );
+  const renderStepIndicator = () => {
+    const stepsData = STEPS.map(step => ({
+      id: step,
+      label: STEP_TITLES[step],
+    }));
+    return <StepIndicator steps={stepsData} currentStepId={currentStep} />;
+  };
 
   const renderInfoStep = () => (
     <View style={styles.stepContent}>
@@ -593,11 +562,11 @@ export default function CreateCommunityScreen() {
               activeOpacity={0.8}
             >
               {isGenerating ? (
-                <ActivityIndicator size="small" color={COLORS.white} />
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
               ) : (
-                <Wand2 size={16} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+                <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
               )}
-              <Text style={styles.generateButtonText}>
+              <Text style={[styles.generateButtonText, { color: colors.textOnPrimary }]}>
                 {isGenerating ? 'Suggestion...' : 'Suggérer'}
               </Text>
             </TouchableOpacity>
@@ -705,7 +674,7 @@ export default function CreateCommunityScreen() {
                   </Text>
                   {isSelected && (
                     <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={COLORS.white} strokeWidth={3} />
+                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -747,7 +716,7 @@ export default function CreateCommunityScreen() {
                         style={[
                           styles.optionChipText,
                           { color: colors.gray700 },
-                          isSelected && { color: COLORS.white },
+                          isSelected && { color: colors.textOnPrimary },
                         ]}
                       >
                         {c.label}
@@ -787,7 +756,7 @@ export default function CreateCommunityScreen() {
                           style={[
                             styles.optionChipText,
                             { color: colors.gray700 },
-                            isSelected && { color: COLORS.white },
+                            isSelected && { color: colors.textOnPrimary },
                           ]}
                         >
                           {r.label}
@@ -825,7 +794,7 @@ export default function CreateCommunityScreen() {
                           style={[
                             styles.optionChipText,
                             { color: colors.gray700 },
-                            isSelected && { color: COLORS.white },
+                            isSelected && { color: colors.textOnPrimary },
                           ]}
                         >
                           {c.label}
@@ -887,7 +856,7 @@ export default function CreateCommunityScreen() {
                   </Text>
                   {isSelected && (
                     <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={COLORS.white} strokeWidth={3} />
+                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -952,7 +921,7 @@ export default function CreateCommunityScreen() {
                             style={[
                               styles.optionChipText,
                               { color: colors.gray700 },
-                              isSelected && { color: COLORS.white },
+                              isSelected && { color: colors.textOnPrimary },
                             ]}
                           >
                             {c.symbol}
@@ -1026,8 +995,8 @@ export default function CreateCommunityScreen() {
             {/* Can Create Event */}
             <View style={[styles.permissionRow, { borderBottomColor: colors.gray200 }]}>
               <View style={styles.permissionInfo}>
-                <View style={[styles.permissionIconBox, { backgroundColor: COLORS.warning + '15' }]}>
-                  <Calendar size={18} color={COLORS.warning} strokeWidth={ICON.strokeWidth} />
+                <View style={[styles.permissionIconBox, { backgroundColor: colors.warning + '15' }]}>
+                  <Calendar size={18} color={colors.warning} strokeWidth={ICON.strokeWidth} />
                 </View>
                 <View>
                   <Text style={[styles.permissionLabel, { color: colors.textPrimary }]}>
@@ -1047,8 +1016,8 @@ export default function CreateCommunityScreen() {
             {/* Can Create Poll */}
             <View style={styles.permissionRow}>
               <View style={styles.permissionInfo}>
-                <View style={[styles.permissionIconBox, { backgroundColor: COLORS.info + '15' }]}>
-                  <BarChart2 size={18} color={COLORS.info} strokeWidth={ICON.strokeWidth} />
+                <View style={[styles.permissionIconBox, { backgroundColor: colors.info + '15' }]}>
+                  <BarChart2 size={18} color={colors.info} strokeWidth={ICON.strokeWidth} />
                 </View>
                 <View>
                   <Text style={[styles.permissionLabel, { color: colors.textPrimary }]}>
@@ -1187,7 +1156,7 @@ export default function CreateCommunityScreen() {
                       style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
                       onPress={() => removeImage(image.id)}
                     >
-                      <X size={14} color={COLORS.white} strokeWidth={2.5} />
+                      <X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -1296,7 +1265,7 @@ export default function CreateCommunityScreen() {
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
             <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Lieu</Text>
             <Text style={[styles.previewValue, { color: communityType === 'HYBRID' ? colors.textPrimary : colors.gray400 }]}>
-              {communityType === 'HYBRID' 
+              {communityType === 'HYBRID'
                 ? [city, region, country].filter(Boolean).join(', ') || 'Non défini'
                 : communityType === 'ONLINE' ? 'En ligne' : 'Non défini'}
             </Text>
@@ -1404,7 +1373,7 @@ export default function CreateCommunityScreen() {
                 onPress={handlePublish}
                 disabled={isSubmitting}
                 fullWidth
-                icon={<Send size={18} color={COLORS.white} strokeWidth={ICON.strokeWidth} />}
+                icon={<Send size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
                 iconPosition="right"
               />
             </View>
@@ -1433,7 +1402,7 @@ export default function CreateCommunityScreen() {
               onPress={handleNext}
               disabled={!canProceed()}
               fullWidth
-              icon={<ChevronRight size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />}
+              icon={<ChevronRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
               iconPosition="right"
             />
           </View>
@@ -1490,7 +1459,7 @@ const styles = StyleSheet.create({
   stepIndicator: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xl },
   stepItem: { alignItems: 'center', gap: SPACING.xs },
   stepDot: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: BORDER.radius.full },
-  stepNumber: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.semibold, color: COLORS.white },
+  stepNumber: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.semibold },
   stepLabel: { fontSize: TYPOGRAPHY.fontSize.xs },
   stepContent: { flex: 1 },
   stepHeader: { alignItems: 'center', marginBottom: SPACING.xl, gap: SPACING.sm },
@@ -1540,7 +1509,7 @@ const styles = StyleSheet.create({
   galleryItem: { width: '31%', aspectRatio: 4 / 3, borderRadius: BORDER.radius.sm, overflow: 'hidden', position: 'relative' },
   galleryImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   galleryRemove: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  galleryRemoveText: { color: COLORS.white, fontSize: 14, fontWeight: 'bold' },
+  galleryRemoveText: { fontSize: 14, fontWeight: 'bold' },
   galleryAdd: { width: '31%', aspectRatio: 4 / 3, borderRadius: BORDER.radius.sm, borderWidth: 1.5, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: SPACING.xs },
   previewContainer: { gap: SPACING.md },
   previewHeader: { position: 'relative' },
@@ -1557,11 +1526,11 @@ const styles = StyleSheet.create({
   previewValue: { fontSize: TYPOGRAPHY.fontSize.sm },
   previewText: { fontSize: TYPOGRAPHY.fontSize.sm, lineHeight: 20 },
   footer: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm, paddingBottom: SPACING.xs },
-  footerButtons: { flexDirection: 'row', gap: SPACING.md },
+  footerButtons: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
   draftButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, paddingVertical: SPACING.md, paddingHorizontal: SPACING.lg, borderWidth: 1.5, borderRadius: BORDER.radius.sm },
   draftButtonText: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
   publishButton: { flex: 1 },
-  
+
   // Generate button styles
   generateButtonContainer: {
     alignItems: 'flex-start',
@@ -1580,15 +1549,14 @@ const styles = StyleSheet.create({
   generateButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.white,
   },
-  
+
   // Location type styles
   locationTypeRow: { flexDirection: 'row', gap: SPACING.sm },
   locationTypeCard: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: SPACING.md, borderWidth: 1.5, borderRadius: BORDER.radius.md, gap: SPACING.xs, position: 'relative' },
   locationTypeLabel: { fontSize: TYPOGRAPHY.fontSize.xs, textAlign: 'center' },
   locationTypeCheck: { position: 'absolute', top: 6, right: 6, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  
+
   // Toggle container styles
   toggleContainer: {
     flexDirection: 'row',
@@ -1615,7 +1583,7 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.xs,
     marginTop: 2,
   },
-  
+
   // Question item styles
   questionHeader: {
     flexDirection: 'row',
@@ -1662,12 +1630,12 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
-  
+
   // Separator
   separator: { height: 1, marginVertical: SPACING.md },
   rowFields: { flexDirection: 'row', gap: SPACING.md },
   halfField: { flex: 1 },
-  
+
   // Images upload styles
   imageUploadContainer: { marginTop: SPACING.md, alignItems: 'center' },
   addImageButtonFullWidth: { width: '100%', aspectRatio: 16 / 9, borderWidth: 2, borderRadius: BORDER.radius.md, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm },
@@ -1676,8 +1644,8 @@ const styles = StyleSheet.create({
   imageItemContainer: { width: '31%', aspectRatio: 16 / 9, borderRadius: BORDER.radius.sm, overflow: 'hidden', position: 'relative' },
   imageItem: { width: '100%', height: '100%', resizeMode: 'cover' },
   removeImageBtn: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  
-  
+
+
   // Preview images styles
   previewImagesScroll: { marginHorizontal: -SPACING.lg, paddingHorizontal: SPACING.lg },
   previewImageItem: { width: 200, height: 120, borderRadius: BORDER.radius.md, marginRight: SPACING.sm, resizeMode: 'cover' },
@@ -1688,7 +1656,7 @@ const styles = StyleSheet.create({
   previewLabel: { fontSize: TYPOGRAPHY.fontSize.xs, marginBottom: 2 },
   previewValue: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
   previewSection: { padding: SPACING.md, borderRadius: BORDER.radius.md },
-  
+
   // Preview application settings styles
   previewApplicationSettings: {
     gap: SPACING.sm,
@@ -1712,9 +1680,9 @@ const styles = StyleSheet.create({
   previewQuestionText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
   },
-  
+
   // Back step button styles
-  backStepButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.xs, paddingVertical: SPACING.md, paddingHorizontal: SPACING.md, borderWidth: 1.5, borderRadius: BORDER.radius.sm },
+  backStepButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.xs, height: LAYOUT.buttonHeight, paddingHorizontal: SPACING.md, borderWidth: 1.5, borderRadius: BORDER.radius.sm },
   backStepButtonText: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
   continueButton: { flex: 1 },
 

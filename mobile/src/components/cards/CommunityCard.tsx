@@ -18,7 +18,7 @@ import {
     Eye,
     Lock,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { formatCompactNumber } from '../../utils/number';
 import { getFullImageUrl } from '../../utils/image';
@@ -108,27 +108,27 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
                 <View style={styles.badgesRow}>
                     {community.type && (
                         <View style={[styles.typeBadge, { backgroundColor: colors.primary }]}>
-                            <Text style={styles.typeBadgeText}>
+                            <Text style={[styles.typeBadgeText, { color: colors.textOnPrimary }]}>
                                 {COMMUNITY_TYPE_LABELS[community.type as keyof typeof COMMUNITY_TYPE_LABELS] || community.type}
                             </Text>
                         </View>
                     )}
                     {/* Visibility badge */}
-                    <View style={[styles.visibilityBadge, { 
-                        backgroundColor: isPrivateCommunity() ? colors.warning : colors.success 
+                    <View style={[styles.visibilityBadge, {
+                        backgroundColor: isPrivateCommunity() ? colors.warning : colors.success
                     }]}>
                         {isPrivateCommunity() ? (
-                            <Lock size={10} color={COLORS.white} strokeWidth={2.5} />
+                            <Lock size={ICON.size.xxs} color={colors.textOnPrimary} strokeWidth={2.5} />
                         ) : (
-                            <Globe size={10} color={COLORS.white} strokeWidth={2.5} />
+                            <Globe size={ICON.size.xxs} color={colors.textOnPrimary} strokeWidth={2.5} />
                         )}
-                        <Text style={styles.visibilityBadgeText}>
+                        <Text style={[styles.visibilityBadgeText, { color: colors.textOnPrimary }]}>
                             {getVisibilityText()}
                         </Text>
                     </View>
                     {isManagement && (
                         <View style={[styles.statusBadge, { backgroundColor: colors.success }]}>
-                            <Text style={styles.statusBadgeText}>Active</Text>
+                            <Text style={[styles.statusBadgeText, { color: colors.textOnPrimary }]}>Active</Text>
                         </View>
                     )}
                 </View>
@@ -238,8 +238,7 @@ const styles = StyleSheet.create({
         borderRadius: 0,
     },
     imageContainer: {
-        height: 120,
-        backgroundColor: COLORS.gray100,
+        height: LAYOUT.cardImageHeightSm,
     },
     image: {
         width: '100%',
@@ -264,32 +263,32 @@ const styles = StyleSheet.create({
         borderRadius: BORDER.radius.xs,
     },
     typeBadgeText: {
+        fontFamily: TYPOGRAPHY.fontFamily.medium,
         fontSize: TYPOGRAPHY.fontSize.xs,
-        fontWeight: TYPOGRAPHY.fontWeight.bold,
-        color: COLORS.white,
+        fontWeight: TYPOGRAPHY.fontWeight.medium,
     },
     statusBadge: {
-        paddingVertical: 4,
-        paddingHorizontal: 8,
+        paddingVertical: SPACING.xs,
+        paddingHorizontal: SPACING.sm,
         borderRadius: BORDER.radius.xs,
     },
     statusBadgeText: {
+        fontFamily: TYPOGRAPHY.fontFamily.medium,
         fontSize: TYPOGRAPHY.fontSize.xs,
-        fontWeight: TYPOGRAPHY.fontWeight.bold,
-        color: COLORS.white,
+        fontWeight: TYPOGRAPHY.fontWeight.medium,
     },
     visibilityBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 3,
-        paddingVertical: 4,
-        paddingHorizontal: 8,
+        gap: SPACING.xxs,
+        paddingVertical: SPACING.xs,
+        paddingHorizontal: SPACING.sm,
         borderRadius: BORDER.radius.xs,
     },
     visibilityBadgeText: {
+        fontFamily: TYPOGRAPHY.fontFamily.medium,
         fontSize: TYPOGRAPHY.fontSize.xs,
-        fontWeight: TYPOGRAPHY.fontWeight.bold,
-        color: COLORS.white,
+        fontWeight: TYPOGRAPHY.fontWeight.medium,
     },
     headerRow: {
         flexDirection: 'row',

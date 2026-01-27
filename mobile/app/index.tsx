@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { COLORS, SPACING, TYPOGRAPHY, BORDER } from '../src/constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER } from '../src/constants/theme';
 import { useAuth } from '../src/contexts/AuthContext';
+import { useTheme } from '../src/hooks/useTheme';
 
 const { height, width } = Dimensions.get('window');
 
@@ -33,6 +34,7 @@ const SLIDES = [
 export default function SplashScreen() {
   const router = useRouter();
   const { status, isLoading, needsOnboarding } = useAuth();
+  const { colors } = useTheme();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
@@ -99,9 +101,9 @@ export default function SplashScreen() {
   // Show loading while checking auth state
   if (isLoading || checkingOnboarding) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Chargement...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.gray600 }]}>Chargement...</Text>
       </View>
     );
   }
@@ -109,8 +111,8 @@ export default function SplashScreen() {
   // If authenticated, AuthContext will handle redirect
   if (status === 'authenticated') {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -118,8 +120,8 @@ export default function SplashScreen() {
   // If already seen onboarding, AuthContext will redirect to login
   if (hasSeenOnboarding) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -129,10 +131,10 @@ export default function SplashScreen() {
   const isLastSlide = currentSlide === SLIDES.length - 1;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
         <View style={styles.slideContent}>
-          <View style={styles.imageContainer}>
+          <View style={[styles.imageContainer, { shadowColor: colors.gray900 }]}>
             <Image
               source={slide.image}
               style={styles.image}
@@ -140,8 +142,8 @@ export default function SplashScreen() {
             />
           </View>
 
-          <Text style={styles.title}>{slide.title}</Text>
-          <Text style={styles.description}>{slide.description}</Text>
+          <Text style={[styles.title, { color: colors.gray900 }]}>{slide.title}</Text>
+          <Text style={[styles.description, { color: colors.gray600 }]}>{slide.description}</Text>
         </View>
 
         <View style={styles.pagination}>
@@ -150,18 +152,19 @@ export default function SplashScreen() {
               key={index}
               style={[
                 styles.dot,
-                currentSlide === index && styles.dotActive,
+                { backgroundColor: colors.gray300 },
+                currentSlide === index && [styles.dotActive, { backgroundColor: colors.primary }],
               ]}
             />
           ))}
         </View>
 
         <TouchableOpacity
-          style={styles.button}
+          style={[styles.button, { backgroundColor: colors.primary }]}
           onPress={handleNext}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>
+          <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>
             {isLastSlide ? 'Continuer' : 'Suivant'}
           </Text>
         </TouchableOpacity>
@@ -173,20 +176,17 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
     gap: SPACING.md,
   },
 
   loadingText: {
     fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.gray600,
   },
 
   content: {
@@ -209,7 +209,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
     borderRadius: BORDER.radius.xl,
     overflow: 'hidden',
-    shadowColor: COLORS.gray900,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -227,14 +226,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: TYPOGRAPHY.fontSize.xxl,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: COLORS.gray900,
     textAlign: 'center',
     marginBottom: SPACING.md,
   },
 
   description: {
     fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.gray600,
     textAlign: 'center',
     lineHeight: TYPOGRAPHY.fontSize.md * TYPOGRAPHY.lineHeight.relaxed,
     paddingHorizontal: SPACING.md,
@@ -250,18 +247,15 @@ const styles = StyleSheet.create({
   dot: {
     width: 8,
     height: 8,
-    backgroundColor: COLORS.gray300,
     borderRadius: BORDER.radius.full,
   },
 
   dotActive: {
-    backgroundColor: COLORS.primary,
     width: 24,
     borderRadius: BORDER.radius.full,
   },
 
   button: {
-    backgroundColor: COLORS.primary,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.xl,
     alignItems: 'center',
@@ -270,7 +264,6 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: COLORS.white,
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },

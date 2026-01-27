@@ -35,21 +35,25 @@ import {
   AlertCircle,
   FolderOpen,
   Plus,
+  Home,
+  Building,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
-import { Button } from '../../../../src/components/ui';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { Button, StepIndicator } from '../../../../src/components/ui';
+import { MapLocationPicker } from '../../../../src/components/MapLocationPicker';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useAuth } from '../../../../src/contexts/AuthContext';
 import { useAlert } from '../../../../src/contexts/AlertContext';
 import { opportunityService, applicationService, talentService, documentService } from '../../../../src/services';
 import type { Opportunity, ApplicationQuestion, ApplicationAnswer, Document } from '../../../../src/types/models';
 
-type ApplyStep = 'profile' | 'questions' | 'preview' | 'success';
+type ApplyStep = 'profile' | 'location' | 'questions' | 'preview' | 'success';
 
-const STEPS: ApplyStep[] = ['profile', 'questions', 'preview', 'success'];
+const STEPS: ApplyStep[] = ['profile', 'location', 'questions', 'preview', 'success'];
 
 const STEP_TITLES: Record<ApplyStep, string> = {
   profile: 'Mon profil',
+  location: 'Localisation',
   questions: 'Candidature',
   preview: 'Aperçu',
   success: 'Confirmation',
@@ -103,6 +107,17 @@ export default function ApplyOpportunityScreen() {
   // Form state
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
+  // Location State
+  const [locationDetails, setLocationDetails] = useState({
+    country: '',
+    countryCode: '', // ISO 2-letter code for API
+    region: '',
+    city: '',
+    address: '',
+    floor: '',
+    coordinates: null as { latitude: number; longitude: number } | null,
+  });
+
   // Load data
   useEffect(() => {
     loadData();
@@ -134,6 +149,16 @@ export default function ApplyOpportunityScreen() {
           setSelectedExistingCV(primaryCV);
           setCvSource('existing');
         }
+      }
+
+      // Pre-fill location from profile if available
+      if (profileResponse.data) {
+        setLocationDetails(prev => ({
+          ...prev,
+          country: profileResponse.data.country || '',
+          region: profileResponse.data.region || '',
+          city: profileResponse.data.city || '',
+        }));
       }
 
       // Initialize answers for each question
@@ -242,6 +267,15 @@ export default function ApplyOpportunityScreen() {
 
     setIsSubmitting(true);
     try {
+      // Update profile with location data (use countryCode for API, fallback to country if not available)
+      if (locationDetails.countryCode || locationDetails.country || locationDetails.region || locationDetails.city) {
+        await talentService.updateMyProfile({
+          country: locationDetails.countryCode || locationDetails.country, // Use ISO code if available
+          region: locationDetails.region,
+          city: locationDetails.city,
+        });
+      }
+
       // Build application answers
       const applicationAnswers: ApplicationAnswer[] = [];
       if (opportunity.application_questions) {
@@ -305,6 +339,8 @@ export default function ApplyOpportunityScreen() {
     switch (currentStep) {
       case 'profile':
         return isProfileComplete();
+      case 'location':
+        return !!(locationDetails.country && locationDetails.region && locationDetails.city);
       case 'questions':
         // Check if CV is required and provided
         if (opportunity.cv_required && !getSelectedCV()) {
@@ -337,43 +373,13 @@ export default function ApplyOpportunityScreen() {
   const renderStepIndicator = () => {
     const visibleSteps = STEPS.filter((s) => s !== 'success');
 
-    return (
-      <View style={styles.stepIndicator}>
-        {visibleSteps.map((step, index) => {
-          const isCompleted = STEPS.indexOf(currentStep) > STEPS.indexOf(step);
-          const isCurrent = currentStep === step;
+    // Create step objects for the indicator
+    const stepsData = visibleSteps.map(step => ({
+      id: step,
+      label: STEP_TITLES[step],
+    }));
 
-          return (
-            <View key={step} style={styles.stepItem}>
-              <View
-                style={[
-                  styles.stepDot,
-                  { backgroundColor: colors.gray200 },
-                  (isCurrent || isCompleted) && { backgroundColor: colors.primary },
-                ]}
-              >
-                {isCompleted ? (
-                  <Check size={12} color={COLORS.white} strokeWidth={3} />
-                ) : (
-                  <Text style={[styles.stepNumber, isCurrent && { color: COLORS.white }]}>
-                    {index + 1}
-                  </Text>
-                )}
-              </View>
-              <Text
-                style={[
-                  styles.stepLabel,
-                  { color: colors.gray500 },
-                  isCurrent && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold },
-                ]}
-              >
-                {STEP_TITLES[step]}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-    );
+    return <StepIndicator steps={stepsData} currentStepId={currentStep} />;
   };
 
   const renderProfileStep = () => {
@@ -472,6 +478,119 @@ export default function ApplyOpportunityScreen() {
             Modifier mon profil
           </Text>
         </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderLocationStep = () => {
+    return (
+      <View style={styles.stepContent}>
+        <View style={styles.stepHeader}>
+          <MapPin size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+          <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
+            Votre localisation
+          </Text>
+          <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
+            Indiquez votre position pour compléter votre dossier
+          </Text>
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: SPACING.xl }}>
+          <View style={styles.formFields}>
+            {/* Map Picker */}
+            <View style={styles.fieldContainer}>
+              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
+                Position sur la carte
+              </Text>
+              <MapLocationPicker
+                initialCoordinates={locationDetails.coordinates || undefined}
+                onLocationSelect={(location) => {
+                  setLocationDetails(prev => ({
+                    ...prev,
+                    country: location.country || prev.country,
+                    countryCode: location.countryCode || prev.countryCode,
+                    region: location.region || prev.region,
+                    city: location.city || prev.city,
+                    address: location.address || prev.address,
+                    coordinates: location.coordinates,
+                  }));
+                }}
+                height={200}
+              />
+            </View>
+
+            {/* Country */}
+            <View style={styles.fieldContainer}>
+              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
+                Pays <Text style={{ color: colors.error }}>*</Text>
+              </Text>
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+                placeholder="Votre pays"
+                placeholderTextColor={colors.gray400}
+                value={locationDetails.country}
+                onChangeText={(text) => setLocationDetails(prev => ({ ...prev, country: text }))}
+              />
+            </View>
+
+            {/* Region */}
+            <View style={styles.fieldContainer}>
+              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
+                Région <Text style={{ color: colors.error }}>*</Text>
+              </Text>
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+                placeholder="Votre région"
+                placeholderTextColor={colors.gray400}
+                value={locationDetails.region}
+                onChangeText={(text) => setLocationDetails(prev => ({ ...prev, region: text }))}
+              />
+            </View>
+
+            {/* City */}
+            <View style={styles.fieldContainer}>
+              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
+                Ville <Text style={{ color: colors.error }}>*</Text>
+              </Text>
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+                placeholder="Votre ville"
+                placeholderTextColor={colors.gray400}
+                value={locationDetails.city}
+                onChangeText={(text) => setLocationDetails(prev => ({ ...prev, city: text }))}
+              />
+            </View>
+
+            {/* Address */}
+            <View style={styles.fieldContainer}>
+              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
+                Adresse
+              </Text>
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+                placeholder="Numéro et nom de rue"
+                placeholderTextColor={colors.gray400}
+                value={locationDetails.address}
+                onChangeText={(text) => setLocationDetails(prev => ({ ...prev, address: text }))}
+              />
+            </View>
+
+            {/* Floor */}
+            <View style={styles.fieldContainer}>
+              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
+                Étage
+              </Text>
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+                placeholder="Numéro d'étage (optionnel)"
+                placeholderTextColor={colors.gray400}
+                value={locationDetails.floor}
+                onChangeText={(text) => setLocationDetails(prev => ({ ...prev, floor: text }))}
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+        </ScrollView>
       </View>
     );
   };
@@ -698,6 +817,25 @@ export default function ApplyOpportunityScreen() {
             )}
           </View>
 
+          {/* Location Preview */}
+          <View style={[styles.previewSection, { backgroundColor: colors.gray50 }]}>
+            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
+              Localisation
+            </Text>
+            <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
+              {[locationDetails.city, locationDetails.country].filter(Boolean).join(', ')}
+            </Text>
+            <Text style={[styles.previewHint, { color: colors.gray500 }]}>
+              {locationDetails.region}
+            </Text>
+            {locationDetails.address && (
+              <Text style={[styles.previewHint, { color: colors.gray500 }]}>
+                {locationDetails.address}
+                {locationDetails.floor ? ` - Étage ${locationDetails.floor}` : ''}
+              </Text>
+            )}
+          </View>
+
           {/* CV Preview */}
           {(opportunity?.cv_required || selectedCV) && (
             <View style={styles.previewSection}>
@@ -800,7 +938,7 @@ export default function ApplyOpportunityScreen() {
                 onPress={handleSubmit}
                 disabled={isSubmitting}
                 fullWidth
-                icon={<Send size={18} color={COLORS.white} strokeWidth={ICON.strokeWidth} />}
+                icon={<Send size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
                 iconPosition="right"
               />
             </View>
@@ -827,7 +965,7 @@ export default function ApplyOpportunityScreen() {
               onPress={handleNext}
               disabled={!canProceed()}
               fullWidth
-              icon={<ChevronRight size={18} color={COLORS.white} strokeWidth={ICON.strokeWidth} />}
+              icon={<ChevronRight size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
               iconPosition="right"
             />
           </View>
@@ -884,6 +1022,7 @@ export default function ApplyOpportunityScreen() {
           {currentStep !== 'success' && renderStepIndicator()}
 
           {currentStep === 'profile' && renderProfileStep()}
+          {currentStep === 'location' && renderLocationStep()}
           {currentStep === 'questions' && renderQuestionsStep()}
           {currentStep === 'preview' && renderPreviewStep()}
           {currentStep === 'success' && renderSuccessStep()}
@@ -988,7 +1127,7 @@ const styles = StyleSheet.create({
   stepNumber: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
 
   stepLabel: {

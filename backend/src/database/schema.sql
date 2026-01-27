@@ -279,53 +279,6 @@ CREATE TRIGGER trigger_communities_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at();
 
--- HUB (Physical Spaces)
-CREATE TABLE hubs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE NOT NULL,
-
-    type VARCHAR(50),
-    description TEXT,
-    amenities TEXT[],
-
-    address TEXT,
-    city VARCHAR(100),
-    region VARCHAR(100),
-    country CHAR(2),
-    coordinates POINT,
-
-    access_type VARCHAR(50),
-    pricing TEXT,
-
-    embedding VECTOR(1536),
-
-    -- Ownership
-    created_by UUID REFERENCES talents(id) ON DELETE SET NULL,
-    organization_id UUID REFERENCES organizations(id) ON DELETE SET NULL,
-
-    -- Metadata
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP WITH TIME ZONE -- Soft delete
-);
-
--- Indexes for hubs
-CREATE INDEX idx_hubs_slug ON hubs(slug);
-CREATE INDEX idx_hubs_type ON hubs(type);
-CREATE INDEX idx_hubs_country ON hubs(country);
-CREATE INDEX idx_hubs_city ON hubs(city);
-CREATE INDEX idx_hubs_access_type ON hubs(access_type);
-CREATE INDEX idx_hubs_created_by ON hubs(created_by);
-CREATE INDEX idx_hubs_organization_id ON hubs(organization_id);
-CREATE INDEX idx_hubs_deleted_at ON hubs(deleted_at) WHERE deleted_at IS NULL;
-
--- Trigger for updated_at
-CREATE TRIGGER trigger_hubs_updated_at
-    BEFORE UPDATE ON hubs
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at();
-
 -- OPPORTUNITY
 CREATE TABLE opportunities (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -823,22 +776,6 @@ CREATE TRIGGER trigger_community_invitations_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at();
 
--- RELATION: BOOKED (Talent -> Hub)
-CREATE TABLE hub_bookings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID REFERENCES talents(id) ON DELETE CASCADE,
-    hub_id UUID REFERENCES hubs(id) ON DELETE CASCADE,
-
-    booking_date TIMESTAMP WITH TIME ZONE,
-    duration INTERVAL,
-    status VARCHAR(50)
-);
-
-CREATE INDEX idx_hub_bookings_talent_id ON hub_bookings(talent_id);
-CREATE INDEX idx_hub_bookings_hub_id ON hub_bookings(hub_id);
-CREATE INDEX idx_hub_bookings_booking_date ON hub_bookings(booking_date);
-CREATE INDEX idx_hub_bookings_status ON hub_bookings(status);
-
 -- RELATION: OWNS_DOCUMENT (Talent -> Document)
 CREATE TABLE talent_documents (
     talent_id UUID REFERENCES talents(id) ON DELETE CASCADE,
@@ -851,18 +788,6 @@ CREATE TABLE talent_documents (
 );
 
 CREATE INDEX idx_talent_documents_document_id ON talent_documents(document_id);
-
--- RELATION: OPERATES (Organization -> Hub)
-CREATE TABLE organization_hubs (
-    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-    hub_id UUID REFERENCES hubs(id) ON DELETE CASCADE,
-
-    relationship VARCHAR(50),
-
-    PRIMARY KEY (organization_id, hub_id)
-);
-
-CREATE INDEX idx_organization_hubs_hub_id ON organization_hubs(hub_id);
 
 -- RELATION: RELATED_TO (Skill -> Skill) - Non-hierarchical relations only
 CREATE TABLE skill_relations (
@@ -918,18 +843,6 @@ CREATE TABLE opportunity_skills (
 );
 
 CREATE INDEX idx_opportunity_skills_skill_id ON opportunity_skills(skill_id);
-
--- Hub <-> Skill
-CREATE TABLE hub_skills (
-    hub_id UUID REFERENCES hubs(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    relevance_score NUMERIC(3,2),
-    is_auto_generated BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (hub_id, skill_id)
-);
-
-CREATE INDEX idx_hub_skills_skill_id ON hub_skills(skill_id);
 
 -- Document <-> Skill
 CREATE TABLE document_skills (
@@ -1237,10 +1150,6 @@ SELECT * FROM organizations WHERE deleted_at IS NULL;
 -- Active communities
 CREATE VIEW active_communities AS
 SELECT * FROM communities WHERE deleted_at IS NULL;
-
--- Active hubs
-CREATE VIEW active_hubs AS
-SELECT * FROM hubs WHERE deleted_at IS NULL;
 
 -- Active opportunities
 CREATE VIEW active_opportunities AS

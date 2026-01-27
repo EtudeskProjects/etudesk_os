@@ -25,7 +25,7 @@ import {
   Loader2,
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
 import { Input, Button, Toggle } from '../../src/components/ui';
 import { COUNTRIES, GENDERS, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
 import { useTheme } from '../../src/hooks/useTheme';
@@ -255,7 +255,7 @@ export default function EditProfileScreen() {
                 </View>
               )}
               <View style={[styles.cameraButton, { backgroundColor: colors.primary }]}>
-                <Camera size={ICON.size.sm} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+                <Camera size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
               </View>
             </TouchableOpacity>
             <Text style={[styles.avatarHint, { color: colors.textSecondary }]}>
@@ -305,7 +305,7 @@ export default function EditProfileScreen() {
                       style={[
                         styles.optionButtonText,
                         { color: colors.gray700 },
-                        gender === g.id && { color: COLORS.white },
+                        gender === g.id && { color: colors.textOnPrimary },
                       ]}
                     >
                       {g.label}
@@ -414,7 +414,7 @@ export default function EditProfileScreen() {
                       style={[
                         styles.optionChipText,
                         { color: colors.gray700 },
-                        country === c.id && { color: COLORS.white },
+                        country === c.id && { color: colors.textOnPrimary },
                       ]}
                     >
                       {c.label}
@@ -451,7 +451,7 @@ export default function EditProfileScreen() {
                         style={[
                           styles.optionChipText,
                           { color: colors.gray700 },
-                          region === r.id && { color: COLORS.white },
+                          region === r.id && { color: colors.textOnPrimary },
                         ]}
                       >
                         {r.label}
@@ -486,7 +486,7 @@ export default function EditProfileScreen() {
                         style={[
                           styles.optionChipText,
                           { color: colors.gray700 },
-                          commune === c.id && { color: COLORS.white },
+                          commune === c.id && { color: colors.textOnPrimary },
                         ]}
                       >
                         {c.label}
@@ -560,7 +560,7 @@ export default function EditProfileScreen() {
             onPress={handleSave}
             fullWidth
             disabled={isSaving}
-            icon={isSaving ? undefined : <Check size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />}
+            icon={isSaving ? undefined : <Check size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
             iconPosition="right"
           />
         </View>
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: TYPOGRAPHY.fontSize.xxl,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
 
   cameraButton: {
@@ -658,7 +658,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: COLORS.white,
+    borderColor: '#FFFFFF',
   },
 
   avatarHint: {

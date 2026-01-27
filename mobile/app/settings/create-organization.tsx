@@ -22,8 +22,8 @@ import {
   MapPin,
   Map,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
-import { Input, Button } from '../../src/components/ui';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { Input, Button, StepIndicator } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
 import {
@@ -217,26 +217,16 @@ export default function CreateOrganizationScreen() {
     return country.length > 0;
   };
 
-  const STEPS: Step[] = ['info', 'location'];
+  /* 
+   * STEP DATA
+   */
+  const STEPS_DATA = [
+    { id: 'info', label: 'Infos' },
+    { id: 'location', label: 'Localisation' },
+  ];
 
   const renderStepIndicator = () => (
-    <View style={styles.stepIndicator}>
-      {STEPS.map((step, index) => (
-        <View
-          key={step}
-          style={[
-            styles.stepDot,
-            { backgroundColor: colors.gray200 },
-            currentStep === step && { backgroundColor: colors.primary },
-            STEPS.indexOf(currentStep) > index && { backgroundColor: colors.primary },
-          ]}
-        >
-          {STEPS.indexOf(currentStep) > index && (
-            <Check size={12} color={COLORS.white} strokeWidth={ICON.strokeWidth + 0.5} />
-          )}
-        </View>
-      ))}
-    </View>
+    <StepIndicator steps={STEPS_DATA} currentStepId={currentStep} />
   );
 
   const renderInfoStep = () => (
@@ -403,7 +393,7 @@ export default function CreateOrganizationScreen() {
                   style={[
                     styles.optionChipText,
                     { color: colors.gray700 },
-                    country === c.id && { color: COLORS.white },
+                    country === c.id && { color: colors.textOnPrimary },
                   ]}
                 >
                   {c.label}
@@ -440,7 +430,7 @@ export default function CreateOrganizationScreen() {
                     style={[
                       styles.optionChipText,
                       { color: colors.gray700 },
-                      region === r.id && { color: COLORS.white },
+                      region === r.id && { color: colors.textOnPrimary },
                     ]}
                   >
                     {r.label}
@@ -475,7 +465,7 @@ export default function CreateOrganizationScreen() {
                     style={[
                       styles.optionChipText,
                       { color: colors.gray700 },
-                      city === c.id && { color: COLORS.white },
+                      city === c.id && { color: colors.textOnPrimary },
                     ]}
                   >
                     {c.label}
@@ -524,11 +514,11 @@ export default function CreateOrganizationScreen() {
             fullWidth
             icon={
               isSubmitting ? undefined :
-              <ChevronRight
-                size={ICON.size.md}
-                color={COLORS.white}
-                strokeWidth={ICON.strokeWidth}
-              />
+                <ChevronRight
+                  size={ICON.size.md}
+                  color={colors.textOnPrimary}
+                  strokeWidth={ICON.strokeWidth}
+                />
             }
             iconPosition="right"
           />

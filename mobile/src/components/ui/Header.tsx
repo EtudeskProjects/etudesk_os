@@ -1,5 +1,5 @@
 import { View, Text, Image, StyleSheet, ViewStyle } from 'react-native';
-import { SPACING, TYPOGRAPHY } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, LAYOUT, ICON } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 interface HeaderProps {
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    height: 56,
+    height: LAYOUT.headerHeight,
   },
 
   headerLeft: {
@@ -43,22 +43,22 @@ const styles = StyleSheet.create({
   },
 
   headerLogo: {
-    width: 28,
-    height: 28,
+    width: ICON.size.xl,
+    height: ICON.size.xl,
     resizeMode: 'contain',
   },
 
   headerTitle: {
+    fontFamily: TYPOGRAPHY.fontFamily.semibold,
     fontSize: TYPOGRAPHY.fontSize.xl,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    minWidth: 40,
+    minWidth: LAYOUT.avatarMd,
     justifyContent: 'flex-end',
   },
 });

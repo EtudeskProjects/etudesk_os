@@ -5,7 +5,7 @@ import {
   Animated,
   StyleSheet,
 } from 'react-native';
-import { BORDER } from '../../constants/theme';
+import { BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 interface ToggleProps {
@@ -79,9 +79,9 @@ export function Toggle({ value, onValueChange, disabled = false, color, size = '
             width: thumbSize,
             height: thumbSize,
             borderRadius: thumbSize / 2,
-            backgroundColor: value ? activeColor : '#FFFFFF',
-            borderWidth: value ? 0 : 1,
-            borderColor: activeColor + '50',
+            backgroundColor: value ? activeColor : colors.white,
+            borderWidth: value ? 0 : BORDER.width.thin,
+            borderColor: withOpacity(activeColor, OPACITY[30]),
             transform: [{ translateX }],
           },
         ]}
@@ -92,6 +92,6 @@ export function Toggle({ value, onValueChange, disabled = false, color, size = '
 
 const styles = StyleSheet.create({
   disabled: {
-    opacity: 0.5,
+    opacity: OPACITY[50],
   },
 });

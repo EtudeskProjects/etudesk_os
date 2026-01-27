@@ -36,7 +36,7 @@ import {
   Shield,
   RefreshCw,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
 import { FooterNav } from '../../../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
@@ -44,20 +44,20 @@ import { communityService, CommunityMemberDetails, MemberStatus, communityMember
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import { getFullImageUrl } from '../../../../../src/utils/image';
 
-// Status configuration
-const STATUS_CONFIG: Record<MemberStatus, { color: string; icon: typeof Clock; label: string }> = {
-  PENDING: { color: COLORS.warning, icon: Clock, label: 'En attente' },
-  ACTIVE: { color: COLORS.success, icon: CheckCircle2, label: 'Actif' },
-  REJECTED: { color: COLORS.error, icon: XCircle, label: 'Refusé' },
-  SUSPENDED: { color: COLORS.gray500, icon: UserX, label: 'Suspendu' },
+// Status configuration - colors resolved dynamically via colorKey
+const STATUS_CONFIG: Record<MemberStatus, { colorKey: 'warning' | 'success' | 'error' | 'gray500'; icon: typeof Clock; label: string }> = {
+  PENDING: { colorKey: 'warning', icon: Clock, label: 'En attente' },
+  ACTIVE: { colorKey: 'success', icon: CheckCircle2, label: 'Actif' },
+  REJECTED: { colorKey: 'error', icon: XCircle, label: 'Refusé' },
+  SUSPENDED: { colorKey: 'gray500', icon: UserX, label: 'Suspendu' },
 };
 
-// Status flow with descriptions
-const STATUS_FLOW: Record<MemberStatus, { label: string; description: string; color: string }> = {
-  PENDING: { label: 'En attente', description: 'Demande en cours d\'examen', color: COLORS.warning },
-  ACTIVE: { label: 'Actif', description: 'Membre actif de la communauté', color: COLORS.success },
-  REJECTED: { label: 'Refusé', description: 'Demande refusée', color: COLORS.error },
-  SUSPENDED: { label: 'Suspendu', description: 'Membre suspendu temporairement', color: COLORS.gray500 },
+// Status flow with descriptions - colors resolved dynamically via colorKey
+const STATUS_FLOW: Record<MemberStatus, { label: string; description: string; colorKey: 'warning' | 'success' | 'error' | 'gray500' }> = {
+  PENDING: { label: 'En attente', description: 'Demande en cours d\'examen', colorKey: 'warning' },
+  ACTIVE: { label: 'Actif', description: 'Membre actif de la communauté', colorKey: 'success' },
+  REJECTED: { label: 'Refusé', description: 'Demande refusée', colorKey: 'error' },
+  SUSPENDED: { label: 'Suspendu', description: 'Membre suspendu temporairement', colorKey: 'gray500' },
 };
 
 type Tab = 'profile' | 'answers' | 'messages' | 'notes';
@@ -424,7 +424,7 @@ export default function CommunityMemberDetailsScreen() {
 
           {/* Bio */}
           {talent?.bio && (
-            <View style={[styles.bioContainer, { marginTop: SPACING.sm }]}>
+            <View style={[styles.bioContainer, { marginTop: SPACING.sm, borderTopColor: colors.gray200 }]}>
               <Text style={[styles.bioText, { color: colors.textSecondary }]}>
                 {talent.bio}
               </Text>
@@ -440,8 +440,8 @@ export default function CommunityMemberDetailsScreen() {
               <TouchableOpacity key={star} onPress={() => handleUpdateRating(star)}>
                 <Star
                   size={32}
-                  color={star <= rating ? COLORS.warning : colors.gray300}
-                  fill={star <= rating ? COLORS.warning : 'transparent'}
+                  color={star <= rating ? colors.warning : colors.gray300}
+                  fill={star <= rating ? colors.warning : 'transparent'}
                   strokeWidth={ICON.strokeWidth}
                 />
               </TouchableOpacity>
@@ -498,7 +498,7 @@ export default function CommunityMemberDetailsScreen() {
                   </View>
                   <View style={[
                     styles.permissionToggle,
-                    { backgroundColor: permissions.can_post ? COLORS.success : colors.gray300 }
+                    { backgroundColor: permissions.can_post ? colors.success : colors.gray300 }
                   ]}>
                     <View style={[
                       styles.permissionToggleKnob,
@@ -514,8 +514,8 @@ export default function CommunityMemberDetailsScreen() {
                   disabled={isSavingPermissions}
                 >
                   <View style={styles.permissionLeft}>
-                    <View style={[styles.permissionIcon, { backgroundColor: COLORS.warning + '15' }]}>
-                      <Calendar size={18} color={COLORS.warning} strokeWidth={ICON.strokeWidth} />
+                    <View style={[styles.permissionIcon, { backgroundColor: colors.warning + '15' }]}>
+                      <Calendar size={18} color={colors.warning} strokeWidth={ICON.strokeWidth} />
                     </View>
                     <View>
                       <Text style={[styles.permissionLabel, { color: colors.textPrimary }]}>
@@ -528,7 +528,7 @@ export default function CommunityMemberDetailsScreen() {
                   </View>
                   <View style={[
                     styles.permissionToggle,
-                    { backgroundColor: permissions.can_create_event ? COLORS.success : colors.gray300 }
+                    { backgroundColor: permissions.can_create_event ? colors.success : colors.gray300 }
                   ]}>
                     <View style={[
                       styles.permissionToggleKnob,
@@ -544,8 +544,8 @@ export default function CommunityMemberDetailsScreen() {
                   disabled={isSavingPermissions}
                 >
                   <View style={styles.permissionLeft}>
-                    <View style={[styles.permissionIcon, { backgroundColor: COLORS.info + '15' }]}>
-                      <BarChart2 size={18} color={COLORS.info} strokeWidth={ICON.strokeWidth} />
+                    <View style={[styles.permissionIcon, { backgroundColor: colors.info + '15' }]}>
+                      <BarChart2 size={18} color={colors.info} strokeWidth={ICON.strokeWidth} />
                     </View>
                     <View>
                       <Text style={[styles.permissionLabel, { color: colors.textPrimary }]}>
@@ -558,7 +558,7 @@ export default function CommunityMemberDetailsScreen() {
                   </View>
                   <View style={[
                     styles.permissionToggle,
-                    { backgroundColor: permissions.can_create_poll ? COLORS.success : colors.gray300 }
+                    { backgroundColor: permissions.can_create_poll ? colors.success : colors.gray300 }
                   ]}>
                     <View style={[
                       styles.permissionToggleKnob,
@@ -620,13 +620,13 @@ export default function CommunityMemberDetailsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Statut du membre</Text>
 
             {/* Current status display */}
-            <View style={[styles.currentStatusDisplay, { backgroundColor: (STATUS_FLOW[member.status]?.color || COLORS.warning) + '10' }]}>
+            <View style={[styles.currentStatusDisplay, { backgroundColor: colors[STATUS_FLOW[member.status]?.colorKey || 'warning'] + '10' }]}>
               {(() => {
                 const config = STATUS_CONFIG[member.status] || STATUS_CONFIG.PENDING;
                 const StatusIcon = config.icon;
-                return <StatusIcon size={20} color={STATUS_FLOW[member.status]?.color || COLORS.warning} strokeWidth={ICON.strokeWidth} />;
+                return <StatusIcon size={20} color={colors[STATUS_FLOW[member.status]?.colorKey || 'warning']} strokeWidth={ICON.strokeWidth} />;
               })()}
-              <Text style={[styles.currentStatusDisplayText, { color: STATUS_FLOW[member.status]?.color || COLORS.warning }]}>
+              <Text style={[styles.currentStatusDisplayText, { color: colors[STATUS_FLOW[member.status]?.colorKey || 'warning'] }]}>
                 {STATUS_FLOW[member.status]?.label || member.status}
               </Text>
             </View>
@@ -681,8 +681,8 @@ export default function CommunityMemberDetailsScreen() {
                           }
                         }}
                       >
-                        <View style={[styles.statusOptionIcon, { backgroundColor: config.color + '15' }]}>
-                          <Icon size={16} color={config.color} strokeWidth={ICON.strokeWidth} />
+                        <View style={[styles.statusOptionIcon, { backgroundColor: colors[config.colorKey] + '15' }]}>
+                          <Icon size={16} color={colors[config.colorKey]} strokeWidth={ICON.strokeWidth} />
                         </View>
                         <View style={styles.statusOptionInfo}>
                           <Text style={[styles.statusOptionLabel, { color: colors.textPrimary }]}>
@@ -702,8 +702,8 @@ export default function CommunityMemberDetailsScreen() {
 
         {/* Rejection reason if rejected */}
         {member?.status === 'REJECTED' && member.rejection_reason && (
-          <View style={[styles.section, { backgroundColor: COLORS.error + '10', borderColor: COLORS.error + '30' }]}>
-            <Text style={[styles.sectionTitle, { color: COLORS.error }]}>Raison du refus</Text>
+          <View style={[styles.section, { backgroundColor: colors.error + '10', borderColor: colors.error + '30' }]}>
+            <Text style={[styles.sectionTitle, { color: colors.error }]}>Raison du refus</Text>
             <Text style={[styles.rejectionReason, { color: colors.textPrimary }]}>
               {member.rejection_reason}
             </Text>
@@ -730,18 +730,18 @@ export default function CommunityMemberDetailsScreen() {
           {member?.accepted_rules && (
             <View style={styles.metaRow}>
               <Text style={[styles.metaLabel, { color: colors.gray500 }]}>Règles acceptées:</Text>
-              <CheckCircle2 size={16} color={COLORS.success} strokeWidth={ICON.strokeWidth} />
+              <CheckCircle2 size={16} color={colors.success} strokeWidth={ICON.strokeWidth} />
             </View>
           )}
         </View>
 
         {/* Delete member */}
         <TouchableOpacity
-          style={[styles.deleteButton, { borderColor: COLORS.error }]}
+          style={[styles.deleteButton, { borderColor: colors.error }]}
           onPress={handleDeleteMember}
         >
-          <Trash2 size={18} color={COLORS.error} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.deleteButtonText, { color: COLORS.error }]}>
+          <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
+          <Text style={[styles.deleteButtonText, { color: colors.error }]}>
             Supprimer ce membre
           </Text>
         </TouchableOpacity>
@@ -904,6 +904,7 @@ export default function CommunityMemberDetailsScreen() {
 
   const statusConfig = STATUS_CONFIG[member.status] || STATUS_CONFIG.PENDING;
   const StatusIcon = statusConfig.icon;
+  const statusColor = colors[statusConfig.colorKey];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -913,9 +914,9 @@ export default function CommunityMemberDetailsScreen() {
           <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <View style={[styles.statusBadge, { backgroundColor: statusConfig.color + '15' }]}>
-            <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.statusText, { color: statusConfig.color }]}>
+          <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
+            <StatusIcon size={14} color={statusColor} strokeWidth={ICON.strokeWidth} />
+            <Text style={[styles.statusText, { color: statusColor }]}>
               {statusConfig.label}
             </Text>
           </View>
@@ -1094,7 +1095,6 @@ const styles = StyleSheet.create({
   bioContainer: {
     paddingTop: SPACING.sm,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: COLORS.gray200,
   },
 
   bioText: {

@@ -12,7 +12,7 @@ import { api } from './api';
 export type ImageType =
   | 'avatar'           // Profile photos (512x512, 1:1)
   | 'logo'             // Organization logos (512x512, 1:1, PNG for transparency)
-  | 'illustration'     // Illustrations for opportunities, communities, hubs (800x600, 4:3, max 5)
+  | 'illustration'     // Illustrations for opportunities, communities, spaces (800x600, 4:3, max 5)
   | 'document'         // Documents (max 2000px)
   | 'identity';        // Identity documents (max 1500px, higher quality)
 

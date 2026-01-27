@@ -6,11 +6,13 @@ import {
   WORK_RHYTHM_LABELS,
   LOCATION_TYPE_LABELS,
   COMPENSATION_FREQUENCY_LABELS,
+  VISIBILITY_LABELS,
   OpportunityType,
   ContractType,
   WorkRhythm,
   LocationType,
   CompensationFrequency,
+  Visibility,
 } from '../types/models';
 
 // ═══════════════════════════════════════════════════════════════
@@ -73,6 +75,15 @@ export const CURRENCY_DATA: Array<{ id: Currency; label: string; symbol: string 
 ];
 
 // Note: EXPERIENCE_LEVEL_DATA removed - no longer used
+
+// ═══════════════════════════════════════════════════════════════
+// VISIBILITY
+// ═══════════════════════════════════════════════════════════════
+
+export const OPPORTUNITY_VISIBILITY_DATA: Array<{ id: Visibility; label: string; description: string }> = [
+  { id: 'PUBLIC', label: VISIBILITY_LABELS.PUBLIC, description: 'Visible dans l\'exploration et la recherche' },
+  { id: 'PRIVATE', label: VISIBILITY_LABELS.PRIVATE, description: 'Accessible uniquement via invitation' },
+];
 
 // ═══════════════════════════════════════════════════════════════
 // UTILITAIRE - GÉNÉRATION DE SLUG

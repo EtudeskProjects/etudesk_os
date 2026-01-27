@@ -14,7 +14,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, AtSign, ArrowRight } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { otpService } from '../../src/services/otpService';
@@ -147,11 +147,11 @@ export default function EmailLoginScreen() {
               disabled={!email.trim() || isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color={COLORS.white} />
+                <ActivityIndicator color={colors.textOnPrimary} />
               ) : (
                 <>
-                  <Text style={styles.submitButtonText}>{t('auth.emailLogin.sendCode')}</Text>
-                  <ArrowRight size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.submitButtonText, { color: colors.textOnPrimary }]}>{t('auth.emailLogin.sendCode')}</Text>
+                  <ArrowRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
                 </>
               )}
             </TouchableOpacity>
@@ -279,7 +279,6 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.white,
   },
 
   infoText: {

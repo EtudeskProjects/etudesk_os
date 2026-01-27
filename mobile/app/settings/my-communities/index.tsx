@@ -19,7 +19,7 @@ import {
   BarChart2,
   FileText,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { FooterNav } from '../../../src/components/ui';
 import { CommunityCard } from '../../../src/components/cards';
@@ -150,7 +150,7 @@ export default function MyCommunitiesScreen() {
             style={[styles.emptyStateButton, { backgroundColor: colors.primary }]}
             onPress={() => router.push('/(tabs)/explore')}
           >
-            <Text style={styles.emptyStateButtonText}>Explorer</Text>
+            <Text style={[styles.emptyStateButtonText, { color: colors.textOnPrimary }]}>Explorer</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -300,7 +300,7 @@ export default function MyCommunitiesScreen() {
               styles.tabBadge,
               { backgroundColor: activeTab === 'memberships' ? colors.primary : colors.gray300 }
             ]}>
-              <Text style={styles.tabBadgeText}>{memberships.length}</Text>
+              <Text style={[styles.tabBadgeText, { color: colors.textOnPrimary }]}>{memberships.length}</Text>
             </View>
           )}
           {activeTab === 'memberships' && (
@@ -328,7 +328,7 @@ export default function MyCommunitiesScreen() {
               styles.tabBadge,
               { backgroundColor: activeTab === 'bookmarks' ? colors.primary : colors.gray300 }
             ]}>
-              <Text style={styles.tabBadgeText}>{bookmarkedActivities.length}</Text>
+              <Text style={[styles.tabBadgeText, { color: colors.textOnPrimary }]}>{bookmarkedActivities.length}</Text>
             </View>
           )}
           {activeTab === 'bookmarks' && (
@@ -420,7 +420,6 @@ const styles = StyleSheet.create({
   tabBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#FFFFFF',
   },
   tabIndicator: {
     position: 'absolute',
@@ -543,7 +542,6 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.sm,
   },
   emptyStateButtonText: {
-    color: '#FFFFFF',
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },

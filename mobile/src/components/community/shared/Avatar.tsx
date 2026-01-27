@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { COLORS, TYPOGRAPHY } from '../../../constants/theme';
+import { TYPOGRAPHY, LAYOUT, withOpacity, OPACITY } from '../../../constants/theme';
 import { useTheme } from '../../../hooks/useTheme';
 
 interface AvatarProps {
@@ -12,10 +12,10 @@ interface AvatarProps {
 }
 
 const SIZES = {
-    xs: 24,
-    sm: 32,
-    md: 36,
-    lg: 44,
+    xs: LAYOUT.avatarXs,
+    sm: LAYOUT.avatarSm,
+    md: LAYOUT.avatarMd,
+    lg: LAYOUT.avatarLg,
 };
 
 export const Avatar: React.FC<AvatarProps> = ({
@@ -53,7 +53,7 @@ export const Avatar: React.FC<AvatarProps> = ({
         return (
             <Image
                 source={{ uri }}
-                style={[styles.image, avatarStyle, ringStyle]}
+                style={[styles.image, avatarStyle, ringStyle, { backgroundColor: colors.gray200 }]}
             />
         );
     }
@@ -63,7 +63,7 @@ export const Avatar: React.FC<AvatarProps> = ({
             styles.placeholder,
             avatarStyle,
             ringStyle,
-            { backgroundColor: colors.primary + '20' }
+            { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }
         ]}>
             <Text style={[styles.initials, { color: colors.primary, fontSize }]}>
                 {getInitials(name)}
@@ -73,14 +73,13 @@ export const Avatar: React.FC<AvatarProps> = ({
 };
 
 const styles = StyleSheet.create({
-    image: {
-        backgroundColor: COLORS.gray200,
-    },
+    image: {},
     placeholder: {
         alignItems: 'center',
         justifyContent: 'center',
     },
     initials: {
-        fontWeight: TYPOGRAPHY.fontWeight.bold,
+        fontFamily: TYPOGRAPHY.fontFamily.semibold,
+        fontWeight: TYPOGRAPHY.fontWeight.semibold,
     },
 });

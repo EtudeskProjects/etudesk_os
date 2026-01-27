@@ -81,6 +81,10 @@ CREATE TABLE IF NOT EXISTS application_messages (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Ensure is_read column exists (in case table existed before)
+ALTER TABLE application_messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
+ALTER TABLE application_messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMP WITH TIME ZONE;
+
 -- Indexes for application_messages
 CREATE INDEX IF NOT EXISTS idx_application_messages_application_id ON application_messages(application_id);
 CREATE INDEX IF NOT EXISTS idx_application_messages_sender_type ON application_messages(sender_type);

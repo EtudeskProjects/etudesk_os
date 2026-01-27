@@ -29,7 +29,16 @@ import {
 } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+
+// Status color constants for static configuration
+const STATUS_COLORS = {
+  warning: '#F59E0B',
+  info: '#3B82F6',
+  success: '#10B981',
+  error: '#EF4444',
+  gray200: '#E5E7EB',
+};
 import { FooterNav } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { applicationService, opportunityService } from '../../../../src/services';
@@ -40,10 +49,10 @@ import { APPLICATION_STATUS_LABELS } from '../../../../src/types/models';
 
 // Status configuration - Simplified to 4 statuses
 const STATUS_CONFIG: Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> = {
-  SUBMITTED: { color: COLORS.warning, icon: Clock, bgColor: COLORS.warning + '15' },
-  IN_REVIEW: { color: COLORS.info, icon: Eye, bgColor: COLORS.info + '15' },
-  ACCEPTED: { color: COLORS.success, icon: CheckCircle2, bgColor: COLORS.success + '15' },
-  REJECTED: { color: COLORS.error, icon: XCircle, bgColor: COLORS.error + '15' },
+  SUBMITTED: { color: STATUS_COLORS.warning, icon: Clock, bgColor: STATUS_COLORS.warning + '15' },
+  IN_REVIEW: { color: STATUS_COLORS.info, icon: Eye, bgColor: STATUS_COLORS.info + '15' },
+  ACCEPTED: { color: STATUS_COLORS.success, icon: CheckCircle2, bgColor: STATUS_COLORS.success + '15' },
+  REJECTED: { color: STATUS_COLORS.error, icon: XCircle, bgColor: STATUS_COLORS.error + '15' },
 };
 
 // Match category configuration
@@ -334,7 +343,7 @@ export default function OpportunityApplicationsScreen() {
           <View style={styles.cardMeta}>
             {item.rating && (
               <View style={styles.ratingBadge}>
-                <Star size={12} color={COLORS.warning} fill={COLORS.warning} />
+                <Star size={12} color={colors.warning} fill={colors.warning} />
                 <Text style={[styles.ratingText, { color: colors.textSecondary }]}>
                   {item.rating}
                 </Text>
@@ -446,43 +455,43 @@ export default function OpportunityApplicationsScreen() {
           style={[
             styles.statItem,
             { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'IN_REVIEW' && { backgroundColor: COLORS.info + '12', borderColor: COLORS.info + '50' }
+            filter === 'IN_REVIEW' && { backgroundColor: colors.info + '12', borderColor: colors.info + '50' }
           ]}
           onPress={() => setFilter('IN_REVIEW')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.statValue, { color: COLORS.info }]}>
+          <Text style={[styles.statValue, { color: colors.info }]}>
             {statusCounts['IN_REVIEW'] || 0}
           </Text>
-          <Text style={[styles.statLabel, { color: filter === 'IN_REVIEW' ? COLORS.info : colors.gray500 }]}>En examen</Text>
+          <Text style={[styles.statLabel, { color: filter === 'IN_REVIEW' ? colors.info : colors.gray500 }]}>En examen</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.statItem,
             { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'ACCEPTED' && { backgroundColor: COLORS.success + '12', borderColor: COLORS.success + '50' }
+            filter === 'ACCEPTED' && { backgroundColor: colors.success + '12', borderColor: colors.success + '50' }
           ]}
           onPress={() => setFilter('ACCEPTED')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.statValue, { color: COLORS.success }]}>
+          <Text style={[styles.statValue, { color: colors.success }]}>
             {statusCounts['ACCEPTED'] || 0}
           </Text>
-          <Text style={[styles.statLabel, { color: filter === 'ACCEPTED' ? COLORS.success : colors.gray500 }]}>Acceptées</Text>
+          <Text style={[styles.statLabel, { color: filter === 'ACCEPTED' ? colors.success : colors.gray500 }]}>Acceptées</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.statItem,
             { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'REJECTED' && { backgroundColor: COLORS.error + '12', borderColor: COLORS.error + '50' }
+            filter === 'REJECTED' && { backgroundColor: colors.error + '12', borderColor: colors.error + '50' }
           ]}
           onPress={() => setFilter('REJECTED')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.statValue, { color: COLORS.error }]}>
+          <Text style={[styles.statValue, { color: colors.error }]}>
             {statusCounts['REJECTED'] || 0}
           </Text>
-          <Text style={[styles.statLabel, { color: filter === 'REJECTED' ? COLORS.error : colors.gray500 }]}>Rejetées</Text>
+          <Text style={[styles.statLabel, { color: filter === 'REJECTED' ? colors.error : colors.gray500 }]}>Rejetées</Text>
         </TouchableOpacity>
       </View>
 
@@ -728,7 +737,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     paddingTop: SPACING.md,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: COLORS.gray200,
+    borderTopColor: '#E5E7EB',
   },
 
   quickAction: {

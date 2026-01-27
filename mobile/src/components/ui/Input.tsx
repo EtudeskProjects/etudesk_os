@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, LAYOUT, BORDER, ICON } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, LAYOUT, BORDER, ICON } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 interface InputProps extends TextInputProps {
@@ -109,6 +109,7 @@ const styles = StyleSheet.create({
   },
 
   label: {
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
     marginBottom: SPACING.xs,
@@ -126,6 +127,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     paddingHorizontal: SPACING.md,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.md,
   },
 
@@ -146,11 +148,13 @@ const styles = StyleSheet.create({
   },
 
   error: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.xs,
     marginTop: SPACING.xs,
   },
 
   hint: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.xs,
     marginTop: SPACING.xs,
   },

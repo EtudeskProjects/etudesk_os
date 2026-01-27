@@ -18,7 +18,7 @@ import {
   Clock,
   Mail,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useOrganizationMembers } from '../../../src/contexts/OrganizationMemberContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -237,8 +237,8 @@ export default function MembersScreen() {
                     style={[styles.emptyButton, { backgroundColor: colors.primary }]}
                     onPress={handleInvite}
                   >
-                    <Plus size={ICON.size.sm} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
-                    <Text style={styles.emptyButtonText}>Inviter un membre</Text>
+                    <Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                    <Text style={[styles.emptyButtonText, { color: colors.textOnPrimary }]}>Inviter un membre</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -491,6 +491,5 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.white,
   },
 });

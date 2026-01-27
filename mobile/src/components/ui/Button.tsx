@@ -7,13 +7,13 @@ import {
   TextStyle,
   ActivityIndicator,
 } from 'react-native';
-import { COLORS, SPACING, TYPOGRAPHY, LAYOUT, BORDER } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, LAYOUT, BORDER, OPACITY } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
@@ -50,6 +50,8 @@ export function Button({
         return 'transparent';
       case 'ghost':
         return 'transparent';
+      case 'destructive':
+        return colors.error;
       default:
         return colors.primary;
     }
@@ -59,21 +61,23 @@ export function Button({
   const getTextColor = () => {
     switch (variant) {
       case 'primary':
-        return COLORS.white;
+        return colors.textOnPrimary;
       case 'secondary':
         return colors.textPrimary;
       case 'outline':
-        return colors.textPrimary;
+        return colors.primary;
       case 'ghost':
         return colors.primary;
+      case 'destructive':
+        return colors.textOnPrimary;
       default:
-        return COLORS.white;
+        return colors.textOnPrimary;
     }
   };
 
   // Dynamic border color for outline variant
   const getBorderColor = () => {
-    return variant === 'outline' ? colors.borderColor : 'transparent';
+    return variant === 'outline' ? colors.borderColorStrong : 'transparent';
   };
 
   const buttonStyles: ViewStyle[] = [
@@ -106,7 +110,7 @@ export function Button({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? COLORS.white : colors.primary}
+          color={variant === 'primary' || variant === 'destructive' ? colors.textOnPrimary : colors.primary}
           size="small"
         />
       ) : (
@@ -129,9 +133,9 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.sm,
   },
 
-  // Sizes
+  // Sizes - Using design system layout constants
   size_sm: {
-    height: 40,
+    height: LAYOUT.buttonHeightSm,
     paddingHorizontal: SPACING.md,
   },
   size_md: {
@@ -139,7 +143,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
   },
   size_lg: {
-    height: 60,
+    height: LAYOUT.buttonHeightLg,
     paddingHorizontal: SPACING.xl,
   },
 
@@ -148,12 +152,13 @@ const styles = StyleSheet.create({
   },
 
   disabled: {
-    opacity: 0.5,
+    opacity: OPACITY[50],
   },
 
   // Text styles
   text: {
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
   textSize_sm: {

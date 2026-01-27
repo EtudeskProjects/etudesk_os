@@ -218,6 +218,13 @@ class CommunityService {
     return api.post<GeneratedCommunityData>('/api/communities/generate', input, { timeout: 60000 });
   }
 
+  /**
+   * Increment view count for a community
+   */
+  async incrementViews(id: string): Promise<ApiResponse<{ views_count: number }>> {
+    return api.post<{ views_count: number }>(`/api/communities/${id}/views`);
+  }
+
   // ─────────────────────────────────────────────────────────────
   // ORGANIZATION MEMBER MANAGEMENT METHODS
   // ─────────────────────────────────────────────────────────────

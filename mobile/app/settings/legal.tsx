@@ -9,7 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 
 type Tab = 'terms' | 'privacy' | 'legal';
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.lg,
         paddingVertical: SPACING.md,
         borderBottomWidth: BORDER.width.thin,
-        borderBottomColor: COLORS.gray200,
+        borderBottomColor: '#E5E7EB',
     },
 
     backButton: {

@@ -25,7 +25,7 @@ import {
   UserX,
   UserPlus,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
 import { FooterNav } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { communityService, CommunityMember, MemberStatus } from '../../../../src/services';
@@ -33,12 +33,12 @@ import { formatRelativeTime } from '../../../../src/utils/date';
 import { getFullImageUrl } from '../../../../src/utils/image';
 import type { Community } from '../../../../src/types/models';
 
-// Status configuration
-const STATUS_CONFIG: Record<MemberStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> = {
-  PENDING: { color: COLORS.warning, icon: Clock, bgColor: COLORS.warning + '15', label: 'En attente' },
-  ACTIVE: { color: COLORS.success, icon: CheckCircle2, bgColor: COLORS.success + '15', label: 'Actif' },
-  REJECTED: { color: COLORS.error, icon: XCircle, bgColor: COLORS.error + '15', label: 'Refusé' },
-  SUSPENDED: { color: COLORS.gray500, icon: UserX, bgColor: COLORS.gray500 + '15', label: 'Suspendu' },
+// Status configuration - colors will be resolved dynamically using theme
+const STATUS_CONFIG: Record<MemberStatus, { colorKey: 'warning' | 'success' | 'error' | 'gray500'; icon: typeof Clock; label: string }> = {
+  PENDING: { colorKey: 'warning', icon: Clock, label: 'En attente' },
+  ACTIVE: { colorKey: 'success', icon: CheckCircle2, label: 'Actif' },
+  REJECTED: { colorKey: 'error', icon: XCircle, label: 'Refusé' },
+  SUSPENDED: { colorKey: 'gray500', icon: UserX, label: 'Suspendu' },
 };
 
 type FilterStatus = 'all' | MemberStatus;
@@ -229,7 +229,7 @@ export default function CommunityMembersScreen() {
               </Text>
               {item.rating && (
                 <View style={styles.ratingBadge}>
-                  <Star size={12} color={COLORS.warning} fill={COLORS.warning} />
+                  <Star size={12} color={colors.warning} fill={colors.warning} />
                   <Text style={[styles.ratingText, { color: colors.textSecondary }]}>
                     {item.rating}
                   </Text>
@@ -343,43 +343,43 @@ export default function CommunityMembersScreen() {
           style={[
             styles.statItem,
             { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'PENDING' && { backgroundColor: COLORS.warning + '12', borderColor: COLORS.warning + '50' }
+            filter === 'PENDING' && { backgroundColor: colors.warning + '12', borderColor: colors.warning + '50' }
           ]}
           onPress={() => setFilter('PENDING')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.statValue, { color: COLORS.warning }]}>
+          <Text style={[styles.statValue, { color: colors.warning }]}>
             {localStatusCounts['PENDING'] || 0}
           </Text>
-          <Text style={[styles.statLabel, { color: filter === 'PENDING' ? COLORS.warning : colors.gray500 }]}>En attente</Text>
+          <Text style={[styles.statLabel, { color: filter === 'PENDING' ? colors.warning : colors.gray500 }]}>En attente</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.statItem,
             { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'ACTIVE' && { backgroundColor: COLORS.success + '12', borderColor: COLORS.success + '50' }
+            filter === 'ACTIVE' && { backgroundColor: colors.success + '12', borderColor: colors.success + '50' }
           ]}
           onPress={() => setFilter('ACTIVE')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.statValue, { color: COLORS.success }]}>
+          <Text style={[styles.statValue, { color: colors.success }]}>
             {localStatusCounts['ACTIVE'] || 0}
           </Text>
-          <Text style={[styles.statLabel, { color: filter === 'ACTIVE' ? COLORS.success : colors.gray500 }]}>Actifs</Text>
+          <Text style={[styles.statLabel, { color: filter === 'ACTIVE' ? colors.success : colors.gray500 }]}>Actifs</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.statItem,
             { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'REJECTED' && { backgroundColor: COLORS.error + '12', borderColor: COLORS.error + '50' }
+            filter === 'REJECTED' && { backgroundColor: colors.error + '12', borderColor: colors.error + '50' }
           ]}
           onPress={() => setFilter('REJECTED')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.statValue, { color: COLORS.error }]}>
+          <Text style={[styles.statValue, { color: colors.error }]}>
             {localStatusCounts['REJECTED'] || 0}
           </Text>
-          <Text style={[styles.statLabel, { color: filter === 'REJECTED' ? COLORS.error : colors.gray500 }]}>Refusés</Text>
+          <Text style={[styles.statLabel, { color: filter === 'REJECTED' ? colors.error : colors.gray500 }]}>Refusés</Text>
         </TouchableOpacity>
       </View>
 

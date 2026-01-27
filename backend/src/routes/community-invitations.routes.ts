@@ -243,7 +243,7 @@ router.get('/:communityId/invitations', authMiddleware, async (req: AuthRequest,
 });
 
 /**
- * DELETE /api/communities/:communityId/invitations/:invitationId - Cancel an invitation
+ * DELETE /api/communities/:communityId/invitations/:invitationId - Cancel an invitation (DELETE from DB)
  */
 router.delete('/:communityId/invitations/:invitationId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
@@ -262,21 +262,21 @@ router.delete('/:communityId/invitations/:invitationId', authMiddleware, async (
     `, [communityId, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Accès non autorisé' });
+      return res.status(403).json({ error: 'Acces non autorise' });
     }
 
+    // DELETE the invitation from DB
     const result = await pool.query(`
-      UPDATE community_invitations
-      SET status = 'CANCELLED', updated_at = NOW()
-      WHERE id = $1 AND community_id = $2 AND status = 'PENDING'
+      DELETE FROM community_invitations
+      WHERE id = $1 AND community_id = $2
       RETURNING id
     `, [invitationId, communityId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation non trouvée ou déjà traitée' });
+      return res.status(404).json({ error: 'Invitation non trouvee' });
     }
 
-    res.json({ success: true, message: 'Invitation annulée' });
+    res.json({ success: true, message: 'Invitation annulee' });
   } catch (error: any) {
     console.error('Error cancelling invitation:', error);
     res.status(500).json({ error: 'Erreur lors de l\'annulation de l\'invitation' });
@@ -511,13 +511,9 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
     if (existingMember.rows.length > 0) {
       const memberStatus = existingMember.rows[0].status;
       if (memberStatus === 'ACTIVE') {
-        // Already a member, just update invitation status
-        await pool.query(`
-          UPDATE community_invitations
-          SET status = 'ACCEPTED', responded_at = NOW(), updated_at = NOW()
-          WHERE id = $1
-        `, [invitationId]);
-        return res.json({ success: true, message: 'Vous êtes déjà membre de cette communauté' });
+        // Already a member, just DELETE the invitation
+        await pool.query('DELETE FROM community_invitations WHERE id = $1', [invitationId]);
+        return res.json({ success: true, message: 'Vous etes deja membre de cette communaute' });
       }
       // Update existing membership to active
       await pool.query(`
@@ -534,12 +530,8 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
       `, [memberId, inv.community_id, talentId, inv.role || 'MEMBER']);
     }
 
-    // Update invitation status
-    await pool.query(`
-      UPDATE community_invitations
-      SET status = 'ACCEPTED', responded_at = NOW(), updated_at = NOW()
-      WHERE id = $1
-    `, [invitationId]);
+    // DELETE the invitation from DB (access granted)
+    await pool.query('DELETE FROM community_invitations WHERE id = $1', [invitationId]);
 
     res.json({
       success: true,
@@ -553,7 +545,7 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
 });
 
 /**
- * POST /api/community-invitations/:invitationId/decline - Decline an invitation
+ * POST /api/community-invitations/:invitationId/decline - Decline an invitation (DELETE from DB)
  */
 router.post('/:invitationId/decline', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
@@ -561,31 +553,29 @@ router.post('/:invitationId/decline', authMiddleware, async (req: AuthRequest, r
     const talentId = req.talentId;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: 'Non authentifie' });
     }
 
     // Get user's email
     const userResult = await pool.query('SELECT email FROM talents WHERE id = $1', [talentId]);
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+      return res.status(404).json({ error: 'Utilisateur non trouve' });
     }
     const userEmail = userResult.rows[0].email;
 
-    // Verify invitation belongs to user and is pending
+    // Verify invitation belongs to user and DELETE
     const result = await pool.query(`
-      UPDATE community_invitations
-      SET status = 'DECLINED', responded_at = NOW(), updated_at = NOW()
-      WHERE id = $1 
+      DELETE FROM community_invitations
+      WHERE id = $1
       AND (invitee_talent_id = $2 OR LOWER(invitee_email) = LOWER($3))
-      AND status = 'PENDING'
       RETURNING id
     `, [invitationId, talentId, userEmail]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation non trouvée ou déjà traitée' });
+      return res.status(404).json({ error: 'Invitation non trouvee' });
     }
 
-    res.json({ success: true, message: 'Invitation déclinée' });
+    res.json({ success: true, message: 'Invitation declinee' });
   } catch (error: any) {
     console.error('Error declining invitation:', error);
     res.status(500).json({ error: 'Erreur lors du refus de l\'invitation' });

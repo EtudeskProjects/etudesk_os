@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Calendar, MapPin, Clock, Save, SquarePen, X } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Button, Input, Toggle } from '../../../../src/components/ui';
 import { communityActivityService } from '../../../../src/services';
@@ -435,7 +435,7 @@ export default function CreateEventScreen() {
                                     style={[styles.modalButton, { backgroundColor: colors.primary }]}
                                     onPress={() => confirmDateSelection()}
                                 >
-                                    <Text style={[styles.modalButtonText, { color: COLORS.white }]}>Confirmer</Text>
+                                    <Text style={[styles.modalButtonText, { color: colors.textOnPrimary }]}>Confirmer</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>

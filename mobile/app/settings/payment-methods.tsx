@@ -18,7 +18,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { Button, Input } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { paymentService, PaymentMethod, PaymentProvider, PAYMENT_PROVIDERS } from '../../src/services/paymentService';
@@ -225,14 +225,14 @@ export default function PaymentMethodsScreen() {
             disabled={isSubmitting}
           >
             <View style={[styles.providerIcon, { backgroundColor: provider.color }]}>
-              <Smartphone size={ICON.size.sm} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+              <Smartphone size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
             </View>
             <Text style={[styles.providerLabel, { color: colors.textPrimary }]}>
               {provider.label}
             </Text>
             {selectedProvider === provider.id && (
               <View style={[styles.checkMark, { backgroundColor: provider.color }]}>
-                <Check size={12} color={COLORS.white} strokeWidth={3} />
+                <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
               </View>
             )}
           </TouchableOpacity>
@@ -338,7 +338,7 @@ export default function PaymentMethodsScreen() {
                     onPress={() => handleSetDefault(method.id)}
                   >
                     <View style={[styles.methodIcon, { backgroundColor: providerInfo?.color }]}>
-                      <Smartphone size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+                      <Smartphone size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
                     </View>
                     <View style={styles.methodInfo}>
                       <Text style={[styles.methodName, { color: colors.textPrimary }]}>

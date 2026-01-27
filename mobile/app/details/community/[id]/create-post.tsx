@@ -23,7 +23,7 @@ import { ArrowLeft, X, FileText, Plus, Calendar, Save, SquarePen, Clock } from '
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Button } from '../../../../src/components/ui';
 import { communityActivityService, communityService } from '../../../../src/services';
@@ -626,7 +626,7 @@ export default function CreatePostScreen() {
                                             <Image source={{ uri: avatar }} style={styles.mentionAvatar} />
                                         ) : (
                                             <View style={[styles.mentionAvatarPlaceholder, { backgroundColor: colors.primary }]}>
-                                                <Text style={styles.mentionAvatarText}>
+                                                <Text style={[styles.mentionAvatarText, { color: colors.textOnPrimary }]}>
                                                     {name.charAt(0).toUpperCase()}
                                                 </Text>
                                             </View>
@@ -678,7 +678,7 @@ export default function CreatePostScreen() {
                                         <Image source={{ uri: att.uri }} style={styles.attachmentImage} />
                                     ) : (
                                         <View style={styles.attachmentDoc}>
-                                            <FileText size={24} color={COLORS.red500} />
+                                            <FileText size={24} color={colors.error} />
                                             <Text
                                                 style={[styles.attachmentDocName, { color: colors.textSecondary }]}
                                                 numberOfLines={1}
@@ -692,7 +692,7 @@ export default function CreatePostScreen() {
                                         onPress={() => removeAttachment(index)}
                                         disabled={isUploading}
                                     >
-                                        <X size={12} color={COLORS.white} />
+                                        <X size={12} color={colors.textOnPrimary} />
                                     </TouchableOpacity>
                                 </View>
                             ))}
@@ -756,7 +756,7 @@ export default function CreatePostScreen() {
                             onPress={showFilePicker}
                             disabled={!canAddMore}
                         >
-                            <Plus size={20} color={COLORS.white} strokeWidth={2.5} />
+                            <Plus size={20} color={colors.textOnPrimary} strokeWidth={2.5} />
                         </TouchableOpacity>
 
                         {/* Schedule button - hide in edit mode */}
@@ -770,7 +770,7 @@ export default function CreatePostScreen() {
                                 ]}
                                 onPress={toggleSchedule}
                             >
-                                <Calendar size={18} color={isScheduled ? COLORS.white : colors.gray600} strokeWidth={2} />
+                                <Calendar size={18} color={isScheduled ? colors.textOnPrimary : colors.gray600} strokeWidth={2} />
                             </TouchableOpacity>
                         )}
 
@@ -854,7 +854,7 @@ export default function CreatePostScreen() {
                             setShowTimePicker(true);
                         }}
                     >
-                        <Text style={styles.pickerConfirmText}>Suivant</Text>
+                        <Text style={[styles.pickerConfirmText, { color: colors.textOnPrimary }]}>Suivant</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -908,7 +908,7 @@ export default function CreatePostScreen() {
                             }
                         }}
                     >
-                        <Text style={styles.pickerConfirmText}>Confirmer</Text>
+                        <Text style={[styles.pickerConfirmText, { color: colors.textOnPrimary }]}>Confirmer</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -989,7 +989,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     mentionAvatarText: {
-        color: COLORS.white,
+        // color set dynamically via inline style
         fontSize: TYPOGRAPHY.fontSize.sm,
         fontWeight: TYPOGRAPHY.fontWeight.semibold,
     },
@@ -1031,7 +1031,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 4,
         right: 4,
-        backgroundColor: COLORS.black + 'CC',
+        backgroundColor: 'rgba(0,0,0,0.8)',
         width: 20,
         height: 20,
         borderRadius: 10,
@@ -1174,6 +1174,6 @@ const styles = StyleSheet.create({
     pickerConfirmText: {
         fontSize: TYPOGRAPHY.fontSize.md,
         fontWeight: TYPOGRAPHY.fontWeight.semibold,
-        color: COLORS.white,
+        // color set dynamically via inline style
     },
 });

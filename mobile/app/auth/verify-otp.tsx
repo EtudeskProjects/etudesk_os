@@ -13,7 +13,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useAuth } from '../../src/contexts/AuthContext';
@@ -253,9 +253,9 @@ export default function VerifyOTPScreen() {
             disabled={!isOtpComplete || isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color={COLORS.white} />
+              <ActivityIndicator color={colors.textOnPrimary} />
             ) : (
-              <Text style={styles.verifyButtonText}>{t('auth.verifyOtp.verify')}</Text>
+              <Text style={[styles.verifyButtonText, { color: colors.textOnPrimary }]}>{t('auth.verifyOtp.verify')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -374,7 +374,6 @@ const styles = StyleSheet.create({
   verifyButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.white,
   },
 
   successContainer: {

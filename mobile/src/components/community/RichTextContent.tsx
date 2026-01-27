@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Play, ExternalLink } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, BORDER } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 interface RichTextContentProps {
@@ -121,12 +121,12 @@ const YouTubeEmbed: React.FC<{ videoId: string; onPress?: () => void }> = ({ vid
             <View style={styles.youtubeOverlay}>
                 <TouchableOpacity style={styles.playButton} onPress={handlePlay}>
                     <View style={styles.playButtonInner}>
-                        <Play size={32} color={COLORS.white} fill={COLORS.white} />
+                        <Play size={ICON.size.xxl} color={colors.white} fill={colors.white} />
                     </View>
                 </TouchableOpacity>
             </View>
             <TouchableOpacity style={styles.openExternalButton} onPress={openInYouTube}>
-                <ExternalLink size={16} color={COLORS.white} />
+                <ExternalLink size={ICON.size.sm} color={colors.white} />
             </TouchableOpacity>
             <View style={styles.youtubeBadge}>
                 <Text style={styles.youtubeBadgeText}>YouTube</Text>
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
         width: '100%',
         borderRadius: BORDER.radius.md,
         overflow: 'hidden',
-        backgroundColor: COLORS.gray900,
+        backgroundColor: '#1F1C18', // gray900
         position: 'relative',
     },
     thumbnail: {
@@ -440,26 +440,26 @@ const styles = StyleSheet.create({
     },
     youtubeOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: COLORS.black + '4D', // 30% opacity
+        backgroundColor: 'rgba(26, 26, 26, 0.3)', // black 30% opacity
         alignItems: 'center',
         justifyContent: 'center',
     },
     playButton: {
         width: 68,
         height: 48,
-        backgroundColor: COLORS.error + 'E6', // 90% opacity
+        backgroundColor: 'rgba(139, 74, 60, 0.9)', // error/terracotta 90% opacity
         borderRadius: BORDER.radius.md,
         alignItems: 'center',
         justifyContent: 'center',
     },
     playButtonInner: {
-        marginLeft: 4, // Offset for play icon visual balance
+        marginLeft: SPACING.xs, // Offset for play icon visual balance
     },
     openExternalButton: {
         position: 'absolute',
         top: SPACING.sm,
         right: SPACING.sm,
-        backgroundColor: COLORS.black + '99', // 60% opacity
+        backgroundColor: 'rgba(26, 26, 26, 0.6)', // black 60% opacity
         padding: SPACING.xs,
         borderRadius: BORDER.radius.sm,
     },
@@ -467,15 +467,16 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: SPACING.sm,
         left: SPACING.sm,
-        backgroundColor: COLORS.error + 'E6', // 90% opacity
+        backgroundColor: 'rgba(139, 74, 60, 0.9)', // error/terracotta 90% opacity
         paddingHorizontal: SPACING.sm,
-        paddingVertical: 2,
+        paddingVertical: SPACING.xxs,
         borderRadius: BORDER.radius.xs,
     },
     youtubeBadgeText: {
-        color: COLORS.white,
+        color: '#FFFFFF',
+        fontFamily: TYPOGRAPHY.fontFamily.medium,
         fontSize: TYPOGRAPHY.fontSize.xs,
-        fontWeight: TYPOGRAPHY.fontWeight.bold,
+        fontWeight: TYPOGRAPHY.fontWeight.medium,
     },
     webview: {
         flex: 1,

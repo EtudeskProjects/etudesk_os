@@ -58,6 +58,7 @@ CREATE INDEX IF NOT EXISTS idx_community_invitations_expires_at
     ON community_invitations(expires_at) WHERE status = 'PENDING';
 
 -- Trigger for updated_at
+DROP TRIGGER IF EXISTS trigger_community_invitations_updated_at ON community_invitations;
 CREATE TRIGGER trigger_community_invitations_updated_at
     BEFORE UPDATE ON community_invitations
     FOR EACH ROW

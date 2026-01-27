@@ -19,7 +19,7 @@ import { ActivityComment } from '../../types/activity';
 import { communityActivityService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import { CommentItem } from './CommentItem';
-import { COLORS, SPACING, TYPOGRAPHY, BORDER } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, withOpacity, OPACITY } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { Send, X, ChevronDown } from 'lucide-react-native';
 
@@ -529,7 +529,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                             {replyingTo ? "Votre réponse..." : "Ajouter un commentaire..."}
                         </Text>
                         <View style={[styles.inlineSendButton, { backgroundColor: colors.gray300 }]}>
-                            <Send size={16} color={COLORS.white} />
+                            <Send size={16} color={colors.textOnPrimary} />
                         </View>
                     </TouchableOpacity>
                 </View>
@@ -617,9 +617,9 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                                 }}
                             >
                                 {submitting ? (
-                                    <ActivityIndicator size="small" color={COLORS.white} />
+                                    <ActivityIndicator size="small" color={colors.textOnPrimary} />
                                 ) : (
-                                    <Send size={16} color={COLORS.white} />
+                                    <Send size={16} color={colors.textOnPrimary} />
                                 )}
                             </View>
                         </View>

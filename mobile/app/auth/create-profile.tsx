@@ -25,8 +25,8 @@ import {
   Loader2,
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
-import { Input, Button, Toggle } from '../../src/components/ui';
+import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
+import { Input, Button, Toggle, StepIndicator } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import {
@@ -119,7 +119,7 @@ export default function CreateProfileScreen() {
 
   // Generic scroll function for chips
   const scrollToChip = (
-    scrollRef: React.RefObject<ScrollView>,
+    scrollRef: React.RefObject<ScrollView | null>,
     positions: React.MutableRefObject<{ [key: string]: { x: number; width: number } }>,
     chipId: string,
     animated: boolean = true
@@ -366,26 +366,17 @@ export default function CreateProfileScreen() {
     return selectedGoals.length > 0;
   };
 
-  const STEPS: Step[] = ['info', 'sectors', 'goals'];
+  /* 
+   * STEP DATA
+   */
+  const STEPS_DATA = [
+    { id: 'info', label: 'Infos' },
+    { id: 'sectors', label: 'Secteurs' },
+    { id: 'goals', label: 'Objectifs' },
+  ];
 
   const renderStepIndicator = () => (
-    <View style={styles.stepIndicator}>
-      {STEPS.map((step, index) => (
-        <View
-          key={step}
-          style={[
-            styles.stepDot,
-            { backgroundColor: colors.gray200 },
-            currentStep === step && { backgroundColor: colors.primary },
-            STEPS.indexOf(currentStep) > index && { backgroundColor: colors.primary },
-          ]}
-        >
-          {STEPS.indexOf(currentStep) > index && (
-            <Check size={12} color={COLORS.white} strokeWidth={ICON.strokeWidth + 0.5} />
-          )}
-        </View>
-      ))}
-    </View>
+    <StepIndicator steps={STEPS_DATA} currentStepId={currentStep} />
   );
 
   // Format date for display
@@ -475,7 +466,7 @@ export default function CreateProfileScreen() {
                   style={[
                     styles.optionButtonText,
                     { color: colors.gray700 },
-                    gender === g.id && { color: COLORS.white },
+                    gender === g.id && { color: colors.textOnPrimary },
                   ]}
                 >
                   {g.label}
@@ -629,7 +620,7 @@ export default function CreateProfileScreen() {
                   style={[
                     styles.optionChipText,
                     { color: colors.gray700 },
-                    country === c.id && { color: COLORS.white },
+                    country === c.id && { color: colors.textOnPrimary },
                   ]}
                 >
                   {c.label}
@@ -672,7 +663,7 @@ export default function CreateProfileScreen() {
                     style={[
                       styles.optionChipText,
                       { color: colors.gray700 },
-                      region === r.id && { color: COLORS.white },
+                      region === r.id && { color: colors.textOnPrimary },
                     ]}
                   >
                     {r.label}
@@ -715,7 +706,7 @@ export default function CreateProfileScreen() {
                     style={[
                       styles.optionChipText,
                       { color: colors.gray700 },
-                      commune === c.id && { color: COLORS.white },
+                      commune === c.id && { color: colors.textOnPrimary },
                     ]}
                   >
                     {c.label}
@@ -914,8 +905,8 @@ export default function CreateProfileScreen() {
               isSubmitting
                 ? 'Création...'
                 : currentStep === 'goals'
-                ? t('auth.createProfile.complete')
-                : t('auth.createProfile.continue')
+                  ? t('auth.createProfile.complete')
+                  : t('auth.createProfile.continue')
             }
             onPress={handleNext}
             disabled={!canProceed() || isSubmitting}
@@ -924,7 +915,7 @@ export default function CreateProfileScreen() {
               isSubmitting ? undefined : (
                 <ChevronRight
                   size={ICON.size.md}
-                  color={COLORS.white}
+                  color={colors.textOnPrimary}
                   strokeWidth={ICON.strokeWidth}
                 />
               )
@@ -940,7 +931,6 @@ export default function CreateProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   header: {
@@ -950,7 +940,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderBottomWidth: BORDER.width.thin,
-    borderBottomColor: COLORS.gray200,
   },
 
   backButton: {
@@ -964,7 +953,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: TYPOGRAPHY.fontSize.lg,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.gray900,
   },
 
   headerSpacer: {
@@ -995,18 +983,15 @@ const styles = StyleSheet.create({
   stepDot: {
     width: 32,
     height: 32,
-    backgroundColor: COLORS.gray200,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: BORDER.radius.full,
   },
 
   stepDotActive: {
-    backgroundColor: COLORS.primary,
   },
 
   stepDotCompleted: {
-    backgroundColor: COLORS.primary,
   },
 
   stepContent: {
@@ -1021,13 +1006,11 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: TYPOGRAPHY.fontSize.xxl,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: COLORS.gray900,
     marginBottom: SPACING.sm,
   },
 
   stepDescription: {
     fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.gray600,
     textAlign: 'center',
   },
 
@@ -1100,7 +1083,6 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.gray700,
     marginBottom: SPACING.xs,
   },
 
@@ -1113,26 +1095,21 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    backgroundColor: COLORS.gray100,
     borderWidth: BORDER.width.thin,
-    borderColor: COLORS.gray200,
     borderRadius: BORDER.radius.sm,
     alignItems: 'center',
   },
 
   optionButtonSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
   },
 
   optionButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.gray700,
   },
 
   optionButtonTextSelected: {
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
 
   horizontalScroll: {
@@ -1147,31 +1124,24 @@ const styles = StyleSheet.create({
   optionChip: {
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    backgroundColor: COLORS.gray100,
     borderWidth: BORDER.width.thin,
-    borderColor: COLORS.gray200,
     borderRadius: BORDER.radius.full,
   },
 
   optionChipSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
   },
 
   optionChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.gray700,
   },
 
   optionChipTextSelected: {
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
 
   datePickerButton: {
-    backgroundColor: COLORS.gray50,
     borderWidth: BORDER.width.thin,
-    borderColor: COLORS.gray200,
     borderRadius: BORDER.radius.sm,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
@@ -1181,11 +1151,9 @@ const styles = StyleSheet.create({
 
   datePickerText: {
     fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.gray900,
   },
 
   datePickerPlaceholder: {
-    color: COLORS.gray500,
   },
 
   datePickerModalOverlay: {
@@ -1195,7 +1163,6 @@ const styles = StyleSheet.create({
   },
 
   datePickerModalContent: {
-    backgroundColor: COLORS.white,
     borderTopLeftRadius: BORDER.radius.lg,
     borderTopRightRadius: BORDER.radius.lg,
     paddingBottom: SPACING.xl,
@@ -1208,13 +1175,11 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
     borderBottomWidth: BORDER.width.thin,
-    borderBottomColor: COLORS.gray200,
   },
 
   datePickerDoneButton: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.primary,
   },
 
   iosDatePicker: {
@@ -1222,23 +1187,19 @@ const styles = StyleSheet.create({
   },
 
   textAreaContainer: {
-    backgroundColor: COLORS.gray50,
     borderWidth: BORDER.width.thin,
-    borderColor: COLORS.gray200,
     borderRadius: BORDER.radius.sm,
     padding: SPACING.md,
   },
 
   textArea: {
     fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.gray900,
     minHeight: 80,
     textAlignVertical: 'top',
   },
 
   charCount: {
     fontSize: TYPOGRAPHY.fontSize.xs,
-    color: COLORS.gray500,
     textAlign: 'right',
     marginTop: SPACING.xs,
   },
@@ -1256,25 +1217,19 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    backgroundColor: COLORS.white,
     borderWidth: 1.5,
-    borderColor: COLORS.gray200,
     borderRadius: BORDER.radius.full,
   },
 
   selectableTagSelected: {
-    backgroundColor: COLORS.primary + '10',
-    borderColor: COLORS.primary,
   },
 
   selectableTagText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.gray600,
   },
 
   selectableTagTextSelected: {
-    color: COLORS.primary,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
@@ -1290,15 +1245,11 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
-    backgroundColor: COLORS.white,
     borderWidth: 1.5,
-    borderColor: COLORS.gray200,
     borderRadius: BORDER.radius.md,
   },
 
   selectableItemSelected: {
-    backgroundColor: COLORS.primary + '08',
-    borderColor: COLORS.primary,
   },
 
   selectableItemCheckbox: {
@@ -1306,32 +1257,25 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: BORDER.radius.sm,
     borderWidth: 2,
-    borderColor: COLORS.gray300,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.white,
   },
 
   selectableItemCheckboxSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
   },
 
   selectableItemText: {
     flex: 1,
     fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.gray600,
   },
 
   selectableItemTextSelected: {
-    color: COLORS.gray900,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
   // Selection hint
   selectionHint: {
     fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.gray500,
     textAlign: 'center',
     marginTop: SPACING.lg,
   },
@@ -1347,14 +1291,12 @@ const styles = StyleSheet.create({
     marginTop: SPACING.lg,
     paddingTop: SPACING.lg,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: COLORS.gray200,
     gap: SPACING.sm,
   },
 
   preferencesSectionTitle: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.gray700,
     marginBottom: SPACING.xs,
   },
 
@@ -1379,12 +1321,10 @@ const styles = StyleSheet.create({
   preferenceLabel: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.gray900,
   },
 
   preferenceDescription: {
     fontSize: TYPOGRAPHY.fontSize.xs,
-    color: COLORS.gray500,
     marginTop: 2,
   },
 });

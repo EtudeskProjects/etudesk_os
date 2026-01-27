@@ -17,7 +17,7 @@ import {
   AlertTriangle,
   X,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, BORDER, ICON } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { Button } from './Button';
 
@@ -111,15 +111,15 @@ export function Alert({
   const getIconBackgroundColor = () => {
     switch (type) {
       case 'success':
-        return `${colors.success}15`;
+        return colors.successLight;
       case 'error':
-        return `${colors.error}15`;
+        return colors.errorLight;
       case 'warning':
-        return `${colors.warning}15`;
+        return colors.warningLight;
       case 'info':
       case 'confirm':
       default:
-        return `${colors.info}15`;
+        return colors.infoLight;
     }
   };
 
@@ -148,7 +148,7 @@ export function Alert({
       onRequestClose={dismissable ? onClose : undefined}
     >
       <TouchableWithoutFeedback onPress={handleBackdropPress}>
-        <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+        <Animated.View style={[styles.overlay, { backgroundColor: colors.overlay, opacity: fadeAnim }]}>
           <TouchableWithoutFeedback>
             <Animated.View
               style={[
@@ -182,7 +182,7 @@ export function Alert({
                 ]}
               >
                 <IconComponent
-                  size={32}
+                  size={ICON.size.xxl}
                   color={getIconColor()}
                   strokeWidth={ICON.strokeWidth}
                 />
@@ -243,14 +243,13 @@ export function Alert({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.lg,
   },
   container: {
-    width: Math.min(SCREEN_WIDTH - SPACING.lg * 2, 340),
-    borderRadius: BORDER.radius.md,
+    width: Math.min(SCREEN_WIDTH - SPACING.lg * 2, LAYOUT.modalMaxWidth),
+    borderRadius: LAYOUT.modalBorderRadius,
     padding: SPACING.lg,
     alignItems: 'center',
   },
@@ -261,8 +260,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   iconContainer: {
-    width: 64,
-    height: 64,
+    width: LAYOUT.avatarXxl,
+    height: LAYOUT.avatarXxl,
     borderRadius: BORDER.radius.full,
     justifyContent: 'center',
     alignItems: 'center',
@@ -270,12 +269,14 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   title: {
+    fontFamily: TYPOGRAPHY.fontFamily.semibold,
     fontSize: TYPOGRAPHY.fontSize.lg,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
     textAlign: 'center',
     marginBottom: SPACING.xs,
   },
   message: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.sm,
     textAlign: 'center',
     lineHeight: TYPOGRAPHY.fontSize.sm * TYPOGRAPHY.lineHeight.normal,

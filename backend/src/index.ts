@@ -5,14 +5,13 @@ import dotenv from 'dotenv';
 import opportunitiesRouter from './routes/opportunities';
 import applicationsRouter from './routes/applications';
 import communitiesRouter from './routes/communities';
-import hubsRouter from './routes/hubs';
+import spacesRouter from './routes/spaces';
 import authRouter from './routes/auth';
 import onboardingRouter from './routes/onboarding';
 import talentsRouter from './routes/talents';
 import organizationsRouter from './routes/organizations';
 import organizationMembersRouter from './routes/organization-members';
 import kycRouter from './routes/kyc';
-import documentsRouter from './routes/documents';
 import bookmarksRouter from './routes/bookmarks';
 import notificationsRouter from './routes/notifications';
 import imagesRouter from './routes/images';
@@ -22,6 +21,8 @@ import communityActivitiesRouter from './routes/community-activities.routes';
 import communitySubscriptionsRouter from './routes/community-subscriptions.routes';
 import communityNotificationsRouter from './routes/community-notifications.routes';
 import communityInvitationsRouter from './routes/community-invitations.routes';
+import opportunityInvitationsRouter from './routes/opportunity-invitations.routes';
+import spaceInvitationsRouter from './routes/space-invitations.routes';
 import webhooksRouter from './routes/webhooks.routes';
 import calendarRouter from './routes/calendar.routes';
 import { verifyEmailConnection } from './services/email.service';
@@ -96,7 +97,6 @@ app.use('/api/talents', talentsRouter);
 app.use('/api/organizations', organizationsRouter);
 app.use('/api/organizations', organizationMembersRouter);
 app.use('/api/kyc', kycRouter);
-app.use('/api/documents', documentsRouter);
 app.use('/api/opportunities', opportunitiesRouter);
 app.use('/api/applications', applicationsRouter);
 app.use('/api/communities', communitiesRouter);
@@ -105,7 +105,11 @@ app.use('/api/community-subscriptions', communitySubscriptionsRouter);
 app.use('/api/community-notifications', communityNotificationsRouter);
 app.use('/api/communities', communityInvitationsRouter); // Invitations routes /:communityId/invitations
 app.use('/api/community-invitations', communityInvitationsRouter); // User routes /me, /:id/accept, /:id/decline
-app.use('/api/hubs', hubsRouter);
+app.use('/api/opportunities', opportunityInvitationsRouter); // Invitations routes /:opportunityId/invitations
+app.use('/api/opportunity-invitations', opportunityInvitationsRouter); // User routes /me, /:id/accept, /:id/decline
+app.use('/api/spaces', spacesRouter);
+app.use('/api/spaces', spaceInvitationsRouter); // Invitations routes /:spaceId/invitations
+app.use('/api/space-invitations', spaceInvitationsRouter); // User routes /me, /:id/accept, /:id/decline
 
 app.use('/api/bookmarks', bookmarksRouter);
 app.use('/api/notifications', notificationsRouter);

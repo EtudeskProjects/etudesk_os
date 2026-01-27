@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Sparkles, Search, Users, MessageCircle, ArrowRight } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { Button } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
@@ -89,7 +89,7 @@ export default function WelcomeScreen() {
             icon={
               <ArrowRight
                 size={ICON.size.md}
-                color={COLORS.white}
+                color={colors.textOnPrimary}
                 strokeWidth={ICON.strokeWidth}
               />
             }

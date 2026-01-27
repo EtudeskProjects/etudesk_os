@@ -9,6 +9,7 @@ import {
 } from '../services/community-generation.service';
 import { autoModerationService } from '../services/auto-moderation.service';
 import { communityPermissionService } from '../services/community-permission.service';
+import { safeParseJson } from '../utils';
 
 // Type for SQL query parameters
 type QueryParam = string | number | boolean | null | Date;
@@ -126,7 +127,7 @@ router.get('/', async (req: Request, res: Response) => {
     let paramIndex = 1;
 
     // Filter out private communities unless explicitly requested
-    // Private communities (visibility = 'PRIVATE' or 'UNLISTED') should not appear in explore
+    // Private communities (visibility = 'PRIVATE') should not appear in explore
     // PUBLIC communities should always appear in explore
     if (include_private !== 'true') {
       if (hasVisibilityColumn) {
@@ -181,6 +182,14 @@ router.get('/organization/:orgId', async (req: Request, res: Response) => {
     const { orgId } = req.params;
     const { limit = 50, offset = 0 } = req.query;
 
+    // Get total count first
+    const countResult = await pool.query(
+      `SELECT COUNT(*) as total FROM communities c
+       WHERE c.organization_id = $1 AND c.deleted_at IS NULL`,
+      [orgId]
+    );
+    const totalCount = parseInt(countResult.rows[0].total);
+
     const result = await pool.query(`
       SELECT c.*,
         (SELECT COUNT(*) FROM community_members WHERE community_id = c.id) as members_count
@@ -190,7 +199,7 @@ router.get('/organization/:orgId', async (req: Request, res: Response) => {
       LIMIT $2 OFFSET $3
     `, [orgId, Number(limit), Number(offset)]);
 
-    res.json({ data: result.rows, count: result.rowCount });
+    res.json({ data: result.rows, count: totalCount });
   } catch (error) {
     console.error('Error fetching organization communities:', error);
     res.status(500).json({ error: 'Failed to fetch communities' });
@@ -295,11 +304,6 @@ router.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Community not found' });
     }
 
-    // Increment view count (fire and forget)
-    pool.query(`
-      UPDATE communities SET views_count = COALESCE(views_count, 0) + 1 WHERE id = $1
-    `, [id]).catch(() => { });
-
     res.json({ data: result.rows[0] });
   } catch (error: any) {
     console.error('Error fetching community:', error);
@@ -315,6 +319,30 @@ router.get('/:id', async (req: Request, res: Response) => {
       message: error?.message || 'Unknown error',
       detail: process.env.NODE_ENV === 'development' ? error?.detail : undefined
     });
+  }
+});
+
+// POST /api/communities/:id/views - Increment view count
+router.post('/:id/views', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `UPDATE communities
+       SET views_count = COALESCE(views_count, 0) + 1, updated_at = NOW()
+       WHERE id = $1 AND deleted_at IS NULL
+       RETURNING id, views_count`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Community not found' });
+    }
+
+    res.json({ data: { views_count: result.rows[0].views_count } });
+  } catch (error) {
+    console.error('Error incrementing community views:', error);
+    res.status(500).json({ error: 'Failed to increment views' });
   }
 });
 
@@ -1143,6 +1171,25 @@ router.get('/memberships/me', authMiddleware, async (req: AuthRequest, res: Resp
     const coverImageField = hasCoverImageUrl ? "'cover_image_url', c.cover_image_url," : '';
     const imagesField = hasImages ? "'images', c.images," : '';
 
+    // Build count query
+    let countQuery = `
+      SELECT COUNT(*) as total
+      FROM community_members cm
+      JOIN communities c ON cm.community_id = c.id
+      WHERE cm.talent_id = $1 AND c.deleted_at IS NULL
+    `;
+    const countParams: QueryParam[] = [talentId as string];
+    let countParamIndex = 2;
+
+    if (status && hasMemberStatus) {
+      countQuery += ` AND cm.status = $${countParamIndex++}`;
+      countParams.push(status as string);
+    }
+
+    const countResult = await pool.query(countQuery, countParams);
+    const totalCount = parseInt(countResult.rows[0].total);
+
+    // Build data query
     let query = `
       SELECT
         cm.*,
@@ -1172,7 +1219,7 @@ router.get('/memberships/me', authMiddleware, async (req: AuthRequest, res: Resp
     params.push(Number(limit), Number(offset));
 
     const result = await pool.query(query, params);
-    res.json({ data: { memberships: result.rows } });
+    res.json({ data: { memberships: result.rows }, count: totalCount });
   } catch (error) {
     console.error('Error fetching memberships:', error);
     res.status(500).json({ error: 'Failed to fetch memberships' });
@@ -1428,7 +1475,7 @@ router.get('/members/:membershipId', authMiddleware, async (req: AuthRequest, re
         bio: row.talent_bio,
         headline: row.talent_bio,
       },
-      answers: typeof row.answers === 'string' ? JSON.parse(row.answers) : row.answers || [],
+      answers: safeParseJson(row.answers, []),
     };
 
     res.json({ data: membership });

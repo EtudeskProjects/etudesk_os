@@ -12,6 +12,56 @@ import { autoModerationService } from '../services/auto-moderation.service';
 // Type for SQL query parameters
 type QueryParam = string | number | boolean | null | Date;
 
+// Map country names to ISO 2-letter codes
+const COUNTRY_NAME_TO_CODE: Record<string, string> = {
+  'côte d\'ivoire': 'CI',
+  'cote d\'ivoire': 'CI',
+  'ivory coast': 'CI',
+  'senegal': 'SN',
+  'sénégal': 'SN',
+  'mali': 'ML',
+  'burkina faso': 'BF',
+  'guinea': 'GN',
+  'guinée': 'GN',
+  'benin': 'BJ',
+  'bénin': 'BJ',
+  'togo': 'TG',
+  'niger': 'NE',
+  'cameroon': 'CM',
+  'cameroun': 'CM',
+  'ghana': 'GH',
+  'nigeria': 'NG',
+  'nigéria': 'NG',
+  'morocco': 'MA',
+  'maroc': 'MA',
+  'tunisia': 'TN',
+  'tunisie': 'TN',
+  'france': 'FR',
+  'canada': 'CA',
+  'united states': 'US',
+  'états-unis': 'US',
+  'etats-unis': 'US',
+};
+
+// Convert country name to ISO code (returns uppercase code or null)
+function normalizeCountryCode(input: string | undefined | null): string | null {
+  if (!input) return null;
+
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  // If already 2-letter code, return uppercase
+  if (trimmed.length === 2) {
+    return trimmed.toUpperCase();
+  }
+
+  // Try to find in mapping (case-insensitive)
+  const normalized = trimmed.toLowerCase();
+  const code = COUNTRY_NAME_TO_CODE[normalized];
+
+  return code || null;
+}
+
 const router = Router();
 
 // Valid organization types
@@ -164,8 +214,13 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Invalid organization type', validTypes: VALID_ORG_TYPES });
     }
 
-    if (headquarters_country && headquarters_country.length !== 2) {
-      return res.status(400).json({ error: 'Country must be a 2-letter ISO code' });
+    // Normalize country code (accepts both ISO codes and full names)
+    const normalizedCountry = headquarters_country ? normalizeCountryCode(headquarters_country) : null;
+    if (headquarters_country && !normalizedCountry) {
+      return res.status(400).json({
+        error: 'Country must be a 2-letter ISO code or a recognized country name',
+        provided: headquarters_country,
+      });
     }
 
     // Content moderation for user-generated text fields
@@ -218,7 +273,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         id, name.trim(), finalSlug, type || null, description?.trim() || null,
         logo_url || null, website_url || null, contact_email || null, contact_phone || null,
         headquarters_city?.trim() || null, headquarters_region?.trim() || null,
-        headquarters_country?.toUpperCase() || null,
+        normalizedCountry,
         sectors || [], goals || [], req.talentId
       ]);
 
@@ -303,8 +358,13 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Invalid organization type' });
     }
 
-    if (headquarters_country && headquarters_country.length !== 2) {
-      return res.status(400).json({ error: 'Country must be a 2-letter ISO code' });
+    // Normalize country code (accepts both ISO codes and full names)
+    const normalizedCountry = headquarters_country ? normalizeCountryCode(headquarters_country) : undefined;
+    if (headquarters_country && !normalizedCountry) {
+      return res.status(400).json({
+        error: 'Country must be a 2-letter ISO code or a recognized country name',
+        provided: headquarters_country,
+      });
     }
 
     // Content moderation for user-generated text fields
@@ -377,7 +437,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     if (headquarters_country !== undefined) {
       updates.push(`headquarters_country = $${paramIndex++}`);
-      params.push(headquarters_country?.toUpperCase() || null);
+      params.push(normalizedCountry || null);
     }
 
     if (sectors !== undefined) {

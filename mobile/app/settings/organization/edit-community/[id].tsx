@@ -35,7 +35,7 @@ import {
   Wand2,
   ClipboardList,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../../src/constants/theme';
 import { Input, Button, Toggle } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
@@ -512,7 +512,7 @@ export default function EditCommunityScreen() {
         return (
           <View key={step} style={styles.stepItem}>
             <View style={[styles.stepDot, { backgroundColor: colors.gray200 }, (isCurrent || isCompleted) && { backgroundColor: colors.primary }]}>
-              {isCompleted ? <Check size={12} color={COLORS.white} strokeWidth={ICON.strokeWidth + 0.5} /> : <Text style={[styles.stepNumber, isCurrent && { color: COLORS.white }]}>{index + 1}</Text>}
+              {isCompleted ? <Check size={12} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth + 0.5} /> : <Text style={[styles.stepNumber, { color: colors.gray600 }, isCurrent && { color: colors.textOnPrimary }]}>{index + 1}</Text>}
             </View>
             <Text style={[styles.stepLabel, { color: colors.gray500 }, isCurrent && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold }]}>{STEP_TITLES[step]}</Text>
           </View>
@@ -589,11 +589,11 @@ export default function EditCommunityScreen() {
               activeOpacity={0.8}
             >
               {isGenerating ? (
-                <ActivityIndicator size="small" color={COLORS.white} />
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
               ) : (
-                <Wand2 size={16} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+                <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
               )}
-              <Text style={styles.generateButtonText}>
+              <Text style={[styles.generateButtonText, { color: colors.textOnPrimary }]}>
                 {isGenerating ? 'Suggestion...' : 'Suggérer'}
               </Text>
             </TouchableOpacity>
@@ -701,7 +701,7 @@ export default function EditCommunityScreen() {
                   </Text>
                   {isSelected && (
                     <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={COLORS.white} strokeWidth={3} />
+                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -743,7 +743,7 @@ export default function EditCommunityScreen() {
                         style={[
                           styles.optionChipText,
                           { color: colors.gray700 },
-                          isSelected && { color: COLORS.white },
+                          isSelected && { color: colors.textOnPrimary },
                         ]}
                       >
                         {c.label}
@@ -783,7 +783,7 @@ export default function EditCommunityScreen() {
                           style={[
                             styles.optionChipText,
                             { color: colors.gray700 },
-                            isSelected && { color: COLORS.white },
+                            isSelected && { color: colors.textOnPrimary },
                           ]}
                         >
                           {r.label}
@@ -821,7 +821,7 @@ export default function EditCommunityScreen() {
                           style={[
                             styles.optionChipText,
                             { color: colors.gray700 },
-                            isSelected && { color: COLORS.white },
+                            isSelected && { color: colors.textOnPrimary },
                           ]}
                         >
                           {c.label}
@@ -883,7 +883,7 @@ export default function EditCommunityScreen() {
                   </Text>
                   {isSelected && (
                     <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={COLORS.white} strokeWidth={3} />
+                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -948,7 +948,7 @@ export default function EditCommunityScreen() {
                             style={[
                               styles.optionChipText,
                               { color: colors.gray700 },
-                              isSelected && { color: COLORS.white },
+                              isSelected && { color: colors.textOnPrimary },
                             ]}
                           >
                             {c.symbol}
@@ -1097,7 +1097,7 @@ export default function EditCommunityScreen() {
                       style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
                       onPress={() => removeImage(image.id)}
                     >
-                      <X size={14} color={COLORS.white} strokeWidth={2.5} />
+                      <X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -1340,7 +1340,7 @@ export default function EditCommunityScreen() {
                 onPress={handleSave}
                 disabled={isSubmitting}
                 fullWidth
-                icon={<Save size={18} color={COLORS.white} />}
+                icon={<Save size={18} color={colors.textOnPrimary} />}
                 iconPosition="right"
               />
             </View>
@@ -1369,7 +1369,7 @@ export default function EditCommunityScreen() {
               onPress={handleNext}
               disabled={!canProceed()}
               fullWidth
-              icon={<ChevronRight size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />}
+              icon={<ChevronRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
               iconPosition="right"
             />
           </View>
@@ -1414,7 +1414,7 @@ const styles = StyleSheet.create({
   stepIndicator: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xl },
   stepItem: { alignItems: 'center', gap: SPACING.xs },
   stepDot: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: BORDER.radius.full },
-  stepNumber: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.semibold, color: COLORS.white },
+  stepNumber: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.semibold },
   stepLabel: { fontSize: TYPOGRAPHY.fontSize.xs },
   stepContent: { flex: 1 },
   stepHeader: { alignItems: 'center', marginBottom: SPACING.xl, gap: SPACING.sm },
@@ -1460,7 +1460,7 @@ const styles = StyleSheet.create({
   galleryItem: { width: '31%', aspectRatio: 4 / 3, borderRadius: BORDER.radius.sm, overflow: 'hidden', position: 'relative' },
   galleryImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   galleryRemove: { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  galleryRemoveText: { color: COLORS.white, fontSize: 14, fontWeight: 'bold' },
+  galleryRemoveText: { fontSize: 14, fontWeight: 'bold' },
   galleryAdd: { width: '31%', aspectRatio: 4 / 3, borderRadius: BORDER.radius.sm, borderWidth: 1.5, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
   previewContainer: { gap: SPACING.md },
   previewHeader: { position: 'relative' },
@@ -1498,7 +1498,6 @@ const styles = StyleSheet.create({
   generateButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.white,
   },
   
   // Location type styles
@@ -1677,7 +1676,7 @@ const styles = StyleSheet.create({
   },
   
   // Back step button styles
-  backStepButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.xs, paddingVertical: SPACING.md, paddingHorizontal: SPACING.md, borderWidth: 1.5, borderRadius: BORDER.radius.sm },
+  backStepButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.xs, height: LAYOUT.buttonHeight, paddingHorizontal: SPACING.md, borderWidth: 1.5, borderRadius: BORDER.radius.sm },
   backStepButtonText: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
   continueButton: { flex: 1 },
 });

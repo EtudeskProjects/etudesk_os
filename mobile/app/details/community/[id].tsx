@@ -13,15 +13,15 @@ import {
   Monitor,
   MapPin,
   ChevronRight,
-  Info,
   Eye,
   CreditCard,
   BookmarkCheck,
   PenSquare,
   BarChart2,
   Shield,
+  Settings,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -98,6 +98,11 @@ export default function CommunityDetailScreen() {
         } else {
           setIsOwner(false);
         }
+
+        // Increment view count (fire and forget)
+        communityService.incrementViews(id!).catch(() => {
+          // Silently fail - not critical
+        });
       }
     } catch (error: any) {
       console.error('Error loading community:', error);
@@ -155,18 +160,6 @@ export default function CommunityDetailScreen() {
     }
   };
 
-  const getTypeIcon = () => {
-    switch (community?.type) {
-      case 'ONLINE':
-        return <Monitor size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />;
-      case 'HYBRID':
-        return <MapPin size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />;
-      default:
-        return <Globe size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />;
-    }
-  };
-
-
   const getButtonText = () => {
     if (membershipStatus?.is_member) {
       return 'Membre';
@@ -174,7 +167,7 @@ export default function CommunityDetailScreen() {
     if (membershipStatus?.has_pending_request) {
       return 'Annuler ma demande';
     }
-    return 'Rejoindre la communauté';
+    return 'Rejoindre la communaute';
   };
 
   const getButtonVariant = (): 'primary' | 'outline' => {
@@ -276,7 +269,7 @@ export default function CommunityDetailScreen() {
                     {community.organization.name}
                   </Text>
                   {community.organization.verification_status === 'VERIFIED' && (
-                    <CheckCircle size={ICON.size.sm} color={COLORS.success} fill={COLORS.success} strokeWidth={0} />
+                    <CheckCircle size={ICON.size.sm} color={colors.success} fill={colors.success} strokeWidth={0} />
                   )}
                 </View>
                 <View style={styles.orgTagsRow}>
@@ -302,6 +295,35 @@ export default function CommunityDetailScreen() {
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {community.name}
           </Text>
+
+          {/* Tags Row */}
+          <View style={styles.tagsRow}>
+            {community.type && (
+              <View style={[styles.tag, { backgroundColor: colors.primary + '15' }]}>
+                {community.type === 'ONLINE' ? (
+                  <Monitor size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                ) : community.type === 'HYBRID' ? (
+                  <MapPin size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                ) : (
+                  <Globe size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                )}
+                <Text style={[styles.tagText, { color: colors.primary, marginLeft: 4 }]}>
+                  {community.type === 'ONLINE' ? 'En ligne' : community.type === 'HYBRID' ? 'Hybride' : 'Présentiel'}
+                </Text>
+              </View>
+            )}
+            {community.is_paid && (
+              <View style={[styles.tag, { backgroundColor: colors.warning + '15' }]}>
+                <CreditCard size={12} color={colors.warning} strokeWidth={ICON.strokeWidth} />
+                <Text style={[styles.tagText, { color: colors.warning, marginLeft: 4 }]}>Payant</Text>
+              </View>
+            )}
+            {!community.is_paid && (
+              <View style={[styles.tag, { backgroundColor: colors.success + '15' }]}>
+                <Text style={[styles.tagText, { color: colors.success }]}>Gratuit</Text>
+              </View>
+            )}
+          </View>
 
           {/* Tab Navigation - Only visible for members */}
           {membershipStatus?.is_member && (
@@ -375,17 +397,8 @@ export default function CommunityDetailScreen() {
           <View style={styles.contentPadded}>
             {/* Meta Info Card */}
             <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-              {/* Members + Views */}
+              {/* Views + Members (Views always first for consistency) */}
               <View style={styles.metaRow}>
-                <View style={styles.metaItem}>
-                  <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                  <View>
-                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Membres</Text>
-                    <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
-                      {community.members_count?.toLocaleString() || '0'}
-                    </Text>
-                  </View>
-                </View>
                 <View style={styles.metaItem}>
                   <Eye size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                   <View>
@@ -395,9 +408,18 @@ export default function CommunityDetailScreen() {
                     </Text>
                   </View>
                 </View>
+                <View style={styles.metaItem}>
+                  <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  <View>
+                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Membres</Text>
+                    <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
+                      {community.members_count?.toLocaleString() || '0'}
+                    </Text>
+                  </View>
+                </View>
               </View>
 
-              {/* Location + Type */}
+              {/* Location + Created date */}
               <View style={styles.metaRow}>
                 <View style={styles.metaItem}>
                   <MapPin size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
@@ -495,13 +517,6 @@ export default function CommunityDetailScreen() {
             )}
 
 
-            {/* Footer Info */}
-            <View style={styles.footerInfo}>
-              <Info size={16} color={colors.textDisabled} />
-              <Text style={[styles.footerInfoText, { color: colors.textDisabled }]}>
-                Créée le {formatDate(community.created_at || '')}
-              </Text>
-            </View>
           </View>
         )}
 
@@ -655,11 +670,11 @@ export default function CommunityDetailScreen() {
           <View style={styles.ctaContainer}>
             {canManageCommunity ? (
               <Button
-                title="Gérer la communauté"
+                title="Gerer la communaute"
                 onPress={() => router.push(`/settings/organization/community-members/${id}` as any)}
                 fullWidth
-                variant="primary"
-                icon={<Users size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />}
+                variant="outline"
+                icon={<Settings size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
               />
             ) : currentSpace === 'organization' ? (
               // Organizations cannot join communities - no button shown
@@ -667,14 +682,14 @@ export default function CommunityDetailScreen() {
             ) : membershipStatus?.is_member ? (
               // Members see "Voir l'actualité" button
               <Button
-                title="Voir l'actualité"
+                title="Voir l'actualite"
                 onPress={() => {
                   setActiveTab('activities');
                   scrollViewRef.current?.scrollTo({ y: 0, animated: true });
                 }}
                 fullWidth
                 variant="primary"
-                icon={<Users size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />}
+                icon={<Eye size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
               />
             ) : (
               // Non-members see "Rejoindre la communauté" or "Annuler ma demande" button
@@ -683,7 +698,7 @@ export default function CommunityDetailScreen() {
                 onPress={handleJoin}
                 fullWidth
                 variant={getButtonVariant()}
-                icon={<Users size={ICON.size.md} color={getButtonVariant() === 'primary' ? COLORS.white : colors.primary} strokeWidth={ICON.strokeWidth} />}
+                icon={<Users size={ICON.size.md} color={getButtonVariant() === 'primary' ? colors.textOnPrimary : colors.primary} strokeWidth={ICON.strokeWidth} />}
               />
             )}
           </View>
@@ -697,7 +712,7 @@ export default function CommunityDetailScreen() {
         bottomOffset={80} // Above navigation/footer
         actions={[
           {
-            icon: <BarChart2 size={24} color={COLORS.white} />,
+            icon: <BarChart2 size={24} color={colors.textOnPrimary} />,
             label: 'Sondage',
             onPress: () => {
               router.push(`/details/community/${id}/create-poll`);
@@ -705,7 +720,7 @@ export default function CommunityDetailScreen() {
             color: colors.warning,
           },
           {
-            icon: <Calendar size={24} color={COLORS.white} />,
+            icon: <Calendar size={24} color={colors.textOnPrimary} />,
             label: 'Événement',
             onPress: () => {
               router.push(`/details/community/${id}/create-event`);
@@ -713,7 +728,7 @@ export default function CommunityDetailScreen() {
             color: colors.info,
           },
           {
-            icon: <PenSquare size={24} color={COLORS.white} />,
+            icon: <PenSquare size={24} color={colors.textOnPrimary} />,
             label: 'Publication',
             onPress: () => {
               router.push(`/details/community/${id}/create-post`);
@@ -773,7 +788,7 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xxxl,
   },
   sliderContainer: {
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.lg,
   },
   contentPadded: {
     paddingHorizontal: SPACING.lg,
@@ -785,7 +800,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     borderWidth: BORDER.width.thin,
     borderRadius: BORDER.radius.md,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.md,
     gap: SPACING.md,
   },
   orgLogo: {
@@ -801,7 +816,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   orgLogoText: {
-    color: COLORS.white,
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
@@ -840,7 +854,25 @@ const styles = StyleSheet.create({
   title: {
     fontSize: TYPOGRAPHY.fontSize.xxl,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
+  },
+  // Tags Row
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+    marginBottom: SPACING.lg,
+  },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: BORDER.radius.xs,
+  },
+  tagText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   // Meta Card
   metaCard: {
@@ -893,7 +925,7 @@ const styles = StyleSheet.create({
   },
   // Sections
   section: {
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -954,18 +986,6 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
-  // Footer
-  footerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    marginTop: SPACING.md,
-    opacity: 0.6,
-  },
-  footerInfoText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
   // Tabs
   tabContainer: {
     flexDirection: 'row',
@@ -1000,9 +1020,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabBadgeText: {
-    color: COLORS.white,
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: '#FFFFFF',
   },
   tabIndicator: {
     position: 'absolute',

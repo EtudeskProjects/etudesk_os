@@ -100,48 +100,57 @@ router.get('/events', authMiddleware, async (req: AuthRequest, res: Response) =>
             SELECT
                 o.id,
                 o.title,
-                o.description,
+                o.summary,
                 o.deadline,
-                o.location,
+                o.locations,
                 org.name as organization_name
             FROM opportunities o
-            JOIN applications a ON a.opportunity_id = o.id
+            JOIN opportunity_applications oa ON oa.opportunity_id = o.id
             JOIN organizations org ON org.id = o.organization_id
-            WHERE a.talent_id = $1
+            WHERE oa.talent_id = $1
                 AND o.deadline >= $2
                 AND o.deadline <= $3
+                AND o.deleted_at IS NULL
             ORDER BY o.deadline ASC
         `, [userId, startDate.toISOString(), endDate.toISOString()]);
 
         for (const row of opportunitiesResult.rows) {
+            // Extract location from locations JSONB (first location if available)
+            const locations = row.locations || [];
+            const firstLocation = locations[0];
+            const locationStr = firstLocation ?
+                [firstLocation.city, firstLocation.country].filter(Boolean).join(', ') :
+                null;
+
             events.push({
                 id: row.id,
                 source: 'opportunity',
                 type: 'OPPORTUNITY',
                 title: row.title,
-                description: row.description,
+                description: row.summary,
                 date: row.deadline,
-                location: row.location,
+                location: locationStr,
                 organization_name: row.organization_name,
             });
         }
 
-        // 4. Hub reservations
+        // 4. Space bookings (reservations)
         const reservationsResult = await pool.query(`
             SELECT
-                hr.id,
-                hr.start_time,
-                hr.end_time,
-                hr.status,
-                h.name as hub_name,
-                h.address as location
-            FROM hub_reservations hr
-            JOIN hubs h ON h.id = hr.hub_id
-            WHERE hr.talent_id = $1
-                AND hr.start_time >= $2
-                AND hr.start_time <= $3
-                AND hr.status = 'CONFIRMED'
-            ORDER BY hr.start_time ASC
+                sb.id,
+                sb.start_datetime,
+                sb.end_datetime,
+                sb.status,
+                s.name as space_name,
+                s.address as location
+            FROM space_bookings sb
+            JOIN spaces s ON s.id = sb.space_id
+            WHERE sb.talent_id = $1
+                AND sb.start_datetime >= $2
+                AND sb.start_datetime <= $3
+                AND sb.status IN ('CONFIRMED', 'PENDING')
+                AND s.deleted_at IS NULL
+            ORDER BY sb.start_datetime ASC
         `, [userId, startDate.toISOString(), endDate.toISOString()]);
 
         for (const row of reservationsResult.rows) {
@@ -149,10 +158,11 @@ router.get('/events', authMiddleware, async (req: AuthRequest, res: Response) =>
                 id: row.id,
                 source: 'reservation',
                 type: 'RESERVATION',
-                title: `Réservation - ${row.hub_name}`,
-                start_date: row.start_time,
-                end_date: row.end_time,
+                title: `Reservation - ${row.space_name}`,
+                start_date: row.start_datetime,
+                end_date: row.end_datetime,
                 location: row.location,
+                status: row.status,
             });
         }
 

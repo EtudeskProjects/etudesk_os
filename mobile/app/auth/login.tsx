@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Alert } fr
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Mail, MessageCircle, AtSign } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 
@@ -77,7 +77,7 @@ export default function LoginScreen() {
             <View style={styles.appleIcon}>
               <Text style={styles.appleIconText}>A</Text>
             </View>
-            <Text style={[styles.authButtonText, styles.authButtonTextApple]}>Apple</Text>
+            <Text style={[styles.authButtonText, { color: colors.textOnPrimary }]}>Apple</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -87,10 +87,10 @@ export default function LoginScreen() {
           >
             <MessageCircle
               size={ICON.size.lg}
-              color={COLORS.white}
+              color={colors.textOnPrimary}
               strokeWidth={ICON.strokeWidth}
             />
-            <Text style={[styles.authButtonText, styles.authButtonTextWhatsApp]}>WhatsApp</Text>
+            <Text style={[styles.authButtonText, { color: colors.textOnPrimary }]}>WhatsApp</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -100,10 +100,10 @@ export default function LoginScreen() {
           >
             <AtSign
               size={ICON.size.lg}
-              color={COLORS.white}
+              color={colors.textOnPrimary}
               strokeWidth={ICON.strokeWidth}
             />
-            <Text style={[styles.authButtonText, styles.authButtonTextEmail]}>Email</Text>
+            <Text style={[styles.authButtonText, { color: colors.textOnPrimary }]}>Email</Text>
           </TouchableOpacity>
         </View>
 
@@ -173,8 +173,8 @@ const styles = StyleSheet.create({
   },
 
   authButtonApple: {
-    backgroundColor: COLORS.black,
-    borderColor: COLORS.black,
+    backgroundColor: '#1F1C18',
+    borderColor: '#1F1C18',
   },
 
   authButtonWhatsApp: {
@@ -187,20 +187,8 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
-  authButtonTextApple: {
-    color: COLORS.white,
-  },
-
-  authButtonTextWhatsApp: {
-    color: COLORS.white,
-  },
-
   authButtonEmail: {
     // Dynamic colors applied inline
-  },
-
-  authButtonTextEmail: {
-    color: COLORS.white,
   },
 
   appleIcon: {
@@ -213,7 +201,7 @@ const styles = StyleSheet.create({
   appleIconText: {
     fontSize: ICON.size.lg,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: COLORS.white,
+    color: '#FFFCF9',
   },
 
   footer: {

@@ -8,6 +8,7 @@ import {
     Animated,
     TouchableWithoutFeedback,
     Dimensions,
+    ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -17,7 +18,7 @@ import {
     ChevronRight,
     X,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -82,20 +83,20 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, o
             route: '/settings/organization/create-opportunity' as const,
         },
         {
+            id: 'space',
+            label: 'Espace',
+            description: 'Salle de reunion, formation, coworking',
+            icon: MapPin,
+            color: colors.warning,
+            route: '/settings/organization/create-space' as const,
+        },
+        {
             id: 'community',
             label: 'Communauté',
             description: 'Groupe, réseau, association',
             icon: Users,
             color: colors.success,
             route: '/settings/organization/create-community' as const,
-        },
-        {
-            id: 'hub',
-            label: 'Espace',
-            description: 'Coworking, incubateur, lieu',
-            icon: MapPin,
-            color: colors.warning,
-            route: '/settings/organization/create-hub' as const,
         },
     ];
 
@@ -120,7 +121,7 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, o
                         }
                     ]}
                 >
-                    <View style={styles.modalHandle} />
+                    <View style={[styles.modalHandle, { backgroundColor: colors.gray300 }]} />
                     <View style={styles.modalHeader}>
                         <View>
                             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Créer une offre</Text>
@@ -132,7 +133,11 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, o
                             <X size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
                         </TouchableOpacity>
                     </View>
-                    <View style={styles.modalOptions}>
+                    <ScrollView 
+                        style={styles.modalOptionsContainer}
+                        contentContainerStyle={styles.modalOptions}
+                        showsVerticalScrollIndicator={false}
+                    >
                         {CREATE_OPTIONS.map((option) => {
                             const IconComponent = option.icon;
                             return (
@@ -159,7 +164,7 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, o
                                 </TouchableOpacity>
                             );
                         })}
-                    </View>
+                    </ScrollView>
                 </Animated.View>
             </View>
         </Modal>
@@ -184,10 +189,9 @@ const styles = StyleSheet.create({
     },
 
     modalHandle: {
-        width: 40,
-        height: 4,
-        backgroundColor: COLORS.gray300,
-        borderRadius: 2,
+        width: LAYOUT.avatarMd,
+        height: SPACING.xs,
+        borderRadius: SPACING.xxs,
         alignSelf: 'center',
         marginTop: SPACING.sm,
         marginBottom: SPACING.xs,
@@ -219,8 +223,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
 
+    modalOptionsContainer: {
+        maxHeight: SCREEN_HEIGHT * 0.5,
+    },
     modalOptions: {
         paddingHorizontal: SPACING.lg,
+        paddingBottom: SPACING.lg,
         gap: SPACING.sm,
     },
 

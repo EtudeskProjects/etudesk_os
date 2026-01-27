@@ -99,8 +99,8 @@
       "yourGoals": "Tes objectifs",
       "goalsHint": "Choisis jusqu'à {{max}} objectifs prioritaires",
       "permissionRequired": "Permission requise",
-      "photoPermissionMessage": "Nous avons besoin de votre permission pour accéder à vos photos.",
-      "photoError": "Une erreur est survenue lors de la sélection de l'image. Veuillez réessayer."
+      "photoPermissionMessage": "Nous avons besoin de ta permission pour accéder à tes photos.",
+      "photoError": "Une erreur est survenue lors de la sélection de l'image. Réessaie."
     },
     "emailLogin": {
       "title": "Connexion par email",
@@ -143,7 +143,7 @@
     "prompts": {
       "explore": {
         "opportunities": "Quelles opportunités correspondent à mon profil ?",
-        "hubs": "Quels hubs sont disponibles à Abidjan ?",
+        "spaces": "Quels espaces sont disponibles à Abidjan ?",
         "communities": "Recommande-moi des communautés tech"
       },
       "study": {
@@ -158,7 +158,7 @@
     "title": "Explorer",
     "categories": {
       "opportunities": "Opportunités",
-      "hubs": "Hubs",
+      "spaces": "Espaces",
       "communities": "Communautés"
     },
     "filters": "Filtres",
@@ -178,14 +178,14 @@
     "remote": "Remote",
     "members": "membres",
     "create": "Créer",
-    "whatToCreate": "Que souhaitez-vous créer pour {{name}} ?",
+    "whatToCreate": "Que souhaites-tu créer pour {{name}} ?",
     "opportunity": "Opportunité",
     "space": "Espace",
     "community": "Communauté"
   },
   "ecosystem": {
     "title": "Accueil",
-    "weeklyInsight": "{{name}}, vous avez eu une semaine chargée ! Vous avez acquis {{skills}} nouvelles compétences et complété {{modules}} modules de formation.",
+    "weeklyInsight": "{{name}}, tu as eu une semaine chargée ! Tu as acquis {{skills}} nouvelles compétences et complété {{modules}} modules de formation.",
     "train": "Se former",
     "notifications": "Notifications",
     "agenda": "Agenda",
@@ -208,7 +208,7 @@
     "nodes": {
       "opportunities": "Opportunités",
       "communities": "Communautés",
-      "hubs": "Hubs",
+      "spaces": "Espaces",
       "documents": "Documents"
     }
   },
@@ -254,7 +254,7 @@
       "legalDesc": "Conditions et confidentialité"
     },
     "logout": "Déconnexion",
-    "logoutConfirm": "Êtes-vous sûr de vouloir vous déconnecter ?",
+    "logoutConfirm": "Es-tu sûr de vouloir te déconnecter ?",
     "version": "Version"
   },
   "preferences": {
@@ -472,8 +472,7 @@
       "coworking": "Coworking",
       "incubator": "Incubateur",
       "accelerator": "Accélérateur",
-      "lab": "Lab",
-      "hub": "Hub"
+      "lab": "Lab"
     }
   },
   "community": {
@@ -557,7 +556,7 @@
     "actionError": "Une erreur est survenue",
     "networkError": "Erreur de connexion. Vérifiez votre connexion internet.",
     "sessionExpired": "Session expirée",
-    "sessionExpiredMessage": "Votre session a expiré. Veuillez vous reconnecter.",
+    "sessionExpiredMessage": "Ta session a expiré. Reconnecte-toi.",
     "permissionDenied": "Permission refusée",
     "permissionDeniedMessage": "Vous n'avez pas les droits pour effectuer cette action."
   }

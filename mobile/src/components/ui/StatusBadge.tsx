@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, TYPOGRAPHY, SPACING, BORDER } from '../../constants/theme';
+import { TYPOGRAPHY, SPACING, BORDER, ICON, OPACITY, ThemeColors } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
-import { Clock, CheckCircle2, XCircle } from 'lucide-react-native';
-import { ICON } from '../../constants/theme';
+import { Clock, CheckCircle2, XCircle, Archive, AlertCircle } from 'lucide-react-native';
 
 export type MemberStatus = 'PENDING' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED' | 'ARCHIVED';
 
@@ -13,50 +12,47 @@ interface StatusBadgeProps {
     size?: 'sm' | 'md' | 'lg';
 }
 
-const STATUS_CONFIG: Record<MemberStatus, { 
-    color: string; 
-    icon: typeof Clock; 
-    bgColor: string; 
-    label: string;
-}> = {
-    PENDING: { 
-        color: COLORS.warning, 
-        icon: Clock, 
-        bgColor: COLORS.warning + '15', 
-        label: 'En attente' 
+// Status configuration using theme color keys
+const getStatusConfig = (colors: ThemeColors) => ({
+    PENDING: {
+        color: colors.statusPending,
+        icon: Clock,
+        bgColor: colors.warningLight,
+        label: 'En attente'
     },
-    ACTIVE: { 
-        color: COLORS.success, 
-        icon: CheckCircle2, 
-        bgColor: COLORS.success + '15', 
-        label: 'Membre actif' 
+    ACTIVE: {
+        color: colors.statusActive,
+        icon: CheckCircle2,
+        bgColor: colors.successLight,
+        label: 'Membre actif'
     },
-    REJECTED: { 
-        color: COLORS.error, 
-        icon: XCircle, 
-        bgColor: COLORS.error + '15', 
-        label: 'Refusée' 
+    REJECTED: {
+        color: colors.statusRejected,
+        icon: XCircle,
+        bgColor: colors.errorLight,
+        label: 'Refusée'
     },
-    SUSPENDED: { 
-        color: COLORS.gray500, 
-        icon: XCircle, 
-        bgColor: COLORS.gray500 + '15', 
-        label: 'Suspendu' 
+    SUSPENDED: {
+        color: colors.statusSuspended,
+        icon: AlertCircle,
+        bgColor: colors.infoLight,
+        label: 'Suspendu'
     },
-    ARCHIVED: { 
-        color: COLORS.gray500, 
-        icon: Clock, 
-        bgColor: COLORS.gray500 + '15', 
-        label: 'Archivé' 
+    ARCHIVED: {
+        color: colors.statusArchived,
+        icon: Archive,
+        bgColor: colors.gray100,
+        label: 'Archivé'
     },
-};
+});
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ 
-    status, 
+export const StatusBadge: React.FC<StatusBadgeProps> = ({
+    status,
     showIcon = true,
     size = 'md'
 }) => {
     const { colors } = useTheme();
+    const STATUS_CONFIG = getStatusConfig(colors);
     const config = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
     const StatusIcon = config.icon;
 
@@ -64,17 +60,17 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         sm: {
             padding: SPACING.xs,
             fontSize: TYPOGRAPHY.fontSize.xs,
-            iconSize: 12,
+            iconSize: ICON.size.xxs,
         },
         md: {
             padding: SPACING.sm,
             fontSize: TYPOGRAPHY.fontSize.sm,
-            iconSize: 16,
+            iconSize: ICON.size.sm,
         },
         lg: {
             padding: SPACING.md,
             fontSize: TYPOGRAPHY.fontSize.md,
-            iconSize: 20,
+            iconSize: ICON.size.md,
         },
     };
 
@@ -82,22 +78,22 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 
     return (
         <View style={[
-            styles.badge, 
-            { 
+            styles.badge,
+            {
                 backgroundColor: config.bgColor,
                 padding: currentSize.padding,
             }
         ]}>
             {showIcon && (
-                <StatusIcon 
-                    size={currentSize.iconSize} 
-                    color={config.color} 
-                    strokeWidth={ICON.strokeWidth} 
+                <StatusIcon
+                    size={currentSize.iconSize}
+                    color={config.color}
+                    strokeWidth={ICON.strokeWidth}
                 />
             )}
             <Text style={[
-                styles.label, 
-                { 
+                styles.label,
+                {
                     color: config.color,
                     fontSize: currentSize.fontSize,
                 }
@@ -117,6 +113,7 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
     },
     label: {
-        fontWeight: TYPOGRAPHY.fontWeight.semibold,
+        fontFamily: TYPOGRAPHY.fontFamily.medium,
+        fontWeight: TYPOGRAPHY.fontWeight.medium,
     },
 });

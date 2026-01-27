@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { Alert, Linking, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../constants/location';
-import { MAPBOX_CONFIG } from '../constants/config';
 
 interface GeolocationResult {
   country: string;
@@ -94,89 +93,6 @@ const findMatchingCity = (countryCode: string, regionCode: string, geocodedCity:
   return '';
 };
 
-// Mapbox reverse geocoding for better accuracy
-interface MapboxFeature {
-  place_type: string[];
-  text: string;
-  properties: {
-    short_code?: string;
-  };
-  context?: Array<{
-    id: string;
-    text: string;
-    short_code?: string;
-  }>;
-}
-
-interface MapboxResponse {
-  features: MapboxFeature[];
-}
-
-const reverseGeocodeWithMapbox = async (
-  latitude: number,
-  longitude: number
-): Promise<{ country: string; countryCode: string; region: string; city: string } | null> => {
-  try {
-    const url = `${MAPBOX_CONFIG.GEOCODING_URL}/${longitude},${latitude}.json?access_token=${MAPBOX_CONFIG.ACCESS_TOKEN}&types=place,region,country&language=fr`;
-
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error('Mapbox geocoding error:', response.status);
-      return null;
-    }
-
-    const data: MapboxResponse = await response.json();
-
-    if (!data.features || data.features.length === 0) {
-      return null;
-    }
-
-    let country = '';
-    let countryCode = '';
-    let region = '';
-    let city = '';
-
-    // Parse features and context
-    for (const feature of data.features) {
-      if (feature.place_type.includes('place')) {
-        city = feature.text;
-      }
-      if (feature.place_type.includes('region')) {
-        region = feature.text;
-      }
-      if (feature.place_type.includes('country')) {
-        country = feature.text;
-        if (feature.properties.short_code) {
-          countryCode = feature.properties.short_code.toUpperCase();
-        }
-      }
-
-      // Also check context for additional info
-      if (feature.context) {
-        for (const ctx of feature.context) {
-          if (ctx.id.startsWith('region')) {
-            region = ctx.text;
-          }
-          if (ctx.id.startsWith('country')) {
-            country = ctx.text;
-            if (ctx.short_code) {
-              countryCode = ctx.short_code.toUpperCase();
-            }
-          }
-          if (ctx.id.startsWith('place')) {
-            city = ctx.text;
-          }
-        }
-      }
-    }
-
-    return { country, countryCode, region, city };
-  } catch (error) {
-    console.error('Mapbox reverse geocoding error:', error);
-    return null;
-  }
-};
-
 export function useGeolocation(): UseGeolocationReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -232,36 +148,26 @@ export function useGeolocation(): UseGeolocationReturn {
 
       const { latitude, longitude } = location.coords;
 
-      // Try Mapbox first for better accuracy, fallback to expo-location
-      let countryName = '';
-      let countryCode = '';
-      let geocodedRegion = '';
-      let geocodedCity = '';
+      // Use expo-location for reverse geocoding
+      const [geocodeResult] = await Location.reverseGeocodeAsync({ latitude, longitude });
 
-      const mapboxResult = await reverseGeocodeWithMapbox(latitude, longitude);
-
-      if (mapboxResult) {
-        countryName = mapboxResult.country;
-        countryCode = mapboxResult.countryCode || COUNTRY_NAME_TO_CODE[countryName] || '';
-        geocodedRegion = mapboxResult.region;
-        geocodedCity = mapboxResult.city;
-        console.log('[Geolocation] Mapbox result:', mapboxResult);
-      } else {
-        // Fallback to expo-location
-        console.log('[Geolocation] Mapbox failed, using expo-location fallback');
-        const [geocodeResult] = await Location.reverseGeocodeAsync({ latitude, longitude });
-
-        if (!geocodeResult) {
-          setError('Impossible de déterminer votre adresse');
-          setIsLoading(false);
-          return null;
-        }
-
-        countryName = geocodeResult.country || '';
-        countryCode = COUNTRY_NAME_TO_CODE[countryName] || '';
-        geocodedRegion = geocodeResult.region || geocodeResult.subregion || '';
-        geocodedCity = geocodeResult.city || geocodeResult.subregion || '';
+      if (!geocodeResult) {
+        setError('Impossible de déterminer votre adresse');
+        setIsLoading(false);
+        return null;
       }
+
+      const countryName = geocodeResult.country || '';
+      const countryCode = COUNTRY_NAME_TO_CODE[countryName] || '';
+      const geocodedRegion = geocodeResult.region || geocodeResult.subregion || '';
+      const geocodedCity = geocodeResult.city || geocodeResult.subregion || '';
+
+      console.log('[Geolocation] Expo-location result:', {
+        country: countryName,
+        countryCode,
+        region: geocodedRegion,
+        city: geocodedCity,
+      });
 
       // Check if we support this country
       const supportedCountry = COUNTRIES.find(c => c.id === countryCode);

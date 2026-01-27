@@ -34,9 +34,6 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
     const { colors } = useTheme();
     const router = useRouter();
-    // TODO: integrate real user ID from context. 
-    // For now assuming we can get it or pass it. 
-    // Usually AuthContext provides `user`.
     const [activities, setActivities] = useState<CommunityActivity[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);

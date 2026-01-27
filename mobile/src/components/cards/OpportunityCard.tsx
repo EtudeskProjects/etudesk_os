@@ -17,7 +17,7 @@ import {
     Trash2,
     Briefcase,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { formatRelativeTime, formatDeadline } from '../../utils/date';
 import { formatCompactNumber } from '../../utils/number';
@@ -123,7 +123,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
                 <View style={styles.badgesRow}>
                     {opportunity.contract_type && (
                         <View style={[styles.typeBadge, { backgroundColor: colors.primary }]}>
-                            <Text style={styles.typeBadgeText}>
+                            <Text style={[styles.typeBadgeText, { color: colors.textOnPrimary }]}>
                                 {CONTRACT_TYPE_LABELS[opportunity.contract_type as ContractType] || opportunity.contract_type}
                             </Text>
                         </View>
@@ -133,7 +133,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
                             styles.statusBadge,
                             { backgroundColor: opportunity.status === 'OPEN' ? colors.success : colors.warning }
                         ]}>
-                            <Text style={styles.statusBadgeText}>
+                            <Text style={[styles.statusBadgeText, { color: colors.textOnPrimary }]}>
                                 {opportunity.status === 'OPEN' ? 'Active' : 'En pause'}
                             </Text>
                         </View>
@@ -234,13 +234,13 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
                             {deadline && (
                                 <View style={styles.detailItem}>
                                     <Clock
-                                        size={14}
-                                        color={deadline.isUrgent ? COLORS.error : colors.textSecondary}
+                                        size={ICON.size.xs}
+                                        color={deadline.isUrgent ? colors.error : colors.textSecondary}
                                         strokeWidth={ICON.strokeWidth}
                                     />
                                     <Text style={[
                                         styles.detailText,
-                                        { color: deadline.isUrgent ? COLORS.error : colors.textSecondary }
+                                        { color: deadline.isUrgent ? colors.error : colors.textSecondary }
                                     ]}>
                                         {deadline.text}
                                     </Text>
@@ -271,8 +271,7 @@ const styles = StyleSheet.create({
         marginBottom: 0,
     },
     imageContainer: {
-        height: 140,
-        backgroundColor: COLORS.gray100,
+        height: LAYOUT.cardImageHeightSm + 20,
     },
     image: {
         width: '100%',
@@ -348,19 +347,19 @@ const styles = StyleSheet.create({
         borderRadius: BORDER.radius.xs,
     },
     typeBadgeText: {
+        fontFamily: TYPOGRAPHY.fontFamily.medium,
         fontSize: TYPOGRAPHY.fontSize.xs,
-        fontWeight: TYPOGRAPHY.fontWeight.bold,
-        color: COLORS.white,
+        fontWeight: TYPOGRAPHY.fontWeight.medium,
     },
     statusBadge: {
-        paddingVertical: 4,
-        paddingHorizontal: 8,
+        paddingVertical: SPACING.xs,
+        paddingHorizontal: SPACING.sm,
         borderRadius: BORDER.radius.xs,
     },
     statusBadgeText: {
+        fontFamily: TYPOGRAPHY.fontFamily.medium,
         fontSize: TYPOGRAPHY.fontSize.xs,
-        fontWeight: TYPOGRAPHY.fontWeight.bold,
-        color: COLORS.white,
+        fontWeight: TYPOGRAPHY.fontWeight.medium,
     },
     detailsRow: {
         flexDirection: 'row',

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { organizationService } from '../services/organizationService';
 import { Organization as OrgModel } from '../types/models';
+import { useAuth } from './AuthContext';
 
 type SpaceType = 'talent' | 'organization';
 
@@ -26,11 +27,13 @@ interface SpaceContextType {
 const SpaceContext = createContext<SpaceContextType | undefined>(undefined);
 
 export function SpaceProvider({ children }: { children: ReactNode }) {
+  const { user, status } = useAuth();
   const [currentSpace, setCurrentSpace] = useState<SpaceType>('talent');
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [userOrganizations, setUserOrganizations] = useState<UserOrganization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const hasAutoSelected = useRef(false);
+  const lastUserId = useRef<string | null>(null);
 
   // Convert API organization to UserOrganization format
   const mapOrganization = (org: OrgModel): UserOrganization => ({
@@ -68,10 +71,35 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Load organizations on mount
+  // Reset state when user changes (logout/login with different account)
   useEffect(() => {
-    fetchOrganizations();
-  }, [fetchOrganizations]);
+    const currentUserId = user?.id || null;
+
+    // If user changed (including logout), reset everything
+    if (lastUserId.current !== null && lastUserId.current !== currentUserId) {
+      console.log('[Space] User changed, resetting state');
+      setCurrentSpace('talent');
+      setSelectedOrgId(null);
+      setUserOrganizations([]);
+      hasAutoSelected.current = false;
+    }
+
+    lastUserId.current = currentUserId;
+  }, [user?.id]);
+
+  // Load organizations when authenticated
+  useEffect(() => {
+    if (status === 'authenticated' && user?.id) {
+      fetchOrganizations();
+    } else if (status === 'unauthenticated') {
+      // Clear organizations on logout
+      setUserOrganizations([]);
+      setSelectedOrgId(null);
+      setCurrentSpace('talent');
+      hasAutoSelected.current = false;
+      setIsLoading(false);
+    }
+  }, [status, user?.id, fetchOrganizations]);
 
   const selectedOrg = selectedOrgId
     ? userOrganizations.find(org => org.id === selectedOrgId) || null

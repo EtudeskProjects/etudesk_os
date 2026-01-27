@@ -31,48 +31,48 @@ import {
   Trash2,
   ChevronDown,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
 import { Button, FooterNav } from '../../../../../src/components/ui';
 import { useTheme } from '../../../../../src/hooks/useTheme';
 import { communityService } from '../../../../../src/services';
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import type { MemberStatus, CommunityMemberDetails } from '../../../../../src/services/communityService';
 
-// Status configuration
-const STATUS_CONFIG: Record<MemberStatus, { color: string; icon: typeof Clock }> = {
-  PENDING: { color: COLORS.warning, icon: Clock },
-  ACTIVE: { color: COLORS.success, icon: CheckCircle2 },
-  REJECTED: { color: COLORS.error, icon: XCircle },
-  SUSPENDED: { color: COLORS.gray500, icon: XCircle },
-};
+// Status configuration - colors are set dynamically using theme colors
+const getStatusConfig = (colors: any): Record<MemberStatus, { color: string; icon: typeof Clock }> => ({
+  PENDING: { color: colors.warning, icon: Clock },
+  ACTIVE: { color: colors.success, icon: CheckCircle2 },
+  REJECTED: { color: colors.error, icon: XCircle },
+  SUSPENDED: { color: colors.gray500, icon: XCircle },
+});
 
-// Status flow with descriptions
-const STATUS_FLOW: Record<MemberStatus, {
+// Status flow with descriptions - colors are set dynamically using theme colors
+const getStatusFlow = (colors: any): Record<MemberStatus, {
   label: string;
   description: string;
   color: string;
-}> = {
+}> => ({
   PENDING: {
     label: 'En attente',
     description: 'Demande en cours de validation',
-    color: COLORS.warning,
+    color: colors.warning,
   },
   ACTIVE: {
     label: 'Membre actif',
     description: 'Membre approuvé de la communauté',
-    color: COLORS.success,
+    color: colors.success,
   },
   REJECTED: {
     label: 'Refusé',
     description: 'Demande non retenue',
-    color: COLORS.error,
+    color: colors.error,
   },
   SUSPENDED: {
     label: 'Suspendu',
     description: 'Membre temporairement suspendu',
-    color: COLORS.gray500,
+    color: colors.gray500,
   },
-};
+});
 
 type Tab = 'profile' | 'notes';
 
@@ -81,6 +81,9 @@ export default function MemberDetailsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const scrollViewRef = useRef<ScrollView>(null);
+
+  const STATUS_CONFIG = getStatusConfig(colors);
+  const STATUS_FLOW = getStatusFlow(colors);
 
   const [membership, setMembership] = useState<CommunityMemberDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -299,8 +302,8 @@ export default function MemberDetailsScreen() {
               <TouchableOpacity key={star} onPress={() => handleUpdateRating(star)}>
                 <Star
                   size={32}
-                  color={star <= rating ? COLORS.warning : colors.gray300}
-                  fill={star <= rating ? COLORS.warning : 'transparent'}
+                  color={star <= rating ? colors.warning : colors.gray300}
+                  fill={star <= rating ? colors.warning : 'transparent'}
                   strokeWidth={ICON.strokeWidth}
                 />
               </TouchableOpacity>
@@ -313,13 +316,13 @@ export default function MemberDetailsScreen() {
           <View style={[styles.section, { borderColor: colors.gray200 }]}>
             <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Statut de l'adhésion</Text>
 
-            <View style={[styles.currentStatusDisplay, { backgroundColor: (STATUS_FLOW[membership.status as MemberStatus]?.color || COLORS.warning) + '10' }]}>
+            <View style={[styles.currentStatusDisplay, { backgroundColor: (STATUS_FLOW[membership.status as MemberStatus]?.color || colors.warning) + '10' }]}>
               {(() => {
                 const config = STATUS_CONFIG[membership.status as MemberStatus] || STATUS_CONFIG.PENDING;
                 const StatusIcon = config.icon;
-                return <StatusIcon size={20} color={STATUS_FLOW[membership.status as MemberStatus]?.color || COLORS.warning} strokeWidth={ICON.strokeWidth} />;
+                return <StatusIcon size={20} color={STATUS_FLOW[membership.status as MemberStatus]?.color || colors.warning} strokeWidth={ICON.strokeWidth} />;
               })()}
-              <Text style={[styles.currentStatusDisplayText, { color: STATUS_FLOW[membership.status as MemberStatus]?.color || COLORS.warning }]}>
+              <Text style={[styles.currentStatusDisplayText, { color: STATUS_FLOW[membership.status as MemberStatus]?.color || colors.warning }]}>
                 {STATUS_FLOW[membership.status as MemberStatus]?.label || membership.status}
               </Text>
             </View>
@@ -392,11 +395,11 @@ export default function MemberDetailsScreen() {
 
         {/* Delete button */}
         <TouchableOpacity
-          style={[styles.deleteButton, { borderColor: COLORS.error }]}
+          style={[styles.deleteButton, { borderColor: colors.error }]}
           onPress={handleDeleteMember}
         >
-          <Trash2 size={18} color={COLORS.error} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.deleteButtonText, { color: COLORS.error }]}>
+          <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
+          <Text style={[styles.deleteButtonText, { color: colors.error }]}>
             Supprimer ce membre
           </Text>
         </TouchableOpacity>
@@ -648,7 +651,7 @@ const styles = StyleSheet.create({
   bioContainer: {
     paddingTop: SPACING.sm,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: COLORS.gray200,
+    borderTopColor: '#E5E7EB',
   },
 
   bioText: {

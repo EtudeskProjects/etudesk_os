@@ -17,6 +17,7 @@ import {
 } from '../middleware/validation.middleware';
 import { rankApplications } from '../services/matching.service';
 import { getApplicationRecommendation } from '../services/recommendation.service';
+import { safeParseJson } from '../utils';
 
 const router = Router();
 
@@ -159,8 +160,11 @@ router.get('/me', authMiddleware, requireTalentProfile, async (req: AuthRequest,
     `, [talentId]);
 
     const statusCounts: Record<string, number> = {};
+    let totalCount = 0;
     countResult.rows.forEach(row => {
-      statusCounts[row.status] = parseInt(row.count, 10);
+      const count = parseInt(row.count, 10);
+      statusCounts[row.status] = count;
+      totalCount += count;
     });
 
     // Transform flat data to nested structure for frontend compatibility
@@ -186,7 +190,7 @@ router.get('/me', authMiddleware, requireTalentProfile, async (req: AuthRequest,
 
     res.json({
       data: applications,
-      count: result.rowCount,
+      count: totalCount,
       statusCounts
     });
   } catch (error) {
@@ -345,10 +349,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         city: row.talent_city,
         country: row.talent_country,
       },
-      // Parse answers if stored as JSON string
-      answers: typeof row.custom_answers === 'string'
-        ? JSON.parse(row.custom_answers)
-        : row.custom_answers || [],
+      answers: safeParseJson(row.custom_answers, []),
     };
 
     res.json({ data: application });

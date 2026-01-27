@@ -15,20 +15,30 @@ WHERE ai_recommendation IS NOT NULL;
 -- These may already exist from schema.sql but adding IF NOT EXISTS for safety
 DO $$
 BEGIN
-  -- Check and add embedding to talent_profiles if not exists
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'talent_profiles' AND column_name = 'embedding'
+  -- Check if talent_profiles table exists and add embedding column if missing
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_name = 'talent_profiles' AND table_schema = 'public'
   ) THEN
-    ALTER TABLE talent_profiles ADD COLUMN embedding JSONB;
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'talent_profiles' AND column_name = 'embedding'
+    ) THEN
+      ALTER TABLE talent_profiles ADD COLUMN embedding JSONB;
+    END IF;
   END IF;
 
-  -- Check and add embedding to opportunities if not exists
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'opportunities' AND column_name = 'embedding'
+  -- Check if opportunities table exists and add embedding column if missing
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_name = 'opportunities' AND table_schema = 'public'
   ) THEN
-    ALTER TABLE opportunities ADD COLUMN embedding JSONB;
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'opportunities' AND column_name = 'embedding'
+    ) THEN
+      ALTER TABLE opportunities ADD COLUMN embedding JSONB;
+    END IF;
   END IF;
 END $$;
 

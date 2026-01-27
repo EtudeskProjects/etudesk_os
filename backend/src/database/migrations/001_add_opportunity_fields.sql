@@ -68,6 +68,11 @@ ADD COLUMN IF NOT EXISTS interview_notes TEXT;
 ALTER TABLE opportunity_applications
 DROP CONSTRAINT IF EXISTS opportunity_applications_status_check;
 
+-- Update any non-conforming status values to 'PENDING' before adding constraint
+UPDATE opportunity_applications
+SET status = 'PENDING'
+WHERE status IS NULL OR status NOT IN ('PENDING', 'REVIEWING', 'SHORTLISTED', 'INTERVIEWING', 'OFFERED', 'ACCEPTED', 'REJECTED', 'WITHDRAWN');
+
 -- Add updated constraint with more statuses
 ALTER TABLE opportunity_applications
 ADD CONSTRAINT opportunity_applications_status_check CHECK (

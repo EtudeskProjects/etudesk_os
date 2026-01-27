@@ -16,7 +16,7 @@ import {
   User,
   Building2,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 
 type TabType = 'talent' | 'organization';
@@ -34,7 +34,7 @@ const TALENT_FAQS: FAQ[] = [
   { id: '5', question: 'Comment vérifier mon identité (KYC) et pourquoi est-ce important ?' },
   { id: '6', question: 'Comment configurer mes moyens de paiement pour le mentorat ?' },
   { id: '7', question: 'Comment rejoindre une communauté sur Etudesk ?' },
-  { id: '8', question: 'Comment réserver un espace de coworking ou un hub ?' },
+  { id: '8', question: 'Comment réserver un espace (salle de réunion, formation, coworking) ?' },
   { id: '9', question: 'Comment suivre mes candidatures et leurs statuts ?' },
   { id: '10', question: 'Comment modifier mes préférences de notifications ?' },
 ];

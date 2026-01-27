@@ -172,6 +172,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_activity_reactions_count ON community_activity_reactions;
 CREATE TRIGGER trigger_update_activity_reactions_count
 AFTER INSERT OR DELETE ON community_activity_reactions
 FOR EACH ROW EXECUTE FUNCTION update_activity_reactions_count();
@@ -189,6 +190,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_activity_comments_count ON community_activity_comments;
 CREATE TRIGGER trigger_update_activity_comments_count
 AFTER INSERT OR DELETE ON community_activity_comments
 FOR EACH ROW EXECUTE FUNCTION update_activity_comments_count();
@@ -209,6 +211,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_poll_option_votes_count ON community_poll_votes;
 CREATE TRIGGER trigger_update_poll_option_votes_count
 AFTER INSERT OR UPDATE OR DELETE ON community_poll_votes
 FOR EACH ROW EXECUTE FUNCTION update_poll_option_votes_count();

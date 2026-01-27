@@ -14,7 +14,7 @@ import {
   Calendar,
   Award,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { Button, ImageSlider, FooterNav } from '../../../src/components/ui';
@@ -152,7 +152,7 @@ export default function OrganizationDetailScreen() {
             <Image source={{ uri: organization.logo_url }} style={styles.logo} />
           ) : (
             <View style={[styles.logoPlaceholder, { backgroundColor: colors.primary }]}>
-              <Text style={styles.logoPlaceholderText}>
+              <Text style={[styles.logoPlaceholderText, { color: colors.textOnPrimary }]}>
                 {getInitials(organization.name)}
               </Text>
             </View>
@@ -163,7 +163,7 @@ export default function OrganizationDetailScreen() {
               {organization.name}
             </Text>
             {organization.verification_status === 'VERIFIED' && (
-              <CheckCircle size={ICON.size.lg} color={COLORS.success} fill={COLORS.success} strokeWidth={0} />
+              <CheckCircle size={ICON.size.lg} color={colors.success} fill={colors.success} strokeWidth={0} />
             )}
           </View>
 
@@ -405,7 +405,6 @@ const styles = StyleSheet.create({
   },
 
   logoPlaceholderText: {
-    color: COLORS.white,
     fontSize: TYPOGRAPHY.fontSize.xxxl,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
   },

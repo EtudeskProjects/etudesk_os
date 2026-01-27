@@ -24,7 +24,7 @@ import {
     Calendar,
     Smartphone,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER, ThemeMode } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, ThemeMode } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useNotifications, NotificationPreferences } from '../../src/hooks/useNotifications';
@@ -217,14 +217,14 @@ export default function PreferencesScreen() {
                                     >
                                         <Icon
                                             size={ICON.size.sm}
-                                            color={isSelected ? COLORS.white : colors.gray600}
+                                            color={isSelected ? colors.textOnPrimary : colors.gray600}
                                             strokeWidth={ICON.strokeWidth}
                                         />
                                         <Text
                                             style={[
                                                 styles.optionButtonText,
                                                 { color: colors.textSecondary },
-                                                isSelected && { color: COLORS.white },
+                                                isSelected && { color: colors.textOnPrimary },
                                             ]}
                                         >
                                             {t(option.labelKey)}
@@ -264,7 +264,7 @@ export default function PreferencesScreen() {
                                             style={[
                                                 styles.optionButtonText,
                                                 { color: colors.textSecondary },
-                                                isSelected && { color: COLORS.white },
+                                                isSelected && { color: colors.textOnPrimary },
                                             ]}
                                         >
                                             {option.label}

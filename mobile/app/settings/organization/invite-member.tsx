@@ -22,7 +22,7 @@ import {
   Check,
   Send,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useOrganizationMembers } from '../../../src/contexts/OrganizationMemberContext';
 import {
@@ -172,7 +172,7 @@ export default function InviteMemberScreen() {
                     { borderColor: isSelected ? colors.primary : colors.gray300 },
                     isSelected && { backgroundColor: colors.primary },
                   ]}>
-                    {isSelected && <Check size={14} color={COLORS.white} strokeWidth={3} />}
+                    {isSelected && <Check size={14} color={colors.textOnPrimary} strokeWidth={3} />}
                   </View>
                 </TouchableOpacity>
               );
@@ -190,7 +190,7 @@ export default function InviteMemberScreen() {
             onPress={handleSend}
             disabled={!isValidEmail(email) || isSending}
           >
-            <Send size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+            <Send size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
             <Text style={styles.sendButtonText}>
               {isSending ? 'Envoi...' : 'Envoyer l\'invitation'}
             </Text>
@@ -330,6 +330,6 @@ const styles = StyleSheet.create({
   sendButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
 });

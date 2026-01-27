@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Briefcase } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { ICON } from '../../constants/theme';
+import { ICON, SPACING, BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -101,7 +101,7 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
 
       {showPagination && images.length > 1 && (
         <View style={styles.paginationContainer}>
-          <View style={[styles.paginationWrapper, { backgroundColor: 'rgba(0,0,0,0.3)' }]}>
+          <View style={[styles.paginationWrapper, { backgroundColor: withOpacity(colors.black, OPACITY[30]) }]}>
             {images.map((_, index) => (
               <TouchableOpacity
                 key={index}
@@ -112,7 +112,9 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
                   style={[
                     styles.dot,
                     {
-                      backgroundColor: index === activeIndex ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
+                      backgroundColor: index === activeIndex
+                        ? colors.white
+                        : withOpacity(colors.white, OPACITY[50]),
                       width: index === activeIndex ? 20 : 8,
                     },
                   ]}
@@ -140,7 +142,7 @@ const styles = StyleSheet.create({
   },
   paginationContainer: {
     position: 'absolute',
-    bottom: 16,
+    bottom: SPACING.md,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -148,14 +150,14 @@ const styles = StyleSheet.create({
   paginationWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    gap: 6,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER.radius.md,
+    gap: SPACING.xs,
   },
   dot: {
-    height: 8,
-    borderRadius: 4,
+    height: SPACING.sm,
+    borderRadius: SPACING.xs,
   },
 });
 

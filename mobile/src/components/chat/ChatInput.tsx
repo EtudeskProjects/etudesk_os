@@ -27,7 +27,7 @@ import {
   FileText,
   Image as ImageIcon,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { formatDate, formatTime } from '../../utils/date';
 
@@ -311,7 +311,7 @@ export function ChatInput({
           onPress={handleSend}
           disabled={!canSend}
         >
-          <SendHorizontal size={20} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+          <SendHorizontal size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
         </TouchableOpacity>
       </View>
     </View>

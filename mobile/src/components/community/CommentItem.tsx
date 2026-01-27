@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { ActivityComment } from '../../types/activity';
-import { COLORS, SPACING, TYPOGRAPHY, BORDER } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, withOpacity, OPACITY } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { Heart, MoreHorizontal, ChevronDown } from 'lucide-react-native';
 import { Avatar, Timestamp } from './shared';
@@ -73,7 +73,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
     const currentAvatarCenter = currentAvatarSize / 2;
 
     return (
-        <View style={[styles.wrapper, isOptimistic && styles.optimisticWrapper]}>
+        <View style={[styles.wrapper, isOptimistic && [styles.optimisticWrapper, { backgroundColor: withOpacity(colors.primary, OPACITY[8]) }]]}>
             {/* Thread line - vertical connector to children */}
             {hasReplies && depth < MAX_DEPTH && (
                 <View
@@ -162,13 +162,13 @@ export const CommentItem: React.FC<CommentItemProps> = ({
                             >
                                 <Heart
                                     size={14}
-                                    color={liked ? COLORS.red500 : colors.gray400}
-                                    fill={liked ? COLORS.red500 : 'transparent'}
+                                    color={liked ? colors.error : colors.gray400}
+                                    fill={liked ? colors.error : 'transparent'}
                                 />
                                 {likeCount > 0 && (
                                     <Text style={[
                                         styles.actionCount,
-                                        { color: liked ? COLORS.red500 : colors.gray400 }
+                                        { color: liked ? colors.error : colors.gray400 }
                                     ]}>
                                         {likeCount}
                                     </Text>
@@ -262,7 +262,6 @@ const styles = StyleSheet.create({
     },
     optimisticWrapper: {
         opacity: 0.85,
-        backgroundColor: COLORS.primary + '08',
         borderRadius: BORDER.radius.md,
         marginHorizontal: -SPACING.xs,
         paddingHorizontal: SPACING.xs,

@@ -26,7 +26,7 @@ import {
     Video,
     Check,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { CommentSection } from '../../../../src/components/community/CommentSection';
 import { RichTextContent } from '../../../../src/components/community/RichTextContent';
@@ -362,7 +362,7 @@ export default function ActivityDetailScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {/* Activity Card Style Container */}
-                <View style={[styles.cardContainer, { backgroundColor: colors.surface }]}>
+                <View style={[styles.cardContainer, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
                     {/* Author Section */}
                     <View style={styles.authorSection}>
                         <View style={styles.authorLeft}>
@@ -373,16 +373,16 @@ export default function ActivityDetailScreen() {
                                         {authorName}
                                     </Text>
                                     {isScheduled && (
-                                        <View style={[styles.scheduledBadge, { backgroundColor: COLORS.warning + '15' }]}>
-                                            <Clock size={10} color={COLORS.warning} />
-                                            <Text style={[styles.scheduledBadgeText, { color: COLORS.warning }]}>
+                                        <View style={[styles.scheduledBadge, { backgroundColor: colors.warning + '15' }]}>
+                                            <Clock size={10} color={colors.warning} />
+                                            <Text style={[styles.scheduledBadgeText, { color: colors.warning }]}>
                                                 Programmé
                                             </Text>
                                         </View>
                                     )}
                                 </View>
                                 {isScheduled && scheduledDate ? (
-                                    <Text style={[styles.scheduledTime, { color: COLORS.warning }]}>
+                                    <Text style={[styles.scheduledTime, { color: colors.warning }]}>
                                         {scheduledDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à {scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                                     </Text>
                                 ) : (
@@ -456,7 +456,7 @@ export default function ActivityDetailScreen() {
                                             <View style={styles.pollOptionLeft}>
                                                 {isVoted && (
                                                     <View style={[styles.pollCheckIcon, { backgroundColor: colors.primary }]}>
-                                                        <Check size={10} color={COLORS.white} strokeWidth={3} />
+                                                        <Check size={10} color={colors.textOnPrimary} strokeWidth={3} />
                                                     </View>
                                                 )}
                                                 <Text style={[
@@ -512,9 +512,9 @@ export default function ActivityDetailScreen() {
 
                             {/* Location */}
                             <View style={styles.eventRow}>
-                                <View style={[styles.eventIconContainer, { backgroundColor: isOnlineEvent ? COLORS.success + '15' : colors.primary + '15' }]}>
+                                <View style={[styles.eventIconContainer, { backgroundColor: isOnlineEvent ? colors.success + '15' : colors.primary + '15' }]}>
                                     {isOnlineEvent ? (
-                                        <Video size={16} color={COLORS.success} />
+                                        <Video size={16} color={colors.success} />
                                     ) : (
                                         <MapPin size={16} color={colors.primary} />
                                     )}
@@ -583,14 +583,14 @@ export default function ActivityDetailScreen() {
                             <Animated.View style={{ transform: [{ scale: likeScaleAnim }] }}>
                                 <Heart
                                     size={18}
-                                    color={liked ? COLORS.red500 : colors.gray500}
-                                    fill={liked ? COLORS.red500 : 'transparent'}
+                                    color={liked ? colors.error : colors.gray500}
+                                    fill={liked ? colors.error : 'transparent'}
                                     strokeWidth={ICON.strokeWidth}
                                 />
                             </Animated.View>
                             <Text style={[
                                 styles.engagementText,
-                                { color: liked ? COLORS.red500 : colors.textSecondary }
+                                { color: liked ? colors.error : colors.textSecondary }
                             ]}>
                                 {formatCount(likesCount)} J'aime{likesCount > 1 ? 's' : ''}
                             </Text>
@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
         marginTop: SPACING.md,
         borderRadius: BORDER.radius.xl,
         borderWidth: BORDER.width.thin,
-        borderColor: COLORS.gray200,
+        // borderColor set dynamically via inline style
         overflow: 'hidden',
     },
     // Author Section
@@ -798,7 +798,7 @@ const styles = StyleSheet.create({
     commentCountText: {
         fontSize: TYPOGRAPHY.fontSize.xs,
         fontWeight: TYPOGRAPHY.fontWeight.bold,
-        color: COLORS.white,
+        // color set dynamically via inline style
     },
     emptyComments: {
         alignItems: 'center',

@@ -50,35 +50,13 @@ export const OPPORTUNITY_TYPES = {
 } as const;
 export type OpportunityType = typeof OPPORTUNITY_TYPES[keyof typeof OPPORTUNITY_TYPES];
 
-export const HUB_TYPES = {
-  COWORKING: "COWORKING",
-  LAB: "LAB",
-  INCUBATOR: "INCUBATOR",
-  ACCELERATOR: "ACCELERATOR",
-  CERTIFICATION_CENTER: "CERTIFICATION_CENTER",
-  TRAINING_CENTER: "TRAINING_CENTER",
-  UNIVERSITY: "UNIVERSITY",
-  MAKERSPACE: "MAKERSPACE",
-  VIRTUAL_COMMUNITY: "VIRTUAL_COMMUNITY"
-} as const;
-export type HubType = typeof HUB_TYPES[keyof typeof HUB_TYPES];
-
-// Catégories d'usage des hubs (pour conformité et calculs de capacité)
-export const HUB_USAGE_CATEGORIES = {
-  FORMATION: "FORMATION",
-  TRAVAIL: "TRAVAIL",
-  REUNION: "REUNION",
-  ATELIER: "ATELIER",
-  MIXTE: "MIXTE"
-} as const;
-export type HubUsageCategory = typeof HUB_USAGE_CATEGORIES[keyof typeof HUB_USAGE_CATEGORIES];
-
 // Types d'espaces internes
 export const SPACE_TYPES = {
   // Formation
   SALLE_COURS: "SALLE_COURS",
   SALLE_INFORMATIQUE: "SALLE_INFORMATIQUE",
   AMPHITHEATRE: "AMPHITHEATRE",
+  SALLE_FORMATION: "SALLE_FORMATION",
   // Travail
   OPEN_SPACE: "OPEN_SPACE",
   BUREAU_PRIVE: "BUREAU_PRIVE",
@@ -89,11 +67,12 @@ export const SPACE_TYPES = {
   CABINE_APPEL: "CABINE_APPEL",
   // Atelier
   ATELIER: "ATELIER",
-  LABO: "LABO",
-  // Communs
-  ACCUEIL: "ACCUEIL",
-  CAFETERIA: "CAFETERIA",
-  ESPACE_DETENTE: "ESPACE_DETENTE"
+  LABORATOIRE: "LABORATOIRE",
+  STUDIO: "STUDIO",
+  // Événement
+  SALLE_EVENEMENT: "SALLE_EVENEMENT",
+  ROOFTOP: "ROOFTOP",
+  TERRASSE: "TERRASSE"
 } as const;
 export type SpaceType = typeof SPACE_TYPES[keyof typeof SPACE_TYPES];
 
@@ -124,65 +103,25 @@ export const ACCESSIBILITY_FEATURES = {
 } as const;
 export type AccessibilityFeature = typeof ACCESSIBILITY_FEATURES[keyof typeof ACCESSIBILITY_FEATURES];
 
-// Mapping HubType vers HubUsageCategory
-export const HUB_TYPE_USAGE_MAP: Record<HubType, HubUsageCategory | null> = {
-  [HUB_TYPES.COWORKING]: HUB_USAGE_CATEGORIES.TRAVAIL,
-  [HUB_TYPES.LAB]: HUB_USAGE_CATEGORIES.ATELIER,
-  [HUB_TYPES.INCUBATOR]: HUB_USAGE_CATEGORIES.TRAVAIL,
-  [HUB_TYPES.ACCELERATOR]: HUB_USAGE_CATEGORIES.TRAVAIL,
-  [HUB_TYPES.CERTIFICATION_CENTER]: HUB_USAGE_CATEGORIES.FORMATION,
-  [HUB_TYPES.TRAINING_CENTER]: HUB_USAGE_CATEGORIES.FORMATION,
-  [HUB_TYPES.UNIVERSITY]: HUB_USAGE_CATEGORIES.FORMATION,
-  [HUB_TYPES.MAKERSPACE]: HUB_USAGE_CATEGORIES.ATELIER,
-  [HUB_TYPES.VIRTUAL_COMMUNITY]: null // Pas d'espace physique
-};
-
 // Densité m² par personne selon le type d'espace
 export const SPACE_TYPE_DENSITY: Record<SpaceType, number> = {
   [SPACE_TYPES.SALLE_COURS]: 2,
   [SPACE_TYPES.SALLE_INFORMATIQUE]: 3,
   [SPACE_TYPES.AMPHITHEATRE]: 0.8,
+  [SPACE_TYPES.SALLE_FORMATION]: 2.5,
   [SPACE_TYPES.OPEN_SPACE]: 7,
   [SPACE_TYPES.BUREAU_PRIVE]: 12,
   [SPACE_TYPES.POSTE_NOMADE]: 4,
   [SPACE_TYPES.SALLE_REUNION]: 2.5,
-  [SPACE_TYPES.SALLE_CONFERENCE]: 1,
+  [SPACE_TYPES.SALLE_CONFERENCE]: 1.5,
   [SPACE_TYPES.CABINE_APPEL]: 2,
   [SPACE_TYPES.ATELIER]: 5,
-  [SPACE_TYPES.LABO]: 8,
-  [SPACE_TYPES.ACCUEIL]: 10,
-  [SPACE_TYPES.CAFETERIA]: 2,
-  [SPACE_TYPES.ESPACE_DETENTE]: 3
+  [SPACE_TYPES.LABORATOIRE]: 8,
+  [SPACE_TYPES.STUDIO]: 6,
+  [SPACE_TYPES.SALLE_EVENEMENT]: 1,
+  [SPACE_TYPES.ROOFTOP]: 2,
+  [SPACE_TYPES.TERRASSE]: 2
 };
-
-export const DOCUMENT_TYPES = {
-  // Professional documents
-  CV: "CV",
-  CERTIFICATE: "CERTIFICATE",
-  DIPLOMA: "DIPLOMA",
-  LICENSE: "LICENSE",
-  PORTFOLIO: "PORTFOLIO",
-  RECOMMENDATION_LETTER: "RECOMMENDATION_LETTER",
-  TRANSCRIPT: "TRANSCRIPT",
-  PUBLICATION: "PUBLICATION",
-  PATENT: "PATENT",
-  // Identity/KYC documents
-  ID_CARD: "ID_CARD",
-  PASSPORT: "PASSPORT",
-  DRIVER_LICENSE: "DRIVER_LICENSE",
-  PROOF_OF_ADDRESS: "PROOF_OF_ADDRESS",
-  // Other
-  OTHER: "OTHER"
-} as const;
-export type DocumentType = typeof DOCUMENT_TYPES[keyof typeof DOCUMENT_TYPES];
-
-export const VERIFICATION_LEVELS = {
-  NONE: 0,
-  SELF_DECLARED: 1,
-  PEER_ENDORSED: 2,
-  DOCUMENT_BACKED: 3
-} as const;
-export type VerificationLevel = typeof VERIFICATION_LEVELS[keyof typeof VERIFICATION_LEVELS];
 
 export const ORGANIZATION_TYPES = {
   COMPANY: "COMPANY",
@@ -252,30 +191,6 @@ export const ORGANIZATION_SIZE = {
 } as const;
 export type OrganizationSize = typeof ORGANIZATION_SIZE[keyof typeof ORGANIZATION_SIZE];
 
-export const PROJECT_TYPES = {
-  ACADEMIC: "ACADEMIC",
-  RESEARCH: "RESEARCH",
-  OPEN_SOURCE: "OPEN_SOURCE",
-  STARTUP: "STARTUP",
-  CREATIVE: "CREATIVE",
-  SOCIAL: "SOCIAL"
-} as const;
-export type ProjectType = typeof PROJECT_TYPES[keyof typeof PROJECT_TYPES];
-
-export const PROJECT_VISIBILITY = {
-  PUBLIC: "PUBLIC",
-  PRIVATE: "PRIVATE"
-} as const;
-export type ProjectVisibility = typeof PROJECT_VISIBILITY[keyof typeof PROJECT_VISIBILITY];
-
-export const PROJECT_STATUS = {
-  IDEA: "IDEA",
-  IN_PROGRESS: "IN_PROGRESS",
-  COMPLETED: "COMPLETED",
-  ARCHIVED: "ARCHIVED"
-} as const;
-export type ProjectStatus = typeof PROJECT_STATUS[keyof typeof PROJECT_STATUS];
-
 export const OPPORTUNITY_STATUS = {
   DRAFT: "DRAFT",
   OPEN: "OPEN",
@@ -322,17 +237,7 @@ export const WORK_RHYTHM = {
 } as const;
 export type WorkRhythm = typeof WORK_RHYTHM[keyof typeof WORK_RHYTHM];
 
-// Legacy alias for backward compatibility
-export const WORK_TYPE = CONTRACT_TYPE;
-export type WorkType = ContractType;
 
-export const COMPENSATION_TYPE = {
-  PAID: "PAID",
-  UNPAID: "UNPAID",
-  EQUITY: "EQUITY",
-  STIPEND: "STIPEND"
-} as const;
-export type CompensationType = typeof COMPENSATION_TYPE[keyof typeof COMPENSATION_TYPE];
 
 export const COMPENSATION_FREQUENCY = {
   HOURLY: "HOURLY",
@@ -348,23 +253,6 @@ export const LOCATION_TYPE = {
   HYBRID: "HYBRID"
 } as const;
 export type LocationType = typeof LOCATION_TYPE[keyof typeof LOCATION_TYPE];
-
-export const LINK_TYPE = {
-  DEMO: "DEMO",
-  REPOSITORY: "REPOSITORY",
-  DOCUMENTATION: "DOCUMENTATION",
-  ARTICLE: "ARTICLE",
-  VIDEO: "VIDEO"
-} as const;
-export type LinkType = typeof LINK_TYPE[keyof typeof LINK_TYPE];
-
-export const CONTRIBUTION_TYPE = {
-  CREATOR: "CREATOR",
-  CONTRIBUTOR: "CONTRIBUTOR",
-  ADVISOR: "ADVISOR",
-  SPONSOR: "SPONSOR"
-} as const;
-export type ContributionType = typeof CONTRIBUTION_TYPE[keyof typeof CONTRIBUTION_TYPE];
 
 export const DEGREE_TYPE = {
   HIGH_SCHOOL: "HIGH_SCHOOL",
@@ -405,14 +293,6 @@ export const SKILL_RELATIONSHIP_TYPE = {
   ALTERNATIVE: "ALTERNATIVE"
 } as const;
 export type SkillRelationshipType = typeof SKILL_RELATIONSHIP_TYPE[keyof typeof SKILL_RELATIONSHIP_TYPE];
-
-export const HUB_RELATIONSHIP = {
-  OWNER: "OWNER",
-  PARTNER: "PARTNER",
-  SPONSOR: "SPONSOR",
-  TENANT: "TENANT"
-} as const;
-export type HubRelationship = typeof HUB_RELATIONSHIP[keyof typeof HUB_RELATIONSHIP];
 
 export const ORG_VERIFICATION_STATUS = {
   CLAIMED: "CLAIMED",
@@ -492,29 +372,6 @@ export const GOAL = {
 } as const;
 export type Goal = typeof GOAL[keyof typeof GOAL];
 
-export const DOCUMENT_VERIFICATION_STATUS = {
-  PENDING: "PENDING",
-  VERIFIED: "VERIFIED",
-  REJECTED: "REJECTED",
-  EXPIRED: "EXPIRED"
-} as const;
-export type DocumentVerificationStatus = typeof DOCUMENT_VERIFICATION_STATUS[keyof typeof DOCUMENT_VERIFICATION_STATUS];
-
-export const DOCUMENT_CATEGORY = {
-  IDENTITY: "IDENTITY",
-  PROFESSIONAL: "PROFESSIONAL",
-  ACADEMIC: "ACADEMIC",
-  OTHER: "OTHER"
-} as const;
-export type DocumentCategory = typeof DOCUMENT_CATEGORY[keyof typeof DOCUMENT_CATEGORY];
-
-export const DOCUMENT_VISIBILITY = {
-  PRIVATE: "PRIVATE",
-  SHARED: "SHARED",
-  PUBLIC: "PUBLIC"
-} as const;
-export type DocumentVisibility = typeof DOCUMENT_VISIBILITY[keyof typeof DOCUMENT_VISIBILITY];
-
 export const COMMUNITY_STATUS = {
   ACTIVE: "ACTIVE",
   INACTIVE: "INACTIVE",
@@ -574,37 +431,6 @@ export interface Skill {
   created_at?: ISOTimestamp;
   updated_at?: ISOTimestamp;
   deleted_at?: ISOTimestamp; // Soft delete
-}
-
-export interface Project {
-  id: UUID;
-  title: string;
-  slug: string;
-  description?: string;
-
-  type?: ProjectType;
-  visibility?: ProjectVisibility;
-
-  started_at?: ISODate;
-  ended_at?: ISODate;
-  status?: ProjectStatus;
-
-  thumbnail_url?: string;
-  gallery?: string[];
-
-  embedding?: Vector;
-
-  created_at?: ISOTimestamp;
-  updated_at?: ISOTimestamp;
-  deleted_at?: ISOTimestamp; // Soft delete
-}
-
-export interface ProjectLink {
-  id: UUID;
-  project_id: UUID;
-  type: LinkType;
-  url: string;
-  title?: string;
 }
 
 export interface Organization {
@@ -686,96 +512,6 @@ export interface Community {
   deleted_at?: ISOTimestamp; // Soft delete
 }
 
-// Structure de tarification pour les hubs
-export interface HubPricing {
-  type: 'FREE' | 'HOURLY' | 'DAILY' | 'MONTHLY' | 'YEARLY' | 'CUSTOM';
-  base_amount?: number;
-  currency?: string; // XOF, EUR, USD
-  includes_tax?: boolean;
-  description?: string;
-  membership_required?: boolean;
-  deposit_amount?: number;
-}
-
-// Espace interne d'un hub (salle, bureau, etc.)
-export interface HubSpace {
-  id: string;
-  name: string;
-  type: SpaceType;
-
-  // Dimensions
-  surface_m2: number;
-  capacity: number; // Calculé automatiquement selon densité
-
-  // Localisation dans le hub
-  floor: number; // 0 = RDC, -1 = sous-sol, 1+ = étages
-
-  // Caractéristiques
-  is_accessible: boolean; // Accessible PMR
-  equipment?: string[]; // Équipements spécifiques
-
-  // Réservation
-  is_bookable: boolean;
-  hourly_rate?: number;
-  daily_rate?: number;
-  currency?: string;
-
-  // Média
-  image_url?: string;
-}
-
-export interface Hub {
-  id: UUID;
-  name: string;
-  slug: string;
-
-  type?: HubType;
-  description?: string;
-  amenities?: string[];
-
-  // Localisation
-  address?: string;
-  city?: string;
-  region?: string;
-  country?: string;
-  coordinates?: Coordinates;
-
-  // Caractéristiques physiques
-  usage_category?: HubUsageCategory;
-  surface_m2?: number;
-  max_capacity?: number;
-  floors_count?: number;
-
-  // Accessibilité
-  is_accessible?: boolean;
-  accessibility_features?: AccessibilityFeature[];
-  accessibility_info_url?: string;
-
-  // Sécurité
-  safety_equipment?: SafetyEquipment[];
-  last_inspection_date?: ISODate;
-  safety_certificate_url?: string;
-
-  // Espaces internes
-  spaces?: HubSpace[];
-
-  // Accès et tarification
-  access_type?: AccessType;
-  pricing?: HubPricing;
-
-  // Ownership
-  created_by?: UUID;
-  organization_id?: UUID;
-
-  // Embedding pour recherche sémantique
-  embedding?: Vector;
-
-  // Timestamps
-  created_at?: ISOTimestamp;
-  updated_at?: ISOTimestamp;
-  deleted_at?: ISOTimestamp; // Soft delete
-}
-
 export interface Opportunity {
   id: UUID;
   title: string;
@@ -840,72 +576,6 @@ export interface Opportunity {
   deleted_at?: ISOTimestamp; // Soft delete
 }
 
-export interface Document {
-  id: UUID;
-  talent_id: UUID;
-  title: string;
-  type: DocumentType;
-  category: DocumentCategory;
-
-  // File storage
-  file_url?: string;
-  front_image_url?: string;  // For identity documents
-  back_image_url?: string;   // For identity documents
-  file_hash?: string;
-  file_size?: number;
-  mime_type?: string;
-
-  // Metadata
-  issued_by?: string;
-  issued_at?: ISODate;
-  expires_at?: ISODate;
-  credential_id?: string;
-  verification_url?: string;
-
-  // Verification
-  verification_status: DocumentVerificationStatus;
-  rejection_reason?: string;
-  verified_by?: UUID;
-  verified_at?: ISOTimestamp;
-  submitted_at?: ISOTimestamp;
-
-  // Skill extraction
-  skills_extracted?: boolean;
-  skills_extracted_at?: ISOTimestamp;
-  extracted_text?: string;
-  summary?: string;
-
-  // Visibility & flags
-  visibility?: DocumentVisibility;
-  is_primary?: boolean;
-
-  // Timestamps
-  created_at?: ISOTimestamp;
-  updated_at?: ISOTimestamp;
-  deleted_at?: ISOTimestamp;
-}
-
-export interface DocumentRequirement {
-  id: UUID;
-  feature: string;
-  required_category?: DocumentCategory;
-  required_type?: DocumentType;
-  must_be_verified: boolean;
-  description_fr?: string;
-  description_en?: string;
-  priority: number;
-  is_active: boolean;
-}
-
-export interface DocumentSkill {
-  id: UUID;
-  document_id: UUID;
-  skill_id?: UUID;
-  skill_name: string;
-  relevance_score?: number;
-  is_auto_generated: boolean;
-}
-
 // ═══════════════════════════════════════════════════════════════
 // RELATION INTERFACES
 // ═══════════════════════════════════════════════════════════════
@@ -925,26 +595,13 @@ export interface TalentSkill {
   context?: string;
 }
 
-export interface TalentProject {
-  id: UUID;
-  talent_id: UUID;
-  project_id: UUID;
-
-  role?: string;
-  contribution_type?: ContributionType;
-  contribution_summary?: string;
-  started_at?: ISODate;
-  ended_at?: ISODate;
-  is_highlighted?: boolean;
-}
-
 export interface TalentExperience {
   id: UUID;
   talent_id: UUID;
   organization_id: UUID;
 
   job_title: string;
-  work_type?: WorkType;
+  work_type?: ContractType;
 
   started_at: ISODate;
   ended_at?: ISODate;
@@ -986,26 +643,6 @@ export interface OpportunityApplication {
   custom_answers?: ApplicationAnswer[];
 }
 
-export interface TalentLearningGoal {
-  id: UUID;
-  talent_id: UUID;
-  skill_id: UUID;
-
-  priority?: Priority;
-  reason?: string;
-  target_level?: ProficiencyLevel;
-  created_at: ISOTimestamp;
-}
-
-export interface SkillEndorsement {
-  id: UUID;
-  endorser_id: UUID;
-  talent_skill_id: UUID;
-
-  relationship_context?: string;
-  comment?: string;
-  created_at: ISOTimestamp;
-}
 
 export interface OpportunityPoster {
   id: UUID;
@@ -1045,7 +682,7 @@ export interface Recommendation {
   highlighted_skill_ids?: UUID[];
 
   created_at: ISOTimestamp;
-  visibility?: DocumentVisibility;
+  visibility?: Visibility;
 }
 
 export interface CommunityMember {
@@ -1079,88 +716,4 @@ export interface CommunityMember {
   updated_at?: ISOTimestamp;
 }
 
-export interface HubBooking {
-  id: UUID;
-  talent_id: UUID;
-  hub_id: UUID;
 
-  booking_date?: ISOTimestamp;
-  duration?: string; // Interval
-  status?: BookingStatus;
-}
-
-export interface TalentDocument {
-  talent_id: UUID;
-  document_id: UUID;
-
-  uploaded_at: ISOTimestamp;
-  is_primary?: boolean;
-}
-
-export interface OrganizationHub {
-  organization_id: UUID;
-  hub_id: UUID;
-
-  relationship?: HubRelationship;
-}
-
-export interface SkillRelation {
-  from_skill_id: UUID;
-  to_skill_id: UUID;
-
-  relationship_type?: SkillRelationshipType;
-  strength?: number;
-}
-
-export interface SkillEvolution {
-  from_skill_id: UUID;
-  to_skill_id: UUID;
-
-  typical_path?: string;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// SKILL RELATION INTERFACES (Auto-generated by LLM)
-// ═══════════════════════════════════════════════════════════════
-
-export interface ProjectSkill {
-  project_id: UUID;
-  skill_id: UUID;
-  relevance_score?: number;
-  is_auto_generated?: boolean;
-  created_at?: ISOTimestamp;
-}
-
-export interface OpportunitySkill {
-  opportunity_id: UUID;
-  skill_id: UUID;
-  is_required?: boolean;
-  proficiency_level?: ProficiencyLevel;
-  relevance_score?: number;
-  is_auto_generated?: boolean;
-  created_at?: ISOTimestamp;
-}
-
-export interface HubSkill {
-  hub_id: UUID;
-  skill_id: UUID;
-  relevance_score?: number;
-  is_auto_generated?: boolean;
-  created_at?: ISOTimestamp;
-}
-
-export interface CommunitySkill {
-  community_id: UUID;
-  skill_id: UUID;
-  relevance_score?: number;
-  is_auto_generated?: boolean;
-  created_at?: ISOTimestamp;
-}
-
-export interface OrganizationSkill {
-  organization_id: UUID;
-  skill_id: UUID;
-  relevance_score?: number;
-  is_auto_generated?: boolean;
-  created_at?: ISOTimestamp;
-}

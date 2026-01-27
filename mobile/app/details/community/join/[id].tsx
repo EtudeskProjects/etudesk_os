@@ -33,8 +33,8 @@ import {
   CreditCard,
   FileText,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
-import { Button } from '../../../../src/components/ui';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { Button, StepIndicator } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useAuth } from '../../../../src/contexts/AuthContext';
 import { useAlert } from '../../../../src/contexts/AlertContext';
@@ -88,31 +88,31 @@ export default function JoinCommunityScreen() {
   // Determine which steps are active based on community config
   const getActiveSteps = (): JoinStep[] => {
     const activeSteps: JoinStep[] = ['profile'];
-    
+
     // Add rules step only if community has rules
     if (community?.rules) {
       activeSteps.push('rules');
     }
-    
+
     // Add questions step only if community has questions
     const questions = getApplicationQuestions();
     if (questions.length > 0) {
       activeSteps.push('questions');
     }
-    
+
     activeSteps.push('preview');
-    
+
     // Note: Paywall step is no longer in join flow
     // Payment happens after admin approves the membership request
-    
+
     activeSteps.push('success');
-    
+
     return activeSteps;
   };
 
   const getApplicationQuestions = (): ApplicationQuestion[] => {
     if (!community?.application_questions) return [];
-    
+
     return community.application_questions.map((q, idx) => {
       if (typeof q === 'string') {
         return {
@@ -213,7 +213,7 @@ export default function JoinCommunityScreen() {
       // Build answers array
       const questions = getApplicationQuestions();
       const membershipAnswers: MembershipAnswer[] = [];
-      
+
       questions.forEach((q) => {
         if (answers[q.id]?.trim()) {
           membershipAnswers.push({
@@ -283,44 +283,13 @@ export default function JoinCommunityScreen() {
   const renderStepIndicator = () => {
     const visibleSteps = getVisibleSteps();
 
-    return (
-      <View style={styles.stepIndicator}>
-        {visibleSteps.map((step, index) => {
-          const activeSteps = getActiveSteps();
-          const isCompleted = activeSteps.indexOf(currentStep) > activeSteps.indexOf(step);
-          const isCurrent = currentStep === step;
+    // Create step objects for the indicator
+    const stepsData = visibleSteps.map(step => ({
+      id: step,
+      label: STEP_TITLES[step],
+    }));
 
-          return (
-            <View key={step} style={styles.stepItem}>
-              <View
-                style={[
-                  styles.stepDot,
-                  { backgroundColor: colors.gray200 },
-                  (isCurrent || isCompleted) && { backgroundColor: colors.primary },
-                ]}
-              >
-                {isCompleted ? (
-                  <Check size={12} color={COLORS.white} strokeWidth={3} />
-                ) : (
-                  <Text style={[styles.stepNumber, isCurrent && { color: COLORS.white }]}>
-                    {index + 1}
-                  </Text>
-                )}
-              </View>
-              <Text
-                style={[
-                  styles.stepLabel,
-                  { color: colors.gray500 },
-                  isCurrent && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold },
-                ]}
-              >
-                {STEP_TITLES[step]}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-    );
+    return <StepIndicator steps={stepsData} currentStepId={currentStep} />;
   };
 
   const renderProfileStep = () => {
@@ -454,7 +423,7 @@ export default function JoinCommunityScreen() {
             { borderColor: acceptedRules ? colors.primary : colors.gray400 },
             acceptedRules && { backgroundColor: colors.primary }
           ]}>
-            {acceptedRules && <Check size={14} color={COLORS.white} strokeWidth={3} />}
+            {acceptedRules && <Check size={14} color={colors.textOnPrimary} strokeWidth={3} />}
           </View>
           <Text style={[styles.checkboxLabel, { color: colors.textPrimary }]}>
             J'ai lu et j'accepte les règles de la communauté
@@ -619,7 +588,7 @@ export default function JoinCommunityScreen() {
           Demande envoyée !
         </Text>
         <Text style={[styles.successDescription, { color: colors.textSecondary }]}>
-          {isPaid 
+          {isPaid
             ? `Votre demande pour rejoindre "${community?.name}" a bien été envoyée. Après approbation par les administrateurs, vous pourrez procéder au paiement de l'abonnement.`
             : `Votre demande pour rejoindre "${community?.name}" a bien été envoyée. Les administrateurs vous contacteront pour valider votre adhésion.`
           }
@@ -669,7 +638,7 @@ export default function JoinCommunityScreen() {
                 onPress={handleSubmit}
                 disabled={isSubmitting}
                 fullWidth
-                icon={<Send size={18} color={COLORS.white} strokeWidth={ICON.strokeWidth} />}
+                icon={<Send size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
                 iconPosition="right"
               />
             </View>
@@ -696,7 +665,7 @@ export default function JoinCommunityScreen() {
               onPress={handleNext}
               disabled={!canProceed()}
               fullWidth
-              icon={<ChevronRight size={18} color={COLORS.white} strokeWidth={ICON.strokeWidth} />}
+              icon={<ChevronRight size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
               iconPosition="right"
             />
           </View>
@@ -843,7 +812,7 @@ const styles = StyleSheet.create({
   stepNumber: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
   stepLabel: {
     fontSize: TYPOGRAPHY.fontSize.xs,

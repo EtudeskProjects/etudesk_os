@@ -1,10 +1,10 @@
 /**
  * MapLocationPicker Component
- * Displays a Mapbox map for location selection with geocoding
- * Falls back to a simple selector when native code is unavailable (Expo Go)
+ * Displays an interactive map using Leaflet/OpenStreetMap in a WebView
+ * Works in Expo Go without native dependencies
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,26 +12,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Platform,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
-import { MapPin, Navigation, X, AlertCircle } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../constants/theme';
-import { MAPBOX_CONFIG } from '../constants/config';
+import { MapPin, Navigation, X } from 'lucide-react-native';
+import { SPACING, TYPOGRAPHY, BORDER, LIGHT_COLORS } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
-
-// Try to import Mapbox - will fail in Expo Go
-let MapboxGL: any = null;
-let isMapboxAvailable = false;
-
-try {
-  MapboxGL = require('@rnmapbox/maps').default;
-  MapboxGL.setAccessToken(MAPBOX_CONFIG.ACCESS_TOKEN);
-  isMapboxAvailable = true;
-} catch (error) {
-  console.log('Mapbox not available (expected in Expo Go)');
-  isMapboxAvailable = false;
-}
 
 interface Coordinates {
   latitude: number;
@@ -52,89 +38,222 @@ interface MapLocationPickerProps {
   onLocationSelect: (location: LocationResult) => void;
   onClose?: () => void;
   height?: number;
+  /** Mode inline: appelle onLocationSelect automatiquement au clic */
+  inline?: boolean;
 }
 
-// Reverse geocode using Mapbox API
+// Reverse geocode using Nominatim (OpenStreetMap)
 const reverseGeocode = async (
   latitude: number,
   longitude: number
 ): Promise<Partial<LocationResult>> => {
   try {
-    const url = `${MAPBOX_CONFIG.GEOCODING_URL}/${longitude},${latitude}.json?access_token=${MAPBOX_CONFIG.ACCESS_TOKEN}&types=place,region,country&language=fr`;
-    const response = await fetch(url);
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=fr`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Etudesk Mobile App',
+      },
+    });
 
     if (!response.ok) {
-      console.error('Mapbox geocoding error:', response.status);
       return {};
     }
 
     const data = await response.json();
 
-    if (!data.features || data.features.length === 0) {
+    if (!data.address) {
       return {};
     }
 
-    let country = '';
-    let countryCode = '';
-    let region = '';
-    let city = '';
-    let address = '';
-
-    // Get the first feature as the main address
-    if (data.features[0]) {
-      address = data.features[0].place_name || '';
-    }
-
-    // Parse features and context
-    for (const feature of data.features) {
-      if (feature.place_type?.includes('place')) {
-        city = feature.text;
-      }
-      if (feature.place_type?.includes('region')) {
-        region = feature.text;
-      }
-      if (feature.place_type?.includes('country')) {
-        country = feature.text;
-        if (feature.properties?.short_code) {
-          countryCode = feature.properties.short_code.toUpperCase();
-        }
-      }
-
-      // Also check context for additional info
-      if (feature.context) {
-        for (const ctx of feature.context) {
-          if (ctx.id?.startsWith('region')) {
-            region = ctx.text;
-          }
-          if (ctx.id?.startsWith('country')) {
-            country = ctx.text;
-            if (ctx.short_code) {
-              countryCode = ctx.short_code.toUpperCase();
-            }
-          }
-          if (ctx.id?.startsWith('place')) {
-            city = ctx.text;
-          }
-        }
-      }
-    }
+    const address = data.display_name || '';
+    const city = data.address.city || data.address.town || data.address.village || data.address.municipality || '';
+    const region = data.address.state || data.address.region || '';
+    const country = data.address.country || '';
+    const countryCode = data.address.country_code?.toUpperCase() || '';
 
     return { country, countryCode, region, city, address };
   } catch (error) {
-    console.error('Reverse geocoding error:', error);
     return {};
   }
 };
 
-// Fallback component when Mapbox is not available
-function MapFallback({
+// HTML for the Leaflet map - Theme: Luxe Africain
+const getMapHTML = (lat: number, lng: number, hasMarker: boolean, primaryColor: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #map { width: 100%; height: 100%; }
+
+    /* Hide all Leaflet branding */
+    .leaflet-control-attribution,
+    .leaflet-control-zoom,
+    .leaflet-control-layers {
+      display: none !important;
+    }
+
+    /* Custom marker - Luxe Africain style */
+    .custom-marker {
+      background: none;
+      border: none;
+    }
+    .marker-pin {
+      width: 32px;
+      height: 32px;
+      background: ${primaryColor};
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      position: relative;
+      border: 2px solid #FFFFFF;
+    }
+    .marker-pin::after {
+      content: '';
+      width: 12px;
+      height: 12px;
+      background: #FFFFFF;
+      border-radius: 50%;
+      position: absolute;
+      top: 8px;
+      left: 8px;
+    }
+
+    /* Pulse animation for marker */
+    .marker-pulse {
+      width: 40px;
+      height: 40px;
+      background: ${primaryColor}20;
+      border-radius: 50%;
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      animation: pulse 2s ease-out infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    // Initialize map without any controls
+    var map = L.map('map', {
+      zoomControl: false,
+      attributionControl: false
+    }).setView([${lat}, ${lng}], 14);
+
+    // Use CartoDB Positron for a clean, minimal look
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd'
+    }).addTo(map);
+
+    // Custom marker icon
+    var markerIcon = L.divIcon({
+      className: 'custom-marker',
+      html: '<div class="marker-pulse"></div><div class="marker-pin"></div>',
+      iconSize: [32, 42],
+      iconAnchor: [16, 42]
+    });
+
+    var marker = ${hasMarker} ? L.marker([${lat}, ${lng}], { icon: markerIcon }).addTo(map) : null;
+
+    // Handle map click
+    map.on('click', function(e) {
+      var lat = e.latlng.lat;
+      var lng = e.latlng.lng;
+
+      if (marker) {
+        marker.setLatLng(e.latlng);
+      } else {
+        marker = L.marker(e.latlng, { icon: markerIcon }).addTo(map);
+      }
+
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'locationSelected',
+        latitude: lat,
+        longitude: lng
+      }));
+    });
+
+    // Function to update marker position from React Native
+    function setMarkerPosition(lat, lng) {
+      var latlng = L.latLng(lat, lng);
+      if (marker) {
+        marker.setLatLng(latlng);
+      } else {
+        marker = L.marker(latlng, { icon: markerIcon }).addTo(map);
+      }
+      map.setView(latlng, 15, { animate: true });
+
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'locationSelected',
+        latitude: lat,
+        longitude: lng
+      }));
+    }
+
+    // Notify that map is ready
+    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'mapReady' }));
+  </script>
+</body>
+</html>
+`;
+
+export function MapLocationPicker({
+  initialCoordinates,
   onLocationSelect,
   onClose,
-  height,
+  height = 300,
+  inline = false,
 }: MapLocationPickerProps) {
   const { colors } = useTheme();
+  const webViewRef = useRef<WebView>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationResult | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+
+  // Default center (Abidjan, Cote d'Ivoire)
+  const defaultCenter: Coordinates = {
+    latitude: 5.3600,
+    longitude: -4.0083,
+  };
+
+  const centerCoords = initialCoordinates || defaultCenter;
+
+  // Request location permission on mount
+  useEffect(() => {
+    requestLocationPermission();
+  }, []);
+
+  // Timeout fallback to hide loading if map doesn't respond
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        setIsLoading(false);
+        setMapReady(true);
+      }
+    }, 5000); // 5 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
+
+  const requestLocationPermission = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted' && !initialCoordinates) {
+        getCurrentLocation();
+      }
+    } catch (error) {
+      // Silent fail
+    }
+  };
 
   const getCurrentLocation = async () => {
     try {
@@ -143,8 +262,8 @@ function MapFallback({
 
       if (status !== 'granted') {
         Alert.alert(
-          'Permission refusee',
-          'Nous avons besoin de votre permission pour acceder a votre position.'
+          'Permission refusée',
+          'Nous avons besoin de votre permission pour accéder à votre position.'
         );
         return;
       }
@@ -158,230 +277,95 @@ function MapFallback({
         longitude: location.coords.longitude,
       };
 
-      // Reverse geocode
-      const geoResult = await reverseGeocode(coords.latitude, coords.longitude);
-      const locationResult: LocationResult = {
-        coordinates: coords,
-        ...geoResult,
-      };
-      setSelectedLocation(locationResult);
-    } catch (error) {
-      console.error('Location error:', error);
-      Alert.alert(
-        'Erreur de localisation',
-        'Impossible de recuperer votre position.'
-      );
-    } finally {
-      setIsLocating(false);
-    }
-  };
-
-  const handleConfirm = () => {
-    if (selectedLocation) {
-      onLocationSelect(selectedLocation);
-    }
-  };
-
-  return (
-    <View style={[styles.fallbackContainer, { height, backgroundColor: colors.gray100 }]}>
-      <View style={styles.fallbackContent}>
-        <AlertCircle size={48} color={colors.gray400} strokeWidth={1.5} />
-        <Text style={[styles.fallbackTitle, { color: colors.textPrimary }]}>
-          Carte non disponible
-        </Text>
-        <Text style={[styles.fallbackText, { color: colors.textSecondary }]}>
-          La carte interactive n'est pas disponible dans Expo Go.{'\n'}
-          Utilisez votre position actuelle.
-        </Text>
-
-        <TouchableOpacity
-          style={[styles.fallbackButton, { backgroundColor: colors.primary }]}
-          onPress={getCurrentLocation}
-          disabled={isLocating}
-        >
-          {isLocating ? (
-            <ActivityIndicator size="small" color={COLORS.white} />
-          ) : (
-            <>
-              <Navigation size={20} color={COLORS.white} strokeWidth={2} />
-              <Text style={styles.fallbackButtonText}>Utiliser ma position</Text>
-            </>
-          )}
-        </TouchableOpacity>
-
-        {selectedLocation && (
-          <View style={[styles.selectedBox, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-            <MapPin size={16} color={colors.primary} strokeWidth={2} />
-            <Text style={[styles.selectedText, { color: colors.textPrimary }]} numberOfLines={2}>
-              {selectedLocation.address ||
-               [selectedLocation.city, selectedLocation.region, selectedLocation.country]
-                 .filter(Boolean)
-                 .join(', ') ||
-               `${selectedLocation.coordinates.latitude.toFixed(4)}, ${selectedLocation.coordinates.longitude.toFixed(4)}`}
-            </Text>
-          </View>
-        )}
-
-        {selectedLocation && (
-          <TouchableOpacity
-            style={[styles.confirmButton, { backgroundColor: colors.primary }]}
-            onPress={handleConfirm}
-          >
-            <Text style={styles.confirmButtonText}>Confirmer cette position</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {onClose && (
-        <TouchableOpacity
-          style={[styles.closeButton, { backgroundColor: colors.surface }]}
-          onPress={onClose}
-        >
-          <X size={20} color={colors.textPrimary} strokeWidth={2} />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-}
-
-// Main component with Mapbox
-function MapLocationPickerWithMapbox({
-  initialCoordinates,
-  onLocationSelect,
-  onClose,
-  height = 300,
-}: MapLocationPickerProps) {
-  const { colors } = useTheme();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLocating, setIsLocating] = useState(false);
-  const [coordinates, setCoordinates] = useState<Coordinates | null>(
-    initialCoordinates || null
-  );
-  const [selectedLocation, setSelectedLocation] = useState<LocationResult | null>(null);
-  const cameraRef = useRef<any>(null);
-
-  // Default center (Abidjan, Cote d'Ivoire)
-  const defaultCenter: Coordinates = {
-    latitude: 5.3600,
-    longitude: -4.0083,
-  };
-
-  useEffect(() => {
-    requestLocationPermission();
-  }, []);
-
-  const requestLocationPermission = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted' && !initialCoordinates) {
-        getCurrentLocation();
-      } else {
-        setIsLoading(false);
+      // Update map marker
+      if (webViewRef.current && mapReady) {
+        webViewRef.current.injectJavaScript(`
+          setMarkerPosition(${coords.latitude}, ${coords.longitude});
+          true;
+        `);
       }
     } catch (error) {
-      console.error('Permission error:', error);
-      setIsLoading(false);
-    }
-  };
-
-  const getCurrentLocation = async () => {
-    try {
-      setIsLocating(true);
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      const newCoords: Coordinates = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      };
-
-      setCoordinates(newCoords);
-
-      cameraRef.current?.setCamera({
-        centerCoordinate: [newCoords.longitude, newCoords.latitude],
-        zoomLevel: 14,
-        animationDuration: 1000,
-      });
-
-      const geoResult = await reverseGeocode(newCoords.latitude, newCoords.longitude);
-      const locationResult: LocationResult = {
-        coordinates: newCoords,
-        ...geoResult,
-      };
-      setSelectedLocation(locationResult);
-    } catch (error) {
-      console.error('Location error:', error);
       Alert.alert(
         'Erreur de localisation',
-        'Impossible de recuperer votre position. Vous pouvez selectionner manuellement sur la carte.'
+        'Impossible de récupérer votre position.'
       );
     } finally {
-      setIsLoading(false);
       setIsLocating(false);
     }
   };
 
-  const handleMapPress = async (event: any) => {
-    const { geometry } = event;
-    if (geometry?.coordinates) {
-      const [longitude, latitude] = geometry.coordinates;
-      const newCoords: Coordinates = { latitude, longitude };
+  const handleWebViewMessage = async (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
 
-      setCoordinates(newCoords);
+      if (data.type === 'mapReady') {
+        setMapReady(true);
+        setIsLoading(false);
+      } else if (data.type === 'locationSelected') {
+        const coords: Coordinates = {
+          latitude: data.latitude,
+          longitude: data.longitude,
+        };
 
-      const geoResult = await reverseGeocode(latitude, longitude);
-      const locationResult: LocationResult = {
-        coordinates: newCoords,
-        ...geoResult,
-      };
-      setSelectedLocation(locationResult);
+        // Reverse geocode
+        const geoResult = await reverseGeocode(coords.latitude, coords.longitude);
+        const locationResult: LocationResult = {
+          coordinates: coords,
+          ...geoResult,
+        };
+
+        setSelectedLocation(locationResult);
+
+        // En mode inline, notifier automatiquement
+        if (inline) {
+          onLocationSelect(locationResult);
+        }
+      }
+    } catch (error) {
+      // Silent fail
     }
   };
 
   const handleConfirm = () => {
     if (selectedLocation) {
       onLocationSelect(selectedLocation);
-    } else if (coordinates) {
-      onLocationSelect({ coordinates });
     }
   };
 
-  const centerCoords = coordinates || initialCoordinates || defaultCenter;
-
   return (
-    <View style={[styles.container, { height }]}>
+    <View style={[styles.container, { height, borderColor: colors.borderColor }]}>
       <View style={styles.mapContainer}>
-        <MapboxGL.MapView
+        <WebView
+          ref={webViewRef}
+          source={{ html: getMapHTML(centerCoords.latitude, centerCoords.longitude, !!initialCoordinates, colors.primary) }}
           style={styles.map}
-          styleURL={MapboxGL.StyleURL.Street}
-          onPress={handleMapPress}
-          logoEnabled={false}
-          attributionEnabled={false}
-        >
-          <MapboxGL.Camera
-            ref={cameraRef}
-            zoomLevel={12}
-            centerCoordinate={[centerCoords.longitude, centerCoords.latitude]}
-            animationDuration={0}
-          />
-
-          <MapboxGL.UserLocation visible animated />
-
-          {coordinates && (
-            <MapboxGL.PointAnnotation
-              id="selected-location"
-              coordinate={[coordinates.longitude, coordinates.latitude]}
-            >
-              <View style={styles.markerContainer}>
-                <MapPin size={32} color={colors.primary} fill={colors.primary} strokeWidth={1.5} />
-              </View>
-            </MapboxGL.PointAnnotation>
-          )}
-        </MapboxGL.MapView>
+          onMessage={handleWebViewMessage}
+          onLoad={() => {
+            // Fallback: if mapReady message wasn't received, hide loading after WebView loads
+            setTimeout(() => {
+              if (isLoading) {
+                setIsLoading(false);
+                setMapReady(true);
+              }
+            }, 1000);
+          }}
+          onError={() => {
+            setIsLoading(false);
+            setMapReady(true);
+          }}
+          scrollEnabled={false}
+          bounces={false}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          startInLoadingState={false}
+          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
+          originWhitelist={['*']}
+          mixedContentMode="compatibility"
+        />
 
         {isLoading && (
-          <View style={styles.loadingOverlay}>
+          <View style={[styles.loadingOverlay, { backgroundColor: colors.surface }]}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
               Chargement de la carte...
@@ -391,51 +375,53 @@ function MapLocationPickerWithMapbox({
 
         {onClose && (
           <TouchableOpacity
-            style={[styles.closeButton, { backgroundColor: colors.surface }]}
+            style={[styles.closeButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
             onPress={onClose}
           >
-            <X size={20} color={colors.textPrimary} strokeWidth={2} />
+            <X size={18} color={colors.textPrimary} strokeWidth={1.5} />
           </TouchableOpacity>
         )}
 
         <TouchableOpacity
-          style={[styles.myLocationButton, { backgroundColor: colors.surface }]}
+          style={[styles.myLocationButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
           onPress={getCurrentLocation}
           disabled={isLocating}
         >
           {isLocating ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
-            <Navigation size={20} color={colors.primary} strokeWidth={2} />
+            <Navigation size={18} color={colors.primary} strokeWidth={1.5} />
           )}
         </TouchableOpacity>
       </View>
 
-      {selectedLocation && (
-        <View style={[styles.locationInfo, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
+      {/* Affichage de l'adresse sélectionnée - mode non-inline avec bouton Confirmer */}
+      {selectedLocation && !inline && (
+        <View style={[styles.locationInfo, { backgroundColor: colors.gray50, borderTopColor: colors.borderColor }]}>
           <View style={styles.locationTextContainer}>
-            <MapPin size={16} color={colors.primary} strokeWidth={2} />
+            <MapPin size={16} color={colors.primary} strokeWidth={1.5} />
             <Text style={[styles.locationText, { color: colors.textPrimary }]} numberOfLines={2}>
               {selectedLocation.address ||
                [selectedLocation.city, selectedLocation.region, selectedLocation.country]
                  .filter(Boolean)
                  .join(', ') ||
-               'Position selectionnee'}
+               'Position sélectionnée'}
             </Text>
           </View>
           <TouchableOpacity
             style={[styles.confirmButton, { backgroundColor: colors.primary }]}
             onPress={handleConfirm}
           >
-            <Text style={styles.confirmButtonText}>Confirmer</Text>
+            <Text style={[styles.confirmButtonText, { color: colors.textOnPrimary }]}>Confirmer</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {!selectedLocation && !isLoading && (
-        <View style={[styles.instructions, { backgroundColor: colors.gray100 }]}>
+      {/* Instructions - seulement en mode non-inline */}
+      {!selectedLocation && !isLoading && !inline && (
+        <View style={[styles.instructions, { backgroundColor: colors.gray50, borderTopColor: colors.borderColor }]}>
           <Text style={[styles.instructionsText, { color: colors.textSecondary }]}>
-            Touchez la carte pour selectionner une position
+            Touchez la carte pour sélectionner une position
           </Text>
         </View>
       )}
@@ -443,18 +429,11 @@ function MapLocationPickerWithMapbox({
   );
 }
 
-// Export the appropriate component based on Mapbox availability
-export function MapLocationPicker(props: MapLocationPickerProps) {
-  if (isMapboxAvailable && MapboxGL) {
-    return <MapLocationPickerWithMapbox {...props} />;
-  }
-  return <MapFallback {...props} />;
-}
-
 const styles = StyleSheet.create({
   container: {
     borderRadius: BORDER.radius.md,
     overflow: 'hidden',
+    borderWidth: 1,
   },
 
   mapContainer: {
@@ -464,11 +443,11 @@ const styles = StyleSheet.create({
 
   map: {
     flex: 1,
+    backgroundColor: LIGHT_COLORS.gray100,
   },
 
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
     gap: SPACING.sm,
@@ -476,6 +455,7 @@ const styles = StyleSheet.create({
 
   loadingText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
 
   closeButton: {
@@ -484,20 +464,10 @@ const styles = StyleSheet.create({
     right: SPACING.sm,
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: BORDER.radius.full,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    borderWidth: 1,
   },
 
   myLocationButton: {
@@ -506,25 +476,10 @@ const styles = StyleSheet.create({
     right: SPACING.sm,
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: BORDER.radius.full,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-  },
-
-  markerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
   },
 
   locationInfo: {
@@ -545,6 +500,7 @@ const styles = StyleSheet.create({
   locationText: {
     flex: 1,
     fontSize: TYPOGRAPHY.fontSize.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
 
   confirmButton: {
@@ -554,78 +510,20 @@ const styles = StyleSheet.create({
   },
 
   confirmButtonText: {
-    color: COLORS.white,
+    fontFamily: TYPOGRAPHY.fontFamily.semibold,
     fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
   instructions: {
     padding: SPACING.md,
     alignItems: 'center',
+    borderTopWidth: 1,
   },
 
   instructionsText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
-  },
-
-  // Fallback styles
-  fallbackContainer: {
-    borderRadius: BORDER.radius.md,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-
-  fallbackContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xl,
-    gap: SPACING.md,
-  },
-
-  fallbackTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    textAlign: 'center',
-  },
-
-  fallbackText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-
-  fallbackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER.radius.md,
-    marginTop: SPACING.md,
-  },
-
-  fallbackButtonText: {
-    color: COLORS.white,
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  selectedBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    padding: SPACING.md,
-    borderRadius: BORDER.radius.sm,
-    borderWidth: 1,
-    width: '100%',
-    marginTop: SPACING.md,
-  },
-
-  selectedText: {
-    flex: 1,
-    fontSize: TYPOGRAPHY.fontSize.sm,
   },
 });
 

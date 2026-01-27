@@ -25,28 +25,34 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="assistant"
-        options={{}}
+        name="assistant/index"
+        options={{
+          href: '/(tabs)/assistant',
+        }}
       />
       <Tabs.Screen
-        name="explore"
-        options={{}}
+        name="explore/index"
+        options={{
+          href: '/(tabs)/explore',
+        }}
       />
       <Tabs.Screen
-        name="graphe"
+        name="graphe/index"
         options={{
           href: isOrganizationSpace ? null : '/(tabs)/graphe',
         }}
       />
       <Tabs.Screen
-        name="gestion"
+        name="gestion/index"
         options={{
           href: isOrganizationSpace ? '/(tabs)/gestion' : null,
         }}
       />
       <Tabs.Screen
-        name="settings"
-        options={{}}
+        name="settings/index"
+        options={{
+          href: '/(tabs)/settings',
+        }}
       />
     </Tabs>
   );

@@ -23,7 +23,7 @@ import {
   MapPin,
   Map,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { Input, Button } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useSpace } from '../../src/contexts/SpaceContext';
@@ -305,7 +305,7 @@ export default function EditOrganizationScreen() {
           ]}
         >
           {STEPS.indexOf(currentStep) > index && (
-            <Check size={12} color={COLORS.white} strokeWidth={ICON.strokeWidth + 0.5} />
+            <Check size={12} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth + 0.5} />
           )}
         </TouchableOpacity>
       ))}
@@ -475,7 +475,7 @@ export default function EditOrganizationScreen() {
                   style={[
                     styles.optionChipText,
                     { color: colors.gray700 },
-                    country === c.id && { color: COLORS.white },
+                    country === c.id && { color: colors.textOnPrimary },
                   ]}
                 >
                   {c.label}
@@ -512,7 +512,7 @@ export default function EditOrganizationScreen() {
                     style={[
                       styles.optionChipText,
                       { color: colors.gray700 },
-                      region === r.id && { color: COLORS.white },
+                      region === r.id && { color: colors.textOnPrimary },
                     ]}
                   >
                     {r.label}
@@ -547,7 +547,7 @@ export default function EditOrganizationScreen() {
                     style={[
                       styles.optionChipText,
                       { color: colors.gray700 },
-                      city === c.id && { color: COLORS.white },
+                      city === c.id && { color: colors.textOnPrimary },
                     ]}
                   >
                     {c.label}
@@ -609,11 +609,11 @@ export default function EditOrganizationScreen() {
             fullWidth
             icon={
               isSaving ? undefined :
-              <ChevronRight
-                size={ICON.size.md}
-                color={COLORS.white}
-                strokeWidth={ICON.strokeWidth}
-              />
+                <ChevronRight
+                  size={ICON.size.md}
+                  color={colors.textOnPrimary}
+                  strokeWidth={ICON.strokeWidth}
+                />
             }
             iconPosition="right"
           />

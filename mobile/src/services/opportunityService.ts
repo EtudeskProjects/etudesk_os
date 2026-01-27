@@ -13,6 +13,7 @@ import {
   CompensationFrequency,
   OpportunityStatus,
   ApplicationQuestion,
+  Visibility,
 } from '../types/models';
 
 export interface OpportunityFilters {
@@ -66,9 +67,11 @@ export interface CreateOpportunityData {
   // Application settings
   cv_required?: boolean;
   application_questions?: ApplicationQuestion[];
+  // Visibility
+  visibility?: Visibility;
 }
 
-export interface UpdateOpportunityData extends Partial<CreateOpportunityData> {}
+export interface UpdateOpportunityData extends Partial<CreateOpportunityData> { }
 
 export interface GenerateOpportunityInput {
   title: string;

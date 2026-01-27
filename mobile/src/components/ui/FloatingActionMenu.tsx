@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Pressable, Animated } from 'react-native';
 import { Plus, X } from 'lucide-react-native';
-import { COLORS, SPACING, SHADOW, BORDER, TYPOGRAPHY } from '../../constants/theme';
+import { SPACING, BORDER, TYPOGRAPHY, LAYOUT, ICON, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 export interface ActionItem {
@@ -17,8 +17,8 @@ interface FloatingActionMenuProps {
     bottomOffset?: number;
 }
 
-const ACTION_ITEM_HEIGHT = 50;
-const ACTION_ITEM_SPACING = 12;
+const ACTION_ITEM_HEIGHT = LAYOUT.fabSizeSm;
+const ACTION_ITEM_SPACING = SPACING.sm;
 
 export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
     actions,
@@ -91,7 +91,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                 style={[
                     styles.overlay,
                     overlayAnimatedStyle,
-                    { backgroundColor: '#000' },
+                    { backgroundColor: colors.black },
                     { pointerEvents: isOpen ? 'auto' : 'none' }
                 ]}
                 onPress={toggleMenu}
@@ -122,11 +122,10 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                     style={[
                         styles.fab,
                         { backgroundColor: colors.primary },
-                        SHADOW.lg,
                     ]}
                 >
                     <Animated.View style={mainButtonAnimatedStyle}>
-                        <Plus size={28} color={COLORS.white} />
+                        <Plus size={ICON.size.xl} color={colors.textOnPrimary} />
                     </Animated.View>
                 </TouchableOpacity>
             </View>
@@ -175,14 +174,13 @@ const ActionItemComponent = ({
 
     return (
         <Animated.View style={[styles.actionItemContainer, animatedStyle]} pointerEvents="box-none">
-            <View style={[styles.labelContainer, { backgroundColor: colors.surface }, SHADOW.sm]}>
+            <View style={[styles.labelContainer, { backgroundColor: colors.surface }]}>
                 <Text style={[styles.labelText, { color: colors.textPrimary }]}>{action.label}</Text>
             </View>
             <TouchableOpacity
                 style={[
                     styles.actionButton,
                     { backgroundColor: action.color || colors.surface },
-                    SHADOW.md
                 ]}
                 onPress={onPress}
                 activeOpacity={0.8}
@@ -205,16 +203,16 @@ const styles = StyleSheet.create({
         zIndex: 2,
     },
     fab: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+        width: LAYOUT.fabSize,
+        height: LAYOUT.fabSize,
+        borderRadius: LAYOUT.fabSize / 2,
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 2,
     },
     actionsContainer: {
         position: 'absolute',
-        bottom: 8, // Center align with FAB roughly to start
+        bottom: SPACING.sm,
         right: 0,
         width: '100%',
         alignItems: 'flex-end',
@@ -226,24 +224,25 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
         position: 'absolute',
         bottom: 0,
-        right: 4, // Align centers with FAB (56 wide vs 48 wide -> 4px offset)
-        height: 48,
-        minWidth: 200, // Enough space for label
+        right: SPACING.xs,
+        height: LAYOUT.fabSizeSm,
+        minWidth: 200,
     },
     labelContainer: {
-        paddingVertical: 6,
-        paddingHorizontal: 12,
+        paddingVertical: SPACING.xs,
+        paddingHorizontal: SPACING.sm,
         borderRadius: BORDER.radius.sm,
         marginRight: SPACING.sm,
     },
     labelText: {
+        fontFamily: TYPOGRAPHY.fontFamily.medium,
         fontSize: TYPOGRAPHY.fontSize.sm,
-        fontWeight: TYPOGRAPHY.fontWeight.bold,
+        fontWeight: TYPOGRAPHY.fontWeight.medium,
     },
     actionButton: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: LAYOUT.fabSizeSm,
+        height: LAYOUT.fabSizeSm,
+        borderRadius: LAYOUT.fabSizeSm / 2,
         alignItems: 'center',
         justifyContent: 'center',
     },

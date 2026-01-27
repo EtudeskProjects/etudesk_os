@@ -96,11 +96,22 @@ router.get('/can-generate', (req: Request, res: Response) => {
   res.json({ canGenerate: result });
 });
 
-// GET /api/opportunities - List all opportunities
-router.get('/', async (req: Request, res: Response) => {
+// GET /api/opportunities - List all opportunities (visibility filtering)
+router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { status, type, location_type, limit = 50, offset = 0 } = req.query;
+    const talentId = req.talentId;
 
+    // Get user email for invitation check
+    let userEmail: string | null = null;
+    if (talentId) {
+      const userResult = await pool.query('SELECT email FROM talents WHERE id = $1', [talentId]);
+      if (userResult.rows.length > 0) {
+        userEmail = userResult.rows[0].email;
+      }
+    }
+
+    // Base query: only PUBLIC opportunities OR those where user is invited
     let query = `
       SELECT o.*,
         COALESCE(
@@ -120,9 +131,33 @@ router.get('/', async (req: Request, res: Response) => {
         ) as organizations
       FROM opportunities o
       WHERE o.deleted_at IS NULL
+      AND (
+        COALESCE(o.visibility, 'PUBLIC') = 'PUBLIC'
     `;
+
     const params: QueryParam[] = [];
     let paramIndex = 1;
+
+    // If user is authenticated, also show opportunities they're invited to or own
+    if (talentId && userEmail) {
+      query += `
+        OR EXISTS (
+          SELECT 1 FROM opportunity_invitations oi
+          WHERE oi.opportunity_id = o.id
+          AND (oi.invitee_talent_id = $${paramIndex} OR LOWER(oi.invitee_email) = LOWER($${paramIndex + 1}))
+        )
+        OR EXISTS (
+          SELECT 1 FROM opportunity_posters op2
+          LEFT JOIN organization_members om ON op2.poster_organization_id = om.organization_id
+          WHERE op2.opportunity_id = o.id
+          AND (op2.poster_talent_id = $${paramIndex} OR om.talent_id = $${paramIndex})
+        )
+      `;
+      params.push(talentId, userEmail);
+      paramIndex += 2;
+    }
+
+    query += `)`;  // Close the visibility OR block
 
     if (status) {
       query += ` AND o.status = $${paramIndex++}`;
@@ -155,6 +190,24 @@ router.get('/organization/:orgId', optionalAuthMiddleware, async (req: AuthReque
     const { orgId } = req.params;
     const { status, limit = 50, offset = 0 } = req.query;
 
+    // Build count query
+    let countQuery = `
+      SELECT COUNT(*) as total FROM opportunities o
+      JOIN opportunity_posters op ON o.id = op.opportunity_id
+      WHERE op.poster_organization_id = $1 AND o.deleted_at IS NULL
+    `;
+    const countParams: QueryParam[] = [orgId];
+    let countParamIndex = 2;
+
+    if (status) {
+      countQuery += ` AND o.status = $${countParamIndex++}`;
+      countParams.push(status as string);
+    }
+
+    const countResult = await pool.query(countQuery, countParams);
+    const totalCount = parseInt(countResult.rows[0].total);
+
+    // Build data query
     let query = `
       SELECT
         o.*,
@@ -177,7 +230,7 @@ router.get('/organization/:orgId', optionalAuthMiddleware, async (req: AuthReque
     params.push(Number(limit), Number(offset));
 
     const result = await pool.query(query, params);
-    res.json({ data: result.rows, count: result.rowCount });
+    res.json({ data: result.rows, count: totalCount });
   } catch (error) {
     console.error('Error fetching organization opportunities:', error);
     res.status(500).json({ error: 'Failed to fetch opportunities' });

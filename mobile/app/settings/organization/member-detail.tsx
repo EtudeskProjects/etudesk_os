@@ -23,7 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useOrganizationMembers } from '../../../src/contexts/OrganizationMemberContext';
 import {
@@ -270,8 +270,8 @@ export default function MemberDetailScreen() {
                         {role === ORGANIZATION_ROLES.ADMIN
                           ? 'Accès complet sauf suppression'
                           : role === ORGANIZATION_ROLES.MANAGER
-                          ? 'Gestion des contenus'
-                          : 'Accès en lecture seule'}
+                            ? 'Gestion des contenus'
+                            : 'Accès en lecture seule'}
                       </Text>
                     </View>
                     <View style={[
@@ -279,7 +279,7 @@ export default function MemberDetailScreen() {
                       { borderColor: isSelected ? colors.primary : colors.gray300 },
                       isSelected && { backgroundColor: colors.primary },
                     ]}>
-                      {isSelected && <Check size={14} color={COLORS.white} strokeWidth={3} />}
+                      {isSelected && <Check size={14} color={colors.textOnPrimary} strokeWidth={3} />}
                     </View>
                   </TouchableOpacity>
                 );
@@ -344,7 +344,7 @@ export default function MemberDetailScreen() {
                             { borderColor: isEnabled ? colors.primary : colors.gray300 },
                             isEnabled && { backgroundColor: colors.primary },
                           ]}>
-                            {isEnabled && <Check size={12} color={COLORS.white} strokeWidth={3} />}
+                            {isEnabled && <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />}
                           </View>
                         </TouchableOpacity>
                       );
@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
 
   // Empty State

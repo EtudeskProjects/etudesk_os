@@ -21,7 +21,7 @@ import {
   MapPin,
   LogOut,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { FooterNav } from '../../../src/components/ui';
 import { useAuth } from '../../../src/contexts/AuthContext';
@@ -30,13 +30,13 @@ import { formatRelativeTime } from '../../../src/utils/date';
 import type { Community } from '../../../src/types/models';
 import type { MemberStatus } from '../../../src/services/communityService';
 
-// Status configuration
-const STATUS_CONFIG: Record<MemberStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> = {
-  PENDING: { color: COLORS.warning, icon: Clock, bgColor: COLORS.warning + '15', label: 'En attente' },
-  ACTIVE: { color: COLORS.success, icon: CheckCircle2, bgColor: COLORS.success + '15', label: 'Membre actif' },
-  REJECTED: { color: COLORS.error, icon: XCircle, bgColor: COLORS.error + '15', label: 'Refusée' },
-  SUSPENDED: { color: COLORS.gray500, icon: XCircle, bgColor: COLORS.gray500 + '15', label: 'Suspendu' },
-};
+// Status configuration - returns config based on theme colors
+const getStatusConfig = (colors: any): Record<MemberStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
+  PENDING: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15', label: 'En attente' },
+  ACTIVE: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Membre actif' },
+  REJECTED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Refusée' },
+  SUSPENDED: { color: colors.gray500, icon: XCircle, bgColor: colors.gray500 + '15', label: 'Suspendu' },
+});
 
 interface MembershipWithDetails {
   id: string;
@@ -73,7 +73,7 @@ export default function MyCommunityDetailsScreen() {
       // Get all memberships and find the one with this ID
       const response = await communityService.getMyMemberships();
       const found = response.data?.memberships?.find((m: any) => m.id === id);
-      
+
       if (found) {
         setMembership(found);
       } else {
@@ -117,6 +117,7 @@ export default function MyCommunityDetailsScreen() {
   const renderDetails = () => {
     if (!membership) return null;
 
+    const STATUS_CONFIG = getStatusConfig(colors);
     const statusConfig = STATUS_CONFIG[membership.status as MemberStatus] || STATUS_CONFIG.PENDING;
     const StatusIcon = statusConfig.icon;
     const community = membership.community;
@@ -192,8 +193,8 @@ export default function MyCommunityDetailsScreen() {
 
         {/* Rejection reason if rejected */}
         {membership.status === 'REJECTED' && membership.rejection_reason && (
-          <View style={[styles.section, { backgroundColor: COLORS.error + '10', borderColor: COLORS.error + '30' }]}>
-            <Text style={[styles.sectionTitle, { color: COLORS.error }]}>Raison du refus</Text>
+          <View style={[styles.section, { backgroundColor: colors.error + '10', borderColor: colors.error + '30' }]}>
+            <Text style={[styles.sectionTitle, { color: colors.error }]}>Raison du refus</Text>
             <Text style={[styles.rejectionReason, { color: colors.textPrimary }]}>
               {membership.rejection_reason}
             </Text>

@@ -1,6 +1,6 @@
 /**
  * Bookmarks Routes
- * Handles bookmarks for opportunities, hubs, and communities
+ * Handles bookmarks for opportunities, spaces, and communities
  */
 
 import { Router, Response } from 'express';
@@ -10,13 +10,13 @@ import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 const router = Router();
 
 // Valid entity types for bookmarking
-type EntityType = 'opportunity' | 'hub' | 'community';
-const VALID_ENTITY_TYPES: EntityType[] = ['opportunity', 'hub', 'community'];
+type EntityType = 'opportunity' | 'space' | 'community';
+const VALID_ENTITY_TYPES: EntityType[] = ['opportunity', 'space', 'community'];
 
 // Map entity type to table and ID column
 const ENTITY_CONFIG: Record<EntityType, { table: string; idColumn: string }> = {
   opportunity: { table: 'opportunities', idColumn: 'id' },
-  hub: { table: 'hubs', idColumn: 'id' },
+  space: { table: 'spaces', idColumn: 'id' },
   community: { table: 'communities', idColumn: 'id' },
 };
 
@@ -26,7 +26,7 @@ const ENTITY_CONFIG: Record<EntityType, { table: string; idColumn: string }> = {
 const getBookmarkTable = (entityType: EntityType): string => {
   switch (entityType) {
     case 'opportunity': return 'opportunity_bookmarks';
-    case 'hub': return 'hub_bookmarks';
+    case 'space': return 'space_bookmarks';
     case 'community': return 'community_bookmarks';
     default: throw new Error(`Invalid entity type: ${entityType}`);
   }
@@ -38,7 +38,7 @@ const getBookmarkTable = (entityType: EntityType): string => {
 const getEntityIdColumn = (entityType: EntityType): string => {
   switch (entityType) {
     case 'opportunity': return 'opportunity_id';
-    case 'hub': return 'hub_id';
+    case 'space': return 'space_id';
     case 'community': return 'community_id';
     default: throw new Error(`Invalid entity type: ${entityType}`);
   }
@@ -230,8 +230,7 @@ router.delete('/opportunities/:id', authMiddleware, async (req: AuthRequest, res
 });
 
 // ============================================================================
-// GENERIC BOOKMARKS (hubs, communities)
-// These use a generic bookmarks table created on the fly
+// SPACE BOOKMARKS
 // ============================================================================
 
 /**
@@ -260,14 +259,14 @@ const ensureBookmarkTable = async (entityType: EntityType): Promise<void> => {
 };
 
 /**
- * GET /api/bookmarks/hubs
+ * GET /api/bookmarks/spaces
  */
-router.get('/hubs', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/spaces', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
 
-    await ensureBookmarkTable('hub');
+    await ensureBookmarkTable('space');
 
     const { limit = 50, offset = 0 } = req.query;
 
@@ -275,92 +274,99 @@ router.get('/hubs', authMiddleware, async (req: AuthRequest, res: Response) => {
       SELECT
         b.created_at as bookmarked_at,
         b.notes,
-        h.*
-      FROM hub_bookmarks b
-      JOIN hubs h ON b.hub_id = h.id
-      WHERE b.talent_id = $1 AND h.deleted_at IS NULL
+        s.*,
+        o.name as organization_name,
+        o.logo_url as organization_logo
+      FROM space_bookmarks b
+      JOIN spaces s ON b.space_id = s.id
+      LEFT JOIN organizations o ON s.organization_id = o.id
+      WHERE b.talent_id = $1 AND s.deleted_at IS NULL
       ORDER BY b.created_at DESC
       LIMIT $2 OFFSET $3
     `, [talentId, Number(limit), Number(offset)]);
 
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
-    console.error('Error fetching hub bookmarks:', error);
+    console.error('Error fetching space bookmarks:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });
 
 /**
- * GET /api/bookmarks/hubs/ids
+ * GET /api/bookmarks/spaces/ids
  */
-router.get('/hubs/ids', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/spaces/ids', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
 
-    await ensureBookmarkTable('hub');
+    await ensureBookmarkTable('space');
 
     const result = await pool.query(`
-      SELECT hub_id FROM hub_bookmarks WHERE talent_id = $1
+      SELECT space_id FROM space_bookmarks WHERE talent_id = $1
     `, [talentId]);
 
-    res.json({ data: result.rows.map(r => r.hub_id) });
+    res.json({ data: result.rows.map(r => r.space_id) });
   } catch (error) {
-    console.error('Error fetching hub bookmark IDs:', error);
+    console.error('Error fetching space bookmark IDs:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });
 
 /**
- * POST /api/bookmarks/hubs/:id
+ * POST /api/bookmarks/spaces/:id
  */
-router.post('/hubs/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/spaces/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     const { id } = req.params;
     if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
 
-    await ensureBookmarkTable('hub');
+    await ensureBookmarkTable('space');
 
-    const check = await pool.query('SELECT id FROM hubs WHERE id = $1 AND deleted_at IS NULL', [id]);
+    const check = await pool.query('SELECT id FROM spaces WHERE id = $1 AND deleted_at IS NULL', [id]);
     if (check.rows.length === 0) {
-      return res.status(404).json({ error: 'Hub non trouvé' });
+      return res.status(404).json({ error: 'Espace non trouvé' });
     }
 
     await pool.query(`
-      INSERT INTO hub_bookmarks (talent_id, hub_id, created_at)
+      INSERT INTO space_bookmarks (talent_id, space_id, created_at)
       VALUES ($1, $2, NOW())
       ON CONFLICT DO NOTHING
     `, [talentId, id]);
 
     res.status(201).json({ success: true, isBookmarked: true });
   } catch (error) {
-    console.error('Error adding hub bookmark:', error);
+    console.error('Error adding space bookmark:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });
 
 /**
- * DELETE /api/bookmarks/hubs/:id
+ * DELETE /api/bookmarks/spaces/:id
  */
-router.delete('/hubs/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.delete('/spaces/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     const { id } = req.params;
     if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
 
-    await ensureBookmarkTable('hub');
+    await ensureBookmarkTable('space');
 
     await pool.query(`
-      DELETE FROM hub_bookmarks WHERE talent_id = $1 AND hub_id = $2
+      DELETE FROM space_bookmarks WHERE talent_id = $1 AND space_id = $2
     `, [talentId, id]);
 
     res.json({ success: true, isBookmarked: false });
   } catch (error) {
-    console.error('Error removing hub bookmark:', error);
+    console.error('Error removing space bookmark:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });
+
+// ============================================================================
+// COMMUNITY BOOKMARKS
+// ============================================================================
 
 /**
  * GET /api/bookmarks/communities
@@ -480,20 +486,20 @@ router.get('/all/ids', authMiddleware, async (req: AuthRequest, res: Response) =
 
     // Ensure all tables exist
     await Promise.all([
-      ensureBookmarkTable('hub'),
+      ensureBookmarkTable('space'),
       ensureBookmarkTable('community'),
     ]);
 
-    const [opportunities, hubs, communities] = await Promise.all([
+    const [opportunities, spaces, communities] = await Promise.all([
       pool.query('SELECT opportunity_id as id FROM opportunity_bookmarks WHERE talent_id = $1', [talentId]),
-      pool.query('SELECT hub_id as id FROM hub_bookmarks WHERE talent_id = $1', [talentId]),
+      pool.query('SELECT space_id as id FROM space_bookmarks WHERE talent_id = $1', [talentId]),
       pool.query('SELECT community_id as id FROM community_bookmarks WHERE talent_id = $1', [talentId]),
     ]);
 
     res.json({
       data: {
         opportunities: opportunities.rows.map(r => r.id),
-        hubs: hubs.rows.map(r => r.id),
+        spaces: spaces.rows.map(r => r.id),
         communities: communities.rows.map(r => r.id),
       }
     });

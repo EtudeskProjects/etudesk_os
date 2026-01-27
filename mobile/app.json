@@ -50,13 +50,7 @@
           "locationWhenInUsePermission": "Etudesk a besoin d'accéder à votre localisation pour remplir automatiquement votre adresse."
         }
       ],
-      "expo-localization",
-      [
-        "@rnmapbox/maps",
-        {
-          "RNMapboxMapsDownloadToken": "pk.eyJ1IjoibGFtaW5lYmFycm8iLCJhIjoiY20zZHMzOW9zMDc5dzJsczgwdWVoZ2NqYyJ9.3baMsQ3_mpKlnBdHCeu0kg"
-        }
-      ]
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true

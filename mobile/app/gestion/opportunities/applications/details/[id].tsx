@@ -42,7 +42,7 @@ import {
   ChevronDown,
   TrendingUp,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
 import { Button, FooterNav } from '../../../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
@@ -51,41 +51,41 @@ import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import type { Application, ApplicationMessage, ApplicationStatus } from '../../../../../src/types/models';
 import { APPLICATION_STATUS_LABELS } from '../../../../../src/types/models';
 
-// Status configuration - Simplified to 4 statuses
-const STATUS_CONFIG: Record<ApplicationStatus, { color: string; icon: typeof Clock }> = {
-  SUBMITTED: { color: COLORS.warning, icon: Clock },
-  IN_REVIEW: { color: COLORS.info, icon: Eye },
-  ACCEPTED: { color: COLORS.success, icon: CheckCircle2 },
-  REJECTED: { color: COLORS.error, icon: XCircle },
-};
+// Status configuration - colors are set dynamically using theme colors
+const getStatusConfig = (colors: any): Record<ApplicationStatus, { color: string; icon: typeof Clock }> => ({
+  SUBMITTED: { color: colors.warning, icon: Clock },
+  IN_REVIEW: { color: colors.info, icon: Eye },
+  ACCEPTED: { color: colors.success, icon: CheckCircle2 },
+  REJECTED: { color: colors.error, icon: XCircle },
+});
 
-// Status flow with descriptions
-const STATUS_FLOW: Record<ApplicationStatus, {
+// Status flow with descriptions - colors are set dynamically using theme colors
+const getStatusFlow = (colors: any): Record<ApplicationStatus, {
   label: string;
   description: string;
   color: string;
-}> = {
+}> => ({
   SUBMITTED: {
     label: 'Soumise',
     description: 'Candidature reçue',
-    color: COLORS.warning,
+    color: colors.warning,
   },
   IN_REVIEW: {
     label: 'En cours d\'examen',
     description: 'Candidature en cours d\'évaluation',
-    color: COLORS.info,
+    color: colors.info,
   },
   ACCEPTED: {
     label: 'Acceptée',
     description: 'Candidature retenue',
-    color: COLORS.success,
+    color: colors.success,
   },
   REJECTED: {
     label: 'Refusée',
     description: 'Candidature non retenue',
-    color: COLORS.error,
+    color: colors.error,
   },
-};
+});
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -106,6 +106,9 @@ export default function ApplicationOrgDetailsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const scrollViewRef = useRef<ScrollView>(null);
+
+  const STATUS_CONFIG = getStatusConfig(colors);
+  const STATUS_FLOW = getStatusFlow(colors);
 
   const [application, setApplication] = useState<Application | null>(null);
   const [messages, setMessages] = useState<ApplicationMessage[]>([]);
@@ -458,8 +461,8 @@ export default function ApplicationOrgDetailsScreen() {
               <TouchableOpacity key={star} onPress={() => handleUpdateRating(star)}>
                 <Star
                   size={32}
-                  color={star <= rating ? COLORS.warning : colors.gray300}
-                  fill={star <= rating ? COLORS.warning : 'transparent'}
+                  color={star <= rating ? colors.warning : colors.gray300}
+                  fill={star <= rating ? colors.warning : 'transparent'}
                   strokeWidth={ICON.strokeWidth}
                 />
               </TouchableOpacity>
@@ -508,13 +511,13 @@ export default function ApplicationOrgDetailsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Statut de la candidature</Text>
 
             {/* Current status display */}
-            <View style={[styles.currentStatusDisplay, { backgroundColor: (STATUS_FLOW[application.status as ApplicationStatus]?.color || COLORS.warning) + '10' }]}>
+            <View style={[styles.currentStatusDisplay, { backgroundColor: (STATUS_FLOW[application.status as ApplicationStatus]?.color || colors.warning) + '10' }]}>
               {(() => {
                 const config = STATUS_CONFIG[application.status as ApplicationStatus] || STATUS_CONFIG.SUBMITTED;
                 const StatusIcon = config.icon;
-                return <StatusIcon size={20} color={STATUS_FLOW[application.status as ApplicationStatus]?.color || COLORS.warning} strokeWidth={ICON.strokeWidth} />;
+                return <StatusIcon size={20} color={STATUS_FLOW[application.status as ApplicationStatus]?.color || colors.warning} strokeWidth={ICON.strokeWidth} />;
               })()}
-              <Text style={[styles.currentStatusDisplayText, { color: STATUS_FLOW[application.status as ApplicationStatus]?.color || COLORS.warning }]}>
+              <Text style={[styles.currentStatusDisplayText, { color: STATUS_FLOW[application.status as ApplicationStatus]?.color || colors.warning }]}>
                 {STATUS_FLOW[application.status as ApplicationStatus]?.label || application.status}
               </Text>
             </View>
@@ -642,8 +645,8 @@ export default function ApplicationOrgDetailsScreen() {
 
         {/* Final status message */}
         {application?.status === 'ACCEPTED' && (
-          <View style={[styles.finalStatusCard, { backgroundColor: COLORS.success + '10', borderColor: COLORS.success + '30' }]}>
-            <Text style={[styles.finalStatusText, { color: COLORS.success }]}>
+          <View style={[styles.finalStatusCard, { backgroundColor: colors.success + '10', borderColor: colors.success + '30' }]}>
+            <Text style={[styles.finalStatusText, { color: colors.success }]}>
               🎉 Ce candidat a été accepté !
             </Text>
           </View>
@@ -651,11 +654,11 @@ export default function ApplicationOrgDetailsScreen() {
 
         {/* Delete application */}
         <TouchableOpacity
-          style={[styles.deleteButton, { borderColor: COLORS.error }]}
+          style={[styles.deleteButton, { borderColor: colors.error }]}
           onPress={handleDeleteApplication}
         >
-          <Trash2 size={18} color={COLORS.error} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.deleteButtonText, { color: COLORS.error }]}>
+          <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
+          <Text style={[styles.deleteButtonText, { color: colors.error }]}>
             Supprimer cette candidature
           </Text>
         </TouchableOpacity>
@@ -1497,7 +1500,7 @@ const styles = StyleSheet.create({
   bioContainer: {
     paddingTop: SPACING.sm,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: COLORS.gray200,
+    borderTopColor: '#E5E7EB',
   },
 
   bioText: {
@@ -1510,12 +1513,12 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.md,
     overflow: 'hidden',
     borderWidth: BORDER.width.thin,
-    borderColor: COLORS.gray200,
+    borderColor: '#E5E7EB',
   },
 
   cvWebView: {
     height: 400,
-    backgroundColor: COLORS.gray100,
+    backgroundColor: '#F3F4F6',
   },
 
   cvLoading: {
@@ -1526,7 +1529,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.gray50,
+    backgroundColor: '#F9FAFB',
   },
 
   cvLoadingText: {
@@ -1564,7 +1567,7 @@ const styles = StyleSheet.create({
   },
 
   cvOpenButtonText: {
-    color: COLORS.white,
+    color: '#FFFFFF',
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },

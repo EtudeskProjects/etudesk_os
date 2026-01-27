@@ -21,7 +21,7 @@ import {
     Star,
     Plus,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { CommunityCard } from '../../../src/components/cards';
@@ -88,8 +88,8 @@ export default function CommunitiesScreen() {
                 ]}
                 onPress={() => setActiveCategory(item.id)}
             >
-                <Icon size={16} color={isActive ? COLORS.white : colors.textSecondary} />
-                <Text style={[styles.categoryLabel, { color: isActive ? COLORS.white : colors.textSecondary }]}>
+                <Icon size={16} color={isActive ? colors.textOnPrimary : colors.textSecondary} />
+                <Text style={[styles.categoryLabel, { color: isActive ? colors.textOnPrimary : colors.textSecondary }]}>
                     {item.label}
                 </Text>
             </TouchableOpacity>

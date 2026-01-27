@@ -26,8 +26,26 @@ export type {
   MemberPermissions
 } from './communityService';
 
-export { hubService } from './hubService';
-export type { HubFilters, CreateHubData, UpdateHubData } from './hubService';
+export { spaceService } from './spaceService';
+export type {
+  SpaceType,
+  SpaceStatus,
+  BookingStatus,
+  PaymentStatus,
+  PricingType,
+  PaymentMethod,
+  SpaceAvailability,
+  Space,
+  SpaceBooking,
+  SpaceFilters,
+  CreateSpaceData,
+  UpdateSpaceData,
+  GenerateSpaceInput,
+  GeneratedSpaceData,
+  CreateBookingData,
+  BookingFilters,
+  AvailabilityCheckResult
+} from './spaceService';
 
 export { otpService } from './otpService';
 
@@ -43,17 +61,6 @@ export type { InviteMemberData, UpdateMemberData } from './organizationMemberSer
 export { kycService } from './kycService';
 export type { KYCDocumentType, KYCStatus, KYCVerification, SubmitKYCData } from './kycService';
 
-export { documentService } from './documentService';
-export type {
-  DocumentFilters,
-  CreateDocumentData,
-  SubmitIdentityData,
-  UpdateDocumentData,
-  UploadUrlResponse,
-  IdentityStatus,
-  RequirementsCheckResult
-} from './documentService';
-
 export { onboardingService } from './onboardingService';
 export type { OnboardingData, OnboardingStatus, OnboardingOptions, OnboardingResult } from './onboardingService';
 
@@ -64,13 +71,13 @@ export { applicationMessageService } from './applicationMessageService';
 export type { MessageFilters, SendMessageData } from './applicationMessageService';
 
 export { ecosystemService } from './ecosystemService';
-export type { EcosystemData, CalendarEvent, Document as EcosystemDocument } from './ecosystemService';
+export type { EcosystemData, CalendarEvent } from './ecosystemService';
 
 export { bookmarkService } from './bookmarkService';
 export type {
   EntityType as BookmarkEntityType,
   BookmarkedOpportunity,
-  BookmarkedHub,
+  BookmarkedSpace,
   BookmarkedCommunity,
   BookmarkIdsResponse,
   BookmarkToggleResponse
@@ -136,3 +143,27 @@ export type {
   MessageFilters as MembershipMessageFilters,
   SendMessageData as MembershipSendMessageData
 } from './communityMembershipMessageService';
+
+export { spaceBookingService } from './spaceBookingService';
+export type {
+  SpaceBookingDetails,
+  BookingFilters as SpaceBookingFilters,
+  UpdateBookingStatusData,
+  BookingExportResult
+} from './spaceBookingService';
+
+export { spaceBookingMessageService } from './spaceBookingMessageService';
+export type {
+  BookingMessage,
+  BookingMessageAttachment,
+  BookingMessageFilters,
+  SendBookingMessageData
+} from './spaceBookingMessageService';
+
+export { spaceInvitationService } from './spaceInvitationService';
+export type {
+  SpaceInvitation,
+  SendSpaceInvitationData,
+  SendSpaceInvitationsResult,
+  AcceptSpaceInvitationResult
+} from './spaceInvitationService';

@@ -26,6 +26,7 @@ import {
   FileText,
   Image as ImageIcon,
   Eye,
+  Lock,
   Upload,
   X,
   Plus,
@@ -38,7 +39,7 @@ import {
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../../src/constants/theme';
 import { Input, Button, Toggle } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
@@ -50,6 +51,7 @@ import {
   LOCATION_TYPE_DATA,
   COMPENSATION_FREQUENCY_DATA,
   CURRENCY_DATA,
+  OPPORTUNITY_VISIBILITY_DATA,
 } from '../../../../src/constants/opportunity';
 import {
   OpportunityType,
@@ -64,6 +66,7 @@ import {
   LOCATION_TYPE_LABELS,
   COMPENSATION_FREQUENCY_LABELS,
   OPPORTUNITY_STATUS_LABELS,
+  Visibility,
 } from '../../../../src/types/models';
 import { opportunityService, UpdateOpportunityData, imageService } from '../../../../src/services';
 import { uploadFile } from '../../../../src/services/fileService';
@@ -138,6 +141,7 @@ export default function EditOpportunityScreen() {
   const COUNTRY_CHIP_WIDTH = 80;
 
   // Form state - Conditions
+  const [visibility, setVisibility] = useState<Visibility>('PUBLIC');
   const [contractType, setContractType] = useState<ContractType | null>(null);
   const [workRhythm, setWorkRhythm] = useState<WorkRhythm | null>(null);
   const [compensationMin, setCompensationMin] = useState('');
@@ -206,6 +210,7 @@ export default function EditOpportunityScreen() {
       setCompensationFrequency(opp.compensation_frequency || null);
       setDuration(opp.duration || '');
       setStatus(opp.status || 'DRAFT');
+      setVisibility((opp.visibility as Visibility) || 'PUBLIC');
 
       // Set organization ID for AI generation
       if (opp.organizations && opp.organizations.length > 0) {
@@ -479,6 +484,7 @@ export default function EditOpportunityScreen() {
         images: allImages.length > 0 ? allImages : undefined,
         attachments: validAttachments.length > 0 ? validAttachments : undefined,
         status,
+        visibility,
       };
       await opportunityService.update(id!, data);
       Alert.alert('Modifications enregistrees', 'L\'opportunite a ete mise a jour.', [{ text: 'OK', onPress: () => router.back() }]);
@@ -581,7 +587,7 @@ export default function EditOpportunityScreen() {
         return (
           <View key={step} style={styles.stepItem}>
             <View style={[styles.stepDot, { backgroundColor: colors.gray200 }, (isCurrent || isCompleted) && { backgroundColor: colors.primary }]}>
-              {isCompleted ? <Check size={12} color={COLORS.white} strokeWidth={ICON.strokeWidth + 0.5} /> : <Text style={[styles.stepNumber, isCurrent && { color: COLORS.white }]}>{index + 1}</Text>}
+              {isCompleted ? <Check size={12} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth + 0.5} /> : <Text style={[styles.stepNumber, { color: colors.gray600 }, isCurrent && { color: colors.textOnPrimary }]}>{index + 1}</Text>}
             </View>
             <Text style={[styles.stepLabel, { color: colors.gray500 }, isCurrent && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold }]}>{STEP_TITLES[step]}</Text>
           </View>
@@ -633,11 +639,11 @@ export default function EditOpportunityScreen() {
               activeOpacity={0.8}
             >
               {isGenerating ? (
-                <ActivityIndicator size="small" color={COLORS.white} />
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
               ) : (
-                <Wand2 size={16} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+                <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
               )}
-              <Text style={styles.generateButtonText}>
+              <Text style={[styles.generateButtonText, { color: colors.textOnPrimary }]}>
                 {isGenerating ? 'Suggestion...' : 'Suggérer'}
               </Text>
             </TouchableOpacity>
@@ -720,7 +726,7 @@ export default function EditOpportunityScreen() {
                   <Text style={[styles.locationTypeLabel, { color: colors.textPrimary }, isSelected && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold }]}>{type.label}</Text>
                   {isSelected && (
                     <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={COLORS.white} strokeWidth={3} />
+                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -739,7 +745,7 @@ export default function EditOpportunityScreen() {
                   const isSelected = country === c.id;
                   return (
                     <TouchableOpacity key={c.id} style={[styles.optionChip, { backgroundColor: colors.gray100, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => { setCountry(c.id); setRegion(''); setCity(''); }}>
-                      <Text style={[styles.optionChipText, { color: colors.gray700 }, isSelected && { color: COLORS.white }]}>{c.label}</Text>
+                      <Text style={[styles.optionChipText, { color: colors.gray700 }, isSelected && { color: colors.textOnPrimary }]}>{c.label}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -754,7 +760,7 @@ export default function EditOpportunityScreen() {
                     const isSelected = region === r.id;
                     return (
                       <TouchableOpacity key={r.id} style={[styles.optionChip, { backgroundColor: colors.gray100, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => { setRegion(r.id); setCity(''); }}>
-                        <Text style={[styles.optionChipText, { color: colors.gray700 }, isSelected && { color: COLORS.white }]}>{r.label}</Text>
+                        <Text style={[styles.optionChipText, { color: colors.gray700 }, isSelected && { color: colors.textOnPrimary }]}>{r.label}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -770,7 +776,7 @@ export default function EditOpportunityScreen() {
                     const isSelected = city === c.id;
                     return (
                       <TouchableOpacity key={c.id} style={[styles.optionChip, { backgroundColor: colors.gray100, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => setCity(c.id)}>
-                        <Text style={[styles.optionChipText, { color: colors.gray700 }, isSelected && { color: COLORS.white }]}>{c.label}</Text>
+                        <Text style={[styles.optionChipText, { color: colors.gray700 }, isSelected && { color: colors.textOnPrimary }]}>{c.label}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -877,6 +883,50 @@ export default function EditOpportunityScreen() {
                 <TouchableOpacity key={freq.id} style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary }]} onPress={() => setCompensationFrequency(freq.id)}>
                   {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
                   <Text style={[styles.selectableTagText, { color: colors.gray600 }, isSelected && { color: colors.primary }]}>{freq.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Visibility */}
+        <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
+        <View style={styles.fieldContainer}>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Visibilité *</Text>
+          <View style={styles.locationTypeRow}>
+            {OPPORTUNITY_VISIBILITY_DATA.map((type) => {
+              const isSelected = visibility === type.id;
+              const IconComponent = type.id === 'PUBLIC' ? Eye : type.id === 'PRIVATE' ? Lock : Eye;
+              return (
+                <TouchableOpacity
+                  key={type.id}
+                  style={[
+                    styles.locationTypeCard,
+                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
+                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                  ]}
+                  onPress={() => setVisibility(type.id)}
+                  activeOpacity={0.7}
+                >
+                  <IconComponent
+                    size={24}
+                    color={isSelected ? colors.primary : colors.gray500}
+                    strokeWidth={ICON.strokeWidth}
+                  />
+                  <Text
+                    style={[
+                      styles.locationTypeLabel,
+                      { color: colors.textPrimary },
+                      isSelected && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold },
+                    ]}
+                  >
+                    {type.label}
+                  </Text>
+                  {isSelected && (
+                    <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
+                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
+                    </View>
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -990,7 +1040,7 @@ export default function EditOpportunityScreen() {
                       style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
                       onPress={() => removeImage(image.id)}
                     >
-                      <X size={14} color={COLORS.white} strokeWidth={2.5} />
+                      <X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -1088,10 +1138,10 @@ export default function EditOpportunityScreen() {
         </View>
         <Text style={[styles.statusHint, { color: colors.gray500 }]}>
           {status === 'DRAFT' ? 'Activez pour publier cette offre et la rendre visible.' :
-           status === 'OPEN' ? 'L\'offre est publiée et visible par les candidats.' :
-           status === 'PAUSED' ? 'L\'offre est en pause. Activez pour la republier.' :
-           status === 'FILLED' ? 'Cette offre a été pourvue.' :
-           status === 'EXPIRED' ? 'Cette offre a expiré.' : ''}
+            status === 'OPEN' ? 'L\'offre est publiée et visible par les candidats.' :
+              status === 'PAUSED' ? 'L\'offre est en pause. Activez pour la republier.' :
+                status === 'FILLED' ? 'Cette offre a été pourvue.' :
+                  status === 'EXPIRED' ? 'Cette offre a expiré.' : ''}
         </Text>
       </View>
 
@@ -1295,7 +1345,7 @@ export default function EditOpportunityScreen() {
               <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
             </TouchableOpacity>
             <View style={styles.saveButtonContainer}>
-              <Button title="Enregistrer" onPress={handleSave} disabled={isSubmitting} fullWidth icon={<Save size={18} color={COLORS.white} />} iconPosition="right" />
+              <Button title="Enregistrer" onPress={handleSave} disabled={isSubmitting} fullWidth icon={<Save size={18} color={colors.textOnPrimary} />} iconPosition="right" />
             </View>
           </View>
         </View>
@@ -1312,7 +1362,7 @@ export default function EditOpportunityScreen() {
             </TouchableOpacity>
           )}
           <View style={[styles.continueButton, !isFirstStep && { flex: 1 }]}>
-            <Button title="Continuer" onPress={handleNext} disabled={!canProceed()} fullWidth icon={<ChevronRight size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />} iconPosition="right" />
+            <Button title="Continuer" onPress={handleNext} disabled={!canProceed()} fullWidth icon={<ChevronRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />} iconPosition="right" />
           </View>
         </View>
       </View>
@@ -1355,7 +1405,7 @@ const styles = StyleSheet.create({
   stepIndicator: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xl },
   stepItem: { alignItems: 'center', gap: SPACING.xs },
   stepDot: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: BORDER.radius.full },
-  stepNumber: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.semibold, color: COLORS.white },
+  stepNumber: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.semibold },
   stepLabel: { fontSize: TYPOGRAPHY.fontSize.xs },
   stepContent: { flex: 1 },
   stepHeader: { alignItems: 'center', marginBottom: SPACING.xl, gap: SPACING.sm },
@@ -1502,7 +1552,7 @@ const styles = StyleSheet.create({
   },
 
   // Back step button styles
-  backStepButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.xs, paddingVertical: SPACING.md, paddingHorizontal: SPACING.md, borderWidth: 1.5, borderRadius: BORDER.radius.sm },
+  backStepButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.xs, height: LAYOUT.buttonHeight, paddingHorizontal: SPACING.md, borderWidth: 1.5, borderRadius: BORDER.radius.sm },
   backStepButtonText: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
   continueButton: { flex: 1 },
 
@@ -1524,6 +1574,5 @@ const styles = StyleSheet.create({
   generateButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.white,
   },
 });

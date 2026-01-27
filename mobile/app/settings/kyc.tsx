@@ -20,7 +20,7 @@ import {
   XCircle,
   Shield,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { Button } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { kycService, KYCDocumentType, imageService } from '../../src/services';
@@ -312,7 +312,7 @@ export default function KYCScreen() {
                       selectedDocType === docType.id && { borderColor: colors.primary, backgroundColor: colors.primary },
                     ]}>
                       {selectedDocType === docType.id && (
-                        <Check size={12} color={COLORS.white} strokeWidth={3} />
+                        <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
                       )}
                     </View>
                   </TouchableOpacity>
@@ -334,7 +334,7 @@ export default function KYCScreen() {
                     <>
                       <Image source={{ uri: frontImage }} style={styles.uploadedImage} />
                       <View style={[styles.uploadBadge, { backgroundColor: colors.success }]}>
-                        <Check size={14} color={COLORS.white} strokeWidth={3} />
+                        <Check size={14} color={colors.textOnPrimary} strokeWidth={3} />
                       </View>
                     </>
                   ) : (
@@ -354,7 +354,7 @@ export default function KYCScreen() {
                     <>
                       <Image source={{ uri: backImage }} style={styles.uploadedImage} />
                       <View style={[styles.uploadBadge, { backgroundColor: colors.success }]}>
-                        <Check size={14} color={COLORS.white} strokeWidth={3} />
+                        <Check size={14} color={colors.textOnPrimary} strokeWidth={3} />
                       </View>
                     </>
                   ) : (
@@ -379,7 +379,7 @@ export default function KYCScreen() {
             fullWidth
             disabled={isSubmitting}
             loading={isSubmitting}
-            icon={!isSubmitting ? <Upload size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} /> : undefined}
+            icon={!isSubmitting ? <Upload size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
             iconPosition="right"
           />
         </View>
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 150,
     resizeMode: 'contain',
-    backgroundColor: COLORS.gray100,
+    backgroundColor: '#F3F4F6',
   },
 
   footer: {

@@ -29,15 +29,16 @@ import {
   Send,
   Inbox,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
 import { FooterNav } from '../../../../../src/components/ui';
 import { useTheme } from '../../../../../src/hooks/useTheme';
 import { communityService, communityInvitationService, CommunityInvitation } from '../../../../../src/services';
 import { formatRelativeTime } from '../../../../../src/utils/date';
 import type { Community } from '../../../../../src/types/models';
 
+// Status config - colors will be resolved dynamically in the component
 const STATUS_CONFIG = {
-  PENDING: { color: COLORS.warning, icon: Clock, label: 'En attente' },
+  PENDING: { icon: Clock, label: 'En attente' },
 };
 
 export default function CommunityInvitationsScreen() {
@@ -158,6 +159,7 @@ export default function CommunityInvitationsScreen() {
   const renderInvitationItem = ({ item }: { item: CommunityInvitation }) => {
     const statusConfig = STATUS_CONFIG.PENDING;
     const StatusIcon = statusConfig.icon;
+    const statusColor = colors.warning; // PENDING status uses warning color
 
     return (
       <View style={[styles.invitationCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
@@ -180,9 +182,9 @@ export default function CommunityInvitationsScreen() {
             </Text>
           </View>
 
-          <View style={[styles.statusBadge, { backgroundColor: statusConfig.color + '15' }]}>
-            <StatusIcon size={12} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.statusText, { color: statusConfig.color }]}>
+          <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
+            <StatusIcon size={12} color={statusColor} strokeWidth={ICON.strokeWidth} />
+            <Text style={[styles.statusText, { color: statusColor }]}>
               {statusConfig.label}
             </Text>
           </View>
@@ -234,8 +236,8 @@ export default function CommunityInvitationsScreen() {
         style={[styles.emptyButton, { backgroundColor: colors.primary }]}
         onPress={() => setShowInviteModal(true)}
       >
-        <UserPlus size={18} color="#fff" strokeWidth={ICON.strokeWidth} />
-        <Text style={styles.emptyButtonText}>Inviter un membre</Text>
+        <UserPlus size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+        <Text style={[styles.emptyButtonText, { color: colors.textOnPrimary }]}>Inviter un membre</Text>
       </TouchableOpacity>
     </View>
   );
@@ -267,7 +269,7 @@ export default function CommunityInvitationsScreen() {
           style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => setShowInviteModal(true)}
         >
-          <UserPlus size={20} color="#fff" strokeWidth={ICON.strokeWidth} />
+          <UserPlus size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
         </TouchableOpacity>
       </View>
 
@@ -363,11 +365,11 @@ export default function CommunityInvitationsScreen() {
                 disabled={isSendingInvite}
               >
                 {isSendingInvite ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={colors.textOnPrimary} />
                 ) : (
                   <>
-                    <Send size={16} color="#fff" strokeWidth={ICON.strokeWidth} />
-                    <Text style={styles.inviteButtonText}>Envoyer</Text>
+                    <Send size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                    <Text style={[styles.inviteButtonText, { color: colors.textOnPrimary }]}>Envoyer</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -557,7 +559,6 @@ const styles = StyleSheet.create({
   },
 
   emptyButtonText: {
-    color: '#fff',
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
@@ -633,7 +634,6 @@ const styles = StyleSheet.create({
   inviteButton: {},
 
   inviteButtonText: {
-    color: '#fff',
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },

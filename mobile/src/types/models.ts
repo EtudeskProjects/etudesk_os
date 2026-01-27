@@ -97,10 +97,6 @@ export const WORK_RHYTHM_LABELS: Record<WorkRhythm, string> = {
   OCCASIONAL: 'Ponctuel',
 };
 
-// Legacy aliases for backward compatibility
-export const WORK_TYPES = CONTRACT_TYPES;
-export type WorkType = ContractType;
-export const WORK_TYPE_LABELS = CONTRACT_TYPE_LABELS;
 
 export const LOCATION_TYPES = {
   ON_SITE: 'ON_SITE',
@@ -115,7 +111,6 @@ export const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
   HYBRID: 'Hybride',
 };
 
-// Note: COMPENSATION_TYPES removed - use only compensation_min/max/frequency/currency
 
 export const COMPENSATION_FREQUENCIES = {
   HOURLY: 'HOURLY',
@@ -219,58 +214,16 @@ export const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// ENUMS - HUB
+// ENUMS - SPACE (Espaces réservables)
 // ═══════════════════════════════════════════════════════════════
 
-export const HUB_TYPES = {
-  COWORKING: 'COWORKING',
-  LAB: 'LAB',
-  INCUBATOR: 'INCUBATOR',
-  ACCELERATOR: 'ACCELERATOR',
-  CERTIFICATION_CENTER: 'CERTIFICATION_CENTER',
-  TRAINING_CENTER: 'TRAINING_CENTER',
-  UNIVERSITY: 'UNIVERSITY',
-  MAKERSPACE: 'MAKERSPACE',
-  VIRTUAL_COMMUNITY: 'VIRTUAL_COMMUNITY',
-} as const;
-export type HubType = (typeof HUB_TYPES)[keyof typeof HUB_TYPES];
-
-export const HUB_TYPE_LABELS: Record<HubType, string> = {
-  COWORKING: 'Coworking',
-  LAB: 'Lab',
-  INCUBATOR: 'Incubateur',
-  ACCELERATOR: 'Accélérateur',
-  CERTIFICATION_CENTER: 'Centre de certification',
-  TRAINING_CENTER: 'Centre de formation',
-  UNIVERSITY: 'Université',
-  MAKERSPACE: 'Makerspace',
-  VIRTUAL_COMMUNITY: 'Communauté virtuelle',
-};
-
-// Catégories d'usage des hubs
-export const HUB_USAGE_CATEGORIES = {
-  FORMATION: 'FORMATION',
-  TRAVAIL: 'TRAVAIL',
-  REUNION: 'REUNION',
-  ATELIER: 'ATELIER',
-  MIXTE: 'MIXTE',
-} as const;
-export type HubUsageCategory = (typeof HUB_USAGE_CATEGORIES)[keyof typeof HUB_USAGE_CATEGORIES];
-
-export const HUB_USAGE_CATEGORY_LABELS: Record<HubUsageCategory, string> = {
-  FORMATION: 'Espace de formation',
-  TRAVAIL: 'Espace de travail',
-  REUNION: 'Espace de réunion',
-  ATELIER: 'Atelier / Laboratoire',
-  MIXTE: 'Espace polyvalent',
-};
-
-// Types d'espaces internes
+// Types d'espaces réservables
 export const SPACE_TYPES = {
   // Formation
   SALLE_COURS: 'SALLE_COURS',
   SALLE_INFORMATIQUE: 'SALLE_INFORMATIQUE',
   AMPHITHEATRE: 'AMPHITHEATRE',
+  SALLE_FORMATION: 'SALLE_FORMATION',
   // Travail
   OPEN_SPACE: 'OPEN_SPACE',
   BUREAU_PRIVE: 'BUREAU_PRIVE',
@@ -281,11 +234,12 @@ export const SPACE_TYPES = {
   CABINE_APPEL: 'CABINE_APPEL',
   // Atelier
   ATELIER: 'ATELIER',
-  LABO: 'LABO',
-  // Communs
-  ACCUEIL: 'ACCUEIL',
-  CAFETERIA: 'CAFETERIA',
-  ESPACE_DETENTE: 'ESPACE_DETENTE',
+  LABORATOIRE: 'LABORATOIRE',
+  STUDIO: 'STUDIO',
+  // Événement
+  SALLE_EVENEMENT: 'SALLE_EVENEMENT',
+  ROOFTOP: 'ROOFTOP',
+  TERRASSE: 'TERRASSE',
 } as const;
 export type SpaceType = (typeof SPACE_TYPES)[keyof typeof SPACE_TYPES];
 
@@ -293,6 +247,7 @@ export const SPACE_TYPE_LABELS: Record<SpaceType, string> = {
   SALLE_COURS: 'Salle de cours',
   SALLE_INFORMATIQUE: 'Salle informatique',
   AMPHITHEATRE: 'Amphithéâtre',
+  SALLE_FORMATION: 'Salle de formation',
   OPEN_SPACE: 'Open space',
   BUREAU_PRIVE: 'Bureau privé',
   POSTE_NOMADE: 'Poste nomade',
@@ -300,10 +255,11 @@ export const SPACE_TYPE_LABELS: Record<SpaceType, string> = {
   SALLE_CONFERENCE: 'Salle de conférence',
   CABINE_APPEL: 'Cabine d\'appel',
   ATELIER: 'Atelier',
-  LABO: 'Laboratoire',
-  ACCUEIL: 'Accueil',
-  CAFETERIA: 'Cafétéria',
-  ESPACE_DETENTE: 'Espace détente',
+  LABORATOIRE: 'Laboratoire',
+  STUDIO: 'Studio',
+  SALLE_EVENEMENT: 'Salle événementielle',
+  ROOFTOP: 'Rooftop',
+  TERRASSE: 'Terrasse',
 };
 
 // Équipements de sécurité
@@ -407,14 +363,12 @@ export const COMMUNITY_TYPE_LABELS: Record<CommunityType, string> = {
 export const VISIBILITY = {
   PUBLIC: 'PUBLIC',
   PRIVATE: 'PRIVATE',
-  MEMBERSHIP: 'MEMBERSHIP',
 } as const;
 export type Visibility = (typeof VISIBILITY)[keyof typeof VISIBILITY];
 
 export const VISIBILITY_LABELS: Record<Visibility, string> = {
   PUBLIC: 'Publique',
   PRIVATE: 'Privée',
-  MEMBERSHIP: 'Sur adhésion',
 };
 
 export const COMMUNITY_STATUS = {
@@ -463,74 +417,6 @@ export const MENTOR_AVAILABILITY_LABELS: Record<MentorAvailability, string> = {
 // ═══════════════════════════════════════════════════════════════
 // ENUMS - DOCUMENT
 // ═══════════════════════════════════════════════════════════════
-
-export const DOCUMENT_TYPES = {
-  // Professional documents
-  CV: 'CV',
-  CERTIFICATE: 'CERTIFICATE',
-  DIPLOMA: 'DIPLOMA',
-  LICENSE: 'LICENSE',
-  PORTFOLIO: 'PORTFOLIO',
-  RECOMMENDATION_LETTER: 'RECOMMENDATION_LETTER',
-  TRANSCRIPT: 'TRANSCRIPT',
-  PUBLICATION: 'PUBLICATION',
-  PATENT: 'PATENT',
-  // Identity/KYC documents
-  ID_CARD: 'ID_CARD',
-  PASSPORT: 'PASSPORT',
-  DRIVER_LICENSE: 'DRIVER_LICENSE',
-  PROOF_OF_ADDRESS: 'PROOF_OF_ADDRESS',
-  // Other
-  OTHER: 'OTHER',
-} as const;
-export type DocumentType = (typeof DOCUMENT_TYPES)[keyof typeof DOCUMENT_TYPES];
-
-export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
-  CV: 'CV',
-  CERTIFICATE: 'Certificat',
-  DIPLOMA: 'Diplôme',
-  LICENSE: 'Licence professionnelle',
-  PORTFOLIO: 'Portfolio',
-  RECOMMENDATION_LETTER: 'Lettre de recommandation',
-  TRANSCRIPT: 'Relevé de notes',
-  PUBLICATION: 'Publication',
-  PATENT: 'Brevet',
-  ID_CARD: "Carte d'identité",
-  PASSPORT: 'Passeport',
-  DRIVER_LICENSE: 'Permis de conduire',
-  PROOF_OF_ADDRESS: 'Justificatif de domicile',
-  OTHER: 'Autre',
-};
-
-export const DOCUMENT_STATUS = {
-  PENDING: 'PENDING',
-  VERIFIED: 'VERIFIED',
-  REJECTED: 'REJECTED',
-  EXPIRED: 'EXPIRED',
-} as const;
-export type DocumentStatus = (typeof DOCUMENT_STATUS)[keyof typeof DOCUMENT_STATUS];
-
-export const DOCUMENT_STATUS_LABELS: Record<DocumentStatus, string> = {
-  PENDING: 'En attente',
-  VERIFIED: 'Vérifié',
-  REJECTED: 'Rejeté',
-  EXPIRED: 'Expiré',
-};
-
-export const DOCUMENT_CATEGORY = {
-  IDENTITY: 'IDENTITY',
-  PROFESSIONAL: 'PROFESSIONAL',
-  ACADEMIC: 'ACADEMIC',
-  OTHER: 'OTHER',
-} as const;
-export type DocumentCategory = (typeof DOCUMENT_CATEGORY)[keyof typeof DOCUMENT_CATEGORY];
-
-export const DOCUMENT_CATEGORY_LABELS: Record<DocumentCategory, string> = {
-  IDENTITY: 'Identité',
-  PROFESSIONAL: 'Professionnel',
-  ACADEMIC: 'Académique',
-  OTHER: 'Autre',
-};
 
 // ═══════════════════════════════════════════════════════════════
 // ENUMS - NOTIFICATIONS & CALENDAR
@@ -787,123 +673,9 @@ export interface Talent {
 export type Mentor = Talent;
 
 // ═══════════════════════════════════════════════════════════════
-// INTERFACES - HUB
+// INTERFACES - SPACE (Espaces réservables)
+// Note: Space types/interfaces are defined in spaceService.ts
 // ═══════════════════════════════════════════════════════════════
-
-export interface HubOpeningHours {
-  day: string;
-  hours: string;
-}
-
-export interface HubEvent {
-  id: UUID;
-  title: string;
-  date: ISODate;
-  time?: string;
-}
-
-// Structure de tarification pour les hubs
-export interface HubPricing {
-  type: PricingType;
-  base_amount?: number;
-  currency?: string;
-  includes_tax?: boolean;
-  description?: string;
-  membership_required?: boolean;
-  deposit_amount?: number;
-}
-
-// Espace interne d'un hub (salle, bureau, etc.)
-export interface HubSpace {
-  id: string;
-  name: string;
-  type: SpaceType;
-  // Dimensions
-  surface_m2: number;
-  capacity: number;
-  // Localisation dans le hub
-  floor: number; // 0 = RDC, -1 = sous-sol, 1+ = étages
-  // Caractéristiques
-  is_accessible: boolean;
-  equipment?: string[];
-  // Réservation
-  is_bookable: boolean;
-  hourly_rate?: number;
-  daily_rate?: number;
-  currency?: string;
-  // Média
-  image_url?: string;
-}
-
-export interface Hub {
-  id: UUID;
-  slug: string;
-  name: string;
-  type?: HubType;
-  description?: string;
-
-  // Images
-  image_url?: string;
-  cover_image_url?: string;
-  gallery?: string[];
-
-  // Location
-  address?: string;
-  city?: string;
-  region?: string;
-  country?: string;
-
-  // Caractéristiques physiques
-  usage_category?: HubUsageCategory;
-  surface_m2?: number;
-  max_capacity?: number;
-  floors_count?: number;
-
-  // Accessibilité
-  is_accessible?: boolean;
-  accessibility_features?: AccessibilityFeature[];
-  accessibility_info_url?: string;
-
-  // Sécurité
-  safety_equipment?: SafetyEquipment[];
-  last_inspection_date?: ISODate;
-  safety_certificate_url?: string;
-
-  // Espaces internes
-  spaces?: HubSpace[];
-
-  // Access & Pricing
-  access_type?: AccessType;
-  pricing?: HubPricing | string; // Support ancien format string
-  capacity?: number; // Legacy - use max_capacity
-
-  // Features
-  amenities?: string[];
-  features?: string[];
-
-  // Contact
-  contact_phone?: string;
-  contact_email?: string;
-  website_url?: string;
-
-  // Hours
-  opening_hours?: HubOpeningHours[];
-
-  // Events
-  upcoming_events?: HubEvent[];
-
-  // Metrics
-  views_count?: number;
-  members_count?: number;
-
-  // Relations
-  organization?: Organization;
-  organization_id?: UUID;
-
-  // Timestamps
-  created_at?: ISOTimestamp;
-  updated_at?: ISOTimestamp;
-}
 
 // ═══════════════════════════════════════════════════════════════
 // INTERFACES - COMMUNITY
@@ -966,61 +738,6 @@ export interface Community {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// INTERFACES - DOCUMENTS
-// ═══════════════════════════════════════════════════════════════
-
-export interface Document {
-  id: UUID;
-  talent_id: UUID;
-  title: string;
-  type: DocumentType;
-  category: DocumentCategory;
-
-  // File storage
-  file_url?: string;
-  front_image_url?: string;
-  back_image_url?: string;
-  file_size?: number;
-
-  // Metadata
-  issued_by?: string;
-  issued_at?: ISOTimestamp;
-  expires_at?: ISOTimestamp;
-  credential_id?: string;
-  verification_url?: string;
-
-  // Verification
-  verification_status: DocumentStatus;
-  rejection_reason?: string;
-  verified_at?: ISOTimestamp;
-  submitted_at?: ISOTimestamp;
-
-  // Skill extraction
-  skills_extracted?: boolean;
-  extracted_skills?: Array<{ skill_name: string; relevance_score?: number }>;
-
-  // Flags
-  is_primary?: boolean;
-  visibility?: 'PRIVATE' | 'SHARED' | 'PUBLIC';
-
-  // Timestamps
-  created_at?: ISOTimestamp;
-  updated_at?: ISOTimestamp;
-}
-
-export interface DocumentRequirement {
-  requirement_id: UUID;
-  feature: string;
-  required_category?: DocumentCategory;
-  required_type?: DocumentType;
-  must_be_verified: boolean;
-  description_fr?: string;
-  is_satisfied: boolean;
-  document_id?: UUID;
-  document_status?: DocumentStatus;
-}
-
-// ═══════════════════════════════════════════════════════════════
 // INTERFACES - NOTIFICATIONS
 // ═══════════════════════════════════════════════════════════════
 
@@ -1050,7 +767,7 @@ export interface CalendarEvent {
   // Related entities
   opportunity_id?: UUID;
   mentor_id?: UUID;
-  hub_id?: UUID;
+  space_id?: UUID;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1073,7 +790,7 @@ export interface PaymentMethod {
 export const GRAPH_NODE_TYPES = {
   OPPORTUNITIES: 'opportunities',
   COMMUNITIES: 'communities',
-  HUBS: 'hubs',
+  SPACES: 'spaces',
   MENTORS: 'mentors',
   DOCUMENTS: 'documents',
 } as const;
@@ -1118,7 +835,7 @@ export interface DashboardStatCard {
 export const ACTIVITY_TYPES = {
   OPPORTUNITY: 'opportunity',
   COMMUNITY: 'community',
-  HUB: 'hub',
+  SPACE: 'space',
   MENTORSHIP: 'mentorship',
 } as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[keyof typeof ACTIVITY_TYPES];
@@ -1260,7 +977,7 @@ export const MEMBER_STATUS_LABELS: Record<MemberStatus, string> = {
 export const ORGANIZATION_ROLES = {
   OWNER: 'OWNER',       // Full control
   ADMIN: 'ADMIN',       // Can do everything except delete organization
-  MANAGER: 'MANAGER',   // Can manage opportunities, communities, hubs (CRUD)
+  MANAGER: 'MANAGER',   // Can manage opportunities, communities, spaces (CRUD)
   OBSERVATEUR: 'OBSERVATEUR', // Read-only access
 } as const;
 export type OrganizationRole = (typeof ORGANIZATION_ROLES)[keyof typeof ORGANIZATION_ROLES];
@@ -1275,22 +992,22 @@ export const ORGANIZATION_ROLE_LABELS: Record<OrganizationRole, string> = {
 export const ORGANIZATION_ROLE_DESCRIPTIONS: Record<OrganizationRole, string> = {
   OWNER: 'Contrôle total de l\'organisation',
   ADMIN: 'Accès complet sauf suppression',
-  MANAGER: 'Gestion des contenus (opportunités, hubs, communautés)',
+  MANAGER: 'Gestion des contenus (opportunités, espaces, communautés)',
   OBSERVATEUR: 'Accès en lecture seule',
 };
 
 // Role-based permission helpers
-export const canManageContent = (role: OrganizationRole) =>
-  [ORGANIZATION_ROLES.OWNER, ORGANIZATION_ROLES.ADMIN, ORGANIZATION_ROLES.MANAGER].includes(role);
+export const canManageContent = (role: OrganizationRole): boolean =>
+  role === ORGANIZATION_ROLES.OWNER || role === ORGANIZATION_ROLES.ADMIN || role === ORGANIZATION_ROLES.MANAGER;
 
-export const canManageMembers = (role: OrganizationRole) =>
-  [ORGANIZATION_ROLES.OWNER, ORGANIZATION_ROLES.ADMIN].includes(role);
+export const canManageMembers = (role: OrganizationRole): boolean =>
+  role === ORGANIZATION_ROLES.OWNER || role === ORGANIZATION_ROLES.ADMIN;
 
-export const canInviteMembers = (role: OrganizationRole) =>
-  [ORGANIZATION_ROLES.OWNER, ORGANIZATION_ROLES.ADMIN].includes(role);
+export const canInviteMembers = (role: OrganizationRole): boolean =>
+  role === ORGANIZATION_ROLES.OWNER || role === ORGANIZATION_ROLES.ADMIN;
 
-export const canEditOrganization = (role: OrganizationRole) =>
-  [ORGANIZATION_ROLES.OWNER, ORGANIZATION_ROLES.ADMIN].includes(role);
+export const canEditOrganization = (role: OrganizationRole): boolean =>
+  role === ORGANIZATION_ROLES.OWNER || role === ORGANIZATION_ROLES.ADMIN;
 
 export interface OrganizationMember {
   id: UUID;
@@ -1324,7 +1041,6 @@ export interface OrganizationInvitation {
   organization_id: UUID;
   email: string;
   role: OrganizationRole;
-  permissions: OrganizationPermission[];
   token: string;
   invited_by: UUID;
   invited_by_name?: string;

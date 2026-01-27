@@ -15,7 +15,7 @@ import {
   Compass,
   Settings,
 } from 'lucide-react-native';
-import { COLORS, SPACING, ICON, BORDER, LAYOUT } from '../../constants/theme';
+import { SPACING, ICON, BORDER, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 type TabName = 'home' | 'assistant' | 'explore' | 'settings';
@@ -43,9 +43,9 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
         const isActive = activeTab === tab.name;
 
         // Match the tabs layout styling:
-        // Active: white icon on blue squared background
+        // Active: white icon on primary squared background
         // Inactive: gray icon, no background
-        const iconColor = isActive ? '#FFFFFF' : colors.textSecondary;
+        const iconColor = isActive ? colors.textOnPrimary : colors.textSecondary;
 
         return (
           <TouchableOpacity
@@ -55,12 +55,12 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
           >
             <View style={[
               styles.tabIcon,
-              isActive && styles.tabIconActive,
+              isActive && [styles.tabIconActive, { backgroundColor: colors.primary }],
             ]}>
               <Icon
                 size={ICON.size.lg}
                 color={iconColor}
-                strokeWidth={isActive ? 1.5 : ICON.strokeWidth}
+                strokeWidth={isActive ? ICON.strokeWidthThick : ICON.strokeWidth}
               />
             </View>
           </TouchableOpacity>
@@ -86,8 +86,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: SPACING.sm,
   },
+  // Note: tabIconActive backgroundColor is applied dynamically with colors.primary
   tabIconActive: {
-    backgroundColor: '#26449F', // Same blue as tabs layout
     borderRadius: BORDER.radius.md,
   },
 });

@@ -145,6 +145,9 @@ FOR EACH ROW EXECUTE FUNCTION set_activity_published_at();
 -- 8. CREATE VIEW FOR PUBLISHED ACTIVITIES (FEED)
 -- ════════════════════════════════════════════════════════════════════════════
 
+-- Drop existing view to allow column changes
+DROP VIEW IF EXISTS community_feed;
+
 CREATE OR REPLACE VIEW community_feed AS
 SELECT
     ca.*,

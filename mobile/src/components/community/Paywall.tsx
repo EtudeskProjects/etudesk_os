@@ -9,7 +9,7 @@ import {
     Linking,
 } from 'react-native';
 import { Lock, CreditCard, Calendar, CheckCircle } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, BORDER, ICON } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { PaywallInfo, communitySubscriptionService } from '../../services';
 
@@ -166,9 +166,9 @@ export const Paywall: React.FC<PaywallProps> = ({
                 disabled={isLoading}
             >
                 {isLoading ? (
-                    <ActivityIndicator size="small" color={COLORS.white} />
+                    <ActivityIndicator size="small" color={colors.textOnPrimary} />
                 ) : (
-                    <Text style={styles.subscribeButtonText}>
+                    <Text style={[styles.subscribeButtonText, { color: colors.textOnPrimary }]}>
                         {hasTrial && !isExpired && !isCancelled
                             ? `Commencer l'essai gratuit`
                             : isExpired || isCancelled
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     subscribeButtonText: {
-        color: COLORS.white,
+        fontFamily: TYPOGRAPHY.fontFamily.semibold,
         fontSize: TYPOGRAPHY.fontSize.md,
         fontWeight: TYPOGRAPHY.fontWeight.semibold,
     },

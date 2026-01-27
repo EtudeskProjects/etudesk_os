@@ -19,20 +19,20 @@ import {
   Bookmark,
   BookmarkX,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { FooterNav } from '../../src/components/ui';
 import { useI18n } from '../../src/contexts/I18nContext';
-import { OpportunityCard, CommunityCard, HubCard } from '../../src/components/cards';
-import { bookmarkService } from '../../src/services';
+import { OpportunityCard, CommunityCard, SpaceCard } from '../../src/components/cards';
+import { bookmarkService, Space } from '../../src/services';
 import type {
   BookmarkedOpportunity,
-  BookmarkedHub,
+  BookmarkedSpace,
   BookmarkedCommunity,
 } from '../../src/services/bookmarkService';
-import type { Opportunity, Hub, Community } from '../../src/types/models';
+import type { Opportunity, Community } from '../../src/types/models';
 
-type Category = 'opportunities' | 'communities' | 'hubs';
+type Category = 'opportunities' | 'communities' | 'spaces';
 
 export default function BookmarksScreen() {
   const router = useRouter();
@@ -41,16 +41,16 @@ export default function BookmarksScreen() {
 
   const [activeCategory, setActiveCategory] = useState<Category>('communities');
   const [opportunities, setOpportunities] = useState<BookmarkedOpportunity[]>([]);
-  const [hubs, setHubs] = useState<BookmarkedHub[]>([]);
+  const [spaces, setSpaces] = useState<BookmarkedSpace[]>([]);
   const [communities, setCommunities] = useState<BookmarkedCommunity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadBookmarks = useCallback(async () => {
     try {
-      const [oppsRes, hubsRes, communitiesRes] = await Promise.all([
+      const [oppsRes, spacesRes, communitiesRes] = await Promise.all([
         bookmarkService.getOpportunities(),
-        bookmarkService.getHubs(),
+        bookmarkService.getSpaces(),
         bookmarkService.getCommunities(),
       ]);
 
@@ -62,7 +62,7 @@ export default function BookmarksScreen() {
         }));
         setOpportunities(transformedOpps);
       }
-      if (hubsRes.data) setHubs(hubsRes.data);
+      if (spacesRes.data) setSpaces(spacesRes.data);
       if (communitiesRes.data) setCommunities(communitiesRes.data);
     } catch (error) {
       console.error('Error loading bookmarks:', error);
@@ -88,9 +88,9 @@ export default function BookmarksScreen() {
           await bookmarkService.removeOpportunity(id);
           setOpportunities(prev => prev.filter(o => o.id !== id));
           break;
-        case 'hubs':
-          await bookmarkService.removeHub(id);
-          setHubs(prev => prev.filter(h => h.id !== id));
+        case 'spaces':
+          await bookmarkService.removeSpace(id);
+          setSpaces(prev => prev.filter(s => s.id !== id));
           break;
         case 'communities':
           await bookmarkService.removeCommunity(id);
@@ -108,7 +108,7 @@ export default function BookmarksScreen() {
 
   const CATEGORIES = [
     { id: 'communities' as Category, label: t('explore.categories.communities'), icon: Users, count: communities.length },
-    { id: 'hubs' as Category, label: t('explore.categories.hubs'), icon: MapPin, count: hubs.length },
+    { id: 'spaces' as Category, label: t('explore.categories.spaces') || 'Espaces', icon: MapPin, count: spaces.length },
     { id: 'opportunities' as Category, label: t('explore.categories.opportunities'), icon: Briefcase, count: opportunities.length },
   ];
 
@@ -134,12 +134,12 @@ export default function BookmarksScreen() {
           >
             <IconComponent
               size={ICON.size.sm}
-              color={isActive ? COLORS.white : colors.textSecondary}
+              color={isActive ? colors.textOnPrimary : colors.textSecondary}
               strokeWidth={ICON.strokeWidth}
             />
             <Text style={[
               styles.categoryLabel,
-              { color: isActive ? COLORS.white : colors.textSecondary }
+              { color: isActive ? colors.textOnPrimary : colors.textSecondary }
             ]}>
               {category.label}
             </Text>
@@ -150,7 +150,7 @@ export default function BookmarksScreen() {
               ]}>
                 <Text style={[
                   styles.countText,
-                  { color: isActive ? COLORS.white : colors.primary }
+                  { color: isActive ? colors.textOnPrimary : colors.primary }
                 ]}>
                   {category.count}
                 </Text>
@@ -169,9 +169,9 @@ export default function BookmarksScreen() {
         Aucun favori
       </Text>
       <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-        Vous n'avez pas encore ajouté de {
-          activeCategory === 'opportunities' ? 'opportunités' :
-          activeCategory === 'hubs' ? 'hubs' : 'communautés'
+        Vous n'avez pas encore ajoute de {
+          activeCategory === 'opportunities' ? 'opportunites' :
+          activeCategory === 'spaces' ? 'espaces' : 'communautes'
         } en favoris
       </Text>
     </View>
@@ -188,14 +188,14 @@ export default function BookmarksScreen() {
     />
   );
 
-  const renderHubItem = ({ item, index }: { item: BookmarkedHub; index: number }) => (
-    <HubCard
-      hub={item as Hub}
-      onPress={() => navigateToDetail('hub', item.id)}
-      isLast={index === hubs.length - 1}
+  const renderSpaceItem = ({ item, index }: { item: BookmarkedSpace; index: number }) => (
+    <SpaceCard
+      space={item as Space}
+      onPress={() => navigateToDetail('space', item.id)}
+      isLast={index === spaces.length - 1}
       showBookmark={true}
       isBookmarked={true}
-      onBookmarkToggle={() => removeBookmark(item.id, 'hubs')}
+      onBookmarkToggle={() => removeBookmark(item.id, 'spaces')}
     />
   );
 
@@ -241,13 +241,13 @@ export default function BookmarksScreen() {
             refreshControl={refreshControl}
           />
         ) : renderEmptyState();
-      case 'hubs':
-        return hubs.length > 0 ? (
+      case 'spaces':
+        return spaces.length > 0 ? (
           <FlatList
             style={styles.list}
-            data={hubs}
+            data={spaces}
             keyExtractor={(item) => item.id}
-            renderItem={renderHubItem}
+            renderItem={renderSpaceItem}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             refreshControl={refreshControl}
@@ -270,7 +270,7 @@ export default function BookmarksScreen() {
     }
   };
 
-  const totalBookmarks = opportunities.length + hubs.length + communities.length;
+  const totalBookmarks = opportunities.length + spaces.length + communities.length;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>

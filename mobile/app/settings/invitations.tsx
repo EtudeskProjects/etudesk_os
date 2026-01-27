@@ -1,7 +1,8 @@
 /**
  * Invitations Screen
- * Shows pending organization AND community invitations for the current user
- * Uses tabs to switch between the two types
+ * Shows pending invitations for the current user
+ * Tab 1: Organisations - Organization invitations
+ * Tab 2: Offres - Communities, Opportunities, and Spaces invitations (unified)
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -29,33 +30,51 @@ import {
   Lock,
   Globe,
   CreditCard,
+  Briefcase,
+  MapPin,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { invitationService, ReceivedInvitation } from '../../src/services/invitationService';
-import { 
-  communityInvitationService, 
-  CommunityInvitation 
+import {
+  communityInvitationService,
+  CommunityInvitation
 } from '../../src/services/communityInvitationService';
+import {
+  opportunityInvitationService,
+  OpportunityInvitation
+} from '../../src/services/opportunityInvitationService';
+import {
+  spaceInvitationService,
+  SpaceInvitation
+} from '../../src/services/spaceInvitationService';
 import { ORGANIZATION_ROLE_LABELS, VISIBILITY_LABELS } from '../../src/types/models';
 import { getFullImageUrl } from '../../src/utils/image';
 
-type TabType = 'organizations' | 'communities';
+type TabType = 'organizations' | 'offers';
+
+// Unified offer invitation type
+type OfferInvitation =
+  | (CommunityInvitation & { _type: 'community' })
+  | (OpportunityInvitation & { _type: 'opportunity' })
+  | (SpaceInvitation & { _type: 'space' });
 
 export default function InvitationsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<TabType>('communities');
-  
+  const [activeTab, setActiveTab] = useState<TabType>('offers');
+
   // Organization invitations
   const [orgInvitations, setOrgInvitations] = useState<ReceivedInvitation[]>([]);
   const [orgLoading, setOrgLoading] = useState(true);
-  
-  // Community invitations
+
+  // Offer invitations (communities, opportunities, spaces)
   const [communityInvitations, setCommunityInvitations] = useState<CommunityInvitation[]>([]);
-  const [communityLoading, setCommunityLoading] = useState(true);
-  
+  const [opportunityInvitations, setOpportunityInvitations] = useState<OpportunityInvitation[]>([]);
+  const [spaceInvitations, setSpaceInvitations] = useState<SpaceInvitation[]>([]);
+  const [offersLoading, setOffersLoading] = useState(true);
+
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
@@ -72,29 +91,47 @@ export default function InvitationsScreen() {
     }
   }, []);
 
-  const fetchCommunityInvitations = useCallback(async () => {
+  const fetchOfferInvitations = useCallback(async () => {
     try {
-      const response = await communityInvitationService.getMyInvitations({ status: 'PENDING' });
-      if (response.data?.data) {
-        setCommunityInvitations(response.data.data);
+      const [communityRes, opportunityRes, spaceRes] = await Promise.all([
+        communityInvitationService.getMyInvitations({ status: 'PENDING' }),
+        opportunityInvitationService.getMyInvitations(),
+        spaceInvitationService.getMyInvitations(),
+      ]);
+
+      if (communityRes.data?.data) {
+        setCommunityInvitations(communityRes.data.data);
+      }
+      if (opportunityRes.data?.data) {
+        setOpportunityInvitations(opportunityRes.data.data);
+      }
+      if (spaceRes.data?.data) {
+        setSpaceInvitations(spaceRes.data.data);
       }
     } catch (error) {
-      console.error('Error fetching community invitations:', error);
+      console.error('Error fetching offer invitations:', error);
     } finally {
-      setCommunityLoading(false);
+      setOffersLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchOrgInvitations();
-    fetchCommunityInvitations();
-  }, [fetchOrgInvitations, fetchCommunityInvitations]);
+    fetchOfferInvitations();
+  }, [fetchOrgInvitations, fetchOfferInvitations]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    Promise.all([fetchOrgInvitations(), fetchCommunityInvitations()])
+    Promise.all([fetchOrgInvitations(), fetchOfferInvitations()])
       .finally(() => setIsRefreshing(false));
   };
+
+  // Combine all offer invitations and sort by date
+  const allOfferInvitations: OfferInvitation[] = [
+    ...communityInvitations.map(inv => ({ ...inv, _type: 'community' as const })),
+    ...opportunityInvitations.map(inv => ({ ...inv, _type: 'opportunity' as const })),
+    ...spaceInvitations.map(inv => ({ ...inv, _type: 'space' as const })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   // Organization invitation handlers
   const handleAcceptOrg = async (invitation: ReceivedInvitation) => {
@@ -103,8 +140,8 @@ export default function InvitationsScreen() {
       const response = await invitationService.acceptInvitation(invitation.id);
       if (response.success) {
         Alert.alert(
-          'Invitation acceptée',
-          `Vous êtes maintenant membre de ${invitation.organization_name}`,
+          'Invitation acceptee',
+          `Vous etes maintenant membre de ${invitation.organization_name}`,
           [{ text: 'OK' }]
         );
         setOrgInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
@@ -147,10 +184,9 @@ export default function InvitationsScreen() {
     try {
       const response = await communityInvitationService.acceptInvitation(invitation.id);
       if (response.data?.requires_payment) {
-        // Redirect to payment flow
         Alert.alert(
           'Abonnement requis',
-          `Cette communauté nécessite un abonnement de ${response.data.monthly_price} ${response.data.currency}/mois.`,
+          `Cette communaute necessite un abonnement de ${response.data.monthly_price} ${response.data.currency}/mois.`,
           [
             { text: 'Annuler', style: 'cancel' },
             {
@@ -164,10 +200,10 @@ export default function InvitationsScreen() {
       } else if (response.data?.success) {
         Alert.alert(
           'Bienvenue !',
-          response.data.message || `Vous avez rejoint la communauté !`,
+          response.data.message || `Vous avez rejoint la communaute !`,
           [
             {
-              text: 'Voir la communauté',
+              text: 'Voir la communaute',
               onPress: () => router.push(`/details/community/${response.data?.community_id}` as any),
             },
             { text: 'OK' },
@@ -185,7 +221,7 @@ export default function InvitationsScreen() {
   const handleDeclineCommunity = async (invitation: CommunityInvitation) => {
     Alert.alert(
       'Refuser l\'invitation',
-      `Voulez-vous vraiment refuser l'invitation à rejoindre "${invitation.community_name}"?`,
+      `Voulez-vous vraiment refuser l'invitation a rejoindre "${invitation.community_name}"?`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -196,6 +232,108 @@ export default function InvitationsScreen() {
             try {
               await communityInvitationService.declineInvitation(invitation.id);
               setCommunityInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
+            } catch (error: any) {
+              Alert.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
+            } finally {
+              setProcessingId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Opportunity invitation handlers
+  const handleAcceptOpportunity = async (invitation: OpportunityInvitation) => {
+    setProcessingId(invitation.id);
+    try {
+      const response = await opportunityInvitationService.acceptInvitation(invitation.id);
+      if (response.data?.success) {
+        Alert.alert(
+          'Invitation acceptee',
+          response.data.message || `Vous pouvez maintenant voir cette opportunite !`,
+          [
+            {
+              text: 'Voir l\'opportunite',
+              onPress: () => router.push(`/details/opportunity/${response.data?.opportunity_id}` as any),
+            },
+            { text: 'OK' },
+          ]
+        );
+        setOpportunityInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
+      }
+    } catch (error: any) {
+      Alert.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleDeclineOpportunity = async (invitation: OpportunityInvitation) => {
+    Alert.alert(
+      'Refuser l\'invitation',
+      `Voulez-vous vraiment refuser l'invitation pour "${invitation.opportunity_title}"?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Refuser',
+          style: 'destructive',
+          onPress: async () => {
+            setProcessingId(invitation.id);
+            try {
+              await opportunityInvitationService.declineInvitation(invitation.id);
+              setOpportunityInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
+            } catch (error: any) {
+              Alert.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
+            } finally {
+              setProcessingId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Space invitation handlers
+  const handleAcceptSpace = async (invitation: SpaceInvitation) => {
+    setProcessingId(invitation.id);
+    try {
+      const response = await spaceInvitationService.acceptInvitation(invitation.id);
+      if (response.data?.success) {
+        Alert.alert(
+          'Invitation acceptee',
+          response.data.message || `Vous pouvez maintenant reserver cet espace !`,
+          [
+            {
+              text: 'Voir l\'espace',
+              onPress: () => router.push(`/details/space/${response.data?.space_id}` as any),
+            },
+            { text: 'OK' },
+          ]
+        );
+        setSpaceInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
+      }
+    } catch (error: any) {
+      Alert.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleDeclineSpace = async (invitation: SpaceInvitation) => {
+    Alert.alert(
+      'Refuser l\'invitation',
+      `Voulez-vous vraiment refuser l'invitation pour "${invitation.space_name}"?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Refuser',
+          style: 'destructive',
+          onPress: async () => {
+            setProcessingId(invitation.id);
+            try {
+              await spaceInvitationService.declineInvitation(invitation.id);
+              setSpaceInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
             } catch (error: any) {
               Alert.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
             } finally {
@@ -220,14 +358,13 @@ export default function InvitationsScreen() {
     const expires = new Date(dateString);
     const now = new Date();
     const diffDays = Math.ceil((expires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays <= 0) return 'Expirée';
+    if (diffDays <= 0) return 'Expiree';
     if (diffDays === 1) return 'Expire demain';
     return `Expire dans ${diffDays} jours`;
   };
 
-  const isLoading = activeTab === 'organizations' ? orgLoading : communityLoading;
-  const invitations = activeTab === 'organizations' ? orgInvitations : communityInvitations;
-  const totalPending = orgInvitations.length + communityInvitations.length;
+  const isLoading = activeTab === 'organizations' ? orgLoading : offersLoading;
+  const totalOffersCount = allOfferInvitations.length;
 
   const renderOrgInvitationCard = (invitation: ReceivedInvitation) => {
     const isProcessing = processingId === invitation.id;
@@ -271,14 +408,14 @@ export default function InvitationsScreen() {
           <View style={styles.detailRow}>
             <Users size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.detailText, { color: colors.textPrimary }]}>
-              Rôle: <Text style={{ fontWeight: '600' }}>{roleLabel}</Text>
+              Role: <Text style={{ fontWeight: '600' }}>{roleLabel}</Text>
             </Text>
           </View>
 
           {invitation.invited_by_name && (
             <View style={styles.detailRow}>
               <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                Invité par {invitation.invited_by_name}
+                Invite par {invitation.invited_by_name}
               </Text>
             </View>
           )}
@@ -308,11 +445,11 @@ export default function InvitationsScreen() {
             disabled={isProcessing}
           >
             {isProcessing ? (
-              <ActivityIndicator size="small" color={COLORS.white} />
+              <ActivityIndicator size="small" color={colors.textOnPrimary} />
             ) : (
               <>
-                <Check size={18} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
-                <Text style={styles.acceptText}>Accepter</Text>
+                <Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>Accepter</Text>
               </>
             )}
           </TouchableOpacity>
@@ -321,134 +458,364 @@ export default function InvitationsScreen() {
     );
   };
 
-  const renderCommunityInvitationCard = (invitation: CommunityInvitation) => {
+  const renderOfferInvitationCard = (invitation: OfferInvitation) => {
     const isProcessing = processingId === invitation.id;
-    const isPrivate = invitation.access_type === 'PRIVATE' || invitation.access_type === 'MEMBERSHIP';
-    const visibilityLabel = VISIBILITY_LABELS[invitation.access_type as keyof typeof VISIBILITY_LABELS] || invitation.access_type;
 
-    return (
-      <View
-        key={invitation.id}
-        style={[styles.invitationCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-      >
-        {/* Community Info */}
-        <View style={styles.cardHeader}>
-          {invitation.cover_image_url ? (
-            <Image
-              source={{ uri: getFullImageUrl(invitation.cover_image_url) || '' }}
-              style={styles.cardLogo}
-            />
-          ) : (
-            <View style={[styles.cardLogoPlaceholder, { backgroundColor: colors.primary + '15' }]}>
-              <Users size={24} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+    // Type-specific rendering
+    if (invitation._type === 'community') {
+      const inv = invitation as CommunityInvitation & { _type: 'community' };
+      const isPrivate = inv.access_type === 'PRIVATE' || inv.access_type === 'MEMBERSHIP';
+
+      return (
+        <View
+          key={`community-${inv.id}`}
+          style={[styles.invitationCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+        >
+          <View style={styles.cardHeader}>
+            {inv.cover_image_url ? (
+              <Image
+                source={{ uri: getFullImageUrl(inv.cover_image_url) || '' }}
+                style={styles.cardLogo}
+              />
+            ) : (
+              <View style={[styles.cardLogoPlaceholder, { backgroundColor: colors.success + '15' }]}>
+                <Users size={24} color={colors.success} strokeWidth={ICON.strokeWidth} />
+              </View>
+            )}
+            <View style={styles.cardInfo}>
+              <Text style={[styles.cardName, { color: colors.textPrimary }]} numberOfLines={1}>
+                {inv.community_name}
+              </Text>
+              {inv.organization?.name && (
+                <Text style={[styles.cardSubtext, { color: colors.textSecondary }]}>
+                  par {inv.organization.name}
+                </Text>
+              )}
+            </View>
+            <View style={[styles.typeBadge, { backgroundColor: colors.success + '15' }]}>
+              <Users size={12} color={colors.success} />
+              <Text style={[styles.typeBadgeText, { color: colors.success }]}>Communaute</Text>
+            </View>
+          </View>
+
+          {inv.community_description && (
+            <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
+              {inv.community_description}
+            </Text>
+          )}
+
+          {inv.message && (
+            <View style={[styles.messageBox, { backgroundColor: colors.gray100 }]}>
+              <Text style={[styles.messageLabel, { color: colors.textSecondary }]}>
+                Message de {inv.invited_by_name}:
+              </Text>
+              <Text style={[styles.messageText, { color: colors.textPrimary }]}>
+                "{inv.message}"
+              </Text>
             </View>
           )}
-          <View style={styles.cardInfo}>
-            <Text style={[styles.cardName, { color: colors.textPrimary }]}>
-              {invitation.community_name}
-            </Text>
-            {invitation.organization?.name && (
-              <Text style={[styles.cardSubtext, { color: colors.textSecondary }]}>
-                par {invitation.organization.name}
-              </Text>
-            )}
-          </View>
-          <View style={[styles.typeBadge, { backgroundColor: colors.success + '15' }]}>
-            <Users size={12} color={colors.success} />
-            <Text style={[styles.typeBadgeText, { color: colors.success }]}>Communauté</Text>
-          </View>
-        </View>
 
-        {/* Description */}
-        {invitation.community_description && (
-          <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
-            {invitation.community_description}
-          </Text>
-        )}
+          <View style={[styles.detailsSection, { borderTopColor: colors.borderColor }]}>
+            <View style={styles.detailsRow}>
+              <View style={styles.detailRow}>
+                {isPrivate ? (
+                  <Lock size={14} color={colors.warning} strokeWidth={ICON.strokeWidth} />
+                ) : (
+                  <Globe size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
+                )}
+                <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                  {isPrivate ? 'Privee' : 'Publique'}
+                </Text>
+              </View>
 
-        {/* Custom message from inviter */}
-        {invitation.message && (
-          <View style={[styles.messageBox, { backgroundColor: colors.gray100 }]}>
-            <Text style={[styles.messageLabel, { color: colors.textSecondary }]}>
-              Message de {invitation.invited_by_name}:
-            </Text>
-            <Text style={[styles.messageText, { color: colors.textPrimary }]}>
-              "{invitation.message}"
-            </Text>
-          </View>
-        )}
-
-        {/* Details */}
-        <View style={[styles.detailsSection, { borderTopColor: colors.borderColor }]}>
-          <View style={styles.detailsRow}>
-            <View style={styles.detailRow}>
-              {isPrivate ? (
-                <Lock size={14} color={colors.warning} strokeWidth={ICON.strokeWidth} />
-              ) : (
-                <Globe size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
+              {inv.members_count !== undefined && (
+                <View style={styles.detailRow}>
+                  <Users size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                    {inv.members_count} membres
+                  </Text>
+                </View>
               )}
-              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                {visibilityLabel}
-              </Text>
+
+              {inv.is_paid && (
+                <View style={styles.detailRow}>
+                  <CreditCard size={14} color={colors.warning} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.detailText, { color: colors.warning }]}>
+                    {inv.monthly_price} {inv.currency}/mois
+                  </Text>
+                </View>
+              )}
             </View>
 
-            {invitation.members_count !== undefined && (
-              <View style={styles.detailRow}>
-                <Users size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                  {invitation.members_count} membres
-                </Text>
-              </View>
-            )}
-
-            {invitation.is_paid && (
-              <View style={styles.detailRow}>
-                <CreditCard size={14} color={colors.warning} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.detailText, { color: colors.warning }]}>
-                  {invitation.monthly_price} {invitation.currency}/mois
-                </Text>
-              </View>
-            )}
+            <View style={styles.detailRow}>
+              <Clock size={14} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                {getExpiresIn(inv.expires_at)}
+              </Text>
+            </View>
           </View>
 
-          <View style={styles.detailRow}>
-            <Clock size={14} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-              {getExpiresIn(invitation.expires_at)}
-            </Text>
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={[styles.declineButton, { borderColor: colors.error }]}
+              onPress={() => handleDeclineCommunity(inv)}
+              disabled={isProcessing}
+            >
+              <X size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.declineText, { color: colors.error }]}>Refuser</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.acceptButton, { backgroundColor: colors.primary }]}
+              onPress={() => handleAcceptCommunity(inv)}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
+              ) : (
+                <>
+                  <Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>
+                    {inv.is_paid ? 'Rejoindre (payant)' : 'Accepter'}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
+      );
+    }
 
-        {/* Actions */}
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.declineButton, { borderColor: colors.error }]}
-            onPress={() => handleDeclineCommunity(invitation)}
-            disabled={isProcessing}
-          >
-            <X size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.declineText, { color: colors.error }]}>Refuser</Text>
-          </TouchableOpacity>
+    if (invitation._type === 'opportunity') {
+      const inv = invitation as OpportunityInvitation & { _type: 'opportunity' };
 
-          <TouchableOpacity
-            style={[styles.acceptButton, { backgroundColor: colors.primary }]}
-            onPress={() => handleAcceptCommunity(invitation)}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <ActivityIndicator size="small" color={COLORS.white} />
+      return (
+        <View
+          key={`opportunity-${inv.id}`}
+          style={[styles.invitationCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+        >
+          <View style={styles.cardHeader}>
+            {inv.cover_image_url ? (
+              <Image
+                source={{ uri: getFullImageUrl(inv.cover_image_url) || '' }}
+                style={styles.cardLogo}
+              />
             ) : (
-              <>
-                <Check size={18} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
-                <Text style={styles.acceptText}>
-                  {invitation.is_paid ? 'Rejoindre (payant)' : 'Accepter'}
-                </Text>
-              </>
+              <View style={[styles.cardLogoPlaceholder, { backgroundColor: colors.warning + '15' }]}>
+                <Briefcase size={24} color={colors.warning} strokeWidth={ICON.strokeWidth} />
+              </View>
             )}
-          </TouchableOpacity>
+            <View style={styles.cardInfo}>
+              <Text style={[styles.cardName, { color: colors.textPrimary }]} numberOfLines={1}>
+                {inv.opportunity_title}
+              </Text>
+              {inv.organization?.name && (
+                <Text style={[styles.cardSubtext, { color: colors.textSecondary }]}>
+                  par {inv.organization.name}
+                </Text>
+              )}
+            </View>
+            <View style={[styles.typeBadge, { backgroundColor: colors.warning + '15' }]}>
+              <Briefcase size={12} color={colors.warning} />
+              <Text style={[styles.typeBadgeText, { color: colors.warning }]}>Opportunite</Text>
+            </View>
+          </View>
+
+          {inv.opportunity_summary && (
+            <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
+              {inv.opportunity_summary}
+            </Text>
+          )}
+
+          {inv.message && (
+            <View style={[styles.messageBox, { backgroundColor: colors.gray100 }]}>
+              <Text style={[styles.messageLabel, { color: colors.textSecondary }]}>
+                Message de {inv.invited_by_name}:
+              </Text>
+              <Text style={[styles.messageText, { color: colors.textPrimary }]}>
+                "{inv.message}"
+              </Text>
+            </View>
+          )}
+
+          <View style={[styles.detailsSection, { borderTopColor: colors.borderColor }]}>
+            <View style={styles.detailsRow}>
+              {inv.opportunity_type && (
+                <View style={styles.detailRow}>
+                  <Briefcase size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                    {inv.opportunity_type}
+                  </Text>
+                </View>
+              )}
+
+              {inv.location_type && (
+                <View style={styles.detailRow}>
+                  <MapPin size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                    {inv.location_type}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.detailRow}>
+              <Clock size={14} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                {getExpiresIn(inv.expires_at)}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={[styles.declineButton, { borderColor: colors.error }]}
+              onPress={() => handleDeclineOpportunity(inv)}
+              disabled={isProcessing}
+            >
+              <X size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.declineText, { color: colors.error }]}>Refuser</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.acceptButton, { backgroundColor: colors.primary }]}
+              onPress={() => handleAcceptOpportunity(inv)}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
+              ) : (
+                <>
+                  <Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>Accepter</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    );
+      );
+    }
+
+    if (invitation._type === 'space') {
+      const inv = invitation as SpaceInvitation & { _type: 'space' };
+
+      return (
+        <View
+          key={`space-${inv.id}`}
+          style={[styles.invitationCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+        >
+          <View style={styles.cardHeader}>
+            {inv.cover_image_url ? (
+              <Image
+                source={{ uri: getFullImageUrl(inv.cover_image_url) || '' }}
+                style={styles.cardLogo}
+              />
+            ) : (
+              <View style={[styles.cardLogoPlaceholder, { backgroundColor: colors.info + '15' }]}>
+                <MapPin size={24} color={colors.info} strokeWidth={ICON.strokeWidth} />
+              </View>
+            )}
+            <View style={styles.cardInfo}>
+              <Text style={[styles.cardName, { color: colors.textPrimary }]} numberOfLines={1}>
+                {inv.space_name}
+              </Text>
+              {inv.organization?.name && (
+                <Text style={[styles.cardSubtext, { color: colors.textSecondary }]}>
+                  par {inv.organization.name}
+                </Text>
+              )}
+            </View>
+            <View style={[styles.typeBadge, { backgroundColor: colors.info + '15' }]}>
+              <MapPin size={12} color={colors.info} />
+              <Text style={[styles.typeBadgeText, { color: colors.info }]}>Espace</Text>
+            </View>
+          </View>
+
+          {inv.space_description && (
+            <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
+              {inv.space_description}
+            </Text>
+          )}
+
+          {inv.message && (
+            <View style={[styles.messageBox, { backgroundColor: colors.gray100 }]}>
+              <Text style={[styles.messageLabel, { color: colors.textSecondary }]}>
+                Message de {inv.invited_by_name}:
+              </Text>
+              <Text style={[styles.messageText, { color: colors.textPrimary }]}>
+                "{inv.message}"
+              </Text>
+            </View>
+          )}
+
+          <View style={[styles.detailsSection, { borderTopColor: colors.borderColor }]}>
+            <View style={styles.detailsRow}>
+              {inv.space_type && (
+                <View style={styles.detailRow}>
+                  <Building2 size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                    {inv.space_type}
+                  </Text>
+                </View>
+              )}
+
+              {inv.city && (
+                <View style={styles.detailRow}>
+                  <MapPin size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                    {inv.city}
+                  </Text>
+                </View>
+              )}
+
+              {inv.hourly_rate && (
+                <View style={styles.detailRow}>
+                  <CreditCard size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.detailText, { color: colors.success }]}>
+                    {inv.hourly_rate} FCFA/h
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.detailRow}>
+              <Clock size={14} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                {getExpiresIn(inv.expires_at)}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={[styles.declineButton, { borderColor: colors.error }]}
+              onPress={() => handleDeclineSpace(inv)}
+              disabled={isProcessing}
+            >
+              <X size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.declineText, { color: colors.error }]}>Refuser</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.acceptButton, { backgroundColor: colors.primary }]}
+              onPress={() => handleAcceptSpace(inv)}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
+              ) : (
+                <>
+                  <Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>Accepter</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -465,22 +832,22 @@ export default function InvitationsScreen() {
       {/* Tabs */}
       <View style={[styles.tabContainer, { borderBottomColor: colors.borderColor }]}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === 'communities' && styles.tabActive]}
-          onPress={() => setActiveTab('communities')}
+          style={[styles.tab, activeTab === 'offers' && styles.tabActive]}
+          onPress={() => setActiveTab('offers')}
         >
-          <Users size={18} color={activeTab === 'communities' ? colors.primary : colors.textSecondary} />
+          <Briefcase size={18} color={activeTab === 'offers' ? colors.primary : colors.textSecondary} />
           <Text style={[
             styles.tabText,
-            { color: activeTab === 'communities' ? colors.primary : colors.textSecondary }
+            { color: activeTab === 'offers' ? colors.primary : colors.textSecondary }
           ]}>
-            Communautés
+            Offres
           </Text>
-          {communityInvitations.length > 0 && (
+          {totalOffersCount > 0 && (
             <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-              <Text style={styles.badgeText}>{communityInvitations.length}</Text>
+              <Text style={styles.badgeText}>{totalOffersCount}</Text>
             </View>
           )}
-          {activeTab === 'communities' && (
+          {activeTab === 'offers' && (
             <View style={[styles.tabIndicator, { backgroundColor: colors.primary }]} />
           )}
         </TouchableOpacity>
@@ -511,16 +878,16 @@ export default function InvitationsScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      ) : invitations.length === 0 ? (
+      ) : (activeTab === 'organizations' ? orgInvitations.length === 0 : totalOffersCount === 0) ? (
         <View style={styles.emptyContainer}>
           <Mail size={48} color={colors.gray300} strokeWidth={1.5} />
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
             Aucune invitation
           </Text>
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {activeTab === 'communities' 
-              ? 'Vous n\'avez pas d\'invitation à rejoindre une communauté'
-              : 'Vous n\'avez pas d\'invitation à rejoindre une organisation'}
+            {activeTab === 'offers'
+              ? 'Vous n\'avez pas d\'invitation pour des offres'
+              : 'Vous n\'avez pas d\'invitation a rejoindre une organisation'}
           </Text>
         </View>
       ) : (
@@ -533,12 +900,15 @@ export default function InvitationsScreen() {
           }
         >
           <Text style={[styles.sectionInfo, { color: colors.textSecondary }]}>
-            {invitations.length} invitation{invitations.length > 1 ? 's' : ''} en attente
+            {activeTab === 'organizations'
+              ? `${orgInvitations.length} invitation${orgInvitations.length > 1 ? 's' : ''} en attente`
+              : `${totalOffersCount} invitation${totalOffersCount > 1 ? 's' : ''} en attente`
+            }
           </Text>
 
           {activeTab === 'organizations'
             ? orgInvitations.map(renderOrgInvitationCard)
-            : communityInvitations.map(renderCommunityInvitationCard)
+            : allOfferInvitations.map(renderOfferInvitationCard)
           }
         </ScrollView>
       )}
@@ -613,7 +983,7 @@ const styles = StyleSheet.create({
   },
 
   badgeText: {
-    color: COLORS.white,
+    color: '#FFFFFF',
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
@@ -795,6 +1165,5 @@ const styles = StyleSheet.create({
   acceptText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.white,
   },
 });

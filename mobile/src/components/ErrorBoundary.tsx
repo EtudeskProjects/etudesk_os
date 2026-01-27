@@ -2,6 +2,9 @@
  * ErrorBoundary Component
  * Catches JavaScript errors anywhere in the child component tree
  * and displays a fallback UI instead of crashing the app
+ *
+ * Note: Uses hardcoded theme values as error boundaries must work
+ * independently of theme context (which may be unavailable during errors)
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
@@ -15,9 +18,23 @@ import {
   Alert,
 } from 'react-native';
 import { AlertTriangle, RefreshCw, Bug, Share2, ChevronDown, ChevronUp } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, BORDER, ICON } from '../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../constants/theme';
 import { logger } from '../services/logService';
-import { ErrorSeverity } from '../types/errors';
+
+// Hardcoded colors for error boundary (must work without theme context)
+const ERROR_COLORS = {
+  background: '#FFFCF9',
+  surface: '#FFFFFF',
+  primary: '#3B2416',
+  error: '#8B4A3C',
+  warning: '#A67C52',
+  white: '#FFFFFF',
+  gray100: '#F5F3F0',
+  gray200: '#E8E4DF',
+  gray600: '#6B6560',
+  gray700: '#4A4540',
+  gray900: '#1F1C18',
+};
 
 interface Props {
   children: ReactNode;
@@ -110,7 +127,7 @@ Time: ${new Date().toISOString()}
           <View style={styles.content}>
             {/* Icon */}
             <View style={styles.iconContainer}>
-              <AlertTriangle size={48} color={COLORS.error} strokeWidth={1.5} />
+              <AlertTriangle size={48} color={ERROR_COLORS.error} strokeWidth={1.5} />
             </View>
 
             {/* Title */}
@@ -133,7 +150,7 @@ Time: ${new Date().toISOString()}
                 onPress={this.handleRetry}
                 activeOpacity={0.8}
               >
-                <RefreshCw size={ICON.size.sm} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+                <RefreshCw size={ICON.size.sm} color={ERROR_COLORS.white} strokeWidth={ICON.strokeWidth} />
                 <Text style={styles.primaryButtonText}>Réessayer</Text>
               </TouchableOpacity>
             </View>
@@ -146,12 +163,12 @@ Time: ${new Date().toISOString()}
                   onPress={this.toggleFullError}
                   activeOpacity={0.7}
                 >
-                  <Bug size={ICON.size.sm} color={COLORS.gray600} strokeWidth={ICON.strokeWidth} />
+                  <Bug size={ICON.size.sm} color={ERROR_COLORS.gray600} strokeWidth={ICON.strokeWidth} />
                   <Text style={styles.devToggleText}>Détails techniques</Text>
                   {showFullError ? (
-                    <ChevronUp size={ICON.size.sm} color={COLORS.gray600} strokeWidth={ICON.strokeWidth} />
+                    <ChevronUp size={ICON.size.sm} color={ERROR_COLORS.gray600} strokeWidth={ICON.strokeWidth} />
                   ) : (
-                    <ChevronDown size={ICON.size.sm} color={COLORS.gray600} strokeWidth={ICON.strokeWidth} />
+                    <ChevronDown size={ICON.size.sm} color={ERROR_COLORS.gray600} strokeWidth={ICON.strokeWidth} />
                   )}
                 </TouchableOpacity>
 
@@ -174,7 +191,7 @@ Time: ${new Date().toISOString()}
                       onPress={this.handleShareError}
                       activeOpacity={0.7}
                     >
-                      <Share2 size={ICON.size.sm} color={COLORS.primary} strokeWidth={ICON.strokeWidth} />
+                      <Share2 size={ICON.size.sm} color={ERROR_COLORS.primary} strokeWidth={ICON.strokeWidth} />
                       <Text style={styles.copyButtonText}>Partager l'erreur</Text>
                     </TouchableOpacity>
                   </View>
@@ -229,7 +246,7 @@ export class ScreenErrorBoundary extends Component<
     if (this.state.hasError) {
       return (
         <View style={styles.screenErrorContainer}>
-          <AlertTriangle size={32} color={COLORS.warning} strokeWidth={1.5} />
+          <AlertTriangle size={32} color={ERROR_COLORS.warning} strokeWidth={1.5} />
           <Text style={styles.screenErrorTitle}>Erreur de chargement</Text>
           <Text style={styles.screenErrorMessage}>
             Cette page n'a pas pu être chargée.
@@ -239,7 +256,7 @@ export class ScreenErrorBoundary extends Component<
               style={styles.screenErrorButton}
               onPress={this.handleRetry}
             >
-              <RefreshCw size={16} color={COLORS.primary} strokeWidth={2} />
+              <RefreshCw size={16} color={ERROR_COLORS.primary} strokeWidth={2} />
               <Text style={styles.screenErrorButtonText}>Réessayer</Text>
             </TouchableOpacity>
             {this.props.onGoBack && (
@@ -262,7 +279,7 @@ export class ScreenErrorBoundary extends Component<
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: ERROR_COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xl,
@@ -278,22 +295,24 @@ const styles = StyleSheet.create({
   },
 
   title: {
+    fontFamily: TYPOGRAPHY.fontFamily.semibold,
     fontSize: TYPOGRAPHY.fontSize.xl,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: COLORS.gray900,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    color: ERROR_COLORS.gray900,
     textAlign: 'center',
     marginBottom: SPACING.sm,
   },
 
   subtitle: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.md,
-    color: COLORS.gray600,
+    color: ERROR_COLORS.gray600,
     textAlign: 'center',
     marginBottom: SPACING.lg,
   },
 
   errorBox: {
-    backgroundColor: COLORS.error + '10',
+    backgroundColor: 'rgba(139, 74, 60, 0.1)', // error at 10% opacity
     borderRadius: BORDER.radius.md,
     padding: SPACING.md,
     marginBottom: SPACING.lg,
@@ -301,9 +320,9 @@ const styles = StyleSheet.create({
   },
 
   errorMessage: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.error,
-    fontFamily: 'monospace',
+    color: ERROR_COLORS.error,
   },
 
   actions: {
@@ -322,19 +341,20 @@ const styles = StyleSheet.create({
   },
 
   primaryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: ERROR_COLORS.primary,
   },
 
   primaryButtonText: {
+    fontFamily: TYPOGRAPHY.fontFamily.semibold,
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.white,
+    color: ERROR_COLORS.white,
   },
 
   devSection: {
     width: '100%',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.gray200,
+    borderTopWidth: BORDER.width.thin,
+    borderTopColor: ERROR_COLORS.gray200,
     paddingTop: SPACING.md,
   },
 
@@ -347,8 +367,9 @@ const styles = StyleSheet.create({
 
   devToggleText: {
     flex: 1,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.gray600,
+    color: ERROR_COLORS.gray600,
   },
 
   devDetails: {
@@ -357,23 +378,24 @@ const styles = StyleSheet.create({
 
   stackScroll: {
     maxHeight: 200,
-    backgroundColor: COLORS.gray100,
+    backgroundColor: ERROR_COLORS.gray100,
     borderRadius: BORDER.radius.sm,
     padding: SPACING.md,
   },
 
   stackTitle: {
+    fontFamily: TYPOGRAPHY.fontFamily.semibold,
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.gray700,
+    color: ERROR_COLORS.gray700,
     marginBottom: SPACING.xs,
     marginTop: SPACING.sm,
   },
 
   stackText: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.xs,
-    color: COLORS.gray600,
-    fontFamily: 'monospace',
+    color: ERROR_COLORS.gray600,
   },
 
   copyButton: {
@@ -386,8 +408,9 @@ const styles = StyleSheet.create({
   },
 
   copyButtonText: {
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.primary,
+    color: ERROR_COLORS.primary,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
@@ -397,19 +420,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xl,
-    backgroundColor: COLORS.background,
+    backgroundColor: ERROR_COLORS.background,
   },
 
   screenErrorTitle: {
+    fontFamily: TYPOGRAPHY.fontFamily.semibold,
     fontSize: TYPOGRAPHY.fontSize.lg,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: COLORS.gray900,
+    color: ERROR_COLORS.gray900,
     marginTop: SPACING.md,
   },
 
   screenErrorMessage: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.sm,
-    color: COLORS.gray600,
+    color: ERROR_COLORS.gray600,
     textAlign: 'center',
     marginTop: SPACING.sm,
     marginBottom: SPACING.lg,
@@ -427,23 +452,25 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderRadius: BORDER.radius.sm,
-    backgroundColor: COLORS.primary + '10',
+    backgroundColor: 'rgba(59, 36, 22, 0.1)', // primary at 10% opacity
   },
 
   screenErrorButtonSecondary: {
-    backgroundColor: COLORS.gray100,
+    backgroundColor: ERROR_COLORS.gray100,
   },
 
   screenErrorButtonText: {
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.primary,
+    color: ERROR_COLORS.primary,
   },
 
   screenErrorButtonTextSecondary: {
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.gray700,
+    color: ERROR_COLORS.gray700,
   },
 });
 

@@ -12,7 +12,7 @@ import { OrganizationMemberProvider } from '../src/contexts/OrganizationMemberCo
 import { AlertProvider } from '../src/contexts/AlertContext';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { useTheme } from '../src/hooks/useTheme';
-import { COLORS } from '../src/constants/theme';
+import { LIGHT_COLORS } from '../src/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -52,7 +52,7 @@ export default function RootLayout() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={LIGHT_COLORS.primary} />
       </View>
     );
   }
@@ -84,6 +84,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
+    backgroundColor: LIGHT_COLORS.background,
   },
 });

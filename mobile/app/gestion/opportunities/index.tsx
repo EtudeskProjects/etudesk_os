@@ -15,7 +15,7 @@ import {
   Plus,
   Briefcase,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { OpportunityCard } from '../../../src/components/cards';
 import { FooterNav } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
@@ -130,7 +130,7 @@ export default function OpportunitiesListScreen() {
           style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/settings/organization/create-opportunity' as any)}
         >
-          <Plus size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+          <Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
         </TouchableOpacity>
       </View>
 
@@ -169,7 +169,7 @@ export default function OpportunitiesListScreen() {
               style={[styles.emptyButton, { backgroundColor: colors.primary }]}
               onPress={() => router.push('/settings/organization/create-opportunity' as any)}
             >
-              <Plus size={ICON.size.sm} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+              <Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
               <Text style={styles.emptyButtonText}>Créer une opportunité</Text>
             </TouchableOpacity>
           </View>
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: BORDER.radius.sm,
-    backgroundColor: COLORS.gray100,
+    backgroundColor: '#F3F4F6',
   },
   cardInfo: {
     flex: 1,
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     paddingTop: SPACING.sm,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: COLORS.gray100,
+    borderTopColor: '#F3F4F6',
   },
   statItem: {
     flexDirection: 'row',
@@ -354,6 +354,6 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
 });

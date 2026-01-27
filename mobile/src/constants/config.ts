@@ -8,12 +8,6 @@ export const API_CONFIG = {
   TIMEOUT: 30000,
 };
 
-// Mapbox Configuration
-export const MAPBOX_CONFIG = {
-  ACCESS_TOKEN: process.env.EXPO_PUBLIC_MAPBOX_TOKEN || 'pk.eyJ1IjoibGFtaW5lYmFycm8iLCJhIjoiY20zZHMzOW9zMDc5dzJsczgwdWVoZ2NqYyJ9.3baMsQ3_mpKlnBdHCeu0kg',
-  GEOCODING_URL: 'https://api.mapbox.com/geocoding/v5/mapbox.places',
-};
-
 // AsyncStorage Keys - Centralized to avoid duplication
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'auth_access_token',

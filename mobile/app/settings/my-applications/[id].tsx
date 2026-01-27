@@ -26,7 +26,7 @@ import {
   FileText,
   MapPin,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { FooterNav } from '../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../src/components/chat';
@@ -37,12 +37,13 @@ import type { Application, ApplicationMessage, ApplicationStatus } from '../../.
 import { APPLICATION_STATUS_LABELS, LOCATION_TYPE_LABELS } from '../../../src/types/models';
 
 // Status configuration - Simplified to 4 statuses
-const STATUS_CONFIG: Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> = {
-  SUBMITTED: { color: COLORS.warning, icon: Clock, bgColor: COLORS.warning + '15' },
-  IN_REVIEW: { color: COLORS.info, icon: Eye, bgColor: COLORS.info + '15' },
-  ACCEPTED: { color: COLORS.success, icon: CheckCircle2, bgColor: COLORS.success + '15' },
-  REJECTED: { color: COLORS.error, icon: XCircle, bgColor: COLORS.error + '15' },
-};
+// Colors will be resolved dynamically using theme colors
+const getStatusConfig = (colors: any): Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> => ({
+  SUBMITTED: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15' },
+  IN_REVIEW: { color: colors.info, icon: Eye, bgColor: colors.info + '15' },
+  ACCEPTED: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15' },
+  REJECTED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15' },
+});
 
 type Tab = 'details' | 'messages';
 
@@ -213,7 +214,7 @@ export default function ApplicationDetailsScreen() {
   const renderDetailsTab = () => {
     if (!application) return null;
 
-    const statusConfig = STATUS_CONFIG[application.status];
+    const statusConfig = getStatusConfig(colors)[application.status];
     const StatusIcon = statusConfig.icon;
     const opportunity = application.opportunity;
 

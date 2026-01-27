@@ -13,7 +13,7 @@ import {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 import { CommunityActivity, ActivityComment, PollOption } from '../../types/activity';
-import { COLORS, SPACING, TYPOGRAPHY, BORDER, ICON } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, withOpacity, OPACITY } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import {
     Heart,
@@ -254,7 +254,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 
     return (
         <Pressable
-            style={[styles.container, { backgroundColor: colors.surface }]}
+            style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
             onPress={() => onPress?.(activity)}
         >
             {/* Header */}
@@ -267,16 +267,16 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                                 {authorName}
                             </Text>
                             {isScheduled && (
-                                <View style={[styles.scheduledBadge, { backgroundColor: COLORS.warning + '15' }]}>
-                                    <Clock size={10} color={COLORS.warning} />
-                                    <Text style={[styles.scheduledBadgeText, { color: COLORS.warning }]}>
+                                <View style={[styles.scheduledBadge, { backgroundColor: colors.warningLight }]}>
+                                    <Clock size={10} color={colors.warning} />
+                                    <Text style={[styles.scheduledBadgeText, { color: colors.warning }]}>
                                         Programmé
                                     </Text>
                                 </View>
                             )}
                         </View>
                         {isScheduled && scheduledDate ? (
-                            <Text style={[styles.scheduledTime, { color: COLORS.warning }]}>
+                            <Text style={[styles.scheduledTime, { color: colors.warning }]}>
                                 {scheduledDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à {scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                             </Text>
                         ) : (
@@ -350,7 +350,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                                     <View style={styles.pollOptionLeft}>
                                         {isVoted && (
                                             <View style={[styles.pollCheckIcon, { backgroundColor: colors.primary }]}>
-                                                <Check size={10} color={COLORS.white} strokeWidth={3} />
+                                                <Check size={10} color={colors.textOnPrimary} strokeWidth={3} />
                                             </View>
                                         )}
                                         <Text style={[
@@ -406,9 +406,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 
                     {/* Location */}
                     <View style={styles.eventRow}>
-                        <View style={[styles.eventIconContainer, { backgroundColor: isOnlineEvent ? COLORS.success + '15' : colors.primary + '15' }]}>
+                        <View style={[styles.eventIconContainer, { backgroundColor: isOnlineEvent ? colors.successLight : withOpacity(colors.primary, OPACITY[15]) }]}>
                             {isOnlineEvent ? (
-                                <Video size={16} color={COLORS.success} />
+                                <Video size={16} color={colors.success} />
                             ) : (
                                 <MapPin size={16} color={colors.primary} />
                             )}
@@ -478,14 +478,14 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                     <Animated.View style={{ transform: [{ scale: likeScaleAnim }] }}>
                         <Heart
                             size={18}
-                            color={liked ? COLORS.red500 : colors.gray500}
-                            fill={liked ? COLORS.red500 : 'transparent'}
+                            color={liked ? colors.error : colors.gray500}
+                            fill={liked ? colors.error : 'transparent'}
                             strokeWidth={ICON.strokeWidth}
                         />
                     </Animated.View>
                     <Text style={[
                         styles.engagementText,
-                        { color: liked ? COLORS.red500 : colors.textSecondary }
+                        { color: liked ? colors.error : colors.textSecondary }
                     ]}>
                         {formatCount(likesCount)} J'aime{likesCount > 1 ? 's' : ''}
                     </Text>
@@ -554,7 +554,6 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.md,
         borderRadius: BORDER.radius.xl,
         borderWidth: BORDER.width.thin,
-        borderColor: COLORS.gray200,
         overflow: 'hidden',
     },
     // Header

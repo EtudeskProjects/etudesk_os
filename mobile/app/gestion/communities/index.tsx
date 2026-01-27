@@ -16,7 +16,7 @@ import {
   Users,
   UserCheck,
 } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { CommunityCard } from '../../../src/components/cards';
 import { FooterNav } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
@@ -125,7 +125,7 @@ export default function CommunitiesListScreen() {
           style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/settings/organization/create-community' as any)}
         >
-          <Plus size={ICON.size.md} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+          <Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
         </TouchableOpacity>
       </View>
 
@@ -164,7 +164,7 @@ export default function CommunitiesListScreen() {
                 style={[styles.emptyButton, { backgroundColor: colors.primary }]}
                 onPress={() => router.push('/settings/organization/create-community' as any)}
               >
-                <Plus size={ICON.size.sm} color={COLORS.white} strokeWidth={ICON.strokeWidth} />
+                <Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
                 <Text style={styles.emptyButtonText}>Créer une communauté</Text>
               </TouchableOpacity>
             </View>
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     height: 100,
-    backgroundColor: COLORS.gray100,
+    backgroundColor: '#F3F4F6',
   },
   coverImage: {
     width: '100%',
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
   membersButton: {
     flexDirection: 'row',
