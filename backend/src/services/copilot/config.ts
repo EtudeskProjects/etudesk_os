@@ -35,6 +35,10 @@ export const AGENT_MODELS: Record<string, ModelType> = {
   document_generator: MODELS.MINI, // Complex document generation
   document_reader: MODELS.NANO,
   admin: MODELS.NANO,
+  invitation: MODELS.NANO,
+  application: MODELS.MINI, // Needs reasoning for application flow
+  activity: MODELS.NANO,
+  org_manager: MODELS.MINI, // Complex CRUD operations
 
   // Study Hub and sub-agents
   study_hub: MODELS.MINI, // Complex pedagogical reasoning
@@ -87,6 +91,22 @@ export const MODEL_PARAMS: Record<string, ModelParams> = {
     temperature: 0.2,
     maxTokens: 1000,
   },
+  invitation: {
+    temperature: 0.2,
+    maxTokens: 1000,
+  },
+  application: {
+    temperature: 0.4,
+    maxTokens: 2000,
+  },
+  activity: {
+    temperature: 0.5,
+    maxTokens: 1500,
+  },
+  org_manager: {
+    temperature: 0.3,
+    maxTokens: 2000,
+  },
 
   // Study Hub
   study_hub: {
@@ -128,6 +148,10 @@ export const AGENT_TOOLS: Record<string, string[]> = {
     'handoff_to_document_generator',
     'handoff_to_document_reader',
     'handoff_to_admin',
+    'handoff_to_invitation',
+    'handoff_to_application',
+    'handoff_to_activity',
+    'handoff_to_org_manager',
     'get_context',
     // Graph tools for exploration
     'query_talent_graph',
@@ -143,6 +167,7 @@ export const AGENT_TOOLS: Record<string, string[]> = {
     'search_communities',
     'search_spaces',
     'search_organizations',
+    'search_talents',
     'get_talent_profile',
     'get_talent_preferences',
     // Graph-powered search
@@ -161,6 +186,58 @@ export const AGENT_TOOLS: Record<string, string[]> = {
     'get_org_stats',
     'list_org_opportunities',
     'check_admin_permissions',
+    'get_org_revenue',
+  ],
+
+  invitation: [
+    'list_my_invitations',
+    'respond_to_invitation',
+    'send_invitation',
+    'list_org_invitations',
+  ],
+
+  application: [
+    'list_my_applications',
+    'apply_to_opportunity',
+    'withdraw_application',
+    'join_community',
+    'list_my_reservations',
+    'book_space',
+    'list_org_applications',
+    'update_application_status',
+    'list_membership_requests',
+    'respond_to_membership',
+    'list_org_reservations',
+  ],
+
+  activity: [
+    'list_activities',
+    'create_activity',
+    'edit_activity',
+    'pin_activity',
+    'comment_on_activity',
+    'react_to_activity',
+  ],
+
+  org_manager: [
+    'check_admin_permissions',
+    'create_community',
+    'edit_community',
+    'create_space',
+    'edit_space',
+    'create_opportunity',
+    'edit_opportunity',
+    'get_org_revenue',
+    'list_org_members',
+    'get_org_stats',
+    'list_org_opportunities',
+    'list_org_applications',
+    'update_application_status',
+    'list_membership_requests',
+    'respond_to_membership',
+    'list_org_reservations',
+    'send_invitation',
+    'list_org_invitations',
   ],
 
   study_hub: [
@@ -268,6 +345,30 @@ export const HANDOFFS: HandoffConfig[] = [
     to: 'admin',
     condition: 'intent_admin',
     description: "Gestion d'organisation (si admin)",
+  },
+  {
+    from: 'explorer_hub',
+    to: 'invitation',
+    condition: 'intent_invitation',
+    description: 'Gestion des invitations (lister, accepter, décliner, envoyer)',
+  },
+  {
+    from: 'explorer_hub',
+    to: 'application',
+    condition: 'intent_application',
+    description: 'Candidatures, adhésions, réservations',
+  },
+  {
+    from: 'explorer_hub',
+    to: 'activity',
+    condition: 'intent_activity',
+    description: 'Publications et interactions communautaires',
+  },
+  {
+    from: 'explorer_hub',
+    to: 'org_manager',
+    condition: 'intent_org_management',
+    description: 'CRUD communautés, espaces, opportunités et suivi revenus',
   },
 
   // Study Hub handoffs

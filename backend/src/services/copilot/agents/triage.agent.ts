@@ -119,7 +119,7 @@ export async function runTriageAgent(input: TriageAgentInput): Promise<TriageAge
 // ORCHESTRATOR
 // ═══════════════════════════════════════════════════════════════
 
-import { runExplorerHub, runSearchAgent, runWebSearchAgent, runDocumentGeneratorAgent, runDocumentReaderAgent, runAdminAgent } from './explorer.agent';
+import { runExplorerHub, runSearchAgent, runWebSearchAgent, runDocumentGeneratorAgent, runDocumentReaderAgent, runAdminAgent, runInvitationAgent, runApplicationAgent, runActivityAgent, runOrgManagerAgent } from './explorer.agent';
 import { runStudyHub, runLearnAgent, runQuizAgent, runFlashcardAgent, runCodeAgent, runResourceAgent } from './study.agent';
 
 /**
@@ -134,6 +134,10 @@ function getAgentRunner(agentType: AgentType) {
     document_generator: runDocumentGeneratorAgent,
     document_reader: runDocumentReaderAgent,
     admin: runAdminAgent,
+    invitation: runInvitationAgent,
+    application: runApplicationAgent,
+    activity: runActivityAgent,
+    org_manager: runOrgManagerAgent,
     study_hub: runStudyHub,
     learn: runLearnAgent,
     quiz: runQuizAgent,

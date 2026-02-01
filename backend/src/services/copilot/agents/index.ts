@@ -20,6 +20,10 @@ export {
   runDocumentGeneratorAgent,
   runDocumentReaderAgent,
   runAdminAgent,
+  runInvitationAgent,
+  runApplicationAgent,
+  runActivityAgent,
+  runOrgManagerAgent,
 } from './explorer.agent';
 
 // Study hub and sub-agents

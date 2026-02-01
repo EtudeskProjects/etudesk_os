@@ -35,6 +35,22 @@ export { adminToolDefinitions } from './admin.tools';
 export * from './graph.tools';
 export { graphToolDefinitions, graphExplorerTools, graphStudyTools } from './graph.tools';
 
+// Invitation tools
+export * from './invitation.tools';
+export { invitationToolDefinitions } from './invitation.tools';
+
+// Application tools
+export * from './application.tools';
+export { applicationToolDefinitions } from './application.tools';
+
+// Activity tools
+export * from './activity.tools';
+export { activityToolDefinitions } from './activity.tools';
+
+// Org management tools
+export * from './org-management.tools';
+export { orgManagementToolDefinitions } from './org-management.tools';
+
 // ═══════════════════════════════════════════════════════════════
 // COMBINED TOOL REGISTRY
 // ═══════════════════════════════════════════════════════════════
@@ -47,6 +63,10 @@ import { learningToolDefinitions } from './learning.tools';
 import { externalToolDefinitions } from './external.tools';
 import { adminToolDefinitions } from './admin.tools';
 import { graphToolDefinitions, graphExplorerTools, graphStudyTools } from './graph.tools';
+import { invitationToolDefinitions } from './invitation.tools';
+import { applicationToolDefinitions } from './application.tools';
+import { activityToolDefinitions } from './activity.tools';
+import { orgManagementToolDefinitions } from './org-management.tools';
 
 export interface ToolDefinition {
   name: string;
@@ -65,6 +85,10 @@ export const ALL_TOOLS: Record<string, ToolDefinition> = {
   ...externalToolDefinitions,
   ...adminToolDefinitions,
   ...graphToolDefinitions,
+  ...invitationToolDefinitions,
+  ...applicationToolDefinitions,
+  ...activityToolDefinitions,
+  ...orgManagementToolDefinitions,
 };
 
 // Tools by category
@@ -77,6 +101,10 @@ export const TOOLS_BY_CATEGORY = {
   external: externalToolDefinitions,
   admin: adminToolDefinitions,
   graph: graphToolDefinitions,
+  invitation: invitationToolDefinitions,
+  application: applicationToolDefinitions,
+  activity: activityToolDefinitions,
+  orgManagement: orgManagementToolDefinitions,
 };
 
 // Tools for Explorer mode
@@ -88,6 +116,10 @@ export const EXPLORER_TOOLS = {
   ...externalToolDefinitions,
   ...adminToolDefinitions,
   ...graphExplorerTools,
+  ...invitationToolDefinitions,
+  ...applicationToolDefinitions,
+  ...activityToolDefinitions,
+  ...orgManagementToolDefinitions,
 };
 
 // Tools for Study mode

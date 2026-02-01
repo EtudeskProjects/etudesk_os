@@ -344,7 +344,7 @@ function getHandoffTargets(agentType: AgentType): AgentType[] {
     case 'triage':
       return ['explorer_hub', 'study_hub'];
     case 'explorer_hub':
-      return ['search', 'web_search', 'document_generator', 'document_reader', 'admin'];
+      return ['search', 'web_search', 'document_generator', 'document_reader', 'admin', 'invitation', 'application', 'activity', 'org_manager'];
     case 'study_hub':
       return ['learn', 'quiz', 'flashcard', 'code'];
     default:

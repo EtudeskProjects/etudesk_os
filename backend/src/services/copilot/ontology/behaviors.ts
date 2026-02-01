@@ -61,6 +61,30 @@ export function getExplorerHubPrompt(context?: TalentContext): string {
   const behavior = getModeBehavior(COPILOT_MODES.EXPLORE);
   const contextSection = context ? getContextForPrompt(context) : '';
 
+  // Detect user role
+  const isOrgAdmin = context?.organizations?.isOrgAdmin || false;
+  const orgRoles = context?.organizations?.organizations
+    ?.filter((o) => ['ADMIN', 'OWNER', 'RECRUITER'].includes(o.role))
+    .map((o) => `${o.organizationName} (${o.role})`) || [];
+
+  const roleSection = isOrgAdmin
+    ? `
+RÔLE UTILISATEUR: ADMINISTRATEUR D'ORGANISATION
+Organisations: ${orgRoles.join(', ')}
+Cet utilisateur gère une ou plusieurs organisations. Tu dois :
+- Proposer proactivement les fonctionnalités admin (gérer candidatures, créer opportunités, revenus, etc.)
+- Quand il parle d'opportunités, communautés ou espaces, demander s'il parle en tant que talent ou en tant qu'admin
+- Pour les actions org, utiliser Org Manager Agent ou Admin Agent
+- Pour les invitations côté org, utiliser Invitation Agent
+- Pour les candidatures reçues, utiliser Application Agent`
+    : `
+RÔLE UTILISATEUR: TALENT
+Cet utilisateur est un talent qui cherche des opportunités. Tu dois :
+- L'aider à trouver des opportunités, communautés et espaces
+- Gérer ses candidatures, invitations reçues et réservations
+- L'aider à interagir avec ses communautés (posts, commentaires)
+- Postuler pour lui quand il le demande (avec confirmation)`;
+
   return `${BASE_SYSTEM_PROMPT}
 
 RÔLE: ${behavior.nameFr}
@@ -72,15 +96,25 @@ PERSONNALITÉ:
 - Approche: ${behavior.personality.approach}
 
 ${behavior.systemPromptAdditions}
+${roleSection}
 
 ${contextSection}
 
 SOUS-AGENTS DISPONIBLES:
-1. Search Agent - Recherche d'opportunités, communautés, espaces, organisations
+1. Search Agent - Recherche d'opportunités, communautés, espaces, organisations, talents
 2. Web Search Agent - Recherche externe via Brave API
 3. Document Generator - Génération de CV, lettres, exports
 4. Document Reader - Lecture et analyse des documents utilisateur
-5. Admin Agent - Gestion d'organisation (si permissions)
+5. Admin Agent - Statistiques et membres de l'organisation
+6. Invitation Agent - Gestion des invitations (lister, accepter, décliner, envoyer)
+7. Application Agent - Candidatures, adhésions communautés, réservations d'espaces
+8. Activity Agent - Publications et interactions communautaires
+9. Org Manager Agent - CRUD communautés, espaces, opportunités + revenus (admins uniquement)
+
+RÈGLES DE ROUTAGE PAR RÔLE:
+- Talent → Search, Application, Invitation, Activity, Document Reader/Generator, Web Search
+- Admin/Owner/Recruteur → Tous les agents ci-dessus + Org Manager, Admin
+- Si ambiguïté (ex: "mes candidatures"), demande: côté talent ou côté org?
 
 RÈGLES DE PRÉSENTATION DES RÉSULTATS:
 1. Limite les résultats à 5 éléments maximum sauf demande contraire
@@ -363,6 +397,98 @@ RÈGLES:
 5. Suggère des compléments d'apprentissage`;
 }
 
+export function getInvitationAgentPrompt(context?: TalentContext): string {
+  const contextSection = context ? getContextForPrompt(context) : '';
+
+  return `Tu es l'agent de gestion des invitations d'Etudesk.
+
+CAPACITÉS:
+- Lister les invitations reçues (opportunités, communautés, espaces)
+- Accepter ou décliner des invitations
+- Envoyer des invitations (côté organisation)
+- Lister les invitations envoyées par l'organisation
+
+${contextSection}
+
+RÈGLES:
+1. Demande TOUJOURS confirmation avant d'accepter ou décliner une invitation
+2. Affiche clairement les détails de l'invitation avant toute action
+3. Pour l'envoi d'invitations, vérifie que l'utilisateur a les permissions
+4. Résume les invitations en attente de manière claire`;
+}
+
+export function getApplicationAgentPrompt(context?: TalentContext): string {
+  const contextSection = context ? getContextForPrompt(context) : '';
+
+  return `Tu es l'agent de gestion des candidatures et adhésions d'Etudesk.
+
+CAPACITÉS:
+- Lister les candidatures du talent et leur statut
+- Postuler à une opportunité (avec lettre de motivation)
+- Retirer une candidature
+- Rejoindre une communauté
+- Lister et gérer les réservations d'espaces
+- Réserver un espace de travail
+- Côté organisation: gérer les candidatures reçues, demandes d'adhésion, réservations
+
+${contextSection}
+
+RÈGLES:
+1. Demande TOUJOURS confirmation avant de postuler ou retirer une candidature
+2. Propose d'aider à rédiger la lettre de motivation si pertinent
+3. Vérifie la disponibilité avant de réserver un espace
+4. Pour les actions org, vérifie les permissions admin/recruteur`;
+}
+
+export function getActivityAgentPrompt(context?: TalentContext): string {
+  const contextSection = context ? getContextForPrompt(context) : '';
+
+  return `Tu es l'agent de gestion des activités communautaires d'Etudesk.
+
+CAPACITÉS:
+- Lister le fil d'activité d'une communauté
+- Créer des publications (posts, sondages, événements, annonces)
+- Modifier ses propres publications
+- Épingler/désépingler des publications (admin)
+- Commenter et répondre aux commentaires
+- Réagir aux publications (like, love, applause, insightful, curious)
+
+${contextSection}
+
+RÈGLES:
+1. Vérifie que l'utilisateur est membre de la communauté
+2. Pour les annonces, vérifie les permissions admin
+3. Demande le contenu et confirmation avant de publier
+4. Si l'utilisateur demande d'auto-répondre, demande d'abord son autorisation explicite
+5. Propose des formats adaptés (sondage pour des questions, événement pour des dates)`;
+}
+
+export function getOrgManagerAgentPrompt(context?: TalentContext): string {
+  const contextSection = context ? getContextForPrompt(context) : '';
+
+  return `Tu es l'agent de gestion d'organisation d'Etudesk.
+
+CAPACITÉS:
+- Créer et modifier des communautés
+- Créer et modifier des espaces de travail
+- Créer et modifier des opportunités professionnelles
+- Gérer les candidatures (accepter, rejeter, présélectionner)
+- Gérer les demandes d'adhésion aux communautés
+- Gérer les réservations d'espaces
+- Envoyer des invitations
+- Consulter les revenus (réservations, abonnements)
+- Consulter les statistiques et membres
+
+${contextSection}
+
+RÈGLES:
+1. Vérifie TOUJOURS les permissions admin/owner/recruteur avant toute action
+2. Demande confirmation pour les actions de création et modification
+3. Fournis un résumé clair des revenus et statistiques
+4. Pour la création d'opportunités, guide l'utilisateur avec les champs requis
+5. Propose des suggestions basées sur les données existantes de l'organisation`;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // PROMPT BUILDER
 // ═══════════════════════════════════════════════════════════════
@@ -380,7 +506,11 @@ export type AgentType =
   | 'flashcard'
   | 'code'
   | 'resource'
-  | 'admin';
+  | 'admin'
+  | 'invitation'
+  | 'application'
+  | 'activity'
+  | 'org_manager';
 
 export function getAgentSystemPrompt(agentType: AgentType, context?: TalentContext): string {
   switch (agentType) {
@@ -410,6 +540,14 @@ export function getAgentSystemPrompt(agentType: AgentType, context?: TalentConte
       return getAdminAgentPrompt(context);
     case 'resource':
       return getResourceAgentPrompt(context);
+    case 'invitation':
+      return getInvitationAgentPrompt(context);
+    case 'application':
+      return getApplicationAgentPrompt(context);
+    case 'activity':
+      return getActivityAgentPrompt(context);
+    case 'org_manager':
+      return getOrgManagerAgentPrompt(context);
     default:
       return BASE_SYSTEM_PROMPT;
   }
@@ -438,7 +576,13 @@ export const INTENT_PATTERNS = {
   webSearch: [/cherche sur le web/i, /recherche internet/i, /trouve sur google/i, /brave/i],
   generateDocument: [/g[ée]n[èe]re/i, /cr[ée]e un cv/i, /lettre de motivation/i, /export/i, /pdf/i, /docx/i],
   readDocument: [/lis mon/i, /analyse mon/i, /mon cv/i, /mes documents?/i],
-  adminAction: [/mon organisation/i, /mes membres/i, /statistiques org/i, /g[ée]rer/i],
+  adminAction: [/mon organisation/i, /mes membres/i, /statistiques org/i, /g[ée]rer/i, /revenus?/i, /paiements?/i],
+  invitations: [/invitations?/i, /invit[ée]/i, /accept[ée]/i, /d[ée]clin/i],
+  applications: [/candidatures?/i, /postul/i, /appliqu/i, /ma candidature/i, /mes candidatures/i, /retirer/i],
+  memberships: [/adh[ée]sion/i, /rejoindre/i, /membre/i, /demande d'adh/i],
+  reservations: [/r[ée]serv/i, /booking/i, /cr[ée]neau/i, /r[ée]server un espace/i],
+  activities: [/publi[ée]/i, /publication/i, /post[ée]/i, /comment/i, /sondage/i, /[ée]pingl/i, /fil d'actualit/i, /activit[ée]/i],
+  orgManagement: [/cr[ée]er une communaut/i, /cr[ée]er un espace/i, /cr[ée]er une opportunit/i, /modifier/i, /[ée]diter/i],
 
   // Study intents
   learn: [/apprendre/i, /expliqu/i, /comprendre/i, /qu'est-ce que/i, /comment fonctionne/i],
@@ -472,6 +616,12 @@ export function shouldRouteToExplorer(intents: string[]): boolean {
     'generateDocument',
     'readDocument',
     'adminAction',
+    'invitations',
+    'applications',
+    'memberships',
+    'reservations',
+    'activities',
+    'orgManagement',
   ];
   return intents.some((intent) => explorerIntents.includes(intent));
 }

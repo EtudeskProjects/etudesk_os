@@ -464,6 +464,184 @@ export async function searchSpaces(
 }
 
 // ═══════════════════════════════════════════════════════════════
+// SEARCH ORGANIZATIONS
+// ═══════════════════════════════════════════════════════════════
+
+export const searchOrganizationsSchema = z.object({
+  query: z.string().optional().describe('Requête de recherche textuelle'),
+  sectors: z.array(z.string()).optional().describe("Secteurs d'activité"),
+  location: z.string().optional().describe('Ville ou région'),
+  hasOpportunities: z.boolean().optional().describe('Uniquement celles avec des opportunités ouvertes'),
+  limit: z.number().min(1).max(10).default(5).describe('Nombre maximum de résultats'),
+});
+
+export type SearchOrganizationsParams = z.infer<typeof searchOrganizationsSchema>;
+
+export async function searchOrganizations(
+  params: SearchOrganizationsParams,
+  context: { talentId: string }
+): Promise<CardListOutput> {
+  const { query, sectors, location, hasOpportunities, limit } = params;
+
+  let sql = `
+    SELECT
+      o.id, o.name, o.slug, o.description, o.sectors, o.logo_url,
+      o.city, o.country, o.website,
+      (SELECT COUNT(*) FROM organization_members om WHERE om.organization_id = o.id AND om.status = 'ACTIVE') as member_count,
+      (SELECT COUNT(*) FROM opportunities opp
+       JOIN opportunity_posters op ON opp.id = op.opportunity_id
+       WHERE op.poster_organization_id = o.id AND opp.status = 'OPEN' AND opp.deleted_at IS NULL) as open_opportunities
+    FROM organizations o
+    WHERE o.deleted_at IS NULL AND o.status = 'ACTIVE'
+  `;
+
+  const queryParams: (string | string[] | number)[] = [];
+  let paramIndex = 1;
+
+  if (query) {
+    sql += ` AND (o.name ILIKE '%' || $${paramIndex} || '%' OR o.description ILIKE '%' || $${paramIndex} || '%')`;
+    queryParams.push(query);
+    paramIndex++;
+  }
+
+  if (sectors && sectors.length > 0) {
+    sql += ` AND o.sectors && $${paramIndex}::text[]`;
+    queryParams.push(sectors);
+    paramIndex++;
+  }
+
+  if (location) {
+    sql += ` AND (o.city ILIKE '%' || $${paramIndex} || '%' OR o.country ILIKE '%' || $${paramIndex} || '%')`;
+    queryParams.push(location);
+    paramIndex++;
+  }
+
+  if (hasOpportunities) {
+    sql += ` AND EXISTS (
+      SELECT 1 FROM opportunities opp
+      JOIN opportunity_posters op ON opp.id = op.opportunity_id
+      WHERE op.poster_organization_id = o.id AND opp.status = 'OPEN' AND opp.deleted_at IS NULL
+    )`;
+  }
+
+  sql += ` ORDER BY open_opportunities DESC, member_count DESC LIMIT $${paramIndex}`;
+  queryParams.push(limit);
+
+  const result = await pool.query(sql, queryParams);
+
+  const cards: Card[] = result.rows.map((row) => ({
+    id: row.id,
+    type: 'organization',
+    title: row.name,
+    subtitle: row.sectors?.slice(0, 2).join(', ') || '',
+    description: row.description?.slice(0, 150) || '',
+    imageUrl: row.logo_url,
+    metadata: {
+      sectors: row.sectors,
+      location: [row.city, row.country].filter(Boolean).join(', '),
+      memberCount: parseInt(row.member_count) || 0,
+      openOpportunities: parseInt(row.open_opportunities) || 0,
+      website: row.website,
+      slug: row.slug,
+    },
+    actions: [
+      { label: 'Voir détails', action: 'navigate', params: { screen: 'organization', id: row.id, slug: row.slug } },
+    ],
+  }));
+
+  return {
+    type: 'organization_list',
+    cards,
+    totalCount: cards.length,
+    hasMore: cards.length === limit,
+    query,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEARCH TALENTS
+// ═══════════════════════════════════════════════════════════════
+
+export const searchTalentsSchema = z.object({
+  query: z.string().optional().describe('Recherche par nom, titre ou compétences'),
+  skills: z.array(z.string()).optional().describe('Compétences recherchées'),
+  location: z.string().optional().describe('Ville ou région'),
+  experienceLevel: z.enum(['JUNIOR', 'MID', 'SENIOR', 'EXPERT']).optional(),
+  limit: z.number().min(1).max(10).default(5),
+});
+
+export type SearchTalentsParams = z.infer<typeof searchTalentsSchema>;
+
+export async function searchTalents(
+  params: SearchTalentsParams,
+  context: { talentId: string }
+) {
+  const { query, skills, location, experienceLevel, limit } = params;
+
+  let sql = `
+    SELECT DISTINCT
+      t.id, t.display_name, t.headline, t.avatar_url, t.city, t.country,
+      t.experience_level,
+      (SELECT array_agg(s.canonical_name) FROM talent_skills ts
+       JOIN skills s ON ts.skill_id = s.id
+       WHERE ts.talent_id = t.id LIMIT 5) as top_skills
+    FROM talents t
+    WHERE t.deleted_at IS NULL AND t.is_public = true
+  `;
+
+  const queryParams: any[] = [];
+  let paramIndex = 1;
+
+  if (query) {
+    sql += ` AND (t.display_name ILIKE '%' || $${paramIndex} || '%' OR t.headline ILIKE '%' || $${paramIndex} || '%')`;
+    queryParams.push(query);
+    paramIndex++;
+  }
+
+  if (skills && skills.length > 0) {
+    sql += ` AND EXISTS (
+      SELECT 1 FROM talent_skills ts
+      JOIN skills s ON ts.skill_id = s.id
+      WHERE ts.talent_id = t.id AND s.canonical_name ILIKE ANY($${paramIndex}::text[])
+    )`;
+    queryParams.push(skills.map((s) => `%${s}%`));
+    paramIndex++;
+  }
+
+  if (location) {
+    sql += ` AND (t.city ILIKE '%' || $${paramIndex} || '%' OR t.country ILIKE '%' || $${paramIndex} || '%')`;
+    queryParams.push(location);
+    paramIndex++;
+  }
+
+  if (experienceLevel) {
+    sql += ` AND t.experience_level = $${paramIndex}`;
+    queryParams.push(experienceLevel);
+    paramIndex++;
+  }
+
+  sql += ` ORDER BY t.display_name ASC LIMIT $${paramIndex}`;
+  queryParams.push(limit);
+
+  const result = await pool.query(sql, queryParams);
+
+  return {
+    type: 'talent_list',
+    talents: result.rows.map((row) => ({
+      id: row.id,
+      name: row.display_name,
+      headline: row.headline,
+      avatarUrl: row.avatar_url,
+      location: [row.city, row.country].filter(Boolean).join(', '),
+      experienceLevel: row.experience_level,
+      topSkills: row.top_skills || [],
+    })),
+    totalCount: result.rows.length,
+    hasMore: result.rows.length === limit,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // EXPORT TOOL DEFINITIONS FOR OPENAI AGENTS
 // ═══════════════════════════════════════════════════════════════
 
@@ -488,5 +666,19 @@ export const searchToolDefinitions = {
       "Recherche des espaces de travail, salles de réunion, ou lieux de formation à réserver. Utilise cette fonction quand l'utilisateur cherche un endroit pour travailler ou organiser un événement.",
     parameters: searchSpacesSchema,
     execute: searchSpaces,
+  },
+  search_organizations: {
+    name: 'search_organizations',
+    description:
+      "Recherche des organisations, entreprises et hubs. Utilise cette fonction quand l'utilisateur cherche une entreprise, un hub ou une organisation.",
+    parameters: searchOrganizationsSchema,
+    execute: searchOrganizations,
+  },
+  search_talents: {
+    name: 'search_talents',
+    description:
+      "Recherche des talents (professionnels) par nom, compétences, localisation ou niveau d'expérience. Réservé aux recruteurs et admins.",
+    parameters: searchTalentsSchema,
+    execute: searchTalents,
   },
 };
