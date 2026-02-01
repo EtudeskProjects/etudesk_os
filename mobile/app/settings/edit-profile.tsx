@@ -21,22 +21,18 @@ import {
   Laptop,
   Plane,
   Check,
-  MapPin,
-  Loader2,
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
 import { Input, Button, Toggle } from '../../src/components/ui';
 import { COUNTRIES, GENDERS, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
 import { useTheme } from '../../src/hooks/useTheme';
-import { useGeolocation } from '../../src/hooks/useGeolocation';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { talentService, imageService } from '../../src/services';
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { isLoading: isGeoLoading, getCurrentLocation } = useGeolocation();
   const { refreshUser } = useAuth();
 
   // Loading states
@@ -63,8 +59,8 @@ export default function EditProfileScreen() {
   const COUNTRY_CHIP_WIDTH = 80;
 
   // Preferences
-  const [remoteReady, setRemoteReady] = useState(false);
-  const [willingToRelocate, setWillingToRelocate] = useState(false);
+  const [remoteReady, setRemoteReady] = useState(true);
+  const [willingToRelocate, setWillingToRelocate] = useState(true);
 
   // Load profile data on mount
   useEffect(() => {
@@ -152,21 +148,6 @@ export default function EditProfileScreen() {
     }
   };
 
-  // Handle geolocation
-  const handleGeolocation = async () => {
-    const result = await getCurrentLocation();
-    if (result) {
-      if (result.countryCode) {
-        setCountry(result.countryCode);
-      }
-      if (result.regionCode) {
-        setRegion(result.regionCode);
-      }
-      if (result.cityCode) {
-        setCommune(result.cityCode);
-      }
-    }
-  };
 
   const handleSave = async () => {
     try {
@@ -366,25 +347,6 @@ export default function EditProfileScreen() {
               )}
             </View>
 
-            {/* Geolocation Button */}
-            <TouchableOpacity
-              style={[
-                styles.geolocationButton,
-                { backgroundColor: colors.primary + '10', borderColor: colors.primary },
-              ]}
-              onPress={handleGeolocation}
-              disabled={isGeoLoading}
-              activeOpacity={0.7}
-            >
-              {isGeoLoading ? (
-                <Loader2 size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              ) : (
-                <MapPin size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              )}
-              <Text style={[styles.geolocationButtonText, { color: colors.primary }]}>
-                {isGeoLoading ? 'Localisation en cours...' : 'Utiliser ma position actuelle'}
-              </Text>
-            </TouchableOpacity>
 
             {/* Pays */}
             <View style={styles.fieldContainer}>
@@ -729,21 +691,6 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
-  geolocationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    padding: SPACING.md,
-    borderWidth: 1.5,
-    borderRadius: BORDER.radius.sm,
-    borderStyle: 'dashed',
-  },
-
-  geolocationButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
 
   datePickerButton: {
     borderWidth: BORDER.width.thin,

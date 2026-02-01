@@ -167,3 +167,25 @@ export type {
   SendSpaceInvitationsResult,
   AcceptSpaceInvitationResult
 } from './spaceInvitationService';
+
+export { default as documentService } from './documentService';
+export type {
+  DocumentType,
+  DocumentCategory,
+  DocumentStatus,
+  TalentDocument,
+  DocumentStats,
+  UploadDocumentParams,
+  UpdateDocumentParams,
+  ListDocumentsParams,
+} from './documentService';
+export {
+  DOCUMENT_TYPE_LABELS,
+  DOCUMENT_CATEGORY_LABELS,
+  DOCUMENT_STATUS_LABELS,
+  formatFileSize,
+  getFileExtension,
+  isAllowedFileType,
+  getStatusColor,
+  getCategoryIcon,
+} from './documentService';

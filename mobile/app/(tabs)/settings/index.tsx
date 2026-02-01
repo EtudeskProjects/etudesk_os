@@ -23,10 +23,8 @@ import {
   Trash2,
   Settings,
   Scale,
-  Mail,
-  CalendarDays,
 } from 'lucide-react-native';
-import { invitationService } from '../../../src/services/invitationService';
+import { kycService } from '../../../src/services/kycService';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
@@ -37,22 +35,20 @@ import { Header, FooterNav } from '../../../src/components/ui';
 export default function AccountScreen() {
   const router = useRouter();
   const [isKYCVerified, setIsKYCVerified] = useState(false);
-  const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
   const { colors } = useTheme();
 
-  // Fetch pending invitations count
   useEffect(() => {
-    const fetchInvitationsCount = async () => {
+    const fetchKYCStatus = async () => {
       try {
-        const response = await invitationService.getReceivedInvitations();
-        if (response.data) {
-          setPendingInvitationsCount(response.data.length);
+        const response = await kycService.getStatus();
+        if (response.data?.status === 'verified') {
+          setIsKYCVerified(true);
         }
       } catch (error) {
         // Silently fail
       }
     };
-    fetchInvitationsCount();
+    fetchKYCStatus();
   }, []);
   const { t, language } = useI18n();
   const { currentSpace, selectedOrgId, selectedOrg, userOrganizations, setSpace } = useSpace();
@@ -169,23 +165,6 @@ export default function AccountScreen() {
       description: t('settings.menu.teamDesc'),
       onPress: () => router.push('/settings/organization/members'),
     }] : []),
-    // Talent-specific: My Reservations
-    ...(!isOrganizationSpace ? [{
-      id: 'reservations',
-      label: language === 'fr' ? 'Mes reservations' : 'My reservations',
-      icon: CalendarDays,
-      description: language === 'fr' ? 'Voir vos reservations d\'espaces' : 'View your space reservations',
-      onPress: () => router.push('/settings/my-reservations'),
-    }] : []),
-    {
-      id: 'invitations',
-      label: language === 'fr' ? 'Invitations' : 'Invitations',
-      icon: Mail,
-      description: language === 'fr' ? 'Invitations d\'organisations' : 'Organization invitations',
-      badge: pendingInvitationsCount > 0 ? `${pendingInvitationsCount}` : null,
-      badgeColor: colors.primary,
-      onPress: () => router.push('/settings/invitations'),
-    },
     {
       id: 'kyc',
       label: t('settings.menu.kyc'),
@@ -355,7 +334,20 @@ export default function AccountScreen() {
                 styles.spaceChip,
                 { backgroundColor: colors.surface, borderColor: colors.gray300, borderStyle: 'dashed' },
               ]}
-              onPress={() => router.push('/settings/create-organization')}
+              onPress={() => {
+                if (!isKYCVerified) {
+                  Alert.alert(
+                    'Vérification requise',
+                    'Vous devez vérifier votre identité (KYC) avant de créer une organisation.',
+                    [
+                      { text: 'Annuler', style: 'cancel' },
+                      { text: 'Vérifier mon identité', onPress: () => router.push('/settings/kyc') },
+                    ]
+                  );
+                  return;
+                }
+                router.push('/settings/create-organization');
+              }}
               activeOpacity={0.8}
             >
               <View style={[styles.spaceChipIcon, { backgroundColor: colors.gray200 }]}>

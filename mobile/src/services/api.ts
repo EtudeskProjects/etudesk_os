@@ -308,6 +308,13 @@ class ApiService {
   }
 
   /**
+   * PATCH request
+   */
+  async patch<T>(endpoint: string, body: any, options?: RequestOptions): Promise<ApiResponse<T>> {
+    return this.request<T>('PATCH', endpoint, body, options?.headers, true, options);
+  }
+
+  /**
    * DELETE request
    */
   async delete<T>(

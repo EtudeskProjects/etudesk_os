@@ -25,8 +25,11 @@ import opportunityInvitationsRouter from './routes/opportunity-invitations.route
 import spaceInvitationsRouter from './routes/space-invitations.routes';
 import webhooksRouter from './routes/webhooks.routes';
 import calendarRouter from './routes/calendar.routes';
+import copilotRouter from './routes/copilot';
+import documentsRouter from './routes/documents';
 import { verifyEmailConnection } from './services/email.service';
 import { cleanupExpiredOTPs } from './services/otp.service';
+import { graphService } from './services/graph';
 import { apiLimiter, authLimiter, otpLimiter } from './middleware/rateLimit.middleware';
 import { communitySubscriptionService } from './services/community-subscription.service';
 import { communityPaymentService } from './services/community-payment.service';
@@ -72,11 +75,16 @@ app.use('/uploads', express.static(uploadDir));
 
 // Health check (no rate limit)
 app.get('/health', async (req, res) => {
+  const neo4jConnected = graphService.isConnected();
+
   res.json({
     status: 'ok',
     name: 'Etudesk API',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
+    services: {
+      neo4j: neo4jConnected ? 'connected' : 'disconnected',
+    },
   });
 });
 
@@ -117,6 +125,8 @@ app.use('/api/images', imagesRouter);
 app.use('/api/files', filesRouter);
 app.use('/api/payment-methods', paymentMethodsRouter);
 app.use('/api/calendar', calendarRouter);
+app.use('/api/copilot', copilotRouter);
+app.use('/api/documents', documentsRouter);
 
 // 404 handler
 app.use((req, res) => {
@@ -138,6 +148,15 @@ app.listen(PORT, async () => {
   if (!emailConnected) {
     console.warn('⚠️  Email service not available. OTP emails will fail.');
     console.warn('   Make sure Mailhog is running: docker-compose up -d mailhog');
+  }
+
+  // Initialize Neo4j Graph Database
+  try {
+    await graphService.initialize();
+    console.log('✅ Neo4j Graph Database connected');
+  } catch (error) {
+    console.warn('⚠️  Neo4j Graph Database not available. Graph features will be limited.');
+    console.warn('   Check your NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD in .env');
   }
 
   // Setup periodic cleanup of expired OTPs (every hour)

@@ -30,6 +30,8 @@ import {
   Award,
   Banknote,
   Info,
+  FolderOpen,
+  Mail,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
@@ -89,12 +91,12 @@ export default function EcosystemScreen() {
 
   const greeting = getGreeting();
 
-  // Get display name
+  // Get first name, truncated to 10 characters
   const getDisplayName = () => {
-    if (isOrganizationSpace && selectedOrg) {
-      return selectedOrg.name;
-    }
-    return user?.name || user?.email?.split('@')[0] || 'Utilisateur';
+    const raw = isOrganizationSpace && selectedOrg
+      ? selectedOrg.name
+      : user?.firstName || user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Utilisateur';
+    return raw.length > 10 ? raw.slice(0, 10) + '...' : raw;
   };
 
   // Card themes
@@ -153,6 +155,14 @@ export default function EcosystemScreen() {
       theme: CARD_THEMES.talent,
     },
     {
+      id: 'documents',
+      label: 'Mes documents',
+      icon: FolderOpen,
+      route: '/settings/documents',
+      count: 0,
+      theme: CARD_THEMES.opportunity,
+    },
+    {
       id: 'communities',
       label: 'Mes communautés',
       icon: Users,
@@ -174,6 +184,14 @@ export default function EcosystemScreen() {
       icon: Briefcase,
       route: '/settings/my-applications',
       count: quickActionCounts.talent.applications,
+      theme: CARD_THEMES.talent,
+    },
+    {
+      id: 'invitations',
+      label: 'Mes invitations',
+      icon: Mail,
+      route: '/settings/invitations',
+      count: 0,
       theme: CARD_THEMES.talent,
     },
   ];
@@ -319,7 +337,7 @@ const renderOrganizationContent = () => (
     {/* Greeting */}
     <View style={styles.greetingSection}>
       <Text style={[styles.greetingText, { color: colors.textPrimary }]}>
-        {greeting.text}, {getDisplayName()} 👋
+        Bonjour {getDisplayName()} 👋
       </Text>
       <Text style={[styles.dateText, { color: colors.textSecondary }]}>
         {new Date().toLocaleDateString('fr-FR', {
@@ -447,7 +465,7 @@ const renderTalentContent = () => (
     {/* Greeting */}
     <View style={styles.greetingSection}>
       <Text style={[styles.greetingText, { color: colors.textPrimary }]}>
-        {greeting.text}, {getDisplayName() || 'Talent'} 👋
+        Bonjour {getDisplayName()} 👋
       </Text>
       <Text style={[styles.dateText, { color: colors.textSecondary }]}>
         {new Date().toLocaleDateString('fr-FR', {

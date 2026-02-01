@@ -11,3 +11,4 @@ export type { ActionItem } from './FloatingActionMenu';
 export { StatusBadge } from './StatusBadge';
 export type { MemberStatus } from './StatusBadge';
 export { StepIndicator } from './StepIndicator';
+export { ShimmerPlaceholder } from './ShimmerPlaceholder';

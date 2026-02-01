@@ -10,7 +10,6 @@ import {
   TextInput,
   Image,
   Alert,
-  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,7 +19,6 @@ import {
   ArrowLeft,
   Camera,
   MapPin,
-  Map,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { Input, Button, StepIndicator } from '../../src/components/ui';
@@ -47,7 +45,6 @@ export default function CreateOrganizationScreen() {
   const { colors } = useTheme();
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showMapPicker, setShowMapPicker] = useState(false);
 
   // Form state - Info
   const [name, setName] = useState('');
@@ -105,7 +102,6 @@ export default function CreateOrganizationScreen() {
 
   const pickLogo = async () => {
     try {
-      // Use centralized imageService for optimized image picking
       const image = await imageService.pickImage({ type: 'logo' });
       if (image) {
         setLogoUri(image.uri);
@@ -131,8 +127,6 @@ export default function CreateOrganizationScreen() {
 
   // Handle map location selection
   const handleMapLocationSelect = (location: any) => {
-    setShowMapPicker(false);
-
     if (location.coordinates) {
       setCoordinates(location.coordinates);
     }
@@ -142,7 +136,6 @@ export default function CreateOrganizationScreen() {
       setCountry(location.countryCode);
     }
     if (location.region) {
-      // Try to match region with our data
       const matchedRegion = availableRegions.find(r =>
         r.label.toLowerCase().includes(location.region.toLowerCase()) ||
         location.region.toLowerCase().includes(r.label.toLowerCase())
@@ -152,7 +145,6 @@ export default function CreateOrganizationScreen() {
       }
     }
     if (location.city) {
-      // Try to match city with our data
       const matchedCity = availableCities.find(c =>
         c.label.toLowerCase().includes(location.city.toLowerCase()) ||
         location.city.toLowerCase().includes(c.label.toLowerCase())
@@ -185,7 +177,7 @@ export default function CreateOrganizationScreen() {
 
       await organizationService.create({
         name: name.trim(),
-        type: orgTypes.length > 0 ? orgTypes[0] : undefined, // Primary type
+        type: orgTypes.length > 0 ? orgTypes[0] : undefined,
         description: description.trim() || undefined,
         logo_url: logoUri || undefined,
         headquarters_city: city || undefined,
@@ -217,9 +209,6 @@ export default function CreateOrganizationScreen() {
     return country.length > 0;
   };
 
-  /* 
-   * STEP DATA
-   */
   const STEPS_DATA = [
     { id: 'info', label: 'Infos' },
     { id: 'location', label: 'Localisation' },
@@ -334,26 +323,14 @@ export default function CreateOrganizationScreen() {
       </View>
 
       <View style={styles.formFields}>
-        {/* Map Button */}
-        <TouchableOpacity
-          style={[
-            styles.mapButton,
-            { backgroundColor: colors.primary + '10', borderColor: colors.primary },
-          ]}
-          onPress={() => setShowMapPicker(true)}
-          activeOpacity={0.7}
-        >
-          <Map size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <View style={styles.mapButtonTextContainer}>
-            <Text style={[styles.mapButtonTitle, { color: colors.primary }]}>
-              Sélectionner sur la carte
-            </Text>
-            <Text style={[styles.mapButtonSubtitle, { color: colors.gray500 }]}>
-              {coordinates ? 'Position sélectionnée' : 'Appuyez pour ouvrir la carte'}
-            </Text>
-          </View>
-          <ChevronRight size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        {/* Inline Map */}
+        <View style={[styles.inlineMapContainer, { borderColor: colors.gray200 }]}>
+          <MapLocationPicker
+            initialCoordinates={coordinates || undefined}
+            onLocationSelect={handleMapLocationSelect}
+            height={220}
+          />
+        </View>
 
         {/* Coordinates display */}
         {coordinates && (
@@ -524,29 +501,6 @@ export default function CreateOrganizationScreen() {
           />
         </View>
       </KeyboardAvoidingView>
-
-      {/* Map Picker Modal */}
-      <Modal
-        visible={showMapPicker}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowMapPicker(false)}
-      >
-        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]} edges={['top']}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowMapPicker(false)} style={styles.backButton}>
-              <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Sélectionner la position</Text>
-            <View style={styles.headerSpacer} />
-          </View>
-          <MapLocationPicker
-            initialCoordinates={coordinates || undefined}
-            onLocationSelect={handleMapLocationSelect}
-            height={undefined}
-          />
-        </SafeAreaView>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -592,21 +546,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.md,
     paddingBottom: SPACING.xl,
-  },
-
-  stepIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.md,
-    marginBottom: SPACING.xl,
-  },
-
-  stepDot: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: BORDER.radius.full,
   },
 
   stepContent: {
@@ -736,28 +675,10 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
   },
 
-  mapButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    padding: SPACING.md,
-    borderWidth: 1.5,
+  inlineMapContainer: {
     borderRadius: BORDER.radius.md,
-    borderStyle: 'dashed',
-  },
-
-  mapButtonTextContainer: {
-    flex: 1,
-  },
-
-  mapButtonTitle: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  mapButtonSubtitle: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    marginTop: 2,
+    overflow: 'hidden',
+    borderWidth: BORDER.width.thin,
   },
 
   coordinatesBox: {
@@ -777,17 +698,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
     paddingBottom: SPACING.xs,
-  },
-
-  modalContainer: {
-    flex: 1,
-  },
-
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
   },
 });

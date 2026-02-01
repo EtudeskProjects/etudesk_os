@@ -117,7 +117,7 @@ router.get('/', async (req, res) => {
 router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.json({ data: [] });
     }
 
     const result = await pool.query(`
