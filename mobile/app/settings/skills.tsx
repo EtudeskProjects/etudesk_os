@@ -15,7 +15,7 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Swipeable } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import {
   Plus,
   Trash2,
@@ -224,7 +224,7 @@ export default function SkillsScreen() {
   };
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <PageLayout
         title="Mes compétences"
         onRefresh={handleRefresh}
@@ -383,7 +383,7 @@ export default function SkillsScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
-    </>
+    </GestureHandlerRootView>
   );
 }
 
