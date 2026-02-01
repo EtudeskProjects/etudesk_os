@@ -39,7 +39,7 @@ const upload = multer({
   storage,
   limits: {
     fileSize: DOCUMENT_LIMITS.MAX_FILE_SIZE_BYTES,
-    files: 1,
+    files: DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST,
   },
   fileFilter: (req, file, cb) => {
     if (ALLOWED_MIME_TYPES.includes(file.mimetype as (typeof ALLOWED_MIME_TYPES)[number])) {
@@ -174,7 +174,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 router.post(
   '/',
   authMiddleware,
-  upload.single('file'),
+  upload.array('file', DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST),
   async (req: AuthRequest, res: Response) => {
     try {
       const talentId = req.talentId;
@@ -182,21 +182,17 @@ router.post(
         return res.status(404).json({ error: 'Profil talent non trouvé' });
       }
 
-      // Check if file was provided
-      if (!req.file) {
+      const files = req.files as Express.Multer.File[] | undefined;
+
+      // Support both single file (req.file) and multi-file (req.files)
+      if (!files || files.length === 0) {
         return res.status(400).json({ error: 'Aucun fichier fourni' });
       }
 
-      // Validate file
-      const validation = validateFile({
-        buffer: req.file.buffer,
-        originalname: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-      });
-
-      if (!validation.valid) {
-        return res.status(400).json({ error: validation.error });
+      if (files.length > DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST) {
+        return res.status(400).json({
+          error: `Maximum ${DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST} fichiers par requête`,
+        });
       }
 
       // Check document limit
@@ -204,6 +200,15 @@ router.post(
       if (!limitCheck.canUpload) {
         return res.status(400).json({
           error: limitCheck.error,
+          currentCount: limitCheck.currentCount,
+          maxCount: limitCheck.maxCount,
+        });
+      }
+
+      // Check if adding these files would exceed the limit
+      if (limitCheck.currentCount + files.length > limitCheck.maxCount) {
+        return res.status(400).json({
+          error: `Vous ne pouvez ajouter que ${limitCheck.maxCount - limitCheck.currentCount} document(s) supplémentaire(s). Limite: ${limitCheck.maxCount}.`,
           currentCount: limitCheck.currentCount,
           maxCount: limitCheck.maxCount,
         });
@@ -217,24 +222,47 @@ router.post(
         return res.status(400).json({ error: 'Type de document invalide' });
       }
 
-      // Upload document
-      const document = await uploadDocument({
-        talentId,
-        file: {
-          buffer: req.file.buffer,
-          originalname: req.file.originalname,
-          mimetype: req.file.mimetype,
-          size: req.file.size,
-        },
-        documentType: document_type,
-        title,
-        description,
-        isPublic: is_public === 'true' || is_public === true,
-      });
+      const uploadedDocuments = [];
+
+      for (const file of files) {
+        // Validate each file
+        const validation = validateFile({
+          buffer: file.buffer,
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size,
+        });
+
+        if (!validation.valid) {
+          return res.status(400).json({ error: `${file.originalname}: ${validation.error}` });
+        }
+
+        // Upload document
+        const document = await uploadDocument({
+          talentId,
+          file: {
+            buffer: file.buffer,
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+          },
+          documentType: document_type,
+          title: files.length === 1 ? title : undefined,
+          description: files.length === 1 ? description : undefined,
+          isPublic: is_public === 'true' || is_public === true,
+        });
+
+        uploadedDocuments.push(document);
+      }
+
+      const message = uploadedDocuments.length === 1
+        ? 'Document uploadé avec succès. Le traitement est en cours.'
+        : `${uploadedDocuments.length} documents uploadés avec succès. Le traitement est en cours.`;
 
       return res.status(201).json({
-        message: 'Document uploadé avec succès. Le traitement est en cours.',
-        document,
+        message,
+        document: uploadedDocuments.length === 1 ? uploadedDocuments[0] : undefined,
+        documents: uploadedDocuments,
       });
     } catch (error) {
       console.error('Error uploading document:', error);
@@ -353,7 +381,7 @@ router.use((error: Error, req: Request, res: Response, next: Function) => {
     }
     if (error.code === 'LIMIT_FILE_COUNT') {
       return res.status(400).json({
-        error: "Un seul fichier peut être uploadé à la fois",
+        error: `Maximum ${DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST} fichiers par requête`,
       });
     }
     return res.status(400).json({ error: error.message });

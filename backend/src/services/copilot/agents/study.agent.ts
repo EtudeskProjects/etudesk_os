@@ -27,6 +27,7 @@ const LEARN_AGENT_TOOLS = [
   'search_wikipedia',
   'search_youtube',
   'generate_diagram',
+  'add_skill_to_profile',
 ];
 
 const QUIZ_AGENT_TOOLS = [
@@ -34,6 +35,7 @@ const QUIZ_AGENT_TOOLS = [
   'evaluate_quiz_answer',
   'create_flashcard',
   'get_progress',
+  'add_skill_to_profile',
 ];
 
 const FLASHCARD_AGENT_TOOLS = [

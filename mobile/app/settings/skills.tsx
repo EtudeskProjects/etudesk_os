@@ -3,7 +3,7 @@
  * Talent skills management - listing, adding, updating, and deleting
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,11 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  TextInput,
   Modal,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Swipeable } from 'react-native-gesture-handler';
 import {
   Plus,
   Trash2,
@@ -24,7 +25,7 @@ import {
   Heart,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
-import { Button, PageLayout, EmptyState } from '../../src/components/ui';
+import { Button, PageLayout, EmptyState, Input } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import skillService, {
   TalentSkill,
@@ -38,6 +39,12 @@ const PROFICIENCY_COLORS: Record<string, string> = {
   INTERMEDIATE: '#3b82f6',
   EXPERT: '#f59e0b',
   MASTER: '#10b981',
+};
+
+const ORIGIN_LABELS: Record<string, string> = {
+  declared: 'Déclarée',
+  extracted: 'Extraite',
+  inferred: 'Inférée',
 };
 
 function getTypeIcon(type: string) {
@@ -65,6 +72,9 @@ export default function SkillsScreen() {
   const [selectedProficiency, setSelectedProficiency] = useState<string>('INTERMEDIATE');
   const [selectedType, setSelectedType] = useState<string>('');
   const [skillName, setSkillName] = useState('');
+  const [skillContext, setSkillContext] = useState('');
+
+  const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
 
   const loadSkills = useCallback(async () => {
     try {
@@ -102,11 +112,9 @@ export default function SkillsScreen() {
         skillName: skillName.trim(),
         proficiencyLevel: selectedProficiency,
         type: selectedType,
+        ...(skillContext.trim() ? { context: skillContext.trim() } : {}),
       });
-      setShowAddModal(false);
-      setSkillName('');
-      setSelectedType('');
-      setSelectedProficiency('INTERMEDIATE');
+      closeModal();
       await loadSkills();
     } catch (error: any) {
       Alert.alert('Erreur', error?.message || "Erreur lors de l'ajout");
@@ -118,6 +126,7 @@ export default function SkillsScreen() {
     setSkillName('');
     setSelectedType('');
     setSelectedProficiency('INTERMEDIATE');
+    setSkillContext('');
   };
 
   const handleDelete = (skill: TalentSkill) => {
@@ -142,85 +151,68 @@ export default function SkillsScreen() {
     );
   };
 
-  const handleUpdateProficiency = async (skill: TalentSkill, newLevel: string) => {
-    try {
-      await skillService.updateSkill(skill.id, newLevel);
-      await loadSkills();
-    } catch {
-      Alert.alert('Erreur', 'Impossible de mettre à jour le niveau');
-    }
+  const renderRightActions = (skill: TalentSkill) => {
+    return (
+      <TouchableOpacity
+        style={[styles.deleteSwipeAction, { backgroundColor: colors.error }]}
+        onPress={() => {
+          swipeableRefs.current[skill.id]?.close();
+          handleDelete(skill);
+        }}
+      >
+        <Trash2 size={20} color="#fff" strokeWidth={ICON.strokeWidth} />
+      </TouchableOpacity>
+    );
   };
 
   const renderSkill = (skill: TalentSkill) => {
-    const TypeIcon = getTypeIcon(skill.type);
     const profColor = PROFICIENCY_COLORS[skill.proficiency_level] || colors.textSecondary;
+    const originLabel = ORIGIN_LABELS[skill.origin] || skill.origin;
+    const contextText = skill.context || skill.extraction_context;
 
     return (
-      <View
+      <Swipeable
         key={skill.id}
-        style={[styles.skillCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+        ref={(ref) => { swipeableRefs.current[skill.id] = ref; }}
+        renderRightActions={() => renderRightActions(skill)}
+        overshootRight={false}
       >
-        <View style={styles.skillHeader}>
-          <View style={[styles.typeIconContainer, { backgroundColor: profColor + '15' }]}>
-            <TypeIcon size={ICON.size.md} color={profColor} strokeWidth={ICON.strokeWidth} />
-          </View>
-          <View style={styles.skillInfo}>
-            <Text style={[styles.skillName, { color: colors.textPrimary }]} numberOfLines={1}>
-              {skill.canonical_name}
-            </Text>
-            <Text style={[styles.skillType, { color: colors.textSecondary }]}>
-              {SKILL_TYPE_LABELS[skill.type] || skill.type}
-              {skill.domain ? ` · ${skill.domain}` : ''}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.deleteButton, { backgroundColor: colors.error + '10' }]}
-            onPress={() => handleDelete(skill)}
-          >
-            <Trash2 size={16} color={colors.error} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-        </View>
+        <View
+          style={[styles.skillCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+        >
+          {/* Skill name */}
+          <Text style={[styles.skillName, { color: colors.textPrimary }]} numberOfLines={1}>
+            {skill.canonical_name}
+          </Text>
 
-        {/* Proficiency selector */}
-        <View style={styles.proficiencyRow}>
-          {PROFICIENCY_LEVELS.map((level) => {
-            const isActive = skill.proficiency_level === level;
-            const levelColor = PROFICIENCY_COLORS[level];
-            return (
-              <TouchableOpacity
-                key={level}
-                style={[
-                  styles.proficiencyChip,
-                  {
-                    backgroundColor: isActive ? levelColor + '20' : colors.gray100,
-                    borderColor: isActive ? levelColor : 'transparent',
-                    borderWidth: 1,
-                  },
-                ]}
-                onPress={() => handleUpdateProficiency(skill, level)}
-              >
-                <Text
-                  style={[
-                    styles.proficiencyChipText,
-                    { color: isActive ? levelColor : colors.textDisabled },
-                  ]}
-                >
-                  {PROFICIENCY_LABELS[level]}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+          {/* Type · Domain */}
+          <Text style={[styles.skillType, { color: colors.textSecondary }]}>
+            {SKILL_TYPE_LABELS[skill.type] || skill.type}
+            {skill.domain ? ` · ${skill.domain}` : ''}
+          </Text>
 
-        {/* Origin badge */}
-        {skill.origin && skill.origin !== 'declared' && (
-          <View style={[styles.originBadge, { backgroundColor: colors.gray100 }]}>
-            <Text style={[styles.originText, { color: colors.textSecondary }]}>
-              {skill.origin === 'inferred' ? 'Inférée par IA' : 'Extraite de document'}
-            </Text>
+          {/* Tags row: proficiency + origin */}
+          <View style={styles.tagsRow}>
+            <View style={[styles.tag, { backgroundColor: profColor + '20', borderColor: profColor }]}>
+              <Text style={[styles.tagText, { color: profColor }]}>
+                {PROFICIENCY_LABELS[skill.proficiency_level]}
+              </Text>
+            </View>
+            <View style={[styles.tag, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}>
+              <Text style={[styles.tagText, { color: colors.textSecondary }]}>
+                {originLabel}
+              </Text>
+            </View>
           </View>
-        )}
-      </View>
+
+          {/* Context */}
+          {contextText ? (
+            <Text style={[styles.contextText, { color: colors.textSecondary }]} numberOfLines={2}>
+              {contextText}
+            </Text>
+          ) : null}
+        </View>
+      </Swipeable>
     );
   };
 
@@ -249,30 +241,6 @@ export default function SkillsScreen() {
           />
         ) : (
           <>
-            {/* Stats */}
-            <View style={[styles.statsCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{skills.length}</Text>
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total</Text>
-                </View>
-                <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
-                <View style={styles.statItem}>
-                  <Text style={[styles.statValue, { color: PROFICIENCY_COLORS.EXPERT }]}>
-                    {skills.filter((s) => s.proficiency_level === 'EXPERT' || s.proficiency_level === 'MASTER').length}
-                  </Text>
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Expert+</Text>
-                </View>
-                <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
-                <View style={styles.statItem}>
-                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                    {groupedSkills.HARD_SKILL.length}
-                  </Text>
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Savoir-faire</Text>
-                </View>
-              </View>
-            </View>
-
             {/* Add Button */}
             <View style={styles.addSection}>
               <Button
@@ -287,11 +255,15 @@ export default function SkillsScreen() {
             {/* Skills grouped by type */}
             {Object.entries(groupedSkills).map(([type, typeSkills]) => {
               if (typeSkills.length === 0) return null;
+              const TypeIcon = getTypeIcon(type);
               return (
                 <View key={type} style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-                    {SKILL_TYPE_LABELS[type] || type} ({typeSkills.length})
-                  </Text>
+                  <View style={styles.sectionHeader}>
+                    <TypeIcon size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+                      {SKILL_TYPE_LABELS[type] || type} ({typeSkills.length})
+                    </Text>
+                  </View>
                   {typeSkills.map(renderSkill)}
                 </View>
               );
@@ -315,13 +287,9 @@ export default function SkillsScreen() {
           <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
             {/* Skill Name */}
             <View style={styles.modalSection}>
-              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>
-                Nom de la compétence
-              </Text>
-              <TextInput
-                style={[styles.textInput, { backgroundColor: colors.surface, borderColor: colors.borderColor, color: colors.textPrimary }]}
+              <Input
+                label="Nom de la compétence"
                 placeholder="Ex: React, Gestion de projet, Communication..."
-                placeholderTextColor={colors.textDisabled}
                 value={skillName}
                 onChangeText={setSkillName}
                 autoFocus
@@ -331,7 +299,7 @@ export default function SkillsScreen() {
             {/* Type Selector */}
             <View style={styles.modalSection}>
               <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Type de compétence *</Text>
-              <View style={styles.proficiencyRow}>
+              <View style={styles.chipRow}>
                 {Object.entries(SKILL_TYPE_LABELS).map(([key, label]) => {
                   const isActive = selectedType === key;
                   const TypeIcon = getTypeIcon(key);
@@ -339,18 +307,17 @@ export default function SkillsScreen() {
                     <TouchableOpacity
                       key={key}
                       style={[
-                        styles.proficiencyChip,
+                        styles.chip,
                         {
                           backgroundColor: isActive ? colors.primary + '20' : colors.gray100,
                           borderColor: isActive ? colors.primary : 'transparent',
-                          borderWidth: 1,
                         },
                       ]}
                       onPress={() => setSelectedType(key)}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <TypeIcon size={14} color={isActive ? colors.primary : colors.textDisabled} strokeWidth={ICON.strokeWidth} />
-                        <Text style={[styles.proficiencyChipText, { color: isActive ? colors.primary : colors.textDisabled }]}>
+                        <Text style={[styles.chipText, { color: isActive ? colors.primary : colors.textDisabled }]}>
                           {label}
                         </Text>
                       </View>
@@ -363,7 +330,7 @@ export default function SkillsScreen() {
             {/* Proficiency Selector */}
             <View style={styles.modalSection}>
               <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Niveau</Text>
-              <View style={styles.proficiencyRow}>
+              <View style={styles.chipRow}>
                 {PROFICIENCY_LEVELS.map((level) => {
                   const isActive = selectedProficiency === level;
                   const levelColor = PROFICIENCY_COLORS[level];
@@ -371,22 +338,37 @@ export default function SkillsScreen() {
                     <TouchableOpacity
                       key={level}
                       style={[
-                        styles.proficiencyChip,
+                        styles.chip,
                         {
                           backgroundColor: isActive ? levelColor + '20' : colors.gray100,
                           borderColor: isActive ? levelColor : 'transparent',
-                          borderWidth: 1,
                         },
                       ]}
                       onPress={() => setSelectedProficiency(level)}
                     >
-                      <Text style={[styles.proficiencyChipText, { color: isActive ? levelColor : colors.textDisabled }]}>
+                      <Text style={[styles.chipText, { color: isActive ? levelColor : colors.textDisabled }]}>
                         {PROFICIENCY_LABELS[level]}
                       </Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
+            </View>
+
+            {/* Context field */}
+            <View style={styles.modalSection}>
+              <Input
+                label="Contexte"
+                placeholder="Comment et quand avez-vous acquis cette compétence ?"
+                value={skillContext}
+                onChangeText={(text) => setSkillContext(text.slice(0, 200))}
+                multiline
+                numberOfLines={3}
+                style={{ height: 80, textAlignVertical: 'top', paddingTop: SPACING.sm }}
+              />
+              <Text style={[styles.charCounter, { color: colors.textDisabled }]}>
+                {skillContext.length}/200
+              </Text>
             </View>
 
             {/* Add Button */}
@@ -406,27 +388,20 @@ export default function SkillsScreen() {
 }
 
 const styles = StyleSheet.create({
-  statsCard: {
-    padding: SPACING.md,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.md,
-    marginBottom: SPACING.lg,
-  },
-  statsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
-  statItem: { alignItems: 'center' },
-  statValue: { fontSize: TYPOGRAPHY.fontSize.xl, fontWeight: TYPOGRAPHY.fontWeight.bold },
-  statLabel: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: 2 },
-  statDivider: { width: 1, height: 30 },
-
   addSection: { marginBottom: SPACING.lg },
 
   section: { marginBottom: SPACING.lg },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginBottom: SPACING.sm,
+  },
   sectionTitle: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: SPACING.sm,
   },
 
   // Skill Card
@@ -436,48 +411,63 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.md,
     marginBottom: SPACING.sm,
   },
-  skillHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.sm },
-  typeIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: BORDER.radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  skillInfo: { flex: 1, marginLeft: SPACING.sm },
   skillName: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.medium },
   skillType: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: 2 },
-  deleteButton: {
-    width: 32,
-    height: 32,
-    borderRadius: BORDER.radius.xs,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 
-  proficiencyRow: {
+  tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.xs,
+    marginTop: SPACING.sm,
   },
-  proficiencyChip: {
-    paddingVertical: 4,
+  tag: {
+    paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
+    borderRadius: BORDER.radius.full,
+    borderWidth: BORDER.width.thin,
   },
-  proficiencyChipText: {
+  tagText: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
-  originBadge: {
-    alignSelf: 'flex-start',
-    paddingVertical: 2,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
+  contextText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
     marginTop: SPACING.xs,
+    lineHeight: 16,
   },
-  originText: { fontSize: TYPOGRAPHY.fontSize.xs },
+
+  // Swipe delete
+  deleteSwipeAction: {
+    width: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: BORDER.radius.md,
+    marginBottom: SPACING.sm,
+  },
+
+  // Chips (modal)
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  chip: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER.radius.full,
+    borderWidth: BORDER.width.thin,
+  },
+  chipText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+
+  charCounter: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    textAlign: 'right',
+    marginTop: 4,
+  },
 
   // Modal
   modalContainer: { flex: 1 },
@@ -495,12 +485,5 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
     marginBottom: SPACING.xs,
-  },
-  textInput: {
-    height: 44,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
-    paddingHorizontal: SPACING.sm,
-    fontSize: TYPOGRAPHY.fontSize.md,
   },
 });

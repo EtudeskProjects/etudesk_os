@@ -81,7 +81,9 @@ export const DOCUMENT_TYPE_CATEGORIES: Record<DocumentType, DocumentCategory> = 
 
 export const DOCUMENT_LIMITS = {
   // Maximum number of documents per talent
-  MAX_DOCUMENTS_PER_TALENT: 20,
+  MAX_DOCUMENTS_PER_TALENT: 100,
+  // Maximum number of files per upload request
+  MAX_FILES_PER_REQUEST: 5,
   // Maximum file size in bytes (20 MB)
   MAX_FILE_SIZE_BYTES: 20 * 1024 * 1024,
   // Maximum file size in MB (for display)

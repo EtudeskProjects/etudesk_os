@@ -32,11 +32,11 @@ import { Button, PageLayout, EmptyState } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import documentService, {
   TalentDocument,
-  DocumentStats,
   DocumentStatus,
   DocumentCategory,
   DOCUMENT_TYPE_LABELS,
   DOCUMENT_STATUS_LABELS,
+  UPLOAD_LIMITS,
   formatFileSize,
   getStatusColor,
 } from '../../src/services/documentService';
@@ -48,16 +48,11 @@ export default function DocumentsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [documents, setDocuments] = useState<TalentDocument[]>([]);
-  const [stats, setStats] = useState<DocumentStats | null>(null);
 
   const loadDocuments = useCallback(async () => {
     try {
-      const [docsResponse, statsResponse] = await Promise.all([
-        documentService.listDocuments({ limit: 50 }),
-        documentService.getDocumentStats(),
-      ]);
+      const docsResponse = await documentService.listDocuments({ limit: 50 });
       setDocuments(docsResponse.documents);
-      setStats(statsResponse);
     } catch (error) {
       console.error('Error loading documents:', error);
       Alert.alert('Erreur', 'Impossible de charger les documents');
@@ -80,42 +75,52 @@ export default function DocumentsScreen() {
   };
 
   const handleUpload = async () => {
-    if (stats && !stats.canUpload) {
-      Alert.alert(
-        'Limite atteinte',
-        `Tu as atteint la limite de ${stats.maxCount} documents. Supprime un document pour en ajouter un nouveau.`
-      );
-      return;
-    }
-
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
         copyToCacheDirectory: true,
+        multiple: true,
       });
 
       if (result.canceled || !result.assets || result.assets.length === 0) {
         return;
       }
 
-      const file = result.assets[0];
+      const assets = result.assets.slice(0, UPLOAD_LIMITS.MAX_FILES_PER_REQUEST);
 
-      if (file.size && file.size > 20 * 1024 * 1024) {
-        Alert.alert('Fichier trop volumineux', 'La taille maximale est de 20 MB');
-        return;
+      // Validate sizes
+      for (const file of assets) {
+        if (file.size && file.size > UPLOAD_LIMITS.MAX_FILE_SIZE_BYTES) {
+          Alert.alert('Fichier trop volumineux', `"${file.name}" dépasse la taille maximale de ${UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB`);
+          return;
+        }
       }
 
       setIsUploading(true);
 
-      await documentService.uploadDocument({
-        file: {
-          uri: file.uri,
-          name: file.name || 'document',
-          type: file.mimeType || 'application/pdf',
-        },
-      });
+      if (assets.length === 1) {
+        const file = assets[0];
+        await documentService.uploadDocument({
+          file: {
+            uri: file.uri,
+            name: file.name || 'document',
+            type: file.mimeType || 'application/pdf',
+          },
+        });
+      } else {
+        await documentService.uploadMultipleDocuments(
+          assets.map((file) => ({
+            uri: file.uri,
+            name: file.name || 'document',
+            type: file.mimeType || 'application/pdf',
+          }))
+        );
+      }
 
-      Alert.alert('Succès', 'Document uploadé avec succès. Le traitement est en cours.');
+      const msg = assets.length === 1
+        ? 'Document uploadé avec succès. Le traitement est en cours.'
+        : `${assets.length} documents uploadés avec succès. Le traitement est en cours.`;
+      Alert.alert('Succès', msg);
       await loadDocuments();
     } catch (error: any) {
       console.error('Error uploading document:', error);
@@ -283,148 +288,44 @@ export default function DocumentsScreen() {
       isRefreshing={isRefreshing}
       isLoading={isLoading}
     >
-      {/* Stats Card */}
-      {stats && (
-        <View style={[styles.statsCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {stats.currentCount}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Documents</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {stats.maxCount - stats.currentCount}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Disponibles</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {formatFileSize(stats.totalSize)}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Utilisés</Text>
-            </View>
-          </View>
-
-          <View style={[styles.progressBarContainer, { backgroundColor: colors.gray100 }]}>
-            <View
-              style={[
-                styles.progressBar,
-                {
-                  backgroundColor: stats.canUpload ? colors.primary : colors.error,
-                  width: `${Math.min((stats.currentCount / stats.maxCount) * 100, 100)}%`,
-                },
-              ]}
-            />
-          </View>
-          <Text style={[styles.limitText, { color: colors.textDisabled }]}>
-            {stats.currentCount} / {stats.maxCount} documents (max {stats.maxFileSizeMB} MB par fichier)
-          </Text>
-        </View>
-      )}
-
-      {/* Upload Button */}
-      <View style={styles.uploadSection}>
-        <Button
-          title={isUploading ? 'Upload en cours...' : 'Ajouter un document'}
-          onPress={handleUpload}
-          fullWidth
-          disabled={isUploading || (stats ? !stats.canUpload : false)}
-          loading={isUploading}
-          icon={!isUploading ? <Upload size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
-          iconPosition="left"
+      {documents.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          title="Aucun document"
+          subtitle="Ajoute tes CV, diplômes, certificats et autres documents professionnels."
+          actionLabel="Ajouter un document"
+          onAction={handleUpload}
         />
-        <Text style={[styles.uploadHint, { color: colors.textDisabled }]}>
-          PDF et images (JPEG, PNG, WebP) acceptés
-        </Text>
-      </View>
-
-      {/* Documents List */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-          Documents ({documents.length})
-        </Text>
-
-        {documents.length === 0 ? (
-          <EmptyState
-            icon={FileText}
-            title="Aucun document"
-            subtitle="Ajoute tes CV, diplômes, certificats et autres documents professionnels."
-          />
-        ) : (
-          documents.map(renderDocument)
-        )}
-      </View>
+      ) : (
+        <>
+          <View style={styles.uploadSection}>
+            <Button
+              title={isUploading ? 'Upload en cours...' : 'Ajouter un document'}
+              onPress={handleUpload}
+              fullWidth
+              disabled={isUploading}
+              loading={isUploading}
+              icon={!isUploading ? <Upload size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
+              iconPosition="left"
+            />
+            <Text style={[styles.uploadHint, { color: colors.textDisabled }]}>
+              PDF et images (JPEG, PNG, WebP) · Max {UPLOAD_LIMITS.MAX_FILES_PER_REQUEST} fichiers, {UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB chacun
+            </Text>
+          </View>
+          {documents.map(renderDocument)}
+        </>
+      )}
     </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  // Stats Card
-  statsCard: {
-    padding: SPACING.md,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.md,
-    marginBottom: SPACING.lg,
-  },
-
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    marginBottom: SPACING.md,
-  },
-
-  statItem: { alignItems: 'center' },
-
-  statValue: {
-    fontSize: TYPOGRAPHY.fontSize.xl,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-  },
-
-  statLabel: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    marginTop: 2,
-  },
-
-  statDivider: { width: 1, height: 30 },
-
-  progressBarContainer: {
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: SPACING.xs,
-  },
-
-  progressBar: {
-    height: '100%',
-    borderRadius: 3,
-  },
-
-  limitText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    textAlign: 'center',
-  },
-
   uploadSection: { marginBottom: SPACING.lg },
 
   uploadHint: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     textAlign: 'center',
     marginTop: SPACING.xs,
-  },
-
-  section: { marginBottom: SPACING.lg },
-
-  sectionTitle: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: SPACING.sm,
   },
 
   // Document Card

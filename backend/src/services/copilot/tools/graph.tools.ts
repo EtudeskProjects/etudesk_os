@@ -140,6 +140,20 @@ export const recordLearningActivitySchema = z.object({
     .describe("Type d'activité d'apprentissage"),
 });
 
+export const addSkillToProfileSchema = z.object({
+  skillName: z.string().describe('Nom de la compétence à ajouter au profil'),
+  type: z
+    .enum(['KNOWLEDGE', 'HARD_SKILL', 'SOFT_SKILL'])
+    .describe('Type de compétence'),
+  proficiencyLevel: z
+    .enum(['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'])
+    .describe("Niveau de maîtrise évalué par l'agent"),
+  context: z
+    .string()
+    .optional()
+    .describe("Contexte d'évaluation (ex: 'Démontré lors du quiz sur les design patterns')"),
+});
+
 export const updateMasteryLevelSchema = z.object({
   topicName: z.string().describe("Nom du sujet d'étude"),
   newMasteryLevel: z
@@ -163,6 +177,7 @@ export type GetSkillGapsParams = z.infer<typeof getSkillGapsSchema>;
 export type AddInferredInterestParams = z.infer<typeof addInferredInterestSchema>;
 export type SuggestSkillToLearnParams = z.infer<typeof suggestSkillToLearnSchema>;
 export type RecordLearningActivityParams = z.infer<typeof recordLearningActivitySchema>;
+export type AddSkillToProfileParams = z.infer<typeof addSkillToProfileSchema>;
 export type UpdateMasteryLevelParams = z.infer<typeof updateMasteryLevelSchema>;
 
 // ═══════════════════════════════════════════════════════════════
@@ -542,6 +557,70 @@ export async function updateMasteryLevel(
   }
 }
 
+/**
+ * Add a skill to the talent's profile (used by copilot after evaluation)
+ */
+export async function addSkillToProfile(
+  params: AddSkillToProfileParams,
+  context: { talentId: string }
+): Promise<{
+  success: boolean;
+  message: string;
+  skillName?: string;
+}> {
+  try {
+    const { pool } = await import('../../database');
+    const slug = params.skillName.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+    // Find or create the skill
+    let skillId: string;
+    const existing = await pool.query(`SELECT id FROM skills WHERE slug = $1`, [slug]);
+    if (existing.rows.length > 0) {
+      skillId = existing.rows[0].id;
+    } else {
+      const created = await pool.query(
+        `INSERT INTO skills (canonical_name, slug, type) VALUES ($1, $2, $3) RETURNING id`,
+        [params.skillName.trim(), slug, params.type]
+      );
+      skillId = created.rows[0].id;
+    }
+
+    // Upsert into talent_skills with origin='inferred'
+    const existingLink = await pool.query(
+      `SELECT id FROM talent_skills WHERE talent_id = $1 AND skill_id = $2`,
+      [context.talentId, skillId]
+    );
+
+    if (existingLink.rows.length > 0) {
+      await pool.query(
+        `UPDATE talent_skills SET proficiency_level = $1, origin = 'inferred'${params.context ? ', context = $3' : ''} WHERE id = $2`,
+        params.context
+          ? [params.proficiencyLevel, existingLink.rows[0].id, params.context]
+          : [params.proficiencyLevel, existingLink.rows[0].id]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO talent_skills (talent_id, skill_id, proficiency_level, origin${params.context ? ', context' : ''})
+         VALUES ($1, $2, $3, 'inferred'${params.context ? ', $4' : ''})`,
+        params.context
+          ? [context.talentId, skillId, params.proficiencyLevel, params.context]
+          : [context.talentId, skillId, params.proficiencyLevel]
+      );
+    }
+
+    return {
+      success: true,
+      message: `Compétence "${params.skillName}" ajoutée au profil (niveau: ${params.proficiencyLevel}, origine: inférée)`,
+      skillName: params.skillName,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.message || "Erreur lors de l'ajout de la compétence",
+    };
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════
@@ -644,6 +723,13 @@ export const graphToolDefinitions = {
     parameters: updateMasteryLevelSchema,
     execute: updateMasteryLevel,
   },
+  add_skill_to_profile: {
+    name: 'add_skill_to_profile',
+    description:
+      "Ajoute une compétence au profil du talent après évaluation (quiz, exercice). Nécessite une évaluation préalable du niveau. La compétence est enregistrée avec origin='inferred'.",
+    parameters: addSkillToProfileSchema,
+    execute: addSkillToProfile,
+  },
 };
 
 // Tools for Explore mode
@@ -665,4 +751,5 @@ export const graphStudyTools = {
   suggest_skill_to_learn: graphToolDefinitions.suggest_skill_to_learn,
   record_learning_activity: graphToolDefinitions.record_learning_activity,
   update_mastery_level: graphToolDefinitions.update_mastery_level,
+  add_skill_to_profile: graphToolDefinitions.add_skill_to_profile,
 };

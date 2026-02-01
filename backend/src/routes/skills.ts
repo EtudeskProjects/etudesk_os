@@ -28,7 +28,7 @@ router.get('/my', async (req: AuthRequest, res: Response) => {
     const result = await pool.query(
       `SELECT ts.id, ts.skill_id, ts.proficiency_level, ts.self_assessed,
               ts.endorsed_count, ts.years_of_experience, ts.last_used_at,
-              ts.context,
+              ts.context, ts.origin, ts.extraction_context,
               s.canonical_name, s.slug, s.type, s.domain, s.aliases
        FROM talent_skills ts
        JOIN skills s ON s.id = ts.skill_id
@@ -55,7 +55,7 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Profil talent requis' });
     }
 
-    const { skillId, skillName, proficiencyLevel, type } = req.body;
+    const { skillId, skillName, proficiencyLevel, type, context } = req.body;
 
     if (!proficiencyLevel || !isValidProficiencyLevel(proficiencyLevel)) {
       return res.status(400).json({ error: 'Niveau de compétence invalide' });
@@ -101,18 +101,18 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
     );
 
     if (existingLink.rows.length > 0) {
-      // Update proficiency
+      // Update proficiency and optionally context
       await pool.query(
-        `UPDATE talent_skills SET proficiency_level = $1 WHERE id = $2`,
-        [proficiencyLevel, existingLink.rows[0].id]
+        `UPDATE talent_skills SET proficiency_level = $1${context ? ', context = $3' : ''} WHERE id = $2`,
+        context ? [proficiencyLevel, existingLink.rows[0].id, context] : [proficiencyLevel, existingLink.rows[0].id]
       );
       return res.json({ data: { id: existingLink.rows[0].id, updated: true } });
     }
 
     const result = await pool.query(
-      `INSERT INTO talent_skills (talent_id, skill_id, proficiency_level)
-       VALUES ($1, $2, $3) RETURNING id`,
-      [talentId, resolvedSkillId, proficiencyLevel]
+      `INSERT INTO talent_skills (talent_id, skill_id, proficiency_level${context ? ', context' : ''})
+       VALUES ($1, $2, $3${context ? ', $4' : ''}) RETURNING id`,
+      context ? [talentId, resolvedSkillId, proficiencyLevel, context] : [talentId, resolvedSkillId, proficiencyLevel]
     );
 
     return res.status(201).json({ data: { id: result.rows[0].id } });

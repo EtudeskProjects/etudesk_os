@@ -15,6 +15,7 @@ export interface TalentSkill {
   last_used_at: string | null;
   context: string | null;
   origin: 'declared' | 'inferred' | 'extracted';
+  extraction_context: string | null;
   canonical_name: string;
   slug: string;
   type: 'KNOWLEDGE' | 'SOFT_SKILL' | 'HARD_SKILL';
@@ -53,6 +54,7 @@ const skillService = {
     skillName: string;
     proficiencyLevel: string;
     type: string;
+    context?: string;
   }): Promise<{ id: string }> {
     const response = await api.post<{ id: string }>('/api/skills/my', input);
     return response.data;

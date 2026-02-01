@@ -108,17 +108,26 @@ export interface DocumentTypesResponse {
   allowedMimeTypes: string[];
 }
 
+export interface FileInput {
+  uri: string;
+  name: string;
+  type: string;
+}
+
 export interface UploadDocumentParams {
-  file: {
-    uri: string;
-    name: string;
-    type: string;
-  };
+  file: FileInput;
   documentType?: DocumentType;
   title?: string;
   description?: string;
   isPublic?: boolean;
 }
+
+export const UPLOAD_LIMITS = {
+  MAX_FILES_PER_REQUEST: 5,
+  MAX_FILE_SIZE_BYTES: 20 * 1024 * 1024,
+  MAX_FILE_SIZE_MB: 20,
+  MAX_DOCUMENTS_PER_TALENT: 100,
+} as const;
 
 export interface UpdateDocumentParams {
   documentType?: DocumentType;
@@ -270,10 +279,49 @@ async function uploadDocument(
     formData
   );
 
-  if (!response.data) {
+  if (!response.document) {
     throw new Error(response.error || 'Failed to upload document');
   }
-  return response.data;
+  return response;
+}
+
+/**
+ * Upload multiple documents (max 5 per request)
+ */
+async function uploadMultipleDocuments(
+  files: FileInput[],
+  options?: { documentType?: DocumentType; isPublic?: boolean }
+): Promise<{ message: string; documents: TalentDocument[] }> {
+  if (files.length > UPLOAD_LIMITS.MAX_FILES_PER_REQUEST) {
+    throw new Error(`Maximum ${UPLOAD_LIMITS.MAX_FILES_PER_REQUEST} fichiers par requête`);
+  }
+
+  const formData = new FormData();
+
+  for (const file of files) {
+    formData.append('file', {
+      uri: file.uri,
+      name: file.name,
+      type: file.type,
+    } as unknown as Blob);
+  }
+
+  if (options?.documentType) {
+    formData.append('document_type', options.documentType);
+  }
+  if (options?.isPublic !== undefined) {
+    formData.append('is_public', String(options.isPublic));
+  }
+
+  const response = await api.post<{ message: string; documents: TalentDocument[] }>(
+    '/api/documents',
+    formData
+  ) as any;
+
+  if (!response.documents && !response.data?.documents) {
+    throw new Error(response.error || 'Failed to upload documents');
+  }
+  return response.data || response;
 }
 
 /**
@@ -405,6 +453,7 @@ export default {
   listDocuments,
   getDocument,
   uploadDocument,
+  uploadMultipleDocuments,
   updateDocument,
   deleteDocument,
   retryExtraction,

@@ -4,9 +4,19 @@
  */
 
 import { Router, Response } from 'express';
+import multer from 'multer';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { copilotService } from '../services/copilot/copilot.service';
 import { COPILOT_MODES, CopilotMode } from '../services/copilot/ontology/schema';
+import {
+  DOCUMENT_LIMITS,
+  ALLOWED_MIME_TYPES,
+} from '../constants/documents';
+import {
+  uploadDocument,
+  canUploadDocument,
+  validateFile,
+} from '../services/documents/document.service';
 
 const router = Router();
 
@@ -66,6 +76,118 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
     });
   }
 });
+
+// ═══════════════════════════════════════════════════════════════
+// ATTACHMENT UPLOAD (Copilot file attachments → documents)
+// ═══════════════════════════════════════════════════════════════
+
+const copilotUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: DOCUMENT_LIMITS.MAX_FILE_SIZE_BYTES,
+    files: DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST,
+  },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_MIME_TYPES.includes(file.mimetype as (typeof ALLOWED_MIME_TYPES)[number])) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Type de fichier non autorisé: ${file.mimetype}. Formats acceptés: PDF, JPEG, PNG, WebP, HEIC`));
+    }
+  },
+});
+
+/**
+ * POST /api/copilot/attachments - Upload files from copilot chat
+ * Files are stored as documents and go through the auto-extraction flow.
+ * If no skills are inferred from the document, no skills are attached.
+ * Max 5 files per request, PDF/images only, 20MB max each.
+ * Returns: { documents: TalentDocument[] }
+ */
+router.post(
+  '/attachments',
+  authMiddleware,
+  copilotUpload.array('file', DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const talentId = req.talentId;
+      if (!talentId) {
+        return res.status(401).json({ error: 'Non authentifié' });
+      }
+
+      const files = req.files as Express.Multer.File[] | undefined;
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: 'Aucun fichier fourni' });
+      }
+
+      if (files.length > DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST) {
+        return res.status(400).json({
+          error: `Maximum ${DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST} fichiers par requête`,
+        });
+      }
+
+      // Check document limit
+      const limitCheck = await canUploadDocument(talentId);
+      if (!limitCheck.canUpload) {
+        return res.status(400).json({
+          error: limitCheck.error,
+          currentCount: limitCheck.currentCount,
+          maxCount: limitCheck.maxCount,
+        });
+      }
+
+      if (limitCheck.currentCount + files.length > limitCheck.maxCount) {
+        return res.status(400).json({
+          error: `Vous ne pouvez ajouter que ${limitCheck.maxCount - limitCheck.currentCount} document(s) supplémentaire(s). Limite: ${limitCheck.maxCount}.`,
+        });
+      }
+
+      const uploadedDocuments = [];
+
+      for (const file of files) {
+        const validation = validateFile({
+          buffer: file.buffer,
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+          size: file.size,
+        });
+
+        if (!validation.valid) {
+          return res.status(400).json({ error: `${file.originalname}: ${validation.error}` });
+        }
+
+        // Upload as document — auto-extraction will classify and extract skills.
+        // If the document doesn't match known categories, it falls into 'OTHER'.
+        // Skills are only attached if the extraction finds relevant competencies.
+        const document = await uploadDocument({
+          talentId,
+          file: {
+            buffer: file.buffer,
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+          },
+        });
+
+        uploadedDocuments.push(document);
+      }
+
+      res.status(201).json({
+        success: true,
+        data: {
+          documents: uploadedDocuments,
+          message: uploadedDocuments.length === 1
+            ? 'Document ajouté et en cours de traitement.'
+            : `${uploadedDocuments.length} documents ajoutés et en cours de traitement.`,
+        },
+      });
+    } catch (error) {
+      console.error('Error uploading copilot attachment:', error);
+      res.status(500).json({
+        error: "Erreur lors de l'upload du fichier",
+      });
+    }
+  }
+);
 
 // ═══════════════════════════════════════════════════════════════
 // SESSION MANAGEMENT
