@@ -17,7 +17,7 @@ export interface TalentSkill {
   origin: 'declared' | 'inferred' | 'extracted';
   canonical_name: string;
   slug: string;
-  type: 'knowledge' | 'know_how' | 'know_being';
+  type: 'KNOWLEDGE' | 'SOFT_SKILL' | 'HARD_SKILL';
   domain: string | null;
   aliases: string[] | null;
 }
@@ -39,21 +39,21 @@ export const PROFICIENCY_LABELS: Record<string, string> = {
 };
 
 export const SKILL_TYPE_LABELS: Record<string, string> = {
-  knowledge: 'Savoir',
-  know_how: 'Savoir-faire',
-  know_being: 'Savoir-être',
+  KNOWLEDGE: 'Savoir',
+  HARD_SKILL: 'Savoir-faire',
+  SOFT_SKILL: 'Savoir-être',
 };
 
 export const PROFICIENCY_LEVELS = ['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'] as const;
 
 const skillService = {
   async getMySkills(): Promise<TalentSkill[]> {
-    const response = await api.get<TalentSkill[]>('/skills/my');
+    const response = await api.get<TalentSkill[]>('/api/skills/my');
     return response.data;
   },
 
   async searchSkills(query: string): Promise<SkillSearchResult[]> {
-    const response = await api.get<SkillSearchResult[]>(`/skills/search?q=${encodeURIComponent(query)}`);
+    const response = await api.get<SkillSearchResult[]>(`/api/skills/search?q=${encodeURIComponent(query)}`);
     return response.data;
   },
 
@@ -63,7 +63,7 @@ const skillService = {
     proficiencyLevel: string;
     type?: string;
   }): Promise<{ id: string }> {
-    const response = await api.post<{ id: string }>('/skills/my', input);
+    const response = await api.post<{ id: string }>('/api/skills/my', input);
     return response.data;
   },
 

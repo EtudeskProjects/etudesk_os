@@ -5,15 +5,28 @@
 -- ═══════════════════════════════════════════════════════════════
 
 -- 1. Add CHECK constraint on skills.type
--- Values: knowledge (savoir), know_how (savoir-faire), know_being (savoir-être)
+-- Values: KNOWLEDGE (savoir), HARD_SKILL (savoir-faire), SOFT_SKILL (savoir-être)
 ALTER TABLE skills
   DROP CONSTRAINT IF EXISTS skills_type_check;
 
 ALTER TABLE skills
   ADD CONSTRAINT skills_type_check
-  CHECK (type IN ('knowledge', 'know_how', 'know_being'));
+  CHECK (type IN ('KNOWLEDGE', 'HARD_SKILL', 'SOFT_SKILL'));
 
--- 2. Add CHECK constraint on talent_skills.proficiency_level
+-- 2. Widen proficiency_level column (was VARCHAR(10), INTERMEDIATE needs 12)
+ALTER TABLE talent_skills
+  ALTER COLUMN proficiency_level TYPE VARCHAR(20);
+
+-- Migrate existing proficiency levels to new format
+UPDATE talent_skills SET proficiency_level = CASE
+  WHEN proficiency_level IN ('C', 'C+') THEN 'BEGINNER'
+  WHEN proficiency_level IN ('B', 'B+') THEN 'INTERMEDIATE'
+  WHEN proficiency_level IN ('A') THEN 'EXPERT'
+  WHEN proficiency_level IN ('A+') THEN 'MASTER'
+  ELSE proficiency_level
+END
+WHERE proficiency_level NOT IN ('BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER');
+
 ALTER TABLE talent_skills
   DROP CONSTRAINT IF EXISTS talent_skills_proficiency_level_check;
 

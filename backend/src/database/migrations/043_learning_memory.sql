@@ -269,7 +269,7 @@ CREATE INDEX idx_learning_flashcards_topic ON learning_flashcards(topic_id);
 CREATE INDEX idx_learning_flashcards_review_queue ON learning_flashcards(talent_id, next_review_at)
     WHERE is_suspended = FALSE AND is_archived = FALSE;
 CREATE INDEX idx_learning_flashcards_due ON learning_flashcards(talent_id, next_review_at)
-    WHERE next_review_at <= CURRENT_TIMESTAMP AND is_suspended = FALSE;
+    WHERE is_suspended = FALSE AND is_archived = FALSE;
 
 -- Sessions
 CREATE INDEX idx_learning_sessions_talent ON learning_sessions(talent_id);

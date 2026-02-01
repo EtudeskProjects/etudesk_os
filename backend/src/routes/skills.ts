@@ -3,9 +3,9 @@
  * CRUD for talent skills management
  */
 
-import { Router, Request, Response } from 'express';
-import { pool } from '../database';
-import { authMiddleware } from '../middleware/auth';
+import { Router, Response } from 'express';
+import { pool } from '../services/database';
+import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { isValidSkillType, isValidProficiencyLevel } from '../constants/skills';
 
 const router = Router();
@@ -17,7 +17,7 @@ router.use(authMiddleware);
  * GET /api/skills/my
  * Get current talent's skills with skill details
  */
-router.get('/my', async (req: Request, res: Response) => {
+router.get('/my', async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
@@ -27,7 +27,7 @@ router.get('/my', async (req: Request, res: Response) => {
     const result = await pool.query(
       `SELECT ts.id, ts.skill_id, ts.proficiency_level, ts.self_assessed,
               ts.endorsed_count, ts.years_of_experience, ts.last_used_at,
-              ts.context, ts.origin,
+              ts.context,
               s.canonical_name, s.slug, s.type, s.domain, s.aliases
        FROM talent_skills ts
        JOIN skills s ON s.id = ts.skill_id
@@ -47,7 +47,7 @@ router.get('/my', async (req: Request, res: Response) => {
  * GET /api/skills/search?q=keyword
  * Search skills catalog
  */
-router.get('/search', async (req: Request, res: Response) => {
+router.get('/search', async (req: AuthRequest, res: Response) => {
   try {
     const { q, type } = req.query;
     if (!q || typeof q !== 'string' || q.length < 2) {
@@ -84,7 +84,7 @@ router.get('/search', async (req: Request, res: Response) => {
  * POST /api/skills/my
  * Add a skill to current talent
  */
-router.post('/my', async (req: Request, res: Response) => {
+router.post('/my', async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
@@ -112,8 +112,11 @@ router.post('/my', async (req: Request, res: Response) => {
       if (existing.rows.length > 0) {
         resolvedSkillId = existing.rows[0].id;
       } else {
-        // Create new skill
-        const skillType = type && isValidSkillType(type) ? type : 'know_how';
+        // Create new skill - type is required
+        if (!type || !isValidSkillType(type)) {
+          return res.status(400).json({ error: 'Le type de compétence est requis (KNOWLEDGE, HARD_SKILL, SOFT_SKILL)' });
+        }
+        const skillType = type;
         const created = await pool.query(
           `INSERT INTO skills (canonical_name, slug, type)
            VALUES ($1, $2, $3) RETURNING id`,
@@ -143,8 +146,8 @@ router.post('/my', async (req: Request, res: Response) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO talent_skills (talent_id, skill_id, proficiency_level, origin)
-       VALUES ($1, $2, $3, 'declared') RETURNING id`,
+      `INSERT INTO talent_skills (talent_id, skill_id, proficiency_level)
+       VALUES ($1, $2, $3) RETURNING id`,
       [talentId, resolvedSkillId, proficiencyLevel]
     );
 
@@ -159,7 +162,7 @@ router.post('/my', async (req: Request, res: Response) => {
  * PUT /api/skills/my/:id
  * Update proficiency level
  */
-router.put('/my/:id', async (req: Request, res: Response) => {
+router.put('/my/:id', async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
@@ -193,7 +196,7 @@ router.put('/my/:id', async (req: Request, res: Response) => {
  * DELETE /api/skills/my/:id
  * Remove a skill from current talent
  */
-router.delete('/my/:id', async (req: Request, res: Response) => {
+router.delete('/my/:id', async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {

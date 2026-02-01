@@ -49,11 +49,11 @@ const PROFICIENCY_COLORS: Record<string, string> = {
 
 function getTypeIcon(type: string) {
   switch (type) {
-    case 'knowledge':
+    case 'KNOWLEDGE':
       return BookOpen;
-    case 'know_how':
+    case 'HARD_SKILL':
       return Wrench;
-    case 'know_being':
+    case 'SOFT_SKILL':
       return Heart;
     default:
       return Wrench;
@@ -74,6 +74,7 @@ export default function SkillsScreen() {
   const [searchResults, setSearchResults] = useState<SkillSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedProficiency, setSelectedProficiency] = useState<string>('INTERMEDIATE');
+  const [selectedType, setSelectedType] = useState<string>('');
   const [customSkillName, setCustomSkillName] = useState('');
 
   const loadSkills = useCallback(async () => {
@@ -144,9 +145,11 @@ export default function SkillsScreen() {
       await skillService.addSkill({
         skillName: customSkillName.trim(),
         proficiencyLevel: selectedProficiency,
+        type: selectedType || undefined,
       });
       setShowAddModal(false);
       setCustomSkillName('');
+      setSelectedType('');
       setSearchQuery('');
       await loadSkills();
     } catch (error: any) {
@@ -260,9 +263,9 @@ export default function SkillsScreen() {
 
   // Group skills by type
   const groupedSkills = {
-    know_how: skills.filter((s) => s.type === 'know_how'),
-    knowledge: skills.filter((s) => s.type === 'knowledge'),
-    know_being: skills.filter((s) => s.type === 'know_being'),
+    HARD_SKILL: skills.filter((s) => s.type === 'HARD_SKILL'),
+    KNOWLEDGE: skills.filter((s) => s.type === 'KNOWLEDGE'),
+    SOFT_SKILL: skills.filter((s) => s.type === 'SOFT_SKILL'),
   };
 
   if (isLoading) {
@@ -294,55 +297,7 @@ export default function SkillsScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} colors={[colors.primary]} />
         }
       >
-        {/* Stats */}
-        <View style={[styles.statsCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{skills.length}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: PROFICIENCY_COLORS.EXPERT }]}>
-                {skills.filter((s) => s.proficiency_level === 'EXPERT' || s.proficiency_level === 'MASTER').length}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Expert+</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {groupedSkills.know_how.length}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Savoir-faire</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Add Button */}
-        <View style={styles.addSection}>
-          <Button
-            title="Ajouter une compétence"
-            onPress={() => setShowAddModal(true)}
-            fullWidth
-            icon={<Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-            iconPosition="left"
-          />
-        </View>
-
-        {/* Skills grouped by type */}
-        {Object.entries(groupedSkills).map(([type, typeSkills]) => {
-          if (typeSkills.length === 0) return null;
-          return (
-            <View key={type} style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-                {SKILL_TYPE_LABELS[type] || type} ({typeSkills.length})
-              </Text>
-              {typeSkills.map(renderSkill)}
-            </View>
-          );
-        })}
-
-        {skills.length === 0 && (
+        {skills.length === 0 ? (
           <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
             <Wrench size={48} color={colors.gray300} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.emptyStateTitle, { color: colors.textPrimary }]}>
@@ -351,7 +306,66 @@ export default function SkillsScreen() {
             <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
               Ajoute tes compétences pour améliorer ton profil et être mieux recommandé.
             </Text>
+            <View style={{ marginTop: SPACING.md, width: '100%' }}>
+              <Button
+                title="Ajouter une compétence"
+                onPress={() => setShowAddModal(true)}
+                fullWidth
+                icon={<Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+                iconPosition="left"
+              />
+            </View>
           </View>
+        ) : (
+          <>
+            {/* Stats */}
+            <View style={[styles.statsCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{skills.length}</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total</Text>
+                </View>
+                <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
+                <View style={styles.statItem}>
+                  <Text style={[styles.statValue, { color: PROFICIENCY_COLORS.EXPERT }]}>
+                    {skills.filter((s) => s.proficiency_level === 'EXPERT' || s.proficiency_level === 'MASTER').length}
+                  </Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Expert+</Text>
+                </View>
+                <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
+                <View style={styles.statItem}>
+                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                    {groupedSkills.HARD_SKILL.length}
+                  </Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Savoir-faire</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Add Button */}
+            <View style={styles.addSection}>
+              <Button
+                title="Ajouter une compétence"
+                onPress={() => setShowAddModal(true)}
+                fullWidth
+                icon={<Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+                iconPosition="left"
+              />
+            </View>
+
+            {/* Skills grouped by type */}
+            {Object.entries(groupedSkills).map(([type, typeSkills]) => {
+              if (typeSkills.length === 0) return null;
+              return (
+                <View key={type} style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+                    {SKILL_TYPE_LABELS[type] || type} ({typeSkills.length})
+                  </Text>
+                  {typeSkills.map(renderSkill)}
+                </View>
+              );
+            })}
+          </>
         )}
       </ScrollView>
 
@@ -360,7 +374,7 @@ export default function SkillsScreen() {
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
           {/* Modal Header */}
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => { setShowAddModal(false); setSearchQuery(''); setSearchResults([]); setCustomSkillName(''); }}>
+            <TouchableOpacity onPress={() => { setShowAddModal(false); setSearchQuery(''); setSearchResults([]); setCustomSkillName(''); setSelectedType(''); }}>
               <X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
             </TouchableOpacity>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Ajouter une compétence</Text>
@@ -390,6 +404,38 @@ export default function SkillsScreen() {
                     <Text style={[styles.proficiencyChipText, { color: isActive ? levelColor : colors.textDisabled }]}>
                       {PROFICIENCY_LABELS[level]}
                     </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Type Selector */}
+          <View style={styles.modalSection}>
+            <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Type de compétence</Text>
+            <View style={styles.proficiencyRow}>
+              {Object.entries(SKILL_TYPE_LABELS).map(([key, label]) => {
+                const isActive = selectedType === key;
+                const TypeIcon = getTypeIcon(key);
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    style={[
+                      styles.proficiencyChip,
+                      {
+                        backgroundColor: isActive ? colors.primary + '20' : colors.gray100,
+                        borderColor: isActive ? colors.primary : 'transparent',
+                        borderWidth: 1,
+                      },
+                    ]}
+                    onPress={() => setSelectedType(isActive ? '' : key)}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <TypeIcon size={14} color={isActive ? colors.primary : colors.textDisabled} strokeWidth={ICON.strokeWidth} />
+                      <Text style={[styles.proficiencyChipText, { color: isActive ? colors.primary : colors.textDisabled }]}>
+                        {label}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 );
               })}
@@ -449,6 +495,11 @@ export default function SkillsScreen() {
                 <Text style={[styles.customSkillLabel, { color: colors.textSecondary }]}>
                   Compétence introuvable ? Ajoute-la manuellement :
                 </Text>
+                {!selectedType && (
+                  <Text style={[styles.customSkillLabel, { color: colors.warning, marginBottom: SPACING.xs }]}>
+                    Sélectionne un type de compétence ci-dessus
+                  </Text>
+                )}
                 <View style={styles.customSkillRow}>
                   <TextInput
                     style={[styles.customSkillInput, { backgroundColor: colors.surface, borderColor: colors.borderColor, color: colors.textPrimary }]}
@@ -458,8 +509,9 @@ export default function SkillsScreen() {
                     onChangeText={setCustomSkillName}
                   />
                   <TouchableOpacity
-                    style={[styles.customSkillButton, { backgroundColor: colors.primary }]}
+                    style={[styles.customSkillButton, { backgroundColor: selectedType ? colors.primary : colors.gray300, opacity: selectedType ? 1 : 0.5 }]}
                     onPress={handleAddCustom}
+                    disabled={!selectedType}
                   >
                     <Plus size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
                   </TouchableOpacity>

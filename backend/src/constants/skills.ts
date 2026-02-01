@@ -8,9 +8,9 @@
 // ═══════════════════════════════════════════════════════════════
 
 export const SKILL_TYPES = {
-  KNOWLEDGE: 'knowledge',       // Savoir (theoretical knowledge)
-  KNOW_HOW: 'know_how',         // Savoir-faire (practical skills)
-  KNOW_BEING: 'know_being',     // Savoir-être (soft skills / behavioral)
+  KNOWLEDGE: 'KNOWLEDGE',       // Savoir (theoretical knowledge)
+  SOFT_SKILL: 'SOFT_SKILL',     // Savoir-être (soft skills / behavioral)
+  HARD_SKILL: 'HARD_SKILL',     // Savoir-faire (practical skills)
 } as const;
 
 export type SkillType = (typeof SKILL_TYPES)[keyof typeof SKILL_TYPES];

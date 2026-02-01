@@ -177,10 +177,9 @@ CREATE OR REPLACE VIEW v_talent_documents AS
 SELECT
     td.*,
     t.first_name || ' ' || t.last_name AS talent_name,
-    u.email AS talent_email
+    t.email AS talent_email
 FROM talent_documents td
 JOIN talents t ON t.id = td.talent_id
-JOIN users u ON u.id = t.user_id
 WHERE td.deleted_at IS NULL;
 
 -- ═══════════════════════════════════════════════════════════════
