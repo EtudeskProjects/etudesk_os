@@ -8,17 +8,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
-  RefreshControl,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import {
-  ArrowLeft,
   Upload,
   FileText,
   Trash2,
@@ -34,7 +28,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
-import { Button } from '../../src/components/ui';
+import { Button, PageLayout, EmptyState } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import documentService, {
   TalentDocument,
@@ -42,14 +36,12 @@ import documentService, {
   DocumentStatus,
   DocumentCategory,
   DOCUMENT_TYPE_LABELS,
-  DOCUMENT_CATEGORY_LABELS,
   DOCUMENT_STATUS_LABELS,
   formatFileSize,
   getStatusColor,
 } from '../../src/services/documentService';
 
 export default function DocumentsScreen() {
-  const router = useRouter();
   const { colors } = useTheme();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -108,7 +100,6 @@ export default function DocumentsScreen() {
 
       const file = result.assets[0];
 
-      // Check file size
       if (file.size && file.size > 20 * 1024 * 1024) {
         Alert.alert('Fichier trop volumineux', 'La taille maximale est de 20 MB');
         return;
@@ -219,7 +210,6 @@ export default function DocumentsScreen() {
           { backgroundColor: colors.surface, borderColor: colors.borderColor },
         ]}
       >
-        {/* Header */}
         <View style={styles.documentHeader}>
           <View style={[styles.fileIconContainer, { backgroundColor: colors.gray100 }]}>
             <FileIcon size={ICON.size.lg} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
@@ -237,7 +227,6 @@ export default function DocumentsScreen() {
           </View>
         </View>
 
-        {/* Status */}
         <View style={styles.statusRow}>
           <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
             <StatusIcon size={14} color={statusColor} strokeWidth={ICON.strokeWidth} />
@@ -250,7 +239,6 @@ export default function DocumentsScreen() {
           </Text>
         </View>
 
-        {/* Tags */}
         {doc.tags && doc.tags.length > 0 && (
           <View style={styles.tagsRow}>
             {doc.tags.slice(0, 3).map((tag, index) => (
@@ -266,7 +254,6 @@ export default function DocumentsScreen() {
           </View>
         )}
 
-        {/* Actions */}
         <View style={styles.actionsRow}>
           {doc.status === 'FAILED' && (
             <TouchableOpacity
@@ -289,164 +276,93 @@ export default function DocumentsScreen() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Mes documents</Text>
-        <View style={styles.headerSpacer} />
+    <PageLayout
+      title="Mes documents"
+      onRefresh={handleRefresh}
+      isRefreshing={isRefreshing}
+      isLoading={isLoading}
+    >
+      {/* Stats Card */}
+      {stats && (
+        <View style={[styles.statsCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {stats.currentCount}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Documents</Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {stats.maxCount - stats.currentCount}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Disponibles</Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {formatFileSize(stats.totalSize)}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Utilisés</Text>
+            </View>
+          </View>
+
+          <View style={[styles.progressBarContainer, { backgroundColor: colors.gray100 }]}>
+            <View
+              style={[
+                styles.progressBar,
+                {
+                  backgroundColor: stats.canUpload ? colors.primary : colors.error,
+                  width: `${Math.min((stats.currentCount / stats.maxCount) * 100, 100)}%`,
+                },
+              ]}
+            />
+          </View>
+          <Text style={[styles.limitText, { color: colors.textDisabled }]}>
+            {stats.currentCount} / {stats.maxCount} documents (max {stats.maxFileSizeMB} MB par fichier)
+          </Text>
+        </View>
+      )}
+
+      {/* Upload Button */}
+      <View style={styles.uploadSection}>
+        <Button
+          title={isUploading ? 'Upload en cours...' : 'Ajouter un document'}
+          onPress={handleUpload}
+          fullWidth
+          disabled={isUploading || (stats ? !stats.canUpload : false)}
+          loading={isUploading}
+          icon={!isUploading ? <Upload size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
+          iconPosition="left"
+        />
+        <Text style={[styles.uploadHint, { color: colors.textDisabled }]}>
+          PDF et images (JPEG, PNG, WebP) acceptés
+        </Text>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} colors={[colors.primary]} />
-        }
-      >
-        {/* Stats Card */}
-        {stats && (
-          <View style={[styles.statsCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                  {stats.currentCount}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Documents</Text>
-              </View>
-              <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                  {stats.maxCount - stats.currentCount}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Disponibles</Text>
-              </View>
-              <View style={[styles.statDivider, { backgroundColor: colors.gray200 }]} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                  {formatFileSize(stats.totalSize)}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Utilisés</Text>
-              </View>
-            </View>
+      {/* Documents List */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+          Documents ({documents.length})
+        </Text>
 
-            {/* Progress bar */}
-            <View style={[styles.progressBarContainer, { backgroundColor: colors.gray100 }]}>
-              <View
-                style={[
-                  styles.progressBar,
-                  {
-                    backgroundColor: stats.canUpload ? colors.primary : colors.error,
-                    width: `${Math.min((stats.currentCount / stats.maxCount) * 100, 100)}%`,
-                  },
-                ]}
-              />
-            </View>
-            <Text style={[styles.limitText, { color: colors.textDisabled }]}>
-              {stats.currentCount} / {stats.maxCount} documents (max {stats.maxFileSizeMB} MB par fichier)
-            </Text>
-          </View>
-        )}
-
-        {/* Upload Button */}
-        <View style={styles.uploadSection}>
-          <Button
-            title={isUploading ? 'Upload en cours...' : 'Ajouter un document'}
-            onPress={handleUpload}
-            fullWidth
-            disabled={isUploading || (stats ? !stats.canUpload : false)}
-            loading={isUploading}
-            icon={!isUploading ? <Upload size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
-            iconPosition="left"
+        {documents.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="Aucun document"
+            subtitle="Ajoute tes CV, diplômes, certificats et autres documents professionnels."
           />
-          <Text style={[styles.uploadHint, { color: colors.textDisabled }]}>
-            PDF et images (JPEG, PNG, WebP) acceptés
-          </Text>
-        </View>
-
-        {/* Documents List */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-            Documents ({documents.length})
-          </Text>
-
-          {documents.length === 0 ? (
-            <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-              <FileText size={48} color={colors.gray300} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.emptyStateTitle, { color: colors.textPrimary }]}>
-                Aucun document
-              </Text>
-              <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
-                Ajoute tes CV, diplômes, certificats et autres documents professionnels.
-              </Text>
-            </View>
-          ) : (
-            documents.map(renderDocument)
-          )}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        ) : (
+          documents.map(renderDocument)
+        )}
+      </View>
+    </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  headerTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  headerSpacer: {
-    width: 40,
-  },
-
-  scrollView: {
-    flex: 1,
-  },
-
-  scrollContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-
   // Stats Card
   statsCard: {
     padding: SPACING.md,
@@ -462,9 +378,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
 
-  statItem: {
-    alignItems: 'center',
-  },
+  statItem: { alignItems: 'center' },
 
   statValue: {
     fontSize: TYPOGRAPHY.fontSize.xl,
@@ -476,10 +390,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  statDivider: {
-    width: 1,
-    height: 30,
-  },
+  statDivider: { width: 1, height: 30 },
 
   progressBarContainer: {
     height: 6,
@@ -498,10 +409,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Upload Section
-  uploadSection: {
-    marginBottom: SPACING.lg,
-  },
+  uploadSection: { marginBottom: SPACING.lg },
 
   uploadHint: {
     fontSize: TYPOGRAPHY.fontSize.xs,
@@ -509,10 +417,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
 
-  // Section
-  section: {
-    marginBottom: SPACING.lg,
-  },
+  section: { marginBottom: SPACING.lg },
 
   sectionTitle: {
     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -520,27 +425,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: SPACING.sm,
-  },
-
-  // Empty State
-  emptyState: {
-    alignItems: 'center',
-    padding: SPACING.xl,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.md,
-  },
-
-  emptyStateTitle: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.xs,
-  },
-
-  emptyStateText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    textAlign: 'center',
-    lineHeight: TYPOGRAPHY.fontSize.sm * 1.5,
   },
 
   // Document Card
@@ -582,9 +466,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
 
-  documentMetaText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
+  documentMetaText: { fontSize: TYPOGRAPHY.fontSize.xs },
 
   statusRow: {
     flexDirection: 'row',
@@ -607,9 +489,7 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
-  fileSize: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
+  fileSize: { fontSize: TYPOGRAPHY.fontSize.xs },
 
   tagsRow: {
     flexDirection: 'row',
@@ -625,13 +505,8 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.xs,
   },
 
-  tagText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
-
-  moreTagsText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
+  tagText: { fontSize: TYPOGRAPHY.fontSize.xs },
+  moreTagsText: { fontSize: TYPOGRAPHY.fontSize.xs },
 
   actionsRow: {
     flexDirection: 'row',

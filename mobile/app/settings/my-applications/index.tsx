@@ -6,12 +6,9 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   Clock,
   CheckCircle2,
   XCircle,
@@ -21,13 +18,12 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
-import { FooterNav } from '../../../src/components/ui';
+import { PageLayout, EmptyState } from '../../../src/components/ui';
 import { applicationService } from '../../../src/services';
 import { formatRelativeTime } from '../../../src/utils/date';
 import type { Application, ApplicationStatus } from '../../../src/types/models';
 import { APPLICATION_STATUS_LABELS } from '../../../src/types/models';
 
-// Status configuration - Simplified to 4 statuses
 const getStatusConfig = (colors: any): Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> => ({
   SUBMITTED: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15' },
   IN_REVIEW: { color: colors.info, icon: Eye, bgColor: colors.info + '15' },
@@ -150,123 +146,65 @@ export default function MyApplicationsScreen() {
             {formatRelativeTime(item.applied_at)}
           </Text>
         </View>
-
       </TouchableOpacity>
     );
   };
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <View style={[styles.emptyIcon, { backgroundColor: colors.gray100 }]}>
-        <Inbox size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-      </View>
-      <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-        {filter === 'all' ? 'Aucune candidature' : 'Aucun résultat'}
-      </Text>
-      <Text style={[styles.emptyDescription, { color: colors.gray500 }]}>
-        {filter === 'all'
-          ? 'Vous n\'avez pas encore postulé à des opportunités. Explorez les offres disponibles.'
-          : 'Aucune candidature avec ce statut.'}
-      </Text>
-      {filter === 'all' && (
-        <TouchableOpacity
-          style={[styles.exploreButton, { backgroundColor: colors.primary }]}
-          onPress={() => router.push('/(tabs)/explore')}
-        >
-          <Text style={[styles.exploreButtonText, { color: colors.textOnPrimary }]}>Explorer les opportunités</Text>
-        </TouchableOpacity>
-      )}
+  const filterChips = [
+    { key: 'all', label: 'Toutes' },
+    { key: 'SUBMITTED', label: 'Soumises' },
+    { key: 'IN_REVIEW', label: 'En examen' },
+    { key: 'ACCEPTED', label: 'Acceptées' },
+    { key: 'REJECTED', label: 'Refusées' },
+  ];
+
+  const headerContent = (
+    <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
+      <FlatList
+        horizontal
+        data={filterChips}
+        renderItem={({ item }) => renderFilterChip(item.key as FilterStatus, item.label)}
+        keyExtractor={(item) => item.key}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersContent}
+      />
     </View>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Mes candidatures</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      {/* Filters */}
-      <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
-        <FlatList
-          horizontal
-          data={[
-            { key: 'all', label: 'Toutes' },
-            { key: 'SUBMITTED', label: 'Soumises' },
-            { key: 'IN_REVIEW', label: 'En examen' },
-            { key: 'ACCEPTED', label: 'Acceptées' },
-            { key: 'REJECTED', label: 'Refusées' },
-          ]}
-          renderItem={({ item }) => renderFilterChip(item.key as FilterStatus, item.label)}
-          keyExtractor={(item) => item.key}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersContent}
-        />
-      </View>
-
-      {/* Content */}
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : (
-        <FlatList
-          data={filteredApplications}
-          renderItem={renderApplicationItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              colors={[colors.primary]}
-              tintColor={colors.primary}
-            />
+    <PageLayout
+      title="Mes candidatures"
+      onRefresh={handleRefresh}
+      isRefreshing={isRefreshing}
+      isLoading={isLoading}
+      headerContent={headerContent}
+    >
+      {filteredApplications.length === 0 ? (
+        <EmptyState
+          icon={Inbox}
+          title={filter === 'all' ? 'Aucune candidature' : 'Aucun résultat'}
+          subtitle={
+            filter === 'all'
+              ? "Vous n'avez pas encore postulé à des opportunités. Explorez les offres disponibles."
+              : 'Aucune candidature avec ce statut.'
           }
-          ListEmptyComponent={renderEmptyState}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          {...(filter === 'all' ? {
+            actionLabel: 'Explorer les opportunités',
+            onAction: () => router.push('/(tabs)/explore'),
+          } : {})}
         />
+      ) : (
+        filteredApplications.map((item) => (
+          <View key={item.id} style={{ marginBottom: SPACING.md }}>
+            {renderApplicationItem({ item })}
+          </View>
+        ))
       )}
-
-      <FooterNav activeTab="home" />
-    </SafeAreaView>
+    </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  headerTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  headerSpacer: {
-    width: 40,
-  },
-
   filtersContainer: {
     paddingVertical: SPACING.sm,
     borderBottomWidth: BORDER.width.thin,
@@ -288,21 +226,6 @@ const styles = StyleSheet.create({
   filterChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  listContent: {
-    padding: SPACING.lg,
-    flexGrow: 1,
-  },
-
-  separator: {
-    height: SPACING.md,
   },
 
   applicationCard: {
@@ -329,9 +252,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 
-  organizationName: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-  },
+  organizationName: { fontSize: TYPOGRAPHY.fontSize.sm },
 
   cardFooter: {
     flexDirection: 'row',
@@ -353,47 +274,5 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
-  appliedDate: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
-
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: SPACING.xl,
-    minHeight: 300,
-  },
-
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.lg,
-  },
-
-  emptyTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginBottom: SPACING.sm,
-  },
-
-  emptyDescription: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
-  },
-
-  exploreButton: {
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
-    borderRadius: BORDER.radius.sm,
-  },
-
-  exploreButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
+  appliedDate: { fontSize: TYPOGRAPHY.fontSize.xs },
 });

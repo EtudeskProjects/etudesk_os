@@ -3,15 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   Calendar,
   Briefcase,
   Users,
@@ -24,6 +18,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
+import { PageLayout, EmptyState } from '../../src/components/ui';
 import { api } from '../../src/services/api';
 
 type EventType = 'event' | 'scheduled_post' | 'opportunity' | 'reservation';
@@ -82,7 +77,6 @@ const formatTime = (dateStr: string): string => {
 };
 
 export default function CalendarScreen() {
-  const router = useRouter();
   const { colors } = useTheme();
   const now = new Date();
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
@@ -93,7 +87,6 @@ export default function CalendarScreen() {
 
   const fetchCalendarEvents = useCallback(async () => {
     try {
-      // Calculate date range for the selected month
       const startDate = new Date(currentYear, currentMonth, 1);
       const endDate = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
 
@@ -103,13 +96,11 @@ export default function CalendarScreen() {
       });
 
       if (response?.data) {
-        // Transform API response to CalendarEvent format
         const transformedEvents: CalendarEvent[] = response.data.map((item: any) => {
           let type: EventType = 'event';
           let title = item.title || item.name || 'Sans titre';
           let eventDate = item.scheduled_at || item.start_date || item.date;
 
-          // Determine event type based on source
           if (item.source === 'scheduled_post' || item.type === 'POST') {
             type = 'scheduled_post';
             title = item.content?.substring(0, 50) || 'Publication programmée';
@@ -138,7 +129,6 @@ export default function CalendarScreen() {
       }
     } catch (error) {
       console.log('Could not fetch calendar events:', error);
-      // Keep empty events array on error
       setEvents([]);
     } finally {
       setIsLoading(false);
@@ -174,13 +164,11 @@ export default function CalendarScreen() {
     }
   };
 
-  // Filter events for current month
   const filteredEvents = events.filter(event => {
     const eventDate = new Date(event.date);
     return eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
   });
 
-  // Group events by date
   const groupedEvents = filteredEvents.reduce((acc, event) => {
     if (!acc[event.date]) {
       acc[event.date] = [];
@@ -191,17 +179,8 @@ export default function CalendarScreen() {
 
   const sortedDates = Object.keys(groupedEvents).sort();
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Calendrier</Text>
-        <View style={styles.backButton} />
-      </View>
-
+  const headerContent = (
+    <>
       {/* Month Selector */}
       <View style={[styles.monthSelector, { backgroundColor: colors.surface }]}>
         <TouchableOpacity onPress={handlePrevMonth} style={styles.monthButton}>
@@ -233,141 +212,100 @@ export default function CalendarScreen() {
           <Text style={[styles.legendText, { color: colors.textSecondary }]}>Opportunités</Text>
         </View>
       </View>
+    </>
+  );
 
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : (
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              tintColor={colors.primary}
-              colors={[colors.primary]}
-            />
-          }
-        >
-          {/* Events by Date */}
-          {sortedDates.map((date) => {
-            const dateEvents = groupedEvents[date];
-            const { day, month, weekday } = formatDate(date);
+  return (
+    <PageLayout
+      title="Calendrier"
+      onRefresh={handleRefresh}
+      isRefreshing={isRefreshing}
+      isLoading={isLoading}
+      headerContent={headerContent}
+    >
+      {sortedDates.map((date) => {
+        const dateEvents = groupedEvents[date];
+        const { day, month, weekday } = formatDate(date);
 
-            return (
-              <View key={date} style={styles.dateSection}>
-                {/* Date Header */}
-                <View style={styles.dateHeader}>
-                  <View style={[styles.dateBox, { backgroundColor: colors.primary + '15' }]}>
-                    <Text style={[styles.dateDay, { color: colors.primary }]}>{day}</Text>
-                    <Text style={[styles.dateMonth, { color: colors.primary }]}>{month}</Text>
-                  </View>
-                  <Text style={[styles.dateWeekday, { color: colors.textSecondary }]}>{weekday}</Text>
-                </View>
-
-                {/* Events for this date */}
-                <View style={[styles.eventsContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-                  {dateEvents.map((event, index) => {
-                    const eventColor = getEventColor(event.type);
-                    const EventIcon = getEventIcon(event.type);
-                    const isLast = index === dateEvents.length - 1;
-
-                    return (
-                      <TouchableOpacity
-                        key={event.id}
-                        style={[
-                          styles.eventItem,
-                          { borderBottomColor: colors.gray100 },
-                          isLast && styles.eventItemLast,
-                        ]}
-                        activeOpacity={0.8}
-                      >
-                        <View style={[styles.eventIndicator, { backgroundColor: eventColor }]} />
-                        <View style={[styles.eventIcon, { backgroundColor: eventColor + '15' }]}>
-                          <EventIcon size={ICON.size.sm} color={eventColor} strokeWidth={ICON.strokeWidth} />
-                        </View>
-                        <View style={styles.eventInfo}>
-                          <Text style={[styles.eventTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                            {event.title}
-                          </Text>
-                          {event.community_name && (
-                            <Text style={[styles.eventCommunity, { color: colors.primary }]} numberOfLines={1}>
-                              {event.community_name}
-                            </Text>
-                          )}
-                          {event.description && (
-                            <Text style={[styles.eventDescription, { color: colors.textSecondary }]} numberOfLines={1}>
-                              {event.description}
-                            </Text>
-                          )}
-                          <View style={styles.eventMeta}>
-                            <Clock size={12} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                            <Text style={[styles.eventTime, { color: colors.gray400 }]}>{event.time}</Text>
-                            {event.location && (
-                              <>
-                                <Text style={[styles.eventDot, { color: colors.gray400 }]}>•</Text>
-                                <MapPin size={12} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                                <Text style={[styles.eventLocation, { color: colors.gray400 }]} numberOfLines={1}>
-                                  {event.location}
-                                </Text>
-                              </>
-                            )}
-                          </View>
-                        </View>
-                        <ChevronRight size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+        return (
+          <View key={date} style={styles.dateSection}>
+            <View style={styles.dateHeader}>
+              <View style={[styles.dateBox, { backgroundColor: colors.primary + '15' }]}>
+                <Text style={[styles.dateDay, { color: colors.primary }]}>{day}</Text>
+                <Text style={[styles.dateMonth, { color: colors.primary }]}>{month}</Text>
               </View>
-            );
-          })}
-
-          {sortedDates.length === 0 && (
-            <View style={styles.emptyState}>
-              <Calendar size={ICON.size.xl} color={colors.gray300} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                Aucun événement ce mois-ci
-              </Text>
-              <Text style={[styles.emptySubtext, { color: colors.gray400 }]}>
-                Vos événements, publications programmées et opportunités apparaîtront ici
-              </Text>
+              <Text style={[styles.dateWeekday, { color: colors.textSecondary }]}>{weekday}</Text>
             </View>
-          )}
-        </ScrollView>
+
+            <View style={[styles.eventsContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+              {dateEvents.map((event, index) => {
+                const eventColor = getEventColor(event.type);
+                const EventIcon = getEventIcon(event.type);
+                const isLast = index === dateEvents.length - 1;
+
+                return (
+                  <TouchableOpacity
+                    key={event.id}
+                    style={[
+                      styles.eventItem,
+                      { borderBottomColor: colors.gray100 },
+                      isLast && styles.eventItemLast,
+                    ]}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[styles.eventIndicator, { backgroundColor: eventColor }]} />
+                    <View style={[styles.eventIcon, { backgroundColor: eventColor + '15' }]}>
+                      <EventIcon size={ICON.size.sm} color={eventColor} strokeWidth={ICON.strokeWidth} />
+                    </View>
+                    <View style={styles.eventInfo}>
+                      <Text style={[styles.eventTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                        {event.title}
+                      </Text>
+                      {event.community_name && (
+                        <Text style={[styles.eventCommunity, { color: colors.primary }]} numberOfLines={1}>
+                          {event.community_name}
+                        </Text>
+                      )}
+                      {event.description && (
+                        <Text style={[styles.eventDescription, { color: colors.textSecondary }]} numberOfLines={1}>
+                          {event.description}
+                        </Text>
+                      )}
+                      <View style={styles.eventMeta}>
+                        <Clock size={12} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+                        <Text style={[styles.eventTime, { color: colors.gray400 }]}>{event.time}</Text>
+                        {event.location && (
+                          <>
+                            <Text style={[styles.eventDot, { color: colors.gray400 }]}>•</Text>
+                            <MapPin size={12} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+                            <Text style={[styles.eventLocation, { color: colors.gray400 }]} numberOfLines={1}>
+                              {event.location}
+                            </Text>
+                          </>
+                        )}
+                      </View>
+                    </View>
+                    <ChevronRight size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        );
+      })}
+
+      {sortedDates.length === 0 && (
+        <EmptyState
+          icon={Calendar}
+          title="Aucun événement ce mois-ci"
+          subtitle="Vos événements, publications programmées et opportunités apparaîtront ici"
+        />
       )}
-    </SafeAreaView>
+    </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  headerTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
   // Month Selector
   monthSelector: {
     flexDirection: 'row',
@@ -418,29 +356,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
 
-  legendText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  scrollView: {
-    flex: 1,
-  },
-
-  scrollContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
+  legendText: { fontSize: TYPOGRAPHY.fontSize.xs },
 
   // Date Section
-  dateSection: {
-    marginBottom: SPACING.lg,
-  },
+  dateSection: { marginBottom: SPACING.lg },
 
   dateHeader: {
     flexDirection: 'row',
@@ -487,9 +406,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: BORDER.width.thin,
   },
 
-  eventItemLast: {
-    borderBottomWidth: 0,
-  },
+  eventItemLast: { borderBottomWidth: 0 },
 
   eventIndicator: {
     width: 4,
@@ -536,35 +453,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
 
-  eventTime: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
-
-  eventDot: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
-
-  eventLocation: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    flex: 1,
-  },
-
-  // Empty State
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.xxxl,
-  },
-
-  emptyText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    marginTop: SPACING.md,
-  },
-
-  emptySubtext: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    textAlign: 'center',
-    marginTop: SPACING.xs,
-    paddingHorizontal: SPACING.xl,
-  },
+  eventTime: { fontSize: TYPOGRAPHY.fontSize.xs },
+  eventDot: { fontSize: TYPOGRAPHY.fontSize.xs },
+  eventLocation: { fontSize: TYPOGRAPHY.fontSize.xs, flex: 1 },
 });

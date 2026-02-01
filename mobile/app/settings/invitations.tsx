@@ -1,8 +1,8 @@
 /**
  * Invitations Screen
  * Shows pending invitations for the current user
- * Tab 1: Organisations - Organization invitations
- * Tab 2: Offres - Communities, Opportunities, and Spaces invitations (unified)
+ * Tab 1: Offres - Communities, Opportunities, and Spaces invitations (unified)
+ * Tab 2: Organisations - Organization invitations
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -10,17 +10,13 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Image,
   Alert,
-  RefreshControl,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   Building2,
   Check,
   X,
@@ -35,6 +31,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
+import { PageLayout, EmptyState, TabBar } from '../../src/components/ui';
 import { invitationService, ReceivedInvitation } from '../../src/services/invitationService';
 import {
   communityInvitationService,
@@ -48,12 +45,11 @@ import {
   spaceInvitationService,
   SpaceInvitation
 } from '../../src/services/spaceInvitationService';
-import { ORGANIZATION_ROLE_LABELS, VISIBILITY_LABELS } from '../../src/types/models';
+import { ORGANIZATION_ROLE_LABELS } from '../../src/types/models';
 import { getFullImageUrl } from '../../src/utils/image';
 
 type TabType = 'organizations' | 'offers';
 
-// Unified offer invitation type
 type OfferInvitation =
   | (CommunityInvitation & { _type: 'community' })
   | (OpportunityInvitation & { _type: 'opportunity' })
@@ -65,11 +61,9 @@ export default function InvitationsScreen() {
 
   const [activeTab, setActiveTab] = useState<TabType>('offers');
 
-  // Organization invitations
   const [orgInvitations, setOrgInvitations] = useState<ReceivedInvitation[]>([]);
   const [orgLoading, setOrgLoading] = useState(true);
 
-  // Offer invitations (communities, opportunities, spaces)
   const [communityInvitations, setCommunityInvitations] = useState<CommunityInvitation[]>([]);
   const [opportunityInvitations, setOpportunityInvitations] = useState<OpportunityInvitation[]>([]);
   const [spaceInvitations, setSpaceInvitations] = useState<SpaceInvitation[]>([]);
@@ -126,7 +120,6 @@ export default function InvitationsScreen() {
       .finally(() => setIsRefreshing(false));
   };
 
-  // Combine all offer invitations and sort by date
   const allOfferInvitations: OfferInvitation[] = [
     ...communityInvitations.map(inv => ({ ...inv, _type: 'community' as const })),
     ...opportunityInvitations.map(inv => ({ ...inv, _type: 'opportunity' as const })),
@@ -375,7 +368,6 @@ export default function InvitationsScreen() {
         key={invitation.id}
         style={[styles.invitationCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
       >
-        {/* Organization Info */}
         <View style={styles.cardHeader}>
           {invitation.organization_logo ? (
             <Image
@@ -403,7 +395,6 @@ export default function InvitationsScreen() {
           </View>
         </View>
 
-        {/* Details */}
         <View style={[styles.detailsSection, { borderTopColor: colors.borderColor }]}>
           <View style={styles.detailRow}>
             <Users size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
@@ -428,7 +419,6 @@ export default function InvitationsScreen() {
           </View>
         </View>
 
-        {/* Actions */}
         <View style={styles.actions}>
           <TouchableOpacity
             style={[styles.declineButton, { borderColor: colors.error }]}
@@ -461,7 +451,6 @@ export default function InvitationsScreen() {
   const renderOfferInvitationCard = (invitation: OfferInvitation) => {
     const isProcessing = processingId === invitation.id;
 
-    // Type-specific rendering
     if (invitation._type === 'community') {
       const inv = invitation as CommunityInvitation & { _type: 'community' };
       const isPrivate = inv.access_type === 'PRIVATE' || inv.access_type === 'MEMBERSHIP';
@@ -818,87 +807,41 @@ export default function InvitationsScreen() {
     return null;
   };
 
+  const isEmpty = activeTab === 'organizations' ? orgInvitations.length === 0 : totalOffersCount === 0;
+
+  const tabs = [
+    { key: 'offers', label: 'Offres', icon: Briefcase, count: totalOffersCount > 0 ? totalOffersCount : undefined },
+    { key: 'organizations', label: 'Organisations', icon: Building2, count: orgInvitations.length > 0 ? orgInvitations.length : undefined },
+  ];
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Invitations</Text>
-        <View style={styles.backButton} />
-      </View>
-
-      {/* Tabs */}
-      <View style={[styles.tabContainer, { borderBottomColor: colors.borderColor }]}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'offers' && styles.tabActive]}
-          onPress={() => setActiveTab('offers')}
-        >
-          <Briefcase size={18} color={activeTab === 'offers' ? colors.primary : colors.textSecondary} />
-          <Text style={[
-            styles.tabText,
-            { color: activeTab === 'offers' ? colors.primary : colors.textSecondary }
-          ]}>
-            Offres
-          </Text>
-          {totalOffersCount > 0 && (
-            <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-              <Text style={styles.badgeText}>{totalOffersCount}</Text>
-            </View>
-          )}
-          {activeTab === 'offers' && (
-            <View style={[styles.tabIndicator, { backgroundColor: colors.primary }]} />
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'organizations' && styles.tabActive]}
-          onPress={() => setActiveTab('organizations')}
-        >
-          <Building2 size={18} color={activeTab === 'organizations' ? colors.primary : colors.textSecondary} />
-          <Text style={[
-            styles.tabText,
-            { color: activeTab === 'organizations' ? colors.primary : colors.textSecondary }
-          ]}>
-            Organisations
-          </Text>
-          {orgInvitations.length > 0 && (
-            <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-              <Text style={styles.badgeText}>{orgInvitations.length}</Text>
-            </View>
-          )}
-          {activeTab === 'organizations' && (
-            <View style={[styles.tabIndicator, { backgroundColor: colors.primary }]} />
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : (activeTab === 'organizations' ? orgInvitations.length === 0 : totalOffersCount === 0) ? (
-        <View style={styles.emptyContainer}>
-          <Mail size={48} color={colors.gray300} strokeWidth={1.5} />
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            Aucune invitation
-          </Text>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {activeTab === 'offers'
-              ? 'Vous n\'avez pas d\'invitation pour des offres'
-              : 'Vous n\'avez pas d\'invitation a rejoindre une organisation'}
-          </Text>
+    <PageLayout
+      title="Invitations"
+      onRefresh={handleRefresh}
+      isRefreshing={isRefreshing}
+      isLoading={isLoading}
+      headerContent={
+        <TabBar
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={(key) => setActiveTab(key as TabType)}
+        />
+      }
+    >
+      {isEmpty ? (
+        <View style={{ marginTop: SPACING.xl }}>
+          <EmptyState
+            icon={Mail}
+            title="Aucune invitation"
+            subtitle={
+              activeTab === 'offers'
+                ? "Vous n'avez pas d'invitation pour des offres"
+                : "Vous n'avez pas d'invitation a rejoindre une organisation"
+            }
+          />
         </View>
       ) : (
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-          }
-        >
+        <>
           <Text style={[styles.sectionInfo, { color: colors.textSecondary }]}>
             {activeTab === 'organizations'
               ? `${orgInvitations.length} invitation${orgInvitations.length > 1 ? 's' : ''} en attente`
@@ -910,122 +853,17 @@ export default function InvitationsScreen() {
             ? orgInvitations.map(renderOrgInvitationCard)
             : allOfferInvitations.map(renderOfferInvitationCard)
           }
-        </ScrollView>
+        </>
       )}
-    </SafeAreaView>
+    </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  headerTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  // Tabs
-  tabContainer: {
-    flexDirection: 'row',
-    borderBottomWidth: BORDER.width.thin,
-    marginHorizontal: SPACING.lg,
-  },
-
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.md,
-    position: 'relative',
-  },
-
-  tabActive: {},
-
-  tabText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  tabIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 2,
-  },
-
-  badge: {
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 6,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.xl,
-  },
-
-  emptyTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginTop: SPACING.lg,
-  },
-
-  emptyText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    textAlign: 'center',
-    marginTop: SPACING.sm,
-  },
-
-  scrollView: {
-    flex: 1,
-  },
-
-  scrollContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.xxl,
-  },
-
   sectionInfo: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     marginBottom: SPACING.md,
+    marginTop: SPACING.md,
   },
 
   invitationCard: {
@@ -1056,9 +894,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  cardInfo: {
-    flex: 1,
-  },
+  cardInfo: { flex: 1 },
 
   cardName: {
     fontSize: TYPOGRAPHY.fontSize.md,
@@ -1126,9 +962,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
 
-  detailText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-  },
+  detailText: { fontSize: TYPOGRAPHY.fontSize.sm },
 
   actions: {
     flexDirection: 'row',

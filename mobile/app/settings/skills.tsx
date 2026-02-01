@@ -12,14 +12,11 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  RefreshControl,
   TextInput,
   Modal,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   Plus,
   Trash2,
   Search,
@@ -27,10 +24,9 @@ import {
   BookOpen,
   Wrench,
   Heart,
-  ChevronDown,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
-import { Button } from '../../src/components/ui';
+import { Button, PageLayout, EmptyState } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import skillService, {
   TalentSkill,
@@ -61,7 +57,6 @@ function getTypeIcon(type: string) {
 }
 
 export default function SkillsScreen() {
-  const router = useRouter();
   const { colors } = useTheme();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -268,54 +263,22 @@ export default function SkillsScreen() {
     SOFT_SKILL: skills.filter((s) => s.type === 'SOFT_SKILL'),
   };
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Mes compétences</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} colors={[colors.primary]} />
-        }
+    <>
+      <PageLayout
+        title="Mes compétences"
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+        isLoading={isLoading}
       >
         {skills.length === 0 ? (
-          <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-            <Wrench size={48} color={colors.gray300} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.emptyStateTitle, { color: colors.textPrimary }]}>
-              Aucune compétence
-            </Text>
-            <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
-              Ajoute tes compétences pour améliorer ton profil et être mieux recommandé.
-            </Text>
-            <View style={{ marginTop: SPACING.md, width: '100%' }}>
-              <Button
-                title="Ajouter une compétence"
-                onPress={() => setShowAddModal(true)}
-                fullWidth
-                icon={<Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-                iconPosition="left"
-              />
-            </View>
-          </View>
+          <EmptyState
+            icon={Wrench}
+            title="Aucune compétence"
+            subtitle="Ajoute tes compétences pour améliorer ton profil et être mieux recommandé."
+            actionLabel="Ajouter une compétence"
+            onAction={() => setShowAddModal(true)}
+          />
         ) : (
           <>
             {/* Stats */}
@@ -367,7 +330,7 @@ export default function SkillsScreen() {
             })}
           </>
         )}
-      </ScrollView>
+      </PageLayout>
 
       {/* Add Skill Modal */}
       <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
@@ -521,28 +484,11 @@ export default function SkillsScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
-    </SafeAreaView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-  backButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: TYPOGRAPHY.fontSize.lg, fontWeight: TYPOGRAPHY.fontWeight.semibold },
-  headerSpacer: { width: 40 },
-
-  scrollView: { flex: 1 },
-  scrollContent: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxl },
-
   statsCard: {
     padding: SPACING.md,
     borderWidth: BORDER.width.thin,
@@ -564,24 +510,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: SPACING.sm,
-  },
-
-  emptyState: {
-    alignItems: 'center',
-    padding: SPACING.xl,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.md,
-  },
-  emptyStateTitle: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.xs,
-  },
-  emptyStateText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    textAlign: 'center',
-    lineHeight: TYPOGRAPHY.fontSize.sm * 1.5,
   },
 
   // Skill Card
