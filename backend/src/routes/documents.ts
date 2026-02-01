@@ -83,7 +83,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       offset: offset ? parseInt(offset as string, 10) : 0,
     });
 
-    return res.json(result);
+    return res.json({ data: result });
   } catch (error) {
     console.error('Error listing documents:', error);
     return res.status(500).json({
@@ -108,11 +108,13 @@ router.get('/stats', authMiddleware, async (req: AuthRequest, res: Response) => 
     const uploadCheck = await canUploadDocument(talentId);
 
     return res.json({
-      ...stats,
-      canUpload: uploadCheck.canUpload,
-      currentCount: uploadCheck.currentCount,
-      maxCount: uploadCheck.maxCount,
-      maxFileSizeMB: DOCUMENT_LIMITS.MAX_FILE_SIZE_MB,
+      data: {
+        ...stats,
+        canUpload: uploadCheck.canUpload,
+        currentCount: uploadCheck.currentCount,
+        maxCount: uploadCheck.maxCount,
+        maxFileSizeMB: DOCUMENT_LIMITS.MAX_FILE_SIZE_MB,
+      },
     });
   } catch (error) {
     console.error('Error getting document stats:', error);
@@ -156,7 +158,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Document non trouvé' });
     }
 
-    return res.json(document);
+    return res.json({ data: document });
   } catch (error) {
     console.error('Error getting document:', error);
     return res.status(500).json({
