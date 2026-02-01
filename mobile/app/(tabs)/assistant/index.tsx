@@ -295,7 +295,7 @@ export default function AssistantScreen() {
 
   const currentMode = MODES.find((m) => m.id === activeMode);
   const ModeIcon = currentMode?.icon || Compass;
-  const userName = user?.talents?.[0]?.display_name?.split(' ')[0] || 'toi';
+  const userName = user?.firstName || user?.displayName || 'toi';
 
   const renderEmptyState = () => (
     <ScrollView
@@ -315,18 +315,18 @@ export default function AssistantScreen() {
         {activeMode === 'explore' ? (
           <>
             <TouchableOpacity
-              style={[styles.quickPrompt, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[styles.quickPrompt, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
               onPress={() => setInputText(t('assistant.prompts.explore.opportunities'))}
             >
-              <Text style={[styles.quickPromptText, { color: colors.text }]}>
+              <Text style={[styles.quickPromptText, { color: colors.textPrimary }]}>
                 {t('assistant.prompts.explore.opportunities')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.quickPrompt, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[styles.quickPrompt, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
               onPress={() => setInputText(t('assistant.prompts.explore.communities'))}
             >
-              <Text style={[styles.quickPromptText, { color: colors.text }]}>
+              <Text style={[styles.quickPromptText, { color: colors.textPrimary }]}>
                 {t('assistant.prompts.explore.communities')}
               </Text>
             </TouchableOpacity>
@@ -334,18 +334,18 @@ export default function AssistantScreen() {
         ) : (
           <>
             <TouchableOpacity
-              style={[styles.quickPrompt, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[styles.quickPrompt, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
               onPress={() => setInputText('Je veux apprendre React Native')}
             >
-              <Text style={[styles.quickPromptText, { color: colors.text }]}>
+              <Text style={[styles.quickPromptText, { color: colors.textPrimary }]}>
                 Je veux apprendre React Native
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.quickPrompt, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[styles.quickPrompt, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
               onPress={() => setInputText('Évalue mon niveau en JavaScript')}
             >
-              <Text style={[styles.quickPromptText, { color: colors.text }]}>
+              <Text style={[styles.quickPromptText, { color: colors.textPrimary }]}>
                 Évalue mon niveau en JavaScript
               </Text>
             </TouchableOpacity>
@@ -370,13 +370,13 @@ export default function AssistantScreen() {
               styles.messageBubble,
               message.role === 'user'
                 ? [styles.userMessage, { backgroundColor: colors.primary }]
-                : [styles.assistantMessage, { backgroundColor: colors.surface, borderColor: colors.border }],
+                : [styles.assistantMessage, { backgroundColor: colors.surface, borderColor: colors.borderColor }],
             ]}
           >
             <Text
               style={[
                 styles.messageText,
-                { color: message.role === 'user' ? colors.textOnPrimary : colors.text },
+                { color: message.role === 'user' ? colors.textOnPrimary : colors.textPrimary },
               ]}
             >
               {message.content}
@@ -409,8 +409,8 @@ export default function AssistantScreen() {
 
   const renderHistoryPanel = () => (
     <View style={[styles.historyPanel, { backgroundColor: colors.background }]}>
-      <View style={[styles.historyHeader, { borderBottomColor: colors.border }]}>
-        <Text style={[styles.historyTitle, { color: colors.text }]}>Historique</Text>
+      <View style={[styles.historyHeader, { borderBottomColor: colors.borderColor }]}>
+        <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>Historique</Text>
         <TouchableOpacity onPress={() => setShowHistory(false)}>
           <X size={24} color={colors.textSecondary} />
         </TouchableOpacity>
@@ -427,7 +427,7 @@ export default function AssistantScreen() {
               key={session.id}
               style={[
                 styles.historyItem,
-                { borderBottomColor: colors.border },
+                { borderBottomColor: colors.borderColor },
                 session.id === sessionId && { backgroundColor: colors.primary + '10' },
               ]}
               onPress={() => handleSelectSession(session)}
@@ -446,7 +446,7 @@ export default function AssistantScreen() {
                   )}
                 </View>
                 <View style={styles.historyItemText}>
-                  <Text style={[styles.historyItemTitle, { color: colors.text }]} numberOfLines={1}>
+                  <Text style={[styles.historyItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
                     {session.title || 'Nouvelle conversation'}
                   </Text>
                   <Text style={[styles.historyItemMeta, { color: colors.textSecondary }]}>
@@ -458,7 +458,7 @@ export default function AssistantScreen() {
                 style={styles.historyItemDelete}
                 onPress={() => handleDeleteSession(session.id)}
               >
-                <X size={16} color={colors.textTertiary} />
+                <X size={16} color={colors.textDisabled} />
               </TouchableOpacity>
             </TouchableOpacity>
           ))

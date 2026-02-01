@@ -39,16 +39,16 @@ router.get('/:communityId', authMiddleware, async (req: any, res: Response) => {
         const subscription = await communitySubscriptionService.getSubscription(communityId, talentId);
 
         if (!subscription) {
-            return res.json({
+            return res.json({ data: {
                 subscribed: false,
                 subscription: null
-            });
+            }});
         }
 
-        res.json({
+        res.json({ data: {
             subscribed: ['ACTIVE', 'TRIAL'].includes(subscription.status),
             subscription
-        });
+        }});
     } catch (error: any) {
         console.error('Error fetching subscription:', error);
         res.status(500).json({ error: error.message });
@@ -338,7 +338,7 @@ router.get('/invoices/:invoiceId', authMiddleware, async (req: any, res: Respons
             return res.status(404).json({ error: 'Invoice not found' });
         }
 
-        res.json(invoice);
+        res.json({ data: invoice });
     } catch (error: any) {
         console.error('Error fetching invoice:', error);
         res.status(500).json({ error: error.message });
@@ -360,7 +360,7 @@ router.get('/invoices/number/:invoiceNumber', authMiddleware, async (req: any, r
             return res.status(404).json({ error: 'Invoice not found' });
         }
 
-        res.json(invoice);
+        res.json({ data: invoice });
     } catch (error: any) {
         console.error('Error fetching invoice:', error);
         res.status(500).json({ error: error.message });

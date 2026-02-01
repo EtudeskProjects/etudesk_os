@@ -35,8 +35,8 @@ export interface RankedApplication {
   status: string;
   applied_at: string;
   cover_letter?: string;
-  resume_url?: string;
-  rating?: number;
+  cv_url?: string;
+  star_rating?: number;
   internal_notes?: string;
   viewed_at?: string;
   talent: {
@@ -567,8 +567,8 @@ export async function rankApplications(
       a.status,
       a.applied_at,
       a.cover_letter,
-      a.resume_url,
-      a.rating,
+      a.cv_url,
+      a.star_rating,
       a.internal_notes,
       a.viewed_at,
       json_build_object(
@@ -649,7 +649,7 @@ export async function rankApplications(
   scoredApplications.sort((a, b) => {
     // If scores are very close (within 5 points), use rating
     if (Math.abs(a._score - b._score) < 5) {
-      return (b.rating || 0) - (a.rating || 0);
+      return (b.star_rating || 0) - (a.star_rating || 0);
     }
     return b._score - a._score;
   });

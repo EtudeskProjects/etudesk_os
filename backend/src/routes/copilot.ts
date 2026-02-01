@@ -246,14 +246,14 @@ router.get('/learning/progress', authMiddleware, async (req: AuthRequest, res: R
     const topicsResult = await pool.query(
       `
       SELECT
-        lt.id, lt.name, lt.mastery_level, lt.last_studied_at,
+        lt.id, lt.topic_name, lt.mastery_level, lt.last_studied_at,
         COUNT(lf.id) as flashcard_count,
-        COUNT(lf.id) FILTER (WHERE lf.next_review_date <= CURRENT_DATE) as due_count
+        COUNT(lf.id) FILTER (WHERE lf.next_review_at <= CURRENT_DATE) as due_count
       FROM learning_topics lt
       LEFT JOIN learning_flashcards lf ON lt.id = lf.topic_id
       WHERE lt.talent_id = $1
       GROUP BY lt.id
-      ORDER BY lt.name
+      ORDER BY lt.topic_name
       `,
       [talentId]
     );
@@ -264,7 +264,7 @@ router.get('/learning/progress', authMiddleware, async (req: AuthRequest, res: R
       SELECT
         COUNT(DISTINCT lt.id) as total_topics,
         COUNT(lf.id) as total_flashcards,
-        COUNT(lf.id) FILTER (WHERE lf.next_review_date <= CURRENT_DATE) as due_flashcards
+        COUNT(lf.id) FILTER (WHERE lf.next_review_at <= CURRENT_DATE) as due_flashcards
       FROM learning_topics lt
       LEFT JOIN learning_flashcards lf ON lt.id = lf.topic_id
       WHERE lt.talent_id = $1
@@ -275,7 +275,7 @@ router.get('/learning/progress', authMiddleware, async (req: AuthRequest, res: R
     // Get streak
     const streakResult = await pool.query(
       `
-      SELECT streak_days, total_study_time_minutes, last_study_date
+      SELECT current_streak_days, total_study_time_minutes, last_study_date
       FROM learning_preferences
       WHERE talent_id = $1
       `,
@@ -287,7 +287,7 @@ router.get('/learning/progress', authMiddleware, async (req: AuthRequest, res: R
       data: {
         topics: topicsResult.rows.map((t) => ({
           id: t.id,
-          name: t.name,
+          name: t.topic_name,
           masteryLevel: t.mastery_level || 0,
           flashcardCount: parseInt(t.flashcard_count) || 0,
           dueCount: parseInt(t.due_count) || 0,
@@ -296,7 +296,7 @@ router.get('/learning/progress', authMiddleware, async (req: AuthRequest, res: R
         totalTopics: parseInt(statsResult.rows[0]?.total_topics) || 0,
         totalFlashcards: parseInt(statsResult.rows[0]?.total_flashcards) || 0,
         dueFlashcards: parseInt(statsResult.rows[0]?.due_flashcards) || 0,
-        streakDays: streakResult.rows[0]?.streak_days || 0,
+        streakDays: streakResult.rows[0]?.current_streak_days || 0,
         totalStudyTimeMinutes: streakResult.rows[0]?.total_study_time_minutes || 0,
         lastStudyDate: streakResult.rows[0]?.last_study_date,
       },
@@ -326,12 +326,12 @@ router.get('/learning/due', authMiddleware, async (req: AuthRequest, res: Respon
 
     let query = `
       SELECT
-        lf.id, lf.front, lf.back, lf.difficulty, lf.easiness_factor,
-        lf.interval_days, lf.repetition_count, lf.next_review_date,
-        lt.id as topic_id, lt.name as topic_name
+        lf.id, lf.front_content, lf.back_content, lf.difficulty, lf.ease_factor,
+        lf.interval_days, lf.repetitions, lf.next_review_at,
+        lt.id as topic_id, lt.topic_name as topic_name
       FROM learning_flashcards lf
       JOIN learning_topics lt ON lf.topic_id = lt.id
-      WHERE lt.talent_id = $1 AND lf.next_review_date <= CURRENT_DATE
+      WHERE lt.talent_id = $1 AND lf.next_review_at <= CURRENT_DATE
     `;
     const params: any[] = [talentId];
 
@@ -340,7 +340,7 @@ router.get('/learning/due', authMiddleware, async (req: AuthRequest, res: Respon
       params.push(topicId);
     }
 
-    query += ` ORDER BY lf.next_review_date ASC, lf.difficulty DESC LIMIT $${params.length + 1}`;
+    query += ` ORDER BY lf.next_review_at ASC, lf.difficulty DESC LIMIT $${params.length + 1}`;
     params.push(limit);
 
     const result = await pool.query(query, params);
@@ -350,17 +350,17 @@ router.get('/learning/due', authMiddleware, async (req: AuthRequest, res: Respon
       data: {
         flashcards: result.rows.map((f) => ({
           id: f.id,
-          front: f.front,
-          back: f.back,
+          front: f.front_content,
+          back: f.back_content,
           difficulty: f.difficulty,
           topic: {
             id: f.topic_id,
             name: f.topic_name,
           },
-          easinessFactor: f.easiness_factor,
+          easinessFactor: f.ease_factor,
           intervalDays: f.interval_days,
-          repetitionCount: f.repetition_count,
-          nextReviewDate: f.next_review_date,
+          repetitionCount: f.repetitions,
+          nextReviewDate: f.next_review_at,
         })),
         count: result.rows.length,
       },
@@ -396,7 +396,7 @@ router.post('/learning/review', authMiddleware, async (req: AuthRequest, res: Re
     // Verify flashcard belongs to user
     const verifyResult = await pool.query(
       `
-      SELECT lf.id, lf.easiness_factor, lf.interval_days, lf.repetition_count
+      SELECT lf.id, lf.ease_factor, lf.interval_days, lf.repetitions
       FROM learning_flashcards lf
       JOIN learning_topics lt ON lf.topic_id = lt.id
       WHERE lf.id = $1 AND lt.talent_id = $2
@@ -408,17 +408,50 @@ router.post('/learning/review', authMiddleware, async (req: AuthRequest, res: Re
       return res.status(404).json({ error: 'Carte non trouvée' });
     }
 
-    // Use the stored procedure to record review (implements SM-2 algorithm)
-    await pool.query('SELECT record_flashcard_review($1, $2)', [flashcardId, quality]);
+    // Inline SM-2 algorithm
+    const card = verifyResult.rows[0];
+    let ef = card.ease_factor;
+    let interval = card.interval_days;
+    let reps = card.repetitions;
 
-    // Get updated flashcard
+    // SM-2: update ease factor
+    ef = ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+    if (ef < 1.3) ef = 1.3;
+
+    if (quality < 3) {
+      reps = 0;
+      interval = 1;
+    } else {
+      reps += 1;
+      if (reps === 1) {
+        interval = 1;
+      } else if (reps === 2) {
+        interval = 6;
+      } else {
+        interval = Math.round(interval * ef);
+      }
+    }
+
+    const nextReviewAt = new Date();
+    nextReviewAt.setDate(nextReviewAt.getDate() + interval);
+
+    // Update card
     const updatedResult = await pool.query(
       `
-      SELECT id, easiness_factor, interval_days, repetition_count, next_review_date, last_reviewed_at
-      FROM learning_flashcards
-      WHERE id = $1
+      UPDATE learning_flashcards SET
+        ease_factor = $1,
+        interval_days = $2,
+        repetitions = $3,
+        next_review_at = $4,
+        last_reviewed_at = CURRENT_TIMESTAMP,
+        last_quality = $5,
+        total_reviews = total_reviews + 1,
+        correct_reviews = correct_reviews + CASE WHEN $5 >= 3 THEN 1 ELSE 0 END,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $6
+      RETURNING id, ease_factor, interval_days, repetitions, next_review_at, last_reviewed_at
       `,
-      [flashcardId]
+      [ef, interval, reps, nextReviewAt, quality, flashcardId]
     );
 
     res.json({
@@ -427,10 +460,10 @@ router.post('/learning/review', authMiddleware, async (req: AuthRequest, res: Re
         flashcardId,
         quality,
         newStats: {
-          easinessFactor: updatedResult.rows[0].easiness_factor,
+          easinessFactor: updatedResult.rows[0].ease_factor,
           intervalDays: updatedResult.rows[0].interval_days,
-          repetitionCount: updatedResult.rows[0].repetition_count,
-          nextReviewDate: updatedResult.rows[0].next_review_date,
+          repetitionCount: updatedResult.rows[0].repetitions,
+          nextReviewDate: updatedResult.rows[0].next_review_at,
           lastReviewedAt: updatedResult.rows[0].last_reviewed_at,
         },
       },
@@ -457,14 +490,14 @@ router.get('/learning/topics', authMiddleware, async (req: AuthRequest, res: Res
     const result = await pool.query(
       `
       SELECT
-        lt.id, lt.name, lt.description, lt.parent_topic_id,
+        lt.id, lt.topic_name, lt.parent_topic_id,
         lt.mastery_level, lt.last_studied_at, lt.created_at,
         COUNT(lf.id) as flashcard_count
       FROM learning_topics lt
       LEFT JOIN learning_flashcards lf ON lt.id = lf.topic_id
       WHERE lt.talent_id = $1
       GROUP BY lt.id
-      ORDER BY lt.name
+      ORDER BY lt.topic_name
       `,
       [talentId]
     );
@@ -474,8 +507,7 @@ router.get('/learning/topics', authMiddleware, async (req: AuthRequest, res: Res
       data: {
         topics: result.rows.map((t) => ({
           id: t.id,
-          name: t.name,
-          description: t.description,
+          name: t.topic_name,
           parentTopicId: t.parent_topic_id,
           masteryLevel: t.mastery_level || 0,
           flashcardCount: parseInt(t.flashcard_count) || 0,

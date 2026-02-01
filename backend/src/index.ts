@@ -27,6 +27,7 @@ import webhooksRouter from './routes/webhooks.routes';
 import calendarRouter from './routes/calendar.routes';
 import copilotRouter from './routes/copilot';
 import documentsRouter from './routes/documents';
+import skillsRouter from './routes/skills';
 import { verifyEmailConnection } from './services/email.service';
 import { cleanupExpiredOTPs } from './services/otp.service';
 import { graphService } from './services/graph';
@@ -127,6 +128,7 @@ app.use('/api/payment-methods', paymentMethodsRouter);
 app.use('/api/calendar', calendarRouter);
 app.use('/api/copilot', copilotRouter);
 app.use('/api/documents', documentsRouter);
+app.use('/api/skills', skillsRouter);
 
 // 404 handler
 app.use((req, res) => {

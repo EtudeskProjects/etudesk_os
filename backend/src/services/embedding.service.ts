@@ -41,8 +41,6 @@ const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
  */
 export function buildTalentEmbeddingText(talent: {
   display_name?: string;
-  current_role?: string;
-  years_experience?: number;
   skills?: string[];
   sectors?: string[];
   bio?: string;
@@ -52,12 +50,8 @@ export function buildTalentEmbeddingText(talent: {
 }): string {
   const parts: string[] = [];
 
-  if (talent.current_role) {
-    parts.push(`${talent.current_role}`);
-  }
-
-  if (talent.years_experience) {
-    parts.push(`avec ${talent.years_experience} ans d'expérience`);
+  if (talent.display_name) {
+    parts.push(talent.display_name);
   }
 
   if (talent.skills && talent.skills.length > 0) {
@@ -355,10 +349,14 @@ export async function onTalentProfileUpdate(talentId: string): Promise<void> {
   try {
     const result = await pool.query(`
       SELECT
-        display_name, current_role, years_experience, skills, sectors,
-        bio, city, country, profile_tags
-      FROM talents
-      WHERE id = $1
+        t.display_name, t.sectors, t.bio, t.city, t.country, t.profile_tags,
+        ARRAY(
+          SELECT s.name FROM talent_skills ts
+          JOIN skills s ON s.id = ts.skill_id
+          WHERE ts.talent_id = t.id
+        ) as skills
+      FROM talents t
+      WHERE t.id = $1
     `, [talentId]);
 
     if (result.rows.length > 0) {
@@ -401,9 +399,13 @@ export async function batchUpdateTalentEmbeddings(limit: number = 100): Promise<
   // Note: We don't check PostgreSQL embedding column since it may not exist
   // Pinecone is the source of truth for embeddings
   const result = await pool.query(`
-    SELECT id, display_name, current_role, years_experience, skills, sectors,
-           bio, city, country, profile_tags
-    FROM talents
+    SELECT t.id, t.display_name, t.sectors, t.bio, t.city, t.country, t.profile_tags,
+           ARRAY(
+             SELECT s.name FROM talent_skills ts
+             JOIN skills s ON s.id = ts.skill_id
+             WHERE ts.talent_id = t.id
+           ) as skills
+    FROM talents t
     LIMIT $1
   `, [limit]);
 

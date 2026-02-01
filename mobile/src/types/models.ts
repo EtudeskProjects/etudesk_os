@@ -374,12 +374,14 @@ export const VISIBILITY_LABELS: Record<Visibility, string> = {
 export const COMMUNITY_STATUS = {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE',
+  ARCHIVED: 'ARCHIVED',
 } as const;
 export type CommunityStatus = (typeof COMMUNITY_STATUS)[keyof typeof COMMUNITY_STATUS];
 
 export const COMMUNITY_STATUS_LABELS: Record<CommunityStatus, string> = {
   ACTIVE: 'Actif',
   INACTIVE: 'Inactif',
+  ARCHIVED: 'Archivé',
 };
 
 // ═══════════════════════════════════════════════════════════════

@@ -150,7 +150,7 @@ export default function EcosystemScreen() {
       id: 'skills',
       label: 'Mes compétences',
       icon: Award,
-      route: '/settings/edit-profile',
+      route: '/settings/skills',
       count: quickActionCounts.talent.skills,
       theme: CARD_THEMES.talent,
     },
@@ -221,18 +221,18 @@ export default function EcosystemScreen() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'application': return CheckCircle;
-      case 'opportunity': return Briefcase;
-      case 'community': return Users;
+      case 'APPLICATION': return CheckCircle;
+      case 'OPPORTUNITY': return Briefcase;
+      case 'COMMUNITY': return Users;
       default: return Bell;
     }
   };
 
   const getNotificationColor = (type: string) => {
     switch (type) {
-      case 'application': return { bg: CARD_THEMES.talent.bg, icon: CARD_THEMES.talent.icon };
-      case 'opportunity': return { bg: CARD_THEMES.opportunity.bg, icon: CARD_THEMES.opportunity.icon };
-      case 'community': return { bg: CARD_THEMES.community.bg, icon: CARD_THEMES.community.icon };
+      case 'APPLICATION': return { bg: CARD_THEMES.talent.bg, icon: CARD_THEMES.talent.icon };
+      case 'OPPORTUNITY': return { bg: CARD_THEMES.opportunity.bg, icon: CARD_THEMES.opportunity.icon };
+      case 'COMMUNITY': return { bg: CARD_THEMES.community.bg, icon: CARD_THEMES.community.icon };
       default: return { bg: colors.gray100, icon: colors.textSecondary };
     }
   };
@@ -590,11 +590,11 @@ const renderTalentContent = () => (
                     {notification.title}
                   </Text>
                   <Text style={[styles.listItemSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {notification.message}
+                    {notification.body}
                   </Text>
                 </View>
                 <Text style={[styles.listItemTime, { color: colors.gray400 }]}>
-                  {notification.time}
+                  {notification.created_at}
                 </Text>
               </TouchableOpacity>
             );

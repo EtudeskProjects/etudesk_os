@@ -123,7 +123,7 @@ class SpaceBookingService {
     bookingId: string,
     notes: string
   ): Promise<ApiResponse<SpaceBookingDetails>> {
-    return api.put<SpaceBookingDetails>(`/api/spaces/bookings/${bookingId}/notes`, { notes });
+    return api.put<SpaceBookingDetails>(`/api/spaces/bookings/${bookingId}/notes`, { internal_notes: notes });
   }
 
   /**

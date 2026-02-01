@@ -617,6 +617,21 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Community not found' });
     }
 
+    // Authorization: must be creator or org member (OWNER/ADMIN)
+    const community = existingResult.rows[0];
+    const isCreator = community.created_by === req.talentId;
+    let isOrgAdmin = false;
+    if (community.organization_id) {
+      const memberCheck = await pool.query(
+        `SELECT role FROM organization_members WHERE organization_id = $1 AND talent_id = $2 AND role IN ('OWNER', 'ADMIN')`,
+        [community.organization_id, req.talentId]
+      );
+      isOrgAdmin = memberCheck.rows.length > 0;
+    }
+    if (!isCreator && !isOrgAdmin) {
+      return res.status(403).json({ error: 'Non autorisé à modifier cette communauté' });
+    }
+
     // Validate tags: max 3 tags
     if (tags !== undefined && Array.isArray(tags) && tags.length > 3) {
       return res.status(400).json({ error: 'Maximum 3 tags allowed' });
@@ -1278,12 +1293,7 @@ router.get('/:id/members', authMiddleware, async (req: AuthRequest, res: Respons
     `);
     const hasMemberId = memberIdCheck.rows.length > 0;
 
-    const talentRoleCheck = await pool.query(`
-      SELECT column_name
-      FROM information_schema.columns
-      WHERE table_name = 'talents' AND column_name = 'current_role'
-    `);
-    const hasTalentCurrentRole = talentRoleCheck.rows.length > 0;
+    const hasTalentCurrentRole = false; // Column does not exist on talents table
 
     // Build membership_id reference for unread messages subquery
     // If id column exists, use it; otherwise use composite key (community_id, talent_id)

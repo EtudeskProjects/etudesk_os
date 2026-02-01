@@ -87,7 +87,7 @@ class ApplicationService {
   /**
    * Check if talent has already applied to an opportunity
    */
-  async hasApplied(opportunityId: string): Promise<ApiResponse<{ hasApplied: boolean; application?: { id: string; status: string; applied_at: string } }>> {
+  async hasApplied(opportunityId: string): Promise<ApiResponse<{ applied: boolean; application?: { id: string; status: string; applied_at: string } }>> {
     return api.get(`/api/applications/check/${opportunityId}`);
   }
 
@@ -102,7 +102,7 @@ class ApplicationService {
     orgId: string,
     filters?: ApplicationFilters
   ): Promise<ApiResponse<Application[]>> {
-    return api.get<Application[]>(`/api/organizations/${orgId}/applications`, filters);
+    return api.get<Application[]>(`/api/applications/organization/${orgId}`, filters);
   }
 
   /**
@@ -112,14 +112,16 @@ class ApplicationService {
     opportunityId: string,
     filters?: { status?: ApplicationStatus; limit?: number; offset?: number }
   ): Promise<ApiResponse<Application[]>> {
-    return api.get<Application[]>(`/api/opportunities/${opportunityId}/applications`, filters);
+    return api.get<Application[]>(`/api/applications/opportunity/${opportunityId}`, filters);
   }
 
   /**
    * Get application counts by status for an opportunity
+   * Note: Status counts are returned inline by getOpportunityApplications() and getRankedApplications()
+   * in the `statusCounts` field. This method uses the same endpoint.
    */
   async getApplicationCounts(opportunityId: string): Promise<ApiResponse<Record<ApplicationStatus, number>>> {
-    return api.get(`/api/opportunities/${opportunityId}/applications/counts`);
+    return api.get(`/api/applications/opportunity/${opportunityId}`, { limit: 0, offset: 0 });
   }
 
   /**
@@ -187,11 +189,11 @@ class ApplicationService {
   /**
    * Export applications to PDF (for organizations)
    */
-  async exportToPdf(opportunityId: string, applicationIds?: string[]): Promise<ApiResponse<{ pdf_url: string }>> {
-    return api.post(`/api/opportunities/${opportunityId}/applications/export`, {
-      application_ids: applicationIds,
-      format: 'pdf',
-    });
+  async exportToCsv(opportunityId: string, options?: { status?: ApplicationStatus; matchCategory?: string }): Promise<ApiResponse<any>> {
+    const params: Record<string, string> = {};
+    if (options?.status) params.status = options.status;
+    if (options?.matchCategory) params.matchCategory = options.matchCategory;
+    return api.get(`/api/applications/opportunity/${opportunityId}/export-csv`, params);
   }
 
   /**

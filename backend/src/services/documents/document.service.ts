@@ -376,7 +376,7 @@ export async function listDocuments(options: DocumentListOptions): Promise<{
 
   // Get total count
   const countResult = await pool.query(
-    `SELECT COUNT(*) FROM talent_documents WHERE ${whereClause}`,
+    `SELECT COUNT(*) as count FROM talent_documents WHERE ${whereClause}`,
     params
   );
   const total = parseInt(countResult.rows[0].count, 10);
@@ -554,7 +554,7 @@ export async function getDocumentStats(talentId: string): Promise<{
   };
 
   interface StatsRow {
-    count: string;
+    total: string;
     total_size: string;
     document_type: string;
     category: string;
@@ -562,7 +562,7 @@ export async function getDocumentStats(talentId: string): Promise<{
   }
 
   result.rows.forEach((row: StatsRow) => {
-    const count = parseInt(row.count, 10);
+    const count = parseInt(row.total, 10);
     stats.total += count;
     stats.totalSize += parseInt(row.total_size || '0', 10);
 

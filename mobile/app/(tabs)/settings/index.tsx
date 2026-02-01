@@ -41,7 +41,7 @@ export default function AccountScreen() {
     const fetchKYCStatus = async () => {
       try {
         const response = await kycService.getStatus();
-        if (response.data?.status === 'verified') {
+        if (response.data?.status === 'VERIFIED') {
           setIsKYCVerified(true);
         }
       } catch (error) {

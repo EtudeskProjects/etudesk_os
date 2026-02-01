@@ -86,8 +86,8 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
     const id = uuidv4();
     const result = await pool.query(`
       INSERT INTO opportunity_applications (
-        id, talent_id, opportunity_id, cover_letter, custom_answers, resume_url, status, applied_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, 'SUBMITTED', NOW())
+        id, talent_id, opportunity_id, cover_letter, custom_answers, cv_url, status, applied_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', NOW())
       RETURNING *
     `, [id, talentId, opportunity_id, cover_letter || null, applicationAnswers ? JSON.stringify(applicationAnswers) : null, resume_url || null]);
 
@@ -728,7 +728,7 @@ router.put('/:id/rating', authMiddleware, validate(uuidParamSchema, 'params'), v
 
     const result = await pool.query(`
       UPDATE opportunity_applications
-      SET rating = $1, updated_at = NOW()
+      SET star_rating = $1, updated_at = NOW()
       WHERE id = $2
       RETURNING *
     `, [rating, id]);
@@ -1193,9 +1193,9 @@ router.get('/opportunity/:opportunityId/export-csv', authMiddleware, validate(op
         escapeCSV(MATCH_LABELS[app.matchCategory || ''] || ''),
         escapeCSV(app.matchScore ? Math.round(app.matchScore) : ''),
         escapeCSV(STATUS_LABELS[app.status] || app.status),
-        escapeCSV(app.rating || ''),
+        escapeCSV(app.star_rating || ''),
         escapeCSV(app.applied_at ? new Date(app.applied_at).toLocaleDateString('fr-FR') : ''),
-        escapeCSV(app.resume_url || '')
+        escapeCSV(app.cv_url || '')
       ].join(',');
     });
 

@@ -158,9 +158,9 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
   const result = await pool.query(
     `
     SELECT
-      t.id, t.user_id, t.display_name, t.first_name, t.last_name, t.email, t.phone,
+      t.id, t.display_name, t.first_name, t.last_name, t.email, t.phone,
       t.bio, t.avatar_url, t.city, t.region, t.country,
-      t.remote_ready, t.willing_to_relocate, t.availability_status,
+      t.remote_ready, t.willing_to_relocate,
       t.profile_tags, t.goals,
       t.created_at, t.updated_at
     FROM talents t
@@ -188,19 +188,9 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
     [talentId]
   );
 
-  // Load languages
-  const languagesResult = await pool.query(
-    `
-    SELECT language, proficiency_level as level
-    FROM talent_languages
-    WHERE talent_id = $1
-  `,
-    [talentId]
-  );
-
   return {
     id: t.id,
-    userId: t.user_id,
+    userId: t.id,
     firstName: t.first_name || t.display_name?.split(' ')[0] || '',
     lastName: t.last_name || t.display_name?.split(' ').slice(1).join(' ') || '',
     email: t.email,
@@ -211,17 +201,13 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
     location: [t.city, t.country].filter(Boolean).join(', '),
     city: t.city,
     country: t.country,
-    availabilityStatus: t.availability_status,
     remotePreference: t.remote_ready ? 'REMOTE' : 'ON_SITE',
     skills: skillsResult.rows.map((s) => ({
       name: s.name,
       level: s.level?.toLowerCase(),
       yearsOfExperience: s.years_of_experience,
     })),
-    languages: languagesResult.rows.map((l) => ({
-      language: l.language,
-      level: l.level?.toLowerCase() || 'basic',
-    })),
+    languages: [],
     sectorsOfInterest: t.goals,
     createdAt: t.created_at?.toISOString(),
     updatedAt: t.updated_at?.toISOString(),
@@ -274,11 +260,11 @@ async function loadApplications(talentId: string, limit: number): Promise<Applic
       a.id, a.opportunity_id, a.status, a.created_at, a.updated_at,
       o.title as opportunity_title,
       org.name as organization_name
-    FROM applications a
+    FROM opportunity_applications a
     JOIN opportunities o ON a.opportunity_id = o.id
     LEFT JOIN opportunity_posters op ON o.id = op.opportunity_id
     LEFT JOIN organizations org ON op.poster_organization_id = org.id
-    WHERE a.talent_id = $1 AND a.deleted_at IS NULL
+    WHERE a.talent_id = $1
     ORDER BY a.created_at DESC
     LIMIT $2
   `,
@@ -348,14 +334,14 @@ async function loadReservations(talentId: string): Promise<ReservationsContext> 
   const result = await pool.query(
     `
     SELECT
-      r.id, r.space_id, r.date, r.start_time, r.end_time, r.status,
+      r.id, r.space_id, r.start_datetime, r.end_datetime, r.status,
       s.name as space_name
-    FROM space_reservations r
+    FROM space_bookings r
     JOIN spaces s ON r.space_id = s.id
     WHERE r.talent_id = $1
-      AND r.date >= CURRENT_DATE
+      AND r.start_datetime >= CURRENT_DATE
       AND r.status != 'CANCELLED'
-    ORDER BY r.date ASC, r.start_time ASC
+    ORDER BY r.start_datetime ASC
     LIMIT 10
   `,
     [talentId]
@@ -365,9 +351,9 @@ async function loadReservations(talentId: string): Promise<ReservationsContext> 
     id: r.id,
     spaceId: r.space_id,
     spaceName: r.space_name,
-    date: r.date?.toISOString().split('T')[0],
-    startTime: r.start_time,
-    endTime: r.end_time,
+    date: r.start_datetime?.toISOString().split('T')[0],
+    startTime: r.start_datetime?.toISOString(),
+    endTime: r.end_datetime?.toISOString(),
     status: r.status,
   }));
 
@@ -378,47 +364,16 @@ async function loadReservations(talentId: string): Promise<ReservationsContext> 
   };
 }
 
-async function loadNotifications(talentId: string, limit: number): Promise<NotificationsContext> {
-  // Get user_id from talent
-  const userResult = await pool.query('SELECT user_id FROM talents WHERE id = $1', [talentId]);
-  if (userResult.rows.length === 0) {
-    return { unreadCount: 0, recentNotifications: [] };
-  }
-  const userId = userResult.rows[0].user_id;
-
-  const result = await pool.query(
-    `
-    SELECT id, type, title, body as message, read_at, created_at
-    FROM notifications
-    WHERE user_id = $1
-    ORDER BY created_at DESC
-    LIMIT $2
-  `,
-    [userId, limit]
-  );
-
-  const notifications = result.rows.map((n) => ({
-    id: n.id,
-    type: n.type,
-    title: n.title,
-    message: n.message,
-    isRead: !!n.read_at,
-    createdAt: n.created_at?.toISOString(),
-  }));
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-
-  return {
-    unreadCount,
-    recentNotifications: notifications,
-  };
+async function loadNotifications(talentId: string, _limit: number): Promise<NotificationsContext> {
+  // notifications table doesn't exist; return empty
+  return { unreadCount: 0, recentNotifications: [] };
 }
 
 async function loadBookmarks(talentId: string): Promise<BookmarksContext> {
   const result = await pool.query(
     `
-    SELECT id, entity_type, entity_id, created_at
-    FROM bookmarks
+    SELECT id, 'opportunity' as entity_type, opportunity_id as entity_id, created_at
+    FROM opportunity_bookmarks
     WHERE talent_id = $1
     ORDER BY created_at DESC
     LIMIT 50
@@ -453,13 +408,13 @@ async function loadCalendar(talentId: string, daysAhead: number): Promise<Calend
   const interviewsResult = await pool.query(
     `
     SELECT
-      a.id, o.title, a.interview_date, a.interview_type
-    FROM applications a
+      a.id, o.title, a.interview_scheduled_at, a.interview_type
+    FROM opportunity_applications a
     JOIN opportunities o ON a.opportunity_id = o.id
     WHERE a.talent_id = $1
       AND a.status = 'INTERVIEW_SCHEDULED'
-      AND a.interview_date >= CURRENT_DATE
-      AND a.interview_date <= CURRENT_DATE + $2
+      AND a.interview_scheduled_at >= CURRENT_DATE
+      AND a.interview_scheduled_at <= CURRENT_DATE + $2
   `,
     [talentId, daysAhead]
   );
@@ -469,7 +424,7 @@ async function loadCalendar(talentId: string, daysAhead: number): Promise<Calend
       id: i.id,
       title: `Entretien: ${i.title}`,
       type: 'interview',
-      startDate: i.interview_date?.toISOString(),
+      startDate: i.interview_scheduled_at?.toISOString(),
       relatedEntityType: 'application',
       relatedEntityId: i.id,
     });
@@ -478,13 +433,13 @@ async function loadCalendar(talentId: string, daysAhead: number): Promise<Calend
   // Get reservation events
   const reservationsResult = await pool.query(
     `
-    SELECT r.id, s.name, r.date, r.start_time
-    FROM space_reservations r
+    SELECT r.id, s.name, r.start_datetime
+    FROM space_bookings r
     JOIN spaces s ON r.space_id = s.id
     WHERE r.talent_id = $1
       AND r.status = 'CONFIRMED'
-      AND r.date >= CURRENT_DATE
-      AND r.date <= CURRENT_DATE + $2
+      AND r.start_datetime >= CURRENT_DATE
+      AND r.start_datetime <= CURRENT_DATE + $2
   `,
     [talentId, daysAhead]
   );
@@ -494,7 +449,7 @@ async function loadCalendar(talentId: string, daysAhead: number): Promise<Calend
       id: r.id,
       title: `Réservation: ${r.name}`,
       type: 'reservation',
-      startDate: r.date?.toISOString(),
+      startDate: r.start_datetime?.toISOString(),
       relatedEntityType: 'reservation',
       relatedEntityId: r.id,
     });
@@ -514,25 +469,43 @@ async function loadCalendar(talentId: string, daysAhead: number): Promise<Calend
 }
 
 async function loadInvitations(talentId: string): Promise<InvitationsContext> {
-  const result = await pool.query(
+  // Load from community and organization invitation tables
+  const communityResult = await pool.query(
     `
     SELECT
-      i.id, i.type, i.status, i.created_at, i.expires_at,
-      u.display_name as from_name,
-      COALESCE(c.name, o.name) as target_name
-    FROM invitations i
-    LEFT JOIN users u ON i.inviter_id = u.id
-    LEFT JOIN communities c ON i.community_id = c.id
-    LEFT JOIN organizations o ON i.organization_id = o.id
-    WHERE i.invitee_talent_id = $1
-      AND i.status = 'PENDING'
-    ORDER BY i.created_at DESC
+      ci.id, 'community' as type, ci.status, ci.created_at, ci.expires_at,
+      t.display_name as from_name,
+      c.name as target_name
+    FROM community_invitations ci
+    LEFT JOIN talents t ON ci.inviter_talent_id = t.id
+    LEFT JOIN communities c ON ci.community_id = c.id
+    WHERE ci.invitee_talent_id = $1
+      AND ci.status = 'PENDING'
+    ORDER BY ci.created_at DESC
     LIMIT 10
   `,
     [talentId]
   );
 
-  const invitations = result.rows.map((i) => ({
+  const orgResult = await pool.query(
+    `
+    SELECT
+      oi.id, 'organization' as type, oi.status, oi.created_at, oi.expires_at,
+      t.display_name as from_name,
+      o.name as target_name
+    FROM organization_invitations oi
+    LEFT JOIN talents t ON oi.inviter_talent_id = t.id
+    LEFT JOIN organizations o ON oi.organization_id = o.id
+    WHERE oi.invitee_talent_id = $1
+      AND oi.status = 'PENDING'
+    ORDER BY oi.created_at DESC
+    LIMIT 10
+  `,
+    [talentId]
+  );
+
+  const allRows = [...communityResult.rows, ...orgResult.rows];
+  const invitations = allRows.map((i) => ({
     id: i.id,
     type: i.type,
     fromName: i.from_name || 'Quelqu\'un',
@@ -557,7 +530,6 @@ async function loadOrganizations(talentId: string): Promise<OrganizationsContext
     FROM organization_members om
     JOIN organizations o ON om.organization_id = o.id
     WHERE om.talent_id = $1
-      AND om.status = 'ACTIVE'
   `,
     [talentId]
   );
@@ -585,8 +557,8 @@ async function loadLearning(talentId: string): Promise<LearningContext> {
     `
     SELECT
       (SELECT COUNT(*) FROM learning_topics WHERE talent_id = $1) as total_topics,
-      (SELECT COUNT(*) FROM learning_flashcards WHERE talent_id = $1 AND is_active = true) as total_flashcards,
-      (SELECT COUNT(*) FROM learning_flashcards WHERE talent_id = $1 AND is_active = true AND next_review_date <= CURRENT_TIMESTAMP) as due_flashcards
+      (SELECT COUNT(*) FROM learning_flashcards WHERE talent_id = $1 AND NOT is_suspended AND NOT is_archived) as total_flashcards,
+      (SELECT COUNT(*) FROM learning_flashcards WHERE talent_id = $1 AND NOT is_suspended AND NOT is_archived AND next_review_at <= CURRENT_TIMESTAMP) as due_flashcards
   `,
     [talentId]
   );
@@ -597,9 +569,9 @@ async function loadLearning(talentId: string): Promise<LearningContext> {
   const topicsResult = await pool.query(
     `
     SELECT
-      lt.id, lt.name, lt.mastery_level,
-      (SELECT COUNT(*) FROM learning_flashcards lf WHERE lf.topic_id = lt.id AND lf.is_active = true) as flashcard_count,
-      (SELECT COUNT(*) FROM learning_flashcards lf WHERE lf.topic_id = lt.id AND lf.is_active = true AND lf.next_review_date <= CURRENT_TIMESTAMP) as due_count,
+      lt.id, lt.topic_name, lt.mastery_level,
+      (SELECT COUNT(*) FROM learning_flashcards lf WHERE lf.topic_id = lt.id AND NOT lf.is_suspended AND NOT lf.is_archived) as flashcard_count,
+      (SELECT COUNT(*) FROM learning_flashcards lf WHERE lf.topic_id = lt.id AND NOT lf.is_suspended AND NOT lf.is_archived AND lf.next_review_at <= CURRENT_TIMESTAMP) as due_count,
       lt.last_studied_at
     FROM learning_topics lt
     WHERE lt.talent_id = $1
@@ -611,7 +583,7 @@ async function loadLearning(talentId: string): Promise<LearningContext> {
 
   const topics = topicsResult.rows.map((t) => ({
     id: t.id,
-    name: t.name,
+    name: t.topic_name,
     masteryLevel: t.mastery_level || 0,
     flashcardCount: parseInt(t.flashcard_count) || 0,
     dueFlashcardCount: parseInt(t.due_count) || 0,
@@ -621,7 +593,7 @@ async function loadLearning(talentId: string): Promise<LearningContext> {
   // Get preferences
   const prefsResult = await pool.query(
     `
-    SELECT daily_card_goal, notifications_enabled
+    SELECT daily_goal_minutes, reminder_enabled
     FROM learning_preferences
     WHERE talent_id = $1
   `,
@@ -650,8 +622,8 @@ async function loadLearning(talentId: string): Promise<LearningContext> {
     topics,
     preferences: prefs
       ? {
-          dailyGoal: prefs.daily_card_goal,
-          notificationsEnabled: prefs.notifications_enabled,
+          dailyGoal: prefs.daily_goal_minutes,
+          notificationsEnabled: prefs.reminder_enabled,
         }
       : undefined,
   };

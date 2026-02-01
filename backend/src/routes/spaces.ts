@@ -313,13 +313,16 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Organization ID is required' });
     }
 
-    // Check organization exists and user has access
+    // Check organization exists and user is member (OWNER/ADMIN)
     const orgCheck = await pool.query(
-      `SELECT id FROM organizations WHERE id = $1 AND deleted_at IS NULL`,
-      [input.organization_id]
+      `SELECT o.id FROM organizations o
+       JOIN organization_members om ON om.organization_id = o.id
+       WHERE o.id = $1 AND o.deleted_at IS NULL
+       AND om.talent_id = $2 AND om.role IN ('OWNER', 'ADMIN')`,
+      [input.organization_id, talentId]
     );
     if (orgCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Organization not found' });
+      return res.status(403).json({ error: 'Non autorisé à créer un espace pour cette organisation' });
     }
 
     const id = uuidv4();
@@ -449,6 +452,18 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Space not found' });
     }
 
+    // Authorization: must be org member (OWNER/ADMIN)
+    const space = existing.rows[0];
+    if (space.organization_id) {
+      const memberCheck = await pool.query(
+        `SELECT role FROM organization_members WHERE organization_id = $1 AND talent_id = $2 AND role IN ('OWNER', 'ADMIN')`,
+        [space.organization_id, req.talentId]
+      );
+      if (memberCheck.rows.length === 0) {
+        return res.status(403).json({ error: 'Non autorisé à modifier cet espace' });
+      }
+    }
+
     // Recalculate capacity if surface or type changed
     let capacity = input.capacity;
     if (input.surface_m2 || input.type) {
@@ -561,6 +576,21 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+
+    // Authorization: must be org member (OWNER/ADMIN)
+    const spaceCheck = await pool.query(`SELECT organization_id FROM spaces WHERE id = $1 AND deleted_at IS NULL`, [id]);
+    if (spaceCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Space not found' });
+    }
+    if (spaceCheck.rows[0].organization_id) {
+      const memberCheck = await pool.query(
+        `SELECT role FROM organization_members WHERE organization_id = $1 AND talent_id = $2 AND role IN ('OWNER', 'ADMIN')`,
+        [spaceCheck.rows[0].organization_id, req.talentId]
+      );
+      if (memberCheck.rows.length === 0) {
+        return res.status(403).json({ error: 'Non autorisé à supprimer cet espace' });
+      }
+    }
 
     // Check for active bookings
     const activeBookings = await pool.query(
@@ -1668,6 +1698,81 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
     res.status(500).json({
       error: 'Erreur lors de la génération des suggestions',
     });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// ADDITIONAL ENDPOINTS
+// ═══════════════════════════════════════════════════════════════
+
+// GET /api/spaces/slug/:slug - Get space by slug
+router.get('/slug/:slug', async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+
+    const result = await pool.query(
+      `SELECT * FROM spaces WHERE slug = $1 AND deleted_at IS NULL`,
+      [slug]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Space not found' });
+    }
+
+    res.json({ data: result.rows[0] });
+  } catch (error) {
+    console.error('Error fetching space by slug:', error);
+    res.status(500).json({ error: 'Failed to fetch space' });
+  }
+});
+
+// GET /api/spaces/:spaceId/bookings/counts - Get booking counts by status
+router.get('/:spaceId/bookings/counts', async (req: Request, res: Response) => {
+  try {
+    const { spaceId } = req.params;
+
+    const result = await pool.query(
+      `SELECT status, COUNT(*) as count FROM space_bookings WHERE space_id = $1 GROUP BY status`,
+      [spaceId]
+    );
+
+    const byStatus: Record<string, number> = {};
+    let total = 0;
+    for (const row of result.rows) {
+      const count = parseInt(row.count);
+      byStatus[row.status] = count;
+      total += count;
+    }
+
+    res.json({ data: { total, byStatus } });
+  } catch (error) {
+    console.error('Error fetching booking counts:', error);
+    res.status(500).json({ error: 'Failed to fetch booking counts' });
+  }
+});
+
+// PUT /api/spaces/bookings/:id/rating - Update booking rating
+router.put('/bookings/:id/rating', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { rating, review } = req.body;
+    const talentId = req.talentId;
+
+    const result = await pool.query(
+      `UPDATE space_bookings SET rating = $1, review = $2, updated_at = NOW()
+       WHERE id = $3 AND talent_id = $4
+       RETURNING *`,
+      [rating, review || null, id, talentId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Booking not found or access denied' });
+    }
+
+    res.json({ data: result.rows[0] });
+  } catch (error) {
+    console.error('Error updating booking rating:', error);
+    res.status(500).json({ error: 'Failed to update booking rating' });
   }
 });
 

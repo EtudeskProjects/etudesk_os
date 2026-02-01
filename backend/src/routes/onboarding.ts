@@ -289,19 +289,20 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       console.log(`✅ Onboarding completed for ${user.email} (talentId: ${talentId})`);
 
       return res.status(201).json({
-        success: true,
+        data: {
+          talent: {
+            id: talentId,
+            slug: finalSlug,
+            displayName: data.displayName,
+            email: user.email,
+          },
+          tokens: {
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresIn: tokens.expiresIn,
+          },
+        },
         message: 'Profil créé avec succès',
-        talent: {
-          id: talentId,
-          slug: finalSlug,
-          displayName: data.displayName,
-          email: user.email,
-        },
-        tokens: {
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-          expiresIn: tokens.expiresIn,
-        },
       });
     } catch (error) {
       await client.query('ROLLBACK');
@@ -351,15 +352,16 @@ router.get('/status', authMiddleware, async (req: AuthRequest, res: Response) =>
     const isComplete = !!user.talent_id;
 
     return res.json({
-      success: true,
-      onboarding: {
-        isComplete,
-        email: user.email,
-        talent: isComplete ? {
-          id: user.talent_id,
-          slug: user.slug,
-          displayName: user.display_name,
-        } : null,
+      data: {
+        onboarding: {
+          isComplete,
+          email: user.email,
+          talent: isComplete ? {
+            id: user.talent_id,
+            slug: user.slug,
+            displayName: user.display_name,
+          } : null,
+        },
       },
     });
   } catch (error) {
@@ -378,16 +380,17 @@ router.get('/status', authMiddleware, async (req: AuthRequest, res: Response) =>
  */
 router.get('/options', async (req, res) => {
   return res.json({
-    success: true,
-    options: {
-      profileTags: VALID_PROFILE_TAGS.map(tag => ({
-        value: tag,
-        label: getProfileTagLabel(tag),
-      })),
-      goals: VALID_GOALS.map(goal => ({
-        value: goal,
-        label: getGoalLabel(goal),
-      })),
+    data: {
+      options: {
+        profileTags: VALID_PROFILE_TAGS.map(tag => ({
+          value: tag,
+          label: getProfileTagLabel(tag),
+        })),
+        goals: VALID_GOALS.map(goal => ({
+          value: goal,
+          label: getGoalLabel(goal),
+        })),
+      },
     },
   });
 });

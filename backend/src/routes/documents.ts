@@ -26,7 +26,6 @@ import {
   DocumentCategory,
   DocumentStatus,
 } from '../constants/documents';
-import { pool } from '../services/database';
 
 const router = Router();
 
@@ -55,13 +54,6 @@ const upload = multer({
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════
 
-/**
- * Get talent ID for the authenticated user
- */
-async function getTalentId(userId: string): Promise<string | null> {
-  const result = await pool.query('SELECT id FROM talents WHERE user_id = $1', [userId]);
-  return result.rows[0]?.id || null;
-}
 
 // ═══════════════════════════════════════════════════════════════
 // ROUTES
@@ -73,14 +65,9 @@ async function getTalentId(userId: string): Promise<string | null> {
  */
 router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Non authentifié' });
-    }
-
-    const talentId = await getTalentId(userId);
+    const talentId = req.talentId;
     if (!talentId) {
-      return res.status(404).json({ error: 'Profil talent non trouvé' });
+      return res.json({ data: [], total: 0 });
     }
 
     const { type, category, status, is_public, search, limit, offset } = req.query;
@@ -112,14 +99,9 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
  */
 router.get('/stats', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Non authentifié' });
-    }
-
-    const talentId = await getTalentId(userId);
+    const talentId = req.talentId;
     if (!talentId) {
-      return res.status(404).json({ error: 'Profil talent non trouvé' });
+      return res.json({ total: 0, byType: {}, byStatus: {}, canUpload: true, currentCount: 0, maxCount: DOCUMENT_LIMITS.MAX_DOCUMENTS_PER_TALENT, maxFileSizeMB: DOCUMENT_LIMITS.MAX_FILE_SIZE_MB });
     }
 
     const stats = await getDocumentStats(talentId);
@@ -164,12 +146,7 @@ router.get('/types', (req: Request, res: Response) => {
  */
 router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Non authentifié' });
-    }
-
-    const talentId = await getTalentId(userId);
+    const talentId = req.talentId;
     if (!talentId) {
       return res.status(404).json({ error: 'Profil talent non trouvé' });
     }
@@ -198,12 +175,7 @@ router.post(
   upload.single('file'),
   async (req: AuthRequest, res: Response) => {
     try {
-      const userId = req.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Non authentifié' });
-      }
-
-      const talentId = await getTalentId(userId);
+      const talentId = req.talentId;
       if (!talentId) {
         return res.status(404).json({ error: 'Profil talent non trouvé' });
       }
@@ -278,12 +250,7 @@ router.post(
  */
 router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Non authentifié' });
-    }
-
-    const talentId = await getTalentId(userId);
+    const talentId = req.talentId;
     if (!talentId) {
       return res.status(404).json({ error: 'Profil talent non trouvé' });
     }
@@ -325,12 +292,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
  */
 router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Non authentifié' });
-    }
-
-    const talentId = await getTalentId(userId);
+    const talentId = req.talentId;
     if (!talentId) {
       return res.status(404).json({ error: 'Profil talent non trouvé' });
     }
@@ -355,12 +317,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
  */
 router.post('/:id/retry', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Non authentifié' });
-    }
-
-    const talentId = await getTalentId(userId);
+    const talentId = req.talentId;
     if (!talentId) {
       return res.status(404).json({ error: 'Profil talent non trouvé' });
     }

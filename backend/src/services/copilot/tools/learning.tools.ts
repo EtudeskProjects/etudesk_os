@@ -52,9 +52,9 @@ export async function createFlashcard(
   if (!finalTopicId && topicName) {
     const topicResult = await pool.query(
       `
-      INSERT INTO learning_topics (id, talent_id, name, created_at, updated_at)
+      INSERT INTO learning_topics (id, talent_id, topic_name, created_at, updated_at)
       VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      ON CONFLICT (talent_id, name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+      ON CONFLICT (talent_id, topic_slug) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
       RETURNING id
     `,
       [uuidv4(), talentId, topicName]
@@ -69,10 +69,10 @@ export async function createFlashcard(
   await pool.query(
     `
     INSERT INTO learning_flashcards (
-      id, talent_id, topic_id, front, back, hint, difficulty, tags,
-      ease_factor, interval_days, repetitions, next_review_date,
-      source_type, is_active, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 2.5, 1, 0, $9, 'ai_generated', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      id, talent_id, topic_id, front_content, back_content, hint, difficulty, tags,
+      ease_factor, interval_days, repetitions, next_review_at,
+      source_type, created_at, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 2.5, 1, 0, $9, 'generated', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
   `,
     [flashcardId, talentId, finalTopicId, front, back, hint, difficulty, tags || [], nextReviewDate]
   );
@@ -107,12 +107,12 @@ export async function getDueCards(
   // Get due cards count by topic
   let countQuery = `
     SELECT
-      lt.id as topic_id, lt.name as topic_name,
+      lt.id as topic_id, lt.topic_name as topic_name,
       COUNT(lf.id) as due_count
     FROM learning_topics lt
     LEFT JOIN learning_flashcards lf ON lf.topic_id = lt.id
-      AND lf.is_active = true
-      AND lf.next_review_date <= CURRENT_TIMESTAMP
+      AND NOT lf.is_suspended AND NOT lf.is_archived
+      AND lf.next_review_at <= CURRENT_TIMESTAMP
     WHERE lt.talent_id = $1
   `;
   const countParams: (string | number)[] = [talentId];
@@ -139,12 +139,12 @@ export async function getDueCards(
   if (totalDue > 0) {
     let cardQuery = `
       SELECT
-        lf.id, lf.topic_id, lf.front, lf.back, lf.hint, lf.difficulty, lf.tags,
-        lf.next_review_date, lf.total_reviews
+        lf.id, lf.topic_id, lf.front_content, lf.back_content, lf.hint, lf.difficulty, lf.tags,
+        lf.next_review_at, lf.total_reviews
       FROM learning_flashcards lf
       WHERE lf.talent_id = $1
-        AND lf.is_active = true
-        AND lf.next_review_date <= CURRENT_TIMESTAMP
+        AND NOT lf.is_suspended AND NOT lf.is_archived
+        AND lf.next_review_at <= CURRENT_TIMESTAMP
     `;
     const cardParams: string[] = [talentId];
 
@@ -153,7 +153,7 @@ export async function getDueCards(
       cardParams.push(topicId);
     }
 
-    cardQuery += ' ORDER BY lf.next_review_date ASC LIMIT 1';
+    cardQuery += ' ORDER BY lf.next_review_at ASC LIMIT 1';
 
     const cardResult = await pool.query(cardQuery, cardParams);
 
@@ -163,13 +163,13 @@ export async function getDueCards(
         type: 'study_flashcard',
         id: c.id,
         topicId: c.topic_id,
-        front: c.front,
-        back: c.back,
+        front: c.front_content,
+        back: c.back_content,
         hint: c.hint,
         difficulty: c.difficulty,
         tags: c.tags,
         isReview: true,
-        dueDate: c.next_review_date?.toISOString(),
+        dueDate: c.next_review_at?.toISOString(),
         reviewCount: c.total_reviews,
       };
     }
@@ -226,8 +226,8 @@ export async function recordReview(
       ease_factor = $1,
       interval_days = $2,
       repetitions = $3,
-      next_review_date = $4,
-      last_review_date = CURRENT_TIMESTAMP,
+      next_review_at = $4,
+      last_reviewed_at = CURRENT_TIMESTAMP,
       last_quality = $5,
       total_reviews = total_reviews + 1,
       correct_reviews = correct_reviews + CASE WHEN $5 >= 3 THEN 1 ELSE 0 END,
@@ -403,10 +403,10 @@ export async function getProgress(
     `
     SELECT
       COUNT(DISTINCT lt.id) as topics_studied,
-      COALESCE(SUM(ls.items_reviewed), 0) as cards_reviewed,
-      COUNT(DISTINCT CASE WHEN ls.session_type = 'quiz' THEN ls.id END) as quizzes_taken,
-      COALESCE(AVG(ls.average_quality), 0) as avg_quality,
-      COALESCE(SUM(ls.duration), 0) as total_time
+      COALESCE(SUM(ls.flashcards_reviewed), 0) as cards_reviewed,
+      0 as quizzes_taken,
+      0 as avg_quality,
+      COALESCE(SUM(ls.duration_minutes), 0) as total_time
     FROM learning_sessions ls
     LEFT JOIN learning_topics lt ON ls.topic_id = lt.id
     WHERE ls.talent_id = $1 ${dateFilter}
@@ -420,7 +420,7 @@ export async function getProgress(
   const topicsResult = await pool.query(
     `
     SELECT
-      lt.id, lt.name, lt.mastery_level, lt.last_studied_at
+      lt.id, lt.topic_name, lt.mastery_level, lt.last_studied_at
     FROM learning_topics lt
     WHERE lt.talent_id = $1
     ORDER BY lt.last_studied_at DESC NULLS LAST
@@ -466,7 +466,7 @@ export async function getProgress(
     },
     recentTopics: topicsResult.rows.map((t) => ({
       id: t.id,
-      name: t.name,
+      name: t.topic_name,
       progress: t.mastery_level || 0,
       lastStudied: t.last_studied_at?.toISOString() || '',
     })),
@@ -493,18 +493,18 @@ export async function createTopic(
   context: { talentId: string }
 ): Promise<{ id: string; name: string }> {
   const { talentId } = context;
-  const { name, description, parentTopicId, domain, tags } = params;
+  const { name, parentTopicId, tags } = params;
 
   const topicId = uuidv4();
 
   await pool.query(
     `
     INSERT INTO learning_topics (
-      id, talent_id, name, description, parent_topic_id, domain, tags,
+      id, talent_id, topic_name, parent_topic_id, tags,
       created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
   `,
-    [topicId, talentId, name, description, parentTopicId, domain, tags || []]
+    [topicId, talentId, name, parentTopicId, tags || []]
   );
 
   return { id: topicId, name };

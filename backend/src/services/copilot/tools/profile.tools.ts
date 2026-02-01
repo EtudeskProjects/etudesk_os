@@ -229,9 +229,9 @@ export async function getTalentProfile(
   if (includeProjects) {
     const projectsResult = await pool.query(
       `
-      SELECT id, title, description, role, url
+      SELECT id, title, description, role
       FROM talent_projects
-      WHERE talent_id = $1 AND deleted_at IS NULL
+      WHERE talent_id = $1
       ORDER BY created_at DESC
       LIMIT 10
     `,
@@ -243,7 +243,6 @@ export async function getTalentProfile(
       title: row.title,
       description: row.description,
       role: row.role,
-      url: row.url,
     }));
   }
 
