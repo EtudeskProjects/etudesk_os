@@ -11,6 +11,8 @@ import {
   generateDocumentSummary,
   ExtractedDocumentData,
 } from './extraction.service';
+import { extractAndSaveSkills } from './skill-extraction.service';
+import { mergeExtractedSkills } from '../skills/skill-merge.service';
 import {
   DocumentType,
   DocumentStatus,
@@ -233,7 +235,7 @@ export async function uploadDocument(input: UploadDocumentInput): Promise<Talent
 /**
  * Process document extraction asynchronously
  */
-async function processDocumentExtraction(
+export async function processDocumentExtraction(
   documentId: string,
   fileUrl: string,
   mimeType: string
@@ -276,6 +278,16 @@ async function processDocumentExtraction(
           documentId,
         ]
       );
+
+      // Extract and save skills if present
+      if (data.skills && data.skills.length > 0) {
+        const docRow = await pool.query(`SELECT talent_id FROM talent_documents WHERE id = $1`, [documentId]);
+        if (docRow.rows.length > 0) {
+          const talentId = docRow.rows[0].talent_id;
+          await extractAndSaveSkills(talentId, documentId, data.skills);
+          await mergeExtractedSkills(talentId);
+        }
+      }
     } else {
       // Mark as failed
       await pool.query(

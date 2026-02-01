@@ -12,6 +12,9 @@ import {
   DocumentAnalysisOutput,
   DocumentDownloadOutput,
 } from '../ontology/outputs';
+import { processDocumentExtraction } from '../../documents/document.service';
+import { extractAndSaveSkills } from '../../documents/skill-extraction.service';
+import { mergeExtractedSkills } from '../../skills/skill-merge.service';
 
 // ═══════════════════════════════════════════════════════════════
 // LIST DOCUMENTS
@@ -453,6 +456,62 @@ export async function generateCSV(
 }
 
 // ═══════════════════════════════════════════════════════════════
+// EXTRACT SKILLS FROM DOCUMENT
+// ═══════════════════════════════════════════════════════════════
+
+export const extractSkillsFromDocumentSchema = z.object({
+  documentId: z.string().uuid().describe('ID du document à analyser pour extraire les compétences'),
+});
+
+export type ExtractSkillsFromDocumentParams = z.infer<typeof extractSkillsFromDocumentSchema>;
+
+export async function extractSkillsFromDocument(
+  params: ExtractSkillsFromDocumentParams,
+  context: { talentId: string }
+): Promise<{ type: string; documentId: string; summary: string; added: number; skipped: number }> {
+  const { talentId } = context;
+  const { documentId } = params;
+
+  // Get document
+  const result = await pool.query(
+    `SELECT id, file_url, mime_type, extracted_data, status
+     FROM talent_documents
+     WHERE id = $1 AND talent_id = $2 AND deleted_at IS NULL`,
+    [documentId, talentId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error('Document non trouvé');
+  }
+
+  const doc = result.rows[0];
+
+  // Re-trigger extraction if not processed yet
+  if (doc.status !== 'PROCESSED' || !doc.extracted_data) {
+    await processDocumentExtraction(documentId, doc.file_url, doc.mime_type);
+    // Re-fetch
+    const updated = await pool.query(`SELECT extracted_data FROM talent_documents WHERE id = $1`, [documentId]);
+    doc.extracted_data = updated.rows[0]?.extracted_data;
+  }
+
+  const skills = doc.extracted_data?.skills || [];
+  if (skills.length === 0) {
+    return { type: 'skill_extraction', documentId, summary: 'Aucune compétence détectée dans ce document.', added: 0, skipped: 0 };
+  }
+
+  const saveResult = await extractAndSaveSkills(talentId, documentId, skills);
+  await mergeExtractedSkills(talentId);
+
+  return {
+    type: 'skill_extraction',
+    documentId,
+    summary: `${saveResult.added} compétence(s) ajoutée(s), ${saveResult.skipped} ignorée(s).`,
+    added: saveResult.added,
+    skipped: saveResult.skipped,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // EXPORT TOOL DEFINITIONS
 // ═══════════════════════════════════════════════════════════════
 
@@ -484,6 +543,13 @@ export const documentToolDefinitions = {
       "Génère un document PDF (CV, lettre de motivation, rapport) personnalisé avec le profil de l'utilisateur.",
     parameters: generatePDFSchema,
     execute: generatePDF,
+  },
+  extract_skills_from_document: {
+    name: 'extract_skills_from_document',
+    description:
+      "Extrait les compétences d'un document et les ajoute au profil du talent. Déclenche extraction + sauvegarde + fusion.",
+    parameters: extractSkillsFromDocumentSchema,
+    execute: extractSkillsFromDocument,
   },
   generate_csv: {
     name: 'generate_csv',

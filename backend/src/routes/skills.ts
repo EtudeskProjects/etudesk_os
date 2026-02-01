@@ -7,6 +7,7 @@ import { Router, Response } from 'express';
 import { pool } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { isValidSkillType, isValidProficiencyLevel } from '../constants/skills';
+import { mergeExtractedSkills } from '../services/skills/skill-merge.service';
 
 const router = Router();
 
@@ -40,43 +41,6 @@ router.get('/my', async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error fetching skills:', error);
     return res.status(500).json({ error: 'Erreur lors du chargement des compétences' });
-  }
-});
-
-/**
- * GET /api/skills/search?q=keyword
- * Search skills catalog
- */
-router.get('/search', async (req: AuthRequest, res: Response) => {
-  try {
-    const { q, type } = req.query;
-    if (!q || typeof q !== 'string' || q.length < 2) {
-      return res.json({ data: [] });
-    }
-
-    const conditions = [`(s.canonical_name ILIKE $1 OR $2 = ANY(s.aliases))`];
-    const params: (string | undefined)[] = [`%${q}%`, q.toLowerCase()];
-    let paramIndex = 3;
-
-    if (type && typeof type === 'string' && isValidSkillType(type)) {
-      conditions.push(`s.type = $${paramIndex}`);
-      params.push(type);
-      paramIndex++;
-    }
-
-    const result = await pool.query(
-      `SELECT s.id, s.canonical_name, s.slug, s.type, s.domain, s.aliases
-       FROM skills s
-       WHERE ${conditions.join(' AND ')}
-       ORDER BY s.canonical_name ASC
-       LIMIT 20`,
-      params
-    );
-
-    return res.json({ data: result.rows });
-  } catch (error) {
-    console.error('Error searching skills:', error);
-    return res.status(500).json({ error: 'Erreur lors de la recherche' });
   }
 });
 
@@ -216,6 +180,25 @@ router.delete('/my/:id', async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error deleting skill:', error);
     return res.status(500).json({ error: 'Erreur lors de la suppression' });
+  }
+});
+
+/**
+ * POST /api/skills/my/merge
+ * Merge extracted skills with declared skills
+ */
+router.post('/my/merge', async (req: AuthRequest, res: Response) => {
+  try {
+    const talentId = req.talentId;
+    if (!talentId) {
+      return res.status(400).json({ error: 'Profil talent requis' });
+    }
+
+    const report = await mergeExtractedSkills(talentId);
+    return res.json({ data: report });
+  } catch (error) {
+    console.error('Error merging skills:', error);
+    return res.status(500).json({ error: 'Erreur lors de la fusion des compétences' });
   }
 });
 

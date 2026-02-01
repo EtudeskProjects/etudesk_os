@@ -20,11 +20,18 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const EXTRACTION_MODEL = 'gpt-4o-mini';
+const EXTRACTION_MODEL = 'gpt-4.1-mini';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
+
+export interface ExtractedSkill {
+  name: string;
+  type: 'KNOWLEDGE' | 'HARD_SKILL' | 'SOFT_SKILL';
+  proficiency_hint?: string;
+  context?: string;
+}
 
 export interface ExtractedDocumentData {
   // Document classification
@@ -40,7 +47,7 @@ export interface ExtractedDocumentData {
   description?: string;
 
   // CV/Resume specific
-  skills?: string[];
+  skills?: ExtractedSkill[];
   experience_years?: number;
   languages?: string[];
   education_level?: string;
@@ -121,7 +128,7 @@ Réponds avec un JSON contenant:
   "issue_date": "YYYY-MM-DD",
   "expiry_date": "YYYY-MM-DD si applicable",
   "description": "Brève description du contenu",
-  "skills": ["compétence1", "compétence2"],
+  "skills": [{"name": "compétence1", "type": "HARD_SKILL|SOFT_SKILL|KNOWLEDGE", "proficiency_hint": "beginner|intermediate|expert", "context": "contexte d'utilisation"}],
   "languages": ["français", "anglais"],
   "field_of_study": "Domaine d'étude",
   "institution": "Institution/École",
@@ -317,7 +324,9 @@ function normalizeTags(tags: string[], data: Partial<ExtractedDocumentData>): st
 
   // Add skills as tags
   data.skills?.forEach((skill) => {
-    if (skill) normalizedTags.add(skill.toLowerCase().trim());
+    if (skill?.name) {
+      normalizedTags.add(skill.name.toLowerCase().trim());
+    }
   });
 
   // Add languages as tags

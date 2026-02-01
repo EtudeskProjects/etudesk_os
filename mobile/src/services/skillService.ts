@@ -22,13 +22,10 @@ export interface TalentSkill {
   aliases: string[] | null;
 }
 
-export interface SkillSearchResult {
-  id: string;
-  canonical_name: string;
-  slug: string;
-  type: string;
-  domain: string | null;
-  aliases: string[] | null;
+export interface MergeReport {
+  merged: number;
+  kept_declared: number;
+  new_extracted: number;
 }
 
 export const PROFICIENCY_LABELS: Record<string, string> = {
@@ -52,16 +49,10 @@ const skillService = {
     return response.data;
   },
 
-  async searchSkills(query: string): Promise<SkillSearchResult[]> {
-    const response = await api.get<SkillSearchResult[]>(`/api/skills/search?q=${encodeURIComponent(query)}`);
-    return response.data;
-  },
-
   async addSkill(input: {
-    skillId?: string;
-    skillName?: string;
+    skillName: string;
     proficiencyLevel: string;
-    type?: string;
+    type: string;
   }): Promise<{ id: string }> {
     const response = await api.post<{ id: string }>('/api/skills/my', input);
     return response.data;
@@ -73,6 +64,11 @@ const skillService = {
 
   async deleteSkill(id: string): Promise<void> {
     await api.delete('/skills/my/' + id);
+  },
+
+  async mergeSkills(): Promise<MergeReport> {
+    const response = await api.post<MergeReport>('/api/skills/my/merge');
+    return response.data;
   },
 };
 

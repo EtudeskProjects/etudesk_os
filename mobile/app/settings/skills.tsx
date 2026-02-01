@@ -11,7 +11,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
   TextInput,
   Modal,
 } from 'react-native';
@@ -19,7 +18,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Plus,
   Trash2,
-  Search,
   X,
   BookOpen,
   Wrench,
@@ -30,7 +28,6 @@ import { Button, PageLayout, EmptyState } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import skillService, {
   TalentSkill,
-  SkillSearchResult,
   PROFICIENCY_LABELS,
   SKILL_TYPE_LABELS,
   PROFICIENCY_LEVELS,
@@ -65,12 +62,9 @@ export default function SkillsScreen() {
 
   // Add skill modal
   const [showAddModal, setShowAddModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SkillSearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [selectedProficiency, setSelectedProficiency] = useState<string>('INTERMEDIATE');
   const [selectedType, setSelectedType] = useState<string>('');
-  const [customSkillName, setCustomSkillName] = useState('');
+  const [skillName, setSkillName] = useState('');
 
   const loadSkills = useCallback(async () => {
     try {
@@ -97,59 +91,33 @@ export default function SkillsScreen() {
     setIsRefreshing(false);
   };
 
-  // Debounced search
-  useEffect(() => {
-    if (searchQuery.length < 2) {
-      setSearchResults([]);
+  const handleAddSkill = async () => {
+    if (!skillName.trim()) return;
+    if (!selectedType) {
+      Alert.alert('Type requis', 'Sélectionne un type de compétence.');
       return;
     }
-
-    const timer = setTimeout(async () => {
-      setIsSearching(true);
-      try {
-        const results = await skillService.searchSkills(searchQuery);
-        setSearchResults(results);
-      } catch {
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const handleAddFromSearch = async (result: SkillSearchResult) => {
     try {
       await skillService.addSkill({
-        skillId: result.id,
+        skillName: skillName.trim(),
         proficiencyLevel: selectedProficiency,
+        type: selectedType,
       });
       setShowAddModal(false);
-      setSearchQuery('');
-      setSearchResults([]);
+      setSkillName('');
+      setSelectedType('');
+      setSelectedProficiency('INTERMEDIATE');
       await loadSkills();
     } catch (error: any) {
       Alert.alert('Erreur', error?.message || "Erreur lors de l'ajout");
     }
   };
 
-  const handleAddCustom = async () => {
-    if (!customSkillName.trim()) return;
-    try {
-      await skillService.addSkill({
-        skillName: customSkillName.trim(),
-        proficiencyLevel: selectedProficiency,
-        type: selectedType || undefined,
-      });
-      setShowAddModal(false);
-      setCustomSkillName('');
-      setSelectedType('');
-      setSearchQuery('');
-      await loadSkills();
-    } catch (error: any) {
-      Alert.alert('Erreur', error?.message || "Erreur lors de l'ajout");
-    }
+  const closeModal = () => {
+    setShowAddModal(false);
+    setSkillName('');
+    setSelectedType('');
+    setSelectedProficiency('INTERMEDIATE');
   };
 
   const handleDelete = (skill: TalentSkill) => {
@@ -337,150 +305,99 @@ export default function SkillsScreen() {
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
           {/* Modal Header */}
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => { setShowAddModal(false); setSearchQuery(''); setSearchResults([]); setCustomSkillName(''); setSelectedType(''); }}>
+            <TouchableOpacity onPress={closeModal}>
               <X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
             </TouchableOpacity>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Ajouter une compétence</Text>
             <View style={{ width: 24 }} />
           </View>
 
-          {/* Proficiency Selector */}
-          <View style={styles.modalSection}>
-            <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Niveau</Text>
-            <View style={styles.proficiencyRow}>
-              {PROFICIENCY_LEVELS.map((level) => {
-                const isActive = selectedProficiency === level;
-                const levelColor = PROFICIENCY_COLORS[level];
-                return (
-                  <TouchableOpacity
-                    key={level}
-                    style={[
-                      styles.proficiencyChip,
-                      {
-                        backgroundColor: isActive ? levelColor + '20' : colors.gray100,
-                        borderColor: isActive ? levelColor : 'transparent',
-                        borderWidth: 1,
-                      },
-                    ]}
-                    onPress={() => setSelectedProficiency(level)}
-                  >
-                    <Text style={[styles.proficiencyChipText, { color: isActive ? levelColor : colors.textDisabled }]}>
-                      {PROFICIENCY_LABELS[level]}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Type Selector */}
-          <View style={styles.modalSection}>
-            <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Type de compétence</Text>
-            <View style={styles.proficiencyRow}>
-              {Object.entries(SKILL_TYPE_LABELS).map(([key, label]) => {
-                const isActive = selectedType === key;
-                const TypeIcon = getTypeIcon(key);
-                return (
-                  <TouchableOpacity
-                    key={key}
-                    style={[
-                      styles.proficiencyChip,
-                      {
-                        backgroundColor: isActive ? colors.primary + '20' : colors.gray100,
-                        borderColor: isActive ? colors.primary : 'transparent',
-                        borderWidth: 1,
-                      },
-                    ]}
-                    onPress={() => setSelectedType(isActive ? '' : key)}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <TypeIcon size={14} color={isActive ? colors.primary : colors.textDisabled} strokeWidth={ICON.strokeWidth} />
-                      <Text style={[styles.proficiencyChipText, { color: isActive ? colors.primary : colors.textDisabled }]}>
-                        {label}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Search */}
-          <View style={styles.modalSection}>
-            <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>
-              Rechercher une compétence
-            </Text>
-            <View style={[styles.searchInput, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-              <Search size={18} color={colors.textDisabled} strokeWidth={ICON.strokeWidth} />
+          <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
+            {/* Skill Name */}
+            <View style={styles.modalSection}>
+              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>
+                Nom de la compétence
+              </Text>
               <TextInput
-                style={[styles.searchTextInput, { color: colors.textPrimary }]}
-                placeholder="Ex: React, Gestion de projet..."
+                style={[styles.textInput, { backgroundColor: colors.surface, borderColor: colors.borderColor, color: colors.textPrimary }]}
+                placeholder="Ex: React, Gestion de projet, Communication..."
                 placeholderTextColor={colors.textDisabled}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
+                value={skillName}
+                onChangeText={setSkillName}
                 autoFocus
               />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => { setSearchQuery(''); setSearchResults([]); }}>
-                  <X size={18} color={colors.textDisabled} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-              )}
             </View>
-          </View>
 
-          <ScrollView style={styles.searchResultsList} keyboardShouldPersistTaps="handled">
-            {isSearching && (
-              <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: SPACING.md }} />
-            )}
-
-            {searchResults.map((result) => (
-              <TouchableOpacity
-                key={result.id}
-                style={[styles.searchResultItem, { borderColor: colors.borderColor }]}
-                onPress={() => handleAddFromSearch(result)}
-              >
-                <View>
-                  <Text style={[styles.searchResultName, { color: colors.textPrimary }]}>
-                    {result.canonical_name}
-                  </Text>
-                  <Text style={[styles.searchResultMeta, { color: colors.textSecondary }]}>
-                    {SKILL_TYPE_LABELS[result.type] || result.type}
-                    {result.domain ? ` · ${result.domain}` : ''}
-                  </Text>
-                </View>
-                <Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
-            ))}
-
-            {/* Custom skill input */}
-            {searchQuery.length >= 2 && !isSearching && (
-              <View style={styles.customSkillSection}>
-                <Text style={[styles.customSkillLabel, { color: colors.textSecondary }]}>
-                  Compétence introuvable ? Ajoute-la manuellement :
-                </Text>
-                {!selectedType && (
-                  <Text style={[styles.customSkillLabel, { color: colors.warning, marginBottom: SPACING.xs }]}>
-                    Sélectionne un type de compétence ci-dessus
-                  </Text>
-                )}
-                <View style={styles.customSkillRow}>
-                  <TextInput
-                    style={[styles.customSkillInput, { backgroundColor: colors.surface, borderColor: colors.borderColor, color: colors.textPrimary }]}
-                    placeholder="Nom de la compétence"
-                    placeholderTextColor={colors.textDisabled}
-                    value={customSkillName || searchQuery}
-                    onChangeText={setCustomSkillName}
-                  />
-                  <TouchableOpacity
-                    style={[styles.customSkillButton, { backgroundColor: selectedType ? colors.primary : colors.gray300, opacity: selectedType ? 1 : 0.5 }]}
-                    onPress={handleAddCustom}
-                    disabled={!selectedType}
-                  >
-                    <Plus size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                  </TouchableOpacity>
-                </View>
+            {/* Type Selector */}
+            <View style={styles.modalSection}>
+              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Type de compétence *</Text>
+              <View style={styles.proficiencyRow}>
+                {Object.entries(SKILL_TYPE_LABELS).map(([key, label]) => {
+                  const isActive = selectedType === key;
+                  const TypeIcon = getTypeIcon(key);
+                  return (
+                    <TouchableOpacity
+                      key={key}
+                      style={[
+                        styles.proficiencyChip,
+                        {
+                          backgroundColor: isActive ? colors.primary + '20' : colors.gray100,
+                          borderColor: isActive ? colors.primary : 'transparent',
+                          borderWidth: 1,
+                        },
+                      ]}
+                      onPress={() => setSelectedType(key)}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <TypeIcon size={14} color={isActive ? colors.primary : colors.textDisabled} strokeWidth={ICON.strokeWidth} />
+                        <Text style={[styles.proficiencyChipText, { color: isActive ? colors.primary : colors.textDisabled }]}>
+                          {label}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
-            )}
+            </View>
+
+            {/* Proficiency Selector */}
+            <View style={styles.modalSection}>
+              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Niveau</Text>
+              <View style={styles.proficiencyRow}>
+                {PROFICIENCY_LEVELS.map((level) => {
+                  const isActive = selectedProficiency === level;
+                  const levelColor = PROFICIENCY_COLORS[level];
+                  return (
+                    <TouchableOpacity
+                      key={level}
+                      style={[
+                        styles.proficiencyChip,
+                        {
+                          backgroundColor: isActive ? levelColor + '20' : colors.gray100,
+                          borderColor: isActive ? levelColor : 'transparent',
+                          borderWidth: 1,
+                        },
+                      ]}
+                      onPress={() => setSelectedProficiency(level)}
+                    >
+                      <Text style={[styles.proficiencyChipText, { color: isActive ? levelColor : colors.textDisabled }]}>
+                        {PROFICIENCY_LABELS[level]}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Add Button */}
+            <View style={styles.modalSection}>
+              <Button
+                title="Ajouter"
+                onPress={handleAddSkill}
+                fullWidth
+                disabled={!skillName.trim() || !selectedType}
+              />
+            </View>
           </ScrollView>
         </SafeAreaView>
       </Modal>
@@ -572,51 +489,18 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
   },
   modalTitle: { fontSize: TYPOGRAPHY.fontSize.lg, fontWeight: TYPOGRAPHY.fontWeight.semibold },
-  modalSection: { paddingHorizontal: SPACING.lg, marginBottom: SPACING.md },
+  modalContent: { flex: 1, paddingHorizontal: SPACING.lg },
+  modalSection: { marginBottom: SPACING.lg },
   modalSectionLabel: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
     marginBottom: SPACING.xs,
   },
-
-  searchInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
-    paddingHorizontal: SPACING.sm,
-    height: 44,
-    gap: SPACING.xs,
-  },
-  searchTextInput: { flex: 1, fontSize: TYPOGRAPHY.fontSize.md },
-
-  searchResultsList: { flex: 1, paddingHorizontal: SPACING.lg },
-  searchResultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: SPACING.md,
-    borderBottomWidth: BORDER.width.thin,
-  },
-  searchResultName: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.medium },
-  searchResultMeta: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: 2 },
-
-  customSkillSection: { marginTop: SPACING.lg },
-  customSkillLabel: { fontSize: TYPOGRAPHY.fontSize.sm, marginBottom: SPACING.xs },
-  customSkillRow: { flexDirection: 'row', gap: SPACING.sm },
-  customSkillInput: {
-    flex: 1,
+  textInput: {
     height: 44,
     borderWidth: BORDER.width.thin,
     borderRadius: BORDER.radius.sm,
     paddingHorizontal: SPACING.sm,
     fontSize: TYPOGRAPHY.fontSize.md,
-  },
-  customSkillButton: {
-    width: 44,
-    height: 44,
-    borderRadius: BORDER.radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
