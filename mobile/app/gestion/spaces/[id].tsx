@@ -3,17 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
   Image,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   Clock,
   CheckCircle2,
   XCircle,
@@ -21,12 +17,10 @@ import {
   Inbox,
   Edit,
   Calendar,
-  User,
-  MapPin,
   UserPlus,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
-import { FooterNav } from '../../../src/components/ui';
+import { PageLayout, EmptyState } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { spaceService, Space, SpaceBooking } from '../../../src/services';
 import { formatRelativeTime } from '../../../src/utils/date';
@@ -39,9 +33,9 @@ type FilterStatus = 'all' | BookingStatus;
 // Status configuration
 const getStatusConfig = (colors: any): Record<BookingStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
   PENDING: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15', label: 'En attente' },
-  CONFIRMED: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Confirmee' },
-  CANCELLED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Annulee' },
-  COMPLETED: { color: colors.info, icon: CheckCircle2, bgColor: colors.info + '15', label: 'Terminee' },
+  CONFIRMED: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Confirmée' },
+  CANCELLED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Annulée' },
+  COMPLETED: { color: colors.info, icon: CheckCircle2, bgColor: colors.info + '15', label: 'Terminée' },
 });
 
 export default function SpaceBookingsManagementScreen() {
@@ -74,7 +68,6 @@ export default function SpaceBookingsManagementScreen() {
       const bookingsList = bookingsResponse.data || [];
       setBookings(bookingsList);
 
-      // Calculate status counts
       const counts: Record<string, number> = {};
       bookingsList.forEach((b: SpaceBooking) => {
         counts[b.status] = (counts[b.status] || 0) + 1;
@@ -82,7 +75,7 @@ export default function SpaceBookingsManagementScreen() {
       setStatusCounts(counts);
     } catch (error) {
       console.error('Error loading data:', error);
-      Alert.alert('Erreur', 'Impossible de charger les reservations.');
+      Alert.alert('Erreur', 'Impossible de charger les réservations.');
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +90,6 @@ export default function SpaceBookingsManagementScreen() {
       const bookingsList = response.data || [];
       setBookings(bookingsList);
 
-      // Recalculate status counts
       const counts: Record<string, number> = {};
       bookingsList.forEach((b: SpaceBooking) => {
         counts[b.status] = (counts[b.status] || 0) + 1;
@@ -118,14 +110,14 @@ export default function SpaceBookingsManagementScreen() {
       );
       handleRefresh();
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre a jour le statut.');
+      Alert.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
     }
   };
 
   const handleConfirmBooking = (bookingId: string) => {
     Alert.alert(
-      'Confirmer la reservation',
-      'Voulez-vous confirmer cette reservation ?',
+      'Confirmer la réservation',
+      'Voulez-vous confirmer cette réservation ?',
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -138,8 +130,8 @@ export default function SpaceBookingsManagementScreen() {
 
   const handleCancelBooking = (bookingId: string) => {
     Alert.alert(
-      'Annuler la reservation',
-      'Voulez-vous annuler cette reservation ?',
+      'Annuler la réservation',
+      'Voulez-vous annuler cette réservation ?',
       [
         { text: 'Non', style: 'cancel' },
         {
@@ -172,7 +164,7 @@ export default function SpaceBookingsManagementScreen() {
     const dateStr = start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
     const startTime = start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     const endTime = end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    return `${dateStr} - ${startTime} a ${endTime}`;
+    return `${dateStr} - ${startTime} à ${endTime}`;
   };
 
   const STATUS_CONFIG = getStatusConfig(colors);
@@ -192,7 +184,6 @@ export default function SpaceBookingsManagementScreen() {
         activeOpacity={0.7}
       >
         <View style={styles.cardHeader}>
-          {/* Avatar */}
           {talent?.avatar_url ? (
             <Image source={{ uri: talent.avatar_url }} style={styles.avatar} />
           ) : (
@@ -203,7 +194,6 @@ export default function SpaceBookingsManagementScreen() {
             </View>
           )}
 
-          {/* Info */}
           <View style={styles.bookingInfo}>
             <Text style={[styles.bookerName, { color: colors.textPrimary }]} numberOfLines={1}>
               {bookerName}
@@ -239,7 +229,6 @@ export default function SpaceBookingsManagementScreen() {
           </View>
         </View>
 
-        {/* Quick actions for pending */}
         {item.status === 'PENDING' && (
           <View style={styles.quickActions}>
             <TouchableOpacity
@@ -262,233 +251,138 @@ export default function SpaceBookingsManagementScreen() {
     );
   };
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <View style={[styles.emptyIcon, { backgroundColor: colors.gray100 }]}>
-        <Inbox size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-      </View>
-      <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-        {filter === 'all' ? 'Aucune reservation' : 'Aucun resultat'}
-      </Text>
-      <Text style={[styles.emptyDescription, { color: colors.gray500 }]}>
-        {filter === 'all'
-          ? 'Cet espace n\'a pas encore de reservations.'
-          : 'Aucune reservation avec ce statut.'}
-      </Text>
+  const localCounts = (() => {
+    const counts: Record<string, number> = { all: bookings.length };
+    bookings.forEach((b) => {
+      counts[b.status] = (counts[b.status] || 0) + 1;
+    });
+    return counts;
+  })();
+
+  const filterChips = [
+    { key: 'all' as FilterStatus, label: 'Toutes', count: localCounts.all || 0 },
+    { key: 'PENDING' as FilterStatus, label: 'En attente', count: localCounts['PENDING'] || 0 },
+    { key: 'CONFIRMED' as FilterStatus, label: 'Confirmées', count: localCounts['CONFIRMED'] || 0 },
+    { key: 'CANCELLED' as FilterStatus, label: 'Annulées', count: localCounts['CANCELLED'] || 0 },
+  ];
+
+  const headerContent = (
+    <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersContent}
+      >
+        {filterChips.map((chip) => {
+          const isActive = filter === chip.key;
+          return (
+            <TouchableOpacity
+              key={chip.key}
+              style={[
+                styles.filterChip,
+                { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
+              ]}
+              onPress={() => setFilter(chip.key)}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  { color: colors.gray700 },
+                  isActive && { color: colors.textOnPrimary },
+                ]}
+              >
+                {chip.label} ({chip.count})
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </SafeAreaView>
-    );
-  }
+  const rightAction = (
+    <View style={styles.headerActions}>
+      <TouchableOpacity
+        onPress={() => router.push(`/gestion/spaces/invitations/${id}` as any)}
+        style={styles.headerActionButton}
+      >
+        <UserPlus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => router.push(`/settings/organization/edit-space/${id}` as any)}
+        style={styles.headerActionButton}
+      >
+        <Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const emptySubtitle = filter === 'all'
+    ? 'Cet espace n\'a pas encore de réservations.'
+    : 'Aucune réservation avec ce statut.';
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-            Reservations
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.gray500 }]} numberOfLines={1}>
-            {space?.name || 'Espace'}
-          </Text>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            onPress={() => router.push(`/gestion/spaces/invitations/${id}` as any)}
-            style={styles.actionButton}
-          >
-            <UserPlus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.push(`/settings/organization/edit-space/${id}` as any)}
-            style={styles.actionButton}
-          >
-            <Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Stats */}
-      <View style={styles.statsContainer}>
-        <TouchableOpacity
-          style={[
-            styles.statItem,
-            { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'all' && { backgroundColor: colors.primary + '12', borderColor: colors.primary + '50' }
-          ]}
-          onPress={() => setFilter('all')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.statValue, { color: filter === 'all' ? colors.primary : colors.textPrimary }]}>
-            {bookings.length}
-          </Text>
-          <Text style={[styles.statLabel, { color: filter === 'all' ? colors.primary : colors.gray500 }]}>Total</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.statItem,
-            { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'PENDING' && { backgroundColor: colors.warning + '12', borderColor: colors.warning + '50' }
-          ]}
-          onPress={() => setFilter('PENDING')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.statValue, { color: colors.warning }]}>
-            {statusCounts['PENDING'] || 0}
-          </Text>
-          <Text style={[styles.statLabel, { color: filter === 'PENDING' ? colors.warning : colors.gray500 }]}>En attente</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.statItem,
-            { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'CONFIRMED' && { backgroundColor: colors.success + '12', borderColor: colors.success + '50' }
-          ]}
-          onPress={() => setFilter('CONFIRMED')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.statValue, { color: colors.success }]}>
-            {statusCounts['CONFIRMED'] || 0}
-          </Text>
-          <Text style={[styles.statLabel, { color: filter === 'CONFIRMED' ? colors.success : colors.gray500 }]}>Confirmees</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.statItem,
-            { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'CANCELLED' && { backgroundColor: colors.error + '12', borderColor: colors.error + '50' }
-          ]}
-          onPress={() => setFilter('CANCELLED')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.statValue, { color: colors.error }]}>
-            {statusCounts['CANCELLED'] || 0}
-          </Text>
-          <Text style={[styles.statLabel, { color: filter === 'CANCELLED' ? colors.error : colors.gray500 }]}>Annulees</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Content */}
-      <FlatList
-        data={filteredBookings}
-        renderItem={renderBookingItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-        ListEmptyComponent={renderEmptyState}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
-
-      <FooterNav activeTab="gestion" />
-    </SafeAreaView>
+    <PageLayout
+      title="Réservations"
+      onRefresh={handleRefresh}
+      isRefreshing={isRefreshing}
+      isLoading={isLoading}
+      headerContent={headerContent}
+      rightAction={rightAction}
+    >
+      {filteredBookings.length === 0 ? (
+        <EmptyState
+          icon={Inbox}
+          title={filter === 'all' ? 'Aucune réservation' : 'Aucun résultat'}
+          subtitle={emptySubtitle}
+        />
+      ) : (
+        filteredBookings.map((item) => (
+          <View key={item.id} style={styles.cardWrapper}>
+            {renderBookingItem({ item })}
+          </View>
+        ))
+      )}
+    </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  filtersContainer: {
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: BORDER.width.thin,
   },
-
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  filtersContent: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
   },
-
-  header: {
+  filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    gap: SPACING.xs,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.full,
   },
-
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  headerContent: {
-    flex: 1,
-    marginHorizontal: SPACING.sm,
-  },
-
-  headerTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  headerSubtitle: {
+  filterChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
-    marginTop: 2,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
-
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
   },
-
-  actionButton: {
-    width: 40,
-    height: 40,
+  headerActionButton: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  statsContainer: {
-    flexDirection: 'row',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.sm,
-  },
-
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.xs,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.md,
-  },
-
-  statValue: {
-    fontSize: TYPOGRAPHY.fontSize.xl,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-  },
-
-  statLabel: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    marginTop: 2,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  listContent: {
-    padding: SPACING.lg,
-    flexGrow: 1,
-  },
-
-  separator: {
-    height: SPACING.md,
+  cardWrapper: {
+    marginBottom: SPACING.md,
   },
 
   bookingCard: {
@@ -601,33 +495,5 @@ const styles = StyleSheet.create({
   quickActionText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: SPACING.xl,
-    minHeight: 300,
-  },
-
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.lg,
-  },
-
-  emptyTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginBottom: SPACING.sm,
-  },
-
-  emptyDescription: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    textAlign: 'center',
   },
 });

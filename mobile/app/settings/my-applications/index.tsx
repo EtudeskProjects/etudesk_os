@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -42,12 +41,7 @@ export default function MyApplicationsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filter, setFilter] = useState<FilterStatus>('all');
 
-  useEffect(() => {
-    loadApplications();
-  }, []);
-
-  const loadApplications = async () => {
-    setIsLoading(true);
+  const loadApplications = useCallback(async () => {
     try {
       const response = await applicationService.getMyApplications();
       setApplications(response.data || []);
@@ -55,20 +49,18 @@ export default function MyApplicationsScreen() {
       console.error('Error loading applications:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    try {
-      const response = await applicationService.getMyApplications();
-      setApplications(response.data || []);
-    } catch (error) {
-      console.error('Error refreshing applications:', error);
-    } finally {
       setIsRefreshing(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadApplications();
+  }, [loadApplications]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    loadApplications();
+  };
 
   const filteredApplications = applications.filter((app) => {
     if (filter === 'all') return true;
@@ -112,12 +104,13 @@ export default function MyApplicationsScreen() {
     );
   };
 
-  const renderApplicationItem = ({ item }: { item: Application }) => {
+  const renderApplicationItem = (item: Application) => {
     const statusConfig = getStatusConfig(colors)[item.status];
     const StatusIcon = statusConfig.icon;
 
     return (
       <TouchableOpacity
+        key={item.id}
         style={[styles.applicationCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
         onPress={() => router.push(`/settings/my-applications/${item.id}`)}
         activeOpacity={0.7}
@@ -151,11 +144,11 @@ export default function MyApplicationsScreen() {
   };
 
   const filterChips = [
-    { key: 'all', label: 'Toutes' },
-    { key: 'SUBMITTED', label: 'Soumises' },
-    { key: 'IN_REVIEW', label: 'En examen' },
-    { key: 'ACCEPTED', label: 'Acceptées' },
-    { key: 'REJECTED', label: 'Refusées' },
+    { key: 'all' as FilterStatus, label: 'Toutes' },
+    { key: 'SUBMITTED' as FilterStatus, label: 'Soumises' },
+    { key: 'IN_REVIEW' as FilterStatus, label: 'En examen' },
+    { key: 'ACCEPTED' as FilterStatus, label: 'Acceptées' },
+    { key: 'REJECTED' as FilterStatus, label: 'Refusées' },
   ];
 
   const headerContent = (
@@ -163,7 +156,7 @@ export default function MyApplicationsScreen() {
       <FlatList
         horizontal
         data={filterChips}
-        renderItem={({ item }) => renderFilterChip(item.key as FilterStatus, item.label)}
+        renderItem={({ item }) => renderFilterChip(item.key, item.label)}
         keyExtractor={(item) => item.key}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filtersContent}
@@ -189,14 +182,14 @@ export default function MyApplicationsScreen() {
               : 'Aucune candidature avec ce statut.'
           }
           {...(filter === 'all' ? {
-            actionLabel: 'Explorer les opportunités',
-            onAction: () => router.push('/(tabs)/explore'),
+            actionLabel: 'Explorer',
+            onAction: () => router.push('/(tabs)/explore?category=opportunities'),
           } : {})}
         />
       ) : (
         filteredApplications.map((item) => (
-          <View key={item.id} style={{ marginBottom: SPACING.md }}>
-            {renderApplicationItem({ item })}
+          <View key={item.id} style={styles.cardWrapper}>
+            {renderApplicationItem(item)}
           </View>
         ))
       )}
@@ -226,6 +219,10 @@ const styles = StyleSheet.create({
   filterChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+
+  cardWrapper: {
+    marginBottom: SPACING.md,
   },
 
   applicationCard: {

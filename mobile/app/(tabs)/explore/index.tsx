@@ -14,7 +14,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   Search,
   Briefcase,
@@ -108,7 +108,10 @@ const filterExpired = <T extends { deadline?: string }>(items: T[]): T[] => {
 
 export default function ExploreScreen() {
   const router = useRouter();
-  const [activeCategory, setActiveCategory] = useState<Category>('communities');
+  const { category: initialCategory } = useLocalSearchParams<{ category?: string }>();
+  const [activeCategory, setActiveCategory] = useState<Category>(
+    (initialCategory as Category) || 'communities'
+  );
   const [bookmarkedItems, setBookmarkedItems] = useState<Record<string, Set<string>>>({
     opportunities: new Set(),
     spaces: new Set(),

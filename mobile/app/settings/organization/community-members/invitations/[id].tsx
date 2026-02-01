@@ -8,9 +8,7 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
-  RefreshControl,
   ActivityIndicator,
   Alert,
   Modal,
@@ -19,9 +17,7 @@ import {
   Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   UserPlus,
   Clock,
   Mail,
@@ -30,7 +26,7 @@ import {
   Inbox,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
-import { FooterNav } from '../../../../../src/components/ui';
+import { PageLayout, EmptyState } from '../../../../../src/components/ui';
 import { useTheme } from '../../../../../src/hooks/useTheme';
 import { communityService, communityInvitationService, CommunityInvitation } from '../../../../../src/services';
 import { formatRelativeTime } from '../../../../../src/utils/date';
@@ -221,75 +217,40 @@ export default function CommunityInvitationsScreen() {
     );
   };
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <View style={[styles.emptyIcon, { backgroundColor: colors.gray100 }]}>
-        <Inbox size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-      </View>
-      <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-        Aucune invitation en attente
-      </Text>
-      <Text style={[styles.emptyDescription, { color: colors.gray500 }]}>
-        Invitez des personnes à rejoindre votre communauté.
-      </Text>
-      <TouchableOpacity
-        style={[styles.emptyButton, { backgroundColor: colors.primary }]}
-        onPress={() => setShowInviteModal(true)}
-      >
-        <UserPlus size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.emptyButtonText, { color: colors.textOnPrimary }]}>Inviter un membre</Text>
-      </TouchableOpacity>
-    </View>
+  const rightAction = (
+    <TouchableOpacity
+      style={[styles.addButton, { backgroundColor: colors.primary }]}
+      onPress={() => setShowInviteModal(true)}
+    >
+      <UserPlus size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+    </TouchableOpacity>
   );
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-            Invitations en attente
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.gray500 }]} numberOfLines={1}>
-            {community?.name} • {invitations.length} en attente
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: colors.primary }]}
-          onPress={() => setShowInviteModal(true)}
-        >
-          <UserPlus size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Invitations List */}
-      <FlatList
-        data={invitations}
-        renderItem={renderInvitationItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-        ListEmptyComponent={renderEmptyState}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
+    <>
+    <PageLayout
+      title="Invitations en attente"
+      onRefresh={handleRefresh}
+      isRefreshing={isRefreshing}
+      isLoading={isLoading}
+      rightAction={rightAction}
+    >
+      {invitations.length === 0 ? (
+        <EmptyState
+          icon={Inbox}
+          title="Aucune invitation en attente"
+          subtitle="Invitez des personnes à rejoindre votre communauté."
+          actionLabel="Inviter un membre"
+          onAction={() => setShowInviteModal(true)}
+        />
+      ) : (
+        invitations.map((item) => (
+          <View key={item.id} style={styles.cardWrapper}>
+            {renderInvitationItem({ item })}
+          </View>
+        ))
+      )}
+    </PageLayout>
 
       {/* Invite Modal */}
       <Modal
@@ -377,63 +338,21 @@ export default function CommunityInvitationsScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-
-      <FooterNav activeTab="home" />
-    </SafeAreaView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-
-  backButton: {
-    marginRight: SPACING.md,
-  },
-
-  headerContent: {
-    flex: 1,
-  },
-
-  headerTitle: {
-    fontSize: TYPOGRAPHY.fontSize.xl,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-  },
-
-  headerSubtitle: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    marginTop: 2,
-  },
-
   addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  listContent: {
-    padding: SPACING.lg,
-    flexGrow: 1,
-  },
-
-  separator: {
-    height: SPACING.md,
+  cardWrapper: {
+    marginBottom: SPACING.md,
   },
 
   invitationCard: {
@@ -518,49 +437,6 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: SPACING.xxl,
-  },
-
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.lg,
-  },
-
-  emptyTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginBottom: SPACING.sm,
-  },
-
-  emptyDescription: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
-  },
-
-  emptyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER.radius.md,
-  },
-
-  emptyButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
   // Modal styles

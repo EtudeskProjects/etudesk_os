@@ -5,23 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
-  RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
-  ArrowLeft,
-  Briefcase,
-  Users,
-  MapPin,
-  Bookmark,
   BookmarkX,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
-import { FooterNav } from '../../src/components/ui';
+import { PageLayout, EmptyState } from '../../src/components/ui';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { OpportunityCard, CommunityCard, SpaceCard } from '../../src/components/cards';
 import { bookmarkService, Space } from '../../src/services';
@@ -32,7 +23,7 @@ import type {
 } from '../../src/services/bookmarkService';
 import type { Opportunity, Community } from '../../src/types/models';
 
-type Category = 'opportunities' | 'communities' | 'spaces';
+type Category = 'communities' | 'spaces' | 'opportunities';
 
 export default function BookmarksScreen() {
   const router = useRouter();
@@ -55,7 +46,6 @@ export default function BookmarksScreen() {
       ]);
 
       if (oppsRes.data) {
-        // Transform organizations array to organization object
         const transformedOpps = oppsRes.data.map((opp: any) => ({
           ...opp,
           organization: opp.organizations?.[0] || opp.organization,
@@ -106,326 +96,150 @@ export default function BookmarksScreen() {
     router.push(`/details/${type}/${id}` as any);
   };
 
-  const CATEGORIES = [
-    { id: 'communities' as Category, label: t('explore.categories.communities'), icon: Users, count: communities.length },
-    { id: 'spaces' as Category, label: t('explore.categories.spaces') || 'Espaces', icon: MapPin, count: spaces.length },
-    { id: 'opportunities' as Category, label: t('explore.categories.opportunities'), icon: Briefcase, count: opportunities.length },
+  const chips: Array<{ key: Category; label: string; count: number }> = [
+    { key: 'communities', label: t('explore.categories.communities'), count: communities.length },
+    { key: 'spaces', label: t('explore.categories.spaces') || 'Espaces', count: spaces.length },
+    { key: 'opportunities', label: t('explore.categories.opportunities'), count: opportunities.length },
   ];
 
-  const renderCategoryTabs = () => (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      style={styles.categoriesList}
-      contentContainerStyle={styles.categoriesContainer}
-    >
-      {CATEGORIES.map((category) => {
-        const IconComponent = category.icon;
-        const isActive = activeCategory === category.id;
-        return (
-          <TouchableOpacity
-            key={category.id}
-            style={[
-              styles.categoryTab,
-              { backgroundColor: isActive ? colors.primary : colors.gray100 },
-            ]}
-            onPress={() => setActiveCategory(category.id)}
-            activeOpacity={0.8}
-          >
-            <IconComponent
-              size={ICON.size.sm}
-              color={isActive ? colors.textOnPrimary : colors.textSecondary}
-              strokeWidth={ICON.strokeWidth}
-            />
-            <Text style={[
-              styles.categoryLabel,
-              { color: isActive ? colors.textOnPrimary : colors.textSecondary }
-            ]}>
-              {category.label}
-            </Text>
-            {category.count > 0 && (
-              <View style={[
-                styles.countBadge,
-                { backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : colors.primary + '15' }
-              ]}>
-                <Text style={[
-                  styles.countText,
-                  { color: isActive ? colors.textOnPrimary : colors.primary }
-                ]}>
-                  {category.count}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
-  );
-
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <BookmarkX size={64} color={colors.gray300} strokeWidth={1.5} />
-      <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-        Aucun favori
-      </Text>
-      <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-        Vous n'avez pas encore ajoute de {
-          activeCategory === 'opportunities' ? 'opportunites' :
-          activeCategory === 'spaces' ? 'espaces' : 'communautes'
-        } en favoris
-      </Text>
-    </View>
-  );
-
-  const renderOpportunityItem = ({ item, index }: { item: BookmarkedOpportunity; index: number }) => (
-    <OpportunityCard
-      opportunity={item as Opportunity}
-      onPress={() => navigateToDetail('opportunity', item.id)}
-      showBookmark
-      isBookmarked={true}
-      onBookmarkToggle={() => removeBookmark(item.id, 'opportunities')}
-      isLast={index === opportunities.length - 1}
-    />
-  );
-
-  const renderSpaceItem = ({ item, index }: { item: BookmarkedSpace; index: number }) => (
-    <SpaceCard
-      space={item as Space}
-      onPress={() => navigateToDetail('space', item.id)}
-      isLast={index === spaces.length - 1}
-      showBookmark={true}
-      isBookmarked={true}
-      onBookmarkToggle={() => removeBookmark(item.id, 'spaces')}
-    />
-  );
-
-  const renderCommunityItem = ({ item, index }: { item: BookmarkedCommunity; index: number }) => (
-    <CommunityCard
-      community={item as Community}
-      onPress={() => navigateToDetail('community', item.id)}
-      isLast={index === communities.length - 1}
-      showBookmark={true}
-      isBookmarked={true}
-      onBookmarkToggle={() => removeBookmark(item.id, 'communities')}
-    />
-  );
-
-  const refreshControl = (
-    <RefreshControl
-      refreshing={isRefreshing}
-      onRefresh={handleRefresh}
-      tintColor={colors.primary}
-      colors={[colors.primary]}
-    />
-  );
-
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      );
-    }
-
+  const getActiveItems = () => {
     switch (activeCategory) {
       case 'opportunities':
-        return opportunities.length > 0 ? (
-          <FlatList
-            style={styles.list}
-            data={opportunities}
-            keyExtractor={(item) => item.id}
-            renderItem={renderOpportunityItem}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            refreshControl={refreshControl}
-          />
-        ) : renderEmptyState();
+        return opportunities;
       case 'spaces':
-        return spaces.length > 0 ? (
-          <FlatList
-            style={styles.list}
-            data={spaces}
-            keyExtractor={(item) => item.id}
-            renderItem={renderSpaceItem}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            refreshControl={refreshControl}
-          />
-        ) : renderEmptyState();
+        return spaces;
       case 'communities':
-        return communities.length > 0 ? (
-          <FlatList
-            style={styles.list}
-            data={communities}
-            keyExtractor={(item) => item.id}
-            renderItem={renderCommunityItem}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            refreshControl={refreshControl}
-          />
-        ) : renderEmptyState();
+        return communities;
       default:
-        return renderEmptyState();
+        return [];
     }
   };
 
-  const totalBookmarks = opportunities.length + spaces.length + communities.length;
+  const emptySubtitle =
+    activeCategory === 'opportunities' ? "d'opportunités" :
+    activeCategory === 'spaces' ? "d'espaces" : 'de communautés';
+
+  const activeItems = getActiveItems();
+
+  const headerContent = (
+    <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersContent}
+      >
+        {chips.map((chip) => {
+          const isActive = activeCategory === chip.key;
+          return (
+            <TouchableOpacity
+              key={chip.key}
+              style={[
+                styles.filterChip,
+                { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
+              ]}
+              onPress={() => setActiveCategory(chip.key)}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  { color: colors.gray700 },
+                  isActive && { color: colors.textOnPrimary },
+                ]}
+              >
+                {chip.label} ({chip.count})
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-        <TouchableOpacity
-          style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            Mes favoris
-          </Text>
-          {totalBookmarks > 0 && (
-            <View style={[styles.totalBadge, { backgroundColor: colors.primary + '15' }]}>
-              <Text style={[styles.totalText, { color: colors.primary }]}>
-                {totalBookmarks}
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={{ width: 44 }} />
-      </View>
-
-      {/* Category Tabs */}
-      {renderCategoryTabs()}
-
-      {/* Content */}
-      <View style={styles.content}>
-        {renderContent()}
-      </View>
-
-      <FooterNav activeTab="settings" />
-    </SafeAreaView>
+    <PageLayout
+      title="Mes favoris"
+      onRefresh={handleRefresh}
+      isRefreshing={isRefreshing}
+      isLoading={isLoading}
+      headerContent={headerContent}
+    >
+      {activeItems.length === 0 ? (
+        <EmptyState
+          icon={BookmarkX}
+          title="Aucun favori"
+          subtitle={`Vous n'avez pas encore ajouté ${emptySubtitle} en favoris.`}
+        />
+      ) : (
+        <>
+          {activeCategory === 'communities' &&
+            communities.map((item, index) => (
+              <View key={item.id} style={styles.cardWrapper}>
+                <CommunityCard
+                  community={item as Community}
+                  onPress={() => navigateToDetail('community', item.id)}
+                  isLast={index === communities.length - 1}
+                  showBookmark
+                  isBookmarked
+                  onBookmarkToggle={() => removeBookmark(item.id, 'communities')}
+                />
+              </View>
+            ))}
+          {activeCategory === 'spaces' &&
+            spaces.map((item, index) => (
+              <View key={item.id} style={styles.cardWrapper}>
+                <SpaceCard
+                  space={item as Space}
+                  onPress={() => navigateToDetail('space', item.id)}
+                  isLast={index === spaces.length - 1}
+                  showBookmark
+                  isBookmarked
+                  onBookmarkToggle={() => removeBookmark(item.id, 'spaces')}
+                />
+              </View>
+            ))}
+          {activeCategory === 'opportunities' &&
+            opportunities.map((item, index) => (
+              <View key={item.id} style={styles.cardWrapper}>
+                <OpportunityCard
+                  opportunity={item as Opportunity}
+                  onPress={() => navigateToDetail('opportunity', item.id)}
+                  showBookmark
+                  isBookmarked
+                  onBookmarkToggle={() => removeBookmark(item.id, 'opportunities')}
+                  isLast={index === opportunities.length - 1}
+                />
+              </View>
+            ))}
+        </>
+      )}
+    </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
+  filtersContainer: {
     paddingVertical: SPACING.sm,
     borderBottomWidth: BORDER.width.thin,
   },
-
-  headerButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: BORDER.radius.sm,
-  },
-
-  headerTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-
-  headerTitle: {
-    fontSize: TYPOGRAPHY.fontSize.xl,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-  },
-
-  totalBadge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: BORDER.radius.full,
-  },
-
-  totalText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  categoriesList: {
-    flexGrow: 0,
-    marginVertical: SPACING.md,
-  },
-
-  categoriesContainer: {
+  filtersContent: {
     paddingHorizontal: SPACING.lg,
     gap: SPACING.sm,
   },
-
-  categoryTab: {
+  filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: BORDER.radius.full,
     gap: SPACING.xs,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.full,
   },
-
-  categoryLabel: {
+  filterChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
-
-  countBadge: {
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 2,
-    borderRadius: BORDER.radius.full,
-    minWidth: 20,
-    alignItems: 'center',
-  },
-
-  countText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  content: {
-    flex: 1,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  list: {
-    flex: 1,
-  },
-
-  listContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xl,
-  },
-
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.xl,
-    gap: SPACING.md,
-  },
-
-  emptyTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  emptyText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    textAlign: 'center',
-    lineHeight: TYPOGRAPHY.fontSize.md * 1.5,
+  cardWrapper: {
+    marginBottom: SPACING.md,
   },
 });

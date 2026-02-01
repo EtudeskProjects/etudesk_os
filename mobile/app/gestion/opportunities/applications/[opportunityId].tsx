@@ -3,17 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
   Image,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   Clock,
   CheckCircle2,
   XCircle,
@@ -30,16 +26,7 @@ import {
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
-
-// Status color constants for static configuration
-const STATUS_COLORS = {
-  warning: '#F59E0B',
-  info: '#3B82F6',
-  success: '#10B981',
-  error: '#EF4444',
-  gray200: '#E5E7EB',
-};
-import { FooterNav } from '../../../../src/components/ui';
+import { PageLayout, EmptyState } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { applicationService, opportunityService } from '../../../../src/services';
 import { RankedApplication } from '../../../../src/services/applicationService';
@@ -47,7 +34,15 @@ import { formatRelativeTime } from '../../../../src/utils/date';
 import type { ApplicationStatus, Opportunity } from '../../../../src/types/models';
 import { APPLICATION_STATUS_LABELS } from '../../../../src/types/models';
 
-// Status configuration - Simplified to 4 statuses
+// Status color constants for static configuration
+const STATUS_COLORS = {
+  warning: '#F59E0B',
+  info: '#3B82F6',
+  success: '#10B981',
+  error: '#EF4444',
+};
+
+// Status configuration
 const STATUS_CONFIG: Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> = {
   SUBMITTED: { color: STATUS_COLORS.warning, icon: Clock, bgColor: STATUS_COLORS.warning + '15' },
   IN_REVIEW: { color: STATUS_COLORS.info, icon: Eye, bgColor: STATUS_COLORS.info + '15' },
@@ -94,7 +89,6 @@ export default function OpportunityApplicationsScreen() {
       setOpportunity(oppResponse.data);
       setApplications(appsResponse.data || []);
 
-      // Pre-populate recommendations from ranked data
       const recos: Record<string, string> = {};
       (appsResponse.data || []).forEach((app: RankedApplication) => {
         if (app.ai_recommendation) {
@@ -118,7 +112,6 @@ export default function OpportunityApplicationsScreen() {
       const response = await applicationService.getRankedApplications(opportunityId);
       setApplications(response.data || []);
 
-      // Update recommendations
       const recos: Record<string, string> = {};
       (response.data || []).forEach((app: RankedApplication) => {
         if (app.ai_recommendation) {
@@ -133,7 +126,6 @@ export default function OpportunityApplicationsScreen() {
     }
   }, [opportunityId]);
 
-  // Lazy load recommendation for a specific application
   const loadRecommendation = useCallback(async (applicationId: string) => {
     if (recommendations[applicationId]) return;
 
@@ -161,28 +153,15 @@ export default function OpportunityApplicationsScreen() {
     }
   };
 
-  const handleExportPdf = async () => {
-    if (!opportunityId) return;
-
-    try {
-      const response = await applicationService.exportToPdf(opportunityId);
-      Alert.alert('Export PDF', `Le PDF a été généré avec succès.`);
-    } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de générer le PDF.');
-    }
-  };
-
   const handleExportCsv = async () => {
     if (!opportunityId) return;
 
     try {
-      // Get the token for authentication
       const token = await require('@react-native-async-storage/async-storage').default.getItem('auth_access_token');
       const csvUrl = applicationService.getExportCsvUrl(opportunityId, {
         status: filter !== 'all' ? filter as ApplicationStatus : undefined,
       });
 
-      // Download the file
       const filename = `candidatures-${opportunity?.title?.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() || 'export'}-${new Date().toISOString().split('T')[0]}.csv`;
       const fileUri = FileSystem.documentDirectory + filename;
 
@@ -196,7 +175,6 @@ export default function OpportunityApplicationsScreen() {
         throw new Error('Erreur lors du téléchargement');
       }
 
-      // Share the file
       const canShare = await Sharing.isAvailableAsync();
       if (canShare) {
         await Sharing.shareAsync(downloadResult.uri, {
@@ -276,7 +254,6 @@ export default function OpportunityApplicationsScreen() {
     const matchConfig = item.matchCategory ? MATCH_CATEGORY_CONFIG[item.matchCategory] : null;
     const recommendation = recommendations[item.id] || item.ai_recommendation;
 
-    // Trigger lazy load of recommendation if not already loaded
     if (!recommendation && item.matchCategory) {
       loadRecommendation(item.id);
     }
@@ -288,7 +265,6 @@ export default function OpportunityApplicationsScreen() {
         activeOpacity={0.7}
       >
         <View style={styles.cardHeader}>
-          {/* Avatar */}
           {talent?.profile_picture_url ? (
             <Image source={{ uri: talent.profile_picture_url }} style={styles.avatar} />
           ) : (
@@ -299,13 +275,11 @@ export default function OpportunityApplicationsScreen() {
             </View>
           )}
 
-          {/* Info */}
           <View style={styles.talentInfo}>
             <View style={styles.nameRow}>
               <Text style={[styles.talentName, { color: colors.textPrimary }]} numberOfLines={1}>
                 {talent ? `${talent.first_name} ${talent.last_name}` : 'Candidat'}
               </Text>
-              {/* Match category badge */}
               {matchConfig && (
                 <View style={[styles.matchBadge, { backgroundColor: matchConfig.bgColor }]}>
                   <TrendingUp size={10} color={matchConfig.color} strokeWidth={ICON.strokeWidth} />
@@ -323,7 +297,6 @@ export default function OpportunityApplicationsScreen() {
           <ChevronRight size={20} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
         </View>
 
-        {/* Recommendation */}
         {recommendation && (
           <View style={[styles.recommendationContainer, { backgroundColor: colors.gray50 }]}>
             <Text style={[styles.recommendationText, { color: colors.textSecondary }]} numberOfLines={3}>
@@ -360,7 +333,6 @@ export default function OpportunityApplicationsScreen() {
           </View>
         </View>
 
-        {/* Quick actions */}
         {item.status === 'SUBMITTED' && (
           <View style={styles.quickActions}>
             <TouchableOpacity
@@ -383,230 +355,127 @@ export default function OpportunityApplicationsScreen() {
     );
   };
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <View style={[styles.emptyIcon, { backgroundColor: colors.gray100 }]}>
-        <Inbox size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-      </View>
-      <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-        {filter === 'all' ? 'Aucune candidature' : 'Aucun résultat'}
-      </Text>
-      <Text style={[styles.emptyDescription, { color: colors.gray500 }]}>
-        {filter === 'all'
-          ? 'Cette opportunité n\'a pas encore reçu de candidatures.'
-          : 'Aucune candidature avec ce statut.'}
-      </Text>
+  const filterChips = [
+    { key: 'all' as FilterStatus, label: 'Toutes', count: statusCounts.all || 0 },
+    { key: 'IN_REVIEW' as FilterStatus, label: 'En examen', count: statusCounts['IN_REVIEW'] || 0 },
+    { key: 'ACCEPTED' as FilterStatus, label: 'Acceptées', count: statusCounts['ACCEPTED'] || 0 },
+    { key: 'REJECTED' as FilterStatus, label: 'Rejetées', count: statusCounts['REJECTED'] || 0 },
+  ];
+
+  const headerContent = (
+    <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersContent}
+      >
+        {filterChips.map((chip) => {
+          const isActive = filter === chip.key;
+          return (
+            <TouchableOpacity
+              key={chip.key}
+              style={[
+                styles.filterChip,
+                { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
+              ]}
+              onPress={() => setFilter(chip.key)}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  { color: colors.gray700 },
+                  isActive && { color: colors.textOnPrimary },
+                ]}
+              >
+                {chip.label} ({chip.count})
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </SafeAreaView>
-    );
-  }
+  const rightAction = (
+    <View style={styles.headerActions}>
+      <TouchableOpacity onPress={handleEdit} style={styles.headerActionButton}>
+        <Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleDelete} style={styles.headerActionButton}>
+        <Trash2 size={20} color={colors.error} strokeWidth={ICON.strokeWidth} />
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleExportCsv} style={styles.headerActionButton}>
+        <Download size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const emptySubtitle = filter === 'all'
+    ? 'Cette opportunité n\'a pas encore reçu de candidatures.'
+    : 'Aucune candidature avec ce statut.';
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-            Candidatures
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.gray500 }]} numberOfLines={1}>
-            {opportunity?.title}
-          </Text>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={handleEdit} style={styles.actionButton}>
-            <Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleDelete} style={styles.actionButton}>
-            <Trash2 size={20} color={colors.error} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleExportCsv} style={styles.actionButton}>
-            <Download size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Stats */}
-      <View style={styles.statsContainer}>
-        <TouchableOpacity
-          style={[
-            styles.statItem,
-            { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'all' && { backgroundColor: colors.primary + '12', borderColor: colors.primary + '50' }
-          ]}
-          onPress={() => setFilter('all')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.statValue, { color: filter === 'all' ? colors.primary : colors.textPrimary }]}>
-            {applications.length}
-          </Text>
-          <Text style={[styles.statLabel, { color: filter === 'all' ? colors.primary : colors.gray500 }]}>Total</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.statItem,
-            { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'IN_REVIEW' && { backgroundColor: colors.info + '12', borderColor: colors.info + '50' }
-          ]}
-          onPress={() => setFilter('IN_REVIEW')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.statValue, { color: colors.info }]}>
-            {statusCounts['IN_REVIEW'] || 0}
-          </Text>
-          <Text style={[styles.statLabel, { color: filter === 'IN_REVIEW' ? colors.info : colors.gray500 }]}>En examen</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.statItem,
-            { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'ACCEPTED' && { backgroundColor: colors.success + '12', borderColor: colors.success + '50' }
-          ]}
-          onPress={() => setFilter('ACCEPTED')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.statValue, { color: colors.success }]}>
-            {statusCounts['ACCEPTED'] || 0}
-          </Text>
-          <Text style={[styles.statLabel, { color: filter === 'ACCEPTED' ? colors.success : colors.gray500 }]}>Acceptées</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.statItem,
-            { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'REJECTED' && { backgroundColor: colors.error + '12', borderColor: colors.error + '50' }
-          ]}
-          onPress={() => setFilter('REJECTED')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.statValue, { color: colors.error }]}>
-            {statusCounts['REJECTED'] || 0}
-          </Text>
-          <Text style={[styles.statLabel, { color: filter === 'REJECTED' ? colors.error : colors.gray500 }]}>Rejetées</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Content */}
-      <FlatList
-        data={filteredApplications}
-        renderItem={renderApplicationItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-        ListEmptyComponent={renderEmptyState}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
-
-      <FooterNav activeTab="gestion" />
-    </SafeAreaView>
+    <PageLayout
+      title="Candidatures"
+      onRefresh={handleRefresh}
+      isRefreshing={isRefreshing}
+      isLoading={isLoading}
+      headerContent={headerContent}
+      rightAction={rightAction}
+    >
+      {filteredApplications.length === 0 ? (
+        <EmptyState
+          icon={Inbox}
+          title={filter === 'all' ? 'Aucune candidature' : 'Aucun résultat'}
+          subtitle={emptySubtitle}
+        />
+      ) : (
+        filteredApplications.map((item) => (
+          <View key={item.id} style={styles.cardWrapper}>
+            {renderApplicationItem({ item })}
+          </View>
+        ))
+      )}
+    </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  filtersContainer: {
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: BORDER.width.thin,
   },
-
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  filtersContent: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
   },
-
-  header: {
+  filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    gap: SPACING.xs,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.full,
   },
-
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  headerContent: {
-    flex: 1,
-    marginHorizontal: SPACING.sm,
-  },
-
-  headerTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  headerSubtitle: {
+  filterChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
-    marginTop: 2,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
-
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
   },
-
-  actionButton: {
-    width: 40,
-    height: 40,
+  headerActionButton: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  statsContainer: {
-    flexDirection: 'row',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.sm,
-  },
-
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.xs,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.md,
-  },
-
-  statValue: {
-    fontSize: TYPOGRAPHY.fontSize.xl,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-  },
-
-  statLabel: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    marginTop: 2,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  listContent: {
-    padding: SPACING.lg,
-    flexGrow: 1,
-  },
-
-  separator: {
-    height: SPACING.md,
+  cardWrapper: {
+    marginBottom: SPACING.md,
   },
 
   applicationCard: {
@@ -753,33 +622,5 @@ const styles = StyleSheet.create({
   quickActionText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: SPACING.xl,
-    minHeight: 300,
-  },
-
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.lg,
-  },
-
-  emptyTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginBottom: SPACING.sm,
-  },
-
-  emptyDescription: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    textAlign: 'center',
   },
 });

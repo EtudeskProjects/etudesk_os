@@ -3,13 +3,17 @@
  * Export all copilot-related components
  */
 
-export { CopilotOutputRenderer, default as OutputRenderer } from './CopilotOutputRenderer';
-export { QuizCard, default as Quiz } from './QuizCard';
-export { SkillGraphView, default as SkillGraph } from './SkillGraphView';
-export { LearningPathView, default as LearningPath } from './LearningPathView';
-export { ThinkingIndicator, default as Thinking } from './ThinkingIndicator';
-export {
-  ToolExecutionTimeline,
-  default as ToolTimeline,
-  type ToolExecution,
-} from './ToolExecutionTimeline';
+// Core components
+export { MarkdownRenderer } from './MarkdownRenderer';
+export { EntityCard } from './EntityCard';
+export { CopyButton } from './CopyButton';
+export { ToolTrace, type ToolTraceItem } from './ToolTrace';
+
+// Block components
+export { QuizBlock } from './blocks/QuizBlock';
+export { FlashcardBlock } from './blocks/FlashcardBlock';
+export { YouTubeBlock } from './blocks/YouTubeBlock';
+export { DiagramBlock } from './blocks/DiagramBlock';
+export { ImageBlock } from './blocks/ImageBlock';
+export { ChartBlock } from './blocks/ChartBlock';
+export { CodeBlock } from './blocks/CodeBlock';

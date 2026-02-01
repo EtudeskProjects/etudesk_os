@@ -626,7 +626,7 @@ ${summarizeContext(context)}
 // CONTEXT LOADING FROM DATABASE
 // ═══════════════════════════════════════════════════════════════
 
-import { pool } from '../../database';
+import { pool } from '../database';
 
 /**
  * Load full talent context from database
@@ -1328,7 +1328,7 @@ function mapLanguageLevel(level: string | null): 'basic' | 'conversational' | 'f
 async function loadGraphContext(talentId: string): Promise<GraphContext> {
   try {
     // Dynamic import to avoid circular dependencies and handle optional Neo4j
-    const { graphService, talentQueries, opportunityQueries } = await import('../../graph');
+    const { graphService, talentQueries, opportunityQueries } = await import('../graph');
 
     if (!graphService.isConnected()) {
       return { isGraphAvailable: false };

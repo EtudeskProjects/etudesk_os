@@ -3,6 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
   Image,
 } from 'react-native';
@@ -16,7 +17,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
-import { PageLayout, EmptyState, TabBar } from '../../../src/components/ui';
+import { PageLayout, EmptyState } from '../../../src/components/ui';
 import { CommunityCard } from '../../../src/components/cards';
 import { communityService, communityActivityService } from '../../../src/services';
 import { formatRelativeTime } from '../../../src/utils/date';
@@ -129,15 +130,20 @@ export default function MyCommunitiesScreen() {
     loadData();
   }, [loadData]);
 
+  const chips = [
+    { key: 'memberships' as Tab, label: 'Adhésions', count: memberships.length },
+    { key: 'bookmarks' as Tab, label: 'Sauvegardes', count: bookmarkedActivities.length },
+  ];
+
   const renderMemberships = () => (
-    <View style={styles.listContainer}>
+    <>
       {memberships.length === 0 ? (
         <EmptyState
           icon={Users}
           title="Aucune communauté"
           subtitle="Rejoignez des communautés pour les voir ici"
           actionLabel="Explorer"
-          onAction={() => router.push('/(tabs)/explore')}
+          onAction={() => router.push('/(tabs)/explore?category=communities')}
         />
       ) : (
         memberships.map((membership) => {
@@ -160,11 +166,11 @@ export default function MyCommunitiesScreen() {
           );
         })
       )}
-    </View>
+    </>
   );
 
   const renderBookmarks = () => (
-    <View style={styles.listContainer}>
+    <>
       {bookmarkedActivities.length === 0 ? (
         <EmptyState
           icon={Bookmark}
@@ -242,13 +248,43 @@ export default function MyCommunitiesScreen() {
           );
         })
       )}
-    </View>
+    </>
   );
 
-  const tabs = [
-    { key: 'memberships', label: 'Adhésions', icon: Users, count: memberships.length > 0 ? memberships.length : undefined },
-    { key: 'bookmarks', label: 'Sauvegardes', icon: Bookmark, count: bookmarkedActivities.length > 0 ? bookmarkedActivities.length : undefined },
-  ];
+  const headerContent = (
+    <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersContent}
+      >
+        {chips.map((chip) => {
+          const isActive = activeTab === chip.key;
+          return (
+            <TouchableOpacity
+              key={chip.key}
+              style={[
+                styles.filterChip,
+                { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
+              ]}
+              onPress={() => setActiveTab(chip.key)}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  { color: colors.gray700 },
+                  isActive && { color: colors.textOnPrimary },
+                ]}
+              >
+                {chip.label} ({chip.count})
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
 
   return (
     <PageLayout
@@ -256,13 +292,7 @@ export default function MyCommunitiesScreen() {
       onRefresh={handleRefresh}
       isRefreshing={isRefreshing}
       isLoading={isLoading}
-      headerContent={
-        <TabBar
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={(key) => setActiveTab(key as Tab)}
-        />
-      }
+      headerContent={headerContent}
     >
       {activeTab === 'memberships' && renderMemberships()}
       {activeTab === 'bookmarks' && renderBookmarks()}
@@ -271,8 +301,26 @@ export default function MyCommunitiesScreen() {
 }
 
 const styles = StyleSheet.create({
-  listContainer: {
-    paddingTop: SPACING.md,
+  filtersContainer: {
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: BORDER.width.thin,
+  },
+  filtersContent: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.full,
+  },
+  filterChipText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   // Bookmark Card
   bookmarkCard: {

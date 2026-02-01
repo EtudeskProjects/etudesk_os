@@ -14,6 +14,7 @@
     "graph:sync": "tsx src/scripts/graph-sync.ts"
   },
   "dependencies": {
+    "@openai/agents": "^0.4.4",
     "@pinecone-database/pinecone": "^3.0.3",
     "@types/multer": "^2.0.0",
     "bcryptjs": "^3.0.3",

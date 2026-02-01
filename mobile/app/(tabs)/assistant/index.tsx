@@ -11,7 +11,6 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   ActivityIndicator,
-  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -27,18 +26,19 @@ import {
   Plus,
   AlertCircle,
   X,
+  Copy,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { Header, FooterNav } from '../../../src/components/ui';
 import {
-  CopilotOutputRenderer,
-  ThinkingIndicator,
-  ToolExecutionTimeline,
-  ToolExecution,
+  MarkdownRenderer,
+  CopyButton,
+  ToolTrace,
+  ToolTraceItem,
 } from '../../../src/components/copilot';
 import {
   copilotService,
@@ -46,7 +46,6 @@ import {
   COPILOT_MODES,
   CopilotMessage,
   SessionSummary,
-  OUTPUT_TYPES,
 } from '../../../src/services/copilotService';
 
 type Mode = 'explore' | 'study';
@@ -61,6 +60,14 @@ const MODE_ICONS = {
   study: BookOpen,
 };
 
+interface StreamingMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  toolTraces?: ToolTraceItem[];
+  isStreaming?: boolean;
+}
+
 export default function AssistantScreen() {
   const { mode, prompt, focusInput, sessionId: initialSessionId } = useLocalSearchParams<{
     mode?: string;
@@ -71,14 +78,13 @@ export default function AssistantScreen() {
 
   const [activeMode, setActiveMode] = useState<Mode>('explore');
   const [inputText, setInputText] = useState('');
-  const [messages, setMessages] = useState<CopilotMessage[]>([]);
+  const [messages, setMessages] = useState<StreamingMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const [activeToolExecutions, setActiveToolExecutions] = useState<ToolExecution[]>([]);
 
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -87,6 +93,7 @@ export default function AssistantScreen() {
   const router = useRouter();
   const inputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Build modes with translated labels
   const ALL_MODES = [
@@ -156,7 +163,21 @@ export default function AssistantScreen() {
       const { session, messages: sessionMessages } = response.data;
       setSessionId(session.id);
       setActiveMode(session.mode as Mode);
-      setMessages(sessionMessages || []);
+
+      // Convert to StreamingMessage format
+      const converted: StreamingMessage[] = (sessionMessages || [])
+        .filter((m: CopilotMessage) => m.role === 'user' || m.role === 'assistant')
+        .map((m: CopilotMessage) => ({
+          id: m.id,
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          toolTraces: m.toolCalls?.map((tc: any) => ({
+            name: tc.name,
+            duration: tc.duration,
+            status: 'done' as const,
+          })),
+        }));
+      setMessages(converted);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
@@ -176,7 +197,7 @@ export default function AssistantScreen() {
     }
   };
 
-  // Send message
+  // Send message with SSE streaming
   const handleSend = async () => {
     if (!inputText.trim() || isSending) return;
 
@@ -184,67 +205,93 @@ export default function AssistantScreen() {
     setInputText('');
     setIsSending(true);
     setError(null);
-    setActiveToolExecutions([]);
 
-    // Add optimistic user message
-    const tempUserMessage: CopilotMessage = {
-      id: `temp-${Date.now()}`,
-      sessionId: sessionId || '',
+    // Add user message
+    const userMsg: StreamingMessage = {
+      id: `user-${Date.now()}`,
       role: 'user',
       content: userContent,
-      createdAt: new Date().toISOString(),
     };
-    setMessages((prev) => [...prev, tempUserMessage]);
 
-    try {
-      const response = await copilotService.sendMessage(
-        userContent,
-        activeMode as CopilotMode,
-        sessionId || undefined
-      );
+    // Add assistant streaming message placeholder
+    const assistantMsgId = `assistant-${Date.now()}`;
+    const assistantMsg: StreamingMessage = {
+      id: assistantMsgId,
+      role: 'assistant',
+      content: '',
+      toolTraces: [],
+      isStreaming: true,
+    };
 
-      if (response.error || !response.data?.data) {
-        throw new Error(response.error || "Erreur lors de l'envoi du message");
+    setMessages((prev) => [...prev, userMsg, assistantMsg]);
+
+    // Start SSE stream
+    abortControllerRef.current = copilotService.sendMessageStream(
+      userContent,
+      activeMode as CopilotMode,
+      sessionId || undefined,
+      {
+        onTextDelta: (delta) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId
+                ? { ...m, content: m.content + delta }
+                : m
+            )
+          );
+        },
+        onToolStart: (tool) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId
+                ? {
+                    ...m,
+                    toolTraces: [
+                      ...(m.toolTraces || []),
+                      { name: tool.name, status: 'running' as const },
+                    ],
+                  }
+                : m
+            )
+          );
+        },
+        onToolEnd: (tool) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId
+                ? {
+                    ...m,
+                    toolTraces: (m.toolTraces || []).map((t) =>
+                      t.name === tool.name && t.status === 'running'
+                        ? { ...t, status: 'done' as const, duration: tool.duration }
+                        : t
+                    ),
+                  }
+                : m
+            )
+          );
+        },
+        onDone: (newSessionId) => {
+          setSessionId(newSessionId);
+          setIsSending(false);
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId ? { ...m, isStreaming: false } : m
+            )
+          );
+          abortControllerRef.current = null;
+        },
+        onError: (errorMsg) => {
+          setError(errorMsg);
+          setIsSending(false);
+          // Remove empty assistant message on error
+          setMessages((prev) =>
+            prev.filter((m) => !(m.id === assistantMsgId && !m.content))
+          );
+          abortControllerRef.current = null;
+        },
       }
-
-      const chatResponse = response.data.data;
-
-      // Update session ID
-      setSessionId(chatResponse.sessionId);
-
-      // Extract tool executions from response if available
-      if (chatResponse.message.toolCalls && chatResponse.message.toolCalls.length > 0) {
-        const toolExecutions: ToolExecution[] = chatResponse.message.toolCalls.map(
-          (tc: any, index: number) => ({
-            id: tc.id || `tool-${index}`,
-            name: tc.name || tc.function?.name || 'unknown',
-            status: 'success' as const,
-            result: tc.result ? JSON.stringify(tc.result).slice(0, 100) : undefined,
-            duration: tc.duration,
-          })
-        );
-        setActiveToolExecutions(toolExecutions);
-      }
-
-      // Replace temp message and add assistant response
-      setMessages((prev) => {
-        const withoutTemp = prev.filter((m) => !m.id.startsWith('temp-'));
-        const realUserMessage: CopilotMessage = {
-          ...tempUserMessage,
-          id: `user-${Date.now()}`,
-          sessionId: chatResponse.sessionId,
-        };
-        return [...withoutTemp, realUserMessage, chatResponse.message];
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
-      // Remove optimistic message on error
-      setMessages((prev) => prev.filter((m) => !m.id.startsWith('temp-')));
-    } finally {
-      setIsSending(false);
-      // Clear tool executions after a delay
-      setTimeout(() => setActiveToolExecutions([]), 2000);
-    }
+    );
   };
 
   // Handle mode toggle
@@ -253,7 +300,6 @@ export default function AssistantScreen() {
     const nextIndex = (currentIndex + 1) % MODES.length;
     const newMode = MODES[nextIndex].id;
 
-    // If mode changes, start a new session
     if (newMode !== activeMode) {
       setActiveMode(newMode);
       setSessionId(null);
@@ -263,9 +309,13 @@ export default function AssistantScreen() {
 
   // Start new conversation
   const handleNewConversation = () => {
+    // Abort any running stream
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
     setSessionId(null);
     setMessages([]);
     setError(null);
+    setIsSending(false);
   };
 
   // Open history panel
@@ -364,46 +414,50 @@ export default function AssistantScreen() {
     >
       {messages.map((message) => (
         <View key={message.id} style={styles.messageWrapper}>
-          {/* Message bubble */}
-          <View
-            style={[
-              styles.messageBubble,
-              message.role === 'user'
-                ? [styles.userMessage, { backgroundColor: colors.primary }]
-                : [styles.assistantMessage, { backgroundColor: colors.surface, borderColor: colors.borderColor }],
-            ]}
-          >
-            <Text
-              style={[
-                styles.messageText,
-                { color: message.role === 'user' ? colors.textOnPrimary : colors.textPrimary },
-              ]}
-            >
-              {message.content}
-            </Text>
-          </View>
+          {message.role === 'user' ? (
+            /* User message: bubble style (right-aligned) */
+            <View style={[styles.userMessage, { backgroundColor: colors.primary }]}>
+              <Text style={[styles.userMessageText, { color: colors.textOnPrimary }]}>
+                {message.content}
+              </Text>
+            </View>
+          ) : (
+            /* Assistant message: transparent, full-width, with copy button */
+            <View style={styles.assistantMessage}>
+              {/* Copy button */}
+              {message.content && !message.isStreaming && (
+                <View style={styles.copyButtonRow}>
+                  <CopyButton content={message.content} />
+                </View>
+              )}
 
-          {/* Output renderer for assistant messages with structured data */}
-          {message.role === 'assistant' && message.outputType && message.outputData && (
-            <CopilotOutputRenderer
-              outputType={message.outputType}
-              outputData={message.outputData}
-            />
+              {/* Tool traces */}
+              {message.toolTraces && message.toolTraces.length > 0 && (
+                <ToolTrace traces={message.toolTraces} />
+              )}
+
+              {/* Markdown-rendered content */}
+              {message.content ? (
+                <MarkdownRenderer content={message.content} />
+              ) : message.isStreaming ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={{ color: colors.textSecondary, fontSize: TYPOGRAPHY.fontSize.sm }}>
+                    {activeMode === 'study' ? 'Préparation du contenu' : 'Recherche en cours'}
+                  </Text>
+                </View>
+              ) : null}
+
+              {/* Streaming cursor */}
+              {message.isStreaming && message.content && (
+                <View style={styles.streamingCursor}>
+                  <View style={[styles.cursorDot, { backgroundColor: colors.primary }]} />
+                </View>
+              )}
+            </View>
           )}
         </View>
       ))}
-
-      {/* Sending indicator with thinking animation */}
-      {isSending && (
-        <View style={styles.thinkingContainer}>
-          <ThinkingIndicator
-            message={activeMode === 'study' ? 'Préparation du contenu' : 'Recherche en cours'}
-          />
-          {activeToolExecutions.length > 0 && (
-            <ToolExecutionTimeline tools={activeToolExecutions} showDetails />
-          )}
-        </View>
-      )}
     </ScrollView>
   );
 
@@ -516,7 +570,7 @@ export default function AssistantScreen() {
             {/* Loading state */}
             {isLoading ? (
               <View style={styles.loadingContainer}>
-                <ThinkingIndicator message="Chargement de la conversation" />
+                <ActivityIndicator size="small" color={colors.primary} />
               </View>
             ) : (
               <View style={styles.content}>
@@ -724,36 +778,41 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
 
-  messageBubble: {
+  // User message: bubble, right-aligned
+  userMessage: {
+    alignSelf: 'flex-end',
     maxWidth: '85%',
     padding: SPACING.md,
     borderRadius: BORDER.radius.md,
   },
 
-  userMessage: {
-    alignSelf: 'flex-end',
-  },
-
-  assistantMessage: {
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-  },
-
-  messageText: {
+  userMessageText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     lineHeight: TYPOGRAPHY.fontSize.md * TYPOGRAPHY.lineHeight.normal,
   },
 
-  typingText: {
-    ...TYPOGRAPHY.caption,
-    marginLeft: SPACING.sm,
+  // Assistant message: transparent, full-width
+  assistantMessage: {
+    width: '100%',
   },
 
-  thinkingContainer: {
-    alignSelf: 'flex-start',
-    maxWidth: '90%',
-    gap: SPACING.sm,
+  copyButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: SPACING.xs,
+  },
+
+  streamingCursor: {
+    flexDirection: 'row',
+    marginTop: 2,
+  },
+
+  cursorDot: {
+    width: 6,
+    height: 16,
+    borderRadius: 1,
+    opacity: 0.7,
   },
 
   // Input Area

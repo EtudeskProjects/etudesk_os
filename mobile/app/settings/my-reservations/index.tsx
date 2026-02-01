@@ -5,14 +5,10 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   Clock,
   CheckCircle2,
   XCircle,
@@ -24,7 +20,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
-import { FooterNav } from '../../../src/components/ui';
+import { PageLayout, EmptyState } from '../../../src/components/ui';
 import { spaceBookingService } from '../../../src/services';
 import type { SpaceBookingDetails } from '../../../src/services/spaceBookingService';
 import { formatDate, formatTime } from '../../../src/utils/date';
@@ -36,9 +32,9 @@ type BookingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_S
 // Status configuration
 const getStatusConfig = (colors: any): Record<BookingStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
   PENDING: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15', label: 'En attente' },
-  CONFIRMED: { color: colors.info, icon: CheckCircle2, bgColor: colors.info + '15', label: 'Confirmee' },
-  COMPLETED: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Terminee' },
-  CANCELLED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Annulee' },
+  CONFIRMED: { color: colors.info, icon: CheckCircle2, bgColor: colors.info + '15', label: 'Confirmée' },
+  COMPLETED: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Terminée' },
+  CANCELLED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Annulée' },
   NO_SHOW: { color: colors.gray500, icon: AlertCircle, bgColor: colors.gray200, label: 'Absent' },
 });
 
@@ -53,12 +49,7 @@ export default function MyReservationsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filter, setFilter] = useState<FilterStatus>('all');
 
-  useEffect(() => {
-    loadBookings();
-  }, []);
-
-  const loadBookings = async () => {
-    setIsLoading(true);
+  const loadBookings = useCallback(async () => {
     try {
       const response = await spaceBookingService.getMyBookings();
       setBookings(response.data || []);
@@ -66,20 +57,18 @@ export default function MyReservationsScreen() {
       console.error('Error loading bookings:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    try {
-      const response = await spaceBookingService.getMyBookings();
-      setBookings(response.data || []);
-    } catch (error) {
-      console.error('Error refreshing bookings:', error);
-    } finally {
       setIsRefreshing(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadBookings();
+  }, [loadBookings]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    loadBookings();
+  };
 
   const filteredBookings = bookings.filter((booking) => {
     if (filter === 'all') return true;
@@ -123,7 +112,7 @@ export default function MyReservationsScreen() {
     );
   };
 
-  const renderBookingItem = ({ item }: { item: SpaceBookingDetails }) => {
+  const renderBookingItem = (item: SpaceBookingDetails) => {
     const statusConfig = getStatusConfig(colors)[item.status as BookingStatus];
     const StatusIcon = statusConfig?.icon || Clock;
 
@@ -132,6 +121,7 @@ export default function MyReservationsScreen() {
 
     return (
       <TouchableOpacity
+        key={item.id}
         style={[styles.bookingCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
         onPress={() => router.push(`/settings/my-reservations/${item.id}`)}
         activeOpacity={0.7}
@@ -161,7 +151,7 @@ export default function MyReservationsScreen() {
             <View style={styles.dateTimeRow}>
               <CalendarDays size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.dateTimeText, { color: colors.textSecondary }]}>
-                {formatDate(startDate)} - {formatTime(startDate)} a {formatTime(endDate)}
+                {formatDate(startDate)} - {formatTime(startDate)} à {formatTime(endDate)}
               </Text>
             </View>
           </View>
@@ -194,118 +184,61 @@ export default function MyReservationsScreen() {
     );
   };
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <View style={[styles.emptyIcon, { backgroundColor: colors.gray100 }]}>
-        <CalendarDays size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-      </View>
-      <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-        {filter === 'all' ? 'Aucune reservation' : 'Aucun resultat'}
-      </Text>
-      <Text style={[styles.emptyDescription, { color: colors.gray500 }]}>
-        {filter === 'all'
-          ? 'Vous n\'avez pas encore de reservations. Explorez les espaces disponibles.'
-          : 'Aucune reservation avec ce statut.'}
-      </Text>
-      {filter === 'all' && (
-        <TouchableOpacity
-          style={[styles.exploreButton, { backgroundColor: colors.primary }]}
-          onPress={() => router.push('/(tabs)/explore')}
-        >
-          <Text style={[styles.exploreButtonText, { color: colors.textOnPrimary }]}>Explorer les espaces</Text>
-        </TouchableOpacity>
-      )}
+  const filterChips = [
+    { key: 'all' as FilterStatus, label: 'Toutes' },
+    { key: 'PENDING' as FilterStatus, label: 'En attente' },
+    { key: 'CONFIRMED' as FilterStatus, label: 'Confirmées' },
+    { key: 'COMPLETED' as FilterStatus, label: 'Terminées' },
+    { key: 'CANCELLED' as FilterStatus, label: 'Annulées' },
+  ];
+
+  const headerContent = (
+    <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
+      <FlatList
+        horizontal
+        data={filterChips}
+        renderItem={({ item }) => renderFilterChip(item.key, item.label)}
+        keyExtractor={(item) => item.key}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersContent}
+      />
     </View>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Mes reservations</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      {/* Filters */}
-      <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
-        <FlatList
-          horizontal
-          data={[
-            { key: 'all', label: 'Toutes' },
-            { key: 'PENDING', label: 'En attente' },
-            { key: 'CONFIRMED', label: 'Confirmees' },
-            { key: 'COMPLETED', label: 'Terminees' },
-            { key: 'CANCELLED', label: 'Annulees' },
-          ]}
-          renderItem={({ item }) => renderFilterChip(item.key as FilterStatus, item.label)}
-          keyExtractor={(item) => item.key}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersContent}
-        />
-      </View>
-
-      {/* Content */}
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : (
-        <FlatList
-          data={filteredBookings}
-          renderItem={renderBookingItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              colors={[colors.primary]}
-              tintColor={colors.primary}
-            />
+    <PageLayout
+      title="Mes réservations"
+      onRefresh={handleRefresh}
+      isRefreshing={isRefreshing}
+      isLoading={isLoading}
+      headerContent={headerContent}
+    >
+      {filteredBookings.length === 0 ? (
+        <EmptyState
+          icon={CalendarDays}
+          title={filter === 'all' ? 'Aucune réservation' : 'Aucun résultat'}
+          subtitle={
+            filter === 'all'
+              ? "Vous n'avez pas encore de réservations. Explorez les espaces disponibles."
+              : 'Aucune réservation avec ce statut.'
           }
-          ListEmptyComponent={renderEmptyState}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          {...(filter === 'all' ? {
+            actionLabel: 'Explorer',
+            onAction: () => router.push('/(tabs)/explore?category=spaces'),
+          } : {})}
         />
+      ) : (
+        filteredBookings.map((item) => (
+          <View key={item.id} style={styles.cardWrapper}>
+            {renderBookingItem(item)}
+          </View>
+        ))
       )}
-
-      <FooterNav activeTab="settings" />
-    </SafeAreaView>
+    </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  headerTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  headerSpacer: {
-    width: 40,
-  },
-
   filtersContainer: {
     paddingVertical: SPACING.sm,
     borderBottomWidth: BORDER.width.thin,
@@ -329,19 +262,8 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  listContent: {
-    padding: SPACING.lg,
-    flexGrow: 1,
-  },
-
-  separator: {
-    height: SPACING.md,
+  cardWrapper: {
+    marginBottom: SPACING.md,
   },
 
   bookingCard: {
@@ -436,46 +358,6 @@ const styles = StyleSheet.create({
 
   priceText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: SPACING.xl,
-    minHeight: 300,
-  },
-
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.lg,
-  },
-
-  emptyTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginBottom: SPACING.sm,
-  },
-
-  emptyDescription: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
-  },
-
-  exploreButton: {
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
-    borderRadius: BORDER.radius.sm,
-  },
-
-  exploreButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 });

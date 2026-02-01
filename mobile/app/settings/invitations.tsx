@@ -10,6 +10,7 @@ import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
   Image,
   Alert,
@@ -31,7 +32,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
-import { PageLayout, EmptyState, TabBar } from '../../src/components/ui';
+import { PageLayout, EmptyState } from '../../src/components/ui';
 import { invitationService, ReceivedInvitation } from '../../src/services/invitationService';
 import {
   communityInvitationService,
@@ -358,6 +359,11 @@ export default function InvitationsScreen() {
 
   const isLoading = activeTab === 'organizations' ? orgLoading : offersLoading;
   const totalOffersCount = allOfferInvitations.length;
+
+  const chips = [
+    { key: 'offers' as TabType, label: 'Offres', count: totalOffersCount },
+    { key: 'organizations' as TabType, label: 'Organisations', count: orgInvitations.length },
+  ];
 
   const renderOrgInvitationCard = (invitation: ReceivedInvitation) => {
     const isProcessing = processingId === invitation.id;
@@ -809,10 +815,40 @@ export default function InvitationsScreen() {
 
   const isEmpty = activeTab === 'organizations' ? orgInvitations.length === 0 : totalOffersCount === 0;
 
-  const tabs = [
-    { key: 'offers', label: 'Offres', icon: Briefcase, count: totalOffersCount > 0 ? totalOffersCount : undefined },
-    { key: 'organizations', label: 'Organisations', icon: Building2, count: orgInvitations.length > 0 ? orgInvitations.length : undefined },
-  ];
+  const headerContent = (
+    <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersContent}
+      >
+        {chips.map((chip) => {
+          const isActive = activeTab === chip.key;
+          return (
+            <TouchableOpacity
+              key={chip.key}
+              style={[
+                styles.filterChip,
+                { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
+              ]}
+              onPress={() => setActiveTab(chip.key)}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  { color: colors.gray700 },
+                  isActive && { color: colors.textOnPrimary },
+                ]}
+              >
+                {chip.label} ({chip.count})
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
 
   return (
     <PageLayout
@@ -820,26 +856,18 @@ export default function InvitationsScreen() {
       onRefresh={handleRefresh}
       isRefreshing={isRefreshing}
       isLoading={isLoading}
-      headerContent={
-        <TabBar
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={(key) => setActiveTab(key as TabType)}
-        />
-      }
+      headerContent={headerContent}
     >
       {isEmpty ? (
-        <View style={{ marginTop: SPACING.xl }}>
-          <EmptyState
-            icon={Mail}
-            title="Aucune invitation"
-            subtitle={
-              activeTab === 'offers'
-                ? "Vous n'avez pas d'invitation pour des offres"
-                : "Vous n'avez pas d'invitation a rejoindre une organisation"
-            }
-          />
-        </View>
+        <EmptyState
+          icon={Mail}
+          title="Aucune invitation"
+          subtitle={
+            activeTab === 'offers'
+              ? "Vous n'avez pas d'invitation pour des offres."
+              : "Vous n'avez pas d'invitation à rejoindre une organisation."
+          }
+        />
       ) : (
         <>
           <Text style={[styles.sectionInfo, { color: colors.textSecondary }]}>
@@ -860,10 +888,31 @@ export default function InvitationsScreen() {
 }
 
 const styles = StyleSheet.create({
+  filtersContainer: {
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: BORDER.width.thin,
+  },
+  filtersContent: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.full,
+  },
+  filterChipText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
   sectionInfo: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     marginBottom: SPACING.md,
-    marginTop: SPACING.md,
+    marginTop: SPACING.sm,
   },
 
   invitationCard: {

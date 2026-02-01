@@ -4,6 +4,8 @@
  */
 
 import { api, ApiResponse } from './api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_CONFIG, STORAGE_KEYS } from '../constants/config';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -86,74 +88,6 @@ export interface CardListOutput {
   totalCount?: number;
   hasMore?: boolean;
   query?: string;
-}
-
-// Skill graph output
-export interface SkillNode {
-  id: string;
-  name: string;
-  level?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
-  progress?: number;
-  domain?: string;
-  children?: string[];
-  isTarget?: boolean;
-  isAcquired?: boolean;
-}
-
-export interface SkillGraphOutput {
-  nodes: SkillNode[];
-  edges: Array<{
-    from: string;
-    to: string;
-    type: 'prerequisite' | 'related' | 'parent';
-  }>;
-  focusSkillId?: string;
-  summary?: string;
-}
-
-// Quiz output
-export interface QuizQuestion {
-  id: string;
-  question: string;
-  type: 'multiple_choice' | 'true_false' | 'open_ended';
-  options?: string[];
-  correctAnswer?: string | number;
-  explanation?: string;
-  skillId?: string;
-  difficulty?: 'easy' | 'medium' | 'hard';
-}
-
-export interface QuizOutput {
-  title: string;
-  description?: string;
-  questions: QuizQuestion[];
-  skillId?: string;
-  skillName?: string;
-  estimatedTime?: number;
-}
-
-// Learning path output
-export interface LearningStep {
-  id: string;
-  title: string;
-  description: string;
-  type: 'lesson' | 'exercise' | 'quiz' | 'project' | 'resource';
-  duration?: number;
-  resourceUrl?: string;
-  skillId?: string;
-  completed?: boolean;
-  order: number;
-}
-
-export interface LearningPathOutput {
-  title: string;
-  description?: string;
-  targetSkill: string;
-  currentLevel?: string;
-  targetLevel?: string;
-  steps: LearningStep[];
-  estimatedDuration?: number;
-  prerequisites?: string[];
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -267,9 +201,6 @@ export interface TopicOverviewOutput {
 // Union of all output types
 export type CopilotOutputData =
   | CardListOutput
-  | SkillGraphOutput
-  | QuizOutput
-  | LearningPathOutput
   | FlashcardOutput
   | MiniQuizOutput
   | CodeEditorOutput
@@ -507,6 +438,126 @@ class CopilotService {
    */
   async getLearningTopics(): Promise<ApiResponse<{ data: { topics: LearningTopic[] } }>> {
     return api.get('/api/copilot/learning/topics');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // SSE STREAMING
+  // ═══════════════════════════════════════════════════════════════
+
+  /**
+   * Send a message with SSE streaming
+   * Returns an AbortController to cancel the stream
+   */
+  sendMessageStream(
+    message: string,
+    mode: CopilotMode,
+    sessionId: string | undefined,
+    callbacks: {
+      onTextDelta: (delta: string) => void;
+      onToolStart: (tool: { name: string; args?: Record<string, unknown> }) => void;
+      onToolEnd: (tool: { name: string; result?: unknown; duration?: number }) => void;
+      onDone: (sessionId: string) => void;
+      onError: (error: string) => void;
+    },
+    organizationId?: string
+  ): AbortController {
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const url = `${API_CONFIG.BASE_URL}/api/copilot/chat`;
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token ? `Bearer ${token}` : '',
+          },
+          body: JSON.stringify({ message, mode, sessionId, organizationId }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          callbacks.onError(errorData.error || `Erreur ${response.status}`);
+          return;
+        }
+
+        if (!response.body) {
+          callbacks.onError('Streaming non supporté');
+          return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          // Parse SSE events (data: {...}\n\n)
+          const lines = buffer.split('\n');
+          buffer = '';
+
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            if (line.startsWith('data: ')) {
+              try {
+                const event = JSON.parse(line.slice(6));
+
+                switch (event.type) {
+                  case 'text_delta':
+                    callbacks.onTextDelta(event.delta);
+                    break;
+                  case 'tool_start':
+                    callbacks.onToolStart(event.tool);
+                    break;
+                  case 'tool_end':
+                    callbacks.onToolEnd(event.tool);
+                    break;
+                  case 'done':
+                    callbacks.onDone(event.sessionId);
+                    break;
+                  case 'error':
+                    callbacks.onError(event.error);
+                    break;
+                }
+              } catch {
+                // Incomplete JSON, add back to buffer
+                buffer = lines.slice(i).join('\n');
+                break;
+              }
+            } else if (line !== '' && !line.startsWith(':')) {
+              // Non-empty non-comment line, keep in buffer
+              buffer += line + '\n';
+            }
+          }
+        }
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          callbacks.onError(error.message || 'Erreur de connexion');
+        }
+      }
+    })();
+
+    return controller;
+  }
+
+  /**
+   * Get prompt suggestions
+   */
+  async getSuggestions(mode: CopilotMode): Promise<string[]> {
+    try {
+      const response = await api.get('/api/copilot/suggestions', { mode });
+      return (response.data as any)?.suggestions || [];
+    } catch {
+      return [];
+    }
   }
 }
 

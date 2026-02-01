@@ -1,13 +1,12 @@
 /**
  * Copilot API Routes
  * Routes for AI copilot chat and session management
+ * OpenAI Agents SDK + GPT-5 + SSE Streaming
  */
 
 import { Router, Response } from 'express';
 import multer from 'multer';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
-import { copilotService } from '../services/copilot/copilot.service';
-import { COPILOT_MODES, CopilotMode } from '../services/copilot/ontology/schema';
 import {
   DOCUMENT_LIMITS,
   ALLOWED_MIME_TYPES,
@@ -17,18 +16,34 @@ import {
   canUploadDocument,
   validateFile,
 } from '../services/documents/document.service';
+import {
+  copilotService,
+  createTalentAgent,
+  createOrgAgent,
+  initSSE,
+  sendSSE,
+  runAgentWithSSE,
+  generateSessionTitle,
+  generateSuggestions,
+  loadTalentContext,
+  EXPLORER_CONTEXT_OPTIONS,
+  STUDY_CONTEXT_OPTIONS,
+  COPILOT_MODES,
+  type CopilotMode,
+  type TalentContext,
+  type OrgContext,
+} from '../services/copilot';
 
 const router = Router();
 
 // ═══════════════════════════════════════════════════════════════
-// CHAT ENDPOINT
+// CHAT ENDPOINT — SSE STREAMING
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * POST /api/copilot/chat - Send a message to the copilot
- * Body: { sessionId?: string, message: string, mode?: 'explore' | 'study' }
- * If mode is not provided, the triage agent will determine the best mode
- * Returns: { sessionId: string, message: CopilotMessage, context?: SessionContext }
+ * POST /api/copilot/chat - Send a message to the copilot (SSE streaming)
+ * Body: { sessionId?: string, message: string, mode?: 'explore' | 'study', organizationId?: string }
+ * Response: Server-Sent Events stream
  */
 router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
@@ -37,7 +52,7 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
       return res.status(401).json({ error: 'Non authentifié' });
     }
 
-    const { sessionId, message, mode } = req.body;
+    const { sessionId: inputSessionId, message, mode, organizationId } = req.body;
 
     // Validate message
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
@@ -48,32 +63,200 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
       return res.status(400).json({ error: 'Le message est trop long (max 4000 caractères)' });
     }
 
-    // Validate mode (optional now - triage will determine if not provided)
-    let validMode: CopilotMode | undefined;
-    if (mode === COPILOT_MODES.STUDY) {
-      validMode = COPILOT_MODES.STUDY;
-    } else if (mode === COPILOT_MODES.EXPLORE) {
-      validMode = COPILOT_MODES.EXPLORE;
+    // Validate mode
+    const validMode: CopilotMode = mode === COPILOT_MODES.STUDY
+      ? COPILOT_MODES.STUDY
+      : COPILOT_MODES.EXPLORE;
+
+    // Initialize SSE
+    initSSE(res);
+
+    // Get or create session
+    let sessionId = inputSessionId;
+    let session: any = null;
+
+    if (sessionId) {
+      session = await copilotService.getSession(sessionId, talentId);
+      if (!session || (mode && session.mode !== mode)) {
+        session = await copilotService.createSession(talentId, validMode);
+        sessionId = session.id;
+      }
+    } else {
+      session = await copilotService.createSession(talentId, validMode);
+      sessionId = session.id;
     }
-    // If no valid mode provided, let the service use triage
 
-    // Process message
-    const response = await copilotService.processMessage({
-      sessionId,
-      message: message.trim(),
-      mode: validMode,
-      talentId,
-    });
+    // Load talent context
+    const contextOptions = validMode === COPILOT_MODES.STUDY
+      ? STUDY_CONTEXT_OPTIONS
+      : EXPLORER_CONTEXT_OPTIONS;
+    const talentContext = await loadTalentContext(talentId, contextOptions);
 
-    res.json({
-      success: true,
-      data: response,
-    });
-  } catch (error) {
+    // Build agent context
+    const isOrg = !!organizationId;
+    let agent: any;
+
+    if (isOrg) {
+      // Find org info
+      const orgInfo = talentContext.organizations?.organizations?.find(
+        (o: any) => o.organizationId === organizationId
+      );
+      const orgCtx: OrgContext = {
+        talentId,
+        talentName: `${talentContext.profile.firstName} ${talentContext.profile.lastName}`,
+        organizationId,
+        organizationName: orgInfo?.organizationName || 'Organisation',
+        role: orgInfo?.role || 'MEMBER',
+      };
+      agent = createOrgAgent(orgCtx);
+    } else {
+      const talentCtx: TalentContext = {
+        talentId,
+        talentName: `${talentContext.profile.firstName} ${talentContext.profile.lastName}`,
+        profile: {
+          firstName: talentContext.profile.firstName,
+          lastName: talentContext.profile.lastName,
+          headline: talentContext.profile.headline,
+          city: talentContext.profile.city,
+          country: talentContext.profile.country,
+          availabilityStatus: talentContext.profile.availabilityStatus,
+          remotePreference: talentContext.profile.remotePreference,
+          skills: (talentContext.profile.skills || []).map((s: any) => ({
+            name: s.name,
+            level: s.level,
+          })),
+          languages: (talentContext.profile.languages || []).map((l: any) => ({
+            language: l.language,
+            level: l.level,
+          })),
+        },
+        documents: talentContext.documents ? {
+          totalCount: talentContext.documents.totalCount,
+          hasCV: talentContext.documents.hasCV,
+          hasDiplomas: talentContext.documents.hasDiplomas,
+        } : undefined,
+        applications: talentContext.applications ? {
+          totalCount: talentContext.applications.totalCount,
+          activeCount: talentContext.applications.activeCount,
+        } : undefined,
+        memberships: talentContext.memberships ? {
+          totalCount: talentContext.memberships.totalCount,
+        } : undefined,
+        reservations: talentContext.reservations ? {
+          totalCount: talentContext.reservations.totalCount,
+          upcomingCount: talentContext.reservations.upcomingCount,
+        } : undefined,
+        invitations: talentContext.invitations ? {
+          pendingCount: talentContext.invitations.pendingCount,
+        } : undefined,
+        organizations: talentContext.organizations ? {
+          isOrgAdmin: talentContext.organizations.isOrgAdmin,
+          adminOfCount: talentContext.organizations.adminOfCount,
+          organizations: talentContext.organizations.organizations.map((o: any) => ({
+            organizationId: o.organizationId,
+            organizationName: o.organizationName,
+            role: o.role,
+          })),
+        } : undefined,
+        learning: talentContext.learning ? {
+          totalTopics: talentContext.learning.totalTopics,
+          totalFlashcards: talentContext.learning.totalFlashcards,
+          dueFlashcards: talentContext.learning.dueFlashcards,
+          streakDays: talentContext.learning.streakDays,
+        } : undefined,
+        graph: talentContext.graph ? {
+          isGraphAvailable: talentContext.graph.isGraphAvailable,
+          skillGaps: talentContext.graph.skillGaps?.map((g: any) => ({
+            skillName: g.skillName,
+            priority: g.priority,
+          })),
+          suggestedSkills: talentContext.graph.suggestedSkills?.map((s: any) => ({
+            skillName: s.skillName,
+            reason: s.reason,
+          })),
+        } : undefined,
+      };
+      agent = createTalentAgent(
+        validMode === COPILOT_MODES.STUDY ? 'study' : 'explorer',
+        talentCtx
+      );
+    }
+
+    // Save user message
+    const { pool } = await import('../services/database');
+    await pool.query(
+      `INSERT INTO copilot_messages (session_id, role, content) VALUES ($1, 'user', $2)`,
+      [sessionId, message.trim()]
+    );
+
+    // Get conversation history for context
+    const historyRes = await pool.query(
+      `SELECT role, content FROM copilot_messages
+       WHERE session_id = $1 ORDER BY created_at ASC LIMIT 20`,
+      [sessionId]
+    );
+    // Exclude the user message we just added (last one)
+    const history = historyRes.rows.slice(0, -1).map((r: any) => ({
+      role: r.role,
+      content: r.content,
+    }));
+
+    // Run agent with SSE streaming
+    const { finalOutput, toolTrace } = await runAgentWithSSE(
+      agent,
+      message.trim(),
+      history,
+      res
+    );
+
+    // Save assistant response
+    await pool.query(
+      `INSERT INTO copilot_messages (session_id, role, content, tool_calls)
+       VALUES ($1, 'assistant', $2, $3)`,
+      [sessionId, finalOutput, toolTrace.length > 0 ? JSON.stringify(toolTrace) : null]
+    );
+
+    // Generate title for first message (non-blocking)
+    const messageCount = historyRes.rows.length;
+    if (messageCount <= 2) {
+      generateSessionTitle(message.trim()).then((title) => {
+        copilotService.updateSessionTitle(sessionId, title).catch(() => {});
+      });
+    }
+
+    // Send done event
+    sendSSE(res, { type: 'done', sessionId });
+    res.end();
+  } catch (error: any) {
     console.error('Error in copilot chat:', error);
-    res.status(500).json({
-      error: 'Erreur lors du traitement du message',
-    });
+    // If headers already sent (SSE started), send error event
+    if (res.headersSent) {
+      sendSSE(res, { type: 'error', error: 'Erreur lors du traitement du message' });
+      res.end();
+    } else {
+      res.status(500).json({ error: 'Erreur lors du traitement du message' });
+    }
+  }
+});
+
+/**
+ * GET /api/copilot/suggestions - Get prompt suggestions
+ * Query: { mode?: string }
+ */
+router.get('/suggestions', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const talentId = req.talentId;
+    if (!talentId) {
+      return res.status(401).json({ error: 'Non authentifié' });
+    }
+
+    const mode = (req.query.mode as string) || 'explore';
+    const suggestions = await generateSuggestions(mode, `talentId: ${talentId}`);
+
+    res.json({ success: true, data: { suggestions } });
+  } catch (error) {
+    console.error('Error generating suggestions:', error);
+    res.json({ success: true, data: { suggestions: [] } });
   }
 });
 

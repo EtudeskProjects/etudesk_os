@@ -3,17 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
   Image,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
   Clock,
   CheckCircle2,
   XCircle,
@@ -21,12 +17,11 @@ import {
   Inbox,
   Star,
   Edit,
-  Trash2,
-  MessageCircle,
   Send,
+  MessageCircle,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
-import { FooterNav } from '../../../../src/components/ui';
+import { PageLayout, EmptyState } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { communityService } from '../../../../src/services';
 import { formatRelativeTime } from '../../../../src/utils/date';
@@ -101,7 +96,6 @@ export default function CommunityMembersScreen() {
       setMembers((prev) =>
         prev.map((m) => (m.id === membershipId ? { ...m, status: newStatus } : m))
       );
-      // Update counts
       handleRefresh();
     } catch (error: any) {
       Alert.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
@@ -163,7 +157,6 @@ export default function CommunityMembersScreen() {
         activeOpacity={0.7}
       >
         <View style={styles.cardHeader}>
-          {/* Avatar */}
           {talent?.avatar_url || talent?.profile_picture_url ? (
             <Image source={{ uri: talent.avatar_url || talent.profile_picture_url }} style={styles.avatar} />
           ) : (
@@ -174,7 +167,6 @@ export default function CommunityMembersScreen() {
             </View>
           )}
 
-          {/* Info */}
           <View style={styles.memberInfo}>
             <Text style={[styles.memberName, { color: colors.textPrimary }]} numberOfLines={1}>
               {memberName}
@@ -218,7 +210,6 @@ export default function CommunityMembersScreen() {
           </View>
         </View>
 
-        {/* Quick actions for pending */}
         {item.status === 'PENDING' && (
           <View style={styles.quickActions}>
             <TouchableOpacity
@@ -241,233 +232,138 @@ export default function CommunityMembersScreen() {
     );
   };
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <View style={[styles.emptyIcon, { backgroundColor: colors.gray100 }]}>
-        <Inbox size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-      </View>
-      <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-        {filter === 'all' ? 'Aucun membre' : 'Aucun résultat'}
-      </Text>
-      <Text style={[styles.emptyDescription, { color: colors.gray500 }]}>
-        {filter === 'all'
-          ? 'Cette communauté n\'a pas encore de membres.'
-          : 'Aucun membre avec ce statut.'}
-      </Text>
+  const localStatusCounts = (() => {
+    const counts: Record<string, number> = { all: members.length };
+    members.forEach((m) => {
+      counts[m.status] = (counts[m.status] || 0) + 1;
+    });
+    return counts;
+  })();
+
+  const filterChips = [
+    { key: 'all' as FilterStatus, label: 'Tous', count: localStatusCounts.all || 0 },
+    { key: 'PENDING' as FilterStatus, label: 'En attente', count: localStatusCounts['PENDING'] || 0 },
+    { key: 'ACTIVE' as FilterStatus, label: 'Actifs', count: localStatusCounts['ACTIVE'] || 0 },
+    { key: 'REJECTED' as FilterStatus, label: 'Refusés', count: localStatusCounts['REJECTED'] || 0 },
+  ];
+
+  const headerContent = (
+    <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersContent}
+      >
+        {filterChips.map((chip) => {
+          const isActive = filter === chip.key;
+          return (
+            <TouchableOpacity
+              key={chip.key}
+              style={[
+                styles.filterChip,
+                { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
+              ]}
+              onPress={() => setFilter(chip.key)}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  { color: colors.gray700 },
+                  isActive && { color: colors.textOnPrimary },
+                ]}
+              >
+                {chip.label} ({chip.count})
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </SafeAreaView>
-    );
-  }
+  const rightAction = (
+    <View style={styles.headerActions}>
+      <TouchableOpacity
+        onPress={() => router.push(`/gestion/communities/invitations/${communityId}` as any)}
+        style={styles.headerActionButton}
+      >
+        <Send size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => router.push(`/settings/organization/edit-community/${communityId}` as any)}
+        style={styles.headerActionButton}
+      >
+        <Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const emptySubtitle = filter === 'all'
+    ? 'Cette communauté n\'a pas encore de membres.'
+    : 'Aucun membre avec ce statut.';
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-            Membres
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.gray500 }]} numberOfLines={1}>
-            {community?.name}
-          </Text>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            onPress={() => router.push(`/gestion/communities/invitations/${communityId}` as any)}
-            style={[styles.actionButton, { backgroundColor: colors.primary + '15', marginRight: SPACING.xs }]}
-          >
-            <Send size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.push(`/settings/organization/edit-community/${communityId}` as any)}
-            style={styles.actionButton}
-          >
-            <Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Stats */}
-      <View style={styles.statsContainer}>
-        <TouchableOpacity
-          style={[
-            styles.statItem,
-            { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'all' && { backgroundColor: colors.primary + '12', borderColor: colors.primary + '50' }
-          ]}
-          onPress={() => setFilter('all')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.statValue, { color: filter === 'all' ? colors.primary : colors.textPrimary }]}>
-            {members.length}
-          </Text>
-          <Text style={[styles.statLabel, { color: filter === 'all' ? colors.primary : colors.gray500 }]}>Total</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.statItem,
-            { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'PENDING' && { backgroundColor: colors.warning + '12', borderColor: colors.warning + '50' }
-          ]}
-          onPress={() => setFilter('PENDING')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.statValue, { color: colors.warning }]}>
-            {statusCounts['PENDING'] || 0}
-          </Text>
-          <Text style={[styles.statLabel, { color: filter === 'PENDING' ? colors.warning : colors.gray500 }]}>En attente</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.statItem,
-            { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'ACTIVE' && { backgroundColor: colors.success + '12', borderColor: colors.success + '50' }
-          ]}
-          onPress={() => setFilter('ACTIVE')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.statValue, { color: colors.success }]}>
-            {statusCounts['ACTIVE'] || 0}
-          </Text>
-          <Text style={[styles.statLabel, { color: filter === 'ACTIVE' ? colors.success : colors.gray500 }]}>Actifs</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.statItem,
-            { backgroundColor: colors.surface, borderColor: colors.gray200 },
-            filter === 'REJECTED' && { backgroundColor: colors.error + '12', borderColor: colors.error + '50' }
-          ]}
-          onPress={() => setFilter('REJECTED')}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.statValue, { color: colors.error }]}>
-            {statusCounts['REJECTED'] || 0}
-          </Text>
-          <Text style={[styles.statLabel, { color: filter === 'REJECTED' ? colors.error : colors.gray500 }]}>Refusés</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Content */}
-      <FlatList
-        data={filteredMembers}
-        renderItem={renderMemberItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-        ListEmptyComponent={renderEmptyState}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
-
-      <FooterNav activeTab="gestion" />
-    </SafeAreaView>
+    <PageLayout
+      title="Membres"
+      onRefresh={handleRefresh}
+      isRefreshing={isRefreshing}
+      isLoading={isLoading}
+      headerContent={headerContent}
+      rightAction={rightAction}
+    >
+      {filteredMembers.length === 0 ? (
+        <EmptyState
+          icon={Inbox}
+          title={filter === 'all' ? 'Aucun membre' : 'Aucun résultat'}
+          subtitle={emptySubtitle}
+        />
+      ) : (
+        filteredMembers.map((item) => (
+          <View key={item.id} style={styles.cardWrapper}>
+            {renderMemberItem({ item })}
+          </View>
+        ))
+      )}
+    </PageLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  filtersContainer: {
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: BORDER.width.thin,
   },
-
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  filtersContent: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
   },
-
-  header: {
+  filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    gap: SPACING.xs,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.full,
   },
-
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  headerContent: {
-    flex: 1,
-    marginHorizontal: SPACING.sm,
-  },
-
-  headerTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  headerSubtitle: {
+  filterChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
-    marginTop: 2,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
-
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
   },
-
-  actionButton: {
-    width: 40,
-    height: 40,
+  headerActionButton: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  statsContainer: {
-    flexDirection: 'row',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.sm,
-  },
-
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.xs,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.md,
-  },
-
-  statValue: {
-    fontSize: TYPOGRAPHY.fontSize.xl,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-  },
-
-  statLabel: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    marginTop: 2,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  listContent: {
-    padding: SPACING.lg,
-    flexGrow: 1,
-  },
-
-  separator: {
-    height: SPACING.md,
+  cardWrapper: {
+    marginBottom: SPACING.md,
   },
 
   memberCard: {
@@ -595,33 +491,5 @@ const styles = StyleSheet.create({
   quickActionText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: SPACING.xl,
-    minHeight: 300,
-  },
-
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.lg,
-  },
-
-  emptyTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginBottom: SPACING.sm,
-  },
-
-  emptyDescription: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    textAlign: 'center',
   },
 });
