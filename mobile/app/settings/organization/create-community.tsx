@@ -220,7 +220,6 @@ export default function CreateCommunityScreen() {
 
     setIsGenerating(true);
     const startTime = Date.now();
-    console.log('[CreateCommunity] AI Generation - Starting...');
 
     try {
       // Collect all existing form data
@@ -249,11 +248,9 @@ export default function CreateCommunityScreen() {
       });
 
       const duration = Date.now() - startTime;
-      console.log(`[CreateCommunity] AI Generation - Completed in ${duration}ms`);
 
       if (response.success && response.data) {
         const data = response.data;
-        console.log('[CreateCommunity] AI Generation - Data received:', Object.keys(data));
 
         // Apply generated data to form fields
         if (data.suggested_name) setName(data.suggested_name);
@@ -338,25 +335,20 @@ export default function CreateCommunityScreen() {
   };
 
   const buildImagesPayload = async (): Promise<string[] | null> => {
-    console.log('[CreateCommunity] buildImagesPayload - Total images:', images.length);
 
     const remoteImages = images.filter((img) => isRemoteUrl(img.uri));
     const localImages = images.filter((img) => !isRemoteUrl(img.uri));
 
-    console.log('[CreateCommunity] Remote images:', remoteImages.length);
-    console.log('[CreateCommunity] Local images to upload:', localImages.length);
 
     const uploadedImageUrls: string[] = [];
 
     for (const image of localImages) {
       try {
-        console.log('[CreateCommunity] Uploading image:', image.uri.substring(0, 50) + '...');
         const uploaded = await imageService.uploadImage(
           { uri: image.uri, width: 800, height: 600 },
           'illustration',
           'community'
         );
-        console.log('[CreateCommunity] Upload success, URL:', uploaded.url);
         uploadedImageUrls.push(uploaded.url);
       } catch (error) {
         console.error('[CreateCommunity] Error uploading image:', error);
@@ -366,7 +358,6 @@ export default function CreateCommunityScreen() {
     }
 
     const allImageUrls = [...remoteImages.map(img => img.uri), ...uploadedImageUrls];
-    console.log('[CreateCommunity] Final image URLs:', allImageUrls);
     return allImageUrls;
   };
 
@@ -419,9 +410,7 @@ export default function CreateCommunityScreen() {
   const handlePublish = async () => {
     setIsSubmitting(true);
     try {
-      console.log('[CreateCommunity] handlePublish - Starting...');
       const imageUrls = await buildImagesPayload();
-      console.log('[CreateCommunity] handlePublish - Image URLs:', imageUrls);
 
       if (imageUrls === null) {
         setIsSubmitting(false);
@@ -429,11 +418,6 @@ export default function CreateCommunityScreen() {
       }
 
       const data = { ...(await buildCommunityData(imageUrls.length > 0 ? imageUrls : undefined)), status: 'ACTIVE' as const };
-      console.log('[CreateCommunity] handlePublish - Data to send:', {
-        ...data,
-        cover_image_url: data.cover_image_url,
-        images: data.images,
-      });
 
       await communityService.create(data);
       Alert.alert(

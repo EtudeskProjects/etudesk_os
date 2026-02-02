@@ -90,7 +90,6 @@ export default function CreateProfileScreen() {
         if (user) {
           // Check if user already has a profile - redirect to main app
           if (user.hasTalentProfile === true || user.onboardingComplete === true || user.talentId) {
-            console.log('[CreateProfile] User already has profile, redirecting to main app');
             completeOnboarding();
             router.replace('/(tabs)/graphe');
             return;
@@ -106,7 +105,6 @@ export default function CreateProfileScreen() {
           }
         }
       } catch (error) {
-        console.log('Could not load auth data:', error);
       }
     };
     loadAuthData();
@@ -261,13 +259,11 @@ export default function CreateProfileScreen() {
         sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
       };
 
-      console.log('[CreateProfile] Submitting profile:', { displayName, firstName: trimmedFirstName, lastName: trimmedLastName });
 
       // Call the onboarding API
       const response = await onboardingService.complete(profileData);
 
       if (response.data) {
-        console.log('[CreateProfile] Profile created successfully');
 
         // Update auth state
         completeOnboarding();
@@ -283,7 +279,6 @@ export default function CreateProfileScreen() {
       // Check if profile already exists - redirect to main app
       const errorMsg = error.error || error.message || '';
       if (errorMsg.includes('existe déjà') || errorMsg.includes('already exists')) {
-        console.log('[CreateProfile] Profile already exists, redirecting to main app');
         completeOnboarding();
         router.replace('/(tabs)/graphe');
         return;
@@ -887,11 +882,6 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.full,
   },
 
-  stepDotActive: {
-  },
-
-  stepDotCompleted: {
-  },
 
   stepContent: {
     flex: 1,
@@ -983,8 +973,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  optionButtonSelected: {
-  },
 
   optionButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -1011,8 +999,6 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.full,
   },
 
-  optionChipSelected: {
-  },
 
   optionChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -1132,8 +1118,6 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.md,
   },
 
-  selectableItemSelected: {
-  },
 
   selectableItemCheckbox: {
     width: 24,

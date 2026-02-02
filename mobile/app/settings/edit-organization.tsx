@@ -176,7 +176,6 @@ export default function EditOrganizationScreen() {
         if (!city && response.data.city) setCity(response.data.city);
       }
     } catch (error) {
-      console.log('Could not load user profile for defaults:', error);
     }
   };
 

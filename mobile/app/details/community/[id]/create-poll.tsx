@@ -91,7 +91,6 @@ export default function CreatePollScreen() {
                     }
                 }
             } catch (error) {
-                console.log('Could not load data:', error);
             } finally {
                 setIsLoadingDraft(false);
             }

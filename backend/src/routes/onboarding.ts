@@ -232,7 +232,6 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       } catch (insertError: any) {
         // If columns don't exist, try without them
         if (insertError.message?.includes('column') && insertError.message?.includes('does not exist')) {
-          console.log('⚠️ Some columns missing, using fallback INSERT');
           await client.query(
             `INSERT INTO talents (
               id, slug, first_name, last_name, bio, email, phone,
@@ -286,8 +285,6 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
 
       // Generate new tokens with talent_id
       const tokens = generateTokens(req.userId!, user.email, talentId);
-
-      console.log(`✅ Onboarding completed for ${user.email} (talentId: ${talentId})`);
 
       return res.status(201).json({
         data: {

@@ -1,14 +1,8 @@
-/**
- * Image Service - Centralized image optimization and upload service
- * Optimizes images before storage without losing visible quality
- */
-
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Platform } from 'react-native';
 import { api } from './api';
 
-// Image type configurations
 export type ImageType =
   | 'avatar'           // Profile photos (512x512, 1:1)
   | 'logo'             // Organization logos (512x512, 1:1, PNG for transparency)
@@ -23,7 +17,6 @@ interface ImageConfig {
   format: ImageManipulator.SaveFormat;
 }
 
-// Optimized configurations for each image type
 const IMAGE_CONFIGS: Record<ImageType, ImageConfig> = {
   avatar: {
     maxWidth: 512,
@@ -78,9 +71,6 @@ export interface PickImageOptions {
   includeBase64?: boolean;
 }
 
-/**
- * Request camera/media library permissions
- */
 export async function requestImagePermissions(): Promise<boolean> {
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (status !== 'granted') {
@@ -94,9 +84,6 @@ export async function requestImagePermissions(): Promise<boolean> {
   return true;
 }
 
-/**
- * Request camera permissions
- */
 export async function requestCameraPermissions(): Promise<boolean> {
   const { status } = await ImagePicker.requestCameraPermissionsAsync();
   if (status !== 'granted') {
@@ -110,9 +97,6 @@ export async function requestCameraPermissions(): Promise<boolean> {
   return true;
 }
 
-/**
- * Get aspect ratio for image type
- */
 function getAspectRatio(type: ImageType): [number, number] {
   switch (type) {
     case 'avatar':
@@ -125,9 +109,6 @@ function getAspectRatio(type: ImageType): [number, number] {
   }
 }
 
-/**
- * Optimize an image based on type configuration
- */
 export async function optimizeImage(
   uri: string,
   type: ImageType,
@@ -136,11 +117,7 @@ export async function optimizeImage(
   const config = IMAGE_CONFIGS[type];
 
   try {
-    // Get image info first to calculate resize dimensions
     const actions: ImageManipulator.Action[] = [];
-
-    // Add resize action - ImageManipulator will maintain aspect ratio
-    // if only one dimension is specified, but we specify both for clarity
     actions.push({
       resize: {
         width: config.maxWidth,
@@ -164,10 +141,6 @@ export async function optimizeImage(
       fileSize = Math.round(result.base64.length / 1.37);
     }
 
-    console.log(`[ImageService] Optimized ${type} image: ${result.width}x${result.height}`);
-    if (fileSize) {
-      console.log(`[ImageService] Approximate size: ${(fileSize / 1024).toFixed(1)} KB`);
-    }
 
     return {
       uri: result.uri,
@@ -182,13 +155,9 @@ export async function optimizeImage(
   }
 }
 
-/**
- * Pick an image from the library and optimize it
- */
 export async function pickImage(options: PickImageOptions): Promise<OptimizedImage | null> {
   const { type, allowsEditing = true, aspect, includeBase64 = false } = options;
 
-  // Request permissions
   const hasPermission = await requestImagePermissions();
   if (!hasPermission) {
     return null;
@@ -208,7 +177,6 @@ export async function pickImage(options: PickImageOptions): Promise<OptimizedIma
 
     const asset = result.assets[0];
 
-    // Optimize the selected image
     return await optimizeImage(asset.uri, type, includeBase64);
   } catch (error) {
     console.error('[ImageService] Error picking image:', error);
@@ -221,13 +189,9 @@ export async function pickImage(options: PickImageOptions): Promise<OptimizedIma
   }
 }
 
-/**
- * Take a photo with the camera and optimize it
- */
 export async function takePhoto(options: PickImageOptions): Promise<OptimizedImage | null> {
   const { type, allowsEditing = true, aspect, includeBase64 = false } = options;
 
-  // Request camera permissions
   const hasPermission = await requestCameraPermissions();
   if (!hasPermission) {
     return null;
@@ -246,7 +210,6 @@ export async function takePhoto(options: PickImageOptions): Promise<OptimizedIma
 
     const asset = result.assets[0];
 
-    // Optimize the captured image
     return await optimizeImage(asset.uri, type, includeBase64);
   } catch (error) {
     console.error('[ImageService] Error taking photo:', error);
@@ -259,9 +222,6 @@ export async function takePhoto(options: PickImageOptions): Promise<OptimizedIma
   }
 }
 
-/**
- * Pick or take an image with a choice dialog
- */
 export async function pickOrTakeImage(options: PickImageOptions): Promise<OptimizedImage | null> {
   return new Promise((resolve) => {
     Alert.alert(
@@ -292,9 +252,6 @@ export async function pickOrTakeImage(options: PickImageOptions): Promise<Optimi
   });
 }
 
-/**
- * Upload an optimized image to the server
- */
 export async function uploadImage(
   image: OptimizedImage,
   type: ImageType,
@@ -306,7 +263,6 @@ export async function uploadImage(
     const mimeType = config.format === ImageManipulator.SaveFormat.PNG ? 'image/png' : 'image/jpeg';
     const filename = `${type}_${Date.now()}.${extension}`;
 
-    // Create form data
     const formData = new FormData();
     formData.append('file', {
       uri: image.uri,
@@ -316,25 +272,22 @@ export async function uploadImage(
     formData.append('category', category);
     formData.append('image_type', type);
 
-    // Get auth token from api service
     let token = await api.getToken();
     const baseUrl = api.getBaseUrl();
 
-    // Upload to server using fetch directly for multipart/form-data
+    // Use fetch directly for multipart/form-data (Content-Type set automatically with boundary)
     let response = await fetch(`${baseUrl}/api/images/upload`, {
       method: 'POST',
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        // Don't set Content-Type for FormData - fetch will set it with boundary
       },
       body: formData,
     });
 
-    // If unauthorized, try to refresh token and retry once
     if (response.status === 401) {
       token = await api.tryRefreshToken();
       if (token) {
-        // Recreate formData for retry (FormData can only be read once)
+        // FormData can only be read once, so recreate for retry
         const retryFormData = new FormData();
         retryFormData.append('file', {
           uri: image.uri,
@@ -369,7 +322,6 @@ export async function uploadImage(
     // The getFullImageUrl utility should be used when displaying images
     const relativeUrl = data.data.url;
 
-    console.log(`[ImageService] Uploaded ${type} image: ${relativeUrl}`);
 
     return {
       url: relativeUrl,
@@ -382,9 +334,6 @@ export async function uploadImage(
   }
 }
 
-/**
- * Pick, optimize, and upload an image in one call
- */
 export async function pickAndUploadImage(
   type: ImageType,
   category: string = 'general',
@@ -398,9 +347,6 @@ export async function pickAndUploadImage(
   return await uploadImage(image, type, category);
 }
 
-/**
- * Take, optimize, and upload a photo in one call
- */
 export async function takeAndUploadPhoto(
   type: ImageType,
   category: string = 'general',
@@ -414,7 +360,6 @@ export async function takeAndUploadPhoto(
   return await uploadImage(image, type, category);
 }
 
-// Export all functions as a service object for convenience
 export const imageService = {
   optimizeImage,
   pickImage,

@@ -128,7 +128,6 @@ export default function CalendarScreen() {
         setEvents(transformedEvents);
       }
     } catch (error) {
-      console.log('Could not fetch calendar events:', error);
       setEvents([]);
     } finally {
       setIsLoading(false);

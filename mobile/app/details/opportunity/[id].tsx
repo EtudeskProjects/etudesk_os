@@ -47,61 +47,6 @@ import { applicationService } from '../../../src/services/applicationService';
 import { BookmarkCheck } from 'lucide-react-native';
 
 // Mock data - in real app, fetch from API based on id
-const MOCK_OPPORTUNITY: Opportunity & { images?: string[] } = {
-  id: '1',
-  title: 'Développeur React Native Senior',
-  slug: 'dev-react-native-senior',
-  type: 'EMPLOYMENT',
-  contract_type: 'CDI',
-  work_rhythm: 'FULL_TIME',
-  location_type: 'HYBRID',
-  locations: [{ city: 'Abidjan', country: 'CI', is_primary: true }],
-  compensation_min: 800000,
-  compensation_max: 1500000,
-  currency: 'XOF',
-  compensation_frequency: 'MONTHLY',
-  deadline: '2026-02-15',
-  posted_at: '2026-01-15T10:00:00Z',
-  start_date: '2026-03-01',
-  duration: '12 mois (renouvelable)',
-  views_count: 234,
-  applications_count: 12,
-  images: [
-    'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80',
-    'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=800&q=80',
-    'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&q=80',
-  ],
-  summary: `Nous recherchons un développeur React Native senior passionné pour rejoindre notre équipe tech en pleine croissance.
-
-Vous serez responsable du développement et de la maintenance de notre application mobile utilisée par plus de 100 000 utilisateurs en Afrique de l'Ouest.
-
-Vous travaillerez en étroite collaboration avec l'équipe produit et design pour créer des expériences utilisateur exceptionnelles.`,
-  requirements: `• 5+ ans d'expérience en développement mobile
-• Expertise React Native (3+ ans)
-• Maîtrise de TypeScript
-• Expérience avec les APIs REST et GraphQL
-• Connaissance de l'écosystème Expo
-• Expérience en gestion d'état (Redux, MobX, Zustand)
-• Familiarité avec les tests (Jest, Detox)
-• Bon niveau en français et anglais`,
-  nice_to_have: `• Expérience avec le backend Node.js
-• Connaissance de CI/CD
-• Contributions open source
-• Expérience en startup`,
-  organization: {
-    id: 'org1',
-    name: 'TechCorp Africa',
-    slug: 'techcorp-africa',
-    logo_url: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200&q=80',
-    type: 'STARTUP',
-    size: 'MEDIUM',
-    description: 'TechCorp Africa est une startup technologique qui développe des solutions innovantes pour le marché africain.',
-    headquarters_city: 'Abidjan',
-    headquarters_country: 'CI',
-    website_url: 'https://techcorp.africa',
-    verification_status: 'VERIFIED',
-  },
-};
 
 const getInitials = (name: string): string => {
   return name
@@ -233,7 +178,6 @@ export default function OpportunityDetailScreen() {
             setOpportunity(prev => prev ? { ...prev, views_count: response.data.views_count } : null);
           }
         }).catch(err => {
-          console.log('Failed to increment views:', err);
           // Silently fail - not critical
         });
       }

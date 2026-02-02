@@ -35,7 +35,6 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
   const hasAutoSelected = useRef(false);
   const lastUserId = useRef<string | null>(null);
 
-  // Convert API organization to UserOrganization format
   const mapOrganization = (org: OrgModel): UserOrganization => ({
     id: org.id,
     name: org.name,
@@ -44,7 +43,6 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     role: org.user_role || 'member',
   });
 
-  // Fetch user organizations from API
   const fetchOrganizations = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -52,12 +50,10 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
       if (response.data) {
         const orgs = response.data.map(mapOrganization);
         setUserOrganizations(orgs);
-        console.log('[Space] Loaded organizations:', orgs.length);
 
         // Auto-select first organization if user has organizations and hasn't been auto-selected yet
         if (orgs.length > 0 && !hasAutoSelected.current) {
           const firstOrg = orgs[0];
-          console.log('[Space] Auto-selecting organization:', firstOrg.name);
           setCurrentSpace('organization');
           setSelectedOrgId(firstOrg.id);
           hasAutoSelected.current = true;
@@ -71,13 +67,10 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Reset state when user changes (logout/login with different account)
   useEffect(() => {
     const currentUserId = user?.id || null;
 
-    // If user changed (including logout), reset everything
     if (lastUserId.current !== null && lastUserId.current !== currentUserId) {
-      console.log('[Space] User changed, resetting state');
       setCurrentSpace('talent');
       setSelectedOrgId(null);
       setUserOrganizations([]);
@@ -87,12 +80,10 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     lastUserId.current = currentUserId;
   }, [user?.id]);
 
-  // Load organizations when authenticated
   useEffect(() => {
     if (status === 'authenticated' && user?.id) {
       fetchOrganizations();
     } else if (status === 'unauthenticated') {
-      // Clear organizations on logout
       setUserOrganizations([]);
       setSelectedOrgId(null);
       setCurrentSpace('talent');

@@ -96,7 +96,6 @@ export default function CreateOrganizationScreen() {
         if (response.data.city) setCity(response.data.city);
       }
     } catch (error) {
-      console.log('Could not load user profile for defaults:', error);
     }
   };
 
@@ -109,7 +108,6 @@ export default function CreateOrganizationScreen() {
       const image = await imageService.pickImage({ type: 'logo' });
       if (image) {
         setLogoUri(image.uri);
-        console.log(`[CreateOrg] Logo selected: ${image.width}x${image.height}`);
       }
     } catch (error) {
       console.error('Erreur lors de la sélection du logo:', error);

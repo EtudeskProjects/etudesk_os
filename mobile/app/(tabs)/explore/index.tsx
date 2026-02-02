@@ -152,7 +152,6 @@ export default function ExploreScreen() {
       }
     } catch (error) {
       // User might not be logged in, ignore
-      console.log('Could not load bookmarks:', error);
     }
   }, []);
 

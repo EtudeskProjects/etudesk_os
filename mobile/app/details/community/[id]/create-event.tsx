@@ -94,7 +94,6 @@ export default function CreateEventScreen() {
                     }
                 }
             } catch (error) {
-                console.log('Could not load data:', error);
             } finally {
                 setIsLoadingDraft(false);
             }

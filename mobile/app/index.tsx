@@ -74,7 +74,6 @@ export default function SplashScreen() {
       const seen = await AsyncStorage.getItem(STORAGE_KEY_ONBOARDING_SEEN);
       setHasSeenOnboarding(seen === 'true');
     } catch (error) {
-      console.log('[Onboarding] Error checking if seen:', error);
     } finally {
       setCheckingOnboarding(false);
     }
@@ -84,7 +83,6 @@ export default function SplashScreen() {
     try {
       await AsyncStorage.setItem(STORAGE_KEY_ONBOARDING_SEEN, 'true');
     } catch (error) {
-      console.log('[Onboarding] Error marking as seen:', error);
     }
   };
 

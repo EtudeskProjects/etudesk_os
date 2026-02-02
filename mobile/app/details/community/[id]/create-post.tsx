@@ -182,7 +182,6 @@ export default function CreatePostScreen() {
                     }
                 }
             } catch (error) {
-                console.log('Could not load data:', error);
             } finally {
                 setIsLoadingDraft(false);
             }

@@ -87,10 +87,6 @@ export default function ActivityDetailScreen() {
         try {
             setIsLoading(true);
             const response = await communityActivityService.getActivityDetails(id!);
-            console.log('[ActivityDetail] Loaded:', {
-                activityId: response.activity?.id,
-                commentsCount: response.comments?.length || 0
-            });
             setActivity(response.activity);
             setComments(response.comments || []);
 
@@ -105,12 +101,6 @@ export default function ActivityDetailScreen() {
 
                 // Initialize poll state - poll_options comes directly from activity, not from metadata
                 const options = response.activity.poll_options || [];
-                console.log('[ActivityDetail] Activity loaded:', {
-                    id: response.activity.id,
-                    type: response.activity.type,
-                    poll_options: response.activity.poll_options,
-                    metadata: response.activity.metadata,
-                });
                 setPollOptions(options);
                 setUserVotedOptionId(
                     response.activity.user_vote_id || options.find((o: PollOption) => o.is_voted_by_user)?.id || null

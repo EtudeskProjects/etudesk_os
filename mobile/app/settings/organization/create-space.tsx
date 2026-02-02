@@ -204,7 +204,6 @@ export default function CreateSpaceScreen() {
 
     setIsGenerating(true);
     const startTime = Date.now();
-    console.log('[CreateSpace] AI Generation - Starting...');
 
     try {
       // Collect all existing form data
@@ -237,11 +236,9 @@ export default function CreateSpaceScreen() {
       });
 
       const duration = Date.now() - startTime;
-      console.log(`[CreateSpace] AI Generation - Completed in ${duration}ms`);
 
       if (response.success && response.data) {
         const data = response.data;
-        console.log('[CreateSpace] AI Generation - Data received:', Object.keys(data));
 
         // Apply generated data to form fields
         if (data.suggested_name) setName(data.suggested_name);

@@ -11,59 +11,10 @@ import { autoModerationService } from '../services/auto-moderation.service';
 import OpenAI from 'openai';
 import { BIO_GEN_SYSTEM_PROMPT } from '../services/ai/prompts/bio-gen.prompt';
 import { buildTalentObject, talentObjectToText } from '../services/ai/talent-object';
+import { normalizeCountryCode } from '../constants/countries';
 
 // Type for SQL query parameters
 type QueryParam = string | number | boolean | null | Date | string[];
-
-// Map country names to ISO 2-letter codes
-const COUNTRY_NAME_TO_CODE: Record<string, string> = {
-  'côte d\'ivoire': 'CI',
-  'cote d\'ivoire': 'CI',
-  'ivory coast': 'CI',
-  'senegal': 'SN',
-  'sénégal': 'SN',
-  'mali': 'ML',
-  'burkina faso': 'BF',
-  'guinea': 'GN',
-  'guinée': 'GN',
-  'benin': 'BJ',
-  'bénin': 'BJ',
-  'togo': 'TG',
-  'niger': 'NE',
-  'cameroon': 'CM',
-  'cameroun': 'CM',
-  'ghana': 'GH',
-  'nigeria': 'NG',
-  'nigéria': 'NG',
-  'morocco': 'MA',
-  'maroc': 'MA',
-  'tunisia': 'TN',
-  'tunisie': 'TN',
-  'france': 'FR',
-  'canada': 'CA',
-  'united states': 'US',
-  'états-unis': 'US',
-  'etats-unis': 'US',
-};
-
-// Convert country name to ISO code (returns uppercase code or null)
-function normalizeCountryCode(input: string | undefined | null): string | null {
-  if (!input) return null;
-
-  const trimmed = input.trim();
-  if (!trimmed) return null;
-
-  // If already 2-letter code, return uppercase
-  if (trimmed.length === 2) {
-    return trimmed.toUpperCase();
-  }
-
-  // Try to find in mapping (case-insensitive)
-  const normalized = trimmed.toLowerCase();
-  const code = COUNTRY_NAME_TO_CODE[normalized];
-
-  return code || null;
-}
 
 const router = Router();
 
@@ -275,8 +226,6 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Talent profile not found' });
     }
-
-    console.log(`✅ Talent profile updated: ${req.talentId}`);
 
     // Generate/update embedding for semantic search (async, non-blocking)
     onTalentProfileUpdate(req.talentId).catch(err =>

@@ -1,16 +1,7 @@
-/**
- * Notification Service
- * Handles push notifications and notification preferences
- */
-
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { api, ApiResponse } from './api';
-
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export type NotificationType = 'OPPORTUNITY' | 'APPLICATION' | 'MESSAGE' | 'SYSTEM' | 'REMINDER';
 
@@ -44,11 +35,6 @@ export interface NotificationsResponse {
   unreadCount: number;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// NOTIFICATION CONFIGURATION
-// ═══════════════════════════════════════════════════════════════
-
-// Configure how notifications are handled when app is foregrounded
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -57,50 +43,33 @@ Notifications.setNotificationHandler({
   }),
 });
 
-// ═══════════════════════════════════════════════════════════════
-// SERVICE CLASS
-// ═══════════════════════════════════════════════════════════════
-
 class NotificationService {
   private expoPushToken: string | null = null;
 
-  // ─────────────────────────────────────────────────────────────
-  // PUSH TOKEN MANAGEMENT
-  // ─────────────────────────────────────────────────────────────
-
-  /**
-   * Register for push notifications and get Expo push token
-   */
   async registerForPushNotifications(): Promise<string | null> {
     if (!Device.isDevice) {
-      console.log('Push notifications require a physical device');
       return null;
     }
 
     try {
-      // Check existing permissions
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
 
-      // Request permission if not granted
       if (existingStatus !== 'granted') {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
 
       if (finalStatus !== 'granted') {
-        console.log('Push notification permission not granted');
         return null;
       }
 
-      // Get Expo push token
       const tokenData = await Notifications.getExpoPushTokenAsync({
         projectId: process.env.EXPO_PROJECT_ID,
       });
 
       this.expoPushToken = tokenData.data;
 
-      // Configure Android channel
       if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
           name: 'default',
@@ -117,9 +86,6 @@ class NotificationService {
     }
   }
 
-  /**
-   * Register push token with backend
-   */
   async registerTokenWithBackend(): Promise<boolean> {
     const token = this.expoPushToken || await this.registerForPushNotifications();
 
@@ -141,9 +107,6 @@ class NotificationService {
     }
   }
 
-  /**
-   * Unregister push token (on logout)
-   */
   async unregisterToken(): Promise<boolean> {
     if (!this.expoPushToken) {
       return true;
@@ -162,49 +125,26 @@ class NotificationService {
     }
   }
 
-  /**
-   * Get current push token
-   */
   getPushToken(): string | null {
     return this.expoPushToken;
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // NOTIFICATION LISTENERS
-  // ─────────────────────────────────────────────────────────────
-
-  /**
-   * Add listener for received notifications (when app is in foreground)
-   */
   addNotificationReceivedListener(
     callback: (notification: Notifications.Notification) => void
   ): Notifications.Subscription {
     return Notifications.addNotificationReceivedListener(callback);
   }
 
-  /**
-   * Add listener for notification responses (when user taps notification)
-   */
   addNotificationResponseListener(
     callback: (response: Notifications.NotificationResponse) => void
   ): Notifications.Subscription {
     return Notifications.addNotificationResponseReceivedListener(callback);
   }
 
-  /**
-   * Get last notification response (for deep linking on app open)
-   */
   async getLastNotificationResponse(): Promise<Notifications.NotificationResponse | null> {
     return Notifications.getLastNotificationResponseAsync();
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // NOTIFICATIONS API
-  // ─────────────────────────────────────────────────────────────
-
-  /**
-   * Get notifications for current user
-   */
   async getNotifications(
     options: { limit?: number; offset?: number; unreadOnly?: boolean } = {}
   ): Promise<ApiResponse<NotificationsResponse>> {
@@ -216,9 +156,6 @@ class NotificationService {
     });
   }
 
-  /**
-   * Get unread notification count
-   */
   async getUnreadCount(): Promise<number> {
     try {
       const response = await this.getNotifications({ limit: 1 });
@@ -228,68 +165,36 @@ class NotificationService {
     }
   }
 
-  /**
-   * Mark notification as read
-   */
   async markAsRead(notificationId: string): Promise<ApiResponse<{ success: boolean }>> {
     return api.put(`/api/notifications/${notificationId}/read`, {});
   }
 
-  /**
-   * Mark all notifications as read
-   */
   async markAllAsRead(): Promise<ApiResponse<{ success: boolean; count: number }>> {
     return api.put('/api/notifications/read-all', {});
   }
 
-  /**
-   * Delete a notification
-   */
   async deleteNotification(notificationId: string): Promise<ApiResponse<{ success: boolean }>> {
     return api.delete(`/api/notifications/${notificationId}`);
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // PREFERENCES
-  // ─────────────────────────────────────────────────────────────
-
-  /**
-   * Get notification preferences
-   */
   async getPreferences(): Promise<ApiResponse<NotificationPreferences>> {
     return api.get('/api/notifications/preferences');
   }
 
-  /**
-   * Update notification preferences
-   */
   async updatePreferences(
     preferences: Partial<Omit<NotificationPreferences, 'id' | 'talent_id'>>
   ): Promise<ApiResponse<NotificationPreferences>> {
     return api.put('/api/notifications/preferences', preferences);
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // BADGE MANAGEMENT
-  // ─────────────────────────────────────────────────────────────
-
-  /**
-   * Set app badge number
-   */
   async setBadgeCount(count: number): Promise<void> {
     await Notifications.setBadgeCountAsync(count);
   }
 
-  /**
-   * Clear app badge
-   */
   async clearBadge(): Promise<void> {
     await Notifications.setBadgeCountAsync(0);
   }
 
-  /**
-   * Update badge from server
-   */
   async syncBadge(): Promise<void> {
     const count = await this.getUnreadCount();
     await this.setBadgeCount(count);

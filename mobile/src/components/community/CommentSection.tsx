@@ -137,7 +137,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                 const optimisticComments = currentComments.filter(c => c._optimistic);
 
                 if (optimisticComments.length > 0) {
-                    console.log('[CommentSection] Preserving optimistic comments during prop update:', optimisticComments.length);
                     // Combine optimistic comments with new props
                     return [...optimisticComments, ...initialComments];
                 }

@@ -162,12 +162,6 @@ export function useGeolocation(): UseGeolocationReturn {
       const geocodedRegion = geocodeResult.region || geocodeResult.subregion || '';
       const geocodedCity = geocodeResult.city || geocodeResult.subregion || '';
 
-      console.log('[Geolocation] Expo-location result:', {
-        country: countryName,
-        countryCode,
-        region: geocodedRegion,
-        city: geocodedCity,
-      });
 
       // Check if we support this country
       const supportedCountry = COUNTRIES.find(c => c.id === countryCode);
@@ -192,7 +186,6 @@ export function useGeolocation(): UseGeolocationReturn {
         cityCode,
       };
 
-      console.log('[Geolocation] Final result:', result);
       setIsLoading(false);
       return result;
 

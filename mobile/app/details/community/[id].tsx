@@ -658,7 +658,6 @@ export default function CommunityDetailScreen() {
             communityId={id!}
             userRole={membershipStatus?.role}
             onActivityPress={(activity) => {
-              console.log('Activity pressed', activity.id);
             }}
           />
         </View>

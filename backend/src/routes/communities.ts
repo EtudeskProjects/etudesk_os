@@ -30,7 +30,6 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
     const talentId = req.talentId;
     const { name, organization_id, existing_data } = req.body;
 
-    // Validate minimum required fields
     if (!canGenerate(name)) {
       return res.status(400).json({
         error: 'Name (min 3 chars) is required',
@@ -45,7 +44,6 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
       });
     }
 
-    // Verify user is a member of the organization
     const memberCheck = await pool.query(
       `SELECT 1 FROM organization_members
        WHERE organization_id = $1 AND talent_id = $2`,
@@ -58,7 +56,6 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
       });
     }
 
-    // Generate suggestions
     const input: GenerationInput = {
       name,
       organization_id,
@@ -93,7 +90,6 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const { type, status, limit = 50, offset = 0, include_private = 'false' } = req.query;
 
-    // First, check if visibility column exists
     const columnCheck = await pool.query(`
       SELECT column_name
       FROM information_schema.columns
@@ -101,7 +97,6 @@ router.get('/', async (req: Request, res: Response) => {
     `);
     const hasVisibilityColumn = columnCheck.rows.length > 0;
 
-    // Check if community_members.status exists
     const memberStatusCheck = await pool.query(`
       SELECT column_name
       FROM information_schema.columns
@@ -182,7 +177,6 @@ router.get('/organization/:orgId', async (req: Request, res: Response) => {
     const { orgId } = req.params;
     const { limit = 50, offset = 0 } = req.query;
 
-    // Get total count first
     const countResult = await pool.query(
       `SELECT COUNT(*) as total FROM communities c
        WHERE c.organization_id = $1 AND c.deleted_at IS NULL`,
@@ -228,7 +222,6 @@ router.get('/:id', async (req: Request, res: Response) => {
     const activeMemberFilter = hasMemberStatus ? " AND cm.status = 'ACTIVE'" : '';
     const activeMemberFilterNoAlias = hasMemberStatus ? " AND status = 'ACTIVE'" : '';
 
-    // Build moderators query based on available columns
     let moderatorsQuery = '';
     if (hasMemberRole) {
       moderatorsQuery = `
@@ -382,24 +375,14 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       access_type,
     } = req.body;
 
-    // Log pour debug des images
-    console.log('[Communities POST] Received images data:', {
-      cover_image_url,
-      images,
-      imagesType: typeof images,
-      imagesIsArray: Array.isArray(images),
-    });
-
     if (!name) {
       return res.status(400).json({ error: 'Name is required' });
     }
 
-    // Validate tags: max 3 tags
     if (tags && Array.isArray(tags) && tags.length > 3) {
       return res.status(400).json({ error: 'Maximum 3 tags allowed' });
     }
 
-    // Content moderation for user-generated text fields
     try {
       await autoModerationService.assertContentApproved({
         name,
@@ -407,8 +390,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         rules,
       });
     } catch (moderationError: any) {
-      console.log(`[Moderation] Community creation rejected: ${moderationError.message}`);
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: moderationError.message,
         code: 'CONTENT_MODERATION_FAILED',
         field: moderationError.flaggedField,
@@ -417,31 +399,22 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     const id = uuidv4();
     const slug = generateSlug(name) + '-' + id.slice(0, 8);
-
-    // Use access_type column for visibility (backward compatibility)
     const visibilityToStore = visibility || access_type;
 
-    // Check which columns exist in the database
     const columnsCheck = await pool.query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'communities' 
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'communities'
       AND column_name = 'access_type'
     `);
     const existingColumns = columnsCheck.rows.map((row: any) => row.column_name);
     const hasAccessType = existingColumns.includes('access_type');
-
-    // Build dynamic INSERT query based on available columns
-    // Store tags as JSON in a text field or use a tags column if it exists
     insertColumns = ['id', 'name', 'slug', 'type', 'description', 'rules', 'application_questions'];
     insertValues = ['$1', '$2', '$3', '$4', '$5', '$6', '$7'];
     let paramIndex = 8;
     // application_questions is stored as TEXT[] in the DB
     params = [id, name, slug, type, description, rules, Array.isArray(application_questions) ? application_questions : null];
 
-    // Check which additional columns exist (single query for efficiency)
-    // Note: logo_url is NOT used for communities (only organizations have logos)
-    // cover_image_url is used as the hero image (like opportunities)
     const additionalColumnsCheck = await pool.query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -483,17 +456,12 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       params.push(cover_image_url);
     }
 
-    console.log('[Communities POST] Image column check:', { hasImages, hasCoverImageUrl, imagesValue: images, coverImageUrlValue: cover_image_url });
-
     if (hasImages && images) {
       insertColumns.push('images');
       insertValues.push(`$${paramIndex++}`);
       // images is already a TEXT[] array, pass it directly
       const imagesToInsert = Array.isArray(images) ? images : [images];
       params.push(imagesToInsert);
-      console.log('[Communities POST] Inserting images:', imagesToInsert);
-    } else {
-      console.log('[Communities POST] Images NOT inserted - hasImages:', hasImages, 'images:', images);
     }
 
     if (hasIsPaid) {
@@ -520,7 +488,6 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       params.push(visibilityToStore);
     }
 
-    // Add default member permissions if provided
     if (default_member_permissions) {
       insertColumns.push('default_member_permissions');
       insertValues.push(`$${paramIndex++}`);
@@ -538,7 +505,6 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     `, params);
 
     // Add creator as admin member
-    // Check if id and status columns exist in community_members
     const memberColumnsCheck = await pool.query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -617,7 +583,6 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Community not found' });
     }
 
-    // Authorization: must be creator or org member (OWNER/ADMIN)
     const community = existingResult.rows[0];
     const isCreator = community.created_by === req.talentId;
     let isOrgAdmin = false;
@@ -632,12 +597,10 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'Non autorisé à modifier cette communauté' });
     }
 
-    // Validate tags: max 3 tags
     if (tags !== undefined && Array.isArray(tags) && tags.length > 3) {
       return res.status(400).json({ error: 'Maximum 3 tags allowed' });
     }
 
-    // Content moderation for user-generated text fields
     try {
       await autoModerationService.assertContentApproved({
         name,
@@ -653,20 +616,17 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Use access_type column for visibility (backward compatibility)
     const visibilityToStore = visibility !== undefined ? visibility : (access_type !== undefined ? access_type : undefined);
 
-    // Check which columns exist in the database
     const columnsCheck = await pool.query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'communities' 
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'communities'
       AND column_name = 'access_type'
     `);
     const existingColumns = columnsCheck.rows.map((row: any) => row.column_name);
     const hasAccessType = existingColumns.includes('access_type');
 
-    // Build dynamic UPDATE query based on available columns
     let updateFields = [
       'name = COALESCE($1, name)',
       'type = COALESCE($2, type)',
@@ -678,7 +638,6 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     // application_questions is stored as TEXT[] in the DB
     let params: any[] = [name, type, description, rules, Array.isArray(application_questions) ? application_questions : null];
 
-    // Check if tags column exists
     const tagsColumnCheck = await pool.query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -697,7 +656,6 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       params.push(visibilityToStore);
     }
 
-    // Check if cover_image_url column exists
     const coverImageCheck = await pool.query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -749,7 +707,6 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     const { id } = req.params;
     const talentId = req.talentId;
 
-    // Verify ownership before deletion
     const ownershipCheck = await pool.query(`
       SELECT id, created_by, organization_id FROM communities
       WHERE id = $1 AND deleted_at IS NULL
@@ -760,8 +717,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     }
 
     const community = ownershipCheck.rows[0];
-    
-    // Check if user is creator or organization member
+
     if (community.created_by !== talentId) {
       if (community.organization_id) {
         const orgCheck = await pool.query(`
@@ -854,7 +810,6 @@ router.post('/:id/join', authMiddleware, async (req: AuthRequest, res: Response)
       return res.status(401).json({ error: 'Non authentifié' });
     }
 
-    // Content moderation for answers (if provided)
     if (answers && Array.isArray(answers) && answers.length > 0) {
       const answersText = answers
         .filter((a: any) => a && a.answer && typeof a.answer === 'string')
@@ -875,7 +830,6 @@ router.post('/:id/join', authMiddleware, async (req: AuthRequest, res: Response)
       }
     }
 
-    // Check which columns exist in community_members
     const columnsCheck = await pool.query(`
       SELECT column_name
       FROM information_schema.columns
@@ -891,7 +845,6 @@ router.post('/:id/join', authMiddleware, async (req: AuthRequest, res: Response)
     const hasCreatedAt = existingColumns.includes('created_at');
     const hasUpdatedAt = existingColumns.includes('updated_at');
 
-    // Check if community exists
     const communityResult = await pool.query(`
       SELECT * FROM communities WHERE id = $1 AND deleted_at IS NULL
     `, [id]);
@@ -904,7 +857,6 @@ router.post('/:id/join', authMiddleware, async (req: AuthRequest, res: Response)
 
     // Note: All memberships require admin approval regardless of access_type
 
-    // Check if user already has a membership (active or pending)
     const existingMembership = await pool.query(`
       SELECT * FROM community_members 
       WHERE community_id = $1 AND talent_id = $2
@@ -1017,7 +969,6 @@ router.post('/:id/join', authMiddleware, async (req: AuthRequest, res: Response)
     // Status is always PENDING until admin approves
     const membershipStatus: string = 'PENDING';
 
-    // Build dynamic INSERT query based on available columns
     const insertColumns: string[] = [];
     const insertValues: string[] = [];
     const insertParams: any[] = [];
@@ -1076,7 +1027,6 @@ router.post('/:id/join', authMiddleware, async (req: AuthRequest, res: Response)
       RETURNING *
     `, insertParams);
 
-    // Notify organization about new membership request (all memberships require approval)
     if (hasId && insertResult.rows[0]?.id) {
       notifyNewMembershipRequest(insertResult.rows[0].id).catch(err => console.error('Notification error:', err));
     }
@@ -1137,7 +1087,6 @@ router.post('/:id/cancel-request', authMiddleware, async (req: AuthRequest, res:
     const { id } = req.params;
     const talentId = req.talentId;
 
-    // Only delete if status is PENDING
     const result = await pool.query(`
       DELETE FROM community_members
       WHERE community_id = $1 AND talent_id = $2 AND status = 'PENDING'
@@ -1167,7 +1116,6 @@ router.get('/memberships/me', authMiddleware, async (req: AuthRequest, res: Resp
       return res.status(401).json({ error: 'Non authentifié' });
     }
 
-    // Check which columns exist
     const columnsCheck = await pool.query(`
       SELECT column_name
       FROM information_schema.columns
@@ -1186,7 +1134,6 @@ router.get('/memberships/me', authMiddleware, async (req: AuthRequest, res: Resp
     const coverImageField = hasCoverImageUrl ? "'cover_image_url', c.cover_image_url," : '';
     const imagesField = hasImages ? "'images', c.images," : '';
 
-    // Build count query
     let countQuery = `
       SELECT COUNT(*) as total
       FROM community_members cm
@@ -1204,7 +1151,6 @@ router.get('/memberships/me', authMiddleware, async (req: AuthRequest, res: Resp
     const countResult = await pool.query(countQuery, countParams);
     const totalCount = parseInt(countResult.rows[0].total);
 
-    // Build data query
     let query = `
       SELECT
         cm.*,
@@ -1255,7 +1201,6 @@ router.get('/:id/members', authMiddleware, async (req: AuthRequest, res: Respons
     const talentId = req.talentId;
     const { status, limit = 50, offset = 0 } = req.query;
 
-    // Verify user is explicit community ADMIN (not just org member)
     const role = await communityPermissionService.getUserRole(talentId!, id);
     if (role !== 'ADMIN') {
       return res.status(403).json({ 
@@ -1263,7 +1208,6 @@ router.get('/:id/members', authMiddleware, async (req: AuthRequest, res: Respons
       });
     }
 
-    // Verify community exists and is not deleted
     const communityCheck = await pool.query(`
       SELECT id FROM communities WHERE id = $1 AND deleted_at IS NULL
     `, [id]);
@@ -1334,7 +1278,6 @@ router.get('/:id/members', authMiddleware, async (req: AuthRequest, res: Respons
 
     const result = await pool.query(query, params);
 
-    // Get status counts
     const statusCounts: Record<string, number> = {};
     if (hasMemberStatus) {
       const countResult = await pool.query(`
@@ -1355,7 +1298,6 @@ router.get('/:id/members', authMiddleware, async (req: AuthRequest, res: Respons
       statusCounts.ACTIVE = parseInt(countResult.rows[0].count, 10);
     }
 
-    // Transform data to match frontend expectations
     const members = result.rows.map(row => ({
       ...row,
       talent: {
@@ -1404,7 +1346,6 @@ router.get('/members/:membershipId', authMiddleware, async (req: AuthRequest, re
     const { membershipId } = req.params;
     const talentId = req.talentId;
 
-    // First get the community_id from the membership
     const membershipCheck = await pool.query(`
       SELECT cm.community_id FROM community_members cm
       JOIN communities c ON cm.community_id = c.id
@@ -1417,11 +1358,10 @@ router.get('/members/:membershipId', authMiddleware, async (req: AuthRequest, re
 
     const communityId = membershipCheck.rows[0].community_id;
 
-    // Verify user is explicit community ADMIN (not just org member)
     const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
-      return res.status(403).json({ 
-        error: 'Accès non autorisé: seuls les administrateurs de la communauté peuvent voir les détails des membres' 
+      return res.status(403).json({
+        error: 'Accès non autorisé: seuls les administrateurs de la communauté peuvent voir les détails des membres'
       });
     }
 
@@ -1454,7 +1394,6 @@ router.get('/members/:membershipId', authMiddleware, async (req: AuthRequest, re
 
     const row = result.rows[0];
 
-    // Mark as viewed if pending
     if (row.status === 'PENDING' && !row.viewed_at) {
       await pool.query(
         'UPDATE community_members SET viewed_at = NOW(), updated_at = NOW() WHERE id = $1',
@@ -1462,7 +1401,6 @@ router.get('/members/:membershipId', authMiddleware, async (req: AuthRequest, re
       );
     }
 
-    // Structure response
     const membership = {
       ...row,
       community: {
@@ -1522,7 +1460,6 @@ router.put('/members/:membershipId/status', authMiddleware, async (req: AuthRequ
       return res.status(400).json({ error: 'Statut invalide' });
     }
 
-    // First get the community_id from the membership
     const membershipInfo = await pool.query(`
       SELECT cm.community_id, cm.status as old_status, cm.talent_id as member_talent_id,
              c.name as community_name
@@ -1537,11 +1474,10 @@ router.put('/members/:membershipId/status', authMiddleware, async (req: AuthRequ
 
     const communityId = membershipInfo.rows[0].community_id;
 
-    // Verify user is explicit community ADMIN (not just org member)
     const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
-      return res.status(403).json({ 
-        error: 'Accès non autorisé: seuls les administrateurs de la communauté peuvent modifier le statut des membres' 
+      return res.status(403).json({
+        error: 'Accès non autorisé: seuls les administrateurs de la communauté peuvent modifier le statut des membres'
       });
     }
 
@@ -1549,7 +1485,6 @@ router.put('/members/:membershipId/status', authMiddleware, async (req: AuthRequ
     const memberTalentId = membershipInfo.rows[0].member_talent_id;
     const communityName = membershipInfo.rows[0].community_name;
 
-    // Update membership
     const updateFields: string[] = ['status = $1', 'updated_at = NOW()'];
     const updateParams: QueryParam[] = [status];
     let paramIndex = 2;
@@ -1574,7 +1509,6 @@ router.put('/members/:membershipId/status', authMiddleware, async (req: AuthRequ
       RETURNING *
     `, updateParams);
 
-    // Notify member about status change
     if (oldStatus !== status) {
       notifyMembershipStatusChanged(membershipId, memberTalentId, communityName, oldStatus, status)
         .catch(err => console.error('Notification error:', err));
@@ -1601,7 +1535,6 @@ router.put('/members/:membershipId/notes', authMiddleware, async (req: AuthReque
     const { notes } = req.body;
     const talentId = req.talentId;
 
-    // First get the community_id from the membership
     const membershipCheck = await pool.query(`
       SELECT cm.community_id FROM community_members cm
       JOIN communities c ON cm.community_id = c.id
@@ -1614,7 +1547,6 @@ router.put('/members/:membershipId/notes', authMiddleware, async (req: AuthReque
 
     const communityId = membershipCheck.rows[0].community_id;
 
-    // Verify user is explicit community ADMIN (not just org member)
     const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({ 
@@ -1650,7 +1582,6 @@ router.put('/members/:membershipId/rating', authMiddleware, async (req: AuthRequ
       return res.status(400).json({ error: 'La note doit être entre 1 et 5' });
     }
 
-    // First get the community_id from the membership
     const membershipCheck = await pool.query(`
       SELECT cm.community_id FROM community_members cm
       JOIN communities c ON cm.community_id = c.id
@@ -1663,7 +1594,6 @@ router.put('/members/:membershipId/rating', authMiddleware, async (req: AuthRequ
 
     const communityId = membershipCheck.rows[0].community_id;
 
-    // Verify user is explicit community ADMIN (not just org member)
     const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({ 
@@ -1694,7 +1624,6 @@ router.get('/members/:membershipId/permissions', authMiddleware, async (req: Aut
     const { membershipId } = req.params;
     const talentId = req.talentId;
 
-    // First get the community_id from the membership
     const membershipCheck = await pool.query(`
       SELECT cm.community_id FROM community_members cm
       JOIN communities c ON cm.community_id = c.id
@@ -1707,7 +1636,6 @@ router.get('/members/:membershipId/permissions', authMiddleware, async (req: Aut
 
     const communityId = membershipCheck.rows[0].community_id;
 
-    // Verify user is explicit community ADMIN
     const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({
@@ -1735,7 +1663,6 @@ router.put('/members/:membershipId/permissions', authMiddleware, async (req: Aut
     const { permissions } = req.body;
     const talentId = req.talentId;
 
-    // First get the community_id from the membership
     const membershipCheck = await pool.query(`
       SELECT cm.community_id, cm.talent_id FROM community_members cm
       JOIN communities c ON cm.community_id = c.id
@@ -1749,7 +1676,6 @@ router.put('/members/:membershipId/permissions', authMiddleware, async (req: Aut
     const communityId = membershipCheck.rows[0].community_id;
     const memberTalentId = membershipCheck.rows[0].talent_id;
 
-    // Verify user is explicit community ADMIN
     const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({
@@ -1789,7 +1715,6 @@ router.get('/:id/default-permissions', authMiddleware, async (req: AuthRequest, 
     const { id: communityId } = req.params;
     const talentId = req.talentId;
 
-    // Verify user is explicit community ADMIN
     const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({
@@ -1816,7 +1741,6 @@ router.put('/:id/default-permissions', authMiddleware, async (req: AuthRequest, 
     const { can_post, can_create_event, can_create_poll } = req.body;
     const talentId = req.talentId;
 
-    // Verify user is explicit community ADMIN
     const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({
@@ -1851,7 +1775,6 @@ router.delete('/members/:membershipId', authMiddleware, async (req: AuthRequest,
     const { membershipId } = req.params;
     const talentId = req.talentId;
 
-    // First get the community_id from the membership
     const membershipCheck = await pool.query(`
       SELECT cm.community_id FROM community_members cm
       JOIN communities c ON cm.community_id = c.id
@@ -1864,7 +1787,6 @@ router.delete('/members/:membershipId', authMiddleware, async (req: AuthRequest,
 
     const communityId = membershipCheck.rows[0].community_id;
 
-    // Verify user is explicit community ADMIN (not just org member)
     const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({ 
@@ -1872,7 +1794,6 @@ router.delete('/members/:membershipId', authMiddleware, async (req: AuthRequest,
       });
     }
 
-    // Delete the membership
     await pool.query('DELETE FROM community_members WHERE id = $1', [membershipId]);
 
     res.json({ success: true, message: 'Membre supprimé. Il pourra postuler à nouveau.' });
@@ -1949,7 +1870,6 @@ async function notifyNewMembershipRequest(membershipId: string): Promise<void> {
 
     const membership = result.rows[0];
 
-    // Get organization members
     const orgMembers = await pool.query(
       `SELECT om.talent_id FROM organization_members om
        WHERE om.organization_id = $1`,
@@ -1995,7 +1915,6 @@ router.get('/members/:membershipId/messages', authMiddleware, async (req: AuthRe
     const talentId = req.talentId;
     const { limit = 50, offset = 0 } = req.query;
 
-    // Get membership and verify access
     const membershipResult = await pool.query(`
       SELECT cm.*, c.organization_id
       FROM community_members cm
@@ -2009,7 +1928,6 @@ router.get('/members/:membershipId/messages', authMiddleware, async (req: AuthRe
 
     const membership = membershipResult.rows[0];
 
-    // Check access: must be the talent OR an org member
     const isOrgMember = await pool.query(
       `SELECT 1 FROM organization_members WHERE organization_id = $1 AND talent_id = $2`,
       [membership.organization_id, talentId]
@@ -2019,7 +1937,6 @@ router.get('/members/:membershipId/messages', authMiddleware, async (req: AuthRe
       return res.status(403).json({ error: 'Accès non autorisé' });
     }
 
-    // Get messages
     const messages = await pool.query(`
       SELECT
         m.*,
@@ -2053,7 +1970,6 @@ router.post('/members/:membershipId/messages', authMiddleware, async (req: AuthR
       return res.status(400).json({ error: 'Le message ne peut pas être vide' });
     }
 
-    // Get membership and verify access
     const membershipResult = await pool.query(`
       SELECT cm.*, c.organization_id, c.name as community_name
       FROM community_members cm
@@ -2067,7 +1983,6 @@ router.post('/members/:membershipId/messages', authMiddleware, async (req: AuthR
 
     const membership = membershipResult.rows[0];
 
-    // Check access: must be the talent OR an org member
     const isOrgMember = await pool.query(
       `SELECT 1 FROM organization_members WHERE organization_id = $1 AND talent_id = $2`,
       [membership.organization_id, talentId]
@@ -2082,7 +1997,6 @@ router.post('/members/:membershipId/messages', authMiddleware, async (req: AuthR
 
     const senderType = isOrg ? 'ORGANIZATION' : 'TALENT';
 
-    // Insert message
     const result = await pool.query(`
       INSERT INTO community_membership_messages
         (membership_id, sender_type, sender_id, content, attachments, proposed_datetime, datetime_type)
@@ -2098,7 +2012,6 @@ router.post('/members/:membershipId/messages', authMiddleware, async (req: AuthR
       datetime_type || null
     ]);
 
-    // Get sender info
     const senderInfo = await pool.query(
       `SELECT COALESCE(first_name || ' ' || last_name, email) as sender_name, avatar_url as sender_avatar FROM talents WHERE id = $1`,
       [talentId]
@@ -2110,21 +2023,17 @@ router.post('/members/:membershipId/messages', authMiddleware, async (req: AuthR
       sender_avatar: senderInfo.rows[0]?.sender_avatar
     };
 
-    // Update unread count for recipient
     if (senderType === 'ORGANIZATION') {
-      // Org sent message, increment unread for talent
       await pool.query(
         `UPDATE community_members SET unread_messages = COALESCE(unread_messages, 0) + 1 WHERE id = $1`,
         [membershipId]
       );
     }
 
-    // Send push notification to recipient
     try {
       const pushService = await import('../services/push-notification.service');
 
       if (senderType === 'ORGANIZATION') {
-        // Notify the talent
         await pushService.sendToUser(membership.talent_id, {
           type: 'MESSAGE',
           title: 'Nouveau message',
@@ -2135,7 +2044,6 @@ router.post('/members/:membershipId/messages', authMiddleware, async (req: AuthR
           },
         });
       } else {
-        // Notify org members
         const orgMembers = await pool.query(
           `SELECT talent_id FROM organization_members WHERE organization_id = $1`,
           [membership.organization_id]
@@ -2172,7 +2080,6 @@ router.put('/members/:membershipId/messages/read-all', authMiddleware, async (re
     const { membershipId } = req.params;
     const talentId = req.talentId;
 
-    // Get membership and verify access
     const membershipResult = await pool.query(`
       SELECT cm.*, c.organization_id
       FROM community_members cm
@@ -2186,7 +2093,6 @@ router.put('/members/:membershipId/messages/read-all', authMiddleware, async (re
 
     const membership = membershipResult.rows[0];
 
-    // Check access
     const isOrgMember = await pool.query(
       `SELECT 1 FROM organization_members WHERE organization_id = $1 AND talent_id = $2`,
       [membership.organization_id, talentId]
@@ -2198,8 +2104,6 @@ router.put('/members/:membershipId/messages/read-all', authMiddleware, async (re
     if (!isTalent && !isOrg) {
       return res.status(403).json({ error: 'Accès non autorisé' });
     }
-
-    // Mark messages as read (only those sent by the OTHER party)
     const senderTypeToMark = isOrg ? 'TALENT' : 'ORGANIZATION';
 
     const result = await pool.query(`
@@ -2208,7 +2112,6 @@ router.put('/members/:membershipId/messages/read-all', authMiddleware, async (re
       WHERE membership_id = $1 AND sender_type = $2 AND read_at IS NULL
     `, [membershipId, senderTypeToMark]);
 
-    // Reset unread count if talent is reading
     if (isTalent) {
       await pool.query(
         `UPDATE community_members SET unread_messages = 0 WHERE id = $1`,

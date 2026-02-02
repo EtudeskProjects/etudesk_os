@@ -8,59 +8,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { pool, generateSlug } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { autoModerationService } from '../services/auto-moderation.service';
+import { normalizeCountryCode } from '../constants/countries';
 
 // Type for SQL query parameters
 type QueryParam = string | number | boolean | null | Date;
-
-// Map country names to ISO 2-letter codes
-const COUNTRY_NAME_TO_CODE: Record<string, string> = {
-  'côte d\'ivoire': 'CI',
-  'cote d\'ivoire': 'CI',
-  'ivory coast': 'CI',
-  'senegal': 'SN',
-  'sénégal': 'SN',
-  'mali': 'ML',
-  'burkina faso': 'BF',
-  'guinea': 'GN',
-  'guinée': 'GN',
-  'benin': 'BJ',
-  'bénin': 'BJ',
-  'togo': 'TG',
-  'niger': 'NE',
-  'cameroon': 'CM',
-  'cameroun': 'CM',
-  'ghana': 'GH',
-  'nigeria': 'NG',
-  'nigéria': 'NG',
-  'morocco': 'MA',
-  'maroc': 'MA',
-  'tunisia': 'TN',
-  'tunisie': 'TN',
-  'france': 'FR',
-  'canada': 'CA',
-  'united states': 'US',
-  'états-unis': 'US',
-  'etats-unis': 'US',
-};
-
-// Convert country name to ISO code (returns uppercase code or null)
-function normalizeCountryCode(input: string | undefined | null): string | null {
-  if (!input) return null;
-
-  const trimmed = input.trim();
-  if (!trimmed) return null;
-
-  // If already 2-letter code, return uppercase
-  if (trimmed.length === 2) {
-    return trimmed.toUpperCase();
-  }
-
-  // Try to find in mapping (case-insensitive)
-  const normalized = trimmed.toLowerCase();
-  const code = COUNTRY_NAME_TO_CODE[normalized];
-
-  return code || null;
-}
 
 const router = Router();
 
@@ -308,7 +259,6 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
       await client.query('COMMIT');
 
-      console.log(`✅ Organization created: ${name} (${id}) by ${req.talentId}`);
       res.status(201).json({ data: result.rows[0] });
     } catch (error) {
       await client.query('ROLLBACK');
@@ -397,8 +347,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         description,
       });
     } catch (moderationError: any) {
-      console.log(`[Moderation] Organization update rejected for ${id}: ${moderationError.message}`);
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: moderationError.message,
         code: 'CONTENT_MODERATION_FAILED',
         field: moderationError.flaggedField,
@@ -499,7 +448,6 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Organization not found' });
     }
 
-    console.log(`✅ Organization updated: ${id}`);
     res.json({ data: result.rows[0] });
   } catch (error) {
     console.error('Error updating organization:', error);
@@ -539,7 +487,6 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
       return res.status(404).json({ error: 'Organization not found' });
     }
 
-    console.log(`✅ Organization deleted: ${id}`);
     res.json({ success: true, message: 'Organization deleted' });
   } catch (error) {
     console.error('Error deleting organization:', error);

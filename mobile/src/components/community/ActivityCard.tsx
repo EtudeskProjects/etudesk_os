@@ -89,16 +89,6 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 
     // Sync poll state when activity changes
     useEffect(() => {
-        // Debug log to see what poll data is received
-        if (activity.type === 'POLL') {
-            console.log('[ActivityCard] POLL activity:', {
-                id: activity.id,
-                type: activity.type,
-                poll_options: activity.poll_options,
-                metadata: activity.metadata,
-                user_vote_id: activity.user_vote_id
-            });
-        }
 
         if (activity.poll_options) {
             setPollOptions(activity.poll_options);

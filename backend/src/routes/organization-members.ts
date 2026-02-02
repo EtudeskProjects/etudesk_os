@@ -225,7 +225,6 @@ router.post('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res:
       ).catch(err => console.error('Failed to send invitation email:', err));
     }
 
-    console.log(`✅ Invitation sent to ${email} for organization ${orgId}`);
     res.status(201).json({ data: result.rows[0] });
   } catch (error) {
     console.error('Error creating invitation:', error);
@@ -294,7 +293,6 @@ router.put('/:orgId/members/:memberId', authMiddleware, async (req: AuthRequest,
       RETURNING *
     `, [role || null, memberId, orgId]);
 
-    console.log(`✅ Member ${memberId} updated in organization ${orgId}`);
     res.json({ data: result.rows[0] });
   } catch (error) {
     console.error('Error updating member:', error);
@@ -353,7 +351,6 @@ router.delete('/:orgId/members/:memberId', authMiddleware, async (req: AuthReque
       DELETE FROM organization_members WHERE id = $1 AND organization_id = $2
     `, [memberId, orgId]);
 
-    console.log(`✅ Member ${memberId} removed from organization ${orgId}`);
     res.json({ success: true, message: 'Member removed' });
   } catch (error) {
     console.error('Error removing member:', error);
@@ -400,7 +397,6 @@ router.delete('/:orgId/invitations/:invitationId', authMiddleware, async (req: A
       return res.status(404).json({ error: 'Invitation not found or already processed' });
     }
 
-    console.log(`✅ Invitation ${invitationId} cancelled`);
     res.json({ success: true, message: 'Invitation cancelled' });
   } catch (error) {
     console.error('Error cancelling invitation:', error);
@@ -462,7 +458,6 @@ router.post('/:orgId/invitations/:invitationId/resend', authMiddleware, async (r
       ).catch(err => console.error('Failed to resend invitation email:', err));
     }
 
-    console.log(`✅ Invitation ${invitationId} resent`);
     res.json({ data: result.rows[0] });
   } catch (error) {
     console.error('Error resending invitation:', error);
@@ -631,7 +626,6 @@ router.post('/invitations/:invitationId/accept', authMiddleware, async (req: Aut
         SELECT id, name, slug, logo_url FROM organizations WHERE id = $1
       `, [invitation.organization_id]);
 
-      console.log(`✅ User ${req.talentId} accepted invitation to organization ${invitation.organization_id}`);
       res.json({
         success: true,
         message: 'Invitation acceptée',
@@ -688,7 +682,6 @@ router.post('/invitations/:invitationId/decline', authMiddleware, async (req: Au
       return res.status(404).json({ error: 'Invitation not found or already processed' });
     }
 
-    console.log(`✅ User ${req.talentId} declined invitation ${invitationId}`);
     res.json({ success: true, message: 'Invitation refusée' });
   } catch (error) {
     console.error('Error declining invitation:', error);

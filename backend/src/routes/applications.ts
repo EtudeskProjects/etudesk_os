@@ -37,7 +37,6 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
     const { opportunity_id, cover_letter, custom_answers, answers, resume_url } = req.body;
     const applicationAnswers = custom_answers || answers;
 
-    // Vérifier que l'opportunité existe et est ouverte
     const oppResult = await pool.query(
       'SELECT id, status, deadline FROM opportunities WHERE id = $1 AND deleted_at IS NULL',
       [opportunity_id]
@@ -56,7 +55,6 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
       return res.status(400).json({ error: 'La date limite de candidature est dépassée' });
     }
 
-    // Vérifier que l'utilisateur n'est pas le créateur direct ou un admin/owner de l'org
     const ownerCheck = await pool.query(`
       SELECT 1 FROM opportunity_posters op
       LEFT JOIN organization_members om ON op.poster_organization_id = om.organization_id
@@ -70,7 +68,6 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
       return res.status(403).json({ error: 'Vous ne pouvez pas postuler à votre propre opportunité' });
     }
 
-    // Vérifier si déjà candidaté
     const existingApp = await pool.query(
       'SELECT id FROM opportunity_applications WHERE talent_id = $1 AND opportunity_id = $2',
       [talentId, opportunity_id]
@@ -83,7 +80,6 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
       });
     }
 
-    // Créer la candidature
     const id = uuidv4();
     const result = await pool.query(`
       INSERT INTO opportunity_applications (
@@ -92,7 +88,6 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
       RETURNING *
     `, [id, talentId, opportunity_id, cover_letter || null, applicationAnswers ? JSON.stringify(applicationAnswers) : null, resume_url || null]);
 
-    // Notify organization about new application
     pushService.notifyNewApplication(id).catch(err => console.error('Notification error:', err));
 
     res.status(201).json({
@@ -155,7 +150,6 @@ router.get('/me', authMiddleware, requireTalentProfile, async (req: AuthRequest,
 
     const result = await pool.query(query, params);
 
-    // Compter par statut
     const countResult = await pool.query(`
       SELECT status, COUNT(*) as count
       FROM opportunity_applications
@@ -215,13 +209,11 @@ router.get('/check/:opportunityId', authMiddleware, requireTalentProfile, async 
     const talentId = req.talentId;
     const { opportunityId } = req.params;
 
-    // Vérifier si déjà candidaté
     const applicationResult = await pool.query(
       'SELECT id, status, applied_at FROM opportunity_applications WHERE talent_id = $1 AND opportunity_id = $2',
       [talentId, opportunityId]
     );
 
-    // Vérifier si l'utilisateur est le créateur direct ou admin/owner de l'org
     const ownerCheck = await pool.query(`
       SELECT 1 FROM opportunity_posters op
       LEFT JOIN organization_members om ON op.poster_organization_id = om.organization_id
@@ -259,7 +251,6 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     const talentId = req.talentId;
     const { id } = req.params;
 
-    // First, get the application with all details
     const result = await pool.query(`
       SELECT
         a.*,
@@ -316,7 +307,6 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     const row = result.rows[0];
 
-    // Check access: either the applicant or organization member
     const isApplicant = row.talent_id === talentId;
 
     let isOrgMember = false;
@@ -334,7 +324,6 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'Accès non autorisé à cette candidature' });
     }
 
-    // Compute matching score
     let matchScore: number | undefined;
     let matchCategory: string | undefined;
     try {
@@ -366,7 +355,6 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       console.error('Error computing matching score:', err);
     }
 
-    // Structure the response with nested objects
     const application = {
       ...row,
       resume_url: row.cv_url, // Map cv_url to resume_url for frontend
@@ -427,7 +415,6 @@ router.put('/:id/withdraw', authMiddleware, requireTalentProfile, async (req: Au
     const talentId = req.talentId;
     const { id } = req.params;
 
-    // Vérifier que la candidature existe et appartient au talent
     const existing = await pool.query(
       'SELECT id, status FROM opportunity_applications WHERE id = $1 AND talent_id = $2',
       [id, talentId]
@@ -469,7 +456,6 @@ router.delete('/:id', authMiddleware, requireTalentProfile, async (req: AuthRequ
     const talentId = req.talentId;
     const { id } = req.params;
 
-    // Vérifier que la candidature existe et appartient au talent
     const existing = await pool.query(
       'SELECT id, status FROM opportunity_applications WHERE id = $1 AND talent_id = $2',
       [id, talentId]
@@ -506,7 +492,6 @@ router.get('/opportunity/:opportunityId', authMiddleware, validate(opportunityId
     const { status, limit = 50, offset = 0 } = req.query;
     const talentId = req.talentId;
 
-    // Vérifier que l'utilisateur a accès à cette opportunité
     const accessCheck = await pool.query(`
       SELECT o.id FROM opportunities o
       JOIN opportunity_posters op ON o.id = op.opportunity_id
@@ -544,7 +529,6 @@ router.get('/opportunity/:opportunityId', authMiddleware, validate(opportunityId
 
     const result = await pool.query(query, params);
 
-    // Compter par statut
     const countResult = await pool.query(`
       SELECT status, COUNT(*) as count
       FROM opportunity_applications
@@ -579,7 +563,6 @@ router.get('/opportunity/:opportunityId/ranked', authMiddleware, validate(opport
     const { status, includeRecommendations = 'false' } = req.query;
     const talentId = req.talentId;
 
-    // Vérifier que l'utilisateur a accès à cette opportunité
     const accessCheck = await pool.query(`
       SELECT o.id FROM opportunities o
       JOIN opportunity_posters op ON o.id = op.opportunity_id
@@ -592,10 +575,8 @@ router.get('/opportunity/:opportunityId/ranked', authMiddleware, validate(opport
       return res.status(403).json({ error: 'Accès non autorisé à cette opportunité' });
     }
 
-    // Rank applications using the matching service
     const rankedApplications = await rankApplications(opportunityId, status as string | undefined);
 
-    // Group by status for easy frontend consumption
     const grouped: Record<string, typeof rankedApplications> = {};
     const statusOrder = ['SUBMITTED', 'IN_REVIEW', 'ACCEPTED', 'REJECTED'];
 
@@ -635,7 +616,6 @@ router.get('/:id/recommendation', authMiddleware, validate(uuidParamSchema, 'par
     const { id } = req.params;
     const talentId = req.talentId;
 
-    // Vérifier l'accès (organisation seulement)
     const accessCheck = await pool.query(`
       SELECT a.id FROM opportunity_applications a
       JOIN opportunities o ON a.opportunity_id = o.id
@@ -692,7 +672,6 @@ router.put('/:id/status', authMiddleware, validate(uuidParamSchema, 'params'), v
       return res.status(403).json({ error: 'Accès non autorisé à cette candidature' });
     }
 
-    // Get old status for notification
     const oldStatusResult = await pool.query(
       'SELECT status FROM opportunity_applications WHERE id = $1',
       [id]
@@ -706,7 +685,6 @@ router.put('/:id/status', authMiddleware, validate(uuidParamSchema, 'params'), v
       RETURNING *
     `, [status, id]);
 
-    // Notify talent about status change
     if (oldStatus && oldStatus !== status) {
       pushService.notifyApplicationStatusChanged(id, oldStatus, status)
         .catch(err => console.error('Notification error:', err));
@@ -733,7 +711,6 @@ router.put('/:id/notes', authMiddleware, validate(uuidParamSchema, 'params'), va
     const { notes } = req.body;
     const talentId = req.talentId;
 
-    // Vérifier l'accès
     const accessCheck = await pool.query(`
       SELECT a.id FROM opportunity_applications a
       JOIN opportunities o ON a.opportunity_id = o.id
@@ -771,7 +748,6 @@ router.put('/:id/rating', authMiddleware, validate(uuidParamSchema, 'params'), v
     const { rating } = req.body;
     const talentId = req.talentId;
 
-    // Vérifier l'accès
     const accessCheck = await pool.query(`
       SELECT a.id FROM opportunity_applications a
       JOIN opportunities o ON a.opportunity_id = o.id
@@ -808,7 +784,6 @@ router.put('/:id/view', authMiddleware, async (req: AuthRequest, res: Response) 
     const { id } = req.params;
     const talentId = req.talentId;
 
-    // Vérifier l'accès
     const accessCheck = await pool.query(`
       SELECT a.id FROM opportunity_applications a
       JOIN opportunities o ON a.opportunity_id = o.id
@@ -846,7 +821,6 @@ router.put('/:id/interview', authMiddleware, validate(uuidParamSchema, 'params')
     const { interview_scheduled_at, interview_type, interview_location, interview_notes } = req.body;
     const talentId = req.talentId;
 
-    // Vérifier l'accès
     const accessCheck = await pool.query(`
       SELECT a.id FROM opportunity_applications a
       JOIN opportunities o ON a.opportunity_id = o.id
@@ -872,7 +846,6 @@ router.put('/:id/interview', authMiddleware, validate(uuidParamSchema, 'params')
       RETURNING *
     `, [interview_scheduled_at, interview_type || null, interview_location || null, interview_notes || null, id]);
 
-    // Notify talent about interview scheduled
     pushService.notifyInterviewScheduled(id, interview_scheduled_at, interview_type, interview_location)
       .catch(err => console.error('Notification error:', err));
 
@@ -892,7 +865,6 @@ router.delete('/:id/interview', authMiddleware, async (req: AuthRequest, res: Re
     const { id } = req.params;
     const talentId = req.talentId;
 
-    // Vérifier l'accès
     const accessCheck = await pool.query(`
       SELECT a.id FROM opportunity_applications a
       JOIN opportunities o ON a.opportunity_id = o.id
@@ -934,7 +906,6 @@ router.put('/bulk/status', authMiddleware, validate(bulkUpdateStatusSchema), asy
     const { application_ids, status } = req.body;
     const talentId = req.talentId;
 
-    // Single query to find all accessible application IDs
     const accessibleResult = await pool.query(`
       SELECT a.id FROM opportunity_applications a
       JOIN opportunities o ON a.opportunity_id = o.id
@@ -950,7 +921,6 @@ router.put('/bulk/status', authMiddleware, validate(bulkUpdateStatusSchema), asy
       return res.json({ success: true, updated: 0, failed: application_ids.length });
     }
 
-    // Single update for all accessible applications
     const updateResult = await pool.query(
       'UPDATE opportunity_applications SET status = $1, updated_at = NOW() WHERE id = ANY($2)',
       [status, accessibleIds]
@@ -976,7 +946,6 @@ router.delete('/:id/organization', authMiddleware, async (req: AuthRequest, res:
     const { id } = req.params;
     const talentId = req.talentId;
 
-    // Verify organization access
     const accessCheck = await pool.query(`
       SELECT a.id FROM opportunity_applications a
       JOIN opportunities o ON a.opportunity_id = o.id
@@ -1015,7 +984,6 @@ router.get('/:id/messages', authMiddleware, async (req: AuthRequest, res: Respon
     const talentId = req.talentId;
     const { limit = 50, offset = 0 } = req.query;
 
-    // Check access: applicant or organization member
     const accessCheck = await pool.query(`
       SELECT a.id, a.talent_id FROM opportunity_applications a
       JOIN opportunities o ON a.opportunity_id = o.id
@@ -1058,7 +1026,6 @@ router.post('/:id/messages', authMiddleware, async (req: AuthRequest, res: Respo
       return res.status(400).json({ error: 'Le message ne peut pas être vide' });
     }
 
-    // Check access and determine sender type
     const accessCheck = await pool.query(`
       SELECT a.id, a.talent_id,
         CASE WHEN a.talent_id = $2 THEN 'TALENT' ELSE 'ORGANIZATION' END as sender_type
@@ -1111,7 +1078,6 @@ router.post('/:id/messages', authMiddleware, async (req: AuthRequest, res: Respo
       datetime_type || null
     ]);
 
-    // Notify about new message
     pushService.notifyApplicationMessage(id, messageId, senderType)
       .catch(err => console.error('Notification error:', err));
 
@@ -1131,7 +1097,6 @@ router.put('/:id/messages/read-all', authMiddleware, async (req: AuthRequest, re
     const { id } = req.params;
     const talentId = req.talentId;
 
-    // Check access
     const accessCheck = await pool.query(`
       SELECT a.id, a.talent_id FROM opportunity_applications a
       JOIN opportunities o ON a.opportunity_id = o.id
@@ -1147,8 +1112,6 @@ router.put('/:id/messages/read-all', authMiddleware, async (req: AuthRequest, re
 
     const isApplicant = accessCheck.rows[0].talent_id === talentId;
     const otherSenderType = isApplicant ? 'ORGANIZATION' : 'TALENT';
-
-    // Mark messages from the other party as read
     const result = await pool.query(`
       UPDATE application_messages
       SET read_at = NOW()
@@ -1173,7 +1136,6 @@ router.get('/opportunity/:opportunityId/export-csv', authMiddleware, validate(op
     const { status, matchCategory } = req.query;
     const talentId = req.talentId;
 
-    // Verify access
     const accessCheck = await pool.query(`
       SELECT o.id, o.title FROM opportunities o
       JOIN opportunity_posters op ON o.id = op.opportunity_id
@@ -1188,16 +1150,12 @@ router.get('/opportunity/:opportunityId/export-csv', authMiddleware, validate(op
 
     const opportunityTitle = accessCheck.rows[0].title;
 
-    // Get ranked applications with talent info
     const rankedApplications = await rankApplications(opportunityId, status as string | undefined);
-
-    // Filter by matchCategory if provided
     let filteredApps = rankedApplications;
     if (matchCategory) {
       filteredApps = rankedApplications.filter(app => app.matchCategory === matchCategory);
     }
 
-    // Build CSV content
     const headers = [
       'Prénom',
       'Nom',
@@ -1258,7 +1216,6 @@ router.get('/opportunity/:opportunityId/export-csv', authMiddleware, validate(op
 
     const csvContent = [headers.join(','), ...rows].join('\n');
 
-    // Set response headers for CSV download
     const filename = `candidatures-${opportunityTitle.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`;
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
