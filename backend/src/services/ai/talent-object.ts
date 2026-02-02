@@ -35,9 +35,9 @@ export interface TalentObject {
 
 export interface DocumentMeta {
   id: string;
-  file_name: string;
+  original_filename: string;
   document_type: string | null;
-  extracted_title: string | null;
+  title: string | null;
   uploaded_at: string;
 }
 
@@ -66,7 +66,7 @@ export async function buildTalentObject(talentId: string): Promise<TalentObject 
        t.region,
        t.country,
        t.phone,
-       u.email,
+       t.email,
        t.remote_ready,
        t.willing_to_relocate,
        COALESCE(
@@ -83,17 +83,16 @@ export async function buildTalentObject(talentId: string): Promise<TalentObject 
        COALESCE(
          (SELECT json_agg(json_build_object(
            'id', d.id,
-           'file_name', d.file_name,
+           'original_filename', d.original_filename,
            'document_type', d.document_type,
-           'extracted_title', d.extracted_title,
-           'uploaded_at', d.uploaded_at
-         ) ORDER BY d.uploaded_at DESC)
-         FROM documents d
-         WHERE d.talent_id = t.id AND d.deleted_at IS NULL),
+           'title', d.title,
+           'uploaded_at', d.created_at
+         ) ORDER BY d.created_at DESC)
+         FROM talent_documents d
+         WHERE d.talent_id = t.id),
          '[]'
        ) AS documents_metadata
      FROM talents t
-     JOIN users u ON u.id = t.user_id
      WHERE t.id = $1 AND t.deleted_at IS NULL`,
     [talentId]
   );
@@ -155,7 +154,7 @@ export function talentObjectToText(t: TalentObject): string {
   if (t.willing_to_relocate) lines.push('Prêt à se relocaliser');
   if (t.skills.length) lines.push(`Compétences: ${t.skills.join(', ')}`);
   if (t.documents_metadata.length) {
-    lines.push(`Documents (${t.documents_metadata.length}): ${t.documents_metadata.map(d => d.extracted_title || d.file_name).join(', ')}`);
+    lines.push(`Documents (${t.documents_metadata.length}): ${t.documents_metadata.map(d => d.title || d.original_filename).join(', ')}`);
   }
 
   return lines.join('\n');
