@@ -39,6 +39,21 @@ async function updateMyProfile(data: UpdateTalentData): Promise<ApiResponse<Tale
 }
 
 /**
+ * Generate a bio suggestion using AI
+ */
+async function generateBio(context?: {
+  display_name?: string;
+  profile_tags?: string[];
+  sectors?: string[];
+  goals?: string[];
+  country?: string;
+  city?: string;
+  region?: string;
+}): Promise<ApiResponse<{ bio: string }>> {
+  return api.post<{ bio: string }>('/api/talents/generate-bio', context || {}, { timeout: 30000 });
+}
+
+/**
  * Get a talent profile by ID or slug
  */
 async function getTalent(idOrSlug: string): Promise<ApiResponse<Talent>> {
@@ -48,5 +63,6 @@ async function getTalent(idOrSlug: string): Promise<ApiResponse<Talent>> {
 export const talentService = {
   getMyProfile,
   updateMyProfile,
+  generateBio,
   getTalent,
 };

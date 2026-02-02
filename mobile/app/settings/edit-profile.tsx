@@ -21,6 +21,7 @@ import {
   Plane,
   Check,
   ChevronRight,
+  Wand2,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
 import { Input, Button, Toggle, StepIndicator } from '../../src/components/ui';
@@ -49,6 +50,7 @@ export default function EditProfileScreen() {
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingBio, setIsGeneratingBio] = useState(false);
 
   // Profile photo
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
@@ -164,6 +166,21 @@ export default function EditProfileScreen() {
       if (prev.length >= MAX_GOALS) return prev;
       return [...prev, goalId];
     });
+  };
+
+  const handleGenerateBio = async () => {
+    if (isGeneratingBio) return;
+    setIsGeneratingBio(true);
+    try {
+      const response = await talentService.generateBio();
+      if (response.data?.bio) {
+        setBio(response.data.bio);
+      }
+    } catch (error: any) {
+      Alert.alert('Erreur', error?.error || 'Impossible de générer la bio.');
+    } finally {
+      setIsGeneratingBio(false);
+    }
   };
 
   const handleNext = async () => {
@@ -366,6 +383,27 @@ export default function EditProfileScreen() {
               maxLength={300}
             />
             <Text style={[styles.charCount, { color: colors.gray400 }]}>{bio.length}/300</Text>
+          </View>
+          <View style={styles.generateButtonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.generateButton,
+                { backgroundColor: colors.primary },
+                isGeneratingBio && { opacity: 0.7 },
+              ]}
+              onPress={handleGenerateBio}
+              disabled={isGeneratingBio}
+              activeOpacity={0.8}
+            >
+              {isGeneratingBio ? (
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
+              ) : (
+                <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+              )}
+              <Text style={styles.generateButtonText}>
+                {isGeneratingBio ? 'Suggestion...' : 'Suggérer'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -890,6 +928,27 @@ const styles = StyleSheet.create({
   optionChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+
+  generateButtonContainer: {
+    alignItems: 'flex-start',
+    marginTop: SPACING.sm,
+  },
+
+  generateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER.radius.sm,
+  },
+
+  generateButtonText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    color: '#FFFFFF',
   },
 
   textAreaContainer: {

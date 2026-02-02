@@ -8,6 +8,8 @@ import { pool } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { onTalentProfileUpdate } from '../services/embedding.service';
 import { autoModerationService } from '../services/auto-moderation.service';
+import { run } from '@openai/agents';
+import { createBioGenAgent } from '../services/ai/agent-factory';
 
 // Type for SQL query parameters
 type QueryParam = string | number | boolean | null | Date | string[];
@@ -274,6 +276,72 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error updating talent profile:', error);
     res.status(500).json({ error: 'Failed to update talent profile' });
+  }
+});
+
+/**
+ * POST /api/talents/generate-bio
+ * Generate a bio suggestion based on the user's profile info
+ */
+router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const parts: string[] = [];
+    let skills: string[] = [];
+
+    // If talent exists, load from DB
+    if (req.talentId) {
+      const result = await pool.query(
+        `SELECT display_name, first_name, last_name, gender, profile_tags, sectors, goals, city, region, country
+         FROM talents WHERE id = $1 AND deleted_at IS NULL`,
+        [req.talentId]
+      );
+
+      if (result.rows.length > 0) {
+        const profile = result.rows[0];
+        if (profile.display_name) parts.push(`Nom: ${profile.display_name}`);
+        if (profile.profile_tags?.length) parts.push(`Profil: ${profile.profile_tags.join(', ')}`);
+        if (profile.sectors?.length) parts.push(`Secteurs: ${profile.sectors.join(', ')}`);
+        if (profile.goals?.length) parts.push(`Objectifs: ${profile.goals.join(', ')}`);
+        if (profile.city || profile.country) parts.push(`Localisation: ${[profile.city, profile.region, profile.country].filter(Boolean).join(', ')}`);
+      }
+
+      const skillsResult = await pool.query(
+        `SELECT s.canonical_name FROM talent_skills ts
+         JOIN skills s ON ts.skill_id = s.id
+         WHERE ts.talent_id = $1 LIMIT 10`,
+        [req.talentId]
+      );
+      skills = skillsResult.rows.map((r: { canonical_name: string }) => r.canonical_name);
+      if (skills.length) parts.push(`Compétences: ${skills.join(', ')}`);
+    }
+
+    // Override/supplement with body data (for create-profile before talent exists)
+    const body = req.body || {};
+    if (body.display_name && !parts.some(p => p.startsWith('Nom:'))) parts.push(`Nom: ${body.display_name}`);
+    if (body.profile_tags?.length && !parts.some(p => p.startsWith('Profil:'))) parts.push(`Profil: ${body.profile_tags.join(', ')}`);
+    if (body.sectors?.length && !parts.some(p => p.startsWith('Secteurs:'))) parts.push(`Secteurs: ${body.sectors.join(', ')}`);
+    if (body.goals?.length && !parts.some(p => p.startsWith('Objectifs:'))) parts.push(`Objectifs: ${body.goals.join(', ')}`);
+    if (body.country && !parts.some(p => p.startsWith('Localisation:'))) parts.push(`Localisation: ${[body.city, body.region, body.country].filter(Boolean).join(', ')}`);
+
+    if (parts.length === 0) {
+      return res.status(400).json({ error: 'Pas assez d\'informations pour générer une bio. Remplis d\'abord ton profil.' });
+    }
+
+    const userPrompt = `Génère une bio pour ce profil :\n${parts.join('\n')}`;
+
+    const agent = createBioGenAgent();
+    const aiResult = await run(agent, userPrompt);
+
+    const bio = aiResult.finalOutput?.trim();
+    if (!bio) {
+      return res.status(500).json({ error: 'Échec de la génération' });
+    }
+
+    // Truncate to 150 chars if needed
+    res.json({ success: true, bio: bio.slice(0, 150) });
+  } catch (error) {
+    console.error('Error generating bio:', error);
+    res.status(500).json({ error: 'Erreur lors de la génération de la bio' });
   }
 });
 
