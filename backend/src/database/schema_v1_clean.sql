@@ -114,7 +114,6 @@ CREATE INDEX idx_sessions_is_active ON sessions(is_active) WHERE is_active = TRU
 CREATE TABLE talents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     slug VARCHAR(255) UNIQUE NOT NULL,
-    display_name VARCHAR(255) NOT NULL,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     bio TEXT,
@@ -152,26 +151,14 @@ CREATE INDEX idx_users_talent_id ON users(talent_id);
 -- SKILLS
 CREATE TABLE skills (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    canonical_name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE NOT NULL,
-    aliases TEXT[],
+    canonical_name VARCHAR(255) UNIQUE NOT NULL,
     type VARCHAR(50) NOT NULL, -- KNOWLEDGE, SOFT_SKILL, HARD_SKILL
-    domain VARCHAR(100),
-    parent_skill_id UUID REFERENCES skills(id) ON DELETE SET NULL,
-    esco_uri TEXT,
-    onet_code VARCHAR(50),
-    embedding VECTOR(1536),
-    typical_evidence TEXT[],
-    growth_trend VARCHAR(50), -- DECLINING, STABLE, GROWING, EMERGING
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX idx_skills_slug ON skills(slug);
 CREATE INDEX idx_skills_type ON skills(type);
-CREATE INDEX idx_skills_parent_skill_id ON skills(parent_skill_id);
-CREATE INDEX idx_skills_domain ON skills(domain);
 CREATE INDEX idx_skills_deleted_at ON skills(deleted_at) WHERE deleted_at IS NULL;
 
 CREATE TRIGGER trigger_skills_updated_at
@@ -921,50 +908,24 @@ CREATE INDEX idx_space_invitations_token ON space_invitations(invitation_token);
 -- TALENT SKILLS
 CREATE TABLE talent_skills (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID REFERENCES talents(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    proficiency_level VARCHAR(10) NOT NULL, -- A, A+, B, B+, C, C+
-    self_assessed BOOLEAN DEFAULT TRUE,
-    endorsed_count INTEGER DEFAULT 0,
-    verified_by UUID[],
-    years_of_experience NUMERIC(4,1),
-    last_used_at DATE,
+    talent_id UUID NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
+    canonical_name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL, -- KNOWLEDGE, SOFT_SKILL, HARD_SKILL
+    origin VARCHAR(50), -- SOURCE, DOCUMENT, EXTRACTION, etc.
+    document_id UUID, -- Reference to source document if extracted
+    proficiency_level VARCHAR(10), -- A, A+, B, B+, C, C+
     context TEXT,
-    UNIQUE(talent_id, skill_id)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(talent_id, canonical_name)
 );
 
 CREATE INDEX idx_talent_skills_talent_id ON talent_skills(talent_id);
-CREATE INDEX idx_talent_skills_skill_id ON talent_skills(skill_id);
-CREATE INDEX idx_talent_skills_proficiency ON talent_skills(proficiency_level);
+CREATE INDEX idx_talent_skills_canonical_name ON talent_skills(canonical_name);
+CREATE INDEX idx_talent_skills_type ON talent_skills(type);
 
--- TALENT LEARNING GOALS
-CREATE TABLE talent_learning_goals (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID REFERENCES talents(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    priority VARCHAR(50), -- LOW, MEDIUM, HIGH
-    reason TEXT,
-    target_level VARCHAR(10),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(talent_id, skill_id)
-);
-
-CREATE INDEX idx_talent_learning_goals_talent_id ON talent_learning_goals(talent_id);
-CREATE INDEX idx_talent_learning_goals_skill_id ON talent_learning_goals(skill_id);
-
--- SKILL ENDORSEMENTS
-CREATE TABLE skill_endorsements (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    endorser_id UUID REFERENCES talents(id) ON DELETE SET NULL,
-    talent_skill_id UUID REFERENCES talent_skills(id) ON DELETE CASCADE,
-    relationship_context TEXT,
-    comment TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(endorser_id, talent_skill_id)
-);
-
-CREATE INDEX idx_skill_endorsements_endorser_id ON skill_endorsements(endorser_id);
-CREATE INDEX idx_skill_endorsements_talent_skill_id ON skill_endorsements(talent_skill_id);
+CREATE TRIGGER trigger_talent_skills_updated_at
+    BEFORE UPDATE ON talent_skills FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- TALENT EXPERIENCES
 CREATE TABLE talent_experiences (
@@ -1026,7 +987,7 @@ CREATE TABLE mentorships (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     mentor_id UUID REFERENCES talents(id) ON DELETE CASCADE,
     mentee_id UUID REFERENCES talents(id) ON DELETE CASCADE,
-    focus_area_skill_ids UUID[],
+    focus_areas TEXT[],
     started_at DATE,
     ended_at DATE,
     status VARCHAR(50), -- ACTIVE, COMPLETED, PAUSED
@@ -1045,7 +1006,7 @@ CREATE TABLE recommendations (
     recommended_id UUID REFERENCES talents(id) ON DELETE CASCADE,
     relationship VARCHAR(255),
     recommendation_text TEXT,
-    highlighted_skill_ids UUID[],
+    highlighted_skills TEXT[],
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     visibility VARCHAR(50) DEFAULT 'PUBLIC',
     UNIQUE(recommender_id, recommended_id)
@@ -1053,57 +1014,6 @@ CREATE TABLE recommendations (
 
 CREATE INDEX idx_recommendations_recommender_id ON recommendations(recommender_id);
 CREATE INDEX idx_recommendations_recommended_id ON recommendations(recommended_id);
-
--- ═══════════════════════════════════════════════════════════════════════════
--- SECTION 8: SKILL RELATIONS
--- ═══════════════════════════════════════════════════════════════════════════
-
--- SKILL RELATIONS (Non-hierarchical)
-CREATE TABLE skill_relations (
-    from_skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    to_skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    relationship_type VARCHAR(50), -- PREREQUISITE_FOR, COMPLEMENTARY, ALTERNATIVE
-    strength NUMERIC(3,2),
-    PRIMARY KEY (from_skill_id, to_skill_id)
-);
-
-CREATE INDEX idx_skill_relations_to_skill_id ON skill_relations(to_skill_id);
-
--- SKILL EVOLUTIONS (Career paths)
-CREATE TABLE skill_evolutions (
-    from_skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    to_skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    typical_path TEXT,
-    PRIMARY KEY (from_skill_id, to_skill_id)
-);
-
-CREATE INDEX idx_skill_evolutions_to_skill_id ON skill_evolutions(to_skill_id);
-
--- OPPORTUNITY SKILLS
-CREATE TABLE opportunity_skills (
-    opportunity_id UUID REFERENCES opportunities(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    is_required BOOLEAN DEFAULT TRUE,
-    proficiency_level VARCHAR(10),
-    relevance_score NUMERIC(3,2),
-    is_auto_generated BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (opportunity_id, skill_id)
-);
-
-CREATE INDEX idx_opportunity_skills_skill_id ON opportunity_skills(skill_id);
-
--- ORGANIZATION SKILLS
-CREATE TABLE organization_skills (
-    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    relevance_score NUMERIC(3,2),
-    is_auto_generated BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (organization_id, skill_id)
-);
-
-CREATE INDEX idx_organization_skills_skill_id ON organization_skills(skill_id);
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- SECTION 9: HELPER FUNCTIONS
@@ -1209,7 +1119,6 @@ $$ LANGUAGE plpgsql;
 -- ═══════════════════════════════════════════════════════════════════════════
 
 CREATE VIEW active_talents AS SELECT * FROM talents WHERE deleted_at IS NULL;
-CREATE VIEW active_skills AS SELECT * FROM skills WHERE deleted_at IS NULL;
 CREATE VIEW active_organizations AS SELECT * FROM organizations WHERE deleted_at IS NULL;
 CREATE VIEW active_communities AS SELECT * FROM communities WHERE deleted_at IS NULL;
 CREATE VIEW active_opportunities AS SELECT * FROM opportunities WHERE deleted_at IS NULL;
@@ -1221,7 +1130,7 @@ WHERE deleted_at IS NULL AND status = 'OPEN'
 AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP);
 
 CREATE VIEW active_users AS
-SELECT u.*, t.display_name, t.avatar_url, t.slug as talent_slug
+SELECT u.*, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.avatar_url, t.slug as talent_slug
 FROM users u LEFT JOIN talents t ON u.talent_id = t.id
 WHERE u.deleted_at IS NULL AND u.is_active = TRUE;
 

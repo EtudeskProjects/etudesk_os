@@ -460,7 +460,7 @@ router.get('/admin/:communityId/subscribers', authMiddleware, async (req: any, r
                 cs.*,
                 json_build_object(
                     'id', t.id,
-                    'display_name', t.display_name,
+                    'display_name', COALESCE(t.first_name || ' ' || t.last_name, t.email),
                     'email', t.email,
                     'avatar_url', t.avatar_url
                 ) as talent

@@ -51,7 +51,6 @@ export interface RankedApplication {
     country?: string;
     bio?: string;
     current_role?: string;
-    years_experience?: number;
     skills?: string[];
     sectors?: string[];
     remote_ready?: boolean;
@@ -66,6 +65,7 @@ export interface RankedApplication {
     type?: string;
   };
   rank: number;
+  matchScore: number;
   matchCategory: 'excellent' | 'good' | 'average' | 'low';
 }
 
@@ -175,86 +175,23 @@ async function calculateSkillsScore(
   const maxScore = WEIGHTS.skills;
 
   try {
-    // Get opportunity required skills
-    const oppSkillsResult = await pool.query(`
-      SELECT os.skill_id, os.is_required, os.proficiency_level, s.canonical_name
-      FROM opportunity_skills os
-      JOIN skills s ON os.skill_id = s.id
-      WHERE os.opportunity_id = $1
-    `, [opportunityId]);
-
-    const oppSkills = oppSkillsResult.rows;
-
-    if (oppSkills.length === 0) {
-      // No specific skills required, use talent skills array if available
-      if (talentSkills && talentSkills.length > 0) {
-        return maxScore * 0.7; // Has skills, but can't match specifically
-      }
-      return maxScore * 0.5; // No skills defined
+    // No opportunity_skills table anymore — use talent skills if available
+    if (talentSkills && talentSkills.length > 0) {
+      return maxScore * 0.7;
     }
 
     // Get talent skills with proficiency
     const talentSkillsResult = await pool.query(`
-      SELECT ts.skill_id, ts.proficiency_level, s.canonical_name
-      FROM talent_skills ts
-      JOIN skills s ON ts.skill_id = s.id
-      WHERE ts.talent_id = $1
+      SELECT canonical_name, proficiency_level
+      FROM talent_skills
+      WHERE talent_id = $1
     `, [talentId]);
 
-    const talentSkillMap = new Map(
-      talentSkillsResult.rows.map(s => [s.skill_id, s])
-    );
-
-    let totalPoints = 0;
-    let requiredSkillsCount = 0;
-    let niceToHaveMatches = 0;
-
-    for (const oppSkill of oppSkills) {
-      const talentSkill = talentSkillMap.get(oppSkill.skill_id);
-
-      if (oppSkill.is_required) {
-        requiredSkillsCount++;
-        if (talentSkill) {
-          // Check proficiency level
-          const talentLevel = PROFICIENCY_ORDER.indexOf(talentSkill.proficiency_level);
-          const requiredLevel = PROFICIENCY_ORDER.indexOf(oppSkill.proficiency_level || 'B');
-
-          if (talentLevel >= requiredLevel) {
-            totalPoints += 1.0; // Full match
-          } else if (talentLevel >= requiredLevel - 1) {
-            totalPoints += 0.7; // Close match
-          } else {
-            totalPoints += 0.3; // Has skill but lower level
-          }
-        }
-      } else {
-        // Nice to have skill
-        if (talentSkill) {
-          niceToHaveMatches++;
-        }
-      }
+    if (talentSkillsResult.rows.length === 0) {
+      return maxScore * 0.3;
     }
 
-    // Calculate base score from required skills
-    let score = requiredSkillsCount > 0
-      ? (totalPoints / requiredSkillsCount) * maxScore
-      : maxScore * 0.5;
-
-    // Bonus for nice-to-have skills (max 5 extra points)
-    const niceToHaveBonus = Math.min(niceToHaveMatches * 1.5, 5);
-    score = Math.min(maxScore, score + niceToHaveBonus);
-
-    // If no structured skills, try text matching with talent.skills array
-    if (requiredSkillsCount === 0 && talentSkills && talentSkills.length > 0) {
-      // Simple text matching as fallback
-      const oppSkillNames = oppSkills.map(s => s.canonical_name.toLowerCase());
-      const matches = talentSkills.filter(s =>
-        oppSkillNames.some(os => os.includes(s.toLowerCase()) || s.toLowerCase().includes(os))
-      );
-      score = (matches.length / Math.max(oppSkills.length, 1)) * maxScore;
-    }
-
-    return Math.round(score * 10) / 10;
+    return maxScore * 0.5;
   } catch (error) {
     console.error('Error calculating skills score:', error);
     // Fallback: if talent has skills array, give partial credit
@@ -473,7 +410,6 @@ export async function calculateMatchingScore(
       region?: string;
       country?: string;
       remote_ready?: boolean;
-      years_experience?: number;
       skills?: string[];
       sectors?: string[];
       profile_tags?: string[];
@@ -573,7 +509,7 @@ export async function rankApplications(
       a.viewed_at,
       json_build_object(
         'id', t.id,
-        'display_name', t.display_name,
+        'display_name', COALESCE(t.first_name || ' ' || t.last_name, t.email),
         'first_name', t.first_name,
         'last_name', t.last_name,
         'email', t.email,
@@ -582,7 +518,7 @@ export async function rankApplications(
         'region', t.region,
         'country', t.country,
         'bio', t.bio,
-        'skills', (SELECT ARRAY_AGG(s.canonical_name) FROM talent_skills ts JOIN skills s ON ts.skill_id = s.id WHERE ts.talent_id = t.id),
+        'skills', (SELECT ARRAY_AGG(canonical_name) FROM talent_skills WHERE talent_id = t.id),
         'sectors', t.sectors,
         'remote_ready', t.remote_ready,
         'profile_tags', t.profile_tags,
@@ -658,6 +594,7 @@ export async function rankApplications(
     return {
       ...rest,
       rank: index + 1,
+      matchScore: _score,
       matchCategory: _matchCategory,
     } as RankedApplication;
   });

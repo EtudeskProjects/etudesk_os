@@ -39,10 +39,11 @@ export const graphQueryTool = tool({
       'add_skill',
       'update_mastery',
     ]),
-    params: z.record(z.string(), z.unknown()).describe("Paramètres spécifiques à l'intent"),
+    paramsJson: z.string().describe("Paramètres spécifiques à l'intent en JSON string (ex: '{\"talentId\":\"uuid\"}')"),
   }),
-  execute: async ({ intent, params }) => {
-    // Extract talentId from run context — it's passed via params
+  execute: async ({ intent, paramsJson }) => {
+    // Parse params from JSON string
+    const params: Record<string, unknown> = paramsJson ? JSON.parse(paramsJson) : {};
     const talentId = params.talentId as string;
     if (!talentId) {
       return { error: 'talentId est requis dans params' };

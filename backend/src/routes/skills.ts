@@ -16,7 +16,7 @@ router.use(authMiddleware);
 
 /**
  * GET /api/skills/my
- * Get current talent's skills with skill details
+ * Get current talent's skills
  */
 router.get('/my', async (req: AuthRequest, res: Response) => {
   try {
@@ -26,14 +26,11 @@ router.get('/my', async (req: AuthRequest, res: Response) => {
     }
 
     const result = await pool.query(
-      `SELECT ts.id, ts.skill_id, ts.proficiency_level, ts.self_assessed,
-              ts.endorsed_count, ts.years_of_experience, ts.last_used_at,
-              ts.context, ts.origin, ts.created_at,
-              s.canonical_name, s.slug, s.type, s.domain, s.aliases
-       FROM talent_skills ts
-       JOIN skills s ON s.id = ts.skill_id
-       WHERE ts.talent_id = $1
-       ORDER BY ts.proficiency_level DESC, s.canonical_name ASC`,
+      `SELECT id, canonical_name, type, proficiency_level,
+              context, origin, created_at
+       FROM talent_skills
+       WHERE talent_id = $1
+       ORDER BY proficiency_level DESC, canonical_name ASC`,
       [talentId]
     );
 
@@ -55,64 +52,41 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Profil talent requis' });
     }
 
-    const { skillId, skillName, proficiencyLevel, type, context } = req.body;
+    const { skillName, proficiencyLevel, type, context } = req.body;
 
     if (!proficiencyLevel || !isValidProficiencyLevel(proficiencyLevel)) {
       return res.status(400).json({ error: 'Niveau de compétence invalide' });
     }
 
-    let resolvedSkillId = skillId;
-
-    // If no skillId, create or find the skill by name
-    if (!resolvedSkillId && skillName) {
-      const slug = skillName.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-
-      // Try to find existing
-      const existing = await pool.query(
-        `SELECT id FROM skills WHERE slug = $1`,
-        [slug]
-      );
-
-      if (existing.rows.length > 0) {
-        resolvedSkillId = existing.rows[0].id;
-      } else {
-        // Create new skill - type is required
-        if (!type || !isValidSkillType(type)) {
-          return res.status(400).json({ error: 'Le type de compétence est requis (KNOWLEDGE, HARD_SKILL, SOFT_SKILL)' });
-        }
-        const skillType = type;
-        const created = await pool.query(
-          `INSERT INTO skills (canonical_name, slug, type)
-           VALUES ($1, $2, $3) RETURNING id`,
-          [skillName.trim(), slug, skillType]
-        );
-        resolvedSkillId = created.rows[0].id;
-      }
+    if (!skillName) {
+      return res.status(400).json({ error: 'skillName requis' });
     }
 
-    if (!resolvedSkillId) {
-      return res.status(400).json({ error: 'skillId ou skillName requis' });
+    if (!type || !isValidSkillType(type)) {
+      return res.status(400).json({ error: 'Le type de compétence est requis (KNOWLEDGE, HARD_SKILL, SOFT_SKILL)' });
     }
+
+    const canonicalName = skillName.trim();
 
     // Check if already exists
-    const existingLink = await pool.query(
-      `SELECT id FROM talent_skills WHERE talent_id = $1 AND skill_id = $2`,
-      [talentId, resolvedSkillId]
+    const existing = await pool.query(
+      `SELECT id FROM talent_skills WHERE talent_id = $1 AND canonical_name = $2`,
+      [talentId, canonicalName]
     );
 
-    if (existingLink.rows.length > 0) {
+    if (existing.rows.length > 0) {
       // Update proficiency and optionally context
       await pool.query(
         `UPDATE talent_skills SET proficiency_level = $1${context ? ', context = $3' : ''} WHERE id = $2`,
-        context ? [proficiencyLevel, existingLink.rows[0].id, context] : [proficiencyLevel, existingLink.rows[0].id]
+        context ? [proficiencyLevel, existing.rows[0].id, context] : [proficiencyLevel, existing.rows[0].id]
       );
-      return res.json({ data: { id: existingLink.rows[0].id, updated: true } });
+      return res.json({ data: { id: existing.rows[0].id, updated: true } });
     }
 
     const result = await pool.query(
-      `INSERT INTO talent_skills (talent_id, skill_id, proficiency_level${context ? ', context' : ''})
-       VALUES ($1, $2, $3${context ? ', $4' : ''}) RETURNING id`,
-      context ? [talentId, resolvedSkillId, proficiencyLevel, context] : [talentId, resolvedSkillId, proficiencyLevel]
+      `INSERT INTO talent_skills (talent_id, canonical_name, type, proficiency_level${context ? ', context' : ''})
+       VALUES ($1, $2, $3, $4${context ? ', $5' : ''}) RETURNING id`,
+      context ? [talentId, canonicalName, type, proficiencyLevel, context] : [talentId, canonicalName, type, proficiencyLevel]
     );
 
     return res.status(201).json({ data: { id: result.rows[0].id } });

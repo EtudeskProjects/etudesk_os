@@ -22,6 +22,7 @@ export const DOCUMENT_TYPES = {
   ID_CARD: 'ID_CARD',
   PASSPORT: 'PASSPORT',
   DRIVER_LICENSE: 'DRIVER_LICENSE',
+  STUDENT_CARD: 'STUDENT_CARD',
   PROOF_OF_ADDRESS: 'PROOF_OF_ADDRESS',
   // Other
   OTHER: 'OTHER',
@@ -43,6 +44,7 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   ID_CARD: "Carte d'identité",
   PASSPORT: 'Passeport',
   DRIVER_LICENSE: 'Permis de conduire',
+  STUDENT_CARD: 'Carte scolaire / étudiante',
   PROOF_OF_ADDRESS: 'Justificatif de domicile',
   OTHER: 'Autre document',
 };
@@ -71,6 +73,7 @@ export const DOCUMENT_TYPE_CATEGORIES: Record<DocumentType, DocumentCategory> = 
   ID_CARD: 'IDENTITY',
   PASSPORT: 'IDENTITY',
   DRIVER_LICENSE: 'IDENTITY',
+  STUDENT_CARD: 'IDENTITY',
   PROOF_OF_ADDRESS: 'IDENTITY',
   OTHER: 'OTHER',
 };

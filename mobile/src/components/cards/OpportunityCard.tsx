@@ -25,6 +25,13 @@ import { getFullImageUrl } from '../../utils/image';
 import type { Opportunity, ContractType, WorkRhythm } from '../../types/models';
 import { CONTRACT_TYPE_LABELS, WORK_RHYTHM_LABELS, LOCATION_TYPE_LABELS } from '../../types/models';
 
+interface StatusOverlay {
+    label: string;
+    color: string;
+    bgColor: string;
+    icon?: React.ReactNode;
+}
+
 interface OpportunityCardProps {
     opportunity: Opportunity;
     onPress: () => void;
@@ -40,6 +47,7 @@ interface OpportunityCardProps {
     showStats?: boolean;
     showStatus?: boolean;
     isLast?: boolean;
+    statusOverlay?: StatusOverlay;
 }
 
 
@@ -58,6 +66,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     showStats = false,
     showStatus = false,
     isLast = false,
+    statusOverlay,
 }) => {
     const { colors } = useTheme();
     const deadline = opportunity.deadline ? formatDeadline(opportunity.deadline) : null;
@@ -139,6 +148,17 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
                         </View>
                     )}
                 </View>
+
+                {statusOverlay && (
+                    <View style={styles.statusOverlayRow}>
+                        <View style={[styles.statusOverlayBadge, { backgroundColor: colors.surface }]}>
+                            {statusOverlay.icon}
+                            <Text style={[styles.statusOverlayText, { color: statusOverlay.color }]}>
+                                {statusOverlay.label}
+                            </Text>
+                        </View>
+                    </View>
+                )}
             </View>
 
             <View style={styles.content}>
@@ -282,6 +302,23 @@ const styles = StyleSheet.create({
         height: '100%',
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    statusOverlayRow: {
+        position: 'absolute',
+        top: SPACING.sm,
+        right: SPACING.sm,
+    },
+    statusOverlayBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACING.xs,
+        paddingVertical: SPACING.xs,
+        paddingHorizontal: SPACING.sm,
+        borderRadius: BORDER.radius.full,
+    },
+    statusOverlayText: {
+        fontSize: TYPOGRAPHY.fontSize.xs,
+        fontWeight: TYPOGRAPHY.fontWeight.semibold,
     },
     content: {
         padding: SPACING.md,

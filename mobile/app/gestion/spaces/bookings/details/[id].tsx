@@ -58,27 +58,27 @@ const getStatusFlow = (colors: any): Record<BookingStatus, {
 }> => ({
   PENDING: {
     label: 'En attente',
-    description: 'Reservation en attente de confirmation',
+    description: 'Réservation en attente de confirmation',
     color: colors.warning,
   },
   CONFIRMED: {
-    label: 'Confirmee',
-    description: 'Reservation confirmee',
+    label: 'Confirmée',
+    description: 'Réservation confirmée',
     color: colors.info,
   },
   COMPLETED: {
-    label: 'Terminee',
-    description: 'Reservation terminee avec succes',
+    label: 'Terminée',
+    description: 'Réservation terminée avec succès',
     color: colors.success,
   },
   CANCELLED: {
-    label: 'Annulee',
-    description: 'Reservation annulee',
+    label: 'Annulée',
+    description: 'Réservation annulée',
     color: colors.error,
   },
   NO_SHOW: {
     label: 'Absent',
-    description: 'Le client ne s\'est pas presente',
+    description: 'Le client ne s\'est pas présenté',
     color: colors.gray500,
   },
 });

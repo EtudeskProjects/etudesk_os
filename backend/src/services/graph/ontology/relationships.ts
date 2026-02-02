@@ -47,11 +47,16 @@ export const RelationshipTypes = {
   SIMILAIRE_A: 'SIMILAIRE_A',
 
   // Entity Relations
-  REQUIERT_COMPETENCE: 'REQUIERT_COMPETENCE',
   PUBLIE_PAR: 'PUBLIE_PAR',
   APPARTIENT_A: 'APPARTIENT_A',
   PREREQUIS_POUR: 'PREREQUIS_POUR',
   COMPLEMENTAIRE_A: 'COMPLEMENTAIRE_A',
+
+  // Organization → Space
+  HEBERGE: 'HEBERGE',
+
+  // Entity → Sector
+  DANS_SECTEUR: 'DANS_SECTEUR',
 } as const;
 
 export type RelationshipType = (typeof RelationshipTypes)[keyof typeof RelationshipTypes];
@@ -62,9 +67,6 @@ export type RelationshipType = (typeof RelationshipTypes)[keyof typeof Relations
 
 export interface PossedeCompetenceProps {
   proficiency_level: 'debutant' | 'intermediaire' | 'avance' | 'expert';
-  years_experience?: number;
-  verified: boolean;
-  endorsed_count?: number;
   source?: 'profile' | 'cv' | 'linkedin' | 'certificate' | 'inferred';
   acquired_at?: string;
 }
@@ -187,13 +189,6 @@ export interface SimilaireAProps {
   computed_at: string;
 }
 
-// Entity Relations
-export interface RequiertCompetenceProps {
-  level_required: 'debutant' | 'intermediaire' | 'avance' | 'expert';
-  is_mandatory: boolean;
-  weight?: number;
-}
-
 export interface PublieParProps {
   published_at: string;
   contact_person?: string;
@@ -212,6 +207,15 @@ export interface PrerequisPourProps {
 export interface ComplementaireAProps {
   synergy_score: number;
   common_use_cases?: string[];
+}
+
+export interface HebergeProps {
+  since?: string;
+  is_official: boolean;
+}
+
+export interface DansSecteurProps {
+  is_primary?: boolean;
 }
 
 // Union type for all relationship properties
@@ -233,11 +237,12 @@ export type RelationshipProps =
   | InteresseParProps
   | DevraitApprendreProps
   | SimilaireAProps
-  | RequiertCompetenceProps
   | PublieParProps
   | AppartientAProps
   | PrerequisPourProps
-  | ComplementaireAProps;
+  | ComplementaireAProps
+  | HebergeProps
+  | DansSecteurProps;
 
 // ═══════════════════════════════════════════════════════════════
 // RELATIONSHIP DIRECTION HELPERS
@@ -261,9 +266,10 @@ export const RelationshipDirections: Record<RelationshipType, { from: string; to
   INTERESSE_PAR: { from: 'Talent', to: 'Skill' }, // Can also be Organization, Community
   DEVRAIT_APPRENDRE: { from: 'Talent', to: 'Skill' },
   SIMILAIRE_A: { from: 'Talent', to: 'Talent' },
-  REQUIERT_COMPETENCE: { from: 'Opportunity', to: 'Skill' },
   PUBLIE_PAR: { from: 'Opportunity', to: 'Organization' },
   APPARTIENT_A: { from: 'Community', to: 'Organization' },
   PREREQUIS_POUR: { from: 'Skill', to: 'Skill' },
   COMPLEMENTAIRE_A: { from: 'Skill', to: 'Skill' },
+  HEBERGE: { from: 'Organization', to: 'Space' },
+  DANS_SECTEUR: { from: 'Organization', to: 'Sector' }, // Also Community, Opportunity
 };

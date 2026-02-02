@@ -7,19 +7,11 @@ import { api } from './api';
 
 export interface TalentSkill {
   id: string;
-  skill_id: string;
   proficiency_level: 'BEGINNER' | 'INTERMEDIATE' | 'EXPERT' | 'MASTER';
-  self_assessed: boolean;
-  endorsed_count: number;
-  years_of_experience: number | null;
-  last_used_at: string | null;
   context: string | null;
   origin: 'declared' | 'inferred' | 'extracted';
   canonical_name: string;
-  slug: string;
   type: 'KNOWLEDGE' | 'SOFT_SKILL' | 'HARD_SKILL';
-  domain: string | null;
-  aliases: string[] | null;
   created_at: string | null;
 }
 

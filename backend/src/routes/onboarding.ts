@@ -30,7 +30,6 @@ const VALID_GOALS = [
 ];
 
 interface OnboardingData {
-  displayName: string;
   firstName?: string;
   lastName?: string;
   bio?: string;
@@ -42,7 +41,7 @@ interface OnboardingData {
   sectors?: string[];
   remoteReady?: boolean;
   willingToRelocate?: boolean;
-  phone?: string;
+  phone: string;
 }
 
 /**
@@ -54,20 +53,12 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
   try {
     const data: OnboardingData = req.body;
 
-    // Validate required fields
-    if (!data.displayName || typeof data.displayName !== 'string') {
+    // Validate required fields - firstName is now required
+    if (!data.firstName || typeof data.firstName !== 'string' || data.firstName.trim().length < 1) {
       return res.status(400).json({
         success: false,
-        error: 'Nom d\'affichage requis',
-        field: 'displayName',
-      });
-    }
-
-    if (data.displayName.length < 2 || data.displayName.length > 100) {
-      return res.status(400).json({
-        success: false,
-        error: 'Le nom doit contenir entre 2 et 100 caractères',
-        field: 'displayName',
+        error: 'Prénom requis',
+        field: 'firstName',
       });
     }
 
@@ -123,6 +114,15 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       }
     }
 
+    // Validate phone (required, min 8 chars)
+    if (!data.phone || data.phone.trim().length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'Le numéro de téléphone est requis (minimum 8 caractères)',
+        field: 'phone',
+      });
+    }
+
     // Validate country code
     if (data.country && data.country.length !== 2) {
       return res.status(400).json({
@@ -135,7 +135,6 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
     // Content moderation for user-generated text fields
     try {
       await autoModerationService.assertContentApproved({
-        displayName: data.displayName,
         bio: data.bio,
       });
     } catch (moderationError: any) {
@@ -177,7 +176,8 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       }
 
       // Generate unique slug
-      let slug = generateSlug(data.displayName);
+      const displayNameForSlug = [data.firstName, data.lastName].filter(Boolean).join(' ') || 'talent';
+      let slug = generateSlug(displayNameForSlug);
       let slugSuffix = 1;
       let finalSlug = slug;
 
@@ -203,23 +203,22 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       try {
         await client.query(
           `INSERT INTO talents (
-            id, slug, display_name, first_name, last_name, bio, email, phone,
+            id, slug, first_name, last_name, bio, email, phone,
             city, region, country, remote_ready, willing_to_relocate,
             profile_tags, goals, sectors, created_at, updated_at
           ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8,
-            $9, $10, $11, $12, $13,
-            $14, $15, $16, NOW(), NOW()
+            $1, $2, $3, $4, $5, $6, $7,
+            $8, $9, $10, $11, $12,
+            $13, $14, $15, NOW(), NOW()
           )`,
           [
             talentId,
             finalSlug,
-            data.displayName.trim(),
             data.firstName?.trim() || null,
             data.lastName?.trim() || null,
             data.bio?.trim() || null,
             user.email,
-            data.phone?.trim() || null,
+            data.phone.trim(),
             data.city?.trim() || null,
             data.region?.trim() || null,
             data.country?.toUpperCase() || null,
@@ -236,21 +235,22 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
           console.log('⚠️ Some columns missing, using fallback INSERT');
           await client.query(
             `INSERT INTO talents (
-              id, slug, display_name, bio, email, phone,
+              id, slug, first_name, last_name, bio, email, phone,
               city, region, country, remote_ready, willing_to_relocate,
               profile_tags, goals, created_at, updated_at
             ) VALUES (
-              $1, $2, $3, $4, $5, $6,
-              $7, $8, $9, $10, $11,
-              $12, $13, NOW(), NOW()
+              $1, $2, $3, $4, $5, $6, $7,
+              $8, $9, $10, $11, $12,
+              $13, $14, NOW(), NOW()
             )`,
             [
               talentId,
               finalSlug,
-              data.displayName.trim(),
+              data.firstName?.trim() || null,
+              data.lastName?.trim() || null,
               data.bio?.trim() || null,
               user.email,
-              data.phone?.trim() || null,
+              data.phone.trim(),
               data.city?.trim() || null,
               data.region?.trim() || null,
               data.country?.toUpperCase() || null,
@@ -274,7 +274,8 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       await client.query('COMMIT');
 
       // Send welcome email (async, don't wait)
-      sendWelcomeEmail(user.email, data.displayName).catch(err => {
+      const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ') || user.email;
+      sendWelcomeEmail(user.email, fullName).catch(err => {
         console.error('❌ Failed to send welcome email:', err);
       });
 
@@ -293,7 +294,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
           talent: {
             id: talentId,
             slug: finalSlug,
-            displayName: data.displayName,
+            displayName: fullName,
             email: user.email,
           },
           tokens: {
@@ -333,7 +334,7 @@ router.get('/status', authMiddleware, async (req: AuthRequest, res: Response) =>
         u.id,
         u.email,
         u.talent_id,
-        t.display_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
         t.slug
        FROM users u
        LEFT JOIN talents t ON u.talent_id = t.id
@@ -359,7 +360,7 @@ router.get('/status', authMiddleware, async (req: AuthRequest, res: Response) =>
           talent: isComplete ? {
             id: user.talent_id,
             slug: user.slug,
-            displayName: user.display_name,
+            displayName: user.display_name, // computed from SQL COALESCE
           } : null,
         },
       },

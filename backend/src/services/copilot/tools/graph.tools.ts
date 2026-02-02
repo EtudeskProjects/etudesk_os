@@ -315,7 +315,12 @@ export async function exploreSkillPath(
   targetSkill: string;
   hasPath: boolean;
   recommendations: string[];
+  error?: string;
 }> {
+  if (!params.targetSkill) {
+    return { paths: [], targetSkill: '', hasPath: false, recommendations: [], error: 'targetSkill est requis pour explorer un chemin d\'apprentissage' };
+  }
+
   const paths = await learningQueries.findLearningPath(
     context.talentId,
     params.targetSkill,
@@ -570,25 +575,12 @@ export async function addSkillToProfile(
 }> {
   try {
     const { pool } = await import('../../database');
-    const slug = params.skillName.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-
-    // Find or create the skill
-    let skillId: string;
-    const existing = await pool.query(`SELECT id FROM skills WHERE slug = $1`, [slug]);
-    if (existing.rows.length > 0) {
-      skillId = existing.rows[0].id;
-    } else {
-      const created = await pool.query(
-        `INSERT INTO skills (canonical_name, slug, type) VALUES ($1, $2, $3) RETURNING id`,
-        [params.skillName.trim(), slug, params.type]
-      );
-      skillId = created.rows[0].id;
-    }
+    const canonicalName = params.skillName.trim();
 
     // Upsert into talent_skills with origin='inferred'
     const existingLink = await pool.query(
-      `SELECT id FROM talent_skills WHERE talent_id = $1 AND skill_id = $2`,
-      [context.talentId, skillId]
+      `SELECT id FROM talent_skills WHERE talent_id = $1 AND canonical_name = $2`,
+      [context.talentId, canonicalName]
     );
 
     if (existingLink.rows.length > 0) {
@@ -600,11 +592,11 @@ export async function addSkillToProfile(
       );
     } else {
       await pool.query(
-        `INSERT INTO talent_skills (talent_id, skill_id, proficiency_level, origin${params.context ? ', context' : ''})
-         VALUES ($1, $2, $3, 'inferred'${params.context ? ', $4' : ''})`,
+        `INSERT INTO talent_skills (talent_id, canonical_name, type, proficiency_level, origin${params.context ? ', context' : ''})
+         VALUES ($1, $2, $3, $4, 'inferred'${params.context ? ', $5' : ''})`,
         params.context
-          ? [context.talentId, skillId, params.proficiencyLevel, params.context]
-          : [context.talentId, skillId, params.proficiencyLevel]
+          ? [context.talentId, canonicalName, params.type, params.proficiencyLevel, params.context]
+          : [context.talentId, canonicalName, params.type, params.proficiencyLevel]
       );
     }
 

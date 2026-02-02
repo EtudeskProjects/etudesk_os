@@ -3,12 +3,10 @@
  */
 
 export {
-  createExtractionAgent,
   createSpaceGenAgent,
   createCommunityGenAgent,
   createOpportunityGenAgent,
   createRecommendationAgent,
-  createKYCAgent,
   createTitleAgent,
   createSuggestionsAgent,
 } from './agent-factory';

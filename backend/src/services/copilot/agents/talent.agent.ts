@@ -36,8 +36,5 @@ export function createTalentAgent(
         ? buildTalentExplorerPrompt(context)
         : buildTalentStudyPrompt(context),
     tools: mode === 'explorer' ? sharedTools : studyTools,
-    modelSettings: {
-      temperature: mode === 'explorer' ? 0.4 : 0.6,
-    },
   });
 }

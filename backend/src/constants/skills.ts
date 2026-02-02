@@ -1,10 +1,10 @@
 /**
  * Skills Constants
- * Aligned with database schema (skills + talent_skills tables)
+ * Aligned with database schema (talent_skills table)
  */
 
 // ═══════════════════════════════════════════════════════════════
-// SKILL TYPES (skills.type)
+// SKILL TYPES (talent_skills.type)
 // ═══════════════════════════════════════════════════════════════
 
 export const SKILL_TYPES = {

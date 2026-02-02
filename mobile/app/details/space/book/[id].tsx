@@ -39,6 +39,7 @@ import {
   Plus,
   CalendarDays,
   Info,
+  FileText,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../../src/constants/theme';
 import { Button, StepIndicator } from '../../../../src/components/ui';
@@ -51,7 +52,10 @@ import {
   SpaceAvailability,
   AvailabilityCheckResult,
   talentService,
+  kycService,
 } from '../../../../src/services';
+import type { TalentObjectData } from '../../../../src/types/models';
+import { getFullImageUrl } from '../../../../src/utils/image';
 import {
   SPACE_TYPE_LABELS,
   formatPrice,
@@ -76,18 +80,6 @@ const STEP_TITLES: Record<BookingStep, string> = {
   preview: 'Apercu',
   success: 'Confirmation',
 };
-
-interface UserProfile {
-  id: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  phone?: string;
-  headline?: string;
-  city?: string;
-  country?: string;
-  profile_picture_url?: string;
-}
 
 interface BookingQuestion {
   id: string;
@@ -188,7 +180,7 @@ export default function BookSpaceScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [space, setSpace] = useState<Space | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<TalentObjectData | null>(null);
   const [availabilities, setAvailabilities] = useState<SpaceAvailability[]>([]);
   const [availabilityResult, setAvailabilityResult] = useState<AvailabilityCheckResult | null>(null);
   const [bookingReference, setBookingReference] = useState<string>('');
@@ -315,6 +307,34 @@ export default function BookSpaceScreen() {
 
     setIsLoading(true);
     try {
+      // KYC gate: vérification d'identité obligatoire
+      try {
+        const kycRes = await kycService.getStatus();
+        if (!kycRes?.data || kycRes.data.status !== 'VERIFIED') {
+          Alert.alert(
+            'Vérification requise',
+            'Tu dois vérifier ton identité avant de réserver un espace.',
+            [
+              { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
+              { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
+            ]
+          );
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        Alert.alert(
+          'Vérification requise',
+          'Tu dois vérifier ton identité avant de réserver un espace.',
+          [
+            { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
+            { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
+          ]
+        );
+        setIsLoading(false);
+        return;
+      }
+
       // Load space and availabilities first (may not require auth for public spaces)
       const [spaceResponse, availabilitiesResponse] = await Promise.all([
         spaceService.getById(id),
@@ -342,7 +362,7 @@ export default function BookSpaceScreen() {
 
       // Try to load user profile (requires auth)
       try {
-        const profileResponse = await talentService.getMyProfile();
+        const profileResponse = await talentService.getMyTalentObject();
         setProfile(profileResponse.data);
       } catch (profileError: any) {
         // If session expired (401), redirect to login
@@ -358,14 +378,24 @@ export default function BookSpaceScreen() {
         if (user) {
           setProfile({
             id: user.id || '',
-            first_name: (user as any).firstName || (user as any).first_name,
-            last_name: (user as any).lastName || (user as any).last_name,
-            email: user.email,
-            phone: (user as any).phone,
-            headline: (user as any).headline,
-            city: (user as any).city,
-            country: (user as any).country,
-            profile_picture_url: (user as any).profilePictureUrl || (user as any).profile_picture_url,
+            first_name: (user as any).firstName || (user as any).first_name || null,
+            last_name: (user as any).lastName || (user as any).last_name || null,
+            display_name: `${(user as any).firstName || (user as any).first_name || ''} ${(user as any).lastName || (user as any).last_name || ''}`.trim(),
+            email: user.email || null,
+            phone: (user as any).phone || null,
+            avatar_url: (user as any).profilePictureUrl || (user as any).profile_picture_url || null,
+            gender: null,
+            bio: null,
+            profile_tags: [],
+            sectors: [],
+            goals: [],
+            city: (user as any).city || null,
+            region: null,
+            country: (user as any).country || null,
+            remote_ready: false,
+            willing_to_relocate: false,
+            skills: [],
+            documents_metadata: [],
           });
         }
       }
@@ -565,28 +595,29 @@ export default function BookSpaceScreen() {
 
   const renderProfileStep = () => {
     const profileComplete = isProfileComplete();
+    const avatarUrl = profile?.avatar_url ? getFullImageUrl(profile.avatar_url) : null;
+    const location = [profile?.city, profile?.region, profile?.country].filter(Boolean).join(', ');
 
     return (
       <View style={styles.stepContent}>
         <View style={styles.stepHeader}>
           <User size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-            Verifiez votre profil
+            Vérifiez votre profil
           </Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Ces informations seront partagees avec le gestionnaire de l'espace
+            Ces informations seront partagées avec le gestionnaire de l'espace
           </Text>
         </View>
 
-        {/* Profile Card */}
         <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
           <View style={styles.profileHeader}>
-            {profile?.profile_picture_url ? (
-              <Image source={{ uri: profile.profile_picture_url }} style={styles.profileAvatar} />
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.profileAvatar} />
             ) : (
               <View style={[styles.profileAvatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
                 <Text style={[styles.profileAvatarText, { color: colors.primary }]}>
-                  {getInitials(profile?.first_name, profile?.last_name)}
+                  {getInitials(profile?.first_name || undefined, profile?.last_name || undefined)}
                 </Text>
               </View>
             )}
@@ -594,11 +625,11 @@ export default function BookSpaceScreen() {
 
           <View style={styles.profileInfo}>
             <Text style={[styles.profileName, { color: colors.textPrimary }]}>
-              {profile?.first_name} {profile?.last_name}
+              {profile?.display_name || `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim()}
             </Text>
-            {profile?.headline && (
-              <Text style={[styles.profileHeadline, { color: colors.textSecondary }]}>
-                {profile.headline}
+            {profile?.bio && (
+              <Text style={[styles.profileHeadline, { color: colors.textSecondary }]} numberOfLines={2}>
+                {profile.bio}
               </Text>
             )}
           </View>
@@ -607,53 +638,86 @@ export default function BookSpaceScreen() {
             {profile?.email && (
               <View style={styles.profileDetailRow}>
                 <Mail size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>
-                  {profile.email}
-                </Text>
+                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>{profile.email}</Text>
               </View>
             )}
             {profile?.phone && (
               <View style={styles.profileDetailRow}>
                 <Phone size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>
-                  {profile.phone}
-                </Text>
+                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>{profile.phone}</Text>
               </View>
             )}
-            {(profile?.city || profile?.country) && (
+            {location ? (
               <View style={styles.profileDetailRow}>
                 <MapPin size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>
-                  {[profile.city, profile.country].filter(Boolean).join(', ')}
-                </Text>
+                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>{location}</Text>
               </View>
-            )}
+            ) : null}
           </View>
+
+          {profile?.skills && profile.skills.length > 0 && (
+            <View style={styles.profileTagsSection}>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Compétences</Text>
+              <View style={styles.profileTagsRow}>
+                {profile.skills.slice(0, 8).map((skill, i) => (
+                  <View key={i} style={[styles.profileTag, { backgroundColor: colors.primary + '12' }]}>
+                    <Text style={[styles.profileTagText, { color: colors.primary }]}>{skill}</Text>
+                  </View>
+                ))}
+                {profile.skills.length > 8 && (
+                  <Text style={[styles.profileTagMore, { color: colors.gray400 }]}>+{profile.skills.length - 8}</Text>
+                )}
+              </View>
+            </View>
+          )}
+
+          {profile?.sectors && profile.sectors.length > 0 && (
+            <View style={styles.profileTagsSection}>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Secteurs</Text>
+              <View style={styles.profileTagsRow}>
+                {profile.sectors.map((s, i) => (
+                  <View key={i} style={[styles.profileTag, { backgroundColor: colors.gray100 }]}>
+                    <Text style={[styles.profileTagText, { color: colors.gray700 }]}>{s}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {profile?.documents_metadata && profile.documents_metadata.length > 0 && (
+            <View style={styles.profileTagsSection}>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Documents ({profile.documents_metadata.length})</Text>
+              {profile.documents_metadata.slice(0, 3).map((doc) => (
+                <View key={doc.id} style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: SPACING.xs }}>
+                  <FileText size={14} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.profileDetailText, { color: colors.textSecondary, flex: 1 }]} numberOfLines={1}>
+                    {doc.title || doc.original_filename}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
 
           {!profileComplete && (
             <View style={[styles.warningBox, { backgroundColor: colors.warning + '15' }]}>
               <AlertCircle size={20} color={colors.warning} strokeWidth={ICON.strokeWidth} />
               <View style={styles.warningContent}>
-                <Text style={[styles.warningTitle, { color: colors.warning }]}>
-                  Profil incomplet
-                </Text>
+                <Text style={[styles.warningTitle, { color: colors.warning }]}>Profil incomplet</Text>
                 <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-                  Completez votre profil (nom, prenom, email) pour continuer.
+                  Complétez votre profil (nom, prénom, email) pour continuer.
                 </Text>
               </View>
             </View>
           )}
         </View>
 
-        <TouchableOpacity
-          style={[styles.editProfileButton, { borderColor: colors.primary }]}
+        <Button
+          title="Modifier mon profil"
           onPress={() => router.push('/settings/edit-profile')}
-        >
-          <SquarePen size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.editProfileText, { color: colors.primary }]}>
-            Modifier mon profil
-          </Text>
-        </TouchableOpacity>
+          variant="outline"
+          fullWidth
+          icon={<SquarePen size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+        />
       </View>
     );
   };
@@ -1376,8 +1440,6 @@ export default function BookSpaceScreen() {
                 onPress={handleSubmit}
                 disabled={isSubmitting}
                 fullWidth
-                icon={<Send size={18} color="#FFFFFF" strokeWidth={ICON.strokeWidth} />}
-                iconPosition="right"
               />
             </View>
           </View>
@@ -1629,6 +1691,35 @@ const styles = StyleSheet.create({
   },
   profileDetailText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
+  },
+  profileTagsSection: {
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  profileTagsLabel: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    marginBottom: SPACING.xs,
+  },
+  profileTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  profileTag: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER.radius.full,
+  },
+  profileTagText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+  profileTagMore: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    alignSelf: 'center',
   },
   warningBox: {
     flexDirection: 'row',

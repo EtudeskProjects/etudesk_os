@@ -13,20 +13,6 @@ export interface SkillExtractionResult {
   skills: Array<{ name: string; type: string; action: 'added' | 'skipped' }>;
 }
 
-/**
- * Generate a URL-safe slug from a skill name, handling French accents
- */
-function slugify(name: string): string {
-  return name
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // strip accent marks
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-}
 
 /**
  * Save extracted skills from a document into the talent's profile.
@@ -46,37 +32,16 @@ export async function extractAndSaveSkills(
     for (const skill of extractedSkills) {
       if (!skill.name || !skill.type || !isValidSkillType(skill.type)) continue;
 
-      const slug = slugify(skill.name);
-      if (!slug) continue;
-
-      // Find or create the skill in the catalog (race-safe)
-      // Store canonical_name in Title Case
       const canonicalName = toTitleCase(skill.name.trim());
 
-      const upsertSkill = await client.query(
-        `INSERT INTO skills (canonical_name, slug, type)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (slug) DO NOTHING
-         RETURNING id`,
-        [canonicalName, slug, skill.type]
-      );
-
-      let skillId: string;
-      if (upsertSkill.rows.length > 0) {
-        skillId = upsertSkill.rows[0].id;
-      } else {
-        const existing = await client.query(`SELECT id FROM skills WHERE slug = $1`, [slug]);
-        skillId = existing.rows[0].id;
-      }
-
       // Check if talent already has this skill
-      const existingLink = await client.query(
-        `SELECT id, origin FROM talent_skills WHERE talent_id = $1 AND skill_id = $2`,
-        [talentId, skillId]
+      const existing = await client.query(
+        `SELECT id, origin FROM talent_skills WHERE talent_id = $1 AND canonical_name = $2`,
+        [talentId, canonicalName]
       );
 
-      if (existingLink.rows.length > 0) {
-        if (existingLink.rows[0].origin === 'declared') {
+      if (existing.rows.length > 0) {
+        if (existing.rows[0].origin === 'declared') {
           result.skipped++;
           result.skills.push({ name: skill.name, type: skill.type, action: 'skipped' });
           continue;
@@ -84,7 +49,7 @@ export async function extractAndSaveSkills(
         // Update existing extracted skill with new document context
         await client.query(
           `UPDATE talent_skills SET context = $1 WHERE id = $2`,
-          [skill.context || null, existingLink.rows[0].id]
+          [skill.context || null, existing.rows[0].id]
         );
         result.skipped++;
         result.skills.push({ name: skill.name, type: skill.type, action: 'skipped' });
@@ -96,11 +61,11 @@ export async function extractAndSaveSkills(
 
       // Insert talent_skill (race-safe)
       const inserted = await client.query(
-        `INSERT INTO talent_skills (talent_id, skill_id, proficiency_level, origin, context)
-         VALUES ($1, $2, $3, 'extracted', $4)
-         ON CONFLICT (talent_id, skill_id) DO NOTHING
+        `INSERT INTO talent_skills (talent_id, canonical_name, type, proficiency_level, origin, context)
+         VALUES ($1, $2, $3, $4, 'extracted', $5)
+         ON CONFLICT (talent_id, canonical_name) DO NOTHING
          RETURNING id`,
-        [talentId, skillId, proficiency, skill.context || null]
+        [talentId, canonicalName, skill.type, proficiency, skill.context || null]
       );
 
       if (inserted.rows.length > 0) {

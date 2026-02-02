@@ -196,12 +196,6 @@ export default function SkillsScreen() {
           {skill.canonical_name}
         </Text>
 
-        {/* Type · Domain */}
-        <Text style={[styles.skillType, { color: colors.textSecondary }]}>
-          {SKILL_TYPE_LABELS[skill.type] || skill.type}
-          {skill.domain ? ` · ${skill.domain}` : ''}
-        </Text>
-
         {/* Tags row: proficiency + origin */}
         <View style={styles.tagsRow}>
           <View style={[styles.tag, { backgroundColor: profColor + '20', borderColor: profColor }]}>

@@ -275,7 +275,7 @@ export async function notifyApplicationStatusChanged(
         a.id,
         a.talent_id,
         t.email as talent_email,
-        t.display_name as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         o.title as opportunity_title,
         org.name as organization_name
       FROM opportunity_applications a
@@ -364,7 +364,7 @@ export async function notifyNewMessage(
         a.id as application_id,
         a.talent_id,
         t.email as talent_email,
-        t.display_name as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         o.title as opportunity_title,
         o.organization_id,
         org.name as organization_name
@@ -428,7 +428,7 @@ export async function notifyNewMessage(
     } else {
       // Notify organization members
       const orgMembers = await pool.query(
-        `SELECT om.talent_id, t.email, t.display_name
+        `SELECT om.talent_id, t.email, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name
          FROM organization_members om
          JOIN talents t ON om.talent_id = t.id
          WHERE om.organization_id = $1`,
@@ -479,7 +479,7 @@ export async function notifyNewApplication(applicationId: string): Promise<void>
       SELECT
         a.id,
         a.talent_id,
-        t.display_name as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         t.email as talent_email,
         o.title as opportunity_title,
         o.organization_id,
@@ -497,7 +497,7 @@ export async function notifyNewApplication(applicationId: string): Promise<void>
 
     // Get organization members to notify
     const orgMembers = await pool.query(
-      `SELECT om.talent_id, t.email, t.display_name
+      `SELECT om.talent_id, t.email, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name
        FROM organization_members om
        JOIN talents t ON om.talent_id = t.id
        WHERE om.organization_id = $1`,
@@ -567,7 +567,7 @@ export async function notifyInterviewScheduled(
         a.id,
         a.talent_id,
         t.email as talent_email,
-        t.display_name as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         o.title as opportunity_title,
         org.name as organization_name
       FROM opportunity_applications a

@@ -23,6 +23,13 @@ import { SPACE_TYPE_LABELS, formatPrice } from '../../constants/space';
 import { getFullImageUrl } from '../../utils/image';
 import type { Space } from '../../services/spaceService';
 
+interface StatusOverlay {
+    label: string;
+    color: string;
+    bgColor: string;
+    icon?: React.ReactNode;
+}
+
 interface SpaceCardProps {
     space: Space;
     onPress: () => void;
@@ -35,6 +42,7 @@ interface SpaceCardProps {
     onViewBookings?: () => void;
     isLast?: boolean;
     isManagement?: boolean;
+    statusOverlay?: StatusOverlay;
 }
 
 export const SpaceCard: React.FC<SpaceCardProps> = ({
@@ -49,6 +57,7 @@ export const SpaceCard: React.FC<SpaceCardProps> = ({
     onViewBookings,
     isLast = false,
     isManagement = false,
+    statusOverlay,
 }) => {
     const { colors } = useTheme();
 
@@ -109,6 +118,17 @@ export const SpaceCard: React.FC<SpaceCardProps> = ({
                         </View>
                     )}
                 </View>
+
+                {statusOverlay && (
+                    <View style={styles.statusOverlayRow}>
+                        <View style={[styles.statusOverlayBadge, { backgroundColor: colors.surface }]}>
+                            {statusOverlay.icon}
+                            <Text style={[styles.statusOverlayText, { color: statusOverlay.color }]}>
+                                {statusOverlay.label}
+                            </Text>
+                        </View>
+                    </View>
+                )}
             </View>
 
             <View style={styles.content}>
@@ -256,6 +276,23 @@ const styles = StyleSheet.create({
         fontFamily: TYPOGRAPHY.fontFamily.medium,
         fontSize: TYPOGRAPHY.fontSize.xs,
         fontWeight: TYPOGRAPHY.fontWeight.medium,
+    },
+    statusOverlayRow: {
+        position: 'absolute',
+        top: SPACING.sm,
+        right: SPACING.sm,
+    },
+    statusOverlayBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACING.xs,
+        paddingVertical: SPACING.xs,
+        paddingHorizontal: SPACING.sm,
+        borderRadius: BORDER.radius.full,
+    },
+    statusOverlayText: {
+        fontSize: TYPOGRAPHY.fontSize.xs,
+        fontWeight: TYPOGRAPHY.fontWeight.semibold,
     },
     content: {
         padding: SPACING.md,

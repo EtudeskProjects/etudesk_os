@@ -28,7 +28,6 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE talents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     slug VARCHAR(255) UNIQUE NOT NULL,
-    display_name VARCHAR(255) NOT NULL,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     bio TEXT,
@@ -76,25 +75,10 @@ CREATE TRIGGER trigger_talents_updated_at
 -- SKILL
 CREATE TABLE skills (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    canonical_name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE NOT NULL,
-    aliases TEXT[],
+    canonical_name VARCHAR(255) UNIQUE NOT NULL,
 
     -- Classification
     type VARCHAR(50) NOT NULL,
-    domain VARCHAR(100),
-
-    -- Hierarchy
-    parent_skill_id UUID REFERENCES skills(id) ON DELETE SET NULL,
-
-    -- Standardization
-    esco_uri TEXT,
-    onet_code VARCHAR(50),
-
-    -- LLM / Metadata
-    embedding VECTOR(1536),
-    typical_evidence TEXT[],
-    growth_trend VARCHAR(50),
 
     -- Timestamps
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -103,10 +87,7 @@ CREATE TABLE skills (
 );
 
 -- Indexes for skills
-CREATE INDEX idx_skills_slug ON skills(slug);
 CREATE INDEX idx_skills_type ON skills(type);
-CREATE INDEX idx_skills_parent_skill_id ON skills(parent_skill_id);
-CREATE INDEX idx_skills_domain ON skills(domain);
 CREATE INDEX idx_skills_deleted_at ON skills(deleted_at) WHERE deleted_at IS NULL;
 
 -- Trigger for updated_at
@@ -350,105 +331,28 @@ CREATE TRIGGER trigger_opportunities_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at();
 
--- DOCUMENT
-CREATE TABLE documents (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    title VARCHAR(255) NOT NULL,
-
-    type VARCHAR(50),
-
-    file_url TEXT NOT NULL,
-    file_hash CHAR(64), -- SHA256
-    extracted_text TEXT,
-
-    issued_by VARCHAR(255),
-    issued_at DATE,
-    expires_at DATE,
-    credential_id VARCHAR(255),
-    verification_url TEXT,
-
-    verification_status VARCHAR(50) DEFAULT 'UNVERIFIED',
-    visibility VARCHAR(50) DEFAULT 'PRIVATE',
-
-    embedding VECTOR(1536),
-    summary TEXT,
-
-    -- Metadata
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP WITH TIME ZONE -- Soft delete
-);
-
--- Indexes for documents
-CREATE INDEX idx_documents_type ON documents(type);
-CREATE INDEX idx_documents_verification_status ON documents(verification_status);
-CREATE INDEX idx_documents_visibility ON documents(visibility);
-CREATE INDEX idx_documents_deleted_at ON documents(deleted_at) WHERE deleted_at IS NULL;
-
--- Trigger for updated_at
-CREATE TRIGGER trigger_documents_updated_at
-    BEFORE UPDATE ON documents
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at();
-
 -- ═══════════════════════════════════════════════════════════════
 -- RELATIONS (EDGES)
 -- ═══════════════════════════════════════════════════════════════
 
--- RELATION: HAS_SKILL (Talent -> Skill)
+-- RELATION: HAS_SKILL (Talent -> Skill, self-contained)
 CREATE TABLE talent_skills (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     talent_id UUID REFERENCES talents(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-
-    proficiency_level VARCHAR(10) NOT NULL,
-    self_assessed BOOLEAN DEFAULT TRUE,
-    endorsed_count INTEGER DEFAULT 0,
-    verified_by UUID[], -- Document IDs that prove this skill
-
-    years_of_experience NUMERIC(4,1),
-    last_used_at DATE,
+    canonical_name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL, -- KNOWLEDGE, SOFT_SKILL, HARD_SKILL
+    proficiency_level VARCHAR(20) NOT NULL, -- BEGINNER, INTERMEDIATE, EXPERT, MASTER
+    origin VARCHAR(20) DEFAULT 'declared', -- declared, inferred, extracted
+    document_id UUID, -- Source document if extracted
     context TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
-    UNIQUE(talent_id, skill_id)
+    UNIQUE(talent_id, canonical_name)
 );
 
 CREATE INDEX idx_talent_skills_talent_id ON talent_skills(talent_id);
-CREATE INDEX idx_talent_skills_skill_id ON talent_skills(skill_id);
+CREATE INDEX idx_talent_skills_canonical_name ON talent_skills(canonical_name);
 CREATE INDEX idx_talent_skills_proficiency_level ON talent_skills(proficiency_level);
-
--- RELATION: WANTS_TO_LEARN (Talent -> Skill)
-CREATE TABLE talent_learning_goals (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID REFERENCES talents(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-
-    priority VARCHAR(50),
-    reason TEXT,
-    target_level VARCHAR(10),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-    UNIQUE(talent_id, skill_id)
-);
-
-CREATE INDEX idx_talent_learning_goals_talent_id ON talent_learning_goals(talent_id);
-CREATE INDEX idx_talent_learning_goals_skill_id ON talent_learning_goals(skill_id);
-
--- RELATION: ENDORSES_SKILL (Talent -> TalentSkill)
-CREATE TABLE skill_endorsements (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    endorser_id UUID REFERENCES talents(id) ON DELETE SET NULL,
-    talent_skill_id UUID REFERENCES talent_skills(id) ON DELETE CASCADE,
-
-    relationship_context TEXT,
-    comment TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-    UNIQUE(endorser_id, talent_skill_id)
-);
-
-CREATE INDEX idx_skill_endorsements_endorser_id ON skill_endorsements(endorser_id);
-CREATE INDEX idx_skill_endorsements_talent_skill_id ON skill_endorsements(talent_skill_id);
 
 -- RELATION: CONTRIBUTED_TO (Talent -> Project)
 CREATE TABLE talent_projects (
@@ -594,7 +498,7 @@ CREATE TABLE mentorships (
     mentor_id UUID REFERENCES talents(id) ON DELETE CASCADE,
     mentee_id UUID REFERENCES talents(id) ON DELETE CASCADE,
 
-    focus_area_skill_ids UUID[], -- Array of Skill IDs
+    focus_areas TEXT[], -- Free-text skill names
     started_at DATE,
     ended_at DATE,
     status VARCHAR(50),
@@ -631,7 +535,7 @@ CREATE TABLE recommendations (
 
     relationship VARCHAR(255),
     recommendation_text TEXT,
-    highlighted_skill_ids UUID[],
+    highlighted_skills TEXT[], -- Free-text skill names
 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     visibility VARCHAR(50) DEFAULT 'PUBLIC',
@@ -731,97 +635,7 @@ CREATE TRIGGER trigger_community_invitations_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at();
 
--- RELATION: OWNS_DOCUMENT (Talent -> Document)
-CREATE TABLE talent_documents (
-    talent_id UUID REFERENCES talents(id) ON DELETE CASCADE,
-    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
-
-    uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    is_primary BOOLEAN DEFAULT FALSE,
-
-    PRIMARY KEY (talent_id, document_id)
-);
-
-CREATE INDEX idx_talent_documents_document_id ON talent_documents(document_id);
-
--- RELATION: RELATED_TO (Skill -> Skill) - Non-hierarchical relations only
-CREATE TABLE skill_relations (
-    from_skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    to_skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-
-    relationship_type VARCHAR(50),
-    strength NUMERIC(3,2),
-
-    PRIMARY KEY (from_skill_id, to_skill_id)
-);
-
-CREATE INDEX idx_skill_relations_to_skill_id ON skill_relations(to_skill_id);
-
--- RELATION: EVOLVES_INTO (Skill -> Skill)
-CREATE TABLE skill_evolutions (
-    from_skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    to_skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-
-    typical_path TEXT,
-
-    PRIMARY KEY (from_skill_id, to_skill_id)
-);
-
-CREATE INDEX idx_skill_evolutions_to_skill_id ON skill_evolutions(to_skill_id);
-
--- ═══════════════════════════════════════════════════════════════
--- RELATIONS: RELATED_SKILLS (Auto-generated by LLM)
--- ═══════════════════════════════════════════════════════════════
-
--- Project <-> Skill
-CREATE TABLE project_skills (
-    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    relevance_score NUMERIC(3,2),
-    is_auto_generated BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (project_id, skill_id)
-);
-
-CREATE INDEX idx_project_skills_skill_id ON project_skills(skill_id);
-
--- Opportunity <-> Skill
-CREATE TABLE opportunity_skills (
-    opportunity_id UUID REFERENCES opportunities(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    is_required BOOLEAN DEFAULT TRUE,
-    proficiency_level VARCHAR(10),
-    relevance_score NUMERIC(3,2),
-    is_auto_generated BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (opportunity_id, skill_id)
-);
-
-CREATE INDEX idx_opportunity_skills_skill_id ON opportunity_skills(skill_id);
-
--- Document <-> Skill
-CREATE TABLE document_skills (
-    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    relevance_score NUMERIC(3,2),
-    is_auto_generated BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (document_id, skill_id)
-);
-
-CREATE INDEX idx_document_skills_skill_id ON document_skills(skill_id);
-
--- Organization <-> Skill
-CREATE TABLE organization_skills (
-    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-    skill_id UUID REFERENCES skills(id) ON DELETE CASCADE,
-    relevance_score NUMERIC(3,2),
-    is_auto_generated BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (organization_id, skill_id)
-);
-
-CREATE INDEX idx_organization_skills_skill_id ON organization_skills(skill_id);
+-- (Legacy tables project_skills, opportunity_skills, organization_skills removed — skills are now in talent_skills only)
 
 -- ═══════════════════════════════════════════════════════════════
 -- COMMUNITY ACTIVITIES & INTERACTIONS
@@ -1090,10 +904,6 @@ CREATE INDEX idx_community_notifications_user_community ON community_notificatio
 CREATE VIEW active_talents AS
 SELECT * FROM talents WHERE deleted_at IS NULL;
 
--- Active skills
-CREATE VIEW active_skills AS
-SELECT * FROM skills WHERE deleted_at IS NULL;
-
 -- Active projects
 CREATE VIEW active_projects AS
 SELECT * FROM projects WHERE deleted_at IS NULL;
@@ -1117,6 +927,3 @@ WHERE deleted_at IS NULL
   AND status = 'OPEN'
   AND (deadline IS NULL OR deadline > CURRENT_TIMESTAMP);
 
--- Active documents
-CREATE VIEW active_documents AS
-SELECT * FROM documents WHERE deleted_at IS NULL;

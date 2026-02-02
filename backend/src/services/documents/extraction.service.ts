@@ -1,10 +1,9 @@
 /**
  * Document Extraction Service
- * Uses Agents SDK with GPT-4.1-mini for structured metadata extraction from documents
+ * Uses OpenAI gpt-4.1-mini vision for structured metadata extraction from documents
  */
 
-import { run } from '@openai/agents';
-import type { AgentInputItem } from '@openai/agents';
+import OpenAI from 'openai';
 import {
   DocumentType,
   DOCUMENT_TYPES,
@@ -12,8 +11,7 @@ import {
   DOCUMENT_TYPE_CATEGORIES,
   DocumentCategory,
 } from '../../constants/documents';
-import { createExtractionAgent } from '../ai/agent-factory';
-import { buildExtractionPrompt } from '../ai/prompts/extraction.prompt';
+import { EXTRACTION_SYSTEM_PROMPT, buildExtractionPrompt } from '../ai/prompts/extraction.prompt';
 import { buildTalentObject, talentObjectToText } from '../ai/talent-object';
 
 // ═══════════════════════════════════════════════════════════════
@@ -44,7 +42,6 @@ export interface ExtractedDocumentData {
   skills?: ExtractedSkill[];
   experience_years?: number;
   languages?: string[];
-  education_level?: string;
   job_titles?: string[];
 
   // Certificate/Diploma specific
@@ -66,9 +63,6 @@ export interface ExtractedDocumentData {
 
   // Summary
   summary?: string;
-
-  // Raw extracted text (for search)
-  extracted_text?: string;
 }
 
 export interface ExtractionResult {
@@ -82,7 +76,7 @@ export interface ExtractionResult {
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * Extract metadata from a document using GPT-4.1-mini vision via Agents SDK
+ * Extract metadata from a document using gpt-4.1-mini vision
  */
 export async function extractDocumentMetadata(
   fileUrl: string,
@@ -90,7 +84,6 @@ export async function extractDocumentMetadata(
   talentId?: string
 ): Promise<ExtractionResult> {
   try {
-    // Determine content type for the API
     const isImage = mimeType.startsWith('image/');
     const isPdf = mimeType === 'application/pdf';
 
@@ -108,37 +101,53 @@ export async function extractDocumentMetadata(
       if (talentObj) talentContext = talentObjectToText(talentObj);
     }
 
-    // Build input with file/image content for the agent
-    const contentParts: any[] = [
-      {
-        type: 'input_text',
-        text: buildExtractionPrompt(mimeType, talentContext),
-      },
+    const prompt = buildExtractionPrompt(mimeType, talentContext);
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // Build content parts
+    const contentParts: OpenAI.ChatCompletionContentPart[] = [
+      { type: 'text', text: prompt },
     ];
 
-    if (isPdf) {
+    let uploadedFileId: string | undefined;
+
+    if (isImage) {
       contentParts.push({
-        type: 'input_file',
-        file: fileUrl,
-        filename: 'document.pdf',
+        type: 'image_url',
+        image_url: { url: fileUrl, detail: 'high' },
       });
-    } else {
+    } else if (isPdf) {
+      // Upload PDF to OpenAI Files API, then reference by file_id
+      const base64Match = fileUrl.match(/^data:[^;]+;base64,(.+)$/);
+      if (!base64Match) {
+        return { success: false, error: 'Format PDF invalide' };
+      }
+      const pdfBuffer = Buffer.from(base64Match[1], 'base64');
+      const file = await openai.files.create({
+        file: new File([pdfBuffer], 'document.pdf', { type: 'application/pdf' }),
+        purpose: 'assistants',
+      });
+      uploadedFileId = file.id;
       contentParts.push({
-        type: 'input_image',
-        image: fileUrl,
-        detail: 'high',
-      });
+        type: 'file',
+        file: { file_id: file.id },
+      } as any);
     }
 
-    const input: AgentInputItem[] = [
-      { role: 'user', content: contentParts },
-    ];
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4.1-mini',
+      messages: [
+        { role: 'system', content: EXTRACTION_SYSTEM_PROMPT },
+        { role: 'user', content: contentParts },
+      ],
+    });
 
-    const agent = createExtractionAgent();
-    const result = await run(agent, input);
+    // Cleanup: delete uploaded file from OpenAI
+    if (uploadedFileId) {
+      openai.files.del(uploadedFileId).catch(() => {});
+    }
 
-    const content = result.finalOutput;
-
+    const content = completion.choices[0]?.message?.content?.trim();
     if (!content) {
       return {
         success: false,
@@ -146,13 +155,12 @@ export async function extractDocumentMetadata(
       };
     }
 
-    // Strip markdown fences if present (LLM sometimes wraps in ```json...```)
+    // Strip markdown fences if present
     const cleanedContent = content
       .replace(/^```(?:json)?\s*\n?/i, '')
       .replace(/\n?```\s*$/i, '')
       .trim();
 
-    // Parse the JSON response
     const extractedData = JSON.parse(cleanedContent) as Partial<ExtractedDocumentData>;
 
     // Validate and normalize the detected type
@@ -189,7 +197,6 @@ export async function extractFromBase64(
   mimeType: string,
   talentId?: string
 ): Promise<ExtractionResult> {
-  // Create data URL
   const dataUrl = `data:${mimeType};base64,${base64Data}`;
   return extractDocumentMetadata(dataUrl, mimeType, talentId);
 }
@@ -220,20 +227,15 @@ export async function detectDocumentType(
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════
 
-/**
- * Normalize document type to valid enum value
- */
 function normalizeDocumentType(type?: string): DocumentType {
   if (!type) return DOCUMENT_TYPES.OTHER;
 
   const upperType = type.toUpperCase().replace(/\s+/g, '_');
 
-  // Check if it's a valid type
   if (Object.values(DOCUMENT_TYPES).includes(upperType as DocumentType)) {
     return upperType as DocumentType;
   }
 
-  // Try to match common variations
   const typeMap: Record<string, DocumentType> = {
     RESUME: DOCUMENT_TYPES.CV,
     CURRICULUM_VITAE: DOCUMENT_TYPES.CV,
@@ -252,42 +254,33 @@ function normalizeDocumentType(type?: string): DocumentType {
   return typeMap[upperType] || DOCUMENT_TYPES.OTHER;
 }
 
-/**
- * Normalize and enrich tags
- */
 function normalizeTags(tags: string[], data: Partial<ExtractedDocumentData>): string[] {
   const normalizedTags = new Set<string>();
 
-  // Add provided tags
   tags.forEach((tag) => {
     if (tag && typeof tag === 'string') {
       normalizedTags.add(tag.toLowerCase().trim());
     }
   });
 
-  // Add skills as tags
   data.skills?.forEach((skill) => {
     if (skill?.name) {
       normalizedTags.add(skill.name.toLowerCase().trim());
     }
   });
 
-  // Add languages as tags
   data.languages?.forEach((lang) => {
     if (lang) normalizedTags.add(lang.toLowerCase().trim());
   });
 
-  // Add field of study
   if (data.field_of_study) {
     normalizedTags.add(data.field_of_study.toLowerCase().trim());
   }
 
-  // Add institution
   if (data.institution) {
     normalizedTags.add(data.institution.toLowerCase().trim());
   }
 
-  // Add document type as tag
   if (data.detected_type) {
     const typeLabel = DOCUMENT_TYPE_LABELS[data.detected_type];
     if (typeLabel) {
@@ -295,7 +288,7 @@ function normalizeTags(tags: string[], data: Partial<ExtractedDocumentData>): st
     }
   }
 
-  return Array.from(normalizedTags).slice(0, 20); // Limit to 20 tags
+  return Array.from(normalizedTags).slice(0, 20);
 }
 
 /**
@@ -304,23 +297,19 @@ function normalizeTags(tags: string[], data: Partial<ExtractedDocumentData>): st
 export function generateDocumentSummary(data: ExtractedDocumentData): string {
   const parts: string[] = [];
 
-  // Type
   const typeLabel = DOCUMENT_TYPE_LABELS[data.detected_type] || 'Document';
   parts.push(typeLabel);
 
-  // Issuer or institution
   if (data.issuer) {
     parts.push(`de ${data.issuer}`);
   } else if (data.institution) {
     parts.push(`de ${data.institution}`);
   }
 
-  // Field of study for academic documents
   if (data.field_of_study) {
     parts.push(`en ${data.field_of_study}`);
   }
 
-  // Issue date
   if (data.issue_date) {
     const year = data.issue_date.split('-')[0];
     parts.push(`(${year})`);

@@ -12,18 +12,17 @@ import {
   CheckCircle2,
   XCircle,
   Eye,
-  ChevronRight,
   Inbox,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { PageLayout, EmptyState } from '../../../src/components/ui';
+import { OpportunityCard } from '../../../src/components/cards';
 import { applicationService } from '../../../src/services';
-import { formatRelativeTime } from '../../../src/utils/date';
-import type { Application, ApplicationStatus } from '../../../src/types/models';
+import type { Application, ApplicationStatus, Opportunity } from '../../../src/types/models';
 import { APPLICATION_STATUS_LABELS } from '../../../src/types/models';
 
-const getStatusConfig = (colors: any): Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> => ({
+const getStatusConfig = (colors: any): Record<string, { color: string; icon: typeof Clock; bgColor: string }> => ({
   SUBMITTED: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15' },
   IN_REVIEW: { color: colors.info, icon: Eye, bgColor: colors.info + '15' },
   ACCEPTED: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15' },
@@ -39,7 +38,7 @@ export default function MyApplicationsScreen() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [filter, setFilter] = useState<FilterStatus>('all');
+  const [filter, setFilter] = useState<FilterStatus>('SUBMITTED');
 
   const loadApplications = useCallback(async () => {
     try {
@@ -105,48 +104,28 @@ export default function MyApplicationsScreen() {
   };
 
   const renderApplicationItem = (item: Application) => {
-    const statusConfig = getStatusConfig(colors)[item.status];
+    const statusConfig = getStatusConfig(colors)[item.status] || getStatusConfig(colors)['SUBMITTED'];
     const StatusIcon = statusConfig.icon;
 
     return (
-      <TouchableOpacity
+      <OpportunityCard
         key={item.id}
-        style={[styles.applicationCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
+        opportunity={(item.opportunity || {}) as Opportunity}
         onPress={() => router.push(`/settings/my-applications/${item.id}`)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.cardHeader}>
-          <View style={styles.opportunityInfo}>
-            <Text style={[styles.opportunityTitle, { color: colors.textPrimary }]} numberOfLines={2}>
-              {item.opportunity?.title || 'Opportunité'}
-            </Text>
-            <Text style={[styles.organizationName, { color: colors.gray500 }]} numberOfLines={1}>
-              {item.opportunity?.organization?.name || 'Organisation'}
-            </Text>
-          </View>
-          <ChevronRight size={20} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-        </View>
-
-        <View style={styles.cardFooter}>
-          <View style={[styles.statusBadge, { backgroundColor: statusConfig.bgColor }]}>
-            <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {APPLICATION_STATUS_LABELS[item.status]}
-            </Text>
-          </View>
-
-          <Text style={[styles.appliedDate, { color: colors.gray500 }]}>
-            {formatRelativeTime(item.applied_at)}
-          </Text>
-        </View>
-      </TouchableOpacity>
+        statusOverlay={{
+          label: APPLICATION_STATUS_LABELS[item.status],
+          color: statusConfig.color,
+          bgColor: statusConfig.bgColor,
+          icon: <StatusIcon size={12} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />,
+        }}
+      />
     );
   };
 
   const filterChips = [
     { key: 'all' as FilterStatus, label: 'Toutes' },
     { key: 'SUBMITTED' as FilterStatus, label: 'Soumises' },
-    { key: 'IN_REVIEW' as FilterStatus, label: 'En examen' },
+    { key: 'IN_REVIEW' as FilterStatus, label: "En cours d'examen" },
     { key: 'ACCEPTED' as FilterStatus, label: 'Acceptées' },
     { key: 'REJECTED' as FilterStatus, label: 'Refusées' },
   ];
@@ -187,11 +166,7 @@ export default function MyApplicationsScreen() {
           } : {})}
         />
       ) : (
-        filteredApplications.map((item) => (
-          <View key={item.id} style={styles.cardWrapper}>
-            {renderApplicationItem(item)}
-          </View>
-        ))
+        filteredApplications.map((item) => renderApplicationItem(item))
       )}
     </PageLayout>
   );
@@ -221,55 +196,4 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
-  cardWrapper: {
-    marginBottom: SPACING.md,
-  },
-
-  applicationCard: {
-    padding: SPACING.md,
-    borderRadius: BORDER.radius.md,
-    borderWidth: BORDER.width.thin,
-  },
-
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.md,
-  },
-
-  opportunityInfo: {
-    flex: 1,
-    marginRight: SPACING.sm,
-  },
-
-  opportunityTitle: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginBottom: 4,
-  },
-
-  organizationName: { fontSize: TYPOGRAPHY.fontSize.sm },
-
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.full,
-  },
-
-  statusText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  appliedDate: { fontSize: TYPOGRAPHY.fontSize.xs },
 });

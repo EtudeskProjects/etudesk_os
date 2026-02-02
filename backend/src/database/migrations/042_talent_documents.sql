@@ -17,6 +17,7 @@ CREATE TYPE document_type AS ENUM (
     'ID_CARD',
     'PASSPORT',
     'DRIVER_LICENSE',
+    'STUDENT_CARD',
     'PROOF_OF_ADDRESS',
     'OTHER'
 );
@@ -63,23 +64,6 @@ CREATE TABLE talent_documents (
     processing_error TEXT,
     processed_at TIMESTAMP WITH TIME ZONE,
 
-    -- Extracted metadata (from AI)
-    extracted_data JSONB DEFAULT '{}'::jsonb,
-    -- {
-    --   title: string,
-    --   issuer: string,
-    --   issue_date: string,
-    --   expiry_date: string,
-    --   description: string,
-    --   skills: string[],
-    --   languages: string[],
-    --   field_of_study: string,
-    --   grade: string,
-    --   full_name: string,
-    --   document_number: string,
-    --   confidence_score: number
-    -- }
-
     -- Auto-generated tags
     tags TEXT[] DEFAULT '{}',
 
@@ -119,8 +103,6 @@ CREATE INDEX idx_talent_documents_category ON talent_documents(category) WHERE d
 -- GIN index for tags search
 CREATE INDEX idx_talent_documents_tags ON talent_documents USING GIN(tags) WHERE deleted_at IS NULL;
 
--- GIN index for extracted data search
-CREATE INDEX idx_talent_documents_extracted ON talent_documents USING GIN(extracted_data) WHERE deleted_at IS NULL;
 
 -- ═══════════════════════════════════════════════════════════════
 -- TRIGGERS

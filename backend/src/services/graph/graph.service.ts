@@ -19,6 +19,7 @@ export interface GraphStats {
     spaces: number;
     learningTopics: number;
     documents: number;
+    sectors: number;
   };
   relationships: {
     total: number;
@@ -35,6 +36,7 @@ export interface EgoNetworkResult {
   learningTopics: Array<{ topic: any; relationship: any }>;
   documents: Array<{ document: any; relationship: any }>;
   connections: Array<{ talent: any; relationship: any }>;
+  bookmarks: Array<{ opportunity: any; relationship: any }>;
   inferences: {
     interests: Array<{ target: any; relationship: any }>;
     skillsToLearn: Array<{ skill: any; relationship: any }>;
@@ -83,6 +85,7 @@ export const graphService = {
       spaces: 0,
       learningTopics: 0,
       documents: 0,
+      sectors: 0,
     };
 
     for (const record of nodeCounts.records) {
@@ -113,6 +116,9 @@ export const graphService = {
           break;
         case NodeLabels.DOCUMENT:
           nodeStats.documents = count;
+          break;
+        case NodeLabels.SECTOR:
+          nodeStats.sectors = count;
           break;
       }
     }
@@ -165,6 +171,9 @@ export const graphService = {
       // Connections
       OPTIONAL MATCH (t)-[r_conn:CONNECTE_AVEC]-(other:Talent)
 
+      // Bookmarks
+      OPTIONAL MATCH (t)-[r_fav:A_MIS_EN_FAVORIS]->(fav:Opportunity)
+
       // Inferred interests
       OPTIONAL MATCH (t)-[r_int:INTERESSE_PAR]->(interest)
 
@@ -179,6 +188,7 @@ export const graphService = {
              collect(DISTINCT {topic: topic, rel: properties(r_topic)}) as learningTopics,
              collect(DISTINCT {doc: doc, rel: properties(r_doc)}) as documents,
              collect(DISTINCT {talent: other, rel: properties(r_conn)}) as connections,
+             collect(DISTINCT {opportunity: fav, rel: properties(r_fav)}) as bookmarks,
              collect(DISTINCT {target: interest, rel: properties(r_int)}) as interests,
              collect(DISTINCT {skill: toLearn, rel: properties(r_learn)}) as skillsToLearn
       `,
@@ -230,6 +240,10 @@ export const graphService = {
         talent: c.talent?.properties,
         relationship: c.rel,
       })),
+      bookmarks: filterNulls(record.get('bookmarks'), 'opportunity').map(b => ({
+        opportunity: b.opportunity?.properties,
+        relationship: b.rel,
+      })),
       inferences: {
         interests: filterNulls(record.get('interests'), 'target').map(i => ({
           target: i.target?.properties,
@@ -246,9 +260,13 @@ export const graphService = {
   /**
    * Find opportunities that match a talent's skills
    */
+  /**
+   * Find opportunities that match a talent's skills.
+   * Returns empty — REQUIERT_COMPETENCE removed (opportunity_skills dropped).
+   */
   async findOpportunityMatches(
-    talentId: string,
-    options: {
+    _talentId: string,
+    _options: {
       limit?: number;
       minMatchScore?: number;
       includeApplied?: boolean;
@@ -262,44 +280,7 @@ export const graphService = {
       missingSkills: string[];
     }>
   > {
-    const { limit = 10, minMatchScore = 0.3, includeApplied = false } = options;
-
-    const result = await neo4jClient.read(
-      `
-      MATCH (t:Talent {id: $talentId})-[:POSSEDE_COMPETENCE]->(s:Skill)
-            <-[:REQUIERT_COMPETENCE]-(op:Opportunity)
-      WHERE op.status = 'published'
-        ${includeApplied ? '' : 'AND NOT EXISTS((t)-[:A_POSTULE_A]->(op))'}
-
-      WITH op, t, collect(DISTINCT s.canonical_name) as matchedSkills, count(DISTINCT s) as matchCount
-
-      MATCH (op)-[:REQUIERT_COMPETENCE]->(req:Skill)
-      WITH op, t, matchedSkills, matchCount, collect(DISTINCT req.canonical_name) as allRequired
-
-      WITH op, matchedSkills, matchCount, allRequired, size(allRequired) as totalRequired,
-           [skill IN allRequired WHERE NOT skill IN matchedSkills] as missingSkills,
-           toFloat(matchCount) / size(allRequired) as matchScore
-
-      WHERE matchScore >= $minMatchScore
-
-      RETURN op as opportunity,
-             matchedSkills,
-             matchScore,
-             totalRequired,
-             missingSkills
-      ORDER BY matchScore DESC
-      LIMIT $limit
-      `,
-      { talentId, minMatchScore, limit: neo4jClient.int(limit) }
-    );
-
-    return result.records.map(record => ({
-      opportunity: record.get('opportunity').properties,
-      matchedSkills: record.get('matchedSkills'),
-      matchScore: record.get('matchScore'),
-      totalRequired: record.get('totalRequired').toNumber?.() ?? record.get('totalRequired'),
-      missingSkills: record.get('missingSkills'),
-    }));
+    return [];
   },
 
   /**
@@ -366,9 +347,13 @@ export const graphService = {
   /**
    * Get skill gaps for a talent (skills they're missing for opportunities they're interested in)
    */
+  /**
+   * Get skill gaps for a talent.
+   * Returns empty — REQUIERT_COMPETENCE removed (opportunity_skills dropped).
+   */
   async getSkillGaps(
-    talentId: string,
-    options: { limit?: number } = {}
+    _talentId: string,
+    _options: { limit?: number } = {}
   ): Promise<
     Array<{
       skill: any;
@@ -377,44 +362,7 @@ export const graphService = {
       priority: 'low' | 'medium' | 'high' | 'critical';
     }>
   > {
-    const { limit = 10 } = options;
-
-    const result = await neo4jClient.read(
-      `
-      // Get skills the talent doesn't have but are required by opportunities
-      MATCH (t:Talent {id: $talentId})
-      MATCH (op:Opportunity)-[:REQUIERT_COMPETENCE]->(s:Skill)
-      WHERE op.status = 'published'
-        AND NOT EXISTS((t)-[:POSSEDE_COMPETENCE]->(s))
-
-      // Count how many opportunities need this skill
-      WITH s, collect(DISTINCT op.title) as opportunities, count(DISTINCT op) as demandCount
-
-      // Prioritize by demand
-      WITH s, opportunities, demandCount,
-           CASE
-             WHEN demandCount >= 5 THEN 'critical'
-             WHEN demandCount >= 3 THEN 'high'
-             WHEN demandCount >= 2 THEN 'medium'
-             ELSE 'low'
-           END as priority
-
-      RETURN s as skill,
-             demandCount,
-             opportunities[0..5] as opportunities,
-             priority
-      ORDER BY demandCount DESC
-      LIMIT $limit
-      `,
-      { talentId, limit: neo4jClient.int(limit) }
-    );
-
-    return result.records.map(record => ({
-      skill: record.get('skill').properties,
-      demandCount: record.get('demandCount').toNumber?.() ?? record.get('demandCount'),
-      opportunities: record.get('opportunities'),
-      priority: record.get('priority') as 'low' | 'medium' | 'high' | 'critical',
-    }));
+    return [];
   },
 
   /**

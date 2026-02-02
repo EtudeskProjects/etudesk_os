@@ -1,17 +1,18 @@
 /**
  * useNotifications Hook
- * Handles Expo Push Notifications setup and management
+ * Fetches and manages notification state
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
-// Configure how notifications are handled when app is in foreground
+// Configure foreground notifications
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -41,51 +42,35 @@ export interface NotificationPreferences {
 }
 
 export function useNotifications() {
-  const { isAuthenticated } = useAuth();
+  const { status } = useAuth();
+  const isAuthenticated = status === 'authenticated';
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
 
-  const notificationListener = useRef<Notifications.Subscription>();
-  const responseListener = useRef<Notifications.Subscription>();
-
-  // Register for push notifications
+  // Register push token
   const registerForPushNotifications = useCallback(async (): Promise<string | null> => {
-    if (!Device.isDevice) {
-      console.log('Push notifications require a physical device');
-      return null;
-    }
+    if (!Device.isDevice) return null;
 
-    // Check permissions
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
-
     if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+      const { status: s } = await Notifications.requestPermissionsAsync();
+      finalStatus = s;
     }
+    if (finalStatus !== 'granted') return null;
 
-    if (finalStatus !== 'granted') {
-      console.log('Push notification permission not granted');
-      return null;
-    }
-
-    // Get Expo push token
     try {
       const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-      const token = await Notifications.getExpoPushTokenAsync({
-        projectId,
-      });
+      const token = await Notifications.getExpoPushTokenAsync({ projectId });
 
-      // Configure Android channel
       if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
           name: 'default',
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#FF5722',
         });
       }
 
@@ -104,79 +89,75 @@ export function useNotifications() {
         platform: Platform.OS,
         deviceName: Device.modelName || 'Unknown Device',
       });
-      console.log('Push token registered with backend');
     } catch (error) {
       console.error('Error sending push token to backend:', error);
     }
   }, []);
 
-  // Initialize push notifications
+  // Init push notifications
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const initPushNotifications = async () => {
+    (async () => {
       const token = await registerForPushNotifications();
       if (token) {
         setExpoPushToken(token);
         await sendTokenToBackend(token);
       }
-    };
+    })();
 
-    initPushNotifications();
-
-    // Listen for incoming notifications (foreground)
-    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notification received:', notification);
-      // Refresh notifications list
+    const sub1 = Notifications.addNotificationReceivedListener(() => {
       fetchNotifications();
     });
-
-    // Listen for notification interactions
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      const data = response.notification.request.content.data;
-      console.log('Notification response:', data);
-      // Handle navigation based on notification data
-      handleNotificationNavigation(data);
+    const sub2 = Notifications.addNotificationResponseReceivedListener((response) => {
+      fetchNotifications();
+      // Navigate based on notification data
+      const data = response.notification.request.content.data || {};
+      const type = data.type as string | undefined;
+      const screen = data.screen as string | undefined;
+      try {
+        if (type === 'MESSAGE' || screen?.includes('messages')) {
+          if (data.applicationId) {
+            router.push(`/settings/my-applications/${data.applicationId}?tab=messages`);
+          } else if (data.membershipId) {
+            router.push(`/settings/my-communities/${data.membershipId}?tab=messages`);
+          } else if (data.bookingId) {
+            router.push(`/settings/my-reservations/${data.bookingId}?tab=messages`);
+          }
+        } else if (type === 'APPLICATION' && data.applicationId) {
+          router.push(`/settings/my-applications/${data.applicationId}`);
+        } else if (type === 'MEMBERSHIP' && data.membershipId) {
+          router.push(`/settings/my-communities/${data.membershipId}`);
+        } else if (type === 'BOOKING' && data.bookingId) {
+          router.push(`/settings/my-reservations/${data.bookingId}`);
+        } else if (type === 'OPPORTUNITY' && data.opportunityId) {
+          router.push(`/details/opportunity/${data.opportunityId}`);
+        }
+      } catch (e) {
+        // Navigation may fail if router not ready
+      }
     });
 
     return () => {
-      if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(notificationListener.current);
-      }
-      if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
-      }
+      sub1.remove();
+      sub2.remove();
     };
-  }, [isAuthenticated, registerForPushNotifications, sendTokenToBackend]);
+  }, [isAuthenticated]);
 
-  // Handle notification navigation
-  const handleNotificationNavigation = (data: Record<string, unknown>) => {
-    // This should be customized based on your navigation structure
-    const { screen, opportunityId, applicationId, conversationId } = data as any;
-
-    // You can use your navigation service here to navigate to the appropriate screen
-    console.log('Navigate to:', screen, { opportunityId, applicationId, conversationId });
-  };
-
-  // Fetch notifications from backend
+  // Fetch notifications
   const fetchNotifications = useCallback(async (options?: { limit?: number; offset?: number }) => {
     if (!isAuthenticated) return;
 
     setIsLoading(true);
     try {
-      const response = await api.get<{
-        data: NotificationData[];
-        total: number;
-        unreadCount: number;
-      }>('/api/notifications', options);
-
-      if (response.data) {
-        setNotifications(response.data);
+      const response: any = await api.get('/api/notifications', options);
+      const notifs = response?.data ?? [];
+      if (Array.isArray(notifs)) {
+        setNotifications(notifs);
       }
-      if (response.unreadCount !== undefined) {
+      if (response?.unreadCount !== undefined) {
         setUnreadCount(response.unreadCount);
-        // Update badge count
-        await Notifications.setBadgeCountAsync(response.unreadCount);
+        try { await Notifications.setBadgeCountAsync(response.unreadCount); } catch {}
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -185,23 +166,21 @@ export function useNotifications() {
     }
   }, [isAuthenticated]);
 
-  // Mark notification as read
+  // Mark as read
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
       await api.put(`/api/notifications/${notificationId}/read`);
       setNotifications(prev =>
-        prev.map(n =>
-          n.id === notificationId ? { ...n, read_at: new Date().toISOString() } : n
-        )
+        prev.map(n => n.id === notificationId ? { ...n, read_at: new Date().toISOString() } : n)
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
-      await Notifications.setBadgeCountAsync(Math.max(0, unreadCount - 1));
+      try { await Notifications.setBadgeCountAsync(Math.max(0, unreadCount - 1)); } catch {}
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
   }, [unreadCount]);
 
-  // Mark all notifications as read
+  // Mark all as read
   const markAllAsRead = useCallback(async () => {
     try {
       await api.put('/api/notifications/read-all');
@@ -209,7 +188,7 @@ export function useNotifications() {
         prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() }))
       );
       setUnreadCount(0);
-      await Notifications.setBadgeCountAsync(0);
+      try { await Notifications.setBadgeCountAsync(0); } catch {}
     } catch (error) {
       console.error('Error marking all as read:', error);
     }
@@ -232,12 +211,10 @@ export function useNotifications() {
   // Fetch preferences
   const fetchPreferences = useCallback(async () => {
     if (!isAuthenticated) return;
-
     try {
-      const response = await api.get<{ data: NotificationPreferences }>('/api/notifications/preferences');
-      if (response.data) {
-        setPreferences(response.data);
-      }
+      const response: any = await api.get('/api/notifications/preferences');
+      const prefs = response?.data ?? response;
+      if (prefs && typeof prefs === 'object') setPreferences(prefs);
     } catch (error) {
       console.error('Error fetching preferences:', error);
     }
@@ -246,10 +223,9 @@ export function useNotifications() {
   // Update preferences
   const updatePreferences = useCallback(async (newPrefs: Partial<NotificationPreferences>) => {
     try {
-      const response = await api.put<{ data: NotificationPreferences }>('/api/notifications/preferences', newPrefs);
-      if (response.data) {
-        setPreferences(response.data);
-      }
+      const response: any = await api.put('/api/notifications/preferences', newPrefs);
+      const prefs = response?.data ?? response;
+      if (prefs && typeof prefs === 'object') setPreferences(prefs);
       return true;
     } catch (error) {
       console.error('Error updating preferences:', error);
@@ -257,10 +233,9 @@ export function useNotifications() {
     }
   }, []);
 
-  // Deactivate token on logout
+  // Deactivate token
   const deactivateToken = useCallback(async () => {
     if (!expoPushToken) return;
-
     try {
       await api.delete('/api/notifications/push-token', { token: expoPushToken });
       setExpoPushToken(null);
@@ -269,21 +244,18 @@ export function useNotifications() {
     }
   }, [expoPushToken]);
 
-  // Fetch notifications and preferences on mount
+  // Auto-fetch on mount
   useEffect(() => {
     if (isAuthenticated) {
       fetchNotifications();
       fetchPreferences();
     }
-  }, [isAuthenticated, fetchNotifications, fetchPreferences]);
+  }, [isAuthenticated]);
 
   return {
-    // Token
     expoPushToken,
     registerForPushNotifications,
     deactivateToken,
-
-    // Notifications
     notifications,
     unreadCount,
     isLoading,
@@ -291,8 +263,6 @@ export function useNotifications() {
     markAsRead,
     markAllAsRead,
     deleteNotification,
-
-    // Preferences
     preferences,
     fetchPreferences,
     updatePreferences,

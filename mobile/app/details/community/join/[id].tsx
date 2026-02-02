@@ -38,9 +38,10 @@ import { Button, StepIndicator } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useAuth } from '../../../../src/contexts/AuthContext';
 import { useAlert } from '../../../../src/contexts/AlertContext';
-import { communityService, talentService, MembershipAnswer } from '../../../../src/services';
-import type { Community, ApplicationQuestion } from '../../../../src/types/models';
+import { communityService, talentService, kycService, MembershipAnswer } from '../../../../src/services';
+import type { Community, ApplicationQuestion, TalentObjectData } from '../../../../src/types/models';
 import { VISIBILITY_LABELS, COMMUNITY_TYPE_LABELS } from '../../../../src/types/models';
+import { getFullImageUrl } from '../../../../src/utils/image';
 
 type JoinStep = 'profile' | 'rules' | 'questions' | 'preview' | 'success';
 
@@ -56,18 +57,6 @@ const STEP_TITLES: Record<JoinStep, string> = {
 
 const MAX_ANSWER_LENGTH = 200;
 
-interface UserProfile {
-  id: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  phone?: string;
-  headline?: string;
-  city?: string;
-  country?: string;
-  profile_picture_url?: string;
-}
-
 export default function JoinCommunityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -79,7 +68,7 @@ export default function JoinCommunityScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [community, setCommunity] = useState<Community | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<TalentObjectData | null>(null);
 
   // Form state
   const [acceptedRules, setAcceptedRules] = useState(false);
@@ -140,6 +129,34 @@ export default function JoinCommunityScreen() {
 
     setIsLoading(true);
     try {
+      // KYC gate: vérification d'identité obligatoire
+      try {
+        const kycRes = await kycService.getStatus();
+        if (!kycRes?.data || kycRes.data.status !== 'VERIFIED') {
+          Alert.alert(
+            'Vérification requise',
+            'Tu dois vérifier ton identité avant de rejoindre une communauté.',
+            [
+              { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
+              { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
+            ]
+          );
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        Alert.alert(
+          'Vérification requise',
+          'Tu dois vérifier ton identité avant de rejoindre une communauté.',
+          [
+            { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
+            { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
+          ]
+        );
+        setIsLoading(false);
+        return;
+      }
+
       // Check if already member
       const membershipResponse = await communityService.checkMembership(id);
       if (membershipResponse.data?.is_member) {
@@ -157,11 +174,16 @@ export default function JoinCommunityScreen() {
 
       const [communityResponse, profileResponse] = await Promise.all([
         communityService.getById(id),
-        talentService.getMyProfile(),
+        talentService.getMyTalentObject().catch(() => talentService.getMyProfile().then(r => {
+          const p = r.data as any;
+          return { data: { ...p, avatar_url: p.avatar_url || p.profile_picture_url || null, display_name: `${p.first_name || ''} ${p.last_name || ''}`.trim(), skills: p.skills || [], sectors: p.sectors || [], goals: p.goals || [], profile_tags: p.profile_tags || [], documents_metadata: [], remote_ready: false, willing_to_relocate: false } as any };
+        }).catch(() => null)),
       ]);
 
       setCommunity(communityResponse.data);
-      setProfile(profileResponse.data);
+      if (profileResponse?.data) {
+        setProfile(profileResponse.data);
+      }
 
       // Initialize answers for each question
       if (communityResponse.data?.application_questions) {
@@ -294,6 +316,8 @@ export default function JoinCommunityScreen() {
 
   const renderProfileStep = () => {
     const profileComplete = isProfileComplete();
+    const avatarUrl = profile?.avatar_url ? getFullImageUrl(profile.avatar_url) : null;
+    const location = [profile?.city, profile?.region, profile?.country].filter(Boolean).join(', ');
 
     return (
       <View style={styles.stepContent}>
@@ -307,69 +331,99 @@ export default function JoinCommunityScreen() {
           </Text>
         </View>
 
-        {/* Profile Card */}
         <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-          {/* Avatar */}
           <View style={styles.profileHeader}>
-            {profile?.profile_picture_url ? (
-              <Image source={{ uri: profile.profile_picture_url }} style={styles.profileAvatar} />
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.profileAvatar} />
             ) : (
               <View style={[styles.profileAvatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
                 <Text style={[styles.profileAvatarText, { color: colors.primary }]}>
-                  {getInitials(profile?.first_name, profile?.last_name)}
+                  {getInitials(profile?.first_name || undefined, profile?.last_name || undefined)}
                 </Text>
               </View>
             )}
           </View>
 
-          {/* Profile Info */}
           <View style={styles.profileInfo}>
             <Text style={[styles.profileName, { color: colors.textPrimary }]}>
-              {profile?.first_name} {profile?.last_name}
+              {profile?.display_name || `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim()}
             </Text>
-            {profile?.headline && (
-              <Text style={[styles.profileHeadline, { color: colors.textSecondary }]}>
-                {profile.headline}
+            {profile?.bio && (
+              <Text style={[styles.profileHeadline, { color: colors.textSecondary }]} numberOfLines={2}>
+                {profile.bio}
               </Text>
             )}
           </View>
 
-          {/* Profile Details */}
           <View style={styles.profileDetails}>
             {profile?.email && (
               <View style={styles.profileDetailRow}>
                 <Mail size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>
-                  {profile.email}
-                </Text>
+                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>{profile.email}</Text>
               </View>
             )}
             {profile?.phone && (
               <View style={styles.profileDetailRow}>
                 <Phone size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>
-                  {profile.phone}
-                </Text>
+                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>{profile.phone}</Text>
               </View>
             )}
-            {(profile?.city || profile?.country) && (
+            {location ? (
               <View style={styles.profileDetailRow}>
                 <MapPin size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>
-                  {[profile.city, profile.country].filter(Boolean).join(', ')}
-                </Text>
+                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>{location}</Text>
               </View>
-            )}
+            ) : null}
           </View>
 
-          {/* Warning if profile incomplete */}
+          {profile?.skills && profile.skills.length > 0 && (
+            <View style={styles.profileTagsSection}>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Compétences</Text>
+              <View style={styles.profileTagsRow}>
+                {profile.skills.slice(0, 8).map((skill, i) => (
+                  <View key={i} style={[styles.profileTag, { backgroundColor: colors.primary + '12' }]}>
+                    <Text style={[styles.profileTagText, { color: colors.primary }]}>{skill}</Text>
+                  </View>
+                ))}
+                {profile.skills.length > 8 && (
+                  <Text style={[styles.profileTagMore, { color: colors.gray400 }]}>+{profile.skills.length - 8}</Text>
+                )}
+              </View>
+            </View>
+          )}
+
+          {profile?.sectors && profile.sectors.length > 0 && (
+            <View style={styles.profileTagsSection}>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Secteurs</Text>
+              <View style={styles.profileTagsRow}>
+                {profile.sectors.map((s, i) => (
+                  <View key={i} style={[styles.profileTag, { backgroundColor: colors.gray100 }]}>
+                    <Text style={[styles.profileTagText, { color: colors.gray700 }]}>{s}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {profile?.documents_metadata && profile.documents_metadata.length > 0 && (
+            <View style={styles.profileTagsSection}>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Documents ({profile.documents_metadata.length})</Text>
+              {profile.documents_metadata.slice(0, 3).map((doc) => (
+                <View key={doc.id} style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: SPACING.xs }}>
+                  <FileText size={14} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.profileDetailText, { color: colors.textSecondary, flex: 1 }]} numberOfLines={1}>
+                    {doc.title || doc.original_filename}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+
           {!profileComplete && (
             <View style={[styles.warningBox, { backgroundColor: colors.warning + '15' }]}>
               <AlertCircle size={20} color={colors.warning} strokeWidth={ICON.strokeWidth} />
               <View style={styles.warningContent}>
-                <Text style={[styles.warningTitle, { color: colors.warning }]}>
-                  Profil incomplet
-                </Text>
+                <Text style={[styles.warningTitle, { color: colors.warning }]}>Profil incomplet</Text>
                 <Text style={[styles.warningText, { color: colors.textSecondary }]}>
                   Complétez votre profil (nom, prénom, email) pour continuer.
                 </Text>
@@ -378,16 +432,13 @@ export default function JoinCommunityScreen() {
           )}
         </View>
 
-        {/* Edit Profile Button */}
-        <TouchableOpacity
-          style={[styles.editProfileButton, { borderColor: colors.primary }]}
+        <Button
+          title="Modifier mon profil"
           onPress={() => router.push('/settings/edit-profile')}
-        >
-          <SquarePen size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.editProfileText, { color: colors.primary }]}>
-            Modifier mon profil
-          </Text>
-        </TouchableOpacity>
+          variant="outline"
+          fullWidth
+          icon={<SquarePen size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+        />
       </View>
     );
   };
@@ -638,8 +689,6 @@ export default function JoinCommunityScreen() {
                 onPress={handleSubmit}
                 disabled={isSubmitting}
                 fullWidth
-                icon={<Send size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-                iconPosition="right"
               />
             </View>
           </View>
@@ -886,6 +935,35 @@ const styles = StyleSheet.create({
   profileDetailText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
   },
+  profileTagsSection: {
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  profileTagsLabel: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    marginBottom: SPACING.xs,
+  },
+  profileTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  profileTag: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER.radius.full,
+  },
+  profileTagText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+  profileTagMore: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    alignSelf: 'center',
+  },
   warningBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1085,7 +1163,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.xs,
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderWidth: 1.5,
     borderRadius: BORDER.radius.sm,

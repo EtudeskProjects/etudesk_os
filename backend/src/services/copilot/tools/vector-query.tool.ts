@@ -30,13 +30,14 @@ export const vectorQueryTool = tool({
       'skills',
     ]),
     topK: z.number().min(1).max(20).default(5),
-    filters: z
-      .record(z.string(), z.unknown())
-      .optional()
-      .describe('Filtres metadata Pinecone (ex: { type: "EMPLOYMENT" })'),
+    filtersJson: z
+      .string()
+      .nullable()
+      .describe('Filtres metadata Pinecone en JSON string (ex: \'{"type":"EMPLOYMENT"}\'). Null si pas de filtre.'),
   }),
-  execute: async ({ query, namespace, topK, filters }) => {
+  execute: async ({ query, namespace, topK, filtersJson }) => {
     try {
+      const filters = filtersJson ? JSON.parse(filtersJson) : {};
       const embedding = await generateEmbedding(query);
       const index = pinecone.index(PINECONE_INDEX);
 
@@ -161,7 +162,7 @@ export const vectorQueryTool = tool({
         }
         case 'talents': {
           const res = await pool.query(
-            `SELECT t.id, t.display_name, t.headline, t.city, t.country
+            `SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio, t.city, t.country
              FROM talents t
              WHERE t.id = ANY($1::uuid[]) AND t.deleted_at IS NULL`,
             [entityIds]
@@ -169,7 +170,7 @@ export const vectorQueryTool = tool({
           results = res.rows.map((r) => ({
             id: r.id,
             name: r.display_name,
-            headline: r.headline,
+            bio: r.bio?.slice(0, 200),
             location: [r.city, r.country].filter(Boolean).join(', '),
             matchScore: ids.find((i) => i.id === r.id)?.score,
           }));

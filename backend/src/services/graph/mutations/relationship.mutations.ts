@@ -20,9 +20,6 @@ export const relationshipMutations = {
     skillId: string,
     properties: {
       proficiencyLevel: string;
-      yearsExperience?: number;
-      verified?: boolean;
-      endorsedCount?: number;
       source?: string;
     }
   ): Promise<void> {
@@ -32,9 +29,6 @@ export const relationshipMutations = {
       MATCH (s:Skill {id: $skillId})
       MERGE (t)-[r:POSSEDE_COMPETENCE]->(s)
       SET r.proficiency_level = $proficiencyLevel,
-          r.years_experience = $yearsExperience,
-          r.verified = $verified,
-          r.endorsed_count = $endorsedCount,
           r.source = $source,
           r.updated_at = datetime()
       `,
@@ -42,9 +36,6 @@ export const relationshipMutations = {
         talentId,
         skillId,
         proficiencyLevel: properties.proficiencyLevel,
-        yearsExperience: properties.yearsExperience,
-        verified: properties.verified ?? false,
-        endorsedCount: properties.endorsedCount ?? 0,
         source: properties.source ?? 'profile',
       }
     );
@@ -58,8 +49,6 @@ export const relationshipMutations = {
     skillName: string,
     properties: {
       proficiencyLevel: string;
-      yearsExperience?: number;
-      verified?: boolean;
     }
   ): Promise<string> {
     const result = await neo4jClient.write(
@@ -69,17 +58,13 @@ export const relationshipMutations = {
       ON CREATE SET s.id = randomUUID(),
                     s.type = 'technical'
       MERGE (t)-[r:POSSEDE_COMPETENCE]->(s)
-      SET r.proficiency_level = $proficiencyLevel,
-          r.years_experience = $yearsExperience,
-          r.verified = $verified
+      SET r.proficiency_level = $proficiencyLevel
       RETURN s.id as skillId
       `,
       {
         talentId,
         skillName: skillName.toLowerCase(),
         proficiencyLevel: properties.proficiencyLevel,
-        yearsExperience: properties.yearsExperience,
-        verified: properties.verified ?? false,
       }
     );
 
@@ -515,41 +500,6 @@ export const relationshipMutations = {
         recommendationText: properties.recommendationText,
         highlightedSkills: properties.highlightedSkills,
         relationshipContext: properties.relationshipContext,
-      }
-    );
-  },
-
-  // ═══════════════════════════════════════════════════════════════
-  // OPPORTUNITY-SKILL RELATIONSHIPS
-  // ═══════════════════════════════════════════════════════════════
-
-  /**
-   * Add skill requirement to an opportunity
-   */
-  async addOpportunitySkillRequirement(
-    opportunityId: string,
-    skillId: string,
-    properties: {
-      levelRequired?: string;
-      isMandatory?: boolean;
-      weight?: number;
-    }
-  ): Promise<void> {
-    await neo4jClient.write(
-      `
-      MATCH (o:Opportunity {id: $opportunityId})
-      MATCH (s:Skill {id: $skillId})
-      MERGE (o)-[r:REQUIERT_COMPETENCE]->(s)
-      SET r.level_required = $levelRequired,
-          r.is_mandatory = $isMandatory,
-          r.weight = $weight
-      `,
-      {
-        opportunityId,
-        skillId,
-        levelRequired: properties.levelRequired ?? 'intermediaire',
-        isMandatory: properties.isMandatory ?? true,
-        weight: properties.weight ?? 1.0,
       }
     );
   },

@@ -16,7 +16,7 @@ export interface TalentObject {
   avatar_url: string | null;
   first_name: string | null;
   last_name: string | null;
-  display_name: string;
+  display_name: string; // computed: COALESCE(first_name || ' ' || last_name, email)
   gender: string | null;
   bio: string | null;
   profile_tags: string[];
@@ -56,7 +56,7 @@ export async function buildTalentObject(talentId: string): Promise<TalentObject 
        t.avatar_url,
        t.first_name,
        t.last_name,
-       t.display_name,
+       COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
        t.gender,
        t.bio,
        t.profile_tags,
@@ -71,11 +71,10 @@ export async function buildTalentObject(talentId: string): Promise<TalentObject 
        t.willing_to_relocate,
        COALESCE(
          ARRAY(
-           SELECT s.canonical_name
-           FROM talent_skills ts
-           JOIN skills s ON s.id = ts.skill_id
-           WHERE ts.talent_id = t.id
-           ORDER BY ts.endorsed_count DESC NULLS LAST
+           SELECT canonical_name
+           FROM talent_skills
+           WHERE talent_id = t.id
+           ORDER BY canonical_name ASC
            LIMIT 20
          ),
          '{}'
@@ -135,10 +134,7 @@ export async function buildTalentObject(talentId: string): Promise<TalentObject 
 export function talentObjectToText(t: TalentObject): string {
   const lines: string[] = [];
 
-  lines.push(`Nom: ${t.display_name}`);
-  if (t.first_name || t.last_name) {
-    lines.push(`Identité: ${[t.first_name, t.last_name].filter(Boolean).join(' ')}`);
-  }
+  lines.push(`Nom: ${[t.first_name, t.last_name].filter(Boolean).join(' ') || t.display_name}`);
   if (t.gender) lines.push(`Genre: ${t.gender}`);
   if (t.bio) lines.push(`Bio: ${t.bio}`);
   if (t.profile_tags.length) lines.push(`Profil: ${t.profile_tags.join(', ')}`);

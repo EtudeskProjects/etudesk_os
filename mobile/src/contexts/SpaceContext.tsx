@@ -10,7 +10,7 @@ interface UserOrganization {
   name: string;
   type: string;
   logoUrl?: string;
-  role: 'admin' | 'member';
+  role: 'OWNER' | 'ADMIN' | 'MANAGER' | 'OBSERVATEUR' | 'member';
 }
 
 interface SpaceContextType {
@@ -39,7 +39,7 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
   const mapOrganization = (org: OrgModel): UserOrganization => ({
     id: org.id,
     name: org.name,
-    type: org.type || 'COMPANY',
+    type: (org.types && org.types.length > 0 ? org.types[0] : org.type) || 'COMPANY',
     logoUrl: org.logo_url,
     role: org.user_role || 'member',
   });

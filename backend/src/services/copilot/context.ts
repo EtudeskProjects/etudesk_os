@@ -33,7 +33,6 @@ export const TalentProfileSchema = z.object({
     z.object({
       name: z.string(),
       level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']).optional(),
-      yearsOfExperience: z.number().optional(),
     })
   ).optional(),
 
@@ -349,7 +348,6 @@ export const GraphContextSchema = z.object({
     name: z.string(),
     level: z.string(),
     relatedOpportunities: z.number(),
-    yearsExperience: z.number().optional(),
   })).optional(),
 
   // Skill gaps (in-demand skills the talent doesn't have)
@@ -532,9 +530,7 @@ export function summarizeContext(context: TalentContext): string {
   // Profile summary
   const p = context.profile;
   parts.push(`PROFIL: ${p.firstName} ${p.lastName}`);
-  if (p.headline) parts.push(`  Position: ${p.headline}`);
   if (p.location) parts.push(`  Localisation: ${p.location}`);
-  if (p.availabilityStatus) parts.push(`  Disponibilité: ${p.availabilityStatus}`);
 
   // Skills
   if (p.skills && p.skills.length > 0) {
@@ -743,7 +739,7 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
   const result = await pool.query(
     `
     SELECT
-      t.id, t.first_name, t.last_name, t.display_name,
+      t.id, t.first_name, t.last_name, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
       t.email, t.phone,
       t.avatar_url, t.bio,
       t.city, t.country,
@@ -764,10 +760,9 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
   // Load skills
   const skillsResult = await pool.query(
     `
-    SELECT s.name, ts.proficiency_level, ts.years_of_experience
-    FROM talent_skills ts
-    JOIN skills s ON ts.skill_id = s.id
-    WHERE ts.talent_id = $1
+    SELECT canonical_name as name, proficiency_level
+    FROM talent_skills
+    WHERE talent_id = $1
     LIMIT 50
     `,
     [talentId]
@@ -776,7 +771,6 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
   const skills = skillsResult.rows.map((s) => ({
     name: s.name,
     level: mapProficiencyLevel(s.proficiency_level),
-    yearsOfExperience: s.years_of_experience,
   }));
 
   // Load languages
@@ -817,7 +811,7 @@ async function loadKYC(talentId: string): Promise<KYCContext> {
   const result = await pool.query(
     `
     SELECT is_verified, verification_level, verified_fields, verification_date
-    FROM talent_kyc
+    FROM kyc_verifications
     WHERE talent_id = $1
     `,
     [talentId]
@@ -881,7 +875,7 @@ async function loadApplications(talentId: string, limit = 10): Promise<Applicati
       a.id, a.opportunity_id, o.title as opportunity_title,
       org.name as organization_name,
       a.status, a.created_at, a.updated_at
-    FROM applications a
+    FROM opportunity_applications a
     JOIN opportunities o ON a.opportunity_id = o.id
     JOIN organizations org ON o.organization_id = org.id
     WHERE a.talent_id = $1
@@ -903,12 +897,12 @@ async function loadApplications(talentId: string, limit = 10): Promise<Applicati
 
   const countResult = await pool.query(
     `SELECT COUNT(*), COUNT(*) FILTER (WHERE status NOT IN ('REJECTED', 'WITHDRAWN', 'ACCEPTED')) as active
-     FROM applications WHERE talent_id = $1`,
+     FROM opportunity_applications WHERE talent_id = $1`,
     [talentId]
   );
 
   const statusResult = await pool.query(
-    `SELECT status, COUNT(*) FROM applications WHERE talent_id = $1 GROUP BY status`,
+    `SELECT status, COUNT(*) FROM opportunity_applications WHERE talent_id = $1 GROUP BY status`,
     [talentId]
   );
 
@@ -963,7 +957,7 @@ async function loadReservations(talentId: string): Promise<ReservationsContext> 
     SELECT
       r.id, r.space_id, s.name as space_name,
       r.date, r.start_time, r.end_time, r.status
-    FROM space_reservations r
+    FROM space_bookings r
     JOIN spaces s ON r.space_id = s.id
     WHERE r.talent_id = $1 AND r.date >= CURRENT_DATE
     ORDER BY r.date, r.start_time
@@ -1023,8 +1017,8 @@ async function loadNotifications(talentId: string, limit = 10): Promise<Notifica
 async function loadBookmarks(talentId: string): Promise<BookmarksContext> {
   const result = await pool.query(
     `
-    SELECT id, entity_type, entity_id, created_at
-    FROM bookmarks
+    SELECT id, 'opportunity' as entity_type, opportunity_id as entity_id, created_at
+    FROM opportunity_bookmarks
     WHERE talent_id = $1
     ORDER BY created_at DESC
     `,
@@ -1099,7 +1093,7 @@ async function loadCalendar(talentId: string, daysAhead = 30): Promise<CalendarC
   const reservations = await pool.query(
     `
     SELECT r.id, r.date, r.start_time, r.end_time, s.name as space_name
-    FROM space_reservations r
+    FROM space_bookings r
     JOIN spaces s ON r.space_id = s.id
     WHERE r.talent_id = $1 AND r.date >= $2 AND r.date <= $3 AND r.status = 'CONFIRMED'
     ORDER BY r.date, r.start_time
@@ -1139,9 +1133,14 @@ async function loadCalendar(talentId: string, daysAhead = 30): Promise<CalendarC
 async function loadInvitations(talentId: string): Promise<InvitationsContext> {
   const result = await pool.query(
     `
-    SELECT id, type, from_name, target_name, status, created_at, expires_at
-    FROM invitations
-    WHERE talent_id = $1 AND status = 'PENDING'
+    SELECT id, 'community' as type, inviter_name as from_name, '' as target_name, status, created_at, expires_at
+    FROM community_invitations WHERE invitee_talent_id = $1 AND status = 'PENDING'
+    UNION ALL
+    SELECT id, 'opportunity' as type, inviter_name as from_name, '' as target_name, status, created_at, expires_at
+    FROM opportunity_invitations WHERE invitee_talent_id = $1 AND status = 'PENDING'
+    UNION ALL
+    SELECT id, 'organization' as type, '' as from_name, '' as target_name, status, created_at, expires_at
+    FROM organization_invitations WHERE email = (SELECT email FROM talents WHERE id = $1) AND status = 'PENDING'
     ORDER BY created_at DESC
     `,
     [talentId]
@@ -1196,22 +1195,22 @@ async function loadLearning(talentId: string): Promise<LearningContext> {
   const topicsResult = await pool.query(
     `
     SELECT
-      lt.id, lt.name, lt.parent_topic_id,
+      lt.id, lt.topic_name, lt.parent_topic_id,
       lt.mastery_level, lt.last_studied_at,
       COUNT(lf.id) as flashcard_count,
-      COUNT(lf.id) FILTER (WHERE lf.next_review_date <= CURRENT_DATE) as due_count
+      COUNT(lf.id) FILTER (WHERE lf.next_review_at <= CURRENT_DATE) as due_count
     FROM learning_topics lt
     LEFT JOIN learning_flashcards lf ON lt.id = lf.topic_id
     WHERE lt.talent_id = $1
     GROUP BY lt.id
-    ORDER BY lt.name
+    ORDER BY lt.topic_name
     `,
     [talentId]
   );
 
   const topics = topicsResult.rows.map((row) => ({
     id: row.id,
-    name: row.name,
+    name: row.topic_name,
     parentTopic: row.parent_topic_id,
     masteryLevel: row.mastery_level || 0,
     flashcardCount: parseInt(row.flashcard_count) || 0,
@@ -1225,7 +1224,7 @@ async function loadLearning(talentId: string): Promise<LearningContext> {
     SELECT
       COUNT(DISTINCT lt.id) as total_topics,
       COUNT(lf.id) as total_flashcards,
-      COUNT(lf.id) FILTER (WHERE lf.next_review_date <= CURRENT_DATE) as due_flashcards
+      COUNT(lf.id) FILTER (WHERE lf.next_review_at <= CURRENT_DATE) as due_flashcards
     FROM learning_topics lt
     LEFT JOIN learning_flashcards lf ON lt.id = lf.topic_id
     WHERE lt.talent_id = $1
@@ -1340,7 +1339,6 @@ async function loadGraphContext(talentId: string): Promise<GraphContext> {
         name: s.name,
         level: s.level || 'intermediaire',
         relatedOpportunities: 0, // Would need additional query
-        yearsExperience: s.yearsExperience,
       })),
       currentPosition: summary.currentPosition,
       skillGaps: skillGaps.slice(0, 5).map(g => ({

@@ -25,6 +25,7 @@ import {
   Trash2,
   FileText,
   MapPin,
+  TrendingUp,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
@@ -38,17 +39,24 @@ import { APPLICATION_STATUS_LABELS, LOCATION_TYPE_LABELS } from '../../../src/ty
 
 // Status configuration - Simplified to 4 statuses
 // Colors will be resolved dynamically using theme colors
-const getStatusConfig = (colors: any): Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> => ({
+const getStatusConfig = (colors: any): Record<string, { color: string; icon: typeof Clock; bgColor: string }> => ({
   SUBMITTED: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15' },
   IN_REVIEW: { color: colors.info, icon: Eye, bgColor: colors.info + '15' },
   ACCEPTED: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15' },
   REJECTED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15' },
 });
 
+const MATCH_CATEGORY_CONFIG = {
+  excellent: { label: 'Excellent match', color: '#059669', bgColor: '#05966915' },
+  good: { label: 'Bon match', color: '#2563eb', bgColor: '#2563eb15' },
+  average: { label: 'Match moyen', color: '#d97706', bgColor: '#d9770615' },
+  low: { label: 'Match faible', color: '#dc2626', bgColor: '#dc262615' },
+};
+
 type Tab = 'details' | 'messages';
 
 export default function ApplicationDetailsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, tab } = useLocalSearchParams<{ id: string; tab?: string }>();
   const router = useRouter();
   const { colors } = useTheme();
   const { user } = useAuth();
@@ -59,7 +67,7 @@ export default function ApplicationDetailsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('details');
+  const [activeTab, setActiveTab] = useState<Tab>(tab === 'messages' ? 'messages' : 'details');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Handle keyboard events for proper input positioning
@@ -214,7 +222,7 @@ export default function ApplicationDetailsScreen() {
   const renderDetailsTab = () => {
     if (!application) return null;
 
-    const statusConfig = getStatusConfig(colors)[application.status];
+    const statusConfig = getStatusConfig(colors)[application.status] || getStatusConfig(colors)['SUBMITTED'];
     const StatusIcon = statusConfig.icon;
     const opportunity = application.opportunity;
 
@@ -231,6 +239,14 @@ export default function ApplicationDetailsScreen() {
               Postulé {formatRelativeTime(application.applied_at)}
             </Text>
           </View>
+          {(application as any).matchCategory && MATCH_CATEGORY_CONFIG[(application as any).matchCategory as keyof typeof MATCH_CATEGORY_CONFIG] && (
+            <View style={[styles.matchBadge, { backgroundColor: MATCH_CATEGORY_CONFIG[(application as any).matchCategory as keyof typeof MATCH_CATEGORY_CONFIG].bgColor }]}>
+              <TrendingUp size={12} color={MATCH_CATEGORY_CONFIG[(application as any).matchCategory as keyof typeof MATCH_CATEGORY_CONFIG].color} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.matchBadgeText, { color: MATCH_CATEGORY_CONFIG[(application as any).matchCategory as keyof typeof MATCH_CATEGORY_CONFIG].color }]}>
+                {MATCH_CATEGORY_CONFIG[(application as any).matchCategory as keyof typeof MATCH_CATEGORY_CONFIG].label}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Opportunity Info */}
@@ -438,7 +454,7 @@ export default function ApplicationDetailsScreen() {
         {activeTab === 'details' ? renderDetailsTab() : renderMessagesTab()}
       </KeyboardAvoidingView>
 
-      <FooterNav activeTab="settings" />
+      <FooterNav activeTab="home" />
     </SafeAreaView>
   );
 }
@@ -532,6 +548,20 @@ const styles = StyleSheet.create({
 
   statusInfo: {
     flex: 1,
+  },
+
+  matchBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: BORDER.radius.full,
+  },
+
+  matchBadgeText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
   statusLabel: {

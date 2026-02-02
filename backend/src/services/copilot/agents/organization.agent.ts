@@ -21,8 +21,5 @@ export function createOrgAgent(context: OrgContext): Agent {
       sqlQueryTool,
       webSearchTool(),
     ],
-    modelSettings: {
-      temperature: 0.4,
-    },
   });
 }

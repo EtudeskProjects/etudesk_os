@@ -444,7 +444,7 @@ export async function notifyApplicationStatusChanged(
         a.id,
         a.talent_id,
         t.email as talent_email,
-        t.display_name as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         o.title as opportunity_title,
         org.name as organization_name
       FROM opportunity_applications a
@@ -512,7 +512,7 @@ export async function notifyApplicationMessage(
         a.id as application_id,
         a.talent_id,
         t.email as talent_email,
-        t.display_name as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         o.title as opportunity_title,
         o.organization_id,
         org.name as organization_name
@@ -563,7 +563,7 @@ export async function notifyApplicationMessage(
     } else {
       // Notify organization members
       const orgMembers = await pool.query(
-        `SELECT om.talent_id, t.email, t.display_name
+        `SELECT om.talent_id, t.email, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name
          FROM organization_members om
          JOIN talents t ON om.talent_id = t.id
          WHERE om.organization_id = $1`,
@@ -605,7 +605,7 @@ export async function notifyNewApplication(applicationId: string): Promise<void>
       SELECT
         a.id,
         a.talent_id,
-        t.display_name as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         o.title as opportunity_title,
         o.organization_id
       FROM opportunity_applications a
@@ -620,7 +620,7 @@ export async function notifyNewApplication(applicationId: string): Promise<void>
 
     // Get organization members
     const orgMembers = await pool.query(
-      `SELECT om.talent_id, t.email, t.display_name
+      `SELECT om.talent_id, t.email, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name
        FROM organization_members om
        JOIN talents t ON om.talent_id = t.id
        WHERE om.organization_id = $1`,
@@ -678,7 +678,7 @@ export async function notifyInterviewScheduled(
         a.id,
         a.talent_id,
         t.email as talent_email,
-        t.display_name as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         o.title as opportunity_title,
         org.name as organization_name
       FROM opportunity_applications a
@@ -944,4 +944,61 @@ async function sendInterviewScheduledEmail(
     html,
     text: `Bonjour ${talentName},\n\nEntretien programmé pour "${opportunityTitle}" chez ${organizationName}.\n\nDate: ${formattedDate}\nType: ${interviewType}${interviewLocation ? `\nLieu: ${interviewLocation}` : ''}\n\nVoir: ${applicationLink}`,
   });
+}
+
+/**
+ * Notify organization members when a new space booking is created
+ */
+export async function notifyNewBooking(bookingId: string): Promise<void> {
+  try {
+    const result = await pool.query(`
+      SELECT
+        sb.id,
+        sb.talent_id,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
+        s.name as space_name,
+        s.organization_id
+      FROM space_bookings sb
+      JOIN talents t ON sb.talent_id = t.id
+      JOIN spaces s ON sb.space_id = s.id
+      WHERE sb.id = $1
+    `, [bookingId]);
+
+    if (result.rows.length === 0) return;
+
+    const booking = result.rows[0];
+
+    // Get organization members
+    const orgMembers = await pool.query(
+      `SELECT om.talent_id, t.email, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name
+       FROM organization_members om
+       JOIN talents t ON om.talent_id = t.id
+       WHERE om.organization_id = $1`,
+      [booking.organization_id]
+    );
+
+    const title = 'Nouvelle demande de réservation';
+    const body = `${booking.talent_name} souhaite réserver "${booking.space_name}"`;
+
+    for (const member of orgMembers.rows) {
+      const prefs = await getPreferences(member.talent_id);
+
+      // Send push
+      if (prefs.push_enabled !== false && prefs.notify_applications !== false) {
+        await sendToUser(member.talent_id, {
+          type: 'BOOKING',
+          title,
+          body,
+          data: {
+            bookingId,
+            talentName: booking.talent_name,
+            spaceName: booking.space_name,
+            screen: 'org-booking-details',
+          },
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error sending new booking notification:', error);
+  }
 }

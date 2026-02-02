@@ -154,11 +154,11 @@ export const learningQueries = {
       WHERE target.canonical_name =~ ('(?i).*' + $targetSkillName + '.*')
          OR target.id = $targetSkillName
 
-      // Check if already has the skill
-      WITH t, current, target,
-           EXISTS((t)-[:POSSEDE_COMPETENCE]->(target)) as alreadyHasSkill
+      WITH t, collect(current) as currentSkills, target
+      OPTIONAL MATCH (t)-[:POSSEDE_COMPETENCE]->(target)
+      WITH t, currentSkills, target, count(target) > 0 as alreadyHasSkill
+      UNWIND currentSkills as current
 
-      // Find shortest paths through prerequisites
       CALL {
         WITH current, target
         MATCH path = shortestPath((current)-[:PREREQUIS_POUR*1..${maxSteps}]->(target))
@@ -170,10 +170,9 @@ export const learningQueries = {
            [n IN nodes(path) | n.canonical_name] as learningPath,
            length(path) as steps
 
-      // Check which prerequisites are met
       UNWIND nodes(path) as pathNode
-      WITH t, target, learningPath, steps, pathNode, alreadyHasSkill,
-           EXISTS((t)-[:POSSEDE_COMPETENCE]->(pathNode)) as isMet
+      OPTIONAL MATCH (t)-[hasPn:POSSEDE_COMPETENCE]->(pathNode)
+      WITH target, learningPath, steps, alreadyHasSkill, pathNode, hasPn IS NOT NULL as isMet
 
       WITH target, learningPath, steps, alreadyHasSkill,
            collect({skill: pathNode.canonical_name, isMet: isMet}) as prerequisites
@@ -210,49 +209,31 @@ export const learningQueries = {
   ): Promise<SkillRecommendation[]> {
     const { limit = 10 } = options;
 
+    // Uses agent-inferred DEVRAIT_APPRENDRE relationships only.
+    // REQUIERT_COMPETENCE was removed (opportunity_skills table dropped).
     const result = await neo4jClient.read(
       `
-      MATCH (t:Talent {id: $talentId})
+      MATCH (t:Talent {id: $talentId})-[sug:DEVRAIT_APPRENDRE]->(s:Skill)
+      WHERE NOT EXISTS((t)-[:POSSEDE_COMPETENCE]->(s))
 
-      // Find skills the talent doesn't have but are in high demand
-      MATCH (op:Opportunity)-[req:REQUIERT_COMPETENCE]->(s:Skill)
-      WHERE op.status = 'published'
-        AND NOT EXISTS((t)-[:POSSEDE_COMPETENCE]->(s))
-
-      WITH t, s, count(DISTINCT op) as demandCount
-
-      // Check if prerequisites are met
       OPTIONAL MATCH (prereq:Skill)-[:PREREQUIS_POUR]->(s)
-      WITH t, s, demandCount,
-           collect(prereq) as allPrereqs,
-           size([prereq IN collect(prereq) WHERE EXISTS((t)-[:POSSEDE_COMPETENCE]->(prereq))]) as metPrereqs
+      WITH t, s, sug, collect(prereq) as allPrereqs
 
-      WITH s, demandCount,
-           size(allPrereqs) = 0 OR metPrereqs = size(allPrereqs) as prerequisitesMet,
-           CASE
-             WHEN demandCount >= 5 THEN 'critical'
-             WHEN demandCount >= 3 THEN 'high'
-             WHEN demandCount >= 2 THEN 'medium'
-             ELSE 'low'
-           END as priority
-
-      // Check if agent already suggested this skill
-      OPTIONAL MATCH (t:Talent {id: $talentId})-[sug:DEVRAIT_APPRENDRE]->(s)
+      WITH s, sug, allPrereqs,
+           size(allPrereqs) = 0 OR size([p IN allPrereqs WHERE EXISTS((t)-[:POSSEDE_COMPETENCE]->(p))]) = size(allPrereqs) as prerequisitesMet
 
       RETURN s as skill,
-             priority,
-             demandCount,
-             prerequisitesMet,
-             sug.reason as agentReason
+             sug.priority as priority,
+             sug.reason as agentReason,
+             prerequisitesMet
       ORDER BY
-        CASE priority
+        CASE sug.priority
           WHEN 'critical' THEN 1
           WHEN 'high' THEN 2
           WHEN 'medium' THEN 3
           ELSE 4
         END,
-        prerequisitesMet DESC,
-        demandCount DESC
+        prerequisitesMet DESC
       LIMIT $limit
       `,
       { talentId, limit: neo4jClient.int(limit) }
@@ -261,7 +242,6 @@ export const learningQueries = {
     return result.records.map(record => {
       const skill = record.get('skill').properties;
       const agentReason = record.get('agentReason');
-      const demandCount = this.toNumber(record.get('demandCount'));
 
       return {
         skill: {
@@ -270,11 +250,9 @@ export const learningQueries = {
           type: skill.type,
           domain: skill.domain,
         },
-        priority: record.get('priority') as 'low' | 'medium' | 'high' | 'critical',
-        reason:
-          agentReason ||
-          `Cette compétence est requise par ${demandCount} opportunité${demandCount > 1 ? 's' : ''} actuellement publiée${demandCount > 1 ? 's' : ''}.`,
-        relatedOpportunities: demandCount,
+        priority: (record.get('priority') || 'medium') as 'low' | 'medium' | 'high' | 'critical',
+        reason: agentReason || 'Compétence suggérée par l\'agent.',
+        relatedOpportunities: 0,
         prerequisitesMet: record.get('prerequisitesMet'),
       };
     });
@@ -300,7 +278,6 @@ export const learningQueries = {
       WITH topic, r,
            duration.between(date(r.last_studied_at), date()).days as daysSinceReview
 
-      // Calculate urgency based on mastery and time since review
       WITH topic, r, daysSinceReview,
            CASE
              WHEN r.mastery_level < 50 AND daysSinceReview > 3 THEN 'high'
@@ -347,19 +324,18 @@ export const learningQueries = {
       MATCH (s:Skill)
       WHERE s.canonical_name =~ ('(?i).*' + $topicName + '.*')
 
-      // Find prerequisites
       OPTIONAL MATCH (prereq:Skill)-[:PREREQUIS_POUR]->(s)
       WITH s, collect({skill: prereq, rel: 'prerequisite'}) as prereqs
 
-      // Find complementary skills
       OPTIONAL MATCH (s)-[:COMPLEMENTAIRE_A]-(comp:Skill)
       WITH s, prereqs, collect({skill: comp, rel: 'complementary'}) as comps
 
-      // Find advanced skills (where this is a prerequisite)
       OPTIONAL MATCH (s)-[:PREREQUIS_POUR]->(adv:Skill)
-      WITH prereqs + comps + collect({skill: adv, rel: 'advanced'}) as allRelated
+      WITH s, prereqs, comps, collect({skill: adv, rel: 'advanced'}) as advs
+      WITH prereqs + comps + advs as allRelated
 
       UNWIND allRelated as related
+      WITH related
       WHERE related.skill IS NOT NULL
 
       RETURN DISTINCT related.skill as skill, related.rel as relationship

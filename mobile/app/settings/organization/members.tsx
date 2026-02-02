@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +18,7 @@ import {
   ChevronRight,
   Clock,
   Mail,
+  Trash2,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
@@ -28,6 +30,7 @@ import {
   ORGANIZATION_ROLE_LABELS,
   canManageMembers as canManageMembersCheck,
 } from '../../../src/types/models';
+import { organizationService } from '../../../src/services';
 
 type TabType = 'members' | 'invitations';
 
@@ -47,7 +50,7 @@ const getRoleColor = (role: OrganizationRole, colors: any) => {
 export default function MembersScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { selectedOrg } = useSpace();
+  const { selectedOrg, refreshOrganizations, setSpace } = useSpace();
   const {
     members,
     invitations,
@@ -77,6 +80,44 @@ export default function MembersScreen() {
     router.push('/settings/organization/invite-member');
   };
 
+  const handleDeleteOrganization = () => {
+    if (!selectedOrg) return;
+    Alert.alert(
+      'Supprimer l\'organisation',
+      `Êtes-vous sûr de vouloir supprimer "${selectedOrg.name}" ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Confirmer la suppression',
+              'Cette action est irréversible. Tous les membres et données seront supprimés.',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Supprimer définitivement',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await organizationService.remove(selectedOrg.id);
+                      await refreshOrganizations();
+                      setSpace('talent');
+                      router.replace('/(tabs)/settings');
+                    } catch (error: any) {
+                      Alert.alert('Erreur', error?.error || 'Impossible de supprimer l\'organisation.');
+                    }
+                  },
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
@@ -93,7 +134,7 @@ export default function MembersScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Équipe</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Gestion de l'organisation</Text>
         {canInviteMembers ? (
           <TouchableOpacity onPress={handleInvite} style={styles.addButton}>
             <Plus size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
@@ -296,6 +337,20 @@ export default function MembersScreen() {
             )}
           </>
         )}
+
+        {/* Delete Organization Button - Owner only */}
+        {selectedOrg?.role === 'OWNER' && (
+          <TouchableOpacity
+            style={[styles.deleteButton, { borderColor: colors.error }]}
+            onPress={handleDeleteOrganization}
+            activeOpacity={0.7}
+          >
+            <Trash2 size={ICON.size.sm} color={colors.error} strokeWidth={ICON.strokeWidth} />
+            <Text style={[styles.deleteButtonText, { color: colors.error }]}>
+              Supprimer l'organisation
+            </Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -489,6 +544,22 @@ const styles = StyleSheet.create({
   },
 
   emptyButtonText: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.xxl,
+    paddingVertical: SPACING.md,
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.sm,
+  },
+
+  deleteButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },

@@ -114,13 +114,11 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
         talentId,
         talentName: `${talentContext.profile.firstName} ${talentContext.profile.lastName}`,
         profile: {
-          firstName: talentContext.profile.firstName,
-          lastName: talentContext.profile.lastName,
-          headline: talentContext.profile.headline,
+          firstName: talentContext.profile.firstName || '',
+          lastName: talentContext.profile.lastName || '',
           city: talentContext.profile.city,
           country: talentContext.profile.country,
-          availabilityStatus: talentContext.profile.availabilityStatus,
-          remotePreference: talentContext.profile.remotePreference,
+          remotePreference: talentContext.profile.remoteReady ? 'remote' : undefined,
           skills: (talentContext.profile.skills || []).map((s: any) => ({
             name: s.name,
             level: s.level,

@@ -952,6 +952,10 @@ router.post('/:id/book', authMiddleware, async (req: AuthRequest, res: Response)
       ]
     );
 
+    // Notify organization about new booking
+    const pushService = await import('../services/push-notification.service');
+    pushService.notifyNewBooking(bookingId).catch(err => console.error('Booking notification error:', err));
+
     res.status(201).json({ data: result.rows[0] });
   } catch (error) {
     console.error('Error creating booking:', error);

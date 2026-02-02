@@ -211,20 +211,52 @@ async function getCurrentUser(): Promise<any | null> {
     const accessToken = await getAccessToken();
     if (!accessToken) return null;
 
-    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    let response = await fetch(`${API_BASE_URL}/api/auth/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       },
     });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        logger.info(LOG_SOURCE, 'Token expired, clearing auth');
-        await logout();
-      } else {
-        logger.apiError(LOG_SOURCE, response.status, 'Failed to get current user', '/api/auth/me');
+    // On 401, try refreshing the token before giving up
+    if (response.status === 401) {
+      const refreshToken = await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+      if (refreshToken) {
+        logger.info(LOG_SOURCE, 'Token expired, attempting refresh');
+        const refreshResponse = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+        });
+
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          if (refreshData.success && refreshData.tokens) {
+            await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, refreshData.tokens.accessToken);
+            await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshData.tokens.refreshToken);
+            logger.info(LOG_SOURCE, 'Token refreshed in getCurrentUser');
+
+            // Retry with new token
+            response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${refreshData.tokens.accessToken}`,
+              },
+            });
+          }
+        }
       }
+
+      // If still 401 after refresh attempt, return null but don't logout
+      // (let the main API layer handle session expiry)
+      if (response.status === 401) {
+        logger.warn(LOG_SOURCE, 'Token expired and refresh failed, returning null');
+        return null;
+      }
+    }
+
+    if (!response.ok) {
+      logger.apiError(LOG_SOURCE, response.status, 'Failed to get current user', '/api/auth/me');
       return null;
     }
 

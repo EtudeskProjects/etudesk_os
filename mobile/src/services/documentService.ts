@@ -35,6 +35,13 @@ export type DocumentStatus =
   | 'VERIFIED'
   | 'REJECTED';
 
+export interface ExtractedSkill {
+  name: string;
+  type: 'KNOWLEDGE' | 'HARD_SKILL' | 'SOFT_SKILL';
+  proficiency_hint?: string;
+  context?: string;
+}
+
 export interface ExtractedDocumentData {
   detected_type: DocumentType;
   detected_category: DocumentCategory;
@@ -44,11 +51,17 @@ export interface ExtractedDocumentData {
   issue_date?: string;
   expiry_date?: string;
   description?: string;
-  skills?: string[];
+  skills?: ExtractedSkill[];
+  skills_count?: number;
+  experience_years?: number;
   languages?: string[];
+  job_titles?: string[];
   field_of_study?: string;
   institution?: string;
+  grade?: string;
   full_name?: string;
+  date_of_birth?: string;
+  nationality?: string;
   tags: string[];
   summary?: string;
 }
@@ -66,13 +79,13 @@ export interface TalentDocument {
   status: DocumentStatus;
   processing_error?: string;
   processed_at?: string;
-  extracted_data: ExtractedDocumentData | Record<string, unknown>;
   tags: string[];
   title?: string;
   description?: string;
   is_public: boolean;
   is_verified: boolean;
   verified_at?: string;
+  skills_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -355,10 +368,7 @@ async function updateDocument(
  */
 async function deleteDocument(documentId: string): Promise<{ message: string }> {
   const response = await api.delete<{ message: string }>(`/api/documents/${documentId}`);
-  if (!response.data) {
-    throw new Error(response.error || 'Failed to delete document');
-  }
-  return response.data;
+  return response;
 }
 
 /**
@@ -366,10 +376,7 @@ async function deleteDocument(documentId: string): Promise<{ message: string }> 
  */
 async function retryExtraction(documentId: string): Promise<{ message: string }> {
   const response = await api.post<{ message: string }>(`/api/documents/${documentId}/retry`);
-  if (!response.data) {
-    throw new Error(response.error || 'Failed to retry extraction');
-  }
-  return response.data;
+  return response;
 }
 
 // ═══════════════════════════════════════════════════════════════

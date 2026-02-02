@@ -4,7 +4,7 @@
  */
 
 import { api, ApiResponse } from './api';
-import { Talent } from '../types/models';
+import { Talent, TalentObjectData } from '../types/models';
 
 export interface UpdateTalentData {
   display_name?: string;
@@ -54,6 +54,13 @@ async function generateBio(context?: {
 }
 
 /**
+ * Get current user's TalentObject (rich profile with skills & documents)
+ */
+async function getMyTalentObject(): Promise<ApiResponse<TalentObjectData>> {
+  return api.get<TalentObjectData>('/api/talents/me/talent-object');
+}
+
+/**
  * Get a talent profile by ID or slug
  */
 async function getTalent(idOrSlug: string): Promise<ApiResponse<Talent>> {
@@ -62,6 +69,7 @@ async function getTalent(idOrSlug: string): Promise<ApiResponse<Talent>> {
 
 export const talentService = {
   getMyProfile,
+  getMyTalentObject,
   updateMyProfile,
   generateBio,
   getTalent,

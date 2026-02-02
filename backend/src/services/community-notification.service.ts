@@ -98,7 +98,7 @@ export class CommunityNotificationService {
                 cn.*,
                 json_build_object(
                     'id', actor.id,
-                    'display_name', actor.display_name,
+                    'display_name', COALESCE(actor.first_name || ' ' || actor.last_name, actor.email),
                     'avatar_url', actor.avatar_url
                 ) as actor,
                 json_build_object(
@@ -203,7 +203,7 @@ export class CommunityNotificationService {
 
         // Get author name
         const authorRes = await pool.query(
-            'SELECT display_name FROM talents WHERE id = $1',
+            'SELECT COALESCE(first_name || \' \' || last_name, email) as display_name FROM talents WHERE id = $1',
             [authorId]
         );
         const authorName = authorRes.rows[0]?.display_name || 'Quelqu\'un';
@@ -260,7 +260,7 @@ export class CommunityNotificationService {
 
         // Get actor name
         const actorRes = await pool.query(
-            'SELECT display_name FROM talents WHERE id = $1',
+            'SELECT COALESCE(first_name || \' \' || last_name, email) as display_name FROM talents WHERE id = $1',
             [actorId]
         );
         const actorName = actorRes.rows[0]?.display_name || 'Quelqu\'un';

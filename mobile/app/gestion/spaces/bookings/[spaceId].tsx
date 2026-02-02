@@ -45,7 +45,7 @@ export default function SpaceBookingsScreen() {
   const [bookings, setBookings] = useState<SpaceBookingDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [filter, setFilter] = useState<FilterStatus>('all');
+  const [filter, setFilter] = useState<FilterStatus>('PENDING');
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
 
   const STATUS_CONFIG = getStatusConfig(colors);
@@ -273,6 +273,7 @@ export default function SpaceBookingsScreen() {
     { key: 'CONFIRMED' as FilterStatus, label: 'Confirmées', count: statusCounts['CONFIRMED'] || 0 },
     { key: 'COMPLETED' as FilterStatus, label: 'Terminées', count: statusCounts['COMPLETED'] || 0 },
     { key: 'CANCELLED' as FilterStatus, label: 'Annulées', count: statusCounts['CANCELLED'] || 0 },
+    { key: 'NO_SHOW' as FilterStatus, label: 'Absents', count: statusCounts['NO_SHOW'] || 0 },
   ];
 
   const headerContent = (

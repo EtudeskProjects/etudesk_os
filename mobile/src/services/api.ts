@@ -69,7 +69,8 @@ class ApiService {
    */
   private async getRefreshToken(): Promise<string | null> {
     try {
-      return await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+      const token = await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+      return token || null; // Treat empty string as null
     } catch {
       return null;
     }
@@ -145,7 +146,10 @@ class ApiService {
 
       if (!response.ok) {
         logger.warn(LOG_SOURCE, `Token refresh failed with status ${response.status}`);
-        await this.clearAuth();
+        // Only clear auth on 401 (token truly invalid), not on network/server errors
+        if (response.status === 401) {
+          await this.clearAuth();
+        }
         this.notifyRefreshSubscribers(false);
         return false;
       }

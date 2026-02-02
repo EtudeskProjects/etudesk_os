@@ -49,6 +49,10 @@ export const NodeExplanations: Record<NodeLabel, { name: string; description: st
     name: 'Événement',
     description: 'Un événement planifié (entretien, réunion, rappel, session)',
   },
+  [NodeLabels.SECTOR]: {
+    name: 'Secteur',
+    description: "Un secteur d'activité (technologie, finance, santé, éducation, etc.)",
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -185,13 +189,6 @@ export const RelationshipExplanations: Record<RelationshipType, RelationshipExpl
     contextTemplate: '{talent1} a un profil similaire à {talent2} ({count} compétences communes)',
   },
 
-  // Entity Relations
-  [RelationshipTypes.REQUIERT_COMPETENCE]: {
-    name: 'Requiert cette compétence',
-    description: 'Compétence requise pour une opportunité',
-    example: "L'offre Senior Developer requiert Python au niveau expert",
-    contextTemplate: '"{opportunity}" requiert {skill} (niveau: {level}, {mandatory})',
-  },
   [RelationshipTypes.PUBLIE_PAR]: {
     name: 'Publiée par cette organisation',
     description: "Organisation ayant publié l'opportunité",
@@ -215,6 +212,22 @@ export const RelationshipExplanations: Record<RelationshipType, RelationshipExpl
     description: 'Compétences qui se renforcent mutuellement',
     example: 'Docker est complémentaire à Kubernetes',
     contextTemplate: '{skill1} est complémentaire à {skill2}',
+  },
+
+  // Organization → Space
+  [RelationshipTypes.HEBERGE]: {
+    name: 'Héberge cet espace',
+    description: 'Organisation propriétaire ou gestionnaire de cet espace',
+    example: 'Impact Hub héberge la salle de réunion Baobab',
+    contextTemplate: '{org} héberge l\'espace "{space}"',
+  },
+
+  // Entity → Sector
+  [RelationshipTypes.DANS_SECTEUR]: {
+    name: 'Opère dans ce secteur',
+    description: "Secteur d'activité dans lequel opère l'entité",
+    example: 'Google opère dans le secteur Technologie',
+    contextTemplate: '{entity} opère dans le secteur {sector}',
   },
 };
 
@@ -271,13 +284,26 @@ export function getRelationshipsFrom(nodeLabel: NodeLabel): RelationshipType[] {
       );
       break;
     case NodeLabels.OPPORTUNITY:
-      relationships.push(RelationshipTypes.REQUIERT_COMPETENCE, RelationshipTypes.PUBLIE_PAR);
+      relationships.push(
+        RelationshipTypes.PUBLIE_PAR
+      );
       break;
     case NodeLabels.COMMUNITY:
-      relationships.push(RelationshipTypes.APPARTIENT_A);
+      relationships.push(
+        RelationshipTypes.APPARTIENT_A,
+        RelationshipTypes.DANS_SECTEUR
+      );
+      break;
+    case NodeLabels.ORGANIZATION:
+      relationships.push(
+        RelationshipTypes.HEBERGE,
+        RelationshipTypes.DANS_SECTEUR
+      );
       break;
     case NodeLabels.SKILL:
       relationships.push(RelationshipTypes.PREREQUIS_POUR, RelationshipTypes.COMPLEMENTAIRE_A);
+      break;
+    case NodeLabels.DOCUMENT:
       break;
   }
 

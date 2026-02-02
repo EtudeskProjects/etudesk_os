@@ -27,12 +27,13 @@ import { kycService, KYCDocumentType, imageService } from '../../src/services';
 import { getFullImageUrl } from '../../src/utils/image';
 
 type VerificationStatus = 'none' | 'verified' | 'rejected';
-type DocumentType = 'id_card' | 'passport' | 'driver_license';
+type DocumentType = 'id_card' | 'passport' | 'driver_license' | 'student_card';
 
 const DOCUMENT_TYPES = [
   { id: 'id_card' as DocumentType, label: "Carte d'identité" },
   { id: 'passport' as DocumentType, label: 'Passeport' },
   { id: 'driver_license' as DocumentType, label: 'Permis de conduire' },
+  { id: 'student_card' as DocumentType, label: 'Carte scolaire / étudiante' },
 ];
 
 export default function KYCScreen() {
@@ -78,6 +79,7 @@ export default function KYCScreen() {
             'ID_CARD': 'id_card',
             'PASSPORT': 'passport',
             'DRIVER_LICENSE': 'driver_license',
+            'STUDENT_CARD': 'student_card',
           };
           setSubmittedDocType(docTypeMap[data.document_type] || null);
         }
@@ -143,6 +145,7 @@ export default function KYCScreen() {
         'id_card': 'ID_CARD',
         'passport': 'PASSPORT',
         'driver_license': 'DRIVER_LICENSE',
+        'student_card': 'STUDENT_CARD',
       };
 
       const frontImageUrl = await kycService.uploadImage(frontImage, `front_${Date.now()}.jpg`);
@@ -180,6 +183,7 @@ export default function KYCScreen() {
       'id_card': "Carte d'identité",
       'passport': 'Passeport',
       'driver_license': 'Permis de conduire',
+      'student_card': 'Carte scolaire / étudiante',
     };
     return labels[docType] || '';
   };
@@ -218,7 +222,7 @@ export default function KYCScreen() {
           <View style={styles.statusContent}>
             <Text style={[styles.statusTitle, { color: colors.success }]}>Identité vérifiée</Text>
             <Text style={[styles.statusDescription, { color: colors.textSecondary }]}>
-              Tu peux maintenant devenir mentor, créer une organisation et recevoir des paiements.
+              Tu peux maintenant créer une organisation, publier des offres et recevoir des paiements.
             </Text>
           </View>
         </View>
@@ -275,7 +279,7 @@ export default function KYCScreen() {
           <View style={[styles.infoCard, { backgroundColor: colors.primary + '10' }]}>
             <Shield size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.infoText, { color: colors.primary }]}>
-              La vérification est requise pour devenir mentor et recevoir des paiements.
+              La vérification est requise pour créer une organisation, publier des offres et recevoir des paiements.
             </Text>
           </View>
         )}

@@ -316,19 +316,11 @@ export function MapLocationPicker({
 
         setSelectedLocation(locationResult);
 
-        // En mode inline, notifier automatiquement
-        if (inline) {
-          onLocationSelect(locationResult);
-        }
+        // Toujours notifier le parent au clic
+        onLocationSelect(locationResult);
       }
     } catch (error) {
       // Silent fail
-    }
-  };
-
-  const handleConfirm = () => {
-    if (selectedLocation) {
-      onLocationSelect(selectedLocation);
     }
   };
 
@@ -395,7 +387,7 @@ export function MapLocationPicker({
         </TouchableOpacity>
       </View>
 
-      {/* Affichage de l'adresse sélectionnée - mode non-inline avec bouton Confirmer */}
+      {/* Affichage de l'adresse sélectionnée */}
       {selectedLocation && !inline && (
         <View style={[styles.locationInfo, { backgroundColor: colors.gray50, borderTopColor: colors.borderColor }]}>
           <View style={styles.locationTextContainer}>
@@ -408,12 +400,6 @@ export function MapLocationPicker({
                'Position sélectionnée'}
             </Text>
           </View>
-          <TouchableOpacity
-            style={[styles.confirmButton, { backgroundColor: colors.primary }]}
-            onPress={handleConfirm}
-          >
-            <Text style={[styles.confirmButtonText, { color: colors.textOnPrimary }]}>Confirmer</Text>
-          </TouchableOpacity>
         </View>
       )}
 

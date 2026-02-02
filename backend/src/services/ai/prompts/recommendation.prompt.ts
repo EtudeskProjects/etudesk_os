@@ -5,7 +5,6 @@
 interface RecommendationPromptContext {
   candidateName: string;
   currentRole: string;
-  yearsExperience: number;
   skills: string;
   location: string;
   opportunityTitle: string;
@@ -21,7 +20,6 @@ export function buildRecommendationPrompt(ctx: RecommendationPromptContext): str
 <context>
 Candidat : ${ctx.candidateName}
 Poste actuel : ${ctx.currentRole}
-Expérience : ${ctx.yearsExperience} ans
 Compétences : ${ctx.skills}
 Localisation : ${ctx.location}
 

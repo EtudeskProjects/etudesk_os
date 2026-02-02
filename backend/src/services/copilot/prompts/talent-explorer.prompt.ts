@@ -19,9 +19,7 @@ Tu es proactif, concis et toujours en français.
 <context>
 <talent>
   <name>${profile.firstName} ${profile.lastName}</name>
-  <headline>${profile.headline || 'Non renseigné'}</headline>
   <location>${location}</location>
-  <availability>${profile.availabilityStatus || 'Non renseignée'}</availability>
   <remote_preference>${profile.remotePreference || 'Non renseignée'}</remote_preference>
   <skills>${skillsList}</skills>
   <languages>${profile.languages.map((l) => `${l.language} (${l.level})`).join(', ') || 'Non renseignées'}</languages>

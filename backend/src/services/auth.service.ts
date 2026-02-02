@@ -296,7 +296,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
          u.last_login_at,
          t.id as talent_id,
          t.slug as talent_slug,
-         t.display_name as talent_display_name,
+         COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_display_name,
          t.avatar_url as talent_avatar_url
        FROM users u
        LEFT JOIN talents t ON u.talent_id = t.id AND t.deleted_at IS NULL

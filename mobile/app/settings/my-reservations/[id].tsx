@@ -10,7 +10,6 @@ import {
   Alert,
   ActivityIndicator,
   Keyboard,
-  Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -38,24 +37,23 @@ import { spaceBookingService, spaceBookingMessageService } from '../../../src/se
 import type { SpaceBookingDetails } from '../../../src/services/spaceBookingService';
 import type { BookingMessage } from '../../../src/services/spaceBookingMessageService';
 import { formatDate, formatTime } from '../../../src/utils/date';
-import { getFullImageUrl } from '../../../src/utils/image';
 
 // Booking status types
 type BookingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
 
 // Status configuration
 const getStatusConfig = (colors: any): Record<BookingStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
-  PENDING: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15', label: 'En attente de confirmation' },
-  CONFIRMED: { color: colors.info, icon: CheckCircle2, bgColor: colors.info + '15', label: 'Confirmee' },
-  COMPLETED: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Terminee' },
-  CANCELLED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Annulee' },
-  NO_SHOW: { color: colors.gray500, icon: AlertCircle, bgColor: colors.gray200, label: 'Marque absent' },
+  PENDING: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15', label: 'En attente' },
+  CONFIRMED: { color: colors.info, icon: CheckCircle2, bgColor: colors.info + '15', label: 'Confirmée' },
+  COMPLETED: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Terminée' },
+  CANCELLED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Annulée' },
+  NO_SHOW: { color: colors.gray500, icon: AlertCircle, bgColor: colors.gray200, label: 'Absent' },
 });
 
 type Tab = 'details' | 'messages';
 
 export default function ReservationDetailsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, tab } = useLocalSearchParams<{ id: string; tab?: string }>();
   const router = useRouter();
   const { colors } = useTheme();
   const { user } = useAuth();
@@ -66,7 +64,7 @@ export default function ReservationDetailsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('details');
+  const [activeTab, setActiveTab] = useState<Tab>(tab === 'messages' ? 'messages' : 'details');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Handle keyboard events for proper input positioning
@@ -254,39 +252,35 @@ export default function ReservationDetailsScreen() {
 
         {/* Space Info */}
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Espace reserve</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Espace</Text>
+          <Text style={[styles.itemTitle, { color: colors.textPrimary }]}>
+            {space?.name || 'Espace'}
+          </Text>
 
-          {/* Space card with image */}
-          <TouchableOpacity
-            style={styles.spaceCard}
-            onPress={() => router.push(`/details/space/${space?.id}`)}
-          >
-            {space?.cover_image_url ? (
-              <Image source={{ uri: getFullImageUrl(space.cover_image_url) || '' }} style={styles.spaceImage} />
-            ) : (
-              <View style={[styles.spaceImagePlaceholder, { backgroundColor: colors.gray100 }]}>
-                <MapPin size={24} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-              </View>
-            )}
-            <View style={styles.spaceDetails}>
-              <Text style={[styles.spaceName, { color: colors.textPrimary }]} numberOfLines={1}>
-                {space?.name || 'Espace'}
+          <View style={styles.itemDetails}>
+            <View style={styles.detailRow}>
+              <Building2 size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                {space?.organization?.name || 'Organisation'}
               </Text>
-              <View style={styles.spaceDetailRow}>
-                <Building2 size={14} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.spaceDetailText, { color: colors.textSecondary }]} numberOfLines={1}>
-                  {space?.organization?.name || 'Organisation'}
+            </View>
+            {space?.city && (
+              <View style={styles.detailRow}>
+                <MapPin size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+                <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                  {space.city}{space.country ? `, ${space.country}` : ''}
                 </Text>
               </View>
-              {space?.city && (
-                <View style={styles.spaceDetailRow}>
-                  <MapPin size={14} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                  <Text style={[styles.spaceDetailText, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {space.city}{space.country ? `, ${space.country}` : ''}
-                  </Text>
-                </View>
-              )}
-            </View>
+            )}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.viewButton, { borderColor: colors.primary }]}
+            onPress={() => router.push(`/details/space/${space?.id}`)}
+          >
+            <Text style={[styles.viewButtonText, { color: colors.primary }]}>
+              Voir l'espace
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -385,6 +379,8 @@ export default function ReservationDetailsScreen() {
       );
     }
 
+    const canSendMessage = messages.length > 0;
+
     return (
       <View style={styles.messagesContainer}>
         <ScrollView
@@ -409,7 +405,7 @@ export default function ReservationDetailsScreen() {
                 Pas encore de messages
               </Text>
               <Text style={[styles.noMessagesText, { color: colors.gray500 }]}>
-                Echangez avec l'organisation concernant votre reservation.
+                L'organisation vous contactera si elle souhaite échanger avec vous.
               </Text>
             </View>
           ) : (
@@ -427,13 +423,21 @@ export default function ReservationDetailsScreen() {
           )}
         </ScrollView>
 
-        {/* Message Input */}
-        <ChatInput
-          onSend={handleSendMessage}
-          isSending={isSending}
-          placeholder="Ecrivez votre message..."
-          showDatetimeOption={true}
-        />
+        {/* Message Input or Waiting Message */}
+        {canSendMessage ? (
+          <ChatInput
+            onSend={handleSendMessage}
+            isSending={isSending}
+            placeholder="Ecrivez votre message..."
+            showDatetimeOption={true}
+          />
+        ) : (
+          <View style={[styles.waitingMessage, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
+            <Text style={[styles.waitingText, { color: colors.gray500 }]}>
+              L'organisation doit vous contacter en premier
+            </Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -484,7 +488,7 @@ export default function ReservationDetailsScreen() {
         {activeTab === 'details' ? renderDetailsTab() : renderMessagesTab()}
       </KeyboardAvoidingView>
 
-      <FooterNav activeTab="settings" />
+      <FooterNav activeTab="home" />
     </SafeAreaView>
   );
 }
@@ -603,46 +607,37 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
 
-  spaceCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  spaceImage: {
-    width: 70,
-    height: 70,
-    borderRadius: BORDER.radius.sm,
-  },
-
-  spaceImagePlaceholder: {
-    width: 70,
-    height: 70,
-    borderRadius: BORDER.radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  spaceDetails: {
-    flex: 1,
-    marginLeft: SPACING.md,
-  },
-
-  spaceName: {
-    fontSize: TYPOGRAPHY.fontSize.md,
+  itemTitle: {
+    fontSize: TYPOGRAPHY.fontSize.lg,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginBottom: 4,
+    marginBottom: SPACING.md,
   },
 
-  spaceDetailRow: {
+  itemDetails: {
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+
+  detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    marginTop: 2,
+    gap: SPACING.sm,
   },
 
-  spaceDetailText: {
+  detailText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
-    flex: 1,
+  },
+
+  viewButton: {
+    padding: SPACING.sm,
+    borderWidth: 1,
+    borderRadius: BORDER.radius.sm,
+    alignItems: 'center',
+  },
+
+  viewButtonText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
   dateTimeGrid: {
@@ -762,5 +757,15 @@ const styles = StyleSheet.create({
   noMessagesText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     textAlign: 'center',
+  },
+
+  waitingMessage: {
+    padding: SPACING.md,
+    borderTopWidth: BORDER.width.thin,
+    alignItems: 'center',
+  },
+
+  waitingText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
   },
 });

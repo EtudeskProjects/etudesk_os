@@ -14,10 +14,8 @@ export interface TalentContext {
   profile: {
     firstName: string;
     lastName: string;
-    headline?: string;
     city?: string;
     country?: string;
-    availabilityStatus?: string;
     remotePreference?: string;
     skills: Array<{ name: string; level?: string }>;
     languages: Array<{ language: string; level: string }>;

@@ -50,10 +50,11 @@ export const sqlQueryTool = tool({
       'create_flashcard',
       'record_review',
     ]),
-    params: z.record(z.string(), z.unknown()).optional(),
+    paramsJson: z.string().describe('Paramètres de la requête en JSON string (ex: \'{"talentId":"uuid"}\')'),
   }),
-  execute: async ({ intent, params }) => {
-    const talentId = params?.talentId as string;
+  execute: async ({ intent, paramsJson }) => {
+    const params: Record<string, unknown> = paramsJson ? JSON.parse(paramsJson) : {};
+    const talentId = params.talentId as string;
     if (!talentId) {
       return { error: 'talentId est requis' };
     }
@@ -63,11 +64,11 @@ export const sqlQueryTool = tool({
         // ─── TALENT ────────────────────────────────────────────
         case 'my_profile': {
           const res = await pool.query(
-            `SELECT t.id, t.first_name, t.last_name, t.display_name, t.headline, t.bio,
-                    t.city, t.country, t.availability_status, t.remote_preference,
-                    t.years_of_experience, t.current_position, t.current_company,
-                    u.email
-             FROM talents t JOIN users u ON t.user_id = u.id
+            `SELECT t.id, t.first_name, t.last_name, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio,
+                    t.city, t.country, t.email, t.phone, t.slug,
+                    t.remote_ready, t.willing_to_relocate, t.sectors,
+                    t.goals, t.profile_tags
+             FROM talents t
              WHERE t.id = $1`,
             [talentId]
           );
@@ -81,7 +82,7 @@ export const sqlQueryTool = tool({
             SELECT a.id, a.status, a.created_at, a.updated_at,
                    o.title as opportunity_title, o.type, o.slug as opportunity_slug,
                    org.name as organization_name
-            FROM applications a
+            FROM opportunity_applications a
             JOIN opportunities o ON a.opportunity_id = o.id
             LEFT JOIN opportunity_posters op ON o.id = op.opportunity_id
             LEFT JOIN organizations org ON op.poster_organization_id = org.id
@@ -102,7 +103,7 @@ export const sqlQueryTool = tool({
             `SELECT r.id, r.date, r.start_time, r.end_time, r.status, r.total_amount,
                     s.name as space_name, s.slug as space_slug, s.city,
                     org.name as organization_name
-             FROM space_reservations r
+             FROM space_bookings r
              JOIN spaces s ON r.space_id = s.id
              LEFT JOIN organizations org ON s.organization_id = org.id
              WHERE r.talent_id = $1
@@ -114,11 +115,15 @@ export const sqlQueryTool = tool({
 
         case 'my_invitations': {
           const res = await pool.query(
-            `SELECT i.id, i.type, i.status, i.created_at, i.expires_at,
-                    i.inviter_name, i.target_name, i.message
-             FROM invitations i
-             WHERE i.invitee_talent_id = $1 AND i.status = 'PENDING'
-             ORDER BY i.created_at DESC`,
+            `SELECT id, 'community' as type, status, created_at, expires_at, inviter_name, '' as target_name
+             FROM community_invitations WHERE invitee_talent_id = $1 AND status = 'PENDING'
+             UNION ALL
+             SELECT id, 'opportunity' as type, status, created_at, expires_at, inviter_name, '' as target_name
+             FROM opportunity_invitations WHERE invitee_talent_id = $1 AND status = 'PENDING'
+             UNION ALL
+             SELECT id, 'organization' as type, status, created_at, expires_at, '' as inviter_name, '' as target_name
+             FROM organization_invitations WHERE email = (SELECT email FROM talents WHERE id = $1) AND status = 'PENDING'
+             ORDER BY created_at DESC`,
             [talentId]
           );
           return { invitations: res.rows, pendingCount: res.rows.length };
@@ -141,8 +146,8 @@ export const sqlQueryTool = tool({
 
         case 'my_bookmarks': {
           const res = await pool.query(
-            `SELECT b.id, b.entity_type, b.entity_id, b.created_at
-             FROM bookmarks b
+            `SELECT b.id, 'opportunity' as entity_type, b.opportunity_id as entity_id, b.created_at
+             FROM opportunity_bookmarks b
              WHERE b.talent_id = $1
              ORDER BY b.created_at DESC LIMIT 20`,
             [talentId]
@@ -163,11 +168,10 @@ export const sqlQueryTool = tool({
 
         case 'my_skills': {
           const res = await pool.query(
-            `SELECT s.canonical_name as name, s.type, ts.proficiency_level, ts.origin
-             FROM talent_skills ts
-             JOIN skills s ON ts.skill_id = s.id
-             WHERE ts.talent_id = $1
-             ORDER BY s.canonical_name`,
+            `SELECT canonical_name as name, type, proficiency_level, origin
+             FROM talent_skills
+             WHERE talent_id = $1
+             ORDER BY canonical_name`,
             [talentId]
           );
           return { skills: res.rows };
@@ -194,12 +198,12 @@ export const sqlQueryTool = tool({
 
         case 'my_quiz_results': {
           const res = await pool.query(
-            `SELECT qr.id, qr.score, qr.total_questions, qr.correct_answers,
-                    qr.created_at, lt.topic_name
+            `SELECT qr.id, qr.score, qr.total_questions, qr.percentage, qr.passed,
+                    qr.completed_at, lt.topic_name
              FROM learning_quiz_results qr
              JOIN learning_topics lt ON qr.topic_id = lt.id
              WHERE lt.talent_id = $1
-             ORDER BY qr.created_at DESC LIMIT 10`,
+             ORDER BY qr.completed_at DESC LIMIT 10`,
             [talentId]
           );
           return { quizResults: res.rows };
@@ -224,7 +228,7 @@ export const sqlQueryTool = tool({
           const orgId = params?.organizationId as string;
           if (!orgId) return { error: 'organizationId requis' };
           const res = await pool.query(
-            `SELECT om.role, om.created_at, t.display_name, t.headline, t.avatar_url
+            `SELECT om.role, om.created_at, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio, t.avatar_url
              FROM organization_members om
              JOIN talents t ON om.talent_id = t.id
              WHERE om.organization_id = $1 AND om.status = 'ACTIVE'
@@ -239,9 +243,9 @@ export const sqlQueryTool = tool({
           if (!orgId) return { error: 'organizationId requis' };
           const res = await pool.query(
             `SELECT a.id, a.status, a.created_at,
-                    t.display_name as talent_name, t.headline,
+                    COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name, t.bio,
                     o.title as opportunity_title
-             FROM applications a
+             FROM opportunity_applications a
              JOIN opportunities o ON a.opportunity_id = o.id
              JOIN opportunity_posters op ON o.id = op.opportunity_id
              JOIN talents t ON a.talent_id = t.id
@@ -271,7 +275,7 @@ export const sqlQueryTool = tool({
           if (!orgId) return { error: 'organizationId requis' };
           const res = await pool.query(
             `SELECT o.id, o.title, o.type, o.status, o.slug,
-                    o.applications_count, o.views_count, o.deadline
+                    (SELECT COUNT(*) FROM opportunity_applications WHERE opportunity_id = o.id) as applications_count, o.views_count, o.deadline
              FROM opportunities o
              JOIN opportunity_posters op ON o.id = op.opportunity_id
              WHERE op.poster_organization_id = $1 AND o.deleted_at IS NULL
@@ -316,7 +320,7 @@ export const sqlQueryTool = tool({
             `SELECT COALESCE(SUM(r.total_amount), 0) as total_revenue,
                     COUNT(*) as total_bookings,
                     COUNT(*) FILTER (WHERE r.status = 'CONFIRMED') as confirmed_bookings
-             FROM space_reservations r
+             FROM space_bookings r
              JOIN spaces s ON r.space_id = s.id
              WHERE s.organization_id = $1`,
             [orgId]
@@ -328,8 +332,8 @@ export const sqlQueryTool = tool({
           const orgId = params?.organizationId as string;
           if (!orgId) return { error: 'organizationId requis' };
           const res = await pool.query(
-            `SELECT i.id, i.type, i.status, i.created_at, i.invitee_email, i.target_name
-             FROM invitations i
+            `SELECT i.id, 'organization' as type, i.status, i.created_at, i.email as invitee_email, i.role as target_name
+             FROM organization_invitations i
              WHERE i.organization_id = $1 AND i.status = 'PENDING'
              ORDER BY i.created_at DESC`,
             [orgId]
@@ -399,7 +403,7 @@ export const sqlQueryTool = tool({
           let sql = `
             SELECT o.id, o.name, o.description, o.sectors, o.slug, o.city, o.country
             FROM organizations o
-            WHERE o.deleted_at IS NULL AND o.status = 'ACTIVE'`;
+            WHERE o.deleted_at IS NULL AND o.verification_status IN ('VERIFIED', 'OFFICIAL')`;
           const p: any[] = [];
           let idx = 1;
           if (q) { sql += ` AND (o.name ILIKE '%' || $${idx} || '%' OR o.description ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
@@ -413,13 +417,13 @@ export const sqlQueryTool = tool({
         case 'search_talents': {
           const { query: q, skills, limit: lim } = params || {};
           let sql = `
-            SELECT t.id, t.display_name, t.headline, t.city, t.country
+            SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio, t.city, t.country
             FROM talents t
-            WHERE t.deleted_at IS NULL AND t.is_public = true`;
+            WHERE t.deleted_at IS NULL`;
           const p: any[] = [];
           let idx = 1;
-          if (q) { sql += ` AND (t.display_name ILIKE '%' || $${idx} || '%' OR t.headline ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
-          sql += ` ORDER BY t.display_name LIMIT $${idx}`;
+          if (q) { sql += ` AND (COALESCE(t.first_name || ' ' || t.last_name, t.email) ILIKE '%' || $${idx} || '%' OR t.bio ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
+          sql += ` ORDER BY t.first_name, t.last_name LIMIT $${idx}`;
           p.push((lim as number) || 5);
           const res = await pool.query(sql, p);
           return { talents: res.rows };

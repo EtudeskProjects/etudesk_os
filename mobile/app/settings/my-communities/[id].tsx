@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
   Alert,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +20,7 @@ import {
   XCircle,
   Users,
   Building2,
+  MessageCircle,
   Trash2,
   MapPin,
   LogOut,
@@ -24,16 +28,18 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { FooterNav } from '../../../src/components/ui';
+import { ChatMessage, ChatInput } from '../../../src/components/chat';
 import { useAuth } from '../../../src/contexts/AuthContext';
-import { communityService } from '../../../src/services';
+import { communityService, communityMembershipMessageService } from '../../../src/services';
 import { formatRelativeTime } from '../../../src/utils/date';
 import type { Community } from '../../../src/types/models';
 import type { MemberStatus } from '../../../src/services/communityService';
+import type { MembershipMessage } from '../../../src/services/communityMembershipMessageService';
 
 // Status configuration - returns config based on theme colors
 const getStatusConfig = (colors: any): Record<MemberStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
   PENDING: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15', label: 'En attente' },
-  ACTIVE: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Membre actif' },
+  ACTIVE: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Active' },
   REJECTED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Refusée' },
   SUSPENDED: { color: colors.gray500, icon: XCircle, bgColor: colors.gray500 + '15', label: 'Suspendu' },
 });
@@ -52,18 +58,49 @@ interface MembershipWithDetails {
   community?: Community;
 }
 
+type Tab = 'details' | 'messages';
+
 export default function MyCommunityDetailsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, tab } = useLocalSearchParams<{ id: string; tab?: string }>();
   const router = useRouter();
   const { colors } = useTheme();
   const { user } = useAuth();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [membership, setMembership] = useState<MembershipWithDetails | null>(null);
+  const [messages, setMessages] = useState<MembershipMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>(tab === 'messages' ? 'messages' : 'details');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  // Handle keyboard events for proper input positioning
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => setKeyboardHeight(e.endCoordinates.height)
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardHeight(0)
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     loadMembership();
   }, [id]);
+
+  useEffect(() => {
+    if (activeTab === 'messages' && membership) {
+      loadMessages();
+    }
+  }, [activeTab, membership]);
 
   const loadMembership = async () => {
     if (!id) return;
@@ -85,6 +122,59 @@ export default function MyCommunityDetailsScreen() {
       router.back();
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadMessages = async () => {
+    if (!membership) return;
+
+    setIsLoadingMessages(true);
+    try {
+      const response = await communityMembershipMessageService.getMessages(membership.id);
+      setMessages(response.data || []);
+
+      // Mark all as read
+      await communityMembershipMessageService.markAllAsRead(membership.id);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  const handleSendMessage = async (data: {
+    content: string;
+    attachments?: { name: string; uri: string; type: string; size?: number }[];
+    proposedDatetime?: string;
+    datetimeType?: string;
+  }) => {
+    if (!membership) return;
+
+    setIsSending(true);
+    try {
+      const response = await communityMembershipMessageService.sendMessage(membership.id, {
+        content: data.content,
+        attachments: data.attachments?.map(a => ({
+          name: a.name,
+          url: a.uri,
+          type: a.type,
+          size: a.size,
+        })),
+        proposed_datetime: data.proposedDatetime,
+        datetime_type: data.datetimeType as any,
+      });
+
+      setMessages((prev) => [...prev, response.data]);
+
+      // Scroll to bottom
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    } catch (error: any) {
+      Alert.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      throw error;
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -114,7 +204,37 @@ export default function MyCommunityDetailsScreen() {
     );
   };
 
-  const renderDetails = () => {
+  const renderTab = (tab: Tab, label: string, icon: typeof Users) => {
+    const isActive = activeTab === tab;
+    const Icon = icon;
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.tab,
+          { borderBottomColor: isActive ? colors.primary : 'transparent' },
+        ]}
+        onPress={() => setActiveTab(tab)}
+      >
+        <Icon
+          size={18}
+          color={isActive ? colors.primary : colors.gray500}
+          strokeWidth={ICON.strokeWidth}
+        />
+        <Text
+          style={[
+            styles.tabText,
+            { color: isActive ? colors.primary : colors.gray500 },
+            isActive && { fontWeight: TYPOGRAPHY.fontWeight.semibold },
+          ]}
+        >
+          {label}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderDetailsTab = () => {
     if (!membership) return null;
 
     const STATUS_CONFIG = getStatusConfig(colors);
@@ -248,6 +368,78 @@ export default function MyCommunityDetailsScreen() {
     );
   };
 
+  const renderMessagesTab = () => {
+    if (isLoadingMessages) {
+      return (
+        <View style={styles.loadingMessages}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      );
+    }
+
+    const canSendMessage = messages.length > 0;
+
+    return (
+      <View style={styles.messagesContainer}>
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.messagesList}
+          contentContainerStyle={[
+            styles.messagesContent,
+            { paddingBottom: keyboardHeight > 0 ? SPACING.md : SPACING.lg },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          onContentSizeChange={() => {
+            if (keyboardHeight > 0) {
+              scrollViewRef.current?.scrollToEnd({ animated: true });
+            }
+          }}
+        >
+          {messages.length === 0 ? (
+            <View style={styles.noMessages}>
+              <MessageCircle size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.noMessagesTitle, { color: colors.textPrimary }]}>
+                Pas encore de messages
+              </Text>
+              <Text style={[styles.noMessagesText, { color: colors.gray500 }]}>
+                L'organisation vous contactera si elle souhaite échanger avec vous.
+              </Text>
+            </View>
+          ) : (
+            messages.map((message) => (
+              <ChatMessage
+                key={message.id}
+                content={message.content}
+                isMe={message.sender_type === 'TALENT'}
+                senderName={message.sender_type === 'ORGANIZATION' ? (message.sender_name || 'Organisation') : undefined}
+                createdAt={message.created_at}
+                proposedDatetime={message.proposed_datetime}
+                attachments={message.attachments}
+              />
+            ))
+          )}
+        </ScrollView>
+
+        {/* Message Input or Waiting Message */}
+        {canSendMessage ? (
+          <ChatInput
+            onSend={handleSendMessage}
+            isSending={isSending}
+            placeholder="Écrivez votre message..."
+            showDatetimeOption={true}
+          />
+        ) : (
+          <View style={[styles.waitingMessage, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
+            <Text style={[styles.waitingText, { color: colors.gray500 }]}>
+              L'organisation doit vous contacter en premier
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
@@ -279,10 +471,22 @@ export default function MyCommunityDetailsScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* Content */}
-      {renderDetails()}
+      {/* Tabs */}
+      <View style={[styles.tabsContainer, { borderBottomColor: colors.gray200 }]}>
+        {renderTab('details', 'Détails', Users)}
+        {renderTab('messages', 'Messages', MessageCircle)}
+      </View>
 
-      <FooterNav activeTab="settings" />
+      {/* Content */}
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        {activeTab === 'details' ? renderDetailsTab() : renderMessagesTab()}
+      </KeyboardAvoidingView>
+
+      <FooterNav activeTab="home" />
     </SafeAreaView>
   );
 }

@@ -8,8 +8,8 @@ import { pool } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { onTalentProfileUpdate } from '../services/embedding.service';
 import { autoModerationService } from '../services/auto-moderation.service';
-import { run } from '@openai/agents';
-import { createBioGenAgent } from '../services/ai/agent-factory';
+import OpenAI from 'openai';
+import { BIO_GEN_SYSTEM_PROMPT } from '../services/ai/prompts/bio-gen.prompt';
 import { buildTalentObject, talentObjectToText } from '../services/ai/talent-object';
 
 // Type for SQL query parameters
@@ -68,6 +68,26 @@ function normalizeCountryCode(input: string | undefined | null): string | null {
 const router = Router();
 
 /**
+ * GET /api/talents/me/talent-object
+ * Get current user's TalentObject (rich profile with skills & documents)
+ */
+router.get('/me/talent-object', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.talentId) {
+      return res.status(404).json({ error: 'Talent profile not found' });
+    }
+    const obj = await buildTalentObject(req.talentId);
+    if (!obj) {
+      return res.status(404).json({ error: 'Talent profile not found' });
+    }
+    res.json({ data: obj });
+  } catch (error) {
+    console.error('Error fetching talent object:', error);
+    res.status(500).json({ error: 'Failed to fetch talent object' });
+  }
+});
+
+/**
  * GET /api/talents/me
  * Get current user's talent profile
  */
@@ -112,7 +132,6 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     }
 
     const {
-      display_name,
       first_name,
       last_name,
       bio,
@@ -132,7 +151,6 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     // Content moderation for user-generated text fields
     try {
       await autoModerationService.assertContentApproved({
-        display_name,
         bio,
       });
     } catch (moderationError: any) {
@@ -150,14 +168,6 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     let paramIndex = 1;
 
     // Validate and add fields
-    if (display_name !== undefined) {
-      if (typeof display_name !== 'string' || display_name.length < 2) {
-        return res.status(400).json({ error: 'Display name must be at least 2 characters' });
-      }
-      updates.push(`display_name = $${paramIndex++}`);
-      params.push(display_name.trim());
-    }
-
     if (first_name !== undefined) {
       updates.push(`first_name = $${paramIndex++}`);
       params.push(first_name?.trim() || null);
@@ -298,7 +308,7 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
     if (!contextText) {
       const body = req.body || {};
       const parts: string[] = [];
-      if (body.display_name) parts.push(`Nom: ${body.display_name}`);
+      if (body.first_name || body.last_name) parts.push(`Nom: ${[body.first_name, body.last_name].filter(Boolean).join(' ')}`);
       if (body.profile_tags?.length) parts.push(`Profil: ${body.profile_tags.join(', ')}`);
       if (body.sectors?.length) parts.push(`Secteurs: ${body.sectors.join(', ')}`);
       if (body.goals?.length) parts.push(`Objectifs: ${body.goals.join(', ')}`);
@@ -310,18 +320,23 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
       return res.status(400).json({ error: 'Pas assez d\'informations pour générer une bio. Remplis d\'abord ton profil.' });
     }
 
-    const userPrompt = `Génère une bio pour ce profil :\n${contextText}`;
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4.1-nano',
+      messages: [
+        { role: 'system', content: BIO_GEN_SYSTEM_PROMPT },
+        { role: 'user', content: `Génère une bio pour ce profil :\n${contextText}` },
+      ],
+    });
 
-    const agent = createBioGenAgent();
-    const aiResult = await run(agent, userPrompt);
-
-    const bio = aiResult.finalOutput?.trim();
+    const choice = completion.choices[0];
+    const bio = (choice?.message?.content ?? choice?.message?.refusal)?.trim();
     if (!bio) {
+      console.error('Bio generation empty response:', JSON.stringify(choice));
       return res.status(500).json({ error: 'Échec de la génération' });
     }
 
-    // Truncate to 150 chars if needed
-    res.json({ success: true, bio: bio.slice(0, 150) });
+    res.json({ data: { bio: bio.slice(0, 250) } });
   } catch (error) {
     console.error('Error generating bio:', error);
     res.status(500).json({ error: 'Erreur lors de la génération de la bio' });
@@ -338,7 +353,7 @@ router.get('/:id', async (req, res) => {
 
     const result = await pool.query(`
       SELECT
-        t.id, t.slug, t.display_name, t.bio, t.avatar_url,
+        t.id, t.slug, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio, t.avatar_url,
         t.city, t.region, t.country, t.remote_ready, t.willing_to_relocate,
         t.profile_tags, t.goals, t.created_at,
         (SELECT COUNT(*) FROM talent_skills WHERE talent_id = t.id) as skill_count

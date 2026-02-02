@@ -98,7 +98,8 @@ export interface CommunityActivity {
   moderation_status: ModerationStatus;
   moderation_reason?: string;
 
-  // Scheduling
+  // Draft / Scheduling
+  is_draft: boolean;
   scheduled_at?: Date | null;  // NULL = immediate publication
   published_at?: Date | null;  // Actual publication time
 

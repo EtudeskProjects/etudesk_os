@@ -42,6 +42,7 @@ import documentService, {
   formatFileSize,
   getStatusColor,
 } from '../../src/services/documentService';
+import { kycService } from '../../src/services/kycService';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -121,6 +122,33 @@ export default function DocumentsScreen() {
 
   const handleUpload = async () => {
     try {
+      // KYC gate: check identity verification BEFORE opening picker
+      try {
+        const kycRes = await kycService.getStatus();
+        const kycData = kycRes?.data;
+        if (!kycData || kycData.status !== 'VERIFIED') {
+          Alert.alert(
+            'Vérification requise',
+            'Tu dois vérifier ton identité avant d\'ajouter des documents.',
+            [
+              { text: 'Plus tard', style: 'cancel' },
+              { text: 'Vérifier', onPress: () => router.push('/settings/kyc') },
+            ]
+          );
+          return;
+        }
+      } catch {
+        Alert.alert(
+          'Vérification requise',
+          'Tu dois vérifier ton identité avant d\'ajouter des documents.',
+          [
+            { text: 'Plus tard', style: 'cancel' },
+            { text: 'Vérifier', onPress: () => router.push('/settings/kyc') },
+          ]
+        );
+        return;
+      }
+
       const result = await DocumentPicker.getDocumentAsync({
         type: ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
         copyToCacheDirectory: true,
@@ -265,8 +293,7 @@ export default function DocumentsScreen() {
     const StatusIcon = getStatusIcon(doc.status);
     const statusColor = getStatusColor(doc.status);
     const relativeDate = formatRelativeDate(doc.created_at);
-    const extracted = doc.extracted_data as Record<string, any> | undefined;
-    const summaryText = doc.description || extracted?.summary || extracted?.description || null;
+    const summaryText = doc.description || null;
     const isExpanded = expandedDocs[doc.id] ?? false;
     const isImage = doc.mime_type.startsWith('image/');
     const fileUrl = getFullFileUrl(doc);
@@ -344,14 +371,11 @@ export default function DocumentsScreen() {
             </View>
 
             {/* Skills count badge */}
-            {(() => {
-              const extractedSkillsCount = extracted?.skills_count ?? extracted?.skills?.length ?? 0;
-              return extractedSkillsCount > 0 ? (
-                <Text style={[styles.skillsCount, { color: colors.primary }]}>
-                  {extractedSkillsCount} compétence{extractedSkillsCount > 1 ? 's' : ''} extraite{extractedSkillsCount > 1 ? 's' : ''}
-                </Text>
-              ) : null;
-            })()}
+            {doc.skills_count != null && doc.skills_count > 0 && (
+              <Text style={[styles.skillsCount, { color: colors.primary }]}>
+                {doc.skills_count} compétence{doc.skills_count > 1 ? 's' : ''} extraite{doc.skills_count > 1 ? 's' : ''}
+              </Text>
+            )}
           </View>
         </View>
 

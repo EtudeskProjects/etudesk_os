@@ -23,12 +23,14 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { Input, Button, StepIndicator } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
+import { useSpace } from '../../src/contexts/SpaceContext';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
 import {
   ORGANIZATION_TYPE_LABELS,
   OrganizationType,
 } from '../../src/types/models';
 import { organizationService, talentService, imageService } from '../../src/services';
+import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../src/constants/talent';
 import MapLocationPicker from '../../src/components/MapLocationPicker';
 
 type Step = 'info' | 'location';
@@ -42,6 +44,7 @@ const ORGANIZATION_TYPE_OPTIONS = Object.entries(ORGANIZATION_TYPE_LABELS).map((
 
 export default function CreateOrganizationScreen() {
   const router = useRouter();
+  const { refreshOrganizations } = useSpace();
   const { colors } = useTheme();
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,6 +54,7 @@ export default function CreateOrganizationScreen() {
   const [orgTypes, setOrgTypes] = useState<OrganizationType[]>([]);
   const [description, setDescription] = useState('');
   const [logoUri, setLogoUri] = useState<string | null>(null);
+  const [sectors, setSectors] = useState<Sector[]>([]);
 
   // Form state - Location
   const [country, setCountry] = useState('');
@@ -125,6 +129,19 @@ export default function CreateOrganizationScreen() {
     });
   };
 
+  // Toggle sector selection (max 5)
+  const toggleSector = (sectorId: Sector) => {
+    setSectors((prev) => {
+      if (prev.includes(sectorId)) {
+        return prev.filter((id) => id !== sectorId);
+      }
+      if (prev.length >= MAX_SECTORS) {
+        return prev;
+      }
+      return [...prev, sectorId];
+    });
+  };
+
   // Handle map location selection
   const handleMapLocationSelect = (location: any) => {
     if (location.coordinates) {
@@ -177,13 +194,17 @@ export default function CreateOrganizationScreen() {
 
       await organizationService.create({
         name: name.trim(),
-        type: orgTypes.length > 0 ? orgTypes[0] : undefined,
+        types: orgTypes.length > 0 ? orgTypes : undefined,
         description: description.trim() || undefined,
         logo_url: logoUri || undefined,
         headquarters_city: city || undefined,
         headquarters_region: region || undefined,
         headquarters_country: country || undefined,
+        headquarters_coordinates: coordinates || undefined,
+        sectors: sectors.length > 0 ? sectors : undefined,
       });
+
+      await refreshOrganizations();
 
       Alert.alert(
         'Organisation créée',
@@ -292,6 +313,46 @@ export default function CreateOrganizationScreen() {
           </Text>
         </View>
 
+        {/* Secteurs */}
+        <View style={styles.fieldContainer}>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
+            Secteurs d'activité (max {MAX_SECTORS})
+          </Text>
+          <View style={styles.tagsContainer}>
+            {SECTOR_DATA.map((sector) => {
+              const isSelected = sectors.includes(sector.id);
+              return (
+                <TouchableOpacity
+                  key={sector.id}
+                  style={[
+                    styles.selectableTag,
+                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
+                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                  ]}
+                  onPress={() => toggleSector(sector.id)}
+                  activeOpacity={0.7}
+                >
+                  {isSelected && (
+                    <Check size={14} color={colors.primary} strokeWidth={2.5} />
+                  )}
+                  <Text
+                    style={[
+                      styles.selectableTagText,
+                      { color: colors.gray600 },
+                      isSelected && { color: colors.primary },
+                    ]}
+                  >
+                    {sector.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
+            {sectors.length}/{MAX_SECTORS} sélectionnés
+          </Text>
+        </View>
+
         {/* Description */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Description</Text>
@@ -332,15 +393,6 @@ export default function CreateOrganizationScreen() {
           />
         </View>
 
-        {/* Coordinates display */}
-        {coordinates && (
-          <View style={[styles.coordinatesBox, { backgroundColor: colors.gray100 }]}>
-            <MapPin size={14} color={colors.gray600} strokeWidth={2} />
-            <Text style={[styles.coordinatesText, { color: colors.gray600 }]}>
-              {coordinates.latitude.toFixed(4)}, {coordinates.longitude.toFixed(4)}
-            </Text>
-          </View>
-        )}
 
         {/* Pays */}
         <View style={styles.fieldContainer}>

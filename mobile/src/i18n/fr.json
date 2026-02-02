@@ -240,7 +240,7 @@
       "organization": "Organisation"
     },
     "menu": {
-      "team": "Équipe",
+      "team": "Gestion de l'organisation",
       "teamDesc": "Gérer les membres et les permissions",
       "kyc": "Vérification d'identité",
       "kycDesc": "Vérifier ton identité",
@@ -416,6 +416,7 @@
   },
   "opportunity": {
     "apply": "Postuler",
+    "viewApplication": "Voir ma candidature",
     "applied": "Candidature envoyée",
     "save": "Sauvegarder",
     "saved": "Sauvegardé",

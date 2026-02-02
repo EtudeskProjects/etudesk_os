@@ -616,6 +616,29 @@ export interface MentorTestimonial {
   date: ISODate;
 }
 
+// TalentObject — rich profile snapshot from backend (skills + documents)
+export interface TalentObjectData {
+  id: string;
+  avatar_url: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  display_name: string;
+  gender: string | null;
+  bio: string | null;
+  profile_tags: string[];
+  sectors: string[];
+  goals: string[];
+  city: string | null;
+  region: string | null;
+  country: string | null;
+  phone: string | null;
+  email: string | null;
+  remote_ready: boolean;
+  willing_to_relocate: boolean;
+  skills: string[];
+  documents_metadata: { id: string; original_filename: string; document_type: string | null; title: string | null; uploaded_at: string }[];
+}
+
 export interface Talent {
   id: UUID;
   slug: string;
@@ -852,6 +875,7 @@ export interface DashboardActivity {
 // ═══════════════════════════════════════════════════════════════
 
 export const APPLICATION_STATUS = {
+  PENDING: 'PENDING',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
   ACCEPTED: 'ACCEPTED',
@@ -860,6 +884,7 @@ export const APPLICATION_STATUS = {
 export type ApplicationStatus = (typeof APPLICATION_STATUS)[keyof typeof APPLICATION_STATUS];
 
 export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
+  PENDING: 'En attente',
   SUBMITTED: 'Soumise',
   IN_REVIEW: 'En cours d\'examen',
   ACCEPTED: 'Acceptée',

@@ -26,7 +26,6 @@ export interface ApplicationForRecommendation {
     first_name?: string;
     last_name?: string;
     current_role?: string;
-    years_experience?: number;
     skills?: string[];
     sectors?: string[];
     city?: string;
@@ -86,7 +85,6 @@ export async function generateRecommendation(
   const prompt = buildRecommendationPrompt({
     candidateName,
     currentRole: talent.current_role || 'Non spécifié',
-    yearsExperience: talent.years_experience || 0,
     skills: talent.skills?.slice(0, 6).join(', ') || 'Non spécifiées',
     location: [talent.city, talent.country].filter(Boolean).join(', ') || 'Non spécifiée',
     opportunityTitle: opportunity.title || 'Non spécifié',
@@ -141,21 +139,20 @@ function generateFallbackRecommendation(
 ): string {
   const name = talent.first_name || talent.display_name?.split(' ')[0] || 'Ce candidat';
   const role = talent.current_role || 'professionnel';
-  const years = talent.years_experience || 0;
 
   switch (matchCategory) {
     case 'excellent':
-      return `${name}, ${role} avec ${years} ans d'expérience, présente un profil très aligné avec les exigences du poste. Entretien fortement recommandé.`;
+      return `${name}, ${role}, présente un profil très aligné avec les exigences du poste. Entretien fortement recommandé.`;
 
     case 'good':
-      return `${name} possède une solide expérience de ${years} ans. Son profil correspond bien aux attentes. Un entretien permettrait d'évaluer sa motivation.`;
+      return `${name} possède une solide expérience en tant que ${role}. Son profil correspond bien aux attentes. Un entretien permettrait d'évaluer sa motivation.`;
 
     case 'average':
-      return `${name} présente un profil intéressant avec ${years} ans d'expérience. Quelques lacunes à vérifier. Entretien à considérer selon disponibilité.`;
+      return `${name} présente un profil intéressant. Quelques lacunes à vérifier. Entretien à considérer selon disponibilité.`;
 
     case 'low':
     default:
-      return `${name} ne correspond pas pleinement au profil recherché. ${years > 0 ? `${years} ans d'expérience mais` : 'Expérience limitée,'} compétences à approfondir.`;
+      return `${name} ne correspond pas pleinement au profil recherché. Compétences à approfondir.`;
   }
 }
 
@@ -170,10 +167,10 @@ export async function getApplicationRecommendation(applicationId: string): Promi
         a.id,
         a.ai_recommendation,
         json_build_object(
-          'display_name', t.display_name,
+          'display_name', COALESCE(t.first_name || ' ' || t.last_name, t.email),
           'first_name', t.first_name,
           'last_name', t.last_name,
-          'skills', (SELECT ARRAY_AGG(s.canonical_name) FROM talent_skills ts JOIN skills s ON ts.skill_id = s.id WHERE ts.talent_id = t.id),
+          'skills', (SELECT ARRAY_AGG(canonical_name) FROM talent_skills WHERE talent_id = t.id),
           'sectors', t.sectors,
           'city', t.city,
           'country', t.country,

@@ -30,15 +30,7 @@ export const SKILL_TYPES = {
 } as const;
 export type SkillType = typeof SKILL_TYPES[keyof typeof SKILL_TYPES];
 
-export const PROFICIENCY_LEVELS = {
-  BEGINNER: "A",
-  ELEMENTARY: "A+",
-  INTERMEDIATE: "B",
-  UPPER_INTERMEDIATE: "B+",
-  ADVANCED: "C",
-  EXPERT: "C+"
-} as const;
-export type ProficiencyLevel = typeof PROFICIENCY_LEVELS[keyof typeof PROFICIENCY_LEVELS];
+export type ProficiencyLevel = 'BEGINNER' | 'INTERMEDIATE' | 'EXPERT' | 'MASTER';
 
 export const OPPORTUNITY_TYPES = {
   EMPLOYMENT: "EMPLOYMENT",
@@ -207,14 +199,6 @@ export const APPLICATION_STATUS = {
   REJECTED: "REJECTED"
 } as const;
 export type ApplicationStatus = typeof APPLICATION_STATUS[keyof typeof APPLICATION_STATUS];
-
-export const GROWTH_TREND = {
-  DECLINING: "DECLINING",
-  STABLE: "STABLE",
-  GROWING: "GROWING",
-  EMERGING: "EMERGING"
-} as const;
-export type GrowthTrend = typeof GROWTH_TREND[keyof typeof GROWTH_TREND];
 
 // Contract type (type de contrat)
 export const CONTRACT_TYPE = {
@@ -386,7 +370,6 @@ export type CommunityStatus = typeof COMMUNITY_STATUS[keyof typeof COMMUNITY_STA
 export interface Talent {
   id: UUID;
   slug: string;
-  display_name: string;
   bio?: string;
   avatar_url?: string;
 
@@ -408,29 +391,6 @@ export interface Talent {
   embedding?: Vector;
   created_at: ISOTimestamp;
   updated_at: ISOTimestamp;
-  deleted_at?: ISOTimestamp; // Soft delete
-}
-
-export interface Skill {
-  id: UUID;
-  canonical_name: string;
-  slug: string;
-  aliases?: string[];
-
-  type: SkillType;
-  domain?: string;
-
-  parent_skill_id?: UUID;
-
-  esco_uri?: string;
-  onet_code?: string;
-
-  embedding?: Vector;
-  typical_evidence?: string[];
-  growth_trend?: GrowthTrend;
-
-  created_at?: ISOTimestamp;
-  updated_at?: ISOTimestamp;
   deleted_at?: ISOTimestamp; // Soft delete
 }
 
@@ -584,16 +544,14 @@ export interface Opportunity {
 export interface TalentSkill {
   id: UUID;
   talent_id: UUID;
-  skill_id: UUID;
+  canonical_name: string;
+  type: SkillType;
 
   proficiency_level: ProficiencyLevel;
-  self_assessed?: boolean;
-  endorsed_count: number;
-  verified_by?: UUID[]; // Documents qui prouvent cette compétence
-
-  years_of_experience?: number;
-  last_used_at?: ISODate;
+  source?: string;
+  document_id?: UUID;
   context?: string;
+  created_at?: ISOTimestamp;
 }
 
 export interface OpportunityApplication {
@@ -643,8 +601,6 @@ export interface Recommendation {
 
   relationship?: string;
   recommendation_text?: string;
-  highlighted_skill_ids?: UUID[];
-
   created_at: ISOTimestamp;
   visibility?: Visibility;
 }

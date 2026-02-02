@@ -1,7 +1,9 @@
 /**
  * Opportunity Graph Queries
  *
- * Queries for matching talents with opportunities
+ * Queries for matching talents with opportunities.
+ * Note: REQUIERT_COMPETENCE was removed (opportunity_skills table dropped in migration 053).
+ * Matching functions now return empty results until a new skill-requirement model is implemented.
  */
 
 import { neo4jClient } from '../neo4j.client';
@@ -53,11 +55,12 @@ export interface SkillGap {
 
 export const opportunityQueries = {
   /**
-   * Find opportunities matching a talent's skills
+   * Find opportunities matching a talent's skills.
+   * Returns empty — no skill requirements in graph (opportunity_skills dropped).
    */
   async findMatchingOpportunities(
-    talentId: string,
-    options: {
+    _talentId: string,
+    _options: {
       limit?: number;
       minMatchScore?: number;
       includeApplied?: boolean;
@@ -65,149 +68,18 @@ export const opportunityQueries = {
       locationTypes?: string[];
     } = {}
   ): Promise<OpportunityMatch[]> {
-    const { limit = 10, minMatchScore = 0.3, includeApplied = false, types, locationTypes } = options;
-
-    let typeFilter = '';
-    if (types && types.length > 0) {
-      typeFilter = 'AND op.type IN $types';
-    }
-
-    let locationFilter = '';
-    if (locationTypes && locationTypes.length > 0) {
-      locationFilter = 'AND op.location_type IN $locationTypes';
-    }
-
-    const result = await neo4jClient.read(
-      `
-      MATCH (t:Talent {id: $talentId})-[:POSSEDE_COMPETENCE]->(s:Skill)
-            <-[:REQUIERT_COMPETENCE]-(op:Opportunity)
-      WHERE op.status = 'published'
-        ${includeApplied ? '' : 'AND NOT EXISTS((t)-[:A_POSTULE_A]->(op))'}
-        ${typeFilter}
-        ${locationFilter}
-
-      WITH op, t, collect(DISTINCT s.canonical_name) as matchedSkills, count(DISTINCT s) as matchCount
-
-      // Get all required skills
-      MATCH (op)-[:REQUIERT_COMPETENCE]->(req:Skill)
-      WITH op, t, matchedSkills, matchCount, collect(DISTINCT req.canonical_name) as allRequired
-
-      // Calculate missing skills and match score
-      WITH op, matchedSkills, matchCount, allRequired, size(allRequired) as totalRequired,
-           [skill IN allRequired WHERE NOT skill IN matchedSkills] as missingSkills,
-           toFloat(matchCount) / size(allRequired) as matchScore
-
-      WHERE matchScore >= $minMatchScore
-
-      // Get organization
-      OPTIONAL MATCH (op)-[:PUBLIE_PAR]->(org:Organization)
-
-      RETURN op as opportunity,
-             org as organization,
-             matchedSkills,
-             missingSkills,
-             matchScore,
-             totalRequired
-      ORDER BY matchScore DESC
-      LIMIT $limit
-      `,
-      {
-        talentId,
-        minMatchScore,
-        limit: neo4jClient.int(limit),
-        types: types || [],
-        locationTypes: locationTypes || [],
-      }
-    );
-
-    return result.records.map(record => {
-      const opp = record.get('opportunity').properties;
-      const org = record.get('organization');
-
-      return {
-        opportunity: {
-          id: opp.id,
-          title: opp.title,
-          type: opp.type,
-          contractType: opp.contract_type,
-          status: opp.status,
-          salaryMin: opp.salary_min,
-          salaryMax: opp.salary_max,
-          locationType: opp.location_type,
-          city: opp.city,
-          country: opp.country,
-          deadline: opp.deadline,
-        },
-        organization: org
-          ? {
-              id: org.properties.id,
-              name: org.properties.name,
-            }
-          : undefined,
-        matchedSkills: record.get('matchedSkills'),
-        missingSkills: record.get('missingSkills'),
-        matchScore: record.get('matchScore'),
-        totalRequired: this.toNumber(record.get('totalRequired')),
-      };
-    });
+    return [];
   },
 
   /**
-   * Get skill gaps for a talent based on available opportunities
+   * Get skill gaps for a talent based on available opportunities.
+   * Returns empty — no skill requirements in graph (opportunity_skills dropped).
    */
   async getSkillGaps(
-    talentId: string,
-    options: { limit?: number } = {}
+    _talentId: string,
+    _options: { limit?: number } = {}
   ): Promise<SkillGap[]> {
-    const { limit = 10 } = options;
-
-    const result = await neo4jClient.read(
-      `
-      MATCH (t:Talent {id: $talentId})
-      MATCH (op:Opportunity)-[req:REQUIERT_COMPETENCE]->(s:Skill)
-      WHERE op.status = 'published'
-        AND NOT EXISTS((t)-[:POSSEDE_COMPETENCE]->(s))
-
-      // Count how many opportunities need this skill
-      WITH s, collect(DISTINCT {id: op.id, title: op.title}) as opportunities, count(DISTINCT op) as demandCount
-
-      // Prioritize by demand
-      WITH s, opportunities, demandCount,
-           CASE
-             WHEN demandCount >= 5 THEN 'critical'
-             WHEN demandCount >= 3 THEN 'high'
-             WHEN demandCount >= 2 THEN 'medium'
-             ELSE 'low'
-           END as priority
-
-      RETURN s as skill,
-             demandCount,
-             opportunities[0..5] as topOpportunities,
-             priority
-      ORDER BY demandCount DESC
-      LIMIT $limit
-      `,
-      { talentId, limit: neo4jClient.int(limit) }
-    );
-
-    return result.records.map(record => {
-      const skill = record.get('skill').properties;
-
-      return {
-        skill: {
-          id: skill.id,
-          name: skill.canonical_name,
-          type: skill.type,
-          domain: skill.domain,
-        },
-        demandCount: this.toNumber(record.get('demandCount')),
-        opportunities: record.get('topOpportunities').map((o: any) => ({
-          id: o.id,
-          title: o.title,
-        })),
-        priority: record.get('priority') as 'low' | 'medium' | 'high' | 'critical',
-      };
-    });
+    return [];
   },
 
   /**
@@ -277,7 +149,7 @@ export const opportunityQueries = {
   },
 
   /**
-   * Get opportunity details with skill requirements
+   * Get opportunity details with applicant count
    */
   async getOpportunityDetails(opportunityId: string): Promise<{
     opportunity: any;
@@ -290,16 +162,12 @@ export const opportunityQueries = {
       MATCH (op:Opportunity {id: $opportunityId})
 
       OPTIONAL MATCH (op)-[:PUBLIE_PAR]->(org:Organization)
-      OPTIONAL MATCH (op)-[req:REQUIERT_COMPETENCE]->(s:Skill)
       OPTIONAL MATCH (t:Talent)-[:A_POSTULE_A]->(op)
 
-      WITH op, org,
-           collect(DISTINCT {name: s.canonical_name, level: req.level_required, mandatory: req.is_mandatory}) as skills,
-           count(DISTINCT t) as applicants
+      WITH op, org, count(DISTINCT t) as applicants
 
       RETURN op as opportunity,
              org as organization,
-             skills as requiredSkills,
              applicants as applicantCount
       `,
       { opportunityId }
@@ -321,103 +189,20 @@ export const opportunityQueries = {
     return {
       opportunity: opp.properties,
       organization: org?.properties,
-      requiredSkills: (record.get('requiredSkills') || [])
-        .filter((s: any) => s.name)
-        .map((s: any) => ({
-          name: s.name,
-          level: s.level || 'intermediaire',
-          isMandatory: s.mandatory ?? true,
-        })),
+      requiredSkills: [], // No skill requirements in graph (opportunity_skills dropped)
       applicantCount: this.toNumber(record.get('applicantCount')),
     };
   },
 
   /**
-   * Recommend opportunities based on inferred interests
+   * Recommend opportunities based on inferred interests.
+   * Returns empty — no skill requirements in graph (opportunity_skills dropped).
    */
   async getRecommendedOpportunities(
-    talentId: string,
-    options: { limit?: number } = {}
+    _talentId: string,
+    _options: { limit?: number } = {}
   ): Promise<OpportunityMatch[]> {
-    const { limit = 5 } = options;
-
-    const result = await neo4jClient.read(
-      `
-      MATCH (t:Talent {id: $talentId})
-
-      // Get opportunities from skills the talent should learn
-      OPTIONAL MATCH (t)-[learn:DEVRAIT_APPRENDRE]->(learnSkill:Skill)
-                     <-[:REQUIERT_COMPETENCE]-(op:Opportunity)
-      WHERE op.status = 'published'
-        AND NOT EXISTS((t)-[:A_POSTULE_A]->(op))
-
-      WITH t, op, collect(DISTINCT learnSkill.canonical_name) as targetSkills
-      WHERE op IS NOT NULL
-
-      // Also consider opportunities from interests
-      OPTIONAL MATCH (t)-[:INTERESSE_PAR]->(interest:Skill)
-                     <-[:REQUIERT_COMPETENCE]-(op)
-
-      WITH op, targetSkills, collect(DISTINCT interest.canonical_name) as interestSkills
-
-      // Get skills the talent already has
-      MATCH (t:Talent {id: $talentId})-[:POSSEDE_COMPETENCE]->(has:Skill)
-            <-[:REQUIERT_COMPETENCE]-(op)
-      WITH op, targetSkills, interestSkills,
-           collect(DISTINCT has.canonical_name) as matchedSkills
-
-      // Get organization
-      OPTIONAL MATCH (op)-[:PUBLIE_PAR]->(org:Organization)
-
-      // Get all required skills
-      MATCH (op)-[:REQUIERT_COMPETENCE]->(req:Skill)
-      WITH op, org, targetSkills, interestSkills, matchedSkills,
-           collect(DISTINCT req.canonical_name) as allRequired
-
-      WITH op, org, matchedSkills, allRequired,
-           [s IN allRequired WHERE NOT s IN matchedSkills] as missingSkills,
-           toFloat(size(matchedSkills)) / size(allRequired) as matchScore,
-           size(targetSkills) + size(interestSkills) as relevanceBoost
-
-      RETURN op as opportunity,
-             org as organization,
-             matchedSkills,
-             missingSkills,
-             matchScore,
-             size(allRequired) as totalRequired
-      ORDER BY relevanceBoost DESC, matchScore DESC
-      LIMIT $limit
-      `,
-      { talentId, limit: neo4jClient.int(limit) }
-    );
-
-    return result.records.map(record => {
-      const opp = record.get('opportunity').properties;
-      const org = record.get('organization');
-
-      return {
-        opportunity: {
-          id: opp.id,
-          title: opp.title,
-          type: opp.type,
-          contractType: opp.contract_type,
-          status: opp.status,
-          salaryMin: opp.salary_min,
-          salaryMax: opp.salary_max,
-          locationType: opp.location_type,
-          city: opp.city,
-          country: opp.country,
-          deadline: opp.deadline,
-        },
-        organization: org
-          ? { id: org.properties.id, name: org.properties.name }
-          : undefined,
-        matchedSkills: record.get('matchedSkills'),
-        missingSkills: record.get('missingSkills'),
-        matchScore: record.get('matchScore'),
-        totalRequired: this.toNumber(record.get('totalRequired')),
-      };
-    });
+    return [];
   },
 
   // Helper

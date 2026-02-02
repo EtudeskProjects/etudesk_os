@@ -596,13 +596,6 @@ const renderTalentContent = () => (
       <View style={styles.sectionHeader}>
         <View style={styles.sectionTitleRow}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Notifications</Text>
-          {notifications.length > 0 && (
-            <View style={[styles.countBadge, { backgroundColor: colors.error }]}>
-              <Text style={[styles.countBadgeText, { color: colors.textOnPrimary }]}>
-                {notifications.length}
-              </Text>
-            </View>
-          )}
         </View>
         <TouchableOpacity onPress={() => router.push('/settings/notifications')}>
           <Text style={[styles.seeMore, { color: colors.primary }]}>Voir tout</Text>
@@ -670,11 +663,14 @@ return (
             activeOpacity={0.8}
           >
             <Bell size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-            {notifications.length > 0 && (
-              <View style={[styles.notificationBadge, { backgroundColor: colors.error }]}>
-                <Text style={[styles.notificationBadgeText, { color: colors.textOnPrimary }]}>{notifications.length}</Text>
-              </View>
-            )}
+            {(() => {
+              const unread = notifications.filter(n => !n.read_at).length;
+              return unread > 0 ? (
+                <View style={[styles.notificationBadge, { backgroundColor: colors.error }]}>
+                  <Text style={[styles.notificationBadgeText, { color: colors.textOnPrimary }]}>{unread}</Text>
+                </View>
+              ) : null;
+            })()}
           </TouchableOpacity>
           {isOrganizationSpace && (
             <TouchableOpacity

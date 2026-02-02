@@ -32,7 +32,6 @@ export interface TalentGraphSummary {
   topSkills: Array<{
     name: string;
     level: string;
-    yearsExperience?: number;
   }>;
   currentPosition?: {
     title: string;
@@ -49,11 +48,7 @@ export interface SkillWithContext {
   id: string;
   name: string;
   type: string;
-  domain?: string;
   proficiencyLevel: string;
-  yearsExperience?: number;
-  verified: boolean;
-  endorsedCount: number;
   relatedOpportunities: number;
   learningTopics: string[];
 }
@@ -100,7 +95,7 @@ export const talentQueries = {
       OPTIONAL MATCH (t)-[r:POSSEDE_COMPETENCE]->(skill:Skill)
       WITH t, skillsCount, experiencesCount, applicationsCount, membershipCount,
            learningTopicsCount, documentsCount, connectionsCount,
-           collect({name: skill.canonical_name, level: r.proficiency_level, years: r.years_experience})[0..5] as topSkills
+           collect({name: skill.canonical_name, level: r.proficiency_level})[0..5] as topSkills
 
       // Get current position
       OPTIONAL MATCH (t)-[exp:TRAVAILLE_CHEZ]->(org:Organization)
@@ -152,7 +147,6 @@ export const talentQueries = {
       topSkills: (record.get('topSkills') || []).filter((s: any) => s.name).map((s: any) => ({
         name: s.name,
         level: s.level,
-        yearsExperience: s.years,
       })),
       currentPosition: currentPos?.title
         ? { title: currentPos.title, organization: currentPos.organization }
@@ -169,27 +163,19 @@ export const talentQueries = {
       `
       MATCH (t:Talent {id: $talentId})-[r:POSSEDE_COMPETENCE]->(s:Skill)
 
-      // Count related opportunities
-      OPTIONAL MATCH (opp:Opportunity)-[:REQUIERT_COMPETENCE]->(s)
-      WHERE opp.status = 'published'
-      WITH t, r, s, count(DISTINCT opp) as relatedOpps
-
       // Get learning topics for this skill domain
+      WITH t, r, s
       OPTIONAL MATCH (t)-[:ETUDIE_SUJET]->(lt:LearningTopic)
       WHERE lt.name CONTAINS s.canonical_name OR s.canonical_name CONTAINS lt.name
-      WITH s, r, relatedOpps, collect(lt.name) as learningTopics
+      WITH s, r, collect(lt.name) as learningTopics
 
       RETURN s.id as id,
              s.canonical_name as name,
              s.type as type,
-             s.domain as domain,
              r.proficiency_level as proficiencyLevel,
-             r.years_experience as yearsExperience,
-             r.verified as verified,
-             r.endorsed_count as endorsedCount,
-             relatedOpps as relatedOpportunities,
+             0 as relatedOpportunities,
              learningTopics
-      ORDER BY relatedOpps DESC, r.proficiency_level DESC
+      ORDER BY r.proficiency_level DESC
       `,
       { talentId }
     );
@@ -198,11 +184,7 @@ export const talentQueries = {
       id: record.get('id'),
       name: record.get('name'),
       type: record.get('type'),
-      domain: record.get('domain'),
       proficiencyLevel: record.get('proficiencyLevel'),
-      yearsExperience: record.get('yearsExperience'),
-      verified: record.get('verified') ?? false,
-      endorsedCount: this.toNumber(record.get('endorsedCount')),
       relatedOpportunities: this.toNumber(record.get('relatedOpportunities')),
       learningTopics: record.get('learningTopics') || [],
     }));

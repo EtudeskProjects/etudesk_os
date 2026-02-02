@@ -4,9 +4,11 @@
  */
 
 import { Response } from 'express';
-import { run, user } from '@openai/agents';
+import { run } from '@openai/agents';
 import type { Agent, AgentInputItem } from '@openai/agents';
 import { SSEEvent } from '../types';
+import { createTitleAgent, createSuggestionsAgent } from '../../ai/agent-factory';
+import { buildSuggestionsSystemPrompt } from '../../ai/prompts/session-utils.prompt';
 
 /**
  * Initialize SSE headers on the response
@@ -121,26 +123,13 @@ export async function runAgentWithSSE(
 }
 
 /**
- * Generate a session title using gpt-5-nano
+ * Generate a session title using Agents SDK (gpt-5-nano)
  */
 export async function generateSessionTitle(message: string): Promise<string> {
   try {
-    const { OpenAI } = await import('openai');
-    const openai = new OpenAI();
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Génère un titre court (3-6 mots max) en français pour cette conversation. Pas de guillemets, pas de ponctuation finale.',
-        },
-        { role: 'user', content: message },
-      ],
-      max_tokens: 20,
-      temperature: 0.3,
-    });
-    return completion.choices[0]?.message?.content?.trim() || message.slice(0, 50);
+    const agent = createTitleAgent();
+    const result = await run(agent, message);
+    return result.finalOutput?.trim() || message.slice(0, 50);
   } catch {
     // Fallback to simple extraction
     const words = message.replace(/[?!.,]/g, '').trim().split(/\s+/);
@@ -149,29 +138,17 @@ export async function generateSessionTitle(message: string): Promise<string> {
 }
 
 /**
- * Generate prompt suggestions using gpt-5-nano
+ * Generate prompt suggestions using Agents SDK (gpt-5-nano)
  */
 export async function generateSuggestions(
   mode: string,
   contextSummary: string
 ): Promise<string[]> {
   try {
-    const { OpenAI } = await import('openai');
-    const openai = new OpenAI();
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
-      messages: [
-        {
-          role: 'system',
-          content: `Génère exactement 3 suggestions de prompts courts en français pour un assistant ${mode === 'study' ? "d'étude" : "d'exploration"}.
-Contexte utilisateur: ${contextSummary}
-Retourne un JSON array de 3 strings. Rien d'autre.`,
-        },
-      ],
-      max_tokens: 150,
-      temperature: 0.7,
-    });
-    const text = completion.choices[0]?.message?.content?.trim() || '[]';
+    const systemPrompt = buildSuggestionsSystemPrompt(mode, contextSummary);
+    const agent = createSuggestionsAgent(systemPrompt);
+    const result = await run(agent, 'Génère les suggestions.');
+    const text = result.finalOutput?.trim() || '[]';
     return JSON.parse(text);
   } catch {
     return [];

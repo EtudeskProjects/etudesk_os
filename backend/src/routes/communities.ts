@@ -1960,17 +1960,21 @@ async function notifyNewMembershipRequest(membershipId: string): Promise<void> {
     const body = `${membership.talent_name} souhaite rejoindre "${membership.community_name}"`;
 
     for (const member of orgMembers.rows) {
-      await pushService.sendToUser(member.talent_id, {
-        type: 'APPLICATION',
-        title,
-        body,
-        data: {
-          membershipId,
-          talentName: membership.talent_name,
-          communityName: membership.community_name,
-          screen: 'org-community-member-details',
-        },
-      });
+      const prefs = await pushService.getPreferences(member.talent_id);
+
+      if (prefs.push_enabled !== false && prefs.notify_applications !== false) {
+        await pushService.sendToUser(member.talent_id, {
+          type: 'MEMBERSHIP',
+          title,
+          body,
+          data: {
+            membershipId,
+            talentName: membership.talent_name,
+            communityName: membership.community_name,
+            screen: 'org-community-member-details',
+          },
+        });
+      }
     }
   } catch (error) {
     console.error('Error sending new membership request notification:', error);

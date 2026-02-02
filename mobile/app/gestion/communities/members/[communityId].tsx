@@ -47,7 +47,7 @@ export default function CommunityMembersScreen() {
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [filter, setFilter] = useState<FilterStatus>('all');
+  const [filter, setFilter] = useState<FilterStatus>('PENDING');
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -245,6 +245,7 @@ export default function CommunityMembersScreen() {
     { key: 'PENDING' as FilterStatus, label: 'En attente', count: localStatusCounts['PENDING'] || 0 },
     { key: 'ACTIVE' as FilterStatus, label: 'Actifs', count: localStatusCounts['ACTIVE'] || 0 },
     { key: 'REJECTED' as FilterStatus, label: 'Refusés', count: localStatusCounts['REJECTED'] || 0 },
+    { key: 'SUSPENDED' as FilterStatus, label: 'Suspendus', count: localStatusCounts['SUSPENDED'] || 0 },
   ];
 
   const headerContent = (

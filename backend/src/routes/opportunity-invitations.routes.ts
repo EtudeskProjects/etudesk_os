@@ -41,10 +41,14 @@ router.post('/:opportunityId/invitations', authMiddleware, async (req: AuthReque
 
     // Verify user has access to the opportunity (via org membership)
     const accessCheck = await pool.query(`
-      SELECT o.title as opportunity_title, o.organization_id
+      SELECT o.title as opportunity_title, o.organization_id,
+             org.name as organization_name,
+             COALESCE(t.first_name || ' ' || t.last_name, t.email) as inviter_name
       FROM opportunities o
       JOIN opportunity_posters op ON o.id = op.opportunity_id
       LEFT JOIN organization_members om ON op.poster_organization_id = om.organization_id
+      LEFT JOIN organizations org ON op.poster_organization_id = org.id
+      LEFT JOIN talents t ON t.id = $2
       WHERE o.id = $1 AND o.deleted_at IS NULL
       AND (op.poster_talent_id = $2 OR om.talent_id = $2)
     `, [opportunityId, talentId]);
@@ -54,6 +58,8 @@ router.post('/:opportunityId/invitations', authMiddleware, async (req: AuthReque
     }
 
     const opportunityTitle = accessCheck.rows[0].opportunity_title;
+    const organizationName = accessCheck.rows[0].organization_name || '';
+    const inviterName = accessCheck.rows[0].inviter_name || '';
     const results: any[] = [];
     const errors: any[] = [];
 
@@ -90,7 +96,7 @@ router.post('/:opportunityId/invitations', authMiddleware, async (req: AuthReque
 
       // Check if invitee is a registered user
       const talentCheck = await pool.query(`
-        SELECT id, display_name FROM talents WHERE LOWER(email) = LOWER($1)
+        SELECT id, COALESCE(first_name || ' ' || last_name, email) as display_name FROM talents WHERE LOWER(email) = LOWER($1)
       `, [email]);
 
       const inviteeTalentId = talentCheck.rows.length > 0 ? talentCheck.rows[0].id : null;
@@ -115,7 +121,9 @@ router.post('/:opportunityId/invitations', authMiddleware, async (req: AuthReque
       });
 
       // Send email notification (fire-and-forget)
-      sendOpportunityInviteEmail(email, inviteeName, opportunityTitle, organizationName, inviterName, message, invitationToken).catch(() => {});
+      if (invitationToken) {
+        sendOpportunityInviteEmail(email, inviteeName, opportunityTitle, organizationName, inviterName, message, invitationToken).catch(() => {});
+      }
     }
 
     res.status(201).json({
@@ -162,7 +170,7 @@ router.get('/:opportunityId/invitations', authMiddleware, async (req: AuthReques
     const result = await pool.query(`
       SELECT
         oi.*,
-        t.display_name as invited_by_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name,
         t.avatar_url as invited_by_avatar
       FROM opportunity_invitations oi
       JOIN talents t ON oi.invited_by = t.id
@@ -320,7 +328,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
         o.location_type,
         o.locations,
         o.status as opportunity_status,
-        t.display_name as invited_by_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name,
         t.avatar_url as invited_by_avatar,
         json_build_object(
           'id', org.id,
@@ -467,7 +475,7 @@ router.get('/token/:token', async (req: Request, res: Response) => {
         o.title as opportunity_title,
         o.summary as opportunity_summary,
         o.cover_image_url,
-        t.display_name as invited_by_name
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name
       FROM opportunity_invitations oi
       JOIN opportunities o ON oi.opportunity_id = o.id
       JOIN talents t ON oi.invited_by = t.id

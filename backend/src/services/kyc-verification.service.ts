@@ -1,14 +1,12 @@
 /**
  * KYC Verification Service
- * Uses Agents SDK with GPT-4.1-nano vision for document verification
+ * Uses OpenAI gpt-4.1-nano vision for document verification
  */
 
-import { run } from '@openai/agents';
-import type { AgentInputItem } from '@openai/agents';
+import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
-import { createKYCAgent } from './ai/agent-factory';
-import { buildKYCVerificationPrompt, buildQuickCheckPrompt } from './ai/prompts/kyc.prompt';
+import { buildKYCVerificationPrompt, buildQuickCheckPrompt, KYC_SYSTEM_PROMPT } from './ai/prompts/kyc.prompt';
 import { buildTalentObject } from './ai/talent-object';
 
 // ═══════════════════════════════════════════════════════════════
@@ -21,7 +19,7 @@ export interface TalentProfile {
   id: string;
   first_name: string | null;
   last_name: string | null;
-  display_name: string;
+  display_name: string; // computed: COALESCE(first_name || ' ' || last_name, email)
 }
 
 export interface DocumentAnalysis {
@@ -277,7 +275,6 @@ export async function verifyKYCDocument(
     );
   }
 
-  // Single TalentObject load — used for both validation and prompt context
   const talentObj = await buildTalentObject(talentId);
   if (!talentObj) {
     return errorResult(
@@ -314,7 +311,6 @@ export async function verifyKYCDocument(
     'STUDENT_CARD': 'Carte scolaire / étudiante',
   };
 
-  // Build talent context for the prompt (name + country only, relevant to KYC)
   const profileName = [talentObj.first_name, talentObj.last_name].filter(Boolean).join(' ') || talentObj.display_name;
   const talentContext = `Nom: ${profileName}\nPays: ${talentObj.country || 'Non renseigné'}`;
 
@@ -326,43 +322,40 @@ export async function verifyKYCDocument(
     talentContext
   );
 
-  // Build input with images
-  const contentItems: Array<
-    | { type: 'input_text'; text: string }
-    | { type: 'input_image'; image: string; detail: string }
-  > = [
-    { type: 'input_text', text: prompt },
+  // Build messages with vision
+  const imageContent: OpenAI.ChatCompletionContentPart[] = [
+    { type: 'text', text: prompt },
     {
-      type: 'input_image',
-      image: `data:${frontImage.mimeType};base64,${frontImage.data}`,
-      detail: 'high',
+      type: 'image_url',
+      image_url: { url: `data:${frontImage.mimeType};base64,${frontImage.data}`, detail: 'high' },
     },
   ];
 
   if (backImage) {
-    contentItems.push({
-      type: 'input_image',
-      image: `data:${backImage.mimeType};base64,${backImage.data}`,
-      detail: 'high',
+    imageContent.push({
+      type: 'image_url',
+      image_url: { url: `data:${backImage.mimeType};base64,${backImage.data}`, detail: 'high' },
     });
   }
 
-  const input: AgentInputItem[] = [
-    { role: 'user', content: contentItems as any },
-  ];
-
   try {
-    console.log(`Calling GPT-4.1-nano API for document analysis...`);
+    console.log(`Calling gpt-4.1-mini API for document analysis...`);
 
-    const agent = createKYCAgent();
-    const result = await run(agent, input);
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4.1-mini',
+      messages: [
+        { role: 'system', content: KYC_SYSTEM_PROMPT },
+        { role: 'user', content: imageContent },
+      ],
+    });
 
-    const analysisText = result.finalOutput;
+    const analysisText = completion.choices[0]?.message?.content?.trim();
     if (!analysisText) {
-      throw new Error('No response from agent');
+      throw new Error('Empty response from API');
     }
 
-    console.log(`GPT-4.1-nano analysis received`);
+    console.log(`gpt-4.1-mini raw response:`, analysisText);
 
     interface DocumentAnalysisResponse {
       detected_document_type: DocumentType | 'UNKNOWN' | 'INVALID';
@@ -384,7 +377,9 @@ export async function verifyKYCDocument(
       back_issues?: string[] | null;
     }
 
-    const analysis: DocumentAnalysisResponse = JSON.parse(analysisText);
+    // Parse JSON — strip markdown fences if present
+    const jsonStr = analysisText.replace(/^```json?\s*\n?/, '').replace(/\n?```\s*$/, '');
+    const analysis: DocumentAnalysisResponse = JSON.parse(jsonStr);
 
     const documentAnalysis: DocumentAnalysis = {
       detected_document_type: analysis.detected_document_type,
@@ -435,44 +430,45 @@ export async function verifyKYCDocument(
         : undefined,
     };
 
-    // Calculate verification score
+    // Calculate verification score — tolerant approach
     const rejectionReasons: string[] = [];
     const warnings: string[] = [];
 
-    if (analysis.detected_document_type !== expectedDocType) {
-      rejectionReasons.push(
-        `Type de document incorrect. Attendu: ${expectedDocType}, Détecté: ${analysis.detected_document_type}`
-      );
-    }
+    // Only reject for clearly invalid documents
     if (!analysis.is_valid_document) {
-      rejectionReasons.push('Le document ne semble pas authentique ou valide');
+      rejectionReasons.push('Le document ne semble pas être un document d\'identité valide');
     }
-    if (analysis.document_quality === 'POOR') {
-      rejectionReasons.push('Qualité d\'image insuffisante');
+    if (!analysis.is_readable && analysis.document_quality === 'POOR') {
+      rejectionReasons.push('Image illisible — veuillez reprendre la photo');
+    }
+
+    // Type mismatch is a warning, not a rejection (user may have selected wrong type)
+    if (analysis.detected_document_type !== expectedDocType && analysis.detected_document_type !== 'UNKNOWN') {
+      warnings.push(`Type détecté: ${analysis.detected_document_type} (attendu: ${expectedDocType})`);
+    }
+    if (analysis.document_quality === 'POOR' && analysis.is_readable) {
+      warnings.push('La qualité d\'image pourrait être améliorée');
     } else if (analysis.document_quality === 'ACCEPTABLE') {
       warnings.push('La qualité d\'image pourrait être améliorée');
     }
-    if (!analysis.is_readable) {
-      rejectionReasons.push('Le texte du document n\'est pas lisible');
-    }
-    if (!analysis.has_photo) {
-      rejectionReasons.push('Aucune photo d\'identité détectée sur le document');
+    if (!analysis.has_photo && expectedDocType !== 'STUDENT_CARD') {
+      warnings.push('Photo d\'identité non détectée sur le document');
     }
     if (!nameComparison.match) {
       if (extractedFullName) {
-        rejectionReasons.push(
-          `Le nom sur le document ne correspond pas au profil (${nameComparison.confidence}% de correspondance)`
-        );
+        warnings.push(`Nom sur le document: "${extractedFullName}" — vérifiez la correspondance avec votre profil`);
       } else {
-        warnings.push('Impossible d\'extraire le nom du document pour vérification');
+        warnings.push('Impossible d\'extraire le nom du document');
       }
     } else if (nameComparison.confidence < 80) {
       warnings.push(`Correspondance du nom partielle (${nameComparison.confidence}%)`);
     }
 
+    // Issues from AI — only reject for fraud/expiry
     if (documentAnalysis.front_analysis.issues.length > 0) {
       documentAnalysis.front_analysis.issues.forEach(issue => {
-        if (issue.toLowerCase().includes('expiré') || issue.toLowerCase().includes('falsif')) {
+        const lower = issue.toLowerCase();
+        if (lower.includes('falsif') || lower.includes('faux') || lower.includes('manipul')) {
           rejectionReasons.push(issue);
         } else {
           warnings.push(issue);
@@ -480,14 +476,19 @@ export async function verifyKYCDocument(
       });
     }
 
+    // Weighted scoring
     let score = 100;
-    score -= rejectionReasons.length * 25;
-    score -= warnings.length * 5;
-    if (!nameComparison.match) score -= 30;
-    if (analysis.document_type_confidence < 80) score -= (80 - analysis.document_type_confidence) / 2;
+    if (!analysis.is_valid_document) score -= 50;
+    if (analysis.document_quality === 'POOR') score -= 20;
+    else if (analysis.document_quality === 'ACCEPTABLE') score -= 5;
+    if (!analysis.is_readable) score -= 25;
+    if (!nameComparison.match && extractedFullName) score -= 10;
+    if (!analysis.has_photo && expectedDocType !== 'STUDENT_CARD') score -= 5;
+    score -= warnings.length * 2;
     score = Math.max(0, Math.min(100, score));
 
-    const isVerified = rejectionReasons.length === 0 && score >= 70;
+    // Verified if no hard rejections and score >= 50
+    const isVerified = rejectionReasons.length === 0 && score >= 50;
 
     console.log(`KYC verification complete: ${isVerified ? 'VERIFIED' : 'REJECTED'} (score: ${score})`);
 
@@ -527,30 +528,32 @@ export async function quickDocumentCheck(
       return { valid: false, document_type: 'UNKNOWN', message: 'Image non accessible' };
     }
 
-    const input: AgentInputItem[] = [
-      {
-        role: 'user',
-        content: [
-          { type: 'input_text', text: buildQuickCheckPrompt() },
-          {
-            type: 'input_image',
-            image: `data:${frontImage.mimeType};base64,${frontImage.data}`,
-            detail: 'low',
-          },
-        ] as any,
-      },
-    ];
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4.1-mini',
+      messages: [
+        { role: 'system', content: KYC_SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: buildQuickCheckPrompt() },
+            {
+              type: 'image_url',
+              image_url: { url: `data:${frontImage.mimeType};base64,${frontImage.data}`, detail: 'low' },
+            },
+          ],
+        },
+      ],
+    });
 
-    const agent = createKYCAgent();
-    const result = await run(agent, input);
-
-    const resultText = result.finalOutput;
+    const resultText = completion.choices[0]?.message?.content?.trim();
     if (!resultText) {
       return { valid: true, document_type: 'UNKNOWN', message: 'Vérification temporairement indisponible' };
     }
 
     try {
-      const parsed = JSON.parse(resultText) as { is_document: boolean; type: DocumentType | 'UNKNOWN'; message: string };
+      const jsonStr = resultText.replace(/^```json?\s*\n?/, '').replace(/\n?```\s*$/, '');
+      const parsed = JSON.parse(jsonStr) as { is_document: boolean; type: DocumentType | 'UNKNOWN'; message: string };
       return {
         valid: parsed.is_document,
         document_type: parsed.type,

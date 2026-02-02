@@ -103,5 +103,5 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: TYPOGRAPHY.fontSize.lg, fontWeight: TYPOGRAPHY.fontWeight.semibold },
   headerSpacer: { width: 40 },
   scrollView: { flex: 1 },
-  scrollContent: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxl },
+  scrollContent: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.xxl },
 });

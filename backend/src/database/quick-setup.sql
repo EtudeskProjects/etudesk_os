@@ -85,9 +85,6 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'talents' AND column_name = 'birthday') THEN
         ALTER TABLE talents ADD COLUMN birthday DATE;
     END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'talents' AND column_name = 'display_name') THEN
-        ALTER TABLE talents ADD COLUMN display_name VARCHAR(255);
-    END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'talents' AND column_name = 'bio') THEN
         ALTER TABLE talents ADD COLUMN bio TEXT;
     END IF;
@@ -196,7 +193,7 @@ CREATE INDEX IF NOT EXISTS idx_org_invitations_email ON organization_invitations
 CREATE INDEX IF NOT EXISTS idx_org_invitations_token ON organization_invitations(token);
 
 -- ═══════════════════════════════════════════════════════════════
--- DOCUMENTS TABLE (Unified: Identity, Professional, Academic)
+-- DOCUMENTS TABLE (Legacy — replaced by talent_documents)
 -- ═══════════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS documents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -239,7 +236,6 @@ CREATE TABLE IF NOT EXISTS documents (
     -- Skill extraction (for CV, certificates, diplomas)
     skills_extracted BOOLEAN DEFAULT FALSE,
     skills_extracted_at TIMESTAMP WITH TIME ZONE,
-    extracted_text TEXT,
     summary TEXT,
 
     -- Visibility
@@ -318,21 +314,7 @@ INSERT INTO document_requirements (feature, required_category, required_type, mu
     ('SKILL_VERIFICATION', 'PROFESSIONAL', 'CV', FALSE, 'Le CV permet d''extraire automatiquement vos compétences', 3)
 ON CONFLICT (feature, required_category, required_type) DO NOTHING;
 
--- ═══════════════════════════════════════════════════════════════
--- DOCUMENT SKILLS TABLE (Skills extracted from documents)
--- ═══════════════════════════════════════════════════════════════
-CREATE TABLE IF NOT EXISTS document_skills (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    skill_id UUID,
-    skill_name VARCHAR(255) NOT NULL,
-    relevance_score NUMERIC(3,2),
-    is_auto_generated BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(document_id, skill_name)
-);
-
-CREATE INDEX IF NOT EXISTS idx_document_skills_document_id ON document_skills(document_id);
+-- (document_skills table removed — skills are now in talent_skills with origin='extracted')
 
 -- ═══════════════════════════════════════════════════════════════
 -- HELPER FUNCTIONS
@@ -519,24 +501,8 @@ CREATE TABLE IF NOT EXISTS community_members (
     PRIMARY KEY(community_id, talent_id)
 );
 
--- ═══════════════════════════════════════════════════════════════
--- SKILLS TABLE (add missing columns if exists)
--- ═══════════════════════════════════════════════════════════════
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'skills' AND column_name = 'canonical_name') THEN
-        ALTER TABLE skills ADD COLUMN canonical_name VARCHAR(255);
-    END IF;
-END $$;
+-- (skills table is legacy — talent_skills is now self-contained)
 
--- ═══════════════════════════════════════════════════════════════
--- OPPORTUNITY SKILLS TABLE
--- ═══════════════════════════════════════════════════════════════
-CREATE TABLE IF NOT EXISTS opportunity_skills (
-    opportunity_id UUID REFERENCES opportunities(id) ON DELETE CASCADE,
-    skill_id UUID,
-    is_required BOOLEAN DEFAULT TRUE,
-    PRIMARY KEY(opportunity_id, skill_id)
-);
+-- (opportunity_skills table removed)
 
 DO $$ BEGIN RAISE NOTICE 'Database setup complete!'; END $$;

@@ -41,9 +41,11 @@ router.post('/:spaceId/invitations', authMiddleware, async (req: AuthRequest, re
 
     // Verify user has access to the space (via org membership)
     const accessCheck = await pool.query(`
-      SELECT s.name as space_name, s.organization_id
+      SELECT s.name as space_name, s.organization_id,
+             COALESCE(t.first_name || ' ' || t.last_name, t.email) as inviter_name
       FROM spaces s
       JOIN organization_members om ON s.organization_id = om.organization_id
+      LEFT JOIN talents t ON t.id = $2
       WHERE s.id = $1 AND s.deleted_at IS NULL AND om.talent_id = $2
     `, [spaceId, talentId]);
 
@@ -52,6 +54,7 @@ router.post('/:spaceId/invitations', authMiddleware, async (req: AuthRequest, re
     }
 
     const spaceName = accessCheck.rows[0].space_name;
+    const inviterName = accessCheck.rows[0].inviter_name || '';
     const results: any[] = [];
     const errors: any[] = [];
 
@@ -76,7 +79,7 @@ router.post('/:spaceId/invitations', authMiddleware, async (req: AuthRequest, re
 
       // Check if invitee is a registered user
       const talentCheck = await pool.query(`
-        SELECT id, display_name FROM talents WHERE LOWER(email) = LOWER($1)
+        SELECT id, COALESCE(first_name || ' ' || last_name, email) as display_name FROM talents WHERE LOWER(email) = LOWER($1)
       `, [email]);
 
       const inviteeTalentId = talentCheck.rows.length > 0 ? talentCheck.rows[0].id : null;
@@ -101,7 +104,9 @@ router.post('/:spaceId/invitations', authMiddleware, async (req: AuthRequest, re
       });
 
       // Send email notification (fire-and-forget)
-      sendSpaceInviteEmail(email, inviteeName, spaceName, inviterName, message, invitationToken).catch(() => {});
+      if (invitationToken) {
+        sendSpaceInviteEmail(email, inviteeName, spaceName, inviterName, message, invitationToken).catch(() => {});
+      }
     }
 
     res.status(201).json({
@@ -146,7 +151,7 @@ router.get('/:spaceId/invitations', authMiddleware, async (req: AuthRequest, res
     const result = await pool.query(`
       SELECT
         si.*,
-        t.display_name as invited_by_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name,
         t.avatar_url as invited_by_avatar
       FROM space_invitations si
       JOIN talents t ON si.invited_by = t.id
@@ -301,7 +306,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
         s.hourly_rate,
         s.daily_rate,
         s.capacity,
-        t.display_name as invited_by_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name,
         t.avatar_url as invited_by_avatar,
         json_build_object(
           'id', o.id,
@@ -450,7 +455,7 @@ router.get('/token/:token', async (req: Request, res: Response) => {
         s.type as space_type,
         s.hourly_rate,
         s.daily_rate,
-        t.display_name as invited_by_name
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name
       FROM space_invitations si
       JOIN spaces s ON si.space_id = s.id
       JOIN talents t ON si.invited_by = t.id

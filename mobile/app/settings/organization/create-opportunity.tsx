@@ -1663,15 +1663,23 @@ export default function CreateOpportunityScreen() {
           )}
         </View>
 
-        {/* Media Summary */}
+        {/* Pièces jointes */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Médias</Text>
-          <Text style={[styles.previewText, { color: images.length > 0 ? colors.textSecondary : colors.gray400 }]}>
-            {images.length} image(s) d'illustration
-          </Text>
-          <Text style={[styles.previewText, { color: attachments.length > 0 ? colors.textSecondary : colors.gray400 }]}>
-            {attachments.length} pièce(s) jointe(s)
-          </Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Pièces jointes</Text>
+          {attachments.length > 0 ? (
+            <View style={{ gap: SPACING.xs }}>
+              {attachments.map((att) => (
+                <View key={att.id} style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
+                  <FileText size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.previewText, { color: colors.textPrimary, flex: 1 }]} numberOfLines={1}>
+                    {att.name}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucune pièce jointe</Text>
+          )}
         </View>
       </View>
     </View>

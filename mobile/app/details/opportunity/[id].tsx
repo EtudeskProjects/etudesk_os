@@ -732,7 +732,7 @@ export default function OpportunityDetailScreen() {
               variant="outline"
               icon={<Settings size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
             />
-          ) : currentSpace !== 'organization' ? (
+          ) : (
             <Button
               title={hasApplied ? t('opportunity.viewApplication') : t('opportunity.apply')}
               onPress={handleApply}
@@ -740,7 +740,7 @@ export default function OpportunityDetailScreen() {
               variant={hasApplied ? 'outline' : 'primary'}
               icon={<Briefcase size={ICON.size.md} color={hasApplied ? colors.primary : colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
             />
-          ) : null}
+          )}
         </View>
         <FooterNav activeTab="explore" />
       </View>

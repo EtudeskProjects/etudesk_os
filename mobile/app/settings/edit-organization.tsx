@@ -11,7 +11,6 @@ import {
   Image,
   Alert,
   ActivityIndicator,
-  Modal,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,10 +20,9 @@ import {
   ArrowLeft,
   Camera,
   MapPin,
-  Map,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
-import { Input, Button } from '../../src/components/ui';
+import { Input, Button, StepIndicator } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useSpace } from '../../src/contexts/SpaceContext';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
@@ -33,6 +31,7 @@ import {
   OrganizationType,
 } from '../../src/types/models';
 import { organizationService, talentService, imageService } from '../../src/services';
+import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../src/constants/talent';
 import MapLocationPicker from '../../src/components/MapLocationPicker';
 
 type Step = 'info' | 'location';
@@ -52,7 +51,6 @@ export default function EditOrganizationScreen() {
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [showMapPicker, setShowMapPicker] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
 
   // Form state - Info
@@ -60,6 +58,7 @@ export default function EditOrganizationScreen() {
   const [orgTypes, setOrgTypes] = useState<OrganizationType[]>([]);
   const [description, setDescription] = useState('');
   const [logoUri, setLogoUri] = useState<string | null>(null);
+  const [sectors, setSectors] = useState<Sector[]>([]);
 
   // Form state - Location
   const [country, setCountry] = useState('');
@@ -104,15 +103,23 @@ export default function EditOrganizationScreen() {
       if (org) {
         setOrganizationId(org.id);
         setName(org.name || '');
-        // Handle type - can be single or array
-        if (org.type) {
-          setOrgTypes([org.type as OrganizationType]);
+        if (org.types && Array.isArray(org.types)) {
+          setOrgTypes(org.types as OrganizationType[]);
+        }
+        if (org.sectors && Array.isArray(org.sectors)) {
+          setSectors(org.sectors as Sector[]);
         }
         setDescription(org.description || '');
         setLogoUri(org.logo_url || null);
         setCountry(org.headquarters_country || '');
         setRegion(org.headquarters_region || '');
         setCity(org.headquarters_city || '');
+        if (org.headquarters_latitude && org.headquarters_longitude) {
+          setCoordinates({
+            latitude: Number(org.headquarters_latitude),
+            longitude: Number(org.headquarters_longitude),
+          });
+        }
       }
     } catch (error) {
       console.error('Error loading organization:', error);
@@ -142,6 +149,12 @@ export default function EditOrganizationScreen() {
         setCountry(org.headquarters_country || '');
         setRegion(org.headquarters_region || '');
         setCity(org.headquarters_city || '');
+        if (org.headquarters_latitude && org.headquarters_longitude) {
+          setCoordinates({
+            latitude: Number(org.headquarters_latitude),
+            longitude: Number(org.headquarters_longitude),
+          });
+        }
       } else {
         // No organization found, load user profile defaults
         await loadUserProfileDefaults();
@@ -195,10 +208,21 @@ export default function EditOrganizationScreen() {
     });
   };
 
+  // Toggle sector selection (max 5)
+  const toggleSector = (sectorId: Sector) => {
+    setSectors((prev) => {
+      if (prev.includes(sectorId)) {
+        return prev.filter((id) => id !== sectorId);
+      }
+      if (prev.length >= MAX_SECTORS) {
+        return prev;
+      }
+      return [...prev, sectorId];
+    });
+  };
+
   // Handle map location selection
   const handleMapLocationSelect = (location: any) => {
-    setShowMapPicker(false);
-
     if (location.coordinates) {
       setCoordinates(location.coordinates);
     }
@@ -254,12 +278,14 @@ export default function EditOrganizationScreen() {
 
       await organizationService.update(organizationId, {
         name: name.trim() || undefined,
-        type: orgTypes.length > 0 ? orgTypes[0] : undefined,
+        types: orgTypes.length > 0 ? orgTypes : undefined,
         description: description.trim() || undefined,
         logo_url: logoUri || undefined,
         headquarters_city: city || undefined,
         headquarters_region: region || undefined,
         headquarters_country: country || undefined,
+        headquarters_coordinates: coordinates || undefined,
+        sectors: sectors.length > 0 ? sectors : undefined,
       });
 
       // Refresh organizations in SpaceContext to update logo everywhere
@@ -286,30 +312,16 @@ export default function EditOrganizationScreen() {
     if (currentStep === 'info') {
       return name.trim().length >= 2;
     }
-    return true;
+    return country.length > 0;
   };
 
-  const STEPS: Step[] = ['info', 'location'];
+  const STEPS_DATA = [
+    { id: 'info', label: 'Infos' },
+    { id: 'location', label: 'Localisation' },
+  ];
 
   const renderStepIndicator = () => (
-    <View style={styles.stepIndicator}>
-      {STEPS.map((step, index) => (
-        <TouchableOpacity
-          key={step}
-          onPress={() => setCurrentStep(step)}
-          style={[
-            styles.stepDot,
-            { backgroundColor: colors.gray200 },
-            currentStep === step && { backgroundColor: colors.primary },
-            STEPS.indexOf(currentStep) > index && { backgroundColor: colors.primary },
-          ]}
-        >
-          {STEPS.indexOf(currentStep) > index && (
-            <Check size={12} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth + 0.5} />
-          )}
-        </TouchableOpacity>
-      ))}
-    </View>
+    <StepIndicator steps={STEPS_DATA} currentStepId={currentStep} />
   );
 
   const renderInfoStep = () => (
@@ -348,7 +360,7 @@ export default function EditOrganizationScreen() {
         {/* Type - Multi-select (max 3) */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Type d'organisation (max {MAX_ORG_TYPES})
+            Type d'organisation * (max {MAX_ORG_TYPES})
           </Text>
           <View style={styles.tagsContainer}>
             {ORGANIZATION_TYPE_OPTIONS.map((type) => {
@@ -385,6 +397,46 @@ export default function EditOrganizationScreen() {
           </Text>
         </View>
 
+        {/* Secteurs */}
+        <View style={styles.fieldContainer}>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
+            Secteurs d'activité (max {MAX_SECTORS})
+          </Text>
+          <View style={styles.tagsContainer}>
+            {SECTOR_DATA.map((sector) => {
+              const isSelected = sectors.includes(sector.id);
+              return (
+                <TouchableOpacity
+                  key={sector.id}
+                  style={[
+                    styles.selectableTag,
+                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
+                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                  ]}
+                  onPress={() => toggleSector(sector.id)}
+                  activeOpacity={0.7}
+                >
+                  {isSelected && (
+                    <Check size={14} color={colors.primary} strokeWidth={2.5} />
+                  )}
+                  <Text
+                    style={[
+                      styles.selectableTagText,
+                      { color: colors.gray600 },
+                      isSelected && { color: colors.primary },
+                    ]}
+                  >
+                    {sector.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
+            {sectors.length}/{MAX_SECTORS} sélectionnés
+          </Text>
+        </View>
+
         {/* Description */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Description</Text>
@@ -416,40 +468,18 @@ export default function EditOrganizationScreen() {
       </View>
 
       <View style={styles.formFields}>
-        {/* Map Button */}
-        <TouchableOpacity
-          style={[
-            styles.mapButton,
-            { backgroundColor: colors.primary + '10', borderColor: colors.primary },
-          ]}
-          onPress={() => setShowMapPicker(true)}
-          activeOpacity={0.7}
-        >
-          <Map size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <View style={styles.mapButtonTextContainer}>
-            <Text style={[styles.mapButtonTitle, { color: colors.primary }]}>
-              Sélectionner sur la carte
-            </Text>
-            <Text style={[styles.mapButtonSubtitle, { color: colors.gray500 }]}>
-              {coordinates ? 'Position sélectionnée' : 'Appuyez pour ouvrir la carte'}
-            </Text>
-          </View>
-          <ChevronRight size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-
-        {/* Coordinates display */}
-        {coordinates && (
-          <View style={[styles.coordinatesBox, { backgroundColor: colors.gray100 }]}>
-            <MapPin size={14} color={colors.gray600} strokeWidth={2} />
-            <Text style={[styles.coordinatesText, { color: colors.gray600 }]}>
-              {coordinates.latitude.toFixed(4)}, {coordinates.longitude.toFixed(4)}
-            </Text>
-          </View>
-        )}
+        {/* Inline Map */}
+        <View style={[styles.inlineMapContainer, { borderColor: colors.gray200 }]}>
+          <MapLocationPicker
+            initialCoordinates={coordinates || undefined}
+            onLocationSelect={handleMapLocationSelect}
+            height={220}
+          />
+        </View>
 
         {/* Pays */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Pays</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Pays *</Text>
           <ScrollView
             ref={countryScrollRef}
             horizontal
@@ -619,29 +649,6 @@ export default function EditOrganizationScreen() {
           />
         </View>
       </KeyboardAvoidingView>
-
-      {/* Map Picker Modal */}
-      <Modal
-        visible={showMapPicker}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowMapPicker(false)}
-      >
-        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]} edges={['top']}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowMapPicker(false)} style={styles.backButton}>
-              <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Sélectionner la position</Text>
-            <View style={styles.headerSpacer} />
-          </View>
-          <MapLocationPicker
-            initialCoordinates={coordinates || undefined}
-            onLocationSelect={handleMapLocationSelect}
-            height={undefined}
-          />
-        </SafeAreaView>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -698,21 +705,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.md,
     paddingBottom: SPACING.xl,
-  },
-
-  stepIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.md,
-    marginBottom: SPACING.xl,
-  },
-
-  stepDot: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: BORDER.radius.full,
   },
 
   stepContent: {
@@ -842,58 +834,15 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
   },
 
-  mapButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    padding: SPACING.md,
-    borderWidth: 1.5,
+  inlineMapContainer: {
     borderRadius: BORDER.radius.md,
-    borderStyle: 'dashed',
-  },
-
-  mapButtonTextContainer: {
-    flex: 1,
-  },
-
-  mapButtonTitle: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  mapButtonSubtitle: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    marginTop: 2,
-  },
-
-  coordinatesBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    padding: SPACING.sm,
-    borderRadius: BORDER.radius.sm,
-  },
-
-  coordinatesText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    overflow: 'hidden',
+    borderWidth: BORDER.width.thin,
   },
 
   footer: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
     paddingBottom: SPACING.xs,
-  },
-
-  modalContainer: {
-    flex: 1,
-  },
-
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
   },
 });

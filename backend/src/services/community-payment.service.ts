@@ -510,7 +510,7 @@ export class CommunityPaymentService {
                    ) as community,
                    json_build_object(
                        'id', t.id,
-                       'display_name', t.display_name,
+                       'display_name', COALESCE(t.first_name || ' ' || t.last_name, t.email),
                        'email', t.email
                    ) as talent
             FROM community_invoices ci

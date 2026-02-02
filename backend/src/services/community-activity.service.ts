@@ -293,7 +293,7 @@ export class CommunityActivityService {
                 ca.*,
                 json_build_object(
                     'id', u.id,
-                    'display_name', u.display_name,
+                    'display_name', COALESCE(u.first_name || ' ' || u.last_name, u.email),
                     'avatar_url', u.avatar_url,
                     'bio', u.bio
                 ) as author,
@@ -465,7 +465,7 @@ export class CommunityActivityService {
                         0 as likes_count,
                         json_build_object(
                             'id', u.id,
-                            'display_name', u.display_name,
+                            'display_name', COALESCE(u.first_name || ' ' || u.last_name, u.email),
                             'avatar_url', u.avatar_url
                         ) as author
                     FROM community_activity_comments c
@@ -632,7 +632,7 @@ export class CommunityActivityService {
                 c.*,
                 json_build_object(
                     'id', u.id,
-                    'display_name', u.display_name,
+                    'display_name', COALESCE(u.first_name || ' ' || u.last_name, u.email),
                     'avatar_url', u.avatar_url
                 ) as author
             FROM community_activity_comments c
@@ -768,7 +768,7 @@ export class CommunityActivityService {
                 ) as community,
                 json_build_object(
                     'id', t.id,
-                    'display_name', t.display_name,
+                    'display_name', COALESCE(t.first_name || ' ' || t.last_name, t.email),
                     'avatar_url', t.avatar_url
                 ) as author,
                 b.created_at as bookmarked_at
@@ -870,7 +870,7 @@ export class CommunityActivityService {
                 ca.*,
                 json_build_object(
                     'id', u.id,
-                    'display_name', u.display_name,
+                    'display_name', COALESCE(u.first_name || ' ' || u.last_name, u.email),
                     'avatar_url', u.avatar_url,
                     'bio', u.bio
                 ) as author,
@@ -917,7 +917,7 @@ export class CommunityActivityService {
                 0 as likes_count,
                 json_build_object(
                     'id', u.id,
-                    'display_name', u.display_name,
+                    'display_name', COALESCE(u.first_name || ' ' || u.last_name, u.email),
                     'avatar_url', u.avatar_url
                 ) as author
             FROM community_activity_comments c
@@ -966,7 +966,7 @@ export class CommunityActivityService {
 
         const result = await pool.query(`
             SELECT ca.*,
-                   json_build_object('id', u.id, 'display_name', u.display_name, 'avatar_url', u.avatar_url) as author
+                   json_build_object('id', u.id, 'display_name', COALESCE(u.first_name || ' ' || u.last_name, u.email), 'avatar_url', u.avatar_url) as author
             FROM community_activities ca
             JOIN talents u ON ca.author_id = u.id
             WHERE ca.community_id = $1
@@ -1020,7 +1020,7 @@ export class CommunityActivityService {
 
         const result = await pool.query(`
             SELECT ca.*,
-                   json_build_object('id', u.id, 'display_name', u.display_name, 'avatar_url', u.avatar_url) as author
+                   json_build_object('id', u.id, 'display_name', COALESCE(u.first_name || ' ' || u.last_name, u.email), 'avatar_url', u.avatar_url) as author
             FROM community_activities ca
             JOIN talents u ON ca.author_id = u.id
             WHERE ca.community_id = $1
@@ -1041,7 +1041,7 @@ export class CommunityActivityService {
     async getDraftByType(communityId: string, userId: string, type: ActivityType): Promise<CommunityActivity | null> {
         const result = await pool.query(`
             SELECT ca.*,
-                   json_build_object('id', u.id, 'display_name', u.display_name, 'avatar_url', u.avatar_url) as author
+                   json_build_object('id', u.id, 'display_name', COALESCE(u.first_name || ' ' || u.last_name, u.email), 'avatar_url', u.avatar_url) as author
             FROM community_activities ca
             JOIN talents u ON ca.author_id = u.id
             WHERE ca.community_id = $1

@@ -160,7 +160,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE VIEW active_users AS
 SELECT
     u.*,
-    t.display_name,
+    COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
     t.avatar_url,
     t.slug as talent_slug
 FROM users u

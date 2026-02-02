@@ -11,11 +11,10 @@ import { STORAGE_KEYS } from '../constants/config';
 const LOG_SOURCE = 'Onboarding';
 
 export interface OnboardingData {
-  displayName: string;
   firstName?: string;
   lastName?: string;
   bio?: string;
-  phone?: string;
+  phone: string;
   city?: string;
   region?: string;
   country?: string;
@@ -62,7 +61,6 @@ export interface OnboardingResult {
 async function complete(data: OnboardingData): Promise<ApiResponse<OnboardingResult>> {
   // Send data in camelCase (backend expects camelCase)
   const apiData = {
-    displayName: data.displayName,
     firstName: data.firstName,
     lastName: data.lastName,
     bio: data.bio,
@@ -94,8 +92,8 @@ async function complete(data: OnboardingData): Promise<ApiResponse<OnboardingRes
     const tokens = (response as any).tokens || response.data?.tokens;
     const talent = (response as any).talent || response.data?.talent;
 
-    // Store new tokens if provided
-    if (tokens) {
+    // Store new tokens if provided and non-empty
+    if (tokens?.accessToken && tokens?.refreshToken) {
       await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
       await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
     }
@@ -125,7 +123,6 @@ async function complete(data: OnboardingData): Promise<ApiResponse<OnboardingRes
 
       // Fallback endpoint might expect snake_case
       const fallbackData = {
-        display_name: data.displayName,
         first_name: data.firstName,
         last_name: data.lastName,
         bio: data.bio,

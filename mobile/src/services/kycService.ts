@@ -5,7 +5,7 @@
 
 import { api, ApiResponse } from './api';
 
-export type KYCDocumentType = 'ID_CARD' | 'PASSPORT' | 'DRIVER_LICENSE';
+export type KYCDocumentType = 'ID_CARD' | 'PASSPORT' | 'DRIVER_LICENSE' | 'STUDENT_CARD';
 export type KYCStatus = 'NONE' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 
 export interface VerificationResult {

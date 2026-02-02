@@ -24,6 +24,7 @@ export {
   type LearningTopicNode,
   type DocumentNode,
   type EventNode,
+  type SectorNode,
   ProficiencyLevels,
   type ProficiencyLevel,
   getMasteryLabel,

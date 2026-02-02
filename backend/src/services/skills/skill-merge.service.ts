@@ -22,24 +22,24 @@ const PROFICIENCY_ORDER = ['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'];
 export async function mergeExtractedSkills(talentId: string): Promise<MergeReport> {
   const report: MergeReport = { merged: 0, kept_declared: 0, new_extracted: 0 };
 
-  // Get all talent_skills grouped by skill_id
+  // Get all talent_skills grouped by canonical_name
   const result = await pool.query(
-    `SELECT id, skill_id, proficiency_level, origin
+    `SELECT id, canonical_name, proficiency_level, origin
      FROM talent_skills
      WHERE talent_id = $1
-     ORDER BY skill_id, origin ASC`,
+     ORDER BY canonical_name, origin ASC`,
     [talentId]
   );
 
-  // Group by skill_id
-  const bySkill = new Map<string, Array<{ id: string; proficiency_level: string; origin: string }>>();
+  // Group by canonical_name
+  const byName = new Map<string, Array<{ id: string; proficiency_level: string; origin: string }>>();
   for (const row of result.rows) {
-    const list = bySkill.get(row.skill_id) || [];
+    const list = byName.get(row.canonical_name) || [];
     list.push(row);
-    bySkill.set(row.skill_id, list);
+    byName.set(row.canonical_name, list);
   }
 
-  for (const [, entries] of bySkill) {
+  for (const [, entries] of byName) {
     if (entries.length <= 1) {
       // No duplicates
       if (entries[0].origin === 'extracted') {
@@ -61,7 +61,7 @@ export async function mergeExtractedSkills(talentId: string): Promise<MergeRepor
 
       if (extractedIdx > declaredIdx) {
         await pool.query(
-          `UPDATE talent_skills SET proficiency_level = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+          `UPDATE talent_skills SET proficiency_level = $1 WHERE id = $2`,
           [extracted.proficiency_level, declared.id]
         );
       }

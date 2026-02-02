@@ -21,10 +21,8 @@ import {
   ChevronLeft,
   Check,
   FileText,
-  Upload,
   X,
   Eye,
-  Send,
   CheckCircle2,
   Briefcase,
   User,
@@ -35,25 +33,23 @@ import {
   AlertCircle,
   FolderOpen,
   Plus,
-  Home,
-  Building,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
 import { Button, StepIndicator } from '../../../../src/components/ui';
-import { MapLocationPicker } from '../../../../src/components/MapLocationPicker';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useAuth } from '../../../../src/contexts/AuthContext';
 import { useAlert } from '../../../../src/contexts/AlertContext';
-import { opportunityService, applicationService, talentService, documentService } from '../../../../src/services';
-import type { Opportunity, ApplicationQuestion, ApplicationAnswer, Document } from '../../../../src/types/models';
+import { opportunityService, applicationService, talentService, documentService, kycService } from '../../../../src/services';
+import type { Opportunity, ApplicationQuestion, ApplicationAnswer, TalentObjectData } from '../../../../src/types/models';
+import type { TalentDocument } from '../../../../src/services/documentService';
+import { getFullImageUrl } from '../../../../src/utils/image';
 
-type ApplyStep = 'profile' | 'location' | 'questions' | 'preview' | 'success';
+type ApplyStep = 'profile' | 'questions' | 'preview' | 'success';
 
-const STEPS: ApplyStep[] = ['profile', 'location', 'questions', 'preview', 'success'];
+const STEPS: ApplyStep[] = ['profile', 'questions', 'preview', 'success'];
 
 const STEP_TITLES: Record<ApplyStep, string> = {
   profile: 'Mon profil',
-  location: 'Localisation',
   questions: 'Candidature',
   preview: 'Aperçu',
   success: 'Confirmation',
@@ -70,18 +66,6 @@ interface CVFile {
   documentId?: string;
 }
 
-interface UserProfile {
-  id: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  phone?: string;
-  headline?: string;
-  city?: string;
-  country?: string;
-  profile_picture_url?: string;
-}
-
 type CVSource = 'existing' | 'upload' | null;
 
 export default function ApplyOpportunityScreen() {
@@ -95,28 +79,18 @@ export default function ApplyOpportunityScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<TalentObjectData | null>(null);
 
   // CV State
-  const [existingCVs, setExistingCVs] = useState<Document[]>([]);
+  const [existingCVs, setExistingCVs] = useState<TalentDocument[]>([]);
   const [hasExistingCV, setHasExistingCV] = useState(false);
   const [cvSource, setCvSource] = useState<CVSource>(null);
-  const [selectedExistingCV, setSelectedExistingCV] = useState<Document | null>(null);
+  const [selectedExistingCV, setSelectedExistingCV] = useState<TalentDocument | null>(null);
   const [uploadedCV, setUploadedCV] = useState<CVFile | null>(null);
 
   // Form state
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  // Location State
-  const [locationDetails, setLocationDetails] = useState({
-    country: '',
-    countryCode: '', // ISO 2-letter code for API
-    region: '',
-    city: '',
-    address: '',
-    floor: '',
-    coordinates: null as { latitude: number; longitude: number } | null,
-  });
 
   // Load data
   useEffect(() => {
@@ -128,37 +102,58 @@ export default function ApplyOpportunityScreen() {
 
     setIsLoading(true);
     try {
-      const [oppResponse, profileResponse, cvsResponse] = await Promise.all([
-        opportunityService.getById(id),
-        talentService.getMyProfile(),
-        documentService.getAllCVs(),
-      ]);
-
-      setOpportunity(oppResponse.data);
-      setProfile(profileResponse.data);
-
-      // Set existing CVs
-      if (cvsResponse.success && cvsResponse.data?.data) {
-        const cvs = cvsResponse.data.data;
-        setExistingCVs(cvs);
-        setHasExistingCV(cvs.length > 0);
-
-        // Auto-select primary CV if available
-        const primaryCV = cvs.find(cv => cv.is_primary) || cvs[0];
-        if (primaryCV) {
-          setSelectedExistingCV(primaryCV);
-          setCvSource('existing');
+      // KYC gate: vérification d'identité obligatoire
+      try {
+        const kycRes = await kycService.getStatus();
+        if (!kycRes?.data || kycRes.data.status !== 'VERIFIED') {
+          Alert.alert(
+            'Vérification requise',
+            'Tu dois vérifier ton identité avant de postuler.',
+            [
+              { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
+              { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
+            ]
+          );
+          setIsLoading(false);
+          return;
         }
+      } catch {
+        Alert.alert(
+          'Vérification requise',
+          'Tu dois vérifier ton identité avant de postuler.',
+          [
+            { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
+            { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
+          ]
+        );
+        setIsLoading(false);
+        return;
       }
 
-      // Pre-fill location from profile if available
-      if (profileResponse.data) {
-        setLocationDetails(prev => ({
-          ...prev,
-          country: profileResponse.data.country || '',
-          region: profileResponse.data.region || '',
-          city: profileResponse.data.city || '',
-        }));
+      const [oppResponse, profileResponse, cvsResponse] = await Promise.all([
+        opportunityService.getById(id),
+        talentService.getMyTalentObject().catch(() => null),
+        documentService.listDocuments({ type: 'CV' }).catch(() => null),
+      ]);
+
+      if (!oppResponse?.data) {
+        Alert.alert('Erreur', 'Impossible de charger cette opportunité.');
+        router.back();
+        return;
+      }
+
+      setOpportunity(oppResponse.data);
+
+      if (profileResponse?.data) {
+        setProfile(profileResponse.data);
+      }
+
+      // Set existing CVs from talent_documents
+      if (cvsResponse?.documents && cvsResponse.documents.length > 0) {
+        setExistingCVs(cvsResponse.documents);
+        setHasExistingCV(true);
+        setSelectedExistingCV(cvsResponse.documents[0]);
+        setCvSource('existing');
       }
 
       // Initialize answers for each question
@@ -170,6 +165,7 @@ export default function ApplyOpportunityScreen() {
         setAnswers(initialAnswers);
       }
     } catch (error) {
+      console.error('Error loading apply data:', error);
       Alert.alert('Erreur', 'Impossible de charger les données.');
       router.back();
     } finally {
@@ -208,7 +204,7 @@ export default function ApplyOpportunityScreen() {
     }
   };
 
-  const selectExistingCV = (cv: Document) => {
+  const selectExistingCV = (cv: TalentDocument) => {
     setSelectedExistingCV(cv);
     setCvSource('existing');
     setUploadedCV(null);
@@ -229,7 +225,7 @@ export default function ApplyOpportunityScreen() {
     }
     if (cvSource === 'existing' && selectedExistingCV) {
       return {
-        name: selectedExistingCV.title || 'CV',
+        name: selectedExistingCV.title || selectedExistingCV.original_filename || 'CV',
         uri: selectedExistingCV.file_url || '',
         type: 'application/pdf',
         isFromDocuments: true,
@@ -267,15 +263,6 @@ export default function ApplyOpportunityScreen() {
 
     setIsSubmitting(true);
     try {
-      // Update profile with location data (use countryCode for API, fallback to country if not available)
-      if (locationDetails.countryCode || locationDetails.country || locationDetails.region || locationDetails.city) {
-        await talentService.updateMyProfile({
-          country: locationDetails.countryCode || locationDetails.country, // Use ISO code if available
-          region: locationDetails.region,
-          city: locationDetails.city,
-        });
-      }
-
       // Build application answers
       const applicationAnswers: ApplicationAnswer[] = [];
       if (opportunity.application_questions) {
@@ -339,8 +326,6 @@ export default function ApplyOpportunityScreen() {
     switch (currentStep) {
       case 'profile':
         return isProfileComplete();
-      case 'location':
-        return !!(locationDetails.country && locationDetails.region && locationDetails.city);
       case 'questions':
         // Check if CV is required and provided
         if (opportunity.cv_required && !getSelectedCV()) {
@@ -384,6 +369,8 @@ export default function ApplyOpportunityScreen() {
 
   const renderProfileStep = () => {
     const profileComplete = isProfileComplete();
+    const avatarUrl = profile?.avatar_url ? getFullImageUrl(profile.avatar_url) : null;
+    const location = [profile?.city, profile?.region, profile?.country].filter(Boolean).join(', ');
 
     return (
       <View style={styles.stepContent}>
@@ -399,67 +386,103 @@ export default function ApplyOpportunityScreen() {
 
         {/* Profile Card */}
         <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-          {/* Avatar */}
           <View style={styles.profileHeader}>
-            {profile?.profile_picture_url ? (
-              <Image source={{ uri: profile.profile_picture_url }} style={styles.profileAvatar} />
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.profileAvatar} />
             ) : (
               <View style={[styles.profileAvatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
                 <Text style={[styles.profileAvatarText, { color: colors.primary }]}>
-                  {getInitials(profile?.first_name, profile?.last_name)}
+                  {getInitials(profile?.first_name || undefined, profile?.last_name || undefined)}
                 </Text>
               </View>
             )}
           </View>
 
-          {/* Profile Info */}
           <View style={styles.profileInfo}>
             <Text style={[styles.profileName, { color: colors.textPrimary }]}>
-              {profile?.first_name} {profile?.last_name}
+              {profile?.display_name || `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim()}
             </Text>
-            {profile?.headline && (
-              <Text style={[styles.profileHeadline, { color: colors.textSecondary }]}>
-                {profile.headline}
+            {profile?.bio && (
+              <Text style={[styles.profileHeadline, { color: colors.textSecondary }]} numberOfLines={2}>
+                {profile.bio}
               </Text>
             )}
           </View>
 
-          {/* Profile Details */}
+          {/* Contact */}
           <View style={styles.profileDetails}>
             {profile?.email && (
               <View style={styles.profileDetailRow}>
                 <Mail size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>
-                  {profile.email}
-                </Text>
+                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>{profile.email}</Text>
               </View>
             )}
             {profile?.phone && (
               <View style={styles.profileDetailRow}>
                 <Phone size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>
-                  {profile.phone}
-                </Text>
+                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>{profile.phone}</Text>
               </View>
             )}
-            {(profile?.city || profile?.country) && (
+            {location ? (
               <View style={styles.profileDetailRow}>
                 <MapPin size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>
-                  {[profile.city, profile.country].filter(Boolean).join(', ')}
-                </Text>
+                <Text style={[styles.profileDetailText, { color: colors.textSecondary }]}>{location}</Text>
               </View>
-            )}
+            ) : null}
           </View>
+
+          {/* Skills */}
+          {profile?.skills && profile.skills.length > 0 && (
+            <View style={styles.profileTagsSection}>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Compétences</Text>
+              <View style={styles.profileTagsRow}>
+                {profile.skills.slice(0, 8).map((skill, i) => (
+                  <View key={i} style={[styles.profileTag, { backgroundColor: colors.primary + '12' }]}>
+                    <Text style={[styles.profileTagText, { color: colors.primary }]}>{skill}</Text>
+                  </View>
+                ))}
+                {profile.skills.length > 8 && (
+                  <Text style={[styles.profileTagMore, { color: colors.gray400 }]}>+{profile.skills.length - 8}</Text>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Sectors */}
+          {profile?.sectors && profile.sectors.length > 0 && (
+            <View style={styles.profileTagsSection}>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Secteurs</Text>
+              <View style={styles.profileTagsRow}>
+                {profile.sectors.map((s, i) => (
+                  <View key={i} style={[styles.profileTag, { backgroundColor: colors.gray100 }]}>
+                    <Text style={[styles.profileTagText, { color: colors.gray700 }]}>{s}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Documents */}
+          {profile?.documents_metadata && profile.documents_metadata.length > 0 && (
+            <View style={styles.profileTagsSection}>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Documents ({profile.documents_metadata.length})</Text>
+              {profile.documents_metadata.slice(0, 3).map((doc) => (
+                <View key={doc.id} style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: SPACING.xs }}>
+                  <FileText size={14} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.profileDetailText, { color: colors.textSecondary, flex: 1 }]} numberOfLines={1}>
+                    {doc.title || doc.original_filename}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
 
           {/* Warning if profile incomplete */}
           {!profileComplete && (
             <View style={[styles.warningBox, { backgroundColor: colors.warning + '15' }]}>
               <AlertCircle size={20} color={colors.warning} strokeWidth={ICON.strokeWidth} />
               <View style={styles.warningContent}>
-                <Text style={[styles.warningTitle, { color: colors.warning }]}>
-                  Profil incomplet
-                </Text>
+                <Text style={[styles.warningTitle, { color: colors.warning }]}>Profil incomplet</Text>
                 <Text style={[styles.warningText, { color: colors.textSecondary }]}>
                   Complétez votre profil (nom, prénom, email) pour continuer.
                 </Text>
@@ -468,129 +491,13 @@ export default function ApplyOpportunityScreen() {
           )}
         </View>
 
-        {/* Edit Profile Button */}
-        <TouchableOpacity
-          style={[styles.editProfileButton, { borderColor: colors.primary }]}
+        <Button
+          title="Modifier mon profil"
           onPress={() => router.push('/settings/edit-profile')}
-        >
-          <SquarePen size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.editProfileText, { color: colors.primary }]}>
-            Modifier mon profil
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  const renderLocationStep = () => {
-    return (
-      <View style={styles.stepContent}>
-        <View style={styles.stepHeader}>
-          <MapPin size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-            Votre localisation
-          </Text>
-          <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Indiquez votre position pour compléter votre dossier
-          </Text>
-        </View>
-
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: SPACING.xl }}>
-          <View style={styles.formFields}>
-            {/* Map Picker */}
-            <View style={styles.fieldContainer}>
-              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-                Position sur la carte
-              </Text>
-              <MapLocationPicker
-                initialCoordinates={locationDetails.coordinates || undefined}
-                onLocationSelect={(location) => {
-                  setLocationDetails(prev => ({
-                    ...prev,
-                    country: location.country || prev.country,
-                    countryCode: location.countryCode || prev.countryCode,
-                    region: location.region || prev.region,
-                    city: location.city || prev.city,
-                    address: location.address || prev.address,
-                    coordinates: location.coordinates,
-                  }));
-                }}
-                height={200}
-              />
-            </View>
-
-            {/* Country */}
-            <View style={styles.fieldContainer}>
-              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-                Pays <Text style={{ color: colors.error }}>*</Text>
-              </Text>
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
-                placeholder="Votre pays"
-                placeholderTextColor={colors.gray400}
-                value={locationDetails.country}
-                onChangeText={(text) => setLocationDetails(prev => ({ ...prev, country: text }))}
-              />
-            </View>
-
-            {/* Region */}
-            <View style={styles.fieldContainer}>
-              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-                Région <Text style={{ color: colors.error }}>*</Text>
-              </Text>
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
-                placeholder="Votre région"
-                placeholderTextColor={colors.gray400}
-                value={locationDetails.region}
-                onChangeText={(text) => setLocationDetails(prev => ({ ...prev, region: text }))}
-              />
-            </View>
-
-            {/* City */}
-            <View style={styles.fieldContainer}>
-              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-                Ville <Text style={{ color: colors.error }}>*</Text>
-              </Text>
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
-                placeholder="Votre ville"
-                placeholderTextColor={colors.gray400}
-                value={locationDetails.city}
-                onChangeText={(text) => setLocationDetails(prev => ({ ...prev, city: text }))}
-              />
-            </View>
-
-            {/* Address */}
-            <View style={styles.fieldContainer}>
-              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-                Adresse
-              </Text>
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
-                placeholder="Numéro et nom de rue"
-                placeholderTextColor={colors.gray400}
-                value={locationDetails.address}
-                onChangeText={(text) => setLocationDetails(prev => ({ ...prev, address: text }))}
-              />
-            </View>
-
-            {/* Floor */}
-            <View style={styles.fieldContainer}>
-              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-                Étage
-              </Text>
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
-                placeholder="Numéro d'étage (optionnel)"
-                placeholderTextColor={colors.gray400}
-                value={locationDetails.floor}
-                onChangeText={(text) => setLocationDetails(prev => ({ ...prev, floor: text }))}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
-        </ScrollView>
+          variant="outline"
+          fullWidth
+          icon={<SquarePen size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+        />
       </View>
     );
   };
@@ -650,7 +557,7 @@ export default function ApplyOpportunityScreen() {
                       </View>
                       <View style={styles.existingCvInfo}>
                         <Text style={[styles.existingCvName, { color: colors.textPrimary }]} numberOfLines={1}>
-                          {cv.title || 'CV'}
+                          {cv.title || cv.original_filename || 'CV'}
                         </Text>
                         {cv.is_primary && (
                           <View style={[styles.primaryBadge, { backgroundColor: colors.success + '15' }]}>
@@ -810,28 +717,9 @@ export default function ApplyOpportunityScreen() {
             <Text style={[styles.previewHint, { color: colors.gray500 }]}>
               {profile?.email}
             </Text>
-            {profile?.headline && (
-              <Text style={[styles.previewHint, { color: colors.gray500 }]}>
-                {profile.headline}
-              </Text>
-            )}
-          </View>
-
-          {/* Location Preview */}
-          <View style={[styles.previewSection, { backgroundColor: colors.gray50 }]}>
-            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-              Localisation
-            </Text>
-            <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
-              {[locationDetails.city, locationDetails.country].filter(Boolean).join(', ')}
-            </Text>
-            <Text style={[styles.previewHint, { color: colors.gray500 }]}>
-              {locationDetails.region}
-            </Text>
-            {locationDetails.address && (
-              <Text style={[styles.previewHint, { color: colors.gray500 }]}>
-                {locationDetails.address}
-                {locationDetails.floor ? ` - Étage ${locationDetails.floor}` : ''}
+            {profile?.bio && (
+              <Text style={[styles.previewHint, { color: colors.gray500 }]} numberOfLines={1}>
+                {profile.bio}
               </Text>
             )}
           </View>
@@ -938,8 +826,6 @@ export default function ApplyOpportunityScreen() {
                 onPress={handleSubmit}
                 disabled={isSubmitting}
                 fullWidth
-                icon={<Send size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-                iconPosition="right"
               />
             </View>
           </View>
@@ -1022,7 +908,6 @@ export default function ApplyOpportunityScreen() {
           {currentStep !== 'success' && renderStepIndicator()}
 
           {currentStep === 'profile' && renderProfileStep()}
-          {currentStep === 'location' && renderLocationStep()}
           {currentStep === 'questions' && renderQuestionsStep()}
           {currentStep === 'preview' && renderPreviewStep()}
           {currentStep === 'success' && renderSuccessStep()}
@@ -1214,6 +1099,36 @@ const styles = StyleSheet.create({
 
   profileDetailText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
+  },
+
+  profileTagsSection: {
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  profileTagsLabel: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    marginBottom: SPACING.xs,
+  },
+  profileTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  profileTag: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER.radius.full,
+  },
+  profileTagText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+  profileTagMore: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    alignSelf: 'center',
   },
 
   warningBox: {
@@ -1582,7 +1497,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.xs,
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderWidth: 1.5,
     borderRadius: BORDER.radius.sm,

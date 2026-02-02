@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -13,18 +12,15 @@ import {
   CheckCircle2,
   XCircle,
   CalendarDays,
-  ChevronRight,
-  MapPin,
-  Users,
   AlertCircle,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { PageLayout, EmptyState } from '../../../src/components/ui';
+import { SpaceCard } from '../../../src/components/cards';
 import { spaceBookingService } from '../../../src/services';
 import type { SpaceBookingDetails } from '../../../src/services/spaceBookingService';
-import { formatDate, formatTime } from '../../../src/utils/date';
-import { getFullImageUrl } from '../../../src/utils/image';
+import type { Space } from '../../../src/services/spaceService';
 
 // Booking status types
 type BookingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
@@ -47,7 +43,7 @@ export default function MyReservationsScreen() {
   const [bookings, setBookings] = useState<SpaceBookingDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [filter, setFilter] = useState<FilterStatus>('all');
+  const [filter, setFilter] = useState<FilterStatus>('PENDING');
 
   const loadBookings = useCallback(async () => {
     try {
@@ -116,71 +112,18 @@ export default function MyReservationsScreen() {
     const statusConfig = getStatusConfig(colors)[item.status as BookingStatus];
     const StatusIcon = statusConfig?.icon || Clock;
 
-    const startDate = new Date(item.start_datetime);
-    const endDate = new Date(item.end_datetime);
-
     return (
-      <TouchableOpacity
+      <SpaceCard
         key={item.id}
-        style={[styles.bookingCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
+        space={(item.space || {}) as Space}
         onPress={() => router.push(`/settings/my-reservations/${item.id}`)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.cardHeader}>
-          {/* Space image */}
-          <View style={styles.imageContainer}>
-            {item.space?.cover_image_url ? (
-              <Image source={{ uri: getFullImageUrl(item.space.cover_image_url) || '' }} style={styles.spaceImage} />
-            ) : (
-              <View style={[styles.imagePlaceholder, { backgroundColor: colors.gray100 }]}>
-                <MapPin size={24} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-              </View>
-            )}
-          </View>
-
-          {/* Space info */}
-          <View style={styles.spaceInfo}>
-            <Text style={[styles.spaceName, { color: colors.textPrimary }]} numberOfLines={1}>
-              {item.space?.name || 'Espace'}
-            </Text>
-            <Text style={[styles.organizationName, { color: colors.gray500 }]} numberOfLines={1}>
-              {item.space?.organization?.name || 'Organisation'}
-            </Text>
-
-            {/* Date & Time */}
-            <View style={styles.dateTimeRow}>
-              <CalendarDays size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.dateTimeText, { color: colors.textSecondary }]}>
-                {formatDate(startDate)} - {formatTime(startDate)} à {formatTime(endDate)}
-              </Text>
-            </View>
-          </View>
-
-          <ChevronRight size={20} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-        </View>
-
-        <View style={styles.cardFooter}>
-          <View style={[styles.statusBadge, { backgroundColor: statusConfig?.bgColor || colors.gray100 }]}>
-            <StatusIcon size={14} color={statusConfig?.color || colors.gray500} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.statusText, { color: statusConfig?.color || colors.gray500 }]}>
-              {statusConfig?.label || item.status}
-            </Text>
-          </View>
-
-          <View style={styles.detailsRow}>
-            <Users size={14} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.detailText, { color: colors.gray500 }]}>
-              {item.attendees_count || 1} {(item.attendees_count || 1) > 1 ? 'personnes' : 'personne'}
-            </Text>
-          </View>
-
-          {item.total_price && item.total_price > 0 && (
-            <Text style={[styles.priceText, { color: colors.primary }]}>
-              {item.total_price.toLocaleString()} FCFA
-            </Text>
-          )}
-        </View>
-      </TouchableOpacity>
+        statusOverlay={{
+          label: statusConfig?.label || item.status,
+          color: statusConfig?.color || colors.gray500,
+          bgColor: statusConfig?.bgColor || colors.gray100,
+          icon: <StatusIcon size={12} color={statusConfig?.color || colors.gray500} strokeWidth={ICON.strokeWidth} />,
+        }}
+      />
     );
   };
 
@@ -190,6 +133,7 @@ export default function MyReservationsScreen() {
     { key: 'CONFIRMED' as FilterStatus, label: 'Confirmées' },
     { key: 'COMPLETED' as FilterStatus, label: 'Terminées' },
     { key: 'CANCELLED' as FilterStatus, label: 'Annulées' },
+    { key: 'NO_SHOW' as FilterStatus, label: 'Absents' },
   ];
 
   const headerContent = (
@@ -228,11 +172,7 @@ export default function MyReservationsScreen() {
           } : {})}
         />
       ) : (
-        filteredBookings.map((item) => (
-          <View key={item.id} style={styles.cardWrapper}>
-            {renderBookingItem(item)}
-          </View>
-        ))
+        filteredBookings.map((item) => renderBookingItem(item))
       )}
     </PageLayout>
   );
@@ -262,102 +202,4 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
-  cardWrapper: {
-    marginBottom: SPACING.md,
-  },
-
-  bookingCard: {
-    padding: SPACING.md,
-    borderRadius: BORDER.radius.md,
-    borderWidth: BORDER.width.thin,
-  },
-
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.md,
-  },
-
-  imageContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: BORDER.radius.sm,
-    overflow: 'hidden',
-    marginRight: SPACING.md,
-  },
-
-  spaceImage: {
-    width: '100%',
-    height: '100%',
-  },
-
-  imagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  spaceInfo: {
-    flex: 1,
-    marginRight: SPACING.sm,
-  },
-
-  spaceName: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    marginBottom: 2,
-  },
-
-  organizationName: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    marginBottom: SPACING.xs,
-  },
-
-  dateTimeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-
-  dateTimeText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
-
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.full,
-  },
-
-  statusText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  detailsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-
-  detailText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
-
-  priceText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
 });

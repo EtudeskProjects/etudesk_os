@@ -69,7 +69,7 @@ export default function OpportunityApplicationsScreen() {
   const [applications, setApplications] = useState<RankedApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [filter, setFilter] = useState<FilterStatus>('all');
+  const [filter, setFilter] = useState<FilterStatus>('SUBMITTED');
   const [recommendations, setRecommendations] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -357,9 +357,10 @@ export default function OpportunityApplicationsScreen() {
 
   const filterChips = [
     { key: 'all' as FilterStatus, label: 'Toutes', count: statusCounts.all || 0 },
-    { key: 'IN_REVIEW' as FilterStatus, label: 'En examen', count: statusCounts['IN_REVIEW'] || 0 },
+    { key: 'SUBMITTED' as FilterStatus, label: 'Soumises', count: statusCounts['SUBMITTED'] || 0 },
+    { key: 'IN_REVIEW' as FilterStatus, label: "En cours d'examen", count: statusCounts['IN_REVIEW'] || 0 },
     { key: 'ACCEPTED' as FilterStatus, label: 'Acceptées', count: statusCounts['ACCEPTED'] || 0 },
-    { key: 'REJECTED' as FilterStatus, label: 'Rejetées', count: statusCounts['REJECTED'] || 0 },
+    { key: 'REJECTED' as FilterStatus, label: 'Refusées', count: statusCounts['REJECTED'] || 0 },
   ];
 
   const headerContent = (

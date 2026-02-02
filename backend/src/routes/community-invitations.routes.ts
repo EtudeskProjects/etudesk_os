@@ -101,7 +101,7 @@ router.post('/:communityId/invitations', authMiddleware, async (req: AuthRequest
 
       // Check if invitee is a registered user
       const talentCheck = await pool.query(`
-        SELECT id, display_name FROM talents WHERE LOWER(email) = LOWER($1)
+        SELECT id, COALESCE(first_name || ' ' || last_name, email) as display_name FROM talents WHERE LOWER(email) = LOWER($1)
       `, [email]);
 
       const inviteeTalentId = talentCheck.rows.length > 0 ? talentCheck.rows[0].id : null;
@@ -131,7 +131,7 @@ router.post('/:communityId/invitations', authMiddleware, async (req: AuthRequest
       try {
         // Get inviter name
         const inviterResult = await pool.query(
-          'SELECT display_name, first_name, last_name FROM talents WHERE id = $1',
+          'SELECT COALESCE(first_name || \' \' || last_name, email) as display_name, first_name, last_name FROM talents WHERE id = $1',
           [talentId]
         );
         const inviter = inviterResult.rows[0];
@@ -199,7 +199,7 @@ router.get('/:communityId/invitations', authMiddleware, async (req: AuthRequest,
     let query = `
       SELECT 
         ci.*,
-        t.display_name as invited_by_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name,
         t.avatar_url as invited_by_avatar
       FROM community_invitations ci
       JOIN talents t ON ci.invited_by = t.id
@@ -330,7 +330,7 @@ router.post('/:communityId/invitations/:invitationId/resend', authMiddleware, as
     const inv = invitation.rows[0];
     try {
       const inviterResult = await pool.query(
-        'SELECT display_name, first_name, last_name FROM talents WHERE id = $1',
+        'SELECT COALESCE(first_name || \' \' || last_name, email) as display_name, first_name, last_name FROM talents WHERE id = $1',
         [talentId]
       );
       const inviter = inviterResult.rows[0];
@@ -394,7 +394,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
         c.monthly_price,
         c.currency,
         (SELECT COUNT(*) FROM community_members WHERE community_id = c.id AND status = 'ACTIVE') as members_count,
-        t.display_name as invited_by_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name,
         t.avatar_url as invited_by_avatar,
         json_build_object(
           'id', o.id,
@@ -598,7 +598,7 @@ router.get('/token/:token', async (req: Request, res: Response) => {
         c.is_paid,
         c.monthly_price,
         c.currency,
-        t.display_name as invited_by_name
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name
       FROM community_invitations ci
       JOIN communities c ON ci.community_id = c.id
       JOIN talents t ON ci.invited_by = t.id
