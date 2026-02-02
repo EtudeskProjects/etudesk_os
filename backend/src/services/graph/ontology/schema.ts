@@ -18,6 +18,7 @@ export const NodeLabels = {
   LEARNING_TOPIC: 'LearningTopic',
   DOCUMENT: 'Document',
   EVENT: 'Event',
+  SECTOR: 'Sector',
 } as const;
 
 export type NodeLabel = (typeof NodeLabels)[keyof typeof NodeLabels];
@@ -43,8 +44,6 @@ export interface SkillNode {
   id: string;
   canonical_name: string;
   type: 'technical' | 'soft' | 'language' | 'tool' | 'domain';
-  domain?: string;
-  aliases?: string[];
 }
 
 export interface OrganizationNode {
@@ -119,6 +118,12 @@ export interface EventNode {
   status: 'pending' | 'completed' | 'cancelled';
 }
 
+export interface SectorNode {
+  id: string;
+  name: string;
+  slug?: string;
+}
+
 // Union type for all nodes
 export type GraphNode =
   | TalentNode
@@ -129,7 +134,8 @@ export type GraphNode =
   | SpaceNode
   | LearningTopicNode
   | DocumentNode
-  | EventNode;
+  | EventNode
+  | SectorNode;
 
 // ═══════════════════════════════════════════════════════════════
 // PROFICIENCY LEVELS
@@ -171,7 +177,6 @@ export function getMasteryLabel(level: number): string {
 export const GRAPH_CONSTRAINTS = [
   // Unique constraints
   'CREATE CONSTRAINT talent_id IF NOT EXISTS FOR (t:Talent) REQUIRE t.id IS UNIQUE',
-  'CREATE CONSTRAINT skill_id IF NOT EXISTS FOR (s:Skill) REQUIRE s.id IS UNIQUE',
   'CREATE CONSTRAINT skill_name IF NOT EXISTS FOR (s:Skill) REQUIRE s.canonical_name IS UNIQUE',
   'CREATE CONSTRAINT org_id IF NOT EXISTS FOR (o:Organization) REQUIRE o.id IS UNIQUE',
   'CREATE CONSTRAINT opp_id IF NOT EXISTS FOR (o:Opportunity) REQUIRE o.id IS UNIQUE',
@@ -180,15 +185,15 @@ export const GRAPH_CONSTRAINTS = [
   'CREATE CONSTRAINT topic_id IF NOT EXISTS FOR (t:LearningTopic) REQUIRE t.id IS UNIQUE',
   'CREATE CONSTRAINT doc_id IF NOT EXISTS FOR (d:Document) REQUIRE d.id IS UNIQUE',
   'CREATE CONSTRAINT event_id IF NOT EXISTS FOR (e:Event) REQUIRE e.id IS UNIQUE',
+  'CREATE CONSTRAINT sector_name IF NOT EXISTS FOR (s:Sector) REQUIRE s.name IS UNIQUE',
 ];
 
 export const GRAPH_INDEXES = [
   // Search indexes
   'CREATE INDEX talent_email IF NOT EXISTS FOR (t:Talent) ON (t.email)',
   'CREATE INDEX talent_city IF NOT EXISTS FOR (t:Talent) ON (t.city)',
-  'CREATE INDEX skill_domain IF NOT EXISTS FOR (s:Skill) ON (s.domain)',
   'CREATE INDEX skill_type IF NOT EXISTS FOR (s:Skill) ON (s.type)',
-  'CREATE INDEX org_type IF NOT EXISTS FOR (o:Organization) ON (o.type)',
+  'CREATE INDEX org_types IF NOT EXISTS FOR (o:Organization) ON (o.types)',
   'CREATE INDEX opp_status IF NOT EXISTS FOR (o:Opportunity) ON (o.status)',
   'CREATE INDEX opp_type IF NOT EXISTS FOR (o:Opportunity) ON (o.type)',
   'CREATE INDEX community_type IF NOT EXISTS FOR (c:Community) ON (c.type)',
@@ -201,4 +206,5 @@ export const GRAPH_INDEXES = [
   'CREATE FULLTEXT INDEX skill_search IF NOT EXISTS FOR (s:Skill) ON EACH [s.canonical_name]',
   'CREATE FULLTEXT INDEX org_search IF NOT EXISTS FOR (o:Organization) ON EACH [o.name]',
   'CREATE FULLTEXT INDEX opp_search IF NOT EXISTS FOR (o:Opportunity) ON EACH [o.title]',
+  'CREATE FULLTEXT INDEX sector_search IF NOT EXISTS FOR (s:Sector) ON EACH [s.name]',
 ];

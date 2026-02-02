@@ -234,7 +234,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       moderatorsQuery = `
         COALESCE(
           (SELECT json_agg(json_build_object(
-            'id', t.id, 'display_name', t.display_name, 'avatar_url', t.avatar_url, 'role', cm.role
+            'id', t.id, 'display_name', COALESCE(t.first_name || ' ' || t.last_name, t.email), 'avatar_url', t.avatar_url, 'role', cm.role
           ))
           FROM community_members cm
           JOIN talents t ON cm.talent_id = t.id
@@ -247,7 +247,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       moderatorsQuery = `
         COALESCE(
           (SELECT json_agg(json_build_object(
-            'id', t.id, 'display_name', t.display_name, 'avatar_url', t.avatar_url
+            'id', t.id, 'display_name', COALESCE(t.first_name || ' ' || t.last_name, t.email), 'avatar_url', t.avatar_url
           ))
           FROM community_members cm
           JOIN talents t ON cm.talent_id = t.id
@@ -265,7 +265,7 @@ router.get('/:id', async (req: Request, res: Response) => {
           (SELECT json_agg(
             json_build_object(
               'id', t.id,
-              'display_name', t.display_name,
+              'display_name', COALESCE(t.first_name || ' ' || t.last_name, t.email),
               'avatar_url', t.avatar_url,
               'role', cm.role,
               'city', t.city,
@@ -288,7 +288,7 @@ router.get('/:id', async (req: Request, res: Response) => {
             'name', o.name,
             'slug', o.slug,
             'logo_url', o.logo_url,
-            'type', o.type,
+            'types', o.types,
             'description', o.description,
             'headquarters_city', o.headquarters_city,
             'headquarters_country', o.headquarters_country,
@@ -1015,7 +1015,7 @@ router.post('/:id/join', authMiddleware, async (req: AuthRequest, res: Response)
 
     // All membership requests require admin approval
     // Status is always PENDING until admin approves
-    const membershipStatus = 'PENDING';
+    const membershipStatus: string = 'PENDING';
 
     // Build dynamic INSERT query based on available columns
     const insertColumns: string[] = [];
@@ -1256,7 +1256,7 @@ router.get('/:id/members', authMiddleware, async (req: AuthRequest, res: Respons
     const { status, limit = 50, offset = 0 } = req.query;
 
     // Verify user is explicit community ADMIN (not just org member)
-    const role = await communityPermissionService.getUserRole(talentId, id);
+    const role = await communityPermissionService.getUserRole(talentId!, id);
     if (role !== 'ADMIN') {
       return res.status(403).json({ 
         error: 'Accès non autorisé: seuls les administrateurs de la communauté peuvent gérer les membres' 
@@ -1305,7 +1305,7 @@ router.get('/:id/members', authMiddleware, async (req: AuthRequest, res: Respons
       SELECT 
         cm.*,
         t.id as talent_id,
-        t.display_name as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         t.first_name as talent_first_name,
         t.last_name as talent_last_name,
         t.email as talent_email,
@@ -1418,7 +1418,7 @@ router.get('/members/:membershipId', authMiddleware, async (req: AuthRequest, re
     const communityId = membershipCheck.rows[0].community_id;
 
     // Verify user is explicit community ADMIN (not just org member)
-    const role = await communityPermissionService.getUserRole(talentId, communityId);
+    const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({ 
         error: 'Accès non autorisé: seuls les administrateurs de la communauté peuvent voir les détails des membres' 
@@ -1433,7 +1433,7 @@ router.get('/members/:membershipId', authMiddleware, async (req: AuthRequest, re
         c.application_questions,
         c.rules as community_rules,
         t.id as talent_id,
-        t.display_name as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         t.first_name as talent_first_name,
         t.last_name as talent_last_name,
         t.email as talent_email,
@@ -1538,7 +1538,7 @@ router.put('/members/:membershipId/status', authMiddleware, async (req: AuthRequ
     const communityId = membershipInfo.rows[0].community_id;
 
     // Verify user is explicit community ADMIN (not just org member)
-    const role = await communityPermissionService.getUserRole(talentId, communityId);
+    const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({ 
         error: 'Accès non autorisé: seuls les administrateurs de la communauté peuvent modifier le statut des membres' 
@@ -1615,7 +1615,7 @@ router.put('/members/:membershipId/notes', authMiddleware, async (req: AuthReque
     const communityId = membershipCheck.rows[0].community_id;
 
     // Verify user is explicit community ADMIN (not just org member)
-    const role = await communityPermissionService.getUserRole(talentId, communityId);
+    const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({ 
         error: 'Accès non autorisé: seuls les administrateurs de la communauté peuvent modifier les notes' 
@@ -1664,7 +1664,7 @@ router.put('/members/:membershipId/rating', authMiddleware, async (req: AuthRequ
     const communityId = membershipCheck.rows[0].community_id;
 
     // Verify user is explicit community ADMIN (not just org member)
-    const role = await communityPermissionService.getUserRole(talentId, communityId);
+    const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({ 
         error: 'Accès non autorisé: seuls les administrateurs de la communauté peuvent modifier les notes' 
@@ -1708,7 +1708,7 @@ router.get('/members/:membershipId/permissions', authMiddleware, async (req: Aut
     const communityId = membershipCheck.rows[0].community_id;
 
     // Verify user is explicit community ADMIN
-    const role = await communityPermissionService.getUserRole(talentId, communityId);
+    const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({
         error: 'Accès non autorisé: seuls les administrateurs peuvent gérer les permissions'
@@ -1750,7 +1750,7 @@ router.put('/members/:membershipId/permissions', authMiddleware, async (req: Aut
     const memberTalentId = membershipCheck.rows[0].talent_id;
 
     // Verify user is explicit community ADMIN
-    const role = await communityPermissionService.getUserRole(talentId, communityId);
+    const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({
         error: 'Accès non autorisé: seuls les administrateurs peuvent gérer les permissions'
@@ -1790,7 +1790,7 @@ router.get('/:id/default-permissions', authMiddleware, async (req: AuthRequest, 
     const talentId = req.talentId;
 
     // Verify user is explicit community ADMIN
-    const role = await communityPermissionService.getUserRole(talentId, communityId);
+    const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({
         error: 'Accès non autorisé: seuls les administrateurs peuvent voir les permissions par défaut'
@@ -1817,7 +1817,7 @@ router.put('/:id/default-permissions', authMiddleware, async (req: AuthRequest, 
     const talentId = req.talentId;
 
     // Verify user is explicit community ADMIN
-    const role = await communityPermissionService.getUserRole(talentId, communityId);
+    const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({
         error: 'Accès non autorisé: seuls les administrateurs peuvent modifier les permissions par défaut'
@@ -1865,7 +1865,7 @@ router.delete('/members/:membershipId', authMiddleware, async (req: AuthRequest,
     const communityId = membershipCheck.rows[0].community_id;
 
     // Verify user is explicit community ADMIN (not just org member)
-    const role = await communityPermissionService.getUserRole(talentId, communityId);
+    const role = await communityPermissionService.getUserRole(talentId!, communityId);
     if (role !== 'ADMIN') {
       return res.status(403).json({ 
         error: 'Accès non autorisé: seuls les administrateurs de la communauté peuvent supprimer des membres' 
@@ -1936,7 +1936,7 @@ async function notifyNewMembershipRequest(membershipId: string): Promise<void> {
     const result = await pool.query(`
       SELECT
         cm.id,
-        t.display_name as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         c.name as community_name,
         c.organization_id
       FROM community_members cm
@@ -2019,7 +2019,7 @@ router.get('/members/:membershipId/messages', authMiddleware, async (req: AuthRe
     const messages = await pool.query(`
       SELECT
         m.*,
-        t.display_name as sender_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as sender_name,
         t.avatar_url as sender_avatar
       FROM community_membership_messages m
       JOIN talents t ON m.sender_id = t.id
@@ -2096,7 +2096,7 @@ router.post('/members/:membershipId/messages', authMiddleware, async (req: AuthR
 
     // Get sender info
     const senderInfo = await pool.query(
-      `SELECT display_name as sender_name, avatar_url as sender_avatar FROM talents WHERE id = $1`,
+      `SELECT COALESCE(first_name || ' ' || last_name, email) as sender_name, avatar_url as sender_avatar FROM talents WHERE id = $1`,
       [talentId]
     );
 

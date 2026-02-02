@@ -115,16 +115,12 @@ export const nodeMutations = {
     id: string;
     canonical_name: string;
     type: string;
-    domain?: string;
-    aliases?: string[];
   }): Promise<void> {
     await neo4jClient.write(
       `
       MERGE (s:Skill {id: $id})
       SET s.canonical_name = $canonical_name,
-          s.type = $type,
-          s.domain = $domain,
-          s.aliases = $aliases
+          s.type = $type
       `,
       skill
     );
@@ -158,7 +154,7 @@ export const nodeMutations = {
   async upsertOrganization(org: {
     id: string;
     name: string;
-    type?: string;
+    types?: string[];
     sectors?: string[];
     size?: string;
     city?: string;
@@ -168,7 +164,7 @@ export const nodeMutations = {
       `
       MERGE (o:Organization {id: $id})
       SET o.name = $name,
-          o.type = $type,
+          o.types = $types,
           o.sectors = $sectors,
           o.size = $size,
           o.city = $city,

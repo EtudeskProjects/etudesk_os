@@ -66,7 +66,7 @@ router.get('/:orgId/members', authMiddleware, async (req: AuthRequest, res: Resp
       SELECT
         om.id, om.organization_id, om.talent_id as user_id, om.role, om.permissions,
         om.joined_at, om.created_at, om.updated_at,
-        t.display_name, t.avatar_url, t.email, t.bio as title
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.avatar_url, t.email, t.bio as title
       FROM organization_members om
       JOIN talents t ON om.talent_id = t.id
       WHERE om.organization_id = $1
@@ -112,7 +112,7 @@ router.get('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res: 
     const result = await pool.query(`
       SELECT
         oi.*,
-        t.display_name as invited_by_name
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name
       FROM organization_invitations oi
       LEFT JOIN talents t ON oi.invited_by = t.id
       WHERE oi.organization_id = $1 AND oi.status = 'PENDING'
@@ -208,7 +208,7 @@ router.post('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res:
 
     // Get organization name and inviter name for email
     const orgInfo = await pool.query(`
-      SELECT o.name as org_name, t.display_name as inviter_name
+      SELECT o.name as org_name, COALESCE(t.first_name || ' ' || t.last_name, t.email) as inviter_name
       FROM organizations o, talents t
       WHERE o.id = $1 AND t.id = $2
     `, [orgId, req.talentId]);
@@ -446,7 +446,7 @@ router.post('/:orgId/invitations/:invitationId/resend', authMiddleware, async (r
     // Resend invitation email
     const invitation = result.rows[0];
     const orgInfo = await pool.query(`
-      SELECT o.name as org_name, t.display_name as inviter_name
+      SELECT o.name as org_name, COALESCE(t.first_name || ' ' || t.last_name, t.email) as inviter_name
       FROM organizations o, talents t
       WHERE o.id = $1 AND t.id = $2
     `, [orgId, req.talentId]);
@@ -513,8 +513,8 @@ router.get('/invitations/received', authMiddleware, async (req: AuthRequest, res
           oi.id, oi.organization_id, oi.email, oi.role, oi.permissions,
           oi.token, oi.expires_at, oi.status, oi.created_at,
           o.name as organization_name, o.logo_url as organization_logo,
-          o.type as organization_type, o.sectors as organization_sectors,
-          t.display_name as invited_by_name, t.avatar_url as invited_by_avatar
+          o.types as organization_types, o.sectors as organization_sectors,
+          COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name, t.avatar_url as invited_by_avatar
         FROM organization_invitations oi
         JOIN organizations o ON oi.organization_id = o.id
         LEFT JOIN talents t ON oi.invited_by = t.id
@@ -708,8 +708,8 @@ router.get('/invitations/by-token/:token', async (req: AuthRequest, res: Respons
       SELECT
         oi.id, oi.organization_id, oi.email, oi.role, oi.expires_at, oi.status,
         o.name as organization_name, o.logo_url as organization_logo,
-        o.type as organization_type,
-        t.display_name as invited_by_name
+        o.types as organization_types,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name
       FROM organization_invitations oi
       JOIN organizations o ON oi.organization_id = o.id
       LEFT JOIN talents t ON oi.invited_by = t.id

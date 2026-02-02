@@ -45,10 +45,6 @@ export const postgresSyncService = {
 
     try {
       // Sync nodes in order (dependencies first)
-      const skillsResult = await this.syncSkills(batchSize);
-      nodesCreated += skillsResult.count;
-      errors.push(...skillsResult.errors);
-
       const orgsResult = await this.syncOrganizations(batchSize);
       nodesCreated += orgsResult.count;
       errors.push(...orgsResult.errors);
@@ -106,13 +102,6 @@ export const postgresSyncService = {
       relationshipsCreated += membershipsRel.count;
       errors.push(...membershipsRel.errors);
 
-      const oppSkillsRel = await this.syncOpportunitySkills(batchSize);
-      relationshipsCreated += oppSkillsRel.count;
-      errors.push(...oppSkillsRel.errors);
-
-      const skillRelationsRel = await this.syncSkillRelations(batchSize);
-      relationshipsCreated += skillRelationsRel.count;
-      errors.push(...skillRelationsRel.errors);
 
       const learningRel = await this.syncLearningRelations(batchSize);
       relationshipsCreated += learningRel.count;
@@ -137,18 +126,6 @@ export const postgresSyncService = {
       const spaceBookingsRel = await this.syncSpaceBookings(batchSize);
       relationshipsCreated += spaceBookingsRel.count;
       errors.push(...spaceBookingsRel.errors);
-
-      const docSkillsRel = await this.syncDocumentSkills(batchSize);
-      relationshipsCreated += docSkillsRel.count;
-      errors.push(...docSkillsRel.errors);
-
-      const orgSkillsRel = await this.syncOrganizationSkills(batchSize);
-      relationshipsCreated += orgSkillsRel.count;
-      errors.push(...orgSkillsRel.errors);
-
-      const projectSkillsRel = await this.syncProjectSkills(batchSize);
-      relationshipsCreated += projectSkillsRel.count;
-      errors.push(...projectSkillsRel.errors);
 
       const sectorRel = await this.syncSectorRelations(batchSize);
       relationshipsCreated += sectorRel.count;
@@ -179,46 +156,12 @@ export const postgresSyncService = {
   },
 
   /**
-   * Sync skills from PostgreSQL
+   * Sync skills — table removed in migration 053, skills are now inline in talent_skills
    */
   async syncSkills(
-    batchSize: number
+    _batchSize: number
   ): Promise<{ count: number; errors: string[] }> {
-    const errors: string[] = [];
-    let count = 0;
-
-    try {
-      const { rows: skills } = await pool.query(`
-        SELECT id, canonical_name, slug, type, domain, aliases
-        FROM skills
-        WHERE deleted_at IS NULL
-      `);
-
-      for (let i = 0; i < skills.length; i += batchSize) {
-        const batch = skills.slice(i, i + batchSize);
-
-        await neo4jClient.write(
-          `
-          UNWIND $skills AS skill
-          MERGE (s:Skill {id: skill.id})
-          SET s.canonical_name = skill.canonical_name,
-              s.slug = skill.slug,
-              s.type = skill.type,
-              s.domain = skill.domain,
-              s.aliases = skill.aliases
-          `,
-          { skills: batch }
-        );
-
-        count += batch.length;
-      }
-
-      console.log(`[GraphSync] Synced ${count} skills`);
-    } catch (error: any) {
-      errors.push(`Skills sync error: ${error.message}`);
-    }
-
-    return { count, errors };
+    return { count: 0, errors: [] };
   },
 
   /**
@@ -232,7 +175,7 @@ export const postgresSyncService = {
 
     try {
       const { rows: orgs } = await pool.query(`
-        SELECT id, name, slug, type, sectors, size,
+        SELECT id, name, slug, types, sectors, size,
                headquarters_city as city, headquarters_country as country
         FROM organizations
         WHERE deleted_at IS NULL
@@ -247,7 +190,7 @@ export const postgresSyncService = {
           MERGE (o:Organization {id: org.id})
           SET o.name = org.name,
               o.slug = org.slug,
-              o.type = org.type,
+              o.types = org.types,
               o.sectors = org.sectors,
               o.size = org.size,
               o.city = org.city,
@@ -278,7 +221,7 @@ export const postgresSyncService = {
 
     try {
       const { rows: talents } = await pool.query(`
-        SELECT id, display_name as name, email, bio as headline,
+        SELECT id, COALESCE(first_name || ' ' || last_name, email) as name, email, bio as headline,
                city, country, goals, created_at, updated_at
         FROM talents
         WHERE deleted_at IS NULL
@@ -558,21 +501,13 @@ export const postgresSyncService = {
         docsResult = await pool.query(`
           SELECT d.id, d.talent_id, d.document_type as type,
                  d.original_filename as filename, d.title,
-                 d.extracted_data->>'skills' as extracted_skills,
                  d.uploaded_at, d.is_verified
           FROM talent_documents d
           WHERE d.deleted_at IS NULL
         `);
       } catch {
-        // Fall back to old documents table
-        docsResult = await pool.query(`
-          SELECT d.id, td.talent_id, d.type, d.title as filename, d.title,
-                 d.summary as extracted_skills, d.created_at as uploaded_at,
-                 (d.verification_status = 'VERIFIED') as is_verified
-          FROM documents d
-          JOIN talent_documents td ON d.id = td.document_id
-          WHERE d.deleted_at IS NULL
-        `);
+        // No documents table available
+        docsResult = { rows: [] };
       }
 
       const docs = docsResult.rows;
@@ -614,7 +549,7 @@ export const postgresSyncService = {
   },
 
   /**
-   * Sync talent-skill relationships
+   * Sync talent-skill relationships (skills are now inline in talent_skills)
    */
   async syncTalentSkills(
     batchSize: number
@@ -624,33 +559,22 @@ export const postgresSyncService = {
 
     try {
       const { rows: relations } = await pool.query(`
-        SELECT ts.talent_id, ts.skill_id, ts.proficiency_level,
-               ts.years_of_experience, ts.endorsed_count,
-               ts.self_assessed as verified
+        SELECT ts.talent_id, ts.canonical_name, ts.type, ts.proficiency_level
         FROM talent_skills ts
         JOIN talents t ON ts.talent_id = t.id AND t.deleted_at IS NULL
-        JOIN skills s ON ts.skill_id = s.id AND s.deleted_at IS NULL
       `);
 
       for (let i = 0; i < relations.length; i += batchSize) {
-        const batch = relations.slice(i, i + batchSize).map(r => ({
-          ...r,
-          years_experience: r.years_of_experience
-            ? parseFloat(r.years_of_experience)
-            : null,
-          verified: !r.verified, // self_assessed = false means verified by document
-        }));
+        const batch = relations.slice(i, i + batchSize);
 
         await neo4jClient.write(
           `
           UNWIND $relations AS rel
           MATCH (t:Talent {id: rel.talent_id})
-          MATCH (s:Skill {id: rel.skill_id})
+          MERGE (s:Skill {canonical_name: rel.canonical_name})
+          ON CREATE SET s.type = rel.type
           MERGE (t)-[r:POSSEDE_COMPETENCE]->(s)
-          SET r.proficiency_level = rel.proficiency_level,
-              r.years_experience = rel.years_experience,
-              r.endorsed_count = rel.endorsed_count,
-              r.verified = rel.verified
+          SET r.proficiency_level = rel.proficiency_level
           `,
           { relations: batch }
         );
@@ -782,115 +706,21 @@ export const postgresSyncService = {
   },
 
   /**
-   * Sync opportunity-skill requirements
+   * Sync opportunity-skill requirements — table removed in migration 053
    */
   async syncOpportunitySkills(
-    batchSize: number
+    _batchSize: number
   ): Promise<{ count: number; errors: string[] }> {
-    const errors: string[] = [];
-    let count = 0;
-
-    try {
-      const { rows: oppSkills } = await pool.query(`
-        SELECT os.opportunity_id, os.skill_id, os.is_required,
-               os.proficiency_level
-        FROM opportunity_skills os
-        JOIN opportunities o ON os.opportunity_id = o.id AND o.deleted_at IS NULL
-        JOIN skills s ON os.skill_id = s.id AND s.deleted_at IS NULL
-      `);
-
-      for (let i = 0; i < oppSkills.length; i += batchSize) {
-        const batch = oppSkills.slice(i, i + batchSize);
-
-        await neo4jClient.write(
-          `
-          UNWIND $oppSkills AS os
-          MATCH (o:Opportunity {id: os.opportunity_id})
-          MATCH (s:Skill {id: os.skill_id})
-          MERGE (o)-[r:REQUIERT_COMPETENCE]->(s)
-          SET r.is_mandatory = os.is_required,
-              r.level_required = os.proficiency_level
-          `,
-          { oppSkills: batch }
-        );
-
-        count += batch.length;
-      }
-
-      console.log(`[GraphSync] Synced ${count} opportunity-skill requirements`);
-    } catch (error: any) {
-      errors.push(`Opportunity skills sync error: ${error.message}`);
-    }
-
-    return { count, errors };
+    return { count: 0, errors: [] };
   },
 
   /**
-   * Sync skill-to-skill relations (prerequisites, complementary)
+   * Sync skill-to-skill relations — tables removed
    */
   async syncSkillRelations(
-    batchSize: number
+    _batchSize: number
   ): Promise<{ count: number; errors: string[] }> {
-    const errors: string[] = [];
-    let count = 0;
-
-    try {
-      // Sync skill relations (COMPLEMENTAIRE_A)
-      const { rows: relations } = await pool.query(`
-        SELECT sr.from_skill_id, sr.to_skill_id, sr.relationship_type, sr.strength
-        FROM skill_relations sr
-        JOIN skills s1 ON sr.from_skill_id = s1.id AND s1.deleted_at IS NULL
-        JOIN skills s2 ON sr.to_skill_id = s2.id AND s2.deleted_at IS NULL
-      `);
-
-      for (let i = 0; i < relations.length; i += batchSize) {
-        const batch = relations.slice(i, i + batchSize);
-
-        await neo4jClient.write(
-          `
-          UNWIND $relations AS rel
-          MATCH (s1:Skill {id: rel.from_skill_id})
-          MATCH (s2:Skill {id: rel.to_skill_id})
-          MERGE (s1)-[r:COMPLEMENTAIRE_A]->(s2)
-          SET r.synergy_score = rel.strength
-          `,
-          { relations: batch }
-        );
-
-        count += batch.length;
-      }
-
-      // Sync skill evolutions (PREREQUIS_POUR)
-      const { rows: evolutions } = await pool.query(`
-        SELECT se.from_skill_id, se.to_skill_id
-        FROM skill_evolutions se
-        JOIN skills s1 ON se.from_skill_id = s1.id AND s1.deleted_at IS NULL
-        JOIN skills s2 ON se.to_skill_id = s2.id AND s2.deleted_at IS NULL
-      `);
-
-      for (let i = 0; i < evolutions.length; i += batchSize) {
-        const batch = evolutions.slice(i, i + batchSize);
-
-        await neo4jClient.write(
-          `
-          UNWIND $evolutions AS evo
-          MATCH (s1:Skill {id: evo.from_skill_id})
-          MATCH (s2:Skill {id: evo.to_skill_id})
-          MERGE (s1)-[r:PREREQUIS_POUR]->(s2)
-          SET r.is_strict = true
-          `,
-          { evolutions: batch }
-        );
-
-        count += batch.length;
-      }
-
-      console.log(`[GraphSync] Synced ${count} skill relations`);
-    } catch (error: any) {
-      errors.push(`Skill relations sync error: ${error.message}`);
-    }
-
-    return { count, errors };
+    return { count: 0, errors: [] };
   },
 
   /**
@@ -983,78 +813,12 @@ export const postgresSyncService = {
   },
 
   /**
-   * Sync projects from PostgreSQL
+   * Sync projects — table removed in migration 040
    */
   async syncProjects(
-    batchSize: number
+    _batchSize: number
   ): Promise<{ count: number; errors: string[] }> {
-    const errors: string[] = [];
-    let count = 0;
-
-    try {
-      const { rows: projects } = await pool.query(`
-        SELECT p.id, p.title, p.slug, p.type, p.status, p.visibility,
-               p.started_at, p.ended_at, p.created_at
-        FROM projects p
-        WHERE p.deleted_at IS NULL
-      `);
-
-      for (let i = 0; i < projects.length; i += batchSize) {
-        const batch = projects.slice(i, i + batchSize).map(p => ({
-          ...p,
-          started_at: p.started_at?.toISOString(),
-          ended_at: p.ended_at?.toISOString(),
-          created_at: p.created_at?.toISOString(),
-        }));
-
-        await neo4jClient.write(
-          `
-          UNWIND $projects AS proj
-          MERGE (p:Project {id: proj.id})
-          SET p.title = proj.title,
-              p.slug = proj.slug,
-              p.type = proj.type,
-              p.status = proj.status,
-              p.visibility = proj.visibility,
-              p.started_at = proj.started_at,
-              p.ended_at = proj.ended_at,
-              p.created_at = proj.created_at
-          `,
-          { projects: batch }
-        );
-
-        count += batch.length;
-      }
-
-      // Sync Talent→Project (A_REALISE) relationships
-      const { rows: talentProjects } = await pool.query(`
-        SELECT p.id as project_id, p.created_by as talent_id
-        FROM projects p
-        JOIN talents t ON p.created_by = t.id AND t.deleted_at IS NULL
-        WHERE p.deleted_at IS NULL AND p.created_by IS NOT NULL
-      `);
-
-      for (let i = 0; i < talentProjects.length; i += batchSize) {
-        const batch = talentProjects.slice(i, i + batchSize);
-
-        await neo4jClient.write(
-          `
-          UNWIND $rels AS rel
-          MATCH (t:Talent {id: rel.talent_id})
-          MATCH (p:Project {id: rel.project_id})
-          MERGE (t)-[r:A_REALISE]->(p)
-          SET r.role = 'creator'
-          `,
-          { rels: batch }
-        );
-      }
-
-      console.log(`[GraphSync] Synced ${count} projects`);
-    } catch (error: any) {
-      errors.push(`Projects sync error: ${error.message}`);
-    }
-
-    return { count, errors };
+    return { count: 0, errors: [] };
   },
 
   /**
@@ -1167,11 +931,7 @@ export const postgresSyncService = {
     try {
       const { rows: mentorships } = await pool.query(`
         SELECT m.mentor_id, m.mentee_id, m.status, m.started_at, m.ended_at,
-               COALESCE(
-                 (SELECT ARRAY_AGG(s.canonical_name)
-                  FROM skills s WHERE s.id = ANY(m.focus_area_skill_ids)),
-                 '{}'
-               ) as focus_areas
+               '{}' as focus_areas
         FROM mentorships m
         JOIN talents t1 ON m.mentor_id = t1.id AND t1.deleted_at IS NULL
         JOIN talents t2 ON m.mentee_id = t2.id AND t2.deleted_at IS NULL
@@ -1221,11 +981,7 @@ export const postgresSyncService = {
       const { rows: recs } = await pool.query(`
         SELECT r.recommender_id, r.recommended_id, r.recommendation_text,
                r.relationship as relationship_context, r.created_at,
-               COALESCE(
-                 (SELECT ARRAY_AGG(s.canonical_name)
-                  FROM skills s WHERE s.id = ANY(r.highlighted_skill_ids)),
-                 '{}'
-               ) as highlighted_skills
+               '{}' as highlighted_skills
         FROM recommendations r
         JOIN talents t1 ON r.recommender_id = t1.id AND t1.deleted_at IS NULL
         JOIN talents t2 ON r.recommended_id = t2.id AND t2.deleted_at IS NULL
@@ -1363,141 +1119,30 @@ export const postgresSyncService = {
   },
 
   /**
-   * Sync document-skill relationships (EXTRAIT_COMPETENCE)
+   * Sync document-skill relationships — table removed in migration 053
    */
   async syncDocumentSkills(
-    batchSize: number
+    _batchSize: number
   ): Promise<{ count: number; errors: string[] }> {
-    const errors: string[] = [];
-    let count = 0;
-
-    try {
-      const { rows: docSkills } = await pool.query(`
-        SELECT ds.document_id, ds.skill_id, ds.relevance_score, ds.is_auto_generated
-        FROM document_skills ds
-        JOIN talent_documents d ON ds.document_id = d.id AND d.deleted_at IS NULL
-        JOIN skills s ON ds.skill_id = s.id AND s.deleted_at IS NULL
-      `);
-
-      for (let i = 0; i < docSkills.length; i += batchSize) {
-        const batch = docSkills.slice(i, i + batchSize).map(ds => ({
-          ...ds,
-          relevance_score: ds.relevance_score ? parseFloat(ds.relevance_score) : null,
-        }));
-
-        await neo4jClient.write(
-          `
-          UNWIND $docSkills AS ds
-          MATCH (d:Document {id: ds.document_id})
-          MATCH (s:Skill {id: ds.skill_id})
-          MERGE (d)-[r:EXTRAIT_COMPETENCE]->(s)
-          SET r.relevance_score = ds.relevance_score,
-              r.is_auto_generated = ds.is_auto_generated
-          `,
-          { docSkills: batch }
-        );
-
-        count += batch.length;
-      }
-
-      console.log(`[GraphSync] Synced ${count} document-skill relationships`);
-    } catch (error: any) {
-      errors.push(`Document skills sync error: ${error.message}`);
-    }
-
-    return { count, errors };
+    return { count: 0, errors: [] };
   },
 
   /**
-   * Sync organization-skill relationships (RECHERCHE_COMPETENCE)
+   * Sync organization-skill relationships — table removed in migration 053
    */
   async syncOrganizationSkills(
-    batchSize: number
+    _batchSize: number
   ): Promise<{ count: number; errors: string[] }> {
-    const errors: string[] = [];
-    let count = 0;
-
-    try {
-      const { rows: orgSkills } = await pool.query(`
-        SELECT os.organization_id, os.skill_id, os.relevance_score, os.is_auto_generated
-        FROM organization_skills os
-        JOIN organizations o ON os.organization_id = o.id AND o.deleted_at IS NULL
-        JOIN skills s ON os.skill_id = s.id AND s.deleted_at IS NULL
-      `);
-
-      for (let i = 0; i < orgSkills.length; i += batchSize) {
-        const batch = orgSkills.slice(i, i + batchSize).map(os => ({
-          ...os,
-          relevance_score: os.relevance_score ? parseFloat(os.relevance_score) : null,
-        }));
-
-        await neo4jClient.write(
-          `
-          UNWIND $orgSkills AS os
-          MATCH (o:Organization {id: os.organization_id})
-          MATCH (s:Skill {id: os.skill_id})
-          MERGE (o)-[r:RECHERCHE_COMPETENCE]->(s)
-          SET r.relevance_score = os.relevance_score,
-              r.is_auto_generated = os.is_auto_generated
-          `,
-          { orgSkills: batch }
-        );
-
-        count += batch.length;
-      }
-
-      console.log(`[GraphSync] Synced ${count} organization-skill relationships`);
-    } catch (error: any) {
-      errors.push(`Organization skills sync error: ${error.message}`);
-    }
-
-    return { count, errors };
+    return { count: 0, errors: [] };
   },
 
   /**
-   * Sync project-skill relationships (UTILISE_COMPETENCE)
+   * Sync project-skill relationships — table removed in migration 053
    */
   async syncProjectSkills(
-    batchSize: number
+    _batchSize: number
   ): Promise<{ count: number; errors: string[] }> {
-    const errors: string[] = [];
-    let count = 0;
-
-    try {
-      const { rows: projSkills } = await pool.query(`
-        SELECT ps.project_id, ps.skill_id, ps.relevance_score, ps.is_auto_generated
-        FROM project_skills ps
-        JOIN projects p ON ps.project_id = p.id AND p.deleted_at IS NULL
-        JOIN skills s ON ps.skill_id = s.id AND s.deleted_at IS NULL
-      `);
-
-      for (let i = 0; i < projSkills.length; i += batchSize) {
-        const batch = projSkills.slice(i, i + batchSize).map(ps => ({
-          ...ps,
-          relevance_score: ps.relevance_score ? parseFloat(ps.relevance_score) : null,
-        }));
-
-        await neo4jClient.write(
-          `
-          UNWIND $projSkills AS ps
-          MATCH (p:Project {id: ps.project_id})
-          MATCH (s:Skill {id: ps.skill_id})
-          MERGE (p)-[r:UTILISE_COMPETENCE]->(s)
-          SET r.relevance_score = ps.relevance_score,
-              r.is_auto_generated = ps.is_auto_generated
-          `,
-          { projSkills: batch }
-        );
-
-        count += batch.length;
-      }
-
-      console.log(`[GraphSync] Synced ${count} project-skill relationships`);
-    } catch (error: any) {
-      errors.push(`Project skills sync error: ${error.message}`);
-    }
-
-    return { count, errors };
+    return { count: 0, errors: [] };
   },
 
   /**
@@ -1569,7 +1214,7 @@ export const postgresSyncService = {
    */
   async syncTalent(talentId: string): Promise<void> {
     const { rows: [talent] } = await pool.query(
-      `SELECT id, display_name as name, email, bio as headline,
+      `SELECT id, COALESCE(first_name || ' ' || last_name, email) as name, email, bio as headline,
               city, country, goals, created_at, updated_at
        FROM talents WHERE id = $1`,
       [talentId]
