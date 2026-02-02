@@ -24,6 +24,7 @@ interface ApiResponse<T> {
 interface ApiError {
   error: string;
   message?: string;
+  code?: string;
   status?: number;
 }
 
@@ -243,6 +244,7 @@ class ApiService {
         throw {
           error: data.error || 'Request failed',
           message: data.message,
+          code: data.code,
           status: response.status,
         } as ApiError;
       }

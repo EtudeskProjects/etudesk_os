@@ -10,6 +10,7 @@
 import OpenAI from 'openai';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { pool } from './database';
+import { buildTalentObject } from './ai/talent-object';
 
 // ═══════════════════════════════════════════════════════════════
 // CLIENT INITIALIZATION
@@ -40,12 +41,12 @@ const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
  * Optimized for ~500 tokens max
  */
 export function buildTalentEmbeddingText(talent: {
-  display_name?: string;
+  display_name?: string | null;
   skills?: string[];
   sectors?: string[];
-  bio?: string;
-  city?: string;
-  country?: string;
+  bio?: string | null;
+  city?: string | null;
+  country?: string | null;
   profile_tags?: string[];
 }): string {
   const parts: string[] = [];
@@ -347,20 +348,17 @@ export async function getSemanticBoost(
  */
 export async function onTalentProfileUpdate(talentId: string): Promise<void> {
   try {
-    const result = await pool.query(`
-      SELECT
-        t.display_name, t.sectors, t.bio, t.city, t.country, t.profile_tags,
-        ARRAY(
-          SELECT s.name FROM talent_skills ts
-          JOIN skills s ON s.id = ts.skill_id
-          WHERE ts.talent_id = t.id
-        ) as skills
-      FROM talents t
-      WHERE t.id = $1
-    `, [talentId]);
-
-    if (result.rows.length > 0) {
-      await upsertTalentEmbedding(talentId, result.rows[0]);
+    const t = await buildTalentObject(talentId);
+    if (t) {
+      await upsertTalentEmbedding(talentId, {
+        display_name: t.display_name,
+        skills: t.skills,
+        sectors: t.sectors,
+        bio: t.bio,
+        city: t.city,
+        country: t.country,
+        profile_tags: t.profile_tags,
+      });
     }
   } catch (error) {
     console.error('Error updating talent embedding on profile update:', error);
@@ -401,7 +399,7 @@ export async function batchUpdateTalentEmbeddings(limit: number = 100): Promise<
   const result = await pool.query(`
     SELECT t.id, t.display_name, t.sectors, t.bio, t.city, t.country, t.profile_tags,
            ARRAY(
-             SELECT s.name FROM talent_skills ts
+             SELECT s.canonical_name FROM talent_skills ts
              JOIN skills s ON s.id = ts.skill_id
              WHERE ts.talent_id = t.id
            ) as skills

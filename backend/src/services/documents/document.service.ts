@@ -5,7 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { pool } from '../database';
-import { uploadFile, deleteFile, getSignedUrl } from '../storage.service';
+import { uploadFile, deleteFile, getFileBuffer } from '../storage.service';
 import {
   extractDocumentMetadata,
   generateDocumentSummary,
@@ -13,6 +13,7 @@ import {
 } from './extraction.service';
 import { extractAndSaveSkills } from './skill-extraction.service';
 import { mergeExtractedSkills } from '../skills/skill-merge.service';
+import { createNotification } from '../notification.service';
 import {
   DocumentType,
   DocumentStatus,
@@ -248,17 +249,38 @@ export async function processDocumentExtraction(
       [DOCUMENT_STATUS.PROCESSING, documentId]
     );
 
-    // Get signed URL for the file (for API access)
-    const signedUrl = await getSignedUrl(fileUrl);
+    // Get talent_id early for context injection
+    const docRow = await pool.query(`SELECT talent_id FROM talent_documents WHERE id = $1`, [documentId]);
+    const talentId = docRow.rows[0]?.talent_id;
 
-    // Extract metadata using GPT-4o-mini
-    const extractionResult = await extractDocumentMetadata(signedUrl, mimeType);
+    // Read file from disk and convert to base64 data URL
+    // (OpenAI API cannot access localhost URLs)
+    const fileBuffer = await getFileBuffer(fileUrl);
+    const base64Data = fileBuffer.toString('base64');
+    const dataUrl = `data:${mimeType};base64,${base64Data}`;
+
+    // Extract metadata using GPT-5-mini with talent context
+    const extractionResult = await extractDocumentMetadata(dataUrl, mimeType, talentId);
 
     if (extractionResult.success && extractionResult.data) {
       const data = extractionResult.data;
       const category = DOCUMENT_TYPE_CATEGORIES[data.detected_type] || 'OTHER';
 
-      // Update document with extracted data
+      // Use AI-extracted title, fallback to generated summary
+      const generatedTitle = data.title || generateDocumentSummary(data);
+
+      // Extract and save skills if present
+      const skillsInDocument = data.skills?.length ?? 0;
+      let skillsAdded = 0;
+
+      if (data.skills && data.skills.length > 0 && talentId) {
+        const skillResult = await extractAndSaveSkills(talentId, documentId, data.skills);
+        skillsAdded = skillResult.added;
+        await mergeExtractedSkills(talentId);
+      }
+
+      // Single UPDATE with skills_count included in extracted_data
+      const extractedDataWithCount = { ...data, skills_count: skillsInDocument };
       await pool.query(
         `UPDATE talent_documents SET
           status = $1,
@@ -266,27 +288,35 @@ export async function processDocumentExtraction(
           category = $3,
           extracted_data = $4,
           tags = $5,
+          title = $6,
           processed_at = CURRENT_TIMESTAMP,
           updated_at = CURRENT_TIMESTAMP
-         WHERE id = $6`,
+         WHERE id = $7`,
         [
           DOCUMENT_STATUS.PROCESSED,
           data.detected_type,
           category,
-          JSON.stringify(data),
+          JSON.stringify(extractedDataWithCount),
           data.tags,
+          generatedTitle,
           documentId,
         ]
       );
 
-      // Extract and save skills if present
-      if (data.skills && data.skills.length > 0) {
-        const docRow = await pool.query(`SELECT talent_id FROM talent_documents WHERE id = $1`, [documentId]);
-        if (docRow.rows.length > 0) {
-          const talentId = docRow.rows[0].talent_id;
-          await extractAndSaveSkills(talentId, documentId, data.skills);
-          await mergeExtractedSkills(talentId);
-        }
+      // Notify talent
+      const docTitle = generatedTitle || 'votre document';
+      if (talentId) {
+        await createNotification({
+          talentId,
+          type: 'SYSTEM',
+          title: 'Document analysé',
+          body: skillsInDocument > 0
+            ? `${skillsInDocument} compétence${skillsInDocument > 1 ? 's' : ''} extraite${skillsInDocument > 1 ? 's' : ''} de "${docTitle}"`
+            : `"${docTitle}" a été analysé avec succès`,
+          referenceType: 'document',
+          referenceId: documentId,
+          data: { documentId, skillsExtracted: skillsInDocument, skillsAdded },
+        });
       }
     } else {
       // Mark as failed
@@ -299,6 +329,20 @@ export async function processDocumentExtraction(
          WHERE id = $3`,
         [DOCUMENT_STATUS.FAILED, extractionResult.error || 'Extraction failed', documentId]
       );
+
+      // Notify talent of failure
+      const failedDocRow = await pool.query(`SELECT talent_id, title, original_filename FROM talent_documents WHERE id = $1`, [documentId]);
+      const failedTalentId = failedDocRow.rows[0]?.talent_id;
+      if (failedTalentId) {
+        await createNotification({
+          talentId: failedTalentId,
+          type: 'SYSTEM',
+          title: "Échec d'analyse",
+          body: "L'analyse de votre document a échoué. Vous pouvez réessayer.",
+          referenceType: 'document',
+          referenceId: documentId,
+        });
+      }
     }
   } catch (error) {
     console.error(`Document extraction error for ${documentId}:`, error);
@@ -315,6 +359,24 @@ export async function processDocumentExtraction(
         documentId,
       ]
     );
+
+    // Notify talent of error
+    try {
+      const errorDocRow = await pool.query(`SELECT talent_id FROM talent_documents WHERE id = $1`, [documentId]);
+      const errorTalentId = errorDocRow.rows[0]?.talent_id;
+      if (errorTalentId) {
+        await createNotification({
+          talentId: errorTalentId,
+          type: 'SYSTEM',
+          title: "Échec d'analyse",
+          body: "L'analyse de votre document a échoué. Vous pouvez réessayer.",
+          referenceType: 'document',
+          referenceId: documentId,
+        });
+      }
+    } catch (notifError) {
+      console.error(`Failed to send error notification for document ${documentId}:`, notifError);
+    }
   }
 }
 

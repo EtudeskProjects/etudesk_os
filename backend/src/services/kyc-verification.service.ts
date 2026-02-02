@@ -1,24 +1,21 @@
 /**
  * KYC Verification Service
- * Uses GPT-5 nano with vision capabilities for document verification
- *
- * Features:
- * - Verifies document type (ID card, passport, driver's license)
- * - Extracts name information from document images
- * - Compares extracted info with user profile
- * - Provides confidence scores and detailed analysis
+ * Uses Agents SDK with GPT-4.1-nano vision for document verification
  */
 
-import OpenAI from 'openai';
-import { pool } from './database';
+import { run } from '@openai/agents';
+import type { AgentInputItem } from '@openai/agents';
 import * as fs from 'fs';
 import * as path from 'path';
+import { createKYCAgent } from './ai/agent-factory';
+import { buildKYCVerificationPrompt, buildQuickCheckPrompt } from './ai/prompts/kyc.prompt';
+import { buildTalentObject } from './ai/talent-object';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
 
-export type DocumentType = 'ID_CARD' | 'PASSPORT' | 'DRIVER_LICENSE';
+export type DocumentType = 'ID_CARD' | 'PASSPORT' | 'DRIVER_LICENSE' | 'STUDENT_CARD';
 
 export interface TalentProfile {
   id: string;
@@ -71,110 +68,36 @@ export interface VerificationResult {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// OPENAI API CONFIGURATION (GPT-5 nano)
+// JSON Schema for structured output
 // ═══════════════════════════════════════════════════════════════
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-const MODEL_NAME = 'gpt-4.1-nano';
-
-// JSON Schema for structured output
 const DOCUMENT_ANALYSIS_SCHEMA = {
   type: 'object',
   properties: {
     detected_document_type: {
       type: 'string',
-      enum: ['ID_CARD', 'PASSPORT', 'DRIVER_LICENSE', 'UNKNOWN', 'INVALID'],
-      description: 'Type de document détecté',
+      enum: ['ID_CARD', 'PASSPORT', 'DRIVER_LICENSE', 'STUDENT_CARD', 'UNKNOWN', 'INVALID'],
     },
-    document_type_confidence: {
-      type: 'number',
-      description: 'Confiance dans la détection du type (0-100)',
-    },
-    is_valid_document: {
-      type: 'boolean',
-      description: 'Le document semble-t-il authentique et valide',
-    },
-    document_quality: {
-      type: 'string',
-      enum: ['GOOD', 'ACCEPTABLE', 'POOR'],
-      description: 'Qualité de l\'image du document',
-    },
-    extracted_first_name: {
-      type: 'string',
-      nullable: true,
-      description: 'Prénom extrait du document',
-    },
-    extracted_last_name: {
-      type: 'string',
-      nullable: true,
-      description: 'Nom de famille extrait du document',
-    },
-    extracted_full_name: {
-      type: 'string',
-      nullable: true,
-      description: 'Nom complet tel qu\'il apparaît sur le document',
-    },
-    document_number: {
-      type: 'string',
-      nullable: true,
-      description: 'Numéro du document si visible',
-    },
-    expiry_date: {
-      type: 'string',
-      nullable: true,
-      description: 'Date d\'expiration si visible (format: YYYY-MM-DD)',
-    },
-    country: {
-      type: 'string',
-      nullable: true,
-      description: 'Pays émetteur du document',
-    },
-    is_front_side: {
-      type: 'boolean',
-      description: 'L\'image montre-t-elle le recto du document',
-    },
-    has_photo: {
-      type: 'boolean',
-      description: 'Une photo d\'identité est-elle visible',
-    },
-    is_readable: {
-      type: 'boolean',
-      description: 'Le texte est-il lisible',
-    },
-    front_issues: {
-      type: 'array',
-      items: { type: 'string' },
-      description: 'Problèmes détectés sur le recto',
-    },
-    is_back_side: {
-      type: 'boolean',
-      nullable: true,
-      description: 'L\'image verso montre-t-elle bien le dos du document',
-    },
-    back_is_readable: {
-      type: 'boolean',
-      nullable: true,
-      description: 'Le verso est-il lisible',
-    },
-    back_issues: {
-      type: 'array',
-      items: { type: 'string' },
-      nullable: true,
-      description: 'Problèmes détectés sur le verso',
-    },
+    document_type_confidence: { type: 'number' },
+    is_valid_document: { type: 'boolean' },
+    document_quality: { type: 'string', enum: ['GOOD', 'ACCEPTABLE', 'POOR'] },
+    extracted_first_name: { type: 'string', nullable: true },
+    extracted_last_name: { type: 'string', nullable: true },
+    extracted_full_name: { type: 'string', nullable: true },
+    document_number: { type: 'string', nullable: true },
+    expiry_date: { type: 'string', nullable: true },
+    country: { type: 'string', nullable: true },
+    is_front_side: { type: 'boolean' },
+    has_photo: { type: 'boolean' },
+    is_readable: { type: 'boolean' },
+    front_issues: { type: 'array', items: { type: 'string' } },
+    is_back_side: { type: 'boolean', nullable: true },
+    back_is_readable: { type: 'boolean', nullable: true },
+    back_issues: { type: 'array', items: { type: 'string' }, nullable: true },
   },
   required: [
-    'detected_document_type',
-    'document_type_confidence',
-    'is_valid_document',
-    'document_quality',
-    'is_front_side',
-    'has_photo',
-    'is_readable',
-    'front_issues',
+    'detected_document_type', 'document_type_confidence', 'is_valid_document',
+    'document_quality', 'is_front_side', 'has_photo', 'is_readable', 'front_issues',
   ],
 };
 
@@ -182,40 +105,16 @@ const DOCUMENT_ANALYSIS_SCHEMA = {
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════
 
-/**
- * Get talent profile for comparison
- */
-async function getTalentProfile(talentId: string): Promise<TalentProfile | null> {
-  try {
-    const result = await pool.query(
-      `SELECT id, first_name, last_name, display_name
-       FROM talents
-       WHERE id = $1 AND deleted_at IS NULL`,
-      [talentId]
-    );
-    return result.rows.length > 0 ? result.rows[0] : null;
-  } catch (error) {
-    console.error('Error fetching talent profile:', error);
-    return null;
-  }
-}
-
-// Upload directory for resolving relative URLs
 const UPLOAD_BASE_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads');
 
-/**
- * Convert image URL/path to base64
- */
 async function imageToBase64(imageUrl: string): Promise<{ data: string; mimeType: string } | null> {
   try {
-    // If it's a relative URL like /uploads/identity/xxx.jpg
     if (imageUrl.startsWith('/uploads/')) {
       const relativePath = imageUrl.replace('/uploads/', '');
       const filePath = path.join(UPLOAD_BASE_DIR, relativePath);
-      console.log(`📁 Reading KYC image from: ${filePath}`);
 
       if (!fs.existsSync(filePath)) {
-        console.error(`❌ KYC image file not found: ${filePath}`);
+        console.error(`KYC image file not found: ${filePath}`);
         return null;
       }
 
@@ -223,133 +122,82 @@ async function imageToBase64(imageUrl: string): Promise<{ data: string; mimeType
       const ext = path.extname(filePath).toLowerCase();
       const mimeType = ext === '.png' ? 'image/png' :
                        ext === '.webp' ? 'image/webp' : 'image/jpeg';
-      return {
-        data: buffer.toString('base64'),
-        mimeType,
-      };
+      return { data: buffer.toString('base64'), mimeType };
     }
 
-    // If it's a local file path (absolute)
     if (imageUrl.startsWith('/') || imageUrl.startsWith('file://')) {
       const filePath = imageUrl.replace('file://', '');
-
       if (!fs.existsSync(filePath)) {
-        console.error(`❌ Image file not found: ${filePath}`);
+        console.error(`Image file not found: ${filePath}`);
         return null;
       }
-
       const buffer = fs.readFileSync(filePath);
       const ext = path.extname(filePath).toLowerCase();
       const mimeType = ext === '.png' ? 'image/png' :
                        ext === '.webp' ? 'image/webp' : 'image/jpeg';
-      return {
-        data: buffer.toString('base64'),
-        mimeType,
-      };
+      return { data: buffer.toString('base64'), mimeType };
     }
 
-    // If it's an HTTP URL, fetch it
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       const response = await fetch(imageUrl);
-      if (!response.ok) {
-        console.error('Failed to fetch image:', response.status);
-        return null;
-      }
+      if (!response.ok) return null;
       const arrayBuffer = await response.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
       const contentType = response.headers.get('content-type') || 'image/jpeg';
-      return {
-        data: buffer.toString('base64'),
-        mimeType: contentType,
-      };
+      return { data: buffer.toString('base64'), mimeType: contentType };
     }
 
-    // If it's already base64 data
     if (imageUrl.startsWith('data:')) {
       const [header, data] = imageUrl.split(',');
       const mimeType = header.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
       return { data, mimeType };
     }
 
-    // Assume it's a base64 string without prefix
-    return {
-      data: imageUrl,
-      mimeType: 'image/jpeg',
-    };
+    return { data: imageUrl, mimeType: 'image/jpeg' };
   } catch (error) {
     console.error('Error converting image to base64:', error);
     return null;
   }
 }
 
-/**
- * Normalize name for comparison (remove accents, lowercase, trim)
- */
 function normalizeName(name: string | null): string {
   if (!name) return '';
   return name
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove accents
-    .replace(/[^a-z\s]/g, '') // Keep only letters and spaces
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z\s]/g, '')
     .trim()
-    .replace(/\s+/g, ' '); // Normalize spaces
+    .replace(/\s+/g, ' ');
 }
 
-/**
- * Compare two names with fuzzy matching
- */
 function compareNames(name1: string | null, name2: string | null): { match: boolean; confidence: number } {
   const n1 = normalizeName(name1);
   const n2 = normalizeName(name2);
 
-  if (!n1 || !n2) {
-    return { match: false, confidence: 0 };
-  }
+  if (!n1 || !n2) return { match: false, confidence: 0 };
+  if (n1 === n2) return { match: true, confidence: 100 };
+  if (n1.includes(n2) || n2.includes(n1)) return { match: true, confidence: 85 };
 
-  // Exact match
-  if (n1 === n2) {
-    return { match: true, confidence: 100 };
-  }
-
-  // Check if one contains the other
-  if (n1.includes(n2) || n2.includes(n1)) {
-    return { match: true, confidence: 85 };
-  }
-
-  // Check individual parts (first name, last name)
   const parts1 = n1.split(' ');
   const parts2 = n2.split(' ');
-
   let matchingParts = 0;
   for (const part1 of parts1) {
     for (const part2 of parts2) {
-      if (part1 === part2 && part1.length > 2) {
-        matchingParts++;
-      }
+      if (part1 === part2 && part1.length > 2) matchingParts++;
     }
   }
 
-  if (matchingParts >= 2) {
-    return { match: true, confidence: 80 };
-  } else if (matchingParts === 1) {
-    return { match: true, confidence: 60 };
-  }
+  if (matchingParts >= 2) return { match: true, confidence: 80 };
+  if (matchingParts === 1) return { match: true, confidence: 60 };
 
-  // Calculate Levenshtein similarity for partial matches
   const maxLen = Math.max(n1.length, n2.length);
   const distance = levenshteinDistance(n1, n2);
   const similarity = ((maxLen - distance) / maxLen) * 100;
 
-  return {
-    match: similarity >= 70,
-    confidence: Math.round(similarity),
-  };
+  return { match: similarity >= 70, confidence: Math.round(similarity) };
 }
 
-/**
- * Levenshtein distance for fuzzy matching
- */
 function levenshteinDistance(s1: string, s2: string): number {
   const m = s1.length;
   const n = s2.length;
@@ -371,43 +219,41 @@ function levenshteinDistance(s1: string, s2: string): number {
   return dp[m][n];
 }
 
-/**
- * Build prompt for document verification
- */
-function buildVerificationPrompt(
-  expectedDocType: DocumentType,
-  hasBackImage: boolean
-): string {
-  const docTypeLabels: Record<DocumentType, string> = {
-    'ID_CARD': 'Carte d\'identité nationale',
-    'PASSPORT': 'Passeport',
-    'DRIVER_LICENSE': 'Permis de conduire',
+// ═══════════════════════════════════════════════════════════════
+// ERROR RESULT HELPER
+// ═══════════════════════════════════════════════════════════════
+
+function errorResult(
+  issues: string[],
+  rejectionReasons: string[],
+  profileName: string | null,
+  error?: string
+): VerificationResult {
+  return {
+    success: !error,
+    is_verified: false,
+    verification_score: 0,
+    document_analysis: {
+      detected_document_type: 'UNKNOWN',
+      document_type_confidence: 0,
+      is_valid_document: false,
+      document_quality: 'POOR',
+      extracted_info: {
+        first_name: null, last_name: null, full_name: null,
+        document_number: null, expiry_date: null, country: null,
+      },
+      front_analysis: {
+        is_front_side: false, has_photo: false, is_readable: false, issues,
+      },
+    },
+    profile_match: {
+      names_match: false, match_confidence: 0,
+      extracted_name: null, profile_name: profileName,
+    },
+    rejection_reasons: rejectionReasons,
+    warnings: [],
+    error,
   };
-
-  return `Tu es un expert en vérification de documents d'identité. Analyse attentivement ${hasBackImage ? 'ces images (recto et verso)' : 'cette image (recto)'} d'un document censé être un(e) ${docTypeLabels[expectedDocType]}.
-
-TÂCHES:
-1. Vérifie si le document correspond au type attendu (${docTypeLabels[expectedDocType]})
-2. Évalue la qualité et la lisibilité du document
-3. Extrait les informations d'identité visibles (nom, prénom, numéro, date d'expiration)
-4. Vérifie que c'est un document authentique (pas une photo d'écran, pas modifié)
-
-CRITÈRES DE QUALITÉ:
-- GOOD: Image nette, bien éclairée, texte parfaitement lisible
-- ACCEPTABLE: Légèrement flou mais lisible, éclairage correct
-- POOR: Flou, mal éclairé, partiellement illisible
-
-SIGNAUX D'ALERTE (à reporter dans les issues):
-- Photo d'écran au lieu d'un vrai document
-- Document plié, déchiré ou endommagé
-- Texte illisible ou masqué
-- Document expiré
-- Suspicion de falsification
-- Mauvais type de document
-
-${hasBackImage ? 'La première image est le RECTO, la deuxième est le VERSO.' : 'Analyse uniquement le RECTO.'}
-
-Réponds en JSON avec les champs demandés. Sois précis dans l'extraction des noms.`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -420,178 +266,103 @@ export async function verifyKYCDocument(
   frontImageUrl: string,
   backImageUrl?: string
 ): Promise<VerificationResult> {
-  console.log(`🔍 Starting KYC verification for talent ${talentId}`);
+  console.log(`Starting KYC verification for talent ${talentId}`);
 
-  // Check API key
   if (!process.env.OPENAI_API_KEY) {
-    console.error('❌ OPENAI_API_KEY not configured');
-    return {
-      success: false,
-      is_verified: false,
-      verification_score: 0,
-      document_analysis: {
-        detected_document_type: 'UNKNOWN',
-        document_type_confidence: 0,
-        is_valid_document: false,
-        document_quality: 'POOR',
-        extracted_info: {
-          first_name: null,
-          last_name: null,
-          full_name: null,
-          document_number: null,
-          expiry_date: null,
-          country: null,
-        },
-        front_analysis: {
-          is_front_side: false,
-          has_photo: false,
-          is_readable: false,
-          issues: ['Service de vérification non configuré'],
-        },
-      },
-      profile_match: {
-        names_match: false,
-        match_confidence: 0,
-        extracted_name: null,
-        profile_name: null,
-      },
-      rejection_reasons: ['Service de vérification non disponible'],
-      warnings: [],
-      error: 'OPENAI_API_KEY not configured',
-    };
+    return errorResult(
+      ['Service de vérification non configuré'],
+      ['Service de vérification non disponible'],
+      null,
+      'OPENAI_API_KEY not configured'
+    );
   }
 
-  // Get talent profile
-  const talent = await getTalentProfile(talentId);
-  if (!talent) {
-    return {
-      success: false,
-      is_verified: false,
-      verification_score: 0,
-      document_analysis: {
-        detected_document_type: 'UNKNOWN',
-        document_type_confidence: 0,
-        is_valid_document: false,
-        document_quality: 'POOR',
-        extracted_info: {
-          first_name: null,
-          last_name: null,
-          full_name: null,
-          document_number: null,
-          expiry_date: null,
-          country: null,
-        },
-        front_analysis: {
-          is_front_side: false,
-          has_photo: false,
-          is_readable: false,
-          issues: ['Profil non trouvé'],
-        },
-      },
-      profile_match: {
-        names_match: false,
-        match_confidence: 0,
-        extracted_name: null,
-        profile_name: null,
-      },
-      rejection_reasons: ['Profil utilisateur non trouvé'],
-      warnings: [],
-      error: 'Talent profile not found',
-    };
+  // Single TalentObject load — used for both validation and prompt context
+  const talentObj = await buildTalentObject(talentId);
+  if (!talentObj) {
+    return errorResult(
+      ['Profil non trouvé'],
+      ['Profil utilisateur non trouvé'],
+      null,
+      'Talent profile not found'
+    );
   }
 
-  // Convert images to base64
+  const talent: TalentProfile = {
+    id: talentObj.id,
+    first_name: talentObj.first_name,
+    last_name: talentObj.last_name,
+    display_name: talentObj.display_name,
+  };
+
   const frontImage = await imageToBase64(frontImageUrl);
   if (!frontImage) {
-    return {
-      success: false,
-      is_verified: false,
-      verification_score: 0,
-      document_analysis: {
-        detected_document_type: 'UNKNOWN',
-        document_type_confidence: 0,
-        is_valid_document: false,
-        document_quality: 'POOR',
-        extracted_info: {
-          first_name: null,
-          last_name: null,
-          full_name: null,
-          document_number: null,
-          expiry_date: null,
-          country: null,
-        },
-        front_analysis: {
-          is_front_side: false,
-          has_photo: false,
-          is_readable: false,
-          issues: ['Impossible de charger l\'image recto'],
-        },
-      },
-      profile_match: {
-        names_match: false,
-        match_confidence: 0,
-        extracted_name: null,
-        profile_name: talent.display_name,
-      },
-      rejection_reasons: ['Image recto non accessible'],
-      warnings: [],
-      error: 'Failed to load front image',
-    };
+    return errorResult(
+      ['Impossible de charger l\'image recto'],
+      ['Image recto non accessible'],
+      talent.display_name,
+      'Failed to load front image'
+    );
   }
 
   const backImage = backImageUrl ? await imageToBase64(backImageUrl) : null;
 
-  // Build prompt with images
-  const prompt = buildVerificationPrompt(expectedDocType, !!backImage) + `\n\nIMPORTANT: Réponds UNIQUEMENT avec un JSON valide respectant ce schéma:
-${JSON.stringify(DOCUMENT_ANALYSIS_SCHEMA, null, 2)}`;
+  const docTypeLabels: Record<DocumentType, string> = {
+    'ID_CARD': 'Carte d\'identité nationale',
+    'PASSPORT': 'Passeport',
+    'DRIVER_LICENSE': 'Permis de conduire',
+    'STUDENT_CARD': 'Carte scolaire / étudiante',
+  };
 
-  const messageContent: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
+  // Build talent context for the prompt (name + country only, relevant to KYC)
+  const profileName = [talentObj.first_name, talentObj.last_name].filter(Boolean).join(' ') || talentObj.display_name;
+  const talentContext = `Nom: ${profileName}\nPays: ${talentObj.country || 'Non renseigné'}`;
+
+  const prompt = buildKYCVerificationPrompt(
+    expectedDocType,
+    docTypeLabels[expectedDocType],
+    !!backImage,
+    JSON.stringify(DOCUMENT_ANALYSIS_SCHEMA, null, 2),
+    talentContext
+  );
+
+  // Build input with images
+  const contentItems: Array<
+    | { type: 'input_text'; text: string }
+    | { type: 'input_image'; image: string; detail: string }
+  > = [
+    { type: 'input_text', text: prompt },
     {
-      type: 'text',
-      text: prompt,
-    },
-    {
-      type: 'image_url',
-      image_url: {
-        url: `data:${frontImage.mimeType};base64,${frontImage.data}`,
-      },
+      type: 'input_image',
+      image: `data:${frontImage.mimeType};base64,${frontImage.data}`,
+      detail: 'high',
     },
   ];
 
   if (backImage) {
-    messageContent.push({
-      type: 'image_url',
-      image_url: {
-        url: `data:${backImage.mimeType};base64,${backImage.data}`,
-      },
+    contentItems.push({
+      type: 'input_image',
+      image: `data:${backImage.mimeType};base64,${backImage.data}`,
+      detail: 'high',
     });
   }
 
+  const input: AgentInputItem[] = [
+    { role: 'user', content: contentItems as any },
+  ];
+
   try {
-    console.log(`📤 Calling GPT-5 nano API for document analysis...`);
+    console.log(`Calling GPT-4.1-nano API for document analysis...`);
 
-    const response = await openai.chat.completions.create({
-      model: MODEL_NAME,
-      messages: [
-        {
-          role: 'system',
-          content: 'Tu es un expert en vérification de documents d\'identité. Réponds toujours en JSON valide.',
-        },
-        {
-          role: 'user',
-          content: messageContent,
-        },
-      ],
-      max_completion_tokens: 2048,
-      response_format: { type: 'json_object' },
-    });
+    const agent = createKYCAgent();
+    const result = await run(agent, input);
 
-    const analysisText = response.choices[0]?.message?.content;
+    const analysisText = result.finalOutput;
     if (!analysisText) {
-      throw new Error('No response from GPT-5 nano');
+      throw new Error('No response from agent');
     }
 
-    console.log(`📥 GPT-5 nano analysis received`);
+    console.log(`GPT-4.1-nano analysis received`);
 
     interface DocumentAnalysisResponse {
       detected_document_type: DocumentType | 'UNKNOWN' | 'INVALID';
@@ -615,7 +386,6 @@ ${JSON.stringify(DOCUMENT_ANALYSIS_SCHEMA, null, 2)}`;
 
     const analysis: DocumentAnalysisResponse = JSON.parse(analysisText);
 
-    // Build document analysis result
     const documentAnalysis: DocumentAnalysis = {
       detected_document_type: analysis.detected_document_type,
       document_type_confidence: analysis.document_type_confidence,
@@ -665,40 +435,29 @@ ${JSON.stringify(DOCUMENT_ANALYSIS_SCHEMA, null, 2)}`;
         : undefined,
     };
 
-    // Calculate verification score and determine if verified
+    // Calculate verification score
     const rejectionReasons: string[] = [];
     const warnings: string[] = [];
 
-    // Check document type
     if (analysis.detected_document_type !== expectedDocType) {
       rejectionReasons.push(
         `Type de document incorrect. Attendu: ${expectedDocType}, Détecté: ${analysis.detected_document_type}`
       );
     }
-
-    // Check validity
     if (!analysis.is_valid_document) {
       rejectionReasons.push('Le document ne semble pas authentique ou valide');
     }
-
-    // Check quality
     if (analysis.document_quality === 'POOR') {
       rejectionReasons.push('Qualité d\'image insuffisante');
     } else if (analysis.document_quality === 'ACCEPTABLE') {
       warnings.push('La qualité d\'image pourrait être améliorée');
     }
-
-    // Check readability
     if (!analysis.is_readable) {
       rejectionReasons.push('Le texte du document n\'est pas lisible');
     }
-
-    // Check photo presence
     if (!analysis.has_photo) {
       rejectionReasons.push('Aucune photo d\'identité détectée sur le document');
     }
-
-    // Check name match
     if (!nameComparison.match) {
       if (extractedFullName) {
         rejectionReasons.push(
@@ -711,7 +470,6 @@ ${JSON.stringify(DOCUMENT_ANALYSIS_SCHEMA, null, 2)}`;
       warnings.push(`Correspondance du nom partielle (${nameComparison.confidence}%)`);
     }
 
-    // Add front issues
     if (documentAnalysis.front_analysis.issues.length > 0) {
       documentAnalysis.front_analysis.issues.forEach(issue => {
         if (issue.toLowerCase().includes('expiré') || issue.toLowerCase().includes('falsif')) {
@@ -722,7 +480,6 @@ ${JSON.stringify(DOCUMENT_ANALYSIS_SCHEMA, null, 2)}`;
       });
     }
 
-    // Calculate final score
     let score = 100;
     score -= rejectionReasons.length * 25;
     score -= warnings.length * 5;
@@ -732,7 +489,7 @@ ${JSON.stringify(DOCUMENT_ANALYSIS_SCHEMA, null, 2)}`;
 
     const isVerified = rejectionReasons.length === 0 && score >= 70;
 
-    console.log(`✅ KYC verification complete: ${isVerified ? 'VERIFIED' : 'REJECTED'} (score: ${score})`);
+    console.log(`KYC verification complete: ${isVerified ? 'VERIFIED' : 'REJECTED'} (score: ${score})`);
 
     return {
       success: true,
@@ -744,41 +501,13 @@ ${JSON.stringify(DOCUMENT_ANALYSIS_SCHEMA, null, 2)}`;
       warnings,
     };
   } catch (error) {
-    console.error('❌ KYC verification error:', error);
-    return {
-      success: false,
-      is_verified: false,
-      verification_score: 0,
-      document_analysis: {
-        detected_document_type: 'UNKNOWN',
-        document_type_confidence: 0,
-        is_valid_document: false,
-        document_quality: 'POOR',
-        extracted_info: {
-          first_name: null,
-          last_name: null,
-          full_name: null,
-          document_number: null,
-          expiry_date: null,
-          country: null,
-        },
-        front_analysis: {
-          is_front_side: false,
-          has_photo: false,
-          is_readable: false,
-          issues: ['Erreur lors de l\'analyse'],
-        },
-      },
-      profile_match: {
-        names_match: false,
-        match_confidence: 0,
-        extracted_name: null,
-        profile_name: talent?.display_name || null,
-      },
-      rejection_reasons: ['Erreur technique lors de la vérification'],
-      warnings: [],
-      error: error instanceof Error ? error.message : 'Verification failed',
-    };
+    console.error('KYC verification error:', error);
+    return errorResult(
+      ['Erreur lors de l\'analyse'],
+      ['Erreur technique lors de la vérification'],
+      talent?.display_name || null,
+      error instanceof Error ? error.message : 'Verification failed'
+    );
   }
 }
 
@@ -798,34 +527,24 @@ export async function quickDocumentCheck(
       return { valid: false, document_type: 'UNKNOWN', message: 'Image non accessible' };
     }
 
-    const response = await openai.chat.completions.create({
-      model: MODEL_NAME,
-      messages: [
-        {
-          role: 'system',
-          content: 'Tu es un expert en vérification de documents. Réponds toujours en JSON valide.',
-        },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Est-ce une image d\'un document d\'identité valide (carte d\'identité, passeport, ou permis de conduire)? Réponds UNIQUEMENT par JSON: {"is_document": boolean, "type": "ID_CARD"|"PASSPORT"|"DRIVER_LICENSE"|"UNKNOWN", "message": "string"}',
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:${frontImage.mimeType};base64,${frontImage.data}`,
-              },
-            },
-          ],
-        },
-      ],
-      max_completion_tokens: 256,
-      response_format: { type: 'json_object' },
-    });
+    const input: AgentInputItem[] = [
+      {
+        role: 'user',
+        content: [
+          { type: 'input_text', text: buildQuickCheckPrompt() },
+          {
+            type: 'input_image',
+            image: `data:${frontImage.mimeType};base64,${frontImage.data}`,
+            detail: 'low',
+          },
+        ] as any,
+      },
+    ];
 
-    const resultText = response.choices[0]?.message?.content;
+    const agent = createKYCAgent();
+    const result = await run(agent, input);
+
+    const resultText = result.finalOutput;
     if (!resultText) {
       return { valid: true, document_type: 'UNKNOWN', message: 'Vérification temporairement indisponible' };
     }
@@ -841,8 +560,6 @@ export async function quickDocumentCheck(
       console.error('Error parsing quick check response:', error);
       return { valid: true, document_type: 'UNKNOWN', message: 'Erreur lors de l\'analyse' };
     }
-
-    return { valid: true, document_type: 'UNKNOWN', message: 'Format de réponse non reconnu' };
   } catch (error) {
     console.error('Quick document check error:', error);
     return { valid: true, document_type: 'UNKNOWN', message: 'Vérification non effectuée' };

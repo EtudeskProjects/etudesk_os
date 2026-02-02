@@ -6,6 +6,7 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
+import { pool } from '../services/database';
 import {
   uploadDocument,
   getDocument,
@@ -180,6 +181,22 @@ router.post(
       const talentId = req.talentId;
       if (!talentId) {
         return res.status(404).json({ error: 'Profil talent non trouvé' });
+      }
+
+      // KYC gate: require verified identity before uploading documents
+      const identityCheck = await pool.query(
+        `SELECT id FROM kyc_verifications
+         WHERE talent_id = $1 AND status = 'VERIFIED'
+         LIMIT 1`,
+        [talentId]
+      );
+
+      if (identityCheck.rows.length === 0) {
+        return res.status(403).json({
+          error: 'Identité non vérifiée',
+          code: 'IDENTITY_REQUIRED',
+          message: 'Vous devez vérifier votre identité avant d\'ajouter des documents. Rendez-vous dans Paramètres > Vérification d\'identité.',
+        });
       }
 
       const files = req.files as Express.Multer.File[] | undefined;

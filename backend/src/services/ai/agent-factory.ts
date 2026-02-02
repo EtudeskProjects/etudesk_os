@@ -22,7 +22,7 @@ import { BIO_GEN_SYSTEM_PROMPT } from './prompts/bio-gen.prompt';
 export function createExtractionAgent(): Agent {
   return new Agent({
     name: 'Document Extractor',
-    model: 'gpt-4.1-mini',
+    model: 'gpt-5-mini',
     instructions: EXTRACTION_SYSTEM_PROMPT,
     modelSettings: {
       temperature: 0.1,
@@ -37,7 +37,7 @@ export function createExtractionAgent(): Agent {
 export function createSpaceGenAgent(): Agent {
   return new Agent({
     name: 'Space Generator',
-    model: 'gpt-4.1-nano',
+    model: 'gpt-5-nano',
     instructions: SPACE_GEN_SYSTEM_PROMPT,
   });
 }
@@ -49,7 +49,7 @@ export function createSpaceGenAgent(): Agent {
 export function createCommunityGenAgent(): Agent {
   return new Agent({
     name: 'Community Generator',
-    model: 'gpt-4.1-nano',
+    model: 'gpt-5-nano',
     instructions: COMMUNITY_GEN_SYSTEM_PROMPT,
   });
 }
@@ -61,7 +61,7 @@ export function createCommunityGenAgent(): Agent {
 export function createOpportunityGenAgent(): Agent {
   return new Agent({
     name: 'Opportunity Generator',
-    model: 'gpt-4.1-nano',
+    model: 'gpt-5-nano',
     instructions: OPPORTUNITY_GEN_SYSTEM_PROMPT,
   });
 }
@@ -73,7 +73,7 @@ export function createOpportunityGenAgent(): Agent {
 export function createRecommendationAgent(): Agent {
   return new Agent({
     name: 'Recommendation Generator',
-    model: 'gpt-4.1-nano',
+    model: 'gpt-5-nano',
     instructions: RECOMMENDATION_SYSTEM_PROMPT,
   });
 }
@@ -85,7 +85,7 @@ export function createRecommendationAgent(): Agent {
 export function createKYCAgent(): Agent {
   return new Agent({
     name: 'KYC Verifier',
-    model: 'gpt-4.1-nano',
+    model: 'gpt-5-mini',
     instructions: KYC_SYSTEM_PROMPT,
   });
 }
@@ -97,7 +97,7 @@ export function createKYCAgent(): Agent {
 export function createBioGenAgent(): Agent {
   return new Agent({
     name: 'Bio Generator',
-    model: 'gpt-4.1-nano',
+    model: 'gpt-5-nano',
     instructions: BIO_GEN_SYSTEM_PROMPT,
     modelSettings: {
       temperature: 0.8,

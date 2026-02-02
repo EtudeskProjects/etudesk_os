@@ -10,6 +10,7 @@ import { onTalentProfileUpdate } from '../services/embedding.service';
 import { autoModerationService } from '../services/auto-moderation.service';
 import { run } from '@openai/agents';
 import { createBioGenAgent } from '../services/ai/agent-factory';
+import { buildTalentObject, talentObjectToText } from '../services/ai/talent-object';
 
 // Type for SQL query parameters
 type QueryParam = string | number | boolean | null | Date | string[];
@@ -285,49 +286,31 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
  */
 router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const parts: string[] = [];
-    let skills: string[] = [];
+    let contextText: string | null = null;
 
-    // If talent exists, load from DB
+    // If talent exists, use TalentObject
     if (req.talentId) {
-      const result = await pool.query(
-        `SELECT display_name, first_name, last_name, gender, profile_tags, sectors, goals, city, region, country
-         FROM talents WHERE id = $1 AND deleted_at IS NULL`,
-        [req.talentId]
-      );
-
-      if (result.rows.length > 0) {
-        const profile = result.rows[0];
-        if (profile.display_name) parts.push(`Nom: ${profile.display_name}`);
-        if (profile.profile_tags?.length) parts.push(`Profil: ${profile.profile_tags.join(', ')}`);
-        if (profile.sectors?.length) parts.push(`Secteurs: ${profile.sectors.join(', ')}`);
-        if (profile.goals?.length) parts.push(`Objectifs: ${profile.goals.join(', ')}`);
-        if (profile.city || profile.country) parts.push(`Localisation: ${[profile.city, profile.region, profile.country].filter(Boolean).join(', ')}`);
-      }
-
-      const skillsResult = await pool.query(
-        `SELECT s.canonical_name FROM talent_skills ts
-         JOIN skills s ON ts.skill_id = s.id
-         WHERE ts.talent_id = $1 LIMIT 10`,
-        [req.talentId]
-      );
-      skills = skillsResult.rows.map((r: { canonical_name: string }) => r.canonical_name);
-      if (skills.length) parts.push(`Compétences: ${skills.join(', ')}`);
+      const talentObj = await buildTalentObject(req.talentId);
+      if (talentObj) contextText = talentObjectToText(talentObj);
     }
 
-    // Override/supplement with body data (for create-profile before talent exists)
-    const body = req.body || {};
-    if (body.display_name && !parts.some(p => p.startsWith('Nom:'))) parts.push(`Nom: ${body.display_name}`);
-    if (body.profile_tags?.length && !parts.some(p => p.startsWith('Profil:'))) parts.push(`Profil: ${body.profile_tags.join(', ')}`);
-    if (body.sectors?.length && !parts.some(p => p.startsWith('Secteurs:'))) parts.push(`Secteurs: ${body.sectors.join(', ')}`);
-    if (body.goals?.length && !parts.some(p => p.startsWith('Objectifs:'))) parts.push(`Objectifs: ${body.goals.join(', ')}`);
-    if (body.country && !parts.some(p => p.startsWith('Localisation:'))) parts.push(`Localisation: ${[body.city, body.region, body.country].filter(Boolean).join(', ')}`);
+    // Fallback: body data (for create-profile before talent exists)
+    if (!contextText) {
+      const body = req.body || {};
+      const parts: string[] = [];
+      if (body.display_name) parts.push(`Nom: ${body.display_name}`);
+      if (body.profile_tags?.length) parts.push(`Profil: ${body.profile_tags.join(', ')}`);
+      if (body.sectors?.length) parts.push(`Secteurs: ${body.sectors.join(', ')}`);
+      if (body.goals?.length) parts.push(`Objectifs: ${body.goals.join(', ')}`);
+      if (body.country) parts.push(`Localisation: ${[body.city, body.region, body.country].filter(Boolean).join(', ')}`);
+      if (parts.length > 0) contextText = parts.join('\n');
+    }
 
-    if (parts.length === 0) {
+    if (!contextText) {
       return res.status(400).json({ error: 'Pas assez d\'informations pour générer une bio. Remplis d\'abord ton profil.' });
     }
 
-    const userPrompt = `Génère une bio pour ce profil :\n${parts.join('\n')}`;
+    const userPrompt = `Génère une bio pour ce profil :\n${contextText}`;
 
     const agent = createBioGenAgent();
     const aiResult = await run(agent, userPrompt);

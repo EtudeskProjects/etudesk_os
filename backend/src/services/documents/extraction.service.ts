@@ -1,9 +1,10 @@
 /**
  * Document Extraction Service
- * Uses GPT-4o-mini multimodal to extract structured metadata from documents
+ * Uses Agents SDK with GPT-4.1-mini for structured metadata extraction from documents
  */
 
-import OpenAI from 'openai';
+import { run } from '@openai/agents';
+import type { AgentInputItem } from '@openai/agents';
 import {
   DocumentType,
   DOCUMENT_TYPES,
@@ -11,16 +12,9 @@ import {
   DOCUMENT_TYPE_CATEGORIES,
   DocumentCategory,
 } from '../../constants/documents';
-
-// ═══════════════════════════════════════════════════════════════
-// OPENAI CLIENT
-// ═══════════════════════════════════════════════════════════════
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-const EXTRACTION_MODEL = 'gpt-4.1-mini';
+import { createExtractionAgent } from '../ai/agent-factory';
+import { buildExtractionPrompt } from '../ai/prompts/extraction.prompt';
+import { buildTalentObject, talentObjectToText } from '../ai/talent-object';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -84,73 +78,16 @@ export interface ExtractionResult {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// EXTRACTION PROMPTS
-// ═══════════════════════════════════════════════════════════════
-
-const EXTRACTION_SYSTEM_PROMPT = `Tu es un expert en analyse de documents. Tu dois extraire les informations structurées des documents fournis (CV, diplômes, certificats, documents d'identité, etc.).
-
-Règles:
-1. Réponds UNIQUEMENT en JSON valide
-2. Si une information n'est pas trouvée, omets le champ plutôt que de mettre null
-3. Les dates doivent être au format ISO (YYYY-MM-DD) quand possible
-4. Les compétences et tags doivent être en minuscules et normalisés
-5. Le score de confiance (0-1) reflète ta certitude sur le type de document détecté
-6. Génère des tags pertinents pour faciliter la recherche
-
-Types de documents possibles:
-- CV: Curriculum Vitae, Resume
-- CERTIFICATE: Certificat de formation, attestation
-- DIPLOMA: Diplôme universitaire, scolaire
-- LICENSE: Licence professionnelle, permis d'exercer
-- PORTFOLIO: Portfolio créatif, book
-- RECOMMENDATION_LETTER: Lettre de recommandation
-- TRANSCRIPT: Bulletin scolaire, relevé de notes
-- PUBLICATION: Article, publication scientifique
-- PATENT: Brevet
-- ID_CARD: Carte d'identité nationale
-- PASSPORT: Passeport
-- DRIVER_LICENSE: Permis de conduire
-- PROOF_OF_ADDRESS: Justificatif de domicile
-- OTHER: Autre document`;
-
-const getExtractionUserPrompt = (mimeType: string) => `
-Analyse ce document et extrais les informations structurées.
-
-Le document est de type: ${mimeType}
-
-Réponds avec un JSON contenant:
-{
-  "detected_type": "TYPE_DU_DOCUMENT",
-  "detected_category": "PROFESSIONAL|ACADEMIC|IDENTITY|OTHER",
-  "confidence_score": 0.0-1.0,
-  "title": "Titre du document si applicable",
-  "issuer": "Émetteur/Organisation",
-  "issue_date": "YYYY-MM-DD",
-  "expiry_date": "YYYY-MM-DD si applicable",
-  "description": "Brève description du contenu",
-  "skills": [{"name": "compétence1", "type": "HARD_SKILL|SOFT_SKILL|KNOWLEDGE", "proficiency_hint": "beginner|intermediate|expert", "context": "contexte d'utilisation"}],
-  "languages": ["français", "anglais"],
-  "field_of_study": "Domaine d'étude",
-  "institution": "Institution/École",
-  "full_name": "Nom complet si document d'identité",
-  "tags": ["tag1", "tag2", "tag3"],
-  "summary": "Résumé en une phrase du document",
-  "extracted_text": "Texte principal extrait (max 500 caractères)"
-}
-
-N'inclus que les champs pertinents pour ce type de document.
-`;
-
-// ═══════════════════════════════════════════════════════════════
 // EXTRACTION FUNCTIONS
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * Extract metadata from a document using GPT-4o-mini vision
+ * Extract metadata from a document using GPT-4.1-mini vision via Agents SDK
  */
 export async function extractDocumentMetadata(
   fileUrl: string,
-  mimeType: string
+  mimeType: string,
+  talentId?: string
 ): Promise<ExtractionResult> {
   try {
     // Determine content type for the API
@@ -164,44 +101,43 @@ export async function extractDocumentMetadata(
       };
     }
 
-    // Build the message content
-    const messageContent: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [
+    // Build talent context if available
+    let talentContext: string | undefined;
+    if (talentId) {
+      const talentObj = await buildTalentObject(talentId);
+      if (talentObj) talentContext = talentObjectToText(talentObj);
+    }
+
+    // Build input with file/image content for the agent
+    const contentParts: any[] = [
       {
-        type: 'text',
-        text: getExtractionUserPrompt(mimeType),
+        type: 'input_text',
+        text: buildExtractionPrompt(mimeType, talentContext),
       },
     ];
 
-    // Add the document as image (GPT-4o-mini can process PDFs as images)
-    if (isImage || isPdf) {
-      messageContent.push({
-        type: 'image_url',
-        image_url: {
-          url: fileUrl,
-          detail: 'high', // Use high detail for better text extraction
-        },
+    if (isPdf) {
+      contentParts.push({
+        type: 'input_file',
+        file: fileUrl,
+        filename: 'document.pdf',
+      });
+    } else {
+      contentParts.push({
+        type: 'input_image',
+        image: fileUrl,
+        detail: 'high',
       });
     }
 
-    // Call GPT-4o-mini
-    const response = await openai.chat.completions.create({
-      model: EXTRACTION_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: EXTRACTION_SYSTEM_PROMPT,
-        },
-        {
-          role: 'user',
-          content: messageContent,
-        },
-      ],
-      max_tokens: 2000,
-      temperature: 0.1, // Low temperature for consistent extraction
-      response_format: { type: 'json_object' },
-    });
+    const input: AgentInputItem[] = [
+      { role: 'user', content: contentParts },
+    ];
 
-    const content = response.choices[0]?.message?.content;
+    const agent = createExtractionAgent();
+    const result = await run(agent, input);
+
+    const content = result.finalOutput;
 
     if (!content) {
       return {
@@ -210,8 +146,14 @@ export async function extractDocumentMetadata(
       };
     }
 
+    // Strip markdown fences if present (LLM sometimes wraps in ```json...```)
+    const cleanedContent = content
+      .replace(/^```(?:json)?\s*\n?/i, '')
+      .replace(/\n?```\s*$/i, '')
+      .trim();
+
     // Parse the JSON response
-    const extractedData = JSON.parse(content) as Partial<ExtractedDocumentData>;
+    const extractedData = JSON.parse(cleanedContent) as Partial<ExtractedDocumentData>;
 
     // Validate and normalize the detected type
     const detectedType = normalizeDocumentType(extractedData.detected_type);
@@ -244,11 +186,12 @@ export async function extractDocumentMetadata(
  */
 export async function extractFromBase64(
   base64Data: string,
-  mimeType: string
+  mimeType: string,
+  talentId?: string
 ): Promise<ExtractionResult> {
   // Create data URL
   const dataUrl = `data:${mimeType};base64,${base64Data}`;
-  return extractDocumentMetadata(dataUrl, mimeType);
+  return extractDocumentMetadata(dataUrl, mimeType, talentId);
 }
 
 /**

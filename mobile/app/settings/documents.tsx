@@ -3,37 +3,39 @@
  * Talent document management - listing, upload, and delete
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Modal,
+  Image,
+  Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
+import { WebView } from 'react-native-webview';
+import { useRouter } from 'expo-router';
 import {
   Upload,
   FileText,
   Trash2,
   RotateCcw,
-  File,
-  Briefcase,
-  GraduationCap,
-  CreditCard,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
-  Image as ImageIcon,
+  X,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { Button, PageLayout, EmptyState } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
+import { API_CONFIG } from '../../src/constants/config';
 import documentService, {
   TalentDocument,
   DocumentStatus,
-  DocumentCategory,
   DOCUMENT_TYPE_LABELS,
   DOCUMENT_STATUS_LABELS,
   UPLOAD_LIMITS,
@@ -41,32 +43,75 @@ import documentService, {
   getStatusColor,
 } from '../../src/services/documentService';
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 export default function DocumentsScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [documents, setDocuments] = useState<TalentDocument[]>([]);
+  const [expandedDocs, setExpandedDocs] = useState<Record<string, boolean>>({});
+  const [previewDoc, setPreviewDoc] = useState<TalentDocument | null>(null);
+
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const getFullFileUrl = (doc: TalentDocument) => {
+    if (doc.file_url.startsWith('http')) return doc.file_url;
+    return `${API_CONFIG.BASE_URL}${doc.file_url.startsWith('/') ? '' : '/'}${doc.file_url}`;
+  };
 
   const loadDocuments = useCallback(async () => {
     try {
       const docsResponse = await documentService.listDocuments({ limit: 50 });
       setDocuments(docsResponse.documents);
+      return docsResponse.documents;
     } catch (error) {
       console.error('Error loading documents:', error);
       Alert.alert('Erreur', 'Impossible de charger les documents');
+      return [];
+    }
+  }, []);
+
+  const startPolling = useCallback(() => {
+    if (pollingRef.current) return;
+    pollingRef.current = setInterval(async () => {
+      try {
+        const docsResponse = await documentService.listDocuments({ limit: 50 });
+        setDocuments(docsResponse.documents);
+        const hasPending = docsResponse.documents.some(
+          (d: TalentDocument) => d.status === 'PENDING' || d.status === 'PROCESSING'
+        );
+        if (!hasPending && pollingRef.current) {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
+        }
+      } catch {}
+    }, 3000);
+  }, []);
+
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
     }
   }, []);
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
-      await loadDocuments();
+      const docs = await loadDocuments();
       setIsLoading(false);
+      const hasPending = docs.some(
+        (d: TalentDocument) => d.status === 'PENDING' || d.status === 'PROCESSING'
+      );
+      if (hasPending) startPolling();
     };
     load();
-  }, [loadDocuments]);
+    return () => stopPolling();
+  }, [loadDocuments, startPolling, stopPolling]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -88,7 +133,6 @@ export default function DocumentsScreen() {
 
       const assets = result.assets.slice(0, UPLOAD_LIMITS.MAX_FILES_PER_REQUEST);
 
-      // Validate sizes
       for (const file of assets) {
         if (file.size && file.size > UPLOAD_LIMITS.MAX_FILE_SIZE_BYTES) {
           Alert.alert('Fichier trop volumineux', `"${file.name}" dépasse la taille maximale de ${UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB`);
@@ -122,8 +166,26 @@ export default function DocumentsScreen() {
         : `${assets.length} documents uploadés avec succès. Le traitement est en cours.`;
       Alert.alert('Succès', msg);
       await loadDocuments();
+      startPolling();
     } catch (error: any) {
       console.error('Error uploading document:', error);
+
+      // KYC gate: redirect to identity verification
+      if (error?.code === 'IDENTITY_REQUIRED') {
+        Alert.alert(
+          'Vérification requise',
+          'Tu dois vérifier ton identité avant d\'ajouter des documents.',
+          [
+            { text: 'Plus tard', style: 'cancel' },
+            {
+              text: 'Vérifier',
+              onPress: () => router.push('/settings/kyc'),
+            },
+          ]
+        );
+        return;
+      }
+
       Alert.alert('Erreur', error?.message || "Erreur lors de l'upload");
     } finally {
       setIsUploading(false);
@@ -157,21 +219,9 @@ export default function DocumentsScreen() {
       await documentService.retryExtraction(doc.id);
       Alert.alert('Succès', "Nouvelle tentative d'extraction lancée");
       await loadDocuments();
+      startPolling();
     } catch (error) {
       Alert.alert('Erreur', "Impossible de relancer l'extraction");
-    }
-  };
-
-  const getCategoryIcon = (category: DocumentCategory) => {
-    switch (category) {
-      case 'PROFESSIONAL':
-        return Briefcase;
-      case 'ACADEMIC':
-        return GraduationCap;
-      case 'IDENTITY':
-        return CreditCard;
-      default:
-        return FileText;
     }
   };
 
@@ -191,21 +241,35 @@ export default function DocumentsScreen() {
     }
   };
 
-  const getFileIcon = (mimeType: string) => {
-    if (mimeType === 'application/pdf') {
-      return FileText;
-    }
-    if (mimeType.startsWith('image/')) {
-      return ImageIcon;
-    }
-    return File;
+  const formatRelativeDate = (dateStr: string | null): string | null => {
+    if (!dateStr) return null;
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffMs = now.getTime() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffH = Math.floor(diffMin / 60);
+    const diffD = Math.floor(diffH / 24);
+    const diffW = Math.floor(diffD / 7);
+    const diffM = Math.floor(diffD / 30);
+
+    if (diffMin < 1) return "À l'instant";
+    if (diffMin < 60) return `Il y a ${diffMin} min`;
+    if (diffH < 24) return `Il y a ${diffH}h`;
+    if (diffD < 7) return `Il y a ${diffD}j`;
+    if (diffW < 5) return `Il y a ${diffW} sem.`;
+    if (diffM < 12) return `Il y a ${diffM} mois`;
+    return `Il y a ${Math.floor(diffD / 365)} an${Math.floor(diffD / 365) > 1 ? 's' : ''}`;
   };
 
   const renderDocument = (doc: TalentDocument) => {
-    const CategoryIcon = getCategoryIcon(doc.category);
     const StatusIcon = getStatusIcon(doc.status);
-    const FileIcon = getFileIcon(doc.mime_type);
     const statusColor = getStatusColor(doc.status);
+    const relativeDate = formatRelativeDate(doc.created_at);
+    const extracted = doc.extracted_data as Record<string, any> | undefined;
+    const summaryText = doc.description || extracted?.summary || extracted?.description || null;
+    const isExpanded = expandedDocs[doc.id] ?? false;
+    const isImage = doc.mime_type.startsWith('image/');
+    const fileUrl = getFullFileUrl(doc);
 
     return (
       <View
@@ -215,107 +279,181 @@ export default function DocumentsScreen() {
           { backgroundColor: colors.surface, borderColor: colors.borderColor },
         ]}
       >
-        <View style={styles.documentHeader}>
-          <View style={[styles.fileIconContainer, { backgroundColor: colors.gray100 }]}>
-            <FileIcon size={ICON.size.lg} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-          </View>
-          <View style={styles.documentInfo}>
-            <Text style={[styles.documentTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-              {doc.title || doc.original_filename}
-            </Text>
-            <View style={styles.documentMeta}>
-              <CategoryIcon size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.documentMetaText, { color: colors.textSecondary }]}>
-                {DOCUMENT_TYPE_LABELS[doc.document_type]}
+        {/* Delete button */}
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDelete(doc)}
+        >
+          <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
+        </TouchableOpacity>
+
+        <View style={styles.cardContent}>
+          {/* Thumbnail */}
+          <TouchableOpacity
+            style={[styles.thumbnail, { backgroundColor: colors.gray100 }]}
+            onPress={() => setPreviewDoc(doc)}
+            activeOpacity={0.7}
+          >
+            {isImage ? (
+              <Image source={{ uri: fileUrl }} style={styles.thumbnailImage} resizeMode="cover" />
+            ) : (
+              <FileText size={24} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+            )}
+          </TouchableOpacity>
+
+          {/* Info */}
+          <View style={styles.cardInfo}>
+            {/* Title */}
+            <TouchableOpacity onPress={() => setPreviewDoc(doc)} activeOpacity={0.7}>
+              <Text style={[styles.documentTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                {doc.title || doc.original_filename}
               </Text>
-            </View>
-          </View>
-        </View>
+            </TouchableOpacity>
 
-        <View style={styles.statusRow}>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
-            <StatusIcon size={14} color={statusColor} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.statusText, { color: statusColor }]}>
-              {DOCUMENT_STATUS_LABELS[doc.status]}
+            {/* Type · Size */}
+            <Text style={[styles.documentMeta, { color: colors.textSecondary }]}>
+              {DOCUMENT_TYPE_LABELS[doc.document_type]} · {formatFileSize(doc.file_size)}
             </Text>
+
+            {/* Tags row: status + retry + date */}
+            <View style={styles.tagsRow}>
+              <View style={[styles.tag, { backgroundColor: statusColor + '20', borderColor: statusColor }]}>
+                {(doc.status === 'PENDING' || doc.status === 'PROCESSING') ? (
+                  <ActivityIndicator size="small" color={statusColor} style={{ transform: [{ scale: 0.55 }] }} />
+                ) : (
+                  <StatusIcon size={12} color={statusColor} strokeWidth={ICON.strokeWidth} />
+                )}
+                <Text style={[styles.tagText, { color: statusColor }]}>
+                  {DOCUMENT_STATUS_LABELS[doc.status]}
+                </Text>
+              </View>
+              {doc.status === 'FAILED' && (
+                <TouchableOpacity
+                  style={[styles.tag, { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+                  onPress={() => handleRetry(doc)}
+                >
+                  <RotateCcw size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.tagText, { color: colors.primary }]}>Réessayer</Text>
+                </TouchableOpacity>
+              )}
+              {relativeDate && (
+                <Text style={[styles.dateText, { color: colors.textDisabled }]}>
+                  {relativeDate}
+                </Text>
+              )}
+            </View>
+
+            {/* Skills count badge */}
+            {(() => {
+              const extractedSkillsCount = extracted?.skills_count ?? extracted?.skills?.length ?? 0;
+              return extractedSkillsCount > 0 ? (
+                <Text style={[styles.skillsCount, { color: colors.primary }]}>
+                  {extractedSkillsCount} compétence{extractedSkillsCount > 1 ? 's' : ''} extraite{extractedSkillsCount > 1 ? 's' : ''}
+                </Text>
+              ) : null;
+            })()}
           </View>
-          <Text style={[styles.fileSize, { color: colors.textDisabled }]}>
-            {formatFileSize(doc.file_size)}
-          </Text>
         </View>
 
-        {doc.tags && doc.tags.length > 0 && (
-          <View style={styles.tagsRow}>
-            {doc.tags.slice(0, 3).map((tag, index) => (
-              <View key={index} style={[styles.tag, { backgroundColor: colors.gray100 }]}>
-                <Text style={[styles.tagText, { color: colors.textSecondary }]}>{tag}</Text>
-              </View>
-            ))}
-            {doc.tags.length > 3 && (
-              <Text style={[styles.moreTagsText, { color: colors.textDisabled }]}>
-                +{doc.tags.length - 3}
+        {/* Summary / Description */}
+        {summaryText && (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setExpandedDocs((prev) => ({ ...prev, [doc.id]: !prev[doc.id] }))}
+          >
+            <Text
+              style={[styles.summaryText, { color: colors.textSecondary }]}
+              numberOfLines={isExpanded ? undefined : 2}
+              onTextLayout={(e) => {
+                // Only show "Voir plus" if text is actually truncated
+                if (!isExpanded && e.nativeEvent.lines.length <= 2 && summaryText.length <= 100) {
+                  // Text fits in 2 lines — no need for toggle
+                }
+              }}
+            >
+              {summaryText}
+            </Text>
+            {summaryText.length > 100 && (
+              <Text style={[styles.seeMore, { color: colors.primary }]}>
+                {isExpanded ? 'Voir moins' : 'Voir plus'}
               </Text>
             )}
-          </View>
-        )}
-
-        <View style={styles.actionsRow}>
-          {doc.status === 'FAILED' && (
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: colors.primary + '10' }]}
-              onPress={() => handleRetry(doc)}
-            >
-              <RotateCcw size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.actionButtonText, { color: colors.primary }]}>Réessayer</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: colors.error + '10' }]}
-            onPress={() => handleDelete(doc)}
-          >
-            <Trash2 size={16} color={colors.error} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.actionButtonText, { color: colors.error }]}>Supprimer</Text>
           </TouchableOpacity>
-        </View>
+        )}
       </View>
     );
   };
 
   return (
-    <PageLayout
-      title="Mes documents"
-      onRefresh={handleRefresh}
-      isRefreshing={isRefreshing}
-      isLoading={isLoading}
-    >
-      {documents.length === 0 ? (
-        <EmptyState
-          icon={FileText}
-          title="Aucun document"
-          subtitle="Ajoute tes CV, diplômes, certificats et autres documents professionnels."
-          actionLabel="Ajouter un document"
-          onAction={handleUpload}
-        />
-      ) : (
-        <>
-          <View style={styles.uploadSection}>
-            <Button
-              title={isUploading ? 'Upload en cours...' : 'Ajouter un document'}
-              onPress={handleUpload}
-              fullWidth
-              disabled={isUploading}
-              loading={isUploading}
-              icon={!isUploading ? <Upload size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
-              iconPosition="left"
-            />
-            <Text style={[styles.uploadHint, { color: colors.textDisabled }]}>
-              PDF et images (JPEG, PNG, WebP) · Max {UPLOAD_LIMITS.MAX_FILES_PER_REQUEST} fichiers, {UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB chacun
-            </Text>
+    <>
+      <PageLayout
+        title="Mes documents"
+        onRefresh={handleRefresh}
+        isRefreshing={isRefreshing}
+        isLoading={isLoading}
+      >
+        {documents.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="Aucun document"
+            subtitle="Ajoute tes CV, diplômes, certificats et autres documents professionnels."
+            actionLabel="Ajouter un document"
+            onAction={handleUpload}
+          />
+        ) : (
+          <>
+            <View style={styles.uploadSection}>
+              <Button
+                title={isUploading ? 'Upload en cours...' : 'Ajouter un document'}
+                onPress={handleUpload}
+                fullWidth
+                disabled={isUploading}
+                loading={isUploading}
+                icon={!isUploading ? <Upload size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
+                iconPosition="left"
+              />
+              <Text style={[styles.uploadHint, { color: colors.textDisabled }]}>
+                PDF et images (JPEG, PNG, WebP) · Max {UPLOAD_LIMITS.MAX_FILES_PER_REQUEST} fichiers, {UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB chacun
+              </Text>
+            </View>
+            {documents.map(renderDocument)}
+          </>
+        )}
+      </PageLayout>
+
+      {/* Preview Modal */}
+      <Modal visible={!!previewDoc} animationType="fade" transparent>
+        <View style={styles.previewOverlay}>
+          <View style={[styles.previewContainer, { backgroundColor: colors.background }]}>
+            <View style={styles.previewHeader}>
+              <Text style={[styles.previewTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                {previewDoc?.title || previewDoc?.original_filename}
+              </Text>
+              <TouchableOpacity onPress={() => setPreviewDoc(null)}>
+                <X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
+              </TouchableOpacity>
+            </View>
+            {previewDoc && (
+              <View style={styles.previewContent}>
+                {previewDoc.mime_type.startsWith('image/') ? (
+                  <Image
+                    source={{ uri: getFullFileUrl(previewDoc) }}
+                    style={styles.previewImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <WebView
+                    source={{ uri: getFullFileUrl(previewDoc) }}
+                    style={styles.previewWebView}
+                    startInLoadingState
+                  />
+                )}
+              </View>
+            )}
           </View>
-          {documents.map(renderDocument)}
-        </>
-      )}
-    </PageLayout>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -336,95 +474,136 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
 
-  documentHeader: {
-    flexDirection: 'row',
+  deleteButton: {
+    position: 'absolute',
+    top: SPACING.xs,
+    right: SPACING.xs,
+    width: 44,
+    height: 44,
     alignItems: 'center',
-    marginBottom: SPACING.sm,
+    justifyContent: 'center',
+    zIndex: 1,
   },
 
-  fileIconContainer: {
+  cardContent: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+  },
+
+  thumbnail: {
     width: 48,
-    height: 48,
+    height: 56,
     borderRadius: BORDER.radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
 
-  documentInfo: {
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  cardInfo: {
     flex: 1,
-    marginLeft: SPACING.md,
+    paddingRight: SPACING.xl,
   },
 
   documentTitle: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    marginBottom: 4,
   },
 
   documentMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-
-  documentMetaText: { fontSize: TYPOGRAPHY.fontSize.xs },
-
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.sm,
-  },
-
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 4,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
-  },
-
-  statusText: {
     fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    marginTop: 2,
   },
-
-  fileSize: { fontSize: TYPOGRAPHY.fontSize.xs },
 
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: SPACING.xs,
-    marginBottom: SPACING.sm,
+    marginTop: SPACING.sm,
   },
 
   tag: {
-    paddingVertical: 2,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
-  },
-
-  tagText: { fontSize: TYPOGRAPHY.fontSize.xs },
-  moreTagsText: { fontSize: TYPOGRAPHY.fontSize.xs },
-
-  actionsRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-
-  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
+    borderRadius: BORDER.radius.full,
+    borderWidth: BORDER.width.thin,
   },
 
-  actionButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
+  tagText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+
+  dateText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    marginLeft: 'auto' as any,
+  },
+
+  skillsCount: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    marginTop: SPACING.xs,
+  },
+
+  summaryText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    lineHeight: 16,
+    marginTop: SPACING.sm,
+  },
+
+  seeMore: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    marginTop: 2,
+  },
+
+  // Preview Modal
+  previewOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  previewContainer: {
+    width: SCREEN_WIDTH - SPACING.lg * 2,
+    height: SCREEN_HEIGHT * 0.75,
+    borderRadius: BORDER.radius.md,
+    overflow: 'hidden',
+  },
+
+  previewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+
+  previewTitle: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    flex: 1,
+    marginRight: SPACING.md,
+  },
+
+  previewContent: {
+    flex: 1,
+  },
+
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  previewWebView: {
+    flex: 1,
   },
 });
