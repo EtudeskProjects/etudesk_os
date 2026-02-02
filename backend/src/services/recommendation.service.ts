@@ -1,25 +1,17 @@
 /**
- * Recommendation Service - AI-powered candidate recommendations using GPT-5 nano
- *
- * Generates concise 30-word recommendations for each application
- * Uses GPT-5 nano for cost-effective inference
+ * Recommendation Service - AI-powered candidate recommendations
+ * Uses Agents SDK with GPT-4.1-nano for cost-effective inference
  */
 
-import OpenAI from 'openai';
+import { run } from '@openai/agents';
 import { pool } from './database';
+import { createRecommendationAgent } from './ai/agent-factory';
+import { buildRecommendationPrompt } from './ai/prompts/recommendation.prompt';
 
 // ═══════════════════════════════════════════════════════════════
-// CLIENT INITIALIZATION
-// ═══════════════════════════════════════════════════════════════
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Use GPT-4.1 nano for fast, cheap inference
-const MODEL_NAME = 'gpt-4.1-nano';
-
 // In-memory cache for recommendations
+// ═══════════════════════════════════════════════════════════════
+
 const recommendationCache = new Map<string, { text: string; timestamp: number }>();
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -89,27 +81,26 @@ export async function generateRecommendation(
   }
 
   const { talent, opportunity, matchCategory } = application;
+  const candidateName = talent.first_name || talent.display_name?.split(' ')[0] || 'Ce candidat';
 
-  // Build the prompt
-  const prompt = buildRecommendationPrompt(talent, opportunity, matchCategory);
+  const prompt = buildRecommendationPrompt({
+    candidateName,
+    currentRole: talent.current_role || 'Non spécifié',
+    yearsExperience: talent.years_experience || 0,
+    skills: talent.skills?.slice(0, 6).join(', ') || 'Non spécifiées',
+    location: [talent.city, talent.country].filter(Boolean).join(', ') || 'Non spécifiée',
+    opportunityTitle: opportunity.title || 'Non spécifié',
+    contractType: opportunity.contract_type || 'Non spécifié',
+    workRhythm: opportunity.work_rhythm || 'Non spécifié',
+    locationType: opportunity.location_type || 'Non spécifié',
+    matchCategory: matchCategory || 'average',
+  });
 
   try {
-    const response = await openai.chat.completions.create({
-      model: MODEL_NAME,
-      messages: [
-        {
-          role: 'system',
-          content: 'Tu es un recruteur expert. Génère des recommandations concises en français.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      max_completion_tokens: 80,
-    });
+    const agent = createRecommendationAgent();
+    const result = await run(agent, prompt);
 
-    let text = response.choices[0]?.message?.content?.trim() || '';
+    let text = result.finalOutput?.trim() || '';
 
     // Ensure it's not too long (max ~40 words for safety)
     const words = text.split(/\s+/);
@@ -139,44 +130,6 @@ export async function generateRecommendation(
     // Return a fallback recommendation based on match category
     return generateFallbackRecommendation(talent, matchCategory);
   }
-}
-
-/**
- * Build the prompt for recommendation generation
- */
-function buildRecommendationPrompt(
-  talent: ApplicationForRecommendation['talent'],
-  opportunity: ApplicationForRecommendation['opportunity'],
-  matchCategory?: string
-): string {
-  const candidateName = talent.first_name || talent.display_name?.split(' ')[0] || 'Ce candidat';
-
-  return `Tu es un recruteur expert. Génère une recommandation CONCISE en 30 mots MAXIMUM.
-
-CANDIDAT:
-- Nom: ${candidateName}
-- Poste actuel: ${talent.current_role || 'Non spécifié'}
-- Expérience: ${talent.years_experience || 0} ans
-- Compétences: ${talent.skills?.slice(0, 6).join(', ') || 'Non spécifiées'}
-- Localisation: ${[talent.city, talent.country].filter(Boolean).join(', ') || 'Non spécifiée'}
-
-POSTE:
-- Titre: ${opportunity.title || 'Non spécifié'}
-- Contrat: ${opportunity.contract_type || 'Non spécifié'}
-- Rythme: ${opportunity.work_rhythm || 'Non spécifié'}
-- Mode: ${opportunity.location_type || 'Non spécifié'}
-
-CATÉGORIE DE MATCH: ${matchCategory || 'average'}
-
-Règles:
-1. Commence par le prénom du candidat
-2. Maximum 30 mots
-3. Mentionne 1-2 points forts spécifiques
-4. Termine par une recommandation claire (entretien recommandé / à considérer / profil à approfondir)
-5. Sois direct et professionnel
-6. Écris en français
-
-Recommandation:`;
 }
 
 /**
@@ -220,8 +173,6 @@ export async function getApplicationRecommendation(applicationId: string): Promi
           'display_name', t.display_name,
           'first_name', t.first_name,
           'last_name', t.last_name,
-          'current_role', (SELECT te.job_title FROM talent_experiences te WHERE te.talent_id = t.id ORDER BY te.ended_at DESC NULLS FIRST, te.started_at DESC LIMIT 1),
-          'years_experience', EXTRACT(YEAR FROM AGE(NOW(), (SELECT MIN(te.started_at) FROM talent_experiences te WHERE te.talent_id = t.id)))::INTEGER,
           'skills', (SELECT ARRAY_AGG(s.canonical_name) FROM talent_skills ts JOIN skills s ON ts.skill_id = s.id WHERE ts.talent_id = t.id),
           'sectors', t.sectors,
           'city', t.city,
@@ -268,7 +219,6 @@ export async function getApplicationRecommendation(applicationId: string): Promi
 
 /**
  * Batch generate recommendations for multiple applications
- * Useful for pre-generating recommendations
  */
 export async function batchGenerateRecommendations(
   applicationIds: string[],
@@ -300,7 +250,6 @@ export async function batchGenerateRecommendations(
 
 /**
  * Clear recommendation cache for an application
- * Call this when application data changes
  */
 export function clearRecommendationCache(applicationId: string): void {
   recommendationCache.delete(`reco:${applicationId}`);

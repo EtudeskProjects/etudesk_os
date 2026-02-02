@@ -393,10 +393,11 @@ export interface Talent {
   email: string;
   phone?: string;
 
+  gender?: string;
+
   city?: string;
   region?: string;
   country?: string;
-  coordinates?: Coordinates;
   remote_ready?: boolean;
   willing_to_relocate?: boolean;
 
@@ -593,43 +594,6 @@ export interface TalentSkill {
   years_of_experience?: number;
   last_used_at?: ISODate;
   context?: string;
-}
-
-export interface TalentExperience {
-  id: UUID;
-  talent_id: UUID;
-  organization_id: UUID;
-
-  job_title: string;
-  work_type?: ContractType;
-
-  started_at: ISODate;
-  ended_at?: ISODate;
-  is_current?: boolean;
-
-  responsibilities?: string;
-  city?: string;
-  country?: string;
-  remote?: boolean;
-
-  verified?: boolean;
-  verified_by?: UUID; // Document ou Talent qui vérifie
-}
-
-export interface TalentEducation {
-  id: UUID;
-  talent_id: UUID;
-  organization_id: UUID;
-
-  degree_type?: DegreeType;
-  field_of_study?: string;
-
-  started_at?: ISODate;
-  ended_at?: ISODate;
-  graduated?: boolean;
-  gpa?: number;
-  honors?: string[];
-  thesis_title?: string;
 }
 
 export interface OpportunityApplication {

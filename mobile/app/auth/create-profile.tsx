@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput,
-  Modal,
   Image,
   Alert,
 } from 'react-native';
@@ -21,10 +20,7 @@ import {
   Laptop,
   Plane,
   Camera,
-  MapPin,
-  Loader2,
 } from 'lucide-react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
 import { Input, Button, Toggle, StepIndicator } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
@@ -38,7 +34,6 @@ import {
   MAX_GOALS,
 } from '../../src/constants/talent';
 import { COUNTRIES, GENDERS, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
-import { useGeolocation } from '../../src/hooks/useGeolocation';
 import { otpService } from '../../src/services/otpService';
 import { onboardingService } from '../../src/services/onboardingService';
 import { imageService } from '../../src/services';
@@ -51,7 +46,6 @@ export default function CreateProfileScreen() {
   const { colors } = useTheme();
   const { t } = useI18n();
   const { completeOnboarding } = useAuth();
-  const { isLoading: isGeoLoading, getCurrentLocation } = useGeolocation();
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -62,17 +56,18 @@ export default function CreateProfileScreen() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [gender, setGender] = useState('');
-  const [birthday, setBirthday] = useState<Date | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [country, setCountry] = useState('CI'); // Côte d'Ivoire par défaut
   const [region, setRegion] = useState('');
   const [commune, setCommune] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
 
+  // Form state - Bio
+  const [bio, setBio] = useState('');
+
   // Form state - Preferences
-  const [remoteReady, setRemoteReady] = useState(false);
-  const [willingToRelocate, setWillingToRelocate] = useState(false);
+  const [remoteReady, setRemoteReady] = useState(true);
+  const [willingToRelocate, setWillingToRelocate] = useState(true);
 
   // Form state - Steps
   const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
@@ -174,28 +169,6 @@ export default function CreateProfileScreen() {
     }
   };
 
-  // Handle geolocation
-  const handleGeolocation = async () => {
-    const result = await getCurrentLocation();
-    if (result) {
-      // Update country
-      if (result.countryCode) {
-        setCountry(result.countryCode);
-        setTimeout(() => scrollToChip(countryScrollRef, countryChipPositions, result.countryCode, true), 100);
-      }
-      // Update region
-      if (result.regionCode) {
-        setRegion(result.regionCode);
-        setTimeout(() => scrollToChip(regionScrollRef, regionChipPositions, result.regionCode, true), 150);
-      }
-      // Update commune/city
-      if (result.cityCode) {
-        setCommune(result.cityCode);
-        setTimeout(() => scrollToChip(communeScrollRef, communeChipPositions, result.cityCode, true), 200);
-      }
-    }
-  };
-
   const toggleSector = (sectorId: string) => {
     setSelectedSectors((prev) => {
       if (prev.includes(sectorId)) {
@@ -274,12 +247,13 @@ export default function CreateProfileScreen() {
         displayName,
         firstName: trimmedFirstName,
         lastName: trimmedLastName,
-        phone: phone.trim() || undefined,
+        phone: phone.trim(),
         city: commune || undefined,
         region: region || undefined,
         country: country || undefined,
         profileTags: selectedTags.length > 0 ? selectedTags : undefined,
         goals: selectedGoals.length > 0 ? selectedGoals : undefined,
+        bio: bio.trim() || undefined,
         remoteReady,
         willingToRelocate,
         // Additional fields
@@ -353,11 +327,12 @@ export default function CreateProfileScreen() {
 
   const canProceed = () => {
     if (currentStep === 'info') {
-      // Required: firstName, lastName, country
+      // Required: firstName, lastName, country, phone
       return (
         firstName.trim().length >= 2 &&
         lastName.trim().length >= 2 &&
-        country.length > 0
+        country.length > 0 &&
+        phone.trim().length >= 8
       );
     }
     if (currentStep === 'sectors') {
@@ -378,28 +353,6 @@ export default function CreateProfileScreen() {
   const renderStepIndicator = () => (
     <StepIndicator steps={STEPS_DATA} currentStepId={currentStep} />
   );
-
-  // Format date for display
-  const formatBirthday = (date: Date | null): string => {
-    if (!date) return '';
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
-  const handleDateChange = (_event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-    }
-    if (selectedDate) {
-      setBirthday(selectedDate);
-    }
-  };
-
-  const handleDatePickerDone = () => {
-    setShowDatePicker(false);
-  };
 
   const renderInfoStep = () => (
     <View style={styles.stepContent}>
@@ -513,79 +466,25 @@ export default function CreateProfileScreen() {
           </View>
         </View>
 
-        {/* Date de naissance */}
+        {/* Bio */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.birthDate')}</Text>
-          <TouchableOpacity
-            style={[styles.datePickerButton, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
-            onPress={() => setShowDatePicker(true)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.datePickerText, { color: colors.textPrimary }, !birthday && { color: colors.gray500 }]}>
-              {birthday ? formatBirthday(birthday) : t('auth.createProfile.selectDate')}
-            </Text>
-          </TouchableOpacity>
-          {showDatePicker && Platform.OS === 'android' && (
-            <DateTimePicker
-              value={birthday || new Date(2000, 0, 1)}
-              mode="date"
-              display="default"
-              onChange={handleDateChange}
-              maximumDate={new Date()}
-              minimumDate={new Date(1940, 0, 1)}
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Bio</Text>
+          <View style={[styles.textAreaContainer, { borderColor: colors.gray200, backgroundColor: colors.surface }]}>
+            <TextInput
+              style={[styles.textArea, { color: colors.textPrimary }]}
+              placeholder="Décris-toi en quelques mots..."
+              placeholderTextColor={colors.gray400}
+              value={bio}
+              onChangeText={(text) => setBio(text.slice(0, 300))}
+              multiline
+              maxLength={300}
             />
-          )}
-          {Platform.OS === 'ios' && (
-            <Modal
-              visible={showDatePicker}
-              transparent
-              animationType="slide"
-            >
-              <View style={styles.datePickerModalOverlay}>
-                <View style={[styles.datePickerModalContent, { backgroundColor: colors.background }]}>
-                  <View style={[styles.datePickerModalHeader, { borderBottomColor: colors.gray200 }]}>
-                    <TouchableOpacity onPress={handleDatePickerDone}>
-                      <Text style={[styles.datePickerDoneButton, { color: colors.primary }]}>{t('common.done')}</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <DateTimePicker
-                    value={birthday || new Date(2000, 0, 1)}
-                    mode="date"
-                    display="spinner"
-                    onChange={handleDateChange}
-                    maximumDate={new Date()}
-                    minimumDate={new Date(1940, 0, 1)}
-                    locale="fr-FR"
-                    style={styles.iosDatePicker}
-                  />
-                </View>
-              </View>
-            </Modal>
-          )}
+            <Text style={[styles.charCount, { color: colors.gray400 }]}>{bio.length}/300</Text>
+          </View>
         </View>
 
         {/* Separator - Localisation */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
-
-        {/* Geolocation Button */}
-        <TouchableOpacity
-          style={[
-            styles.geolocationButton,
-            { backgroundColor: colors.primary + '10', borderColor: colors.primary },
-          ]}
-          onPress={handleGeolocation}
-          disabled={isGeoLoading}
-          activeOpacity={0.7}
-        >
-          {isGeoLoading ? (
-            <Loader2 size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          ) : (
-            <MapPin size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          )}
-          <Text style={[styles.geolocationButtonText, { color: colors.primary }]}>
-            {isGeoLoading ? t('auth.createProfile.locating') : t('auth.createProfile.useMyLocation')}
-          </Text>
-        </TouchableOpacity>
 
         {/* Pays */}
         <View style={styles.fieldContainer}>
@@ -722,7 +621,7 @@ export default function CreateProfileScreen() {
 
         {/* Téléphone */}
         <Input
-          label={t('auth.createProfile.phone')}
+          label={`${t('auth.createProfile.phone')} *`}
           placeholder="+225 07 00 00 00 00"
           value={phone}
           onChangeText={setPhone}
@@ -1049,22 +948,6 @@ const styles = StyleSheet.create({
   separator: {
     height: 1,
     marginVertical: SPACING.md,
-  },
-
-  geolocationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    padding: SPACING.md,
-    borderWidth: 1.5,
-    borderRadius: BORDER.radius.sm,
-    borderStyle: 'dashed',
-  },
-
-  geolocationButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
   rowFields: {

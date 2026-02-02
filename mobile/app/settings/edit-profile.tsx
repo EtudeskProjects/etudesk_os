@@ -10,7 +10,6 @@ import {
   TextInput,
   Image,
   Alert,
-  Modal,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -21,19 +20,31 @@ import {
   Laptop,
   Plane,
   Check,
+  ChevronRight,
 } from 'lucide-react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
-import { Input, Button, Toggle } from '../../src/components/ui';
+import { Input, Button, Toggle, StepIndicator } from '../../src/components/ui';
+import {
+  SECTOR_DATA,
+  PROFILE_TAG_DATA,
+  GOAL_DATA,
+  MAX_SECTORS,
+  MAX_PROFILE_TAGS,
+  MAX_GOALS,
+} from '../../src/constants/talent';
 import { COUNTRIES, GENDERS, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { talentService, imageService } from '../../src/services';
 
+type Step = 'info' | 'sectors' | 'goals';
+
 export default function EditProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { refreshUser } = useAuth();
+
+  const [currentStep, setCurrentStep] = useState<Step>('info');
 
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
@@ -46,11 +57,10 @@ export default function EditProfileScreen() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [gender, setGender] = useState('');
-  const [birthday, setBirthday] = useState<Date | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [country, setCountry] = useState('');
   const [region, setRegion] = useState('');
   const [commune, setCommune] = useState('');
+  const [bio, setBio] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
 
@@ -61,6 +71,11 @@ export default function EditProfileScreen() {
   // Preferences
   const [remoteReady, setRemoteReady] = useState(true);
   const [willingToRelocate, setWillingToRelocate] = useState(true);
+
+  // Tags, sectors, goals
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
 
   // Load profile data on mount
   useEffect(() => {
@@ -76,8 +91,8 @@ export default function EditProfileScreen() {
       if (profile) {
         setFirstName(profile.first_name || '');
         setLastName(profile.last_name || '');
+        setBio(profile.bio || '');
         setGender(profile.gender || '');
-        setBirthday(profile.birthday ? new Date(profile.birthday) : null);
         setCountry(profile.country || '');
         setRegion(profile.region || '');
         setCommune(profile.city || '');
@@ -86,10 +101,12 @@ export default function EditProfileScreen() {
         setAvatarUri(profile.avatar_url || null);
         setRemoteReady(profile.remote_ready || false);
         setWillingToRelocate(profile.willing_to_relocate || false);
+        setSelectedTags(profile.profile_tags || []);
+        setSelectedSectors(profile.sectors || []);
+        setSelectedGoals(profile.goals || []);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
-      // Use default values if profile can't be loaded
     } finally {
       setIsLoading(false);
     }
@@ -101,7 +118,7 @@ export default function EditProfileScreen() {
 
   // Auto-scroll to selected country after loading
   useEffect(() => {
-    if (country && countryScrollRef.current && !isLoading) {
+    if (country && countryScrollRef.current && !isLoading && currentStep === 'info') {
       const countryIndex = COUNTRIES.findIndex(c => c.id === country);
       if (countryIndex > 0) {
         setTimeout(() => {
@@ -112,42 +129,62 @@ export default function EditProfileScreen() {
         }, 300);
       }
     }
-  }, [country, isLoading]);
-
-  const formatBirthday = (date: Date | null): string => {
-    if (!date) return '';
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
-  const handleDateChange = (_event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-    }
-    if (selectedDate) {
-      setBirthday(selectedDate);
-    }
-  };
-
-  const handleDatePickerDone = () => {
-    setShowDatePicker(false);
-  };
+  }, [country, isLoading, currentStep]);
 
   const pickImage = async () => {
     try {
-      // Use centralized imageService for optimized image picking
       const image = await imageService.pickImage({ type: 'avatar' });
       if (image) {
         setAvatarUri(image.uri);
-        console.log(`[EditProfile] Avatar selected: ${image.width}x${image.height}`);
       }
     } catch (error) {
       console.error('Erreur lors de la sélection de l\'image:', error);
     }
   };
 
+  const toggleTag = (tagId: string) => {
+    setSelectedTags((prev) => {
+      if (prev.includes(tagId)) return prev.filter((id) => id !== tagId);
+      if (prev.length >= MAX_PROFILE_TAGS) return prev;
+      return [...prev, tagId];
+    });
+  };
+
+  const toggleSector = (sectorId: string) => {
+    setSelectedSectors((prev) => {
+      if (prev.includes(sectorId)) return prev.filter((id) => id !== sectorId);
+      if (prev.length >= MAX_SECTORS) return prev;
+      return [...prev, sectorId];
+    });
+  };
+
+  const toggleGoal = (goalId: string) => {
+    setSelectedGoals((prev) => {
+      if (prev.includes(goalId)) return prev.filter((id) => id !== goalId);
+      if (prev.length >= MAX_GOALS) return prev;
+      return [...prev, goalId];
+    });
+  };
+
+  const handleNext = async () => {
+    if (currentStep === 'info') {
+      setCurrentStep('sectors');
+    } else if (currentStep === 'sectors') {
+      setCurrentStep('goals');
+    } else {
+      await handleSave();
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep === 'info') {
+      router.back();
+    } else if (currentStep === 'sectors') {
+      setCurrentStep('info');
+    } else if (currentStep === 'goals') {
+      setCurrentStep('sectors');
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -159,8 +196,8 @@ export default function EditProfileScreen() {
         display_name: displayName,
         first_name: firstName || undefined,
         last_name: lastName || undefined,
+        bio: bio.trim() || undefined,
         gender: gender as 'M' | 'F' | 'O' || undefined,
-        birthday: birthday?.toISOString().split('T')[0] || undefined,
         country: country || undefined,
         region: region || undefined,
         city: commune || undefined,
@@ -168,9 +205,11 @@ export default function EditProfileScreen() {
         avatar_url: avatarUri || undefined,
         remote_ready: remoteReady,
         willing_to_relocate: willingToRelocate,
+        profile_tags: selectedTags,
+        sectors: selectedSectors,
+        goals: selectedGoals,
       });
 
-      // Refresh user data in AuthContext to update avatar everywhere
       await refreshUser();
 
       Alert.alert('Succès', 'Ton profil a été mis à jour.', [
@@ -194,6 +233,408 @@ export default function EditProfileScreen() {
     return `${f}${l}`.toUpperCase() || '?';
   };
 
+  const STEPS_DATA = [
+    { id: 'info', label: 'Infos' },
+    { id: 'sectors', label: 'Secteurs' },
+    { id: 'goals', label: 'Objectifs' },
+  ];
+
+  const renderInfoStep = () => (
+    <View style={styles.stepContent}>
+      <View style={styles.stepHeader}>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Tes informations</Text>
+      </View>
+
+      <View style={styles.formFields}>
+        {/* Photo de profil */}
+        <View style={styles.photoSection}>
+          <TouchableOpacity
+            style={[styles.photoContainer, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
+            onPress={pickImage}
+          >
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={styles.photoImage} />
+            ) : (
+              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
+                <Text style={styles.avatarText}>{getInitials()}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <Text style={[styles.photoHint, { color: colors.textSecondary }]}>
+            Appuie pour changer ta photo
+          </Text>
+        </View>
+
+        {/* Prénom & Nom */}
+        <View style={styles.rowFields}>
+          <View style={styles.halfField}>
+            <Input
+              label="Prénom"
+              placeholder=""
+              value={firstName}
+              onChangeText={setFirstName}
+              autoCapitalize="words"
+            />
+          </View>
+          <View style={styles.halfField}>
+            <Input
+              label="Nom"
+              placeholder=""
+              value={lastName}
+              onChangeText={setLastName}
+              autoCapitalize="words"
+            />
+          </View>
+        </View>
+
+        {/* Genre */}
+        <View style={styles.fieldContainer}>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Genre</Text>
+          <View style={styles.optionsRow}>
+            {GENDERS.map((g) => (
+              <TouchableOpacity
+                key={g.id}
+                style={[
+                  styles.optionButton,
+                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                  gender === g.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+                ]}
+                onPress={() => setGender(g.id)}
+              >
+                <Text
+                  style={[
+                    styles.optionButtonText,
+                    { color: colors.gray700 },
+                    gender === g.id && { color: colors.textOnPrimary },
+                  ]}
+                >
+                  {g.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Profil Tags */}
+        <View style={styles.fieldContainer}>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
+            Ton profil ({selectedTags.length}/{MAX_PROFILE_TAGS})
+          </Text>
+          <View style={styles.tagsContainer}>
+            {PROFILE_TAG_DATA.map((tag) => {
+              const isSelected = selectedTags.includes(tag.id);
+              return (
+                <TouchableOpacity
+                  key={tag.id}
+                  style={[
+                    styles.selectableTag,
+                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
+                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                  ]}
+                  onPress={() => toggleTag(tag.id)}
+                  activeOpacity={0.7}
+                >
+                  {isSelected && (
+                    <Check size={14} color={colors.primary} strokeWidth={2.5} />
+                  )}
+                  <Text
+                    style={[
+                      styles.selectableTagText,
+                      { color: colors.gray600 },
+                      isSelected && { color: colors.primary },
+                    ]}
+                  >
+                    {tag.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Bio */}
+        <View style={styles.fieldContainer}>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Bio</Text>
+          <View style={[styles.textAreaContainer, { borderColor: colors.gray200, backgroundColor: colors.surface }]}>
+            <TextInput
+              style={[styles.textArea, { color: colors.textPrimary }]}
+              placeholder="Décris-toi en quelques mots..."
+              placeholderTextColor={colors.gray400}
+              value={bio}
+              onChangeText={(text) => setBio(text.slice(0, 300))}
+              multiline
+              maxLength={300}
+            />
+            <Text style={[styles.charCount, { color: colors.gray400 }]}>{bio.length}/300</Text>
+          </View>
+        </View>
+
+        {/* Separator */}
+        <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
+
+        {/* Pays */}
+        <View style={styles.fieldContainer}>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Pays</Text>
+          <ScrollView
+            ref={countryScrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.horizontalScroll}
+            contentContainerStyle={styles.horizontalScrollContent}
+          >
+            {COUNTRIES.map((c) => (
+              <TouchableOpacity
+                key={c.id}
+                style={[
+                  styles.optionChip,
+                  { borderColor: colors.gray200, backgroundColor: colors.gray100 },
+                  country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+                ]}
+                onPress={() => {
+                  setCountry(c.id);
+                  setRegion('');
+                  setCommune('');
+                }}
+              >
+                <Text
+                  style={[
+                    styles.optionChipText,
+                    { color: colors.gray700 },
+                    country === c.id && { color: colors.textOnPrimary },
+                  ]}
+                >
+                  {c.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Région */}
+        {availableRegions.length > 0 && (
+          <View style={styles.fieldContainer}>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Région</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.horizontalScroll}
+              contentContainerStyle={styles.horizontalScrollContent}
+            >
+              {availableRegions.map((r) => (
+                <TouchableOpacity
+                  key={r.id}
+                  style={[
+                    styles.optionChip,
+                    { borderColor: colors.gray200, backgroundColor: colors.gray100 },
+                    region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+                  ]}
+                  onPress={() => {
+                    setRegion(r.id);
+                    setCommune('');
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.optionChipText,
+                      { color: colors.gray700 },
+                      region === r.id && { color: colors.textOnPrimary },
+                    ]}
+                  >
+                    {r.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Commune */}
+        {availableCommunes.length > 0 && (
+          <View style={styles.fieldContainer}>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Commune / Ville</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.horizontalScroll}
+              contentContainerStyle={styles.horizontalScrollContent}
+            >
+              {availableCommunes.map((c) => (
+                <TouchableOpacity
+                  key={c.id}
+                  style={[
+                    styles.optionChip,
+                    { borderColor: colors.gray200, backgroundColor: colors.gray100 },
+                    commune === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+                  ]}
+                  onPress={() => setCommune(c.id)}
+                >
+                  <Text
+                    style={[
+                      styles.optionChipText,
+                      { color: colors.gray700 },
+                      commune === c.id && { color: colors.textOnPrimary },
+                    ]}
+                  >
+                    {c.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Separator */}
+        <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
+
+        {/* Téléphone */}
+        <Input
+          label="Téléphone"
+          placeholder="+225 07 00 00 00 00"
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+        />
+
+        {/* Email */}
+        <Input
+          label="Email"
+          placeholder="ton@email.com"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        {/* Préférences de travail */}
+        <View style={[styles.preferencesSection, { borderTopColor: colors.gray200 }]}>
+          <Text style={[styles.preferencesSectionTitle, { color: colors.gray700 }]}>
+            Préférences de travail
+          </Text>
+
+          <View style={styles.preferenceItem}>
+            <View style={styles.preferenceInfo}>
+              <Laptop size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
+              <View style={styles.preferenceTextContainer}>
+                <Text style={[styles.preferenceLabel, { color: colors.textPrimary }]}>Disponible en remote</Text>
+                <Text style={[styles.preferenceDescription, { color: colors.gray500 }]}>Je peux travailler à distance</Text>
+              </View>
+            </View>
+            <Toggle
+              value={remoteReady}
+              onValueChange={setRemoteReady}
+            />
+          </View>
+
+          <View style={styles.preferenceItem}>
+            <View style={styles.preferenceInfo}>
+              <Plane size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
+              <View style={styles.preferenceTextContainer}>
+                <Text style={[styles.preferenceLabel, { color: colors.textPrimary }]}>Ouvert à la relocalisation</Text>
+                <Text style={[styles.preferenceDescription, { color: colors.gray500 }]}>Je peux déménager pour une opportunité</Text>
+              </View>
+            </View>
+            <Toggle
+              value={willingToRelocate}
+              onValueChange={setWillingToRelocate}
+            />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderSectorsStep = () => (
+    <View style={styles.stepContent}>
+      <View style={styles.stepHeader}>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Tes secteurs d'activité</Text>
+        <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
+          Choisis jusqu'à {MAX_SECTORS} secteurs qui t'intéressent
+        </Text>
+      </View>
+
+      <View style={styles.tagsContainer}>
+        {SECTOR_DATA.map((sector) => {
+          const isSelected = selectedSectors.includes(sector.id);
+          return (
+            <TouchableOpacity
+              key={sector.id}
+              style={[
+                styles.selectableTag,
+                { backgroundColor: colors.surface, borderColor: colors.gray200 },
+                isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+              ]}
+              onPress={() => toggleSector(sector.id)}
+              activeOpacity={0.7}
+            >
+              {isSelected && (
+                <Check size={14} color={colors.primary} strokeWidth={2.5} />
+              )}
+              <Text
+                style={[
+                  styles.selectableTagText,
+                  { color: colors.gray600 },
+                  isSelected && { color: colors.primary },
+                ]}
+              >
+                {sector.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
+        {selectedSectors.length}/{MAX_SECTORS} sélectionnés
+      </Text>
+    </View>
+  );
+
+  const renderGoalsStep = () => (
+    <View style={styles.stepContent}>
+      <View style={styles.stepHeader}>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Tes objectifs</Text>
+        <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
+          Choisis jusqu'à {MAX_GOALS} objectifs
+        </Text>
+      </View>
+
+      <View style={styles.tagsContainer}>
+        {GOAL_DATA.map((goal) => {
+          const isSelected = selectedGoals.includes(goal.id);
+          return (
+            <TouchableOpacity
+              key={goal.id}
+              style={[
+                styles.selectableTag,
+                { backgroundColor: colors.surface, borderColor: colors.gray200 },
+                isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+              ]}
+              onPress={() => toggleGoal(goal.id)}
+              activeOpacity={0.7}
+            >
+              {isSelected && (
+                <Check size={14} color={colors.primary} strokeWidth={2.5} />
+              )}
+              <Text
+                style={[
+                  styles.selectableTagText,
+                  { color: colors.gray600 },
+                  isSelected && { color: colors.primary },
+                ]}
+              >
+                {goal.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
+        {selectedGoals.length}/{MAX_GOALS} sélectionnés
+      </Text>
+    </View>
+  );
+
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
@@ -206,325 +647,65 @@ export default function EditProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+      {/* Header */}
+      <View style={[styles.header, { borderBottomColor: colors.gray200 }]}>
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Modifier le profil</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Modifier le profil</Text>
-          <View style={styles.headerSpacer} />
-        </View>
-
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Avatar Section */}
-          <View style={styles.avatarSection}>
-            <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}>
-              {avatarUri ? (
-                <Image source={{ uri: avatarUri }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.avatarText}>{getInitials()}</Text>
-                </View>
-              )}
-              <View style={[styles.cameraButton, { backgroundColor: colors.primary }]}>
-                <Camera size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              </View>
-            </TouchableOpacity>
-            <Text style={[styles.avatarHint, { color: colors.textSecondary }]}>
-              Appuie pour changer ta photo
-            </Text>
-          </View>
+          <StepIndicator steps={STEPS_DATA} currentStepId={currentStep} />
 
-          {/* Form Fields */}
-          <View style={styles.formFields}>
-            {/* Prénom & Nom */}
-            <View style={styles.rowFields}>
-              <View style={styles.halfField}>
-                <Input
-                  label="Prénom"
-                  placeholder=""
-                  value={firstName}
-                  onChangeText={setFirstName}
-                  autoCapitalize="words"
-                />
-              </View>
-              <View style={styles.halfField}>
-                <Input
-                  label="Nom"
-                  placeholder=""
-                  value={lastName}
-                  onChangeText={setLastName}
-                  autoCapitalize="words"
-                />
-              </View>
-            </View>
-
-            {/* Genre */}
-            <View style={styles.fieldContainer}>
-              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Genre</Text>
-              <View style={styles.optionsRow}>
-                {GENDERS.map((g) => (
-                  <TouchableOpacity
-                    key={g.id}
-                    style={[
-                      styles.optionButton,
-                      { borderColor: colors.gray200, backgroundColor: colors.gray100 },
-                      gender === g.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                    ]}
-                    onPress={() => setGender(g.id)}
-                  >
-                    <Text
-                      style={[
-                        styles.optionButtonText,
-                        { color: colors.gray700 },
-                        gender === g.id && { color: colors.textOnPrimary },
-                      ]}
-                    >
-                      {g.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Date de naissance */}
-            <View style={styles.fieldContainer}>
-              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Date de naissance</Text>
-              <TouchableOpacity
-                style={[styles.datePickerButton, { borderColor: colors.gray200, backgroundColor: colors.gray50 }]}
-                onPress={() => setShowDatePicker(true)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.datePickerText, { color: colors.textPrimary }, !birthday && { color: colors.gray500 }]}>
-                  {birthday ? formatBirthday(birthday) : 'Sélectionner une date'}
-                </Text>
-              </TouchableOpacity>
-              {showDatePicker && Platform.OS === 'android' && (
-                <DateTimePicker
-                  value={birthday || new Date(2000, 0, 1)}
-                  mode="date"
-                  display="default"
-                  onChange={handleDateChange}
-                  maximumDate={new Date()}
-                  minimumDate={new Date(1940, 0, 1)}
-                />
-              )}
-              {Platform.OS === 'ios' && (
-                <Modal
-                  visible={showDatePicker}
-                  transparent
-                  animationType="slide"
-                >
-                  <View style={styles.datePickerModalOverlay}>
-                    <View style={[styles.datePickerModalContent, { backgroundColor: colors.background }]}>
-                      <View style={[styles.datePickerModalHeader, { borderBottomColor: colors.borderColor }]}>
-                        <TouchableOpacity onPress={handleDatePickerDone}>
-                          <Text style={[styles.datePickerDoneButton, { color: colors.primary }]}>Terminer</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <DateTimePicker
-                        value={birthday || new Date(2000, 0, 1)}
-                        mode="date"
-                        display="spinner"
-                        onChange={handleDateChange}
-                        maximumDate={new Date()}
-                        minimumDate={new Date(1940, 0, 1)}
-                        locale="fr-FR"
-                        style={styles.iosDatePicker}
-                      />
-                    </View>
-                  </View>
-                </Modal>
-              )}
-            </View>
-
-
-            {/* Pays */}
-            <View style={styles.fieldContainer}>
-              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Pays</Text>
-              <ScrollView
-                ref={countryScrollRef}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.horizontalScroll}
-                contentContainerStyle={styles.horizontalScrollContent}
-              >
-                {COUNTRIES.map((c) => (
-                  <TouchableOpacity
-                    key={c.id}
-                    style={[
-                      styles.optionChip,
-                      { borderColor: colors.gray200, backgroundColor: colors.gray100 },
-                      country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                    ]}
-                    onPress={() => {
-                      setCountry(c.id);
-                      setRegion('');
-                      setCommune('');
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.optionChipText,
-                        { color: colors.gray700 },
-                        country === c.id && { color: colors.textOnPrimary },
-                      ]}
-                    >
-                      {c.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-
-            {/* Région */}
-            {availableRegions.length > 0 && (
-              <View style={styles.fieldContainer}>
-                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Région</Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.horizontalScroll}
-                  contentContainerStyle={styles.horizontalScrollContent}
-                >
-                  {availableRegions.map((r) => (
-                    <TouchableOpacity
-                      key={r.id}
-                      style={[
-                        styles.optionChip,
-                        { borderColor: colors.gray200, backgroundColor: colors.gray100 },
-                        region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                      ]}
-                      onPress={() => {
-                        setRegion(r.id);
-                        setCommune('');
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.optionChipText,
-                          { color: colors.gray700 },
-                          region === r.id && { color: colors.textOnPrimary },
-                        ]}
-                      >
-                        {r.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-
-            {/* Commune */}
-            {availableCommunes.length > 0 && (
-              <View style={styles.fieldContainer}>
-                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Commune / Ville</Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.horizontalScroll}
-                  contentContainerStyle={styles.horizontalScrollContent}
-                >
-                  {availableCommunes.map((c) => (
-                    <TouchableOpacity
-                      key={c.id}
-                      style={[
-                        styles.optionChip,
-                        { borderColor: colors.gray200, backgroundColor: colors.gray100 },
-                        commune === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                      ]}
-                      onPress={() => setCommune(c.id)}
-                    >
-                      <Text
-                        style={[
-                          styles.optionChipText,
-                          { color: colors.gray700 },
-                          commune === c.id && { color: colors.textOnPrimary },
-                        ]}
-                      >
-                        {c.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-
-            {/* Téléphone */}
-            <Input
-              label="Téléphone"
-              placeholder="+225 07 00 00 00 00"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
-
-            {/* Email */}
-            <Input
-              label="Email"
-              placeholder="ton@email.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            {/* Préférences de travail */}
-            <View style={[styles.preferencesSection, { borderTopColor: colors.gray200 }]}>
-              <Text style={[styles.preferencesSectionTitle, { color: colors.gray700 }]}>
-                Préférences de travail
-              </Text>
-
-              <View style={styles.preferenceItem}>
-                <View style={styles.preferenceInfo}>
-                  <Laptop size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-                  <View style={styles.preferenceTextContainer}>
-                    <Text style={[styles.preferenceLabel, { color: colors.textPrimary }]}>Disponible en remote</Text>
-                    <Text style={[styles.preferenceDescription, { color: colors.gray500 }]}>Je peux travailler à distance</Text>
-                  </View>
-                </View>
-                <Toggle
-                  value={remoteReady}
-                  onValueChange={setRemoteReady}
-                />
-              </View>
-
-              <View style={styles.preferenceItem}>
-                <View style={styles.preferenceInfo}>
-                  <Plane size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-                  <View style={styles.preferenceTextContainer}>
-                    <Text style={[styles.preferenceLabel, { color: colors.textPrimary }]}>Ouvert à la relocalisation</Text>
-                    <Text style={[styles.preferenceDescription, { color: colors.gray500 }]}>Je peux déménager pour une opportunité</Text>
-                  </View>
-                </View>
-                <Toggle
-                  value={willingToRelocate}
-                  onValueChange={setWillingToRelocate}
-                />
-              </View>
-            </View>
-          </View>
+          {currentStep === 'info' && renderInfoStep()}
+          {currentStep === 'sectors' && renderSectorsStep()}
+          {currentStep === 'goals' && renderGoalsStep()}
         </ScrollView>
 
-        {/* Footer */}
         <View style={[styles.footer, { backgroundColor: colors.background }]}>
-          <Button
-            title={isSaving ? "Enregistrement..." : "Enregistrer"}
-            onPress={handleSave}
-            fullWidth
-            disabled={isSaving}
-            icon={isSaving ? undefined : <Check size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-            iconPosition="right"
-          />
+          <View style={styles.footerButtons}>
+            {currentStep !== 'info' && (
+              <Button
+                title="Précédent"
+                onPress={handleBack}
+                variant="outline"
+                icon={<ArrowLeft size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+                iconPosition="left"
+                style={styles.footerBackButton}
+              />
+            )}
+            <Button
+              title={
+                isSaving
+                  ? 'Enregistrement...'
+                  : currentStep === 'goals'
+                    ? 'Enregistrer'
+                    : 'Suivant'
+              }
+              onPress={handleNext}
+              disabled={isSaving}
+              style={{ flex: 1 }}
+              icon={
+                isSaving ? undefined : (
+                  currentStep === 'goals'
+                    ? <Check size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                    : <ChevronRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                )
+              }
+              iconPosition="right"
+            />
+          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -550,8 +731,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: BORDER.width.thin,
   },
 
   backButton: {
@@ -559,6 +741,7 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: BORDER.radius.full,
   },
 
   headerTitle: {
@@ -576,30 +759,61 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
     paddingBottom: SPACING.xl,
   },
 
-  // Avatar
-  avatarSection: {
+  stepContent: {
+    flex: 1,
+  },
+
+  stepHeader: {
     alignItems: 'center',
     marginBottom: SPACING.xl,
   },
 
-  avatarContainer: {
-    position: 'relative',
+  stepTitle: {
+    fontSize: TYPOGRAPHY.fontSize.xxl,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
     marginBottom: SPACING.sm,
   },
 
-  avatar: {
+  stepDescription: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    textAlign: 'center',
+  },
+
+  // Photo section
+  photoSection: {
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+
+  photoContainer: {
     width: 100,
     height: 100,
     borderRadius: BORDER.radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: BORDER.width.thin,
+    borderStyle: 'dashed',
+    overflow: 'hidden',
+  },
+
+  photoImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+
+  photoHint: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    marginTop: SPACING.sm,
   },
 
   avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: BORDER.radius.lg,
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -610,24 +824,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  cameraButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+  separator: {
+    height: 1,
+    marginVertical: SPACING.md,
   },
 
-  avatarHint: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-  },
-
-  // Form
   formFields: {
     gap: SPACING.md,
   },
@@ -691,50 +892,6 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
-
-  datePickerButton: {
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    height: LAYOUT.inputHeight,
-    justifyContent: 'center',
-  },
-
-  datePickerText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-  },
-
-  datePickerModalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  },
-
-  datePickerModalContent: {
-    borderTopLeftRadius: BORDER.radius.lg,
-    borderTopRightRadius: BORDER.radius.lg,
-    paddingBottom: SPACING.xl,
-  },
-
-  datePickerModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderBottomWidth: BORDER.width.thin,
-  },
-
-  datePickerDoneButton: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  iosDatePicker: {
-    height: 200,
-  },
-
   textAreaContainer: {
     borderWidth: BORDER.width.thin,
     borderRadius: BORDER.radius.sm,
@@ -751,6 +908,33 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.xs,
     textAlign: 'right',
     marginTop: SPACING.xs,
+  },
+
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  },
+
+  selectableTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderWidth: 1.5,
+    borderRadius: BORDER.radius.full,
+  },
+
+  selectableTagText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+
+  selectionHint: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    textAlign: 'center',
+    marginTop: SPACING.lg,
   },
 
   // Preferences
@@ -799,5 +983,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
     paddingBottom: SPACING.xs,
+  },
+
+  footerButtons: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+
+  footerBackButton: {
+    flex: 0,
   },
 });

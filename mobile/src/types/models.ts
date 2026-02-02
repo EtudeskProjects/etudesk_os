@@ -629,7 +629,6 @@ export interface Talent {
   // === PROFIL ===
   bio?: string;
   gender?: 'M' | 'F' | 'OTHER';
-  birthday?: ISODate;
   // === LOCALISATION ===
   city?: string;
   region?: string;
@@ -643,10 +642,6 @@ export interface Talent {
   goals?: string[];
   skills?: string[];
   languages?: string[];
-  // === EXPÉRIENCE ===
-  years_experience?: number;
-  current_role?: string;
-  current_company?: string;
   // === MENTOR (nullable si pas mentor) ===
   is_mentor?: boolean;
   mentor_bio?: string;

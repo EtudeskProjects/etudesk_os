@@ -77,6 +77,14 @@ export const postgresSyncService = {
       nodesCreated += docsResult.count;
       errors.push(...docsResult.errors);
 
+      const projectsResult = await this.syncProjects(batchSize);
+      nodesCreated += projectsResult.count;
+      errors.push(...projectsResult.errors);
+
+      const sectorsResult = await this.syncSectors(batchSize);
+      nodesCreated += sectorsResult.count;
+      errors.push(...sectorsResult.errors);
+
       // Sync relationships
       const talentSkillsRel = await this.syncTalentSkills(batchSize);
       relationshipsCreated += talentSkillsRel.count;
@@ -109,6 +117,42 @@ export const postgresSyncService = {
       const learningRel = await this.syncLearningRelations(batchSize);
       relationshipsCreated += learningRel.count;
       errors.push(...learningRel.errors);
+
+      const connectionsRel = await this.syncConnections(batchSize);
+      relationshipsCreated += connectionsRel.count;
+      errors.push(...connectionsRel.errors);
+
+      const mentorshipsRel = await this.syncMentorships(batchSize);
+      relationshipsCreated += mentorshipsRel.count;
+      errors.push(...mentorshipsRel.errors);
+
+      const recommendationsRel = await this.syncRecommendations(batchSize);
+      relationshipsCreated += recommendationsRel.count;
+      errors.push(...recommendationsRel.errors);
+
+      const bookmarksRel = await this.syncBookmarks(batchSize);
+      relationshipsCreated += bookmarksRel.count;
+      errors.push(...bookmarksRel.errors);
+
+      const spaceBookingsRel = await this.syncSpaceBookings(batchSize);
+      relationshipsCreated += spaceBookingsRel.count;
+      errors.push(...spaceBookingsRel.errors);
+
+      const docSkillsRel = await this.syncDocumentSkills(batchSize);
+      relationshipsCreated += docSkillsRel.count;
+      errors.push(...docSkillsRel.errors);
+
+      const orgSkillsRel = await this.syncOrganizationSkills(batchSize);
+      relationshipsCreated += orgSkillsRel.count;
+      errors.push(...orgSkillsRel.errors);
+
+      const projectSkillsRel = await this.syncProjectSkills(batchSize);
+      relationshipsCreated += projectSkillsRel.count;
+      errors.push(...projectSkillsRel.errors);
+
+      const sectorRel = await this.syncSectorRelations(batchSize);
+      relationshipsCreated += sectorRel.count;
+      errors.push(...sectorRel.errors);
 
       console.log(
         `[GraphSync] Full sync completed: ${nodesCreated} nodes, ${relationshipsCreated} relationships`
@@ -407,7 +451,7 @@ export const postgresSyncService = {
     try {
       const { rows: spaces } = await pool.query(`
         SELECT id, name, slug, type, capacity,
-               hourly_rate, daily_rate, city, country
+               hourly_rate, daily_rate, city, country, organization_id
         FROM spaces
         WHERE deleted_at IS NULL
       `);
@@ -431,6 +475,11 @@ export const postgresSyncService = {
               s.daily_rate = space.daily_rate,
               s.city = space.city,
               s.country = space.country
+
+          WITH s, space
+          WHERE space.organization_id IS NOT NULL
+          MATCH (org:Organization {id: space.organization_id})
+          MERGE (org)-[:HEBERGE]->(s)
           `,
           { spaces: batch }
         );
@@ -618,113 +667,21 @@ export const postgresSyncService = {
   },
 
   /**
-   * Sync work experiences (talent-organization)
+   * Sync work experiences — table removed in migration 051
    */
   async syncExperiences(
-    batchSize: number
+    _batchSize: number
   ): Promise<{ count: number; errors: string[] }> {
-    const errors: string[] = [];
-    let count = 0;
-
-    try {
-      const { rows: experiences } = await pool.query(`
-        SELECT te.talent_id, te.organization_id, te.job_title,
-               te.started_at, te.ended_at, te.is_current
-        FROM talent_experiences te
-        JOIN talents t ON te.talent_id = t.id AND t.deleted_at IS NULL
-        JOIN organizations o ON te.organization_id = o.id AND o.deleted_at IS NULL
-      `);
-
-      for (let i = 0; i < experiences.length; i += batchSize) {
-        const batch = experiences.slice(i, i + batchSize).map(e => ({
-          ...e,
-          started_at: e.started_at?.toISOString(),
-          ended_at: e.ended_at?.toISOString(),
-        }));
-
-        await neo4jClient.write(
-          `
-          UNWIND $experiences AS exp
-          MATCH (t:Talent {id: exp.talent_id})
-          MATCH (o:Organization {id: exp.organization_id})
-
-          FOREACH (_ IN CASE WHEN exp.is_current THEN [1] ELSE [] END |
-            MERGE (t)-[r:TRAVAILLE_CHEZ]->(o)
-            SET r.job_title = exp.job_title,
-                r.started_at = exp.started_at,
-                r.is_current = true
-          )
-
-          FOREACH (_ IN CASE WHEN NOT exp.is_current THEN [1] ELSE [] END |
-            MERGE (t)-[r:A_TRAVAILLE_CHEZ]->(o)
-            SET r.job_title = exp.job_title,
-                r.started_at = exp.started_at,
-                r.ended_at = exp.ended_at
-          )
-          `,
-          { experiences: batch }
-        );
-
-        count += batch.length;
-      }
-
-      console.log(`[GraphSync] Synced ${count} work experiences`);
-    } catch (error: any) {
-      errors.push(`Experiences sync error: ${error.message}`);
-    }
-
-    return { count, errors };
+    return { count: 0, errors: [] };
   },
 
   /**
-   * Sync education records (talent-organization)
+   * Sync education records — table removed in migration 051
    */
   async syncEducations(
-    batchSize: number
+    _batchSize: number
   ): Promise<{ count: number; errors: string[] }> {
-    const errors: string[] = [];
-    let count = 0;
-
-    try {
-      const { rows: educations } = await pool.query(`
-        SELECT te.talent_id, te.organization_id, te.degree_type,
-               te.field_of_study, te.started_at, te.ended_at, te.graduated
-        FROM talent_educations te
-        JOIN talents t ON te.talent_id = t.id AND t.deleted_at IS NULL
-        JOIN organizations o ON te.organization_id = o.id AND o.deleted_at IS NULL
-      `);
-
-      for (let i = 0; i < educations.length; i += batchSize) {
-        const batch = educations.slice(i, i + batchSize).map(e => ({
-          ...e,
-          started_at: e.started_at?.toISOString(),
-          ended_at: e.ended_at?.toISOString(),
-        }));
-
-        await neo4jClient.write(
-          `
-          UNWIND $educations AS edu
-          MATCH (t:Talent {id: edu.talent_id})
-          MATCH (o:Organization {id: edu.organization_id})
-          MERGE (t)-[r:A_ETUDIE_A]->(o)
-          SET r.degree_type = edu.degree_type,
-              r.field_of_study = edu.field_of_study,
-              r.started_at = edu.started_at,
-              r.ended_at = edu.ended_at,
-              r.graduated = edu.graduated
-          `,
-          { educations: batch }
-        );
-
-        count += batch.length;
-      }
-
-      console.log(`[GraphSync] Synced ${count} educations`);
-    } catch (error: any) {
-      errors.push(`Educations sync error: ${error.message}`);
-    }
-
-    return { count, errors };
+    return { count: 0, errors: [] };
   },
 
   /**
@@ -1020,6 +977,588 @@ export const postgresSyncService = {
       console.log(`[GraphSync] Synced ${count} learning relations`);
     } catch (error: any) {
       errors.push(`Learning relations sync error: ${error.message}`);
+    }
+
+    return { count, errors };
+  },
+
+  /**
+   * Sync projects from PostgreSQL
+   */
+  async syncProjects(
+    batchSize: number
+  ): Promise<{ count: number; errors: string[] }> {
+    const errors: string[] = [];
+    let count = 0;
+
+    try {
+      const { rows: projects } = await pool.query(`
+        SELECT p.id, p.title, p.slug, p.type, p.status, p.visibility,
+               p.started_at, p.ended_at, p.created_at
+        FROM projects p
+        WHERE p.deleted_at IS NULL
+      `);
+
+      for (let i = 0; i < projects.length; i += batchSize) {
+        const batch = projects.slice(i, i + batchSize).map(p => ({
+          ...p,
+          started_at: p.started_at?.toISOString(),
+          ended_at: p.ended_at?.toISOString(),
+          created_at: p.created_at?.toISOString(),
+        }));
+
+        await neo4jClient.write(
+          `
+          UNWIND $projects AS proj
+          MERGE (p:Project {id: proj.id})
+          SET p.title = proj.title,
+              p.slug = proj.slug,
+              p.type = proj.type,
+              p.status = proj.status,
+              p.visibility = proj.visibility,
+              p.started_at = proj.started_at,
+              p.ended_at = proj.ended_at,
+              p.created_at = proj.created_at
+          `,
+          { projects: batch }
+        );
+
+        count += batch.length;
+      }
+
+      // Sync Talent→Project (A_REALISE) relationships
+      const { rows: talentProjects } = await pool.query(`
+        SELECT p.id as project_id, p.created_by as talent_id
+        FROM projects p
+        JOIN talents t ON p.created_by = t.id AND t.deleted_at IS NULL
+        WHERE p.deleted_at IS NULL AND p.created_by IS NOT NULL
+      `);
+
+      for (let i = 0; i < talentProjects.length; i += batchSize) {
+        const batch = talentProjects.slice(i, i + batchSize);
+
+        await neo4jClient.write(
+          `
+          UNWIND $rels AS rel
+          MATCH (t:Talent {id: rel.talent_id})
+          MATCH (p:Project {id: rel.project_id})
+          MERGE (t)-[r:A_REALISE]->(p)
+          SET r.role = 'creator'
+          `,
+          { rels: batch }
+        );
+      }
+
+      console.log(`[GraphSync] Synced ${count} projects`);
+    } catch (error: any) {
+      errors.push(`Projects sync error: ${error.message}`);
+    }
+
+    return { count, errors };
+  },
+
+  /**
+   * Sync sectors as proper nodes from organization/community sector arrays
+   */
+  async syncSectors(
+    batchSize: number
+  ): Promise<{ count: number; errors: string[] }> {
+    const errors: string[] = [];
+    let count = 0;
+
+    try {
+      // Extract unique sectors from organizations and communities
+      const { rows: sectorRows } = await pool.query(`
+        SELECT DISTINCT unnest(sectors) as name
+        FROM (
+          SELECT sectors FROM organizations WHERE deleted_at IS NULL AND sectors IS NOT NULL
+          UNION ALL
+          SELECT sectors FROM communities WHERE deleted_at IS NULL AND sectors IS NOT NULL
+        ) sub
+        WHERE unnest(sectors) IS NOT NULL
+      `);
+
+      if (sectorRows.length > 0) {
+        const sectors = sectorRows.map(r => ({
+          name: r.name,
+          slug: r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        }));
+
+        for (let i = 0; i < sectors.length; i += batchSize) {
+          const batch = sectors.slice(i, i + batchSize);
+
+          await neo4jClient.write(
+            `
+            UNWIND $sectors AS sector
+            MERGE (s:Sector {name: sector.name})
+            SET s.slug = sector.slug
+            `,
+            { sectors: batch }
+          );
+
+          count += batch.length;
+        }
+      }
+
+      console.log(`[GraphSync] Synced ${count} sectors`);
+    } catch (error: any) {
+      errors.push(`Sectors sync error: ${error.message}`);
+    }
+
+    return { count, errors };
+  },
+
+  /**
+   * Sync talent connections (CONNECTE_AVEC)
+   */
+  async syncConnections(
+    batchSize: number
+  ): Promise<{ count: number; errors: string[] }> {
+    const errors: string[] = [];
+    let count = 0;
+
+    try {
+      const { rows: connections } = await pool.query(`
+        SELECT c.from_talent_id, c.to_talent_id, c.relationship_type,
+               c.connected_at
+        FROM connections c
+        JOIN talents t1 ON c.from_talent_id = t1.id AND t1.deleted_at IS NULL
+        JOIN talents t2 ON c.to_talent_id = t2.id AND t2.deleted_at IS NULL
+      `);
+
+      for (let i = 0; i < connections.length; i += batchSize) {
+        const batch = connections.slice(i, i + batchSize).map(c => ({
+          ...c,
+          connected_at: c.connected_at?.toISOString(),
+        }));
+
+        await neo4jClient.write(
+          `
+          UNWIND $connections AS conn
+          MATCH (t1:Talent {id: conn.from_talent_id})
+          MATCH (t2:Talent {id: conn.to_talent_id})
+          MERGE (t1)-[r:CONNECTE_AVEC]->(t2)
+          SET r.relationship_type = conn.relationship_type,
+              r.connected_at = conn.connected_at
+          `,
+          { connections: batch }
+        );
+
+        count += batch.length;
+      }
+
+      console.log(`[GraphSync] Synced ${count} connections`);
+    } catch (error: any) {
+      errors.push(`Connections sync error: ${error.message}`);
+    }
+
+    return { count, errors };
+  },
+
+  /**
+   * Sync mentorships (MENTOR_DE)
+   */
+  async syncMentorships(
+    batchSize: number
+  ): Promise<{ count: number; errors: string[] }> {
+    const errors: string[] = [];
+    let count = 0;
+
+    try {
+      const { rows: mentorships } = await pool.query(`
+        SELECT m.mentor_id, m.mentee_id, m.status, m.started_at, m.ended_at,
+               COALESCE(
+                 (SELECT ARRAY_AGG(s.canonical_name)
+                  FROM skills s WHERE s.id = ANY(m.focus_area_skill_ids)),
+                 '{}'
+               ) as focus_areas
+        FROM mentorships m
+        JOIN talents t1 ON m.mentor_id = t1.id AND t1.deleted_at IS NULL
+        JOIN talents t2 ON m.mentee_id = t2.id AND t2.deleted_at IS NULL
+      `);
+
+      for (let i = 0; i < mentorships.length; i += batchSize) {
+        const batch = mentorships.slice(i, i + batchSize).map(m => ({
+          ...m,
+          started_at: m.started_at?.toISOString(),
+          ended_at: m.ended_at?.toISOString(),
+        }));
+
+        await neo4jClient.write(
+          `
+          UNWIND $mentorships AS m
+          MATCH (mentor:Talent {id: m.mentor_id})
+          MATCH (mentee:Talent {id: m.mentee_id})
+          MERGE (mentor)-[r:MENTOR_DE]->(mentee)
+          SET r.focus_areas = m.focus_areas,
+              r.started_at = m.started_at,
+              r.status = m.status
+          `,
+          { mentorships: batch }
+        );
+
+        count += batch.length;
+      }
+
+      console.log(`[GraphSync] Synced ${count} mentorships`);
+    } catch (error: any) {
+      errors.push(`Mentorships sync error: ${error.message}`);
+    }
+
+    return { count, errors };
+  },
+
+  /**
+   * Sync recommendations (RECOMMANDE_PAR)
+   */
+  async syncRecommendations(
+    batchSize: number
+  ): Promise<{ count: number; errors: string[] }> {
+    const errors: string[] = [];
+    let count = 0;
+
+    try {
+      const { rows: recs } = await pool.query(`
+        SELECT r.recommender_id, r.recommended_id, r.recommendation_text,
+               r.relationship as relationship_context, r.created_at,
+               COALESCE(
+                 (SELECT ARRAY_AGG(s.canonical_name)
+                  FROM skills s WHERE s.id = ANY(r.highlighted_skill_ids)),
+                 '{}'
+               ) as highlighted_skills
+        FROM recommendations r
+        JOIN talents t1 ON r.recommender_id = t1.id AND t1.deleted_at IS NULL
+        JOIN talents t2 ON r.recommended_id = t2.id AND t2.deleted_at IS NULL
+      `);
+
+      for (let i = 0; i < recs.length; i += batchSize) {
+        const batch = recs.slice(i, i + batchSize).map(r => ({
+          ...r,
+          created_at: r.created_at?.toISOString(),
+        }));
+
+        await neo4jClient.write(
+          `
+          UNWIND $recs AS rec
+          MATCH (recommender:Talent {id: rec.recommender_id})
+          MATCH (recommended:Talent {id: rec.recommended_id})
+          MERGE (recommended)-[r:RECOMMANDE_PAR]->(recommender)
+          SET r.recommendation_text = rec.recommendation_text,
+              r.highlighted_skills = rec.highlighted_skills,
+              r.recommended_at = rec.created_at,
+              r.relationship_context = rec.relationship_context
+          `,
+          { recs: batch }
+        );
+
+        count += batch.length;
+      }
+
+      console.log(`[GraphSync] Synced ${count} recommendations`);
+    } catch (error: any) {
+      errors.push(`Recommendations sync error: ${error.message}`);
+    }
+
+    return { count, errors };
+  },
+
+  /**
+   * Sync opportunity bookmarks (A_MIS_EN_FAVORIS)
+   */
+  async syncBookmarks(
+    batchSize: number
+  ): Promise<{ count: number; errors: string[] }> {
+    const errors: string[] = [];
+    let count = 0;
+
+    try {
+      const { rows: bookmarks } = await pool.query(`
+        SELECT ob.talent_id, ob.opportunity_id, ob.created_at, ob.notes
+        FROM opportunity_bookmarks ob
+        JOIN talents t ON ob.talent_id = t.id AND t.deleted_at IS NULL
+        JOIN opportunities o ON ob.opportunity_id = o.id AND o.deleted_at IS NULL
+      `);
+
+      for (let i = 0; i < bookmarks.length; i += batchSize) {
+        const batch = bookmarks.slice(i, i + batchSize).map(b => ({
+          ...b,
+          created_at: b.created_at?.toISOString(),
+        }));
+
+        await neo4jClient.write(
+          `
+          UNWIND $bookmarks AS bm
+          MATCH (t:Talent {id: bm.talent_id})
+          MATCH (o:Opportunity {id: bm.opportunity_id})
+          MERGE (t)-[r:A_MIS_EN_FAVORIS]->(o)
+          SET r.created_at = bm.created_at,
+              r.notes = bm.notes
+          `,
+          { bookmarks: batch }
+        );
+
+        count += batch.length;
+      }
+
+      console.log(`[GraphSync] Synced ${count} bookmarks`);
+    } catch (error: any) {
+      errors.push(`Bookmarks sync error: ${error.message}`);
+    }
+
+    return { count, errors };
+  },
+
+  /**
+   * Sync space bookings (A_RESERVE)
+   */
+  async syncSpaceBookings(
+    batchSize: number
+  ): Promise<{ count: number; errors: string[] }> {
+    const errors: string[] = [];
+    let count = 0;
+
+    try {
+      const { rows: bookings } = await pool.query(`
+        SELECT sb.talent_id, sb.space_id, sb.start_datetime, sb.end_datetime,
+               sb.status, sb.total_amount as total_price
+        FROM space_bookings sb
+        JOIN talents t ON sb.talent_id = t.id AND t.deleted_at IS NULL
+        JOIN spaces s ON sb.space_id = s.id AND s.deleted_at IS NULL
+        WHERE sb.talent_id IS NOT NULL
+      `);
+
+      for (let i = 0; i < bookings.length; i += batchSize) {
+        const batch = bookings.slice(i, i + batchSize).map(b => ({
+          ...b,
+          date: b.start_datetime?.toISOString()?.split('T')[0],
+          start_time: b.start_datetime?.toISOString(),
+          end_time: b.end_datetime?.toISOString(),
+          total_price: b.total_price ? parseFloat(b.total_price) : null,
+        }));
+
+        await neo4jClient.write(
+          `
+          UNWIND $bookings AS bk
+          MATCH (t:Talent {id: bk.talent_id})
+          MATCH (s:Space {id: bk.space_id})
+          MERGE (t)-[r:A_RESERVE]->(s)
+          SET r.date = bk.date,
+              r.start_time = bk.start_time,
+              r.end_time = bk.end_time,
+              r.status = bk.status,
+              r.total_price = bk.total_price
+          `,
+          { bookings: batch }
+        );
+
+        count += batch.length;
+      }
+
+      console.log(`[GraphSync] Synced ${count} space bookings`);
+    } catch (error: any) {
+      errors.push(`Space bookings sync error: ${error.message}`);
+    }
+
+    return { count, errors };
+  },
+
+  /**
+   * Sync document-skill relationships (EXTRAIT_COMPETENCE)
+   */
+  async syncDocumentSkills(
+    batchSize: number
+  ): Promise<{ count: number; errors: string[] }> {
+    const errors: string[] = [];
+    let count = 0;
+
+    try {
+      const { rows: docSkills } = await pool.query(`
+        SELECT ds.document_id, ds.skill_id, ds.relevance_score, ds.is_auto_generated
+        FROM document_skills ds
+        JOIN talent_documents d ON ds.document_id = d.id AND d.deleted_at IS NULL
+        JOIN skills s ON ds.skill_id = s.id AND s.deleted_at IS NULL
+      `);
+
+      for (let i = 0; i < docSkills.length; i += batchSize) {
+        const batch = docSkills.slice(i, i + batchSize).map(ds => ({
+          ...ds,
+          relevance_score: ds.relevance_score ? parseFloat(ds.relevance_score) : null,
+        }));
+
+        await neo4jClient.write(
+          `
+          UNWIND $docSkills AS ds
+          MATCH (d:Document {id: ds.document_id})
+          MATCH (s:Skill {id: ds.skill_id})
+          MERGE (d)-[r:EXTRAIT_COMPETENCE]->(s)
+          SET r.relevance_score = ds.relevance_score,
+              r.is_auto_generated = ds.is_auto_generated
+          `,
+          { docSkills: batch }
+        );
+
+        count += batch.length;
+      }
+
+      console.log(`[GraphSync] Synced ${count} document-skill relationships`);
+    } catch (error: any) {
+      errors.push(`Document skills sync error: ${error.message}`);
+    }
+
+    return { count, errors };
+  },
+
+  /**
+   * Sync organization-skill relationships (RECHERCHE_COMPETENCE)
+   */
+  async syncOrganizationSkills(
+    batchSize: number
+  ): Promise<{ count: number; errors: string[] }> {
+    const errors: string[] = [];
+    let count = 0;
+
+    try {
+      const { rows: orgSkills } = await pool.query(`
+        SELECT os.organization_id, os.skill_id, os.relevance_score, os.is_auto_generated
+        FROM organization_skills os
+        JOIN organizations o ON os.organization_id = o.id AND o.deleted_at IS NULL
+        JOIN skills s ON os.skill_id = s.id AND s.deleted_at IS NULL
+      `);
+
+      for (let i = 0; i < orgSkills.length; i += batchSize) {
+        const batch = orgSkills.slice(i, i + batchSize).map(os => ({
+          ...os,
+          relevance_score: os.relevance_score ? parseFloat(os.relevance_score) : null,
+        }));
+
+        await neo4jClient.write(
+          `
+          UNWIND $orgSkills AS os
+          MATCH (o:Organization {id: os.organization_id})
+          MATCH (s:Skill {id: os.skill_id})
+          MERGE (o)-[r:RECHERCHE_COMPETENCE]->(s)
+          SET r.relevance_score = os.relevance_score,
+              r.is_auto_generated = os.is_auto_generated
+          `,
+          { orgSkills: batch }
+        );
+
+        count += batch.length;
+      }
+
+      console.log(`[GraphSync] Synced ${count} organization-skill relationships`);
+    } catch (error: any) {
+      errors.push(`Organization skills sync error: ${error.message}`);
+    }
+
+    return { count, errors };
+  },
+
+  /**
+   * Sync project-skill relationships (UTILISE_COMPETENCE)
+   */
+  async syncProjectSkills(
+    batchSize: number
+  ): Promise<{ count: number; errors: string[] }> {
+    const errors: string[] = [];
+    let count = 0;
+
+    try {
+      const { rows: projSkills } = await pool.query(`
+        SELECT ps.project_id, ps.skill_id, ps.relevance_score, ps.is_auto_generated
+        FROM project_skills ps
+        JOIN projects p ON ps.project_id = p.id AND p.deleted_at IS NULL
+        JOIN skills s ON ps.skill_id = s.id AND s.deleted_at IS NULL
+      `);
+
+      for (let i = 0; i < projSkills.length; i += batchSize) {
+        const batch = projSkills.slice(i, i + batchSize).map(ps => ({
+          ...ps,
+          relevance_score: ps.relevance_score ? parseFloat(ps.relevance_score) : null,
+        }));
+
+        await neo4jClient.write(
+          `
+          UNWIND $projSkills AS ps
+          MATCH (p:Project {id: ps.project_id})
+          MATCH (s:Skill {id: ps.skill_id})
+          MERGE (p)-[r:UTILISE_COMPETENCE]->(s)
+          SET r.relevance_score = ps.relevance_score,
+              r.is_auto_generated = ps.is_auto_generated
+          `,
+          { projSkills: batch }
+        );
+
+        count += batch.length;
+      }
+
+      console.log(`[GraphSync] Synced ${count} project-skill relationships`);
+    } catch (error: any) {
+      errors.push(`Project skills sync error: ${error.message}`);
+    }
+
+    return { count, errors };
+  },
+
+  /**
+   * Sync sector relationships (Organization/Community → Sector via DANS_SECTEUR)
+   */
+  async syncSectorRelations(
+    batchSize: number
+  ): Promise<{ count: number; errors: string[] }> {
+    const errors: string[] = [];
+    let count = 0;
+
+    try {
+      // Organizations → Sectors
+      const { rows: orgSectors } = await pool.query(`
+        SELECT o.id as entity_id, unnest(o.sectors) as sector_name, 'Organization' as label
+        FROM organizations o
+        WHERE o.deleted_at IS NULL AND o.sectors IS NOT NULL
+      `);
+
+      for (let i = 0; i < orgSectors.length; i += batchSize) {
+        const batch = orgSectors.slice(i, i + batchSize);
+
+        await neo4jClient.write(
+          `
+          UNWIND $rels AS rel
+          MATCH (o:Organization {id: rel.entity_id})
+          MATCH (s:Sector {name: rel.sector_name})
+          MERGE (o)-[:DANS_SECTEUR]->(s)
+          `,
+          { rels: batch }
+        );
+
+        count += batch.length;
+      }
+
+      // Communities → Sectors
+      const { rows: commSectors } = await pool.query(`
+        SELECT c.id as entity_id, unnest(c.sectors) as sector_name
+        FROM communities c
+        WHERE c.deleted_at IS NULL AND c.sectors IS NOT NULL
+      `);
+
+      for (let i = 0; i < commSectors.length; i += batchSize) {
+        const batch = commSectors.slice(i, i + batchSize);
+
+        await neo4jClient.write(
+          `
+          UNWIND $rels AS rel
+          MATCH (c:Community {id: rel.entity_id})
+          MATCH (s:Sector {name: rel.sector_name})
+          MERGE (c)-[:DANS_SECTEUR]->(s)
+          `,
+          { rels: batch }
+        );
+
+        count += batch.length;
+      }
+
+      console.log(`[GraphSync] Synced ${count} sector relations`);
+    } catch (error: any) {
+      errors.push(`Sector relations sync error: ${error.message}`);
     }
 
     return { count, errors };

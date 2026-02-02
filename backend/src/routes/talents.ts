@@ -77,8 +77,6 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     const result = await pool.query(`
       SELECT t.*,
         (SELECT COUNT(*) FROM talent_skills WHERE talent_id = t.id) as skill_count,
-        (SELECT COUNT(*) FROM talent_experiences WHERE talent_id = t.id) as experience_count,
-        (SELECT COUNT(*) FROM talent_educations WHERE talent_id = t.id) as education_count,
         (SELECT status FROM kyc_verifications WHERE talent_id = t.id ORDER BY created_at DESC LIMIT 1) as kyc_status,
         CASE
           WHEN EXISTS (SELECT 1 FROM kyc_verifications WHERE talent_id = t.id AND status = 'VERIFIED')
@@ -118,7 +116,6 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
       avatar_url,
       phone,
       gender,
-      birthday,
       city,
       region,
       country,
@@ -126,6 +123,7 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
       willing_to_relocate,
       profile_tags,
       goals,
+      sectors,
     } = req.body;
 
     // Content moderation for user-generated text fields
@@ -187,11 +185,6 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
       params.push(gender || null);
     }
 
-    if (birthday !== undefined) {
-      updates.push(`birthday = $${paramIndex++}`);
-      params.push(birthday ? new Date(birthday) : null);
-    }
-
     if (city !== undefined) {
       updates.push(`city = $${paramIndex++}`);
       params.push(city?.trim() || null);
@@ -230,6 +223,14 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
       }
       updates.push(`profile_tags = $${paramIndex++}`);
       params.push(profile_tags);
+    }
+
+    if (sectors !== undefined) {
+      if (!Array.isArray(sectors)) {
+        return res.status(400).json({ error: 'sectors must be an array' });
+      }
+      updates.push(`sectors = $${paramIndex++}`);
+      params.push(sectors);
     }
 
     if (goals !== undefined) {

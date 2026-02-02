@@ -827,62 +827,7 @@ async function seed() {
     console.log(`   ✓ ${memberCount} community-member relations created\n`);
 
     // ========================================================================
-    // 10. SEED TALENT_EXPERIENCES
-    // ========================================================================
-    console.log('💼 Seeding talent experiences...');
-    let experienceCount = 0;
-
-    for (const talentId of talentIds) {
-      const numExperiences = randomInt(1, 4);
-
-      for (let i = 0; i < numExperiences; i++) {
-        const orgId = randomElement(organizationIds);
-        const startDate = randomDate(new Date('2018-01-01'), new Date('2023-01-01'));
-        const endDate = i === 0 ? null : randomDate(startDate, new Date('2024-12-01'));
-        const jobTitles = ['Developpeur', 'Designer', 'Chef de projet', 'Analyste', 'Consultant', 'Manager'];
-
-        await client.query(
-          `INSERT INTO talent_experiences (talent_id, organization_id, job_title, started_at, ended_at)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT DO NOTHING`,
-          [talentId, orgId, randomElement(jobTitles), formatDate(startDate), endDate ? formatDate(endDate) : null]
-        );
-        experienceCount++;
-      }
-    }
-    console.log(`   ✓ ${experienceCount} experiences created\n`);
-
-    // ========================================================================
-    // 16. SEED TALENT_EDUCATIONS
-    // ========================================================================
-    console.log('🎓 Seeding talent educations...');
-    let educationCount = 0;
-
-    const degreeTypes = ['HIGH_SCHOOL', 'BACHELOR', 'MASTER', 'PHD', 'CERTIFICATE', 'BOOTCAMP'];
-    const fieldsOfStudy = ['Informatique', 'Gestion', 'Marketing', 'Finance', 'Design', 'Data Science'];
-
-    for (const talentId of talentIds) {
-      const numEducations = randomInt(1, 3);
-
-      for (let i = 0; i < numEducations; i++) {
-        // Use INPHB or other educational institution
-        const eduOrgIndex = organizationIds.findIndex((_, idx) => ORGANIZATIONS_DATA[idx].type === 'EDUCATIONAL_INSTITUTION');
-        const orgId = eduOrgIndex >= 0 ? organizationIds[eduOrgIndex] : randomElement(organizationIds);
-
-        const startDate = randomDate(new Date('2015-09-01'), new Date('2022-09-01'));
-        const endDate = new Date(startDate);
-        endDate.setFullYear(endDate.getFullYear() + randomInt(2, 5));
-
-        await client.query(
-          `INSERT INTO talent_educations (talent_id, organization_id, degree_type, field_of_study, started_at, ended_at)
-           VALUES ($1, $2, $3, $4, $5, $6)
-           ON CONFLICT DO NOTHING`,
-          [talentId, orgId, randomElement(degreeTypes), randomElement(fieldsOfStudy), formatDate(startDate), formatDate(endDate)]
-        );
-        educationCount++;
-      }
-    }
-    console.log(`   ✓ ${educationCount} educations created\n`);
+    // talent_experiences and talent_educations removed in migration 051
 
     // ========================================================================
     // 17. SEED MENTORSHIPS

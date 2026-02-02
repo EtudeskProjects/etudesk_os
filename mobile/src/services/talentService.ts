@@ -14,13 +14,13 @@ export interface UpdateTalentData {
   avatar_url?: string;
   phone?: string;
   gender?: 'M' | 'F' | 'O';
-  birthday?: string;
   city?: string;
   region?: string;
   country?: string;
   remote_ready?: boolean;
   willing_to_relocate?: boolean;
   profile_tags?: string[];
+  sectors?: string[];
   goals?: string[];
 }
 

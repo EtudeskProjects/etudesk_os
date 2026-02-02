@@ -582,8 +582,6 @@ export async function rankApplications(
         'region', t.region,
         'country', t.country,
         'bio', t.bio,
-        'current_role', (SELECT te.job_title FROM talent_experiences te WHERE te.talent_id = t.id ORDER BY te.ended_at DESC NULLS FIRST, te.started_at DESC LIMIT 1),
-        'years_experience', EXTRACT(YEAR FROM AGE(NOW(), (SELECT MIN(te.started_at) FROM talent_experiences te WHERE te.talent_id = t.id)))::INTEGER,
         'skills', (SELECT ARRAY_AGG(s.canonical_name) FROM talent_skills ts JOIN skills s ON ts.skill_id = s.id WHERE ts.talent_id = t.id),
         'sectors', t.sectors,
         'remote_ready', t.remote_ready,

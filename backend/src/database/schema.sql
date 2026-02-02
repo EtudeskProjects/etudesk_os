@@ -33,6 +33,7 @@ CREATE TABLE talents (
     last_name VARCHAR(100),
     bio TEXT,
     avatar_url TEXT,
+    gender VARCHAR(10),
 
     -- Contact (Private)
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -42,7 +43,6 @@ CREATE TABLE talents (
     city VARCHAR(100),
     region VARCHAR(100),
     country CHAR(2), -- ISO 3166-1 alpha-2
-    coordinates POINT,
     remote_ready BOOLEAN DEFAULT FALSE,
     willing_to_relocate BOOLEAN DEFAULT FALSE,
 
@@ -469,52 +469,7 @@ CREATE TABLE talent_projects (
 CREATE INDEX idx_talent_projects_talent_id ON talent_projects(talent_id);
 CREATE INDEX idx_talent_projects_project_id ON talent_projects(project_id);
 
--- RELATION: WORKED_AT (Talent -> Organization)
-CREATE TABLE talent_experiences (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID REFERENCES talents(id) ON DELETE CASCADE,
-    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-
-    job_title VARCHAR(255) NOT NULL,
-    work_type VARCHAR(50),
-
-    started_at DATE NOT NULL,
-    ended_at DATE,
-    is_current BOOLEAN GENERATED ALWAYS AS (ended_at IS NULL) STORED,
-
-    responsibilities TEXT,
-    city VARCHAR(100),
-    country CHAR(2),
-    remote BOOLEAN DEFAULT FALSE,
-
-    verified BOOLEAN DEFAULT FALSE,
-    verified_by UUID REFERENCES documents(id) ON DELETE SET NULL
-);
-
-CREATE INDEX idx_talent_experiences_talent_id ON talent_experiences(talent_id);
-CREATE INDEX idx_talent_experiences_organization_id ON talent_experiences(organization_id);
-CREATE INDEX idx_talent_experiences_is_current ON talent_experiences(is_current);
-
--- RELATION: STUDIED_AT (Talent -> Organization)
-CREATE TABLE talent_educations (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID REFERENCES talents(id) ON DELETE CASCADE,
-    organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-
-    degree_type VARCHAR(50),
-    field_of_study VARCHAR(255),
-
-    started_at DATE,
-    ended_at DATE,
-    graduated BOOLEAN DEFAULT TRUE,
-    gpa NUMERIC(4,2), -- Système français (0-20)
-    honors TEXT[],
-    thesis_title TEXT
-);
-
-CREATE INDEX idx_talent_educations_talent_id ON talent_educations(talent_id);
-CREATE INDEX idx_talent_educations_organization_id ON talent_educations(organization_id);
-CREATE INDEX idx_talent_educations_degree_type ON talent_educations(degree_type);
+-- talent_experiences and talent_educations removed in migration 051
 
 -- RELATION: POSTED (Talent|Organization -> Opportunity)
 CREATE TABLE opportunity_posters (

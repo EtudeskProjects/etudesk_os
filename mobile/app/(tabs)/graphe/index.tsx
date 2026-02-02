@@ -27,11 +27,12 @@ import {
   CloudSun,
   Target,
   Plus,
-  Award,
+  Gem,
   Banknote,
   Info,
   FolderOpen,
   Mail,
+  User,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
@@ -47,8 +48,13 @@ import {
   spaceService,
   spaceBookingService,
   opportunityService,
+  documentService,
 } from '../../../src/services';
-import type { Notification as EcoNotification } from '../../../src/services/notificationService';
+import skillService from '../../../src/services/skillService';
+import { communityInvitationService } from '../../../src/services/communityInvitationService';
+import { spaceInvitationService } from '../../../src/services/spaceInvitationService';
+import { opportunityInvitationService } from '../../../src/services/opportunityInvitationService';
+import { notificationService, type Notification as EcoNotification } from '../../../src/services/notificationService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -69,9 +75,11 @@ export default function EcosystemScreen() {
   const [quickActionCounts, setQuickActionCounts] = useState({
     talent: {
       skills: 0,
+      documents: 0,
       communities: 0,
       reservations: 0,
       applications: 0,
+      invitations: 0,
     },
     org: {
       communities: 0,
@@ -149,7 +157,7 @@ export default function EcosystemScreen() {
     {
       id: 'skills',
       label: 'Mes compétences',
-      icon: Award,
+      icon: Gem,
       route: '/settings/skills',
       count: quickActionCounts.talent.skills,
       theme: CARD_THEMES.talent,
@@ -159,7 +167,7 @@ export default function EcosystemScreen() {
       label: 'Mes documents',
       icon: FolderOpen,
       route: '/settings/documents',
-      count: 0,
+      count: quickActionCounts.talent.documents,
       theme: CARD_THEMES.opportunity,
     },
     {
@@ -187,11 +195,11 @@ export default function EcosystemScreen() {
       theme: CARD_THEMES.talent,
     },
     {
-      id: 'invitations',
-      label: 'Mes invitations',
-      icon: Mail,
-      route: '/settings/invitations',
-      count: 0,
+      id: 'profile',
+      label: 'Mon Profil',
+      icon: User,
+      route: '/settings/edit-profile',
+      count: undefined,
       theme: CARD_THEMES.talent,
     },
   ];
@@ -224,6 +232,7 @@ export default function EcosystemScreen() {
       case 'APPLICATION': return CheckCircle;
       case 'OPPORTUNITY': return Briefcase;
       case 'COMMUNITY': return Users;
+      case 'SYSTEM': return AlertCircle;
       default: return Bell;
     }
   };
@@ -233,9 +242,35 @@ export default function EcosystemScreen() {
       case 'APPLICATION': return { bg: CARD_THEMES.talent.bg, icon: CARD_THEMES.talent.icon };
       case 'OPPORTUNITY': return { bg: CARD_THEMES.opportunity.bg, icon: CARD_THEMES.opportunity.icon };
       case 'COMMUNITY': return { bg: CARD_THEMES.community.bg, icon: CARD_THEMES.community.icon };
+      case 'SYSTEM': return { bg: CARD_THEMES.space.bg, icon: CARD_THEMES.space.icon };
       default: return { bg: colors.gray100, icon: colors.textSecondary };
     }
   };
+
+  const formatRelativeTime = (dateStr: string): string => {
+    const now = Date.now();
+    const diff = now - new Date(dateStr).getTime();
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return "À l'instant";
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `${h}h`;
+    const d = Math.floor(h / 24);
+    if (d < 7) return `${d}j`;
+    return `${Math.floor(d / 7)} sem.`;
+  };
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      const response: any = await notificationService.getNotifications({ limit: 5 });
+      const notifs = response?.data ?? [];
+      if (Array.isArray(notifs)) {
+        setNotifications(notifs);
+      }
+    } catch (error) {
+      console.error('[Ecosystem] Failed to load notifications:', error);
+    }
+  }, []);
 
   const loadQuickActionCounts = useCallback(async () => {
     try {
@@ -275,15 +310,20 @@ export default function EcosystemScreen() {
         return;
       }
 
-      const [communitiesResult, bookingsResult, applicationsResult] = await Promise.allSettled([
+      const [
+        communitiesResult, bookingsResult, applicationsResult,
+        skillsResult, documentsResult,
+        communityInvResult, spaceInvResult, opportunityInvResult,
+      ] = await Promise.allSettled([
         communityService.getMyMemberships({ limit: 1, offset: 0 }),
         spaceBookingService.getMyBookings({ limit: 1, offset: 0 }),
         applicationService.getMyApplications({ limit: 1, offset: 0 }),
+        skillService.getMySkills(),
+        documentService.listDocuments({ limit: 1 }),
+        communityInvitationService.getMyInvitations({ status: 'PENDING', limit: 1 }),
+        spaceInvitationService.getMyInvitations({ limit: 1 }),
+        opportunityInvitationService.getMyInvitations({ limit: 1 }),
       ]);
-
-      // Calculate skills count (we'll need to get this from another source)
-      // For now, set to 0 or fetch from skills endpoint if available
-      const skillsCount = 0;
 
       // Extract results safely, defaulting to 0 if failed
       const communitiesRes = communitiesResult.status === 'fulfilled' ? communitiesResult.value : null;
@@ -293,14 +333,23 @@ export default function EcosystemScreen() {
       const communitiesCount = communitiesRes?.count ?? communitiesRes?.data?.memberships?.length ?? 0;
       const reservationsCount = bookingsRes?.count ?? bookingsRes?.data?.length ?? 0;
       const applicationsCount = applicationsRes?.count ?? applicationsRes?.data?.length ?? 0;
+      const skillsCount = skillsResult.status === 'fulfilled' ? skillsResult.value.length : 0;
+      const documentsCount = documentsResult.status === 'fulfilled' ? (documentsResult.value?.total ?? documentsResult.value?.documents?.length ?? 0) : 0;
+
+      const communityInvCount = communityInvResult.status === 'fulfilled' ? (communityInvResult.value.data?.count ?? communityInvResult.value.data?.data?.length ?? 0) : 0;
+      const spaceInvCount = spaceInvResult.status === 'fulfilled' ? (spaceInvResult.value.data?.count ?? spaceInvResult.value.data?.data?.length ?? 0) : 0;
+      const opportunityInvCount = opportunityInvResult.status === 'fulfilled' ? (opportunityInvResult.value.data?.count ?? opportunityInvResult.value.data?.data?.length ?? 0) : 0;
+      const invitationsCount = communityInvCount + spaceInvCount + opportunityInvCount;
 
       setQuickActionCounts((prev) => ({
         ...prev,
         talent: {
           skills: skillsCount,
+          documents: documentsCount,
           communities: communitiesCount,
           reservations: reservationsCount,
           applications: applicationsCount,
+          invitations: invitationsCount,
         },
       }));
     } catch (error) {
@@ -311,16 +360,16 @@ export default function EcosystemScreen() {
   // Refresh handler
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await loadQuickActionCounts();
+    await Promise.all([loadQuickActionCounts(), loadNotifications()]);
     setIsRefreshing(false);
-  }, [loadQuickActionCounts]);
+  }, [loadQuickActionCounts, loadNotifications]);
 
   // Load data
   useEffect(() => {
     let isMounted = true;
     const loadData = async () => {
       setIsLoading(true);
-      await loadQuickActionCounts();
+      await Promise.all([loadQuickActionCounts(), loadNotifications()]);
       if (isMounted) {
         setIsLoading(false);
       }
@@ -329,7 +378,7 @@ export default function EcosystemScreen() {
     return () => {
       isMounted = false;
     };
-  }, [loadQuickActionCounts]);
+  }, [loadQuickActionCounts, loadNotifications]);
 
 // Render Organization Content
 const renderOrganizationContent = () => (
@@ -380,11 +429,13 @@ const renderOrganizationContent = () => (
               <Text style={[styles.quickActionLabel, { color: action.theme.text }]} numberOfLines={2}>
                 {action.label}
               </Text>
-              <View style={[styles.quickActionBadge, { backgroundColor: action.theme.icon }]}>
-                <Text style={[styles.quickActionBadgeText, { color: colors.textOnPrimary }]}>
-                  {formatCompactNumber(action.count)}
-                </Text>
-              </View>
+              {action.count !== undefined && (
+                <View style={[styles.quickActionBadge, { backgroundColor: action.theme.icon }]}>
+                  <Text style={[styles.quickActionBadgeText, { color: colors.textOnPrimary }]}>
+                    {formatCompactNumber(action.count)}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}
@@ -514,11 +565,13 @@ const renderTalentContent = () => (
               <Text style={[styles.quickActionLabel, { color: action.theme.text }]} numberOfLines={2}>
                 {action.label}
               </Text>
-              <View style={[styles.quickActionBadge, { backgroundColor: action.theme.icon }]}>
-                <Text style={[styles.quickActionBadgeText, { color: colors.textOnPrimary }]}>
-                  {formatCompactNumber(action.count)}
-                </Text>
-              </View>
+              {action.count !== undefined && (
+                <View style={[styles.quickActionBadge, { backgroundColor: action.theme.icon }]}>
+                  <Text style={[styles.quickActionBadgeText, { color: colors.textOnPrimary }]}>
+                    {formatCompactNumber(action.count)}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}
@@ -551,7 +604,7 @@ const renderTalentContent = () => (
             </View>
           )}
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/settings/notifications')}>
           <Text style={[styles.seeMore, { color: colors.primary }]}>Voir tout</Text>
         </TouchableOpacity>
       </View>
@@ -594,7 +647,7 @@ const renderTalentContent = () => (
                   </Text>
                 </View>
                 <Text style={[styles.listItemTime, { color: colors.gray400 }]}>
-                  {notification.created_at}
+                  {formatRelativeTime(notification.created_at)}
                 </Text>
               </TouchableOpacity>
             );
@@ -613,6 +666,7 @@ return (
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
+            onPress={() => router.push('/settings/notifications')}
             activeOpacity={0.8}
           >
             <Bell size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
