@@ -75,7 +75,7 @@ export async function buildTalentObject(talentId: string): Promise<TalentObject 
            FROM talent_skills ts
            JOIN skills s ON s.id = ts.skill_id
            WHERE ts.talent_id = t.id
-           ORDER BY ts.endorsement_count DESC NULLS LAST
+           ORDER BY ts.endorsed_count DESC NULLS LAST
            LIMIT 20
          ),
          '{}'
