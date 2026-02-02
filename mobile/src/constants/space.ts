@@ -39,18 +39,18 @@ export type SpaceType = (typeof SPACE_TYPES)[keyof typeof SPACE_TYPES];
 export const SPACE_TYPE_LABELS: Record<SpaceType, string> = {
   SALLE_COURS: 'Salle de cours',
   SALLE_INFORMATIQUE: 'Salle informatique',
-  AMPHITHEATRE: 'Amphitheatre',
+  AMPHITHEATRE: 'Amphithéâtre',
   SALLE_FORMATION: 'Salle de formation',
   OPEN_SPACE: 'Open space',
-  BUREAU_PRIVE: 'Bureau prive',
+  BUREAU_PRIVE: 'Bureau privé',
   POSTE_NOMADE: 'Poste nomade',
-  SALLE_REUNION: 'Salle de reunion',
-  SALLE_CONFERENCE: 'Salle de conference',
+  SALLE_REUNION: 'Salle de réunion',
+  SALLE_CONFERENCE: 'Salle de conférence',
   CABINE_APPEL: 'Cabine d\'appel',
   ATELIER: 'Atelier',
   LABORATOIRE: 'Laboratoire',
   STUDIO: 'Studio',
-  SALLE_EVENEMENT: 'Salle evenementielle',
+  SALLE_EVENEMENT: 'Salle événementielle',
   ROOFTOP: 'Rooftop',
   TERRASSE: 'Terrasse',
 };
@@ -249,18 +249,18 @@ export const SPACE_EQUIPMENT = [
 export type SpaceEquipment = (typeof SPACE_EQUIPMENT)[number];
 
 export const SPACE_EQUIPMENT_LABELS: Record<SpaceEquipment, string> = {
-  VIDEOPROJECTOR: 'Videoprojecteur',
+  VIDEOPROJECTOR: 'Vidéoprojecteur',
   WHITEBOARD: 'Tableau blanc',
   FLIPCHART: 'Paperboard',
-  SCREEN: 'Ecran',
-  SOUND_SYSTEM: 'Systeme audio',
+  SCREEN: 'Écran',
+  SOUND_SYSTEM: 'Système audio',
   MICROPHONE: 'Microphone',
   WEBCAM: 'Webcam',
-  TV_SCREEN: 'Ecran TV',
-  VIDEO_CONFERENCE: 'Videoconference',
+  TV_SCREEN: 'Écran TV',
+  VIDEO_CONFERENCE: 'Vidéoconférence',
   COMPUTERS: 'Ordinateurs',
   PRINTERS: 'Imprimantes',
-  PHONE: 'Telephone',
+  PHONE: 'Téléphone',
 };
 
 export const SPACE_EQUIPMENT_DATA: Array<{ id: SpaceEquipment; label: string; icon: string }> = [
@@ -300,13 +300,13 @@ export const SPACE_AMENITY_LABELS: Record<SpaceAmenity, string> = {
   AIR_CONDITIONING: 'Climatisation',
   HEATING: 'Chauffage',
   PARKING: 'Parking',
-  CAFETERIA: 'Cafeteria',
+  CAFETERIA: 'Cafétéria',
   KITCHEN: 'Cuisine',
   RESTROOMS: 'Sanitaires',
   RECEPTION: 'Accueil',
-  SECURITY: 'Securite',
+  SECURITY: 'Sécurité',
   ELEVATOR: 'Ascenseur',
-  NATURAL_LIGHT: 'Lumiere naturelle',
+  NATURAL_LIGHT: 'Lumière naturelle',
   SOUNDPROOF: 'Insonorisation',
 };
 

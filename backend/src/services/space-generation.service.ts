@@ -1,7 +1,6 @@
 /**
  * Space Generation Service
- * Uses GPT-4.1 nano for AI-powered space form generation
- * with structured outputs
+ * Uses Agents SDK with GPT-4.1-nano for AI-powered space form generation
  */
 
 import OpenAI from 'openai';
@@ -11,6 +10,7 @@ import {
   SECTORS,
 } from '../types/models';
 import { SpaceType, SPACE_TYPES } from '../types/space.types';
+import { SPACE_GEN_SYSTEM_PROMPT, buildSpaceGenPrompt } from './ai/prompts/space-gen.prompt';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -42,7 +42,7 @@ export interface GeneratedSpace {
 
 interface OrganizationContext {
   name: string;
-  type?: string;
+  types?: string[];
   sectors?: string[];
   size?: string;
   description?: string;
@@ -52,126 +52,13 @@ interface OrganizationContext {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// OPENAI API (GPT-4.1 nano)
-// ═══════════════════════════════════════════════════════════════
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-const MODEL_NAME = 'gpt-4.1-nano';
-
-// Space equipment types (from space types)
-const SPACE_EQUIPMENT = [
-  'VIDEOPROJECTOR',
-  'WHITEBOARD',
-  'SCREEN',
-  'MICROPHONE',
-  'SPEAKER',
-  'COMPUTER',
-  'PRINTER',
-  'WEBCAM',
-  'WIFI',
-  'AIR_CONDITIONING',
-  'HEATING',
-];
-
-// Space amenities
-const SPACE_AMENITIES = [
-  'WIFI',
-  'PARKING',
-  'CAFETERIA',
-  'RESTROOM',
-  'ELEVATOR',
-  'SECURITY',
-];
-
-// JSON Schema for structured output
-const SPACE_SCHEMA = {
-  type: 'object',
-  properties: {
-    suggested_name: {
-      type: 'string',
-      description: 'Nom amélioré pour l\'espace (max 60 caractères)',
-    },
-    description: {
-      type: 'string',
-      description: 'Description de l\'espace (300-500 caractères)',
-    },
-    sectors: {
-      type: 'array',
-      items: {
-        type: 'string',
-        enum: Object.values(SECTORS),
-      },
-      minItems: 1,
-      maxItems: 5,
-      description: 'Secteurs d\'activité pertinents (1-5 secteurs)',
-    },
-    equipment: {
-      type: 'array',
-      items: {
-        type: 'string',
-        enum: SPACE_EQUIPMENT,
-      },
-      description: 'Équipements suggérés pour ce type d\'espace',
-    },
-    amenities: {
-      type: 'array',
-      items: {
-        type: 'string',
-        enum: SPACE_AMENITIES,
-      },
-      description: 'Services/commodités suggérés',
-    },
-    surface_m2: {
-      type: 'number',
-      description: 'Surface suggérée en m² selon le type d\'espace',
-    },
-    capacity: {
-      type: 'number',
-      description: 'Capacité suggérée en nombre de personnes',
-    },
-    rules: {
-      type: 'string',
-      description: 'Règlements intérieurs (3-5 points avec "• " comme puce, séparés par \\n, max 1000 caractères)',
-    },
-    hourly_rate: {
-      type: 'number',
-      description: 'Tarif horaire suggéré en XOF',
-    },
-    daily_rate: {
-      type: 'number',
-      description: 'Tarif journalier suggéré en XOF',
-    },
-    weekly_rate: {
-      type: 'number',
-      description: 'Tarif hebdomadaire suggéré en XOF',
-    },
-    monthly_rate: {
-      type: 'number',
-      description: 'Tarif mensuel suggéré en XOF',
-    },
-    questions: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-      maxItems: 5,
-      description: 'Questions complémentaires pour les réservations (max 5 questions courtes)',
-    },
-  },
-  required: ['description', 'sectors'],
-};
-
-// ═══════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════
 
 async function getOrganizationContext(organizationId: string): Promise<OrganizationContext | null> {
   try {
     const result = await pool.query(
-      `SELECT name, type, sectors, size, description,
+      `SELECT name, types, sectors, size, description,
               headquarters_city, headquarters_region, headquarters_country
        FROM organizations
        WHERE id = $1 AND deleted_at IS NULL`,
@@ -187,33 +74,6 @@ async function getOrganizationContext(organizationId: string): Promise<Organizat
     console.error('Error fetching organization context:', error);
     return null;
   }
-}
-
-function buildPrompt(
-  input: GenerationInput,
-  organization: OrganizationContext
-): string {
-  const sectorsList = Object.values(SECTORS).join(',');
-  const spaceTypeLabel = input.type.replace(/_/g, ' ').toLowerCase();
-  
-  return `Génère des suggestions pour un espace "${input.name}" de type ${spaceTypeLabel} (org: ${organization.name}, ${organization.type || 'N/A'}).
-
-REQUIS en JSON:
-- suggested_name: nom amélioré (max 60 car)
-- description: 300-500 car, caractéristiques et usage
-- sectors: 1-5 parmi [${sectorsList}]
-- equipment: équipements pertinents pour ${spaceTypeLabel}
-- amenities: services/commodités (WIFI souvent inclus)
-- surface_m2: surface typique en m² pour ce type d'espace
-- capacity: capacité typique en nombre de personnes
-- rules: règlements intérieurs (3-5 points avec "• " comme puce, séparés par \\n)
-- hourly_rate: tarif horaire XOF (suggérer selon type et localisation)
-- daily_rate: tarif journalier XOF
-- weekly_rate: tarif hebdomadaire XOF (optionnel)
-- monthly_rate: tarif mensuel XOF (optionnel)
-- questions: 2-4 questions pour réservations (max 5)
-
-Français, concis, professionnel.`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -247,31 +107,36 @@ export async function generateSpaceSuggestion(
   }
 
   // Build prompt
-  const prompt = buildPrompt(input, organization);
+  const spaceTypeLabel = input.type.replace(/_/g, ' ').toLowerCase();
+  const orgLocation = [organization.headquarters_city, organization.headquarters_region, organization.headquarters_country].filter(Boolean).join(', ') || 'Non spécifié';
+  const prompt = buildSpaceGenPrompt({
+    spaceName: input.name,
+    spaceTypeLabel,
+    orgName: organization.name,
+    orgType: organization.types?.join(', ') || 'N/A',
+    orgSectors: organization.sectors?.join(', ') || 'Non spécifié',
+    orgDescription: organization.description || '',
+    orgLocation,
+    sectorsList: Object.values(SECTORS).join(','),
+  });
 
   try {
     console.log('[SpaceGeneration] Starting generation for:', input.name);
     const startTime = Date.now();
 
-    const response = await openai.chat.completions.create({
-      model: MODEL_NAME,
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4.1-nano',
       messages: [
-        {
-          role: 'system',
-          content: 'Tu es un expert en gestion d\'espaces réservables. Réponds toujours en JSON valide.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
+        { role: 'system', content: SPACE_GEN_SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
       ],
-      max_completion_tokens: 2000,
       response_format: { type: 'json_object' },
     });
 
     console.log(`[SpaceGeneration] Completed in ${Date.now() - startTime}ms`);
 
-    const generatedText = response.choices[0]?.message?.content;
+    const generatedText = completion.choices[0]?.message?.content;
     if (!generatedText) {
       return { success: false, error: 'No response from AI model' };
     }
@@ -294,5 +159,3 @@ export async function generateSpaceSuggestion(
     };
   }
 }
-
-// ═══════════════════════════════════════════════════════════════

@@ -80,8 +80,8 @@ const STEP_TITLES: Record<Step, string> = {
   info: 'Infos',
   lieu: 'Lieu',
   conditions: 'Conditions',
-  media: 'Media',
-  preview: 'Apercu',
+  media: 'Média',
+  preview: 'Aperçu',
 };
 
 // Constants for limits
@@ -529,7 +529,7 @@ export default function EditOpportunityScreen() {
     }
   };
 
-  const formatDate = (date: Date | null) => date ? date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Non definie';
+  const formatDate = (date: Date | null) => date ? date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Non définie';
 
   const formatNumber = (num: string | number | null | undefined): string => {
     if (!num) return '';
@@ -550,9 +550,9 @@ export default function EditOpportunityScreen() {
   };
 
   const getLocationLabel = () => {
-    if (!locationType) return 'Non defini';
+    if (!locationType) return 'Non défini';
     const locationLabel = LOCATION_TYPE_LABELS[locationType];
-    if (!locationLabel) return 'Non defini';
+    if (!locationLabel) return 'Non défini';
     if (locationType === 'REMOTE') return locationLabel;
     const parts = [locationLabel];
     if (city) {
@@ -650,10 +650,10 @@ export default function EditOpportunityScreen() {
           </View>
         )}
 
-        {/* Secteurs d'activite - Multi-selection (5 max) */}
+        {/* Secteurs d'activité - Multi-selection (5 max) */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Secteurs d'activite ({selectedSectors.length}/{MAX_SECTORS})
+            Secteurs d'activité ({selectedSectors.length}/{MAX_SECTORS})
           </Text>
           <View style={styles.tagsContainer}>
             {SECTOR_DATA.slice(0, 15).map((sector) => {
@@ -681,18 +681,18 @@ export default function EditOpportunityScreen() {
           <Text style={[styles.charCount, { color: colors.gray500 }]}>{summary.length}/1000</Text>
         </View>
 
-        {/* Prerequis */}
+        {/* Prérequis */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Prerequis</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Prérequis</Text>
           <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
             <TextInput style={[styles.textArea, { color: colors.textPrimary }]} placeholder="Competences requises..." value={requirements} onChangeText={setRequirements} multiline maxLength={500} placeholderTextColor={colors.gray500} />
           </View>
           <Text style={[styles.charCount, { color: colors.gray500 }]}>{requirements.length}/500</Text>
         </View>
 
-        {/* Atouts apprecies */}
+        {/* Atouts appréciés */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Atouts apprecies</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Atouts appréciés</Text>
           <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
             <TextInput style={[styles.textArea, { color: colors.textPrimary }]} placeholder="Competences bonus..." value={niceToHave} onChangeText={setNiceToHave} multiline maxLength={300} placeholderTextColor={colors.gray500} />
           </View>
@@ -828,9 +828,9 @@ export default function EditOpportunityScreen() {
           </View>
         </View>
 
-        {/* Duree du contrat - Input libre */}
+        {/* Durée du contrat - Input libre */}
         <Input
-          label="Duree du contrat"
+          label="Durée du contrat"
           placeholder="ex: 1 mois, 6 mois, CDI..."
           value={duration}
           onChangeText={setDuration}
@@ -945,7 +945,7 @@ export default function EditOpportunityScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.halfField}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Date de debut</Text>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Date de début</Text>
             <TouchableOpacity style={[styles.dateButton, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]} onPress={() => setShowStartDatePicker(true)}>
               <Calendar size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.dateButtonText, { color: startDate ? colors.textPrimary : colors.gray500 }]} numberOfLines={1}>{startDate ? formatDate(startDate) : 'Selectionner'}</Text>
@@ -1197,7 +1197,7 @@ export default function EditOpportunityScreen() {
               </View>
             ) : (
               <View style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>Type non defini</Text>
+                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>Type non défini</Text>
               </View>
             )}
             {contractType ? (
@@ -1206,7 +1206,7 @@ export default function EditOpportunityScreen() {
               </View>
             ) : (
               <View style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>Contrat non defini</Text>
+                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>Contrat non défini</Text>
               </View>
             )}
             {workRhythm && (
@@ -1219,7 +1219,7 @@ export default function EditOpportunityScreen() {
 
         {/* Secteurs */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Secteurs d'activite</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Secteurs d'activité</Text>
           {selectedSectors.length > 0 ? (
             <View style={styles.previewTags}>
               {selectedSectors.map((sectorId) => {
@@ -1232,7 +1232,7 @@ export default function EditOpportunityScreen() {
               })}
             </View>
           ) : (
-            <Text style={[styles.previewText, { color: colors.gray500 }]}>Aucun secteur selectionne</Text>
+            <Text style={[styles.previewText, { color: colors.gray500 }]}>Aucun secteur sélectionné</Text>
           )}
         </View>
 
@@ -1244,11 +1244,11 @@ export default function EditOpportunityScreen() {
           </View>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
             <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Rythme de travail</Text>
-            <Text style={[styles.previewValue, { color: workRhythm ? colors.textPrimary : colors.gray400 }]}>{workRhythm ? WORK_RHYTHM_LABELS[workRhythm] : 'Non defini'}</Text>
+            <Text style={[styles.previewValue, { color: workRhythm ? colors.textPrimary : colors.gray400 }]}>{workRhythm ? WORK_RHYTHM_LABELS[workRhythm] : 'Non défini'}</Text>
           </View>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Duree du contrat</Text>
-            <Text style={[styles.previewValue, { color: duration.trim() ? colors.textPrimary : colors.gray400 }]}>{duration.trim() || 'Non definie'}</Text>
+            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Durée du contrat</Text>
+            <Text style={[styles.previewValue, { color: duration.trim() ? colors.textPrimary : colors.gray400 }]}>{duration.trim() || 'Non définie'}</Text>
           </View>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
             <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Date limite</Text>
@@ -1280,7 +1280,7 @@ export default function EditOpportunityScreen() {
               <Text style={[styles.previewValue, { color: deadline ? colors.textPrimary : colors.gray400 }]}>{formatDate(deadline)}</Text>
             </View>
             <View>
-              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Date de debut</Text>
+              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Date de début</Text>
               <Text style={[styles.previewValue, { color: startDate ? colors.textPrimary : colors.gray400 }]}>{formatDate(startDate)}</Text>
             </View>
           </View>
@@ -1292,16 +1292,16 @@ export default function EditOpportunityScreen() {
           {summary ? <Text style={[styles.previewText, { color: colors.textSecondary }]}>{summary}</Text> : <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucune description</Text>}
         </View>
 
-        {/* Prerequis */}
+        {/* Prérequis */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Prerequis</Text>
-          {requirements ? <Text style={[styles.previewText, { color: colors.textSecondary }]}>{requirements}</Text> : <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucun prerequis defini</Text>}
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Prérequis</Text>
+          {requirements ? <Text style={[styles.previewText, { color: colors.textSecondary }]}>{requirements}</Text> : <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucun prérequis défini</Text>}
         </View>
 
-        {/* Atouts apprecies */}
+        {/* Atouts appréciés */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Atouts apprecies</Text>
-          {niceToHave ? <Text style={[styles.previewText, { color: colors.textSecondary }]}>{niceToHave}</Text> : <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucun atout defini</Text>}
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Atouts appréciés</Text>
+          {niceToHave ? <Text style={[styles.previewText, { color: colors.textSecondary }]}>{niceToHave}</Text> : <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucun atout défini</Text>}
         </View>
 
         {/* Pièces jointes */}

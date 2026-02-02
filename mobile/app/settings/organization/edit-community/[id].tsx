@@ -85,7 +85,7 @@ const STEP_TITLES: Record<Step, string> = {
   info: 'Infos',
   lieu: 'Lieu',
   conditions: 'Conditions',
-  media: 'Media',
+  media: 'Média',
   preview: 'Aperçu',
 };
 

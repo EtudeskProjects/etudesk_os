@@ -73,6 +73,8 @@ const VALID_ORG_TYPES = [
   'COOPERATIVE', 'SOCIAL_ENTERPRISE'
 ];
 
+const MAX_ORG_TYPES = 3;
+
 /**
  * GET /api/organizations
  * List all organizations
@@ -91,7 +93,7 @@ router.get('/', async (req, res) => {
     let paramIndex = 1;
 
     if (type) {
-      query += ` AND o.type = $${paramIndex++}`;
+      query += ` AND $${paramIndex++} = ANY(o.types)`;
       params.push(type as string);
     }
     if (country) {
@@ -123,7 +125,9 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
     const result = await pool.query(`
       SELECT o.*,
         om.role as user_role,
-        (SELECT COUNT(*) FROM organization_members WHERE organization_id = o.id) as member_count
+        (SELECT COUNT(*) FROM organization_members WHERE organization_id = o.id) as member_count,
+        o.headquarters_coordinates[0] as headquarters_longitude,
+        o.headquarters_coordinates[1] as headquarters_latitude
       FROM organizations o
       INNER JOIN organization_members om ON om.organization_id = o.id AND om.talent_id = $1
       WHERE o.deleted_at IS NULL
@@ -147,7 +151,9 @@ router.get('/:id', async (req, res) => {
 
     const result = await pool.query(`
       SELECT o.*,
-        (SELECT COUNT(*) FROM organization_members WHERE organization_id = o.id) as member_count
+        (SELECT COUNT(*) FROM organization_members WHERE organization_id = o.id) as member_count,
+        o.headquarters_coordinates[0] as headquarters_longitude,
+        o.headquarters_coordinates[1] as headquarters_latitude
       FROM organizations o
       WHERE (o.id::text = $1 OR o.slug = $1) AND o.deleted_at IS NULL
     `, [id]);
@@ -192,7 +198,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     const {
       name,
-      type,
+      types,
       description,
       logo_url,
       website_url,
@@ -201,6 +207,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       headquarters_city,
       headquarters_region,
       headquarters_country,
+      headquarters_coordinates,
       sectors,
       goals,
     } = req.body;
@@ -210,8 +217,13 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Organization name must be at least 2 characters' });
     }
 
-    if (type && !VALID_ORG_TYPES.includes(type)) {
-      return res.status(400).json({ error: 'Invalid organization type', validTypes: VALID_ORG_TYPES });
+    if (types) {
+      if (!Array.isArray(types) || types.length > MAX_ORG_TYPES) {
+        return res.status(400).json({ error: `types must be an array of max ${MAX_ORG_TYPES} items`, validTypes: VALID_ORG_TYPES });
+      }
+      if (types.some((t: string) => !VALID_ORG_TYPES.includes(t))) {
+        return res.status(400).json({ error: 'Invalid organization type', validTypes: VALID_ORG_TYPES });
+      }
     }
 
     // Normalize country code (accepts both ISO codes and full names)
@@ -260,20 +272,25 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
       // Create organization
       const id = uuidv4();
+      const coordsValue = headquarters_coordinates
+        ? `(${Number(headquarters_coordinates.longitude)},${Number(headquarters_coordinates.latitude)})`
+        : null;
+
       const result = await client.query(`
         INSERT INTO organizations (
-          id, name, slug, type, description, logo_url, website_url,
+          id, name, slug, types, description, logo_url, website_url,
           contact_email, contact_phone,
           headquarters_city, headquarters_region, headquarters_country,
+          headquarters_coordinates,
           sectors, goals, created_by, created_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW()
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW()
         ) RETURNING *
       `, [
-        id, name.trim(), finalSlug, type || null, description?.trim() || null,
+        id, name.trim(), finalSlug, types && types.length > 0 ? types : null, description?.trim() || null,
         logo_url || null, website_url || null, contact_email || null, contact_phone || null,
         headquarters_city?.trim() || null, headquarters_region?.trim() || null,
-        normalizedCountry,
+        normalizedCountry, coordsValue,
         sectors || [], goals || [], req.talentId
       ]);
 
@@ -340,7 +357,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     const {
       name,
-      type,
+      types,
       description,
       logo_url,
       website_url,
@@ -349,13 +366,19 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       headquarters_city,
       headquarters_region,
       headquarters_country,
+      headquarters_coordinates,
       sectors,
       goals,
     } = req.body;
 
     // Validation
-    if (type && !VALID_ORG_TYPES.includes(type)) {
-      return res.status(400).json({ error: 'Invalid organization type' });
+    if (types !== undefined) {
+      if (types !== null && (!Array.isArray(types) || types.length > MAX_ORG_TYPES)) {
+        return res.status(400).json({ error: `types must be an array of max ${MAX_ORG_TYPES} items` });
+      }
+      if (types && types.some((t: string) => !VALID_ORG_TYPES.includes(t))) {
+        return res.status(400).json({ error: 'Invalid organization type', validTypes: VALID_ORG_TYPES });
+      }
     }
 
     // Normalize country code (accepts both ISO codes and full names)
@@ -395,9 +418,9 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       params.push(name.trim());
     }
 
-    if (type !== undefined) {
-      updates.push(`type = $${paramIndex++}`);
-      params.push(type || null);
+    if (types !== undefined) {
+      updates.push(`types = $${paramIndex++}`);
+      params.push(types && types.length > 0 ? types : null);
     }
 
     if (description !== undefined) {
@@ -438,6 +461,14 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     if (headquarters_country !== undefined) {
       updates.push(`headquarters_country = $${paramIndex++}`);
       params.push(normalizedCountry || null);
+    }
+
+    if (headquarters_coordinates !== undefined) {
+      const coordsValue = headquarters_coordinates
+        ? `(${Number(headquarters_coordinates.longitude)},${Number(headquarters_coordinates.latitude)})`
+        : null;
+      updates.push(`headquarters_coordinates = $${paramIndex++}`);
+      params.push(coordsValue);
     }
 
     if (sectors !== undefined) {

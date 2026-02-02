@@ -961,7 +961,6 @@ export default function CreateCommunityScreen() {
         {/* Permissions des membres par défaut */}
         <View style={styles.fieldContainer}>
           <View style={styles.permissionSectionHeader}>
-            <Shield size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.fieldLabel, { color: colors.gray700, marginBottom: 0 }]}>
               Permissions des membres
             </Text>
@@ -1014,7 +1013,7 @@ export default function CreateCommunityScreen() {
             </View>
 
             {/* Can Create Poll */}
-            <View style={styles.permissionRow}>
+            <View style={[styles.permissionRow, { borderBottomWidth: 0 }]}>
               <View style={styles.permissionInfo}>
                 <View style={[styles.permissionIconBox, { backgroundColor: colors.info + '15' }]}>
                   <BarChart2 size={18} color={colors.info} strokeWidth={ICON.strokeWidth} />
@@ -1527,7 +1526,7 @@ const styles = StyleSheet.create({
   previewText: { fontSize: TYPOGRAPHY.fontSize.sm, lineHeight: 20 },
   footer: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm, paddingBottom: SPACING.xs },
   footerButtons: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
-  draftButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, paddingVertical: SPACING.md, paddingHorizontal: SPACING.lg, borderWidth: 1.5, borderRadius: BORDER.radius.sm },
+  draftButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, height: LAYOUT.buttonHeight, paddingHorizontal: SPACING.lg, borderWidth: 1.5, borderRadius: BORDER.radius.sm },
   draftButtonText: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
   publishButton: { flex: 1 },
 

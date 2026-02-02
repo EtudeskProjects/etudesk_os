@@ -7,6 +7,9 @@ interface SpacePromptContext {
   spaceTypeLabel: string;
   orgName: string;
   orgType: string;
+  orgSectors: string;
+  orgDescription: string;
+  orgLocation: string;
   sectorsList: string;
 }
 
@@ -15,6 +18,8 @@ export function buildSpaceGenPrompt(ctx: SpacePromptContext): string {
 
 <context>
 Organisation : ${ctx.orgName} (${ctx.orgType})
+Secteurs : ${ctx.orgSectors}
+Localisation : ${ctx.orgLocation}${ctx.orgDescription ? `\nDescription : ${ctx.orgDescription}` : ''}
 Espace demandé : "${ctx.spaceName}" de type ${ctx.spaceTypeLabel}
 </context>
 

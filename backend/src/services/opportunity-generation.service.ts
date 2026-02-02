@@ -1,7 +1,6 @@
 /**
  * Opportunity Generation Service
- * Uses GPT-4.1 nano for AI-powered opportunity form generation
- * with structured outputs
+ * Uses Agents SDK with GPT-4.1-nano for AI-powered opportunity form generation
  */
 
 import OpenAI from 'openai';
@@ -23,6 +22,7 @@ import {
   SECTORS,
   OpportunityLocation,
 } from '../types/models';
+import { OPPORTUNITY_GEN_SYSTEM_PROMPT, buildOpportunityGenPrompt } from './ai/prompts/opportunity-gen.prompt';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -67,7 +67,7 @@ export interface GeneratedOpportunity {
 
 interface OrganizationContext {
   name: string;
-  type?: string;
+  types?: string[];
   sectors?: string[];
   size?: string;
   description?: string;
@@ -78,16 +78,9 @@ interface OrganizationContext {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// OPENAI API (GPT-4.1 nano)
+// JSON Schema for structured output
 // ═══════════════════════════════════════════════════════════════
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-const MODEL_NAME = 'gpt-4.1-nano';
-
-// JSON Schema for structured output
 const OPPORTUNITY_SCHEMA = {
   type: 'object',
   properties: {
@@ -110,44 +103,27 @@ const OPPORTUNITY_SCHEMA = {
     contract_type: {
       type: 'string',
       enum: Object.values(CONTRACT_TYPE),
-      description: 'Type de contrat (CDI, CDD, Stage, Freelance, etc.)',
     },
     work_rhythm: {
       type: 'string',
       enum: Object.values(WORK_RHYTHM),
-      description: 'Rythme de travail (Temps plein, Temps partiel, Flexible, Ponctuel)',
     },
     sectors: {
       type: 'array',
-      items: {
-        type: 'string',
-        enum: Object.values(SECTORS),
-      },
+      items: { type: 'string', enum: Object.values(SECTORS) },
       minItems: 2,
       maxItems: 5,
-      description: 'Secteurs d\'activité pertinents (2-5 secteurs obligatoires)',
     },
-    compensation_min: {
-      type: 'number',
-      description: 'Salaire minimum (en XOF par défaut)',
-    },
-    compensation_max: {
-      type: 'number',
-      description: 'Salaire maximum (en XOF par défaut)',
-    },
-    currency: {
-      type: 'string',
-      description: 'Code devise ISO 4217 (défaut: XOF)',
-    },
+    compensation_min: { type: 'number' },
+    compensation_max: { type: 'number' },
+    currency: { type: 'string' },
     compensation_frequency: {
       type: 'string',
       enum: Object.values(COMPENSATION_FREQUENCY),
-      description: 'Fréquence de paiement',
     },
     location_type: {
       type: 'string',
       enum: Object.values(LOCATION_TYPE),
-      description: 'Type de lieu de travail',
     },
     locations: {
       type: 'array',
@@ -160,20 +136,10 @@ const OPPORTUNITY_SCHEMA = {
           is_primary: { type: 'boolean' },
         },
       },
-      description: 'Lieux de travail possibles',
     },
-    duration: {
-      type: 'string',
-      description: 'Durée du contrat si applicable (ex: "6 mois", "1 an")',
-    },
-    deadline_days: {
-      type: 'number',
-      description: 'Nombre de jours à partir d\'aujourd\'hui pour la date limite de candidature (14-60 jours selon le type)',
-    },
-    cv_required: {
-      type: 'boolean',
-      description: 'CV requis pour postuler',
-    },
+    duration: { type: 'string' },
+    deadline_days: { type: 'number' },
+    cv_required: { type: 'boolean' },
     application_questions: {
       type: 'array',
       items: {
@@ -187,37 +153,19 @@ const OPPORTUNITY_SCHEMA = {
         required: ['id', 'question', 'required'],
       },
       maxItems: 3,
-      description: 'Questions personnalisées pour les candidats (max 3)',
     },
     target_profiles: {
       type: 'array',
-      items: {
-        type: 'string',
-        enum: Object.values(PROFILE_TAG),
-      },
+      items: { type: 'string', enum: Object.values(PROFILE_TAG) },
       maxItems: 4,
-      description: 'Profils cibles pour cette opportunité',
     },
-    ideal_candidate_summary: {
-      type: 'string',
-      description: 'Description du candidat idéal (2-3 phrases)',
-    },
+    ideal_candidate_summary: { type: 'string' },
   },
   required: [
-    'suggested_title',
-    'summary',
-    'requirements',
-    'nice_to_have',
-    'contract_type',
-    'work_rhythm',
-    'sectors',
-    'currency',
-    'compensation_frequency',
-    'location_type',
-    'deadline_days',
-    'cv_required',
-    'application_questions',
-    'target_profiles',
+    'suggested_title', 'summary', 'requirements', 'nice_to_have',
+    'contract_type', 'work_rhythm', 'sectors', 'currency',
+    'compensation_frequency', 'location_type', 'deadline_days',
+    'cv_required', 'application_questions', 'target_profiles',
     'ideal_candidate_summary',
   ],
 };
@@ -229,7 +177,7 @@ const OPPORTUNITY_SCHEMA = {
 async function getOrganizationContext(organizationId: string): Promise<OrganizationContext | null> {
   try {
     const result = await pool.query(
-      `SELECT name, type, sectors, size, description,
+      `SELECT name, types, sectors, size, description,
               headquarters_city, headquarters_region, headquarters_country,
               culture_summary
        FROM organizations
@@ -246,57 +194,6 @@ async function getOrganizationContext(organizationId: string): Promise<Organizat
     console.error('Error fetching organization context:', error);
     return null;
   }
-}
-
-function buildPrompt(
-  input: GenerationInput,
-  organization: OrganizationContext
-): string {
-  const opportunityTypeLabels: Record<OpportunityType, string> = {
-    EMPLOYMENT: 'Emploi',
-    INTERNSHIP: 'Stage',
-    ENTREPRENEURSHIP: 'Entrepreneuriat',
-    ALTERNATION: 'Alternance',
-    FREELANCE: 'Freelance',
-    VOLUNTEER: 'Bénévolat',
-  };
-
-  const existingDataContext = input.existing_data
-    ? `\n\nDonnées existantes du formulaire à prendre en compte:\n${JSON.stringify(input.existing_data, null, 2)}`
-    : '';
-
-  return `Tu es un expert en recrutement en Afrique francophone. Génère des données CONCISES.
-
-ORGANISATION:
-- Nom: ${organization.name}
-- Type: ${organization.type || 'Non spécifié'}
-- Secteurs: ${organization.sectors?.join(', ') || 'Non spécifié'}
-- Localisation: ${[organization.headquarters_city, organization.headquarters_region, organization.headquarters_country].filter(Boolean).join(', ') || 'Non spécifié'}
-
-OPPORTUNITÉ:
-- Titre brut: "${input.title}"
-- Type: ${opportunityTypeLabels[input.type]} (${input.type})
-${existingDataContext}
-
-INSTRUCTIONS CRITIQUES:
-1. suggested_title: Corrige/améliore le titre (professionnel, max 60 car.)
-2. summary: Description COURTE (150-300 car. MAX)
-3. requirements: 3-5 points COURTS avec "• " (max 250 car.)
-4. nice_to_have: 2-3 points COURTS avec "• " (max 150 car.)
-5. sectors: Sélectionne 2-5 secteurs pertinents (OBLIGATOIRE)
-6. deadline_days: Nombre de jours pour la deadline (Stage: 14-21j, Emploi: 30-45j, Consultation: 21-30j)
-7. Questions de candidature: 2-3 questions courtes et pertinentes
-8. Contenu en français, concis et professionnel
-
-SALAIRES (XOF/mois) - Génère TOUJOURS compensation_min ET compensation_max:
-- Stage/Apprentissage: min 50,000 - max 150,000
-- Junior: min 150,000 - max 400,000
-- Mid: min 400,000 - max 800,000
-- Senior: min 800,000 - max 1,500,000
-
-IMPORTANT: 
-- Génère TOUJOURS compensation_min ET compensation_max (jamais seulement le minimum)
-- Garde les textes COURTS et DIRECTS.`;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -329,28 +226,43 @@ export async function generateOpportunitySuggestion(
     return { success: false, error: 'Organization not found' };
   }
 
-  // Build prompt with JSON schema instructions
-  const prompt = buildPrompt(input, organization) + `\n\nIMPORTANT: Réponds UNIQUEMENT avec un JSON valide respectant ce schéma:
-${JSON.stringify(OPPORTUNITY_SCHEMA, null, 2)}`;
+  const opportunityTypeLabels: Record<OpportunityType, string> = {
+    EMPLOYMENT: 'Emploi',
+    INTERNSHIP: 'Stage',
+    ENTREPRENEURSHIP: 'Entrepreneuriat',
+    ALTERNATION: 'Alternance',
+    FREELANCE: 'Freelance',
+    VOLUNTEER: 'Bénévolat',
+  };
+
+  const existingDataContext = input.existing_data
+    ? `\nDonnées existantes : ${JSON.stringify(input.existing_data, null, 2)}`
+    : '';
+
+  const prompt = buildOpportunityGenPrompt({
+    title: input.title,
+    typeLabel: opportunityTypeLabels[input.type],
+    type: input.type,
+    orgName: organization.name,
+    orgType: organization.types?.join(', ') || 'Non spécifié',
+    orgSectors: organization.sectors?.join(', ') || 'Non spécifié',
+    orgLocation: [organization.headquarters_city, organization.headquarters_region, organization.headquarters_country].filter(Boolean).join(', ') || 'Non spécifié',
+    existingDataContext,
+    schemaJson: JSON.stringify(OPPORTUNITY_SCHEMA, null, 2),
+  });
 
   try {
-    const response = await openai.chat.completions.create({
-      model: MODEL_NAME,
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4.1-nano',
       messages: [
-        {
-          role: 'system',
-          content: 'Tu es un expert en recrutement. Réponds toujours en JSON valide.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
+        { role: 'system', content: OPPORTUNITY_GEN_SYSTEM_PROMPT },
+        { role: 'user', content: prompt },
       ],
-      max_completion_tokens: 4096,
       response_format: { type: 'json_object' },
     });
 
-    const generatedText = response.choices[0]?.message?.content;
+    const generatedText = completion.choices[0]?.message?.content;
     if (!generatedText) {
       return { success: false, error: 'No response from AI model' };
     }

@@ -2237,7 +2237,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
-    paddingVertical: SPACING.md,
+    height: LAYOUT.buttonHeight,
     paddingHorizontal: SPACING.lg,
     borderWidth: 1.5,
     borderRadius: BORDER.radius.sm,

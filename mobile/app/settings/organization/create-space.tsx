@@ -65,10 +65,10 @@ const STEPS: Step[] = ['info', 'location', 'capacity', 'conditions', 'media', 'p
 const STEP_TITLES: Record<Step, string> = {
   info: 'Infos',
   location: 'Lieu',
-  capacity: 'Capacite',
+  capacity: 'Capacité',
   conditions: 'Conditions',
-  media: 'Media',
-  preview: 'Apercu',
+  media: 'Média',
+  preview: 'Aperçu',
 };
 
 const MAX_IMAGES = 5;
@@ -504,7 +504,7 @@ export default function CreateSpaceScreen() {
 
   const handlePublish = async () => {
     if (!selectedOrgId) {
-      Alert.alert('Erreur', 'Aucune organisation selectionnee.');
+      Alert.alert('Erreur', 'Aucune organisation sélectionnée.');
       return;
     }
 
@@ -635,7 +635,7 @@ export default function CreateSpaceScreen() {
         {/* Sectors Selection */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Secteurs d'activite ({selectedSectors.length}/{MAX_SECTORS})
+            Secteurs d'activité ({selectedSectors.length}/{MAX_SECTORS})
           </Text>
           <View style={styles.tagsContainer}>
             {SECTOR_DATA.map((sector) => {
@@ -880,7 +880,7 @@ export default function CreateSpaceScreen() {
         </View>
 
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Equipements techniques</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Équipements techniques</Text>
           <View style={styles.tagsContainer}>
             {SPACE_EQUIPMENT_DATA.map((item) => {
               const isSelected = selectedEquipment.includes(item.id);
@@ -953,7 +953,7 @@ export default function CreateSpaceScreen() {
 
         {isAccessible && (
           <View style={styles.fieldContainer}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Equipements d'accessibilite</Text>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Équipements d'accessibilite</Text>
             <View style={styles.tagsContainer}>
               {ACCESSIBILITY_DATA.map((item) => {
                 const isSelected = selectedAccessibility.includes(item.id);
@@ -1089,7 +1089,7 @@ export default function CreateSpaceScreen() {
 
         {/* Availability */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
-        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Disponibilites</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Disponibilités</Text>
 
         <View style={styles.availabilityContainer}>
           {DAYS_OF_WEEK.map((day) => {
@@ -1163,7 +1163,7 @@ export default function CreateSpaceScreen() {
         {/* Questions */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
         <View style={styles.fieldContainer}>
-          <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Questions supplementaires ({questions.length}/{MAX_QUESTIONS})</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Questions supplémentaires ({questions.length}/{MAX_QUESTIONS})</Text>
           <Text style={[styles.fieldHint, { color: colors.gray500 }]}>
             Questions posees lors de la reservation
           </Text>
@@ -1260,9 +1260,9 @@ export default function CreateSpaceScreen() {
       <View style={styles.stepContent}>
         <View style={styles.stepHeader}>
           <Eye size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Apercu</Text>
+          <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Aperçu</Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Verifiez avant publication
+            Vérifiez avant publication
           </Text>
         </View>
 
@@ -1319,7 +1319,7 @@ export default function CreateSpaceScreen() {
           <View style={[styles.previewLocationRow, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
             <MapPin size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.previewLocationText, { color: colors.textPrimary }]}>
-              {[address, city, region, country].filter(Boolean).join(', ') || 'Lieu non defini'}
+              {[address, city, region, country].filter(Boolean).join(', ') || 'Lieu non défini'}
             </Text>
           </View>
 
@@ -1380,7 +1380,7 @@ export default function CreateSpaceScreen() {
           {selectedEquipment.length > 0 && (
             <View style={styles.previewSection}>
               <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-                Equipements ({selectedEquipment.length})
+                Équipements ({selectedEquipment.length})
               </Text>
               <View style={styles.previewTagsWrap}>
                 {selectedEquipment.map((equipId) => {
@@ -1399,7 +1399,7 @@ export default function CreateSpaceScreen() {
           {selectedAmenities.length > 0 && (
             <View style={styles.previewSection}>
               <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-                Commodites ({selectedAmenities.length})
+                Commodités ({selectedAmenities.length})
               </Text>
               <View style={styles.previewTagsWrap}>
                 {selectedAmenities.map((amenityId) => {
@@ -1416,7 +1416,7 @@ export default function CreateSpaceScreen() {
 
           {/* Availability preview */}
           <View style={styles.previewSection}>
-            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Disponibilites</Text>
+            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Disponibilités</Text>
             <View style={styles.availabilityPreview}>
               {DAYS_OF_WEEK.map((day) => {
                 const dayAvail = availability[day.id];
@@ -1435,7 +1435,7 @@ export default function CreateSpaceScreen() {
                       {day.short}
                     </Text>
                     <Text style={[styles.availabilityPreviewTime, { color: dayAvail.isOpen ? colors.primary : colors.gray400 }]}>
-                      {dayAvail.isOpen ? `${dayAvail.startTime}-${dayAvail.endTime}` : 'Ferme'}
+                      {dayAvail.isOpen ? `${dayAvail.startTime}-${dayAvail.endTime}` : 'Fermé'}
                     </Text>
                   </View>
                 );
@@ -1449,7 +1449,7 @@ export default function CreateSpaceScreen() {
               <View style={styles.previewSectionHeader}>
                 <FileText size={16} color={colors.gray700} strokeWidth={ICON.strokeWidth} />
                 <Text style={[styles.previewSectionTitle, { color: colors.gray700, marginBottom: 0, marginLeft: SPACING.xs }]}>
-                  Reglements interieurs
+                  Règlements intérieurs
                 </Text>
               </View>
               <View style={[styles.previewRulesBox, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
@@ -1464,7 +1464,7 @@ export default function CreateSpaceScreen() {
               <View style={styles.previewSectionHeader}>
                 <HelpCircle size={16} color={colors.gray700} strokeWidth={ICON.strokeWidth} />
                 <Text style={[styles.previewSectionTitle, { color: colors.gray700, marginBottom: 0, marginLeft: SPACING.xs }]}>
-                  Questions supplementaires ({questions.length})
+                  Questions supplémentaires ({questions.length})
                 </Text>
               </View>
               <View style={styles.previewQuestionsList}>
