@@ -169,11 +169,11 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
     }
     if (is_bookable !== undefined) {
       query += ` AND s.is_bookable = $${paramIndex++}`;
-      params.push(is_bookable === 'true' || is_bookable === true);
+      params.push(String(is_bookable) === 'true');
     }
     if (is_accessible !== undefined) {
       query += ` AND s.is_accessible = $${paramIndex++}`;
-      params.push(is_accessible === 'true' || is_accessible === true);
+      params.push(String(is_accessible) === 'true');
     }
 
     query += ` ORDER BY s.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
@@ -690,10 +690,9 @@ router.put('/:id/availabilities', authMiddleware, async (req: AuthRequest, res: 
     const { id } = req.params;
     const { availabilities } = req.body;
 
-    // Deactivate existing
-    await pool.query(`UPDATE space_availabilities SET is_active = false WHERE space_id = $1`, [id]);
+    // Delete existing and insert new
+    await pool.query(`DELETE FROM space_availabilities WHERE space_id = $1`, [id]);
 
-    // Insert new
     if (availabilities && availabilities.length > 0) {
       for (const avail of availabilities) {
         await pool.query(
@@ -817,10 +816,10 @@ router.get('/:id/bookings', async (req: Request, res: Response) => {
 
     let query = `
       SELECT sb.*,
-        COALESCE(t.first_name || ' ' || t.last_name, t.display_name, t.email) as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         t.first_name as talent_first_name,
         t.last_name as talent_last_name,
-        t.display_name as talent_display_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_display_name,
         t.avatar_url as talent_avatar,
         t.email as talent_email,
         t.phone as talent_phone,
@@ -1055,7 +1054,7 @@ router.get('/bookings/my', authMiddleware, async (req: AuthRequest, res: Respons
 
     // Build count query
     let countQuery = `SELECT COUNT(*) as total FROM space_bookings sb WHERE sb.talent_id = $1`;
-    const countParams: QueryParam[] = [talentId];
+    const countParams: QueryParam[] = [talentId!];
     let countParamIndex = 2;
 
     if (status) {
@@ -1079,7 +1078,7 @@ router.get('/bookings/my', authMiddleware, async (req: AuthRequest, res: Respons
       LEFT JOIN organizations o ON sb.organization_id = o.id
       WHERE sb.talent_id = $1
     `;
-    const params: QueryParam[] = [talentId];
+    const params: QueryParam[] = [talentId!];
     let paramIndex = 2;
 
     if (status) {
@@ -1146,7 +1145,7 @@ router.get('/bookings/organization/:orgId', authMiddleware, async (req: AuthRequ
         s.cover_image_url as space_image,
         s.address as space_address,
         o.name as organization_name,
-        COALESCE(t.first_name || ' ' || t.last_name, t.display_name, t.email) as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         t.first_name as talent_first_name,
         t.last_name as talent_last_name,
         t.avatar_url as talent_avatar,
@@ -1221,7 +1220,7 @@ router.get('/bookings/:id', authMiddleware, async (req: AuthRequest, res: Respon
         s.city as space_city,
         o.name as organization_name,
         o.logo_url as organization_logo,
-        COALESCE(t.first_name || ' ' || t.last_name, t.display_name, t.email) as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         t.first_name as talent_first_name,
         t.last_name as talent_last_name,
         t.avatar_url as talent_avatar,
@@ -1405,7 +1404,7 @@ router.get('/bookings/:id/messages', authMiddleware, async (req: AuthRequest, re
     let query = `
       SELECT bm.*,
         CASE
-          WHEN bm.sender_type = 'TALENT' THEN COALESCE(t.first_name || ' ' || t.last_name, t.display_name, t.email)
+          WHEN bm.sender_type = 'TALENT' THEN COALESCE(t.first_name || ' ' || t.last_name, t.email)
           ELSE o.name
         END as sender_name,
         CASE
@@ -1500,7 +1499,7 @@ router.post('/bookings/:id/messages', authMiddleware, async (req: AuthRequest, r
 
     if (senderType === 'TALENT') {
       const talentInfo = await pool.query(
-        `SELECT COALESCE(first_name || ' ' || last_name, display_name, email) as name, avatar_url FROM talents WHERE id = $1`,
+        `SELECT COALESCE(first_name || ' ' || last_name, email) as name, avatar_url FROM talents WHERE id = $1`,
         [senderId]
       );
       if (talentInfo.rows.length > 0) {

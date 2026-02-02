@@ -1708,8 +1708,6 @@ export default function CreateOpportunityScreen() {
                 onPress={handlePublish}
                 disabled={isSubmitting}
                 fullWidth
-                icon={<Send size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-                iconPosition="right"
               />
             </View>
           </View>
@@ -1944,10 +1942,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.xs,
+    gap: SPACING.sm,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    borderRadius: BORDER.radius.sm,
+    borderRadius: BORDER.radius.full,
   },
 
   generateButtonText: {

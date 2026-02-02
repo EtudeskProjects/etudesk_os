@@ -32,6 +32,7 @@ import {
   Plus,
   Save,
   Trash2,
+  ClipboardList,
   Building2,
   Home,
   Laptop,
@@ -66,6 +67,7 @@ import {
   LOCATION_TYPE_LABELS,
   COMPENSATION_FREQUENCY_LABELS,
   OPPORTUNITY_STATUS_LABELS,
+  ApplicationQuestion,
   Visibility,
 } from '../../../../src/types/models';
 import { opportunityService, UpdateOpportunityData, imageService } from '../../../../src/services';
@@ -88,6 +90,8 @@ const STEP_TITLES: Record<Step, string> = {
 const MAX_SECTORS = 5;
 const MAX_IMAGES = 5;
 const MAX_ATTACHMENTS = 3;
+const MAX_QUESTIONS = 5;
+const MAX_QUESTION_LENGTH = 200;
 const MAX_ATTACHMENT_SIZE_MB = 20;
 const MAX_ATTACHMENT_SIZE_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;
 
@@ -153,6 +157,10 @@ export default function EditOpportunityScreen() {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+
+  // Form state - Candidature
+  const [cvRequired, setCvRequired] = useState(false);
+  const [applicationQuestions, setApplicationQuestions] = useState<ApplicationQuestion[]>([]);
 
   // Form state - Media
   const [images, setImages] = useState<ImageItem[]>([]);
@@ -244,6 +252,17 @@ export default function EditOpportunityScreen() {
           size: att.size,
         })));
       }
+
+      // Load candidature settings
+      setCvRequired(opp.cv_required || false);
+      if (opp.application_questions && Array.isArray(opp.application_questions)) {
+        setApplicationQuestions(opp.application_questions.map((q: any, idx: number) => ({
+          id: q.id || String(idx + 1),
+          question: q.question || '',
+          required: q.required || false,
+          max_length: q.max_length || MAX_QUESTION_LENGTH,
+        })));
+      }
     } catch (error: any) {
       Alert.alert('Erreur', error.error || 'Impossible de charger l\'opportunite.');
       router.back();
@@ -275,6 +294,31 @@ export default function EditOpportunityScreen() {
 
   const removeImage = (imgId: string) => {
     setImages(images.filter((img) => img.id !== imgId));
+  };
+
+  // Question handlers
+  const addQuestion = () => {
+    if (applicationQuestions.length >= MAX_QUESTIONS) {
+      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.`);
+      return;
+    }
+    const newQuestion: ApplicationQuestion = {
+      id: Date.now().toString(),
+      question: '',
+      required: false,
+      max_length: MAX_QUESTION_LENGTH,
+    };
+    setApplicationQuestions([...applicationQuestions, newQuestion]);
+  };
+
+  const updateQuestion = (qId: string, updates: Partial<ApplicationQuestion>) => {
+    setApplicationQuestions(applicationQuestions.map((q) =>
+      q.id === qId ? { ...q, ...updates } : q
+    ));
+  };
+
+  const removeQuestion = (qId: string) => {
+    setApplicationQuestions(applicationQuestions.filter((q) => q.id !== qId));
   };
 
   const pickDocument = async () => {
@@ -483,6 +527,8 @@ export default function EditOpportunityScreen() {
         cover_image_url: validCoverImage,
         images: allImages.length > 0 ? allImages : undefined,
         attachments: validAttachments.length > 0 ? validAttachments : undefined,
+        cv_required: cvRequired,
+        application_questions: applicationQuestions.filter(q => q.question.trim().length > 0),
         status,
         visibility,
       };
@@ -995,6 +1041,95 @@ export default function EditOpportunityScreen() {
             minimumDate={deadline ? new Date(deadline.getTime() + 24 * 60 * 60 * 1000) : new Date(Date.now() + 24 * 60 * 60 * 1000)}
           />
         )}
+
+        {/* Separator before candidature settings */}
+        <View style={[styles.sectionSeparator, { backgroundColor: colors.gray200 }]} />
+
+        {/* Candidature Settings Section */}
+        <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Paramètres de candidature</Text>
+
+        {/* CV Required Toggle */}
+        <View style={[styles.toggleContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
+          <View style={styles.toggleInfo}>
+            <ClipboardList size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+            <View style={styles.toggleTextContainer}>
+              <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>CV requis</Text>
+              <Text style={[styles.toggleDescription, { color: colors.gray500 }]}>
+                Les candidats devront joindre leur CV
+              </Text>
+            </View>
+          </View>
+          <Toggle
+            value={cvRequired}
+            onValueChange={setCvRequired}
+          />
+        </View>
+
+        {/* Complementary Questions */}
+        <View style={styles.fieldContainer}>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
+            Questions complémentaires ({applicationQuestions.length}/{MAX_QUESTIONS})
+          </Text>
+          <Text style={[styles.fieldHint, { color: colors.gray500 }]}>
+            Posez des questions aux candidats (réponse courte, max {MAX_QUESTION_LENGTH} caractères)
+          </Text>
+
+          {/* Questions List */}
+          {applicationQuestions.map((question, index) => (
+            <View
+              key={question.id}
+              style={[styles.questionItem, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
+            >
+              <View style={styles.questionHeader}>
+                <Text style={[styles.questionNumber, { color: colors.primary }]}>
+                  Question {index + 1}
+                </Text>
+                <TouchableOpacity onPress={() => removeQuestion(question.id)}>
+                  <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
+                </TouchableOpacity>
+              </View>
+
+              <TextInput
+                style={[styles.questionInput, { backgroundColor: colors.gray50, color: colors.textPrimary, borderColor: colors.gray200 }]}
+                placeholder="Écrivez votre question..."
+                placeholderTextColor={colors.gray400}
+                value={question.question}
+                onChangeText={(text) => updateQuestion(question.id, { question: text })}
+                maxLength={MAX_QUESTION_LENGTH}
+                multiline
+                numberOfLines={2}
+              />
+
+              <View style={styles.questionFooter}>
+                <Text style={[styles.charCount, { color: colors.gray500 }]}>
+                  {question.question.length}/{MAX_QUESTION_LENGTH}
+                </Text>
+
+                <View style={styles.requiredToggle}>
+                  <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>Obligatoire</Text>
+                  <Toggle
+                    value={question.required}
+                    onValueChange={(value) => updateQuestion(question.id, { required: value })}
+                    size="small"
+                  />
+                </View>
+              </View>
+            </View>
+          ))}
+
+          {/* Add Question Button */}
+          {applicationQuestions.length < MAX_QUESTIONS && (
+            <TouchableOpacity
+              style={[styles.addQuestionButton, { borderColor: colors.primary }]}
+              onPress={addQuestion}
+            >
+              <Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.addQuestionText, { color: colors.primary }]}>
+                Ajouter une question
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -1112,6 +1247,9 @@ export default function EditOpportunityScreen() {
       <View style={styles.stepHeader}>
         <Eye size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
         <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Aperçu</Text>
+        <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
+          Vérifiez toutes les informations avant enregistrement
+        </Text>
       </View>
 
       {/* Status Management Card */}
@@ -1146,40 +1284,13 @@ export default function EditOpportunityScreen() {
       </View>
 
       <View style={styles.previewContainer}>
-        {/* Full-width Image Slider */}
+        {/* Images Preview */}
         {images.length > 0 ? (
-          <View style={styles.imageSliderContainer}>
-            <ScrollView
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onScroll={handleImageScroll}
-              scrollEventThrottle={16}
-              style={styles.imageSlider}
-            >
-              {images.map((img) => (
-                <Image
-                  key={img.id}
-                  source={{ uri: getFullImageUrl(img.uri) || img.uri }}
-                  style={[styles.sliderImage, { width: SCREEN_WIDTH - SPACING.lg * 2 }]}
-                  resizeMode="cover"
-                />
-              ))}
-            </ScrollView>
-            {images.length > 1 && (
-              <View style={styles.paginationDots}>
-                {images.map((_, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.dot,
-                      { backgroundColor: index === currentImageIndex ? colors.primary : colors.gray300 },
-                    ]}
-                  />
-                ))}
-              </View>
-            )}
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.previewImagesScroll}>
+            {images.map((img) => (
+              <Image key={img.id} source={{ uri: getFullImageUrl(img.uri) || img.uri }} style={styles.previewImageItem} />
+            ))}
+          </ScrollView>
         ) : (
           <View style={[styles.previewNoImage, { backgroundColor: colors.gray100 }]}>
             <ImageIcon size={32} color={colors.gray400} />
@@ -1304,27 +1415,48 @@ export default function EditOpportunityScreen() {
           {niceToHave ? <Text style={[styles.previewText, { color: colors.textSecondary }]}>{niceToHave}</Text> : <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucun atout défini</Text>}
         </View>
 
-        {/* Pièces jointes */}
-        <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Pièces jointes</Text>
-          {attachments.length > 0 ? (
-            <View style={{ marginTop: SPACING.xs }}>
-              {attachments.map((attachment) => (
-                <View key={attachment.id} style={{ marginBottom: SPACING.xs }}>
-                  <Text style={[styles.previewText, { color: colors.textPrimary }]}>
-                    {attachment.name}
+        {/* Paramètres de candidature */}
+        <View style={[styles.previewSection, { backgroundColor: colors.gray50 }]}>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Paramètres de candidature</Text>
+          <View style={styles.previewApplicationSettings}>
+            <View style={styles.previewSettingRow}>
+              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>CV requis</Text>
+              <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
+                {cvRequired ? 'Oui' : 'Non'}
+              </Text>
+            </View>
+            <View style={styles.previewSettingRow}>
+              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Questions complémentaires</Text>
+              <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
+                {applicationQuestions.filter(q => q.question.trim()).length}
+              </Text>
+            </View>
+          </View>
+          {applicationQuestions.filter(q => q.question.trim()).length > 0 && (
+            <View style={styles.previewQuestionsList}>
+              {applicationQuestions.filter(q => q.question.trim()).map((q, index) => (
+                <View key={q.id} style={styles.previewQuestionItem}>
+                  <Text style={[styles.previewQuestionLabel, { color: colors.gray500 }]}>
+                    Q{index + 1}{q.required ? ' *' : ''}
                   </Text>
-                  {attachment.size && (
-                    <Text style={[styles.previewText, { color: colors.gray500, fontSize: TYPOGRAPHY.fontSize.xs }]}>
-                      {formatFileSize(attachment.size)}
-                    </Text>
-                  )}
+                  <Text style={[styles.previewQuestionText, { color: colors.textSecondary }]}>
+                    {q.question}
+                  </Text>
                 </View>
               ))}
             </View>
-          ) : (
-            <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucune pièce jointe</Text>
           )}
+        </View>
+
+        {/* Médias */}
+        <View style={styles.previewSection}>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Médias</Text>
+          <Text style={[styles.previewText, { color: images.length > 0 ? colors.textSecondary : colors.gray400 }]}>
+            {images.length} image(s) d'illustration
+          </Text>
+          <Text style={[styles.previewText, { color: attachments.length > 0 ? colors.textSecondary : colors.gray400 }]}>
+            {attachments.length} pièce(s) jointe(s)
+          </Text>
         </View>
       </View>
     </View>
@@ -1345,7 +1477,7 @@ export default function EditOpportunityScreen() {
               <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
             </TouchableOpacity>
             <View style={styles.saveButtonContainer}>
-              <Button title="Enregistrer" onPress={handleSave} disabled={isSubmitting} fullWidth icon={<Save size={18} color={colors.textOnPrimary} />} iconPosition="right" />
+              <Button title="Enregistrer" onPress={handleSave} disabled={isSubmitting} fullWidth />
             </View>
           </View>
         </View>
@@ -1566,13 +1698,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.xs,
+    gap: SPACING.sm,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    borderRadius: BORDER.radius.sm,
+    borderRadius: BORDER.radius.full,
   },
   generateButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
+
+  // Candidature settings styles
+  sectionSeparator: { height: 1, marginVertical: SPACING.lg },
+  sectionTitle: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.semibold, marginBottom: SPACING.md },
+  toggleContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: SPACING.md, borderRadius: BORDER.radius.md, borderWidth: 1, marginBottom: SPACING.md },
+  toggleInfo: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, flex: 1 },
+  toggleTextContainer: { flex: 1 },
+  toggleLabel: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
+  toggleDescription: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: 2 },
+  questionItem: { padding: SPACING.md, borderRadius: BORDER.radius.md, borderWidth: 1, marginTop: SPACING.sm },
+  questionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm },
+  questionNumber: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.semibold },
+  questionInput: { borderWidth: 1, borderRadius: BORDER.radius.sm, padding: SPACING.sm, fontSize: TYPOGRAPHY.fontSize.sm, minHeight: 60, textAlignVertical: 'top' },
+  questionFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: SPACING.sm },
+  requiredToggle: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  requiredLabel: { fontSize: TYPOGRAPHY.fontSize.xs },
+  addQuestionButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, padding: SPACING.md, borderWidth: 1.5, borderRadius: BORDER.radius.md, borderStyle: 'dashed', marginTop: SPACING.sm },
+  addQuestionText: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
+
+  // Preview question styles
+  previewApplicationSettings: { gap: SPACING.sm },
+  previewSettingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  previewQuestionsList: { marginTop: SPACING.md, gap: SPACING.sm },
+  previewQuestionItem: { gap: 2 },
+  previewQuestionLabel: { fontSize: TYPOGRAPHY.fontSize.xs, fontWeight: TYPOGRAPHY.fontWeight.medium },
+  previewQuestionText: { fontSize: TYPOGRAPHY.fontSize.sm },
 });

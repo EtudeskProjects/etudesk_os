@@ -341,9 +341,12 @@ export default function SpaceDetailScreen() {
   }
 
   const bestPrice = getBestPrice();
-  const images = space.gallery_images?.length > 0
-    ? space.gallery_images.map(img => getFullImageUrl(img) || '')
-    : (space.cover_image_url ? [getFullImageUrl(space.cover_image_url) || ''] : [FALLBACK_IMAGE]);
+  const images = (() => {
+    const imageList = space.gallery_images && space.gallery_images.length > 0
+      ? space.gallery_images
+      : (space.cover_image_url ? [space.cover_image_url] : []);
+    return imageList.map(img => getFullImageUrl(img) || '').filter(Boolean);
+  })();
 
   const shouldTruncateDescription = space.description && space.description.length > DESCRIPTION_LIMIT;
 

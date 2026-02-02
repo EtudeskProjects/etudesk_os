@@ -1116,7 +1116,7 @@ export default function EditCommunityScreen() {
         <Eye size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
         <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Aperçu</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Vérifiez toutes les informations avant publication
+          Vérifiez toutes les informations avant enregistrement
         </Text>
       </View>
 
@@ -1340,8 +1340,6 @@ export default function EditCommunityScreen() {
                 onPress={handleSave}
                 disabled={isSubmitting}
                 fullWidth
-                icon={<Save size={18} color={colors.textOnPrimary} />}
-                iconPosition="right"
               />
             </View>
           </View>
@@ -1490,10 +1488,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.xs,
+    gap: SPACING.sm,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    borderRadius: BORDER.radius.sm,
+    borderRadius: BORDER.radius.full,
   },
   generateButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,

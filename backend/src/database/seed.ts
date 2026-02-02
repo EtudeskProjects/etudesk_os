@@ -89,61 +89,62 @@ const LOCATIONS = {
 
 const SKILLS_DATA = [
   // Hard Skills - Tech
-  { name: 'React', type: 'HARD_SKILL', domain: 'Frontend Development', aliases: ['React.js', 'ReactJS'] },
-  { name: 'React Native', type: 'HARD_SKILL', domain: 'Mobile Development', aliases: ['RN'] },
-  { name: 'TypeScript', type: 'HARD_SKILL', domain: 'Programming Languages', aliases: ['TS'] },
-  { name: 'JavaScript', type: 'HARD_SKILL', domain: 'Programming Languages', aliases: ['JS', 'ECMAScript'] },
-  { name: 'Python', type: 'HARD_SKILL', domain: 'Programming Languages', aliases: [] },
-  { name: 'Node.js', type: 'HARD_SKILL', domain: 'Backend Development', aliases: ['NodeJS', 'Node'] },
-  { name: 'PostgreSQL', type: 'HARD_SKILL', domain: 'Databases', aliases: ['Postgres', 'PG'] },
-  { name: 'MongoDB', type: 'HARD_SKILL', domain: 'Databases', aliases: ['Mongo'] },
-  { name: 'GraphQL', type: 'HARD_SKILL', domain: 'API Development', aliases: ['GQL'] },
-  { name: 'REST API', type: 'HARD_SKILL', domain: 'API Development', aliases: ['RESTful API'] },
-  { name: 'Docker', type: 'HARD_SKILL', domain: 'DevOps', aliases: [] },
-  { name: 'Kubernetes', type: 'HARD_SKILL', domain: 'DevOps', aliases: ['K8s'] },
-  { name: 'AWS', type: 'HARD_SKILL', domain: 'Cloud Computing', aliases: ['Amazon Web Services'] },
-  { name: 'Git', type: 'HARD_SKILL', domain: 'Version Control', aliases: ['GitHub', 'GitLab'] },
-  { name: 'CI/CD', type: 'HARD_SKILL', domain: 'DevOps', aliases: ['Continuous Integration'] },
+  // Hard Skills - Tech
+  { name: 'React', type: 'HARD_SKILL' },
+  { name: 'React Native', type: 'HARD_SKILL' },
+  { name: 'TypeScript', type: 'HARD_SKILL' },
+  { name: 'JavaScript', type: 'HARD_SKILL' },
+  { name: 'Python', type: 'HARD_SKILL' },
+  { name: 'Node.js', type: 'HARD_SKILL' },
+  { name: 'PostgreSQL', type: 'HARD_SKILL' },
+  { name: 'MongoDB', type: 'HARD_SKILL' },
+  { name: 'GraphQL', type: 'HARD_SKILL' },
+  { name: 'REST API', type: 'HARD_SKILL' },
+  { name: 'Docker', type: 'HARD_SKILL' },
+  { name: 'Kubernetes', type: 'HARD_SKILL' },
+  { name: 'AWS', type: 'HARD_SKILL' },
+  { name: 'Git', type: 'HARD_SKILL' },
+  { name: 'CI/CD', type: 'HARD_SKILL' },
 
   // Hard Skills - Design
-  { name: 'UI Design', type: 'HARD_SKILL', domain: 'Design', aliases: ['User Interface Design'] },
-  { name: 'UX Design', type: 'HARD_SKILL', domain: 'Design', aliases: ['User Experience Design'] },
-  { name: 'Figma', type: 'HARD_SKILL', domain: 'Design Tools', aliases: [] },
-  { name: 'Adobe XD', type: 'HARD_SKILL', domain: 'Design Tools', aliases: ['XD'] },
-  { name: 'Photoshop', type: 'HARD_SKILL', domain: 'Design Tools', aliases: ['Adobe Photoshop', 'PS'] },
+  { name: 'UI Design', type: 'HARD_SKILL' },
+  { name: 'UX Design', type: 'HARD_SKILL' },
+  { name: 'Figma', type: 'HARD_SKILL' },
+  { name: 'Adobe XD', type: 'HARD_SKILL' },
+  { name: 'Photoshop', type: 'HARD_SKILL' },
 
   // Hard Skills - Data
-  { name: 'Machine Learning', type: 'HARD_SKILL', domain: 'Data Science', aliases: ['ML'] },
-  { name: 'Data Analysis', type: 'HARD_SKILL', domain: 'Data Science', aliases: ['Data Analytics'] },
-  { name: 'SQL', type: 'HARD_SKILL', domain: 'Databases', aliases: [] },
-  { name: 'Excel', type: 'HARD_SKILL', domain: 'Productivity', aliases: ['Microsoft Excel'] },
-  { name: 'Power BI', type: 'HARD_SKILL', domain: 'Business Intelligence', aliases: [] },
+  { name: 'Machine Learning', type: 'HARD_SKILL' },
+  { name: 'Data Analysis', type: 'HARD_SKILL' },
+  { name: 'SQL', type: 'HARD_SKILL' },
+  { name: 'Excel', type: 'HARD_SKILL' },
+  { name: 'Power BI', type: 'HARD_SKILL' },
 
   // Hard Skills - Business
-  { name: 'Marketing Digital', type: 'HARD_SKILL', domain: 'Marketing', aliases: ['Digital Marketing'] },
-  { name: 'SEO', type: 'HARD_SKILL', domain: 'Marketing', aliases: ['Search Engine Optimization'] },
-  { name: 'Google Analytics', type: 'HARD_SKILL', domain: 'Analytics', aliases: ['GA', 'GA4'] },
-  { name: 'Gestion de projet', type: 'HARD_SKILL', domain: 'Management', aliases: ['Project Management'] },
-  { name: 'Comptabilite', type: 'HARD_SKILL', domain: 'Finance', aliases: ['Accounting'] },
+  { name: 'Marketing Digital', type: 'HARD_SKILL' },
+  { name: 'SEO', type: 'HARD_SKILL' },
+  { name: 'Google Analytics', type: 'HARD_SKILL' },
+  { name: 'Gestion de projet', type: 'HARD_SKILL' },
+  { name: 'Comptabilite', type: 'HARD_SKILL' },
 
   // Soft Skills
-  { name: 'Leadership', type: 'SOFT_SKILL', domain: 'Management', aliases: [] },
-  { name: 'Communication', type: 'SOFT_SKILL', domain: 'Interpersonal', aliases: [] },
-  { name: 'Travail en equipe', type: 'SOFT_SKILL', domain: 'Collaboration', aliases: ['Teamwork'] },
-  { name: 'Resolution de problemes', type: 'SOFT_SKILL', domain: 'Critical Thinking', aliases: ['Problem Solving'] },
-  { name: 'Creativite', type: 'SOFT_SKILL', domain: 'Innovation', aliases: ['Creativity'] },
-  { name: 'Adaptabilite', type: 'SOFT_SKILL', domain: 'Personal Development', aliases: ['Adaptability'] },
-  { name: 'Gestion du temps', type: 'SOFT_SKILL', domain: 'Productivity', aliases: ['Time Management'] },
-  { name: 'Negociation', type: 'SOFT_SKILL', domain: 'Business', aliases: ['Negotiation'] },
-  { name: 'Presentation', type: 'SOFT_SKILL', domain: 'Communication', aliases: ['Public Speaking'] },
-  { name: 'Esprit critique', type: 'SOFT_SKILL', domain: 'Critical Thinking', aliases: ['Critical Thinking'] },
+  { name: 'Leadership', type: 'SOFT_SKILL' },
+  { name: 'Communication', type: 'SOFT_SKILL' },
+  { name: 'Travail en equipe', type: 'SOFT_SKILL' },
+  { name: 'Resolution de problemes', type: 'SOFT_SKILL' },
+  { name: 'Creativite', type: 'SOFT_SKILL' },
+  { name: 'Adaptabilite', type: 'SOFT_SKILL' },
+  { name: 'Gestion du temps', type: 'SOFT_SKILL' },
+  { name: 'Negociation', type: 'SOFT_SKILL' },
+  { name: 'Presentation', type: 'SOFT_SKILL' },
+  { name: 'Esprit critique', type: 'SOFT_SKILL' },
 
   // Knowledge
-  { name: 'Droit du travail', type: 'KNOWLEDGE', domain: 'Legal', aliases: ['Labor Law'] },
-  { name: 'Finance d\'entreprise', type: 'KNOWLEDGE', domain: 'Finance', aliases: ['Corporate Finance'] },
-  { name: 'Economie', type: 'KNOWLEDGE', domain: 'Economics', aliases: ['Economics'] },
-  { name: 'Ressources humaines', type: 'KNOWLEDGE', domain: 'HR', aliases: ['Human Resources', 'RH'] },
-  { name: 'Supply Chain', type: 'KNOWLEDGE', domain: 'Operations', aliases: ['Chaine d\'approvisionnement'] },
+  { name: 'Droit du travail', type: 'KNOWLEDGE' },
+  { name: 'Finance d\'entreprise', type: 'KNOWLEDGE' },
+  { name: 'Economie', type: 'KNOWLEDGE' },
+  { name: 'Ressources humaines', type: 'KNOWLEDGE' },
+  { name: 'Supply Chain', type: 'KNOWLEDGE' },
 ];
 
 // ============================================================================
@@ -571,24 +572,15 @@ async function seed() {
     await client.query('BEGIN');
 
     // ========================================================================
-    // 1. SEED SKILLS
+    // 1. SKILLS DATA (used for talent_skills seeding below)
     // ========================================================================
-    console.log('📚 Seeding skills...');
-    const skillIds: Record<string, string> = {};
-
+    console.log('📚 Preparing skills data...');
+    const skillNames = SKILLS_DATA.map(s => s.name);
+    const skillTypeMap: Record<string, string> = {};
     for (const skill of SKILLS_DATA) {
-      const id = uuidv4();
-      const slug = generateSlug(skill.name);
-      skillIds[skill.name] = id;
-
-      await client.query(
-        `INSERT INTO skills (id, canonical_name, slug, aliases, type, domain, growth_trend, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, 'STABLE', NOW(), NOW())
-         ON CONFLICT (slug) DO NOTHING`,
-        [id, skill.name, slug, skill.aliases, skill.type, skill.domain]
-      );
+      skillTypeMap[skill.name] = skill.type;
     }
-    console.log(`   ✓ ${SKILLS_DATA.length} skills created\n`);
+    console.log(`   ✓ ${SKILLS_DATA.length} skills prepared\n`);
 
     // ========================================================================
     // 2. SEED TALENTS
@@ -603,15 +595,14 @@ async function seed() {
       const location = randomElement(LOCATIONS.CI.cities);
       const email = `${talent.first_name.toLowerCase()}.${talent.last_name.toLowerCase()}@example.com`;
       const slug = generateSlug(`${talent.first_name}-${talent.last_name}`);
-      const displayName = `${talent.first_name} ${talent.last_name}`;
 
       await client.query(
-        `INSERT INTO talents (id, slug, display_name, bio, email, city, region, country, coordinates,
+        `INSERT INTO talents (id, slug, first_name, last_name, bio, email, city, region, country, coordinates,
          remote_ready, willing_to_relocate, profile_tags, goals, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
          ON CONFLICT (email) DO NOTHING`,
         [
-          id, slug, displayName, talent.bio, email,
+          id, slug, talent.first_name, talent.last_name, talent.bio, email,
           location.city, location.region, LOCATIONS.CI.country, location.coordinates,
           talent.remote_ready, talent.willing_to_relocate,
           talent.profile_tags, talent.goals
@@ -627,22 +618,20 @@ async function seed() {
     let talentSkillCount = 0;
 
     const proficiencyLevels = ['A', 'A+', 'B', 'B+', 'C', 'C+'];
-    const skillNames = Object.keys(skillIds);
 
     for (const talentId of talentIds) {
       const numSkills = randomInt(5, 12);
       const selectedSkills = randomElements(skillNames, numSkills);
 
       for (const skillName of selectedSkills) {
-        const skillId = skillIds[skillName];
         const proficiency = randomElement(proficiencyLevels);
-        const yearsOfExperience = randomInt(1, 10);
+        const skillType = skillTypeMap[skillName] || 'KNOWLEDGE';
 
         await client.query(
-          `INSERT INTO talent_skills (talent_id, skill_id, proficiency_level, self_assessed, endorsed_count, years_of_experience)
-           VALUES ($1, $2, $3, TRUE, $4, $5)
-           ON CONFLICT (talent_id, skill_id) DO NOTHING`,
-          [talentId, skillId, proficiency, randomInt(0, 20), yearsOfExperience]
+          `INSERT INTO talent_skills (talent_id, canonical_name, type, proficiency_level)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (talent_id, canonical_name) DO NOTHING`,
+          [talentId, skillName, skillType, proficiency]
         );
         talentSkillCount++;
       }
@@ -665,13 +654,13 @@ async function seed() {
       const createdBy = talentIds[i % talentIds.length];
 
       await client.query(
-        `INSERT INTO organizations (id, name, slug, type, sectors, size, description, website_url,
+        `INSERT INTO organizations (id, name, slug, types, sectors, size, description, website_url,
          headquarters_city, headquarters_region, headquarters_country, headquarters_coordinates,
          verification_status, culture_summary, created_by, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())
          ON CONFLICT (slug) DO NOTHING`,
         [
-          id, org.name, slug, org.type, org.sectors, org.size, org.description, org.website_url,
+          id, org.name, slug, [org.type], org.sectors, org.size, org.description, org.website_url,
           location.city, location.region, LOCATIONS.CI.country, location.coordinates,
           'VERIFIED', org.culture_summary, createdBy
         ]
@@ -746,32 +735,7 @@ async function seed() {
     }
     console.log(`   ✓ ${opportunityIds.length * 2} opportunity-poster relations created\n`);
 
-    // ========================================================================
-    // 7. SEED OPPORTUNITY_SKILLS (Relations)
-    // ========================================================================
-    console.log('🔗 Seeding opportunity skills...');
-    let oppSkillCount = 0;
-
-    for (const opportunityId of opportunityIds) {
-      const numSkills = randomInt(3, 8);
-      const selectedSkills = randomElements(skillNames, numSkills);
-
-      for (let i = 0; i < selectedSkills.length; i++) {
-        const skillName = selectedSkills[i];
-        const skillId = skillIds[skillName];
-        const isRequired = i < 3; // First 3 skills are required
-        const proficiency = randomElement(['B', 'B+', 'C', 'C+']);
-
-        await client.query(
-          `INSERT INTO opportunity_skills (opportunity_id, skill_id, is_required, proficiency_level, relevance_score, created_at)
-           VALUES ($1, $2, $3, $4, $5, NOW())
-           ON CONFLICT (opportunity_id, skill_id) DO NOTHING`,
-          [opportunityId, skillId, isRequired, proficiency, Math.random()]
-        );
-        oppSkillCount++;
-      }
-    }
-    console.log(`   ✓ ${oppSkillCount} opportunity-skill relations created\n`);
+    // opportunity_skills table removed in migration 053
 
     // ========================================================================
     // 8. SEED COMMUNITIES
@@ -845,14 +809,13 @@ async function seed() {
 
       for (const menteeId of selectedMentees) {
         const startedAt = randomDate(new Date('2024-01-01'), new Date('2025-01-01'));
-        const focusSkills = randomElements(Object.values(skillIds), randomInt(1, 3));
         const status = randomElement(['ACTIVE', 'ACTIVE', 'COMPLETED']);
 
         await client.query(
-          `INSERT INTO mentorships (mentor_id, mentee_id, focus_area_skill_ids, status, started_at)
-           VALUES ($1, $2, $3, $4, $5)
+          `INSERT INTO mentorships (mentor_id, mentee_id, status, started_at)
+           VALUES ($1, $2, $3, $4)
            ON CONFLICT (mentor_id, mentee_id) DO NOTHING`,
-          [mentorId, menteeId, focusSkills, status, formatDate(startedAt)]
+          [mentorId, menteeId, status, formatDate(startedAt)]
         );
         mentorshipCount++;
       }

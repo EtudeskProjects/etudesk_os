@@ -31,6 +31,7 @@ import {
   Wand2,
   FileText,
   HelpCircle,
+  Trash2,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../../src/constants/theme';
 import { Input, Button, Toggle, StepIndicator } from '../../../../src/components/ui';
@@ -51,7 +52,7 @@ import {
   calculateSpaceCapacity,
   formatPrice,
 } from '../../../../src/constants/space';
-import { Visibility } from '../../../../src/types/models';
+import { Visibility, ApplicationQuestion } from '../../../../src/types/models';
 import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../../../src/constants/talent';
 import { useSpace } from '../../../../src/contexts/SpaceContext';
 import { spaceService, UpdateSpaceData, Space, imageService } from '../../../../src/services';
@@ -73,6 +74,7 @@ const STEP_TITLES: Record<Step, string> = {
 const MAX_IMAGES = 5;
 const MAX_RULES = 10;
 const MAX_QUESTIONS = 5;
+const MAX_QUESTION_LENGTH = 200;
 
 const DAYS_OF_WEEK = [
   { id: 1, label: 'Lundi', short: 'Lun' },
@@ -156,8 +158,7 @@ export default function EditSpaceScreen() {
 
   // Rules and Questions
   const [rules, setRules] = useState<string>('');
-  const [questions, setQuestions] = useState<string[]>([]);
-  const [newQuestion, setNewQuestion] = useState('');
+  const [questions, setQuestions] = useState<ApplicationQuestion[]>([]);
 
   // Form state - Media
   const [images, setImages] = useState<ImageItem[]>([]);
@@ -205,7 +206,12 @@ export default function EditSpaceScreen() {
           setRules(Array.isArray(space.booking_rules) && space.booking_rules.length > 0
             ? space.booking_rules.join('\n')
             : '');
-          setQuestions(space.questions || []);
+          setQuestions((space.questions || []).map((q: string, idx: number) => ({
+            id: `loaded-${idx}`,
+            question: q,
+            required: false,
+            max_length: MAX_QUESTION_LENGTH,
+          })));
           if (space.coordinates) {
             // Handle both formats: {lat, lng} and PostgreSQL POINT {x, y}
             const coords = space.coordinates as any;
@@ -232,23 +238,14 @@ export default function EditSpaceScreen() {
             setAvailability(newAvailability);
           }
 
-          // Load images
-          const imageItems: ImageItem[] = [];
-          if (space.cover_image_url) {
-            imageItems.push({ id: 'cover', uri: getFullImageUrl(space.cover_image_url) || space.cover_image_url });
-          }
-          if (space.gallery_images && Array.isArray(space.gallery_images)) {
-            space.gallery_images.forEach((url, idx) => {
-              imageItems.push({ id: `gallery-${idx}`, uri: getFullImageUrl(url) || url });
-            });
-          } else if (space.images && Array.isArray(space.images)) {
-            space.images.forEach((url, idx) => {
-              if (url !== space.cover_image_url) {
-                imageItems.push({ id: `gallery-${idx}`, uri: getFullImageUrl(url) || url });
-              }
-            });
-          }
-          setImages(imageItems);
+          // Load images — gallery_images contains all images (including cover)
+          const imageList = space.gallery_images && space.gallery_images.length > 0
+            ? space.gallery_images
+            : (space.cover_image_url ? [space.cover_image_url] : []);
+          setImages(imageList.map((url, idx) => ({
+            id: `img-${idx}`,
+            uri: getFullImageUrl(url) || url,
+          })));
         }
       } catch (error) {
         console.error('Error loading space:', error);
@@ -350,7 +347,13 @@ export default function EditSpaceScreen() {
 
         // Questions
         if (data.questions && data.questions.length > 0) {
-          setQuestions(data.questions.slice(0, MAX_QUESTIONS));
+          const newQuestions: ApplicationQuestion[] = data.questions.slice(0, MAX_QUESTIONS).map((q, idx) => ({
+            id: Date.now().toString() + idx,
+            question: q,
+            required: false,
+            max_length: MAX_QUESTION_LENGTH,
+          }));
+          setQuestions(newQuestions);
         }
       }
     } catch (error: any) {
@@ -431,14 +434,27 @@ export default function EditSpaceScreen() {
 
 
   const addQuestion = () => {
-    if (newQuestion.trim() && questions.length < MAX_QUESTIONS) {
-      setQuestions([...questions, newQuestion.trim()]);
-      setNewQuestion('');
+    if (questions.length >= MAX_QUESTIONS) {
+      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.`);
+      return;
     }
+    const newQuestion: ApplicationQuestion = {
+      id: Date.now().toString(),
+      question: '',
+      required: false,
+      max_length: MAX_QUESTION_LENGTH,
+    };
+    setQuestions([...questions, newQuestion]);
   };
 
-  const removeQuestion = (index: number) => {
-    setQuestions(questions.filter((_, i) => i !== index));
+  const updateQuestion = (id: string, updates: Partial<ApplicationQuestion>) => {
+    setQuestions(questions.map((q) =>
+      q.id === id ? { ...q, ...updates } : q
+    ));
+  };
+
+  const removeQuestion = (id: string) => {
+    setQuestions(questions.filter((q) => q.id !== id));
   };
 
   const handleMapLocationSelect = (location: any) => {
@@ -567,9 +583,9 @@ export default function EditSpaceScreen() {
     is_bookable: true,
     requires_approval: true, // Admin always validates bookings
     booking_rules: rules.trim() ? [rules.trim()] : undefined, // Convert textarea to array for backend
-    questions: questions.length > 0 ? questions : undefined,
+    questions: questions.filter(q => q.question.trim().length > 0).map(q => q.question) as any,
     cover_image_url: imageUrls && imageUrls.length > 0 ? imageUrls[0] : undefined,
-    gallery_images: imageUrls && imageUrls.length > 1 ? imageUrls.slice(1) : undefined,
+    gallery_images: imageUrls && imageUrls.length > 0 ? imageUrls : undefined,
     coordinates: coordinates || undefined,
     visibility,
   });
@@ -1247,40 +1263,67 @@ export default function EditSpaceScreen() {
         {/* Questions */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
         <View style={styles.fieldContainer}>
-          <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Questions supplémentaires ({questions.length}/{MAX_QUESTIONS})</Text>
-          <Text style={[styles.fieldHint, { color: colors.gray500 }]}>
-            Questions posees lors de la reservation
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
+            Questions supplémentaires ({questions.length}/{MAX_QUESTIONS})
           </Text>
-        </View>
+          <Text style={[styles.fieldHint, { color: colors.gray500 }]}>
+            Posez des questions aux demandeurs (réponse courte, max {MAX_QUESTION_LENGTH} caractères)
+          </Text>
 
-        <View style={styles.listContainer}>
+          {/* Questions List */}
           {questions.map((question, index) => (
-            <View key={index} style={[styles.listItem, { backgroundColor: colors.gray50 }]}>
-              <Text style={[styles.listItemText, { color: colors.textPrimary }]}>{question}</Text>
-              <TouchableOpacity onPress={() => removeQuestion(index)}>
-                <X size={16} color={colors.error} strokeWidth={2} />
-              </TouchableOpacity>
+            <View
+              key={question.id}
+              style={[styles.questionItem, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
+            >
+              <View style={styles.questionHeader}>
+                <Text style={[styles.questionNumber, { color: colors.primary }]}>
+                  Question {index + 1}
+                </Text>
+                <TouchableOpacity onPress={() => removeQuestion(question.id)}>
+                  <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
+                </TouchableOpacity>
+              </View>
+
+              <TextInput
+                style={[styles.questionInput, { backgroundColor: colors.gray50, color: colors.textPrimary, borderColor: colors.gray200 }]}
+                placeholder="Écrivez votre question..."
+                placeholderTextColor={colors.gray400}
+                value={question.question}
+                onChangeText={(text) => updateQuestion(question.id, { question: text })}
+                maxLength={MAX_QUESTION_LENGTH}
+                multiline
+                numberOfLines={2}
+              />
+
+              <View style={styles.questionFooter}>
+                <Text style={[styles.charCount, { color: colors.gray500 }]}>
+                  {question.question.length}/{MAX_QUESTION_LENGTH}
+                </Text>
+
+                <View style={styles.requiredToggle}>
+                  <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>Obligatoire</Text>
+                  <Toggle
+                    value={question.required}
+                    onValueChange={(value) => updateQuestion(question.id, { required: value })}
+                    size="small"
+                  />
+                </View>
+              </View>
             </View>
           ))}
 
+          {/* Add Question Button */}
           {questions.length < MAX_QUESTIONS && (
-            <View style={styles.addItemRow}>
-              <TextInput
-                style={[styles.addItemInput, { backgroundColor: colors.gray50, borderColor: colors.gray200, color: colors.textPrimary }]}
-                value={newQuestion}
-                onChangeText={setNewQuestion}
-                placeholder="Ajouter une question..."
-                placeholderTextColor={colors.gray400}
-                onSubmitEditing={addQuestion}
-              />
-              <TouchableOpacity
-                style={[styles.addItemButton, { backgroundColor: colors.primary }]}
-                onPress={addQuestion}
-                disabled={!newQuestion.trim()}
-              >
-                <Plus size={16} color={colors.textOnPrimary} strokeWidth={2.5} />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[styles.addQuestionButton, { borderColor: colors.primary }]}
+              onPress={addQuestion}
+            >
+              <Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.addQuestionText, { color: colors.primary }]}>
+                Ajouter une question
+              </Text>
+            </TouchableOpacity>
           )}
         </View>
       </View>
@@ -1346,7 +1389,7 @@ export default function EditSpaceScreen() {
           <Eye size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Aperçu</Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Vérifiez avant d'enregistrer
+            Vérifiez toutes les informations avant enregistrement
           </Text>
         </View>
 
@@ -1453,12 +1496,14 @@ export default function EditSpaceScreen() {
             )}
           </View>
 
-          {description && (
-            <View style={styles.previewSection}>
-              <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Description</Text>
+          <View style={styles.previewSection}>
+            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Description</Text>
+            {description ? (
               <Text style={[styles.previewText, { color: colors.textSecondary }]}>{description}</Text>
-            </View>
-          )}
+            ) : (
+              <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucune description</Text>
+            )}
+          </View>
 
           {/* Equipment preview */}
           {selectedEquipment.length > 0 && (
@@ -1527,40 +1572,42 @@ export default function EditSpaceScreen() {
             </View>
           </View>
 
-          {/* Rules preview */}
-          {rules.trim() && (
-            <View style={styles.previewSection}>
-              <View style={styles.previewSectionHeader}>
-                <FileText size={16} color={colors.gray700} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.previewSectionTitle, { color: colors.gray700, marginBottom: 0, marginLeft: SPACING.xs }]}>
-                  Règlements intérieurs
+          {/* Règlements intérieurs */}
+          <View style={styles.previewSection}>
+            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Règlements intérieurs</Text>
+            {rules.trim() ? (
+              <Text style={[styles.previewText, { color: colors.textSecondary }]}>{rules}</Text>
+            ) : (
+              <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucun règlement défini</Text>
+            )}
+          </View>
+
+          {/* Questions complémentaires */}
+          <View style={[styles.previewSection, { backgroundColor: colors.gray50 }]}>
+            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Questions complémentaires</Text>
+            <View style={styles.previewApplicationSettings}>
+              <View style={styles.previewSettingRow}>
+                <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Nombre de questions</Text>
+                <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
+                  {questions.filter(q => q.question.trim()).length}
                 </Text>
-              </View>
-              <View style={[styles.previewRulesBox, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-                <Text style={[styles.previewRulesText, { color: colors.textSecondary }]}>{rules}</Text>
               </View>
             </View>
-          )}
-
-          {/* Questions preview */}
-          {questions.length > 0 && (
-            <View style={styles.previewSection}>
-              <View style={styles.previewSectionHeader}>
-                <HelpCircle size={16} color={colors.gray700} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.previewSectionTitle, { color: colors.gray700, marginBottom: 0, marginLeft: SPACING.xs }]}>
-                  Questions supplémentaires ({questions.length})
-                </Text>
-              </View>
+            {questions.filter(q => q.question.trim()).length > 0 && (
               <View style={styles.previewQuestionsList}>
-                {questions.map((question, index) => (
-                  <View key={index} style={[styles.previewQuestionItem, { backgroundColor: colors.info + '08', borderColor: colors.info + '20' }]}>
-                    <Text style={[styles.previewQuestionNumber, { color: colors.info }]}>{index + 1}.</Text>
-                    <Text style={[styles.previewQuestionText, { color: colors.textPrimary }]}>{question}</Text>
+                {questions.filter(q => q.question.trim()).map((q, index) => (
+                  <View key={q.id} style={styles.previewQuestionItem}>
+                    <Text style={[styles.previewQuestionLabel, { color: colors.gray500 }]}>
+                      Q{index + 1}{q.required ? ' *' : ''}
+                    </Text>
+                    <Text style={[styles.previewQuestionText, { color: colors.textSecondary }]}>
+                      {q.question}
+                    </Text>
                   </View>
                 ))}
               </View>
-            </View>
-          )}
+            )}
+          </View>
         </View>
       </View>
     );
@@ -1723,13 +1770,59 @@ const styles = StyleSheet.create({
   timeSeparator: { fontSize: TYPOGRAPHY.fontSize.sm },
   closedText: { fontSize: TYPOGRAPHY.fontSize.sm },
 
-  // Rules/Questions list
-  listContainer: { gap: SPACING.sm },
-  listItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: SPACING.md, borderRadius: BORDER.radius.sm },
-  listItemText: { flex: 1, fontSize: TYPOGRAPHY.fontSize.sm, marginRight: SPACING.sm },
-  addItemRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  addItemInput: { flex: 1, height: 40, borderWidth: 1, borderRadius: BORDER.radius.sm, paddingHorizontal: SPACING.md, fontSize: TYPOGRAPHY.fontSize.sm },
-  addItemButton: { width: 40, height: 40, borderRadius: BORDER.radius.sm, alignItems: 'center', justifyContent: 'center' },
+  // Question item styles
+  questionItem: {
+    padding: SPACING.md,
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.md,
+    marginTop: SPACING.sm,
+    gap: SPACING.sm,
+  },
+  questionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  questionNumber: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+  },
+  questionInput: {
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.sm,
+    padding: SPACING.sm,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    minHeight: 60,
+    textAlignVertical: 'top',
+  },
+  questionFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  requiredToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  requiredLabel: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+  },
+  addQuestionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    padding: SPACING.md,
+    borderWidth: 1.5,
+    borderRadius: BORDER.radius.sm,
+    borderStyle: 'dashed',
+    marginTop: SPACING.md,
+  },
+  addQuestionText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
 
   // Media
   imageUploadContainer: { marginTop: SPACING.md, alignItems: 'center' },
@@ -1770,8 +1863,25 @@ const styles = StyleSheet.create({
   previewSectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.xs },
   previewRulesBox: { padding: SPACING.md, borderRadius: BORDER.radius.sm, borderWidth: 1, marginTop: SPACING.xs },
   previewRulesText: { fontSize: TYPOGRAPHY.fontSize.sm, lineHeight: 20 },
-  previewQuestionsList: { gap: SPACING.sm, marginTop: SPACING.xs },
-  previewQuestionItem: { flexDirection: 'row', alignItems: 'flex-start', padding: SPACING.sm, borderRadius: BORDER.radius.sm, borderWidth: 1 },
+  previewApplicationSettings: {
+    gap: SPACING.sm,
+  },
+  previewSettingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  previewQuestionsList: {
+    marginTop: SPACING.md,
+    gap: SPACING.sm,
+  },
+  previewQuestionItem: {
+    gap: 2,
+  },
+  previewQuestionLabel: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
   previewQuestionNumber: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.semibold, marginRight: SPACING.xs },
   previewQuestionText: { flex: 1, fontSize: TYPOGRAPHY.fontSize.sm },
 

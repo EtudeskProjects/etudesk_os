@@ -119,7 +119,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
             'id', org.id,
             'name', org.name,
             'logo_url', org.logo_url,
-            'type', org.type,
+            'types', org.types,
             'headquarters_city', org.headquarters_city,
             'headquarters_country', org.headquarters_country,
             'verification_status', org.verification_status
@@ -255,7 +255,7 @@ router.get('/:id', async (req: Request, res: Response) => {
             'id', org.id,
             'name', org.name,
             'logo_url', org.logo_url,
-            'type', org.type,
+            'types', org.types,
             'headquarters_city', org.headquarters_city,
             'headquarters_country', org.headquarters_country,
             'verification_status', org.verification_status
@@ -265,13 +265,7 @@ router.get('/:id', async (req: Request, res: Response) => {
            WHERE op.opportunity_id = o.id),
           '[]'
         ) as organizations,
-        COALESCE(
-          (SELECT json_agg(json_build_object('id', s.id, 'name', s.canonical_name, 'is_required', os.is_required))
-           FROM opportunity_skills os
-           JOIN skills s ON os.skill_id = s.id
-           WHERE os.opportunity_id = o.id),
-          '[]'
-        ) as skills,
+        '[]'::json as skills,
         (SELECT COUNT(*) FROM opportunity_applications WHERE opportunity_id = o.id) as applications_count,
         COALESCE(o.views_count, 0) as views_count
       FROM opportunities o
@@ -521,9 +515,10 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     // Properly handle undefined values - use existing values from database
     const finalSectors = sectors !== undefined ? sectors : existing.sectors;
     const finalImages = images !== undefined ? images : existing.images;
-    const finalLocations = locations !== undefined ? JSON.stringify(locations) : existing.locations;
-    const finalApplicationQuestions = application_questions !== undefined ? JSON.stringify(application_questions) : existing.application_questions;
-    const finalAttachments = attachments !== undefined ? JSON.stringify(attachments) : existing.attachments;
+    const safeStringify = (val: any) => typeof val === 'string' ? val : JSON.stringify(val);
+    const finalLocations = locations !== undefined ? JSON.stringify(locations) : safeStringify(existing.locations);
+    const finalApplicationQuestions = application_questions !== undefined ? JSON.stringify(application_questions) : safeStringify(existing.application_questions);
+    const finalAttachments = attachments !== undefined ? JSON.stringify(attachments) : safeStringify(existing.attachments);
 
     const result = await pool.query(`
       UPDATE opportunities SET
@@ -641,7 +636,7 @@ router.get('/:id/applications', authMiddleware, async (req: AuthRequest, res: Re
       SELECT
         a.*,
         t.id as talent_id,
-        t.display_name as talent_display_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_display_name,
         t.first_name as talent_first_name,
         t.last_name as talent_last_name,
         t.avatar_url as talent_avatar,

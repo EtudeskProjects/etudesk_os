@@ -269,14 +269,14 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         o.requirements as opportunity_requirements,
         o.application_questions,
         COALESCE(
-          (SELECT json_agg(json_build_object('id', org.id, 'name', org.name, 'logo_url', org.logo_url, 'type', org.type))
+          (SELECT json_agg(json_build_object('id', org.id, 'name', org.name, 'logo_url', org.logo_url, 'types', org.types))
            FROM opportunity_posters op
            JOIN organizations org ON op.poster_organization_id = org.id
            WHERE op.opportunity_id = o.id),
           '[]'
         ) as organizations,
         t.id as talent_id,
-        t.display_name as talent_display_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_display_name,
         t.first_name as talent_first_name,
         t.last_name as talent_last_name,
         t.email as talent_email,
@@ -463,7 +463,7 @@ router.get('/opportunity/:opportunityId', authMiddleware, validate(opportunityId
     let query = `
       SELECT
         a.*,
-        t.display_name as talent_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
         t.avatar_url as talent_avatar,
         t.email as talent_email,
         t.city as talent_city,
@@ -1146,7 +1146,6 @@ router.get('/opportunity/:opportunityId/export-csv', authMiddleware, validate(op
       'Téléphone',
       'Ville',
       'Poste actuel',
-      'Années d\'expérience',
       'Compétences',
       'Match',
       'Score',
@@ -1188,7 +1187,6 @@ router.get('/opportunity/:opportunityId/export-csv', authMiddleware, validate(op
         escapeCSV(talent.phone),
         escapeCSV(talent.city),
         escapeCSV(talent.current_role),
-        escapeCSV(talent.years_experience),
         escapeCSV(Array.isArray(talent.skills) ? talent.skills.join(', ') : ''),
         escapeCSV(MATCH_LABELS[app.matchCategory || ''] || ''),
         escapeCSV(app.matchScore ? Math.round(app.matchScore) : ''),
