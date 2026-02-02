@@ -33,10 +33,12 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
 import { Button, FooterNav } from '../../../../../src/components/ui';
+import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
-import { communityService } from '../../../../../src/services';
+import { communityService, communityMembershipMessageService } from '../../../../../src/services';
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import type { MemberStatus, CommunityMemberDetails } from '../../../../../src/services/communityService';
+import type { MembershipMessage } from '../../../../../src/services/communityMembershipMessageService';
 
 // Status configuration - colors are set dynamically using theme colors
 const getStatusConfig = (colors: any): Record<MemberStatus, { color: string; icon: typeof Clock }> => ({
@@ -58,12 +60,12 @@ const getStatusFlow = (colors: any): Record<MemberStatus, {
     color: colors.warning,
   },
   ACTIVE: {
-    label: 'Membre actif',
+    label: 'Active',
     description: 'Membre approuvé de la communauté',
     color: colors.success,
   },
   REJECTED: {
-    label: 'Refusé',
+    label: 'Refusée',
     description: 'Demande non retenue',
     color: colors.error,
   },
@@ -74,7 +76,7 @@ const getStatusFlow = (colors: any): Record<MemberStatus, {
   },
 });
 
-type Tab = 'profile' | 'notes';
+type Tab = 'profile' | 'messages' | 'notes';
 
 export default function MemberDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -86,7 +88,10 @@ export default function MemberDetailsScreen() {
   const STATUS_FLOW = getStatusFlow(colors);
 
   const [membership, setMembership] = useState<CommunityMemberDetails | null>(null);
+  const [messages, setMessages] = useState<MembershipMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -119,6 +124,12 @@ export default function MemberDetailsScreen() {
     loadMembership();
   }, [id]);
 
+  useEffect(() => {
+    if (activeTab === 'messages' && membership) {
+      loadMessages();
+    }
+  }, [activeTab, membership]);
+
   const loadMembership = async () => {
     if (!id) return;
 
@@ -133,6 +144,56 @@ export default function MemberDetailsScreen() {
       router.back();
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadMessages = async () => {
+    if (!membership) return;
+
+    setIsLoadingMessages(true);
+    try {
+      const response = await communityMembershipMessageService.getMessages(membership.id);
+      setMessages(response.data || []);
+      await communityMembershipMessageService.markAllAsRead(membership.id);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  const handleSendMessage = async (data: {
+    content: string;
+    attachments?: { name: string; uri: string; type: string; size?: number }[];
+    proposedDatetime?: string;
+    datetimeType?: string;
+  }) => {
+    if (!membership) return;
+
+    setIsSending(true);
+    try {
+      const response = await communityMembershipMessageService.sendMessage(membership.id, {
+        content: data.content,
+        attachments: data.attachments?.map(a => ({
+          name: a.name,
+          url: a.uri,
+          type: a.type,
+          size: a.size,
+        })),
+        proposed_datetime: data.proposedDatetime,
+        datetime_type: data.datetimeType as any,
+      });
+
+      setMessages((prev) => [...prev, response.data]);
+
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    } catch (error: any) {
+      Alert.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      throw error;
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -409,6 +470,72 @@ export default function MemberDetailsScreen() {
     );
   };
 
+  const renderMessagesTab = () => {
+    if (isLoadingMessages) {
+      return (
+        <View style={styles.loadingMessages}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      );
+    }
+
+    const talent = membership?.talent;
+    const talentName = talent?.first_name && talent?.last_name
+      ? `${talent.first_name} ${talent.last_name}`
+      : 'Membre';
+
+    return (
+      <View style={styles.messagesContainer}>
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.messagesList}
+          contentContainerStyle={[
+            styles.messagesContent,
+            { paddingBottom: keyboardHeight > 0 ? SPACING.md : SPACING.lg },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          onContentSizeChange={() => {
+            if (keyboardHeight > 0) {
+              scrollViewRef.current?.scrollToEnd({ animated: true });
+            }
+          }}
+        >
+          {messages.length === 0 ? (
+            <View style={styles.noMessages}>
+              <MessageCircle size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.noMessagesTitle, { color: colors.textPrimary }]}>
+                Pas encore de messages
+              </Text>
+              <Text style={[styles.noMessagesText, { color: colors.gray500 }]}>
+                Envoyez un message au membre pour démarrer la conversation.
+              </Text>
+            </View>
+          ) : (
+            messages.map((message) => (
+              <ChatMessage
+                key={message.id}
+                content={message.content}
+                isMe={message.sender_type === 'ORGANIZATION'}
+                senderName={message.sender_type === 'TALENT' ? (message.sender_name || talentName) : undefined}
+                createdAt={message.created_at}
+                proposedDatetime={message.proposed_datetime}
+                attachments={message.attachments}
+              />
+            ))
+          )}
+        </ScrollView>
+
+        <ChatInput
+          onSend={handleSendMessage}
+          isSending={isSending}
+          placeholder="Écrivez votre message..."
+          showDatetimeOption={true}
+        />
+      </View>
+    );
+  };
+
   const renderNotesTab = () => (
     <View style={styles.tabContent}>
       <View style={[styles.notesCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
@@ -481,6 +608,7 @@ export default function MemberDetailsScreen() {
       {/* Tabs */}
       <View style={[styles.tabsContainer, { borderBottomColor: colors.gray200 }]}>
         {renderTab('profile', 'Profil')}
+        {renderTab('messages', 'Messages')}
         {renderTab('notes', 'Notes')}
       </View>
 
@@ -491,6 +619,7 @@ export default function MemberDetailsScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {activeTab === 'profile' && renderProfileTab()}
+        {activeTab === 'messages' && renderMessagesTab()}
         {activeTab === 'notes' && renderNotesTab()}
       </KeyboardAvoidingView>
 

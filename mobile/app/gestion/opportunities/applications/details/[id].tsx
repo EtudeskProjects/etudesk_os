@@ -99,7 +99,7 @@ const MATCH_CATEGORY_CONFIG = {
 
 type MatchCategory = 'excellent' | 'good' | 'average' | 'low';
 
-type Tab = 'profile' | 'answers' | 'notes' | 'messages';
+type Tab = 'profile' | 'messages' | 'notes';
 
 export default function ApplicationOrgDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -668,38 +668,6 @@ export default function ApplicationOrgDetailsScreen() {
     );
   };
 
-  const renderAnswersTab = () => {
-    const answers = application?.answers || [];
-    const questions = application?.opportunity?.application_questions || [];
-
-    return (
-      <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-        {answers.length === 0 ? (
-          <View style={styles.noContent}>
-            <Text style={[styles.noContentText, { color: colors.gray500 }]}>
-              Aucune réponse à afficher
-            </Text>
-          </View>
-        ) : (
-          answers.map((answer, index) => {
-            const question = questions.find((q) => q.id === answer.question_id);
-            return (
-              <View key={answer.question_id} style={[styles.answerCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-                <Text style={[styles.answerQuestion, { color: colors.gray600 }]}>
-                  {question?.question || `Question ${index + 1}`}
-                </Text>
-                <Text style={[styles.answerText, { color: colors.textPrimary }]}>
-                  {answer.answer}
-                </Text>
-              </View>
-            );
-          })
-        )}
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
-    );
-  };
-
   const renderNotesTab = () => (
     <View style={styles.tabContent}>
       <View style={[styles.notesCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
@@ -848,6 +816,7 @@ export default function ApplicationOrgDetailsScreen() {
         {activeTab === 'profile' && renderProfileTab()}
         {activeTab === 'messages' && renderMessagesTab()}
         {activeTab === 'notes' && renderNotesTab()}
+
       </KeyboardAvoidingView>
 
       {/* CV Fullscreen Modal - Only for remote URLs */}

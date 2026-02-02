@@ -15,7 +15,7 @@ import {
   uuidParamSchema,
   opportunityIdParamSchema
 } from '../middleware/validation.middleware';
-import { rankApplications } from '../services/matching.service';
+import { rankApplications, calculateMatchingScore, getMatchCategory } from '../services/matching.service';
 import { getApplicationRecommendation } from '../services/recommendation.service';
 import { safeParseJson } from '../utils';
 
@@ -56,13 +56,14 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
       return res.status(400).json({ error: 'La date limite de candidature est dépassée' });
     }
 
-    // Vérifier que l'utilisateur n'est pas le propriétaire de l'opportunité
-    // (ni en tant que poster direct, ni en tant que membre de l'organisation)
+    // Vérifier que l'utilisateur n'est pas le créateur direct ou un admin/owner de l'org
     const ownerCheck = await pool.query(`
       SELECT 1 FROM opportunity_posters op
       LEFT JOIN organization_members om ON op.poster_organization_id = om.organization_id
+        AND om.talent_id = $2
+        AND om.role IN ('OWNER', 'ADMIN')
       WHERE op.opportunity_id = $1
-      AND (op.poster_talent_id = $2 OR om.talent_id = $2)
+      AND (op.poster_talent_id = $2 OR om.talent_id IS NOT NULL)
     `, [opportunity_id, talentId]);
 
     if (ownerCheck.rows.length > 0) {
@@ -127,6 +128,9 @@ router.get('/me', authMiddleware, requireTalentProfile, async (req: AuthRequest,
         o.compensation_min,
         o.compensation_max,
         o.currency,
+        o.cover_image_url as opportunity_cover_image_url,
+        o.images as opportunity_images,
+        o.contract_type as opportunity_contract_type,
         COALESCE(
           (SELECT json_agg(json_build_object('id', org.id, 'name', org.name, 'logo_url', org.logo_url))
            FROM opportunity_posters op
@@ -182,6 +186,9 @@ router.get('/me', authMiddleware, requireTalentProfile, async (req: AuthRequest,
         compensation_min: row.compensation_min,
         compensation_max: row.compensation_max,
         currency: row.currency,
+        cover_image_url: row.opportunity_cover_image_url,
+        images: row.opportunity_images,
+        contract_type: row.opportunity_contract_type,
         organizations: row.organizations,
         // For convenience, also provide first organization as 'organization'
         organization: row.organizations && row.organizations.length > 0 ? row.organizations[0] : null,
@@ -214,12 +221,14 @@ router.get('/check/:opportunityId', authMiddleware, requireTalentProfile, async 
       [talentId, opportunityId]
     );
 
-    // Vérifier si l'utilisateur est le propriétaire de l'opportunité
+    // Vérifier si l'utilisateur est le créateur direct ou admin/owner de l'org
     const ownerCheck = await pool.query(`
       SELECT 1 FROM opportunity_posters op
       LEFT JOIN organization_members om ON op.poster_organization_id = om.organization_id
+        AND om.talent_id = $2
+        AND om.role IN ('OWNER', 'ADMIN')
       WHERE op.opportunity_id = $1
-      AND (op.poster_talent_id = $2 OR om.talent_id = $2)
+      AND (op.poster_talent_id = $2 OR om.talent_id IS NOT NULL)
     `, [opportunityId, talentId]);
 
     const isOwner = ownerCheck.rows.length > 0;
@@ -284,7 +293,17 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         t.avatar_url as talent_avatar,
         t.bio as talent_bio,
         t.city as talent_city,
-        t.country as talent_country
+        t.country as talent_country,
+        t.region as talent_region,
+        t.remote_ready as talent_remote_ready,
+        t.sectors as talent_sectors,
+        t.profile_tags as talent_profile_tags,
+        (SELECT ARRAY_AGG(canonical_name) FROM talent_skills WHERE talent_id = t.id) as talent_skills,
+        o.contract_type,
+        o.work_rhythm,
+        o.cover_image_url as opportunity_cover_image,
+        o.images as opportunity_images,
+        (SELECT org.sectors FROM opportunity_posters op2 JOIN organizations org ON op2.poster_organization_id = org.id WHERE op2.opportunity_id = o.id LIMIT 1) as org_sectors
       FROM opportunity_applications a
       JOIN opportunities o ON a.opportunity_id = o.id
       JOIN talents t ON a.talent_id = t.id
@@ -315,9 +334,46 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'Accès non autorisé à cette candidature' });
     }
 
+    // Compute matching score
+    let matchScore: number | undefined;
+    let matchCategory: string | undefined;
+    try {
+      const scoreResult = await calculateMatchingScore({
+        id: row.id,
+        talent_id: row.talent_id,
+        opportunity_id: row.opp_id,
+        talent: {
+          city: row.talent_city,
+          region: row.talent_region,
+          country: row.talent_country,
+          remote_ready: row.talent_remote_ready,
+          skills: row.talent_skills || [],
+          sectors: row.talent_sectors || [],
+          profile_tags: row.talent_profile_tags || [],
+        },
+        opportunity: {
+          location_type: row.location_type,
+          locations: row.locations,
+          contract_type: row.contract_type,
+          work_rhythm: row.work_rhythm,
+          type: row.opportunity_type,
+        },
+        organization: { sectors: row.org_sectors || [] },
+      });
+      matchScore = scoreResult.finalScore;
+      matchCategory = getMatchCategory(scoreResult.finalScore);
+    } catch (err) {
+      console.error('Error computing matching score:', err);
+    }
+
     // Structure the response with nested objects
     const application = {
       ...row,
+      resume_url: row.cv_url, // Map cv_url to resume_url for frontend
+      rating: row.star_rating || 0,
+      internal_notes: row.internal_notes || '',
+      matchScore,
+      matchCategory,
       opportunity: {
         id: row.opp_id,
         title: row.opportunity_title,
@@ -334,6 +390,9 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         requirements: row.opportunity_requirements,
         application_questions: row.application_questions,
         organizations: row.organizations,
+        cover_image_url: row.opportunity_cover_image,
+        images: row.opportunity_images,
+        contract_type: row.contract_type,
       },
       talent: {
         id: row.talent_id,
@@ -343,9 +402,9 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         email: row.talent_email,
         phone: row.talent_phone,
         avatar_url: row.talent_avatar,
-        profile_picture_url: row.talent_avatar, // Map avatar_url to profile_picture_url for frontend compatibility
+        profile_picture_url: row.talent_avatar,
         bio: row.talent_bio,
-        headline: row.talent_bio, // Use bio as headline for frontend compatibility
+        headline: row.talent_bio,
         city: row.talent_city,
         country: row.talent_country,
       },

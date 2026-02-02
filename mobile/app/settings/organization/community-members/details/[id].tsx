@@ -37,7 +37,7 @@ import {
   RefreshCw,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
-import { FooterNav } from '../../../../../src/components/ui';
+import { FooterNav, Toggle } from '../../../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
 import { communityService, CommunityMemberDetails, MemberStatus, communityMembershipMessageService, MembershipMessage, MemberPermissions, DEFAULT_MEMBER_PERMISSIONS } from '../../../../../src/services';
@@ -478,11 +478,7 @@ export default function CommunityMemberDetailsScreen() {
               {/* Permission toggles */}
               <View style={styles.permissionsList}>
                 {/* Can Post */}
-                <TouchableOpacity
-                  style={[styles.permissionItem, { borderColor: colors.gray200 }]}
-                  onPress={() => handleTogglePermission('can_post')}
-                  disabled={isSavingPermissions}
-                >
+                <View style={[styles.permissionItem, { borderColor: colors.gray200 }]}>
                   <View style={styles.permissionLeft}>
                     <View style={[styles.permissionIcon, { backgroundColor: colors.primary + '15' }]}>
                       <FileText size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
@@ -496,23 +492,15 @@ export default function CommunityMemberDetailsScreen() {
                       </Text>
                     </View>
                   </View>
-                  <View style={[
-                    styles.permissionToggle,
-                    { backgroundColor: permissions.can_post ? colors.success : colors.gray300 }
-                  ]}>
-                    <View style={[
-                      styles.permissionToggleKnob,
-                      permissions.can_post && styles.permissionToggleKnobActive
-                    ]} />
-                  </View>
-                </TouchableOpacity>
+                  <Toggle
+                    value={permissions.can_post}
+                    onValueChange={() => handleTogglePermission('can_post')}
+                    disabled={isSavingPermissions}
+                  />
+                </View>
 
                 {/* Can Create Event */}
-                <TouchableOpacity
-                  style={[styles.permissionItem, { borderColor: colors.gray200 }]}
-                  onPress={() => handleTogglePermission('can_create_event')}
-                  disabled={isSavingPermissions}
-                >
+                <View style={[styles.permissionItem, { borderColor: colors.gray200 }]}>
                   <View style={styles.permissionLeft}>
                     <View style={[styles.permissionIcon, { backgroundColor: colors.warning + '15' }]}>
                       <Calendar size={18} color={colors.warning} strokeWidth={ICON.strokeWidth} />
@@ -526,23 +514,15 @@ export default function CommunityMemberDetailsScreen() {
                       </Text>
                     </View>
                   </View>
-                  <View style={[
-                    styles.permissionToggle,
-                    { backgroundColor: permissions.can_create_event ? colors.success : colors.gray300 }
-                  ]}>
-                    <View style={[
-                      styles.permissionToggleKnob,
-                      permissions.can_create_event && styles.permissionToggleKnobActive
-                    ]} />
-                  </View>
-                </TouchableOpacity>
+                  <Toggle
+                    value={permissions.can_create_event}
+                    onValueChange={() => handleTogglePermission('can_create_event')}
+                    disabled={isSavingPermissions}
+                  />
+                </View>
 
                 {/* Can Create Poll */}
-                <TouchableOpacity
-                  style={[styles.permissionItem, { borderColor: colors.gray200, borderBottomWidth: 0 }]}
-                  onPress={() => handleTogglePermission('can_create_poll')}
-                  disabled={isSavingPermissions}
-                >
+                <View style={[styles.permissionItem, { borderColor: colors.gray200, borderBottomWidth: 0 }]}>
                   <View style={styles.permissionLeft}>
                     <View style={[styles.permissionIcon, { backgroundColor: colors.info + '15' }]}>
                       <BarChart2 size={18} color={colors.info} strokeWidth={ICON.strokeWidth} />
@@ -556,16 +536,12 @@ export default function CommunityMemberDetailsScreen() {
                       </Text>
                     </View>
                   </View>
-                  <View style={[
-                    styles.permissionToggle,
-                    { backgroundColor: permissions.can_create_poll ? colors.success : colors.gray300 }
-                  ]}>
-                    <View style={[
-                      styles.permissionToggleKnob,
-                      permissions.can_create_poll && styles.permissionToggleKnobActive
-                    ]} />
-                  </View>
-                </TouchableOpacity>
+                  <Toggle
+                    value={permissions.can_create_poll}
+                    onValueChange={() => handleTogglePermission('can_create_poll')}
+                    disabled={isSavingPermissions}
+                  />
+                </View>
               </View>
 
               {/* Custom permissions indicator and reset button */}
@@ -1402,30 +1378,6 @@ const styles = StyleSheet.create({
   permissionDesc: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     marginTop: 2,
-  },
-
-  permissionToggle: {
-    width: 48,
-    height: 28,
-    borderRadius: 14,
-    padding: 2,
-    justifyContent: 'center',
-  },
-
-  permissionToggleKnob: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-
-  permissionToggleKnobActive: {
-    alignSelf: 'flex-end',
   },
 
   resetPermissionsButton: {

@@ -14,6 +14,9 @@ import {
   Calendar,
   BarChart2,
   FileText,
+  Clock,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
@@ -24,12 +27,20 @@ import { formatRelativeTime } from '../../../src/utils/date';
 import { getFullImageUrl } from '../../../src/utils/image';
 import type { Community } from '../../../src/types/models';
 
+const getMemberStatusConfig = (colors: any) => ({
+  PENDING: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15', label: 'En attente' },
+  ACTIVE: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Active' },
+  REJECTED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Refusée' },
+  SUSPENDED: { color: colors.gray500, icon: XCircle, bgColor: colors.gray500 + '15', label: 'Suspendu' },
+});
+
 type Tab = 'memberships' | 'bookmarks';
+type MemberFilterStatus = 'all' | 'PENDING' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED';
 
 interface Membership {
   id: string;
   community_id: string;
-  status: 'ACTIVE' | 'PENDING' | 'REJECTED';
+  status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'SUSPENDED';
   role: string;
   joined_at: string;
   community: {
@@ -86,6 +97,7 @@ export default function MyCommunitiesScreen() {
   const { colors } = useTheme();
 
   const [activeTab, setActiveTab] = useState<Tab>('memberships');
+  const [memberFilter, setMemberFilter] = useState<MemberFilterStatus>('PENDING');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -135,18 +147,46 @@ export default function MyCommunitiesScreen() {
     { key: 'bookmarks' as Tab, label: 'Sauvegardes', count: bookmarkedActivities.length },
   ];
 
+  const filteredMemberships = memberships.filter((m) => {
+    if (memberFilter === 'all') return true;
+    return m.status === memberFilter;
+  });
+
+  const getMemberStatusCounts = () => {
+    const counts: Record<string, number> = { all: memberships.length };
+    memberships.forEach((m) => {
+      counts[m.status] = (counts[m.status] || 0) + 1;
+    });
+    return counts;
+  };
+  const memberStatusCounts = getMemberStatusCounts();
+
+  const memberFilterChips: { key: MemberFilterStatus; label: string }[] = [
+    { key: 'all', label: 'Toutes' },
+    { key: 'PENDING', label: 'En attente' },
+    { key: 'ACTIVE', label: 'Actives' },
+    { key: 'REJECTED', label: 'Refusées' },
+    { key: 'SUSPENDED', label: 'Suspendues' },
+  ];
+
   const renderMemberships = () => (
     <>
-      {memberships.length === 0 ? (
+      {filteredMemberships.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="Aucune communauté"
-          subtitle="Rejoignez des communautés pour les voir ici"
-          actionLabel="Explorer"
-          onAction={() => router.push('/(tabs)/explore?category=communities')}
+          title={memberFilter === 'all' ? 'Aucune communauté' : 'Aucun résultat'}
+          subtitle={
+            memberFilter === 'all'
+              ? 'Rejoignez des communautés pour les voir ici'
+              : 'Aucune adhésion avec ce statut.'
+          }
+          {...(memberFilter === 'all' ? {
+            actionLabel: 'Explorer',
+            onAction: () => router.push('/(tabs)/explore?category=communities'),
+          } : {})}
         />
       ) : (
-        memberships.map((membership) => {
+        filteredMemberships.map((membership) => {
           const community: Community = {
             id: membership.community_id,
             name: membership.community.name,
@@ -157,11 +197,20 @@ export default function MyCommunitiesScreen() {
             type: membership.community.type as any,
           } as Community;
 
+          const statusConfig = getMemberStatusConfig(colors)[membership.status] || getMemberStatusConfig(colors).PENDING;
+          const StatusIcon = statusConfig.icon;
+
           return (
             <CommunityCard
               key={membership.id}
               community={community}
-              onPress={() => router.push(`/details/community/${membership.community_id}`)}
+              onPress={() => router.push(`/settings/my-communities/${membership.id}`)}
+              statusOverlay={{
+                label: statusConfig.label,
+                color: statusConfig.color,
+                bgColor: statusConfig.bgColor,
+                icon: <StatusIcon size={12} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />,
+              }}
             />
           );
         })
@@ -252,37 +301,74 @@ export default function MyCommunitiesScreen() {
   );
 
   const headerContent = (
-    <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filtersContent}
-      >
-        {chips.map((chip) => {
-          const isActive = activeTab === chip.key;
-          return (
-            <TouchableOpacity
-              key={chip.key}
-              style={[
-                styles.filterChip,
-                { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
-              ]}
-              onPress={() => setActiveTab(chip.key)}
-            >
-              <Text
+    <View>
+      <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtersContent}
+        >
+          {chips.map((chip) => {
+            const isActive = activeTab === chip.key;
+            return (
+              <TouchableOpacity
+                key={chip.key}
                 style={[
-                  styles.filterChipText,
-                  { color: colors.gray700 },
-                  isActive && { color: colors.textOnPrimary },
+                  styles.filterChip,
+                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                  isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
                 ]}
+                onPress={() => setActiveTab(chip.key)}
               >
-                {chip.label} ({chip.count})
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    { color: colors.gray700 },
+                    isActive && { color: colors.textOnPrimary },
+                  ]}
+                >
+                  {chip.label} ({chip.count})
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+      {activeTab === 'memberships' && (
+        <View style={styles.memberFiltersRow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filtersContent}
+          >
+            {memberFilterChips.map((chip) => {
+              const isActive = memberFilter === chip.key;
+              const count = memberStatusCounts[chip.key] || 0;
+              return (
+                <TouchableOpacity
+                  key={chip.key}
+                  style={[
+                    styles.filterChip,
+                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                    isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
+                  ]}
+                  onPress={() => setMemberFilter(chip.key)}
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      { color: colors.gray700 },
+                      isActive && { color: colors.textOnPrimary },
+                    ]}
+                  >
+                    {chip.label} ({count})
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 
@@ -321,6 +407,9 @@ const styles = StyleSheet.create({
   filterChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+  memberFiltersRow: {
+    paddingVertical: SPACING.sm,
   },
   // Bookmark Card
   bookmarkCard: {
