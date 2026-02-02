@@ -356,7 +356,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     };
 
     const handleMoreOptions = (comment: ActivityComment) => {
-        const isAuthor = user?.id === comment.author_id;
+        const isAuthor = user?.talentId === comment.author_id;
 
         if (Platform.OS === 'ios') {
             const options = isAuthor
@@ -455,7 +455,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                         <CommentItem
                             key={comment.id}
                             comment={comment}
-                            currentUserId={user?.id}
+                            currentUserId={user?.talentId}
                             isLast={index === visibleComments.length - 1 && !hasMoreComments}
                             onReply={handleReply}
                             onLike={handleLikeComment}
@@ -661,7 +661,7 @@ const styles = StyleSheet.create({
     },
     showMoreLine: {
         position: 'absolute',
-        left: 17, // Align with thread line
+        left: 19, // Align with thread line (AVATAR_SIZE/2 - LINE_WIDTH/2 = 40/2 - 1)
         top: 0,
         width: 2,
         height: '100%',

@@ -623,7 +623,7 @@ export default function MemberDetailsScreen() {
         {activeTab === 'notes' && renderNotesTab()}
       </KeyboardAvoidingView>
 
-      <FooterNav activeTab="gestion" />
+      <FooterNav activeTab="home" />
     </SafeAreaView>
   );
 }

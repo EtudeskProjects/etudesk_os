@@ -860,7 +860,7 @@ export default function ApplicationOrgDetailsScreen() {
       )}
 
       {/* Footer Navigation */}
-      <FooterNav activeTab="gestion" />
+      <FooterNav activeTab="home" />
     </SafeAreaView>
   );
 }

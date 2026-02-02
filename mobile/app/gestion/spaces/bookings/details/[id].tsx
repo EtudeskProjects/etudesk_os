@@ -700,7 +700,7 @@ export default function BookingDetailsScreen() {
         {activeTab === 'notes' && renderNotesTab()}
       </KeyboardAvoidingView>
 
-      <FooterNav activeTab="gestion" />
+      <FooterNav activeTab="home" />
     </SafeAreaView>
   );
 }

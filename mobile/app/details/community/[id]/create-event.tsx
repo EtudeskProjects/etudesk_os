@@ -214,7 +214,7 @@ export default function CreateEventScreen() {
     };
 
     const handleSubmit = async () => {
-        if (!title.trim() || !description.trim() || !location.trim()) {
+        if (!title.trim() || (!isOnline && !location.trim())) {
             Alert.alert('Erreur', 'Veuillez remplir tous les champs obligatoires.');
             return;
         }

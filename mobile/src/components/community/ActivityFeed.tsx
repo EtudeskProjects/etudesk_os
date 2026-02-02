@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, ActivityIndicator, Text, StyleSheet, TouchableOpacity, Alert, FlatList } from 'react-native';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { View, ActivityIndicator, Text, StyleSheet, TouchableOpacity, Alert, FlatList, ScrollView } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { CommunityActivity } from '../../types/activity';
+import { CommunityActivity, ActivityType } from '../../types/activity';
 import { communityActivityService } from '../../services';
 import { ActivityCard } from './ActivityCard';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER } from '../../constants/theme';
@@ -44,6 +44,21 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     const { user } = useAuth();
     // Use talentId for author comparison since backend stores talent_id as author_id
     const currentUserId = user?.talentId || user?.id || '';
+
+    type FilterType = 'ALL' | ActivityType;
+    const [activeFilter, setActiveFilter] = useState<FilterType>('ALL');
+
+    const filterChips: { key: FilterType; label: string }[] = [
+        { key: 'ALL', label: 'Tout' },
+        { key: 'POST', label: 'Publications' },
+        { key: 'EVENT', label: 'Événements' },
+        { key: 'POLL', label: 'Sondages' },
+    ];
+
+    const filteredActivities = useMemo(() => {
+        if (activeFilter === 'ALL') return activities;
+        return activities.filter(a => a.type === activeFilter);
+    }, [activities, activeFilter]);
 
     const loadFeed = useCallback(async (refresh = false) => {
         if (refresh) {
@@ -293,12 +308,48 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         );
     };
 
+    const renderFilterHeader = () => (
+        <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterContent}
+            style={styles.filterContainer}
+        >
+            {filterChips.map((chip) => {
+                const isActive = activeFilter === chip.key;
+                const count = chip.key === 'ALL' ? activities.length : activities.filter(a => a.type === chip.key).length;
+                return (
+                    <TouchableOpacity
+                        key={chip.key}
+                        style={[
+                            styles.filterChip,
+                            { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                            isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
+                        ]}
+                        onPress={() => setActiveFilter(chip.key)}
+                    >
+                        <Text
+                            style={[
+                                styles.filterChipText,
+                                { color: colors.gray700 },
+                                isActive && { color: colors.textOnPrimary },
+                            ]}
+                        >
+                            {chip.label} ({count})
+                        </Text>
+                    </TouchableOpacity>
+                );
+            })}
+        </ScrollView>
+    );
+
     return (
         <FlatList
-            data={activities}
+            data={filteredActivities}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
+            ListHeaderComponent={renderFilterHeader}
             ListEmptyComponent={renderEmpty}
             ListFooterComponent={renderFooter}
             onRefresh={refreshFeed}
@@ -315,6 +366,23 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 };
 
 const styles = StyleSheet.create({
+    filterContainer: {
+        marginBottom: SPACING.sm,
+    },
+    filterContent: {
+        paddingHorizontal: SPACING.lg,
+        gap: SPACING.sm,
+    },
+    filterChip: {
+        paddingVertical: SPACING.xs,
+        paddingHorizontal: SPACING.md,
+        borderWidth: BORDER.width.thin,
+        borderRadius: BORDER.radius.full,
+    },
+    filterChipText: {
+        fontSize: TYPOGRAPHY.fontSize.sm,
+        fontWeight: TYPOGRAPHY.fontWeight.medium,
+    },
     listContent: {
         paddingHorizontal: 0,
         paddingVertical: SPACING.sm,

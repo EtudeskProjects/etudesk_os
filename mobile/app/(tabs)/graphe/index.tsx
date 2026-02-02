@@ -915,10 +915,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
-    paddingVertical: SPACING.lg,
+    paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.xl,
     borderRadius: BORDER.radius.md,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.sm,
   },
 
   actionButtonText: {

@@ -8,9 +8,9 @@ import { Avatar, Timestamp } from './shared';
 import { RichTextContent } from './RichTextContent';
 import { getFullImageUrl } from '../../utils/image';
 
-// Thread line constants
-const AVATAR_SIZE = 36;
-const AVATAR_SIZE_NESTED = 32;
+// Thread line constants - must match LAYOUT avatar sizes
+const AVATAR_SIZE = 40; // LAYOUT.avatarMd
+const AVATAR_SIZE_NESTED = 32; // LAYOUT.avatarSm
 const THREAD_LINE_WIDTH = 2;
 const THREAD_LINE_LEFT = AVATAR_SIZE / 2; // Center of parent avatar
 const NESTED_INDENT = THREAD_LINE_LEFT + SPACING.md + 8; // Indentation for nested comments
