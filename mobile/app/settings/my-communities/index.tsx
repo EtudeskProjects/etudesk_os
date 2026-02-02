@@ -97,7 +97,7 @@ export default function MyCommunitiesScreen() {
   const { colors } = useTheme();
 
   const [activeTab, setActiveTab] = useState<Tab>('memberships');
-  const [memberFilter, setMemberFilter] = useState<MemberFilterStatus>('PENDING');
+  const [memberFilter, setMemberFilter] = useState<MemberFilterStatus>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
