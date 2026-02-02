@@ -29,6 +29,7 @@ export function Input({
   rightIcon,
   containerStyle,
   secureTextEntry,
+  multiline,
   ...props
 }: InputProps) {
   const { colors } = useTheme();
@@ -48,6 +49,7 @@ export function Input({
             backgroundColor: colors.gray100,
             borderColor: colors.borderColor,
           },
+          multiline && { height: undefined, minHeight: 96, alignItems: 'flex-start' },
           isFocused && {
             borderColor: colors.primary,
             backgroundColor: colors.surface,
@@ -63,7 +65,9 @@ export function Input({
             { color: colors.textPrimary },
             leftIcon && styles.inputWithLeftIcon,
             (rightIcon || isPassword) && styles.inputWithRightIcon,
+            multiline && { height: undefined, paddingTop: SPACING.md, paddingBottom: SPACING.md, textAlignVertical: 'top' as const },
           ]}
+          multiline={multiline}
           placeholderTextColor={colors.gray500}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}

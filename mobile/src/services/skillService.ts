@@ -15,12 +15,12 @@ export interface TalentSkill {
   last_used_at: string | null;
   context: string | null;
   origin: 'declared' | 'inferred' | 'extracted';
-  extraction_context: string | null;
   canonical_name: string;
   slug: string;
   type: 'KNOWLEDGE' | 'SOFT_SKILL' | 'HARD_SKILL';
   domain: string | null;
   aliases: string[] | null;
+  created_at: string | null;
 }
 
 export interface MergeReport {
@@ -61,11 +61,11 @@ const skillService = {
   },
 
   async updateSkill(id: string, proficiencyLevel: string): Promise<void> {
-    await api.put('/skills/my/' + id, { proficiencyLevel });
+    await api.put('/api/skills/my/' + id, { proficiencyLevel });
   },
 
   async deleteSkill(id: string): Promise<void> {
-    await api.delete('/skills/my/' + id);
+    await api.delete('/api/skills/my/' + id);
   },
 
   async mergeSkills(): Promise<MergeReport> {

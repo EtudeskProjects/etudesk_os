@@ -11,19 +11,14 @@ import { z } from 'zod';
 
 export const TalentProfileSchema = z.object({
   id: z.string(),
-  userId: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   email: z.string(),
   phone: z.string().optional(),
   avatarUrl: z.string().optional(),
 
   // Professional info
-  headline: z.string().optional(),
   bio: z.string().optional(),
-  currentPosition: z.string().optional(),
-  currentCompany: z.string().optional(),
-  yearsOfExperience: z.number().optional(),
 
   // Location
   location: z.string().optional(),
@@ -31,12 +26,7 @@ export const TalentProfileSchema = z.object({
   country: z.string().optional(),
 
   // Preferences
-  availabilityStatus: z
-    .enum(['AVAILABLE', 'OPEN_TO_OFFERS', 'NOT_LOOKING', 'EMPLOYED'])
-    .optional(),
-  remotePreference: z.enum(['REMOTE', 'HYBRID', 'ON_SITE', 'ANY']).optional(),
-  salaryExpectation: z.number().optional(),
-  salaryCurrency: z.string().optional(),
+  remoteReady: z.boolean().optional(),
 
   // Skills summary
   skills: z.array(
@@ -753,16 +743,13 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
   const result = await pool.query(
     `
     SELECT
-      t.id, t.user_id, t.first_name, t.last_name, t.display_name,
-      u.email, t.phone_number,
-      t.avatar_url, t.headline, t.bio,
-      t.current_position, t.current_company, t.years_of_experience,
+      t.id, t.first_name, t.last_name, t.display_name,
+      t.email, t.phone,
+      t.avatar_url, t.bio,
       t.city, t.country,
-      t.availability_status, t.remote_preference,
-      t.salary_expectation, t.salary_currency,
+      t.remote_ready,
       t.created_at, t.updated_at
     FROM talents t
-    JOIN users u ON t.user_id = u.id
     WHERE t.id = $1
     `,
     [talentId]
@@ -809,24 +796,16 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
 
   return {
     id: row.id,
-    userId: row.user_id,
     firstName: row.first_name,
     lastName: row.last_name,
     email: row.email,
-    phone: row.phone_number,
+    phone: row.phone,
     avatarUrl: row.avatar_url,
-    headline: row.headline,
     bio: row.bio,
-    currentPosition: row.current_position,
-    currentCompany: row.current_company,
-    yearsOfExperience: row.years_of_experience,
     location: row.city ? `${row.city}, ${row.country || ''}`.trim() : row.country,
     city: row.city,
     country: row.country,
-    availabilityStatus: row.availability_status,
-    remotePreference: row.remote_preference,
-    salaryExpectation: row.salary_expectation,
-    salaryCurrency: row.salary_currency,
+    remoteReady: row.remote_ready,
     skills,
     languages,
     createdAt: row.created_at?.toISOString(),

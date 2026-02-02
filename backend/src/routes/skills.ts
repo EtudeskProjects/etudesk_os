@@ -28,7 +28,7 @@ router.get('/my', async (req: AuthRequest, res: Response) => {
     const result = await pool.query(
       `SELECT ts.id, ts.skill_id, ts.proficiency_level, ts.self_assessed,
               ts.endorsed_count, ts.years_of_experience, ts.last_used_at,
-              ts.context, ts.origin, ts.extraction_context,
+              ts.context, ts.origin, ts.created_at,
               s.canonical_name, s.slug, s.type, s.domain, s.aliases
        FROM talent_skills ts
        JOIN skills s ON s.id = ts.skill_id

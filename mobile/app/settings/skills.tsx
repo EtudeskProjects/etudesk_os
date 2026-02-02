@@ -3,7 +3,7 @@
  * Talent skills management - listing, adding, updating, and deleting
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,17 +12,17 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
-  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 import {
   Plus,
   Trash2,
   X,
   BookOpen,
-  Wrench,
-  Heart,
+  Cog,
+  Gem,
+  Users,
+  ChevronDown,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { Button, PageLayout, EmptyState, Input } from '../../src/components/ui';
@@ -47,16 +47,37 @@ const ORIGIN_LABELS: Record<string, string> = {
   inferred: 'Inférée',
 };
 
+function formatRelativeDate(dateStr: string | null): string | null {
+  if (!dateStr) return null;
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffH = Math.floor(diffMin / 60);
+  const diffD = Math.floor(diffH / 24);
+  const diffW = Math.floor(diffD / 7);
+  const diffM = Math.floor(diffD / 30);
+
+  if (diffMin < 1) return "À l'instant";
+  if (diffMin < 60) return `Il y a ${diffMin} min`;
+  if (diffH < 24) return `Il y a ${diffH}h`;
+  if (diffD < 7) return `Il y a ${diffD}j`;
+  if (diffW < 5) return `Il y a ${diffW} sem.`;
+  if (diffM < 12) return `Il y a ${diffM} mois`;
+  return `Il y a ${Math.floor(diffD / 365)} an${Math.floor(diffD / 365) > 1 ? 's' : ''}`;
+}
+
+
 function getTypeIcon(type: string) {
   switch (type) {
     case 'KNOWLEDGE':
       return BookOpen;
     case 'HARD_SKILL':
-      return Wrench;
+      return Cog;
     case 'SOFT_SKILL':
-      return Heart;
+      return Users;
     default:
-      return Wrench;
+      return Gem;
   }
 }
 
@@ -73,8 +94,8 @@ export default function SkillsScreen() {
   const [selectedType, setSelectedType] = useState<string>('');
   const [skillName, setSkillName] = useState('');
   const [skillContext, setSkillContext] = useState('');
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
-  const swipeableRefs = useRef<Record<string, Swipeable | null>>({});
 
   const loadSkills = useCallback(async () => {
     try {
@@ -151,80 +172,77 @@ export default function SkillsScreen() {
     );
   };
 
-  const renderRightActions = (skill: TalentSkill) => {
-    return (
-      <TouchableOpacity
-        style={[styles.deleteSwipeAction, { backgroundColor: colors.error }]}
-        onPress={() => {
-          swipeableRefs.current[skill.id]?.close();
-          handleDelete(skill);
-        }}
-      >
-        <Trash2 size={20} color="#fff" strokeWidth={ICON.strokeWidth} />
-      </TouchableOpacity>
-    );
-  };
-
   const renderSkill = (skill: TalentSkill) => {
     const profColor = PROFICIENCY_COLORS[skill.proficiency_level] || colors.textSecondary;
     const originLabel = ORIGIN_LABELS[skill.origin] || skill.origin;
-    const contextText = skill.context || skill.extraction_context;
+    const contextText = skill.context;
+    const relativeDate = formatRelativeDate(skill.created_at);
 
     return (
-      <Swipeable
+      <View
         key={skill.id}
-        ref={(ref) => { swipeableRefs.current[skill.id] = ref; }}
-        renderRightActions={() => renderRightActions(skill)}
-        overshootRight={false}
+        style={[styles.skillCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
       >
-        <View
-          style={[styles.skillCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+        {/* Delete button */}
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDelete(skill)}
         >
-          {/* Skill name */}
-          <Text style={[styles.skillName, { color: colors.textPrimary }]} numberOfLines={1}>
-            {skill.canonical_name}
-          </Text>
+          <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
+        </TouchableOpacity>
 
-          {/* Type · Domain */}
-          <Text style={[styles.skillType, { color: colors.textSecondary }]}>
-            {SKILL_TYPE_LABELS[skill.type] || skill.type}
-            {skill.domain ? ` · ${skill.domain}` : ''}
-          </Text>
+        {/* Skill name */}
+        <Text style={[styles.skillName, { color: colors.textPrimary }]} numberOfLines={1}>
+          {skill.canonical_name}
+        </Text>
 
-          {/* Tags row: proficiency + origin */}
-          <View style={styles.tagsRow}>
-            <View style={[styles.tag, { backgroundColor: profColor + '20', borderColor: profColor }]}>
-              <Text style={[styles.tagText, { color: profColor }]}>
-                {PROFICIENCY_LABELS[skill.proficiency_level]}
-              </Text>
-            </View>
-            <View style={[styles.tag, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}>
-              <Text style={[styles.tagText, { color: colors.textSecondary }]}>
-                {originLabel}
-              </Text>
-            </View>
-          </View>
+        {/* Type · Domain */}
+        <Text style={[styles.skillType, { color: colors.textSecondary }]}>
+          {SKILL_TYPE_LABELS[skill.type] || skill.type}
+          {skill.domain ? ` · ${skill.domain}` : ''}
+        </Text>
 
-          {/* Context */}
-          {contextText ? (
-            <Text style={[styles.contextText, { color: colors.textSecondary }]} numberOfLines={2}>
-              {contextText}
+        {/* Tags row: proficiency + origin */}
+        <View style={styles.tagsRow}>
+          <View style={[styles.tag, { backgroundColor: profColor + '20', borderColor: profColor }]}>
+            <Text style={[styles.tagText, { color: profColor }]}>
+              {PROFICIENCY_LABELS[skill.proficiency_level]}
             </Text>
-          ) : null}
+          </View>
+          <View style={[styles.tag, { backgroundColor: colors.textSecondary + '15', borderColor: colors.textSecondary + '30' }]}>
+            <Text style={[styles.tagText, { color: colors.textSecondary }]}>
+              {originLabel}
+            </Text>
+          </View>
+          {relativeDate && (
+            <Text style={[styles.dateText, { color: colors.textDisabled }]}>
+              {relativeDate}
+            </Text>
+          )}
         </View>
-      </Swipeable>
+
+        {/* Context */}
+        {contextText ? (
+          <Text style={[styles.contextText, { color: colors.textSecondary }]} numberOfLines={2}>
+            {contextText}
+          </Text>
+        ) : null}
+      </View>
     );
   };
 
   // Group skills by type
+  const sortByRecent = (a: TalentSkill, b: TalentSkill) =>
+    new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+
   const groupedSkills = {
-    HARD_SKILL: skills.filter((s) => s.type === 'HARD_SKILL'),
-    KNOWLEDGE: skills.filter((s) => s.type === 'KNOWLEDGE'),
-    SOFT_SKILL: skills.filter((s) => s.type === 'SOFT_SKILL'),
+    HARD_SKILL: skills.filter((s) => s.type === 'HARD_SKILL').sort(sortByRecent),
+    KNOWLEDGE: skills.filter((s) => s.type === 'KNOWLEDGE').sort(sortByRecent),
+    SOFT_SKILL: skills.filter((s) => s.type === 'SOFT_SKILL').sort(sortByRecent),
   };
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <>
       <PageLayout
         title="Mes compétences"
         onRefresh={handleRefresh}
@@ -233,7 +251,7 @@ export default function SkillsScreen() {
       >
         {skills.length === 0 ? (
           <EmptyState
-            icon={Wrench}
+            icon={Gem}
             title="Aucune compétence"
             subtitle="Ajoute tes compétences pour améliorer ton profil et être mieux recommandé."
             actionLabel="Ajouter une compétence"
@@ -256,15 +274,26 @@ export default function SkillsScreen() {
             {Object.entries(groupedSkills).map(([type, typeSkills]) => {
               if (typeSkills.length === 0) return null;
               const TypeIcon = getTypeIcon(type);
+              const isCollapsed = collapsedSections[type] ?? false;
               return (
                 <View key={type} style={styles.section}>
-                  <View style={styles.sectionHeader}>
+                  <TouchableOpacity
+                    style={styles.sectionHeader}
+                    onPress={() => setCollapsedSections((prev) => ({ ...prev, [type]: !prev[type] }))}
+                    activeOpacity={0.7}
+                  >
                     <TypeIcon size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, flex: 1 }]}>
                       {SKILL_TYPE_LABELS[type] || type} ({typeSkills.length})
                     </Text>
-                  </View>
-                  {typeSkills.map(renderSkill)}
+                    <ChevronDown
+                      size={16}
+                      color={colors.textSecondary}
+                      strokeWidth={ICON.strokeWidth}
+                      style={{ transform: [{ rotate: isCollapsed ? '-90deg' : '0deg' }] }}
+                    />
+                  </TouchableOpacity>
+                  {!isCollapsed && typeSkills.map(renderSkill)}
                 </View>
               );
             })}
@@ -364,7 +393,6 @@ export default function SkillsScreen() {
                 onChangeText={(text) => setSkillContext(text.slice(0, 200))}
                 multiline
                 numberOfLines={3}
-                style={{ height: 80, textAlignVertical: 'top', paddingTop: SPACING.sm }}
               />
               <Text style={[styles.charCounter, { color: colors.textDisabled }]}>
                 {skillContext.length}/200
@@ -383,7 +411,7 @@ export default function SkillsScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
-    </GestureHandlerRootView>
+    </>
   );
 }
 
@@ -411,12 +439,13 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.md,
     marginBottom: SPACING.sm,
   },
-  skillName: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.medium },
+  skillName: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.medium, paddingRight: SPACING.xl },
   skillType: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: 2 },
 
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    alignItems: 'center',
     gap: SPACING.xs,
     marginTop: SPACING.sm,
   },
@@ -436,14 +465,20 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
     lineHeight: 16,
   },
+  dateText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    marginLeft: 'auto' as any,
+  },
 
-  // Swipe delete
-  deleteSwipeAction: {
-    width: 64,
+  deleteButton: {
+    position: 'absolute',
+    top: SPACING.xs,
+    right: SPACING.xs,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: BORDER.radius.md,
-    marginBottom: SPACING.sm,
+    zIndex: 1,
   },
 
   // Chips (modal)
