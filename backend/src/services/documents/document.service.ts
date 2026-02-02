@@ -9,7 +9,6 @@ import { uploadFile, deleteFile, getFileBuffer } from '../storage.service';
 import {
   extractDocumentMetadata,
   generateDocumentSummary,
-  ExtractedDocumentData,
 } from './extraction.service';
 import { extractAndSaveSkills } from './skill-extraction.service';
 import { mergeExtractedSkills } from '../skills/skill-merge.service';
@@ -45,7 +44,6 @@ export interface TalentDocument {
   status: DocumentStatus;
   processing_error?: string;
   processed_at?: Date;
-  extracted_data: ExtractedDocumentData | Record<string, unknown>;
   tags: string[];
   title?: string;
   description?: string;
@@ -272,23 +270,44 @@ export async function processDocumentExtraction(
       // Extract and save skills if present
       const skillsInDocument = data.skills?.length ?? 0;
       let skillsAdded = 0;
+      let nameSkipped = false;
 
+      // Garde-fou : vérifier que le document appartient bien au talent
       if (data.skills && data.skills.length > 0 && talentId) {
-        const skillResult = await extractAndSaveSkills(talentId, documentId, data.skills);
-        skillsAdded = skillResult.added;
-        await mergeExtractedSkills(talentId);
+        let ownerMatch = true; // par défaut on laisse passer
+
+        if (data.full_name) {
+          const talentRow = await pool.query(
+            `SELECT first_name, last_name FROM talents WHERE id = $1`,
+            [talentId]
+          );
+          const talent = talentRow.rows[0];
+          if (talent) {
+            const normalize = (s: string) =>
+              s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().split(/\s+/);
+            const talentTokens = normalize(`${talent.first_name} ${talent.last_name}`);
+            const docTokens = normalize(data.full_name);
+            ownerMatch = talentTokens.some((t: string) => docTokens.includes(t));
+          }
+        }
+
+        if (ownerMatch) {
+          const skillResult = await extractAndSaveSkills(talentId, documentId, data.skills);
+          skillsAdded = skillResult.added;
+          await mergeExtractedSkills(talentId);
+        } else {
+          nameSkipped = true;
+        }
       }
 
-      // Single UPDATE with skills_count included in extracted_data
-      const extractedDataWithCount = { ...data, skills_count: skillsInDocument };
       await pool.query(
         `UPDATE talent_documents SET
           status = $1,
           document_type = $2,
           category = $3,
-          extracted_data = $4,
-          tags = $5,
-          title = $6,
+          tags = $4,
+          title = $5,
+          description = COALESCE(description, $6),
           processed_at = CURRENT_TIMESTAMP,
           updated_at = CURRENT_TIMESTAMP
          WHERE id = $7`,
@@ -296,9 +315,9 @@ export async function processDocumentExtraction(
           DOCUMENT_STATUS.PROCESSED,
           data.detected_type,
           category,
-          JSON.stringify(extractedDataWithCount),
           data.tags,
           generatedTitle,
+          data.summary || data.description || null,
           documentId,
         ]
       );
@@ -306,16 +325,20 @@ export async function processDocumentExtraction(
       // Notify talent
       const docTitle = generatedTitle || 'votre document';
       if (talentId) {
+        const notifBody = nameSkipped
+          ? `"${docTitle}" a été analysé, mais les compétences n'ont pas été ajoutées car le nom dans le document ne correspond pas à votre profil.`
+          : skillsInDocument > 0
+            ? `${skillsInDocument} compétence${skillsInDocument > 1 ? 's' : ''} extraite${skillsInDocument > 1 ? 's' : ''} de "${docTitle}"`
+            : `"${docTitle}" a été analysé avec succès`;
+
         await createNotification({
           talentId,
           type: 'SYSTEM',
-          title: 'Document analysé',
-          body: skillsInDocument > 0
-            ? `${skillsInDocument} compétence${skillsInDocument > 1 ? 's' : ''} extraite${skillsInDocument > 1 ? 's' : ''} de "${docTitle}"`
-            : `"${docTitle}" a été analysé avec succès`,
+          title: nameSkipped ? 'Document analysé — compétences ignorées' : 'Document analysé',
+          body: notifBody,
           referenceType: 'document',
           referenceId: documentId,
-          data: { documentId, skillsExtracted: skillsInDocument, skillsAdded },
+          data: { documentId, skillsExtracted: skillsInDocument, skillsAdded, nameSkipped },
         });
       }
     } else {
@@ -407,40 +430,40 @@ export async function listDocuments(options: DocumentListOptions): Promise<{
 }> {
   const { talentId, type, category, status, isPublic, search, limit = 20, offset = 0 } = options;
 
-  const conditions: string[] = ['talent_id = $1', 'deleted_at IS NULL'];
+  const conditions: string[] = ['td.talent_id = $1', 'td.deleted_at IS NULL'];
   const params: (string | boolean | number)[] = [talentId];
   let paramIndex = 2;
 
   if (type) {
-    conditions.push(`document_type = $${paramIndex}`);
+    conditions.push(`td.document_type = $${paramIndex}`);
     params.push(type);
     paramIndex++;
   }
 
   if (category) {
-    conditions.push(`category = $${paramIndex}`);
+    conditions.push(`td.category = $${paramIndex}`);
     params.push(category);
     paramIndex++;
   }
 
   if (status) {
-    conditions.push(`status = $${paramIndex}`);
+    conditions.push(`td.status = $${paramIndex}`);
     params.push(status);
     paramIndex++;
   }
 
   if (isPublic !== undefined) {
-    conditions.push(`is_public = $${paramIndex}`);
+    conditions.push(`td.is_public = $${paramIndex}`);
     params.push(isPublic);
     paramIndex++;
   }
 
   if (search) {
     conditions.push(`(
-      original_filename ILIKE $${paramIndex} OR
-      title ILIKE $${paramIndex} OR
-      description ILIKE $${paramIndex} OR
-      $${paramIndex + 1} = ANY(tags)
+      td.original_filename ILIKE $${paramIndex} OR
+      td.title ILIKE $${paramIndex} OR
+      td.description ILIKE $${paramIndex} OR
+      $${paramIndex + 1} = ANY(td.tags)
     )`);
     params.push(`%${search}%`, search.toLowerCase());
     paramIndex += 2;
@@ -450,17 +473,19 @@ export async function listDocuments(options: DocumentListOptions): Promise<{
 
   // Get total count
   const countResult = await pool.query(
-    `SELECT COUNT(*) as count FROM talent_documents WHERE ${whereClause}`,
+    `SELECT COUNT(*) as count FROM talent_documents td WHERE ${whereClause}`,
     params
   );
   const total = parseInt(countResult.rows[0].count, 10);
 
-  // Get documents
+  // Get documents with skills count
   params.push(limit, offset);
   const result = await pool.query(
-    `SELECT * FROM talent_documents
+    `SELECT td.*,
+       (SELECT COUNT(*) FROM talent_skills ts WHERE ts.document_id = td.id)::int AS skills_count
+     FROM talent_documents td
      WHERE ${whereClause}
-     ORDER BY created_at DESC
+     ORDER BY td.created_at DESC
      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
     params
   );

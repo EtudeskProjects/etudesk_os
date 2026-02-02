@@ -23,6 +23,7 @@ import {
   Trash2,
   Settings,
   Scale,
+  Mail,
 } from 'lucide-react-native';
 import { kycService } from '../../../src/services/kycService';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
@@ -165,6 +166,13 @@ export default function AccountScreen() {
       description: t('settings.menu.teamDesc'),
       onPress: () => router.push('/settings/organization/members'),
     }] : []),
+    {
+      id: 'invitations',
+      label: 'Mes invitations',
+      icon: Mail,
+      description: 'Gérer vos invitations reçues',
+      onPress: () => router.push('/settings/invitations'),
+    },
     {
       id: 'kyc',
       label: t('settings.menu.kyc'),
@@ -512,6 +520,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: BORDER.radius.md,
+    resizeMode: 'cover',
   },
 
   avatarText: {
@@ -580,6 +589,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: BORDER.radius.full,
+    resizeMode: 'cover',
   },
 
   spaceChipText: {
