@@ -660,7 +660,7 @@ export const graphToolDefinitions = {
   find_similar_talents: {
     name: 'find_similar_talents',
     description:
-      "Trouve des talents ayant des profils de compétences similaires. Utile pour le networking et les recommandations de mentors.",
+      "Trouve des talents ayant des profils de compétences similaires. Utile pour le networking.",
     parameters: findSimilarTalentsSchema,
     execute: findSimilarTalents,
   },

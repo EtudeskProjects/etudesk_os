@@ -156,7 +156,6 @@ export const nodeMutations = {
     name: string;
     types?: string[];
     sectors?: string[];
-    size?: string;
     city?: string;
     country?: string;
   }): Promise<void> {
@@ -166,7 +165,6 @@ export const nodeMutations = {
       SET o.name = $name,
           o.types = $types,
           o.sectors = $sectors,
-          o.size = $size,
           o.city = $city,
           o.country = $country
       `,

@@ -27,7 +27,6 @@ const VALID_PROFILE_TAGS = [
 const VALID_GOALS = [
   'LEARN_NEW_SKILLS', 'PREPARE_EXAMS', 'FIND_JOB', 'ADVANCE_CAREER',
   'RESEARCH_SUPPORT', 'IMPROVE_PRODUCTIVITY', 'COLLABORATIVE_LEARNING',
-  'TEACH_OR_MENTOR',
 ];
 
 interface OnboardingData {
@@ -427,7 +426,6 @@ function getGoalLabel(goal: string): string {
     RESEARCH_SUPPORT: 'Support à la recherche',
     IMPROVE_PRODUCTIVITY: 'Améliorer ma productivité',
     COLLABORATIVE_LEARNING: 'Apprentissage collaboratif',
-    TEACH_OR_MENTOR: 'Enseigner ou mentorer',
   };
   return labels[goal] || goal;
 }

@@ -99,10 +99,6 @@ export default function CommunityDetailScreen() {
           setIsOwner(false);
         }
 
-        // Increment view count (fire and forget)
-        communityService.incrementViews(id!).catch(() => {
-          // Silently fail - not critical
-        });
       }
     } catch (error: any) {
       console.error('Error loading community:', error);
@@ -397,17 +393,8 @@ export default function CommunityDetailScreen() {
           <View style={styles.contentPadded}>
             {/* Meta Info Card */}
             <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-              {/* Views + Members (Views always first for consistency) */}
+              {/* Members */}
               <View style={styles.metaRow}>
-                <View style={styles.metaItem}>
-                  <Eye size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                  <View>
-                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Vues</Text>
-                    <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
-                      {community.views_count?.toLocaleString() || '0'}
-                    </Text>
-                  </View>
-                </View>
                 <View style={styles.metaItem}>
                   <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                   <View>

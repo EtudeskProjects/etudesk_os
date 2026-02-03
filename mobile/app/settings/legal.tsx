@@ -44,7 +44,7 @@ export default function LegalScreen() {
             <Text style={[styles.paragraph, { color: colors.gray600 }]}>
                 Etudesk est une plateforme de mise en relation entre talents et opportunités professionnelles en Afrique.
                 Nous facilitons la connexion entre candidats et organisations pour des opportunités d'emploi, de stage,
-                de mentorat et de formation.
+                et de formation.
             </Text>
 
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>3. Inscription et compte utilisateur</Text>

@@ -314,7 +314,7 @@ export default function PaymentMethodsScreen() {
         {/* Info */}
         <View style={[styles.infoCard, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
           <Text style={[styles.infoText, { color: colors.primary }]}>
-            Configure tes moyens de paiement pour recevoir tes revenus de mentorat.
+            Configure tes moyens de paiement pour recevoir tes revenus.
           </Text>
         </View>
 

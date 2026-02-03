@@ -181,23 +181,6 @@ export const ORGANIZATION_TYPE_LABELS: Record<OrganizationType, string> = {
   SOCIAL_ENTERPRISE: 'Entreprise sociale',
 };
 
-export const ORGANIZATION_SIZES = {
-  SOLO: 'SOLO',
-  SMALL: 'SMALL',
-  MEDIUM: 'MEDIUM',
-  LARGE: 'LARGE',
-  ENTERPRISE: 'ENTERPRISE',
-} as const;
-export type OrganizationSize = (typeof ORGANIZATION_SIZES)[keyof typeof ORGANIZATION_SIZES];
-
-export const ORGANIZATION_SIZE_LABELS: Record<OrganizationSize, string> = {
-  SOLO: '1 personne',
-  SMALL: '2-10 employés',
-  MEDIUM: '11-50 employés',
-  LARGE: '51-200 employés',
-  ENTERPRISE: '200+ employés',
-};
-
 export const VERIFICATION_STATUS = {
   PENDING: 'PENDING',
   VERIFIED: 'VERIFIED',
@@ -385,38 +368,6 @@ export const COMMUNITY_STATUS_LABELS: Record<CommunityStatus, string> = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// ENUMS - MENTORSHIP
-// ═══════════════════════════════════════════════════════════════
-
-export const MENTORSHIP_STATUS = {
-  ACTIVE: 'ACTIVE',
-  PAUSED: 'PAUSED',
-  COMPLETED: 'COMPLETED',
-} as const;
-export type MentorshipStatus = (typeof MENTORSHIP_STATUS)[keyof typeof MENTORSHIP_STATUS];
-
-export const MENTORSHIP_STATUS_LABELS: Record<MentorshipStatus, string> = {
-  ACTIVE: 'Actif',
-  PAUSED: 'En pause',
-  COMPLETED: 'Terminé',
-};
-
-export const MENTOR_AVAILABILITY = {
-  WEEKDAYS: 'WEEKDAYS',
-  WEEKENDS: 'WEEKENDS',
-  EVENINGS: 'EVENINGS',
-  FLEXIBLE: 'FLEXIBLE',
-} as const;
-export type MentorAvailability = (typeof MENTOR_AVAILABILITY)[keyof typeof MENTOR_AVAILABILITY];
-
-export const MENTOR_AVAILABILITY_LABELS: Record<MentorAvailability, string> = {
-  WEEKDAYS: 'En semaine',
-  WEEKENDS: 'Week-ends',
-  EVENINGS: 'Soirées',
-  FLEXIBLE: 'Flexible',
-};
-
-// ═══════════════════════════════════════════════════════════════
 // ENUMS - DOCUMENT
 // ═══════════════════════════════════════════════════════════════
 
@@ -426,16 +377,15 @@ export const MENTOR_AVAILABILITY_LABELS: Record<MentorAvailability, string> = {
 
 export const NOTIFICATION_TYPES = {
   OPPORTUNITY: 'OPPORTUNITY',
-  MENTORSHIP: 'MENTORSHIP',
   COMMUNITY: 'COMMUNITY',
   MESSAGE: 'MESSAGE',
   SYSTEM: 'SYSTEM',
+  SPACE: 'SPACE',
 } as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
 
 export const CALENDAR_EVENT_TYPES = {
   INTERVIEW: 'INTERVIEW',
-  MENTORSHIP: 'MENTORSHIP',
   BOOKING: 'BOOKING',
   DEADLINE: 'DEADLINE',
 } as const;
@@ -443,7 +393,6 @@ export type CalendarEventType = (typeof CALENDAR_EVENT_TYPES)[keyof typeof CALEN
 
 export const CALENDAR_EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
   INTERVIEW: 'Entretien',
-  MENTORSHIP: 'Session mentorat',
   BOOKING: 'Réservation',
   DEADLINE: 'Date limite',
 };
@@ -537,7 +486,6 @@ export interface Opportunity {
   // Status
   status?: OpportunityStatus;
   // Metrics (utilisé dans explore.tsx et gestion.tsx)
-  views_count?: number;
   applications_count?: number;
   // User interaction state (utilisé dans explore.tsx)
   is_saved?: boolean;
@@ -573,7 +521,6 @@ export interface Organization {
   name: string;
   type?: OrganizationType;
   sectors?: string[];
-  size?: OrganizationSize;
   description?: string;
   logo_url?: string;
   website_url?: string;
@@ -592,10 +539,6 @@ export interface Organization {
   verification_status?: VerificationStatus;
   // Culture & Info
   culture_summary?: string;
-  employees_count?: number;
-  // Metrics
-  opportunities_count?: number;
-  views_count?: number;
   // User role in this org (utilisé dans SpaceContext)
   user_role?: 'admin' | 'member';
   // Timestamps
@@ -604,17 +547,8 @@ export interface Organization {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// INTERFACES - TALENT (inclut données Mentor)
+// INTERFACES - TALENT
 // ═══════════════════════════════════════════════════════════════
-
-export interface MentorTestimonial {
-  id: UUID;
-  author_name: string;
-  author_avatar_url?: string;
-  content: string;
-  rating: number;
-  date: ISODate;
-}
 
 // TalentObject — rich profile snapshot from backend (skills + documents)
 export interface TalentObjectData {
@@ -665,21 +599,6 @@ export interface Talent {
   goals?: string[];
   skills?: string[];
   languages?: string[];
-  // === MENTOR (nullable si pas mentor) ===
-  is_mentor?: boolean;
-  mentor_bio?: string;
-  mentor_expertise_areas?: string[];
-  mentor_availability?: MentorAvailability;
-  mentor_price_per_session?: number;
-  mentor_currency?: string;
-  mentor_response_time?: string; // ex: "< 24h"
-  mentor_is_published?: boolean;
-  // === MÉTRIQUES MENTOR ===
-  mentees_count?: number;
-  mentor_rating?: number;
-  mentor_reviews_count?: number;
-  mentor_sessions_completed?: number;
-  mentor_testimonials?: MentorTestimonial[];
   // === MÉTRIQUES PROFIL ===
   profile_views_count?: number;
   // === VÉRIFICATION ===
@@ -688,9 +607,6 @@ export interface Talent {
   created_at?: ISOTimestamp;
   updated_at?: ISOTimestamp;
 }
-
-// Alias pour compatibilité avec les vues existantes
-export type Mentor = Talent;
 
 // ═══════════════════════════════════════════════════════════════
 // INTERFACES - SPACE (Espaces réservables)
@@ -741,7 +657,6 @@ export interface Community {
   // Metrics
   members_count?: number;
   activities_count?: number;
-  views_count?: number;
   // User state
   is_member?: boolean;
   // Members preview
@@ -786,7 +701,6 @@ export interface CalendarEvent {
   description?: string;
   // Related entities
   opportunity_id?: UUID;
-  mentor_id?: UUID;
   space_id?: UUID;
 }
 
@@ -811,7 +725,6 @@ export const GRAPH_NODE_TYPES = {
   OPPORTUNITIES: 'opportunities',
   COMMUNITIES: 'communities',
   SPACES: 'spaces',
-  MENTORS: 'mentors',
   DOCUMENTS: 'documents',
 } as const;
 export type GraphNodeType = (typeof GRAPH_NODE_TYPES)[keyof typeof GRAPH_NODE_TYPES];
@@ -856,7 +769,6 @@ export const ACTIVITY_TYPES = {
   OPPORTUNITY: 'opportunity',
   COMMUNITY: 'community',
   SPACE: 'space',
-  MENTORSHIP: 'mentorship',
 } as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[keyof typeof ACTIVITY_TYPES];
 
@@ -909,11 +821,6 @@ export interface Application {
   // Organization notes (internal)
   internal_notes?: string;
   rating?: number; // 1-5 stars
-  // Interview scheduling
-  interview_scheduled_at?: ISOTimestamp;
-  interview_type?: 'PHONE' | 'VIDEO' | 'IN_PERSON';
-  interview_location?: string;
-  interview_notes?: string;
   // Relations
   opportunity?: Opportunity;
   talent?: Talent;
@@ -950,29 +857,6 @@ export interface ApplicationMessage {
   // Timestamps
   created_at: ISOTimestamp;
   updated_at?: ISOTimestamp;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - MENTORSHIP SESSIONS
-// ═══════════════════════════════════════════════════════════════
-
-export interface MentorshipSession {
-  id: UUID;
-  mentor_id: UUID;
-  mentee_id: UUID;
-  status: MentorshipStatus;
-  topic?: string;
-  scheduled_at?: ISOTimestamp;
-  duration_minutes?: number;
-  meeting_url?: string;
-  notes?: string;
-  rating?: number;
-  // Relations
-  mentor?: Talent;
-  mentee?: Talent;
-  // Timestamps
-  created_at: ISOTimestamp;
-  completed_at?: ISOTimestamp;
 }
 
 // ═══════════════════════════════════════════════════════════════

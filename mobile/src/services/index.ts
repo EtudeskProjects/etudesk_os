@@ -65,7 +65,7 @@ export { onboardingService } from './onboardingService';
 export type { OnboardingData, OnboardingStatus, OnboardingOptions, OnboardingResult } from './onboardingService';
 
 export { applicationService } from './applicationService';
-export type { ApplicationFilters, CreateApplicationData, UpdateApplicationData, ScheduleInterviewData } from './applicationService';
+export type { ApplicationFilters, CreateApplicationData, UpdateApplicationData } from './applicationService';
 
 export { applicationMessageService } from './applicationMessageService';
 export type { MessageFilters, SendMessageData } from './applicationMessageService';

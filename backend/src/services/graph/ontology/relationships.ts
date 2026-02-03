@@ -38,7 +38,6 @@ export const RelationshipTypes = {
 
   // Talent ↔ Talent
   CONNECTE_AVEC: 'CONNECTE_AVEC',
-  MENTOR_DE: 'MENTOR_DE',
   RECOMMANDE_PAR: 'RECOMMANDE_PAR',
 
   // Agent-Inferred Relations
@@ -145,16 +144,9 @@ export interface AEvenementProps {
 
 // Talent ↔ Talent relations
 export interface ConnecteAvecProps {
-  relationship_type: 'colleague' | 'classmate' | 'mentor' | 'friend' | 'professional';
+  relationship_type: 'colleague' | 'classmate' | 'friend' | 'professional';
   connected_at: string;
   met_at?: string; // how/where they met
-}
-
-export interface MentorDeProps {
-  focus_areas: string[];
-  started_at: string;
-  status: 'active' | 'paused' | 'completed';
-  sessions_count?: number;
 }
 
 export interface RecommandeParProps {
@@ -232,7 +224,6 @@ export type RelationshipProps =
   | EtudieSujetProps
   | AEvenementProps
   | ConnecteAvecProps
-  | MentorDeProps
   | RecommandeParProps
   | InteresseParProps
   | DevraitApprendreProps
@@ -261,7 +252,6 @@ export const RelationshipDirections: Record<RelationshipType, { from: string; to
   ETUDIE_SUJET: { from: 'Talent', to: 'LearningTopic' },
   A_EVENEMENT: { from: 'Talent', to: 'Event' },
   CONNECTE_AVEC: { from: 'Talent', to: 'Talent' },
-  MENTOR_DE: { from: 'Talent', to: 'Talent' },
   RECOMMANDE_PAR: { from: 'Talent', to: 'Talent' },
   INTERESSE_PAR: { from: 'Talent', to: 'Skill' }, // Can also be Organization, Community
   DEVRAIT_APPRENDRE: { from: 'Talent', to: 'Skill' },

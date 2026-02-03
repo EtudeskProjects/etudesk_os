@@ -51,7 +51,7 @@ import {
   MAX_COMMUNITY_TAGS,
   MAX_MEMBERSHIP_QUESTIONS,
 } from '../../../src/constants/community';
-import { CURRENCY_DATA } from '../../../src/constants/opportunity';
+import { getCurrencySymbol } from '../../../src/constants/opportunity';
 import {
   CommunityType,
   Visibility,
@@ -509,10 +509,6 @@ export default function CreateCommunityScreen() {
     return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   };
 
-  const getCurrencySymbol = (currencyId: string): string => {
-    const currency = CURRENCY_DATA.find(c => c.id === currencyId);
-    return currency?.symbol || currencyId;
-  };
 
   const renderStepIndicator = () => {
     const stepsData = STEPS.map(step => ({
@@ -931,38 +927,18 @@ export default function CreateCommunityScreen() {
               </View>
               <View style={styles.halfField}>
                 <View style={styles.fieldContainer}>
-                  <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Devise</Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.horizontalScroll}
-                    contentContainerStyle={styles.horizontalScrollContent}
-                  >
-                    {CURRENCY_DATA.map((c) => {
-                      const isSelected = currency === c.id;
-                      return (
-                        <TouchableOpacity
-                          key={c.id}
-                          style={[
-                            styles.optionChip,
-                            { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                            isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
-                          ]}
-                          onPress={() => form.setValue('currency', c.id)}
-                        >
-                          <Text
-                            style={[
-                              styles.optionChipText,
-                              { color: colors.gray700 },
-                              isSelected && { color: colors.textOnPrimary },
-                            ]}
-                          >
-                            {c.symbol}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
+                  <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Devise (ex: XOF, EUR)</Text>
+                  <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
+                    <TextInput
+                      style={[styles.textArea, { color: colors.textPrimary, minHeight: 44 }]}
+                      value={currency}
+                      onChangeText={(v) => form.setValue('currency', v || 'XOF')}
+                      placeholder="XOF"
+                      placeholderTextColor={colors.gray400}
+                      maxLength={10}
+                      autoCapitalize="characters"
+                    />
+                  </View>
                 </View>
               </View>
             </View>

@@ -156,12 +156,6 @@ export const RelationshipExplanations: Record<RelationshipType, RelationshipExpl
     example: 'Pierre est connecté avec Marie (ancien collègue)',
     contextTemplate: '{talent1} est connecté avec {talent2} ({type})',
   },
-  [RelationshipTypes.MENTOR_DE]: {
-    name: 'Est mentor de',
-    description: 'Indique une relation de mentorat entre deux talents',
-    example: "Amina est mentor de Kofi pour le développement web",
-    contextTemplate: '{mentor} est mentor de {mentee} pour {areas}',
-  },
   [RelationshipTypes.RECOMMANDE_PAR]: {
     name: 'A été recommandé par',
     description: "Indique qu'un talent a reçu une recommandation d'un autre",
@@ -276,7 +270,6 @@ export function getRelationshipsFrom(nodeLabel: NodeLabel): RelationshipType[] {
         RelationshipTypes.ETUDIE_SUJET,
         RelationshipTypes.A_EVENEMENT,
         RelationshipTypes.CONNECTE_AVEC,
-        RelationshipTypes.MENTOR_DE,
         RelationshipTypes.RECOMMANDE_PAR,
         RelationshipTypes.INTERESSE_PAR,
         RelationshipTypes.DEVRAIT_APPRENDRE,

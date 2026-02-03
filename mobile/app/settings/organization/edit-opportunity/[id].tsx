@@ -51,7 +51,7 @@ import {
   WORK_RHYTHM_DATA,
   LOCATION_TYPE_DATA,
   COMPENSATION_FREQUENCY_DATA,
-  CURRENCY_DATA,
+  getCurrencySymbol,
   OPPORTUNITY_VISIBILITY_DATA,
 } from '../../../../src/constants/opportunity';
 import {
@@ -583,11 +583,6 @@ export default function EditOpportunityScreen() {
     return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   };
 
-  const getCurrencySymbol = (currencyId: string): string => {
-    const currency = CURRENCY_DATA.find(c => c.id === currencyId);
-    return currency?.symbol || currencyId;
-  };
-
   const formatFileSize = (bytes: number | undefined | null): string => {
     if (!bytes) return '';
     if (bytes < 1024) return `${bytes} B`;
@@ -898,25 +893,17 @@ export default function EditOpportunityScreen() {
         </View>
 
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Devise</Text>
-          <View style={styles.tagsContainer}>
-            {CURRENCY_DATA.map((c) => {
-              const isSelected = currency === c.id;
-              return (
-                <TouchableOpacity
-                  key={c.id}
-                  style={[
-                    styles.selectableTag,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
-                  onPress={() => setCurrency(c.id)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.selectableTagText, { color: colors.gray600 }, isSelected && { color: colors.primary }]}>{c.symbol}</Text>
-                </TouchableOpacity>
-              );
-            })}
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Devise (ex: XOF, EUR)</Text>
+          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
+            <TextInput
+              style={[styles.textArea, { color: colors.textPrimary, minHeight: 44 }]}
+              value={currency}
+              onChangeText={setCurrency}
+              placeholder="XOF"
+              placeholderTextColor={colors.gray400}
+              maxLength={10}
+              autoCapitalize="characters"
+            />
           </View>
         </View>
 

@@ -1,15 +1,14 @@
 /**
- * OrganizationCard
- * Elegant card for displaying organizations
- * Design: Minimalist, warm earth tones, no shadows
+ * OrganizationCard - Refactored to use BaseCard components
+ * Supports variants: default, compact, featured
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Building2, MapPin, Users, Globe, Briefcase } from 'lucide-react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import { Building2, MapPin, Globe } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT } from '../../constants/theme';
-import { formatCompactNumber } from '../../utils/number';
+import { CardContainer, CardImage, CardContent, CardHeader } from './BaseCard';
 
 export interface OrganizationCardData {
   id: string;
@@ -20,8 +19,6 @@ export interface OrganizationCardData {
   city?: string;
   country?: string;
   website?: string;
-  employees_count?: number;
-  opportunities_count?: number;
   sectors?: string[];
 }
 
@@ -37,19 +34,15 @@ export const OrganizationCard: React.FC<OrganizationCardProps> = ({
   variant = 'default',
 }) => {
   const { colors } = useTheme();
-
   const location = [organization.city, organization.country].filter(Boolean).join(', ');
 
+  // Compact variant - horizontal layout
   if (variant === 'compact') {
     return (
-      <TouchableOpacity
-        style={[
-          styles.compactContainer,
-          { backgroundColor: colors.cardOrg, borderColor: colors.cardOrgAccent },
-        ]}
+      <CardContainer
         onPress={onPress}
-        activeOpacity={0.8}
-        disabled={!onPress}
+        horizontal
+        style={[styles.compactContainer, { backgroundColor: colors.cardOrg, borderColor: colors.cardOrgAccent }]}
       >
         {organization.logo_url ? (
           <Image source={{ uri: organization.logo_url }} style={styles.compactLogo} />
@@ -68,35 +61,27 @@ export const OrganizationCard: React.FC<OrganizationCardProps> = ({
             </Text>
           )}
         </View>
-      </TouchableOpacity>
+      </CardContainer>
     );
   }
 
+  // Default and featured variants - vertical layout
   return (
-    <TouchableOpacity
-      style={[
-        styles.container,
-        { backgroundColor: colors.cardOrg, borderColor: colors.cardOrgAccent },
-      ]}
+    <CardContainer
       onPress={onPress}
-      activeOpacity={0.8}
-      disabled={!onPress}
+      style={{ backgroundColor: colors.cardOrg, borderColor: colors.cardOrgAccent }}
     >
-      {/* Cover Image */}
+      {/* Cover Image (featured only) */}
       {variant === 'featured' && (
-        <View style={styles.coverContainer}>
-          {organization.cover_image_url ? (
-            <Image source={{ uri: organization.cover_image_url }} style={styles.coverImage} />
-          ) : (
-            <View style={[styles.coverPlaceholder, { backgroundColor: colors.cardOrgAccent }]}>
-              <Building2 size={ICON.size.xxxl} color={colors.cardOrgText} strokeWidth={ICON.strokeWidth} />
-            </View>
-          )}
-        </View>
+        <CardImage
+          imageUrl={organization.cover_image_url}
+          PlaceholderIcon={Building2}
+          height={LAYOUT.cardImageHeightSm}
+        />
       )}
 
-      <View style={styles.content}>
-        {/* Header */}
+      <CardContent>
+        {/* Header with logo */}
         <View style={styles.header}>
           {organization.logo_url ? (
             <Image source={{ uri: organization.logo_url }} style={styles.logo} />
@@ -121,36 +106,20 @@ export const OrganizationCard: React.FC<OrganizationCardProps> = ({
         </View>
 
         {/* Description */}
-        {organization.description && variant !== 'compact' && (
+        {organization.description && (
           <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
             {organization.description}
           </Text>
         )}
 
         {/* Stats */}
-        <View style={styles.statsRow}>
-          {organization.employees_count !== undefined && organization.employees_count > 0 && (
-            <View style={styles.stat}>
-              <Users size={14} color={colors.cardOrgText} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.statText, { color: colors.cardOrgText }]}>
-                {formatCompactNumber(organization.employees_count)} employés
-              </Text>
-            </View>
-          )}
-          {organization.opportunities_count !== undefined && organization.opportunities_count > 0 && (
-            <View style={styles.stat}>
-              <Briefcase size={14} color={colors.cardOrgText} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.statText, { color: colors.cardOrgText }]}>
-                {organization.opportunities_count} offres
-              </Text>
-            </View>
-          )}
-          {organization.website && (
+        {organization.website && (
+          <View style={styles.statsRow}>
             <View style={styles.stat}>
               <Globe size={14} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             </View>
-          )}
-        </View>
+          </View>
+        )}
 
         {/* Sectors */}
         {organization.sectors && organization.sectors.length > 0 && (
@@ -172,34 +141,12 @@ export const OrganizationCard: React.FC<OrganizationCardProps> = ({
             )}
           </View>
         )}
-      </View>
-    </TouchableOpacity>
+      </CardContent>
+    </CardContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    borderRadius: BORDER.radius.md,
-    borderWidth: 1,
-    marginBottom: SPACING.sm,
-    overflow: 'hidden',
-  },
-  coverContainer: {
-    height: LAYOUT.cardImageHeightSm,
-  },
-  coverImage: {
-    width: '100%',
-    height: '100%',
-  },
-  coverPlaceholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    padding: SPACING.md,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -252,10 +199,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  statText: {
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
   sectorsContainer: {
     flexDirection: 'row',
     marginTop: SPACING.sm,
@@ -278,12 +221,7 @@ const styles = StyleSheet.create({
 
   // Compact variant
   compactContainer: {
-    flexDirection: 'row',
-    padding: SPACING.md,
     borderRadius: BORDER.radius.md,
-    borderWidth: 1,
-    marginBottom: SPACING.sm,
-    alignItems: 'center',
   },
   compactLogo: {
     width: LAYOUT.avatarMd,

@@ -442,36 +442,6 @@ export const relationshipMutations = {
   },
 
   /**
-   * Add a mentorship relationship
-   */
-  async addMentorship(
-    mentorId: string,
-    menteeId: string,
-    properties: {
-      focusAreas: string[];
-      status?: string;
-    }
-  ): Promise<void> {
-    await neo4jClient.write(
-      `
-      MATCH (mentor:Talent {id: $mentorId})
-      MATCH (mentee:Talent {id: $menteeId})
-      WHERE mentor <> mentee
-      MERGE (mentor)-[r:MENTOR_DE]->(mentee)
-      SET r.focus_areas = $focusAreas,
-          r.started_at = datetime(),
-          r.status = $status
-      `,
-      {
-        mentorId,
-        menteeId,
-        focusAreas: properties.focusAreas,
-        status: properties.status ?? 'active',
-      }
-    );
-  },
-
-  /**
    * Add a recommendation
    */
   async addRecommendation(

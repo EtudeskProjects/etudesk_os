@@ -17,6 +17,7 @@ import {
   Handshake,
   MessageCircle,
   Clock,
+  MapPin,
   Trash2,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
@@ -49,6 +50,7 @@ const getNotificationIcon = (type: string) => {
     case 'APPLICATION': return Handshake;
     case 'MESSAGE': return MessageCircle;
     case 'REMINDER': return Clock;
+    case 'SPACE': return MapPin;
     default: return Bell;
   }
 };
@@ -59,6 +61,7 @@ const getNotificationColor = (type: string): string => {
     case 'APPLICATION': return '#9C27B0';
     case 'MESSAGE': return '#FF9800';
     case 'REMINDER': return '#2196F3';
+    case 'SPACE': return '#00BCD4';
     default: return '#607D8B';
   }
 };
@@ -111,6 +114,8 @@ export default function NotificationsScreen() {
       router.push(`/settings/my-communities/${data.membershipId}`);
     } else if (notification.type === 'BOOKING' && data.bookingId) {
       router.push(`/settings/my-reservations/${data.bookingId}`);
+    } else if (notification.type === 'SPACE' && data.spaceId) {
+      router.push(`/details/space/${data.spaceId}`);
     }
   };
 

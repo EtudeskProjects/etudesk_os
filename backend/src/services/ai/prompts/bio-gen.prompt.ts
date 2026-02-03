@@ -1,6 +1,6 @@
 /**
  * Bio Generation Prompt
- * Model: gpt-5-nano | Output: plain text (250 chars max)
+ * Model: gpt-4o-mini | Output: plain text (250 chars max)
  */
 
 export const BIO_GEN_SYSTEM_PROMPT = `<role>Rédacteur de bios professionnelles pour une plateforme africaine de talents</role>

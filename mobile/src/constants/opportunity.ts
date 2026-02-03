@@ -60,19 +60,15 @@ export const COMPENSATION_FREQUENCY_DATA: Array<{ id: CompensationFrequency; lab
   { id: 'PROJECT', label: COMPENSATION_FREQUENCY_LABELS.PROJECT },
 ];
 
-// ═══════════════════════════════════════════════════════════════
-// DEVISES SUPPORTÉES
-// ═══════════════════════════════════════════════════════════════
-
-export type Currency = 'XOF' | 'EUR' | 'USD' | 'GHS' | 'NGN';
-
-export const CURRENCY_DATA: Array<{ id: Currency; label: string; symbol: string }> = [
-  { id: 'XOF', label: 'Franc CFA (FCFA)', symbol: 'FCFA' },
-  { id: 'EUR', label: 'Euro (€)', symbol: '€' },
-  { id: 'USD', label: 'Dollar US ($)', symbol: '$' },
-  { id: 'GHS', label: 'Cedi ghanéen (₵)', symbol: '₵' },
-  { id: 'NGN', label: 'Naira (₦)', symbol: '₦' },
-];
+/**
+ * Retourne le symbole d'affichage pour un code devise (optionnel).
+ * Utiliser un champ texte libre pour la devise dans les formulaires.
+ */
+export function getCurrencySymbol(code: string): string {
+  if (!code) return '';
+  const symbols: Record<string, string> = { XOF: 'FCFA', EUR: '€', USD: '$', GHS: '₵', NGN: '₦' };
+  return symbols[code.toUpperCase()] || code;
+}
 
 // Note: EXPERIENCE_LEVEL_DATA removed - no longer used
 

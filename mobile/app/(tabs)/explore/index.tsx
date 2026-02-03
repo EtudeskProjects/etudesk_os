@@ -226,7 +226,7 @@ export default function ExploreScreen() {
   };
 
   // Sort function
-  const sortItems = <T extends { posted_at?: string; created_at?: string; views_count?: number; relevance_score?: number; city?: string; region?: string; country?: string; locations?: { city?: string; region?: string; country?: string }[] }>(items: T[], option: SortOption): T[] => {
+  const sortItems = <T extends { posted_at?: string; created_at?: string; relevance_score?: number; applications_count?: number; city?: string; region?: string; country?: string; locations?: { city?: string; region?: string; country?: string }[] }>(items: T[], option: SortOption): T[] => {
     const sorted = [...items];
     switch (option) {
       case 'relevance':
@@ -240,7 +240,7 @@ export default function ExploreScreen() {
           return dateB - dateA;
         });
       case 'popularity':
-        return sorted.sort((a, b) => (b.views_count || 0) - (a.views_count || 0));
+        return sorted.sort((a, b) => (b.applications_count || 0) - (a.applications_count || 0));
       default:
         return sorted;
     }

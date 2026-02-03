@@ -66,7 +66,6 @@ interface QuickStats {
   communities: number;
   spaces: number;
   applications: number;
-  views: number;
   members: number;
 }
 
@@ -95,7 +94,6 @@ export default function GestionScreen() {
     communities: 0,
     spaces: 0,
     applications: 0,
-    views: 0,
     members: 0,
   });
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
@@ -145,10 +143,6 @@ export default function GestionScreen() {
       const spaces = spacesRes.status === 'fulfilled' && spacesRes.value.data
         ? spacesRes.value.data : [];
 
-      const totalViews = opportunities.reduce((sum, o) => sum + (o.views_count || 0), 0)
-        + communities.reduce((sum, c) => sum + (c.views_count || 0), 0)
-        + spaces.reduce((sum, s) => sum + (s.views_count || 0), 0);
-
       const totalApplications = opportunities.reduce((sum, o) => sum + (o.applications_count || 0), 0);
       const totalMembers = communities.reduce((sum, c) => sum + (c.members_count || 0), 0);
 
@@ -157,7 +151,6 @@ export default function GestionScreen() {
         communities: communities.length,
         spaces: spaces.length,
         applications: totalApplications,
-        views: totalViews,
         members: totalMembers,
       });
 
@@ -253,14 +246,6 @@ export default function GestionScreen() {
       icon: FileText,
       color: PASTEL_COLORS.purple,
       count: stats.applications,
-      route: '/gestion/opportunities',
-    },
-    {
-      id: 'views',
-      label: 'Vues totales',
-      icon: Eye,
-      color: PASTEL_COLORS.teal,
-      count: stats.views,
       route: '/gestion/opportunities',
     },
     {

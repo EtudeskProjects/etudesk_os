@@ -12,6 +12,7 @@ export type NotificationType =
   | 'COMMUNITY'
   | 'MESSAGE'
   | 'SYSTEM'
+  | 'SPACE'
   | 'REMINDER'
   | 'MEMBERSHIP'
   | 'BOOKING';

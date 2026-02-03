@@ -106,7 +106,6 @@ export const GOAL = {
   RESEARCH_SUPPORT: 'RESEARCH_SUPPORT',
   IMPROVE_PRODUCTIVITY: 'IMPROVE_PRODUCTIVITY',
   COLLABORATIVE_LEARNING: 'COLLABORATIVE_LEARNING',
-  TEACH_OR_MENTOR: 'TEACH_OR_MENTOR',
 } as const;
 
 export type Goal = (typeof GOAL)[keyof typeof GOAL];
@@ -119,7 +118,6 @@ export const GOAL_DATA: Array<{ id: Goal; label: string }> = [
   { id: 'RESEARCH_SUPPORT', label: 'Aide à la recherche' },
   { id: 'IMPROVE_PRODUCTIVITY', label: 'Améliorer ma productivité' },
   { id: 'COLLABORATIVE_LEARNING', label: 'Apprentissage collaboratif' },
-  { id: 'TEACH_OR_MENTOR', label: 'Enseigner ou mentorer' },
 ];
 
 export const MAX_GOALS = 3;

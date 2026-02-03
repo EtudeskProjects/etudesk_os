@@ -250,7 +250,6 @@ CREATE TABLE organizations (
     slug VARCHAR(255) UNIQUE NOT NULL,
     types TEXT[],
     sectors TEXT[],
-    size VARCHAR(50),
     description TEXT,
     logo_url TEXT,
     website_url TEXT,
@@ -350,7 +349,6 @@ CREATE TABLE communities (
     monthly_price NUMERIC(10, 2),
     currency VARCHAR(10) DEFAULT 'XOF',
     trial_period_days INTEGER DEFAULT 0 CHECK (trial_period_days IN (0, 1, 3, 7, 30)),
-    views_count INTEGER DEFAULT 0,
     status VARCHAR(50) DEFAULT 'ACTIVE',
     embedding VECTOR(1536),
     created_by UUID REFERENCES talents(id) ON DELETE SET NULL,
@@ -452,7 +450,6 @@ CREATE TABLE community_activities (
     reactions_count INTEGER DEFAULT 0,
     comments_count INTEGER DEFAULT 0,
     shares_count INTEGER DEFAULT 0,
-    views_count INTEGER DEFAULT 0,
     published_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -670,14 +667,12 @@ CREATE TABLE opportunities (
     status VARCHAR(50) DEFAULT 'DRAFT',
     embedding VECTOR(1536),
     ideal_candidate_summary TEXT,
-    views_count INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 CREATE INDEX idx_opportunities_slug ON opportunities(slug);
-CREATE INDEX idx_opportunities_views_count ON opportunities(views_count DESC) WHERE deleted_at IS NULL;
 CREATE INDEX idx_opportunities_type ON opportunities(type);
 CREATE INDEX idx_opportunities_status ON opportunities(status);
 CREATE INDEX idx_opportunities_location_type ON opportunities(location_type);
@@ -729,10 +724,6 @@ CREATE TABLE opportunity_applications (
     internal_notes TEXT,
     star_rating INTEGER,
     viewed_at TIMESTAMP WITH TIME ZONE,
-    interview_scheduled_at TIMESTAMP WITH TIME ZONE,
-    interview_type VARCHAR(50),
-    interview_location TEXT,
-    interview_notes TEXT,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP WITH TIME ZONE,
     UNIQUE(talent_id, opportunity_id)
@@ -741,7 +732,6 @@ CREATE TABLE opportunity_applications (
 CREATE INDEX idx_opportunity_applications_talent_id ON opportunity_applications(talent_id);
 CREATE INDEX idx_opportunity_applications_opportunity_id ON opportunity_applications(opportunity_id);
 CREATE INDEX idx_opportunity_applications_status ON opportunity_applications(status);
-CREATE INDEX idx_opportunity_applications_interview ON opportunity_applications(interview_scheduled_at) WHERE interview_scheduled_at IS NOT NULL;
 CREATE INDEX idx_applications_talent_opportunity ON opportunity_applications(talent_id, opportunity_id) WHERE deleted_at IS NULL;
 CREATE INDEX idx_applications_opportunity_status ON opportunity_applications(opportunity_id, status, applied_at DESC) WHERE deleted_at IS NULL;
 CREATE INDEX idx_applications_talent_status ON opportunity_applications(talent_id, status, applied_at DESC) WHERE deleted_at IS NULL;
@@ -837,7 +827,6 @@ CREATE TABLE spaces (
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     created_by UUID REFERENCES talents(id),
     status VARCHAR(20) DEFAULT 'ACTIVE',
-    views_count INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP WITH TIME ZONE
@@ -999,22 +988,6 @@ CREATE TABLE connections (
 
 CREATE INDEX idx_connections_from_talent_id ON connections(from_talent_id);
 CREATE INDEX idx_connections_to_talent_id ON connections(to_talent_id);
-
-CREATE TABLE mentorships (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    mentor_id UUID REFERENCES talents(id) ON DELETE CASCADE,
-    mentee_id UUID REFERENCES talents(id) ON DELETE CASCADE,
-    focus_areas TEXT[],
-    started_at DATE,
-    ended_at DATE,
-    status VARCHAR(50),
-    notes TEXT,
-    UNIQUE(mentor_id, mentee_id)
-);
-
-CREATE INDEX idx_mentorships_mentor_id ON mentorships(mentor_id);
-CREATE INDEX idx_mentorships_mentee_id ON mentorships(mentee_id);
-CREATE INDEX idx_mentorships_status ON mentorships(status);
 
 CREATE TABLE recommendations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

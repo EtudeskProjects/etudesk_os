@@ -124,7 +124,7 @@ export async function runAgentWithSSE(
 }
 
 /**
- * Generate a session title using Agents SDK (gpt-5-nano)
+ * Generate a session title using Agents SDK (gpt-4o-mini)
  */
 export async function generateSessionTitle(message: string): Promise<string> {
   try {
@@ -139,7 +139,7 @@ export async function generateSessionTitle(message: string): Promise<string> {
 }
 
 /**
- * Generate prompt suggestions using Agents SDK (gpt-5-nano)
+ * Generate prompt suggestions using Agents SDK (gpt-4o-mini)
  */
 export async function generateSuggestions(
   mode: string,

@@ -8,12 +8,14 @@ import {
 import { communityNotificationService } from './community-notification.service';
 
 import { logger } from '../utils';
-// Import subscription service dynamically to avoid circular dependency
-let _subscriptionService: any = null;
-const getSubscriptionService = async () => {
+import type { CommunitySubscriptionService } from './community-subscription.service';
+
+// Lazy import to break circular dependency - properly typed
+let _subscriptionService: CommunitySubscriptionService | null = null;
+const getSubscriptionService = async (): Promise<CommunitySubscriptionService> => {
     if (!_subscriptionService) {
-        const module = await import('./community-subscription.service');
-        _subscriptionService = module.communitySubscriptionService;
+        const { communitySubscriptionService } = await import('./community-subscription.service');
+        _subscriptionService = communitySubscriptionService;
     }
     return _subscriptionService;
 };

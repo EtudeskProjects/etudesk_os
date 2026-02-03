@@ -233,6 +233,7 @@ export default function EcosystemScreen() {
       case 'OPPORTUNITY': return Briefcase;
       case 'COMMUNITY': return Users;
       case 'SYSTEM': return AlertCircle;
+      case 'SPACE': return MapPin;
       default: return Bell;
     }
   };
@@ -243,6 +244,7 @@ export default function EcosystemScreen() {
       case 'OPPORTUNITY': return { bg: CARD_THEMES.opportunity.bg, icon: CARD_THEMES.opportunity.icon };
       case 'COMMUNITY': return { bg: CARD_THEMES.community.bg, icon: CARD_THEMES.community.icon };
       case 'SYSTEM': return { bg: CARD_THEMES.space.bg, icon: CARD_THEMES.space.icon };
+      case 'SPACE': return { bg: CARD_THEMES.space.bg, icon: CARD_THEMES.space.icon };
       default: return { bg: colors.gray100, icon: colors.textSecondary };
     }
   };

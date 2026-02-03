@@ -86,7 +86,6 @@ export interface Space {
   // Computed
   availabilities?: SpaceAvailability[];
   active_bookings_count?: number;
-  views_count?: number;
   // Timestamps
   created_at: string;
   updated_at: string;

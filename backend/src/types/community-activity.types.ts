@@ -107,7 +107,6 @@ export interface CommunityActivity {
   reactions_count: number;     // Likes count
   comments_count: number;
   bookmarks_count: number;
-  views_count: number;
 
   // Timestamps
   created_at: Date;

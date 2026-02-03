@@ -73,7 +73,7 @@ export interface OpportunityNode {
 export interface CommunityNode {
   id: string;
   name: string;
-  type: 'professional' | 'learning' | 'networking' | 'mentorship' | 'other';
+  type: 'professional' | 'learning' | 'networking' | 'other';
   sectors?: string[];
   is_paid: boolean;
   member_count?: number;

@@ -17,7 +17,7 @@ import { SESSION_TITLE_SYSTEM_PROMPT } from './prompts/session-utils.prompt';
 export function createSpaceGenAgent(): Agent {
   return new Agent({
     name: 'Space Generator',
-    model: 'gpt-4.1-nano',
+    model: 'gpt-4o-mini',
     instructions: SPACE_GEN_SYSTEM_PROMPT,
   });
 }
@@ -29,7 +29,7 @@ export function createSpaceGenAgent(): Agent {
 export function createCommunityGenAgent(): Agent {
   return new Agent({
     name: 'Community Generator',
-    model: 'gpt-4.1-nano',
+    model: 'gpt-4o-mini',
     instructions: COMMUNITY_GEN_SYSTEM_PROMPT,
   });
 }
@@ -41,7 +41,7 @@ export function createCommunityGenAgent(): Agent {
 export function createOpportunityGenAgent(): Agent {
   return new Agent({
     name: 'Opportunity Generator',
-    model: 'gpt-4.1-nano',
+    model: 'gpt-4o-mini',
     instructions: OPPORTUNITY_GEN_SYSTEM_PROMPT,
   });
 }
@@ -53,7 +53,7 @@ export function createOpportunityGenAgent(): Agent {
 export function createRecommendationAgent(): Agent {
   return new Agent({
     name: 'Recommendation Generator',
-    model: 'gpt-4.1-nano',
+    model: 'gpt-4o-mini',
     instructions: RECOMMENDATION_SYSTEM_PROMPT,
   });
 }
@@ -65,7 +65,7 @@ export function createRecommendationAgent(): Agent {
 export function createTitleAgent(): Agent {
   return new Agent({
     name: 'Session Title Generator',
-    model: 'gpt-4.1-nano',
+    model: 'gpt-4o-mini',
     instructions: SESSION_TITLE_SYSTEM_PROMPT,
   });
 }
@@ -73,7 +73,7 @@ export function createTitleAgent(): Agent {
 export function createSuggestionsAgent(systemPrompt: string): Agent {
   return new Agent({
     name: 'Suggestions Generator',
-    model: 'gpt-4.1-nano',
+    model: 'gpt-4o-mini',
     instructions: systemPrompt,
   });
 }

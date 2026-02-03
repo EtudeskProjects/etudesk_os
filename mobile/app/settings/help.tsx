@@ -29,14 +29,12 @@ interface FAQ {
 const TALENT_FAQS: FAQ[] = [
   { id: '1', question: 'Comment créer et optimiser mon profil pour attirer les recruteurs ?' },
   { id: '2', question: 'Comment postuler à une opportunité sur Etudesk ?' },
-  { id: '3', question: 'Comment fonctionne le système de mentorat ?' },
-  { id: '4', question: 'Comment réserver une session avec un mentor ?' },
-  { id: '5', question: 'Comment vérifier mon identité (KYC) et pourquoi est-ce important ?' },
-  { id: '6', question: 'Comment configurer mes moyens de paiement pour le mentorat ?' },
-  { id: '7', question: 'Comment rejoindre une communauté sur Etudesk ?' },
-  { id: '8', question: 'Comment réserver un espace (salle de réunion, formation, coworking) ?' },
-  { id: '9', question: 'Comment suivre mes candidatures et leurs statuts ?' },
-  { id: '10', question: 'Comment modifier mes préférences de notifications ?' },
+  { id: '3', question: 'Comment vérifier mon identité (KYC) et pourquoi est-ce important ?' },
+  { id: '4', question: 'Comment configurer mes moyens de paiement ?' },
+  { id: '5', question: 'Comment rejoindre une communauté sur Etudesk ?' },
+  { id: '6', question: 'Comment réserver un espace (salle de réunion, formation, coworking) ?' },
+  { id: '7', question: 'Comment suivre mes candidatures et leurs statuts ?' },
+  { id: '8', question: 'Comment modifier mes préférences de notifications ?' },
 ];
 
 const ORGANIZATION_FAQS: FAQ[] = [

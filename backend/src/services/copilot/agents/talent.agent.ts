@@ -38,7 +38,7 @@ export function createTalentAgent(
 
   return new Agent({
     name: mode === 'explorer' ? 'Talent Explorer' : 'Talent Study',
-    model: 'gpt-5-mini',
+    model: 'gpt-4o',
     instructions:
       mode === 'explorer'
         ? buildTalentExplorerPrompt(context)

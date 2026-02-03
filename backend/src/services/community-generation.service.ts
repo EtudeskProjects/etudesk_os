@@ -122,7 +122,7 @@ export async function generateCommunitySuggestion(
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4.1-nano',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: COMMUNITY_GEN_SYSTEM_PROMPT },
         { role: 'user', content: prompt },

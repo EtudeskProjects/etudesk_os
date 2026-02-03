@@ -18,10 +18,6 @@ export interface Application {
   status: ApplicationStatus;
   notes?: string;
   rating?: number;
-  interview_scheduled_at?: Date;
-  interview_type?: string;
-  interview_location?: string;
-  interview_notes?: string;
   applied_at: Date;
   created_at: Date;
   updated_at: Date;
@@ -48,10 +44,6 @@ export interface UpdateApplicationDTO {
   status?: ApplicationStatus;
   notes?: string;
   rating?: number;
-  interview_scheduled_at?: Date;
-  interview_type?: string;
-  interview_location?: string;
-  interview_notes?: string;
 }
 
 export interface ApplicationFilters {
@@ -268,31 +260,6 @@ class ApplicationRepository extends BaseRepository<Application> {
        WHERE id = $2 AND deleted_at IS NULL
        RETURNING *`,
       [rating, id]
-    );
-    return result.rows[0] || null;
-  }
-
-  /**
-   * Schedule interview
-   */
-  async scheduleInterview(
-    id: string,
-    scheduledAt: Date,
-    type?: string,
-    location?: string,
-    notes?: string
-  ): Promise<Application | null> {
-    const result = await this.query<Application>(
-      `UPDATE opportunity_applications
-       SET
-         interview_scheduled_at = $1,
-         interview_type = COALESCE($2, interview_type),
-         interview_location = COALESCE($3, interview_location),
-         interview_notes = COALESCE($4, interview_notes),
-         updated_at = NOW()
-       WHERE id = $5 AND deleted_at IS NULL
-       RETURNING *`,
-      [scheduledAt, type || null, location || null, notes || null, id]
     );
     return result.rows[0] || null;
   }

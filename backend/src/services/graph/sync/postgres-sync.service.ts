@@ -112,10 +112,6 @@ export const postgresSyncService = {
       relationshipsCreated += connectionsRel.count;
       errors.push(...connectionsRel.errors);
 
-      const mentorshipsRel = await this.syncMentorships(batchSize);
-      relationshipsCreated += mentorshipsRel.count;
-      errors.push(...mentorshipsRel.errors);
-
       const recommendationsRel = await this.syncRecommendations(batchSize);
       relationshipsCreated += recommendationsRel.count;
       errors.push(...recommendationsRel.errors);
@@ -176,7 +172,7 @@ export const postgresSyncService = {
 
     try {
       const { rows: orgs } = await pool.query(`
-        SELECT id, name, slug, types, sectors, size,
+        SELECT id, name, slug, types, sectors,
                headquarters_city as city, headquarters_country as country
         FROM organizations
         WHERE deleted_at IS NULL
@@ -193,7 +189,6 @@ export const postgresSyncService = {
               o.slug = org.slug,
               o.types = org.types,
               o.sectors = org.sectors,
-              o.size = org.size,
               o.city = org.city,
               o.country = org.country
           `,
@@ -915,55 +910,6 @@ export const postgresSyncService = {
       logger.info(`[GraphSync] Synced ${count} connections`);
     } catch (error: any) {
       errors.push(`Connections sync error: ${error.message}`);
-    }
-
-    return { count, errors };
-  },
-
-  /**
-   * Sync mentorships (MENTOR_DE)
-   */
-  async syncMentorships(
-    batchSize: number
-  ): Promise<{ count: number; errors: string[] }> {
-    const errors: string[] = [];
-    let count = 0;
-
-    try {
-      const { rows: mentorships } = await pool.query(`
-        SELECT m.mentor_id, m.mentee_id, m.status, m.started_at, m.ended_at,
-               '{}' as focus_areas
-        FROM mentorships m
-        JOIN talents t1 ON m.mentor_id = t1.id AND t1.deleted_at IS NULL
-        JOIN talents t2 ON m.mentee_id = t2.id AND t2.deleted_at IS NULL
-      `);
-
-      for (let i = 0; i < mentorships.length; i += batchSize) {
-        const batch = mentorships.slice(i, i + batchSize).map(m => ({
-          ...m,
-          started_at: m.started_at?.toISOString(),
-          ended_at: m.ended_at?.toISOString(),
-        }));
-
-        await neo4jClient.write(
-          `
-          UNWIND $mentorships AS m
-          MATCH (mentor:Talent {id: m.mentor_id})
-          MATCH (mentee:Talent {id: m.mentee_id})
-          MERGE (mentor)-[r:MENTOR_DE]->(mentee)
-          SET r.focus_areas = m.focus_areas,
-              r.started_at = m.started_at,
-              r.status = m.status
-          `,
-          { mentorships: batch }
-        );
-
-        count += batch.length;
-      }
-
-      logger.info(`[GraphSync] Synced ${count} mentorships`);
-    } catch (error: any) {
-      errors.push(`Mentorships sync error: ${error.message}`);
     }
 
     return { count, errors };

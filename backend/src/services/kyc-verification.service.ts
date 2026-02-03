@@ -1,6 +1,6 @@
 /**
  * KYC Verification Service
- * Uses OpenAI gpt-4.1-nano vision for document verification
+ * Uses OpenAI gpt-4o-mini vision for document verification
  */
 
 import OpenAI from 'openai';
@@ -340,11 +340,11 @@ export async function verifyKYCDocument(
   }
 
   try {
-    logger.info(`Calling gpt-4.1-mini API for document analysis...`);
+    logger.info(`Calling gpt-4o-mini API for document analysis...`);
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: KYC_SYSTEM_PROMPT },
         { role: 'user', content: imageContent },
@@ -356,7 +356,7 @@ export async function verifyKYCDocument(
       throw new Error('Empty response from API');
     }
 
-    logger.info('gpt-4.1-mini raw response', { response: analysisText });
+    logger.info('gpt-4o-mini raw response', { response: analysisText });
 
     interface DocumentAnalysisResponse {
       detected_document_type: DocumentType | 'UNKNOWN' | 'INVALID';
@@ -531,7 +531,7 @@ export async function quickDocumentCheck(
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: KYC_SYSTEM_PROMPT },
         {

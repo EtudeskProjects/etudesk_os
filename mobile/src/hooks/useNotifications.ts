@@ -132,6 +132,8 @@ export function useNotifications() {
           router.push(`/settings/my-reservations/${data.bookingId}`);
         } else if (type === 'OPPORTUNITY' && data.opportunityId) {
           router.push(`/details/opportunity/${data.opportunityId}`);
+        } else if (type === 'SPACE' && data.spaceId) {
+          router.push(`/details/space/${data.spaceId}`);
         }
       } catch (e) {
         // Navigation may fail if router not ready

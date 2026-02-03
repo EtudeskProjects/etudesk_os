@@ -33,13 +33,6 @@ export interface UpdateApplicationData {
   rating?: number;
 }
 
-export interface ScheduleInterviewData {
-  interview_scheduled_at: string;
-  interview_type: 'PHONE' | 'VIDEO' | 'IN_PERSON';
-  interview_location?: string;
-  interview_notes?: string;
-}
-
 // ═══════════════════════════════════════════════════════════════
 // SERVICE CLASS
 // ═══════════════════════════════════════════════════════════════
@@ -153,20 +146,6 @@ class ApplicationService {
       throw new Error('Rating must be between 1 and 5');
     }
     return api.put<Application>(`/api/applications/${id}/rating`, { rating });
-  }
-
-  /**
-   * Schedule an interview (for organizations)
-   */
-  async scheduleInterview(id: string, data: ScheduleInterviewData): Promise<ApiResponse<Application>> {
-    return api.put<Application>(`/api/applications/${id}/interview`, data);
-  }
-
-  /**
-   * Cancel an interview (for organizations)
-   */
-  async cancelInterview(id: string): Promise<ApiResponse<Application>> {
-    return api.delete(`/api/applications/${id}/interview`);
   }
 
   /**

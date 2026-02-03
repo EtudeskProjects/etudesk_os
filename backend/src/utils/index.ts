@@ -2,6 +2,11 @@
  * Backend Utilities
  */
 
+// Re-export helpers
+export * from './pagination.helper';
+export * from './error-handler';
+export * from './query-builder';
+
 /**
  * Safely parse JSON string, returns fallback on error
  */

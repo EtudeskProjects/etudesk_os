@@ -15,7 +15,7 @@ const expo = new Expo();
 // TYPES
 // ═══════════════════════════════════════════════════════════════
 
-export type NotificationType = 'OPPORTUNITY' | 'APPLICATION' | 'MESSAGE' | 'SYSTEM' | 'REMINDER' | 'MEMBERSHIP' | 'BOOKING';
+export type NotificationType = 'OPPORTUNITY' | 'APPLICATION' | 'MESSAGE' | 'SYSTEM' | 'SPACE' | 'REMINDER' | 'MEMBERSHIP' | 'BOOKING';
 
 export interface PushNotificationData {
   type: NotificationType;
@@ -661,77 +661,6 @@ export async function notifyNewApplication(applicationId: string): Promise<void>
     }
   } catch (error) {
     logger.error('Error sending new application notification:', error);
-  }
-}
-
-/**
- * Notify talent when an interview is scheduled
- */
-export async function notifyInterviewScheduled(
-  applicationId: string,
-  interviewDate: string,
-  interviewType: string,
-  interviewLocation?: string
-): Promise<void> {
-  try {
-    const result = await pool.query(`
-      SELECT
-        a.id,
-        a.talent_id,
-        t.email as talent_email,
-        COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name,
-        o.title as opportunity_title,
-        org.name as organization_name
-      FROM opportunity_applications a
-      JOIN talents t ON a.talent_id = t.id
-      JOIN opportunities o ON a.opportunity_id = o.id
-      LEFT JOIN opportunity_posters op ON o.id = op.opportunity_id
-      LEFT JOIN organizations org ON op.poster_organization_id = org.id
-      WHERE a.id = $1
-    `, [applicationId]);
-
-    if (result.rows.length === 0) return;
-
-    const app = result.rows[0];
-    const interviewTypeLabel = interviewType === 'VIDEO' ? 'Visioconférence'
-      : interviewType === 'PHONE' ? 'Téléphone'
-      : 'En personne';
-
-    const title = 'Entretien programmé';
-    const body = `Entretien ${interviewTypeLabel.toLowerCase()} programmé pour "${app.opportunity_title}"`;
-
-    const prefs = await getPreferences(app.talent_id);
-
-    // Send push
-    if (prefs.push_enabled !== false && prefs.notify_reminders !== false) {
-      await sendToUser(app.talent_id, {
-        type: 'REMINDER',
-        title,
-        body,
-        data: {
-          applicationId,
-          interviewDate,
-          interviewType,
-          screen: 'application-details',
-        },
-      });
-    }
-
-    // Send email
-    if (prefs.email_enabled !== false && prefs.notify_reminders !== false) {
-      await sendInterviewScheduledEmail(
-        app.talent_email,
-        app.talent_name,
-        app.opportunity_title,
-        app.organization_name || 'L\'organisation',
-        interviewDate,
-        interviewTypeLabel,
-        interviewLocation,
-        applicationId
-      );
-    }
-  } catch (error) {
-    logger.error('Error sending interview scheduled notification:', error);
   }
 }
 

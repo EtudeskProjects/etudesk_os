@@ -1,14 +1,14 @@
 /**
- * TalentCard
- * Elegant card for displaying talent profiles
- * Design: Minimalist, warm earth tones, no shadows
+ * TalentCard - Refactored to use BaseCard components
+ * Horizontal layout with avatar, content and rating
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { User, MapPin, Briefcase, Star } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT } from '../../constants/theme';
+import { CardContainer } from './BaseCard';
 
 export interface TalentCardData {
   id: string;
@@ -34,21 +34,13 @@ export const TalentCard: React.FC<TalentCardProps> = ({
   compact = false,
 }) => {
   const { colors } = useTheme();
-
   const location = [talent.city, talent.country].filter(Boolean).join(', ');
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.cardTalent,
-          borderColor: colors.cardTalentAccent,
-        },
-      ]}
+    <CardContainer
       onPress={onPress}
-      activeOpacity={0.8}
-      disabled={!onPress}
+      horizontal
+      style={{ backgroundColor: colors.cardTalent, borderColor: colors.cardTalentAccent }}
     >
       {/* Avatar */}
       <View style={styles.avatarContainer}>
@@ -116,19 +108,11 @@ export const TalentCard: React.FC<TalentCardProps> = ({
           </Text>
         </View>
       )}
-    </TouchableOpacity>
+    </CardContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    padding: SPACING.md,
-    borderRadius: BORDER.radius.md,
-    borderWidth: 1,
-    marginBottom: SPACING.sm,
-    alignItems: 'center',
-  },
   avatarContainer: {
     marginRight: SPACING.md,
   },

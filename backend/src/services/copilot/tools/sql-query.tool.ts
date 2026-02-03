@@ -315,7 +315,7 @@ export function createSqlQueryTool(
           if (!orgId) return { error: 'organizationId requis' };
           const res = await pool.query(
             `SELECT o.id, o.title, o.type, o.status, o.slug,
-                    (SELECT COUNT(*) FROM opportunity_applications WHERE opportunity_id = o.id) as applications_count, o.views_count, o.deadline
+                    (SELECT COUNT(*) FROM opportunity_applications WHERE opportunity_id = o.id) as applications_count, o.deadline
              FROM opportunities o
              JOIN opportunity_posters op ON o.id = op.opportunity_id
              WHERE op.poster_organization_id = $1 AND o.deleted_at IS NULL
@@ -432,7 +432,7 @@ export function createSqlQueryTool(
           if (q) { sql += ` AND (s.name ILIKE '%' || $${idx} || '%' OR s.description ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
           if (type) { sql += ` AND s.type = $${idx}`; p.push(type); idx++; }
           if (location) { sql += ` AND s.city ILIKE '%' || $${idx} || '%'`; p.push(location); idx++; }
-          sql += ` ORDER BY s.views_count DESC NULLS LAST LIMIT $${idx}`;
+          sql += ` ORDER BY s.created_at DESC NULLS LAST LIMIT $${idx}`;
           p.push((lim as number) || 5);
           const res = await pool.query(sql, p);
           return { spaces: res.rows };
@@ -532,27 +532,5 @@ export function createSqlQueryTool(
   });
 }
 
-/**
- * @deprecated Use createSqlQueryTool(authenticatedTalentId) instead for security.
- * This static export is kept for backward compatibility but should be migrated.
- * WARNING: This version is vulnerable to IDOR attacks if talentId is not validated.
- */
-export const sqlQueryTool = tool({
-  name: 'sql_query',
-  description:
-    "Exécute une requête sur la base PostgreSQL. DEPRECATED: Utilisez createSqlQueryTool() pour la sécurité.",
-  parameters: z.object({
-    intent: z.enum(SQL_INTENTS),
-    paramsJson: z.string().describe('Paramètres de la requête en JSON string'),
-  }),
-  execute: async ({ intent, paramsJson }) => {
-    const params: Record<string, unknown> = paramsJson ? JSON.parse(paramsJson) : {};
-    const talentId = params.talentId as string;
-    if (!talentId) {
-      return { error: 'talentId est requis. SECURITY WARNING: Use createSqlQueryTool() instead.' };
-    }
-    // Delegate to a minimal implementation that warns about security
-    logger.warn('[SECURITY WARNING] sqlQueryTool used without authentication context. Migrate to createSqlQueryTool()');
-    return { error: 'This tool is deprecated. Please update the agent to use createSqlQueryTool().' };
-  },
-});
+// NOTE: sqlQueryTool export was removed for security reasons.
+// Use createSqlQueryTool(authenticatedTalentId) instead to prevent IDOR vulnerabilities.

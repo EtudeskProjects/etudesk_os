@@ -1,6 +1,6 @@
 /**
  * Document Extraction Prompt
- * Model: gpt-4.1-mini (vision) | Output: JSON
+ * Model: gpt-4o-mini (vision) | Output: JSON
  */
 
 export function buildExtractionPrompt(mimeType: string, talentContext?: string): string {

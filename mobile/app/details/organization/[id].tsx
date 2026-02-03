@@ -22,13 +22,10 @@ import { formatRelativeTime } from '../../../src/utils/date';
 import type { Organization, Opportunity } from '../../../src/types/models';
 import {
   ORGANIZATION_TYPE_LABELS,
-  ORGANIZATION_SIZE_LABELS,
 } from '../../../src/types/models';
 
 // Mock data - in real app, fetch from API based on id
 const MOCK_ORGANIZATION: Organization & {
-  employees_count?: number;
-  opportunities_count?: number;
   founded_year?: number;
   social_links?: { type: string; url: string }[];
   opportunities?: Opportunity[];
@@ -39,7 +36,6 @@ const MOCK_ORGANIZATION: Organization & {
   slug: 'techcorp-africa',
   type: 'STARTUP',
   sectors: ['DIGITAL', 'FINANCE'],
-  size: 'MEDIUM',
   description: `TechCorp Africa est une startup technologique qui développe des solutions innovantes pour le marché africain.
 
 Notre mission est de démocratiser l'accès aux services financiers numériques en Afrique de l'Ouest.
@@ -59,8 +55,6 @@ Nous croyons en l'innovation locale et au potentiel des talents africains.`,
     'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80',
     'https://images.unsplash.com/photo-1497215842964-222b430dc094?w=800&q=80',
   ],
-  employees_count: 45,
-  opportunities_count: 3,
   founded_year: 2020,
   social_links: [
     { type: 'twitter', url: 'https://twitter.com/techcorpafrica' },
@@ -194,24 +188,6 @@ export default function OrganizationDetailScreen() {
               <Text style={[styles.statValue, { color: colors.primary }]}>{organization.founded_year}</Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Fondée</Text>
             </View>
-          )}
-          {organization.employees_count && (
-            <>
-              <View style={[styles.statDivider, { backgroundColor: colors.borderColor }]} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{organization.employees_count}</Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Employés</Text>
-              </View>
-            </>
-          )}
-          {organization.opportunities_count !== undefined && (
-            <>
-              <View style={[styles.statDivider, { backgroundColor: colors.borderColor }]} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{organization.opportunities_count}</Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Offres</Text>
-              </View>
-            </>
           )}
         </View>
 

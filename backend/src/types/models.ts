@@ -174,15 +174,6 @@ export const SECTORS = {
 } as const;
 export type Sector = typeof SECTORS[keyof typeof SECTORS];
 
-export const ORGANIZATION_SIZE = {
-  SOLO: "SOLO",
-  SMALL: "SMALL",
-  MEDIUM: "MEDIUM",
-  LARGE: "LARGE",
-  ENTERPRISE: "ENTERPRISE"
-} as const;
-export type OrganizationSize = typeof ORGANIZATION_SIZE[keyof typeof ORGANIZATION_SIZE];
-
 export const OPPORTUNITY_STATUS = {
   DRAFT: "DRAFT",
   OPEN: "OPEN",
@@ -401,7 +392,6 @@ export interface Organization {
 
   type?: OrganizationType;
   sectors?: Sector[]; // Plusieurs secteurs possibles
-  size?: OrganizationSize;
 
   description?: string;
   logo_url?: string;
@@ -525,7 +515,6 @@ export interface Opportunity {
   }>;
 
   // Metrics (computed/optional)
-  views_count?: number;
   applications_count?: number;
 
   // Internal fields (not exposed to frontend typically)

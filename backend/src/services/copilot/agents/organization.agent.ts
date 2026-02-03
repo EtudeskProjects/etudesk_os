@@ -17,7 +17,7 @@ export function createOrgAgent(context: OrgContext): Agent {
 
   return new Agent({
     name: 'Organization Explorer',
-    model: 'gpt-5-mini',
+    model: 'gpt-4o',
     instructions: buildOrgExplorerPrompt(context),
     tools: [
       vectorQueryTool,

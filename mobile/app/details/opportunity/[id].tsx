@@ -41,7 +41,7 @@ import {
   ORGANIZATION_TYPE_LABELS,
   COMPENSATION_FREQUENCY_LABELS,
 } from '../../../src/types/models';
-import { CURRENCY_DATA } from '../../../src/constants/opportunity';
+import { getCurrencySymbol } from '../../../src/constants/opportunity';
 import { opportunityService, bookmarkService } from '../../../src/services';
 import { applicationService } from '../../../src/services/applicationService';
 import { BookmarkCheck } from 'lucide-react-native';
@@ -60,8 +60,7 @@ const getInitials = (name: string): string => {
 const formatSalary = (min?: number, max?: number, currency?: string, frequency?: string): string => {
   if (!min && !max) return 'Non spécifié';
   const currencyCode = currency || 'XOF';
-  const currencyData = CURRENCY_DATA.find(c => c.id === currencyCode);
-  const currencySymbol = currencyData?.symbol || currencyCode;
+  const currencySymbol = getCurrencySymbol(currencyCode);
   
   const freqLabel = frequency && COMPENSATION_FREQUENCY_LABELS[frequency as keyof typeof COMPENSATION_FREQUENCY_LABELS]
     ? ` ${COMPENSATION_FREQUENCY_LABELS[frequency as keyof typeof COMPENSATION_FREQUENCY_LABELS]}`
@@ -170,16 +169,6 @@ export default function OpportunityDetailScreen() {
           opp.organization = opp.organizations[0];
         }
         setOpportunity(opp);
-        
-        // Increment view count (fire and forget, don't wait for response)
-        opportunityService.incrementViews(id!).then(response => {
-          if (response.data) {
-            // Update local state with new view count
-            setOpportunity(prev => prev ? { ...prev, views_count: response.data.views_count } : null);
-          }
-        }).catch(err => {
-          // Silently fail - not critical
-        });
       }
     } catch (error: any) {
       console.error('Error loading opportunity:', error);
@@ -406,15 +395,6 @@ export default function OpportunityDetailScreen() {
           <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
             {/* Views + Applications */}
             <View style={styles.metaRow}>
-              <View style={styles.metaItem}>
-                <Eye size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                <View>
-                  <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('opportunity.views')}</Text>
-                  <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
-                    {opportunity.views_count?.toLocaleString() || '0'}
-                  </Text>
-                </View>
-              </View>
               <View style={styles.metaItem}>
                 <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                 <View>

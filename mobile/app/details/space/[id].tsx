@@ -181,10 +181,6 @@ export default function SpaceDetailScreen() {
           setIsOwner(false);
         }
 
-        // Increment view count (fire and forget)
-        spaceService.incrementViews(id).catch(() => {
-          // Silently fail - not critical
-        });
       }
     } catch (error) {
       console.error('Error loading space:', error);

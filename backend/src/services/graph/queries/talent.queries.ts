@@ -265,7 +265,7 @@ export const talentQueries = {
   },
 
   /**
-   * Get talent's network (connections, mentors, mentees)
+   * Get talent's network (connections)
    */
   async getTalentNetwork(talentId: string): Promise<{
     connections: Array<{ id: string; name: string; relationshipType: string }>;
@@ -275,29 +275,13 @@ export const talentQueries = {
     const result = await neo4jClient.read(
       `
       MATCH (t:Talent {id: $talentId})
-
       OPTIONAL MATCH (t)-[conn:CONNECTE_AVEC]-(connected:Talent)
       WITH t, collect(DISTINCT {
         id: connected.id,
         name: connected.name,
         type: conn.relationship_type
       }) as connections
-
-      OPTIONAL MATCH (t)<-[mentorRel:MENTOR_DE]-(mentor:Talent)
-      WITH t, connections, collect(DISTINCT {
-        id: mentor.id,
-        name: mentor.name,
-        focusAreas: mentorRel.focus_areas
-      }) as mentors
-
-      OPTIONAL MATCH (t)-[menteeRel:MENTOR_DE]->(mentee:Talent)
-      WITH t, connections, mentors, collect(DISTINCT {
-        id: mentee.id,
-        name: mentee.name,
-        focusAreas: menteeRel.focus_areas
-      }) as mentees
-
-      RETURN connections, mentors, mentees
+      RETURN connections
       `,
       { talentId }
     );
@@ -307,23 +291,16 @@ export const talentQueries = {
     }
 
     const record = result.records[0];
+    const connections = (record.get('connections') || []).filter((c: any) => c.id).map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      relationshipType: c.type || 'professional',
+    }));
 
     return {
-      connections: (record.get('connections') || []).filter((c: any) => c.id).map((c: any) => ({
-        id: c.id,
-        name: c.name,
-        relationshipType: c.type || 'professional',
-      })),
-      mentors: (record.get('mentors') || []).filter((m: any) => m.id).map((m: any) => ({
-        id: m.id,
-        name: m.name,
-        focusAreas: m.focusAreas || [],
-      })),
-      mentees: (record.get('mentees') || []).filter((m: any) => m.id).map((m: any) => ({
-        id: m.id,
-        name: m.name,
-        focusAreas: m.focusAreas || [],
-      })),
+      connections,
+      mentors: [],
+      mentees: [],
     };
   },
 

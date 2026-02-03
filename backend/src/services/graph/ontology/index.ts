@@ -41,7 +41,6 @@ export {
   type EtudieSujetProps,
   type AEvenementProps,
   type ConnecteAvecProps,
-  type MentorDeProps,
   type RecommandeParProps,
   type InteresseParProps,
   type DevraitApprendreProps,

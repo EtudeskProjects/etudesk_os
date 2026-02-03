@@ -75,19 +75,6 @@ export const updateApplicationRatingSchema = z.object({
     .nullable()
 });
 
-// Schedule interview schema
-export const scheduleInterviewSchema = z.object({
-  interview_scheduled_at: z.string().refine(
-    (val) => !isNaN(Date.parse(val)),
-    'Date d\'entretien invalide'
-  ),
-  interview_type: z.enum(['PHONE', 'VIDEO', 'IN_PERSON'], {
-    message: 'Type d\'entretien invalide'
-  }).optional(),
-  interview_location: z.string().max(500, 'L\'adresse ne doit pas dépasser 500 caractères').optional(),
-  interview_notes: z.string().max(2000, 'Les notes ne doivent pas dépasser 2000 caractères').optional()
-});
-
 // Bulk update status schema
 export const bulkUpdateStatusSchema = z.object({
   application_ids: z.array(z.string().uuid('ID de candidature invalide'))
@@ -212,7 +199,7 @@ const VALID_PROFILE_TAGS = [
 
 const VALID_GOALS = [
   'FIND_JOB', 'FIND_INTERNSHIP', 'FIND_FREELANCE',
-  'BUILD_NETWORK', 'DEVELOP_SKILLS', 'FIND_MENTORSHIP',
+  'BUILD_NETWORK', 'DEVELOP_SKILLS',
   'CREATE_BUSINESS', 'FIND_PARTNERS', 'FIND_FUNDING'
 ] as const;
 
@@ -265,7 +252,7 @@ export const onboardingSchema = z.object({
 
 const COMMUNITY_TYPES = [
   'GENERAL', 'PROFESSIONAL', 'ALUMNI',
-  'INTEREST', 'LOCAL', 'MENTORSHIP', 'LEARNING'
+  'INTEREST', 'LOCAL', 'LEARNING'
 ] as const;
 
 const COMMUNITY_ACCESS_TYPES = [
