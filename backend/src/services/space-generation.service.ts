@@ -12,6 +12,7 @@ import {
 import { SpaceType, SPACE_TYPES } from '../types/space.types';
 import { SPACE_GEN_SYSTEM_PROMPT, buildSpaceGenPrompt } from './ai/prompts/space-gen.prompt';
 
+import { logger } from '../utils';
 // ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
@@ -71,7 +72,7 @@ async function getOrganizationContext(organizationId: string): Promise<Organizat
 
     return result.rows[0];
   } catch (error) {
-    console.error('Error fetching organization context:', error);
+    logger.error('Error fetching organization context:', error);
     return null;
   }
 }
@@ -121,7 +122,7 @@ export async function generateSpaceSuggestion(
   });
 
   try {
-    console.log('[SpaceGeneration] Starting generation for:', input.name);
+    logger.info('[SpaceGeneration] Starting generation', { name: input.name });
     const startTime = Date.now();
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -134,7 +135,7 @@ export async function generateSpaceSuggestion(
       response_format: { type: 'json_object' },
     });
 
-    console.log(`[SpaceGeneration] Completed in ${Date.now() - startTime}ms`);
+    logger.info(`[SpaceGeneration] Completed in ${Date.now() - startTime}ms`);
 
     const generatedText = completion.choices[0]?.message?.content;
     if (!generatedText) {
@@ -152,7 +153,7 @@ export async function generateSpaceSuggestion(
 
     return { success: true, data: generatedData };
   } catch (error) {
-    console.error('Error generating space suggestion:', error);
+    logger.error('Error generating space suggestion:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Generation failed',

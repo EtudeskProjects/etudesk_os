@@ -19,6 +19,7 @@ import { rankApplications, calculateMatchingScore, getMatchCategory } from '../s
 import { getApplicationRecommendation } from '../services/recommendation.service';
 import { safeParseJson } from '../utils';
 
+import { logger } from '../utils';
 const router = Router();
 
 // ============================================================================
@@ -88,7 +89,7 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
       RETURNING *
     `, [id, talentId, opportunity_id, cover_letter || null, applicationAnswers ? JSON.stringify(applicationAnswers) : null, resume_url || null]);
 
-    pushService.notifyNewApplication(id).catch(err => console.error('Notification error:', err));
+    pushService.notifyNewApplication(id).catch(err => logger.error('Notification error:', err));
 
     res.status(201).json({
       success: true,
@@ -96,7 +97,7 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
       message: 'Candidature soumise avec succès'
     });
   } catch (error) {
-    console.error('Error creating application:', error);
+    logger.error('Error creating application:', error);
     res.status(500).json({ error: 'Erreur lors de la soumission de la candidature' });
   }
 });
@@ -195,7 +196,7 @@ router.get('/me', authMiddleware, requireTalentProfile, async (req: AuthRequest,
       statusCounts
     });
   } catch (error) {
-    console.error('Error fetching my applications:', error);
+    logger.error('Error fetching my applications:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des candidatures' });
   }
 });
@@ -237,7 +238,7 @@ router.get('/check/:opportunityId', authMiddleware, requireTalentProfile, async 
       }
     });
   } catch (error) {
-    console.error('Error checking application:', error);
+    logger.error('Error checking application:', error);
     res.status(500).json({ error: 'Erreur lors de la vérification' });
   }
 });
@@ -352,7 +353,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       matchScore = scoreResult.finalScore;
       matchCategory = getMatchCategory(scoreResult.finalScore);
     } catch (err) {
-      console.error('Error computing matching score:', err);
+      logger.error('Error computing matching score:', err);
     }
 
     const application = {
@@ -401,7 +402,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     res.json({ data: application });
   } catch (error) {
-    console.error('Error fetching application:', error);
+    logger.error('Error fetching application:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération de la candidature' });
   }
 });
@@ -441,7 +442,7 @@ router.put('/:id/withdraw', authMiddleware, requireTalentProfile, async (req: Au
       message: 'Candidature retirée'
     });
   } catch (error) {
-    console.error('Error withdrawing application:', error);
+    logger.error('Error withdrawing application:', error);
     res.status(500).json({ error: 'Erreur lors du retrait de la candidature' });
   }
 });
@@ -473,7 +474,7 @@ router.delete('/:id', authMiddleware, requireTalentProfile, async (req: AuthRequ
 
     res.json({ success: true, message: 'Candidature supprimée. Vous pouvez postuler à nouveau.' });
   } catch (error) {
-    console.error('Error deleting application:', error);
+    logger.error('Error deleting application:', error);
     res.status(500).json({ error: 'Erreur lors de la suppression de la candidature' });
   }
 });
@@ -547,7 +548,7 @@ router.get('/opportunity/:opportunityId', authMiddleware, validate(opportunityId
       statusCounts
     });
   } catch (error) {
-    console.error('Error fetching opportunity applications:', error);
+    logger.error('Error fetching opportunity applications:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des candidatures' });
   }
 });
@@ -601,7 +602,7 @@ router.get('/opportunity/:opportunityId/ranked', authMiddleware, validate(opport
       statusCounts
     });
   } catch (error) {
-    console.error('Error fetching ranked applications:', error);
+    logger.error('Error fetching ranked applications:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des candidatures classées' });
   }
 });
@@ -643,7 +644,7 @@ router.get('/:id/recommendation', authMiddleware, validate(uuidParamSchema, 'par
       }
     });
   } catch (error) {
-    console.error('Error getting recommendation:', error);
+    logger.error('Error getting recommendation:', error);
     res.status(500).json({ error: 'Erreur lors de la génération de la recommandation' });
   }
 });
@@ -687,7 +688,7 @@ router.put('/:id/status', authMiddleware, validate(uuidParamSchema, 'params'), v
 
     if (oldStatus && oldStatus !== status) {
       pushService.notifyApplicationStatusChanged(id, oldStatus, status)
-        .catch(err => console.error('Notification error:', err));
+        .catch(err => logger.error('Notification error:', err));
     }
 
     res.json({
@@ -696,7 +697,7 @@ router.put('/:id/status', authMiddleware, validate(uuidParamSchema, 'params'), v
       message: 'Statut mis à jour'
     });
   } catch (error) {
-    console.error('Error updating application status:', error);
+    logger.error('Error updating application status:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour du statut' });
   }
 });
@@ -733,7 +734,7 @@ router.put('/:id/notes', authMiddleware, validate(uuidParamSchema, 'params'), va
 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating notes:', error);
+    logger.error('Error updating notes:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour des notes' });
   }
 });
@@ -770,7 +771,7 @@ router.put('/:id/rating', authMiddleware, validate(uuidParamSchema, 'params'), v
 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating rating:', error);
+    logger.error('Error updating rating:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour de la note' });
   }
 });
@@ -806,7 +807,7 @@ router.put('/:id/view', authMiddleware, async (req: AuthRequest, res: Response) 
 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error marking as viewed:', error);
+    logger.error('Error marking as viewed:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour' });
   }
 });
@@ -847,11 +848,11 @@ router.put('/:id/interview', authMiddleware, validate(uuidParamSchema, 'params')
     `, [interview_scheduled_at, interview_type || null, interview_location || null, interview_notes || null, id]);
 
     pushService.notifyInterviewScheduled(id, interview_scheduled_at, interview_type, interview_location)
-      .catch(err => console.error('Notification error:', err));
+      .catch(err => logger.error('Notification error:', err));
 
     res.json({ success: true, data: result.rows[0], message: 'Entretien planifié' });
   } catch (error) {
-    console.error('Error scheduling interview:', error);
+    logger.error('Error scheduling interview:', error);
     res.status(500).json({ error: 'Erreur lors de la planification de l\'entretien' });
   }
 });
@@ -892,7 +893,7 @@ router.delete('/:id/interview', authMiddleware, async (req: AuthRequest, res: Re
 
     res.json({ success: true, data: result.rows[0], message: 'Entretien annulé' });
   } catch (error) {
-    console.error('Error canceling interview:', error);
+    logger.error('Error canceling interview:', error);
     res.status(500).json({ error: 'Erreur lors de l\'annulation de l\'entretien' });
   }
 });
@@ -931,7 +932,7 @@ router.put('/bulk/status', authMiddleware, validate(bulkUpdateStatusSchema), asy
 
     res.json({ success: true, updated, failed });
   } catch (error) {
-    console.error('Error bulk updating status:', error);
+    logger.error('Error bulk updating status:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour en masse' });
   }
 });
@@ -965,7 +966,7 @@ router.delete('/:id/organization', authMiddleware, async (req: AuthRequest, res:
 
     res.json({ success: true, message: 'Candidature supprimée' });
   } catch (error) {
-    console.error('Error deleting application (org):', error);
+    logger.error('Error deleting application (org):', error);
     res.status(500).json({ error: 'Erreur lors de la suppression de la candidature' });
   }
 });
@@ -1006,7 +1007,7 @@ router.get('/:id/messages', authMiddleware, async (req: AuthRequest, res: Respon
 
     res.json({ data: result.rows });
   } catch (error) {
-    console.error('Error fetching messages:', error);
+    logger.error('Error fetching messages:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des messages' });
   }
 });
@@ -1079,11 +1080,11 @@ router.post('/:id/messages', authMiddleware, async (req: AuthRequest, res: Respo
     ]);
 
     pushService.notifyApplicationMessage(id, messageId, senderType)
-      .catch(err => console.error('Notification error:', err));
+      .catch(err => logger.error('Notification error:', err));
 
     res.status(201).json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error sending message:', error);
+    logger.error('Error sending message:', error);
     res.status(500).json({ error: 'Erreur lors de l\'envoi du message' });
   }
 });
@@ -1120,7 +1121,7 @@ router.put('/:id/messages/read-all', authMiddleware, async (req: AuthRequest, re
 
     res.json({ success: true, marked: result.rowCount });
   } catch (error) {
-    console.error('Error marking messages as read:', error);
+    logger.error('Error marking messages as read:', error);
     res.status(500).json({ error: 'Erreur lors du marquage des messages' });
   }
 });
@@ -1223,7 +1224,7 @@ router.get('/opportunity/:opportunityId/export-csv', authMiddleware, validate(op
     // Add BOM for Excel UTF-8 compatibility
     res.send('\uFEFF' + csvContent);
   } catch (error) {
-    console.error('Error exporting applications to CSV:', error);
+    logger.error('Error exporting applications to CSV:', error);
     res.status(500).json({ error: 'Erreur lors de l\'export CSV' });
   }
 });

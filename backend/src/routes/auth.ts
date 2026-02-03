@@ -18,6 +18,13 @@ import {
   needsOnboarding,
 } from '../services/auth.service';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
+import { logger } from '../utils';
+import {
+  validate,
+  requestOtpSchema,
+  verifyOtpSchema,
+  refreshTokenSchema,
+} from '../middleware/validation.middleware';
 
 const router = Router();
 
@@ -26,25 +33,9 @@ const router = Router();
  *
  * Request an OTP code to be sent to email
  */
-router.post('/request-otp', async (req: Request, res: Response) => {
+router.post('/request-otp', validate(requestOtpSchema), async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
-
-    // Validate email
-    if (!email || typeof email !== 'string') {
-      return res.status(400).json({
-        success: false,
-        error: 'Email requis',
-      });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Email invalide',
-      });
-    }
+    const { email } = req.body; // Already validated and transformed by Zod
 
     // Get client info for security
     const ipAddress = req.ip || req.socket.remoteAddress;
@@ -71,7 +62,7 @@ router.post('/request-otp', async (req: Request, res: Response) => {
     const emailResult = await sendOTPEmail(email, otpResult.code!);
 
     if (!emailResult.success) {
-      console.error('❌ Failed to send OTP email:', emailResult.error);
+      logger.error('❌ Failed to send OTP email:', emailResult.error);
       return res.status(500).json({
         success: false,
         error: 'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.',
@@ -84,7 +75,7 @@ router.post('/request-otp', async (req: Request, res: Response) => {
       expiresAt: otpResult.expiresAt,
     });
   } catch (error) {
-    console.error('❌ Request OTP error:', error);
+    logger.error('❌ Request OTP error:', error);
     return res.status(500).json({
       success: false,
       error: 'Erreur serveur',
@@ -97,24 +88,9 @@ router.post('/request-otp', async (req: Request, res: Response) => {
  *
  * Verify OTP and create session
  */
-router.post('/verify-otp', async (req: Request, res: Response) => {
+router.post('/verify-otp', validate(verifyOtpSchema), async (req: Request, res: Response) => {
   try {
-    const { email, code } = req.body;
-
-    // Validate input
-    if (!email || !code) {
-      return res.status(400).json({
-        success: false,
-        error: 'Email et code requis',
-      });
-    }
-
-    if (typeof code !== 'string' || code.length !== 6) {
-      return res.status(400).json({
-        success: false,
-        error: 'Code invalide (6 chiffres requis)',
-      });
-    }
+    const { email, code } = req.body; // Already validated by Zod
 
     // Verify OTP
     const verifyResult = await verifyOTP(email, code);
@@ -159,7 +135,7 @@ router.post('/verify-otp', async (req: Request, res: Response) => {
       needsOnboarding: needsOnboard,
     });
   } catch (error) {
-    console.error('❌ Verify OTP error:', error);
+    logger.error('❌ Verify OTP error:', error);
     return res.status(500).json({
       success: false,
       error: 'Erreur serveur',
@@ -172,16 +148,9 @@ router.post('/verify-otp', async (req: Request, res: Response) => {
  *
  * Refresh access token using refresh token
  */
-router.post('/refresh', async (req: Request, res: Response) => {
+router.post('/refresh', validate(refreshTokenSchema), async (req: Request, res: Response) => {
   try {
-    const { refreshToken } = req.body;
-
-    if (!refreshToken) {
-      return res.status(400).json({
-        success: false,
-        error: 'Refresh token requis',
-      });
-    }
+    const { refreshToken } = req.body; // Already validated by Zod
 
     const result = await refreshTokens(refreshToken);
 
@@ -197,7 +166,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       tokens: result.tokens,
     });
   } catch (error) {
-    console.error('❌ Refresh token error:', error);
+    logger.error('❌ Refresh token error:', error);
     return res.status(500).json({
       success: false,
       error: 'Erreur serveur',
@@ -236,7 +205,7 @@ router.post('/logout', authMiddleware, async (req: AuthRequest, res: Response) =
       message: 'Déconnexion réussie',
     });
   } catch (error) {
-    console.error('❌ Logout error:', error);
+    logger.error('❌ Logout error:', error);
     return res.status(500).json({
       success: false,
       error: 'Erreur serveur',
@@ -268,7 +237,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
       needsOnboarding: needsOnboard,
     });
   } catch (error) {
-    console.error('❌ Get profile error:', error);
+    logger.error('❌ Get profile error:', error);
     return res.status(500).json({
       success: false,
       error: 'Erreur serveur',

@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { ModerationStatus } from '../types/community-activity.types';
 
+import { logger } from '../utils';
 dotenv.config();
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -49,7 +50,7 @@ export class AutoModerationService {
 
     constructor() {
         if (!OPENAI_API_KEY) {
-            console.warn('⚠️ OPENAI_API_KEY is not set. Auto-moderation will be disabled (always APPROVED).');
+            logger.warn('⚠️ OPENAI_API_KEY is not set. Auto-moderation will be disabled (always APPROVED).');
         } else {
             this.openai = new OpenAI({ 
                 apiKey: OPENAI_API_KEY,
@@ -105,7 +106,7 @@ export class AutoModerationService {
                         ? `Contenu inapproprié détecté: ${flaggedCategories.join(', ')}`
                         : 'Contenu inapproprié détecté';
 
-                    console.log(`[Moderation] FLAGGED: "${content.substring(0, 50)}..." - ${reason}`);
+                    logger.info(`[Moderation] FLAGGED: "${content.substring(0, 50)}..." - ${reason}`);
 
                     return { status: 'FLAGGED' as ModerationStatus, reason };
                 }
@@ -120,9 +121,9 @@ export class AutoModerationService {
         } catch (error) {
             // Handle timeout or other errors
             if (error instanceof Error && error.message === 'Moderation API timeout') {
-                console.warn(`[Moderation] Timeout after 3s for content: "${content.substring(0, 50)}..." - Approving content`);
+                logger.warn(`[Moderation] Timeout after 3s for content: "${content.substring(0, 50)}..." - Approving content`);
             } else {
-                console.error('[Moderation] Error:', error);
+                logger.error('[Moderation] Error:', error);
             }
             // Fail open: approve content but log the error
             // In production, you might want to fail closed (PENDING for manual review)

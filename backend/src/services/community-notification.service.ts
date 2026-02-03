@@ -6,6 +6,7 @@ import {
 } from '../types/community-activity.types';
 import { sendPushNotification } from './notification.service';
 
+import { logger } from '../utils';
 interface CreateNotificationDTO {
     talent_id: string;
     community_id: string;
@@ -56,7 +57,7 @@ export class CommunityNotificationService {
                 community_id: dto.community_id,
                 activity_id: dto.activity_id,
                 notification_id: notification.id
-            }).catch(err => console.error('Failed to send push:', err));
+            }).catch(err => logger.error('Failed to send push:', err));
         }
 
         return notification;
@@ -392,7 +393,7 @@ export class CommunityNotificationService {
                     activity_id: notification.activity_id,
                     notification_id: notification.id
                 }
-            ).catch(err => console.error('Failed to send scheduled push:', err));
+            ).catch(err => logger.error('Failed to send scheduled push:', err));
         }
 
         return result.rowCount || 0;
@@ -423,7 +424,7 @@ export class CommunityNotificationService {
         try {
             await sendPushNotification(talentId, title, body, data);
         } catch (err) {
-            console.error('Push notification failed:', err);
+            logger.error('Push notification failed:', err);
         }
     }
 

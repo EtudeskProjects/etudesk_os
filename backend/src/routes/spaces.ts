@@ -25,6 +25,7 @@ import {
 } from '../types/space.types';
 import { generateSpaceSuggestion } from '../services/space-generation.service';
 
+import { logger } from '../utils';
 type QueryParam = string | number | boolean | null | Date;
 
 const router = Router();
@@ -60,7 +61,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
       hasVisibilityColumn = columnCheck.rows.length > 0;
     } catch (checkError) {
       // If check fails, assume column doesn't exist
-      console.warn('Failed to check visibility column:', checkError);
+      logger.warn('Failed to check visibility column', { error: String(checkError) });
     }
 
     // Check if space_invitations table exists
@@ -73,7 +74,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
       hasSpaceInvitationsTable = tableCheck.rows.length > 0;
     } catch (checkError) {
       // If check fails, assume table doesn't exist
-      console.warn('Failed to check space_invitations table:', checkError);
+      logger.warn('Failed to check space_invitations table', { error: String(checkError) });
     }
 
     // Get user email for invitation check
@@ -86,7 +87,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
         }
       } catch (emailError) {
         // If email lookup fails, continue without email-based invitation check
-        console.warn('Failed to fetch user email for invitation check:', emailError);
+        logger.warn('Failed to fetch user email for invitation check', { error: String(emailError) });
       }
     }
 
@@ -195,10 +196,10 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
 
     res.json({ data: spaces, count: result.rowCount });
   } catch (error) {
-    console.error('Error fetching spaces:', error);
+    logger.error('Error fetching spaces:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error('Error details:', { errorMessage, errorStack });
+    logger.error('Error details:', { errorMessage, errorStack });
     res.status(500).json({ 
       error: 'Failed to fetch spaces',
       message: errorMessage 
@@ -243,7 +244,7 @@ router.get('/organization/:orgId', async (req: Request, res: Response) => {
 
     res.json({ data: result.rows, count: totalCount });
   } catch (error) {
-    console.error('Error fetching organization spaces:', error);
+    logger.error('Error fetching organization spaces:', error);
     res.status(500).json({ error: 'Failed to fetch spaces' });
   }
 });
@@ -288,7 +289,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching space:', error);
+    logger.error('Error fetching space:', error);
     res.status(500).json({ error: 'Failed to fetch space' });
   }
 });
@@ -433,7 +434,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({ data: space });
   } catch (error) {
-    console.error('Error creating space:', error);
+    logger.error('Error creating space:', error);
     res.status(500).json({ error: 'Failed to create space' });
   }
 });
@@ -567,7 +568,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating space:', error);
+    logger.error('Error updating space:', error);
     res.status(500).json({ error: 'Failed to update space' });
   }
 });
@@ -618,7 +619,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
 
     res.json({ success: true, message: 'Space deleted' });
   } catch (error) {
-    console.error('Error deleting space:', error);
+    logger.error('Error deleting space:', error);
     res.status(500).json({ error: 'Failed to delete space' });
   }
 });
@@ -646,7 +647,7 @@ router.post('/:id/views', async (req: Request, res: Response) => {
 
     res.json({ data: { views_count: result.rows[0].views_count } });
   } catch (error) {
-    console.error('Error incrementing space views:', error);
+    logger.error('Error incrementing space views:', error);
     res.status(500).json({ error: 'Failed to increment views' });
   }
 });
@@ -679,7 +680,7 @@ router.get('/:id/availabilities', async (req: Request, res: Response) => {
 
     res.json({ data: result.rows });
   } catch (error) {
-    console.error('Error fetching availabilities:', error);
+    logger.error('Error fetching availabilities:', error);
     res.status(500).json({ error: 'Failed to fetch availabilities' });
   }
 });
@@ -720,7 +721,7 @@ router.put('/:id/availabilities', authMiddleware, async (req: AuthRequest, res: 
 
     res.json({ data: result.rows });
   } catch (error) {
-    console.error('Error updating availabilities:', error);
+    logger.error('Error updating availabilities:', error);
     res.status(500).json({ error: 'Failed to update availabilities' });
   }
 });
@@ -743,7 +744,7 @@ router.post('/:id/unavailabilities', authMiddleware, async (req: AuthRequest, re
 
     res.status(201).json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error creating unavailability:', error);
+    logger.error('Error creating unavailability:', error);
     res.status(500).json({ error: 'Failed to create unavailability' });
   }
 });
@@ -803,7 +804,7 @@ router.get('/:id/availability-check', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Error checking availability:', error);
+    logger.error('Error checking availability:', error);
     res.status(500).json({ error: 'Failed to check availability' });
   }
 });
@@ -871,7 +872,7 @@ router.get('/:id/bookings', async (req: Request, res: Response) => {
 
     res.json({ data: bookings, count: result.rowCount });
   } catch (error) {
-    console.error('Error fetching space bookings:', error);
+    logger.error('Error fetching space bookings:', error);
     res.status(500).json({ error: 'Failed to fetch bookings' });
   }
 });
@@ -954,11 +955,11 @@ router.post('/:id/book', authMiddleware, async (req: AuthRequest, res: Response)
 
     // Notify organization about new booking
     const pushService = await import('../services/push-notification.service');
-    pushService.notifyNewBooking(bookingId).catch(err => console.error('Booking notification error:', err));
+    pushService.notifyNewBooking(bookingId).catch(err => logger.error('Booking notification error:', err));
 
     res.status(201).json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error creating booking:', error);
+    logger.error('Error creating booking:', error);
     res.status(500).json({ error: 'Failed to create booking' });
   }
 });
@@ -989,7 +990,7 @@ router.post('/bookings/:id/confirm', authMiddleware, async (req: AuthRequest, re
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error confirming booking:', error);
+    logger.error('Error confirming booking:', error);
     res.status(500).json({ error: 'Failed to confirm booking' });
   }
 });
@@ -1018,7 +1019,7 @@ router.post('/bookings/:id/cancel', authMiddleware, async (req: AuthRequest, res
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error cancelling booking:', error);
+    logger.error('Error cancelling booking:', error);
     res.status(500).json({ error: 'Failed to cancel booking' });
   }
 });
@@ -1045,7 +1046,7 @@ router.post('/bookings/:id/complete', authMiddleware, async (req: AuthRequest, r
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error completing booking:', error);
+    logger.error('Error completing booking:', error);
     res.status(500).json({ error: 'Failed to complete booking' });
   }
 });
@@ -1113,7 +1114,7 @@ router.get('/bookings/my', authMiddleware, async (req: AuthRequest, res: Respons
 
     res.json({ data: bookings, count: totalCount });
   } catch (error) {
-    console.error('Error fetching user bookings:', error);
+    logger.error('Error fetching user bookings:', error);
     res.status(500).json({ error: 'Failed to fetch bookings' });
   }
 });
@@ -1205,7 +1206,7 @@ router.get('/bookings/organization/:orgId', authMiddleware, async (req: AuthRequ
 
     res.json({ data: bookings, count: totalCount });
   } catch (error) {
-    console.error('Error fetching organization bookings:', error);
+    logger.error('Error fetching organization bookings:', error);
     res.status(500).json({ error: 'Failed to fetch bookings' });
   }
 });
@@ -1276,7 +1277,7 @@ router.get('/bookings/:id', authMiddleware, async (req: AuthRequest, res: Respon
 
     res.json({ data: booking });
   } catch (error) {
-    console.error('Error fetching booking:', error);
+    logger.error('Error fetching booking:', error);
     res.status(500).json({ error: 'Failed to fetch booking' });
   }
 });
@@ -1300,7 +1301,7 @@ router.put('/bookings/:id/status', authMiddleware, async (req: AuthRequest, res:
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating booking status:', error);
+    logger.error('Error updating booking status:', error);
     res.status(500).json({ error: 'Failed to update booking status' });
   }
 });
@@ -1324,7 +1325,7 @@ router.put('/bookings/:id/notes', authMiddleware, async (req: AuthRequest, res: 
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating booking notes:', error);
+    logger.error('Error updating booking notes:', error);
     res.status(500).json({ error: 'Failed to update booking notes' });
   }
 });
@@ -1347,7 +1348,7 @@ router.post('/bookings/:id/no-show', authMiddleware, async (req: AuthRequest, re
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error marking booking as no-show:', error);
+    logger.error('Error marking booking as no-show:', error);
     res.status(500).json({ error: 'Failed to mark booking as no-show' });
   }
 });
@@ -1367,7 +1368,7 @@ router.delete('/bookings/:id', authMiddleware, async (req: AuthRequest, res: Res
 
     res.json({ success: true, message: 'Booking deleted' });
   } catch (error) {
-    console.error('Error deleting booking:', error);
+    logger.error('Error deleting booking:', error);
     res.status(500).json({ error: 'Failed to delete booking' });
   }
 });
@@ -1435,7 +1436,7 @@ router.get('/bookings/:id/messages', authMiddleware, async (req: AuthRequest, re
 
     res.json({ data: result.rows });
   } catch (error) {
-    console.error('Error fetching booking messages:', error);
+    logger.error('Error fetching booking messages:', error);
     res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
@@ -1529,7 +1530,7 @@ router.post('/bookings/:id/messages', authMiddleware, async (req: AuthRequest, r
       }
     });
   } catch (error) {
-    console.error('Error sending booking message:', error);
+    logger.error('Error sending booking message:', error);
     res.status(500).json({ error: 'Failed to send message' });
   }
 });
@@ -1578,7 +1579,7 @@ router.put('/bookings/:id/messages/read-all', authMiddleware, async (req: AuthRe
 
     res.json({ data: { marked: result.rowCount } });
   } catch (error) {
-    console.error('Error marking messages as read:', error);
+    logger.error('Error marking messages as read:', error);
     res.status(500).json({ error: 'Failed to mark messages as read' });
   }
 });
@@ -1622,7 +1623,7 @@ router.get('/bookings/:id/messages/unread-count', authMiddleware, async (req: Au
 
     res.json({ data: { count: parseInt(result.rows[0].count) } });
   } catch (error) {
-    console.error('Error getting unread count:', error);
+    logger.error('Error getting unread count:', error);
     res.status(500).json({ error: 'Failed to get unread count' });
   }
 });
@@ -1697,7 +1698,7 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
       data: result.data,
     });
   } catch (error) {
-    console.error('Error generating space suggestions:', error);
+    logger.error('Error generating space suggestions:', error);
     res.status(500).json({
       error: 'Erreur lors de la génération des suggestions',
     });
@@ -1724,7 +1725,7 @@ router.get('/slug/:slug', async (req: Request, res: Response) => {
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error fetching space by slug:', error);
+    logger.error('Error fetching space by slug:', error);
     res.status(500).json({ error: 'Failed to fetch space' });
   }
 });
@@ -1749,7 +1750,7 @@ router.get('/:spaceId/bookings/counts', async (req: Request, res: Response) => {
 
     res.json({ data: { total, byStatus } });
   } catch (error) {
-    console.error('Error fetching booking counts:', error);
+    logger.error('Error fetching booking counts:', error);
     res.status(500).json({ error: 'Failed to fetch booking counts' });
   }
 });
@@ -1774,7 +1775,7 @@ router.put('/bookings/:id/rating', authMiddleware, async (req: AuthRequest, res:
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating booking rating:', error);
+    logger.error('Error updating booking rating:', error);
     res.status(500).json({ error: 'Failed to update booking rating' });
   }
 });

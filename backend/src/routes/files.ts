@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 
+import { logger } from '../utils';
 const router = Router();
 
 const UPLOAD_BASE_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads');
@@ -82,7 +83,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
       },
     });
   } catch (error: any) {
-    console.error('[Files] Upload error:', error);
+    logger.error('[Files] Upload error:', error);
     res.status(500).json({ error: error.message || 'Erreur lors de l\'upload du fichier' });
   }
 });

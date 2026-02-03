@@ -6,6 +6,7 @@ import { communityAdminMiddleware, CommunityAccessRequest } from '../middleware/
 import { communityPermissionService } from '../services/community-permission.service';
 import { pool } from '../services/database';
 
+import { logger } from '../utils';
 const router = express.Router();
 
 // ═══════════════════════════════════════════════════════════════
@@ -22,7 +23,7 @@ router.get('/my', authMiddleware, async (req: any, res: Response) => {
         const subscriptions = await communitySubscriptionService.getUserSubscriptions(talentId);
         res.json({ data: subscriptions });
     } catch (error: any) {
-        console.error('Error fetching subscriptions:', error);
+        logger.error('Error fetching subscriptions:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -50,7 +51,7 @@ router.get('/:communityId', authMiddleware, async (req: any, res: Response) => {
             subscription
         }});
     } catch (error: any) {
-        console.error('Error fetching subscription:', error);
+        logger.error('Error fetching subscription:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -143,7 +144,7 @@ router.post('/:communityId/subscribe', authMiddleware, async (req: any, res: Res
                 : 'Abonnement créé'
         });
     } catch (error: any) {
-        console.error('Error creating subscription:', error);
+        logger.error('Error creating subscription:', error);
         res.status(400).json({ error: error.message });
     }
 });
@@ -180,7 +181,7 @@ router.post('/:subscriptionId/pay', authMiddleware, async (req: any, res: Respon
             ...payment
         });
     } catch (error: any) {
-        console.error('Error initializing payment:', error);
+        logger.error('Error initializing payment:', error);
         res.status(400).json({ error: error.message });
     }
 });
@@ -200,7 +201,7 @@ router.get('/:subscriptionId/verify/:reference', authMiddleware, async (req: any
             payment
         });
     } catch (error: any) {
-        console.error('Error verifying payment:', error);
+        logger.error('Error verifying payment:', error);
         res.status(400).json({ error: error.message });
     }
 });
@@ -222,7 +223,7 @@ router.post('/:subscriptionId/cancel', authMiddleware, async (req: any, res: Res
             message: `Abonnement annulé. Vous aurez accès jusqu'au ${new Date(subscription.current_period_end).toLocaleDateString('fr-FR')}`
         });
     } catch (error: any) {
-        console.error('Error cancelling subscription:', error);
+        logger.error('Error cancelling subscription:', error);
         res.status(400).json({ error: error.message });
     }
 });
@@ -252,7 +253,7 @@ router.post('/:subscriptionId/reactivate', authMiddleware, async (req: any, res:
             subscription
         });
     } catch (error: any) {
-        console.error('Error reactivating subscription:', error);
+        logger.error('Error reactivating subscription:', error);
         res.status(400).json({ error: error.message });
     }
 });
@@ -270,7 +271,7 @@ router.get('/:subscriptionId/payments', authMiddleware, async (req: any, res: Re
 
         res.json({ data: payments });
     } catch (error: any) {
-        console.error('Error fetching payments:', error);
+        logger.error('Error fetching payments:', error);
         res.status(400).json({ error: error.message });
     }
 });
@@ -292,7 +293,7 @@ router.get('/:subscriptionId/invoices', authMiddleware, async (req: any, res: Re
 
         res.json({ data: invoices });
     } catch (error: any) {
-        console.error('Error fetching invoices:', error);
+        logger.error('Error fetching invoices:', error);
         res.status(400).json({ error: error.message });
     }
 });
@@ -318,7 +319,7 @@ router.get('/invoices/all', authMiddleware, async (req: any, res: Response) => {
 
         res.json({ data: invoices });
     } catch (error: any) {
-        console.error('Error fetching invoices:', error);
+        logger.error('Error fetching invoices:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -340,7 +341,7 @@ router.get('/invoices/:invoiceId', authMiddleware, async (req: any, res: Respons
 
         res.json({ data: invoice });
     } catch (error: any) {
-        console.error('Error fetching invoice:', error);
+        logger.error('Error fetching invoice:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -362,7 +363,7 @@ router.get('/invoices/number/:invoiceNumber', authMiddleware, async (req: any, r
 
         res.json({ data: invoice });
     } catch (error: any) {
-        console.error('Error fetching invoice:', error);
+        logger.error('Error fetching invoice:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -390,7 +391,7 @@ router.get('/admin/:communityId/stats', authMiddleware, async (req: any, res: Re
 
         res.json(stats);
     } catch (error: any) {
-        console.error('Error fetching subscription stats:', error);
+        logger.error('Error fetching subscription stats:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -419,7 +420,7 @@ router.get('/admin/:communityId/revenue', authMiddleware, async (req: any, res: 
 
         res.json(stats);
     } catch (error: any) {
-        console.error('Error fetching revenue stats:', error);
+        logger.error('Error fetching revenue stats:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -473,7 +474,7 @@ router.get('/admin/:communityId/subscribers', authMiddleware, async (req: any, r
 
         res.json({ data: result.rows });
     } catch (error: any) {
-        console.error('Error fetching subscribers:', error);
+        logger.error('Error fetching subscribers:', error);
         res.status(500).json({ error: error.message });
     }
 });

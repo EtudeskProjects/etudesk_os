@@ -36,6 +36,9 @@ import { communitySubscriptionService } from './services/community-subscription.
 import { communityPaymentService } from './services/community-payment.service';
 import { communityNotificationService } from './services/community-notification.service';
 import { communityActivityService } from './services/community-activity.service';
+import { AppError, isAppError, RateLimitError } from './errors';
+import { createVersionedRouter, CURRENT_API_VERSION } from './middleware/api-version.middleware';
+import { logger } from './utils';
 
 dotenv.config();
 
@@ -43,24 +46,38 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // CORS Configuration
-const getCorsOrigin = (): string | string[] | boolean => {
+const getCorsOrigin = (): string | string[] => {
   const corsOrigin = process.env.CORS_ORIGIN;
 
-  if (!corsOrigin) {
-    if (process.env.NODE_ENV === 'production') {
-      console.error('❌ CORS_ORIGIN must be set in production');
+  // In production, CORS_ORIGIN must be set and cannot be wildcard
+  if (process.env.NODE_ENV === 'production') {
+    if (!corsOrigin) {
+      logger.error('CORS_ORIGIN must be set in production');
       throw new Error('CORS_ORIGIN must be set in production');
     }
+    if (corsOrigin === '*') {
+      logger.error('CORS_ORIGIN cannot be wildcard (*) in production');
+      throw new Error('CORS_ORIGIN cannot be wildcard (*) in production. Specify exact origins.');
+    }
+  }
+
+  if (!corsOrigin) {
     // Development: allow localhost origins
+    return ['http://localhost:3000', 'http://localhost:8081', 'http://localhost:19006'];
+  }
+
+  // Reject wildcard even in development (bad practice)
+  if (corsOrigin === '*') {
+    logger.warn('CORS_ORIGIN=* is insecure. Using localhost defaults instead.');
     return ['http://localhost:3000', 'http://localhost:8081', 'http://localhost:19006'];
   }
 
   // Allow multiple origins separated by comma
   if (corsOrigin.includes(',')) {
-    return corsOrigin.split(',').map((o) => o.trim());
+    return corsOrigin.split(',').map((o) => o.trim()).filter(Boolean);
   }
 
-  return corsOrigin;
+  return [corsOrigin];
 };
 
 app.use(cors({
@@ -89,76 +106,120 @@ app.get('/health', async (req, res) => {
   });
 });
 
-// Webhooks route BEFORE rate limiter (needs raw body parsing for signature verification)
-app.use('/api/webhooks', webhooksRouter);
+// ═══════════════════════════════════════════════════════════════
+// API v1 ROUTER (Versioned)
+// ═══════════════════════════════════════════════════════════════
+const v1Router = createVersionedRouter('v1');
 
-// Apply global API rate limiter
-app.use('/api', apiLimiter);
+// Webhooks route BEFORE rate limiter (needs raw body parsing for signature verification)
+v1Router.use('/webhooks', webhooksRouter);
+
+// Apply rate limiter to v1 routes
+v1Router.use(apiLimiter);
 
 // Auth Routes with stricter rate limiting
-app.use('/api/auth/request-otp', otpLimiter);
-app.use('/api/auth/verify-otp', authLimiter);
-app.use('/api/auth', authRouter);
-app.use('/api/onboarding', onboardingRouter);
+v1Router.use('/auth/request-otp', otpLimiter);
+v1Router.use('/auth/verify-otp', authLimiter);
+v1Router.use('/auth', authRouter);
+v1Router.use('/onboarding', onboardingRouter);
 
-// API Routes
-app.use('/api/talents', talentsRouter);
-app.use('/api/organizations', organizationsRouter);
-app.use('/api/organizations', organizationMembersRouter);
-app.use('/api/kyc', kycRouter);
-app.use('/api/opportunities', opportunitiesRouter);
-app.use('/api/applications', applicationsRouter);
-app.use('/api/communities', communitiesRouter);
-app.use('/api', communityActivitiesRouter);
-app.use('/api/community-subscriptions', communitySubscriptionsRouter);
-app.use('/api/community-notifications', communityNotificationsRouter);
-app.use('/api/communities', communityInvitationsRouter); // Invitations routes /:communityId/invitations
-app.use('/api/community-invitations', communityInvitationsRouter); // User routes /me, /:id/accept, /:id/decline
-app.use('/api/opportunities', opportunityInvitationsRouter); // Invitations routes /:opportunityId/invitations
-app.use('/api/opportunity-invitations', opportunityInvitationsRouter); // User routes /me, /:id/accept, /:id/decline
-app.use('/api/spaces', spacesRouter);
-app.use('/api/spaces', spaceInvitationsRouter); // Invitations routes /:spaceId/invitations
-app.use('/api/space-invitations', spaceInvitationsRouter); // User routes /me, /:id/accept, /:id/decline
+// Domain Routes
+v1Router.use('/talents', talentsRouter);
+v1Router.use('/organizations', organizationsRouter);
+v1Router.use('/organizations', organizationMembersRouter);
+v1Router.use('/kyc', kycRouter);
+v1Router.use('/opportunities', opportunitiesRouter);
+v1Router.use('/applications', applicationsRouter);
+v1Router.use('/communities', communitiesRouter);
+v1Router.use('/', communityActivitiesRouter);
+v1Router.use('/community-subscriptions', communitySubscriptionsRouter);
+v1Router.use('/community-notifications', communityNotificationsRouter);
+v1Router.use('/communities', communityInvitationsRouter);
+v1Router.use('/community-invitations', communityInvitationsRouter);
+v1Router.use('/opportunities', opportunityInvitationsRouter);
+v1Router.use('/opportunity-invitations', opportunityInvitationsRouter);
+v1Router.use('/spaces', spacesRouter);
+v1Router.use('/spaces', spaceInvitationsRouter);
+v1Router.use('/space-invitations', spaceInvitationsRouter);
+v1Router.use('/bookmarks', bookmarksRouter);
+v1Router.use('/notifications', notificationsRouter);
+v1Router.use('/images', imagesRouter);
+v1Router.use('/files', filesRouter);
+v1Router.use('/payment-methods', paymentMethodsRouter);
+v1Router.use('/calendar', calendarRouter);
+v1Router.use('/copilot', copilotRouter);
+v1Router.use('/documents', documentsRouter);
+v1Router.use('/skills', skillsRouter);
 
-app.use('/api/bookmarks', bookmarksRouter);
-app.use('/api/notifications', notificationsRouter);
-app.use('/api/images', imagesRouter);
-app.use('/api/files', filesRouter);
-app.use('/api/payment-methods', paymentMethodsRouter);
-app.use('/api/calendar', calendarRouter);
-app.use('/api/copilot', copilotRouter);
-app.use('/api/documents', documentsRouter);
-app.use('/api/skills', skillsRouter);
+// Mount versioned API
+app.use('/api/v1', v1Router);
+app.use('/api', v1Router); // Backward compatible - defaults to v1
 
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
-// Error handler
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Server error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+// Global error handler
+app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  // Handle our custom AppError instances
+  if (isAppError(err)) {
+    // Log operational errors at appropriate level
+    if (err.statusCode >= 500) {
+      logger.error(`[${err.code}] ${err.message}`, err, {
+        path: req.path,
+        method: req.method,
+        statusCode: err.statusCode,
+      });
+    } else if (process.env.NODE_ENV !== 'production') {
+      logger.warn(`[${err.code}] ${err.message}`, { path: req.path });
+    }
+
+    // Add Retry-After header for rate limit errors
+    if (err instanceof RateLimitError && err.retryAfter) {
+      res.setHeader('Retry-After', err.retryAfter);
+    }
+
+    return res.status(err.statusCode).json(err.toJSON());
+  }
+
+  // Handle unexpected errors
+  logger.error('Unexpected error', err, {
+    path: req.path,
+    method: req.method,
+  });
+
+  // Never expose internal error details in production
+  res.status(500).json({
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: process.env.NODE_ENV === 'production'
+        ? 'An unexpected error occurred'
+        : err.message,
+    },
+  });
 });
 
 // Start server
 app.listen(PORT, async () => {
-  console.log(`🚀 Etudesk API running on http://localhost:${PORT}`);
+  logger.info('Etudesk API started', { port: PORT, version: CURRENT_API_VERSION });
 
   // Verify email service connection
   const emailConnected = await verifyEmailConnection();
   if (!emailConnected) {
-    console.warn('⚠️  Email service not available. OTP emails will fail.');
-    console.warn('   Make sure Mailhog is running: docker-compose up -d mailhog');
+    logger.warn('Email service not available. OTP emails will fail.', {
+      hint: 'Make sure Mailhog is running: docker-compose up -d mailhog',
+    });
   }
 
   // Initialize Neo4j Graph Database
   try {
     await graphService.initialize();
-    console.log('✅ Neo4j Graph Database connected');
+    logger.info('Neo4j Graph Database connected');
   } catch (error) {
-    console.warn('⚠️  Neo4j Graph Database not available. Graph features will be limited.');
-    console.warn('   Check your NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD in .env');
+    logger.warn('Neo4j Graph Database not available. Graph features will be limited.', {
+      hint: 'Check your NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD in .env',
+    });
   }
 
   // Setup periodic cleanup of expired OTPs (every hour)
@@ -167,89 +228,82 @@ app.listen(PORT, async () => {
   }, 60 * 60 * 1000);
 
   // ═══════════════════════════════════════════════════════════════
-  // COMMUNITY MODULE CRON JOBS
+  // CRON JOBS
   // ═══════════════════════════════════════════════════════════════
+  const cronLogger = logger.child({ module: 'cron' });
 
   // Process expiring subscriptions daily (at startup and every 24h)
   const runSubscriptionCron = async () => {
     try {
       const result = await communitySubscriptionService.processExpiringSubscriptions();
-      console.log(`[CRON] Subscription check: ${result.expired} expired, ${result.reminded} reminded`);
+      cronLogger.info('Subscription check completed', { expired: result.expired, reminded: result.reminded });
     } catch (err) {
-      console.error('[CRON] Failed to process subscriptions:', err);
+      cronLogger.error('Failed to process subscriptions', err);
     }
   };
-  runSubscriptionCron(); // Run at startup
-  setInterval(runSubscriptionCron, 24 * 60 * 60 * 1000); // Every 24h
+  runSubscriptionCron();
+  setInterval(runSubscriptionCron, 24 * 60 * 60 * 1000);
 
   // Retry failed payments daily
   const runPaymentRetryCron = async () => {
     try {
       const count = await communityPaymentService.processFailedPaymentsRetry();
       if (count > 0) {
-        console.log(`[CRON] Retried ${count} failed payments`);
+        cronLogger.info('Retried failed payments', { count });
       }
     } catch (err) {
-      console.error('[CRON] Failed to retry payments:', err);
+      cronLogger.error('Failed to retry payments', err);
     }
   };
-  setInterval(runPaymentRetryCron, 24 * 60 * 60 * 1000); // Every 24h
+  setInterval(runPaymentRetryCron, 24 * 60 * 60 * 1000);
 
   // Process scheduled notifications every 10 minutes
   const runNotificationCron = async () => {
     try {
       const count = await communityNotificationService.processScheduledNotifications();
       if (count > 0) {
-        console.log(`[CRON] Sent ${count} scheduled notifications`);
+        cronLogger.info('Sent scheduled notifications', { count });
       }
     } catch (err) {
-      console.error('[CRON] Failed to process notifications:', err);
+      cronLogger.error('Failed to process notifications', err);
     }
   };
-  setInterval(runNotificationCron, 10 * 60 * 1000); // Every 10 minutes
+  setInterval(runNotificationCron, 10 * 60 * 1000);
 
   // Publish scheduled activities every 5 minutes
   const runPublishScheduledCron = async () => {
     try {
       const count = await communityActivityService.publishScheduledActivities();
       if (count > 0) {
-        console.log(`[CRON] Published ${count} scheduled activities`);
+        cronLogger.info('Published scheduled activities', { count });
       }
     } catch (err) {
-      console.error('[CRON] Failed to publish scheduled activities:', err);
+      cronLogger.error('Failed to publish scheduled activities', err);
     }
   };
-  runPublishScheduledCron(); // Run at startup
-  setInterval(runPublishScheduledCron, 5 * 60 * 1000); // Every 5 minutes
+  runPublishScheduledCron();
+  setInterval(runPublishScheduledCron, 5 * 60 * 1000);
 
   // Cleanup old notifications weekly
   const runNotificationCleanupCron = async () => {
     try {
       const count = await communityNotificationService.deleteOldNotifications(90);
       if (count > 0) {
-        console.log(`[CRON] Deleted ${count} old notifications`);
+        cronLogger.info('Deleted old notifications', { count });
       }
     } catch (err) {
-      console.error('[CRON] Failed to cleanup notifications:', err);
+      cronLogger.error('Failed to cleanup notifications', err);
     }
   };
-  setInterval(runNotificationCleanupCron, 7 * 24 * 60 * 60 * 1000); // Weekly
+  setInterval(runNotificationCleanupCron, 7 * 24 * 60 * 60 * 1000);
 
-  console.log('');
-  console.log('📋 Available endpoints:');
-  console.log('   POST /api/auth/request-otp  - Request OTP code');
-  console.log('   POST /api/auth/verify-otp   - Verify OTP and login');
-  console.log('   POST /api/auth/refresh      - Refresh tokens');
-  console.log('   POST /api/auth/logout       - Logout');
-  console.log('   GET  /api/auth/me           - Get current user');
-  console.log('   POST /api/onboarding/complete - Create talent profile');
-  console.log('   GET  /api/onboarding/status   - Check onboarding status');
-  console.log('   GET  /api/talents/me          - Get current talent profile');
-  console.log('   PUT  /api/talents/me          - Update current talent profile');
-  console.log('   GET  /api/organizations       - List organizations');
-  console.log('   POST /api/organizations       - Create organization');
-  console.log('   PUT  /api/organizations/:id   - Update organization');
-  console.log('   GET  /api/kyc/status          - Get KYC status');
-  console.log('   POST /api/kyc/submit          - Submit KYC documents');
-  console.log('');
+  logger.info('API ready', {
+    endpoints: {
+      auth: '/api/v1/auth',
+      talents: '/api/v1/talents',
+      organizations: '/api/v1/organizations',
+      opportunities: '/api/v1/opportunities',
+      communities: '/api/v1/communities',
+    },
+  });
 });

@@ -13,6 +13,7 @@ import { sendWelcomeEmail } from '../services/email.service';
 import { onTalentProfileUpdate } from '../services/embedding.service';
 import { autoModerationService } from '../services/auto-moderation.service';
 
+import { logger } from '../utils';
 const router = Router();
 
 // Valid profile tags
@@ -138,7 +139,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
         bio: data.bio,
       });
     } catch (moderationError: any) {
-      console.log(`[Moderation] Onboarding rejected: ${moderationError.message}`);
+      logger.info(`[Moderation] Onboarding rejected: ${moderationError.message}`);
       return res.status(400).json({
         success: false,
         error: moderationError.message,
@@ -275,12 +276,12 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       // Send welcome email (async, don't wait)
       const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ') || user.email;
       sendWelcomeEmail(user.email, fullName).catch(err => {
-        console.error('❌ Failed to send welcome email:', err);
+        logger.error('❌ Failed to send welcome email:', err);
       });
 
       // Generate embedding for semantic search (async, don't wait)
       onTalentProfileUpdate(talentId).catch(err => {
-        console.error('❌ Failed to generate talent embedding:', err);
+        logger.error('❌ Failed to generate talent embedding:', err);
       });
 
       // Generate new tokens with talent_id
@@ -309,7 +310,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       client.release();
     }
   } catch (error: any) {
-    console.error('❌ Onboarding error:', error);
+    logger.error('❌ Onboarding error:', error);
     return res.status(500).json({
       success: false,
       error: 'Erreur lors de la création du profil',
@@ -363,7 +364,7 @@ router.get('/status', authMiddleware, async (req: AuthRequest, res: Response) =>
       },
     });
   } catch (error) {
-    console.error('❌ Get onboarding status error:', error);
+    logger.error('❌ Get onboarding status error:', error);
     return res.status(500).json({
       success: false,
       error: 'Erreur serveur',

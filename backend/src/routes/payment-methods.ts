@@ -8,6 +8,7 @@ import { pool } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { v4 as uuidv4 } from 'uuid';
 
+import { logger } from '../utils';
 const router = Router();
 
 type PaymentProvider = 'orange_money' | 'mtn_money' | 'moov_money' | 'wave' | 'push' | 'djamo';
@@ -43,7 +44,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     const paymentMethods = result.rows[0].payment_methods || [];
     res.json({ data: paymentMethods });
   } catch (error) {
-    console.error('Error fetching payment methods:', error);
+    logger.error('Error fetching payment methods:', error);
     res.status(500).json({ error: 'Failed to fetch payment methods' });
   }
 });
@@ -105,10 +106,10 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       [JSON.stringify(paymentMethods), req.talentId]
     );
 
-    console.log(`✅ Payment method added for talent: ${req.talentId}`);
+    logger.info(`✅ Payment method added for talent: ${req.talentId}`);
     res.status(201).json({ data: newMethod });
   } catch (error) {
-    console.error('Error adding payment method:', error);
+    logger.error('Error adding payment method:', error);
     res.status(500).json({ error: 'Failed to add payment method' });
   }
 });
@@ -154,10 +155,10 @@ router.put('/:id/default', authMiddleware, async (req: AuthRequest, res: Respons
       [JSON.stringify(paymentMethods), req.talentId]
     );
 
-    console.log(`✅ Default payment method set: ${id} for talent: ${req.talentId}`);
+    logger.info(`✅ Default payment method set: ${id} for talent: ${req.talentId}`);
     res.json({ data: paymentMethods });
   } catch (error) {
-    console.error('Error setting default payment method:', error);
+    logger.error('Error setting default payment method:', error);
     res.status(500).json({ error: 'Failed to set default payment method' });
   }
 });
@@ -208,10 +209,10 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
       [JSON.stringify(paymentMethods), req.talentId]
     );
 
-    console.log(`✅ Payment method deleted: ${id} for talent: ${req.talentId}`);
+    logger.info(`✅ Payment method deleted: ${id} for talent: ${req.talentId}`);
     res.json({ data: paymentMethods });
   } catch (error) {
-    console.error('Error deleting payment method:', error);
+    logger.error('Error deleting payment method:', error);
     res.status(500).json({ error: 'Failed to delete payment method' });
   }
 });

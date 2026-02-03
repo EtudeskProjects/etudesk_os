@@ -1,63 +1,103 @@
 /**
  * SQL Query Tool — PostgreSQL structured data access
  * Intent-based queries (NEVER raw SQL from the LLM)
+ *
+ * SECURITY: The tool receives the authenticated talentId via factory injection,
+ * NOT from LLM parameters. This prevents IDOR attacks.
  */
 
 import { tool } from '@openai/agents';
 import { z } from 'zod';
 import { pool } from '../../database';
 
-export const sqlQueryTool = tool({
-  name: 'sql_query',
-  description:
-    "Exécute une requête sur la base PostgreSQL. Utilise pour accéder aux données structurées : profils, candidatures, réservations, invitations, activités, statistiques org, flashcards, quiz.",
-  parameters: z.object({
-    intent: z.enum([
-      // Talent
-      'my_profile',
-      'my_applications',
-      'my_reservations',
-      'my_invitations',
-      'my_communities',
-      'my_bookmarks',
-      'my_documents',
-      'my_skills',
-      'my_flashcards',
-      'my_quiz_results',
-      'my_learning_topics',
-      // Org
-      'org_members',
-      'org_applications',
-      'org_stats',
-      'org_opportunities',
-      'org_communities',
-      'org_spaces',
-      'org_revenue',
-      'org_invitations',
-      // Search
-      'search_opportunities',
-      'search_communities',
-      'search_spaces',
-      'search_organizations',
-      'search_talents',
-      // Actions
-      'apply_opportunity',
-      'join_community',
-      'book_space',
-      'create_activity',
-      'respond_invitation',
-      'update_application',
-      'create_flashcard',
-      'record_review',
-    ]),
-    paramsJson: z.string().describe('Paramètres de la requête en JSON string (ex: \'{"talentId":"uuid"}\')'),
-  }),
-  execute: async ({ intent, paramsJson }) => {
-    const params: Record<string, unknown> = paramsJson ? JSON.parse(paramsJson) : {};
-    const talentId = params.talentId as string;
-    if (!talentId) {
-      return { error: 'talentId est requis' };
-    }
+import { logger } from '../../../utils';
+// Schema for intents
+const SQL_INTENTS = [
+  // Talent
+  'my_profile',
+  'my_applications',
+  'my_reservations',
+  'my_invitations',
+  'my_communities',
+  'my_bookmarks',
+  'my_documents',
+  'my_skills',
+  'my_flashcards',
+  'my_quiz_results',
+  'my_learning_topics',
+  // Org
+  'org_members',
+  'org_applications',
+  'org_stats',
+  'org_opportunities',
+  'org_communities',
+  'org_spaces',
+  'org_revenue',
+  'org_invitations',
+  // Search
+  'search_opportunities',
+  'search_communities',
+  'search_spaces',
+  'search_organizations',
+  'search_talents',
+  // Actions
+  'apply_opportunity',
+  'join_community',
+  'book_space',
+  'create_activity',
+  'respond_invitation',
+  'update_application',
+  'create_flashcard',
+  'record_review',
+] as const;
+
+type SqlIntent = typeof SQL_INTENTS[number];
+
+/**
+ * Creates a SQL query tool with the authenticated talentId injected.
+ * This ensures the tool always operates on the authenticated user's data,
+ * preventing IDOR (Insecure Direct Object Reference) vulnerabilities.
+ *
+ * @param authenticatedTalentId - The talentId from the authenticated session
+ * @param authorizedOrgIds - Optional list of organization IDs the user is authorized to access
+ */
+export function createSqlQueryTool(
+  authenticatedTalentId: string,
+  authorizedOrgIds?: string[]
+) {
+  return tool({
+    name: 'sql_query',
+    description:
+      "Exécute une requête sur la base PostgreSQL. Utilise pour accéder aux données structurées : profils, candidatures, réservations, invitations, activités, statistiques org, flashcards, quiz. Note: les données personnelles sont automatiquement filtrées pour l'utilisateur courant.",
+    parameters: z.object({
+      intent: z.enum(SQL_INTENTS),
+      paramsJson: z.string().describe('Paramètres optionnels en JSON (ex: \'{"status":"PENDING"}\' pour filtrer). Ne pas inclure talentId.'),
+    }),
+    execute: async ({ intent, paramsJson }) => {
+      const params: Record<string, unknown> = paramsJson ? JSON.parse(paramsJson) : {};
+
+      // SECURITY: Always use the authenticated talentId, never from params
+      const talentId = authenticatedTalentId;
+
+      // For org intents, verify authorization
+      if (intent.startsWith('org_')) {
+        const orgId = params?.organizationId as string;
+        if (!orgId) {
+          return { error: 'organizationId requis pour les requêtes organisation' };
+        }
+        // If authorizedOrgIds is provided, check authorization
+        if (authorizedOrgIds && !authorizedOrgIds.includes(orgId)) {
+          // Verify user is member of the organization
+          const memberCheck = await pool.query(
+            `SELECT role FROM organization_members
+             WHERE organization_id = $1 AND talent_id = $2 AND status = 'ACTIVE'`,
+            [orgId, talentId]
+          );
+          if (memberCheck.rows.length === 0) {
+            return { error: 'Accès non autorisé à cette organisation' };
+          }
+        }
+      }
 
     try {
       switch (intent) {
@@ -485,8 +525,34 @@ export const sqlQueryTool = tool({
           return { error: `Intent '${intent}' non implémenté. Contactez le développeur.` };
       }
     } catch (error: any) {
-      console.error(`SQL query error (${intent}):`, error);
+      logger.error(`SQL query error (${intent}):`, error);
       return { error: error.message };
     }
+  },
+  });
+}
+
+/**
+ * @deprecated Use createSqlQueryTool(authenticatedTalentId) instead for security.
+ * This static export is kept for backward compatibility but should be migrated.
+ * WARNING: This version is vulnerable to IDOR attacks if talentId is not validated.
+ */
+export const sqlQueryTool = tool({
+  name: 'sql_query',
+  description:
+    "Exécute une requête sur la base PostgreSQL. DEPRECATED: Utilisez createSqlQueryTool() pour la sécurité.",
+  parameters: z.object({
+    intent: z.enum(SQL_INTENTS),
+    paramsJson: z.string().describe('Paramètres de la requête en JSON string'),
+  }),
+  execute: async ({ intent, paramsJson }) => {
+    const params: Record<string, unknown> = paramsJson ? JSON.parse(paramsJson) : {};
+    const talentId = params.talentId as string;
+    if (!talentId) {
+      return { error: 'talentId est requis. SECURITY WARNING: Use createSqlQueryTool() instead.' };
+    }
+    // Delegate to a minimal implementation that warns about security
+    logger.warn('[SECURITY WARNING] sqlQueryTool used without authentication context. Migrate to createSqlQueryTool()');
+    return { error: 'This tool is deprecated. Please update the agent to use createSqlQueryTool().' };
   },
 });

@@ -3,6 +3,7 @@ import { pool } from '../services/database';
 import { communitySubscriptionService } from '../services/community-subscription.service';
 import { communityPermissionService } from '../services/community-permission.service';
 
+import { logger } from '../utils';
 /**
  * Extended request with community access info
  */
@@ -79,7 +80,7 @@ export async function communityMemberMiddleware(
 
         next();
     } catch (error: any) {
-        console.error('Community member middleware error:', error);
+        logger.error('Community member middleware error:', error);
         res.status(500).json({ error: 'Failed to verify community membership' });
     }
 }
@@ -178,7 +179,7 @@ export async function communityPaidAccessMiddleware(
 
         next();
     } catch (error: any) {
-        console.error('Community paid access middleware error:', error);
+        logger.error('Community paid access middleware error:', error);
         res.status(500).json({ error: 'Failed to verify community access' });
     }
 }
@@ -226,7 +227,7 @@ export async function communityAdminMiddleware(
 
         next();
     } catch (error: any) {
-        console.error('Community admin middleware error:', error);
+        logger.error('Community admin middleware error:', error);
         res.status(500).json({ error: 'Failed to verify admin access' });
     }
 }
@@ -260,7 +261,7 @@ export async function communityOwnerMiddleware(
 
         next();
     } catch (error: any) {
-        console.error('Community owner middleware error:', error);
+        logger.error('Community owner middleware error:', error);
         res.status(500).json({ error: 'Failed to verify admin access' });
     }
 }

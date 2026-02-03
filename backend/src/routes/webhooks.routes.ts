@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import crypto from 'crypto';
 import { communityPaymentService } from '../services/community-payment.service';
 
+import { logger } from '../utils';
 const router = express.Router();
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || '';
@@ -11,7 +12,7 @@ const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || '';
  */
 function verifyPaystackSignature(payload: string, signature: string): boolean {
     if (!PAYSTACK_SECRET_KEY) {
-        console.error('[Webhook] PAYSTACK_SECRET_KEY not configured');
+        logger.error('[Webhook] PAYSTACK_SECRET_KEY not configured');
         return false;
     }
 
@@ -34,14 +35,14 @@ router.post('/paystack', express.raw({ type: 'application/json' }), async (req: 
 
         // Verify signature
         if (!verifyPaystackSignature(payload, signature)) {
-            console.error('[Webhook] Invalid Paystack signature');
+            logger.error('[Webhook] Invalid Paystack signature');
             return res.status(401).json({ error: 'Invalid signature' });
         }
 
         const event = JSON.parse(payload);
 
-        console.log(`[Webhook] Received Paystack event: ${event.event}`);
-        console.log(`[Webhook] Reference: ${event.data?.reference || 'N/A'}`);
+        logger.info(`[Webhook] Received Paystack event: ${event.event}`);
+        logger.info(`[Webhook] Reference: ${event.data?.reference || 'N/A'}`);
 
         // Process the webhook
         await communityPaymentService.handleWebhook(event);
@@ -50,7 +51,7 @@ router.post('/paystack', express.raw({ type: 'application/json' }), async (req: 
         res.status(200).json({ received: true });
 
     } catch (error: any) {
-        console.error('[Webhook] Error processing Paystack webhook:', error);
+        logger.error('[Webhook] Error processing Paystack webhook:', error);
         // Still return 200 to prevent Paystack from retrying
         res.status(200).json({ received: true, error: error.message });
     }

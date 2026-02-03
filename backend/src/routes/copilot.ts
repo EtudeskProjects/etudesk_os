@@ -226,7 +226,7 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
     sendSSE(res, { type: 'done', sessionId });
     res.end();
   } catch (error: any) {
-    console.error('Error in copilot chat:', error);
+    logger.error('Error in copilot chat:', error);
     // If headers already sent (SSE started), send error event
     if (res.headersSent) {
       sendSSE(res, { type: 'error', error: 'Erreur lors du traitement du message' });
@@ -253,7 +253,7 @@ router.get('/suggestions', authMiddleware, async (req: AuthRequest, res: Respons
 
     res.json({ success: true, data: { suggestions } });
   } catch (error) {
-    console.error('Error generating suggestions:', error);
+    logger.error('Error generating suggestions:', error);
     res.json({ success: true, data: { suggestions: [] } });
   }
 });
@@ -362,7 +362,7 @@ router.post(
         },
       });
     } catch (error) {
-      console.error('Error uploading copilot attachment:', error);
+      logger.error('Error uploading copilot attachment:', error);
       res.status(500).json({
         error: "Erreur lors de l'upload du fichier",
       });
@@ -395,7 +395,7 @@ router.get('/sessions', authMiddleware, async (req: AuthRequest, res: Response) 
       data: { sessions },
     });
   } catch (error) {
-    console.error('Error listing copilot sessions:', error);
+    logger.error('Error listing copilot sessions:', error);
     res.status(500).json({
       error: 'Erreur lors de la récupération des sessions',
     });
@@ -425,7 +425,7 @@ router.post('/sessions', authMiddleware, async (req: AuthRequest, res: Response)
       data: session,
     });
   } catch (error) {
-    console.error('Error creating copilot session:', error);
+    logger.error('Error creating copilot session:', error);
     res.status(500).json({
       error: 'Erreur lors de la création de la session',
     });
@@ -457,7 +457,7 @@ router.get('/sessions/:id', authMiddleware, async (req: AuthRequest, res: Respon
       data: { session, messages },
     });
   } catch (error) {
-    console.error('Error getting copilot session:', error);
+    logger.error('Error getting copilot session:', error);
     res.status(500).json({
       error: 'Erreur lors de la récupération de la session',
     });
@@ -486,7 +486,7 @@ router.delete('/sessions/:id', authMiddleware, async (req: AuthRequest, res: Res
       message: 'Session supprimée',
     });
   } catch (error) {
-    console.error('Error deleting copilot session:', error);
+    logger.error('Error deleting copilot session:', error);
     res.status(500).json({
       error: 'Erreur lors de la suppression de la session',
     });
@@ -521,7 +521,7 @@ router.get('/sessions/:id/messages', authMiddleware, async (req: AuthRequest, re
       data: { messages },
     });
   } catch (error) {
-    console.error('Error getting copilot messages:', error);
+    logger.error('Error getting copilot messages:', error);
     res.status(500).json({
       error: 'Erreur lors de la récupération des messages',
     });
@@ -534,6 +534,7 @@ router.get('/sessions/:id/messages', authMiddleware, async (req: AuthRequest, re
 
 import { pool } from '../services/database';
 
+import { logger } from '../utils';
 /**
  * GET /api/copilot/learning/progress - Get learning progress summary
  * Returns: { topics, totalFlashcards, dueFlashcards, streak, etc. }
@@ -605,7 +606,7 @@ router.get('/learning/progress', authMiddleware, async (req: AuthRequest, res: R
       },
     });
   } catch (error) {
-    console.error('Error getting learning progress:', error);
+    logger.error('Error getting learning progress:', error);
     res.status(500).json({
       error: 'Erreur lors de la récupération de la progression',
     });
@@ -669,7 +670,7 @@ router.get('/learning/due', authMiddleware, async (req: AuthRequest, res: Respon
       },
     });
   } catch (error) {
-    console.error('Error getting due flashcards:', error);
+    logger.error('Error getting due flashcards:', error);
     res.status(500).json({
       error: 'Erreur lors de la récupération des cartes',
     });
@@ -772,7 +773,7 @@ router.post('/learning/review', authMiddleware, async (req: AuthRequest, res: Re
       },
     });
   } catch (error) {
-    console.error('Error recording flashcard review:', error);
+    logger.error('Error recording flashcard review:', error);
     res.status(500).json({
       error: 'Erreur lors de l\'enregistrement de la révision',
     });
@@ -820,7 +821,7 @@ router.get('/learning/topics', authMiddleware, async (req: AuthRequest, res: Res
       },
     });
   } catch (error) {
-    console.error('Error getting learning topics:', error);
+    logger.error('Error getting learning topics:', error);
     res.status(500).json({
       error: 'Erreur lors de la récupération des sujets',
     });

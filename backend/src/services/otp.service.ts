@@ -8,6 +8,7 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { pool } from './database';
 
+import { logger } from '../utils';
 // OTP Configuration
 const OTP_CONFIG = {
   length: 6,
@@ -68,13 +69,14 @@ export async function createOTP(
 
   try {
     // Check rate limiting - last OTP request for this email
+    // Use parameterized interval to prevent SQL injection
     const recentOTP = await client.query(
       `SELECT id, created_at FROM otp_codes
        WHERE email = $1
-         AND created_at > NOW() - INTERVAL '${OTP_CONFIG.rateLimitMinutes} minutes'
+         AND created_at > NOW() - ($2 || ' minutes')::INTERVAL
        ORDER BY created_at DESC
        LIMIT 1`,
-      [email.toLowerCase()]
+      [email.toLowerCase(), OTP_CONFIG.rateLimitMinutes.toString()]
     );
 
     if (recentOTP.rows.length > 0) {
@@ -91,12 +93,13 @@ export async function createOTP(
     }
 
     // Check if too many failed attempts recently (cooldown)
+    // Use parameterized interval to prevent SQL injection
     const failedAttempts = await client.query(
       `SELECT COUNT(*) as count FROM otp_codes
        WHERE email = $1
          AND attempts >= max_attempts
-         AND created_at > NOW() - INTERVAL '${OTP_CONFIG.cooldownMinutes} minutes'`,
-      [email.toLowerCase()]
+         AND created_at > NOW() - ($2 || ' minutes')::INTERVAL`,
+      [email.toLowerCase(), OTP_CONFIG.cooldownMinutes.toString()]
     );
 
     if (parseInt(failedAttempts.rows[0].count, 10) >= 3) {
@@ -139,7 +142,7 @@ export async function createOTP(
 
     // Only log in development, never log the actual code
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`🔑 OTP created for ${email} (expires: ${expiresAt.toISOString()})`);
+      logger.info(`🔑 OTP created for ${email} (expires: ${expiresAt.toISOString()})`);
     }
 
     return {
@@ -149,7 +152,7 @@ export async function createOTP(
       expiresAt,
     };
   } catch (error) {
-    console.error('❌ Failed to create OTP:', error);
+    logger.error('❌ Failed to create OTP:', error);
     return {
       success: false,
       error: 'Erreur lors de la création du code',
@@ -268,7 +271,7 @@ export async function verifyOTP(email: string, code: string): Promise<VerifyOTPR
 
     await client.query('COMMIT');
 
-    console.log(`✅ OTP verified for ${email} (userId: ${userId}, isNewUser: ${isNewUser})`);
+    logger.info(`✅ OTP verified for ${email} (userId: ${userId}, isNewUser: ${isNewUser})`);
 
     return {
       success: true,
@@ -278,7 +281,7 @@ export async function verifyOTP(email: string, code: string): Promise<VerifyOTPR
     };
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('❌ Failed to verify OTP:', error);
+    logger.error('❌ Failed to verify OTP:', error);
     return {
       success: false,
       error: 'Erreur lors de la vérification du code',
@@ -296,11 +299,11 @@ export async function cleanupExpiredOTPs(): Promise<number> {
     const result = await pool.query(`SELECT cleanup_expired_otps() as deleted_count`);
     const count = result.rows[0]?.deleted_count || 0;
     if (count > 0) {
-      console.log(`🧹 Cleaned up ${count} expired OTPs`);
+      logger.info(`🧹 Cleaned up ${count} expired OTPs`);
     }
     return count;
   } catch (error) {
-    console.error('❌ Failed to cleanup OTPs:', error);
+    logger.error('❌ Failed to cleanup OTPs:', error);
     return 0;
   }
 }

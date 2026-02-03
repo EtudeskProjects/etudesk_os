@@ -2,6 +2,7 @@ import express, { Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { pool } from '../services/database';
 
+import { logger } from '../utils';
 const router = express.Router();
 
 /**
@@ -175,7 +176,7 @@ router.get('/events', authMiddleware, async (req: AuthRequest, res: Response) =>
 
         res.json({ data: events });
     } catch (error: any) {
-        console.error('Error fetching calendar events:', error);
+        logger.error('Error fetching calendar events:', error);
         res.status(500).json({ error: error.message });
     }
 });

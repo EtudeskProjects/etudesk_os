@@ -11,6 +11,7 @@ import {
 import { onOpportunityUpdate } from '../services/embedding.service';
 import { autoModerationService } from '../services/auto-moderation.service';
 
+import { logger } from '../utils';
 // Type for SQL query parameters
 type QueryParam = string | number | boolean | null | Date;
 
@@ -79,7 +80,7 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
       data: result.data,
     });
   } catch (error) {
-    console.error('Error generating opportunity suggestions:', error);
+    logger.error('Error generating opportunity suggestions:', error);
     res.status(500).json({
       error: 'Erreur lors de la génération des suggestions',
     });
@@ -178,7 +179,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
     const result = await pool.query(query, params);
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
-    console.error('Error fetching opportunities:', error);
+    logger.error('Error fetching opportunities:', error);
     res.status(500).json({ error: 'Failed to fetch opportunities' });
   }
 });
@@ -232,7 +233,7 @@ router.get('/organization/:orgId', optionalAuthMiddleware, async (req: AuthReque
     const result = await pool.query(query, params);
     res.json({ data: result.rows, count: totalCount });
   } catch (error) {
-    console.error('Error fetching organization opportunities:', error);
+    logger.error('Error fetching organization opportunities:', error);
     res.status(500).json({ error: 'Failed to fetch opportunities' });
   }
 });
@@ -284,7 +285,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     res.json({ data: opportunity });
   } catch (error: any) {
-    console.error('Error fetching opportunity:', error.message, error.stack);
+    logger.error('Error fetching opportunity:', error.message, error.stack);
     res.status(500).json({ error: 'Failed to fetch opportunity', details: error.message });
   }
 });
@@ -321,7 +322,7 @@ router.post('/:id/view', async (req: Request, res: Response) => {
 
     res.json({ success: true, views_count: result.rows[0]?.views_count || 0 });
   } catch (error: any) {
-    console.error('Error incrementing views:', error.message, error.stack);
+    logger.error('Error incrementing views:', error.message, error.stack);
     res.status(500).json({ error: 'Failed to increment views', details: error.message });
   }
 });
@@ -371,7 +372,7 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
         nice_to_have,
       });
     } catch (moderationError: any) {
-      console.log(`[Moderation] Opportunity creation rejected: ${moderationError.message}`);
+      logger.info(`[Moderation] Opportunity creation rejected: ${moderationError.message}`);
       return res.status(400).json({ 
         error: moderationError.message,
         code: 'CONTENT_MODERATION_FAILED',
@@ -431,12 +432,12 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
 
     // Generate embedding for semantic search (async, non-blocking)
     onOpportunityUpdate(id).catch(err =>
-      console.error('Failed to generate opportunity embedding:', err)
+      logger.error('Failed to generate opportunity embedding:', err)
     );
 
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error creating opportunity:', error);
+    logger.error('Error creating opportunity:', error);
     res.status(500).json({ error: 'Failed to create opportunity' });
   }
 });
@@ -500,7 +501,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         nice_to_have,
       });
     } catch (moderationError: any) {
-      console.log(`[Moderation] Opportunity update rejected for ${id}: ${moderationError.message}`);
+      logger.info(`[Moderation] Opportunity update rejected for ${id}: ${moderationError.message}`);
       return res.status(400).json({ 
         error: moderationError.message,
         code: 'CONTENT_MODERATION_FAILED',
@@ -559,12 +560,12 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     // Update embedding for semantic search (async, non-blocking)
     onOpportunityUpdate(id).catch(err =>
-      console.error('Failed to update opportunity embedding:', err)
+      logger.error('Failed to update opportunity embedding:', err)
     );
 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating opportunity:', error);
+    logger.error('Error updating opportunity:', error);
     res.status(500).json({ error: 'Failed to update opportunity' });
   }
 });
@@ -600,7 +601,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
 
     res.json({ success: true, message: 'Opportunity deleted' });
   } catch (error) {
-    console.error('Error deleting opportunity:', error);
+    logger.error('Error deleting opportunity:', error);
     res.status(500).json({ error: 'Failed to delete opportunity' });
   }
 });
@@ -698,7 +699,7 @@ router.get('/:id/applications', authMiddleware, async (req: AuthRequest, res: Re
       statusCounts
     });
   } catch (error) {
-    console.error('Error fetching opportunity applications:', error);
+    logger.error('Error fetching opportunity applications:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des candidatures' });
   }
 });
@@ -747,7 +748,7 @@ router.get('/:id/applications/counts', authMiddleware, async (req: AuthRequest, 
 
     res.json({ data: counts, total });
   } catch (error) {
-    console.error('Error fetching application counts:', error);
+    logger.error('Error fetching application counts:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
   }
 });

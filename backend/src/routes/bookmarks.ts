@@ -7,6 +7,7 @@ import { Router, Response } from 'express';
 import { pool } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 
+import { logger } from '../utils';
 const router = Router();
 
 // Valid entity types for bookmarking
@@ -95,7 +96,7 @@ router.get('/opportunities', authMiddleware, async (req: AuthRequest, res: Respo
       total: parseInt(countResult.rows[0].total, 10)
     });
   } catch (error) {
-    console.error('Error fetching opportunity bookmarks:', error);
+    logger.error('Error fetching opportunity bookmarks:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des favoris' });
   }
 });
@@ -122,7 +123,7 @@ router.get('/opportunities/ids', authMiddleware, async (req: AuthRequest, res: R
 
     res.json({ data: ids });
   } catch (error) {
-    console.error('Error fetching opportunity bookmark IDs:', error);
+    logger.error('Error fetching opportunity bookmark IDs:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des favoris' });
   }
 });
@@ -149,7 +150,7 @@ router.get('/opportunities/:id/status', authMiddleware, async (req: AuthRequest,
       data: { isBookmarked: result.rows.length > 0 }
     });
   } catch (error) {
-    console.error('Error checking opportunity bookmark status:', error);
+    logger.error('Error checking opportunity bookmark status:', error);
     res.status(500).json({ error: 'Erreur lors de la vérification du favori' });
   }
 });
@@ -185,7 +186,7 @@ router.post('/opportunities/:id', authMiddleware, async (req: AuthRequest, res: 
       ON CONFLICT (talent_id, opportunity_id) DO UPDATE SET notes = EXCLUDED.notes
     `, [talentId, id, notes || null]);
 
-    console.log(`✅ Opportunity bookmarked: talent ${talentId} -> opportunity ${id}`);
+    logger.info(`✅ Opportunity bookmarked: talent ${talentId} -> opportunity ${id}`);
 
     res.status(201).json({
       success: true,
@@ -193,7 +194,7 @@ router.post('/opportunities/:id', authMiddleware, async (req: AuthRequest, res: 
       isBookmarked: true
     });
   } catch (error) {
-    console.error('Error adding opportunity bookmark:', error);
+    logger.error('Error adding opportunity bookmark:', error);
     res.status(500).json({ error: 'Erreur lors de l\'ajout aux favoris' });
   }
 });
@@ -216,7 +217,7 @@ router.delete('/opportunities/:id', authMiddleware, async (req: AuthRequest, res
       WHERE talent_id = $1 AND opportunity_id = $2
     `, [talentId, id]);
 
-    console.log(`✅ Opportunity unbookmarked: talent ${talentId} -> opportunity ${id}`);
+    logger.info(`✅ Opportunity unbookmarked: talent ${talentId} -> opportunity ${id}`);
 
     res.json({
       success: true,
@@ -224,7 +225,7 @@ router.delete('/opportunities/:id', authMiddleware, async (req: AuthRequest, res
       isBookmarked: false
     });
   } catch (error) {
-    console.error('Error removing opportunity bookmark:', error);
+    logger.error('Error removing opportunity bookmark:', error);
     res.status(500).json({ error: 'Erreur lors du retrait des favoris' });
   }
 });
@@ -287,7 +288,7 @@ router.get('/spaces', authMiddleware, async (req: AuthRequest, res: Response) =>
 
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
-    console.error('Error fetching space bookmarks:', error);
+    logger.error('Error fetching space bookmarks:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });
@@ -308,7 +309,7 @@ router.get('/spaces/ids', authMiddleware, async (req: AuthRequest, res: Response
 
     res.json({ data: result.rows.map(r => r.space_id) });
   } catch (error) {
-    console.error('Error fetching space bookmark IDs:', error);
+    logger.error('Error fetching space bookmark IDs:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });
@@ -337,7 +338,7 @@ router.post('/spaces/:id', authMiddleware, async (req: AuthRequest, res: Respons
 
     res.status(201).json({ success: true, isBookmarked: true });
   } catch (error) {
-    console.error('Error adding space bookmark:', error);
+    logger.error('Error adding space bookmark:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });
@@ -359,7 +360,7 @@ router.delete('/spaces/:id', authMiddleware, async (req: AuthRequest, res: Respo
 
     res.json({ success: true, isBookmarked: false });
   } catch (error) {
-    console.error('Error removing space bookmark:', error);
+    logger.error('Error removing space bookmark:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });
@@ -394,7 +395,7 @@ router.get('/communities', authMiddleware, async (req: AuthRequest, res: Respons
 
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
-    console.error('Error fetching community bookmarks:', error);
+    logger.error('Error fetching community bookmarks:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });
@@ -415,7 +416,7 @@ router.get('/communities/ids', authMiddleware, async (req: AuthRequest, res: Res
 
     res.json({ data: result.rows.map(r => r.community_id) });
   } catch (error) {
-    console.error('Error fetching community bookmark IDs:', error);
+    logger.error('Error fetching community bookmark IDs:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });
@@ -444,7 +445,7 @@ router.post('/communities/:id', authMiddleware, async (req: AuthRequest, res: Re
 
     res.status(201).json({ success: true, isBookmarked: true });
   } catch (error) {
-    console.error('Error adding community bookmark:', error);
+    logger.error('Error adding community bookmark:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });
@@ -466,7 +467,7 @@ router.delete('/communities/:id', authMiddleware, async (req: AuthRequest, res: 
 
     res.json({ success: true, isBookmarked: false });
   } catch (error) {
-    console.error('Error removing community bookmark:', error);
+    logger.error('Error removing community bookmark:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });
@@ -504,7 +505,7 @@ router.get('/all/ids', authMiddleware, async (req: AuthRequest, res: Response) =
       }
     });
   } catch (error) {
-    console.error('Error fetching all bookmark IDs:', error);
+    logger.error('Error fetching all bookmark IDs:', error);
     res.status(500).json({ error: 'Erreur' });
   }
 });

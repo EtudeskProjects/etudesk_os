@@ -614,6 +614,7 @@ ${summarizeContext(context)}
 
 import { pool } from '../database';
 
+import { logger } from '../../utils';
 /**
  * Load full talent context from database
  * This is the main function used by the copilot service
@@ -1015,12 +1016,20 @@ async function loadNotifications(talentId: string, limit = 10): Promise<Notifica
 }
 
 async function loadBookmarks(talentId: string): Promise<BookmarksContext> {
+  // OPTIMIZED: Single query with JOIN instead of N+1 queries
   const result = await pool.query(
     `
-    SELECT id, 'opportunity' as entity_type, opportunity_id as entity_id, created_at
-    FROM opportunity_bookmarks
-    WHERE talent_id = $1
-    ORDER BY created_at DESC
+    SELECT
+      ob.id,
+      'opportunity' as entity_type,
+      ob.opportunity_id as entity_id,
+      ob.created_at,
+      o.title as entity_title
+    FROM opportunity_bookmarks ob
+    LEFT JOIN opportunities o ON ob.opportunity_id = o.id
+    WHERE ob.talent_id = $1
+    ORDER BY ob.created_at DESC
+    LIMIT 50
     `,
     [talentId]
   );
@@ -1031,24 +1040,11 @@ async function loadBookmarks(talentId: string): Promise<BookmarksContext> {
   for (const row of result.rows) {
     byType[row.entity_type] = (byType[row.entity_type] || 0) + 1;
 
-    // Get entity title based on type
-    let entityTitle = 'Unknown';
-    if (row.entity_type === 'opportunity') {
-      const opp = await pool.query('SELECT title FROM opportunities WHERE id = $1', [row.entity_id]);
-      entityTitle = opp.rows[0]?.title || 'Unknown';
-    } else if (row.entity_type === 'community') {
-      const comm = await pool.query('SELECT name FROM communities WHERE id = $1', [row.entity_id]);
-      entityTitle = comm.rows[0]?.name || 'Unknown';
-    } else if (row.entity_type === 'space') {
-      const space = await pool.query('SELECT name FROM spaces WHERE id = $1', [row.entity_id]);
-      entityTitle = space.rows[0]?.name || 'Unknown';
-    }
-
     bookmarks.push({
       id: row.id,
       entityType: row.entity_type,
       entityId: row.entity_id,
-      entityTitle,
+      entityTitle: row.entity_title || 'Unknown',
       bookmarkedAt: row.created_at?.toISOString(),
     });
   }
@@ -1363,7 +1359,7 @@ async function loadGraphContext(talentId: string): Promise<GraphContext> {
       })),
     };
   } catch (error) {
-    console.error('[Context] Failed to load graph context:', error);
+    logger.error('[Context] Failed to load graph context:', error);
     return { isGraphAvailable: false };
   }
 }

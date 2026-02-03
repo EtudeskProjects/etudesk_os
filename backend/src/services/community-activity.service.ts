@@ -15,6 +15,7 @@ import { communityPermissionService } from './community-permission.service';
 import { autoModerationService } from './auto-moderation.service';
 import { communityNotificationService } from './community-notification.service';
 
+import { logger } from '../utils';
 export class CommunityActivityService {
 
     /**
@@ -118,7 +119,7 @@ export class CommunityActivityService {
             if (publishedAt) {
                 setImmediate(() => {
                     communityNotificationService.notifyNewActivity(activity.id, dto.community_id, dto.author_id)
-                        .catch(err => console.error('Failed to notify new activity:', err));
+                        .catch(err => logger.error('Failed to notify new activity:', err));
                 });
             }
 
@@ -127,7 +128,7 @@ export class CommunityActivityService {
                 const eventDate = new Date(dto.metadata.start_date);
                 setImmediate(() => {
                     communityNotificationService.scheduleEventReminders(activity.id, dto.community_id, eventDate)
-                        .catch(err => console.error('Failed to schedule event reminders:', err));
+                        .catch(err => logger.error('Failed to schedule event reminders:', err));
                 });
             }
 
@@ -245,7 +246,7 @@ export class CommunityActivityService {
         // Notify community members
         setImmediate(() => {
             communityNotificationService.notifyNewActivity(activityId, community_id, author_id)
-                .catch(err => console.error('Failed to notify new activity:', err));
+                .catch(err => logger.error('Failed to notify new activity:', err));
         });
 
         return result.rows[0];
@@ -329,24 +330,37 @@ export class CommunityActivityService {
             }
         }
 
-        // Hydrate Poll Options and apply visibility logic
-        const activitiesWithPolls = await Promise.all(rows.map(async (activity) => {
+        // OPTIMIZED: Batch load poll options instead of N+1 queries
+        const pollActivityIds = rows.filter(a => a.type === 'POLL').map(a => a.id);
+
+        let pollOptionsMap: Record<string, any[]> = {};
+        if (pollActivityIds.length > 0) {
+            const pollOptions = await pool.query(
+                `SELECT po.*,
+                 CASE WHEN pv.option_id IS NOT NULL THEN true ELSE false END as is_voted_by_user
+                 FROM community_poll_options po
+                 LEFT JOIN community_poll_votes pv ON po.id = pv.option_id AND pv.user_id = $2
+                 WHERE po.activity_id = ANY($1)
+                 ORDER BY po.activity_id, po.order_index ASC`,
+                [pollActivityIds, userId]
+            );
+            // Group options by activity_id
+            for (const option of pollOptions.rows) {
+                if (!pollOptionsMap[option.activity_id]) {
+                    pollOptionsMap[option.activity_id] = [];
+                }
+                pollOptionsMap[option.activity_id].push(option);
+            }
+        }
+
+        // Hydrate poll options and apply visibility logic
+        const activitiesWithPolls = rows.map((activity) => {
             if (activity.type === 'POLL') {
-                const pollOptions = await pool.query(
-                    `SELECT po.*,
-                     CASE WHEN pv.option_id IS NOT NULL THEN true ELSE false END as is_voted_by_user
-                     FROM community_poll_options po
-                     LEFT JOIN community_poll_votes pv ON po.id = pv.option_id AND pv.user_id = $2
-                     WHERE po.activity_id = $1
-                     ORDER BY po.order_index ASC`,
-                    [activity.id, userId]
-                );
-                activity.poll_options = pollOptions.rows;
-                // Apply poll results visibility logic
+                activity.poll_options = pollOptionsMap[activity.id] || [];
                 return this.applyPollResultsVisibility(activity);
             }
             return activity;
-        }));
+        });
 
         return {
             data: activitiesWithPolls,
@@ -402,7 +416,7 @@ export class CommunityActivityService {
                             actor_id: userId,
                             title: 'Nouveau like',
                             body: `Quelqu'un a aimé votre ${activity.type.toLowerCase()}`
-                        }).catch(err => console.error('Failed to send like notification:', err));
+                        }).catch(err => logger.error('Failed to send like notification:', err));
                     });
                 }
             }
@@ -537,7 +551,7 @@ export class CommunityActivityService {
                         );
                     }
                 } catch (err) {
-                    console.error('Failed to send comment notifications:', err);
+                    logger.error('Failed to send comment notifications:', err);
                 }
             });
 
@@ -996,7 +1010,7 @@ export class CommunityActivityService {
         for (const activity of result.rows) {
             setImmediate(() => {
                 communityNotificationService.notifyNewActivity(activity.id, activity.community_id, activity.author_id)
-                    .catch(err => console.error('Failed to notify scheduled activity:', err));
+                    .catch(err => logger.error('Failed to notify scheduled activity:', err));
             });
         }
 
@@ -1091,7 +1105,7 @@ export class CommunityActivityService {
         // Notify community members
         setImmediate(() => {
             communityNotificationService.notifyNewActivity(activityId, community_id, userId)
-                .catch(err => console.error('Failed to notify new activity:', err));
+                .catch(err => logger.error('Failed to notify new activity:', err));
         });
 
         // Schedule event reminders if this is an EVENT with a start_date
@@ -1099,7 +1113,7 @@ export class CommunityActivityService {
             const eventDate = new Date(metadata.start_date);
             setImmediate(() => {
                 communityNotificationService.scheduleEventReminders(activityId, community_id, eventDate)
-                    .catch(err => console.error('Failed to schedule event reminders:', err));
+                    .catch(err => logger.error('Failed to schedule event reminders:', err));
             });
         }
 

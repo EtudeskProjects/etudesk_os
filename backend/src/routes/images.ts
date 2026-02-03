@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 
+import { logger } from '../utils';
 const router = Router();
 
 // Ensure upload directories exist
@@ -160,7 +161,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
     const optimizedSize = info.size;
     const compressionRatio = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
 
-    console.log(`[Images] Uploaded ${imageType}: ${info.width}x${info.height}, ${(optimizedSize / 1024).toFixed(1)}KB (${compressionRatio}% smaller)`);
+    logger.info(`[Images] Uploaded ${imageType}: ${info.width}x${info.height}, ${(optimizedSize / 1024).toFixed(1)}KB (${compressionRatio}% smaller)`);
 
     // Generate URLs
     const baseUrl = process.env.API_URL || `http://localhost:${process.env.PORT || 3000}`;
@@ -180,7 +181,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
       },
     });
   } catch (error: any) {
-    console.error('[Images] Upload error:', error);
+    logger.error('[Images] Upload error:', error);
     res.status(500).json({ error: error.message || 'Erreur lors de l\'upload de l\'image' });
   }
 });
@@ -227,11 +228,11 @@ router.post('/upload-multiple', authMiddleware, upload.array('files', 10), async
       });
     }
 
-    console.log(`[Images] Uploaded ${results.length} ${imageType} images`);
+    logger.info(`[Images] Uploaded ${results.length} ${imageType} images`);
 
     res.status(201).json({ data: results });
   } catch (error: any) {
-    console.error('[Images] Multiple upload error:', error);
+    logger.error('[Images] Multiple upload error:', error);
     res.status(500).json({ error: error.message || 'Erreur lors de l\'upload des images' });
   }
 });
@@ -250,7 +251,7 @@ router.delete('/:fileId', authMiddleware, async (req: AuthRequest, res: Response
         const filePath = path.join(UPLOAD_BASE_DIR, dir, `${fileId}.${ext}`);
         if (fs.existsSync(filePath)) {
           await fs.promises.unlink(filePath);
-          console.log(`[Images] Deleted: ${dir}/${fileId}.${ext}`);
+          logger.info(`[Images] Deleted: ${dir}/${fileId}.${ext}`);
           return res.json({ success: true, message: 'Image supprimée' });
         }
       }
@@ -258,7 +259,7 @@ router.delete('/:fileId', authMiddleware, async (req: AuthRequest, res: Response
 
     return res.status(404).json({ error: 'Image non trouvée' });
   } catch (error: any) {
-    console.error('[Images] Delete error:', error);
+    logger.error('[Images] Delete error:', error);
     res.status(500).json({ error: 'Erreur lors de la suppression de l\'image' });
   }
 });

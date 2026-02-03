@@ -11,6 +11,7 @@
 
 import { pool } from './database';
 
+import { logger } from '../utils';
 // ═══════════════════════════════════════════════════════════════
 // TYPES & CONSTANTS
 // ═══════════════════════════════════════════════════════════════
@@ -193,7 +194,7 @@ async function calculateSkillsScore(
 
     return maxScore * 0.5;
   } catch (error) {
-    console.error('Error calculating skills score:', error);
+    logger.error('Error calculating skills score:', error);
     // Fallback: if talent has skills array, give partial credit
     if (talentSkills && talentSkills.length > 0) {
       return maxScore * 0.5;
@@ -558,7 +559,7 @@ export async function rankApplications(
         try {
           semanticBoost = await getSemanticBoost(row.talent_id, opportunityId);
         } catch (error) {
-          console.error('Error getting semantic boost:', error);
+          logger.error('Error getting semantic boost:', error);
         }
       }
 

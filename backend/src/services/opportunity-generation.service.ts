@@ -24,6 +24,7 @@ import {
 } from '../types/models';
 import { OPPORTUNITY_GEN_SYSTEM_PROMPT, buildOpportunityGenPrompt } from './ai/prompts/opportunity-gen.prompt';
 
+import { logger } from '../utils';
 // ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
@@ -191,7 +192,7 @@ async function getOrganizationContext(organizationId: string): Promise<Organizat
 
     return result.rows[0];
   } catch (error) {
-    console.error('Error fetching organization context:', error);
+    logger.error('Error fetching organization context:', error);
     return null;
   }
 }
@@ -287,7 +288,7 @@ export async function generateOpportunitySuggestion(
 
     return { success: true, data: generatedData };
   } catch (error) {
-    console.error('Error generating opportunity suggestion:', error);
+    logger.error('Error generating opportunity suggestion:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Generation failed',

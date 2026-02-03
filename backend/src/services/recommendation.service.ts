@@ -8,6 +8,7 @@ import { pool } from './database';
 import { createRecommendationAgent } from './ai/agent-factory';
 import { buildRecommendationPrompt } from './ai/prompts/recommendation.prompt';
 
+import { logger } from '../utils';
 // ═══════════════════════════════════════════════════════════════
 // In-memory cache for recommendations
 // ═══════════════════════════════════════════════════════════════
@@ -119,12 +120,12 @@ export async function generateRecommendation(
       );
     } catch (error) {
       // DB update failed, but we have the recommendation
-      console.error('Failed to cache recommendation in DB:', error);
+      logger.error('Failed to cache recommendation in DB:', error);
     }
 
     return text;
   } catch (error) {
-    console.error('Error generating recommendation:', error);
+    logger.error('Error generating recommendation:', error);
     // Return a fallback recommendation based on match category
     return generateFallbackRecommendation(talent, matchCategory);
   }
@@ -209,7 +210,7 @@ export async function getApplicationRecommendation(applicationId: string): Promi
 
     return recommendation;
   } catch (error) {
-    console.error('Error getting application recommendation:', error);
+    logger.error('Error getting application recommendation:', error);
     return null;
   }
 }

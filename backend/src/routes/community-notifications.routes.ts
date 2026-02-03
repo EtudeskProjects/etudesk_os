@@ -2,6 +2,7 @@ import express, { Response } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { communityNotificationService } from '../services/community-notification.service';
 
+import { logger } from '../utils';
 const router = express.Router();
 
 /**
@@ -24,7 +25,7 @@ router.get('/', authMiddleware, async (req: any, res: Response) => {
 
         res.json(result);
     } catch (error: any) {
-        console.error('Error fetching notifications:', error);
+        logger.error('Error fetching notifications:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -40,7 +41,7 @@ router.get('/unread-counts', authMiddleware, async (req: any, res: Response) => 
 
         res.json({ data: counts });
     } catch (error: any) {
-        console.error('Error fetching unread counts:', error);
+        logger.error('Error fetching unread counts:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -73,7 +74,7 @@ router.post('/read', authMiddleware, async (req: any, res: Response) => {
             marked_read: count
         });
     } catch (error: any) {
-        console.error('Error marking notifications as read:', error);
+        logger.error('Error marking notifications as read:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -94,7 +95,7 @@ router.post('/:communityId/read-all', authMiddleware, async (req: any, res: Resp
             marked_read: count
         });
     } catch (error: any) {
-        console.error('Error marking community notifications as read:', error);
+        logger.error('Error marking community notifications as read:', error);
         res.status(500).json({ error: error.message });
     }
 });

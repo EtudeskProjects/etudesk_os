@@ -7,6 +7,7 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { pool } from '../services/database';
+import { logger } from '../utils';
 import {
   uploadDocument,
   getDocument,
@@ -86,7 +87,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     return res.json({ data: result });
   } catch (error) {
-    console.error('Error listing documents:', error);
+    logger.error('Error listing documents:', error);
     return res.status(500).json({
       error: 'Erreur lors de la récupération des documents',
       details: error instanceof Error ? error.message : 'Unknown error',
@@ -118,7 +119,7 @@ router.get('/stats', authMiddleware, async (req: AuthRequest, res: Response) => 
       },
     });
   } catch (error) {
-    console.error('Error getting document stats:', error);
+    logger.error('Error getting document stats:', error);
     return res.status(500).json({
       error: 'Erreur lors de la récupération des statistiques',
     });
@@ -161,7 +162,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     return res.json({ data: document });
   } catch (error) {
-    console.error('Error getting document:', error);
+    logger.error('Error getting document:', error);
     return res.status(500).json({
       error: 'Erreur lors de la récupération du document',
     });
@@ -282,7 +283,7 @@ router.post(
         documents: uploadedDocuments,
       });
     } catch (error) {
-      console.error('Error uploading document:', error);
+      logger.error('Error uploading document:', error);
       return res.status(500).json({
         error: "Erreur lors de l'upload du document",
         details: error instanceof Error ? error.message : 'Unknown error',
@@ -326,7 +327,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
       document,
     });
   } catch (error) {
-    console.error('Error updating document:', error);
+    logger.error('Error updating document:', error);
     return res.status(500).json({
       error: 'Erreur lors de la mise à jour du document',
     });
@@ -351,7 +352,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
 
     return res.json({ message: 'Document supprimé' });
   } catch (error) {
-    console.error('Error deleting document:', error);
+    logger.error('Error deleting document:', error);
     return res.status(500).json({
       error: 'Erreur lors de la suppression du document',
     });
@@ -378,7 +379,7 @@ router.post('/:id/retry', authMiddleware, async (req: AuthRequest, res: Response
       message: "Nouvelle tentative d'extraction lancée",
     });
   } catch (error) {
-    console.error('Error retrying extraction:', error);
+    logger.error('Error retrying extraction:', error);
     return res.status(500).json({
       error: error instanceof Error ? error.message : "Erreur lors de la tentative d'extraction",
     });

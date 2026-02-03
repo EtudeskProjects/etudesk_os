@@ -6,6 +6,7 @@
 import { tool } from '@openai/agents';
 import { z } from 'zod';
 
+import { logger } from '../../../utils';
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
 
 export const youtubeSearchTool = tool({
@@ -57,7 +58,7 @@ export const youtubeSearchTool = tool({
 
       return { videos };
     } catch (error: any) {
-      console.error('YouTube search error:', error);
+      logger.error('YouTube search error:', error);
       return { videos: [], error: error.message };
     }
   },

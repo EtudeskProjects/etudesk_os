@@ -9,6 +9,7 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { pool } from './database';
 
+import { logger } from '../utils';
 // JWT Configuration
 const getJwtSecret = (envVar: string, name: string): string => {
   const secret = process.env[envVar];
@@ -17,7 +18,7 @@ const getJwtSecret = (envVar: string, name: string): string => {
       throw new Error(`${name} must be set in production environment`);
     }
     // Dev-only fallback with warning
-    console.warn(`⚠️ ${name} not set. Using development fallback. DO NOT USE IN PRODUCTION.`);
+    logger.warn(`⚠️ ${name} not set. Using development fallback. DO NOT USE IN PRODUCTION.`);
     return `dev-only-${name.toLowerCase().replace(/_/g, '-')}-${Date.now()}`;
   }
   if (secret.length < 32) {
@@ -199,7 +200,7 @@ export async function validateSession(refreshToken: string): Promise<{ valid: bo
 
     return { valid: false };
   } catch (error) {
-    console.error('❌ Session validation error:', error);
+    logger.error('❌ Session validation error:', error);
     return { valid: false };
   }
 }
@@ -217,7 +218,7 @@ export async function revokeSession(sessionId: string, reason?: string): Promise
     );
     return true;
   } catch (error) {
-    console.error('❌ Failed to revoke session:', error);
+    logger.error('❌ Failed to revoke session:', error);
     return false;
   }
 }
@@ -236,7 +237,7 @@ export async function revokeAllSessions(userId: string, reason?: string): Promis
     );
     return result.rowCount || 0;
   } catch (error) {
-    console.error('❌ Failed to revoke all sessions:', error);
+    logger.error('❌ Failed to revoke all sessions:', error);
     return 0;
   }
 }
@@ -329,7 +330,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
       lastLoginAt: row.last_login_at,
     };
   } catch (error) {
-    console.error('❌ Failed to get user profile:', error);
+    logger.error('❌ Failed to get user profile:', error);
     return null;
   }
 }
@@ -345,7 +346,7 @@ export async function needsOnboarding(userId: string): Promise<boolean> {
     );
     return result.rows.length > 0 && !result.rows[0].talent_id;
   } catch (error) {
-    console.error('❌ Failed to check onboarding status:', error);
+    logger.error('❌ Failed to check onboarding status:', error);
     return false;
   }
 }

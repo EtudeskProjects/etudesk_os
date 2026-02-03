@@ -9,6 +9,7 @@ import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { isValidSkillType, isValidProficiencyLevel } from '../constants/skills';
 import { mergeExtractedSkills } from '../services/skills/skill-merge.service';
 
+import { logger } from '../utils';
 const router = Router();
 
 // All routes require auth
@@ -36,7 +37,7 @@ router.get('/my', async (req: AuthRequest, res: Response) => {
 
     return res.json({ data: result.rows });
   } catch (error) {
-    console.error('Error fetching skills:', error);
+    logger.error('Error fetching skills:', error);
     return res.status(500).json({ error: 'Erreur lors du chargement des compétences' });
   }
 });
@@ -91,7 +92,7 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
 
     return res.status(201).json({ data: { id: result.rows[0].id } });
   } catch (error) {
-    console.error('Error adding skill:', error);
+    logger.error('Error adding skill:', error);
     return res.status(500).json({ error: "Erreur lors de l'ajout de la compétence" });
   }
 });
@@ -125,7 +126,7 @@ router.put('/my/:id', async (req: AuthRequest, res: Response) => {
 
     return res.json({ data: { id: result.rows[0].id } });
   } catch (error) {
-    console.error('Error updating skill:', error);
+    logger.error('Error updating skill:', error);
     return res.status(500).json({ error: 'Erreur lors de la mise à jour' });
   }
 });
@@ -152,7 +153,7 @@ router.delete('/my/:id', async (req: AuthRequest, res: Response) => {
 
     return res.json({ data: { deleted: true } });
   } catch (error) {
-    console.error('Error deleting skill:', error);
+    logger.error('Error deleting skill:', error);
     return res.status(500).json({ error: 'Erreur lors de la suppression' });
   }
 });
@@ -171,7 +172,7 @@ router.post('/my/merge', async (req: AuthRequest, res: Response) => {
     const report = await mergeExtractedSkills(talentId);
     return res.json({ data: report });
   } catch (error) {
-    console.error('Error merging skills:', error);
+    logger.error('Error merging skills:', error);
     return res.status(500).json({ error: 'Erreur lors de la fusion des compétences' });
   }
 });

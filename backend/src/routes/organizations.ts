@@ -10,6 +10,7 @@ import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { autoModerationService } from '../services/auto-moderation.service';
 import { normalizeCountryCode } from '../constants/countries';
 
+import { logger } from '../utils';
 // Type for SQL query parameters
 type QueryParam = string | number | boolean | null | Date;
 
@@ -58,7 +59,7 @@ router.get('/', async (req, res) => {
     const result = await pool.query(query, params);
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
-    console.error('Error fetching organizations:', error);
+    logger.error('Error fetching organizations:', error);
     res.status(500).json({ error: 'Failed to fetch organizations' });
   }
 });
@@ -87,7 +88,7 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
-    console.error('Error fetching my organizations:', error);
+    logger.error('Error fetching my organizations:', error);
     res.status(500).json({ error: 'Failed to fetch organizations' });
   }
 });
@@ -115,7 +116,7 @@ router.get('/:id', async (req, res) => {
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error fetching organization:', error);
+    logger.error('Error fetching organization:', error);
     res.status(500).json({ error: 'Failed to fetch organization' });
   }
 });
@@ -193,7 +194,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         description,
       });
     } catch (moderationError: any) {
-      console.log(`[Moderation] Organization creation rejected: ${moderationError.message}`);
+      logger.info(`[Moderation] Organization creation rejected: ${moderationError.message}`);
       return res.status(400).json({ 
         error: moderationError.message,
         code: 'CONTENT_MODERATION_FAILED',
@@ -267,7 +268,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       client.release();
     }
   } catch (error) {
-    console.error('Error creating organization:', error);
+    logger.error('Error creating organization:', error);
     res.status(500).json({ error: 'Failed to create organization' });
   }
 });
@@ -450,7 +451,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating organization:', error);
+    logger.error('Error updating organization:', error);
     res.status(500).json({ error: 'Failed to update organization' });
   }
 });
@@ -489,7 +490,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
 
     res.json({ success: true, message: 'Organization deleted' });
   } catch (error) {
-    console.error('Error deleting organization:', error);
+    logger.error('Error deleting organization:', error);
     res.status(500).json({ error: 'Failed to delete organization' });
   }
 });

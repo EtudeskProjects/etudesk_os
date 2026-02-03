@@ -10,6 +10,7 @@ import { pool } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { sendCommunityInviteEmail } from '../services/email.service';
 
+import { logger } from '../utils';
 const router = Router();
 
 // ============================================================================
@@ -146,9 +147,9 @@ router.post('/:communityId/invitations', authMiddleware, async (req: AuthRequest
           message,
           invitationToken
         );
-        console.log(`📧 Community invitation email sent to ${email}`);
+        logger.info(`📧 Community invitation email sent to ${email}`);
       } catch (emailError) {
-        console.error(`Failed to send invitation email to ${email}:`, emailError);
+        logger.error(`Failed to send invitation email to ${email}:`, emailError);
         // Don't fail the invitation if email fails
       }
     }
@@ -164,7 +165,7 @@ router.post('/:communityId/invitations', authMiddleware, async (req: AuthRequest
       message: `${results.length} invitation(s) envoyée(s)${errors.length > 0 ? `, ${errors.length} échec(s)` : ''}`,
     });
   } catch (error: any) {
-    console.error('Error sending invitations:', error);
+    logger.error('Error sending invitations:', error);
     res.status(500).json({ 
       error: 'Erreur lors de l\'envoi des invitations',
       message: error?.message || 'Unknown error',
@@ -237,7 +238,7 @@ router.get('/:communityId/invitations', authMiddleware, async (req: AuthRequest,
       statusCounts,
     });
   } catch (error: any) {
-    console.error('Error fetching invitations:', error);
+    logger.error('Error fetching invitations:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des invitations' });
   }
 });
@@ -278,7 +279,7 @@ router.delete('/:communityId/invitations/:invitationId', authMiddleware, async (
 
     res.json({ success: true, message: 'Invitation annulee' });
   } catch (error: any) {
-    console.error('Error cancelling invitation:', error);
+    logger.error('Error cancelling invitation:', error);
     res.status(500).json({ error: 'Erreur lors de l\'annulation de l\'invitation' });
   }
 });
@@ -345,15 +346,15 @@ router.post('/:communityId/invitations/:invitationId/resend', authMiddleware, as
         inv.message,
         inv.invitation_token
       );
-      console.log(`📧 Community invitation email resent to ${inv.invitee_email}`);
+      logger.info(`📧 Community invitation email resent to ${inv.invitee_email}`);
     } catch (emailError) {
-      console.error(`Failed to resend invitation email to ${inv.invitee_email}:`, emailError);
+      logger.error(`Failed to resend invitation email to ${inv.invitee_email}:`, emailError);
       // Don't fail the resend if email fails
     }
 
     res.json({ success: true, message: 'Invitation renvoyée' });
   } catch (error: any) {
-    console.error('Error resending invitation:', error);
+    logger.error('Error resending invitation:', error);
     res.status(500).json({ error: 'Erreur lors du renvoi de l\'invitation' });
   }
 });
@@ -440,7 +441,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
       statusCounts,
     });
   } catch (error: any) {
-    console.error('Error fetching user invitations:', error);
+    logger.error('Error fetching user invitations:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des invitations' });
   }
 });
@@ -539,7 +540,7 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
       community_id: inv.community_id,
     });
   } catch (error: any) {
-    console.error('Error accepting invitation:', error);
+    logger.error('Error accepting invitation:', error);
     res.status(500).json({ error: 'Erreur lors de l\'acceptation de l\'invitation' });
   }
 });
@@ -577,7 +578,7 @@ router.post('/:invitationId/decline', authMiddleware, async (req: AuthRequest, r
 
     res.json({ success: true, message: 'Invitation declinee' });
   } catch (error: any) {
-    console.error('Error declining invitation:', error);
+    logger.error('Error declining invitation:', error);
     res.status(500).json({ error: 'Erreur lors du refus de l\'invitation' });
   }
 });
@@ -640,7 +641,7 @@ router.get('/token/:token', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('Error verifying invitation token:', error);
+    logger.error('Error verifying invitation token:', error);
     res.status(500).json({ error: 'Erreur lors de la vérification de l\'invitation' });
   }
 });

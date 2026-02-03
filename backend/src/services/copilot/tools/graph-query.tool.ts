@@ -5,6 +5,7 @@
 
 import { tool } from '@openai/agents';
 import { z } from 'zod';
+import { logger } from '../../../utils';
 import {
   queryTalentGraph,
   findOpportunityMatches,
@@ -164,7 +165,7 @@ export const graphQueryTool = tool({
           return { error: `Intent '${intent}' non reconnu` };
       }
     } catch (error: any) {
-      console.error(`Graph query error (${intent}):`, error);
+      logger.error(`Graph query error (${intent}):`, error);
       return { error: error.message };
     }
   },

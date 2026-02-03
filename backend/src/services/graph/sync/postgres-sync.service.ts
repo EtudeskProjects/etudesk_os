@@ -8,6 +8,7 @@ import { pool } from '../../database';
 import { neo4jClient } from '../neo4j.client';
 import { NodeLabels, RelationshipTypes } from '../ontology';
 
+import { logger } from '../../../utils';
 // ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
@@ -41,7 +42,7 @@ export const postgresSyncService = {
     let nodesCreated = 0;
     let relationshipsCreated = 0;
 
-    console.log('[GraphSync] Starting full sync...');
+    logger.info('[GraphSync] Starting full sync...');
 
     try {
       // Sync nodes in order (dependencies first)
@@ -131,7 +132,7 @@ export const postgresSyncService = {
       relationshipsCreated += sectorRel.count;
       errors.push(...sectorRel.errors);
 
-      console.log(
+      logger.info(
         `[GraphSync] Full sync completed: ${nodesCreated} nodes, ${relationshipsCreated} relationships`
       );
 
@@ -143,7 +144,7 @@ export const postgresSyncService = {
         duration: Date.now() - startTime,
       };
     } catch (error: any) {
-      console.error('[GraphSync] Full sync failed:', error);
+      logger.error('[GraphSync] Full sync failed:', error);
       errors.push(error.message);
       return {
         success: false,
@@ -202,7 +203,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} organizations`);
+      logger.info(`[GraphSync] Synced ${count} organizations`);
     } catch (error: any) {
       errors.push(`Organizations sync error: ${error.message}`);
     }
@@ -253,7 +254,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} talents`);
+      logger.info(`[GraphSync] Synced ${count} talents`);
     } catch (error: any) {
       errors.push(`Talents sync error: ${error.message}`);
     }
@@ -317,7 +318,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} opportunities`);
+      logger.info(`[GraphSync] Synced ${count} opportunities`);
     } catch (error: any) {
       errors.push(`Opportunities sync error: ${error.message}`);
     }
@@ -374,7 +375,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} communities`);
+      logger.info(`[GraphSync] Synced ${count} communities`);
     } catch (error: any) {
       errors.push(`Communities sync error: ${error.message}`);
     }
@@ -430,7 +431,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} spaces`);
+      logger.info(`[GraphSync] Synced ${count} spaces`);
     } catch (error: any) {
       errors.push(`Spaces sync error: ${error.message}`);
     }
@@ -477,7 +478,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} learning topics`);
+      logger.info(`[GraphSync] Synced ${count} learning topics`);
     } catch (error: any) {
       errors.push(`Learning topics sync error: ${error.message}`);
     }
@@ -540,7 +541,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} documents`);
+      logger.info(`[GraphSync] Synced ${count} documents`);
     } catch (error: any) {
       errors.push(`Documents sync error: ${error.message}`);
     }
@@ -582,7 +583,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} talent-skill relationships`);
+      logger.info(`[GraphSync] Synced ${count} talent-skill relationships`);
     } catch (error: any) {
       errors.push(`Talent-skills sync error: ${error.message}`);
     }
@@ -648,7 +649,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} applications`);
+      logger.info(`[GraphSync] Synced ${count} applications`);
     } catch (error: any) {
       errors.push(`Applications sync error: ${error.message}`);
     }
@@ -697,7 +698,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} community memberships`);
+      logger.info(`[GraphSync] Synced ${count} community memberships`);
     } catch (error: any) {
       errors.push(`Memberships sync error: ${error.message}`);
     }
@@ -804,7 +805,7 @@ export const postgresSyncService = {
         count += talentDocs.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} learning relations`);
+      logger.info(`[GraphSync] Synced ${count} learning relations`);
     } catch (error: any) {
       errors.push(`Learning relations sync error: ${error.message}`);
     }
@@ -864,7 +865,7 @@ export const postgresSyncService = {
         }
       }
 
-      console.log(`[GraphSync] Synced ${count} sectors`);
+      logger.info(`[GraphSync] Synced ${count} sectors`);
     } catch (error: any) {
       errors.push(`Sectors sync error: ${error.message}`);
     }
@@ -911,7 +912,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} connections`);
+      logger.info(`[GraphSync] Synced ${count} connections`);
     } catch (error: any) {
       errors.push(`Connections sync error: ${error.message}`);
     }
@@ -960,7 +961,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} mentorships`);
+      logger.info(`[GraphSync] Synced ${count} mentorships`);
     } catch (error: any) {
       errors.push(`Mentorships sync error: ${error.message}`);
     }
@@ -1010,7 +1011,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} recommendations`);
+      logger.info(`[GraphSync] Synced ${count} recommendations`);
     } catch (error: any) {
       errors.push(`Recommendations sync error: ${error.message}`);
     }
@@ -1056,7 +1057,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} bookmarks`);
+      logger.info(`[GraphSync] Synced ${count} bookmarks`);
     } catch (error: any) {
       errors.push(`Bookmarks sync error: ${error.message}`);
     }
@@ -1110,7 +1111,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} space bookings`);
+      logger.info(`[GraphSync] Synced ${count} space bookings`);
     } catch (error: any) {
       errors.push(`Space bookings sync error: ${error.message}`);
     }
@@ -1201,7 +1202,7 @@ export const postgresSyncService = {
         count += batch.length;
       }
 
-      console.log(`[GraphSync] Synced ${count} sector relations`);
+      logger.info(`[GraphSync] Synced ${count} sector relations`);
     } catch (error: any) {
       errors.push(`Sector relations sync error: ${error.message}`);
     }

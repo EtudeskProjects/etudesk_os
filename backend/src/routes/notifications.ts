@@ -7,6 +7,7 @@ import { Router, Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import * as pushService from '../services/push-notification.service';
 
+import { logger } from '../utils';
 const router = Router();
 
 // ═══════════════════════════════════════════════════════════════
@@ -38,7 +39,7 @@ router.post('/push-token', authMiddleware, async (req: AuthRequest, res: Respons
 
     res.json({ success: true, message: 'Push token registered' });
   } catch (error) {
-    console.error('Error registering push token:', error);
+    logger.error('Error registering push token:', error);
     res.status(500).json({ error: 'Failed to register push token' });
   }
 });
@@ -59,7 +60,7 @@ router.delete('/push-token', authMiddleware, async (req: AuthRequest, res: Respo
     await pushService.deactivatePushToken(talentId, token);
     res.json({ success: true, message: 'Push token deactivated' });
   } catch (error) {
-    console.error('Error deactivating push token:', error);
+    logger.error('Error deactivating push token:', error);
     res.status(500).json({ error: 'Failed to deactivate push token' });
   }
 });
@@ -88,7 +89,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       unreadCount: result.unreadCount,
     });
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    logger.error('Error fetching notifications:', error);
     res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 });
@@ -110,7 +111,7 @@ router.put('/:id/read', authMiddleware, async (req: AuthRequest, res: Response) 
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error marking notification as read:', error);
+    logger.error('Error marking notification as read:', error);
     res.status(500).json({ error: 'Failed to mark notification as read' });
   }
 });
@@ -125,7 +126,7 @@ router.put('/read-all', authMiddleware, async (req: AuthRequest, res: Response) 
     const count = await pushService.markAllAsRead(talentId);
     res.json({ success: true, count });
   } catch (error) {
-    console.error('Error marking all notifications as read:', error);
+    logger.error('Error marking all notifications as read:', error);
     res.status(500).json({ error: 'Failed to mark all as read' });
   }
 });
@@ -147,7 +148,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting notification:', error);
+    logger.error('Error deleting notification:', error);
     res.status(500).json({ error: 'Failed to delete notification' });
   }
 });
@@ -166,7 +167,7 @@ router.get('/preferences', authMiddleware, async (req: AuthRequest, res: Respons
     const preferences = await pushService.getPreferences(talentId);
     res.json({ success: true, data: preferences });
   } catch (error) {
-    console.error('Error fetching preferences:', error);
+    logger.error('Error fetching preferences:', error);
     res.status(500).json({ error: 'Failed to fetch preferences' });
   }
 });
@@ -200,7 +201,7 @@ router.put('/preferences', authMiddleware, async (req: AuthRequest, res: Respons
 
     res.json({ success: true, data: preferences });
   } catch (error) {
-    console.error('Error updating preferences:', error);
+    logger.error('Error updating preferences:', error);
     res.status(500).json({ error: 'Failed to update preferences' });
   }
 });

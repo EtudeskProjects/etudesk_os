@@ -13,6 +13,7 @@ import {
 import { extractAndSaveSkills } from './skill-extraction.service';
 import { mergeExtractedSkills } from '../skills/skill-merge.service';
 import { createNotification } from '../notification.service';
+import { logger } from '../../utils';
 import {
   DocumentType,
   DocumentStatus,
@@ -225,7 +226,7 @@ export async function uploadDocument(input: UploadDocumentInput): Promise<Talent
 
   // Trigger async extraction (don't wait for it)
   processDocumentExtraction(documentId, fileUrl, file.mimetype).catch((err) =>
-    console.error(`Extraction failed for document ${documentId}:`, err)
+    logger.error(`Extraction failed for document ${documentId}:`, err)
   );
 
   return document;
@@ -368,7 +369,7 @@ export async function processDocumentExtraction(
       }
     }
   } catch (error) {
-    console.error(`Document extraction error for ${documentId}:`, error);
+    logger.error(`Document extraction error for ${documentId}:`, error);
     await pool.query(
       `UPDATE talent_documents SET
         status = $1,
@@ -398,7 +399,7 @@ export async function processDocumentExtraction(
         });
       }
     } catch (notifError) {
-      console.error(`Failed to send error notification for document ${documentId}:`, notifError);
+      logger.error(`Failed to send error notification for document ${documentId}:`, notifError);
     }
   }
 }
@@ -587,7 +588,7 @@ export async function deleteDocument(documentId: string, talentId: string): Prom
 
   // Delete file from storage (async, don't wait)
   deleteFile(document.file_url).catch((err) =>
-    console.error(`Failed to delete file for document ${documentId}:`, err)
+    logger.error(`Failed to delete file for document ${documentId}:`, err)
   );
 
   return true;
@@ -615,7 +616,7 @@ export async function retryExtraction(documentId: string, talentId: string): Pro
 
   // Trigger extraction
   processDocumentExtraction(documentId, document.file_url, document.mime_type).catch((err) =>
-    console.error(`Retry extraction failed for document ${documentId}:`, err)
+    logger.error(`Retry extraction failed for document ${documentId}:`, err)
   );
 
   return true;

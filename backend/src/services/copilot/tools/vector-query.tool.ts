@@ -9,6 +9,7 @@ import { Pinecone } from '@pinecone-database/pinecone';
 import { generateEmbedding } from '../../embedding.service';
 import { pool } from '../../database';
 
+import { logger } from '../../../utils';
 const pinecone = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY || '',
 });
@@ -182,7 +183,7 @@ export const vectorQueryTool = tool({
 
       return { results, totalFound: results.length };
     } catch (error: any) {
-      console.error('Vector query error:', error);
+      logger.error('Vector query error:', error);
       return { results: [], error: error.message };
     }
   },

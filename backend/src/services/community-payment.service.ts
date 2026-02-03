@@ -7,6 +7,7 @@ import {
 } from '../types/community-activity.types';
 import { communityNotificationService } from './community-notification.service';
 
+import { logger } from '../utils';
 // Import subscription service dynamically to avoid circular dependency
 let _subscriptionService: any = null;
 const getSubscriptionService = async () => {
@@ -216,7 +217,7 @@ export class CommunityPaymentService {
                 break;
 
             default:
-                console.log(`Unhandled webhook event: ${eventType}`);
+                logger.info(`Unhandled webhook event: ${eventType}`);
         }
     }
 
@@ -270,7 +271,7 @@ export class CommunityPaymentService {
                 subscription.community_id,
                 communityRes.rows[0]?.name || 'Communauté',
                 'Le renouvellement automatique a échoué'
-            ).catch(err => console.error('Failed to notify payment failed:', err));
+            ).catch(err => logger.error('Failed to notify payment failed:', err));
         }
     }
 
@@ -327,7 +328,7 @@ export class CommunityPaymentService {
                 subscription.community_name,
                 payment.amount,
                 payment.currency
-            ).catch(err => console.error('Failed to notify payment success:', err));
+            ).catch(err => logger.error('Failed to notify payment success:', err));
 
             return payment;
 
@@ -389,7 +390,7 @@ export class CommunityPaymentService {
                 subscription.community_id,
                 subscription.community_name,
                 reason
-            ).catch(err => console.error('Failed to notify payment failed:', err));
+            ).catch(err => logger.error('Failed to notify payment failed:', err));
 
             return payment;
 
@@ -549,7 +550,7 @@ export class CommunityPaymentService {
                 });
                 retriedCount++;
             } catch (err) {
-                console.error(`Failed to retry payment ${payment.id}:`, err);
+                logger.error(`Failed to retry payment ${payment.id}:`, err);
             }
         }
 

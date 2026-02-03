@@ -6,6 +6,7 @@ import {
 } from '../types/community-activity.types';
 import { communityNotificationService } from './community-notification.service';
 
+import { logger } from '../utils';
 interface CreateSubscriptionDTO {
     community_id: string;
     talent_id: string;
@@ -132,7 +133,7 @@ export class CommunitySubscriptionService {
                     type: 'PAYMENT_SUCCESS',
                     title: 'Période d\'essai activée',
                     body: `Votre période d'essai de ${trialDays} jours pour "${community.name}" a commencé.`
-                }).catch(err => console.error('Failed to send trial notification:', err));
+                }).catch(err => logger.error('Failed to send trial notification:', err));
             }
 
             return subscription;
@@ -354,7 +355,7 @@ export class CommunitySubscriptionService {
                     sub.talent_id,
                     sub.community_id,
                     sub.community_name
-                ).catch(err => console.error('Failed to notify expired:', err));
+                ).catch(err => logger.error('Failed to notify expired:', err));
 
                 // Update member status
                 await client.query(`
@@ -386,7 +387,7 @@ export class CommunitySubscriptionService {
                     sub.community_id,
                     sub.community_name,
                     new Date(sub.current_period_end)
-                ).catch(err => console.error('Failed to notify expiring:', err));
+                ).catch(err => logger.error('Failed to notify expiring:', err));
             }
 
             await client.query('COMMIT');

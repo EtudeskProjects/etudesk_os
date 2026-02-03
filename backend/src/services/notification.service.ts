@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { pool } from './database';
 import { sendEmail } from './email.service';
 
+import { logger } from '../utils';
 // Notification types
 export type NotificationType =
   | 'APPLICATION_STATUS_CHANGED'
@@ -189,7 +190,7 @@ export async function sendPushNotification(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Expo push error:', errorText);
+      logger.error('Expo push error:', errorText);
       return { success: false, error: errorText };
     }
 
@@ -211,10 +212,10 @@ export async function sendPushNotification(
       }
     }
 
-    console.log(`📱 Push notification sent to ${tokens.length} device(s) for talent ${talentId}`);
+    logger.info(`📱 Push notification sent to ${tokens.length} device(s) for talent ${talentId}`);
     return { success: true };
   } catch (error) {
-    console.error('Failed to send push notification:', error);
+    logger.error('Failed to send push notification:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
@@ -243,7 +244,7 @@ export async function registerPushToken(
     [id, talentId, token, deviceType || null, deviceName || null]
   );
 
-  console.log(`📱 Push token registered for talent ${talentId}`);
+  logger.info(`📱 Push token registered for talent ${talentId}`);
 }
 
 /**
@@ -342,7 +343,7 @@ export async function notifyApplicationStatusChanged(
       );
     }
   } catch (error) {
-    console.error('Error sending application status notification:', error);
+    logger.error('Error sending application status notification:', error);
   }
 }
 
@@ -466,7 +467,7 @@ export async function notifyNewMessage(
       }
     }
   } catch (error) {
-    console.error('Error sending new message notification:', error);
+    logger.error('Error sending new message notification:', error);
   }
 }
 
@@ -548,7 +549,7 @@ export async function notifyNewApplication(applicationId: string): Promise<void>
       }
     }
   } catch (error) {
-    console.error('Error sending new application notification:', error);
+    logger.error('Error sending new application notification:', error);
   }
 }
 
@@ -632,7 +633,7 @@ export async function notifyInterviewScheduled(
       );
     }
   } catch (error) {
-    console.error('Error sending interview scheduled notification:', error);
+    logger.error('Error sending interview scheduled notification:', error);
   }
 }
 

@@ -8,6 +8,7 @@
 import nodemailer from 'nodemailer';
 import type Mail from 'nodemailer/lib/mailer';
 
+import { logger } from '../utils';
 // Email configuration
 const EMAIL_CONFIG = {
   // Mailhog defaults (development)
@@ -221,14 +222,14 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
 
     const info = await transporter.sendMail(mailOptions);
 
-    console.log(`📧 Email sent to ${options.to}: ${info.messageId}`);
+    logger.info(`📧 Email sent to ${options.to}: ${info.messageId}`);
 
     return {
       success: true,
       messageId: info.messageId,
     };
   } catch (error) {
-    console.error('❌ Failed to send email:', error);
+    logger.error('❌ Failed to send email:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -632,10 +633,10 @@ export async function sendOpportunityInviteEmail(
 export async function verifyEmailConnection(): Promise<boolean> {
   try {
     await transporter.verify();
-    console.log('✅ Email service connected');
+    logger.info('✅ Email service connected');
     return true;
   } catch (error) {
-    console.error('❌ Email service connection failed:', error);
+    logger.error('❌ Email service connection failed:', error);
     return false;
   }
 }

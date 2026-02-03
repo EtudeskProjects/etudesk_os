@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
+import { logger } from '../utils';
 const router = express.Router();
 
 // File upload configuration
@@ -41,7 +42,7 @@ router.get('/:communityId/activities', authMiddleware, communityPaidAccessMiddle
         // req is AuthRequest, so it has talentId and userId
         const userId = req.talentId || req.userId;
 
-        console.log(`[Activities] Fetching for community: ${communityId}, user: ${userId}`);
+        logger.info(`[Activities] Fetching for community: ${communityId}, user: ${userId}`);
 
         const result = await communityActivityService.getCommunityFeed(
             communityId,
@@ -50,11 +51,11 @@ router.get('/:communityId/activities', authMiddleware, communityPaidAccessMiddle
             cursor as string
         );
 
-        console.log(`[Activities] Found ${result.data.length} activities`);
+        logger.info(`[Activities] Found ${result.data.length} activities`);
 
         res.json(result);
     } catch (error: any) {
-        console.error('Error fetching activities:', error);
+        logger.error('Error fetching activities:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -66,7 +67,7 @@ router.post('/:communityId/activities', authMiddleware, upload.array('attachment
         const userId = req.talentId || req.userId;
         const { type, content, metadata, scheduled_at, is_draft } = req.body;
 
-        console.log(`[Activities] Creating activity - community: ${communityId}, author: ${userId}, type: ${type}, is_draft: ${is_draft}`);
+        logger.info(`[Activities] Creating activity - community: ${communityId}, author: ${userId}, type: ${type}, is_draft: ${is_draft}`);
 
         // Process attachments
         const files = req.files as Express.Multer.File[];
@@ -98,11 +99,11 @@ router.post('/:communityId/activities', authMiddleware, upload.array('attachment
             is_draft: is_draft === true || is_draft === 'true'
         });
 
-        console.log(`[Activities] Created activity: ${activity.id}, moderation_status: ${activity.moderation_status}, is_draft: ${activity.is_draft}`);
+        logger.info(`[Activities] Created activity: ${activity.id}, moderation_status: ${activity.moderation_status}, is_draft: ${activity.is_draft}`);
 
         res.status(201).json(activity);
     } catch (error: any) {
-        console.error('Error creating activity:', error);
+        logger.error('Error creating activity:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -116,7 +117,7 @@ router.get('/activities/bookmarks', authMiddleware, async (req: any, res: Respon
 
         res.json({ data: bookmarkedActivities });
     } catch (error: any) {
-        console.error('Error fetching bookmarked activities:', error);
+        logger.error('Error fetching bookmarked activities:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -132,7 +133,7 @@ router.post('/activities/:activityId/reaction', authMiddleware, async (req: any,
 
         res.json({ success: true, isLiked });
     } catch (error: any) {
-        console.error('Error toggling like:', error);
+        logger.error('Error toggling like:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -147,7 +148,7 @@ router.post('/activities/:activityId/like', authMiddleware, async (req: any, res
 
         res.json({ success: true, isLiked });
     } catch (error: any) {
-        console.error('Error toggling like:', error);
+        logger.error('Error toggling like:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -169,7 +170,7 @@ router.post('/activities/:activityId/comments', authMiddleware, async (req: any,
 
         res.status(201).json(comment);
     } catch (error: any) {
-        console.error('Error adding comment:', error);
+        logger.error('Error adding comment:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -188,7 +189,7 @@ router.put('/activities/:activityId/comments/:commentId', authMiddleware, async 
 
         res.json({ data: comment });
     } catch (error: any) {
-        console.error('Error updating comment:', error);
+        logger.error('Error updating comment:', error);
         res.status(400).json({ error: error.message });
     }
 });
@@ -203,7 +204,7 @@ router.delete('/activities/:activityId/comments/:commentId', authMiddleware, asy
 
         res.json({ success: true });
     } catch (error: any) {
-        console.error('Error deleting comment:', error);
+        logger.error('Error deleting comment:', error);
         res.status(400).json({ error: error.message });
     }
 });
@@ -219,7 +220,7 @@ router.post('/activities/:activityId/vote', authMiddleware, async (req: any, res
 
         res.json({ success: true });
     } catch (error: any) {
-        console.error('Error voting on poll:', error);
+        logger.error('Error voting on poll:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -234,7 +235,7 @@ router.post('/activities/:activityId/bookmark', authMiddleware, async (req: any,
 
         res.json({ success: true, isBookmarked });
     } catch (error: any) {
-        console.error('Error toggling bookmark:', error);
+        logger.error('Error toggling bookmark:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -249,7 +250,7 @@ router.delete('/activities/:activityId/bookmark', authMiddleware, async (req: an
 
         res.json({ success: true, isBookmarked: false });
     } catch (error: any) {
-        console.error('Error removing bookmark:', error);
+        logger.error('Error removing bookmark:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -265,7 +266,7 @@ router.get('/activities/:activityId/bookmark', authMiddleware, async (req: any, 
 
         res.json({ isBookmarked: activity.is_bookmarked || false });
     } catch (error: any) {
-        console.error('Error checking bookmark status:', error);
+        logger.error('Error checking bookmark status:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -278,7 +279,7 @@ router.delete('/activities/:activityId', authMiddleware, async (req: any, res: R
         await communityActivityService.deleteActivity(activityId, userId);
         res.json({ success: true });
     } catch (error: any) {
-        console.error('Error deleting activity:', error);
+        logger.error('Error deleting activity:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -291,7 +292,7 @@ router.post('/activities/:activityId/pin', authMiddleware, async (req: any, res:
         const isPinned = await communityActivityService.togglePin(activityId, userId);
         res.json({ success: true, isPinned });
     } catch (error: any) {
-        console.error('Error pinning activity:', error);
+        logger.error('Error pinning activity:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -304,7 +305,7 @@ router.get('/activities/:activityId', authMiddleware, async (req: any, res: Resp
         const details = await communityActivityService.getActivityDetails(activityId, userId);
         res.json(details);
     } catch (error: any) {
-        console.error('Error getting activity details:', error);
+        logger.error('Error getting activity details:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -331,7 +332,7 @@ router.get('/:communityId/activities/drafts', authMiddleware, async (req: any, r
 
         res.json({ data: drafts });
     } catch (error: any) {
-        console.error('Error fetching drafts:', error);
+        logger.error('Error fetching drafts:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -353,7 +354,7 @@ router.get('/:communityId/activities/draft/:type', authMiddleware, async (req: a
         // Returns null if no draft exists (not an error)
         res.json({ data: draft });
     } catch (error: any) {
-        console.error('Error fetching draft by type:', error);
+        logger.error('Error fetching draft by type:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -368,7 +369,7 @@ router.put('/activities/:activityId/publish', authMiddleware, async (req: any, r
 
         res.json({ data: activity });
     } catch (error: any) {
-        console.error('Error publishing draft:', error);
+        logger.error('Error publishing draft:', error);
         res.status(400).json({ error: error.message });
     }
 });

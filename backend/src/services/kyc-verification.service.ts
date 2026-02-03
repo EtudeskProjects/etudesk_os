@@ -9,6 +9,7 @@ import * as path from 'path';
 import { buildKYCVerificationPrompt, buildQuickCheckPrompt, KYC_SYSTEM_PROMPT } from './ai/prompts/kyc.prompt';
 import { buildTalentObject } from './ai/talent-object';
 
+import { logger } from '../utils';
 // ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
@@ -112,7 +113,7 @@ async function imageToBase64(imageUrl: string): Promise<{ data: string; mimeType
       const filePath = path.join(UPLOAD_BASE_DIR, relativePath);
 
       if (!fs.existsSync(filePath)) {
-        console.error(`KYC image file not found: ${filePath}`);
+        logger.error(`KYC image file not found: ${filePath}`);
         return null;
       }
 
@@ -126,7 +127,7 @@ async function imageToBase64(imageUrl: string): Promise<{ data: string; mimeType
     if (imageUrl.startsWith('/') || imageUrl.startsWith('file://')) {
       const filePath = imageUrl.replace('file://', '');
       if (!fs.existsSync(filePath)) {
-        console.error(`Image file not found: ${filePath}`);
+        logger.error(`Image file not found: ${filePath}`);
         return null;
       }
       const buffer = fs.readFileSync(filePath);
@@ -153,7 +154,7 @@ async function imageToBase64(imageUrl: string): Promise<{ data: string; mimeType
 
     return { data: imageUrl, mimeType: 'image/jpeg' };
   } catch (error) {
-    console.error('Error converting image to base64:', error);
+    logger.error('Error converting image to base64:', error);
     return null;
   }
 }
@@ -264,7 +265,7 @@ export async function verifyKYCDocument(
   frontImageUrl: string,
   backImageUrl?: string
 ): Promise<VerificationResult> {
-  console.log(`Starting KYC verification for talent ${talentId}`);
+  logger.info(`Starting KYC verification for talent ${talentId}`);
 
   if (!process.env.OPENAI_API_KEY) {
     return errorResult(
@@ -339,7 +340,7 @@ export async function verifyKYCDocument(
   }
 
   try {
-    console.log(`Calling gpt-4.1-mini API for document analysis...`);
+    logger.info(`Calling gpt-4.1-mini API for document analysis...`);
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const completion = await openai.chat.completions.create({
@@ -355,7 +356,7 @@ export async function verifyKYCDocument(
       throw new Error('Empty response from API');
     }
 
-    console.log(`gpt-4.1-mini raw response:`, analysisText);
+    logger.info('gpt-4.1-mini raw response', { response: analysisText });
 
     interface DocumentAnalysisResponse {
       detected_document_type: DocumentType | 'UNKNOWN' | 'INVALID';
@@ -490,7 +491,7 @@ export async function verifyKYCDocument(
     // Verified if no hard rejections and score >= 50
     const isVerified = rejectionReasons.length === 0 && score >= 50;
 
-    console.log(`KYC verification complete: ${isVerified ? 'VERIFIED' : 'REJECTED'} (score: ${score})`);
+    logger.info(`KYC verification complete: ${isVerified ? 'VERIFIED' : 'REJECTED'} (score: ${score})`);
 
     return {
       success: true,
@@ -502,7 +503,7 @@ export async function verifyKYCDocument(
       warnings,
     };
   } catch (error) {
-    console.error('KYC verification error:', error);
+    logger.error('KYC verification error:', error);
     return errorResult(
       ['Erreur lors de l\'analyse'],
       ['Erreur technique lors de la vérification'],
@@ -560,11 +561,11 @@ export async function quickDocumentCheck(
         message: parsed.message,
       };
     } catch (error) {
-      console.error('Error parsing quick check response:', error);
+      logger.error('Error parsing quick check response:', error);
       return { valid: true, document_type: 'UNKNOWN', message: 'Erreur lors de l\'analyse' };
     }
   } catch (error) {
-    console.error('Quick document check error:', error);
+    logger.error('Quick document check error:', error);
     return { valid: true, document_type: 'UNKNOWN', message: 'Vérification non effectuée' };
   }
 }

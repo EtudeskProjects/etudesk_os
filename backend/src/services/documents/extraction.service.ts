@@ -14,6 +14,7 @@ import {
 import { EXTRACTION_SYSTEM_PROMPT, buildExtractionPrompt } from '../ai/prompts/extraction.prompt';
 import { buildTalentObject, talentObjectToText } from '../ai/talent-object';
 
+import { logger } from '../../utils';
 // ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
@@ -181,7 +182,7 @@ export async function extractDocumentMetadata(
       } as ExtractedDocumentData,
     };
   } catch (error) {
-    console.error('Document extraction error:', error);
+    logger.error('Document extraction error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur d'extraction inconnue",

@@ -8,6 +8,7 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, TokenPayload } from '../services/auth.service';
 import { pool } from '../services/database';
 
+import { logger } from '../utils';
 export interface AuthRequest extends Request {
   userId?: string;
   userEmail?: string;
@@ -78,7 +79,7 @@ export async function authMiddleware(
         req.talentId = result.rows[0].talent_id;
       }
     } catch (error) {
-      console.error('Error looking up talentId:', error);
+      logger.error('Error looking up talentId:', error);
     }
   }
 

@@ -15,6 +15,7 @@ import {
 } from '../types/models';
 import { COMMUNITY_GEN_SYSTEM_PROMPT, buildCommunityGenPrompt } from './ai/prompts/community-gen.prompt';
 
+import { logger } from '../utils';
 // ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
@@ -72,7 +73,7 @@ async function getOrganizationContext(organizationId: string): Promise<Organizat
 
     return result.rows[0];
   } catch (error) {
-    console.error('Error fetching organization context:', error);
+    logger.error('Error fetching organization context:', error);
     return null;
   }
 }
@@ -116,7 +117,7 @@ export async function generateCommunitySuggestion(
   });
 
   try {
-    console.log('[CommunityGeneration] Starting generation for:', input.name);
+    logger.info('[CommunityGeneration] Starting generation', { name: input.name });
     const startTime = Date.now();
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -129,7 +130,7 @@ export async function generateCommunitySuggestion(
       response_format: { type: 'json_object' },
     });
 
-    console.log(`[CommunityGeneration] Completed in ${Date.now() - startTime}ms`);
+    logger.info(`[CommunityGeneration] Completed in ${Date.now() - startTime}ms`);
 
     const generatedText = completion.choices[0]?.message?.content;
     if (!generatedText) {
@@ -162,7 +163,7 @@ export async function generateCommunitySuggestion(
 
     return { success: true, data: generatedData };
   } catch (error) {
-    console.error('Error generating community suggestion:', error);
+    logger.error('Error generating community suggestion:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Generation failed',

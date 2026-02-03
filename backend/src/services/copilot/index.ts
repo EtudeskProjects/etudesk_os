@@ -10,7 +10,7 @@ export { createOrgAgent } from './agents/organization.agent';
 // Tools
 export { vectorQueryTool } from './tools/vector-query.tool';
 export { graphQueryTool } from './tools/graph-query.tool';
-export { sqlQueryTool } from './tools/sql-query.tool';
+export { createSqlQueryTool, sqlQueryTool } from './tools/sql-query.tool';
 export { youtubeSearchTool } from './tools/youtube-search.tool';
 
 // Prompts

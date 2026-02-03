@@ -9,6 +9,7 @@ import { pool } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { sendOrganizationInviteEmail } from '../services/email.service';
 
+import { logger } from '../utils';
 const router = Router();
 
 // Valid roles (synchronized with mobile)
@@ -82,7 +83,7 @@ router.get('/:orgId/members', authMiddleware, async (req: AuthRequest, res: Resp
 
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
-    console.error('Error fetching organization members:', error);
+    logger.error('Error fetching organization members:', error);
     res.status(500).json({ error: 'Failed to fetch members' });
   }
 });
@@ -121,7 +122,7 @@ router.get('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res: 
 
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
-    console.error('Error fetching invitations:', error);
+    logger.error('Error fetching invitations:', error);
     res.status(500).json({ error: 'Failed to fetch invitations' });
   }
 });
@@ -222,12 +223,12 @@ router.post('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res:
         inviter_name,
         inviteRole,
         token
-      ).catch(err => console.error('Failed to send invitation email:', err));
+      ).catch(err => logger.error('Failed to send invitation email:', err));
     }
 
     res.status(201).json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error creating invitation:', error);
+    logger.error('Error creating invitation:', error);
     res.status(500).json({ error: 'Failed to create invitation' });
   }
 });
@@ -295,7 +296,7 @@ router.put('/:orgId/members/:memberId', authMiddleware, async (req: AuthRequest,
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating member:', error);
+    logger.error('Error updating member:', error);
     res.status(500).json({ error: 'Failed to update member' });
   }
 });
@@ -353,7 +354,7 @@ router.delete('/:orgId/members/:memberId', authMiddleware, async (req: AuthReque
 
     res.json({ success: true, message: 'Member removed' });
   } catch (error) {
-    console.error('Error removing member:', error);
+    logger.error('Error removing member:', error);
     res.status(500).json({ error: 'Failed to remove member' });
   }
 });
@@ -399,7 +400,7 @@ router.delete('/:orgId/invitations/:invitationId', authMiddleware, async (req: A
 
     res.json({ success: true, message: 'Invitation cancelled' });
   } catch (error) {
-    console.error('Error cancelling invitation:', error);
+    logger.error('Error cancelling invitation:', error);
     res.status(500).json({ error: 'Failed to cancel invitation' });
   }
 });
@@ -455,12 +456,12 @@ router.post('/:orgId/invitations/:invitationId/resend', authMiddleware, async (r
         inviter_name,
         invitation.role,
         invitation.token
-      ).catch(err => console.error('Failed to resend invitation email:', err));
+      ).catch(err => logger.error('Failed to resend invitation email:', err));
     }
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error resending invitation:', error);
+    logger.error('Error resending invitation:', error);
     res.status(500).json({ error: 'Failed to resend invitation' });
   }
 });
@@ -488,7 +489,7 @@ router.get('/invitations/received', authMiddleware, async (req: AuthRequest, res
     } catch (dbError: any) {
       // Handle connection errors
       if (dbError.code === 'ECONNRESET' || dbError.code === 'ECONNREFUSED' || dbError.code === 'ETIMEDOUT') {
-        console.error('Database connection error fetching received invitations:', dbError);
+        logger.error('Database connection error fetching received invitations:', dbError);
         return res.status(503).json({ error: 'Service temporairement indisponible. Veuillez réessayer.' });
       }
       throw dbError;
@@ -522,7 +523,7 @@ router.get('/invitations/received', authMiddleware, async (req: AuthRequest, res
     } catch (dbError: any) {
       // Handle connection errors
       if (dbError.code === 'ECONNRESET' || dbError.code === 'ECONNREFUSED' || dbError.code === 'ETIMEDOUT') {
-        console.error('Database connection error fetching received invitations:', dbError);
+        logger.error('Database connection error fetching received invitations:', dbError);
         return res.status(503).json({ error: 'Service temporairement indisponible. Veuillez réessayer.' });
       }
       throw dbError;
@@ -530,7 +531,7 @@ router.get('/invitations/received', authMiddleware, async (req: AuthRequest, res
 
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error: any) {
-    console.error('Error fetching received invitations:', error);
+    logger.error('Error fetching received invitations:', error);
     
     // Handle specific database connection errors
     if (error.code === 'ECONNRESET' || error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
@@ -642,7 +643,7 @@ router.post('/invitations/:invitationId/accept', authMiddleware, async (req: Aut
       client.release();
     }
   } catch (error) {
-    console.error('Error accepting invitation:', error);
+    logger.error('Error accepting invitation:', error);
     res.status(500).json({ error: 'Failed to accept invitation' });
   }
 });
@@ -684,7 +685,7 @@ router.post('/invitations/:invitationId/decline', authMiddleware, async (req: Au
 
     res.json({ success: true, message: 'Invitation refusée' });
   } catch (error) {
-    console.error('Error declining invitation:', error);
+    logger.error('Error declining invitation:', error);
     res.status(500).json({ error: 'Failed to decline invitation' });
   }
 });
@@ -734,7 +735,7 @@ router.get('/invitations/by-token/:token', async (req: AuthRequest, res: Respons
 
     res.json({ data: invitation });
   } catch (error) {
-    console.error('Error fetching invitation by token:', error);
+    logger.error('Error fetching invitation by token:', error);
     res.status(500).json({ error: 'Failed to fetch invitation' });
   }
 });

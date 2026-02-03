@@ -11,6 +11,7 @@ import { pool } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { sendOpportunityInviteEmail } from '../services/email.service';
 
+import { logger } from '../utils';
 const router = Router();
 
 // ============================================================================
@@ -137,7 +138,7 @@ router.post('/:opportunityId/invitations', authMiddleware, async (req: AuthReque
       message: `${results.length} invitation(s) envoyee(s)${errors.length > 0 ? `, ${errors.length} echec(s)` : ''}`,
     });
   } catch (error: any) {
-    console.error('Error sending opportunity invitations:', error);
+    logger.error('Error sending opportunity invitations:', error);
     res.status(500).json({
       error: 'Erreur lors de l\'envoi des invitations',
       message: error?.message || 'Unknown error',
@@ -191,7 +192,7 @@ router.get('/:opportunityId/invitations', authMiddleware, async (req: AuthReques
       count: parseInt(countResult.rows[0].count, 10),
     });
   } catch (error: any) {
-    console.error('Error fetching opportunity invitations:', error);
+    logger.error('Error fetching opportunity invitations:', error);
     res.status(500).json({ error: 'Erreur lors de la recuperation des invitations' });
   }
 });
@@ -230,7 +231,7 @@ router.delete('/:opportunityId/invitations/:invitationId', authMiddleware, async
 
     res.json({ success: true, message: 'Invitation annulee' });
   } catch (error: any) {
-    console.error('Error cancelling opportunity invitation:', error);
+    logger.error('Error cancelling opportunity invitation:', error);
     res.status(500).json({ error: 'Erreur lors de l\'annulation de l\'invitation' });
   }
 });
@@ -289,7 +290,7 @@ router.post('/:opportunityId/invitations/:invitationId/resend', authMiddleware, 
 
     res.json({ success: true, message: 'Invitation renvoyee' });
   } catch (error: any) {
-    console.error('Error resending opportunity invitation:', error);
+    logger.error('Error resending opportunity invitation:', error);
     res.status(500).json({ error: 'Erreur lors du renvoi de l\'invitation' });
   }
 });
@@ -360,7 +361,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
       count: parseInt(countResult.rows[0].count, 10),
     });
   } catch (error: any) {
-    console.error('Error fetching user opportunity invitations:', error);
+    logger.error('Error fetching user opportunity invitations:', error);
     res.status(500).json({ error: 'Erreur lors de la recuperation des invitations' });
   }
 });
@@ -419,7 +420,7 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
       opportunity_id: inv.opportunity_id,
     });
   } catch (error: any) {
-    console.error('Error accepting opportunity invitation:', error);
+    logger.error('Error accepting opportunity invitation:', error);
     res.status(500).json({ error: 'Erreur lors de l\'acceptation de l\'invitation' });
   }
 });
@@ -457,7 +458,7 @@ router.post('/:invitationId/decline', authMiddleware, async (req: AuthRequest, r
 
     res.json({ success: true, message: 'Invitation declinee' });
   } catch (error: any) {
-    console.error('Error declining opportunity invitation:', error);
+    logger.error('Error declining opportunity invitation:', error);
     res.status(500).json({ error: 'Erreur lors du refus de l\'invitation' });
   }
 });
@@ -507,7 +508,7 @@ router.get('/token/:token', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('Error verifying opportunity invitation token:', error);
+    logger.error('Error verifying opportunity invitation token:', error);
     res.status(500).json({ error: 'Erreur lors de la verification de l\'invitation' });
   }
 });

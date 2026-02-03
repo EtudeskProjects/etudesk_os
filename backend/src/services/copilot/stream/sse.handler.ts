@@ -10,6 +10,7 @@ import { SSEEvent } from '../types';
 import { createTitleAgent, createSuggestionsAgent } from '../../ai/agent-factory';
 import { buildSuggestionsSystemPrompt } from '../../ai/prompts/session-utils.prompt';
 
+import { logger } from '../../../utils';
 /**
  * Initialize SSE headers on the response
  */
@@ -115,7 +116,7 @@ export async function runAgentWithSSE(
         : JSON.stringify((result as any).finalOutput);
     }
   } catch (error: any) {
-    console.error('SSE stream error:', error);
+    logger.error('SSE stream error:', error);
     sendSSE(res, { type: 'error', error: error.message || 'Erreur interne' });
   }
 

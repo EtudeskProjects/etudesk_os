@@ -11,6 +11,7 @@ import { autoModerationService } from '../services/auto-moderation.service';
 import { communityPermissionService } from '../services/community-permission.service';
 import { safeParseJson } from '../utils';
 
+import { logger } from '../utils';
 // Type for SQL query parameters
 type QueryParam = string | number | boolean | null | Date;
 
@@ -75,7 +76,7 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
       data: result.data,
     });
   } catch (error) {
-    console.error('Error generating community suggestions:', error);
+    logger.error('Error generating community suggestions:', error);
     res.status(500).json({
       error: 'Erreur lors de la génération des suggestions',
     });
@@ -149,9 +150,9 @@ router.get('/', async (req: Request, res: Response) => {
     const result = await pool.query(query, params);
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error: any) {
-    console.error('Error fetching communities:', error);
-    console.error('Query:', query);
-    console.error('Params:', params);
+    logger.error('Error fetching communities:', error);
+    logger.error('Query:', query);
+    logger.error('Params:', params);
 
     // If error is about missing column, provide helpful message
     if (error?.message?.includes('access_type')) {
@@ -195,7 +196,7 @@ router.get('/organization/:orgId', async (req: Request, res: Response) => {
 
     res.json({ data: result.rows, count: totalCount });
   } catch (error) {
-    console.error('Error fetching organization communities:', error);
+    logger.error('Error fetching organization communities:', error);
     res.status(500).json({ error: 'Failed to fetch communities' });
   }
 });
@@ -299,8 +300,8 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     res.json({ data: result.rows[0] });
   } catch (error: any) {
-    console.error('Error fetching community:', error);
-    console.error('Error details:', {
+    logger.error('Error fetching community:', error);
+    logger.error('Error details:', {
       message: error?.message,
       code: error?.code,
       detail: error?.detail,
@@ -334,7 +335,7 @@ router.post('/:id/views', async (req: Request, res: Response) => {
 
     res.json({ data: { views_count: result.rows[0].views_count } });
   } catch (error) {
-    console.error('Error incrementing community views:', error);
+    logger.error('Error incrementing community views:', error);
     res.status(500).json({ error: 'Failed to increment views' });
   }
 });
@@ -530,16 +531,16 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({ data: result.rows[0] });
   } catch (error: any) {
-    console.error('Error creating community:', error);
-    console.error('Error message:', error?.message);
-    console.error('Error code:', error?.code);
-    console.error('Error detail:', error?.detail);
-    console.error('Query columns:', insertColumns);
-    console.error('Query values:', insertValues);
-    console.error('Params count:', params.length);
-    console.error('Params:', JSON.stringify(params, null, 2));
+    logger.error('Error creating community:', error);
+    logger.error('Error message:', error?.message);
+    logger.error('Error code:', error?.code);
+    logger.error('Error detail:', error?.detail);
+    logger.error('Query columns:', insertColumns);
+    logger.error('Query values:', insertValues);
+    logger.error('Params count:', params.length);
+    logger.error('Params:', JSON.stringify(params, null, 2));
     if (insertColumns.length > 0 && insertValues.length > 0) {
-      console.error('Generated SQL:', `INSERT INTO communities (${insertColumns.join(', ')}) VALUES (${insertValues.join(', ')})`);
+      logger.error('Generated SQL:', `INSERT INTO communities (${insertColumns.join(', ')}) VALUES (${insertValues.join(', ')})`);
     }
     res.status(500).json({
       error: 'Failed to create community',
@@ -608,7 +609,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         rules,
       });
     } catch (moderationError: any) {
-      console.log(`[Moderation] Community update rejected for ${id}: ${moderationError.message}`);
+      logger.info(`[Moderation] Community update rejected for ${id}: ${moderationError.message}`);
       return res.status(400).json({ 
         error: moderationError.message,
         code: 'CONTENT_MODERATION_FAILED',
@@ -696,7 +697,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating community:', error);
+    logger.error('Error updating community:', error);
     res.status(500).json({ error: 'Failed to update community' });
   }
 });
@@ -745,7 +746,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
 
     res.json({ success: true, message: 'Community deleted' });
   } catch (error) {
-    console.error('Error deleting community:', error);
+    logger.error('Error deleting community:', error);
     res.status(500).json({ error: 'Failed to delete community' });
   }
 });
@@ -791,7 +792,7 @@ router.get('/:id/membership', authMiddleware, async (req: AuthRequest, res: Resp
       },
     });
   } catch (error) {
-    console.error('Error checking membership:', error);
+    logger.error('Error checking membership:', error);
     res.status(500).json({ error: 'Failed to check membership' });
   }
 });
@@ -820,7 +821,7 @@ router.post('/:id/join', authMiddleware, async (req: AuthRequest, res: Response)
         try {
           await autoModerationService.assertContentApproved({ answers: answersText });
         } catch (moderationError: any) {
-          console.log(`[Moderation] Community join request rejected for ${talentId}: ${moderationError.message}`);
+          logger.info(`[Moderation] Community join request rejected for ${talentId}: ${moderationError.message}`);
           return res.status(400).json({ 
             error: moderationError.message,
             code: 'CONTENT_MODERATION_FAILED',
@@ -1028,7 +1029,7 @@ router.post('/:id/join', authMiddleware, async (req: AuthRequest, res: Response)
     `, insertParams);
 
     if (hasId && insertResult.rows[0]?.id) {
-      notifyNewMembershipRequest(insertResult.rows[0].id).catch(err => console.error('Notification error:', err));
+      notifyNewMembershipRequest(insertResult.rows[0].id).catch(err => logger.error('Notification error:', err));
     }
 
     res.status(201).json({
@@ -1039,8 +1040,8 @@ router.post('/:id/join', authMiddleware, async (req: AuthRequest, res: Response)
       },
     });
   } catch (error: any) {
-    console.error('Error joining community:', error);
-    console.error('Error details:', {
+    logger.error('Error joining community:', error);
+    logger.error('Error details:', {
       message: error?.message,
       code: error?.code,
       detail: error?.detail,
@@ -1074,7 +1075,7 @@ router.post('/:id/leave', authMiddleware, async (req: AuthRequest, res: Response
 
     res.json({ success: true, message: 'Vous avez quitté la communauté' });
   } catch (error) {
-    console.error('Error leaving community:', error);
+    logger.error('Error leaving community:', error);
     res.status(500).json({ error: 'Erreur lors du départ de la communauté' });
   }
 });
@@ -1099,7 +1100,7 @@ router.post('/:id/cancel-request', authMiddleware, async (req: AuthRequest, res:
 
     res.json({ success: true, message: 'Demande d\'adhésion annulée' });
   } catch (error) {
-    console.error('Error cancelling membership request:', error);
+    logger.error('Error cancelling membership request:', error);
     res.status(500).json({ error: 'Erreur lors de l\'annulation de la demande' });
   }
 });
@@ -1182,7 +1183,7 @@ router.get('/memberships/me', authMiddleware, async (req: AuthRequest, res: Resp
     const result = await pool.query(query, params);
     res.json({ data: { memberships: result.rows }, count: totalCount });
   } catch (error) {
-    console.error('Error fetching memberships:', error);
+    logger.error('Error fetching memberships:', error);
     res.status(500).json({ error: 'Failed to fetch memberships' });
   }
 });
@@ -1321,8 +1322,8 @@ router.get('/:id/members', authMiddleware, async (req: AuthRequest, res: Respons
       statusCounts
     });
   } catch (error: any) {
-    console.error('Error fetching community members:', error);
-    console.error('Error details:', {
+    logger.error('Error fetching community members:', error);
+    logger.error('Error details:', {
       message: error?.message,
       code: error?.code,
       detail: error?.detail,
@@ -1428,7 +1429,7 @@ router.get('/members/:membershipId', authMiddleware, async (req: AuthRequest, re
 
     res.json({ data: membership });
   } catch (error) {
-    console.error('Error fetching membership details:', error);
+    logger.error('Error fetching membership details:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des détails' });
   }
 });
@@ -1511,7 +1512,7 @@ router.put('/members/:membershipId/status', authMiddleware, async (req: AuthRequ
 
     if (oldStatus !== status) {
       notifyMembershipStatusChanged(membershipId, memberTalentId, communityName, oldStatus, status)
-        .catch(err => console.error('Notification error:', err));
+        .catch(err => logger.error('Notification error:', err));
     }
 
     res.json({
@@ -1520,7 +1521,7 @@ router.put('/members/:membershipId/status', authMiddleware, async (req: AuthRequ
       message: `Statut mis à jour: ${status}`
     });
   } catch (error) {
-    console.error('Error updating membership status:', error);
+    logger.error('Error updating membership status:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour du statut' });
   }
 });
@@ -1563,7 +1564,7 @@ router.put('/members/:membershipId/notes', authMiddleware, async (req: AuthReque
 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating notes:', error);
+    logger.error('Error updating notes:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour des notes' });
   }
 });
@@ -1610,7 +1611,7 @@ router.put('/members/:membershipId/rating', authMiddleware, async (req: AuthRequ
 
     res.json({ success: true, data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating rating:', error);
+    logger.error('Error updating rating:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour de la note' });
   }
 });
@@ -1646,7 +1647,7 @@ router.get('/members/:membershipId/permissions', authMiddleware, async (req: Aut
     const permissionsData = await communityPermissionService.getMembershipPermissions(membershipId);
     res.json({ success: true, data: permissionsData });
   } catch (error) {
-    console.error('Error getting member permissions:', error);
+    logger.error('Error getting member permissions:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des permissions' });
   }
 });
@@ -1701,7 +1702,7 @@ router.put('/members/:membershipId/permissions', authMiddleware, async (req: Aut
       message: permissions === null ? 'Permissions réinitialisées aux valeurs par défaut' : 'Permissions mises à jour'
     });
   } catch (error) {
-    console.error('Error updating member permissions:', error);
+    logger.error('Error updating member permissions:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour des permissions' });
   }
 });
@@ -1725,7 +1726,7 @@ router.get('/:id/default-permissions', authMiddleware, async (req: AuthRequest, 
     const defaultPermissions = await communityPermissionService.getCommunityDefaultPermissions(communityId);
     res.json({ success: true, data: defaultPermissions });
   } catch (error) {
-    console.error('Error getting default permissions:', error);
+    logger.error('Error getting default permissions:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des permissions par défaut' });
   }
 });
@@ -1760,7 +1761,7 @@ router.put('/:id/default-permissions', authMiddleware, async (req: AuthRequest, 
       message: 'Permissions par défaut mises à jour'
     });
   } catch (error) {
-    console.error('Error updating default permissions:', error);
+    logger.error('Error updating default permissions:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour des permissions par défaut' });
   }
 });
@@ -1798,7 +1799,7 @@ router.delete('/members/:membershipId', authMiddleware, async (req: AuthRequest,
 
     res.json({ success: true, message: 'Membre supprimé. Il pourra postuler à nouveau.' });
   } catch (error) {
-    console.error('Error deleting membership:', error);
+    logger.error('Error deleting membership:', error);
     res.status(500).json({ error: 'Erreur lors de la suppression du membre' });
   }
 });
@@ -1843,7 +1844,7 @@ async function notifyMembershipStatusChanged(
       },
     });
   } catch (error) {
-    console.error('Error sending membership status notification:', error);
+    logger.error('Error sending membership status notification:', error);
   }
 }
 
@@ -1897,7 +1898,7 @@ async function notifyNewMembershipRequest(membershipId: string): Promise<void> {
       }
     }
   } catch (error) {
-    console.error('Error sending new membership request notification:', error);
+    logger.error('Error sending new membership request notification:', error);
   }
 }
 
@@ -1951,7 +1952,7 @@ router.get('/members/:membershipId/messages', authMiddleware, async (req: AuthRe
 
     res.json({ data: messages.rows });
   } catch (error) {
-    console.error('Error fetching membership messages:', error);
+    logger.error('Error fetching membership messages:', error);
     res.status(500).json({ error: 'Erreur lors de la récupération des messages' });
   }
 });
@@ -2061,12 +2062,12 @@ router.post('/members/:membershipId/messages', authMiddleware, async (req: AuthR
         }
       }
     } catch (pushError) {
-      console.error('Error sending message notification:', pushError);
+      logger.error('Error sending message notification:', pushError);
     }
 
     res.status(201).json({ data: message });
   } catch (error) {
-    console.error('Error sending membership message:', error);
+    logger.error('Error sending membership message:', error);
     res.status(500).json({ error: 'Erreur lors de l\'envoi du message' });
   }
 });
@@ -2121,7 +2122,7 @@ router.put('/members/:membershipId/messages/read-all', authMiddleware, async (re
 
     res.json({ marked: result.rowCount });
   } catch (error) {
-    console.error('Error marking messages as read:', error);
+    logger.error('Error marking messages as read:', error);
     res.status(500).json({ error: 'Erreur lors du marquage des messages' });
   }
 });

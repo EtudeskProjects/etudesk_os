@@ -12,6 +12,7 @@ import { Pinecone } from '@pinecone-database/pinecone';
 import { pool } from './database';
 import { buildTalentObject } from './ai/talent-object';
 
+import { logger } from '../utils';
 // ═══════════════════════════════════════════════════════════════
 // CLIENT INITIALIZATION
 // ═══════════════════════════════════════════════════════════════
@@ -167,7 +168,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
     return embedding;
   } catch (error) {
-    console.error('Error generating embedding:', error);
+    logger.error('Error generating embedding:', error);
     throw error;
   }
 }
@@ -210,7 +211,7 @@ export async function upsertTalentEmbedding(
     // Note: Embedding is stored in Pinecone only, not in PostgreSQL
     // to avoid schema complexity and since Pinecone is the primary vector store
   } catch (error) {
-    console.error('Error upserting talent embedding:', error);
+    logger.error('Error upserting talent embedding:', error);
     // Don't throw - embedding is optional enhancement
   }
 }
@@ -242,7 +243,7 @@ export async function upsertOpportunityEmbedding(
     // Note: Embedding is stored in Pinecone only, not in PostgreSQL
     // to avoid schema complexity and since Pinecone is the primary vector store
   } catch (error) {
-    console.error('Error upserting opportunity embedding:', error);
+    logger.error('Error upserting opportunity embedding:', error);
     // Don't throw - embedding is optional enhancement
   }
 }
@@ -330,14 +331,14 @@ export async function getSemanticBoost(
       // Ignore errors if embedding columns don't exist
       // This is expected if migrations haven't been run
       if (pgError.code !== '42703') { // 42703 = undefined column
-        console.warn('PostgreSQL fallback failed (non-critical):', pgError.message);
+        logger.warn('PostgreSQL fallback failed (non-critical):', pgError.message);
       }
     }
 
     // No embeddings available, return neutral
     return 0;
   } catch (error) {
-    console.error('Error getting semantic boost:', error);
+    logger.error('Error getting semantic boost:', error);
     return 0; // Neutral boost on error
   }
 }
@@ -361,7 +362,7 @@ export async function onTalentProfileUpdate(talentId: string): Promise<void> {
       });
     }
   } catch (error) {
-    console.error('Error updating talent embedding on profile update:', error);
+    logger.error('Error updating talent embedding on profile update:', error);
   }
 }
 
@@ -386,7 +387,7 @@ export async function onOpportunityUpdate(opportunityId: string): Promise<void> 
       await upsertOpportunityEmbedding(opportunityId, result.rows[0]);
     }
   } catch (error) {
-    console.error('Error updating opportunity embedding:', error);
+    logger.error('Error updating opportunity embedding:', error);
   }
 }
 
@@ -414,7 +415,7 @@ export async function batchUpdateTalentEmbeddings(limit: number = 100): Promise<
       // Small delay to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
-      console.error(`Error updating embedding for talent ${talent.id}:`, error);
+      logger.error(`Error updating embedding for talent ${talent.id}:`, error);
     }
   }
 
@@ -446,7 +447,7 @@ export async function batchUpdateOpportunityEmbeddings(limit: number = 100): Pro
       // Small delay to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
-      console.error(`Error updating embedding for opportunity ${opp.id}:`, error);
+      logger.error(`Error updating embedding for opportunity ${opp.id}:`, error);
     }
   }
 

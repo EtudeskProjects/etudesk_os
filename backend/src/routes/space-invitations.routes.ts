@@ -11,6 +11,7 @@ import { pool } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { sendSpaceInviteEmail } from '../services/email.service';
 
+import { logger } from '../utils';
 const router = Router();
 
 // ============================================================================
@@ -120,7 +121,7 @@ router.post('/:spaceId/invitations', authMiddleware, async (req: AuthRequest, re
       message: `${results.length} invitation(s) envoyee(s)${errors.length > 0 ? `, ${errors.length} echec(s)` : ''}`,
     });
   } catch (error: any) {
-    console.error('Error sending space invitations:', error);
+    logger.error('Error sending space invitations:', error);
     res.status(500).json({
       error: 'Erreur lors de l\'envoi des invitations',
       message: error?.message || 'Unknown error',
@@ -172,7 +173,7 @@ router.get('/:spaceId/invitations', authMiddleware, async (req: AuthRequest, res
       count: parseInt(countResult.rows[0].count, 10),
     });
   } catch (error: any) {
-    console.error('Error fetching space invitations:', error);
+    logger.error('Error fetching space invitations:', error);
     res.status(500).json({ error: 'Erreur lors de la recuperation des invitations' });
   }
 });
@@ -209,7 +210,7 @@ router.delete('/:spaceId/invitations/:invitationId', authMiddleware, async (req:
 
     res.json({ success: true, message: 'Invitation annulee' });
   } catch (error: any) {
-    console.error('Error cancelling space invitation:', error);
+    logger.error('Error cancelling space invitation:', error);
     res.status(500).json({ error: 'Erreur lors de l\'annulation de l\'invitation' });
   }
 });
@@ -265,7 +266,7 @@ router.post('/:spaceId/invitations/:invitationId/resend', authMiddleware, async 
 
     res.json({ success: true, message: 'Invitation renvoyee' });
   } catch (error: any) {
-    console.error('Error resending space invitation:', error);
+    logger.error('Error resending space invitation:', error);
     res.status(500).json({ error: 'Erreur lors du renvoi de l\'invitation' });
   }
 });
@@ -337,7 +338,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
       count: parseInt(countResult.rows[0].count, 10),
     });
   } catch (error: any) {
-    console.error('Error fetching user space invitations:', error);
+    logger.error('Error fetching user space invitations:', error);
     res.status(500).json({ error: 'Erreur lors de la recuperation des invitations' });
   }
 });
@@ -396,7 +397,7 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
       space_id: inv.space_id,
     });
   } catch (error: any) {
-    console.error('Error accepting space invitation:', error);
+    logger.error('Error accepting space invitation:', error);
     res.status(500).json({ error: 'Erreur lors de l\'acceptation de l\'invitation' });
   }
 });
@@ -434,7 +435,7 @@ router.post('/:invitationId/decline', authMiddleware, async (req: AuthRequest, r
 
     res.json({ success: true, message: 'Invitation declinee' });
   } catch (error: any) {
-    console.error('Error declining space invitation:', error);
+    logger.error('Error declining space invitation:', error);
     res.status(500).json({ error: 'Erreur lors du refus de l\'invitation' });
   }
 });
@@ -490,7 +491,7 @@ router.get('/token/:token', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('Error verifying space invitation token:', error);
+    logger.error('Error verifying space invitation token:', error);
     res.status(500).json({ error: 'Erreur lors de la verification de l\'invitation' });
   }
 });

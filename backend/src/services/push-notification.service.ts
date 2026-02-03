@@ -7,6 +7,7 @@ import Expo, { ExpoPushMessage, ExpoPushTicket, ExpoPushReceipt } from 'expo-ser
 import { pool } from './database';
 import { sendEmail } from './email.service';
 
+import { logger } from '../utils';
 // Create Expo SDK client
 const expo = new Expo();
 
@@ -14,7 +15,7 @@ const expo = new Expo();
 // TYPES
 // ═══════════════════════════════════════════════════════════════
 
-export type NotificationType = 'OPPORTUNITY' | 'APPLICATION' | 'MESSAGE' | 'SYSTEM' | 'REMINDER';
+export type NotificationType = 'OPPORTUNITY' | 'APPLICATION' | 'MESSAGE' | 'SYSTEM' | 'REMINDER' | 'MEMBERSHIP' | 'BOOKING';
 
 export interface PushNotificationData {
   type: NotificationType;
@@ -56,7 +57,7 @@ export async function registerPushToken(
     );
     return { success: true };
   } catch (error) {
-    console.error('Error registering push token:', error);
+    logger.error('Error registering push token:', error);
     return { success: false, error: 'Failed to register token' };
   }
 }
@@ -76,7 +77,7 @@ export async function deactivatePushToken(
     );
     return { success: true };
   } catch (error) {
-    console.error('Error deactivating push token:', error);
+    logger.error('Error deactivating push token:', error);
     return { success: false };
   }
 }
@@ -184,7 +185,7 @@ export async function sendToUser(
       const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
       tickets.push(...ticketChunk);
     } catch (error) {
-      console.error('Error sending push notification chunk:', error);
+      logger.error('Error sending push notification chunk:', error);
       errors.push(error instanceof Error ? error.message : 'Unknown error');
     }
   }
@@ -492,7 +493,7 @@ export async function notifyApplicationStatusChanged(
       );
     }
   } catch (error) {
-    console.error('Error sending application status notification:', error);
+    logger.error('Error sending application status notification:', error);
   }
 }
 
@@ -592,7 +593,7 @@ export async function notifyApplicationMessage(
       }
     }
   } catch (error) {
-    console.error('Error sending message notification:', error);
+    logger.error('Error sending message notification:', error);
   }
 }
 
@@ -659,7 +660,7 @@ export async function notifyNewApplication(applicationId: string): Promise<void>
       }
     }
   } catch (error) {
-    console.error('Error sending new application notification:', error);
+    logger.error('Error sending new application notification:', error);
   }
 }
 
@@ -730,7 +731,7 @@ export async function notifyInterviewScheduled(
       );
     }
   } catch (error) {
-    console.error('Error sending interview scheduled notification:', error);
+    logger.error('Error sending interview scheduled notification:', error);
   }
 }
 
@@ -999,6 +1000,6 @@ export async function notifyNewBooking(bookingId: string): Promise<void> {
       }
     }
   } catch (error) {
-    console.error('Error sending new booking notification:', error);
+    logger.error('Error sending new booking notification:', error);
   }
 }

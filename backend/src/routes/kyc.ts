@@ -7,6 +7,7 @@ import { Router, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { pool } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
+import { logger } from '../utils';
 import {
   verifyKYCDocument,
   DocumentType,
@@ -53,7 +54,7 @@ router.get('/status', authMiddleware, async (req: AuthRequest, res: Response) =>
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error fetching KYC status:', error);
+    logger.error('Error fetching KYC status:', error);
     res.status(500).json({ error: 'Failed to fetch KYC status' });
   }
 });
@@ -98,7 +99,7 @@ router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) =
       });
     }
 
-    console.log(`📋 KYC submission received for talent ${req.talentId}`);
+    logger.info(`📋 KYC submission received for talent ${req.talentId}`);
 
     // Verify document with Gemini Vision
     let verificationResult: VerificationResult;
@@ -110,7 +111,7 @@ router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) =
         back_image_url
       );
     } catch (verifyError) {
-      console.error('Verification service error:', verifyError);
+      logger.error('Verification service error:', verifyError);
       // If verification service fails, set to pending for manual review
       verificationResult = {
         success: false,
@@ -153,13 +154,13 @@ router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) =
 
     if (verificationResult.success && verificationResult.is_verified) {
       status = 'VERIFIED';
-      console.log(`✅ KYC verified for talent ${req.talentId} (score: ${verificationResult.verification_score})`);
+      logger.info(`✅ KYC verified for talent ${req.talentId} (score: ${verificationResult.verification_score})`);
     } else {
       status = 'REJECTED';
       rejectionReason = verificationResult.rejection_reasons.length > 0
         ? verificationResult.rejection_reasons.join('; ')
         : 'Document non conforme ou illisible';
-      console.log(`❌ KYC rejected for talent ${req.talentId}: ${rejectionReason}`);
+      logger.info(`❌ KYC rejected for talent ${req.talentId}: ${rejectionReason}`);
     }
 
     // Create KYC verification record
@@ -206,7 +207,7 @@ router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) =
       },
     });
   } catch (error) {
-    console.error('Error submitting KYC:', error);
+    logger.error('Error submitting KYC:', error);
     res.status(500).json({ error: 'Failed to submit KYC verification' });
   }
 });
@@ -262,7 +263,7 @@ router.post('/upload-url', authMiddleware, async (req: AuthRequest, res: Respons
       }
     });
   } catch (error) {
-    console.error('Error generating upload URL:', error);
+    logger.error('Error generating upload URL:', error);
     res.status(500).json({ error: 'Failed to generate upload URL' });
   }
 });
@@ -288,7 +289,7 @@ router.get('/history', authMiddleware, async (req: AuthRequest, res: Response) =
 
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
-    console.error('Error fetching KYC history:', error);
+    logger.error('Error fetching KYC history:', error);
     res.status(500).json({ error: 'Failed to fetch KYC history' });
   }
 });

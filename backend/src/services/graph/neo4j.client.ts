@@ -5,6 +5,7 @@
 import neo4j, { Driver, Session, Result, QueryResult, RecordShape, Integer } from 'neo4j-driver';
 import { GRAPH_CONSTRAINTS, GRAPH_INDEXES } from './ontology';
 
+import { logger } from '../../utils';
 // ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
@@ -34,7 +35,7 @@ class Neo4jClient {
    */
   async initialize(config?: Neo4jConfig): Promise<void> {
     if (this.initialized && this.driver) {
-      console.log('[Neo4j] Client already initialized');
+      logger.info('[Neo4j] Client already initialized');
       return;
     }
 
@@ -46,7 +47,7 @@ class Neo4jClient {
     };
 
     try {
-      console.log(`[Neo4j] Connecting to ${this.config.uri}...`);
+      logger.info(`[Neo4j] Connecting to ${this.config.uri}...`);
 
       this.driver = neo4j.driver(
         this.config.uri,
@@ -57,22 +58,22 @@ class Neo4jClient {
           connectionTimeout: 30000,
           logging: {
             level: 'warn',
-            logger: (level, message) => console.log(`[Neo4j][${level}] ${message}`),
+            logger: (level, message) => logger.info(`[Neo4j][${level}] ${message}`),
           },
         }
       );
 
       // Verify connectivity
       await this.driver.verifyConnectivity();
-      console.log('[Neo4j] Connection verified successfully');
+      logger.info('[Neo4j] Connection verified successfully');
 
       // Initialize schema
       await this.initializeSchema();
 
       this.initialized = true;
-      console.log('[Neo4j] Client initialized successfully');
+      logger.info('[Neo4j] Client initialized successfully');
     } catch (error) {
-      console.error('[Neo4j] Failed to initialize:', error);
+      logger.error('[Neo4j] Failed to initialize:', error);
       throw error;
     }
   }
@@ -81,7 +82,7 @@ class Neo4jClient {
    * Initialize graph schema (constraints and indexes)
    */
   private async initializeSchema(): Promise<void> {
-    console.log('[Neo4j] Initializing schema...');
+    logger.info('[Neo4j] Initializing schema...');
 
     const session = this.getSession();
     try {
@@ -92,7 +93,7 @@ class Neo4jClient {
         } catch (error: any) {
           // Ignore if constraint already exists
           if (!error.message?.includes('already exists')) {
-            console.warn(`[Neo4j] Constraint warning: ${error.message}`);
+            logger.warn(`[Neo4j] Constraint warning: ${error.message}`);
           }
         }
       }
@@ -104,12 +105,12 @@ class Neo4jClient {
         } catch (error: any) {
           // Ignore if index already exists
           if (!error.message?.includes('already exists')) {
-            console.warn(`[Neo4j] Index warning: ${error.message}`);
+            logger.warn(`[Neo4j] Index warning: ${error.message}`);
           }
         }
       }
 
-      console.log('[Neo4j] Schema initialized');
+      logger.info('[Neo4j] Schema initialized');
     } finally {
       await session.close();
     }
@@ -231,7 +232,7 @@ class Neo4jClient {
       await this.driver.close();
       this.driver = null;
       this.initialized = false;
-      console.log('[Neo4j] Connection closed');
+      logger.info('[Neo4j] Connection closed');
     }
   }
 }

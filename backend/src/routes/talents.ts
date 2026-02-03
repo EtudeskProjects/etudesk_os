@@ -13,6 +13,7 @@ import { BIO_GEN_SYSTEM_PROMPT } from '../services/ai/prompts/bio-gen.prompt';
 import { buildTalentObject, talentObjectToText } from '../services/ai/talent-object';
 import { normalizeCountryCode } from '../constants/countries';
 
+import { logger } from '../utils';
 // Type for SQL query parameters
 type QueryParam = string | number | boolean | null | Date | string[];
 
@@ -33,7 +34,7 @@ router.get('/me/talent-object', authMiddleware, async (req: AuthRequest, res: Re
     }
     res.json({ data: obj });
   } catch (error) {
-    console.error('Error fetching talent object:', error);
+    logger.error('Error fetching talent object:', error);
     res.status(500).json({ error: 'Failed to fetch talent object' });
   }
 });
@@ -67,7 +68,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error fetching talent profile:', error);
+    logger.error('Error fetching talent profile:', error);
     res.status(500).json({ error: 'Failed to fetch talent profile' });
   }
 });
@@ -105,7 +106,7 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
         bio,
       });
     } catch (moderationError: any) {
-      console.log(`[Moderation] Talent profile update rejected for ${req.talentId}: ${moderationError.message}`);
+      logger.info(`[Moderation] Talent profile update rejected for ${req.talentId}: ${moderationError.message}`);
       return res.status(400).json({ 
         error: moderationError.message,
         code: 'CONTENT_MODERATION_FAILED',
@@ -229,12 +230,12 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     // Generate/update embedding for semantic search (async, non-blocking)
     onTalentProfileUpdate(req.talentId).catch(err =>
-      console.error('Failed to update talent embedding:', err)
+      logger.error('Failed to update talent embedding:', err)
     );
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error updating talent profile:', error);
+    logger.error('Error updating talent profile:', error);
     res.status(500).json({ error: 'Failed to update talent profile' });
   }
 });
@@ -281,13 +282,13 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
     const choice = completion.choices[0];
     const bio = (choice?.message?.content ?? choice?.message?.refusal)?.trim();
     if (!bio) {
-      console.error('Bio generation empty response:', JSON.stringify(choice));
+      logger.error('Bio generation empty response:', JSON.stringify(choice));
       return res.status(500).json({ error: 'Échec de la génération' });
     }
 
     res.json({ data: { bio: bio.slice(0, 250) } });
   } catch (error) {
-    console.error('Error generating bio:', error);
+    logger.error('Error generating bio:', error);
     res.status(500).json({ error: 'Erreur lors de la génération de la bio' });
   }
 });
@@ -316,7 +317,7 @@ router.get('/:id', async (req, res) => {
 
     res.json({ data: result.rows[0] });
   } catch (error) {
-    console.error('Error fetching talent:', error);
+    logger.error('Error fetching talent:', error);
     res.status(500).json({ error: 'Failed to fetch talent' });
   }
 });
