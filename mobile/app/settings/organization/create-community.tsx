@@ -39,9 +39,10 @@ import {
   Calendar,
   BarChart2,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { Input, Button, Toggle, StepIndicator } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
+import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
 import {
   COMMUNITY_TYPE_DATA,
@@ -84,6 +85,29 @@ interface ImageItem {
   uri: string;
 }
 
+interface CommunityFormValues {
+  // Info
+  name: string;
+  communityType: CommunityType | null;
+  description: string;
+  selectedTags: string[];
+  selectedSectors: Sector[];
+  // Lieu
+  country: string;
+  region: string;
+  city: string;
+  // Conditions
+  visibility: Visibility | null;
+  isPaid: boolean;
+  monthlyPrice: string;
+  currency: string;
+  rules: string;
+  applicationQuestions: ApplicationQuestion[];
+  defaultPermissions: MemberPermissions;
+  // Media
+  images: ImageItem[];
+}
+
 // Icons for location types
 const LOCATION_TYPE_ICONS: Record<CommunityType, React.ComponentType<any>> = {
   HYBRID: Home,
@@ -96,35 +120,58 @@ export default function CreateCommunityScreen() {
   const { colors } = useTheme();
   const { selectedOrgId, selectedOrg } = useSpace();
   const [currentStep, setCurrentStep] = useState<Step>('info');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // Form state - Info
-  const [name, setName] = useState('');
-  const [communityType, setCommunityType] = useState<CommunityType | null>('ONLINE');
-  const [description, setDescription] = useState('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedSectors, setSelectedSectors] = useState<Sector[]>([]);
-
-  // Form state - Lieu
-  const [country, setCountry] = useState('');
-  const [region, setRegion] = useState('');
-  const [city, setCity] = useState('');
   const [orgLocationLoaded, setOrgLocationLoaded] = useState(false);
   const countryScrollRef = useRef<ScrollView>(null);
   const COUNTRY_CHIP_WIDTH = 80;
 
-  // Form state - Conditions
-  const [visibility, setVisibility] = useState<Visibility | null>('PUBLIC');
-  const [isPaid, setIsPaid] = useState(false);
-  const [monthlyPrice, setMonthlyPrice] = useState('');
-  const [currency, setCurrency] = useState('XOF');
-  const [rules, setRules] = useState('');
-  const [applicationQuestions, setApplicationQuestions] = useState<ApplicationQuestion[]>([]);
-  const [defaultPermissions, setDefaultPermissions] = useState<MemberPermissions>(DEFAULT_MEMBER_PERMISSIONS);
+  // Form management with useForm hook
+  const form = useForm<CommunityFormValues>({
+    fields: {
+      // Info
+      name: { initialValue: '' },
+      communityType: { initialValue: 'ONLINE' as CommunityType | null },
+      description: { initialValue: '' },
+      selectedTags: { initialValue: [] as string[] },
+      selectedSectors: { initialValue: [] as Sector[] },
+      // Lieu
+      country: { initialValue: '' },
+      region: { initialValue: '' },
+      city: { initialValue: '' },
+      // Conditions
+      visibility: { initialValue: 'PUBLIC' as Visibility | null },
+      isPaid: { initialValue: false },
+      monthlyPrice: { initialValue: '' },
+      currency: { initialValue: 'XOF' },
+      rules: { initialValue: '' },
+      applicationQuestions: { initialValue: [] as ApplicationQuestion[] },
+      defaultPermissions: { initialValue: DEFAULT_MEMBER_PERMISSIONS },
+      // Media
+      images: { initialValue: [] as ImageItem[] },
+    },
+    onSubmit: async (values) => {
+      // Submit logic handled separately via handlePublish/handleSaveDraft
+    },
+    validateOnChange: false,
+  });
 
-  // Form state - Media
-  const [images, setImages] = useState<ImageItem[]>([]);
+  // Convenience getters for all form values
+  const name = form.getValue('name');
+  const communityType = form.getValue('communityType');
+  const description = form.getValue('description');
+  const selectedTags = form.getValue('selectedTags');
+  const selectedSectors = form.getValue('selectedSectors');
+  const country = form.getValue('country');
+  const region = form.getValue('region');
+  const city = form.getValue('city');
+  const visibility = form.getValue('visibility');
+  const isPaid = form.getValue('isPaid');
+  const monthlyPrice = form.getValue('monthlyPrice');
+  const currency = form.getValue('currency');
+  const rules = form.getValue('rules');
+  const applicationQuestions = form.getValue('applicationQuestions');
+  const defaultPermissions = form.getValue('defaultPermissions');
+  const images = form.getValue('images');
 
   // Get regions and cities dynamically
   const availableRegions = country ? getRegionsByCountry(country) : [];
@@ -153,12 +200,14 @@ export default function CreateCommunityScreen() {
           const response = await organizationService.get(selectedOrgId);
           const org = response.data;
           if (org) {
-            if (org.headquarters_country) setCountry(org.headquarters_country);
-            if (org.headquarters_region) setRegion(org.headquarters_region);
-            if (org.headquarters_city) setCity(org.headquarters_city);
+            form.setValues({
+              country: org.headquarters_country || '',
+              region: org.headquarters_region || '',
+              city: org.headquarters_city || '',
+            });
           }
         } catch (error) {
-          setCountry('CI');
+          form.setValue('country', 'CI');
         }
         setOrgLocationLoaded(true);
       }
@@ -179,7 +228,7 @@ export default function CreateCommunityScreen() {
           id: Date.now().toString(),
           uri: image.uri,
         };
-        setImages([...images, newImage]);
+        form.setValue('images', [...images, newImage]);
       }
     } catch (error) {
       Alert.alert('Erreur', 'Une erreur est survenue lors de la sélection de l\'image.');
@@ -187,15 +236,15 @@ export default function CreateCommunityScreen() {
   };
 
   const removeImage = (id: string) => {
-    setImages(images.filter((img) => img.id !== id));
+    form.setValue('images', images.filter((img) => img.id !== id));
   };
 
 
   const toggleTag = (tagId: string) => {
     if (selectedTags.includes(tagId)) {
-      setSelectedTags(selectedTags.filter((t) => t !== tagId));
+      form.setValue('selectedTags', selectedTags.filter((t) => t !== tagId));
     } else if (selectedTags.length < MAX_COMMUNITY_TAGS) {
-      setSelectedTags([...selectedTags, tagId]);
+      form.setValue('selectedTags', [...selectedTags, tagId]);
     } else {
       Alert.alert('Limite atteinte', `Vous pouvez sélectionner au maximum ${MAX_COMMUNITY_TAGS} tags.`);
     }
@@ -203,9 +252,9 @@ export default function CreateCommunityScreen() {
 
   const toggleSector = (sectorId: Sector) => {
     if (selectedSectors.includes(sectorId)) {
-      setSelectedSectors(selectedSectors.filter((s) => s !== sectorId));
+      form.setValue('selectedSectors', selectedSectors.filter((s) => s !== sectorId));
     } else if (selectedSectors.length < MAX_SECTORS) {
-      setSelectedSectors([...selectedSectors, sectorId]);
+      form.setValue('selectedSectors', [...selectedSectors, sectorId]);
     } else {
       Alert.alert('Limite atteinte', `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.`);
     }
@@ -252,27 +301,29 @@ export default function CreateCommunityScreen() {
       if (response.success && response.data) {
         const data = response.data;
 
-        // Apply generated data to form fields
-        if (data.suggested_name) setName(data.suggested_name);
-        if (data.description) setDescription(data.description);
+        // Apply generated data to form fields using setValues for batch update
+        const updates: Partial<CommunityFormValues> = {};
+
+        if (data.suggested_name) updates.name = data.suggested_name;
+        if (data.description) updates.description = data.description;
 
         // Tags - apply up to 3 tags
         if (data.tags && data.tags.length > 0) {
-          setSelectedTags(data.tags.slice(0, MAX_COMMUNITY_TAGS));
+          updates.selectedTags = data.tags.slice(0, MAX_COMMUNITY_TAGS);
         }
 
         // Sectors - apply up to 5 sectors
         if (data.sectors && data.sectors.length > 0) {
-          setSelectedSectors(data.sectors.slice(0, MAX_SECTORS));
+          updates.selectedSectors = data.sectors.slice(0, MAX_SECTORS);
         }
 
-        if (data.rules) setRules(data.rules);
-        if (data.visibility) setVisibility(data.visibility);
+        if (data.rules) updates.rules = data.rules;
+        if (data.visibility) updates.visibility = data.visibility;
 
         // Pricing
-        if (data.is_paid !== undefined) setIsPaid(data.is_paid);
-        if (data.monthly_price) setMonthlyPrice(Math.floor(data.monthly_price).toString());
-        if (data.currency) setCurrency(data.currency);
+        if (data.is_paid !== undefined) updates.isPaid = data.is_paid;
+        if (data.monthly_price) updates.monthlyPrice = Math.floor(data.monthly_price).toString();
+        if (data.currency) updates.currency = data.currency;
 
         // Application questions
         if (data.application_questions && data.application_questions.length > 0) {
@@ -282,8 +333,10 @@ export default function CreateCommunityScreen() {
             required: false,
             max_length: MAX_QUESTION_LENGTH,
           }));
-          setApplicationQuestions(newQuestions);
+          updates.applicationQuestions = newQuestions;
         }
+
+        form.setValues(updates);
       }
     } catch (error: any) {
       const duration = Date.now() - startTime;
@@ -306,17 +359,17 @@ export default function CreateCommunityScreen() {
       required: false,
       max_length: MAX_QUESTION_LENGTH,
     };
-    setApplicationQuestions([...applicationQuestions, newQuestion]);
+    form.setValue('applicationQuestions', [...applicationQuestions, newQuestion]);
   };
 
   const updateQuestion = (id: string, updates: Partial<ApplicationQuestion>) => {
-    setApplicationQuestions(applicationQuestions.map((q) =>
+    form.setValue('applicationQuestions', applicationQuestions.map((q) =>
       q.id === id ? { ...q, ...updates } : q
     ));
   };
 
   const removeQuestion = (id: string) => {
-    setApplicationQuestions(applicationQuestions.filter((q) => q.id !== id));
+    form.setValue('applicationQuestions', applicationQuestions.filter((q) => q.id !== id));
   };
 
   const handleNext = () => {
@@ -386,11 +439,9 @@ export default function CreateCommunityScreen() {
   });
 
   const handleSaveDraft = async () => {
-    setIsSubmitting(true);
     try {
       const imageUrls = await buildImagesPayload();
       if (imageUrls === null) {
-        setIsSubmitting(false);
         return;
       }
       const data = await buildCommunityData(imageUrls);
@@ -402,18 +453,14 @@ export default function CreateCommunityScreen() {
       );
     } catch (error: any) {
       Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de l\'enregistrement.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handlePublish = async () => {
-    setIsSubmitting(true);
     try {
       const imageUrls = await buildImagesPayload();
 
       if (imageUrls === null) {
-        setIsSubmitting(false);
         return;
       }
 
@@ -428,8 +475,6 @@ export default function CreateCommunityScreen() {
     } catch (error: any) {
       console.error('[CreateCommunity] handlePublish - Error:', error);
       Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de la création.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -493,7 +538,7 @@ export default function CreateCommunityScreen() {
           label="Nom de la communauté *"
           placeholder="Ex: Développeurs Abidjan"
           value={name}
-          onChangeText={setName}
+          onChangeText={(value) => form.setValue('name', value)}
           autoCapitalize="words"
         />
 
@@ -511,7 +556,7 @@ export default function CreateCommunityScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleTag(tag.id)}
                   activeOpacity={0.7}
@@ -571,7 +616,7 @@ export default function CreateCommunityScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleSector(sector.id)}
                   activeOpacity={0.7}
@@ -600,7 +645,7 @@ export default function CreateCommunityScreen() {
               style={[styles.textArea, { color: colors.textPrimary }]}
               placeholder="Décrivez votre communauté, ses objectifs et sa mission..."
               value={description}
-              onChangeText={setDescription}
+              onChangeText={(value) => form.setValue('description', value)}
               multiline
               numberOfLines={4}
               maxLength={1000}
@@ -637,9 +682,9 @@ export default function CreateCommunityScreen() {
                   style={[
                     styles.locationTypeCard,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => setCommunityType(type.id)}
+                  onPress={() => form.setValue('communityType', type.id)}
                   activeOpacity={0.7}
                 >
                   <IconComponent
@@ -691,9 +736,11 @@ export default function CreateCommunityScreen() {
                         isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                       ]}
                       onPress={() => {
-                        setCountry(c.id);
-                        setRegion('');
-                        setCity('');
+                        form.setValues({
+                          country: c.id,
+                          region: '',
+                          city: '',
+                        });
                       }}
                     >
                       <Text
@@ -732,8 +779,10 @@ export default function CreateCommunityScreen() {
                           isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                         ]}
                         onPress={() => {
-                          setRegion(r.id);
-                          setCity('');
+                          form.setValues({
+                            region: r.id,
+                            city: '',
+                          });
                         }}
                       >
                         <Text
@@ -772,7 +821,7 @@ export default function CreateCommunityScreen() {
                           { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                           isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                         ]}
-                        onPress={() => setCity(c.id)}
+                        onPress={() => form.setValue('city', c.id)}
                       >
                         <Text
                           style={[
@@ -819,9 +868,9 @@ export default function CreateCommunityScreen() {
                   style={[
                     styles.locationTypeCard,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => setVisibility(type.id)}
+                  onPress={() => form.setValue('visibility', type.id)}
                   activeOpacity={0.7}
                 >
                   <IconComponent
@@ -863,7 +912,7 @@ export default function CreateCommunityScreen() {
           </View>
           <Toggle
             value={isPaid}
-            onValueChange={setIsPaid}
+            onValueChange={(value) => form.setValue('isPaid', value)}
           />
         </View>
 
@@ -876,7 +925,7 @@ export default function CreateCommunityScreen() {
                   label="Coût abonnement mensuel *"
                   placeholder="5000"
                   value={monthlyPrice}
-                  onChangeText={setMonthlyPrice}
+                  onChangeText={(value) => form.setValue('monthlyPrice', value)}
                   keyboardType="numeric"
                 />
               </View>
@@ -899,7 +948,7 @@ export default function CreateCommunityScreen() {
                             { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                             isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                           ]}
-                          onPress={() => setCurrency(c.id)}
+                          onPress={() => form.setValue('currency', c.id)}
                         >
                           <Text
                             style={[
@@ -930,7 +979,7 @@ export default function CreateCommunityScreen() {
               style={[styles.textArea, { color: colors.textPrimary }]}
               placeholder="Ex: 1. Respectez les autres membres&#10;2. Pas de spam&#10;3. Restez courtois..."
               value={rules}
-              onChangeText={setRules}
+              onChangeText={(value) => form.setValue('rules', value)}
               multiline
               numberOfLines={5}
               maxLength={1000}
@@ -957,7 +1006,7 @@ export default function CreateCommunityScreen() {
             {/* Can Post */}
             <View style={[styles.permissionRow, { borderBottomColor: colors.gray200 }]}>
               <View style={styles.permissionInfo}>
-                <View style={[styles.permissionIconBox, { backgroundColor: colors.primary + '15' }]}>
+                <View style={[styles.permissionIconBox, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                   <FileText size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                 </View>
                 <View>
@@ -971,14 +1020,14 @@ export default function CreateCommunityScreen() {
               </View>
               <Toggle
                 value={defaultPermissions.can_post}
-                onValueChange={(value) => setDefaultPermissions(p => ({ ...p, can_post: value }))}
+                onValueChange={(value) => form.setValue('defaultPermissions', { ...defaultPermissions, can_post: value })}
               />
             </View>
 
             {/* Can Create Event */}
             <View style={[styles.permissionRow, { borderBottomColor: colors.gray200 }]}>
               <View style={styles.permissionInfo}>
-                <View style={[styles.permissionIconBox, { backgroundColor: colors.warning + '15' }]}>
+                <View style={[styles.permissionIconBox, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
                   <Calendar size={18} color={colors.warning} strokeWidth={ICON.strokeWidth} />
                 </View>
                 <View>
@@ -992,14 +1041,14 @@ export default function CreateCommunityScreen() {
               </View>
               <Toggle
                 value={defaultPermissions.can_create_event}
-                onValueChange={(value) => setDefaultPermissions(p => ({ ...p, can_create_event: value }))}
+                onValueChange={(value) => form.setValue('defaultPermissions', { ...defaultPermissions, can_create_event: value })}
               />
             </View>
 
             {/* Can Create Poll */}
             <View style={[styles.permissionRow, { borderBottomWidth: 0 }]}>
               <View style={styles.permissionInfo}>
-                <View style={[styles.permissionIconBox, { backgroundColor: colors.info + '15' }]}>
+                <View style={[styles.permissionIconBox, { backgroundColor: withOpacity(colors.info, OPACITY[15]) }]}>
                   <BarChart2 size={18} color={colors.info} strokeWidth={ICON.strokeWidth} />
                 </View>
                 <View>
@@ -1013,7 +1062,7 @@ export default function CreateCommunityScreen() {
               </View>
               <Toggle
                 value={defaultPermissions.can_create_poll}
-                onValueChange={(value) => setDefaultPermissions(p => ({ ...p, can_create_poll: value }))}
+                onValueChange={(value) => form.setValue('defaultPermissions', { ...defaultPermissions, can_create_poll: value })}
               />
             </View>
           </View>
@@ -1182,7 +1231,7 @@ export default function CreateCommunityScreen() {
           <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{name || 'Sans nom'}</Text>
           <View style={styles.previewTags}>
             {communityType ? (
-              <View style={[styles.previewTag, { backgroundColor: colors.primary + '15' }]}>
+              <View style={[styles.previewTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.previewTagText, { color: colors.primary }]}>
                   {COMMUNITY_TYPE_LABELS[communityType]}
                 </Text>
@@ -1336,7 +1385,7 @@ export default function CreateCommunityScreen() {
             <TouchableOpacity
               style={[styles.backStepButton, { borderColor: colors.gray300 }]}
               onPress={handleBack}
-              disabled={isSubmitting}
+              disabled={form.state.isSubmitting}
             >
               <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.backStepButtonText, { color: colors.gray700 }]}>Retour</Text>
@@ -1345,7 +1394,7 @@ export default function CreateCommunityScreen() {
             <TouchableOpacity
               style={[styles.draftButton, { borderColor: colors.gray300 }]}
               onPress={handleSaveDraft}
-              disabled={isSubmitting}
+              disabled={form.state.isSubmitting}
             >
               <Save size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
             </TouchableOpacity>
@@ -1354,7 +1403,7 @@ export default function CreateCommunityScreen() {
               <Button
                 title="Publier"
                 onPress={handlePublish}
-                disabled={isSubmitting}
+                disabled={form.state.isSubmitting}
                 fullWidth
               />
             </View>

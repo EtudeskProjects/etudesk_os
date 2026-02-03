@@ -24,7 +24,7 @@ import {
   Users,
   ChevronDown,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Button, PageLayout, EmptyState, Input } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import skillService, {
@@ -198,12 +198,12 @@ export default function SkillsScreen() {
 
         {/* Tags row: proficiency + origin */}
         <View style={styles.tagsRow}>
-          <View style={[styles.tag, { backgroundColor: profColor + '20', borderColor: profColor }]}>
+          <View style={[styles.tag, { backgroundColor: withOpacity(profColor, OPACITY[20]), borderColor: profColor }]}>
             <Text style={[styles.tagText, { color: profColor }]}>
               {PROFICIENCY_LABELS[skill.proficiency_level]}
             </Text>
           </View>
-          <View style={[styles.tag, { backgroundColor: colors.textSecondary + '15', borderColor: colors.textSecondary + '30' }]}>
+          <View style={[styles.tag, { backgroundColor: withOpacity(colors.textSecondary, OPACITY[15]), borderColor: withOpacity(colors.textSecondary, OPACITY[30]) }]}>
             <Text style={[styles.tagText, { color: colors.textSecondary }]}>
               {originLabel}
             </Text>
@@ -332,7 +332,7 @@ export default function SkillsScreen() {
                       style={[
                         styles.chip,
                         {
-                          backgroundColor: isActive ? colors.primary + '20' : colors.gray100,
+                          backgroundColor: isActive ? withOpacity(colors.primary, OPACITY[20]) : colors.gray100,
                           borderColor: isActive ? colors.primary : 'transparent',
                         },
                       ]}
@@ -363,7 +363,7 @@ export default function SkillsScreen() {
                       style={[
                         styles.chip,
                         {
-                          backgroundColor: isActive ? levelColor + '20' : colors.gray100,
+                          backgroundColor: isActive ? withOpacity(levelColor, OPACITY[20]) : colors.gray100,
                           borderColor: isActive ? levelColor : 'transparent',
                         },
                       ]}

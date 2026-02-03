@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { BookOpen, CheckCircle, XCircle, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 
 interface QuizQuestion {
   id: string;
@@ -68,7 +68,7 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({ data }) => {
             {data.topic}
           </Text>
         </View>
-        <View style={[styles.progressBadge, { backgroundColor: colors.primary + '15' }]}>
+        <View style={[styles.progressBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
           <Text style={[styles.progressText, { color: colors.primary }]}>
             {currentQuestion + 1}/{data.questions.length}
           </Text>
@@ -113,7 +113,7 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({ data }) => {
             borderColor = colors.error;
             textColor = colors.error;
           } else if (isSelected) {
-            backgroundColor = colors.primary + '15';
+            backgroundColor = withOpacity(colors.primary, OPACITY[15]);
             borderColor = colors.primary;
             textColor = colors.primary;
           }

@@ -25,7 +25,7 @@ import {
 } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { PageLayout, EmptyState } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { applicationService, opportunityService } from '../../../../src/services';
@@ -44,18 +44,18 @@ const STATUS_COLORS = {
 
 // Status configuration
 const STATUS_CONFIG: Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> = {
-  SUBMITTED: { color: STATUS_COLORS.warning, icon: Clock, bgColor: STATUS_COLORS.warning + '15' },
-  IN_REVIEW: { color: STATUS_COLORS.info, icon: Eye, bgColor: STATUS_COLORS.info + '15' },
-  ACCEPTED: { color: STATUS_COLORS.success, icon: CheckCircle2, bgColor: STATUS_COLORS.success + '15' },
-  REJECTED: { color: STATUS_COLORS.error, icon: XCircle, bgColor: STATUS_COLORS.error + '15' },
+  SUBMITTED: { color: STATUS_COLORS.warning, icon: Clock, bgColor: withOpacity(STATUS_COLORS.warning, OPACITY[15]) },
+  IN_REVIEW: { color: STATUS_COLORS.info, icon: Eye, bgColor: withOpacity(STATUS_COLORS.info, OPACITY[15]) },
+  ACCEPTED: { color: STATUS_COLORS.success, icon: CheckCircle2, bgColor: withOpacity(STATUS_COLORS.success, OPACITY[15]) },
+  REJECTED: { color: STATUS_COLORS.error, icon: XCircle, bgColor: withOpacity(STATUS_COLORS.error, OPACITY[15]) },
 };
 
 // Match category configuration
 const MATCH_CATEGORY_CONFIG = {
-  excellent: { label: 'Excellent', color: '#059669', bgColor: '#059669' + '15' },
-  good: { label: 'Bon', color: '#2563eb', bgColor: '#2563eb' + '15' },
-  average: { label: 'Moyen', color: '#d97706', bgColor: '#d97706' + '15' },
-  low: { label: 'Faible', color: '#dc2626', bgColor: '#dc2626' + '15' },
+  excellent: { label: 'Excellent', color: '#059669', bgColor: withOpacity('#059669', OPACITY[15]) },
+  good: { label: 'Bon', color: '#2563eb', bgColor: withOpacity('#2563eb', OPACITY[15]) },
+  average: { label: 'Moyen', color: '#d97706', bgColor: withOpacity('#d97706', OPACITY[15]) },
+  low: { label: 'Faible', color: '#dc2626', bgColor: withOpacity('#dc2626', OPACITY[15]) },
 };
 
 type FilterStatus = 'all' | ApplicationStatus;
@@ -268,7 +268,7 @@ export default function OpportunityApplicationsScreen() {
           {talent?.profile_picture_url ? (
             <Image source={{ uri: talent.profile_picture_url }} style={styles.avatar} />
           ) : (
-            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+            <View style={[styles.avatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
               <Text style={[styles.avatarText, { color: colors.primary }]}>
                 {getInitials(talent?.first_name ? `${talent.first_name} ${talent.last_name}` : undefined)}
               </Text>
@@ -336,14 +336,14 @@ export default function OpportunityApplicationsScreen() {
         {item.status === 'SUBMITTED' && (
           <View style={styles.quickActions}>
             <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: colors.info + '15' }]}
+              style={[styles.quickAction, { backgroundColor: withOpacity(colors.info, OPACITY[15]) }]}
               onPress={() => handleUpdateStatus(item.id, 'IN_REVIEW')}
             >
               <Eye size={14} color={colors.info} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.quickActionText, { color: colors.info }]}>Examiner</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: colors.error + '15' }]}
+              style={[styles.quickAction, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}
               onPress={() => handleUpdateStatus(item.id, 'REJECTED')}
             >
               <XCircle size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />

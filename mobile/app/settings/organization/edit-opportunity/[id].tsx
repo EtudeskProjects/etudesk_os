@@ -40,7 +40,7 @@ import {
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { Input, Button, Toggle } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
@@ -660,7 +660,7 @@ export default function EditOpportunityScreen() {
               return (
                 <TouchableOpacity
                   key={type.id}
-                  style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary }]}
+                  style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]}
                   onPress={() => setOpportunityType(type.id)}
                 >
                   {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
@@ -707,7 +707,7 @@ export default function EditOpportunityScreen() {
               return (
                 <TouchableOpacity
                   key={sector.id}
-                  style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary }]}
+                  style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]}
                   onPress={() => toggleSector(sector.id)}
                 >
                   {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
@@ -765,7 +765,7 @@ export default function EditOpportunityScreen() {
               return (
                 <TouchableOpacity
                   key={type.id}
-                  style={[styles.locationTypeCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary }]}
+                  style={[styles.locationTypeCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]}
                   onPress={() => setLocationType(type.id)}
                 >
                   <IconComponent size={24} color={isSelected ? colors.primary : colors.gray500} strokeWidth={ICON.strokeWidth} />
@@ -849,7 +849,7 @@ export default function EditOpportunityScreen() {
             {CONTRACT_TYPE_DATA.map((type) => {
               const isSelected = contractType === type.id;
               return (
-                <TouchableOpacity key={type.id} style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary }]} onPress={() => setContractType(type.id)}>
+                <TouchableOpacity key={type.id} style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]} onPress={() => setContractType(type.id)}>
                   {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
                   <Text style={[styles.selectableTagText, { color: colors.gray600 }, isSelected && { color: colors.primary }]}>{type.label}</Text>
                 </TouchableOpacity>
@@ -865,7 +865,7 @@ export default function EditOpportunityScreen() {
             {WORK_RHYTHM_DATA.map((rhythm) => {
               const isSelected = workRhythm === rhythm.id;
               return (
-                <TouchableOpacity key={rhythm.id} style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary }]} onPress={() => setWorkRhythm(isSelected ? null : rhythm.id)}>
+                <TouchableOpacity key={rhythm.id} style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]} onPress={() => setWorkRhythm(isSelected ? null : rhythm.id)}>
                   {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
                   <Text style={[styles.selectableTagText, { color: colors.gray600 }, isSelected && { color: colors.primary }]}>{rhythm.label}</Text>
                 </TouchableOpacity>
@@ -908,7 +908,7 @@ export default function EditOpportunityScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => setCurrency(c.id)}
                   activeOpacity={0.7}
@@ -926,7 +926,7 @@ export default function EditOpportunityScreen() {
             {COMPENSATION_FREQUENCY_DATA.map((freq) => {
               const isSelected = compensationFrequency === freq.id;
               return (
-                <TouchableOpacity key={freq.id} style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary }]} onPress={() => setCompensationFrequency(freq.id)}>
+                <TouchableOpacity key={freq.id} style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]} onPress={() => setCompensationFrequency(freq.id)}>
                   {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
                   <Text style={[styles.selectableTagText, { color: colors.gray600 }, isSelected && { color: colors.primary }]}>{freq.label}</Text>
                 </TouchableOpacity>
@@ -949,7 +949,7 @@ export default function EditOpportunityScreen() {
                   style={[
                     styles.locationTypeCard,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => setVisibility(type.id)}
                   activeOpacity={0.7}
@@ -1258,7 +1258,7 @@ export default function EditOpportunityScreen() {
           <View>
             <Text style={[styles.statusLabel, { color: colors.gray600 }]}>Statut de l'offre</Text>
             <View style={styles.statusBadgeContainer}>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
+              <View style={[styles.statusBadge, { backgroundColor: withOpacity(getStatusColor(), OPACITY[20]) }]}>
                 <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
                 <Text style={[styles.statusBadgeText, { color: getStatusColor() }]}>
                   {OPPORTUNITY_STATUS_LABELS[status]}
@@ -1303,7 +1303,7 @@ export default function EditOpportunityScreen() {
           <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{title || 'Sans titre'}</Text>
           <View style={styles.previewTags}>
             {opportunityType ? (
-              <View style={[styles.previewTag, { backgroundColor: colors.primary + '15' }]}>
+              <View style={[styles.previewTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.previewTagText, { color: colors.primary }]}>{OPPORTUNITY_TYPE_LABELS[opportunityType]}</Text>
               </View>
             ) : (

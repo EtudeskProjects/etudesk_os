@@ -36,7 +36,7 @@ import {
   Shield,
   RefreshCw,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../../src/constants/theme';
 import { FooterNav, Toggle } from '../../../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
@@ -372,7 +372,7 @@ export default function CommunityMemberDetailsScreen() {
               style={styles.profileAvatar}
             />
           ) : (
-            <View style={[styles.profileAvatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+            <View style={[styles.profileAvatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
               <Text style={[styles.profileAvatarText, { color: colors.primary }]}>
                 {getInitials(talent?.first_name, talent?.last_name, talent?.display_name)}
               </Text>
@@ -459,7 +459,7 @@ export default function CommunityMemberDetailsScreen() {
               </Text>
             </View>
             {memberRole === 'ADMIN' && (
-              <View style={[styles.adminBadge, { backgroundColor: colors.primary + '15' }]}>
+              <View style={[styles.adminBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.adminBadgeText, { color: colors.primary }]}>Admin</Text>
               </View>
             )}
@@ -468,7 +468,7 @@ export default function CommunityMemberDetailsScreen() {
           {isLoadingPermissions ? (
             <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: SPACING.md }} />
           ) : memberRole === 'ADMIN' ? (
-            <View style={[styles.permissionInfo, { backgroundColor: colors.primary + '10' }]}>
+            <View style={[styles.permissionInfo, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
               <Text style={[styles.permissionInfoText, { color: colors.primary }]}>
                 Les administrateurs ont toutes les permissions par défaut.
               </Text>
@@ -480,7 +480,7 @@ export default function CommunityMemberDetailsScreen() {
                 {/* Can Post */}
                 <View style={[styles.permissionItem, { borderColor: colors.gray200 }]}>
                   <View style={styles.permissionLeft}>
-                    <View style={[styles.permissionIcon, { backgroundColor: colors.primary + '15' }]}>
+                    <View style={[styles.permissionIcon, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                       <FileText size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                     </View>
                     <View>
@@ -502,7 +502,7 @@ export default function CommunityMemberDetailsScreen() {
                 {/* Can Create Event */}
                 <View style={[styles.permissionItem, { borderColor: colors.gray200 }]}>
                   <View style={styles.permissionLeft}>
-                    <View style={[styles.permissionIcon, { backgroundColor: colors.warning + '15' }]}>
+                    <View style={[styles.permissionIcon, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
                       <Calendar size={18} color={colors.warning} strokeWidth={ICON.strokeWidth} />
                     </View>
                     <View>
@@ -524,7 +524,7 @@ export default function CommunityMemberDetailsScreen() {
                 {/* Can Create Poll */}
                 <View style={[styles.permissionItem, { borderColor: colors.gray200, borderBottomWidth: 0 }]}>
                   <View style={styles.permissionLeft}>
-                    <View style={[styles.permissionIcon, { backgroundColor: colors.info + '15' }]}>
+                    <View style={[styles.permissionIcon, { backgroundColor: withOpacity(colors.info, OPACITY[15]) }]}>
                       <BarChart2 size={18} color={colors.info} strokeWidth={ICON.strokeWidth} />
                     </View>
                     <View>
@@ -596,7 +596,7 @@ export default function CommunityMemberDetailsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Statut du membre</Text>
 
             {/* Current status display */}
-            <View style={[styles.currentStatusDisplay, { backgroundColor: colors[STATUS_FLOW[member.status]?.colorKey || 'warning'] + '10' }]}>
+            <View style={[styles.currentStatusDisplay, { backgroundColor: withOpacity(colors[STATUS_FLOW[member.status]?.colorKey || 'warning'], OPACITY[10]) }]}>
               {(() => {
                 const config = STATUS_CONFIG[member.status] || STATUS_CONFIG.PENDING;
                 const StatusIcon = config.icon;
@@ -657,7 +657,7 @@ export default function CommunityMemberDetailsScreen() {
                           }
                         }}
                       >
-                        <View style={[styles.statusOptionIcon, { backgroundColor: colors[config.colorKey] + '15' }]}>
+                        <View style={[styles.statusOptionIcon, { backgroundColor: withOpacity(colors[config.colorKey], OPACITY[15]) }]}>
                           <Icon size={16} color={colors[config.colorKey]} strokeWidth={ICON.strokeWidth} />
                         </View>
                         <View style={styles.statusOptionInfo}>
@@ -678,7 +678,7 @@ export default function CommunityMemberDetailsScreen() {
 
         {/* Rejection reason if rejected */}
         {member?.status === 'REJECTED' && member.rejection_reason && (
-          <View style={[styles.section, { backgroundColor: colors.error + '10', borderColor: colors.error + '30' }]}>
+          <View style={[styles.section, { backgroundColor: withOpacity(colors.error, OPACITY[10]), borderColor: withOpacity(colors.error, OPACITY[30]) }]}>
             <Text style={[styles.sectionTitle, { color: colors.error }]}>Raison du refus</Text>
             <Text style={[styles.rejectionReason, { color: colors.textPrimary }]}>
               {member.rejection_reason}
@@ -890,7 +890,7 @@ export default function CommunityMemberDetailsScreen() {
           <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
+          <View style={[styles.statusBadge, { backgroundColor: withOpacity(statusColor, OPACITY[15]) }]}>
             <StatusIcon size={14} color={statusColor} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.statusText, { color: statusColor }]}>
               {statusConfig.label}

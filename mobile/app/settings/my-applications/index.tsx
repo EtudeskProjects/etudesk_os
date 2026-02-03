@@ -14,7 +14,7 @@ import {
   Eye,
   Inbox,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { PageLayout, EmptyState } from '../../../src/components/ui';
 import { OpportunityCard } from '../../../src/components/cards';
@@ -23,10 +23,10 @@ import type { Application, ApplicationStatus, Opportunity } from '../../../src/t
 import { APPLICATION_STATUS_LABELS } from '../../../src/types/models';
 
 const getStatusConfig = (colors: any): Record<string, { color: string; icon: typeof Clock; bgColor: string }> => ({
-  SUBMITTED: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15' },
-  IN_REVIEW: { color: colors.info, icon: Eye, bgColor: colors.info + '15' },
-  ACCEPTED: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15' },
-  REJECTED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15' },
+  SUBMITTED: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]) },
+  IN_REVIEW: { color: colors.info, icon: Eye, bgColor: withOpacity(colors.info, OPACITY[15]) },
+  ACCEPTED: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]) },
+  REJECTED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]) },
 });
 
 type FilterStatus = 'all' | ApplicationStatus;

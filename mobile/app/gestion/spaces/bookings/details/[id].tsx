@@ -34,7 +34,7 @@ import {
   FileText,
   Users,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../../src/constants/theme';
 import { FooterNav } from '../../../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
@@ -323,7 +323,7 @@ export default function BookingDetailsScreen() {
           {talent?.avatar_url ? (
             <Image source={{ uri: talent.avatar_url }} style={styles.profileAvatar} />
           ) : (
-            <View style={[styles.profileAvatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+            <View style={[styles.profileAvatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
               <Text style={[styles.profileAvatarText, { color: colors.primary }]}>
                 {getInitials(talent?.first_name, talent?.last_name)}
               </Text>
@@ -448,7 +448,7 @@ export default function BookingDetailsScreen() {
           <View style={[styles.section, { borderColor: colors.gray200 }]}>
             <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Statut de la reservation</Text>
 
-            <View style={[styles.currentStatusDisplay, { backgroundColor: (STATUS_FLOW[booking.status]?.color || colors.warning) + '10' }]}>
+            <View style={[styles.currentStatusDisplay, { backgroundColor: withOpacity(STATUS_FLOW[booking.status]?.color || colors.warning, OPACITY[10]) }]}>
               {(() => {
                 const config = STATUS_CONFIG[booking.status] || STATUS_CONFIG.PENDING;
                 const StatusIcon = config.icon;
@@ -489,7 +489,7 @@ export default function BookingDetailsScreen() {
                         style={[styles.statusOption, { borderBottomColor: colors.gray100 }]}
                         onPress={() => handleUpdateStatus(status)}
                       >
-                        <View style={[styles.statusOptionIcon, { backgroundColor: config.color + '15' }]}>
+                        <View style={[styles.statusOptionIcon, { backgroundColor: withOpacity(config.color, OPACITY[15]) }]}>
                           <Icon size={16} color={config.color} strokeWidth={ICON.strokeWidth} />
                         </View>
                         <View style={styles.statusOptionInfo}>
@@ -672,7 +672,7 @@ export default function BookingDetailsScreen() {
           <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <View style={[styles.statusBadge, { backgroundColor: statusConfig.color + '15' }]}>
+          <View style={[styles.statusBadge, { backgroundColor: withOpacity(statusConfig.color, OPACITY[15]) }]}>
             <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
               {STATUS_FLOW[booking.status]?.label || booking.status}

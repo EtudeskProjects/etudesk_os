@@ -23,8 +23,9 @@ import { ArrowLeft, X, FileText, Plus, Calendar, Save, SquarePen, Clock } from '
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
+import { useForm } from '../../../../src/hooks/useForm';
 import { Button } from '../../../../src/components/ui';
 import { communityActivityService, communityService } from '../../../../src/services';
 
@@ -48,6 +49,13 @@ interface CommunityMember {
     };
 }
 
+interface PostFormValues {
+    content: string;
+    attachments: Attachment[];
+    isScheduled: boolean;
+    scheduledDate: Date;
+}
+
 const MAX_FILES = 5;
 
 export default function CreatePostScreen() {
@@ -59,40 +67,110 @@ export default function CreatePostScreen() {
     // Edit mode - when activityId is provided, we're editing an existing activity
     const isEditMode = !!activityId;
 
-    const [content, setContent] = useState('');
-    const [attachments, setAttachments] = useState<Attachment[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    // Draft state (UI state)
     const [isLoadingDraft, setIsLoadingDraft] = useState(true);
-    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-    // Draft state
     const [existingDraftId, setExistingDraftId] = useState<string | null>(null);
     const [hasDraft, setHasDraft] = useState(false);
     const [initialContent, setInitialContent] = useState('');
 
-    // Scheduled publication
-    const [isScheduled, setIsScheduled] = useState(false);
-    const [scheduledDate, setScheduledDate] = useState(new Date(Date.now() + 60 * 60 * 1000));
+    // Date/Time picker state (UI state)
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showTimePicker, setShowTimePicker] = useState(false);
 
-    // Upload progress
+    // Upload progress (UI state)
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
     const progressAnim = useRef(new Animated.Value(0)).current;
 
-    // Mentions
+    // Mentions (UI state)
     const [members, setMembers] = useState<CommunityMember[]>([]);
     const [showMentions, setShowMentions] = useState(false);
     const [mentionSearch, setMentionSearch] = useState('');
     const [mentionStartIndex, setMentionStartIndex] = useState(-1);
     const [cursorPosition, setCursorPosition] = useState(0);
 
+    // Form state using useForm
+    const form = useForm<PostFormValues>({
+        fields: {
+            content: { initialValue: '' },
+            attachments: { initialValue: [] },
+            isScheduled: { initialValue: false },
+            scheduledDate: { initialValue: new Date(Date.now() + 60 * 60 * 1000) },
+        },
+        onSubmit: async (values) => {
+            if (!values.content.trim() && values.attachments.length === 0) {
+                Alert.alert('Erreur', 'Veuillez ajouter du texte ou un fichier.');
+                return;
+            }
+
+            // Validate scheduled date is in the future (only for new posts)
+            if (!isEditMode && values.isScheduled && values.scheduledDate <= new Date()) {
+                Alert.alert('Erreur', 'La date de publication programmée doit être dans le futur.');
+                return;
+            }
+
+            let completeProgress: (() => void) | undefined;
+            if (values.attachments.length > 0) {
+                completeProgress = simulateUploadProgress();
+            }
+
+            if (isEditMode && activityId) {
+                // Update existing activity
+                await communityActivityService.updateActivity(activityId, {
+                    content: values.content,
+                    attachments: values.attachments.map(att => ({
+                        uri: att.uri,
+                        type: att.type,
+                        name: att.name,
+                    })),
+                });
+            } else if (existingDraftId) {
+                await communityActivityService.updateDraft(existingDraftId, {
+                    content: values.content,
+                    attachments: values.attachments.map(att => ({
+                        uri: att.uri,
+                        type: att.type,
+                        name: att.name,
+                    })),
+                    scheduled_at: values.isScheduled ? values.scheduledDate.toISOString() : undefined,
+                });
+                await communityActivityService.publishDraft(existingDraftId);
+            } else {
+                await communityActivityService.createActivity(id!, {
+                    community_id: id!,
+                    type: 'POST',
+                    content: values.content,
+                    attachments: values.attachments.map(att => ({
+                        uri: att.uri,
+                        type: att.type,
+                        name: att.name,
+                    })),
+                    scheduled_at: values.isScheduled ? values.scheduledDate.toISOString() : undefined,
+                });
+            }
+
+            if (completeProgress) completeProgress();
+            const message = isEditMode
+                ? 'Votre publication a été modifiée !'
+                : values.isScheduled
+                    ? `Publication programmée pour le ${values.scheduledDate.toLocaleDateString('fr-FR')} à ${values.scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`
+                    : 'Votre publication a été créée !';
+
+            Alert.alert('Succès', message, [
+                { text: 'OK', onPress: () => router.back() }
+            ]);
+        },
+    });
+
+    // Convenience getters
+    const content = form.getValue('content');
+    const attachments = form.getValue('attachments');
+    const isScheduled = form.getValue('isScheduled');
+    const scheduledDate = form.getValue('scheduledDate');
+    const isSubmitting = form.state.isSubmitting;
+
     // Track unsaved changes
-    useEffect(() => {
-        const hasChanges = content !== initialContent || attachments.length > 0;
-        setHasUnsavedChanges(hasChanges);
-    }, [content, attachments, initialContent]);
+    const hasUnsavedChanges = content !== initialContent || attachments.length > 0;
 
     // Handle back button with confirmation
     const handleBack = useCallback(() => {
@@ -145,7 +223,7 @@ export default function CreatePostScreen() {
                     const response = await communityActivityService.getActivityDetails(activityId);
                     if (response?.activity) {
                         const activity = response.activity;
-                        setContent(activity.content || '');
+                        form.setValue('content', activity.content || '');
                         setInitialContent(activity.content || '');
                         if (activity.attachments && Array.isArray(activity.attachments)) {
                             const activityAttachments: Attachment[] = activity.attachments.map((att: any) => ({
@@ -154,7 +232,7 @@ export default function CreatePostScreen() {
                                 name: att.name || 'attachment',
                                 isImage: typeof att === 'string' ? !att.includes('.pdf') : (att.type?.startsWith('image/') || true),
                             }));
-                            setAttachments(activityAttachments);
+                            form.setValue('attachments', activityAttachments);
                         }
                     }
                 } else {
@@ -164,7 +242,7 @@ export default function CreatePostScreen() {
                         const draft = response.data;
                         setExistingDraftId(draft.id);
                         setHasDraft(true);
-                        setContent(draft.content || '');
+                        form.setValue('content', draft.content || '');
                         setInitialContent(draft.content || '');
                         if (draft.attachments && Array.isArray(draft.attachments)) {
                             const draftAttachments: Attachment[] = draft.attachments.map((att: any) => ({
@@ -173,11 +251,11 @@ export default function CreatePostScreen() {
                                 name: att.name || 'attachment',
                                 isImage: att.type?.startsWith('image/') || true,
                             }));
-                            setAttachments(draftAttachments);
+                            form.setValue('attachments', draftAttachments);
                         }
                         if (draft.scheduled_at) {
-                            setIsScheduled(true);
-                            setScheduledDate(new Date(draft.scheduled_at));
+                            form.setValue('isScheduled', true);
+                            form.setValue('scheduledDate', new Date(draft.scheduled_at));
                         }
                     }
                 }
@@ -187,6 +265,7 @@ export default function CreatePostScreen() {
             }
         };
         loadData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, isEditMode, activityId]);
 
     // Fetch community members for mentions
@@ -210,7 +289,7 @@ export default function CreatePostScreen() {
     }, [id]);
 
     const handleTextChange = (text: string) => {
-        setContent(text);
+        form.setValue('content', text);
         const textBeforeCursor = text.substring(0, cursorPosition + (text.length - content.length));
         const lastAtIndex = textBeforeCursor.lastIndexOf('@');
 
@@ -249,7 +328,7 @@ export default function CreatePostScreen() {
         const beforeMention = content.substring(0, mentionStartIndex);
         const afterMention = content.substring(cursorPosition);
         const newContent = `${beforeMention}@${name} ${afterMention}`;
-        setContent(newContent);
+        form.setValue('content', newContent);
         setShowMentions(false);
         setMentionSearch('');
         inputRef.current?.focus();
@@ -307,7 +386,7 @@ export default function CreatePostScreen() {
                         isImage: !isVideo,
                     };
                 });
-                setAttachments(prev => [...prev, ...newAttachments]);
+                form.setValue('attachments', [...attachments, ...newAttachments]);
             }
         } catch (error) {
             Alert.alert('Erreur', 'Impossible de sélectionner les médias');
@@ -330,7 +409,7 @@ export default function CreatePostScreen() {
                     name: file.name || `document-${Date.now()}.pdf`,
                     isImage: false,
                 }));
-                setAttachments(prev => [...prev, ...newAttachments]);
+                form.setValue('attachments', [...attachments, ...newAttachments]);
             }
         } catch (error) {
             Alert.alert('Erreur', 'Impossible de sélectionner le document');
@@ -338,7 +417,7 @@ export default function CreatePostScreen() {
     };
 
     const removeAttachment = (index: number) => {
-        setAttachments(prev => prev.filter((_, i) => i !== index));
+        form.setValue('attachments', attachments.filter((_, i) => i !== index));
     };
 
     // Animate upload progress
@@ -379,6 +458,8 @@ export default function CreatePostScreen() {
         };
     }, [animateProgress, progressAnim]);
 
+    const [isSavingDraft, setIsSavingDraft] = useState(false);
+
     const handleSaveAsDraft = async () => {
         if (!content.trim() && attachments.length === 0) {
             Alert.alert('Erreur', 'Veuillez ajouter du texte ou un fichier pour sauvegarder.');
@@ -386,7 +467,7 @@ export default function CreatePostScreen() {
         }
 
         try {
-            setIsSubmitting(true);
+            setIsSavingDraft(true);
             let completeProgress: (() => void) | undefined;
             if (attachments.length > 0) {
                 completeProgress = simulateUploadProgress();
@@ -418,7 +499,6 @@ export default function CreatePostScreen() {
             }
 
             if (completeProgress) completeProgress();
-            setHasUnsavedChanges(false);
             Alert.alert('Succès', 'Brouillon sauvegardé !', [
                 { text: 'OK', onPress: () => router.back() }
             ]);
@@ -429,94 +509,18 @@ export default function CreatePostScreen() {
             const message = error?.response?.data?.error || error?.message || 'Impossible de sauvegarder le brouillon.';
             Alert.alert('Erreur', message);
         } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleSubmit = async () => {
-        if (!content.trim() && attachments.length === 0) {
-            Alert.alert('Erreur', 'Veuillez ajouter du texte ou un fichier.');
-            return;
-        }
-
-        // Validate scheduled date is in the future (only for new posts)
-        if (!isEditMode && isScheduled && scheduledDate <= new Date()) {
-            Alert.alert('Erreur', 'La date de publication programmée doit être dans le futur.');
-            return;
-        }
-
-        try {
-            setIsSubmitting(true);
-            let completeProgress: (() => void) | undefined;
-            if (attachments.length > 0) {
-                completeProgress = simulateUploadProgress();
-            }
-
-            if (isEditMode && activityId) {
-                // Update existing activity
-                await communityActivityService.updateActivity(activityId, {
-                    content: content,
-                    attachments: attachments.map(att => ({
-                        uri: att.uri,
-                        type: att.type,
-                        name: att.name,
-                    })),
-                });
-            } else if (existingDraftId) {
-                await communityActivityService.updateDraft(existingDraftId, {
-                    content: content,
-                    attachments: attachments.map(att => ({
-                        uri: att.uri,
-                        type: att.type,
-                        name: att.name,
-                    })),
-                    scheduled_at: isScheduled ? scheduledDate.toISOString() : undefined,
-                });
-                await communityActivityService.publishDraft(existingDraftId);
-            } else {
-                await communityActivityService.createActivity(id!, {
-                    community_id: id!,
-                    type: 'POST',
-                    content: content,
-                    attachments: attachments.map(att => ({
-                        uri: att.uri,
-                        type: att.type,
-                        name: att.name,
-                    })),
-                    scheduled_at: isScheduled ? scheduledDate.toISOString() : undefined,
-                });
-            }
-
-            if (completeProgress) completeProgress();
-            setHasUnsavedChanges(false);
-            const message = isEditMode
-                ? 'Votre publication a été modifiée !'
-                : isScheduled
-                    ? `Publication programmée pour le ${scheduledDate.toLocaleDateString('fr-FR')} à ${scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`
-                    : 'Votre publication a été créée !';
-
-            Alert.alert('Succès', message, [
-                { text: 'OK', onPress: () => router.back() }
-            ]);
-        } catch (error: any) {
-            setIsUploading(false);
-            setUploadProgress(0);
-            progressAnim.setValue(0);
-            const message = error?.response?.data?.error || error?.message || 'Impossible de publier.';
-            Alert.alert('Erreur', message);
-        } finally {
-            setIsSubmitting(false);
+            setIsSavingDraft(false);
         }
     };
 
     const toggleSchedule = () => {
         if (isScheduled) {
-            setIsScheduled(false);
+            form.setValue('isScheduled', false);
         } else {
-            setIsScheduled(true);
+            form.setValue('isScheduled', true);
             // Set default to 1 hour from now
             const defaultDate = new Date(Date.now() + 60 * 60 * 1000);
-            setScheduledDate(defaultDate);
+            form.setValue('scheduledDate', defaultDate);
             // Dismiss keyboard before showing date picker
             Keyboard.dismiss();
             setTimeout(() => setShowDatePicker(true), 100);
@@ -575,7 +579,7 @@ export default function CreatePostScreen() {
 
             {/* Draft Banner - only show for drafts, not for edit mode */}
             {!isEditMode && hasDraft && (
-                <View style={[styles.draftBanner, { backgroundColor: colors.primary + '15' }]}>
+                <View style={[styles.draftBanner, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                     <SquarePen size={14} color={colors.primary} />
                     <Text style={[styles.draftBannerText, { color: colors.primary }]}>
                         Modifications non publiées
@@ -704,7 +708,7 @@ export default function CreatePostScreen() {
                 {!isEditMode && isScheduled && (
                     <View style={[styles.scheduleIndicator, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
                         <TouchableOpacity
-                            style={[styles.scheduleIconContainer, { backgroundColor: colors.primary + '15' }]}
+                            style={[styles.scheduleIconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}
                             onPress={openDatePicker}
                         >
                             <Calendar size={16} color={colors.primary} />
@@ -735,7 +739,7 @@ export default function CreatePostScreen() {
                             </View>
                         </View>
                         <TouchableOpacity
-                            onPress={() => setIsScheduled(false)}
+                            onPress={() => form.setValue('isScheduled', false)}
                             style={[styles.scheduleRemoveBtn, { backgroundColor: colors.gray100 }]}
                         >
                             <X size={16} color={colors.gray500} />
@@ -791,11 +795,11 @@ export default function CreatePostScreen() {
                                     styles.draftBtn,
                                     {
                                         borderColor: colors.borderColor,
-                                        opacity: (!content.trim() && attachments.length === 0) || isSubmitting ? 0.5 : 1
+                                        opacity: (!content.trim() && attachments.length === 0) || isSubmitting || isSavingDraft ? 0.5 : 1
                                     }
                                 ]}
                                 onPress={handleSaveAsDraft}
-                                disabled={(!content.trim() && attachments.length === 0) || isSubmitting}
+                                disabled={(!content.trim() && attachments.length === 0) || isSubmitting || isSavingDraft}
                             >
                                 <Save size={18} color={colors.gray500} />
                             </TouchableOpacity>
@@ -804,7 +808,7 @@ export default function CreatePostScreen() {
                         {/* Publish/Update button */}
                         <Button
                             title={isEditMode ? 'Modifier' : getScheduleButtonLabel()}
-                            onPress={handleSubmit}
+                            onPress={form.handleSubmit}
                             loading={isSubmitting}
                             disabled={(!content.trim() && attachments.length === 0) || isSubmitting}
                             size="sm"
@@ -824,7 +828,7 @@ export default function CreatePostScreen() {
                             setShowDatePicker(false);
                         }
                         if (event.type === 'set' && selectedDate) {
-                            setScheduledDate(selectedDate);
+                            form.setValue('scheduledDate', selectedDate);
                             if (Platform.OS === 'ios') {
                                 // On iOS with spinner, user confirms manually
                             } else {
@@ -872,14 +876,14 @@ export default function CreatePostScreen() {
                                 if (selectedDate <= new Date()) {
                                     const futureDate = new Date();
                                     futureDate.setMinutes(futureDate.getMinutes() + 5);
-                                    setScheduledDate(futureDate);
+                                    form.setValue('scheduledDate', futureDate);
                                     Alert.alert('Heure ajustée', 'L\'heure a été ajustée car elle était dans le passé.');
                                 } else {
-                                    setScheduledDate(selectedDate);
+                                    form.setValue('scheduledDate', selectedDate);
                                 }
                             }
                         } else if (selectedDate) {
-                            setScheduledDate(selectedDate);
+                            form.setValue('scheduledDate', selectedDate);
                         }
                     }}
                 />
@@ -902,7 +906,7 @@ export default function CreatePostScreen() {
                             if (scheduledDate <= new Date()) {
                                 const futureDate = new Date();
                                 futureDate.setMinutes(futureDate.getMinutes() + 5);
-                                setScheduledDate(futureDate);
+                                form.setValue('scheduledDate', futureDate);
                                 Alert.alert('Heure ajustée', 'L\'heure a été ajustée car elle était dans le passé.');
                             }
                         }}

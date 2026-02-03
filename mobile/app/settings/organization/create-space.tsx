@@ -35,10 +35,11 @@ import {
   HelpCircle,
   Trash2,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { Input, Button, Toggle, StepIndicator } from '../../../src/components/ui';
 import MapLocationPicker from '../../../src/components/MapLocationPicker';
 import { useTheme } from '../../../src/hooks/useTheme';
+import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
 import {
   SPACE_TYPE_DATA,
@@ -98,69 +99,231 @@ interface DayAvailability {
   endTime: string;
 }
 
+// Form values interface
+interface SpaceFormValues {
+  // Info
+  name: string;
+  spaceType: SpaceType | null;
+  description: string;
+  selectedSectors: Sector[];
+  // Location
+  address: string;
+  country: string;
+  region: string;
+  city: string;
+  coordinates: { lat: number; lng: number } | null;
+  // Capacity
+  surfaceM2: string;
+  capacity: string;
+  autoCapacity: boolean;
+  selectedEquipment: SpaceEquipment[];
+  selectedAmenities: SpaceAmenity[];
+  isAccessible: boolean;
+  selectedAccessibility: AccessibilityFeature[];
+  // Conditions
+  visibility: Visibility;
+  hourlyRate: string;
+  dailyRate: string;
+  weeklyRate: string;
+  monthlyRate: string;
+  requiresApproval: boolean;
+  availability: Record<number, DayAvailability>;
+  rules: string;
+  questions: ApplicationQuestion[];
+  // Media
+  images: ImageItem[];
+}
+
 // Format number without decimals
 const formatNumber = (value: number): string => {
   if (!value && value !== 0) return '';
   return Math.round(value).toLocaleString('fr-FR');
 };
 
+// Default availability schedule
+const DEFAULT_AVAILABILITY: Record<number, DayAvailability> = {
+  0: { isOpen: false, startTime: '09:00', endTime: '18:00' },
+  1: { isOpen: true, startTime: '08:00', endTime: '20:00' },
+  2: { isOpen: true, startTime: '08:00', endTime: '20:00' },
+  3: { isOpen: true, startTime: '08:00', endTime: '20:00' },
+  4: { isOpen: true, startTime: '08:00', endTime: '20:00' },
+  5: { isOpen: true, startTime: '08:00', endTime: '20:00' },
+  6: { isOpen: false, startTime: '09:00', endTime: '18:00' },
+};
+
 export default function CreateSpaceScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { selectedOrgId, selectedOrg } = useSpace();
+
+  // Keep these states for step navigation and UI
   const [currentStep, setCurrentStep] = useState<Step>('info');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // Form state - Info
-  const [name, setName] = useState('');
-  const [spaceType, setSpaceType] = useState<SpaceType | null>(null);
-  const [description, setDescription] = useState('');
-  const [selectedSectors, setSelectedSectors] = useState<Sector[]>([]);
-
-  // Form state - Location
-  const [address, setAddress] = useState('');
-  const [country, setCountry] = useState('CI');
-  const [region, setRegion] = useState('');
-  const [city, setCity] = useState('');
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [orgLocationLoaded, setOrgLocationLoaded] = useState(false);
   const countryScrollRef = useRef<ScrollView>(null);
 
-  // Form state - Capacity
-  const [surfaceM2, setSurfaceM2] = useState('');
-  const [capacity, setCapacity] = useState('');
-  const [autoCapacity, setAutoCapacity] = useState(true);
-  const [selectedEquipment, setSelectedEquipment] = useState<SpaceEquipment[]>([]);
-  const [selectedAmenities, setSelectedAmenities] = useState<SpaceAmenity[]>([]);
-  const [isAccessible, setIsAccessible] = useState(false);
-  const [selectedAccessibility, setSelectedAccessibility] = useState<AccessibilityFeature[]>([]);
+  // Helper functions for building payloads
+  const isRemoteUrl = (uri: string): boolean => {
+    return uri.startsWith('http://') || uri.startsWith('https://') || uri.startsWith('/uploads/');
+  };
 
-  // Form state - Conditions (Pricing, Availability, Rules, Questions)
-  const [visibility, setVisibility] = useState<Visibility>('PUBLIC');
-  const [hourlyRate, setHourlyRate] = useState('');
-  const [dailyRate, setDailyRate] = useState('');
-  const [weeklyRate, setWeeklyRate] = useState('');
-  const [monthlyRate, setMonthlyRate] = useState('');
-  const [requiresApproval, setRequiresApproval] = useState(false);
+  const buildImagesPayload = async (images: ImageItem[]): Promise<string[] | null> => {
+    const localImages = images.filter((img) => !isRemoteUrl(img.uri));
+    const uploadedUrls: string[] = [];
 
-  // Availability schedule
-  const [availability, setAvailability] = useState<Record<number, DayAvailability>>({
-    0: { isOpen: false, startTime: '09:00', endTime: '18:00' },
-    1: { isOpen: true, startTime: '08:00', endTime: '20:00' },
-    2: { isOpen: true, startTime: '08:00', endTime: '20:00' },
-    3: { isOpen: true, startTime: '08:00', endTime: '20:00' },
-    4: { isOpen: true, startTime: '08:00', endTime: '20:00' },
-    5: { isOpen: true, startTime: '08:00', endTime: '20:00' },
-    6: { isOpen: false, startTime: '09:00', endTime: '18:00' },
+    for (const image of localImages) {
+      try {
+        const uploaded = await imageService.uploadImage(
+          { uri: image.uri, width: 800, height: 600 },
+          'illustration',
+          'space'
+        );
+        uploadedUrls.push(uploaded.url);
+      } catch (error) {
+        Alert.alert('Erreur', 'Impossible d\'uploader une image.');
+        return null;
+      }
+    }
+
+    const remoteUrls = images.filter((img) => isRemoteUrl(img.uri)).map(img => img.uri);
+    return [...remoteUrls, ...uploadedUrls];
+  };
+
+  // Convert availability state to backend format
+  const buildAvailabilities = (availability: Record<number, DayAvailability>) => {
+    const availabilities: Array<{
+      day_of_week: number;
+      start_time: string;
+      end_time: string;
+    }> = [];
+
+    Object.entries(availability).forEach(([dayId, dayAvail]) => {
+      if (dayAvail.isOpen) {
+        availabilities.push({
+          day_of_week: parseInt(dayId),
+          start_time: dayAvail.startTime,
+          end_time: dayAvail.endTime,
+        });
+      }
+    });
+
+    return availabilities.length > 0 ? availabilities : undefined;
+  };
+
+  const buildSpaceData = (values: SpaceFormValues, imageUrls?: string[]): CreateSpaceData => ({
+    name: values.name,
+    type: values.spaceType!,
+    description: values.description || undefined,
+    address: values.address || undefined,
+    city: values.city || undefined,
+    region: values.region || undefined,
+    country: values.country || 'CI',
+    surface_m2: parseFloat(values.surfaceM2),
+    capacity: parseInt(values.capacity),
+    equipment: values.selectedEquipment,
+    amenities: values.selectedAmenities,
+    sectors: values.selectedSectors.length > 0 ? values.selectedSectors : undefined,
+    is_accessible: values.isAccessible,
+    accessibility_features: values.isAccessible ? values.selectedAccessibility : [],
+    hourly_rate: values.hourlyRate ? parseFloat(values.hourlyRate) : undefined,
+    daily_rate: values.dailyRate ? parseFloat(values.dailyRate) : undefined,
+    weekly_rate: values.weeklyRate ? parseFloat(values.weeklyRate) : undefined,
+    monthly_rate: values.monthlyRate ? parseFloat(values.monthlyRate) : undefined,
+    is_bookable: true,
+    requires_approval: true,
+    booking_rules: values.rules.trim() ? [values.rules.trim()] : undefined,
+    questions: values.questions.filter(q => q.question.trim().length > 0).map(q => q.question) as any,
+    cover_image_url: imageUrls && imageUrls.length > 0 ? imageUrls[0] : undefined,
+    gallery_images: imageUrls && imageUrls.length > 0 ? imageUrls : undefined,
+    organization_id: selectedOrgId!,
+    coordinates: values.coordinates || undefined,
+    visibility: values.visibility,
+    availabilities: buildAvailabilities(values.availability),
   });
 
-  // Rules and Questions
-  const [rules, setRules] = useState<string>('');
-  const [questions, setQuestions] = useState<ApplicationQuestion[]>([]);
+  // Form hook with all fields
+  const form = useForm<SpaceFormValues>({
+    fields: {
+      // Info
+      name: { initialValue: '' },
+      spaceType: { initialValue: null },
+      description: { initialValue: '' },
+      selectedSectors: { initialValue: [] },
+      // Location
+      address: { initialValue: '' },
+      country: { initialValue: 'CI' },
+      region: { initialValue: '' },
+      city: { initialValue: '' },
+      coordinates: { initialValue: null },
+      // Capacity
+      surfaceM2: { initialValue: '' },
+      capacity: { initialValue: '' },
+      autoCapacity: { initialValue: true },
+      selectedEquipment: { initialValue: [] },
+      selectedAmenities: { initialValue: [] },
+      isAccessible: { initialValue: false },
+      selectedAccessibility: { initialValue: [] },
+      // Conditions
+      visibility: { initialValue: 'PUBLIC' },
+      hourlyRate: { initialValue: '' },
+      dailyRate: { initialValue: '' },
+      weeklyRate: { initialValue: '' },
+      monthlyRate: { initialValue: '' },
+      requiresApproval: { initialValue: false },
+      availability: { initialValue: DEFAULT_AVAILABILITY },
+      rules: { initialValue: '' },
+      questions: { initialValue: [] },
+      // Media
+      images: { initialValue: [] },
+    },
+    onSubmit: async (values) => {
+      if (!selectedOrgId) {
+        Alert.alert('Erreur', 'Aucune organisation sélectionnée.');
+        return;
+      }
 
-  // Form state - Media
-  const [images, setImages] = useState<ImageItem[]>([]);
+      const imageUrls = await buildImagesPayload(values.images);
+      if (imageUrls === null) {
+        return;
+      }
+
+      const data = buildSpaceData(values, imageUrls.length > 0 ? imageUrls : undefined);
+      await spaceService.create(data);
+
+      Alert.alert('Espace cree', `"${values.name}" a ete cree avec succes !`, [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    },
+    validateOnChange: false,
+  });
+
+  // Convenience getters for all form values
+  const name = form.getValue('name');
+  const spaceType = form.getValue('spaceType');
+  const description = form.getValue('description');
+  const selectedSectors = form.getValue('selectedSectors');
+  const address = form.getValue('address');
+  const country = form.getValue('country');
+  const region = form.getValue('region');
+  const city = form.getValue('city');
+  const coordinates = form.getValue('coordinates');
+  const surfaceM2 = form.getValue('surfaceM2');
+  const capacity = form.getValue('capacity');
+  const autoCapacity = form.getValue('autoCapacity');
+  const selectedEquipment = form.getValue('selectedEquipment');
+  const selectedAmenities = form.getValue('selectedAmenities');
+  const isAccessible = form.getValue('isAccessible');
+  const selectedAccessibility = form.getValue('selectedAccessibility');
+  const visibility = form.getValue('visibility');
+  const hourlyRate = form.getValue('hourlyRate');
+  const dailyRate = form.getValue('dailyRate');
+  const weeklyRate = form.getValue('weeklyRate');
+  const monthlyRate = form.getValue('monthlyRate');
+  const requiresApproval = form.getValue('requiresApproval');
+  const availability = form.getValue('availability');
+  const rules = form.getValue('rules');
+  const questions = form.getValue('questions');
+  const images = form.getValue('images');
 
   // Get regions and cities
   const availableRegions = country ? getRegionsByCountry(country) : [];
@@ -173,7 +336,7 @@ export default function CreateSpaceScreen() {
   useEffect(() => {
     if (autoCapacity && surfaceM2 && spaceType) {
       const calculatedCapacity = calculateSpaceCapacity(parseFloat(surfaceM2), spaceType);
-      setCapacity(calculatedCapacity.toString());
+      form.setValue('capacity', calculatedCapacity.toString());
     }
   }, [surfaceM2, spaceType, autoCapacity]);
 
@@ -185,12 +348,14 @@ export default function CreateSpaceScreen() {
           const response = await organizationService.get(selectedOrgId);
           const org = response.data;
           if (org) {
-            if (org.headquarters_country) setCountry(org.headquarters_country);
-            if (org.headquarters_region) setRegion(org.headquarters_region);
-            if (org.headquarters_city) setCity(org.headquarters_city);
+            form.setValues({
+              country: org.headquarters_country || 'CI',
+              region: org.headquarters_region || '',
+              city: org.headquarters_city || '',
+            });
           }
         } catch (error) {
-          setCountry('CI');
+          form.setValue('country', 'CI');
         }
         setOrgLocationLoaded(true);
       }
@@ -241,36 +406,36 @@ export default function CreateSpaceScreen() {
         const data = response.data;
 
         // Apply generated data to form fields
-        if (data.suggested_name) setName(data.suggested_name);
-        if (data.description) setDescription(data.description);
+        if (data.suggested_name) form.setValue('name', data.suggested_name);
+        if (data.description) form.setValue('description', data.description);
 
         // Sectors - apply up to 5 sectors
         if (data.sectors && data.sectors.length > 0) {
-          setSelectedSectors(data.sectors.slice(0, MAX_SECTORS) as Sector[]);
+          form.setValue('selectedSectors', data.sectors.slice(0, MAX_SECTORS) as Sector[]);
         }
 
         // Equipment
         if (data.equipment && data.equipment.length > 0) {
-          setSelectedEquipment(data.equipment.filter(e => SPACE_EQUIPMENT_DATA.some(d => d.id === e)) as SpaceEquipment[]);
+          form.setValue('selectedEquipment', data.equipment.filter(e => SPACE_EQUIPMENT_DATA.some(d => d.id === e)) as SpaceEquipment[]);
         }
 
         // Amenities
         if (data.amenities && data.amenities.length > 0) {
-          setSelectedAmenities(data.amenities.filter(a => SPACE_AMENITY_DATA.some(d => d.id === a)) as SpaceAmenity[]);
+          form.setValue('selectedAmenities', data.amenities.filter(a => SPACE_AMENITY_DATA.some(d => d.id === a)) as SpaceAmenity[]);
         }
 
         // Surface & Capacity
-        if (data.surface_m2) setSurfaceM2(Math.round(data.surface_m2).toString());
-        if (data.capacity) setCapacity(Math.round(data.capacity).toString());
+        if (data.surface_m2) form.setValue('surfaceM2', Math.round(data.surface_m2).toString());
+        if (data.capacity) form.setValue('capacity', Math.round(data.capacity).toString());
 
         // Rules
-        if (data.rules) setRules(data.rules);
+        if (data.rules) form.setValue('rules', data.rules);
 
         // Pricing
-        if (data.hourly_rate) setHourlyRate(Math.round(data.hourly_rate).toString());
-        if (data.daily_rate) setDailyRate(Math.round(data.daily_rate).toString());
-        if (data.weekly_rate) setWeeklyRate(Math.round(data.weekly_rate).toString());
-        if (data.monthly_rate) setMonthlyRate(Math.round(data.monthly_rate).toString());
+        if (data.hourly_rate) form.setValue('hourlyRate', Math.round(data.hourly_rate).toString());
+        if (data.daily_rate) form.setValue('dailyRate', Math.round(data.daily_rate).toString());
+        if (data.weekly_rate) form.setValue('weeklyRate', Math.round(data.weekly_rate).toString());
+        if (data.monthly_rate) form.setValue('monthlyRate', Math.round(data.monthly_rate).toString());
 
         // Questions
         if (data.questions && data.questions.length > 0) {
@@ -280,7 +445,7 @@ export default function CreateSpaceScreen() {
             required: false,
             max_length: MAX_QUESTION_LENGTH,
           }));
-          setQuestions(newQuestions);
+          form.setValue('questions', newQuestions);
         }
       }
     } catch (error: any) {
@@ -293,14 +458,15 @@ export default function CreateSpaceScreen() {
   };
 
   const pickImage = async () => {
-    if (images.length >= MAX_IMAGES) {
+    const currentImages = form.getValue('images');
+    if (currentImages.length >= MAX_IMAGES) {
       Alert.alert('Limite atteinte', `Maximum ${MAX_IMAGES} images.`);
       return;
     }
     try {
       const image = await imageService.pickImage({ type: 'illustration' });
       if (image) {
-        setImages([...images, { id: Date.now().toString(), uri: image.uri }]);
+        form.setValue('images', [...currentImages, { id: Date.now().toString(), uri: image.uri }]);
       }
     } catch (error) {
       Alert.alert('Erreur', 'Impossible de selectionner l\'image.');
@@ -308,60 +474,68 @@ export default function CreateSpaceScreen() {
   };
 
   const removeImage = (id: string) => {
-    setImages(images.filter((img) => img.id !== id));
+    const currentImages = form.getValue('images');
+    form.setValue('images', currentImages.filter((img) => img.id !== id));
   };
 
   const toggleEquipment = (id: SpaceEquipment) => {
-    if (selectedEquipment.includes(id)) {
-      setSelectedEquipment(selectedEquipment.filter((e) => e !== id));
+    const current = form.getValue('selectedEquipment');
+    if (current.includes(id)) {
+      form.setValue('selectedEquipment', current.filter((e) => e !== id));
     } else {
-      setSelectedEquipment([...selectedEquipment, id]);
+      form.setValue('selectedEquipment', [...current, id]);
     }
   };
 
   const toggleAmenity = (id: SpaceAmenity) => {
-    if (selectedAmenities.includes(id)) {
-      setSelectedAmenities(selectedAmenities.filter((a) => a !== id));
+    const current = form.getValue('selectedAmenities');
+    if (current.includes(id)) {
+      form.setValue('selectedAmenities', current.filter((a) => a !== id));
     } else {
-      setSelectedAmenities([...selectedAmenities, id]);
+      form.setValue('selectedAmenities', [...current, id]);
     }
   };
 
   const toggleAccessibility = (id: AccessibilityFeature) => {
-    if (selectedAccessibility.includes(id)) {
-      setSelectedAccessibility(selectedAccessibility.filter((a) => a !== id));
+    const current = form.getValue('selectedAccessibility');
+    if (current.includes(id)) {
+      form.setValue('selectedAccessibility', current.filter((a) => a !== id));
     } else {
-      setSelectedAccessibility([...selectedAccessibility, id]);
+      form.setValue('selectedAccessibility', [...current, id]);
     }
   };
 
   const toggleSector = (sectorId: Sector) => {
-    if (selectedSectors.includes(sectorId)) {
-      setSelectedSectors(selectedSectors.filter((s) => s !== sectorId));
-    } else if (selectedSectors.length < MAX_SECTORS) {
-      setSelectedSectors([...selectedSectors, sectorId]);
+    const current = form.getValue('selectedSectors');
+    if (current.includes(sectorId)) {
+      form.setValue('selectedSectors', current.filter((s) => s !== sectorId));
+    } else if (current.length < MAX_SECTORS) {
+      form.setValue('selectedSectors', [...current, sectorId]);
     } else {
       Alert.alert('Limite atteinte', `Vous pouvez selectionner au maximum ${MAX_SECTORS} secteurs.`);
     }
   };
 
   const toggleDayAvailability = (dayId: number) => {
-    setAvailability(prev => ({
-      ...prev,
-      [dayId]: { ...prev[dayId], isOpen: !prev[dayId].isOpen },
-    }));
+    const current = form.getValue('availability');
+    form.setValue('availability', {
+      ...current,
+      [dayId]: { ...current[dayId], isOpen: !current[dayId].isOpen },
+    });
   };
 
   const updateDayTime = (dayId: number, field: 'startTime' | 'endTime', value: string) => {
-    setAvailability(prev => ({
-      ...prev,
-      [dayId]: { ...prev[dayId], [field]: value },
-    }));
+    const current = form.getValue('availability');
+    form.setValue('availability', {
+      ...current,
+      [dayId]: { ...current[dayId], [field]: value },
+    });
   };
 
 
   const addQuestion = () => {
-    if (questions.length >= MAX_QUESTIONS) {
+    const current = form.getValue('questions');
+    if (current.length >= MAX_QUESTIONS) {
       Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.`);
       return;
     }
@@ -371,42 +545,47 @@ export default function CreateSpaceScreen() {
       required: false,
       max_length: MAX_QUESTION_LENGTH,
     };
-    setQuestions([...questions, newQuestion]);
+    form.setValue('questions', [...current, newQuestion]);
   };
 
   const updateQuestion = (id: string, updates: Partial<ApplicationQuestion>) => {
-    setQuestions(questions.map((q) =>
+    const current = form.getValue('questions');
+    form.setValue('questions', current.map((q) =>
       q.id === id ? { ...q, ...updates } : q
     ));
   };
 
   const removeQuestion = (id: string) => {
-    setQuestions(questions.filter((q) => q.id !== id));
+    const current = form.getValue('questions');
+    form.setValue('questions', current.filter((q) => q.id !== id));
   };
 
   const handleMapLocationSelect = (location: any) => {
+    const currentCountry = form.getValue('country');
+    const currentRegion = form.getValue('region');
+
     if (location.coordinates) {
-      setCoordinates({
+      form.setValue('coordinates', {
         lat: location.coordinates.latitude,
         lng: location.coordinates.longitude,
       });
     }
 
     if (location.address) {
-      setAddress(location.address);
+      form.setValue('address', location.address);
     }
 
-    const targetCountry = location.countryCode || country;
+    const targetCountry = location.countryCode || currentCountry;
     if (targetCountry) {
-      if (location.countryCode && location.countryCode !== country) {
-        setRegion('');
-        setCity('');
+      if (location.countryCode && location.countryCode !== currentCountry) {
+        form.setValue('region', '');
+        form.setValue('city', '');
       }
-      setCountry(targetCountry);
+      form.setValue('country', targetCountry);
     }
 
     const regionOptions = getRegionsByCountry(targetCountry);
-    let matchedRegionId = location.countryCode && location.countryCode !== country ? '' : region;
+    let matchedRegionId = location.countryCode && location.countryCode !== currentCountry ? '' : currentRegion;
     if (location.region && regionOptions.length > 0) {
       const matchedRegion = regionOptions.find(r =>
         r.label.toLowerCase().includes(location.region.toLowerCase()) ||
@@ -414,7 +593,7 @@ export default function CreateSpaceScreen() {
       );
       if (matchedRegion) {
         matchedRegionId = matchedRegion.id;
-        setRegion(matchedRegion.id);
+        form.setValue('region', matchedRegion.id);
       }
     }
 
@@ -425,7 +604,7 @@ export default function CreateSpaceScreen() {
         location.city.toLowerCase().includes(c.label.toLowerCase())
       );
       if (matchedCity) {
-        setCity(matchedCity.id);
+        form.setValue('city', matchedCity.id);
       }
     }
   };
@@ -441,110 +620,6 @@ export default function CreateSpaceScreen() {
     else router.back();
   };
 
-  const isRemoteUrl = (uri: string): boolean => {
-    return uri.startsWith('http://') || uri.startsWith('https://') || uri.startsWith('/uploads/');
-  };
-
-  const buildImagesPayload = async (): Promise<string[] | null> => {
-    const localImages = images.filter((img) => !isRemoteUrl(img.uri));
-    const uploadedUrls: string[] = [];
-
-    for (const image of localImages) {
-      try {
-        const uploaded = await imageService.uploadImage(
-          { uri: image.uri, width: 800, height: 600 },
-          'illustration',
-          'space'
-        );
-        uploadedUrls.push(uploaded.url);
-      } catch (error) {
-        Alert.alert('Erreur', 'Impossible d\'uploader une image.');
-        return null;
-      }
-    }
-
-    const remoteUrls = images.filter((img) => isRemoteUrl(img.uri)).map(img => img.uri);
-    return [...remoteUrls, ...uploadedUrls];
-  };
-
-  // Convert availability state to backend format
-  const buildAvailabilities = () => {
-    const availabilities: Array<{
-      day_of_week: number;
-      start_time: string;
-      end_time: string;
-    }> = [];
-
-    Object.entries(availability).forEach(([dayId, dayAvail]) => {
-      if (dayAvail.isOpen) {
-        availabilities.push({
-          day_of_week: parseInt(dayId),
-          start_time: dayAvail.startTime,
-          end_time: dayAvail.endTime,
-        });
-      }
-    });
-
-    return availabilities.length > 0 ? availabilities : undefined;
-  };
-
-  const buildSpaceData = (imageUrls?: string[]): CreateSpaceData => ({
-    name,
-    type: spaceType!,
-    description: description || undefined,
-    address: address || undefined,
-    city: city || undefined,
-    region: region || undefined,
-    country: country || 'CI',
-    surface_m2: parseFloat(surfaceM2),
-    capacity: parseInt(capacity),
-    equipment: selectedEquipment,
-    amenities: selectedAmenities,
-    sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
-    is_accessible: isAccessible,
-    accessibility_features: isAccessible ? selectedAccessibility : [],
-    hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
-    daily_rate: dailyRate ? parseFloat(dailyRate) : undefined,
-    weekly_rate: weeklyRate ? parseFloat(weeklyRate) : undefined,
-    monthly_rate: monthlyRate ? parseFloat(monthlyRate) : undefined,
-    is_bookable: true,
-    requires_approval: true, // Admin always validates bookings
-    booking_rules: rules.trim() ? [rules.trim()] : undefined, // Convert textarea to array for backend
-    questions: questions.filter(q => q.question.trim().length > 0).map(q => q.question) as any,
-    cover_image_url: imageUrls && imageUrls.length > 0 ? imageUrls[0] : undefined,
-    gallery_images: imageUrls && imageUrls.length > 0 ? imageUrls : undefined,
-    organization_id: selectedOrgId!,
-    coordinates: coordinates || undefined,
-    visibility,
-    availabilities: buildAvailabilities(),
-  });
-
-  const handlePublish = async () => {
-    if (!selectedOrgId) {
-      Alert.alert('Erreur', 'Aucune organisation sélectionnée.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const imageUrls = await buildImagesPayload();
-      if (imageUrls === null) {
-        setIsSubmitting(false);
-        return;
-      }
-
-      const data = buildSpaceData(imageUrls.length > 0 ? imageUrls : undefined);
-      await spaceService.create(data);
-
-      Alert.alert('Espace cree', `"${name}" a ete cree avec succes !`, [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Une erreur est survenue.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const canProceed = () => {
     switch (currentStep) {
@@ -588,7 +663,7 @@ export default function CreateSpaceScreen() {
           label="Nom de l'espace *"
           placeholder="Ex: Salle de reunion Cocody"
           value={name}
-          onChangeText={setName}
+          onChangeText={(val) => form.setValue('name', val)}
           autoCapitalize="words"
         />
 
@@ -603,9 +678,9 @@ export default function CreateSpaceScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => setSpaceType(type.id)}
+                  onPress={() => form.setValue('spaceType', type.id)}
                   activeOpacity={0.7}
                 >
                   {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
@@ -663,7 +738,7 @@ export default function CreateSpaceScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleSector(sector.id)}
                   activeOpacity={0.7}
@@ -691,7 +766,7 @@ export default function CreateSpaceScreen() {
               style={[styles.textArea, { color: colors.textPrimary }]}
               placeholder="Decrivez l'espace, ses caracteristiques..."
               value={description}
-              onChangeText={setDescription}
+              onChangeText={(val) => form.setValue('description', val)}
               multiline
               numberOfLines={4}
               maxLength={500}
@@ -719,7 +794,7 @@ export default function CreateSpaceScreen() {
           label="Adresse"
           placeholder="Ex: 123 Boulevard Latrille"
           value={address}
-          onChangeText={setAddress}
+          onChangeText={(val) => form.setValue('address', val)}
         />
 
         <View style={styles.fieldContainer}>
@@ -741,9 +816,9 @@ export default function CreateSpaceScreen() {
                     isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                   ]}
                   onPress={() => {
-                    setCountry(c.id);
-                    setRegion('');
-                    setCity('');
+                    form.setValue('country', c.id);
+                    form.setValue('region', '');
+                    form.setValue('city', '');
                   }}
                 >
                   <Text
@@ -776,8 +851,8 @@ export default function CreateSpaceScreen() {
                       isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                     ]}
                     onPress={() => {
-                      setRegion(r.id);
-                      setCity('');
+                      form.setValue('region', r.id);
+                      form.setValue('city', '');
                     }}
                   >
                     <Text
@@ -810,7 +885,7 @@ export default function CreateSpaceScreen() {
                       { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                       isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                     ]}
-                    onPress={() => setCity(c.id)}
+                    onPress={() => form.setValue('city', c.id)}
                   >
                     <Text
                       style={[
@@ -870,7 +945,7 @@ export default function CreateSpaceScreen() {
               label="Surface (m2) *"
               placeholder="Ex: 25"
               value={surfaceM2}
-              onChangeText={setSurfaceM2}
+              onChangeText={(val) => form.setValue('surfaceM2', val)}
               keyboardType="numeric"
             />
           </View>
@@ -879,7 +954,7 @@ export default function CreateSpaceScreen() {
               label="Capacité (Personnes) *"
               placeholder="Ex: 10"
               value={capacity}
-              onChangeText={setCapacity}
+              onChangeText={(val) => form.setValue('capacity', val)}
               keyboardType="numeric"
               editable={!autoCapacity}
             />
@@ -893,7 +968,7 @@ export default function CreateSpaceScreen() {
               Capacité calculée selon le type
             </Text>
           </View>
-          <Toggle value={autoCapacity} onValueChange={setAutoCapacity} />
+          <Toggle value={autoCapacity} onValueChange={(val) => form.setValue('autoCapacity', val)} />
         </View>
 
         <View style={styles.fieldContainer}>
@@ -907,7 +982,7 @@ export default function CreateSpaceScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleEquipment(item.id)}
                 >
@@ -938,7 +1013,7 @@ export default function CreateSpaceScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleAmenity(item.id)}
                 >
@@ -965,7 +1040,7 @@ export default function CreateSpaceScreen() {
               Accessible aux personnes a mobilite reduite
             </Text>
           </View>
-          <Toggle value={isAccessible} onValueChange={setIsAccessible} />
+          <Toggle value={isAccessible} onValueChange={(val) => form.setValue('isAccessible', val)} />
         </View>
 
         {isAccessible && (
@@ -980,7 +1055,7 @@ export default function CreateSpaceScreen() {
                     style={[
                       styles.selectableTag,
                       { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                      isSelected && { backgroundColor: colors.info + '10', borderColor: colors.info },
+                      isSelected && { backgroundColor: withOpacity(colors.info, OPACITY[10]), borderColor: colors.info },
                     ]}
                     onPress={() => toggleAccessibility(item.id)}
                   >
@@ -1024,7 +1099,7 @@ export default function CreateSpaceScreen() {
               label="Tarif horaire *"
               placeholder="Ex: 5000"
               value={hourlyRate}
-              onChangeText={setHourlyRate}
+              onChangeText={(val) => form.setValue('hourlyRate', val)}
               keyboardType="numeric"
             />
           </View>
@@ -1033,7 +1108,7 @@ export default function CreateSpaceScreen() {
               label="Tarif journalier"
               placeholder="Ex: 25000"
               value={dailyRate}
-              onChangeText={setDailyRate}
+              onChangeText={(val) => form.setValue('dailyRate', val)}
               keyboardType="numeric"
             />
           </View>
@@ -1045,7 +1120,7 @@ export default function CreateSpaceScreen() {
               label="Tarif hebdomadaire"
               placeholder="Ex: 100000"
               value={weeklyRate}
-              onChangeText={setWeeklyRate}
+              onChangeText={(val) => form.setValue('weeklyRate', val)}
               keyboardType="numeric"
             />
           </View>
@@ -1054,7 +1129,7 @@ export default function CreateSpaceScreen() {
               label="Tarif mensuel"
               placeholder="Ex: 350000"
               value={monthlyRate}
-              onChangeText={setMonthlyRate}
+              onChangeText={(val) => form.setValue('monthlyRate', val)}
               keyboardType="numeric"
             />
           </View>
@@ -1074,9 +1149,9 @@ export default function CreateSpaceScreen() {
                   style={[
                     styles.locationTypeCard,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => setVisibility(type.id)}
+                  onPress={() => form.setValue('visibility', type.id)}
                   activeOpacity={0.7}
                 >
                   <IconComponent
@@ -1167,7 +1242,7 @@ export default function CreateSpaceScreen() {
               style={[styles.textArea, { color: colors.textPrimary }]}
               placeholder="Ex: • Respecter les horaires de reservation&#10;• Maintenir l'espace propre apres utilisation&#10;• Ne pas fumer dans les locaux..."
               value={rules}
-              onChangeText={setRules}
+              onChangeText={(val) => form.setValue('rules', val)}
               multiline
               numberOfLines={5}
               maxLength={1000}
@@ -1337,7 +1412,7 @@ export default function CreateSpaceScreen() {
               {/* Visibility badge */}
               <View style={[
                 styles.previewTagWithIcon,
-                { backgroundColor: visibility === 'PUBLIC' ? colors.success + '15' : colors.warning + '15' }
+                { backgroundColor: visibility === 'PUBLIC' ? withOpacity(colors.success, OPACITY[15]) : withOpacity(colors.warning, OPACITY[15]) }
               ]}>
                 {visibility === 'PUBLIC' ? (
                   <Eye size={14} color={colors.success} strokeWidth={2} />
@@ -1451,7 +1526,7 @@ export default function CreateSpaceScreen() {
                 {selectedAmenities.map((amenityId) => {
                   const amenity = SPACE_AMENITY_DATA.find(a => a.id === amenityId);
                   return amenity ? (
-                    <View key={amenityId} style={[styles.previewSmallTag, { backgroundColor: colors.primary + '10' }]}>
+                    <View key={amenityId} style={[styles.previewSmallTag, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
                       <Text style={[styles.previewSmallTagText, { color: colors.primary }]}>{amenity.label}</Text>
                     </View>
                   ) : null;
@@ -1472,8 +1547,8 @@ export default function CreateSpaceScreen() {
                     style={[
                       styles.availabilityPreviewCard,
                       {
-                        backgroundColor: dayAvail.isOpen ? colors.primary + '08' : colors.gray50,
-                        borderColor: dayAvail.isOpen ? colors.primary + '30' : colors.gray200,
+                        backgroundColor: dayAvail.isOpen ? withOpacity(colors.primary, OPACITY['08']) : colors.gray50,
+                        borderColor: dayAvail.isOpen ? withOpacity(colors.primary, OPACITY[30]) : colors.gray200,
                       },
                     ]}
                   >
@@ -1532,6 +1607,7 @@ export default function CreateSpaceScreen() {
 
   const renderFooter = () => {
     const isFirstStep = currentStep === 'info';
+    const isSubmitting = form.state.isSubmitting;
 
     if (currentStep === 'preview') {
       return (
@@ -1548,7 +1624,7 @@ export default function CreateSpaceScreen() {
             <View style={styles.publishButton}>
               <Button
                 title={isSubmitting ? 'Publication...' : 'Publier'}
-                onPress={handlePublish}
+                onPress={form.handleSubmit}
                 disabled={isSubmitting}
                 fullWidth
               />

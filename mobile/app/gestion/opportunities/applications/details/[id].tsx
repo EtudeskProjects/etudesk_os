@@ -42,7 +42,7 @@ import {
   ChevronDown,
   TrendingUp,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../../src/constants/theme';
 import { Button, FooterNav } from '../../../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
@@ -91,10 +91,10 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Match category configuration
 const MATCH_CATEGORY_CONFIG = {
-  excellent: { label: 'Excellent', color: '#059669', bgColor: '#059669' + '15' },
-  good: { label: 'Bon', color: '#2563eb', bgColor: '#2563eb' + '15' },
-  average: { label: 'Moyen', color: '#d97706', bgColor: '#d97706' + '15' },
-  low: { label: 'Faible', color: '#dc2626', bgColor: '#dc2626' + '15' },
+  excellent: { label: 'Excellent', color: '#059669', bgColor: withOpacity('#059669', OPACITY[15]) },
+  good: { label: 'Bon', color: '#2563eb', bgColor: withOpacity('#2563eb', OPACITY[15]) },
+  average: { label: 'Moyen', color: '#d97706', bgColor: withOpacity('#d97706', OPACITY[15]) },
+  low: { label: 'Faible', color: '#dc2626', bgColor: withOpacity('#dc2626', OPACITY[15]) },
 };
 
 type MatchCategory = 'excellent' | 'good' | 'average' | 'low';
@@ -393,7 +393,7 @@ export default function ApplicationOrgDetailsScreen() {
           {talent?.profile_picture_url ? (
             <Image source={{ uri: talent.profile_picture_url }} style={styles.profileAvatar} />
           ) : (
-            <View style={[styles.profileAvatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+            <View style={[styles.profileAvatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
               <Text style={[styles.profileAvatarText, { color: colors.primary }]}>
                 {getInitials(talent?.first_name, talent?.last_name)}
               </Text>
@@ -511,7 +511,7 @@ export default function ApplicationOrgDetailsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Statut de la candidature</Text>
 
             {/* Current status display */}
-            <View style={[styles.currentStatusDisplay, { backgroundColor: (STATUS_FLOW[application.status as ApplicationStatus]?.color || colors.warning) + '10' }]}>
+            <View style={[styles.currentStatusDisplay, { backgroundColor: withOpacity(STATUS_FLOW[application.status as ApplicationStatus]?.color || colors.warning, OPACITY[10]) }]}>
               {(() => {
                 const config = STATUS_CONFIG[application.status as ApplicationStatus] || STATUS_CONFIG.SUBMITTED;
                 const StatusIcon = config.icon;
@@ -554,7 +554,7 @@ export default function ApplicationOrgDetailsScreen() {
                         style={[styles.statusOption, { borderBottomColor: colors.gray100 }]}
                         onPress={() => handleUpdateStatus(status)}
                       >
-                        <View style={[styles.statusOptionIcon, { backgroundColor: config.color + '15' }]}>
+                        <View style={[styles.statusOptionIcon, { backgroundColor: withOpacity(config.color, OPACITY[15]) }]}>
                           <Icon size={16} color={config.color} strokeWidth={ICON.strokeWidth} />
                         </View>
                         <View style={styles.statusOptionInfo}>
@@ -645,7 +645,7 @@ export default function ApplicationOrgDetailsScreen() {
 
         {/* Final status message */}
         {application?.status === 'ACCEPTED' && (
-          <View style={[styles.finalStatusCard, { backgroundColor: colors.success + '10', borderColor: colors.success + '30' }]}>
+          <View style={[styles.finalStatusCard, { backgroundColor: withOpacity(colors.success, OPACITY[10]), borderColor: withOpacity(colors.success, OPACITY[30]) }]}>
             <Text style={[styles.finalStatusText, { color: colors.success }]}>
               🎉 Ce candidat a été accepté !
             </Text>
@@ -790,7 +790,7 @@ export default function ApplicationOrgDetailsScreen() {
           <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <View style={[styles.statusBadge, { backgroundColor: statusConfig.color + '15' }]}>
+          <View style={[styles.statusBadge, { backgroundColor: withOpacity(statusConfig.color, OPACITY[15]) }]}>
             <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
               {APPLICATION_STATUS_LABELS[application.status]}

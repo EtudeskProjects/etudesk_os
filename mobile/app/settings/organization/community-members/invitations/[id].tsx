@@ -25,7 +25,7 @@ import {
   Send,
   Inbox,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../../src/constants/theme';
 import { PageLayout, EmptyState } from '../../../../../src/components/ui';
 import { useTheme } from '../../../../../src/hooks/useTheme';
 import { communityService, communityInvitationService, CommunityInvitation } from '../../../../../src/services';
@@ -160,7 +160,7 @@ export default function CommunityInvitationsScreen() {
     return (
       <View style={[styles.invitationCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
         <View style={styles.invitationHeader}>
-          <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
+          <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
             <Mail size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           </View>
 
@@ -178,7 +178,7 @@ export default function CommunityInvitationsScreen() {
             </Text>
           </View>
 
-          <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
+          <View style={[styles.statusBadge, { backgroundColor: withOpacity(statusColor, OPACITY[15]) }]}>
             <StatusIcon size={12} color={statusColor} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.statusText, { color: statusColor }]}>
               {statusConfig.label}
@@ -197,7 +197,7 @@ export default function CommunityInvitationsScreen() {
         {item.status === 'PENDING' && (
           <View style={styles.actionButtons}>
             <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: colors.primary + '15' }]}
+              style={[styles.actionButton, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}
               onPress={() => handleResendInvitation(item)}
             >
               <Send size={14} color={colors.primary} strokeWidth={ICON.strokeWidth} />
@@ -205,7 +205,7 @@ export default function CommunityInvitationsScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: colors.error + '15' }]}
+              style={[styles.actionButton, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}
               onPress={() => handleCancelInvitation(item)}
             >
               <Trash2 size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />

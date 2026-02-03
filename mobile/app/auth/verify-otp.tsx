@@ -13,7 +13,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useAuth } from '../../src/contexts/AuthContext';
@@ -148,7 +148,7 @@ export default function VerifyOTPScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.successContainer}>
-          <View style={[styles.successIcon, { backgroundColor: colors.success + '15' }]}>
+          <View style={[styles.successIcon, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
             <CheckCircle size={ICON.size.xxl} color={colors.success} strokeWidth={ICON.strokeWidth} />
           </View>
           <Text style={[styles.successTitle, { color: colors.textPrimary }]}>
@@ -179,7 +179,7 @@ export default function VerifyOTPScreen() {
         </View>
 
         <View style={styles.content}>
-          <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
+          <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
             <Mail size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           </View>
 

@@ -62,7 +62,7 @@ import {
   EyeOff,
   Projector,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { Button, ImageSlider, FooterNav } from '../../../src/components/ui';
@@ -368,7 +368,7 @@ export default function SpaceDetailScreen() {
             <Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: isBookmarked ? colors.primary + '15' : colors.gray100 }]}
+            style={[styles.headerButton, { backgroundColor: isBookmarked ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 }]}
             onPress={handleBookmarkToggle}
           >
             {isBookmarked ? (
@@ -420,7 +420,7 @@ export default function SpaceDetailScreen() {
                 </View>
                 <View style={styles.orgTagsRow}>
                   {(space.organization as any).type && (
-                    <View style={[styles.orgTag, { backgroundColor: colors.primary + '15' }]}>
+                    <View style={[styles.orgTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                       <Text style={[styles.orgTagText, { color: colors.primary }]}>
                         {ORGANIZATION_TYPE_LABELS[(space.organization as any).type] || (space.organization as any).type}
                       </Text>
@@ -445,14 +445,14 @@ export default function SpaceDetailScreen() {
           {/* Tags Row: Type, Status, Accessibility */}
           <View style={styles.tagsRow}>
             {space.type && (
-              <View style={[styles.tag, { backgroundColor: colors.primary + '15' }]}>
+              <View style={[styles.tag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.tagText, { color: colors.primary }]}>
                   {SPACE_TYPE_LABELS[space.type as keyof typeof SPACE_TYPE_LABELS] || space.type}
                 </Text>
               </View>
             )}
             {space.is_accessible && (
-              <View style={[styles.tag, { backgroundColor: colors.info + '15' }]}>
+              <View style={[styles.tag, { backgroundColor: withOpacity(colors.info, OPACITY[15]) }]}>
                 <Accessibility size={12} color={colors.info} strokeWidth={ICON.strokeWidth} />
                 <Text style={[styles.tagText, { color: colors.info, marginLeft: 4 }]}>Accessible PMR</Text>
               </View>
@@ -635,7 +635,7 @@ export default function SpaceDetailScreen() {
                 {space.accessibility_features.map((feature, index) => {
                   const IconComponent = ACCESSIBILITY_ICONS[feature] || CheckCircle;
                   return (
-                    <View key={index} style={[styles.gridItem, { backgroundColor: colors.success + '10' }]}>
+                    <View key={index} style={[styles.gridItem, { backgroundColor: withOpacity(colors.success, OPACITY[10]) }]}>
                       <IconComponent size={ICON.size.sm} color={colors.success} strokeWidth={ICON.strokeWidth} />
                       <Text style={[styles.gridItemText, { color: colors.success }]}>
                         {ACCESSIBILITY_FEATURE_LABELS[feature as keyof typeof ACCESSIBILITY_FEATURE_LABELS] || feature}

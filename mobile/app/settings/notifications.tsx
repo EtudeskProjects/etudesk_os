@@ -19,7 +19,7 @@ import {
   Clock,
   Trash2,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useNotifications, NotificationData } from '../../src/hooks/useNotifications';
 
@@ -163,7 +163,7 @@ export default function NotificationsScreen() {
                   onPress={() => handleNotificationPress(notification)}
                   activeOpacity={0.8}
                 >
-                  <View style={[styles.notificationIcon, { backgroundColor: notifColor + '15' }]}>
+                  <View style={[styles.notificationIcon, { backgroundColor: withOpacity(notifColor, OPACITY[15]) }]}>
                     <NotifIcon size={ICON.size.md} color={notifColor} strokeWidth={ICON.strokeWidth} />
                   </View>
                   <View style={styles.notificationContent}>

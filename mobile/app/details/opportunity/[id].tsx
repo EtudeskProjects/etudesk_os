@@ -24,7 +24,7 @@ import {
   X,
   Settings,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -281,7 +281,7 @@ export default function OpportunityDetailScreen() {
             <Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: isBookmarked ? colors.primary + '15' : colors.gray100 }]}
+            style={[styles.headerButton, { backgroundColor: isBookmarked ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 }]}
             onPress={toggleBookmark}
           >
             {isBookmarked ? (
@@ -332,7 +332,7 @@ export default function OpportunityDetailScreen() {
               </View>
               <View style={styles.orgTagsRow}>
                 {opportunity.organization?.type && (
-                  <View style={[styles.orgTag, { backgroundColor: colors.primary + '15' }]}>
+                  <View style={[styles.orgTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                     <Text style={[styles.orgTagText, { color: colors.primary }]}>
                       {ORGANIZATION_TYPE_LABELS[opportunity.organization.type] || opportunity.organization.type}
                     </Text>
@@ -373,7 +373,7 @@ export default function OpportunityDetailScreen() {
           {/* Tags */}
           <View style={styles.tagsRow}>
             {opportunity.type && (
-              <View style={[styles.tag, { backgroundColor: colors.primary + '15' }]}>
+              <View style={[styles.tag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.tagText, { color: colors.primary }]}>
                   {OPPORTUNITY_TYPE_LABELS[opportunity.type] || opportunity.type}
                 </Text>

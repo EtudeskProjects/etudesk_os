@@ -18,7 +18,7 @@ import {
   CheckCircle2,
   XCircle,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { PageLayout, EmptyState } from '../../../src/components/ui';
 import { CommunityCard } from '../../../src/components/cards';
@@ -28,10 +28,10 @@ import { getFullImageUrl } from '../../../src/utils/image';
 import type { Community } from '../../../src/types/models';
 
 const getMemberStatusConfig = (colors: any) => ({
-  PENDING: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15', label: 'En attente' },
-  ACTIVE: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Active' },
-  REJECTED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Refusée' },
-  SUSPENDED: { color: colors.gray500, icon: XCircle, bgColor: colors.gray500 + '15', label: 'Suspendu' },
+  PENDING: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]), label: 'En attente' },
+  ACTIVE: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]), label: 'Active' },
+  REJECTED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]), label: 'Refusée' },
+  SUSPENDED: { color: colors.gray500, icon: XCircle, bgColor: withOpacity(colors.gray500, OPACITY[15]), label: 'Suspendu' },
 });
 
 type Tab = 'memberships' | 'bookmarks';
@@ -250,7 +250,7 @@ export default function MyCommunitiesScreen() {
                   style={styles.authorAvatar}
                 />
               ) : (
-                <View style={[styles.authorAvatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+                <View style={[styles.authorAvatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
                   <Text style={[styles.authorInitials, { color: colors.primary }]}>
                     {authorInitials}
                   </Text>

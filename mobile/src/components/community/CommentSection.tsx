@@ -497,7 +497,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                 <View style={styles.inputSection}>
                     {/* Reply indicator with message preview */}
                     {replyingTo && (
-                        <View style={[styles.replyIndicator, { backgroundColor: colors.primary + '10' }]}>
+                        <View style={[styles.replyIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
                             <View style={styles.replyContent}>
                                 <Text style={[styles.replyIndicatorText, { color: colors.primary }]} numberOfLines={1}>
                                     Répondre à {replyingTo.author?.display_name || 'utilisateur'}
@@ -562,7 +562,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                     <View style={[styles.modalInputContainer, { backgroundColor: colors.surface }]}>
                         {/* Reply indicator with message preview */}
                         {replyingTo && (
-                            <View style={[styles.replyIndicator, { backgroundColor: colors.primary + '10' }]}>
+                            <View style={[styles.replyIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
                                 <View style={styles.replyContent}>
                                     <Text style={[styles.replyIndicatorText, { color: colors.primary }]} numberOfLines={1}>
                                         Répondre à {replyingTo.author?.display_name || 'utilisateur'}

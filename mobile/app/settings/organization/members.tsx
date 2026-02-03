@@ -20,7 +20,7 @@ import {
   Mail,
   Trash2,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useOrganizationMembers } from '../../../src/contexts/OrganizationMemberContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -242,7 +242,7 @@ export default function MembersScreen() {
                         </Text>
                       )}
                       <View style={styles.memberMeta}>
-                        <View style={[styles.roleBadge, { backgroundColor: roleColor + '15' }]}>
+                        <View style={[styles.roleBadge, { backgroundColor: withOpacity(roleColor, OPACITY[15]) }]}>
                           <Text style={[styles.roleText, { color: roleColor }]}>
                             {ORGANIZATION_ROLE_LABELS[member.role]}
                           </Text>
@@ -304,7 +304,7 @@ export default function MembersScreen() {
                       activeOpacity={0.7}
                     >
                       {/* Avatar Placeholder */}
-                      <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary + '15' }]}>
+                      <View style={[styles.avatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                         <Mail size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                       </View>
 
@@ -314,7 +314,7 @@ export default function MembersScreen() {
                           {invitation.email}
                         </Text>
                         <View style={styles.memberMeta}>
-                          <View style={[styles.roleBadge, { backgroundColor: roleColor + '15' }]}>
+                          <View style={[styles.roleBadge, { backgroundColor: withOpacity(roleColor, OPACITY[15]) }]}>
                             <Text style={[styles.roleText, { color: roleColor }]}>
                               {ORGANIZATION_ROLE_LABELS[invitation.role]}
                             </Text>

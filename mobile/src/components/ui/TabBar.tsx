@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, COMPONENT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import type { LucideIcon } from 'lucide-react-native';
 
@@ -33,7 +33,7 @@ export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
             style={styles.tab}
             onPress={() => onTabChange(tab.key)}
           >
-            <TabIcon size={18} color={color} strokeWidth={ICON.strokeWidth} />
+            <TabIcon size={ICON.size.md} color={color} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.tabText, { color }]}>{tab.label}</Text>
             {tab.count !== undefined && tab.count > 0 && (
               <View style={[styles.badge, { backgroundColor: isActive ? colors.primary : colors.gray300 }]}>
@@ -67,23 +67,23 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   badge: {
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 6,
-    borderRadius: 10,
+    minWidth: COMPONENT.badgeDimensions.minWidth,
+    height: COMPONENT.badgeDimensions.height,
+    paddingHorizontal: COMPONENT.badgeDimensions.paddingHorizontal,
+    borderRadius: COMPONENT.badgeDimensions.borderRadius,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: COMPONENT.badgeDimensions.fontSize,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   indicator: {
     position: 'absolute',
     bottom: 0,
     left: SPACING.lg,
     right: SPACING.lg,
-    height: 2,
-    borderRadius: 1,
+    height: COMPONENT.tabBar.indicatorHeight,
+    borderRadius: COMPONENT.tabBar.indicatorBorderRadius,
   },
 });

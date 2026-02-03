@@ -36,12 +36,12 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
                 ]}
               >
                 {isCompleted ? (
-                  <Check size={14} color="#fff" strokeWidth={2.5} />
+                  <Check size={14} color={colors.textOnPrimary} strokeWidth={2.5} />
                 ) : (
                   <Text
                     style={[
                       styles.stepNumber,
-                      { color: isCurrent ? '#fff' : colors.gray500 },
+                      { color: isCurrent ? colors.textOnPrimary : colors.gray500 },
                     ]}
                   >
                     {index + 1}

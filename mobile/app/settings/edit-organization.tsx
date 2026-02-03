@@ -21,7 +21,7 @@ import {
   Camera,
   MapPin,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Input, Button, StepIndicator } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useSpace } from '../../src/contexts/SpaceContext';
@@ -33,6 +33,7 @@ import {
 import { organizationService, talentService, imageService } from '../../src/services';
 import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../src/constants/talent';
 import MapLocationPicker from '../../src/components/MapLocationPicker';
+import { useForm } from '../../src/hooks/useForm';
 
 type Step = 'info' | 'location';
 
@@ -43,6 +44,19 @@ const ORGANIZATION_TYPE_OPTIONS = Object.entries(ORGANIZATION_TYPE_LABELS).map((
   label,
 }));
 
+// Type for form values
+interface OrganizationFormValues {
+  name: string;
+  orgTypes: OrganizationType[];
+  description: string;
+  logoUri: string | null;
+  sectors: Sector[];
+  country: string;
+  region: string;
+  city: string;
+  coordinates: { latitude: number; longitude: number } | null;
+}
+
 export default function EditOrganizationScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -50,21 +64,53 @@ export default function EditOrganizationScreen() {
   const { refreshOrganizations } = useSpace();
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
 
-  // Form state - Info
-  const [name, setName] = useState('');
-  const [orgTypes, setOrgTypes] = useState<OrganizationType[]>([]);
-  const [description, setDescription] = useState('');
-  const [logoUri, setLogoUri] = useState<string | null>(null);
-  const [sectors, setSectors] = useState<Sector[]>([]);
+  // Form management with useForm hook
+  const form = useForm<OrganizationFormValues>({
+    fields: {
+      name: { initialValue: '', required: true },
+      orgTypes: { initialValue: [] },
+      description: { initialValue: '' },
+      logoUri: { initialValue: null },
+      sectors: { initialValue: [] },
+      country: { initialValue: '', required: true },
+      region: { initialValue: '' },
+      city: { initialValue: '' },
+      coordinates: { initialValue: null },
+    },
+    onSubmit: async (values) => {
+      if (!organizationId) {
+        Alert.alert('Erreur', 'Aucune organisation à modifier.');
+        return;
+      }
+      await organizationService.update(organizationId, {
+        name: values.name.trim() || undefined,
+        types: values.orgTypes.length > 0 ? values.orgTypes : undefined,
+        description: values.description.trim() || undefined,
+        logo_url: values.logoUri || undefined,
+        headquarters_city: values.city || undefined,
+        headquarters_region: values.region || undefined,
+        headquarters_country: values.country || undefined,
+        headquarters_coordinates: values.coordinates || undefined,
+        sectors: values.sectors.length > 0 ? values.sectors : undefined,
+      });
+      await refreshOrganizations();
+      Alert.alert('Succès', 'Les informations de l\'organisation ont été mises à jour.',
+        [{ text: 'OK', onPress: () => router.back() }]);
+    },
+  });
 
-  // Form state - Location
-  const [country, setCountry] = useState('');
-  const [region, setRegion] = useState('');
-  const [city, setCity] = useState('');
-  const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
+  // Get form values for convenience
+  const country = form.getValue('country');
+  const region = form.getValue('region');
+  const city = form.getValue('city');
+  const orgTypes = form.getValue('orgTypes');
+  const sectors = form.getValue('sectors');
+  const name = form.getValue('name');
+  const description = form.getValue('description');
+  const logoUri = form.getValue('logoUri');
+  const coordinates = form.getValue('coordinates');
 
   // Refs for auto-scroll to selected country
   const countryScrollRef = useRef<ScrollView>(null);
@@ -102,24 +148,20 @@ export default function EditOrganizationScreen() {
 
       if (org) {
         setOrganizationId(org.id);
-        setName(org.name || '');
-        if (org.types && Array.isArray(org.types)) {
-          setOrgTypes(org.types as OrganizationType[]);
-        }
-        if (org.sectors && Array.isArray(org.sectors)) {
-          setSectors(org.sectors as Sector[]);
-        }
-        setDescription(org.description || '');
-        setLogoUri(org.logo_url || null);
-        setCountry(org.headquarters_country || '');
-        setRegion(org.headquarters_region || '');
-        setCity(org.headquarters_city || '');
-        if (org.headquarters_latitude && org.headquarters_longitude) {
-          setCoordinates({
+        form.setValues({
+          name: org.name || '',
+          orgTypes: (org.types && Array.isArray(org.types)) ? org.types as OrganizationType[] : [],
+          sectors: (org.sectors && Array.isArray(org.sectors)) ? org.sectors as Sector[] : [],
+          description: org.description || '',
+          logoUri: org.logo_url || null,
+          country: org.headquarters_country || '',
+          region: org.headquarters_region || '',
+          city: org.headquarters_city || '',
+          coordinates: (org.headquarters_latitude && org.headquarters_longitude) ? {
             latitude: Number(org.headquarters_latitude),
             longitude: Number(org.headquarters_longitude),
-          });
-        }
+          } : null,
+        });
       }
     } catch (error) {
       console.error('Error loading organization:', error);
@@ -140,21 +182,19 @@ export default function EditOrganizationScreen() {
       if (response.data && response.data.length > 0) {
         const org = response.data[0];
         setOrganizationId(org.id);
-        setName(org.name || '');
-        if (org.type) {
-          setOrgTypes([org.type as OrganizationType]);
-        }
-        setDescription(org.description || '');
-        setLogoUri(org.logo_url || null);
-        setCountry(org.headquarters_country || '');
-        setRegion(org.headquarters_region || '');
-        setCity(org.headquarters_city || '');
-        if (org.headquarters_latitude && org.headquarters_longitude) {
-          setCoordinates({
+        form.setValues({
+          name: org.name || '',
+          orgTypes: org.type ? [org.type as OrganizationType] : [],
+          description: org.description || '',
+          logoUri: org.logo_url || null,
+          country: org.headquarters_country || '',
+          region: org.headquarters_region || '',
+          city: org.headquarters_city || '',
+          coordinates: (org.headquarters_latitude && org.headquarters_longitude) ? {
             latitude: Number(org.headquarters_latitude),
             longitude: Number(org.headquarters_longitude),
-          });
-        }
+          } : null,
+        });
       } else {
         // No organization found, load user profile defaults
         await loadUserProfileDefaults();
@@ -171,9 +211,14 @@ export default function EditOrganizationScreen() {
     try {
       const response = await talentService.getMyProfile();
       if (response.data) {
-        if (!country && response.data.country) setCountry(response.data.country);
-        if (!region && response.data.region) setRegion(response.data.region);
-        if (!city && response.data.city) setCity(response.data.city);
+        const currentCountry = form.getValue('country');
+        const currentRegion = form.getValue('region');
+        const currentCity = form.getValue('city');
+        form.setValues({
+          country: !currentCountry && response.data.country ? response.data.country : currentCountry,
+          region: !currentRegion && response.data.region ? response.data.region : currentRegion,
+          city: !currentCity && response.data.city ? response.data.city : currentCity,
+        });
       }
     } catch (error) {
     }
@@ -187,7 +232,7 @@ export default function EditOrganizationScreen() {
     try {
       const image = await imageService.pickImage({ type: 'logo' });
       if (image) {
-        setLogoUri(image.uri);
+        form.setValue('logoUri', image.uri);
       }
     } catch (error) {
       console.error('Erreur lors de la sélection du logo:', error);
@@ -196,39 +241,35 @@ export default function EditOrganizationScreen() {
 
   // Toggle organization type selection (max 3)
   const toggleOrgType = (typeId: OrganizationType) => {
-    setOrgTypes((prev) => {
-      if (prev.includes(typeId)) {
-        return prev.filter((id) => id !== typeId);
-      }
-      if (prev.length >= MAX_ORG_TYPES) {
-        return prev;
-      }
-      return [...prev, typeId];
-    });
+    const current = form.getValue('orgTypes');
+    if (current.includes(typeId)) {
+      form.setValue('orgTypes', current.filter((id) => id !== typeId));
+    } else if (current.length < MAX_ORG_TYPES) {
+      form.setValue('orgTypes', [...current, typeId]);
+    }
   };
 
   // Toggle sector selection (max 5)
   const toggleSector = (sectorId: Sector) => {
-    setSectors((prev) => {
-      if (prev.includes(sectorId)) {
-        return prev.filter((id) => id !== sectorId);
-      }
-      if (prev.length >= MAX_SECTORS) {
-        return prev;
-      }
-      return [...prev, sectorId];
-    });
+    const current = form.getValue('sectors');
+    if (current.includes(sectorId)) {
+      form.setValue('sectors', current.filter((id) => id !== sectorId));
+    } else if (current.length < MAX_SECTORS) {
+      form.setValue('sectors', [...current, sectorId]);
+    }
   };
 
   // Handle map location selection
   const handleMapLocationSelect = (location: any) => {
+    const updates: Partial<OrganizationFormValues> = {};
+
     if (location.coordinates) {
-      setCoordinates(location.coordinates);
+      updates.coordinates = location.coordinates;
     }
 
     // Update location fields from geocoding
     if (location.countryCode) {
-      setCountry(location.countryCode);
+      updates.country = location.countryCode;
     }
     if (location.region) {
       const matchedRegion = availableRegions.find(r =>
@@ -236,7 +277,7 @@ export default function EditOrganizationScreen() {
         location.region.toLowerCase().includes(r.label.toLowerCase())
       );
       if (matchedRegion) {
-        setRegion(matchedRegion.id);
+        updates.region = matchedRegion.id;
       }
     }
     if (location.city) {
@@ -245,16 +286,27 @@ export default function EditOrganizationScreen() {
         location.city.toLowerCase().includes(c.label.toLowerCase())
       );
       if (matchedCity) {
-        setCity(matchedCity.id);
+        updates.city = matchedCity.id;
       }
     }
+
+    form.setValues(updates);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 'info') {
       setCurrentStep('location');
     } else {
-      handleSave();
+      try {
+        await form.handleSubmit();
+      } catch (error: any) {
+        console.error('Error saving organization:', error);
+        Alert.alert(
+          'Erreur',
+          error?.error || 'Une erreur est survenue lors de la mise à jour.',
+          [{ text: 'OK' }]
+        );
+      }
     }
   };
 
@@ -263,47 +315,6 @@ export default function EditOrganizationScreen() {
       router.back();
     } else {
       setCurrentStep('info');
-    }
-  };
-
-  const handleSave = async () => {
-    if (!organizationId) {
-      Alert.alert('Erreur', 'Aucune organisation à modifier.');
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-
-      await organizationService.update(organizationId, {
-        name: name.trim() || undefined,
-        types: orgTypes.length > 0 ? orgTypes : undefined,
-        description: description.trim() || undefined,
-        logo_url: logoUri || undefined,
-        headquarters_city: city || undefined,
-        headquarters_region: region || undefined,
-        headquarters_country: country || undefined,
-        headquarters_coordinates: coordinates || undefined,
-        sectors: sectors.length > 0 ? sectors : undefined,
-      });
-
-      // Refresh organizations in SpaceContext to update logo everywhere
-      await refreshOrganizations();
-
-      Alert.alert(
-        'Succès',
-        'Les informations de l\'organisation ont été mises à jour.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-    } catch (error: any) {
-      console.error('Error saving organization:', error);
-      Alert.alert(
-        'Erreur',
-        error?.error || 'Une erreur est survenue lors de la mise à jour.',
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -352,7 +363,7 @@ export default function EditOrganizationScreen() {
           label="Nom de l'organisation *"
           placeholder="Ex: Etudesk"
           value={name}
-          onChangeText={setName}
+          onChangeText={(value) => form.setValue('name', value)}
           autoCapitalize="words"
         />
 
@@ -370,7 +381,7 @@ export default function EditOrganizationScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleOrgType(type.id)}
                   activeOpacity={0.7}
@@ -410,7 +421,7 @@ export default function EditOrganizationScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleSector(sector.id)}
                   activeOpacity={0.7}
@@ -444,7 +455,7 @@ export default function EditOrganizationScreen() {
               style={[styles.textArea, { color: colors.textPrimary }]}
               placeholder="Décrivez votre organisation en quelques mots..."
               value={description}
-              onChangeText={setDescription}
+              onChangeText={(value) => form.setValue('description', value)}
               multiline
               numberOfLines={4}
               maxLength={500}
@@ -495,9 +506,7 @@ export default function EditOrganizationScreen() {
                   country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
                 ]}
                 onPress={() => {
-                  setCountry(c.id);
-                  setRegion('');
-                  setCity('');
+                  form.setValues({ country: c.id, region: '', city: '' });
                 }}
               >
                 <Text
@@ -533,8 +542,7 @@ export default function EditOrganizationScreen() {
                     region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
                   ]}
                   onPress={() => {
-                    setRegion(r.id);
-                    setCity('');
+                    form.setValues({ region: r.id, city: '' });
                   }}
                 >
                   <Text
@@ -570,7 +578,7 @@ export default function EditOrganizationScreen() {
                     { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                     city === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
                   ]}
-                  onPress={() => setCity(c.id)}
+                  onPress={() => form.setValue('city', c.id)}
                 >
                   <Text
                     style={[
@@ -632,12 +640,12 @@ export default function EditOrganizationScreen() {
 
         <View style={[styles.footer, { backgroundColor: colors.background }]}>
           <Button
-            title={currentStep === 'location' ? (isSaving ? 'Enregistrement...' : 'Enregistrer') : 'Continuer'}
+            title={currentStep === 'location' ? (form.state.isSubmitting ? 'Enregistrement...' : 'Enregistrer') : 'Continuer'}
             onPress={handleNext}
-            disabled={!canProceed() || isSaving}
+            disabled={!canProceed() || form.state.isSubmitting}
             fullWidth
             icon={
-              isSaving ? undefined :
+              form.state.isSubmitting ? undefined :
                 <ChevronRight
                   size={ICON.size.md}
                   color={colors.textOnPrimary}

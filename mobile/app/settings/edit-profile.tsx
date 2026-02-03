@@ -23,7 +23,7 @@ import {
   ChevronRight,
   Wand2,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Input, Button, Toggle, StepIndicator } from '../../src/components/ui';
 import {
   SECTOR_DATA,
@@ -37,6 +37,25 @@ import { COUNTRIES, GENDERS, getRegionsByCountry, getCommunesByRegion } from '..
 import { useTheme } from '../../src/hooks/useTheme';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { talentService, imageService } from '../../src/services';
+import { useForm } from '../../src/hooks/useForm';
+
+interface ProfileFormValues {
+  firstName: string;
+  lastName: string;
+  gender: string;
+  country: string;
+  region: string;
+  commune: string;
+  bio: string;
+  phone: string;
+  email: string;
+  avatarUri: string | null;
+  remoteReady: boolean;
+  willingToRelocate: boolean;
+  selectedTags: string[];
+  selectedSectors: string[];
+  selectedGoals: string[];
+}
 
 type Step = 'info' | 'sectors' | 'goals';
 
@@ -49,35 +68,73 @@ export default function EditProfileScreen() {
 
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingBio, setIsGeneratingBio] = useState(false);
-
-  // Profile photo
-  const [avatarUri, setAvatarUri] = useState<string | null>(null);
-
-  // Form state - Info
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [gender, setGender] = useState('');
-  const [country, setCountry] = useState('');
-  const [region, setRegion] = useState('');
-  const [commune, setCommune] = useState('');
-  const [bio, setBio] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
 
   // Refs for auto-scroll to selected country
   const countryScrollRef = useRef<ScrollView>(null);
   const COUNTRY_CHIP_WIDTH = 80;
 
-  // Preferences
-  const [remoteReady, setRemoteReady] = useState(true);
-  const [willingToRelocate, setWillingToRelocate] = useState(true);
+  // Form hook
+  const form = useForm<ProfileFormValues>({
+    fields: {
+      firstName: { initialValue: '' },
+      lastName: { initialValue: '' },
+      gender: { initialValue: '' },
+      country: { initialValue: '' },
+      region: { initialValue: '' },
+      commune: { initialValue: '' },
+      bio: { initialValue: '' },
+      phone: { initialValue: '' },
+      email: { initialValue: '' },
+      avatarUri: { initialValue: null },
+      remoteReady: { initialValue: true },
+      willingToRelocate: { initialValue: true },
+      selectedTags: { initialValue: [] },
+      selectedSectors: { initialValue: [] },
+      selectedGoals: { initialValue: [] },
+    },
+    onSubmit: async (values) => {
+      const displayName = `${values.firstName} ${values.lastName}`.trim() || values.firstName || values.lastName;
+      await talentService.updateMyProfile({
+        display_name: displayName,
+        first_name: values.firstName || undefined,
+        last_name: values.lastName || undefined,
+        bio: values.bio.trim() || undefined,
+        gender: values.gender as 'M' | 'F' | 'O' || undefined,
+        country: values.country || undefined,
+        region: values.region || undefined,
+        city: values.commune || undefined,
+        phone: values.phone || undefined,
+        avatar_url: values.avatarUri || undefined,
+        remote_ready: values.remoteReady,
+        willing_to_relocate: values.willingToRelocate,
+        profile_tags: values.selectedTags,
+        sectors: values.selectedSectors,
+        goals: values.selectedGoals,
+      });
+      await refreshUser();
+      Alert.alert('Succes', 'Ton profil a ete mis a jour.', [
+        { text: 'OK', onPress: () => router.back() }
+      ]);
+    },
+  });
 
-  // Tags, sectors, goals
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  // Convenience getters for form values
+  const firstName = form.getValue('firstName');
+  const lastName = form.getValue('lastName');
+  const gender = form.getValue('gender');
+  const country = form.getValue('country');
+  const region = form.getValue('region');
+  const commune = form.getValue('commune');
+  const bio = form.getValue('bio');
+  const phone = form.getValue('phone');
+  const email = form.getValue('email');
+  const avatarUri = form.getValue('avatarUri');
+  const remoteReady = form.getValue('remoteReady');
+  const willingToRelocate = form.getValue('willingToRelocate');
+  const selectedTags = form.getValue('selectedTags');
+  const selectedSectors = form.getValue('selectedSectors');
+  const selectedGoals = form.getValue('selectedGoals');
 
   // Load profile data on mount
   useEffect(() => {
@@ -91,21 +148,23 @@ export default function EditProfileScreen() {
       const profile = response.data;
 
       if (profile) {
-        setFirstName(profile.first_name || '');
-        setLastName(profile.last_name || '');
-        setBio(profile.bio || '');
-        setGender(profile.gender || '');
-        setCountry(profile.country || '');
-        setRegion(profile.region || '');
-        setCommune(profile.city || '');
-        setPhone(profile.phone || '');
-        setEmail(profile.email || '');
-        setAvatarUri(profile.avatar_url || null);
-        setRemoteReady(profile.remote_ready || false);
-        setWillingToRelocate(profile.willing_to_relocate || false);
-        setSelectedTags(profile.profile_tags || []);
-        setSelectedSectors(profile.sectors || []);
-        setSelectedGoals(profile.goals || []);
+        form.setValues({
+          firstName: profile.first_name || '',
+          lastName: profile.last_name || '',
+          bio: profile.bio || '',
+          gender: profile.gender || '',
+          country: profile.country || '',
+          region: profile.region || '',
+          commune: profile.city || '',
+          phone: profile.phone || '',
+          email: profile.email || '',
+          avatarUri: profile.avatar_url || null,
+          remoteReady: profile.remote_ready || false,
+          willingToRelocate: profile.willing_to_relocate || false,
+          selectedTags: profile.profile_tags || [],
+          selectedSectors: profile.sectors || [],
+          selectedGoals: profile.goals || [],
+        });
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -137,35 +196,38 @@ export default function EditProfileScreen() {
     try {
       const image = await imageService.pickImage({ type: 'avatar' });
       if (image) {
-        setAvatarUri(image.uri);
+        form.setValue('avatarUri', image.uri);
       }
     } catch (error) {
-      console.error('Erreur lors de la sélection de l\'image:', error);
+      console.error('Erreur lors de la selection de l\'image:', error);
     }
   };
 
   const toggleTag = (tagId: string) => {
-    setSelectedTags((prev) => {
-      if (prev.includes(tagId)) return prev.filter((id) => id !== tagId);
-      if (prev.length >= MAX_PROFILE_TAGS) return prev;
-      return [...prev, tagId];
-    });
+    const currentTags = form.getValue('selectedTags');
+    if (currentTags.includes(tagId)) {
+      form.setValue('selectedTags', currentTags.filter((id) => id !== tagId));
+    } else if (currentTags.length < MAX_PROFILE_TAGS) {
+      form.setValue('selectedTags', [...currentTags, tagId]);
+    }
   };
 
   const toggleSector = (sectorId: string) => {
-    setSelectedSectors((prev) => {
-      if (prev.includes(sectorId)) return prev.filter((id) => id !== sectorId);
-      if (prev.length >= MAX_SECTORS) return prev;
-      return [...prev, sectorId];
-    });
+    const currentSectors = form.getValue('selectedSectors');
+    if (currentSectors.includes(sectorId)) {
+      form.setValue('selectedSectors', currentSectors.filter((id) => id !== sectorId));
+    } else if (currentSectors.length < MAX_SECTORS) {
+      form.setValue('selectedSectors', [...currentSectors, sectorId]);
+    }
   };
 
   const toggleGoal = (goalId: string) => {
-    setSelectedGoals((prev) => {
-      if (prev.includes(goalId)) return prev.filter((id) => id !== goalId);
-      if (prev.length >= MAX_GOALS) return prev;
-      return [...prev, goalId];
-    });
+    const currentGoals = form.getValue('selectedGoals');
+    if (currentGoals.includes(goalId)) {
+      form.setValue('selectedGoals', currentGoals.filter((id) => id !== goalId));
+    } else if (currentGoals.length < MAX_GOALS) {
+      form.setValue('selectedGoals', [...currentGoals, goalId]);
+    }
   };
 
   const handleGenerateBio = async () => {
@@ -174,10 +236,10 @@ export default function EditProfileScreen() {
     try {
       const response = await talentService.generateBio();
       if (response.data?.bio) {
-        setBio(response.data.bio);
+        form.setValue('bio', response.data.bio);
       }
     } catch (error: any) {
-      Alert.alert('Erreur', error?.error || 'Impossible de générer la bio.');
+      Alert.alert('Erreur', error?.error || 'Impossible de generer la bio.');
     } finally {
       setIsGeneratingBio(false);
     }
@@ -189,7 +251,7 @@ export default function EditProfileScreen() {
     } else if (currentStep === 'sectors') {
       setCurrentStep('goals');
     } else {
-      await handleSave();
+      await form.handleSubmit();
     }
   };
 
@@ -200,47 +262,6 @@ export default function EditProfileScreen() {
       setCurrentStep('info');
     } else if (currentStep === 'goals') {
       setCurrentStep('sectors');
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      setIsSaving(true);
-
-      const displayName = `${firstName} ${lastName}`.trim() || firstName || lastName;
-
-      await talentService.updateMyProfile({
-        display_name: displayName,
-        first_name: firstName || undefined,
-        last_name: lastName || undefined,
-        bio: bio.trim() || undefined,
-        gender: gender as 'M' | 'F' | 'O' || undefined,
-        country: country || undefined,
-        region: region || undefined,
-        city: commune || undefined,
-        phone: phone || undefined,
-        avatar_url: avatarUri || undefined,
-        remote_ready: remoteReady,
-        willing_to_relocate: willingToRelocate,
-        profile_tags: selectedTags,
-        sectors: selectedSectors,
-        goals: selectedGoals,
-      });
-
-      await refreshUser();
-
-      Alert.alert('Succès', 'Ton profil a été mis à jour.', [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
-    } catch (error: any) {
-      console.error('Error saving profile:', error);
-      Alert.alert(
-        'Erreur',
-        error?.error || 'Une erreur est survenue lors de la mise à jour du profil.',
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -282,14 +303,14 @@ export default function EditProfileScreen() {
           </Text>
         </View>
 
-        {/* Prénom & Nom */}
+        {/* Prenom & Nom */}
         <View style={styles.rowFields}>
           <View style={styles.halfField}>
             <Input
-              label="Prénom"
+              label="Prenom"
               placeholder=""
               value={firstName}
-              onChangeText={setFirstName}
+              onChangeText={(text) => form.setValue('firstName', text)}
               autoCapitalize="words"
             />
           </View>
@@ -298,7 +319,7 @@ export default function EditProfileScreen() {
               label="Nom"
               placeholder=""
               value={lastName}
-              onChangeText={setLastName}
+              onChangeText={(text) => form.setValue('lastName', text)}
               autoCapitalize="words"
             />
           </View>
@@ -316,7 +337,7 @@ export default function EditProfileScreen() {
                   { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                   gender === g.id && { backgroundColor: colors.primary, borderColor: colors.primary },
                 ]}
-                onPress={() => setGender(g.id)}
+                onPress={() => form.setValue('gender', g.id)}
               >
                 <Text
                   style={[
@@ -346,7 +367,7 @@ export default function EditProfileScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleTag(tag.id)}
                   activeOpacity={0.7}
@@ -378,7 +399,7 @@ export default function EditProfileScreen() {
               placeholder="Décris-toi en quelques mots..."
               placeholderTextColor={colors.gray400}
               value={bio}
-              onChangeText={(text) => setBio(text.slice(0, 300))}
+              onChangeText={(text) => form.setValue('bio', text.slice(0, 300))}
               multiline
               maxLength={300}
             />
@@ -429,9 +450,9 @@ export default function EditProfileScreen() {
                   country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
                 ]}
                 onPress={() => {
-                  setCountry(c.id);
-                  setRegion('');
-                  setCommune('');
+                  form.setValue('country', c.id);
+                  form.setValue('region', '');
+                  form.setValue('commune', '');
                 }}
               >
                 <Text
@@ -467,8 +488,8 @@ export default function EditProfileScreen() {
                     region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
                   ]}
                   onPress={() => {
-                    setRegion(r.id);
-                    setCommune('');
+                    form.setValue('region', r.id);
+                    form.setValue('commune', '');
                   }}
                 >
                   <Text
@@ -504,7 +525,7 @@ export default function EditProfileScreen() {
                     { borderColor: colors.gray200, backgroundColor: colors.gray100 },
                     commune === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
                   ]}
-                  onPress={() => setCommune(c.id)}
+                  onPress={() => form.setValue('commune', c.id)}
                 >
                   <Text
                     style={[
@@ -524,12 +545,12 @@ export default function EditProfileScreen() {
         {/* Separator */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
 
-        {/* Téléphone */}
+        {/* Telephone */}
         <Input
-          label="Téléphone"
+          label="Telephone"
           placeholder="+225 07 00 00 00 00"
           value={phone}
-          onChangeText={setPhone}
+          onChangeText={(text) => form.setValue('phone', text)}
           keyboardType="phone-pad"
         />
 
@@ -538,7 +559,7 @@ export default function EditProfileScreen() {
           label="Email"
           placeholder="ton@email.com"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => form.setValue('email', text)}
           keyboardType="email-address"
           autoCapitalize="none"
         />
@@ -559,7 +580,7 @@ export default function EditProfileScreen() {
             </View>
             <Toggle
               value={remoteReady}
-              onValueChange={setRemoteReady}
+              onValueChange={(value) => form.setValue('remoteReady', value)}
             />
           </View>
 
@@ -573,7 +594,7 @@ export default function EditProfileScreen() {
             </View>
             <Toggle
               value={willingToRelocate}
-              onValueChange={setWillingToRelocate}
+              onValueChange={(value) => form.setValue('willingToRelocate', value)}
             />
           </View>
         </View>
@@ -599,7 +620,7 @@ export default function EditProfileScreen() {
               style={[
                 styles.selectableTag,
                 { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
               ]}
               onPress={() => toggleSector(sector.id)}
               activeOpacity={0.7}
@@ -645,7 +666,7 @@ export default function EditProfileScreen() {
               style={[
                 styles.selectableTag,
                 { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
               ]}
               onPress={() => toggleGoal(goal.id)}
               activeOpacity={0.7}
@@ -725,17 +746,17 @@ export default function EditProfileScreen() {
             )}
             <Button
               title={
-                isSaving
+                form.state.isSubmitting
                   ? 'Enregistrement...'
                   : currentStep === 'goals'
                     ? 'Enregistrer'
                     : 'Suivant'
               }
               onPress={handleNext}
-              disabled={isSaving}
+              disabled={form.state.isSubmitting}
               style={{ flex: 1 }}
               icon={
-                isSaving ? undefined : (
+                form.state.isSubmitting ? undefined : (
                   currentStep === 'goals'
                     ? <Check size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
                     : <ChevronRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />

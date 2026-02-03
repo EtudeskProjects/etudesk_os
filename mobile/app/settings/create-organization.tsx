@@ -20,7 +20,7 @@ import {
   Camera,
   MapPin,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Input, Button, StepIndicator } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useSpace } from '../../src/contexts/SpaceContext';
@@ -32,6 +32,7 @@ import {
 import { organizationService, talentService, imageService } from '../../src/services';
 import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../src/constants/talent';
 import MapLocationPicker from '../../src/components/MapLocationPicker';
+import { useForm } from '../../src/hooks/useForm';
 
 type Step = 'info' | 'location';
 
@@ -42,29 +43,75 @@ const ORGANIZATION_TYPE_OPTIONS = Object.entries(ORGANIZATION_TYPE_LABELS).map((
   label,
 }));
 
+// Type for form values
+interface OrganizationFormValues {
+  name: string;
+  orgTypes: OrganizationType[];
+  description: string;
+  logoUri: string | null;
+  sectors: Sector[];
+  country: string;
+  region: string;
+  city: string;
+  coordinates: { latitude: number; longitude: number } | null;
+}
+
 export default function CreateOrganizationScreen() {
   const router = useRouter();
   const { refreshOrganizations } = useSpace();
   const { colors } = useTheme();
   const [currentStep, setCurrentStep] = useState<Step>('info');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form state - Info
-  const [name, setName] = useState('');
-  const [orgTypes, setOrgTypes] = useState<OrganizationType[]>([]);
-  const [description, setDescription] = useState('');
-  const [logoUri, setLogoUri] = useState<string | null>(null);
-  const [sectors, setSectors] = useState<Sector[]>([]);
+  // Form management with useForm hook
+  const form = useForm<OrganizationFormValues>({
+    fields: {
+      name: { initialValue: '', required: true, requiredMessage: 'Le nom est requis' },
+      orgTypes: { initialValue: [], required: true, requiredMessage: 'Sélectionnez au moins un type' },
+      description: { initialValue: '' },
+      logoUri: { initialValue: null },
+      sectors: { initialValue: [] },
+      country: { initialValue: '', required: true, requiredMessage: 'Le pays est requis' },
+      region: { initialValue: '' },
+      city: { initialValue: '' },
+      coordinates: { initialValue: null },
+    },
+    onSubmit: async (values) => {
+      await organizationService.create({
+        name: values.name.trim(),
+        types: values.orgTypes.length > 0 ? values.orgTypes : undefined,
+        description: values.description.trim() || undefined,
+        logo_url: values.logoUri || undefined,
+        headquarters_city: values.city || undefined,
+        headquarters_region: values.region || undefined,
+        headquarters_country: values.country || undefined,
+        headquarters_coordinates: values.coordinates || undefined,
+        sectors: values.sectors.length > 0 ? values.sectors : undefined,
+      });
 
-  // Form state - Location
-  const [country, setCountry] = useState('');
-  const [region, setRegion] = useState('');
-  const [city, setCity] = useState('');
-  const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
+      await refreshOrganizations();
+
+      Alert.alert(
+        'Organisation créée',
+        `${values.name} a été créée avec succès !`,
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
+    },
+  });
 
   // Refs for auto-scroll to selected country
   const countryScrollRef = useRef<ScrollView>(null);
   const COUNTRY_CHIP_WIDTH = 80;
+
+  // Get form values for convenience
+  const country = form.getValue('country');
+  const region = form.getValue('region');
+  const city = form.getValue('city');
+  const orgTypes = form.getValue('orgTypes');
+  const sectors = form.getValue('sectors');
+  const name = form.getValue('name');
+  const description = form.getValue('description');
+  const logoUri = form.getValue('logoUri');
+  const coordinates = form.getValue('coordinates');
 
   // Auto-scroll to selected country
   useEffect(() => {
@@ -91,9 +138,11 @@ export default function CreateOrganizationScreen() {
       const response = await talentService.getMyProfile();
       if (response.data) {
         // Pre-fill location from user profile
-        if (response.data.country) setCountry(response.data.country);
-        if (response.data.region) setRegion(response.data.region);
-        if (response.data.city) setCity(response.data.city);
+        form.setValues({
+          country: response.data.country || '',
+          region: response.data.region || '',
+          city: response.data.city || '',
+        });
       }
     } catch (error) {
     }
@@ -107,7 +156,7 @@ export default function CreateOrganizationScreen() {
     try {
       const image = await imageService.pickImage({ type: 'logo' });
       if (image) {
-        setLogoUri(image.uri);
+        form.setValue('logoUri', image.uri);
       }
     } catch (error) {
       console.error('Erreur lors de la sélection du logo:', error);
@@ -116,39 +165,35 @@ export default function CreateOrganizationScreen() {
 
   // Toggle organization type selection (max 3)
   const toggleOrgType = (typeId: OrganizationType) => {
-    setOrgTypes((prev) => {
-      if (prev.includes(typeId)) {
-        return prev.filter((id) => id !== typeId);
-      }
-      if (prev.length >= MAX_ORG_TYPES) {
-        return prev;
-      }
-      return [...prev, typeId];
-    });
+    const current = form.getValue('orgTypes');
+    if (current.includes(typeId)) {
+      form.setValue('orgTypes', current.filter((id) => id !== typeId));
+    } else if (current.length < MAX_ORG_TYPES) {
+      form.setValue('orgTypes', [...current, typeId]);
+    }
   };
 
   // Toggle sector selection (max 5)
   const toggleSector = (sectorId: Sector) => {
-    setSectors((prev) => {
-      if (prev.includes(sectorId)) {
-        return prev.filter((id) => id !== sectorId);
-      }
-      if (prev.length >= MAX_SECTORS) {
-        return prev;
-      }
-      return [...prev, sectorId];
-    });
+    const current = form.getValue('sectors');
+    if (current.includes(sectorId)) {
+      form.setValue('sectors', current.filter((id) => id !== sectorId));
+    } else if (current.length < MAX_SECTORS) {
+      form.setValue('sectors', [...current, sectorId]);
+    }
   };
 
   // Handle map location selection
   const handleMapLocationSelect = (location: any) => {
+    const updates: Partial<OrganizationFormValues> = {};
+
     if (location.coordinates) {
-      setCoordinates(location.coordinates);
+      updates.coordinates = location.coordinates;
     }
 
     // Update location fields from geocoding
     if (location.countryCode) {
-      setCountry(location.countryCode);
+      updates.country = location.countryCode;
     }
     if (location.region) {
       const matchedRegion = availableRegions.find(r =>
@@ -156,7 +201,7 @@ export default function CreateOrganizationScreen() {
         location.region.toLowerCase().includes(r.label.toLowerCase())
       );
       if (matchedRegion) {
-        setRegion(matchedRegion.id);
+        updates.region = matchedRegion.id;
       }
     }
     if (location.city) {
@@ -165,16 +210,27 @@ export default function CreateOrganizationScreen() {
         location.city.toLowerCase().includes(c.label.toLowerCase())
       );
       if (matchedCity) {
-        setCity(matchedCity.id);
+        updates.city = matchedCity.id;
       }
     }
+
+    form.setValues(updates);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 'info') {
       setCurrentStep('location');
     } else {
-      handleSubmit();
+      try {
+        await form.handleSubmit();
+      } catch (error: any) {
+        console.error('Error creating organization:', error);
+        Alert.alert(
+          'Erreur',
+          error?.message || 'Une erreur est survenue lors de la création de l\'organisation.',
+          [{ text: 'OK' }]
+        );
+      }
     }
   };
 
@@ -183,41 +239,6 @@ export default function CreateOrganizationScreen() {
       router.back();
     } else {
       setCurrentStep('info');
-    }
-  };
-
-  const handleSubmit = async () => {
-    try {
-      setIsSubmitting(true);
-
-      await organizationService.create({
-        name: name.trim(),
-        types: orgTypes.length > 0 ? orgTypes : undefined,
-        description: description.trim() || undefined,
-        logo_url: logoUri || undefined,
-        headquarters_city: city || undefined,
-        headquarters_region: region || undefined,
-        headquarters_country: country || undefined,
-        headquarters_coordinates: coordinates || undefined,
-        sectors: sectors.length > 0 ? sectors : undefined,
-      });
-
-      await refreshOrganizations();
-
-      Alert.alert(
-        'Organisation créée',
-        `${name} a été créée avec succès !`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-    } catch (error: any) {
-      console.error('Error creating organization:', error);
-      Alert.alert(
-        'Erreur',
-        error?.error || 'Une erreur est survenue lors de la création de l\'organisation.',
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -266,7 +287,7 @@ export default function CreateOrganizationScreen() {
           label="Nom de l'organisation *"
           placeholder="Ex: Etudesk"
           value={name}
-          onChangeText={setName}
+          onChangeText={(value) => form.setValue('name', value)}
           autoCapitalize="words"
           autoFocus
         />
@@ -285,7 +306,7 @@ export default function CreateOrganizationScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleOrgType(type.id)}
                   activeOpacity={0.7}
@@ -325,7 +346,7 @@ export default function CreateOrganizationScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleSector(sector.id)}
                   activeOpacity={0.7}
@@ -359,7 +380,7 @@ export default function CreateOrganizationScreen() {
               style={[styles.textArea, { color: colors.textPrimary }]}
               placeholder="Décrivez votre organisation en quelques mots..."
               value={description}
-              onChangeText={setDescription}
+              onChangeText={(value) => form.setValue('description', value)}
               multiline
               numberOfLines={4}
               maxLength={500}
@@ -411,9 +432,7 @@ export default function CreateOrganizationScreen() {
                   country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
                 ]}
                 onPress={() => {
-                  setCountry(c.id);
-                  setRegion('');
-                  setCity('');
+                  form.setValues({ country: c.id, region: '', city: '' });
                 }}
               >
                 <Text
@@ -449,8 +468,7 @@ export default function CreateOrganizationScreen() {
                     region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
                   ]}
                   onPress={() => {
-                    setRegion(r.id);
-                    setCity('');
+                    form.setValues({ region: r.id, city: '' });
                   }}
                 >
                   <Text
@@ -486,7 +504,7 @@ export default function CreateOrganizationScreen() {
                     { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                     city === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
                   ]}
-                  onPress={() => setCity(c.id)}
+                  onPress={() => form.setValue('city', c.id)}
                 >
                   <Text
                     style={[
@@ -535,12 +553,12 @@ export default function CreateOrganizationScreen() {
 
         <View style={[styles.footer, { backgroundColor: colors.background }]}>
           <Button
-            title={currentStep === 'location' ? (isSubmitting ? 'Création...' : 'Créer l\'organisation') : 'Continuer'}
+            title={currentStep === 'location' ? (form.state.isSubmitting ? 'Création...' : 'Créer l\'organisation') : 'Continuer'}
             onPress={handleNext}
-            disabled={!canProceed() || isSubmitting}
+            disabled={!canProceed() || form.state.isSubmitting}
             fullWidth
             icon={
-              isSubmitting ? undefined :
+              form.state.isSubmitting ? undefined :
                 <ChevronRight
                   size={ICON.size.md}
                   color={colors.textOnPrimary}

@@ -391,7 +391,7 @@ export default function ExploreScreen() {
                 style={[
                   styles.filterOption,
                   { borderBottomColor: colors.borderColor },
-                  isSelected && { backgroundColor: colors.primary + '10' },
+                  isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]) },
                 ]}
                 onPress={() => handleSortSelect(option.id)}
                 activeOpacity={0.7}
@@ -399,7 +399,7 @@ export default function ExploreScreen() {
                 <View style={styles.filterOptionLeft}>
                   <View style={[
                     styles.filterIconContainer,
-                    { backgroundColor: isSelected ? colors.primary + '20' : colors.gray100 }
+                    { backgroundColor: isSelected ? withOpacity(colors.primary, OPACITY[20]) : colors.gray100 }
                   ]}>
                     <IconComponent
                       size={ICON.size.md}
@@ -658,7 +658,7 @@ export default function ExploreScreen() {
         <TouchableOpacity
           style={[
             styles.filterButton,
-            { backgroundColor: sortOption !== 'relevance' ? colors.primary + '15' : colors.gray100 }
+            { backgroundColor: sortOption !== 'relevance' ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 }
           ]}
           onPress={() => setShowFilterModal(true)}
           activeOpacity={0.8}

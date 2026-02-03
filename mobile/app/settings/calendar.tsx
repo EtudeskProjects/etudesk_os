@@ -16,7 +16,7 @@ import {
   FileText,
   Send,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { PageLayout, EmptyState } from '../../src/components/ui';
 import { api } from '../../src/services/api';
@@ -229,7 +229,7 @@ export default function CalendarScreen() {
         return (
           <View key={date} style={styles.dateSection}>
             <View style={styles.dateHeader}>
-              <View style={[styles.dateBox, { backgroundColor: colors.primary + '15' }]}>
+              <View style={[styles.dateBox, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.dateDay, { color: colors.primary }]}>{day}</Text>
                 <Text style={[styles.dateMonth, { color: colors.primary }]}>{month}</Text>
               </View>
@@ -253,7 +253,7 @@ export default function CalendarScreen() {
                     activeOpacity={0.8}
                   >
                     <View style={[styles.eventIndicator, { backgroundColor: eventColor }]} />
-                    <View style={[styles.eventIcon, { backgroundColor: eventColor + '15' }]}>
+                    <View style={[styles.eventIcon, { backgroundColor: withOpacity(eventColor, OPACITY[15]) }]}>
                       <EventIcon size={ICON.size.sm} color={eventColor} strokeWidth={ICON.strokeWidth} />
                     </View>
                     <View style={styles.eventInfo}>

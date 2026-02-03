@@ -15,7 +15,7 @@ import {
   ChevronRight,
 } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../constants/theme';
 
 interface EntityCardProps {
   type: string;
@@ -59,7 +59,7 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data }) => {
         <Briefcase size={16} color={colors.primary} />
         <Text style={[styles.cardType, { color: colors.primary }]}>Opportunité</Text>
         {data.matchScore && (
-          <View style={[styles.scoreBadge, { backgroundColor: colors.primary + '15' }]}>
+          <View style={[styles.scoreBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
             <Star size={10} color={colors.primary} />
             <Text style={[styles.scoreText, { color: colors.primary }]}>{data.matchScore}%</Text>
           </View>

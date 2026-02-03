@@ -34,9 +34,10 @@ import {
   FolderOpen,
   Plus,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { Button, StepIndicator } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
+import { useForm } from '../../../../src/hooks/useForm';
 import { useAuth } from '../../../../src/contexts/AuthContext';
 import { useAlert } from '../../../../src/contexts/AlertContext';
 import { opportunityService, applicationService, talentService, documentService, kycService } from '../../../../src/services';
@@ -68,6 +69,13 @@ interface CVFile {
 
 type CVSource = 'existing' | 'upload' | null;
 
+interface ApplicationFormValues {
+  answers: Record<string, string>;
+  cvSource: CVSource;
+  selectedExistingCV: TalentDocument | null;
+  uploadedCV: CVFile | null;
+}
+
 export default function ApplyOpportunityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -77,19 +85,68 @@ export default function ApplyOpportunityScreen() {
 
   const [currentStep, setCurrentStep] = useState<ApplyStep>('profile');
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null);
   const [profile, setProfile] = useState<TalentObjectData | null>(null);
 
-  // CV State
+  // CV State (loaded data)
   const [existingCVs, setExistingCVs] = useState<TalentDocument[]>([]);
   const [hasExistingCV, setHasExistingCV] = useState(false);
-  const [cvSource, setCvSource] = useState<CVSource>(null);
-  const [selectedExistingCV, setSelectedExistingCV] = useState<TalentDocument | null>(null);
-  const [uploadedCV, setUploadedCV] = useState<CVFile | null>(null);
 
-  // Form state
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  // Form state using useForm
+  const form = useForm<ApplicationFormValues>({
+    fields: {
+      answers: { initialValue: {} },
+      cvSource: { initialValue: null },
+      selectedExistingCV: { initialValue: null },
+      uploadedCV: { initialValue: null },
+    },
+    onSubmit: async (values) => {
+      if (!opportunity) return;
+
+      // Build application answers
+      const applicationAnswers: ApplicationAnswer[] = [];
+      if (opportunity.application_questions) {
+        opportunity.application_questions.forEach((q) => {
+          if (values.answers[q.id]?.trim()) {
+            applicationAnswers.push({
+              question_id: q.id,
+              answer: values.answers[q.id].trim(),
+            });
+          }
+        });
+      }
+
+      // Get CV URL
+      const selectedCV = getSelectedCV();
+      let cvUrl: string | undefined;
+
+      if (selectedCV) {
+        if (selectedCV.isFromDocuments) {
+          // Use the file_url from documents
+          cvUrl = selectedCV.uri;
+        } else {
+          // TODO: Upload the file first, then use the returned URL
+          // For now, using the local URI (would need real upload implementation)
+          cvUrl = selectedCV.uri;
+        }
+      }
+
+      await applicationService.apply({
+        opportunity_id: opportunity.id,
+        resume_url: cvUrl,
+        answers: applicationAnswers.length > 0 ? applicationAnswers : undefined,
+      });
+
+      setCurrentStep('success');
+    },
+  });
+
+  // Convenience getters
+  const answers = form.getValue('answers');
+  const cvSource = form.getValue('cvSource');
+  const selectedExistingCV = form.getValue('selectedExistingCV');
+  const uploadedCV = form.getValue('uploadedCV');
+  const isSubmitting = form.state.isSubmitting;
 
 
   // Load data
@@ -152,8 +209,8 @@ export default function ApplyOpportunityScreen() {
       if (cvsResponse?.documents && cvsResponse.documents.length > 0) {
         setExistingCVs(cvsResponse.documents);
         setHasExistingCV(true);
-        setSelectedExistingCV(cvsResponse.documents[0]);
-        setCvSource('existing');
+        form.setValue('selectedExistingCV', cvsResponse.documents[0]);
+        form.setValue('cvSource', 'existing');
       }
 
       // Initialize answers for each question
@@ -162,7 +219,7 @@ export default function ApplyOpportunityScreen() {
         oppResponse.data.application_questions.forEach((q: ApplicationQuestion) => {
           initialAnswers[q.id] = '';
         });
-        setAnswers(initialAnswers);
+        form.setValue('answers', initialAnswers);
       }
     } catch (error) {
       console.error('Error loading apply data:', error);
@@ -189,15 +246,15 @@ export default function ApplyOpportunityScreen() {
           return;
         }
 
-        setUploadedCV({
+        form.setValue('uploadedCV', {
           name: doc.name,
           uri: doc.uri,
           type: doc.mimeType || 'application/pdf',
           size: doc.size,
           isFromDocuments: false,
         });
-        setCvSource('upload');
-        setSelectedExistingCV(null);
+        form.setValue('cvSource', 'upload');
+        form.setValue('selectedExistingCV', null);
       }
     } catch (error) {
       Alert.alert('Erreur', 'Une erreur est survenue lors de la sélection du fichier.');
@@ -205,18 +262,18 @@ export default function ApplyOpportunityScreen() {
   };
 
   const selectExistingCV = (cv: TalentDocument) => {
-    setSelectedExistingCV(cv);
-    setCvSource('existing');
-    setUploadedCV(null);
+    form.setValue('selectedExistingCV', cv);
+    form.setValue('cvSource', 'existing');
+    form.setValue('uploadedCV', null);
   };
 
   const removeCV = () => {
     if (cvSource === 'upload') {
-      setUploadedCV(null);
+      form.setValue('uploadedCV', null);
     } else {
-      setSelectedExistingCV(null);
+      form.setValue('selectedExistingCV', null);
     }
-    setCvSource(null);
+    form.setValue('cvSource', null);
   };
 
   const getSelectedCV = (): CVFile | null => {
@@ -236,10 +293,10 @@ export default function ApplyOpportunityScreen() {
   };
 
   const updateAnswer = (questionId: string, value: string) => {
-    setAnswers((prev) => ({
-      ...prev,
+    form.setValue('answers', {
+      ...answers,
       [questionId]: value,
-    }));
+    });
   };
 
   const handleNext = () => {
@@ -261,43 +318,8 @@ export default function ApplyOpportunityScreen() {
   const handleSubmit = async () => {
     if (!opportunity) return;
 
-    setIsSubmitting(true);
     try {
-      // Build application answers
-      const applicationAnswers: ApplicationAnswer[] = [];
-      if (opportunity.application_questions) {
-        opportunity.application_questions.forEach((q) => {
-          if (answers[q.id]?.trim()) {
-            applicationAnswers.push({
-              question_id: q.id,
-              answer: answers[q.id].trim(),
-            });
-          }
-        });
-      }
-
-      // Get CV URL
-      const selectedCV = getSelectedCV();
-      let cvUrl: string | undefined;
-
-      if (selectedCV) {
-        if (selectedCV.isFromDocuments) {
-          // Use the file_url from documents
-          cvUrl = selectedCV.uri;
-        } else {
-          // TODO: Upload the file first, then use the returned URL
-          // For now, using the local URI (would need real upload implementation)
-          cvUrl = selectedCV.uri;
-        }
-      }
-
-      await applicationService.apply({
-        opportunity_id: opportunity.id,
-        resume_url: cvUrl,
-        answers: applicationAnswers.length > 0 ? applicationAnswers : undefined,
-      });
-
-      setCurrentStep('success');
+      await form.handleSubmit();
     } catch (error: any) {
       if (error.status === 403 && error.error?.includes('propre opportunité')) {
         showError(
@@ -310,8 +332,6 @@ export default function ApplyOpportunityScreen() {
           error.error || 'Une erreur est survenue lors de l\'envoi de votre candidature.'
         );
       }
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -390,7 +410,7 @@ export default function ApplyOpportunityScreen() {
             {avatarUrl ? (
               <Image source={{ uri: avatarUrl }} style={styles.profileAvatar} />
             ) : (
-              <View style={[styles.profileAvatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+              <View style={[styles.profileAvatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
                 <Text style={[styles.profileAvatarText, { color: colors.primary }]}>
                   {getInitials(profile?.first_name || undefined, profile?.last_name || undefined)}
                 </Text>
@@ -437,7 +457,7 @@ export default function ApplyOpportunityScreen() {
               <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Compétences</Text>
               <View style={styles.profileTagsRow}>
                 {profile.skills.slice(0, 8).map((skill, i) => (
-                  <View key={i} style={[styles.profileTag, { backgroundColor: colors.primary + '12' }]}>
+                  <View key={i} style={[styles.profileTag, { backgroundColor: withOpacity(colors.primary, OPACITY[12]) }]}>
                     <Text style={[styles.profileTagText, { color: colors.primary }]}>{skill}</Text>
                   </View>
                 ))}
@@ -479,7 +499,7 @@ export default function ApplyOpportunityScreen() {
 
           {/* Warning if profile incomplete */}
           {!profileComplete && (
-            <View style={[styles.warningBox, { backgroundColor: colors.warning + '15' }]}>
+            <View style={[styles.warningBox, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
               <AlertCircle size={20} color={colors.warning} strokeWidth={ICON.strokeWidth} />
               <View style={styles.warningContent}>
                 <Text style={[styles.warningTitle, { color: colors.warning }]}>Profil incomplet</Text>
@@ -515,7 +535,7 @@ export default function ApplyOpportunityScreen() {
         {/* If CV is selected, show preview */}
         {selectedCV ? (
           <View style={[styles.cvPreview, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <View style={[styles.cvIconContainer, { backgroundColor: colors.primary + '15' }]}>
+            <View style={[styles.cvIconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
               <FileText size={24} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             </View>
             <View style={styles.cvInfo}>
@@ -547,12 +567,12 @@ export default function ApplyOpportunityScreen() {
                         { backgroundColor: colors.gray50, borderColor: colors.gray200 },
                         selectedExistingCV?.id === cv.id && {
                           borderColor: colors.primary,
-                          backgroundColor: colors.primary + '08',
+                          backgroundColor: withOpacity(colors.primary, OPACITY['08']),
                         },
                       ]}
                       onPress={() => selectExistingCV(cv)}
                     >
-                      <View style={[styles.existingCvIcon, { backgroundColor: colors.primary + '15' }]}>
+                      <View style={[styles.existingCvIcon, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                         <FolderOpen size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                       </View>
                       <View style={styles.existingCvInfo}>
@@ -560,7 +580,7 @@ export default function ApplyOpportunityScreen() {
                           {cv.title || cv.original_filename || 'CV'}
                         </Text>
                         {cv.is_primary && (
-                          <View style={[styles.primaryBadge, { backgroundColor: colors.success + '15' }]}>
+                          <View style={[styles.primaryBadge, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
                             <Text style={[styles.primaryBadgeText, { color: colors.success }]}>
                               Principal
                             </Text>
@@ -707,7 +727,7 @@ export default function ApplyOpportunityScreen() {
           </View>
 
           {/* Profile Preview */}
-          <View style={[styles.previewSection, { backgroundColor: colors.primary + '08' }]}>
+          <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.primary, OPACITY['08']) }]}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
               Votre profil
             </Text>
@@ -775,7 +795,7 @@ export default function ApplyOpportunityScreen() {
 
   const renderSuccessStep = () => (
     <View style={styles.successContainer}>
-      <View style={[styles.successIcon, { backgroundColor: colors.success + '15' }]}>
+      <View style={[styles.successIcon, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
         <CheckCircle2 size={64} color={colors.success} strokeWidth={ICON.strokeWidth} />
       </View>
       <Text style={[styles.successTitle, { color: colors.textPrimary }]}>

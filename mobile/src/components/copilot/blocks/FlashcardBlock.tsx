@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Lightbulb, RotateCw } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 
 interface FlashcardBlockProps {
   data: {
@@ -73,7 +73,7 @@ export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
         <Text style={[styles.topic, { color: colors.textSecondary }]}>
           {data.topic}
         </Text>
-        <View style={[styles.difficultyBadge, { backgroundColor: difficultyColor + '15' }]}>
+        <View style={[styles.difficultyBadge, { backgroundColor: withOpacity(difficultyColor, OPACITY[15]) }]}>
           <Text style={[styles.difficultyText, { color: difficultyColor }]}>
             {difficultyLabel}
           </Text>
@@ -85,7 +85,7 @@ export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
         style={[
           styles.card,
           {
-            backgroundColor: isFlipped ? colors.primary + '10' : colors.surface,
+            backgroundColor: isFlipped ? withOpacity(colors.primary, OPACITY[10]) : colors.surface,
             borderColor: isFlipped ? colors.primary : colors.borderColor,
           },
         ]}

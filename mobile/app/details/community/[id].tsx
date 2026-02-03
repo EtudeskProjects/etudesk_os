@@ -21,7 +21,7 @@ import {
   Shield,
   Settings,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -214,7 +214,7 @@ export default function CommunityDetailScreen() {
             <Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: isBookmarked ? colors.primary + '15' : colors.gray100 }]}
+            style={[styles.headerButton, { backgroundColor: isBookmarked ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 }]}
             onPress={toggleBookmark}
           >
             {isBookmarked ? (
@@ -274,7 +274,7 @@ export default function CommunityDetailScreen() {
                 </View>
                 <View style={styles.orgTagsRow}>
                   {community.organization.type && (
-                    <View style={[styles.orgTag, { backgroundColor: colors.primary + '15' }]}>
+                    <View style={[styles.orgTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                       <Text style={[styles.orgTagText, { color: colors.primary }]}>
                         {ORGANIZATION_TYPE_LABELS[community.organization.type] || community.organization.type}
                       </Text>
@@ -299,7 +299,7 @@ export default function CommunityDetailScreen() {
           {/* Tags Row */}
           <View style={styles.tagsRow}>
             {community.type && (
-              <View style={[styles.tag, { backgroundColor: colors.primary + '15' }]}>
+              <View style={[styles.tag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 {community.type === 'ONLINE' ? (
                   <Monitor size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                 ) : community.type === 'HYBRID' ? (
@@ -313,13 +313,13 @@ export default function CommunityDetailScreen() {
               </View>
             )}
             {community.is_paid && (
-              <View style={[styles.tag, { backgroundColor: colors.warning + '15' }]}>
+              <View style={[styles.tag, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
                 <CreditCard size={12} color={colors.warning} strokeWidth={ICON.strokeWidth} />
                 <Text style={[styles.tagText, { color: colors.warning, marginLeft: 4 }]}>Payant</Text>
               </View>
             )}
             {!community.is_paid && (
-              <View style={[styles.tag, { backgroundColor: colors.success + '15' }]}>
+              <View style={[styles.tag, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
                 <Text style={[styles.tagText, { color: colors.success }]}>Gratuit</Text>
               </View>
             )}
@@ -463,7 +463,7 @@ export default function CommunityDetailScreen() {
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tags</Text>
                 <View style={styles.categoriesRow}>
                   {tags.map((tag, index) => (
-                    <View key={index} style={[styles.categoryTag, { backgroundColor: colors.primary + '10' }]}>
+                    <View key={index} style={[styles.categoryTag, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
                       <Text style={[styles.categoryTagText, { color: colors.primary }]}>{tag}</Text>
                     </View>
                   ))}
@@ -499,7 +499,7 @@ export default function CommunityDetailScreen() {
                           style={[styles.memberAvatar, { borderColor: colors.background }]}
                         />
                       ) : (
-                        <View style={[styles.memberAvatarPlaceholder, { backgroundColor: colors.primary + '20', borderColor: colors.background }]}>
+                        <View style={[styles.memberAvatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]), borderColor: colors.background }]}>
                           <Text style={[styles.memberAvatarText, { color: colors.primary }]}>
                             {getInitials(member.display_name || '')}
                           </Text>
@@ -546,7 +546,7 @@ export default function CommunityDetailScreen() {
                           style={styles.memberItemAvatar}
                         />
                       ) : (
-                        <View style={[styles.memberItemAvatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+                        <View style={[styles.memberItemAvatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
                           <Text style={[styles.memberItemAvatarText, { color: colors.primary }]}>
                             {getInitials(member.display_name || '')}
                           </Text>
@@ -558,7 +558,7 @@ export default function CommunityDetailScreen() {
                             {member.display_name}
                           </Text>
                           {member.role === 'ADMIN' && (
-                            <View style={[styles.adminBadge, { backgroundColor: colors.primary + '15' }]}>
+                            <View style={[styles.adminBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                               <Shield size={10} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                               <Text style={[styles.adminBadgeText, { color: colors.primary }]}>Admin</Text>
                             </View>

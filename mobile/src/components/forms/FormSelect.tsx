@@ -9,7 +9,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { ChevronDown, Check, X } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 interface SelectOption {
@@ -70,7 +70,7 @@ export function FormSelect({
       {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
 
       <Modal visible={isOpen} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
+        <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.borderColor }]}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
@@ -89,7 +89,7 @@ export function FormSelect({
                   style={[
                     styles.optionItem,
                     { borderBottomColor: colors.gray100 },
-                    item.value === value && { backgroundColor: colors.primary + '10' },
+                    item.value === value && { backgroundColor: withOpacity(colors.primary, OPACITY[10]) },
                   ]}
                   onPress={() => {
                     onChange(item.value);
@@ -152,7 +152,6 @@ const styles = StyleSheet.create({
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
 

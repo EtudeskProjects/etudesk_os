@@ -21,10 +21,11 @@ import {
   Plane,
   Camera,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Input, Button, Toggle, StepIndicator } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
+import { useForm } from '../../src/hooks/useForm';
 import {
   SECTOR_DATA,
   PROFILE_TAG_DATA,
@@ -41,38 +42,94 @@ import { useAuth } from '../../src/contexts/AuthContext';
 
 type Step = 'info' | 'sectors' | 'goals';
 
+interface ProfileFormValues {
+  firstName: string;
+  lastName: string;
+  gender: string;
+  country: string;
+  region: string;
+  commune: string;
+  bio: string;
+  phone: string;
+  email: string;
+  avatarUri: string | null;
+  remoteReady: boolean;
+  willingToRelocate: boolean;
+  selectedTags: string[];
+  selectedSectors: string[];
+  selectedGoals: string[];
+}
+
 export default function CreateProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t } = useI18n();
   const { completeOnboarding } = useAuth();
   const [currentStep, setCurrentStep] = useState<Step>('info');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form state - Photo
-  const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  // Form management with useForm hook
+  const form = useForm<ProfileFormValues>({
+    fields: {
+      firstName: { initialValue: '', required: true, requiredMessage: 'Le prénom est requis' },
+      lastName: { initialValue: '', required: true, requiredMessage: 'Le nom est requis' },
+      gender: { initialValue: '' },
+      country: { initialValue: 'CI' },
+      region: { initialValue: '' },
+      commune: { initialValue: '' },
+      bio: { initialValue: '' },
+      phone: { initialValue: '', required: true, requiredMessage: 'Le téléphone est requis' },
+      email: { initialValue: '' },
+      avatarUri: { initialValue: null },
+      remoteReady: { initialValue: true },
+      willingToRelocate: { initialValue: true },
+      selectedTags: { initialValue: [] },
+      selectedSectors: { initialValue: [], required: true },
+      selectedGoals: { initialValue: [], required: true },
+    },
+    onSubmit: async (values) => {
+      const displayName = `${values.firstName.trim()} ${values.lastName.trim()}`.trim();
+      const profileData = {
+        displayName,
+        firstName: values.firstName.trim(),
+        lastName: values.lastName.trim(),
+        phone: values.phone.trim(),
+        city: values.commune || undefined,
+        region: values.region || undefined,
+        country: values.country || undefined,
+        profileTags: values.selectedTags.length > 0 ? values.selectedTags : undefined,
+        goals: values.selectedGoals.length > 0 ? values.selectedGoals : undefined,
+        bio: values.bio.trim() || undefined,
+        remoteReady: values.remoteReady,
+        willingToRelocate: values.willingToRelocate,
+        gender: values.gender || undefined,
+        sectors: values.selectedSectors.length > 0 ? values.selectedSectors : undefined,
+      };
+      const response = await onboardingService.complete(profileData);
+      if (response.data) {
+        completeOnboarding();
+        router.replace('/auth/welcome');
+      } else {
+        throw new Error('Échec de la création du profil');
+      }
+    },
+  });
 
-  // Form state - Info
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [gender, setGender] = useState('');
-  const [country, setCountry] = useState('CI'); // Côte d'Ivoire par défaut
-  const [region, setRegion] = useState('');
-  const [commune, setCommune] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-
-  // Form state - Bio
-  const [bio, setBio] = useState('');
-
-  // Form state - Preferences
-  const [remoteReady, setRemoteReady] = useState(true);
-  const [willingToRelocate, setWillingToRelocate] = useState(true);
-
-  // Form state - Steps
-  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  // Convenience getters for form values
+  const firstName = form.getValue('firstName');
+  const lastName = form.getValue('lastName');
+  const gender = form.getValue('gender');
+  const country = form.getValue('country');
+  const region = form.getValue('region');
+  const commune = form.getValue('commune');
+  const bio = form.getValue('bio');
+  const phone = form.getValue('phone');
+  const email = form.getValue('email');
+  const avatarUri = form.getValue('avatarUri');
+  const remoteReady = form.getValue('remoteReady');
+  const willingToRelocate = form.getValue('willingToRelocate');
+  const selectedTags = form.getValue('selectedTags');
+  const selectedSectors = form.getValue('selectedSectors');
+  const selectedGoals = form.getValue('selectedGoals');
 
   // Refs for horizontal scrolls
   const countryScrollRef = useRef<ScrollView>(null);
@@ -97,11 +154,11 @@ export default function CreateProfileScreen() {
 
           // Pre-fill email if user logged in with email
           if (user.email) {
-            setEmail(user.email);
+            form.setValues({ email: user.email });
           }
           // Pre-fill phone if user logged in with WhatsApp/phone
           if (user.phone) {
-            setPhone(user.phone);
+            form.setValues({ phone: user.phone });
           }
         }
       } catch (error) {
@@ -155,7 +212,7 @@ export default function CreateProfileScreen() {
     try {
       const image = await imageService.pickImage({ type: 'avatar' });
       if (image) {
-        setAvatarUri(image.uri);
+        form.setValue('avatarUri', image.uri);
       }
     } catch (error) {
       console.error('Error selecting image:', error);
@@ -168,39 +225,30 @@ export default function CreateProfileScreen() {
   };
 
   const toggleSector = (sectorId: string) => {
-    setSelectedSectors((prev) => {
-      if (prev.includes(sectorId)) {
-        return prev.filter((id) => id !== sectorId);
-      }
-      if (prev.length >= MAX_SECTORS) {
-        return prev;
-      }
-      return [...prev, sectorId];
-    });
+    const currentSectors = form.getValue('selectedSectors');
+    if (currentSectors.includes(sectorId)) {
+      form.setValue('selectedSectors', currentSectors.filter((id) => id !== sectorId));
+    } else if (currentSectors.length < MAX_SECTORS) {
+      form.setValue('selectedSectors', [...currentSectors, sectorId]);
+    }
   };
 
   const toggleTag = (tagId: string) => {
-    setSelectedTags((prev) => {
-      if (prev.includes(tagId)) {
-        return prev.filter((id) => id !== tagId);
-      }
-      if (prev.length >= MAX_PROFILE_TAGS) {
-        return prev;
-      }
-      return [...prev, tagId];
-    });
+    const currentTags = form.getValue('selectedTags');
+    if (currentTags.includes(tagId)) {
+      form.setValue('selectedTags', currentTags.filter((id) => id !== tagId));
+    } else if (currentTags.length < MAX_PROFILE_TAGS) {
+      form.setValue('selectedTags', [...currentTags, tagId]);
+    }
   };
 
   const toggleGoal = (goalId: string) => {
-    setSelectedGoals((prev) => {
-      if (prev.includes(goalId)) {
-        return prev.filter((id) => id !== goalId);
-      }
-      if (prev.length >= MAX_GOALS) {
-        return prev;
-      }
-      return [...prev, goalId];
-    });
+    const currentGoals = form.getValue('selectedGoals');
+    if (currentGoals.includes(goalId)) {
+      form.setValue('selectedGoals', currentGoals.filter((id) => id !== goalId));
+    } else if (currentGoals.length < MAX_GOALS) {
+      form.setValue('selectedGoals', [...currentGoals, goalId]);
+    }
   };
 
   const handleNext = async () => {
@@ -215,7 +263,7 @@ export default function CreateProfileScreen() {
   };
 
   const handleSubmitProfile = async () => {
-    if (isSubmitting) return;
+    if (form.state.isSubmitting) return;
 
     // Validate required fields
     const trimmedFirstName = firstName.trim();
@@ -238,41 +286,8 @@ export default function CreateProfileScreen() {
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      // Build the profile data
-      const profileData = {
-        displayName,
-        firstName: trimmedFirstName,
-        lastName: trimmedLastName,
-        phone: phone.trim(),
-        city: commune || undefined,
-        region: region || undefined,
-        country: country || undefined,
-        profileTags: selectedTags.length > 0 ? selectedTags : undefined,
-        goals: selectedGoals.length > 0 ? selectedGoals : undefined,
-        bio: bio.trim() || undefined,
-        remoteReady,
-        willingToRelocate,
-        // Additional fields
-        gender: gender || undefined,
-        sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
-      };
-
-
-      // Call the onboarding API
-      const response = await onboardingService.complete(profileData);
-
-      if (response.data) {
-
-        // Update auth state
-        completeOnboarding();
-
-        // Navigate to welcome screen
-        router.replace('/auth/welcome');
-      } else {
-        throw new Error('Échec de la création du profil');
-      }
+      await form.handleSubmit();
     } catch (error: any) {
       console.error('[CreateProfile] Error creating profile:', JSON.stringify(error, null, 2));
 
@@ -305,8 +320,6 @@ export default function CreateProfileScreen() {
         errorMessage,
         [{ text: 'OK' }]
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -336,7 +349,7 @@ export default function CreateProfileScreen() {
     return selectedGoals.length > 0;
   };
 
-  /* 
+  /*
    * STEP DATA
    */
   const STEPS_DATA = [
@@ -380,7 +393,7 @@ export default function CreateProfileScreen() {
               label={`${t('auth.createProfile.firstName')} *`}
               placeholder=""
               value={firstName}
-              onChangeText={setFirstName}
+              onChangeText={(value) => form.setValue('firstName', value)}
               autoCapitalize="words"
               autoFocus
             />
@@ -390,7 +403,7 @@ export default function CreateProfileScreen() {
               label={`${t('auth.createProfile.lastName')} *`}
               placeholder=""
               value={lastName}
-              onChangeText={setLastName}
+              onChangeText={(value) => form.setValue('lastName', value)}
               autoCapitalize="words"
             />
           </View>
@@ -408,7 +421,7 @@ export default function CreateProfileScreen() {
                   { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                   gender === g.id && { backgroundColor: colors.primary, borderColor: colors.primary },
                 ]}
-                onPress={() => setGender(g.id)}
+                onPress={() => form.setValue('gender', g.id)}
               >
                 <Text
                   style={[
@@ -438,7 +451,7 @@ export default function CreateProfileScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleTag(tag.id)}
                   activeOpacity={0.7}
@@ -470,7 +483,7 @@ export default function CreateProfileScreen() {
               placeholder="Décris-toi en quelques mots..."
               placeholderTextColor={colors.gray400}
               value={bio}
-              onChangeText={(text) => setBio(text.slice(0, 300))}
+              onChangeText={(text) => form.setValue('bio', text.slice(0, 300))}
               multiline
               maxLength={300}
             />
@@ -504,9 +517,9 @@ export default function CreateProfileScreen() {
                   handleChipLayout(countryChipPositions, c.id, x, width);
                 }}
                 onPress={() => {
-                  setCountry(c.id);
-                  setRegion('');
-                  setCommune('');
+                  form.setValue('country', c.id);
+                  form.setValue('region', '');
+                  form.setValue('commune', '');
                   setTimeout(() => scrollToChip(countryScrollRef, countryChipPositions, c.id, true), 50);
                 }}
               >
@@ -548,8 +561,8 @@ export default function CreateProfileScreen() {
                     handleChipLayout(regionChipPositions, r.id, x, width);
                   }}
                   onPress={() => {
-                    setRegion(r.id);
-                    setCommune('');
+                    form.setValue('region', r.id);
+                    form.setValue('commune', '');
                     setTimeout(() => scrollToChip(regionScrollRef, regionChipPositions, r.id, true), 50);
                   }}
                 >
@@ -592,7 +605,7 @@ export default function CreateProfileScreen() {
                     handleChipLayout(communeChipPositions, c.id, x, width);
                   }}
                   onPress={() => {
-                    setCommune(c.id);
+                    form.setValue('commune', c.id);
                     setTimeout(() => scrollToChip(communeScrollRef, communeChipPositions, c.id, true), 50);
                   }}
                 >
@@ -619,7 +632,7 @@ export default function CreateProfileScreen() {
           label={`${t('auth.createProfile.phone')} *`}
           placeholder="+225 07 00 00 00 00"
           value={phone}
-          onChangeText={setPhone}
+          onChangeText={(value) => form.setValue('phone', value)}
           keyboardType="phone-pad"
         />
 
@@ -628,7 +641,7 @@ export default function CreateProfileScreen() {
           label={t('auth.createProfile.email')}
           placeholder="ton@email.com"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(value) => form.setValue('email', value)}
           keyboardType="email-address"
           autoCapitalize="none"
         />
@@ -647,7 +660,7 @@ export default function CreateProfileScreen() {
             </View>
             <Toggle
               value={remoteReady}
-              onValueChange={setRemoteReady}
+              onValueChange={(value) => form.setValue('remoteReady', value)}
             />
           </View>
 
@@ -661,7 +674,7 @@ export default function CreateProfileScreen() {
             </View>
             <Toggle
               value={willingToRelocate}
-              onValueChange={setWillingToRelocate}
+              onValueChange={(value) => form.setValue('willingToRelocate', value)}
             />
           </View>
         </View>
@@ -687,7 +700,7 @@ export default function CreateProfileScreen() {
               style={[
                 styles.selectableTag,
                 { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
               ]}
               onPress={() => toggleSector(sector.id)}
               activeOpacity={0.7}
@@ -733,7 +746,7 @@ export default function CreateProfileScreen() {
               style={[
                 styles.selectableTag,
                 { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
               ]}
               onPress={() => toggleGoal(goal.id)}
               activeOpacity={0.7}
@@ -796,17 +809,17 @@ export default function CreateProfileScreen() {
         <View style={[styles.footer, { backgroundColor: colors.background }]}>
           <Button
             title={
-              isSubmitting
+              form.state.isSubmitting
                 ? 'Création...'
                 : currentStep === 'goals'
                   ? t('auth.createProfile.complete')
                   : t('auth.createProfile.continue')
             }
             onPress={handleNext}
-            disabled={!canProceed() || isSubmitting}
+            disabled={!canProceed() || form.state.isSubmitting}
             fullWidth
             icon={
-              isSubmitting ? undefined : (
+              form.state.isSubmitting ? undefined : (
                 <ChevronRight
                   size={ICON.size.md}
                   color={colors.textOnPrimary}

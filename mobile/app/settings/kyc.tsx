@@ -20,7 +20,7 @@ import {
   XCircle,
   Shield,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Button } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { kycService, KYCDocumentType, imageService } from '../../src/services';
@@ -217,7 +217,7 @@ export default function KYCScreen() {
   const renderStatus = () => {
     if (verificationStatus === 'verified') {
       return (
-        <View style={[styles.statusCard, { backgroundColor: colors.success + '15', borderColor: colors.success }]}>
+        <View style={[styles.statusCard, { backgroundColor: withOpacity(colors.success, OPACITY[15]), borderColor: colors.success }]}>
           <Check size={ICON.size.lg} color={colors.success} strokeWidth={ICON.strokeWidth} />
           <View style={styles.statusContent}>
             <Text style={[styles.statusTitle, { color: colors.success }]}>Identité vérifiée</Text>
@@ -231,7 +231,7 @@ export default function KYCScreen() {
 
     if (verificationStatus === 'rejected') {
       return (
-        <View style={[styles.statusCard, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
+        <View style={[styles.statusCard, { backgroundColor: withOpacity(colors.error, OPACITY[15]), borderColor: colors.error }]}>
           <XCircle size={ICON.size.lg} color={colors.error} strokeWidth={ICON.strokeWidth} />
           <View style={styles.statusContent}>
             <Text style={[styles.statusTitle, { color: colors.error }]}>Vérification échouée</Text>
@@ -276,7 +276,7 @@ export default function KYCScreen() {
       >
         {/* Info Card - only show if not verified */}
         {verificationStatus !== 'verified' && (
-          <View style={[styles.infoCard, { backgroundColor: colors.primary + '10' }]}>
+          <View style={[styles.infoCard, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
             <Shield size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.infoText, { color: colors.primary }]}>
               La vérification est requise pour créer une organisation, publier des offres et recevoir des paiements.

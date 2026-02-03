@@ -24,6 +24,14 @@ interface FooterNavProps {
   activeTab?: TabName;
 }
 
+// Accessibility labels for each tab
+const TAB_ACCESSIBILITY: Record<TabName, { label: string; hint: string }> = {
+  home: { label: 'Accueil', hint: 'Aller à la page d\'accueil' },
+  assistant: { label: 'Assistant', hint: 'Ouvrir l\'assistant IA' },
+  explore: { label: 'Explorer', hint: 'Parcourir les opportunités et communautés' },
+  settings: { label: 'Paramètres', hint: 'Accéder aux paramètres' },
+};
+
 export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
   const router = useRouter();
   const { colors } = useTheme();
@@ -52,6 +60,14 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
             key={tab.name}
             style={styles.tab}
             onPress={() => router.push(tab.route as any)}
+            activeOpacity={0.7}
+            accessible={true}
+            accessibilityRole="tab"
+            accessibilityLabel={TAB_ACCESSIBILITY[tab.name].label}
+            accessibilityHint={TAB_ACCESSIBILITY[tab.name].hint}
+            accessibilityState={{
+              selected: isActive,
+            }}
           >
             <View style={[
               styles.tabIcon,

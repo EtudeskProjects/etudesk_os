@@ -31,7 +31,7 @@ interface CommentItemProps {
 const MAX_DEPTH = 2;
 const DEFAULT_VISIBLE_REPLIES = 2;
 
-export const CommentItem: React.FC<CommentItemProps> = ({
+export const CommentItem: React.FC<CommentItemProps> = React.memo(({
     comment,
     currentUserId,
     depth = 0,
@@ -254,7 +254,10 @@ export const CommentItem: React.FC<CommentItemProps> = ({
             )}
         </View>
     );
-};
+});
+
+// Display name for debugging
+CommentItem.displayName = 'CommentItem';
 
 const styles = StyleSheet.create({
     wrapper: {

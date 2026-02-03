@@ -26,7 +26,7 @@ import {
   Mail,
 } from 'lucide-react-native';
 import { kycService } from '../../../src/services/kycService';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -249,7 +249,7 @@ export default function AccountScreen() {
               {selectedOrg?.logoUrl ? (
                 <Image source={{ uri: selectedOrg.logoUrl }} style={styles.avatarImage} />
               ) : (
-                <View style={[styles.avatarContainer, { backgroundColor: colors.primary + '15' }]}>
+                <View style={[styles.avatarContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                   <Building2 size={ICON.size.lg} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                 </View>
               )}
@@ -279,7 +279,7 @@ export default function AccountScreen() {
               style={[
                 styles.spaceChip,
                 { backgroundColor: colors.surface, borderColor: colors.borderColor },
-                currentSpace === 'talent' && { borderColor: colors.primary, backgroundColor: colors.primary + '10' },
+                currentSpace === 'talent' && { borderColor: colors.primary, backgroundColor: withOpacity(colors.primary, OPACITY[10]) },
               ]}
               onPress={() => handleSelectSpace('talent')}
               activeOpacity={0.8}
@@ -311,7 +311,7 @@ export default function AccountScreen() {
                   style={[
                     styles.spaceChip,
                     { backgroundColor: colors.surface, borderColor: colors.borderColor },
-                    isActive && { borderColor: colors.primary, backgroundColor: colors.primary + '10' },
+                    isActive && { borderColor: colors.primary, backgroundColor: withOpacity(colors.primary, OPACITY[10]) },
                   ]}
                   onPress={() => handleSelectSpace('organization', org.id)}
                   activeOpacity={0.8}
@@ -398,7 +398,7 @@ export default function AccountScreen() {
                     <Text style={[styles.menuItemDescription, { color: colors.textSecondary }]}>{item.description}</Text>
                   </View>
                   {item.badge && (
-                    <View style={[styles.badge, { backgroundColor: item.badgeColor + '20' }]}>
+                    <View style={[styles.badge, { backgroundColor: withOpacity(item.badgeColor, OPACITY[20]) }]}>
                       <Text style={[styles.badgeText, { color: item.badgeColor }]}>{item.badge}</Text>
                     </View>
                   )}

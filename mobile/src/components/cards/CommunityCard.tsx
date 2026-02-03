@@ -18,7 +18,7 @@ import {
     Eye,
     Lock,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { formatCompactNumber } from '../../utils/number';
 import { getFullImageUrl } from '../../utils/image';
@@ -48,7 +48,7 @@ interface CommunityCardProps {
     statusOverlay?: StatusOverlay;
 }
 
-export const CommunityCard: React.FC<CommunityCardProps> = ({
+export const CommunityCard: React.FC<CommunityCardProps> = React.memo(({
     community,
     onPress,
     isBookmarked = false,
@@ -95,7 +95,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
         <TouchableOpacity
             style={[
                 styles.container,
-                { backgroundColor: colors.primary + '08', borderColor: colors.primary + '15' },
+                { backgroundColor: withOpacity(colors.primary, OPACITY[8]), borderColor: withOpacity(colors.primary, OPACITY[15]) },
                 isLast && styles.noBorder,
             ]}
             activeOpacity={0.8}
@@ -244,7 +244,10 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({
             </View>
         </TouchableOpacity>
     );
-};
+});
+
+// Display name for debugging
+CommunityCard.displayName = 'CommunityCard';
 
 const styles = StyleSheet.create({
     container: {
@@ -362,7 +365,7 @@ const styles = StyleSheet.create({
     metaItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: SPACING.xs,
     },
     metaText: {
         fontSize: TYPOGRAPHY.fontSize.sm,

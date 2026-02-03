@@ -54,7 +54,7 @@ const formatCount = (count: number): string => {
     return count.toString();
 };
 
-export const ActivityCard: React.FC<ActivityCardProps> = ({
+export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
     activity,
     currentUserId,
     userRole,
@@ -330,7 +330,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                                         style={[
                                             styles.pollProgressBar,
                                             {
-                                                backgroundColor: isVoted ? colors.primary + '20' : colors.gray100,
+                                                backgroundColor: isVoted ? withOpacity(colors.primary, OPACITY[20]) : colors.gray100,
                                                 width: `${percentage}%`,
                                             }
                                         ]}
@@ -374,7 +374,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                 <View style={[styles.eventContainer, { backgroundColor: colors.background, borderColor: colors.borderColor }]}>
                     {/* Date & Time */}
                     <View style={styles.eventRow}>
-                        <View style={[styles.eventIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                        <View style={[styles.eventIconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                             <Calendar size={16} color={colors.primary} />
                         </View>
                         <View style={styles.eventInfo}>
@@ -536,7 +536,10 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             )}
         </Pressable>
     );
-};
+});
+
+// Display name for debugging
+ActivityCard.displayName = 'ActivityCard';
 
 const styles = StyleSheet.create({
     container: {

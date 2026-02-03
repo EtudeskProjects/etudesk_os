@@ -8,7 +8,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 interface ChipOption {
@@ -76,7 +76,7 @@ export function FormChipSelect({
               style={[
                 styles.chip,
                 {
-                  backgroundColor: isSelected ? colors.primary + '15' : colors.gray100,
+                  backgroundColor: isSelected ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100,
                   borderColor: isSelected ? colors.primary : colors.borderColor,
                 },
               ]}
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: SPACING.xs,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderWidth: BORDER.width.thin,

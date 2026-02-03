@@ -21,7 +21,7 @@ import {
   UserX,
   UserPlus,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { PageLayout, EmptyState } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { communityService, CommunityMember, MemberStatus } from '../../../../src/services';
@@ -210,7 +210,7 @@ export default function CommunityMembersScreen() {
               style={styles.avatar}
             />
           ) : (
-            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+            <View style={[styles.avatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
               <Text style={[styles.avatarText, { color: colors.primary }]}>
                 {getInitials(talent?.display_name || `${talent?.first_name} ${talent?.last_name}`)}
               </Text>
@@ -249,14 +249,14 @@ export default function CommunityMembersScreen() {
         {item.status === 'PENDING' && (
           <View style={styles.quickActions}>
             <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: colors.success + '15' }]}
+              style={[styles.quickAction, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}
               onPress={() => handleAccept(item.id)}
             >
               <CheckCircle2 size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.quickActionText, { color: colors.success }]}>Accepter</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: colors.error + '15' }]}
+              style={[styles.quickAction, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}
               onPress={() => handleReject(item.id)}
             >
               <XCircle size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />

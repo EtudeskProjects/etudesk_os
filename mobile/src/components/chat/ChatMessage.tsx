@@ -25,7 +25,7 @@ import {
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ExpoCalendar from 'expo-calendar';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { formatRelativeTime, formatDate, formatTime } from '../../utils/date';
 
@@ -181,7 +181,7 @@ export function ChatMessage({
             return (
               <Text
                 key={index}
-                style={[styles.linkText, { color: isMe ? '#ADD8E6' : colors.primary }]}
+                style={[styles.linkText, { color: isMe ? colors.textOnPrimary : colors.primary }]}
                 onPress={() => handleLinkPress(part)}
               >
                 {part}
@@ -222,7 +222,7 @@ export function ChatMessage({
                 key={index}
                 style={[
                   styles.attachmentItem,
-                  { backgroundColor: isMe ? 'rgba(255,255,255,0.2)' : colors.gray200 },
+                  { backgroundColor: isMe ? withOpacity(colors.white, OPACITY[20]) : colors.gray200 },
                 ]}
                 onPress={() => handleAttachmentPress(attachment)}
               >
@@ -239,7 +239,7 @@ export function ChatMessage({
                   >
                     {truncateFilename(attachment.name, 25)}
                   </Text>
-                  <Text style={[styles.attachmentSize, { color: isMe ? 'rgba(255,255,255,0.7)' : colors.gray500 }]}>
+                  <Text style={[styles.attachmentSize, { color: isMe ? withOpacity(colors.textOnPrimary, OPACITY[70]) : colors.gray500 }]}>
                     {formatFileSize(attachment.size)}
                   </Text>
                 </View>
@@ -254,7 +254,7 @@ export function ChatMessage({
         <TouchableOpacity
           style={[
             styles.datetimeProposal,
-            { backgroundColor: isMe ? 'rgba(255,255,255,0.2)' : colors.primary + '15' },
+            { backgroundColor: isMe ? withOpacity(colors.white, OPACITY[20]) : withOpacity(colors.primary, OPACITY[15]) },
           ]}
           onPress={handleAddToCalendar}
           activeOpacity={0.7}
@@ -266,7 +266,7 @@ export function ChatMessage({
           />
           <View style={styles.datetimeInfo}>
             {datetimeType && (
-              <Text style={[styles.datetimeLabel, { color: isMe ? 'rgba(255,255,255,0.8)' : colors.primary }]}>
+              <Text style={[styles.datetimeLabel, { color: isMe ? withOpacity(colors.textOnPrimary, OPACITY[80]) : colors.primary }]}>
                 {DATETIME_TYPE_LABELS[datetimeType] || 'Créneau proposé'}
               </Text>
             )}
@@ -286,7 +286,7 @@ export function ChatMessage({
       <Text
         style={[
           styles.messageTime,
-          { color: isMe ? 'rgba(255,255,255,0.7)' : colors.gray500 },
+          { color: isMe ? withOpacity(colors.textOnPrimary, OPACITY[70]) : colors.gray500 },
         ]}
       >
         {formatRelativeTime(createdAt)}

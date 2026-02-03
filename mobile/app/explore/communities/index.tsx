@@ -21,7 +21,7 @@ import {
     Star,
     Plus,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { CommunityCard } from '../../../src/components/cards';
@@ -135,7 +135,7 @@ export default function CommunitiesScreen() {
                     <ArrowLeft size={ICON.size.md} color={colors.textPrimary} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Communautés</Text>
-                <TouchableOpacity style={[styles.headerButton, { backgroundColor: colors.primary + '10' }]}>
+                <TouchableOpacity style={[styles.headerButton, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
                     <Plus size={ICON.size.md} color={colors.primary} />
                 </TouchableOpacity>
             </View>

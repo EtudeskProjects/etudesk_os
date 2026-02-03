@@ -33,7 +33,7 @@ import {
   HelpCircle,
   Trash2,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { Input, Button, Toggle, StepIndicator } from '../../../../src/components/ui';
 import MapLocationPicker from '../../../../src/components/MapLocationPicker';
 import { useTheme } from '../../../../src/hooks/useTheme';
@@ -686,7 +686,7 @@ export default function EditSpaceScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => setSpaceType(type.id)}
                   activeOpacity={0.7}
@@ -746,7 +746,7 @@ export default function EditSpaceScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleSector(sector.id)}
                   activeOpacity={0.7}
@@ -990,7 +990,7 @@ export default function EditSpaceScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleEquipment(item.id)}
                 >
@@ -1021,7 +1021,7 @@ export default function EditSpaceScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleAmenity(item.id)}
                 >
@@ -1063,7 +1063,7 @@ export default function EditSpaceScreen() {
                     style={[
                       styles.selectableTag,
                       { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                      isSelected && { backgroundColor: colors.info + '10', borderColor: colors.info },
+                      isSelected && { backgroundColor: withOpacity(colors.info, OPACITY[10]), borderColor: colors.info },
                     ]}
                     onPress={() => toggleAccessibility(item.id)}
                   >
@@ -1157,7 +1157,7 @@ export default function EditSpaceScreen() {
                   style={[
                     styles.locationTypeCard,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => setVisibility(type.id)}
                   activeOpacity={0.7}
@@ -1420,7 +1420,7 @@ export default function EditSpaceScreen() {
               {/* Visibility badge */}
               <View style={[
                 styles.previewTagWithIcon,
-                { backgroundColor: visibility === 'PUBLIC' ? colors.success + '15' : colors.warning + '15' }
+                { backgroundColor: visibility === 'PUBLIC' ? withOpacity(colors.success, OPACITY[15]) : withOpacity(colors.warning, OPACITY[15]) }
               ]}>
                 {visibility === 'PUBLIC' ? (
                   <Eye size={14} color={colors.success} strokeWidth={2} />
@@ -1534,7 +1534,7 @@ export default function EditSpaceScreen() {
                 {selectedAmenities.map((amenityId) => {
                   const amenity = SPACE_AMENITY_DATA.find(a => a.id === amenityId);
                   return amenity ? (
-                    <View key={amenityId} style={[styles.previewSmallTag, { backgroundColor: colors.primary + '10' }]}>
+                    <View key={amenityId} style={[styles.previewSmallTag, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
                       <Text style={[styles.previewSmallTagText, { color: colors.primary }]}>{amenity.label}</Text>
                     </View>
                   ) : null;
@@ -1555,8 +1555,8 @@ export default function EditSpaceScreen() {
                     style={[
                       styles.availabilityPreviewCard,
                       {
-                        backgroundColor: dayAvail.isOpen ? colors.primary + '08' : colors.gray50,
-                        borderColor: dayAvail.isOpen ? colors.primary + '30' : colors.gray200,
+                        backgroundColor: dayAvail.isOpen ? withOpacity(colors.primary, OPACITY['08']) : colors.gray50,
+                        borderColor: dayAvail.isOpen ? withOpacity(colors.primary, OPACITY[30]) : colors.gray200,
                       },
                     ]}
                   >

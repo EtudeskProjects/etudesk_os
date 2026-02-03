@@ -11,6 +11,7 @@ import { SpaceProvider } from '../src/contexts/SpaceContext';
 import { OrganizationMemberProvider } from '../src/contexts/OrganizationMemberContext';
 import { AlertProvider } from '../src/contexts/AlertContext';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
+import { ToastProvider } from '../src/components/ui/Toast';
 import { useTheme } from '../src/hooks/useTheme';
 import { LIGHT_COLORS } from '../src/constants/theme';
 
@@ -65,7 +66,9 @@ export default function RootLayout() {
             <SpaceProvider>
               <OrganizationMemberProvider>
                 <AlertProvider>
-                  <RootLayoutNav />
+                  <ToastProvider>
+                    <RootLayoutNav />
+                  </ToastProvider>
                 </AlertProvider>
               </OrganizationMemberProvider>
             </SpaceProvider>

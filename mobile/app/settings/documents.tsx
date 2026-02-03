@@ -29,7 +29,7 @@ import {
   AlertCircle,
   X,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Button, PageLayout, EmptyState } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { API_CONFIG } from '../../src/constants/config';
@@ -344,7 +344,7 @@ export default function DocumentsScreen() {
 
             {/* Tags row: status + retry + date */}
             <View style={styles.tagsRow}>
-              <View style={[styles.tag, { backgroundColor: statusColor + '20', borderColor: statusColor }]}>
+              <View style={[styles.tag, { backgroundColor: withOpacity(statusColor, OPACITY[20]), borderColor: statusColor }]}>
                 {(doc.status === 'PENDING' || doc.status === 'PROCESSING') ? (
                   <ActivityIndicator size="small" color={statusColor} style={{ transform: [{ scale: 0.55 }] }} />
                 ) : (
@@ -356,7 +356,7 @@ export default function DocumentsScreen() {
               </View>
               {doc.status === 'FAILED' && (
                 <TouchableOpacity
-                  style={[styles.tag, { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}
+                  style={[styles.tag, { backgroundColor: withOpacity(colors.primary, OPACITY[20]), borderColor: colors.primary }]}
                   onPress={() => handleRetry(doc)}
                 >
                   <RotateCcw size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />

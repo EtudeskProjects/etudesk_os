@@ -35,7 +35,7 @@ import {
   Wand2,
   ClipboardList,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { Input, Button, Toggle } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
@@ -554,7 +554,7 @@ export default function EditCommunityScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleTag(tag.id)}
                   activeOpacity={0.7}
@@ -614,7 +614,7 @@ export default function EditCommunityScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleSector(sector.id)}
                   activeOpacity={0.7}
@@ -680,7 +680,7 @@ export default function EditCommunityScreen() {
                   style={[
                     styles.locationTypeCard,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => setCommunityType(type.id)}
                   activeOpacity={0.7}
@@ -862,7 +862,7 @@ export default function EditCommunityScreen() {
                   style={[
                     styles.locationTypeCard,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => setVisibility(type.id)}
                   activeOpacity={0.7}
@@ -1126,7 +1126,7 @@ export default function EditCommunityScreen() {
           <View>
             <Text style={[styles.statusLabel, { color: colors.gray600 }]}>Statut de la communauté</Text>
             <View style={styles.statusBadgeContainer}>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
+              <View style={[styles.statusBadge, { backgroundColor: withOpacity(getStatusColor(), OPACITY[20]) }]}>
                 <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
                 <Text style={[styles.statusBadgeText, { color: getStatusColor() }]}>
                   {COMMUNITY_STATUS_LABELS[status]}
@@ -1166,7 +1166,7 @@ export default function EditCommunityScreen() {
           <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{name || 'Sans nom'}</Text>
           <View style={styles.previewTags}>
             {communityType ? (
-              <View style={[styles.previewTag, { backgroundColor: colors.primary + '15' }]}>
+              <View style={[styles.previewTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.previewTagText, { color: colors.primary }]}>
                   {COMMUNITY_TYPE_LABELS[communityType]}
                 </Text>

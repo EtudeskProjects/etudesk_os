@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import * as Clipboard from 'expo-clipboard';
 import { Code, Copy, Check } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 
 interface CodeBlockProps {
   language: string;
@@ -73,7 +73,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
             color={colors.gray400}
             strokeWidth={ICON.strokeWidth}
           />
-          <View style={[styles.languageBadge, { backgroundColor: colors.primary + '30' }]}>
+          <View style={[styles.languageBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[30]) }]}>
             <Text style={[styles.languageText, { color: colors.primary }]}>
               {getLanguageLabel(language)}
             </Text>

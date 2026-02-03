@@ -27,7 +27,7 @@ import {
   FileText,
   Image as ImageIcon,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { formatDate, formatTime } from '../../utils/date';
 
@@ -181,7 +181,7 @@ export function ChatInput({
     <View style={[styles.container, { backgroundColor: colors.surface, borderTopColor: colors.gray200 }]}>
       {/* Datetime indicator */}
       {proposedDatetime && (
-        <View style={[styles.datetimeIndicator, { backgroundColor: colors.primary + '10' }]}>
+        <View style={[styles.datetimeIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
           <Calendar size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.datetimeIndicatorText, { color: colors.primary }]}>
             Proposition: {formatDate(proposedDatetime.toISOString())} à {formatTime(proposedDatetime.toISOString())}
@@ -278,7 +278,7 @@ export function ChatInput({
           <TouchableOpacity
             style={[
               styles.iconButton,
-              { backgroundColor: showDatePicker || proposedDatetime ? colors.primary + '15' : colors.gray100 },
+              { backgroundColor: showDatePicker || proposedDatetime ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 },
             ]}
             onPress={handleToggleDatePicker}
             disabled={disabled}

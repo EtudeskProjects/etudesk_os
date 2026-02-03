@@ -22,7 +22,7 @@ import {
   Check,
   Send,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useOrganizationMembers } from '../../../src/contexts/OrganizationMemberContext';
 import {
@@ -156,7 +156,7 @@ export default function InviteMemberScreen() {
                   onPress={() => setSelectedRole(role)}
                   activeOpacity={0.7}
                 >
-                  <View style={[styles.roleOptionIcon, { backgroundColor: rColor + '15' }]}>
+                  <View style={[styles.roleOptionIcon, { backgroundColor: withOpacity(rColor, OPACITY[15]) }]}>
                     <RIcon size={ICON.size.sm} color={rColor} strokeWidth={ICON.strokeWidth} />
                   </View>
                   <View style={styles.roleOptionInfo}>

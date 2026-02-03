@@ -23,7 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useOrganizationMembers } from '../../../src/contexts/OrganizationMemberContext';
 import {
@@ -215,7 +215,7 @@ export default function MemberDetailScreen() {
           {member.title && (
             <Text style={[styles.memberTitle, { color: colors.textSecondary }]}>{member.title}</Text>
           )}
-          <View style={[styles.roleBadge, { backgroundColor: roleColor + '15' }]}>
+          <View style={[styles.roleBadge, { backgroundColor: withOpacity(roleColor, OPACITY[15]) }]}>
             <RoleIcon size={14} color={roleColor} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.roleText, { color: roleColor }]}>
               {ORGANIZATION_ROLE_LABELS[member.role]}
@@ -259,7 +259,7 @@ export default function MemberDetailScreen() {
                     onPress={() => handleRoleChange(role)}
                     activeOpacity={0.7}
                   >
-                    <View style={[styles.roleOptionIcon, { backgroundColor: rColor + '15' }]}>
+                    <View style={[styles.roleOptionIcon, { backgroundColor: withOpacity(rColor, OPACITY[15]) }]}>
                       <RIcon size={ICON.size.sm} color={rColor} strokeWidth={ICON.strokeWidth} />
                     </View>
                     <View style={styles.roleOptionInfo}>

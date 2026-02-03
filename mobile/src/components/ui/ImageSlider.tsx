@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Briefcase } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { ICON, SPACING, BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
+import { ICON, SPACING, BORDER, LAYOUT, OPACITY, COMPONENT, withOpacity } from '../../constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -25,7 +25,7 @@ interface ImageSliderProps {
 
 export const ImageSlider: React.FC<ImageSliderProps> = ({
   images,
-  height = 250,
+  height = COMPONENT.imageSlider.defaultHeight,
   showPagination = true,
   borderRadius = 0,
   onImagePress,

@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Calendar, MapPin, Clock, Save, SquarePen, X } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Button, Input, Toggle } from '../../../../src/components/ui';
 import { communityActivityService } from '../../../../src/services';
@@ -300,7 +300,7 @@ export default function CreateEventScreen() {
             </View>
 
             {!isEditMode && hasDraft && (
-                <View style={[styles.draftBanner, { backgroundColor: colors.primary + '15' }]}>
+                <View style={[styles.draftBanner, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                     <SquarePen size={14} color={colors.primary} />
                     <Text style={[styles.draftBannerText, { color: colors.primary }]}>
                         Modifications non publiées

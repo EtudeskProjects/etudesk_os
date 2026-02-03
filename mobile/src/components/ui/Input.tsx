@@ -19,6 +19,10 @@ interface InputProps extends TextInputProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   containerStyle?: ViewStyle;
+  /** Accessibility label - defaults to label if not provided */
+  accessibilityLabel?: string;
+  /** Accessibility hint */
+  accessibilityHint?: string;
 }
 
 export function Input({
@@ -30,6 +34,8 @@ export function Input({
   containerStyle,
   secureTextEntry,
   multiline,
+  accessibilityLabel,
+  accessibilityHint,
   ...props
 }: InputProps) {
   const { colors } = useTheme();
@@ -72,6 +78,12 @@ export function Input({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           secureTextEntry={isPassword && !isPasswordVisible}
+          accessible={true}
+          accessibilityLabel={accessibilityLabel || label}
+          accessibilityHint={accessibilityHint || (error ? `Erreur: ${error}` : hint)}
+          accessibilityState={{
+            disabled: props.editable === false,
+          }}
           {...props}
         />
 
@@ -79,6 +91,11 @@ export function Input({
           <TouchableOpacity
             style={styles.iconRight}
             onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={isPasswordVisible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+            accessibilityHint="Active pour basculer la visibilité du mot de passe"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             {isPasswordVisible ? (
               <EyeOff

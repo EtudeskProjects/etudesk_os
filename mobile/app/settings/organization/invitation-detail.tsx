@@ -21,7 +21,7 @@ import {
   X,
   UserPlus,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useOrganizationMembers } from '../../../src/contexts/OrganizationMemberContext';
 import {
@@ -156,13 +156,13 @@ export default function InvitationDetailScreen() {
       >
         {/* Invitation Card */}
         <View style={[styles.invitationCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-          <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
+          <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
             <UserPlus size={ICON.size.xl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           </View>
 
           <Text style={[styles.email, { color: colors.textPrimary }]}>{invitation.email}</Text>
 
-          <View style={[styles.roleBadge, { backgroundColor: roleColor + '15' }]}>
+          <View style={[styles.roleBadge, { backgroundColor: withOpacity(roleColor, OPACITY[15]) }]}>
             <RoleIcon size={14} color={roleColor} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.roleText, { color: roleColor }]}>
               {ORGANIZATION_ROLE_LABELS[invitation.role]}
@@ -172,7 +172,7 @@ export default function InvitationDetailScreen() {
           {/* Status */}
           <View style={[
             styles.statusBadge,
-            { backgroundColor: isExpired ? colors.error + '15' : colors.warning + '15' },
+            { backgroundColor: isExpired ? withOpacity(colors.error, OPACITY[15]) : withOpacity(colors.warning, OPACITY[15]) },
           ]}>
             <Clock size={14} color={isExpired ? colors.error : colors.warning} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.statusText, { color: isExpired ? colors.error : colors.warning }]}>

@@ -25,7 +25,7 @@ import {
   MapPin,
   LogOut,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { FooterNav } from '../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../src/components/chat';
@@ -38,10 +38,10 @@ import type { MembershipMessage } from '../../../src/services/communityMembershi
 
 // Status configuration - returns config based on theme colors
 const getStatusConfig = (colors: any): Record<MemberStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
-  PENDING: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15', label: 'En attente' },
-  ACTIVE: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Active' },
-  REJECTED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Refusée' },
-  SUSPENDED: { color: colors.gray500, icon: XCircle, bgColor: colors.gray500 + '15', label: 'Suspendu' },
+  PENDING: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]), label: 'En attente' },
+  ACTIVE: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]), label: 'Active' },
+  REJECTED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]), label: 'Refusée' },
+  SUSPENDED: { color: colors.gray500, icon: XCircle, bgColor: withOpacity(colors.gray500, OPACITY[15]), label: 'Suspendu' },
 });
 
 interface MembershipWithDetails {
@@ -313,7 +313,7 @@ export default function MyCommunityDetailsScreen() {
 
         {/* Rejection reason if rejected */}
         {membership.status === 'REJECTED' && membership.rejection_reason && (
-          <View style={[styles.section, { backgroundColor: colors.error + '10', borderColor: colors.error + '30' }]}>
+          <View style={[styles.section, { backgroundColor: withOpacity(colors.error, OPACITY[10]), borderColor: withOpacity(colors.error, OPACITY[30]) }]}>
             <Text style={[styles.sectionTitle, { color: colors.error }]}>Raison du refus</Text>
             <Text style={[styles.rejectionReason, { color: colors.textPrimary }]}>
               {membership.rejection_reason}

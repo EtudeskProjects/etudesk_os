@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Sparkles, Search, Users, MessageCircle, ArrowRight } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Button } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
@@ -41,7 +41,7 @@ export default function WelcomeScreen() {
       <View style={styles.content}>
         {/* Header with celebration */}
         <View style={styles.header}>
-          <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
+          <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
             <Sparkles
               size={ICON.size.xl * 1.5}
               color={colors.primary}
@@ -64,7 +64,7 @@ export default function WelcomeScreen() {
             const FeatureIcon = feature.icon;
             return (
               <View key={index} style={styles.featureItem}>
-                <View style={[styles.featureIconContainer, { backgroundColor: colors.primary + '10' }]}>
+                <View style={[styles.featureIconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
                   <FeatureIcon
                     size={ICON.size.md}
                     color={colors.primary}

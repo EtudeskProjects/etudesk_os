@@ -5,7 +5,7 @@ import {
   Animated,
   StyleSheet,
 } from 'react-native';
-import { BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
+import { BORDER, LAYOUT, OPACITY, COMPONENT, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 interface ToggleProps {
@@ -14,25 +14,25 @@ interface ToggleProps {
   disabled?: boolean;
   color?: string; // Custom color for the toggle (defaults to primary)
   size?: 'normal' | 'small'; // Size variant
+  /** Accessibility label describing the toggle */
+  accessibilityLabel?: string;
+  /** Accessibility hint describing what happens when toggled */
+  accessibilityHint?: string;
 }
 
-const SIZES = {
-  normal: {
-    trackWidth: 48,
-    trackHeight: 8,
-    thumbSize: 28,
-  },
-  small: {
-    trackWidth: 36,
-    trackHeight: 6,
-    thumbSize: 20,
-  },
-};
-
-export function Toggle({ value, onValueChange, disabled = false, color, size = 'normal' }: ToggleProps) {
+export function Toggle({
+  value,
+  onValueChange,
+  disabled = false,
+  color,
+  size = 'normal',
+  accessibilityLabel,
+  accessibilityHint,
+}: ToggleProps) {
   const { colors } = useTheme();
   const activeColor = color || colors.primary;
-  const { trackWidth, trackHeight, thumbSize } = SIZES[size];
+  // Use design system tokens instead of hardcoded values
+  const { trackWidth, trackHeight, thumbSize } = COMPONENT.toggle[size];
 
   const translateX = useRef(new Animated.Value(value ? trackWidth - thumbSize : 0)).current;
 
@@ -57,6 +57,14 @@ export function Toggle({ value, onValueChange, disabled = false, color, size = '
       onPress={handlePress}
       disabled={disabled}
       style={[{ width: trackWidth, height: thumbSize, justifyContent: 'center' }, disabled && styles.disabled]}
+      accessible={true}
+      accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint || (value ? 'Désactiver' : 'Activer')}
+      accessibilityState={{
+        checked: value,
+        disabled: disabled,
+      }}
     >
       {/* Track (thin background) */}
       <View

@@ -18,7 +18,7 @@ import {
     ChevronRight,
     X,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -151,14 +151,14 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, o
                                     }}
                                     activeOpacity={0.7}
                                 >
-                                    <View style={[styles.modalOptionIconLarge, { backgroundColor: option.color + '15' }]}>
+                                    <View style={[styles.modalOptionIconLarge, { backgroundColor: withOpacity(option.color, OPACITY[15]) }]}>
                                         <IconComponent size={28} color={option.color} strokeWidth={ICON.strokeWidth} />
                                     </View>
                                     <View style={styles.modalOptionContent}>
                                         <Text style={[styles.modalOptionTitle, { color: colors.textPrimary }]}>{option.label}</Text>
                                         <Text style={[styles.modalOptionDescription, { color: colors.textSecondary }]}>{option.description}</Text>
                                     </View>
-                                    <View style={[styles.modalOptionArrow, { backgroundColor: option.color + '10' }]}>
+                                    <View style={[styles.modalOptionArrow, { backgroundColor: withOpacity(option.color, OPACITY[10]) }]}>
                                         <ChevronRight size={ICON.size.sm} color={option.color} strokeWidth={ICON.strokeWidth} />
                                     </View>
                                 </TouchableOpacity>

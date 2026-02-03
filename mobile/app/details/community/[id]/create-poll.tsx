@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Plus, Trash2, Calendar, Clock, Save, SquarePen } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Button, Toggle } from '../../../../src/components/ui';
 import { communityActivityService } from '../../../../src/services';
@@ -285,7 +285,7 @@ export default function CreatePollScreen() {
             </View>
 
             {!isEditMode && hasDraft && (
-                <View style={[styles.draftBanner, { backgroundColor: colors.primary + '15' }]}>
+                <View style={[styles.draftBanner, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                     <SquarePen size={14} color={colors.primary} />
                     <Text style={[styles.draftBannerText, { color: colors.primary }]}>
                         Modifications non publiées

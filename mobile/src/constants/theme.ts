@@ -571,6 +571,46 @@ export const COMPONENT = {
     },
   },
 
+  // Badge dimensions (for TabBar, notifications, etc.)
+  badgeDimensions: {
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    fontSize: 11,
+  },
+
+  // Toggle configurations
+  toggle: {
+    normal: {
+      trackWidth: 48,
+      trackHeight: 8,
+      thumbSize: 28,
+    },
+    small: {
+      trackWidth: 36,
+      trackHeight: 6,
+      thumbSize: 20,
+    },
+  },
+
+  // TabBar configurations
+  tabBar: {
+    indicatorHeight: 2,
+    indicatorBorderRadius: 1,
+  },
+
+  // Step indicator configurations
+  stepIndicator: {
+    size: 32,
+    fontSize: 14,
+  },
+
+  // Image slider
+  imageSlider: {
+    defaultHeight: 200,
+  },
+
   // Card configurations
   card: {
     padding: SPACING.md,
@@ -583,6 +623,35 @@ export const COMPONENT = {
     padding: SPACING.md,
     borderRadius: BORDER.radius.sm,
     borderWidth: BORDER.width.thin,
+  },
+
+  // Touch targets (accessibility)
+  touchTarget: {
+    minSize: 44,  // WCAG minimum
+    recommended: 48,
+  },
+} as const;
+
+// ═══════════════════════════════════════════════════════════════
+// MATCH CATEGORY COLORS (for application matching scores)
+// ═══════════════════════════════════════════════════════════════
+
+export const MATCH_COLORS = {
+  excellent: {
+    color: '#059669',
+    bgColor: 'rgba(5, 150, 105, 0.08)',
+  },
+  good: {
+    color: '#2563eb',
+    bgColor: 'rgba(37, 99, 235, 0.08)',
+  },
+  average: {
+    color: '#d97706',
+    bgColor: 'rgba(217, 119, 6, 0.08)',
+  },
+  low: {
+    color: '#dc2626',
+    bgColor: 'rgba(220, 38, 38, 0.08)',
   },
 } as const;
 

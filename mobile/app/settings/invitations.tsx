@@ -30,7 +30,7 @@ import {
   Briefcase,
   MapPin,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { PageLayout, EmptyState } from '../../src/components/ui';
 import { invitationService, ReceivedInvitation } from '../../src/services/invitationService';
@@ -381,7 +381,7 @@ export default function InvitationsScreen() {
               style={styles.cardLogo}
             />
           ) : (
-            <View style={[styles.cardLogoPlaceholder, { backgroundColor: colors.primary + '15' }]}>
+            <View style={[styles.cardLogoPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
               <Building2 size={24} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             </View>
           )}
@@ -395,7 +395,7 @@ export default function InvitationsScreen() {
               </Text>
             )}
           </View>
-          <View style={[styles.typeBadge, { backgroundColor: colors.info + '15' }]}>
+          <View style={[styles.typeBadge, { backgroundColor: withOpacity(colors.info, OPACITY[15]) }]}>
             <Building2 size={12} color={colors.info} />
             <Text style={[styles.typeBadgeText, { color: colors.info }]}>Organisation</Text>
           </View>
@@ -473,7 +473,7 @@ export default function InvitationsScreen() {
                 style={styles.cardLogo}
               />
             ) : (
-              <View style={[styles.cardLogoPlaceholder, { backgroundColor: colors.success + '15' }]}>
+              <View style={[styles.cardLogoPlaceholder, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
                 <Users size={24} color={colors.success} strokeWidth={ICON.strokeWidth} />
               </View>
             )}
@@ -487,7 +487,7 @@ export default function InvitationsScreen() {
                 </Text>
               )}
             </View>
-            <View style={[styles.typeBadge, { backgroundColor: colors.success + '15' }]}>
+            <View style={[styles.typeBadge, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
               <Users size={12} color={colors.success} />
               <Text style={[styles.typeBadgeText, { color: colors.success }]}>Communaute</Text>
             </View>
@@ -596,7 +596,7 @@ export default function InvitationsScreen() {
                 style={styles.cardLogo}
               />
             ) : (
-              <View style={[styles.cardLogoPlaceholder, { backgroundColor: colors.warning + '15' }]}>
+              <View style={[styles.cardLogoPlaceholder, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
                 <Briefcase size={24} color={colors.warning} strokeWidth={ICON.strokeWidth} />
               </View>
             )}
@@ -610,7 +610,7 @@ export default function InvitationsScreen() {
                 </Text>
               )}
             </View>
-            <View style={[styles.typeBadge, { backgroundColor: colors.warning + '15' }]}>
+            <View style={[styles.typeBadge, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
               <Briefcase size={12} color={colors.warning} />
               <Text style={[styles.typeBadgeText, { color: colors.warning }]}>Opportunite</Text>
             </View>
@@ -706,7 +706,7 @@ export default function InvitationsScreen() {
                 style={styles.cardLogo}
               />
             ) : (
-              <View style={[styles.cardLogoPlaceholder, { backgroundColor: colors.info + '15' }]}>
+              <View style={[styles.cardLogoPlaceholder, { backgroundColor: withOpacity(colors.info, OPACITY[15]) }]}>
                 <MapPin size={24} color={colors.info} strokeWidth={ICON.strokeWidth} />
               </View>
             )}
@@ -720,7 +720,7 @@ export default function InvitationsScreen() {
                 </Text>
               )}
             </View>
-            <View style={[styles.typeBadge, { backgroundColor: colors.info + '15' }]}>
+            <View style={[styles.typeBadge, { backgroundColor: withOpacity(colors.info, OPACITY[15]) }]}>
               <MapPin size={12} color={colors.info} />
               <Text style={[styles.typeBadgeText, { color: colors.info }]}>Espace</Text>
             </View>

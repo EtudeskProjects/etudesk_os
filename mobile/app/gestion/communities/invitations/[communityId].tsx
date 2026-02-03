@@ -31,7 +31,7 @@ import {
   Users,
   Search,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Button } from '../../../../src/components/ui';
 import {
@@ -350,7 +350,7 @@ export default function CommunityInvitationsScreen() {
                       </Text>
                     )}
                   </View>
-                  <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
+                  <View style={[styles.statusBadge, { backgroundColor: withOpacity(statusColor, OPACITY[15]) }]}>
                     <Text style={[styles.statusText, { color: statusColor }]}>
                       {getStatusLabel(invitation.status)}
                     </Text>

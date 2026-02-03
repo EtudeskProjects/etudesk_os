@@ -19,7 +19,7 @@ import {
   AlertCircle,
   DollarSign,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { PageLayout, EmptyState } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { spaceService, spaceBookingService, Space, SpaceBookingDetails, BookingStatus } from '../../../../src/services';
@@ -27,11 +27,11 @@ import { formatRelativeTime } from '../../../../src/utils/date';
 
 // Status configuration
 const getStatusConfig = (colors: any): Record<BookingStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
-  PENDING: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15', label: 'En attente' },
-  CONFIRMED: { color: colors.info, icon: CheckCircle2, bgColor: colors.info + '15', label: 'Confirmée' },
-  COMPLETED: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Terminée' },
-  CANCELLED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Annulée' },
-  NO_SHOW: { color: colors.gray500, icon: AlertCircle, bgColor: colors.gray500 + '15', label: 'Absent' },
+  PENDING: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]), label: 'En attente' },
+  CONFIRMED: { color: colors.info, icon: CheckCircle2, bgColor: withOpacity(colors.info, OPACITY[15]), label: 'Confirmée' },
+  COMPLETED: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]), label: 'Terminée' },
+  CANCELLED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]), label: 'Annulée' },
+  NO_SHOW: { color: colors.gray500, icon: AlertCircle, bgColor: withOpacity(colors.gray500, OPACITY[15]), label: 'Absent' },
 });
 
 type FilterStatus = 'all' | BookingStatus;
@@ -195,7 +195,7 @@ export default function SpaceBookingsScreen() {
           {talent?.avatar_url || talent?.profile_picture_url ? (
             <Image source={{ uri: talent.avatar_url || talent.profile_picture_url }} style={styles.avatar} />
           ) : (
-            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+            <View style={[styles.avatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
               <Text style={[styles.avatarText, { color: colors.primary }]}>
                 {getInitials(talentName)}
               </Text>
@@ -248,14 +248,14 @@ export default function SpaceBookingsScreen() {
         {item.status === 'PENDING' && (
           <View style={styles.quickActions}>
             <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: colors.success + '15' }]}
+              style={[styles.quickAction, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}
               onPress={() => handleConfirmBooking(item.id)}
             >
               <CheckCircle2 size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.quickActionText, { color: colors.success }]}>Confirmer</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: colors.error + '15' }]}
+              style={[styles.quickAction, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}
               onPress={() => handleCancelBooking(item.id)}
             >
               <XCircle size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />

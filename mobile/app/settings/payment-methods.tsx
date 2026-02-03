@@ -18,7 +18,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Button, Input } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { paymentService, PaymentMethod, PaymentProvider, PAYMENT_PROVIDERS } from '../../src/services/paymentService';
@@ -206,7 +206,7 @@ export default function PaymentMethodsScreen() {
 
       {/* Form-level error */}
       {formError && (
-        <View style={[styles.errorBanner, { backgroundColor: colors.error + '15' }]}>
+        <View style={[styles.errorBanner, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}>
           <Text style={[styles.errorBannerText, { color: colors.error }]}>{formError}</Text>
         </View>
       )}
@@ -219,7 +219,7 @@ export default function PaymentMethodsScreen() {
             style={[
               styles.providerCard,
               { borderColor: colors.gray200, backgroundColor: colors.gray50 },
-              selectedProvider === provider.id && { borderColor: provider.color, backgroundColor: provider.color + '15' },
+              selectedProvider === provider.id && { borderColor: provider.color, backgroundColor: withOpacity(provider.color, OPACITY[15]) },
             ]}
             onPress={() => handleSelectProvider(provider.id)}
             disabled={isSubmitting}
@@ -312,7 +312,7 @@ export default function PaymentMethodsScreen() {
         }
       >
         {/* Info */}
-        <View style={[styles.infoCard, { backgroundColor: colors.primary + '10' }]}>
+        <View style={[styles.infoCard, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
           <Text style={[styles.infoText, { color: colors.primary }]}>
             Configure tes moyens de paiement pour recevoir tes revenus de mentorat.
           </Text>
@@ -349,7 +349,7 @@ export default function PaymentMethodsScreen() {
                       </Text>
                     </View>
                     {method.isDefault && (
-                      <View style={[styles.defaultBadge, { backgroundColor: colors.success + '20' }]}>
+                      <View style={[styles.defaultBadge, { backgroundColor: withOpacity(colors.success, OPACITY[20]) }]}>
                         <Text style={[styles.defaultBadgeText, { color: colors.success }]}>Par défaut</Text>
                       </View>
                     )}

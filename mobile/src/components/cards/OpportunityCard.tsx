@@ -17,7 +17,7 @@ import {
     Trash2,
     Briefcase,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { formatRelativeTime, formatDeadline } from '../../utils/date';
 import { formatCompactNumber } from '../../utils/number';
@@ -109,7 +109,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
         <TouchableOpacity
             style={[
                 styles.container,
-                { backgroundColor: colors.primary + '08', borderColor: colors.primary + '15' },
+                { backgroundColor: withOpacity(colors.primary, OPACITY['08']), borderColor: withOpacity(colors.primary, OPACITY[15]) },
                 isLast && styles.lastItem,
             ]}
             activeOpacity={0.8}

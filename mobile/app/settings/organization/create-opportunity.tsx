@@ -40,9 +40,10 @@ import {
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { Input, Button, Toggle, StepIndicator } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
+import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
 import { SECTOR_DATA } from '../../../src/constants/talent';
 import {
@@ -108,6 +109,39 @@ interface ImageItem {
   uri: string;
 }
 
+// Form values interface
+interface OpportunityFormValues {
+  // Info
+  title: string;
+  opportunityType: OpportunityType | null;
+  summary: string;
+  requirements: string;
+  niceToHave: string;
+  selectedSectors: string[];
+  // Lieu
+  locationType: LocationType | null;
+  country: string;
+  region: string;
+  city: string;
+  // Conditions
+  visibility: Visibility;
+  contractType: ContractType | null;
+  workRhythm: WorkRhythm | null;
+  compensationMin: string;
+  compensationMax: string;
+  currency: string;
+  compensationFrequency: CompensationFrequency | null;
+  duration: string;
+  deadline: Date | null;
+  startDate: Date | null;
+  // Media
+  images: ImageItem[];
+  attachments: Attachment[];
+  // Application
+  cvRequired: boolean;
+  applicationQuestions: ApplicationQuestion[];
+}
+
 // Icons for location types
 const LOCATION_TYPE_ICONS: Record<LocationType, React.ComponentType<any>> = {
   ON_SITE: Building2,
@@ -119,54 +153,85 @@ export default function CreateOpportunityScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { selectedOrgId, selectedOrg } = useSpace();
+
+  // UI state (not form data)
   const [currentStep, setCurrentStep] = useState<Step>('info');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // Form state - Info
-  const [title, setTitle] = useState('');
-  const [opportunityType, setOpportunityType] = useState<OpportunityType | null>(null);
-  const [summary, setSummary] = useState('');
-  const [requirements, setRequirements] = useState('');
-  const [niceToHave, setNiceToHave] = useState('');
-  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
-
-  // Form state - Lieu
-  const [locationType, setLocationType] = useState<LocationType | null>(null);
-  const [country, setCountry] = useState('');
-  const [region, setRegion] = useState('');
-  const [city, setCity] = useState('');
   const [orgLocationLoaded, setOrgLocationLoaded] = useState(false);
-
-  // Refs for auto-scroll to selected country
-  const countryScrollRef = useRef<ScrollView>(null);
-  const COUNTRY_CHIP_WIDTH = 80; // Approximate width of each country chip
-
-  // Form state - Conditions
-  const [visibility, setVisibility] = useState<Visibility>('PUBLIC');
-  const [contractType, setContractType] = useState<ContractType | null>(null);
-  const [workRhythm, setWorkRhythm] = useState<WorkRhythm | null>(null);
-  const [compensationMin, setCompensationMin] = useState('');
-  const [compensationMax, setCompensationMax] = useState('');
-  const [currency, setCurrency] = useState('XOF');
-  const [compensationFrequency, setCompensationFrequency] = useState<CompensationFrequency | null>(null);
-  const [duration, setDuration] = useState('');
-  const [deadline, setDeadline] = useState<Date | null>(null);
-  const [startDate, setStartDate] = useState<Date | null>(null);
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
 
-  // Form state - Media
-  const [images, setImages] = useState<ImageItem[]>([]);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  // Form hook with all form fields
+  const form = useForm<OpportunityFormValues>({
+    fields: {
+      // Info
+      title: { initialValue: '' },
+      opportunityType: { initialValue: null },
+      summary: { initialValue: '' },
+      requirements: { initialValue: '' },
+      niceToHave: { initialValue: '' },
+      selectedSectors: { initialValue: [] },
+      // Lieu
+      locationType: { initialValue: null },
+      country: { initialValue: '' },
+      region: { initialValue: '' },
+      city: { initialValue: '' },
+      // Conditions
+      visibility: { initialValue: 'PUBLIC' },
+      contractType: { initialValue: null },
+      workRhythm: { initialValue: null },
+      compensationMin: { initialValue: '' },
+      compensationMax: { initialValue: '' },
+      currency: { initialValue: 'XOF' },
+      compensationFrequency: { initialValue: null },
+      duration: { initialValue: '' },
+      deadline: { initialValue: null },
+      startDate: { initialValue: null },
+      // Media
+      images: { initialValue: [] },
+      attachments: { initialValue: [] },
+      // Application
+      cvRequired: { initialValue: false },
+      applicationQuestions: { initialValue: [] },
+    },
+    onSubmit: async (values) => {
+      // Submit logic handled by handlePublish
+    },
+  });
 
-  // Form state - Candidature (Application settings)
-  const [cvRequired, setCvRequired] = useState(false);
-  const [applicationQuestions, setApplicationQuestions] = useState<ApplicationQuestion[]>([]);
+  // Convenience getters for all form values
+  const title = form.getValue('title');
+  const opportunityType = form.getValue('opportunityType');
+  const summary = form.getValue('summary');
+  const requirements = form.getValue('requirements');
+  const niceToHave = form.getValue('niceToHave');
+  const selectedSectors = form.getValue('selectedSectors');
+  const locationType = form.getValue('locationType');
+  const country = form.getValue('country');
+  const region = form.getValue('region');
+  const city = form.getValue('city');
+  const visibility = form.getValue('visibility');
+  const contractType = form.getValue('contractType');
+  const workRhythm = form.getValue('workRhythm');
+  const compensationMin = form.getValue('compensationMin');
+  const compensationMax = form.getValue('compensationMax');
+  const currency = form.getValue('currency');
+  const compensationFrequency = form.getValue('compensationFrequency');
+  const duration = form.getValue('duration');
+  const deadline = form.getValue('deadline');
+  const startDate = form.getValue('startDate');
+  const images = form.getValue('images');
+  const attachments = form.getValue('attachments');
+  const cvRequired = form.getValue('cvRequired');
+  const applicationQuestions = form.getValue('applicationQuestions');
 
   // Get regions and cities dynamically
   const availableRegions = country ? getRegionsByCountry(country) : [];
   const availableCities = country && region ? getCommunesByRegion(country, region) : [];
+
+  // Refs for auto-scroll to selected country
+  const countryScrollRef = useRef<ScrollView>(null);
+  const COUNTRY_CHIP_WIDTH = 80; // Approximate width of each country chip
 
   // Auto-scroll to selected country
   useEffect(() => {
@@ -191,14 +256,16 @@ export default function CreateOpportunityScreen() {
           const response = await organizationService.get(selectedOrgId);
           const org = response.data;
           if (org) {
-            // Set default values from organization
-            if (org.headquarters_country) setCountry(org.headquarters_country);
-            if (org.headquarters_region) setRegion(org.headquarters_region);
-            if (org.headquarters_city) setCity(org.headquarters_city);
+            // Set default values from organization using setValues
+            form.setValues({
+              country: org.headquarters_country || '',
+              region: org.headquarters_region || '',
+              city: org.headquarters_city || '',
+            });
           }
         } catch (error) {
           // Fallback to CI if org not found
-          setCountry('CI');
+          form.setValue('country', 'CI');
         }
         setOrgLocationLoaded(true);
       }
@@ -220,7 +287,7 @@ export default function CreateOpportunityScreen() {
           id: Date.now().toString(),
           uri: image.uri,
         };
-        setImages([...images, newImage]);
+        form.setValue('images', [...images, newImage]);
       }
     } catch (error) {
       Alert.alert('Erreur', 'Une erreur est survenue lors de la sélection de l\'image.');
@@ -228,7 +295,7 @@ export default function CreateOpportunityScreen() {
   };
 
   const removeImage = (id: string) => {
-    setImages(images.filter((img) => img.id !== id));
+    form.setValue('images', images.filter((img) => img.id !== id));
   };
 
   const pickDocument = async () => {
@@ -259,7 +326,7 @@ export default function CreateOpportunityScreen() {
           type: doc.mimeType || 'application/pdf',
           size: fileSize,
         };
-        setAttachments([...attachments, newAttachment]);
+        form.setValue('attachments', [...attachments, newAttachment]);
       }
     } catch (error) {
       Alert.alert('Erreur', 'Une erreur est survenue lors de la sélection du document.');
@@ -267,7 +334,7 @@ export default function CreateOpportunityScreen() {
   };
 
   const removeAttachment = (id: string) => {
-    setAttachments(attachments.filter((a) => a.id !== id));
+    form.setValue('attachments', attachments.filter((a) => a.id !== id));
   };
 
   const isRemoteUrl = (uri: string): boolean => {
@@ -340,25 +407,25 @@ export default function CreateOpportunityScreen() {
       required: false,
       max_length: MAX_QUESTION_LENGTH,
     };
-    setApplicationQuestions([...applicationQuestions, newQuestion]);
+    form.setValue('applicationQuestions', [...applicationQuestions, newQuestion]);
   };
 
   const updateQuestion = (id: string, updates: Partial<ApplicationQuestion>) => {
-    setApplicationQuestions(applicationQuestions.map((q) =>
+    form.setValue('applicationQuestions', applicationQuestions.map((q) =>
       q.id === id ? { ...q, ...updates } : q
     ));
   };
 
   const removeQuestion = (id: string) => {
-    setApplicationQuestions(applicationQuestions.filter((q) => q.id !== id));
+    form.setValue('applicationQuestions', applicationQuestions.filter((q) => q.id !== id));
   };
 
   // Handle sector selection (multi-select with max 5)
   const toggleSector = (sectorId: string) => {
     if (selectedSectors.includes(sectorId)) {
-      setSelectedSectors(selectedSectors.filter((s) => s !== sectorId));
+      form.setValue('selectedSectors', selectedSectors.filter((s) => s !== sectorId));
     } else if (selectedSectors.length < MAX_SECTORS) {
-      setSelectedSectors([...selectedSectors, sectorId]);
+      form.setValue('selectedSectors', [...selectedSectors, sectorId]);
     } else {
       Alert.alert('Limite atteinte', `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.`);
     }
@@ -382,39 +449,42 @@ export default function CreateOpportunityScreen() {
       if (response.success && response.data) {
         const data = response.data;
 
-        // Apply generated data to form fields
-        // Title - apply suggested title
-        if (data.suggested_title) setTitle(data.suggested_title);
+        // Apply generated data to form fields using setValues for batch update
+        const updates: Partial<OpportunityFormValues> = {};
 
-        if (data.summary) setSummary(data.summary);
-        if (data.requirements) setRequirements(data.requirements);
-        if (data.nice_to_have) setNiceToHave(data.nice_to_have);
-        if (data.contract_type) setContractType(data.contract_type as ContractType);
-        if (data.work_rhythm) setWorkRhythm(data.work_rhythm as WorkRhythm);
+        // Title - apply suggested title
+        if (data.suggested_title) updates.title = data.suggested_title;
+        if (data.summary) updates.summary = data.summary;
+        if (data.requirements) updates.requirements = data.requirements;
+        if (data.nice_to_have) updates.niceToHave = data.nice_to_have;
+        if (data.contract_type) updates.contractType = data.contract_type as ContractType;
+        if (data.work_rhythm) updates.workRhythm = data.work_rhythm as WorkRhythm;
 
         // Sectors - apply 2-5 sectors
         if (data.sectors && data.sectors.length > 0) {
-          setSelectedSectors(data.sectors.slice(0, MAX_SECTORS));
+          updates.selectedSectors = data.sectors.slice(0, MAX_SECTORS);
         }
 
-        if (data.compensation_min) setCompensationMin(Math.floor(data.compensation_min).toString());
-        if (data.compensation_max) setCompensationMax(Math.floor(data.compensation_max).toString());
-        if (data.currency) setCurrency(data.currency);
-        if (data.compensation_frequency) setCompensationFrequency(data.compensation_frequency as CompensationFrequency);
-        if (data.location_type) setLocationType(data.location_type as LocationType);
-        if (data.duration) setDuration(data.duration);
+        if (data.compensation_min) updates.compensationMin = Math.floor(data.compensation_min).toString();
+        if (data.compensation_max) updates.compensationMax = Math.floor(data.compensation_max).toString();
+        if (data.currency) updates.currency = data.currency;
+        if (data.compensation_frequency) updates.compensationFrequency = data.compensation_frequency as CompensationFrequency;
+        if (data.location_type) updates.locationType = data.location_type as LocationType;
+        if (data.duration) updates.duration = data.duration;
 
         // Deadline - calculate date from deadline_days
         if (data.deadline_days && data.deadline_days > 0) {
           const deadlineDate = new Date();
           deadlineDate.setDate(deadlineDate.getDate() + data.deadline_days);
-          setDeadline(deadlineDate);
+          updates.deadline = deadlineDate;
         }
 
-        if (data.cv_required !== undefined) setCvRequired(data.cv_required);
+        if (data.cv_required !== undefined) updates.cvRequired = data.cv_required;
         if (data.application_questions && data.application_questions.length > 0) {
-          setApplicationQuestions(data.application_questions.slice(0, MAX_QUESTIONS));
+          updates.applicationQuestions = data.application_questions.slice(0, MAX_QUESTIONS);
         }
+
+        form.setValues(updates);
       }
     } catch (error: any) {
       console.error('Error generating opportunity:', error);
@@ -482,16 +552,13 @@ export default function CreateOpportunityScreen() {
   });
 
   const handleSaveDraft = async () => {
-    setIsSubmitting(true);
     try {
       const imageUrls = await buildImagesPayload();
       if (imageUrls === null) {
-        setIsSubmitting(false);
         return;
       }
       const attachmentPayload = await buildAttachmentsPayload();
       if (attachmentPayload === null) {
-        setIsSubmitting(false);
         return;
       }
       const data = buildOpportunityData(imageUrls, attachmentPayload);
@@ -503,22 +570,17 @@ export default function CreateOpportunityScreen() {
       );
     } catch (error: any) {
       Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de l\'enregistrement.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handlePublish = async () => {
-    setIsSubmitting(true);
     try {
       const imageUrls = await buildImagesPayload();
       if (imageUrls === null) {
-        setIsSubmitting(false);
         return;
       }
       const attachmentPayload = await buildAttachmentsPayload();
       if (attachmentPayload === null) {
-        setIsSubmitting(false);
         return;
       }
       const data = { ...buildOpportunityData(imageUrls, attachmentPayload), status: 'OPEN' as const };
@@ -530,8 +592,6 @@ export default function CreateOpportunityScreen() {
       );
     } catch (error: any) {
       Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de la publication.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -564,8 +624,8 @@ export default function CreateOpportunityScreen() {
   };
 
   const getCurrencySymbol = (currencyId: string): string => {
-    const currency = CURRENCY_DATA.find(c => c.id === currencyId);
-    return currency?.symbol || currencyId;
+    const currencyItem = CURRENCY_DATA.find(c => c.id === currencyId);
+    return currencyItem?.symbol || currencyId;
   };
 
   const getSectorsLabel = (ids: string[]) => {
@@ -599,7 +659,7 @@ export default function CreateOpportunityScreen() {
           label="Titre du poste *"
           placeholder="Ex: Développeur Full Stack"
           value={title}
-          onChangeText={setTitle}
+          onChangeText={(value) => form.setValue('title', value)}
           autoCapitalize="words"
         />
 
@@ -615,9 +675,9 @@ export default function CreateOpportunityScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => setOpportunityType(type.id)}
+                  onPress={() => form.setValue('opportunityType', type.id)}
                   activeOpacity={0.7}
                 >
                   {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
@@ -675,7 +735,7 @@ export default function CreateOpportunityScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
                   onPress={() => toggleSector(sector.id)}
                   activeOpacity={0.7}
@@ -704,7 +764,7 @@ export default function CreateOpportunityScreen() {
               style={[styles.textArea, { color: colors.textPrimary }]}
               placeholder="Décrivez les missions et responsabilités..."
               value={summary}
-              onChangeText={setSummary}
+              onChangeText={(value) => form.setValue('summary', value)}
               multiline
               numberOfLines={4}
               maxLength={1000}
@@ -722,7 +782,7 @@ export default function CreateOpportunityScreen() {
               style={[styles.textArea, { color: colors.textPrimary }]}
               placeholder="Compétences et qualifications requises..."
               value={requirements}
-              onChangeText={setRequirements}
+              onChangeText={(value) => form.setValue('requirements', value)}
               multiline
               numberOfLines={3}
               maxLength={500}
@@ -740,7 +800,7 @@ export default function CreateOpportunityScreen() {
               style={[styles.textArea, { color: colors.textPrimary }]}
               placeholder="Compétences bonus appréciées..."
               value={niceToHave}
-              onChangeText={setNiceToHave}
+              onChangeText={(value) => form.setValue('niceToHave', value)}
               multiline
               numberOfLines={2}
               maxLength={300}
@@ -777,9 +837,9 @@ export default function CreateOpportunityScreen() {
                   style={[
                     styles.locationTypeCard,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => setLocationType(type.id)}
+                  onPress={() => form.setValue('locationType', type.id)}
                   activeOpacity={0.7}
                 >
                   <IconComponent
@@ -831,9 +891,11 @@ export default function CreateOpportunityScreen() {
                         isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                       ]}
                       onPress={() => {
-                        setCountry(c.id);
-                        setRegion('');
-                        setCity('');
+                        form.setValues({
+                          country: c.id,
+                          region: '',
+                          city: '',
+                        });
                       }}
                     >
                       <Text
@@ -872,8 +934,10 @@ export default function CreateOpportunityScreen() {
                           isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                         ]}
                         onPress={() => {
-                          setRegion(r.id);
-                          setCity('');
+                          form.setValues({
+                            region: r.id,
+                            city: '',
+                          });
                         }}
                       >
                         <Text
@@ -912,7 +976,7 @@ export default function CreateOpportunityScreen() {
                           { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                           isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                         ]}
-                        onPress={() => setCity(c.id)}
+                        onPress={() => form.setValue('city', c.id)}
                       >
                         <Text
                           style={[
@@ -958,9 +1022,9 @@ export default function CreateOpportunityScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => setContractType(type.id)}
+                  onPress={() => form.setValue('contractType', type.id)}
                   activeOpacity={0.7}
                 >
                   {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
@@ -991,9 +1055,9 @@ export default function CreateOpportunityScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => setWorkRhythm(isSelected ? null : rhythm.id)}
+                  onPress={() => form.setValue('workRhythm', isSelected ? null : rhythm.id)}
                   activeOpacity={0.7}
                 >
                   {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
@@ -1017,7 +1081,7 @@ export default function CreateOpportunityScreen() {
           label="Durée du contrat"
           placeholder="ex: 1 mois, 6 mois, CDI..."
           value={duration}
-          onChangeText={setDuration}
+          onChangeText={(value) => form.setValue('duration', value)}
         />
 
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
@@ -1031,7 +1095,7 @@ export default function CreateOpportunityScreen() {
                 label="Minimum"
                 placeholder="150000"
                 value={compensationMin}
-                onChangeText={setCompensationMin}
+                onChangeText={(value) => form.setValue('compensationMin', value)}
                 keyboardType="numeric"
               />
             </View>
@@ -1040,7 +1104,7 @@ export default function CreateOpportunityScreen() {
                 label="Maximum"
                 placeholder="300000"
                 value={compensationMax}
-                onChangeText={setCompensationMax}
+                onChangeText={(value) => form.setValue('compensationMax', value)}
                 keyboardType="numeric"
               />
             </View>
@@ -1066,7 +1130,7 @@ export default function CreateOpportunityScreen() {
                     { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                     isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                   ]}
-                  onPress={() => setCurrency(c.id)}
+                  onPress={() => form.setValue('currency', c.id)}
                 >
                   <Text
                     style={[
@@ -1095,9 +1159,9 @@ export default function CreateOpportunityScreen() {
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => setCompensationFrequency(freq.id)}
+                  onPress={() => form.setValue('compensationFrequency', freq.id)}
                   activeOpacity={0.7}
                 >
                   {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
@@ -1130,9 +1194,9 @@ export default function CreateOpportunityScreen() {
                   style={[
                     styles.locationTypeCard,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => setVisibility(type.id)}
+                  onPress={() => form.setValue('visibility', type.id)}
                   activeOpacity={0.7}
                 >
                   <IconComponent
@@ -1210,10 +1274,10 @@ export default function CreateOpportunityScreen() {
                   Alert.alert('Date invalide', 'La date limite doit être supérieure à aujourd\'hui.');
                   return;
                 }
-                setDeadline(selectedDate);
+                form.setValue('deadline', selectedDate);
                 // Si la date de début existe et est <= nouvelle date limite, la réinitialiser
                 if (startDate && startDate <= selectedDate) {
-                  setStartDate(null);
+                  form.setValue('startDate', null);
                 }
               }
             }}
@@ -1234,7 +1298,7 @@ export default function CreateOpportunityScreen() {
                   Alert.alert('Date invalide', 'La date de début doit être supérieure à la date limite.');
                   return;
                 }
-                setStartDate(selectedDate);
+                form.setValue('startDate', selectedDate);
               }
             }}
             minimumDate={deadline ? new Date(deadline.getTime() + 24 * 60 * 60 * 1000) : new Date(Date.now() + 24 * 60 * 60 * 1000)}
@@ -1260,7 +1324,7 @@ export default function CreateOpportunityScreen() {
           </View>
           <Toggle
             value={cvRequired}
-            onValueChange={setCvRequired}
+            onValueChange={(value) => form.setValue('cvRequired', value)}
           />
         </View>
 
@@ -1486,7 +1550,7 @@ export default function CreateOpportunityScreen() {
           <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{title || 'Sans titre'}</Text>
           <View style={styles.previewTags}>
             {opportunityType ? (
-              <View style={[styles.previewTag, { backgroundColor: colors.primary + '15' }]}>
+              <View style={[styles.previewTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.previewTagText, { color: colors.primary }]}>
                   {OPPORTUNITY_TYPE_LABELS[opportunityType]}
                 </Text>
@@ -1696,7 +1760,7 @@ export default function CreateOpportunityScreen() {
             <TouchableOpacity
               style={[styles.backStepButton, { borderColor: colors.gray300 }]}
               onPress={handleBack}
-              disabled={isSubmitting}
+              disabled={form.state.isSubmitting}
             >
               <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.backStepButtonText, { color: colors.gray700 }]}>Retour</Text>
@@ -1705,7 +1769,7 @@ export default function CreateOpportunityScreen() {
             <TouchableOpacity
               style={[styles.draftButton, { borderColor: colors.gray300 }]}
               onPress={handleSaveDraft}
-              disabled={isSubmitting}
+              disabled={form.state.isSubmitting}
             >
               <Save size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
             </TouchableOpacity>
@@ -1714,7 +1778,8 @@ export default function CreateOpportunityScreen() {
               <Button
                 title="Publier"
                 onPress={handlePublish}
-                disabled={isSubmitting}
+                disabled={form.state.isSubmitting}
+                loading={form.state.isSubmitting}
                 fullWidth
               />
             </View>

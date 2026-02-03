@@ -104,7 +104,7 @@ export const Paywall: React.FC<PaywallProps> = ({
     return (
         <View style={[styles.container, { backgroundColor: colors.surface }]}>
             {/* Header Icon */}
-            <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
+            <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Lock size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             </View>
 
@@ -138,7 +138,7 @@ export const Paywall: React.FC<PaywallProps> = ({
                 </Text>
 
                 {hasTrial && !isExpired && !isCancelled && (
-                    <View style={[styles.trialBadge, { backgroundColor: colors.success + '15' }]}>
+                    <View style={[styles.trialBadge, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
                         <Calendar size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
                         <Text style={[styles.trialText, { color: colors.success }]}>
                             {paywall.trial_days} jours d'essai gratuit

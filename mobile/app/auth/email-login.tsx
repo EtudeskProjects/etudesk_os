@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,9 +14,10 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, AtSign, ArrowRight } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
+import { useForm, validators } from '../../src/hooks/useForm';
 import { otpService } from '../../src/services/otpService';
 
 export default function EmailLoginScreen() {
@@ -24,46 +25,38 @@ export default function EmailLoginScreen() {
   const { colors } = useTheme();
   const { t } = useI18n();
 
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const handleSendOTP = async () => {
-    setError('');
-
-    if (!email.trim()) {
-      setError(t('errors.required'));
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setError(t('errors.invalidEmail'));
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      await otpService.sendOTP(email);
+  const form = useForm({
+    fields: {
+      email: {
+        initialValue: '',
+        required: true,
+        requiredMessage: t('errors.required'),
+        validate: (value: string) => {
+          if (!value) return null;
+          return validators.email(value) ? t('errors.invalidEmail') : null;
+        },
+      },
+    },
+    onSubmit: async (values) => {
+      await otpService.sendOTP(values.email);
       router.push({
         pathname: '/auth/verify-otp',
-        params: { email },
+        params: { email: values.email },
       });
+    },
+  });
+
+  const handleSendOTP = useCallback(async () => {
+    try {
+      await form.handleSubmit();
     } catch (err) {
       Alert.alert(
         t('common.error'),
         t('auth.emailLogin.sendError'),
         [{ text: t('common.retry'), onPress: handleSendOTP }, { text: t('common.cancel') }]
       );
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [form, t]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
@@ -89,7 +82,7 @@ export default function EmailLoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
+            <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
               <AtSign size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             </View>
 
@@ -108,7 +101,7 @@ export default function EmailLoginScreen() {
               <View
                 style={[
                   styles.inputWrapper,
-                  { backgroundColor: colors.surface, borderColor: error ? colors.error : colors.borderColor },
+                  { backgroundColor: colors.surface, borderColor: form.getError('email') ? colors.error : colors.borderColor },
                 ]}
               >
                 <AtSign size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
@@ -116,21 +109,19 @@ export default function EmailLoginScreen() {
                   style={[styles.input, { color: colors.textPrimary }]}
                   placeholder={t('auth.login.emailPlaceholder')}
                   placeholderTextColor={colors.gray400}
-                  value={email}
-                  onChangeText={(text) => {
-                    setEmail(text);
-                    setError('');
-                  }}
+                  value={form.getValue('email')}
+                  onChangeText={(text) => form.setValue('email', text)}
+                  onBlur={() => form.setTouched('email')}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
                   autoComplete="email"
                   autoFocus={true}
-                  editable={!isLoading}
+                  editable={!form.state.isSubmitting}
                 />
               </View>
-              {error ? (
-                <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+              {form.getError('email') ? (
+                <Text style={[styles.errorText, { color: colors.error }]}>{form.getError('email')}</Text>
               ) : null}
             </View>
           </View>
@@ -140,13 +131,13 @@ export default function EmailLoginScreen() {
               style={[
                 styles.submitButton,
                 { backgroundColor: colors.primary },
-                (!email.trim() || isLoading) && styles.submitButtonDisabled,
+                (!form.getValue('email').trim() || form.state.isSubmitting) && styles.submitButtonDisabled,
               ]}
               onPress={handleSendOTP}
               activeOpacity={0.8}
-              disabled={!email.trim() || isLoading}
+              disabled={!form.getValue('email').trim() || form.state.isSubmitting}
             >
-              {isLoading ? (
+              {form.state.isSubmitting ? (
                 <ActivityIndicator color={colors.textOnPrimary} />
               ) : (
                 <>

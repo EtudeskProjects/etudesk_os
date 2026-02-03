@@ -22,6 +22,12 @@ interface ButtonProps {
   fullWidth?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  /** Accessibility label - defaults to title if not provided */
+  accessibilityLabel?: string;
+  /** Accessibility hint - describes what happens when button is pressed */
+  accessibilityHint?: string;
+  /** Test ID for testing */
+  testID?: string;
 }
 
 export function Button({
@@ -36,6 +42,9 @@ export function Button({
   fullWidth = false,
   style,
   textStyle,
+  accessibilityLabel,
+  accessibilityHint,
+  testID,
 }: ButtonProps) {
   const { colors } = useTheme();
 
@@ -107,6 +116,15 @@ export function Button({
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.8}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{
+        disabled: disabled || loading,
+        busy: loading,
+      }}
+      testID={testID}
     >
       {loading ? (
         <ActivityIndicator

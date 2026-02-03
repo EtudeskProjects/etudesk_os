@@ -16,7 +16,7 @@ import {
   User,
   Building2,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 
 type TabType = 'talent' | 'organization';
@@ -124,7 +124,7 @@ export default function HelpScreen() {
       </View>
 
       {/* Info Banner */}
-      <View style={[styles.infoBanner, { backgroundColor: colors.primary + '10' }]}>
+      <View style={[styles.infoBanner, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
         <MessageCircle size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
         <Text style={[styles.infoBannerText, { color: colors.primary }]}>
           Clique sur une question pour obtenir une réponse personnalisée de notre assistant
@@ -152,7 +152,7 @@ export default function HelpScreen() {
                 onPress={() => handleQuestionPress(faq.question)}
                 activeOpacity={0.7}
               >
-                <View style={[styles.faqNumber, { backgroundColor: colors.primary + '15' }]}>
+                <View style={[styles.faqNumber, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                   <Text style={[styles.faqNumberText, { color: colors.primary }]}>{faq.id}</Text>
                 </View>
                 <Text style={[styles.faqQuestion, { color: colors.textPrimary }]}>

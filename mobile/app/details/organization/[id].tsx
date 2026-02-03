@@ -14,7 +14,7 @@ import {
   Calendar,
   Award,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { Button, ImageSlider, FooterNav } from '../../../src/components/ui';
@@ -170,7 +170,7 @@ export default function OrganizationDetailScreen() {
           {/* Type & Location */}
           <View style={styles.infoRow}>
             {organization.type && (
-              <View style={[styles.typeBadge, { backgroundColor: colors.primary + '15' }]}>
+              <View style={[styles.typeBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.typeBadgeText, { color: colors.primary }]}>
                   {ORGANIZATION_TYPE_LABELS[organization.type] || organization.type}
                 </Text>

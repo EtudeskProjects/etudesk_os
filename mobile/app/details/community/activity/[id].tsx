@@ -26,7 +26,7 @@ import {
     Video,
     Check,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { CommentSection } from '../../../../src/components/community/CommentSection';
 import { RichTextContent } from '../../../../src/components/community/RichTextContent';
@@ -363,7 +363,7 @@ export default function ActivityDetailScreen() {
                                         {authorName}
                                     </Text>
                                     {isScheduled && (
-                                        <View style={[styles.scheduledBadge, { backgroundColor: colors.warning + '15' }]}>
+                                        <View style={[styles.scheduledBadge, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
                                             <Clock size={10} color={colors.warning} />
                                             <Text style={[styles.scheduledBadgeText, { color: colors.warning }]}>
                                                 Programmé
@@ -436,7 +436,7 @@ export default function ActivityDetailScreen() {
                                                 style={[
                                                     styles.pollProgressBar,
                                                     {
-                                                        backgroundColor: isVoted ? colors.primary + '20' : colors.gray100,
+                                                        backgroundColor: isVoted ? withOpacity(colors.primary, OPACITY[20]) : colors.gray100,
                                                         width: `${percentage}%`,
                                                     }
                                                 ]}
@@ -480,7 +480,7 @@ export default function ActivityDetailScreen() {
                         <View style={[styles.eventContainer, { backgroundColor: colors.background, borderColor: colors.borderColor }]}>
                             {/* Date & Time */}
                             <View style={styles.eventRow}>
-                                <View style={[styles.eventIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                                <View style={[styles.eventIconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                                     <Calendar size={16} color={colors.primary} />
                                 </View>
                                 <View style={styles.eventInfo}>
@@ -502,7 +502,7 @@ export default function ActivityDetailScreen() {
 
                             {/* Location */}
                             <View style={styles.eventRow}>
-                                <View style={[styles.eventIconContainer, { backgroundColor: isOnlineEvent ? colors.success + '15' : colors.primary + '15' }]}>
+                                <View style={[styles.eventIconContainer, { backgroundColor: isOnlineEvent ? withOpacity(colors.success, OPACITY[15]) : withOpacity(colors.primary, OPACITY[15]) }]}>
                                     {isOnlineEvent ? (
                                         <Video size={16} color={colors.success} />
                                     ) : (

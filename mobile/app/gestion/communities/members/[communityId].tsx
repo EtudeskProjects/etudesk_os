@@ -20,7 +20,7 @@ import {
   Send,
   MessageCircle,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { PageLayout, EmptyState } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { communityService } from '../../../../src/services';
@@ -30,10 +30,10 @@ import type { MemberStatus, CommunityMember } from '../../../../src/services/com
 
 // Status configuration - colors are set dynamically in component using theme colors
 const getStatusConfig = (colors: any): Record<MemberStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
-  PENDING: { color: colors.warning, icon: Clock, bgColor: colors.warning + '15', label: 'En attente' },
-  ACTIVE: { color: colors.success, icon: CheckCircle2, bgColor: colors.success + '15', label: 'Actif' },
-  REJECTED: { color: colors.error, icon: XCircle, bgColor: colors.error + '15', label: 'Refusé' },
-  SUSPENDED: { color: colors.gray500, icon: XCircle, bgColor: colors.gray500 + '15', label: 'Suspendu' },
+  PENDING: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]), label: 'En attente' },
+  ACTIVE: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]), label: 'Actif' },
+  REJECTED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]), label: 'Refusé' },
+  SUSPENDED: { color: colors.gray500, icon: XCircle, bgColor: withOpacity(colors.gray500, OPACITY[15]), label: 'Suspendu' },
 });
 
 type FilterStatus = 'all' | MemberStatus;
@@ -160,7 +160,7 @@ export default function CommunityMembersScreen() {
           {talent?.avatar_url || talent?.profile_picture_url ? (
             <Image source={{ uri: talent.avatar_url || talent.profile_picture_url }} style={styles.avatar} />
           ) : (
-            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+            <View style={[styles.avatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
               <Text style={[styles.avatarText, { color: colors.primary }]}>
                 {getInitials(memberName)}
               </Text>
@@ -213,14 +213,14 @@ export default function CommunityMembersScreen() {
         {item.status === 'PENDING' && (
           <View style={styles.quickActions}>
             <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: colors.success + '15' }]}
+              style={[styles.quickAction, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}
               onPress={() => handleUpdateStatus(item.id, 'ACTIVE')}
             >
               <CheckCircle2 size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.quickActionText, { color: colors.success }]}>Accepter</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: colors.error + '15' }]}
+              style={[styles.quickAction, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}
               onPress={() => handleUpdateStatus(item.id, 'REJECTED')}
             >
               <XCircle size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />

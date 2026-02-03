@@ -28,7 +28,7 @@ import {
   X,
   Copy,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -482,7 +482,7 @@ export default function AssistantScreen() {
               style={[
                 styles.historyItem,
                 { borderBottomColor: colors.borderColor },
-                session.id === sessionId && { backgroundColor: colors.primary + '10' },
+                session.id === sessionId && { backgroundColor: withOpacity(colors.primary, OPACITY[10]) },
               ]}
               onPress={() => handleSelectSession(session)}
             >
@@ -558,7 +558,7 @@ export default function AssistantScreen() {
 
             {/* Error banner */}
             {error && (
-              <View style={[styles.errorBanner, { backgroundColor: colors.error + '15' }]}>
+              <View style={[styles.errorBanner, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}>
                 <AlertCircle size={16} color={colors.error} />
                 <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
                 <TouchableOpacity onPress={() => setError(null)}>

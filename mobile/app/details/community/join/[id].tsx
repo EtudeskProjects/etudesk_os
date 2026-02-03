@@ -33,7 +33,7 @@ import {
   CreditCard,
   FileText,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { Button, StepIndicator } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useAuth } from '../../../../src/contexts/AuthContext';
@@ -336,7 +336,7 @@ export default function JoinCommunityScreen() {
             {avatarUrl ? (
               <Image source={{ uri: avatarUrl }} style={styles.profileAvatar} />
             ) : (
-              <View style={[styles.profileAvatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+              <View style={[styles.profileAvatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
                 <Text style={[styles.profileAvatarText, { color: colors.primary }]}>
                   {getInitials(profile?.first_name || undefined, profile?.last_name || undefined)}
                 </Text>
@@ -381,7 +381,7 @@ export default function JoinCommunityScreen() {
               <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Compétences</Text>
               <View style={styles.profileTagsRow}>
                 {profile.skills.slice(0, 8).map((skill, i) => (
-                  <View key={i} style={[styles.profileTag, { backgroundColor: colors.primary + '12' }]}>
+                  <View key={i} style={[styles.profileTag, { backgroundColor: withOpacity(colors.primary, OPACITY[12]) }]}>
                     <Text style={[styles.profileTagText, { color: colors.primary }]}>{skill}</Text>
                   </View>
                 ))}
@@ -420,7 +420,7 @@ export default function JoinCommunityScreen() {
           )}
 
           {!profileComplete && (
-            <View style={[styles.warningBox, { backgroundColor: colors.warning + '15' }]}>
+            <View style={[styles.warningBox, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
               <AlertCircle size={20} color={colors.warning} strokeWidth={ICON.strokeWidth} />
               <View style={styles.warningContent}>
                 <Text style={[styles.warningTitle, { color: colors.warning }]}>Profil incomplet</Text>
@@ -558,7 +558,7 @@ export default function JoinCommunityScreen() {
           </View>
 
           {/* Profile Preview */}
-          <View style={[styles.previewSection, { backgroundColor: colors.primary + '08' }]}>
+          <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.primary, OPACITY['08']) }]}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
               Votre profil
             </Text>
@@ -606,7 +606,7 @@ export default function JoinCommunityScreen() {
 
           {/* Pricing Info */}
           {community?.is_paid && (
-            <View style={[styles.previewSection, { backgroundColor: colors.warning + '10' }]}>
+            <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.warning, OPACITY[10]) }]}>
               <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
                 Abonnement
               </Text>
@@ -632,7 +632,7 @@ export default function JoinCommunityScreen() {
 
     return (
       <View style={styles.successContainer}>
-        <View style={[styles.successIcon, { backgroundColor: colors.success + '15' }]}>
+        <View style={[styles.successIcon, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
           <CheckCircle2 size={64} color={colors.success} strokeWidth={ICON.strokeWidth} />
         </View>
         <Text style={[styles.successTitle, { color: colors.textPrimary }]}>

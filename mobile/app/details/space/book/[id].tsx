@@ -41,7 +41,7 @@ import {
   Info,
   FileText,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { Button, StepIndicator } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useAuth } from '../../../../src/contexts/AuthContext';
@@ -615,7 +615,7 @@ export default function BookSpaceScreen() {
             {avatarUrl ? (
               <Image source={{ uri: avatarUrl }} style={styles.profileAvatar} />
             ) : (
-              <View style={[styles.profileAvatarPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+              <View style={[styles.profileAvatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
                 <Text style={[styles.profileAvatarText, { color: colors.primary }]}>
                   {getInitials(profile?.first_name || undefined, profile?.last_name || undefined)}
                 </Text>
@@ -660,7 +660,7 @@ export default function BookSpaceScreen() {
               <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Compétences</Text>
               <View style={styles.profileTagsRow}>
                 {profile.skills.slice(0, 8).map((skill, i) => (
-                  <View key={i} style={[styles.profileTag, { backgroundColor: colors.primary + '12' }]}>
+                  <View key={i} style={[styles.profileTag, { backgroundColor: withOpacity(colors.primary, OPACITY[12]) }]}>
                     <Text style={[styles.profileTagText, { color: colors.primary }]}>{skill}</Text>
                   </View>
                 ))}
@@ -699,7 +699,7 @@ export default function BookSpaceScreen() {
           )}
 
           {!profileComplete && (
-            <View style={[styles.warningBox, { backgroundColor: colors.warning + '15' }]}>
+            <View style={[styles.warningBox, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
               <AlertCircle size={20} color={colors.warning} strokeWidth={ICON.strokeWidth} />
               <View style={styles.warningContent}>
                 <Text style={[styles.warningTitle, { color: colors.warning }]}>Profil incomplet</Text>
@@ -900,7 +900,7 @@ export default function BookSpaceScreen() {
 
         {/* Selected Date Display */}
         {selectedDate && (
-          <View style={[styles.selectedDateCard, { backgroundColor: colors.primary + '10' }]}>
+          <View style={[styles.selectedDateCard, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
             <CalendarDays size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.selectedDateText, { color: colors.primary }]}>
               {formatDateDisplay(selectedDate)}
@@ -951,7 +951,7 @@ export default function BookSpaceScreen() {
 
         {/* No slots message */}
         {selectedDate && availableTimeSlots.length === 0 && (
-          <View style={[styles.noSlotsCard, { backgroundColor: colors.warning + '15' }]}>
+          <View style={[styles.noSlotsCard, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
             <AlertCircle size={20} color={colors.warning} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.noSlotsText, { color: colors.warning }]}>
               Aucun creneau disponible pour cette date
@@ -1028,7 +1028,7 @@ export default function BookSpaceScreen() {
 
         {/* Estimated Price */}
         {selectedDate && selectedStartTime && estimatedPrice && (
-          <View style={[styles.priceCard, { backgroundColor: colors.success + '10', borderColor: colors.success + '30' }]}>
+          <View style={[styles.priceCard, { backgroundColor: withOpacity(colors.success, OPACITY[10]), borderColor: withOpacity(colors.success, OPACITY[30]) }]}>
             <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>
               {isFreeSpace ? 'Tarif' : 'Tarif estime'}
             </Text>
@@ -1219,7 +1219,7 @@ export default function BookSpaceScreen() {
           </View>
 
           {/* Date & Time Info */}
-          <View style={[styles.previewSection, { backgroundColor: colors.primary + '08' }]}>
+          <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.primary, OPACITY['08']) }]}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
               Date & Heure
             </Text>
@@ -1310,7 +1310,7 @@ export default function BookSpaceScreen() {
 
           {/* Price Breakdown */}
           {estimatedPrice && (
-            <View style={[styles.previewSection, { backgroundColor: isFreeSpace ? colors.success + '10' : colors.warning + '10' }]}>
+            <View style={[styles.previewSection, { backgroundColor: isFreeSpace ? withOpacity(colors.success, OPACITY[10]) : withOpacity(colors.warning, OPACITY[10]) }]}>
               <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
                 Tarification
               </Text>
@@ -1365,7 +1365,7 @@ export default function BookSpaceScreen() {
   const renderSuccessStep = () => {
     return (
       <View style={styles.successContainer}>
-        <View style={[styles.successIcon, { backgroundColor: colors.success + '15' }]}>
+        <View style={[styles.successIcon, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
           <CheckCircle2 size={64} color={colors.success} strokeWidth={ICON.strokeWidth} />
         </View>
         <Text style={[styles.successTitle, { color: colors.textPrimary }]}>
@@ -1377,7 +1377,7 @@ export default function BookSpaceScreen() {
         </Text>
 
         {/* Booking Reference */}
-        <View style={[styles.referenceCard, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
+        <View style={[styles.referenceCard, { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: withOpacity(colors.primary, OPACITY[30]) }]}>
           <Text style={[styles.referenceLabel, { color: colors.gray500 }]}>
             Reference de reservation
           </Text>

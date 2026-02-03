@@ -4,7 +4,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { CommunityActivity, ActivityType } from '../../types/activity';
 import { communityActivityService } from '../../services';
 import { ActivityCard } from './ActivityCard';
-import { COLORS, SPACING, TYPOGRAPHY, BORDER } from '../../constants/theme';
+import { COLORS, SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { MessageSquare, Lock } from 'lucide-react-native';
@@ -135,16 +135,16 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         }, [communityId, loading, refreshFeed])
     );
 
-    const handleLike = async (activityId: string) => {
+    const handleLike = useCallback(async (activityId: string) => {
         try {
             await communityActivityService.toggleLike(activityId);
             // Optimistic update is already handled in ActivityCard
         } catch (error) {
             console.error('Like failed:', error);
         }
-    };
+    }, []);
 
-    const handleBookmark = async (activityId: string) => {
+    const handleBookmark = useCallback(async (activityId: string) => {
         try {
             await communityActivityService.toggleBookmark(activityId);
             // Refresh feed to update bookmark status
@@ -152,9 +152,9 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         } catch (error) {
             console.error('Bookmark failed:', error);
         }
-    };
+    }, [refreshFeed]);
 
-    const handleVote = async (activityId: string, optionId: string) => {
+    const handleVote = useCallback(async (activityId: string, optionId: string) => {
         try {
             await communityActivityService.vote(activityId, optionId);
             // Optimistic update is already handled in ActivityCard
@@ -162,9 +162,9 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             console.error('Vote failed:', error);
             Alert.alert('Erreur', 'Impossible de voter');
         }
-    };
+    }, []);
 
-    const handlePin = async (activityId: string) => {
+    const handlePin = useCallback(async (activityId: string) => {
         try {
             await communityActivityService.togglePin(activityId);
             refreshFeed();
@@ -172,9 +172,9 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             console.error('Toggle pin failed:', error);
             Alert.alert('Erreur', 'Impossible de modifier l\'épingle');
         }
-    };
+    }, [refreshFeed]);
 
-    const handleDelete = (activityId: string) => {
+    const handleDelete = useCallback((activityId: string) => {
         Alert.alert(
             'Supprimer',
             'Êtes-vous sûr de vouloir supprimer cette activité ?',
@@ -190,14 +190,14 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 }}
             ]
         );
-    };
+    }, [refreshFeed]);
 
-    const handleActivityPress = (activity: CommunityActivity) => {
+    const handleActivityPress = useCallback((activity: CommunityActivity) => {
         // Navigate to activity detail
         router.push(`/details/community/activity/${activity.id}`);
-    };
+    }, [router]);
 
-    const handleEdit = (activity: CommunityActivity) => {
+    const handleEdit = useCallback((activity: CommunityActivity) => {
         // Navigate to the appropriate edit form based on activity type
         const baseUrl = `/details/community/${activity.community_id}`;
         switch (activity.type) {
@@ -211,9 +211,9 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 router.push(`${baseUrl}/create-poll?activityId=${activity.id}`);
                 break;
         }
-    };
+    }, [router]);
 
-    const renderItem = ({ item }: { item: CommunityActivity }) => (
+    const renderItem = useCallback(({ item }: { item: CommunityActivity }) => (
         <ActivityCard
             activity={item}
             currentUserId={currentUserId}
@@ -226,7 +226,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             onPress={handleActivityPress}
             onVote={handleVote}
         />
-    );
+    ), [currentUserId, userRole, handleLike, handleBookmark, handleEdit, handlePin, handleDelete, handleActivityPress, handleVote]);
 
 
     if (loading && !refreshing && (activities?.length ?? 0) === 0) {
@@ -245,7 +245,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
         return (
             <View style={[styles.paywallContainer, { backgroundColor: colors.surface }]}>
-                <View style={[styles.paywallIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                <View style={[styles.paywallIconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                     <Lock size={48} color={colors.primary} strokeWidth={1.5} />
                 </View>
                 <Text style={[styles.paywallTitle, { color: colors.textPrimary }]}>
@@ -343,6 +343,13 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         </ScrollView>
     );
 
+    // Memoized onEndReached handler
+    const handleEndReached = useCallback(() => {
+        if (nextCursor && !loadingMore && !refreshing) {
+            loadFeed(false);
+        }
+    }, [nextCursor, loadingMore, refreshing, loadFeed]);
+
     return (
         <FlatList
             data={filteredActivities}
@@ -354,13 +361,15 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             ListFooterComponent={renderFooter}
             onRefresh={refreshFeed}
             refreshing={refreshing}
-            onEndReached={() => {
-                if (nextCursor && !loadingMore && !refreshing) {
-                    loadFeed(false);
-                }
-            }}
+            onEndReached={handleEndReached}
             onEndReachedThreshold={0.5}
             showsVerticalScrollIndicator={false}
+            // Performance optimizations
+            initialNumToRender={5}
+            maxToRenderPerBatch={5}
+            windowSize={7}
+            removeClippedSubviews={true}
+            updateCellsBatchingPeriod={50}
         />
     );
 };
