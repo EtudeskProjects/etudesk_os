@@ -49,6 +49,11 @@ export function buildTalentEmbeddingText(talent: {
   city?: string | null;
   country?: string | null;
   profile_tags?: string[];
+  // New fields
+  goals?: string[];
+  remote_ready?: boolean;
+  willing_to_relocate?: boolean;
+  documents_metadata?: Array<{ title?: string | null; original_filename: string }>;
 }): string {
   const parts: string[] = [];
 
@@ -77,7 +82,21 @@ export function buildTalentEmbeddingText(talent: {
     parts.push(talent.bio.slice(0, 200));
   }
 
-  return parts.join('. ').slice(0, 800);
+  if (talent.goals && talent.goals.length > 0) {
+    parts.push(`Objectifs: ${talent.goals.join(', ')}`);
+  }
+
+  if (talent.remote_ready) parts.push('Disponible en télétravail');
+  if (talent.willing_to_relocate) parts.push('Prêt à déménager');
+
+  if (talent.documents_metadata && talent.documents_metadata.length > 0) {
+    const docNames = talent.documents_metadata
+      .map((d) => d.title || d.original_filename)
+      .join(', ');
+    parts.push(`Documents: ${docNames}`);
+  }
+
+  return parts.join('. ').slice(0, 1000);
 }
 
 /**
@@ -133,6 +152,100 @@ export function buildOpportunityEmbeddingText(opportunity: {
 
   if (opportunity.requirements) {
     parts.push(`Requis: ${opportunity.requirements.slice(0, 200)}`);
+  }
+
+  return parts.join('. ').slice(0, 800);
+}
+
+/**
+ * Build embedding text for a community
+ * Optimized for ~500 tokens max
+ */
+export function buildCommunityEmbeddingText(community: {
+  name?: string;
+  description?: string | null;
+  type?: string | null;
+  access_type?: string | null;
+  sectors?: string[];
+  tags?: string[];
+  city?: string | null;
+  country?: string | null;
+  is_paid?: boolean;
+}): string {
+  const parts: string[] = [];
+
+  if (community.name) parts.push(community.name);
+  if (community.type) parts.push(`Type: ${community.type}`);
+  if (community.access_type) parts.push(`Accès: ${community.access_type}`);
+
+  if (community.city || community.country) {
+    parts.push(`Lieu: ${[community.city, community.country].filter(Boolean).join(', ')}`);
+  }
+
+  if (community.sectors && community.sectors.length > 0) {
+    parts.push(`Secteurs: ${community.sectors.slice(0, 5).join(', ')}`);
+  }
+
+  if (community.tags && community.tags.length > 0) {
+    parts.push(`Tags: ${community.tags.slice(0, 8).join(', ')}`);
+  }
+
+  if (community.is_paid) parts.push('Communauté payante');
+
+  if (community.description) {
+    parts.push(community.description.slice(0, 300));
+  }
+
+  return parts.join('. ').slice(0, 800);
+}
+
+/**
+ * Build embedding text for a space
+ * Optimized for ~500 tokens max
+ */
+export function buildSpaceEmbeddingText(space: {
+  name?: string;
+  description?: string | null;
+  type?: string;
+  capacity?: number;
+  equipment?: string[];
+  amenities?: string[];
+  sectors?: string[];
+  city?: string | null;
+  country?: string | null;
+  is_bookable?: boolean;
+  hourly_rate?: number | null;
+  address?: string | null;
+}): string {
+  const parts: string[] = [];
+
+  if (space.name) parts.push(space.name);
+  if (space.type) parts.push(`Type: ${space.type}`);
+  if (space.capacity) parts.push(`Capacité: ${space.capacity} personnes`);
+
+  if (space.city || space.country) {
+    parts.push(`Lieu: ${[space.city, space.country].filter(Boolean).join(', ')}`);
+  }
+
+  if (space.address) parts.push(`Adresse: ${space.address.slice(0, 100)}`);
+
+  if (space.sectors && space.sectors.length > 0) {
+    parts.push(`Secteurs: ${space.sectors.slice(0, 5).join(', ')}`);
+  }
+
+  if (space.equipment && space.equipment.length > 0) {
+    parts.push(`Équipements: ${space.equipment.slice(0, 6).join(', ')}`);
+  }
+
+  if (space.amenities && space.amenities.length > 0) {
+    parts.push(`Services: ${space.amenities.slice(0, 6).join(', ')}`);
+  }
+
+  if (space.hourly_rate) parts.push(`Tarif: ${space.hourly_rate} XOF/h`);
+  if (space.is_bookable === false) parts.push('Non réservable en ligne');
+
+  if (space.description) {
+    parts.push(space.description.slice(0, 300));
   }
 
   return parts.join('. ').slice(0, 800);
@@ -203,7 +316,14 @@ export async function upsertTalentEmbedding(
         metadata: {
           type: 'talent',
           id: talentId,
-          text: text.slice(0, 500),
+          text: text.slice(0, 1000),
+          // Metadata for filtering
+          city: talent.city || '',
+          country: talent.country || '',
+          remote_ready: !!talent.remote_ready,
+          willing_to_relocate: !!talent.willing_to_relocate,
+          sectors: talent.sectors || [],
+          skills: talent.skills || [],
         },
       },
     ]);
@@ -245,6 +365,74 @@ export async function upsertOpportunityEmbedding(
   } catch (error) {
     logger.error('Error upserting opportunity embedding:', error);
     // Don't throw - embedding is optional enhancement
+  }
+}
+
+/**
+ * Upsert community embedding to Pinecone
+ */
+export async function upsertCommunityEmbedding(
+  communityId: string,
+  community: Parameters<typeof buildCommunityEmbeddingText>[0]
+): Promise<void> {
+  try {
+    const text = buildCommunityEmbeddingText(community);
+    const embedding = await generateEmbedding(text);
+
+    const index = getPineconeIndex();
+    await index.upsert([
+      {
+        id: `community:${communityId}`,
+        values: embedding,
+        metadata: {
+          type: 'community',
+          id: communityId,
+          text: text.slice(0, 500),
+          city: community.city || '',
+          country: community.country || '',
+          community_type: community.type || '',
+          access_type: community.access_type || '',
+          is_paid: !!community.is_paid,
+          sectors: community.sectors || [],
+        },
+      },
+    ]);
+  } catch (error) {
+    logger.error('Error upserting community embedding:', error);
+  }
+}
+
+/**
+ * Upsert space embedding to Pinecone
+ */
+export async function upsertSpaceEmbedding(
+  spaceId: string,
+  space: Parameters<typeof buildSpaceEmbeddingText>[0]
+): Promise<void> {
+  try {
+    const text = buildSpaceEmbeddingText(space);
+    const embedding = await generateEmbedding(text);
+
+    const index = getPineconeIndex();
+    await index.upsert([
+      {
+        id: `space:${spaceId}`,
+        values: embedding,
+        metadata: {
+          type: 'space',
+          id: spaceId,
+          text: text.slice(0, 500),
+          city: space.city || '',
+          country: space.country || '',
+          space_type: space.type || '',
+          capacity: space.capacity || 0,
+          is_bookable: space.is_bookable !== false,
+          sectors: space.sectors || [],
+        },
+      },
+    ]);
+  } catch (error) {
+    logger.error('Error upserting space embedding:', error);
   }
 }
 
@@ -359,6 +547,10 @@ export async function onTalentProfileUpdate(talentId: string): Promise<void> {
         city: t.city,
         country: t.country,
         profile_tags: t.profile_tags,
+        goals: t.goals,
+        remote_ready: t.remote_ready,
+        willing_to_relocate: t.willing_to_relocate,
+        documents_metadata: t.documents_metadata,
       });
     }
   } catch (error) {
@@ -448,6 +640,68 @@ export async function batchUpdateOpportunityEmbeddings(limit: number = 100): Pro
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
       logger.error(`Error updating embedding for opportunity ${opp.id}:`, error);
+    }
+  }
+
+  return updated;
+}
+
+/**
+ * Batch update embeddings for all communities (for initial setup)
+ */
+export async function batchUpdateCommunityEmbeddings(limit: number = 100): Promise<number> {
+  const result = await pool.query(`
+    SELECT c.id, c.name, c.description, c.type, c.access_type,
+           c.city, c.country, c.is_paid,
+           c.sectors::text as sectors_json,
+           c.tags::text as tags_json
+    FROM communities c
+    WHERE c.deleted_at IS NULL AND c.status = 'ACTIVE'
+    LIMIT $1
+  `, [limit]);
+
+  let updated = 0;
+  for (const row of result.rows) {
+    try {
+      const sectors = row.sectors_json ? JSON.parse(row.sectors_json) : [];
+      const tags = row.tags_json ? JSON.parse(row.tags_json) : [];
+      await upsertCommunityEmbedding(row.id, {
+        ...row,
+        sectors,
+        tags,
+      });
+      updated++;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+      logger.error(`Error updating embedding for community ${row.id}:`, error);
+    }
+  }
+
+  return updated;
+}
+
+/**
+ * Batch update embeddings for all spaces (for initial setup)
+ */
+export async function batchUpdateSpaceEmbeddings(limit: number = 100): Promise<number> {
+  const result = await pool.query(`
+    SELECT s.id, s.name, s.description, s.type, s.capacity,
+           s.equipment, s.amenities, s.sectors,
+           s.city, s.country, s.is_bookable,
+           s.hourly_rate, s.address
+    FROM spaces s
+    WHERE s.deleted_at IS NULL AND s.status = 'ACTIVE'
+    LIMIT $1
+  `, [limit]);
+
+  let updated = 0;
+  for (const space of result.rows) {
+    try {
+      await upsertSpaceEmbedding(space.id, space);
+      updated++;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+      logger.error(`Error updating embedding for space ${space.id}:`, error);
     }
   }
 

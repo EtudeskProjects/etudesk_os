@@ -295,100 +295,6 @@ export const OrganizationsContextSchema = z.object({
 export type OrganizationRole = z.infer<typeof OrganizationRoleSchema>;
 export type OrganizationsContext = z.infer<typeof OrganizationsContextSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// LEARNING CONTEXT (For study mode)
-// ═══════════════════════════════════════════════════════════════
-
-export const LearningTopicSummarySchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  parentTopic: z.string().optional(),
-  masteryLevel: z.number().min(0).max(100),
-  flashcardCount: z.number(),
-  dueFlashcardCount: z.number(),
-  lastStudiedAt: z.string().optional(),
-});
-
-export const LearningContextSchema = z.object({
-  totalTopics: z.number(),
-  totalFlashcards: z.number(),
-  dueFlashcards: z.number(),
-  streakDays: z.number(),
-  totalStudyTime: z.number(), // minutes
-  topics: z.array(LearningTopicSummarySchema),
-  preferences: z
-    .object({
-      dailyGoal: z.number().optional(), // cards per day
-      preferredStudyTime: z.string().optional(), // e.g., "morning", "evening"
-      notificationsEnabled: z.boolean(),
-    })
-    .optional(),
-});
-
-export type LearningTopicSummary = z.infer<typeof LearningTopicSummarySchema>;
-export type LearningContext = z.infer<typeof LearningContextSchema>;
-
-// ═══════════════════════════════════════════════════════════════
-// GRAPH CONTEXT (Talent Graph insights from Neo4j)
-// ═══════════════════════════════════════════════════════════════
-
-export const GraphContextSchema = z.object({
-  // Graph stats summary
-  stats: z.object({
-    skillsCount: z.number(),
-    experiencesCount: z.number(),
-    applicationsCount: z.number(),
-    membershipCount: z.number(),
-    connectionsCount: z.number(),
-    learningTopicsCount: z.number(),
-  }).optional(),
-
-  // Top skills with graph context
-  topSkills: z.array(z.object({
-    name: z.string(),
-    level: z.string(),
-    relatedOpportunities: z.number(),
-  })).optional(),
-
-  // Skill gaps (in-demand skills the talent doesn't have)
-  skillGaps: z.array(z.object({
-    skillName: z.string(),
-    demandCount: z.number(),
-    priority: z.enum(['low', 'medium', 'high', 'critical']),
-  })).optional(),
-
-  // Agent-inferred interests
-  inferredInterests: z.array(z.object({
-    target: z.string(),
-    targetType: z.string(),
-    confidence: z.number(),
-    reason: z.string(),
-  })).optional(),
-
-  // Suggested skills to learn
-  suggestedSkills: z.array(z.object({
-    skillName: z.string(),
-    priority: z.string(),
-    reason: z.string(),
-  })).optional(),
-
-  // Similar talents for networking
-  similarTalents: z.array(z.object({
-    name: z.string(),
-    commonSkillsCount: z.number(),
-  })).optional(),
-
-  // Current position from graph
-  currentPosition: z.object({
-    title: z.string(),
-    organization: z.string(),
-  }).optional(),
-
-  // Graph available flag
-  isGraphAvailable: z.boolean(),
-});
-
-export type GraphContext = z.infer<typeof GraphContextSchema>;
 
 // ═══════════════════════════════════════════════════════════════
 // FULL TALENT CONTEXT
@@ -411,12 +317,6 @@ export const TalentContextSchema = z.object({
 
   // Admin context
   organizations: OrganizationsContextSchema.optional(),
-
-  // Learning context
-  learning: LearningContextSchema.optional(),
-
-  // Graph context (from Neo4j Talent Graph)
-  graph: GraphContextSchema.optional(),
 
   // Session context (current conversation)
   session: z
@@ -455,8 +355,6 @@ export interface ContextLoadOptions {
   includeCalendar?: boolean;
   includeInvitations?: boolean;
   includeOrganizations?: boolean;
-  includeLearning?: boolean;
-  includeGraph?: boolean; // Include Talent Graph context from Neo4j
 
   // Limits
   documentsLimit?: number;
@@ -475,8 +373,6 @@ export const DEFAULT_CONTEXT_OPTIONS: ContextLoadOptions = {
   includeCalendar: true,
   includeInvitations: true,
   includeOrganizations: true,
-  includeLearning: true,
-  includeGraph: true, // Include graph context by default
 
   documentsLimit: 20,
   applicationsLimit: 10,
@@ -495,30 +391,12 @@ export const EXPLORER_CONTEXT_OPTIONS: ContextLoadOptions = {
   includeCalendar: true,
   includeInvitations: true,
   includeOrganizations: true,
-  includeLearning: false,
-  includeGraph: true, // Graph is key for exploration
 
   documentsLimit: 10,
   applicationsLimit: 5,
   calendarDaysAhead: 14,
 };
 
-// Optimized context for Study mode
-export const STUDY_CONTEXT_OPTIONS: ContextLoadOptions = {
-  includeDocuments: true,
-  includeApplications: false,
-  includeMemberships: false,
-  includeReservations: false,
-  includeNotifications: false,
-  includeBookmarks: false,
-  includeCalendar: false,
-  includeInvitations: false,
-  includeOrganizations: false,
-  includeLearning: true,
-  includeGraph: true, // Graph is key for learning paths
-
-  documentsLimit: 10,
-};
 
 // ═══════════════════════════════════════════════════════════════
 // CONTEXT HELPERS
@@ -561,31 +439,6 @@ export function summarizeContext(context: TalentContext): string {
     parts.push(`ADMIN ORG: ${context.organizations.adminOfCount} organisations`);
   }
 
-  // Learning
-  if (context.learning) {
-    parts.push(`APPRENTISSAGE: ${context.learning.totalTopics} sujets, ${context.learning.dueFlashcards} cartes dues`);
-    if (context.learning.streakDays > 0) {
-      parts.push(`  Série: ${context.learning.streakDays} jours`);
-    }
-  }
-
-  // Graph insights
-  if (context.graph?.isGraphAvailable) {
-    parts.push(`TALENT GRAPH:`);
-    if (context.graph.stats) {
-      parts.push(`  Compétences: ${context.graph.stats.skillsCount}, Expériences: ${context.graph.stats.experiencesCount}`);
-      parts.push(`  Connexions: ${context.graph.stats.connectionsCount}, Communautés: ${context.graph.stats.membershipCount}`);
-    }
-    if (context.graph.skillGaps && context.graph.skillGaps.length > 0) {
-      const criticalGaps = context.graph.skillGaps.filter(g => g.priority === 'critical' || g.priority === 'high');
-      if (criticalGaps.length > 0) {
-        parts.push(`  Lacunes prioritaires: ${criticalGaps.map(g => g.skillName).slice(0, 3).join(', ')}`);
-      }
-    }
-    if (context.graph.suggestedSkills && context.graph.suggestedSkills.length > 0) {
-      parts.push(`  Suggestions: ${context.graph.suggestedSkills.slice(0, 3).map(s => s.skillName).join(', ')}`);
-    }
-  }
 
   // Calendar
   if (context.calendar && context.calendar.upcomingEvents.length > 0) {
@@ -710,21 +563,6 @@ export async function loadTalentContext(
     );
   }
 
-  if (options.includeLearning) {
-    loaders.push(
-      loadLearning(talentId).then((l) => {
-        context.learning = l;
-      })
-    );
-  }
-
-  if (options.includeGraph) {
-    loaders.push(
-      loadGraphContext(talentId).then((g) => {
-        context.graph = g;
-      })
-    );
-  }
 
   // Wait for all loaders
   await Promise.all(loaders);
@@ -811,9 +649,11 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
 async function loadKYC(talentId: string): Promise<KYCContext> {
   const result = await pool.query(
     `
-    SELECT is_verified, verification_level, verified_fields, verification_date
+    SELECT status, document_type, verification_score, verified_at
     FROM kyc_verifications
     WHERE talent_id = $1
+    ORDER BY created_at DESC
+    LIMIT 1
     `,
     [talentId]
   );
@@ -824,20 +664,20 @@ async function loadKYC(talentId: string): Promise<KYCContext> {
 
   const row = result.rows[0];
   return {
-    isVerified: row.is_verified,
-    verificationLevel: row.verification_level,
-    verifiedFields: row.verified_fields,
-    verificationDate: row.verification_date?.toISOString(),
+    isVerified: row.status === 'VERIFIED',
+    verificationLevel: row.status,
+    verifiedFields: row.document_type ? [row.document_type] : [],
+    verificationDate: row.verified_at?.toISOString(),
   };
 }
 
 async function loadDocuments(talentId: string, limit = 20): Promise<DocumentsContext> {
   const result = await pool.query(
     `
-    SELECT id, type, category, title, filename, status, extracted_skills, extracted_summary, uploaded_at
+    SELECT id, document_type, category, title, original_filename, status, tags, description, created_at
     FROM talent_documents
     WHERE talent_id = $1 AND deleted_at IS NULL
-    ORDER BY uploaded_at DESC
+    ORDER BY created_at DESC
     LIMIT $2
     `,
     [talentId, limit]
@@ -845,14 +685,14 @@ async function loadDocuments(talentId: string, limit = 20): Promise<DocumentsCon
 
   const documents = result.rows.map((row) => ({
     id: row.id,
-    type: row.type,
+    type: row.document_type,
     category: row.category,
     title: row.title,
-    filename: row.filename,
+    filename: row.original_filename,
     status: row.status,
-    extractedSkills: row.extracted_skills,
-    extractedSummary: row.extracted_summary,
-    uploadedAt: row.uploaded_at?.toISOString(),
+    extractedSkills: row.tags || [],
+    extractedSummary: row.description,
+    uploadedAt: row.created_at?.toISOString(),
   }));
 
   const countResult = await pool.query(
@@ -875,12 +715,12 @@ async function loadApplications(talentId: string, limit = 10): Promise<Applicati
     SELECT
       a.id, a.opportunity_id, o.title as opportunity_title,
       org.name as organization_name,
-      a.status, a.created_at, a.updated_at
+      a.status, a.applied_at, a.updated_at
     FROM opportunity_applications a
     JOIN opportunities o ON a.opportunity_id = o.id
     JOIN organizations org ON o.organization_id = org.id
     WHERE a.talent_id = $1
-    ORDER BY a.created_at DESC
+    ORDER BY a.applied_at DESC
     LIMIT $2
     `,
     [talentId, limit]
@@ -892,7 +732,7 @@ async function loadApplications(talentId: string, limit = 10): Promise<Applicati
     opportunityTitle: row.opportunity_title,
     organizationName: row.organization_name,
     status: row.status,
-    appliedAt: row.created_at?.toISOString(),
+    appliedAt: row.applied_at?.toISOString(),
     lastActivityAt: row.updated_at?.toISOString(),
   }));
 
@@ -957,11 +797,11 @@ async function loadReservations(talentId: string): Promise<ReservationsContext> 
     `
     SELECT
       r.id, r.space_id, s.name as space_name,
-      r.date, r.start_time, r.end_time, r.status
+      r.start_datetime, r.end_datetime, r.status
     FROM space_bookings r
     JOIN spaces s ON r.space_id = s.id
-    WHERE r.talent_id = $1 AND r.date >= CURRENT_DATE
-    ORDER BY r.date, r.start_time
+    WHERE r.talent_id = $1 AND r.start_datetime >= CURRENT_DATE
+    ORDER BY r.start_datetime
     `,
     [talentId]
   );
@@ -970,9 +810,9 @@ async function loadReservations(talentId: string): Promise<ReservationsContext> 
     id: row.id,
     spaceId: row.space_id,
     spaceName: row.space_name,
-    date: row.date?.toISOString().split('T')[0],
-    startTime: row.start_time,
-    endTime: row.end_time,
+    date: row.start_datetime?.toISOString().split('T')[0],
+    startTime: row.start_datetime?.toISOString().split('T')[1]?.substring(0, 5),
+    endTime: row.end_datetime?.toISOString().split('T')[1]?.substring(0, 5),
     status: row.status,
   }));
 
@@ -986,11 +826,11 @@ async function loadReservations(talentId: string): Promise<ReservationsContext> 
 async function loadNotifications(talentId: string, limit = 10): Promise<NotificationsContext> {
   const result = await pool.query(
     `
-    SELECT id, type, title, message, is_read, created_at
+    SELECT id, type, title, body, is_read, created_at
     FROM notifications
     WHERE talent_id = $1
     ORDER BY created_at DESC
-    LIMIT $1
+    LIMIT $2
     `,
     [talentId, limit]
   );
@@ -999,7 +839,7 @@ async function loadNotifications(talentId: string, limit = 10): Promise<Notifica
     id: row.id,
     type: row.type,
     title: row.title,
-    message: row.message,
+    message: row.body,
     isRead: row.is_read,
     createdAt: row.created_at?.toISOString(),
   }));
@@ -1020,7 +860,7 @@ async function loadBookmarks(talentId: string): Promise<BookmarksContext> {
   const result = await pool.query(
     `
     SELECT
-      ob.id,
+      ob.opportunity_id as id,
       'opportunity' as entity_type,
       ob.opportunity_id as entity_id,
       ob.created_at,
@@ -1061,38 +901,16 @@ async function loadCalendar(talentId: string, daysAhead = 30): Promise<CalendarC
   const now = new Date();
   const endDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
 
-  // Load interviews
-  const interviews = await pool.query(
-    `
-    SELECT i.id, i.scheduled_at, i.duration_minutes, o.title as opportunity_title
-    FROM interviews i
-    JOIN applications a ON i.application_id = a.id
-    JOIN opportunities o ON a.opportunity_id = o.id
-    WHERE a.talent_id = $1 AND i.scheduled_at >= $2 AND i.scheduled_at <= $3
-    ORDER BY i.scheduled_at
-    `,
-    [talentId, now, endDate]
-  );
-
-  for (const row of interviews.rows) {
-    events.push({
-      id: row.id,
-      title: `Entretien: ${row.opportunity_title}`,
-      type: 'interview',
-      startDate: row.scheduled_at?.toISOString(),
-      relatedEntityType: 'interview',
-      relatedEntityId: row.id,
-    });
-  }
+  // Note: interviews table not yet implemented
 
   // Load reservations
   const reservations = await pool.query(
     `
-    SELECT r.id, r.date, r.start_time, r.end_time, s.name as space_name
+    SELECT r.id, r.start_datetime, r.end_datetime, s.name as space_name
     FROM space_bookings r
     JOIN spaces s ON r.space_id = s.id
-    WHERE r.talent_id = $1 AND r.date >= $2 AND r.date <= $3 AND r.status = 'CONFIRMED'
-    ORDER BY r.date, r.start_time
+    WHERE r.talent_id = $1 AND r.start_datetime >= $2 AND r.start_datetime <= $3 AND r.status = 'CONFIRMED'
+    ORDER BY r.start_datetime
     `,
     [talentId, now, endDate]
   );
@@ -1102,8 +920,8 @@ async function loadCalendar(talentId: string, daysAhead = 30): Promise<CalendarC
       id: row.id,
       title: `Réservation: ${row.space_name}`,
       type: 'reservation',
-      startDate: `${row.date.toISOString().split('T')[0]}T${row.start_time}`,
-      endDate: `${row.date.toISOString().split('T')[0]}T${row.end_time}`,
+      startDate: row.start_datetime?.toISOString(),
+      endDate: row.end_datetime?.toISOString(),
       relatedEntityType: 'reservation',
       relatedEntityId: row.id,
     });
@@ -1129,14 +947,22 @@ async function loadCalendar(talentId: string, daysAhead = 30): Promise<CalendarC
 async function loadInvitations(talentId: string): Promise<InvitationsContext> {
   const result = await pool.query(
     `
-    SELECT id, 'community' as type, inviter_name as from_name, '' as target_name, status, created_at, expires_at
-    FROM community_invitations WHERE invitee_talent_id = $1 AND status = 'PENDING'
+    SELECT ci.id, 'community' as type, COALESCE(t.first_name || ' ' || t.last_name, '') as from_name, c.name as target_name, ci.status, ci.created_at, ci.expires_at
+    FROM community_invitations ci
+    LEFT JOIN talents t ON ci.invited_by = t.id
+    LEFT JOIN communities c ON ci.community_id = c.id
+    WHERE ci.invitee_talent_id = $1 AND ci.status = 'PENDING'
     UNION ALL
-    SELECT id, 'opportunity' as type, inviter_name as from_name, '' as target_name, status, created_at, expires_at
-    FROM opportunity_invitations WHERE invitee_talent_id = $1 AND status = 'PENDING'
+    SELECT oi.id, 'opportunity' as type, COALESCE(t.first_name || ' ' || t.last_name, '') as from_name, o.title as target_name, 'PENDING' as status, oi.created_at, oi.expires_at
+    FROM opportunity_invitations oi
+    LEFT JOIN talents t ON oi.invited_by = t.id
+    LEFT JOIN opportunities o ON oi.opportunity_id = o.id
+    WHERE oi.invitee_talent_id = $1 AND oi.expires_at > NOW()
     UNION ALL
-    SELECT id, 'organization' as type, '' as from_name, '' as target_name, status, created_at, expires_at
-    FROM organization_invitations WHERE email = (SELECT email FROM talents WHERE id = $1) AND status = 'PENDING'
+    SELECT ori.id, 'organization' as type, '' as from_name, org.name as target_name, ori.status, ori.created_at, ori.expires_at
+    FROM organization_invitations ori
+    LEFT JOIN organizations org ON ori.organization_id = org.id
+    WHERE ori.email = (SELECT email FROM talents WHERE id = $1) AND ori.status = 'PENDING'
     ORDER BY created_at DESC
     `,
     [talentId]
@@ -1161,7 +987,7 @@ async function loadInvitations(talentId: string): Promise<InvitationsContext> {
 async function loadOrganizations(talentId: string): Promise<OrganizationsContext> {
   const result = await pool.query(
     `
-    SELECT om.organization_id, o.name as organization_name, om.role, om.permissions
+    SELECT om.organization_id, o.name as organization_name, om.role
     FROM organization_members om
     JOIN organizations o ON om.organization_id = o.id
     WHERE om.talent_id = $1 AND om.status = 'ACTIVE'
@@ -1173,7 +999,7 @@ async function loadOrganizations(talentId: string): Promise<OrganizationsContext
     organizationId: row.organization_id,
     organizationName: row.organization_name,
     role: row.role,
-    permissions: row.permissions || [],
+    permissions: [],
   }));
 
   const isOrgAdmin = organizations.some((o) => ['ADMIN', 'OWNER'].includes(o.role));
@@ -1186,88 +1012,6 @@ async function loadOrganizations(talentId: string): Promise<OrganizationsContext
   };
 }
 
-async function loadLearning(talentId: string): Promise<LearningContext> {
-  // Load topics with flashcard counts
-  const topicsResult = await pool.query(
-    `
-    SELECT
-      lt.id, lt.topic_name, lt.parent_topic_id,
-      lt.mastery_level, lt.last_studied_at,
-      COUNT(lf.id) as flashcard_count,
-      COUNT(lf.id) FILTER (WHERE lf.next_review_at <= CURRENT_DATE) as due_count
-    FROM learning_topics lt
-    LEFT JOIN learning_flashcards lf ON lt.id = lf.topic_id
-    WHERE lt.talent_id = $1
-    GROUP BY lt.id
-    ORDER BY lt.topic_name
-    `,
-    [talentId]
-  );
-
-  const topics = topicsResult.rows.map((row) => ({
-    id: row.id,
-    name: row.topic_name,
-    parentTopic: row.parent_topic_id,
-    masteryLevel: row.mastery_level || 0,
-    flashcardCount: parseInt(row.flashcard_count) || 0,
-    dueFlashcardCount: parseInt(row.due_count) || 0,
-    lastStudiedAt: row.last_studied_at?.toISOString(),
-  }));
-
-  // Total stats
-  const statsResult = await pool.query(
-    `
-    SELECT
-      COUNT(DISTINCT lt.id) as total_topics,
-      COUNT(lf.id) as total_flashcards,
-      COUNT(lf.id) FILTER (WHERE lf.next_review_at <= CURRENT_DATE) as due_flashcards
-    FROM learning_topics lt
-    LEFT JOIN learning_flashcards lf ON lt.id = lf.topic_id
-    WHERE lt.talent_id = $1
-    `,
-    [talentId]
-  );
-
-  // Load streak
-  const streakResult = await pool.query(
-    `
-    SELECT streak_days, total_study_time_minutes
-    FROM learning_preferences
-    WHERE talent_id = $1
-    `,
-    [talentId]
-  );
-
-  const streak = streakResult.rows[0];
-
-  // Load preferences
-  const prefsResult = await pool.query(
-    `
-    SELECT daily_goal, preferred_study_time, notifications_enabled
-    FROM learning_preferences
-    WHERE talent_id = $1
-    `,
-    [talentId]
-  );
-
-  const prefs = prefsResult.rows[0];
-
-  return {
-    totalTopics: parseInt(statsResult.rows[0]?.total_topics) || 0,
-    totalFlashcards: parseInt(statsResult.rows[0]?.total_flashcards) || 0,
-    dueFlashcards: parseInt(statsResult.rows[0]?.due_flashcards) || 0,
-    streakDays: streak?.streak_days || 0,
-    totalStudyTime: streak?.total_study_time_minutes || 0,
-    topics,
-    preferences: prefs
-      ? {
-          dailyGoal: prefs.daily_goal,
-          preferredStudyTime: prefs.preferred_study_time,
-          notificationsEnabled: prefs.notifications_enabled,
-        }
-      : undefined,
-  };
-}
 
 // ═══════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -1295,71 +1039,3 @@ function mapLanguageLevel(level: string | null): 'basic' | 'conversational' | 'f
   return mapping[level.toUpperCase()] || 'basic';
 }
 
-// ═══════════════════════════════════════════════════════════════
-// GRAPH CONTEXT LOADER
-// ═══════════════════════════════════════════════════════════════
-
-async function loadGraphContext(talentId: string): Promise<GraphContext> {
-  try {
-    // Dynamic import to avoid circular dependencies and handle optional Neo4j
-    const { graphService, talentQueries, opportunityQueries } = await import('../graph');
-
-    if (!graphService.isConnected()) {
-      return { isGraphAvailable: false };
-    }
-
-    // Load talent summary from graph
-    const summary = await talentQueries.getTalentSummary(talentId);
-
-    if (!summary) {
-      return { isGraphAvailable: true };
-    }
-
-    // Load skill gaps
-    const skillGaps = await opportunityQueries.getSkillGaps(talentId, { limit: 5 });
-
-    // Load inferences
-    const inferences = await talentQueries.getTalentInferences(talentId);
-
-    return {
-      isGraphAvailable: true,
-      stats: {
-        skillsCount: summary.stats.skillsCount,
-        experiencesCount: summary.stats.experiencesCount,
-        applicationsCount: summary.stats.applicationsCount,
-        membershipCount: summary.stats.membershipCount,
-        connectionsCount: summary.stats.connectionsCount,
-        learningTopicsCount: summary.stats.learningTopicsCount,
-      },
-      topSkills: summary.topSkills.slice(0, 5).map(s => ({
-        name: s.name,
-        level: s.level || 'intermediaire',
-        relatedOpportunities: 0, // Would need additional query
-      })),
-      currentPosition: summary.currentPosition,
-      skillGaps: skillGaps.slice(0, 5).map(g => ({
-        skillName: g.skill.name,
-        demandCount: g.demandCount,
-        priority: g.priority,
-      })),
-      inferredInterests: inferences.interests.slice(0, 5).map(i => ({
-        target: i.target,
-        targetType: i.targetType,
-        confidence: i.confidence,
-        reason: i.reason,
-      })),
-      suggestedSkills: inferences.suggestedSkills.slice(0, 5).map((s: any) => ({
-        skillName: s.skill,
-        priority: s.priority,
-        reason: s.reason,
-      })),
-      similarTalents: inferences.similarTalents.slice(0, 3).map(t => ({
-        name: t.name,
-        commonSkillsCount: t.commonSkillsCount,
-      })),
-    };
-  } catch (error) {
-    logger.error('[Context] Failed to load graph context:', error);
-    return { isGraphAvailable: false };
-  }
-}

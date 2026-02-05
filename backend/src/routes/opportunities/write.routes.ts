@@ -103,6 +103,7 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
       sectors,
       images,
       attachments,
+      visibility,
     } = req.body;
 
     if (!title) {
@@ -145,10 +146,10 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
         compensation_min, compensation_max, currency, compensation_frequency,
         location_type, locations, posted_at, deadline, start_date, duration,
         status, cover_image_url, cv_required, application_questions, sectors, images, attachments,
-        organization_id, created_at, updated_at
+        organization_id, visibility, created_at, updated_at
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-        $20, $21, $22, $23, $24, $25, $26, $27, NOW(), NOW()
+        $20, $21, $22, $23, $24, $25, $26, $27, $28, NOW(), NOW()
       ) RETURNING *
     `, [
       id, title, slug, type || null, contract_type || null, work_rhythm || null,
@@ -159,7 +160,7 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
       status, cover_image_url || null, cv_required || false,
       application_questions?.length > 0 ? JSON.stringify(application_questions) : null,
       sectors || null, images || null, attachments ? JSON.stringify(attachments) : null,
-      organization_id || null
+      organization_id || null, visibility || 'PUBLIC'
     ]);
 
     // Link to organization or talent
@@ -196,6 +197,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       compensation_min, compensation_max, currency, compensation_frequency,
       location_type, locations, deadline, start_date, duration, status,
       cover_image_url, cv_required, application_questions, sectors, images, attachments,
+      visibility,
     } = req.body;
 
     // Check if opportunity exists
@@ -270,15 +272,16 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         sectors = $22,
         images = $23,
         attachments = $24,
+        visibility = COALESCE($25, visibility),
         updated_at = NOW()
-      WHERE id = $25 AND deleted_at IS NULL
+      WHERE id = $26 AND deleted_at IS NULL
       RETURNING *
     `, [
       title, type, contract_type, work_rhythm, summary, requirements, nice_to_have,
       compensation_min, compensation_max, currency, compensation_frequency,
       location_type, finalLocations, postedAt, deadline, start_date, duration,
       newStatus, cover_image_url, cv_required, finalQuestions,
-      finalSectors, finalImages, finalAttachments, id
+      finalSectors, finalImages, finalAttachments, visibility, id
     ]);
 
     // Update embedding (async)

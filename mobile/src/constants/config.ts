@@ -16,4 +16,5 @@ export const STORAGE_KEYS = {
   ONBOARDING_SEEN: 'onboarding_seen',
   LANGUAGE: 'app_language',
   THEME: 'app_theme',
+  PRIVACY_PREFERENCES: 'app_privacy_preferences',
 } as const;

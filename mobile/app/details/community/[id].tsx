@@ -14,7 +14,6 @@ import {
   MapPin,
   ChevronRight,
   Eye,
-  CreditCard,
   BookmarkCheck,
   PenSquare,
   BarChart2,
@@ -44,12 +43,6 @@ const getInitials = (name: string): string => {
     .slice(0, 2);
 };
 
-const formatPrice = (price?: number, currency?: string): string => {
-  if (!price) return 'Gratuit';
-  const currencySymbol = currency === 'EUR' ? '€' : currency === 'USD' ? '$' : currency || 'XOF';
-  return `${price.toLocaleString('fr-FR')} ${currencySymbol}/mois`;
-};
-
 export default function CommunityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -63,6 +56,8 @@ export default function CommunityDetailScreen() {
   const [isOwner, setIsOwner] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [activeTab, setActiveTab] = useState<'presentation' | 'activities' | 'members'>('presentation');
+  const [membersPreview, setMembersPreview] = useState<CommunityMemberPreview[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Only show manage button if owner AND connected as organization
@@ -118,6 +113,41 @@ export default function CommunityDetailScreen() {
       // User might not be logged in, ignore error
     }
   };
+
+  const loadMembers = useCallback(async () => {
+    if (!id) return;
+    setMembersLoading(true);
+    try {
+      const res = await communityService.getCommunityMembers(id, { limit: 100, status: 'ACTIVE' });
+      const list = Array.isArray(res?.data) ? res.data : (res as any)?.data ?? [];
+      const preview: CommunityMemberPreview[] = list.map((row: any) => {
+        const t = row.talent || {};
+        const displayName = [t.first_name, t.last_name].filter(Boolean).join(' ').trim() || t.email || '';
+        return {
+          id: t.id || row.id,
+          display_name: displayName,
+          avatar_url: t.avatar_url,
+          role: row.role,
+          city: t.city,
+          country: t.country,
+          bio: t.bio,
+          joined_at: row.joined_at,
+        };
+      });
+      setMembersPreview(preview);
+    } catch (e) {
+      console.error('Error loading members:', e);
+      setMembersPreview([]);
+    } finally {
+      setMembersLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (id && community && membersPreview.length === 0 && !membersLoading) {
+      loadMembers();
+    }
+  }, [id, community, loadMembers, membersLoading, membersPreview.length]);
 
   const toggleBookmark = async () => {
     setIsBookmarked(!isBookmarked);
@@ -308,17 +338,6 @@ export default function CommunityDetailScreen() {
                 </Text>
               </View>
             )}
-            {community.is_paid && (
-              <View style={[styles.tag, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
-                <CreditCard size={12} color={colors.warning} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.tagText, { color: colors.warning, marginLeft: 4 }]}>Payant</Text>
-              </View>
-            )}
-            {!community.is_paid && (
-              <View style={[styles.tag, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
-                <Text style={[styles.tagText, { color: colors.success }]}>Gratuit</Text>
-              </View>
-            )}
           </View>
 
           {/* Tab Navigation - Only visible for members */}
@@ -429,19 +448,6 @@ export default function CommunityDetailScreen() {
                   </View>
                 </View>
               </View>
-
-              {/* Pricing - full width if paid */}
-              {community.is_paid && (
-                <View style={styles.metaRowFull}>
-                  <CreditCard size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                  <View style={styles.metaItemFull}>
-                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Abonnement</Text>
-                    <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
-                      {formatPrice(community.monthly_price, community.currency)}
-                    </Text>
-                  </View>
-                </View>
-              )}
             </View>
 
             {/* Tags/Categories Section */}
@@ -469,16 +475,16 @@ export default function CommunityDetailScreen() {
             )}
 
             {/* Members Preview */}
-            {community.members_preview && community.members_preview.length > 0 && (
+            {membersPreview.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Membres</Text>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => setActiveTab('members')}>
                     <Text style={[styles.seeAllText, { color: colors.primary }]}>Voir tout</Text>
                   </TouchableOpacity>
                 </View>
                 <View style={styles.membersList}>
-                  {community.members_preview.slice(0, 5).map((member) => (
+                  {membersPreview.slice(0, 5).map((member) => (
                     <View key={member.id} style={styles.memberAvatarContainer}>
                       {member.avatar_url ? (
                         <Image
@@ -494,9 +500,9 @@ export default function CommunityDetailScreen() {
                       )}
                     </View>
                   ))}
-                  {community.members_count && community.members_count > 5 && (
+                  {(community.members_count ?? membersPreview.length) > 5 && (
                     <View style={[styles.moreMembersCircle, { backgroundColor: colors.gray100, borderColor: colors.background }]}>
-                      <Text style={[styles.moreMembersText, { color: colors.textSecondary }]}>+{community.members_count - 5}</Text>
+                      <Text style={[styles.moreMembersText, { color: colors.textSecondary }]}>+{(community.members_count ?? membersPreview.length) - 5}</Text>
                     </View>
                   )}
                 </View>
@@ -512,9 +518,13 @@ export default function CommunityDetailScreen() {
           <View style={styles.contentPadded}>
             <View style={styles.tabContent}>
               {/* Members List */}
-              {community.members_preview && community.members_preview.length > 0 ? (
+              {membersLoading ? (
+                <View style={[styles.membersListContainer, styles.loadingContainer, { backgroundColor: colors.surface, minHeight: 120 }]}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+              ) : membersPreview.length > 0 ? (
                 <View style={[styles.membersListContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-                  {community.members_preview.map((member, index) => (
+                  {membersPreview.map((member, index) => (
                     <TouchableOpacity
                       key={member.id}
                       style={[
@@ -522,7 +532,7 @@ export default function CommunityDetailScreen() {
                         {
                           borderBottomColor: colors.borderColor,
                           backgroundColor: colors.surface,
-                          borderBottomWidth: index < (community.members_preview?.length || 0) - 1 ? BORDER.width.thin : 0
+                          borderBottomWidth: index < membersPreview.length - 1 ? BORDER.width.thin : 0
                         }
                       ]}
                       activeOpacity={0.7}
@@ -539,10 +549,10 @@ export default function CommunityDetailScreen() {
                           </Text>
                         </View>
                       )}
-                      <View style={styles.memberItemInfo}>
+                        <View style={styles.memberItemInfo}>
                         <View style={styles.memberItemNameRow}>
                           <Text style={[styles.memberItemName, { color: colors.textPrimary }]} numberOfLines={1}>
-                            {member.display_name}
+                            {member.display_name || 'Membre'}
                           </Text>
                           {member.role === 'ADMIN' && (
                             <View style={[styles.adminBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>

@@ -343,7 +343,9 @@ export const GOAL = {
   RESEARCH_SUPPORT: "RESEARCH_SUPPORT",
   IMPROVE_PRODUCTIVITY: "IMPROVE_PRODUCTIVITY",
   COLLABORATIVE_LEARNING: "COLLABORATIVE_LEARNING",
-  TEACH_OR_MENTOR: "TEACH_OR_MENTOR"
+  TEACH_OR_MENTOR: "TEACH_OR_MENTOR",
+  BUILD_NETWORK_OR_VISIBILITY: "BUILD_NETWORK_OR_VISIBILITY",
+  CONTRIBUTE_OR_GIVE_BACK: "CONTRIBUTE_OR_GIVE_BACK"
 } as const;
 export type Goal = typeof GOAL[keyof typeof GOAL];
 
@@ -378,6 +380,7 @@ export interface Talent {
   // Profile
   profile_tags?: ProfileTag[]; // Max recommandé: plusieurs tags
   goals?: Goal[]; // Max 3
+  is_visible?: boolean;
 
   embedding?: Vector;
   created_at: ISOTimestamp;
@@ -403,6 +406,7 @@ export interface Organization {
   headquarters_coordinates?: Coordinates;
 
   verification_status?: OrgVerificationStatus;
+  is_visible?: boolean;
 
   embedding?: Vector;
   culture_summary?: string;
@@ -434,12 +438,6 @@ export interface Community {
   visibility?: Visibility;
   // Legacy access_type for backward compatibility
   access_type?: AccessType;
-
-  // Pricing
-  is_paid?: boolean;
-  monthly_price?: number;
-  currency?: string; // ISO currency code (XOF, EUR, USD, etc.)
-  trial_period_days?: 0 | 1 | 3 | 7 | 30; // Free trial period in days
 
   // Location
   city?: string;

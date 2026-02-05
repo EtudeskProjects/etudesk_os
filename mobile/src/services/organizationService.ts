@@ -8,7 +8,7 @@ import { Organization, OrganizationType } from '../types/models';
 
 export interface CreateOrganizationData {
   name: string;
-  type?: OrganizationType;
+  types?: OrganizationType[];
   description?: string;
   logo_url?: string;
   website_url?: string;
@@ -17,13 +17,14 @@ export interface CreateOrganizationData {
   headquarters_city?: string;
   headquarters_region?: string;
   headquarters_country?: string;
+  headquarters_coordinates?: { latitude: number; longitude: number };
   sectors?: string[];
   goals?: string[];
 }
 
 export interface UpdateOrganizationData {
   name?: string;
-  type?: OrganizationType;
+  types?: OrganizationType[];
   description?: string;
   logo_url?: string;
   website_url?: string;
@@ -32,6 +33,7 @@ export interface UpdateOrganizationData {
   headquarters_city?: string;
   headquarters_region?: string;
   headquarters_country?: string;
+  headquarters_coordinates?: { latitude: number; longitude: number };
   sectors?: string[];
   goals?: string[];
 }

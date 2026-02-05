@@ -291,7 +291,7 @@ export default function EditProfileScreen() {
             onPress={pickImage}
           >
             {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.photoImage} />
+              <Image source={{ uri: avatarUri }} style={styles.photoImage} resizeMode="cover" />
             ) : (
               <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
                 <Text style={styles.avatarText}>{getInitials()}</Text>

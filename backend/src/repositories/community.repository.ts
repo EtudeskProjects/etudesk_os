@@ -19,10 +19,6 @@ export interface Community {
   cover_image_url: string | null;
   logo_url: string | null;
   visibility: CommunityVisibility;
-  is_paid: boolean;
-  price: number | null;
-  currency: string | null;
-  billing_period: string | null;
   sectors: string[] | null;
   tags: string[] | null;
   rules: string | null;
@@ -60,10 +56,6 @@ export interface CreateCommunityDTO {
   cover_image_url?: string;
   logo_url?: string;
   visibility?: CommunityVisibility;
-  is_paid?: boolean;
-  price?: number;
-  currency?: string;
-  billing_period?: string;
   sectors?: string[];
   tags?: string[];
   rules?: string;
@@ -75,10 +67,6 @@ export interface UpdateCommunityDTO {
   cover_image_url?: string;
   logo_url?: string;
   visibility?: CommunityVisibility;
-  is_paid?: boolean;
-  price?: number;
-  currency?: string;
-  billing_period?: string;
   sectors?: string[];
   tags?: string[];
   rules?: string;
@@ -87,7 +75,6 @@ export interface UpdateCommunityDTO {
 export interface CommunityFilters {
   organizationId?: string;
   visibility?: CommunityVisibility;
-  is_paid?: boolean;
   sectors?: string[];
   search?: string;
 }
@@ -139,8 +126,8 @@ class CommunityRepository extends BaseRepository<Community> {
     const result = await this.query<Community>(
       `INSERT INTO communities (
         slug, organization_id, name, description, cover_image_url, logo_url,
-        visibility, is_paid, price, currency, billing_period, sectors, tags, rules
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        visibility, sectors, tags, rules
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *`,
       [
         data.slug,
@@ -150,10 +137,6 @@ class CommunityRepository extends BaseRepository<Community> {
         data.cover_image_url || null,
         data.logo_url || null,
         data.visibility || 'PUBLIC',
-        data.is_paid || false,
-        data.price || null,
-        data.currency || null,
-        data.billing_period || null,
         data.sectors || null,
         data.tags || null,
         data.rules || null,
@@ -172,7 +155,7 @@ class CommunityRepository extends BaseRepository<Community> {
 
     const fields: (keyof UpdateCommunityDTO)[] = [
       'name', 'description', 'cover_image_url', 'logo_url', 'visibility',
-      'is_paid', 'price', 'currency', 'billing_period', 'sectors', 'tags', 'rules'
+      'sectors', 'tags', 'rules'
     ];
 
     for (const field of fields) {
@@ -227,11 +210,6 @@ class CommunityRepository extends BaseRepository<Community> {
     if (filters.visibility) {
       conditions.push(`c.visibility = $${paramIndex++}`);
       params.push(filters.visibility);
-    }
-
-    if (filters.is_paid !== undefined) {
-      conditions.push(`c.is_paid = $${paramIndex++}`);
-      params.push(filters.is_paid);
     }
 
     if (filters.sectors && filters.sectors.length > 0) {

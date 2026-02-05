@@ -50,9 +50,6 @@ export interface CreateCommunityData {
   tags?: string[]; // Max 3 tags
   sectors?: Sector[]; // Max 5
   visibility?: Visibility;
-  is_paid?: boolean;
-  monthly_price?: number;
-  currency?: string;
 
   // Default member permissions
   default_member_permissions?: MemberPermissions;
@@ -87,9 +84,6 @@ export interface GeneratedCommunityData {
   sectors?: Sector[];
   rules?: string;
   visibility?: Visibility;
-  is_paid?: boolean;
-  monthly_price?: number;
-  currency?: string;
   application_questions?: string[];
 }
 
@@ -165,18 +159,28 @@ class CommunityService {
   // ─────────────────────────────────────────────────────────────
 
   /**
-   * Get communities the current user is a member of
+   * Get communities the current user is a member of (including PENDING requests).
+   * Backend returns { data: array, pagination }; we normalize to { data: { memberships } }.
    */
   async getMyMemberships(filters?: { status?: 'ACTIVE' | 'PENDING' | 'REJECTED'; limit?: number; offset?: number }): Promise<ApiResponse<{
     memberships: Array<{
       id: string;
+      community_id?: string;
       community: Community;
       role: 'ADMIN' | 'MEMBER';
-      status: 'ACTIVE' | 'PENDING' | 'REJECTED';
+      status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'SUSPENDED';
       joined_at: string;
     }>;
+    pagination?: { total: number; limit: number; offset: number; hasMore: boolean };
   }>> {
-    return api.get('/api/communities/memberships/me', filters);
+    const res = await api.get<{ data: any[]; pagination?: any }>('/api/communities/memberships/me', filters);
+    const list = Array.isArray(res?.data) ? res.data : (res as any)?.memberships ?? [];
+    return {
+      data: {
+        memberships: list,
+        ...(res?.pagination && { pagination: res.pagination }),
+      },
+    } as any;
   }
 
   /**

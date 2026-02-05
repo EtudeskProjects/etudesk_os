@@ -47,7 +47,11 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       LIMIT 1
     `, [req.talentId]);
 
-    if (identityCheck.rows.length === 0) {
+    // Admin email check (move to a utility if reused)
+    const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'admin@etudesk.com').split(',').map(e => e.trim().toLowerCase());
+    const isAdmin = req.userEmail && ADMIN_EMAILS.includes(req.userEmail.toLowerCase());
+
+    if (!isAdmin && identityCheck.rows.length === 0) {
       return res.status(403).json({
         error: 'Verified identity required',
         code: 'IDENTITY_REQUIRED',

@@ -20,6 +20,7 @@ import { CodeBlock } from './blocks/CodeBlock';
 
 interface MarkdownRendererProps {
   content: string;
+  onQuizAnswer?: (answer: string) => void;
 }
 
 // Parse content into blocks
@@ -30,10 +31,42 @@ interface Block {
   data?: any; // parsed JSON data
 }
 
+/**
+ * Try to parse JSON with basic repair for common LLM issues:
+ * - Trailing commas
+ * - Unquoted values after colons
+ * - Truncated strings
+ */
+function tryParseJSON(raw: string): any | null {
+  // 1. Direct parse
+  try { return JSON.parse(raw); } catch { /* continue */ }
+
+  // 2. Try fixing common issues
+  let fixed = raw
+    .replace(/,\s*}/g, '}')       // trailing commas
+    .replace(/,\s*]/g, ']')       // trailing commas in arrays
+    .replace(/'/g, '"');           // single quotes → double quotes
+
+  try { return JSON.parse(fixed); } catch { /* continue */ }
+
+  // 3. Try to extract key-value pairs manually for entity-like objects
+  const kvRegex = /"(\w+)"\s*:\s*("(?:[^"\\]|\\.)*"|\d+(?:\.\d+)?|true|false|null|\[.*?\])/g;
+  const obj: Record<string, any> = {};
+  let m: RegExpExecArray | null;
+  while ((m = kvRegex.exec(raw)) !== null) {
+    try {
+      obj[m[1]] = JSON.parse(m[2]);
+    } catch {
+      obj[m[1]] = m[2].replace(/^"|"$/g, '');
+    }
+  }
+  return Object.keys(obj).length > 0 ? obj : null;
+}
+
 function parseBlocks(content: string): Block[] {
   const blocks: Block[] = [];
-  // Match fenced code blocks: ```type[:subtype]\n...\n```
-  const blockRegex = /```([\w:-]+)\n([\s\S]*?)```/g;
+  // Match fenced code blocks: 2+ backticks (tolerant) + tag + newline + body + 2+ backticks
+  const blockRegex = /`{2,}([\w:-]+)\n([\s\S]*?)`{2,}/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -47,63 +80,54 @@ function parseBlocks(content: string): Block[] {
     const tag = match[1];
     const body = match[2].trim();
 
-    // Entity blocks: entity:opportunity, entity:community, etc.
-    if (tag.startsWith('entity:')) {
-      const entityType = tag.replace('entity:', '');
-      try {
-        const data = JSON.parse(body);
+    // Known entity type names (used as fallback when LLM omits `entity:` prefix)
+    const ENTITY_TYPES = ['opportunity', 'community', 'space', 'organization', 'talent', 'event', 'document', 'skill', 'notification', 'maps'];
+
+    // Entity blocks: entity:opportunity, entity:community, OR just opportunity, community, etc.
+    const isEntityTag = tag.startsWith('entity:') || ENTITY_TYPES.includes(tag);
+    if (isEntityTag) {
+      const entityType = tag.startsWith('entity:') ? tag.replace('entity:', '') : tag;
+      const data = tryParseJSON(body);
+      // Documents can use file_url as identifier instead of id
+      const hasValidId = data && (data.id || (entityType === 'document' && (data.file_url || data.downloadUrl)));
+      if (hasValidId) {
         blocks.push({ type: 'entity', content: body, meta: entityType, data });
-      } catch {
-        blocks.push({ type: 'text', content: body });
+      } else {
+        // Malformed entity — skip silently (don't show raw JSON)
       }
     }
     // Quiz block
     else if (tag === 'quiz') {
-      try {
-        blocks.push({ type: 'quiz', content: body, data: JSON.parse(body) });
-      } catch {
-        blocks.push({ type: 'text', content: body });
-      }
+      const data = tryParseJSON(body);
+      if (data) blocks.push({ type: 'quiz', content: body, data });
     }
-    // Flashcard block
+    // Flashcard block — require front + back fields
     else if (tag === 'flashcard') {
-      try {
-        blocks.push({ type: 'flashcard', content: body, data: JSON.parse(body) });
-      } catch {
-        blocks.push({ type: 'text', content: body });
+      const data = tryParseJSON(body);
+      if (data && data.front && data.back) {
+        blocks.push({ type: 'flashcard', content: body, data });
       }
+      // Malformed flashcard (truncated/missing fields) — skip silently
     }
     // YouTube block
     else if (tag === 'youtube') {
-      try {
-        blocks.push({ type: 'youtube', content: body, data: JSON.parse(body) });
-      } catch {
-        blocks.push({ type: 'text', content: body });
-      }
+      const data = tryParseJSON(body);
+      if (data) blocks.push({ type: 'youtube', content: body, data });
     }
     // Diagram block
     else if (tag === 'diagram') {
-      try {
-        blocks.push({ type: 'diagram', content: body, data: JSON.parse(body) });
-      } catch {
-        blocks.push({ type: 'text', content: body });
-      }
+      const data = tryParseJSON(body);
+      if (data) blocks.push({ type: 'diagram', content: body, data });
     }
     // Image block
     else if (tag === 'image') {
-      try {
-        blocks.push({ type: 'image', content: body, data: JSON.parse(body) });
-      } catch {
-        blocks.push({ type: 'text', content: body });
-      }
+      const data = tryParseJSON(body);
+      if (data) blocks.push({ type: 'image', content: body, data });
     }
     // Chart block
     else if (tag === 'chart') {
-      try {
-        blocks.push({ type: 'chart', content: body, data: JSON.parse(body) });
-      } catch {
-        blocks.push({ type: 'text', content: body });
-      }
+      const data = tryParseJSON(body);
+      if (data) blocks.push({ type: 'chart', content: body, data });
     }
     // Code blocks: code:javascript or just javascript, python, etc.
     else {
@@ -344,7 +368,7 @@ function TextBlock({ content, colors }: { content: string; colors: any }) {
   return <View>{elements}</View>;
 }
 
-export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) => {
+export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQuizAnswer }) => {
   const { colors } = useTheme();
 
   const blocks = useMemo(() => parseBlocks(content), [content]);
@@ -358,7 +382,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content }) =
               <EntityCard key={index} type={block.meta || ''} data={block.data} />
             );
           case 'quiz':
-            return <QuizBlock key={index} data={block.data} />;
+            return <QuizBlock key={index} data={block.data} onAnswer={onQuizAnswer} />;
           case 'flashcard':
             return <FlashcardBlock key={index} data={block.data} />;
           case 'youtube':

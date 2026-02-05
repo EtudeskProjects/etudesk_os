@@ -376,7 +376,7 @@ export default function CreateProfileScreen() {
             onPress={pickImage}
           >
             {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.photoImage} />
+              <Image source={{ uri: avatarUri }} style={styles.photoImage} resizeMode="cover" />
             ) : (
               <Camera size={ICON.size.lg} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
             )}
@@ -634,6 +634,7 @@ export default function CreateProfileScreen() {
           value={phone}
           onChangeText={(value) => form.setValue('phone', value)}
           keyboardType="phone-pad"
+          hint="Ce numéro doit être unique pour votre profil"
         />
 
         {/* Email */}

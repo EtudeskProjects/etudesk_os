@@ -12,10 +12,10 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
 export const youtubeSearchTool = tool({
   name: 'youtube_search',
   description:
-    'Recherche des vidéos YouTube éducatives. Mode étude uniquement. Retourne les vidéos les plus pertinentes pour un sujet donné.',
+    'Search YouTube for educational videos on a topic. Study mode only. Returns the most relevant French-language video tutorials. Use this when the learner needs video explanations or visual demonstrations of a concept.',
   parameters: z.object({
-    query: z.string().describe('Requête de recherche'),
-    maxResults: z.number().min(1).max(5).default(3),
+    query: z.string().describe('Search query for educational videos. Be specific about the topic and level. Example: "tutoriel React hooks débutant" or "architecture MVC expliquée simplement"'),
+    maxResults: z.number().min(1).max(3).default(1).describe('Number of videos to return. Default 1. The agent must only display ONE video per response.'),
   }),
   execute: async ({ query, maxResults }) => {
     if (!YOUTUBE_API_KEY) {

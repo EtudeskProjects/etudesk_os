@@ -18,7 +18,7 @@ import imagesRouter from './routes/images';
 import filesRouter from './routes/files';
 import paymentMethodsRouter from './routes/payment-methods';
 import communityActivitiesRouter from './routes/community-activities.routes';
-import communitySubscriptionsRouter from './routes/community-subscriptions.routes';
+
 import communityNotificationsRouter from './routes/community-notifications.routes';
 import communityInvitationsRouter from './routes/community-invitations.routes';
 import opportunityInvitationsRouter from './routes/opportunity-invitations.routes';
@@ -30,10 +30,8 @@ import documentsRouter from './routes/documents';
 import skillsRouter from './routes/skills';
 import { verifyEmailConnection } from './services/email.service';
 import { cleanupExpiredOTPs } from './services/otp.service';
-import { graphService } from './services/graph';
 import { apiLimiter, authLimiter, otpLimiter } from './middleware/rateLimit.middleware';
-import { communitySubscriptionService } from './services/community-subscription.service';
-import { communityPaymentService } from './services/community-payment.service';
+
 import { communityNotificationService } from './services/community-notification.service';
 import { communityActivityService } from './services/community-activity.service';
 import { AppError, isAppError, RateLimitError } from './errors';
@@ -93,16 +91,11 @@ app.use('/uploads', express.static(uploadDir));
 
 // Health check (no rate limit)
 app.get('/health', async (req, res) => {
-  const neo4jConnected = graphService.isConnected();
-
   res.json({
     status: 'ok',
     name: 'Etudesk API',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
-    services: {
-      neo4j: neo4jConnected ? 'connected' : 'disconnected',
-    },
   });
 });
 
@@ -132,12 +125,17 @@ v1Router.use('/opportunities', opportunitiesRouter);
 v1Router.use('/applications', applicationsRouter);
 v1Router.use('/communities', communitiesRouter);
 v1Router.use('/', communityActivitiesRouter);
-v1Router.use('/community-subscriptions', communitySubscriptionsRouter);
+
 v1Router.use('/community-notifications', communityNotificationsRouter);
 v1Router.use('/communities', communityInvitationsRouter);
+v1Router.use('/community-invitations', communityInvitationsRouter); // Fix: Explicit mount for /me path
+
 v1Router.use('/opportunities', opportunityInvitationsRouter);
+v1Router.use('/opportunity-invitations', opportunityInvitationsRouter); // Fix: Explicit mount for /me path
+
 v1Router.use('/spaces', spacesRouter);
 v1Router.use('/spaces', spaceInvitationsRouter);
+v1Router.use('/space-invitations', spaceInvitationsRouter); // Fix: Explicit mount for /me path
 v1Router.use('/bookmarks', bookmarksRouter);
 v1Router.use('/notifications', notificationsRouter);
 v1Router.use('/images', imagesRouter);
@@ -209,16 +207,6 @@ app.listen(PORT, async () => {
     });
   }
 
-  // Initialize Neo4j Graph Database
-  try {
-    await graphService.initialize();
-    logger.info('Neo4j Graph Database connected');
-  } catch (error) {
-    logger.warn('Neo4j Graph Database not available. Graph features will be limited.', {
-      hint: 'Check your NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD in .env',
-    });
-  }
-
   // Setup periodic cleanup of expired OTPs (every hour)
   setInterval(() => {
     cleanupExpiredOTPs();
@@ -229,30 +217,7 @@ app.listen(PORT, async () => {
   // ═══════════════════════════════════════════════════════════════
   const cronLogger = logger.child({ module: 'cron' });
 
-  // Process expiring subscriptions daily (at startup and every 24h)
-  const runSubscriptionCron = async () => {
-    try {
-      const result = await communitySubscriptionService.processExpiringSubscriptions();
-      cronLogger.info('Subscription check completed', { expired: result.expired, reminded: result.reminded });
-    } catch (err) {
-      cronLogger.error('Failed to process subscriptions', err);
-    }
-  };
-  runSubscriptionCron();
-  setInterval(runSubscriptionCron, 24 * 60 * 60 * 1000);
-
-  // Retry failed payments daily
-  const runPaymentRetryCron = async () => {
-    try {
-      const count = await communityPaymentService.processFailedPaymentsRetry();
-      if (count > 0) {
-        cronLogger.info('Retried failed payments', { count });
-      }
-    } catch (err) {
-      cronLogger.error('Failed to retry payments', err);
-    }
-  };
-  setInterval(runPaymentRetryCron, 24 * 60 * 60 * 1000);
+  cronLogger.info('Cron jobs initialized');
 
   // Process scheduled notifications every 10 minutes
   const runNotificationCron = async () => {

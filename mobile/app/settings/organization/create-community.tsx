@@ -51,7 +51,6 @@ import {
   MAX_COMMUNITY_TAGS,
   MAX_MEMBERSHIP_QUESTIONS,
 } from '../../../src/constants/community';
-import { getCurrencySymbol } from '../../../src/constants/opportunity';
 import {
   CommunityType,
   Visibility,
@@ -98,9 +97,6 @@ interface CommunityFormValues {
   city: string;
   // Conditions
   visibility: Visibility | null;
-  isPaid: boolean;
-  monthlyPrice: string;
-  currency: string;
   rules: string;
   applicationQuestions: ApplicationQuestion[];
   defaultPermissions: MemberPermissions;
@@ -121,6 +117,7 @@ export default function CreateCommunityScreen() {
   const { selectedOrgId, selectedOrg } = useSpace();
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [orgLocationLoaded, setOrgLocationLoaded] = useState(false);
   const countryScrollRef = useRef<ScrollView>(null);
   const COUNTRY_CHIP_WIDTH = 80;
@@ -140,9 +137,6 @@ export default function CreateCommunityScreen() {
       city: { initialValue: '' },
       // Conditions
       visibility: { initialValue: 'PUBLIC' as Visibility | null },
-      isPaid: { initialValue: false },
-      monthlyPrice: { initialValue: '' },
-      currency: { initialValue: 'XOF' },
       rules: { initialValue: '' },
       applicationQuestions: { initialValue: [] as ApplicationQuestion[] },
       defaultPermissions: { initialValue: DEFAULT_MEMBER_PERMISSIONS },
@@ -165,9 +159,6 @@ export default function CreateCommunityScreen() {
   const region = form.getValue('region');
   const city = form.getValue('city');
   const visibility = form.getValue('visibility');
-  const isPaid = form.getValue('isPaid');
-  const monthlyPrice = form.getValue('monthlyPrice');
-  const currency = form.getValue('currency');
   const rules = form.getValue('rules');
   const applicationQuestions = form.getValue('applicationQuestions');
   const defaultPermissions = form.getValue('defaultPermissions');
@@ -279,9 +270,6 @@ export default function CreateCommunityScreen() {
         tags: selectedTags.length > 0 ? selectedTags : undefined,
         sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
         visibility: visibility || undefined,
-        is_paid: isPaid,
-        monthly_price: isPaid && monthlyPrice ? parseFloat(monthlyPrice) : undefined,
-        currency: isPaid ? currency : undefined,
         rules: rules || undefined,
         application_questions: applicationQuestions.filter(q => q.question.trim().length > 0).map(q => q.question),
         default_member_permissions: defaultPermissions,
@@ -319,11 +307,6 @@ export default function CreateCommunityScreen() {
 
         if (data.rules) updates.rules = data.rules;
         if (data.visibility) updates.visibility = data.visibility;
-
-        // Pricing
-        if (data.is_paid !== undefined) updates.isPaid = data.is_paid;
-        if (data.monthly_price) updates.monthlyPrice = Math.floor(data.monthly_price).toString();
-        if (data.currency) updates.currency = data.currency;
 
         // Application questions
         if (data.application_questions && data.application_questions.length > 0) {
@@ -426,9 +409,6 @@ export default function CreateCommunityScreen() {
     tags: selectedTags.length > 0 ? selectedTags : undefined,
     sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
     visibility: visibility || undefined,
-    is_paid: isPaid,
-    monthly_price: isPaid && monthlyPrice ? parseFloat(monthlyPrice) : undefined,
-    currency: isPaid ? currency : undefined,
     default_member_permissions: defaultPermissions,
     city: communityType === 'HYBRID' ? city || undefined : undefined,
     region: communityType === 'HYBRID' ? region || undefined : undefined,
@@ -439,9 +419,12 @@ export default function CreateCommunityScreen() {
   });
 
   const handleSaveDraft = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const imageUrls = await buildImagesPayload();
       if (imageUrls === null) {
+        setIsSubmitting(false);
         return;
       }
       const data = await buildCommunityData(imageUrls);
@@ -453,14 +436,19 @@ export default function CreateCommunityScreen() {
       );
     } catch (error: any) {
       Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de l\'enregistrement.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handlePublish = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const imageUrls = await buildImagesPayload();
 
       if (imageUrls === null) {
+        setIsSubmitting(false);
         return;
       }
 
@@ -475,6 +463,8 @@ export default function CreateCommunityScreen() {
     } catch (error: any) {
       console.error('[CreateCommunity] handlePublish - Error:', error);
       Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de la création.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -502,13 +492,6 @@ export default function CreateCommunityScreen() {
       .map((id) => SECTOR_DATA.find((s) => s.id === id)?.label || id)
       .join(', ');
   };
-
-  const formatNumber = (num: string | number | null | undefined): string => {
-    if (!num) return '';
-    const numStr = typeof num === 'number' ? num.toString() : num;
-    return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  };
-
 
   const renderStepIndicator = () => {
     const stepsData = STEPS.map(step => ({
@@ -894,57 +877,6 @@ export default function CreateCommunityScreen() {
           </View>
         </View>
 
-        {/* Pricing Toggle */}
-        <View style={[styles.toggleContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-          <View style={styles.toggleInfo}>
-            <View style={styles.toggleTextContainer}>
-              <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>
-                Communauté {isPaid ? 'payante' : 'gratuite'}
-              </Text>
-              <Text style={[styles.toggleDescription, { color: colors.gray500 }]}>
-                {isPaid ? 'Les membres devront payer un abonnement' : 'Accès gratuit pour tous les membres'}
-              </Text>
-            </View>
-          </View>
-          <Toggle
-            value={isPaid}
-            onValueChange={(value) => form.setValue('isPaid', value)}
-          />
-        </View>
-
-        {/* Monthly Price (if paid) */}
-        {isPaid && (
-          <>
-            <View style={styles.rowFields}>
-              <View style={styles.halfField}>
-                <Input
-                  label="Coût abonnement mensuel *"
-                  placeholder="5000"
-                  value={monthlyPrice}
-                  onChangeText={(value) => form.setValue('monthlyPrice', value)}
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={styles.halfField}>
-                <View style={styles.fieldContainer}>
-                  <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Devise (ex: XOF, EUR)</Text>
-                  <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-                    <TextInput
-                      style={[styles.textArea, { color: colors.textPrimary, minHeight: 44 }]}
-                      value={currency}
-                      onChangeText={(v) => form.setValue('currency', v || 'XOF')}
-                      placeholder="XOF"
-                      placeholderTextColor={colors.gray400}
-                      maxLength={10}
-                      autoCapitalize="characters"
-                    />
-                  </View>
-                </View>
-              </View>
-            </View>
-          </>
-        )}
-
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
 
         {/* Règles */}
@@ -1271,33 +1203,25 @@ export default function CreateCommunityScreen() {
         {/* Info Grid */}
         <View style={styles.previewGrid}>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
+            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Type</Text>
+            <Text style={[styles.previewGridValue, { color: colors.textPrimary }]}>
+              {COMMUNITY_TYPE_LABELS[communityType || 'ONLINE']}
+            </Text>
+          </View>
+          <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
             <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Lieu</Text>
-            <Text style={[styles.previewValue, { color: communityType === 'HYBRID' ? colors.textPrimary : colors.gray400 }]}>
+            <Text style={[styles.previewGridValue, { color: communityType === 'HYBRID' ? colors.textPrimary : colors.gray400 }]}>
               {communityType === 'HYBRID'
                 ? [city, region, country].filter(Boolean).join(', ') || 'Non défini'
-                : communityType === 'ONLINE' ? 'En ligne' : 'Non défini'}
+                : 'En ligne'}
             </Text>
           </View>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
             <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Visibilité</Text>
-            <Text style={[styles.previewValue, { color: visibility ? colors.textPrimary : colors.gray400 }]}>
-              {visibility ? VISIBILITY_LABELS[visibility] : 'Non définie'}
+            <Text style={[styles.previewGridValue, { color: colors.textPrimary }]}>
+              {VISIBILITY_LABELS[visibility || 'PUBLIC']}
             </Text>
           </View>
-          <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Tarification</Text>
-            <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
-              {isPaid ? 'Payante' : 'Gratuite'}
-            </Text>
-          </View>
-          {isPaid && (
-            <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Prix mensuel</Text>
-              <Text style={[styles.previewValue, { color: monthlyPrice ? colors.textPrimary : colors.gray400 }]}>
-                {monthlyPrice ? `${formatNumber(monthlyPrice)} ${getCurrencySymbol(currency)}` : 'Non défini'}
-              </Text>
-            </View>
-          )}
         </View>
 
         {/* Description */}
@@ -1660,8 +1584,8 @@ const styles = StyleSheet.create({
   previewGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   previewGridItem: { width: '50%', padding: SPACING.md, borderWidth: 0.5 },
   previewLabel: { fontSize: TYPOGRAPHY.fontSize.xs, marginBottom: 2 },
-  previewValue: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
-  previewSection: { padding: SPACING.md, borderRadius: BORDER.radius.md },
+  previewGridValue: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
+  previewGridSection: { padding: SPACING.md, borderRadius: BORDER.radius.md },
 
   // Preview application settings styles
   previewApplicationSettings: {

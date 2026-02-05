@@ -69,6 +69,7 @@ export interface Space {
   booking_rules?: string[]; // Booking rules/conditions (TEXT[])
   questions?: string[]; // Questions asked during booking (TEXT[])
   requires_approval?: boolean;
+  payment_collection_info?: string;
   // Contact
   contact_name?: string;
   contact_phone?: string;
@@ -185,6 +186,7 @@ export interface CreateSpaceData {
   booking_rules?: string[];
   questions?: string[];
   requires_approval?: boolean;
+  payment_collection_info?: string;
   contact_name?: string;
   contact_phone?: string;
   contact_email?: string;
@@ -199,7 +201,7 @@ export interface CreateSpaceData {
   }>;
 }
 
-export interface UpdateSpaceData extends Partial<Omit<CreateSpaceData, 'organization_id'>> {}
+export interface UpdateSpaceData extends Partial<Omit<CreateSpaceData, 'organization_id'>> { }
 
 export interface GenerateSpaceInput {
   name: string;
@@ -396,7 +398,7 @@ class SpaceService {
    * Confirm a booking (organization action)
    */
   async confirmBooking(bookingId: string): Promise<ApiResponse<SpaceBooking>> {
-    return api.post<SpaceBooking>(`/api/spaces/bookings/${bookingId}/confirm`);
+    return api.post<SpaceBooking>(`/api/spaces/bookings/${bookingId}/confirm`, {});
   }
 
   /**
@@ -417,7 +419,7 @@ class SpaceService {
    * Mark booking as no-show
    */
   async markNoShow(bookingId: string): Promise<ApiResponse<SpaceBooking>> {
-    return api.post<SpaceBooking>(`/api/spaces/bookings/${bookingId}/no-show`);
+    return api.post<SpaceBooking>(`/api/spaces/bookings/${bookingId}/no-show`, {});
   }
 
   /**
@@ -460,7 +462,7 @@ class SpaceService {
    * Increment view count for a space
    */
   async incrementViews(id: string): Promise<ApiResponse<{ views_count: number }>> {
-    return api.post<{ views_count: number }>(`/api/spaces/${id}/views`);
+    return api.post<{ views_count: number }>(`/api/spaces/${id}/views`, {});
   }
 }
 

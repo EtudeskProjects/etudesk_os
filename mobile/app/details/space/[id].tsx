@@ -61,6 +61,7 @@ import {
   Headphones,
   EyeOff,
   Projector,
+  Banknote,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
@@ -552,6 +553,18 @@ export default function SpaceDetailScreen() {
                     </View>
                   )}
                 </>
+              )}
+
+              {space.payment_collection_info && (
+                <View style={[styles.priceRow, { marginTop: SPACING.sm, paddingTop: SPACING.sm, borderTopWidth: BORDER.width.thin, borderTopColor: colors.borderColor }]}>
+                  <View style={styles.priceLeft}>
+                    <Banknote size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Mode d'encaissement</Text>
+                      <Text style={[styles.priceValue, { color: colors.textPrimary, marginTop: 2 }]}>{space.payment_collection_info}</Text>
+                    </View>
+                  </View>
+                </View>
               )}
             </View>
           </View>

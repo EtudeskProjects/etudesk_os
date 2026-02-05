@@ -22,22 +22,46 @@ type QueryParam = string | number | boolean | null | Date;
  */
 router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { status, type, location_type } = req.query;
+    const { status, type, location_type, search } = req.query;
     const pagination = getPaginationParams(req);
     const talentId = req.talentId;
 
-    // Get user email for invitation check
+    // Get user profile for matching
+    let userProfile: any = null;
     let userEmail: string | null = null;
+
     if (talentId) {
-      const userResult = await pool.query('SELECT email FROM talents WHERE id = $1', [talentId]);
+      const userResult = await pool.query(`
+        SELECT id, email, city, region, country, remote_ready, willing_to_relocate,
+          sectors, profile_tags, goals, bio
+        FROM talents 
+        WHERE id = $1
+      `, [talentId]);
+
       if (userResult.rows.length > 0) {
-        userEmail = userResult.rows[0].email;
+        userProfile = userResult.rows[0];
+        userEmail = userProfile.email;
       }
     }
 
+    const { MatchingUtils } = await import('../../utils/MatchingUtils');
+
+    // Build matching criteria
+    const criteria = {
+      city: userProfile?.city,
+      region: userProfile?.region,
+      country: userProfile?.country,
+      remote: userProfile?.remote_ready || location_type === 'REMOTE',
+      sectors: userProfile?.sectors || [],
+      query: (search as string) || undefined
+    };
+
+    const matchScore = MatchingUtils.buildMatchScore('opp', criteria);
+
     // Base query: only PUBLIC opportunities OR those where user is invited
     let query = `
-      SELECT o.*,
+      SELECT opp.*,
+        ${matchScore} as match_score,
         COALESCE(
           (SELECT json_agg(json_build_object(
             'id', org.id,
@@ -46,17 +70,18 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
             'types', org.types,
             'headquarters_city', org.headquarters_city,
             'headquarters_country', org.headquarters_country,
-            'verification_status', org.verification_status
+            'verification_status', org.verification_status,
+            'is_visible', org.is_visible
           ))
            FROM opportunity_posters op
            JOIN organizations org ON op.poster_organization_id = org.id
-           WHERE op.opportunity_id = o.id),
+           WHERE op.opportunity_id = opp.id),
           '[]'
         ) as organizations
-      FROM opportunities o
-      WHERE o.deleted_at IS NULL
+      FROM opportunities opp
+      WHERE opp.deleted_at IS NULL
       AND (
-        COALESCE(o.visibility, 'PUBLIC') = 'PUBLIC'
+        COALESCE(opp.visibility, 'PUBLIC') = 'PUBLIC'
     `;
 
     const params: QueryParam[] = [];
@@ -67,36 +92,43 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
       query += `
         OR EXISTS (
           SELECT 1 FROM opportunity_invitations oi
-          WHERE oi.opportunity_id = o.id
+          WHERE oi.opportunity_id = opp.id
           AND (oi.invitee_talent_id = $${paramIndex} OR LOWER(oi.invitee_email) = LOWER($${paramIndex + 1}))
         )
         OR EXISTS (
           SELECT 1 FROM opportunity_posters op2
           LEFT JOIN organization_members om ON op2.poster_organization_id = om.organization_id
-          WHERE op2.opportunity_id = o.id
+          WHERE op2.opportunity_id = opp.id
           AND (op2.poster_talent_id = $${paramIndex} OR om.talent_id = $${paramIndex})
         )
       `;
       params.push(talentId, userEmail);
-      paramIndex += 2;
+      paramIndex += 2; // Incremented by 2 because we pushed 2 params
     }
 
     query += `)`;
 
     if (status) {
-      query += ` AND o.status = $${paramIndex++}`;
+      query += ` AND opp.status = $${paramIndex++}`;
       params.push(status as string);
     }
     if (type) {
-      query += ` AND o.type = $${paramIndex++}`;
+      query += ` AND opp.type = $${paramIndex++}`;
       params.push(type as string);
     }
     if (location_type) {
-      query += ` AND o.location_type = $${paramIndex++}`;
+      query += ` AND opp.location_type = $${paramIndex++}`;
       params.push(location_type as string);
     }
 
-    query += ` ORDER BY o.posted_at DESC NULLS LAST, o.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    if (search) {
+      query += ` AND (opp.title ILIKE $${paramIndex} OR opp.summary ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    // Sort by Universal Match Score, then Recency
+    query += ` ORDER BY match_score DESC, opp.posted_at DESC NULLS LAST, opp.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(pagination.limit, pagination.offset);
 
     const result = await pool.query(query, params);

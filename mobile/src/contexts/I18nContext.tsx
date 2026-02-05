@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { Platform, NativeModules } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n, { Language } from '../i18n';
+import { STORAGE_KEYS } from '../constants/config';
 
 interface I18nContextType {
   language: Language;
@@ -13,6 +15,10 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 interface I18nProviderProps {
   children: ReactNode;
+}
+
+function isValidLanguage(value: string): value is Language {
+  return value === 'fr' || value === 'en';
 }
 
 // Helper to safely get device locale without expo-localization
@@ -33,10 +39,22 @@ function getDeviceLanguage(): Language {
 }
 
 export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
-  // Initialize with device locale or default to French
-  const initialLanguage: Language = getDeviceLanguage();
+  const [language, setLanguageState] = useState<Language>(getDeviceLanguage());
 
-  const [language, setLanguageState] = useState<Language>(initialLanguage);
+  // Load stored language on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEYS.LANGUAGE);
+        if (stored && isValidLanguage(stored)) {
+          setLanguageState(stored);
+          i18n.locale = stored;
+        }
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
 
   // Update i18n locale when language changes
   useEffect(() => {
@@ -46,6 +64,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
     i18n.locale = lang;
+    AsyncStorage.setItem(STORAGE_KEYS.LANGUAGE, lang).catch(() => {});
   }, []);
 
   // Translation function with interpolation support

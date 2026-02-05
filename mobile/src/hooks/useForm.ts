@@ -305,6 +305,8 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>): U
    * Handle form submission
    */
   const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
+
     setSubmitCount(prev => prev + 1);
 
     // Validate all fields

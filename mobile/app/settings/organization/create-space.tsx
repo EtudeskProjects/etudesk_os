@@ -126,6 +126,7 @@ interface SpaceFormValues {
   dailyRate: string;
   weeklyRate: string;
   monthlyRate: string;
+  paymentCollectionInfo: string;
   requiresApproval: boolean;
   availability: Record<number, DayAvailability>;
   rules: string;
@@ -159,6 +160,7 @@ export default function CreateSpaceScreen() {
   // Keep these states for step navigation and UI
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [orgLocationLoaded, setOrgLocationLoaded] = useState(false);
   const countryScrollRef = useRef<ScrollView>(null);
 
@@ -229,6 +231,7 @@ export default function CreateSpaceScreen() {
     daily_rate: values.dailyRate ? parseFloat(values.dailyRate) : undefined,
     weekly_rate: values.weeklyRate ? parseFloat(values.weeklyRate) : undefined,
     monthly_rate: values.monthlyRate ? parseFloat(values.monthlyRate) : undefined,
+    payment_collection_info: values.paymentCollectionInfo.trim() || undefined,
     is_bookable: true,
     requires_approval: true,
     booking_rules: values.rules.trim() ? [values.rules.trim()] : undefined,
@@ -269,6 +272,7 @@ export default function CreateSpaceScreen() {
       dailyRate: { initialValue: '' },
       weeklyRate: { initialValue: '' },
       monthlyRate: { initialValue: '' },
+      paymentCollectionInfo: { initialValue: '' },
       requiresApproval: { initialValue: false },
       availability: { initialValue: DEFAULT_AVAILABILITY },
       rules: { initialValue: '' },
@@ -277,22 +281,31 @@ export default function CreateSpaceScreen() {
       images: { initialValue: [] },
     },
     onSubmit: async (values) => {
+      if (isSubmitting) return;
       if (!selectedOrgId) {
         Alert.alert('Erreur', 'Aucune organisation sélectionnée.');
         return;
       }
 
-      const imageUrls = await buildImagesPayload(values.images);
-      if (imageUrls === null) {
-        return;
+      setIsSubmitting(true);
+      try {
+        const imageUrls = await buildImagesPayload(values.images);
+        if (imageUrls === null) {
+          setIsSubmitting(false);
+          return;
+        }
+
+        const data = buildSpaceData(values, imageUrls.length > 0 ? imageUrls : undefined);
+        await spaceService.create(data);
+
+        Alert.alert('Espace créé', `"${values.name}" a été créé avec succès !`, [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      } catch (error: any) {
+        Alert.alert('Erreur', error.error || 'Une erreur est survenue.');
+      } finally {
+        setIsSubmitting(false);
       }
-
-      const data = buildSpaceData(values, imageUrls.length > 0 ? imageUrls : undefined);
-      await spaceService.create(data);
-
-      Alert.alert('Espace cree', `"${values.name}" a ete cree avec succes !`, [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
     },
     validateOnChange: false,
   });
@@ -319,6 +332,7 @@ export default function CreateSpaceScreen() {
   const dailyRate = form.getValue('dailyRate');
   const weeklyRate = form.getValue('weeklyRate');
   const monthlyRate = form.getValue('monthlyRate');
+  const paymentCollectionInfo = form.getValue('paymentCollectionInfo');
   const requiresApproval = form.getValue('requiresApproval');
   const availability = form.getValue('availability');
   const rules = form.getValue('rules');
@@ -379,7 +393,7 @@ export default function CreateSpaceScreen() {
         sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
         equipment: selectedEquipment.length > 0 ? selectedEquipment : undefined,
         amenities: selectedAmenities.length > 0 ? selectedAmenities : undefined,
-        rules: rules || undefined,
+        booking_rules: rules ? [rules] : undefined,
         hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
         daily_rate: dailyRate ? parseFloat(dailyRate) : undefined,
         weekly_rate: weeklyRate ? parseFloat(weeklyRate) : undefined,
@@ -1135,6 +1149,15 @@ export default function CreateSpaceScreen() {
           </View>
         </View>
 
+        <Input
+          label="Mode d'encaissement"
+          placeholder="Ex: Espèces, Orange Money, Wave, Mobile Money..."
+          value={paymentCollectionInfo}
+          onChangeText={(val) => form.setValue('paymentCollectionInfo', val)}
+          multiline
+          numberOfLines={2}
+        />
+
         {/* Visibility */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
         <View style={styles.fieldContainer}>
@@ -1488,6 +1511,13 @@ export default function CreateSpaceScreen() {
             )}
           </View>
 
+          {paymentCollectionInfo && (
+            <View style={styles.previewSection}>
+              <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Mode d'encaissement</Text>
+              <Text style={[styles.previewText, { color: colors.textSecondary }]}>{paymentCollectionInfo}</Text>
+            </View>
+          )}
+
           <View style={styles.previewSection}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Description</Text>
             {description ? (
@@ -1547,7 +1577,7 @@ export default function CreateSpaceScreen() {
                     style={[
                       styles.availabilityPreviewCard,
                       {
-                        backgroundColor: dayAvail.isOpen ? withOpacity(colors.primary, OPACITY['08']) : colors.gray50,
+                        backgroundColor: dayAvail.isOpen ? withOpacity(colors.primary, OPACITY[8]) : colors.gray50,
                         borderColor: dayAvail.isOpen ? withOpacity(colors.primary, OPACITY[30]) : colors.gray200,
                       },
                     ]}

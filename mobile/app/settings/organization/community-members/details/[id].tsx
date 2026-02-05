@@ -152,8 +152,14 @@ export default function CommunityMemberDetailsScreen() {
         setIsCustomPermissions(response.data.isCustom);
         setMemberRole(response.data.role);
       }
-    } catch (error) {
-      console.error('Error loading permissions:', error);
+    } catch (error: any) {
+      if (error?.status !== 404) {
+        console.error('Error loading permissions:', error);
+      }
+      setPermissions(DEFAULT_MEMBER_PERMISSIONS);
+      setCommunityDefaults(DEFAULT_MEMBER_PERMISSIONS);
+      setIsCustomPermissions(false);
+      setMemberRole('MEMBER');
     } finally {
       setIsLoadingPermissions(false);
     }
@@ -609,7 +615,7 @@ export default function CommunityMemberDetailsScreen() {
 
             {/* Status picker */}
             <TouchableOpacity
-              style={[styles.statusPickerButton, { borderColor: colors.gray300 }]}
+              style={[styles.statusPickerButton, { borderColor: colors.gray300, backgroundColor: colors.gray100 }]}
               onPress={() => setShowStatusPicker(!showStatusPicker)}
             >
               <Text style={[styles.statusPickerButtonText, { color: colors.textPrimary }]}>
@@ -625,7 +631,7 @@ export default function CommunityMemberDetailsScreen() {
 
             {/* Status options */}
             {showStatusPicker && (
-              <View style={[styles.statusOptions, { borderColor: colors.gray200 }]}>
+              <View style={[styles.statusOptions, { borderColor: colors.gray200, backgroundColor: colors.surface }]}>
                 {(Object.keys(STATUS_FLOW) as MemberStatus[])
                   .filter(status => status !== member.status)
                   .map((status) => {
@@ -636,7 +642,7 @@ export default function CommunityMemberDetailsScreen() {
                     return (
                       <TouchableOpacity
                         key={status}
-                        style={[styles.statusOption, { borderBottomColor: colors.gray100 }]}
+                        style={[styles.statusOption, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}
                         onPress={() => {
                           if (status === 'REJECTED') {
                             Alert.prompt(

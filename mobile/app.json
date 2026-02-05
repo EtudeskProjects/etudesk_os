@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "splash": {
-      "image": "./assets/etudesk_logo_blue.png",
+      "image": "./assets/etudesk_logo_black.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },

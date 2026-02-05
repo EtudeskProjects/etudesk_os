@@ -1,6 +1,6 @@
 /**
  * Copilot — Main Exports
- * OpenAI Agents SDK + GPT-5 + SSE Streaming
+ * OpenAI Agents SDK + GPT-4o + SSE Streaming
  */
 
 // Agents
@@ -9,13 +9,16 @@ export { createOrgAgent } from './agents/organization.agent';
 
 // Tools
 export { vectorQueryTool } from './tools/vector-query.tool';
-export { graphQueryTool } from './tools/graph-query.tool';
 export { createSqlQueryTool } from './tools/sql-query.tool';
 export { youtubeSearchTool } from './tools/youtube-search.tool';
+export { generateDocumentTool } from './tools/generate-document.tool';
+export { generateImageTool } from './tools/generate-image.tool';
+export { generateDiagramTool } from './tools/generate-diagram.tool';
+export { createFileReaderAgent } from './tools/file-read.tool';
+export { webSearchAgent } from './tools/web-search.tool';
 
 // Prompts
 export { buildTalentExplorerPrompt } from './prompts/talent-explorer.prompt';
-export { buildTalentStudyPrompt } from './prompts/talent-study.prompt';
 export { buildOrgExplorerPrompt } from './prompts/org-explorer.prompt';
 
 // SSE
@@ -43,7 +46,10 @@ export {
 } from './session.service';
 
 // Context
-export { loadTalentContext, EXPLORER_CONTEXT_OPTIONS, STUDY_CONTEXT_OPTIONS } from './context';
+export { loadTalentContext, EXPLORER_CONTEXT_OPTIONS } from './context';
+
+// Ontology
+export { getOntology, reloadOntology } from './ontology.cache';
 
 // Types
 export type {
@@ -55,5 +61,8 @@ export type {
   SSEToolEndEvent,
   SSEDoneEvent,
   SSEErrorEvent,
+  SSELimitReachedEvent,
   ToolContext,
+  MessageSegment,
+  ToolSegmentData,
 } from './types';

@@ -140,6 +140,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         is_bookable, min_booking_hours, max_booking_hours, advance_booking_days, cancellation_hours,
         contact_name, contact_phone, contact_email,
         booking_rules, questions, requires_approval, visibility,
+        payment_collection_info,
         organization_id, created_by
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7,
@@ -150,7 +151,8 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         $25, $26, $27, $28, $29,
         $30, $31, $32,
         $33, $34, $35, $36,
-        $37, $38
+        $37,
+        $38, $39
       ) RETURNING *
     `,
       [
@@ -190,6 +192,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         input.questions || null,
         input.requires_approval || false,
         input.visibility || 'PUBLIC',
+        input.payment_collection_info || null,
         input.organization_id,
         talentId,
       ]
@@ -310,8 +313,9 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         requires_approval = COALESCE($33, requires_approval),
         visibility = COALESCE($34, visibility),
         status = COALESCE($35, status),
+        payment_collection_info = COALESCE($36, payment_collection_info),
         updated_at = NOW()
-      WHERE id = $36 AND deleted_at IS NULL
+      WHERE id = $37 AND deleted_at IS NULL
       RETURNING *
     `,
       [
@@ -350,6 +354,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         input.requires_approval,
         input.visibility,
         (input as { status?: string }).status,
+        input.payment_collection_info,
         id,
       ]
     );

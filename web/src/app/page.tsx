@@ -1,3 +1,5 @@
+import React from 'react';
+
 export default function Home() {
   return (
     <main style={styles.main}>
@@ -29,7 +31,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderBottom: '1px solid #eee',
   },
   logo: {
-    color: '#26449F',
+    color: '#1A1A1A',
     fontSize: '1.5rem',
     fontWeight: 700,
   },
@@ -44,7 +46,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   heroTitle: {
     fontSize: '2.5rem',
-    color: '#26449F',
+    color: '#1A1A1A',
     marginBottom: '1rem',
   },
   heroText: {

@@ -107,9 +107,12 @@ export function addOrderBy(
   nullsLast = true
 ): QueryBuilder {
   const nullsClause = nullsLast ? ' NULLS LAST' : '';
+  const hasOrderBy = builder.sql.includes('ORDER BY');
+  const separator = hasOrderBy ? ',' : ' ORDER BY';
+
   return {
     ...builder,
-    sql: `${builder.sql} ORDER BY ${column} ${direction}${nullsClause}`,
+    sql: `${builder.sql}${separator} ${column} ${direction}${nullsClause}`,
   };
 }
 

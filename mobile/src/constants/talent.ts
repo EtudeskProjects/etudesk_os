@@ -106,6 +106,9 @@ export const GOAL = {
   RESEARCH_SUPPORT: 'RESEARCH_SUPPORT',
   IMPROVE_PRODUCTIVITY: 'IMPROVE_PRODUCTIVITY',
   COLLABORATIVE_LEARNING: 'COLLABORATIVE_LEARNING',
+  TEACH_OR_MENTOR: 'TEACH_OR_MENTOR',
+  BUILD_NETWORK_OR_VISIBILITY: 'BUILD_NETWORK_OR_VISIBILITY',
+  CONTRIBUTE_OR_GIVE_BACK: 'CONTRIBUTE_OR_GIVE_BACK',
 } as const;
 
 export type Goal = (typeof GOAL)[keyof typeof GOAL];
@@ -118,6 +121,63 @@ export const GOAL_DATA: Array<{ id: Goal; label: string }> = [
   { id: 'RESEARCH_SUPPORT', label: 'Aide à la recherche' },
   { id: 'IMPROVE_PRODUCTIVITY', label: 'Améliorer ma productivité' },
   { id: 'COLLABORATIVE_LEARNING', label: 'Apprentissage collaboratif' },
+  { id: 'TEACH_OR_MENTOR', label: 'Enseigner ou mentorer' },
+  { id: 'BUILD_NETWORK_OR_VISIBILITY', label: 'Développer mon réseau / visibilité' },
+  { id: 'CONTRIBUTE_OR_GIVE_BACK', label: 'Contribuer / Redonner' },
 ];
 
 export const MAX_GOALS = 3;
+
+// ═══════════════════════════════════════════════════════════════
+// LEARNING PREFERENCES (Study Mode)
+// ═══════════════════════════════════════════════════════════════
+
+export const LEARNING_STYLE = {
+  VISUAL: 'VISUAL',
+  AUDITORY: 'AUDITORY',
+  TEXT_BASED: 'TEXT_BASED',
+  INTERACTIVE: 'INTERACTIVE',
+} as const;
+
+export const LEARNING_STYLE_DATA = [
+  { id: 'VISUAL', label: 'Visuel', icon: 'eye' },
+  { id: 'AUDITORY', label: 'Auditif', icon: 'headphones' },
+  { id: 'TEXT_BASED', label: 'Textuel', icon: 'file-text' },
+  { id: 'INTERACTIVE', label: 'Interactif', icon: 'mouse-pointer' },
+];
+
+export const LEARNING_INTERACTION = {
+  SOCRATIC: 'SOCRATIC',
+  DIRECT: 'DIRECT',
+  EXPLORATORY: 'EXPLORATORY',
+} as const;
+
+export const LEARNING_INTERACTION_DATA = [
+  { id: 'SOCRATIC', label: 'Socratique', description: 'Apprentissage par le questionnement' },
+  { id: 'DIRECT', label: 'Direct', description: 'Instructions claires et directes' },
+  { id: 'EXPLORATORY', label: 'Exploratoire', description: 'Apprentissage par la découverte' },
+];
+
+export const LEARNING_DEPTH = {
+  THEORETICAL: 'THEORETICAL',
+  PRACTICAL: 'PRACTICAL',
+  BALANCED: 'BALANCED',
+} as const;
+
+export const LEARNING_DEPTH_DATA = [
+  { id: 'THEORETICAL', label: 'Théorique' },
+  { id: 'PRACTICAL', label: 'Pratique' },
+  { id: 'BALANCED', label: 'Équilibré' },
+];
+
+export const LEARNING_DIFFICULTY = {
+  GENTLE: 'GENTLE',
+  STANDARD: 'STANDARD',
+  CHALLENGING: 'CHALLENGING',
+} as const;
+
+export const LEARNING_DIFFICULTY_DATA = [
+  { id: 'GENTLE', label: 'Doux', description: 'Progression pas à pas' },
+  { id: 'STANDARD', label: 'Standard', description: 'Rythme normal' },
+  { id: 'CHALLENGING', label: 'Intense', description: 'Défis stimulants' },
+];

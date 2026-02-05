@@ -143,6 +143,7 @@ export default function EditSpaceScreen() {
   const [dailyRate, setDailyRate] = useState('');
   const [weeklyRate, setWeeklyRate] = useState('');
   const [monthlyRate, setMonthlyRate] = useState('');
+  const [paymentCollectionInfo, setPaymentCollectionInfo] = useState('');
   const [requiresApproval, setRequiresApproval] = useState(false);
 
   // Availability schedule
@@ -200,6 +201,7 @@ export default function EditSpaceScreen() {
           setDailyRate(space.daily_rate ? Math.round(space.daily_rate).toString() : '');
           setWeeklyRate(space.weekly_rate ? Math.round(space.weekly_rate).toString() : '');
           setMonthlyRate(space.monthly_rate ? Math.round(space.monthly_rate).toString() : '');
+          setPaymentCollectionInfo(space.payment_collection_info || '');
           setRequiresApproval(space.requires_approval || false);
           setVisibility((space.visibility as Visibility) || 'PUBLIC');
           // Convert booking_rules array to string (join with newlines if multiple, or take first element)
@@ -580,6 +582,7 @@ export default function EditSpaceScreen() {
     daily_rate: dailyRate ? parseFloat(dailyRate) : undefined,
     weekly_rate: weeklyRate ? parseFloat(weeklyRate) : undefined,
     monthly_rate: monthlyRate ? parseFloat(monthlyRate) : undefined,
+    payment_collection_info: paymentCollectionInfo.trim() || undefined,
     is_bookable: true,
     requires_approval: true, // Admin always validates bookings
     booking_rules: rules.trim() ? [rules.trim()] : undefined, // Convert textarea to array for backend
@@ -1143,6 +1146,15 @@ export default function EditSpaceScreen() {
           </View>
         </View>
 
+        <Input
+          label="Mode d'encaissement"
+          placeholder="Ex: Espèces, Orange Money, Wave, Mobile Money..."
+          value={paymentCollectionInfo}
+          onChangeText={setPaymentCollectionInfo}
+          multiline
+          numberOfLines={2}
+        />
+
         {/* Visibility */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
         <View style={styles.fieldContainer}>
@@ -1495,6 +1507,13 @@ export default function EditSpaceScreen() {
               </>
             )}
           </View>
+
+          {paymentCollectionInfo && (
+            <View style={styles.previewSection}>
+              <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Mode d'encaissement</Text>
+              <Text style={[styles.previewText, { color: colors.textSecondary }]}>{paymentCollectionInfo}</Text>
+            </View>
+          )}
 
           <View style={styles.previewSection}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Description</Text>

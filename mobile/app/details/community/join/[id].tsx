@@ -30,7 +30,6 @@ import {
   Users,
   Eye,
   Send,
-  CreditCard,
   FileText,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
@@ -603,33 +602,12 @@ export default function JoinCommunityScreen() {
               ))}
             </View>
           )}
-
-          {/* Pricing Info */}
-          {community?.is_paid && (
-            <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.warning, OPACITY[10]) }]}>
-              <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-                Abonnement
-              </Text>
-              <View style={styles.previewPricing}>
-                <CreditCard size={18} color={colors.warning} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.previewPricingText, { color: colors.warning }]}>
-                  {community.monthly_price?.toLocaleString('fr-FR')} {community.currency || 'XOF'}/mois
-                </Text>
-              </View>
-              <Text style={[styles.previewHint, { color: colors.gray500 }]}>
-                Après approbation de votre demande par l'administration, vous pourrez procéder au paiement pour accéder à la communauté.
-              </Text>
-            </View>
-          )}
         </View>
       </View>
     );
   };
 
   const renderSuccessStep = () => {
-    // All memberships now require admin approval
-    const isPaid = community?.is_paid;
-
     return (
       <View style={styles.successContainer}>
         <View style={[styles.successIcon, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
@@ -639,10 +617,7 @@ export default function JoinCommunityScreen() {
           Demande envoyée !
         </Text>
         <Text style={[styles.successDescription, { color: colors.textSecondary }]}>
-          {isPaid
-            ? `Votre demande pour rejoindre "${community?.name}" a bien été envoyée. Après approbation par les administrateurs, vous pourrez procéder au paiement de l'abonnement.`
-            : `Votre demande pour rejoindre "${community?.name}" a bien été envoyée. Les administrateurs vous contacteront pour valider votre adhésion.`
-          }
+          Votre demande pour rejoindre "{community?.name}" a bien été envoyée. Les administrateurs vous contacteront pour valider votre adhésion.
         </Text>
 
         <View style={styles.successActions}>

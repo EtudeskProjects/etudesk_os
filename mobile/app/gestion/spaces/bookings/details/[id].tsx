@@ -460,7 +460,7 @@ export default function BookingDetailsScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.statusPickerButton, { borderColor: colors.gray300 }]}
+              style={[styles.statusPickerButton, { borderColor: colors.gray300, backgroundColor: colors.gray100 }]}
               onPress={() => setShowStatusPicker(!showStatusPicker)}
             >
               <Text style={[styles.statusPickerButtonText, { color: colors.textPrimary }]}>
@@ -475,7 +475,7 @@ export default function BookingDetailsScreen() {
             </TouchableOpacity>
 
             {showStatusPicker && (
-              <View style={[styles.statusOptions, { borderColor: colors.gray200 }]}>
+              <View style={[styles.statusOptions, { borderColor: colors.gray200, backgroundColor: colors.surface }]}>
                 {(Object.keys(STATUS_FLOW) as BookingStatus[])
                   .filter(status => status !== booking.status)
                   .map((status) => {
@@ -486,7 +486,7 @@ export default function BookingDetailsScreen() {
                     return (
                       <TouchableOpacity
                         key={status}
-                        style={[styles.statusOption, { borderBottomColor: colors.gray100 }]}
+                        style={[styles.statusOption, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}
                         onPress={() => handleUpdateStatus(status)}
                       >
                         <View style={[styles.statusOptionIcon, { backgroundColor: withOpacity(config.color, OPACITY[15]) }]}>

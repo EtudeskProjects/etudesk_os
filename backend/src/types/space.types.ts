@@ -224,6 +224,7 @@ export interface Space {
   weekly_rate?: number;
   monthly_rate?: number;
   deposit_amount?: number;
+  payment_collection_info?: string;
 
   // Booking settings
   is_bookable: boolean;
@@ -388,6 +389,7 @@ export interface CreateSpaceInput {
   questions?: string[];
   requires_approval?: boolean;
   visibility?: 'PUBLIC' | 'PRIVATE';
+  payment_collection_info?: string;
 }
 
 export interface UpdateSpaceInput extends Partial<Omit<CreateSpaceInput, 'organization_id'>> {}

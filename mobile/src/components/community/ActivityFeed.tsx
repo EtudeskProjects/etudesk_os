@@ -228,6 +228,12 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         />
     ), [currentUserId, userRole, handleLike, handleBookmark, handleEdit, handlePin, handleDelete, handleActivityPress, handleVote]);
 
+    // Must be declared before any early return to keep hooks order consistent
+    const handleEndReached = useCallback(() => {
+        if (nextCursor && !loadingMore && !refreshing) {
+            loadFeed(false);
+        }
+    }, [nextCursor, loadingMore, refreshing, loadFeed]);
 
     if (loading && !refreshing && (activities?.length ?? 0) === 0) {
         return (
@@ -342,13 +348,6 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             })}
         </ScrollView>
     );
-
-    // Memoized onEndReached handler
-    const handleEndReached = useCallback(() => {
-        if (nextCursor && !loadingMore && !refreshing) {
-            loadFeed(false);
-        }
-    }, [nextCursor, loadingMore, refreshing, loadFeed]);
 
     return (
         <FlatList

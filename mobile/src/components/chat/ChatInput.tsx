@@ -68,7 +68,7 @@ export function ChatInput({
   isSending = false,
   showDatetimeOption = true,
 }: ChatInputProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const inputRef = useRef<TextInput>(null);
 
   const [messageText, setMessageText] = useState('');
@@ -86,7 +86,7 @@ export function ChatInput({
   const handlePickFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        type: ['application/pdf', 'image/*'],
         copyToCacheDirectory: true,
         multiple: false,
       });
@@ -225,9 +225,9 @@ export function ChatInput({
         </View>
       )}
 
-      {/* Date picker (iOS spinner) */}
+      {/* Date picker (iOS spinner) - background + textColor for visibility */}
       {showDatePicker && Platform.OS === 'ios' && (
-        <View style={[styles.datePickerContainer, { borderBottomColor: colors.gray200 }]}>
+        <View style={[styles.datePickerContainer, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}>
           <View style={styles.datePickerHeader}>
             <Text style={[styles.datePickerTitle, { color: colors.textPrimary }]}>
               Proposer une date
@@ -243,6 +243,8 @@ export function ChatInput({
             onChange={handleDateChange}
             minimumDate={new Date()}
             locale="fr-FR"
+            themeVariant={isDark ? 'dark' : 'light'}
+            textColor={colors.textPrimary}
           />
         </View>
       )}

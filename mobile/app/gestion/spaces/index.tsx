@@ -9,7 +9,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import {
   ArrowLeft,
   Plus,
@@ -56,6 +56,13 @@ export default function SpacesListScreen() {
   useEffect(() => {
     loadSpaces();
   }, [loadSpaces]);
+
+  // Rafraîchir la liste quand l'écran redevient visible (ex. retour après création)
+  useFocusEffect(
+    useCallback(() => {
+      loadSpaces();
+    }, [loadSpaces])
+  );
 
   const handleRefresh = () => {
     setIsRefreshing(true);

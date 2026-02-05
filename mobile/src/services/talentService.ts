@@ -22,6 +22,12 @@ export interface UpdateTalentData {
   profile_tags?: string[];
   sectors?: string[];
   goals?: string[];
+  learning_preferences?: {
+    style?: 'VISUAL' | 'AUDITORY' | 'TEXT_BASED' | 'INTERACTIVE';
+    interaction?: 'SOCRATIC' | 'DIRECT' | 'EXPLORATORY';
+    depth?: 'THEORETICAL' | 'PRACTICAL' | 'BALANCED';
+    difficulty?: 'GENTLE' | 'STANDARD' | 'CHALLENGING';
+  };
 }
 
 /**

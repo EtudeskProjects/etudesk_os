@@ -11,6 +11,8 @@ import {
   DOCUMENT_LIMITS,
   ALLOWED_MIME_TYPES,
 } from '../constants/documents';
+import { logger } from '../utils';
+import { pool } from '../services/database';
 import {
   uploadDocument,
   canUploadDocument,
@@ -27,7 +29,6 @@ import {
   generateSuggestions,
   loadTalentContext,
   EXPLORER_CONTEXT_OPTIONS,
-  STUDY_CONTEXT_OPTIONS,
   COPILOT_MODES,
   type CopilotMode,
   type TalentContext,
@@ -52,7 +53,7 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
       return res.status(401).json({ error: 'Non authentifié' });
     }
 
-    const { sessionId: inputSessionId, message, mode, organizationId } = req.body;
+    const { sessionId: inputSessionId, message, mode, organizationId, attachmentIds } = req.body;
 
     // Validate message
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
@@ -64,8 +65,8 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
     }
 
     // Validate mode
-    const validMode: CopilotMode = mode === COPILOT_MODES.STUDY
-      ? COPILOT_MODES.STUDY
+    const validMode: CopilotMode = Object.values(COPILOT_MODES).includes(mode as CopilotMode)
+      ? (mode as CopilotMode)
       : COPILOT_MODES.EXPLORE;
 
     // Initialize SSE
@@ -76,8 +77,7 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
     let session: any = null;
 
     if (sessionId) {
-      session = await copilotService.getSession(sessionId, talentId);
-      if (!session || (mode && session.mode !== mode)) {
+      if (!session) {
         session = await copilotService.createSession(talentId, validMode);
         sessionId = session.id;
       }
@@ -87,9 +87,7 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
     }
 
     // Load talent context
-    const contextOptions = validMode === COPILOT_MODES.STUDY
-      ? STUDY_CONTEXT_OPTIONS
-      : EXPLORER_CONTEXT_OPTIONS;
+    const contextOptions = EXPLORER_CONTEXT_OPTIONS;
     const talentContext = await loadTalentContext(talentId, contextOptions);
 
     // Build agent context
@@ -111,80 +109,32 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
       agent = createOrgAgent(orgCtx);
     } else {
       const talentCtx: TalentContext = {
+        ...talentContext,
         talentId,
-        talentName: `${talentContext.profile.firstName} ${talentContext.profile.lastName}`,
-        profile: {
-          firstName: talentContext.profile.firstName || '',
-          lastName: talentContext.profile.lastName || '',
-          city: talentContext.profile.city,
-          country: talentContext.profile.country,
-          remotePreference: talentContext.profile.remoteReady ? 'remote' : undefined,
-          skills: (talentContext.profile.skills || []).map((s: any) => ({
-            name: s.name,
-            level: s.level,
-          })),
-          languages: (talentContext.profile.languages || []).map((l: any) => ({
-            language: l.language,
-            level: l.level,
-          })),
+        talentName: `${talentContext.profile.firstName || ''} ${talentContext.profile.lastName || ''}`.trim() || talentContext.profile.email,
+        session: {
+          currentMode: session.mode,
+          conversationTopic: session.title,
         },
-        documents: talentContext.documents ? {
-          totalCount: talentContext.documents.totalCount,
-          hasCV: talentContext.documents.hasCV,
-          hasDiplomas: talentContext.documents.hasDiplomas,
-        } : undefined,
-        applications: talentContext.applications ? {
-          totalCount: talentContext.applications.totalCount,
-          activeCount: talentContext.applications.activeCount,
-        } : undefined,
-        memberships: talentContext.memberships ? {
-          totalCount: talentContext.memberships.totalCount,
-        } : undefined,
-        reservations: talentContext.reservations ? {
-          totalCount: talentContext.reservations.totalCount,
-          upcomingCount: talentContext.reservations.upcomingCount,
-        } : undefined,
-        invitations: talentContext.invitations ? {
-          pendingCount: talentContext.invitations.pendingCount,
-        } : undefined,
-        organizations: talentContext.organizations ? {
-          isOrgAdmin: talentContext.organizations.isOrgAdmin,
-          adminOfCount: talentContext.organizations.adminOfCount,
-          organizations: talentContext.organizations.organizations.map((o: any) => ({
-            organizationId: o.organizationId,
-            organizationName: o.organizationName,
-            role: o.role,
-          })),
-        } : undefined,
-        learning: talentContext.learning ? {
-          totalTopics: talentContext.learning.totalTopics,
-          totalFlashcards: talentContext.learning.totalFlashcards,
-          dueFlashcards: talentContext.learning.dueFlashcards,
-          streakDays: talentContext.learning.streakDays,
-        } : undefined,
-        graph: talentContext.graph ? {
-          isGraphAvailable: talentContext.graph.isGraphAvailable,
-          skillGaps: talentContext.graph.skillGaps?.map((g: any) => ({
-            skillName: g.skillName,
-            priority: g.priority,
-          })),
-          suggestedSkills: talentContext.graph.suggestedSkills?.map((s: any) => ({
-            skillName: s.skillName,
-            reason: s.reason,
-          })),
-        } : undefined,
       };
-      agent = createTalentAgent(
-        validMode === COPILOT_MODES.STUDY ? 'study' : 'explorer',
-        talentCtx
+      agent = createTalentAgent(talentCtx);
+    }
+
+    // Load attachment details if provided
+    let messageAttachments = null;
+    if (attachmentIds && Array.isArray(attachmentIds) && attachmentIds.length > 0) {
+      const attachRes = await pool.query(
+        `SELECT id, original_filename as name, file_url as url, mime_type as type, file_size as size 
+         FROM talent_documents WHERE id = ANY($1) AND talent_id = $2`,
+        [attachmentIds, talentId]
       );
+      messageAttachments = JSON.stringify(attachRes.rows);
     }
 
     // Save user message
-    const { pool } = await import('../services/database');
     await pool.query(
-      `INSERT INTO copilot_messages (session_id, role, content) VALUES ($1, 'user', $2)`,
-      [sessionId, message.trim()]
+      `INSERT INTO copilot_messages (session_id, role, content, attachments) VALUES ($1, 'user', $2, $3)`,
+      [sessionId, message.trim(), messageAttachments]
     );
 
     // Get conversation history for context
@@ -199,26 +149,33 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
       content: r.content,
     }));
 
-    // Run agent with SSE streaming
-    const { finalOutput, toolTrace } = await runAgentWithSSE(
+    // Run agent with SSE streaming (pass attachments so agent sees file context)
+    const parsedAttachments = messageAttachments ? JSON.parse(messageAttachments) : undefined;
+    const { finalOutput, toolTrace, segments } = await runAgentWithSSE(
       agent,
       message.trim(),
       history,
-      res
+      res,
+      parsedAttachments
     );
 
-    // Save assistant response
+    // Save assistant response (persist segments in output_data for reload)
     await pool.query(
-      `INSERT INTO copilot_messages (session_id, role, content, tool_calls)
-       VALUES ($1, 'assistant', $2, $3)`,
-      [sessionId, finalOutput, toolTrace.length > 0 ? JSON.stringify(toolTrace) : null]
+      `INSERT INTO copilot_messages (session_id, role, content, tool_calls, output_data)
+       VALUES ($1, 'assistant', $2, $3, $4)`,
+      [
+        sessionId,
+        finalOutput,
+        toolTrace.length > 0 ? JSON.stringify(toolTrace) : null,
+        segments.length > 0 ? JSON.stringify(segments) : null,
+      ]
     );
 
     // Generate title for first message (non-blocking)
     const messageCount = historyRes.rows.length;
     if (messageCount <= 2) {
       generateSessionTitle(message.trim()).then((title) => {
-        copilotService.updateSessionTitle(sessionId, title).catch(() => {});
+        copilotService.updateSessionTitle(sessionId, title).catch(() => { });
       });
     }
 
@@ -238,9 +195,20 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
 });
 
 /**
- * GET /api/copilot/suggestions - Get prompt suggestions
- * Query: { mode?: string }
+ * GET /api/copilot/suggestions - Get AI-powered intent suggestions
+ * Query: { mode?: string, sessionId?: string }
+ * Returns: { suggestions: string[] }
  */
+
+// Simple in-memory cache for suggestions to boost speed
+interface CacheEntry {
+  suggestions: string[];
+  lastMessageCount: number;
+  timestamp: number;
+}
+const suggestionsCache = new Map<string, CacheEntry>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 router.get('/suggestions', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
@@ -249,14 +217,189 @@ router.get('/suggestions', authMiddleware, async (req: AuthRequest, res: Respons
     }
 
     const mode = (req.query.mode as string) || 'explore';
-    const suggestions = await generateSuggestions(mode, `talentId: ${talentId}`);
+    const sessionId = req.query.sessionId as string | undefined;
 
-    res.json({ success: true, data: { suggestions } });
+    // 1. Parallel data fetching for context and history
+    let conversationHistory: Array<{ role: string; content: string }> = [];
+    let talentContext: { firstName?: string; goals?: string[]; sectors?: string[] } | undefined;
+
+    const [historyRes, contextRes] = await Promise.all([
+      sessionId ? (async () => {
+        try {
+          const { pool } = await import('../services/database');
+          const result = await pool.query(
+            `SELECT role, content FROM copilot_messages 
+             WHERE session_id = $1 
+             ORDER BY created_at DESC 
+             LIMIT 4`,
+            [sessionId]
+          );
+          return result.rows.reverse();
+        } catch { return []; }
+      })() : Promise.resolve([]),
+      (async () => {
+        try {
+          const context = await loadTalentContext(talentId, EXPLORER_CONTEXT_OPTIONS);
+          return {
+            firstName: context.profile?.firstName,
+            goals: (context.profile as any)?.goals,
+            sectors: context.profile?.sectorsOfInterest,
+          };
+        } catch { return undefined; }
+      })()
+    ]);
+
+    conversationHistory = historyRes;
+    talentContext = contextRes;
+
+    // 2. Check Cache with secondary hit detection (matching history length)
+    const cacheKey = `${talentId}:${sessionId || 'new'}:${mode}`;
+    const cached = suggestionsCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL) && cached.lastMessageCount === conversationHistory.length) {
+      return res.json({
+        success: true,
+        data: { suggestions: cached.suggestions }
+      });
+    }
+
+    // 3. Generate suggestions with gpt-4.1-nano
+    const { run } = await import('@openai/agents');
+    const { createIntentSuggestionsAgent } = await import('../services/ai/agent-factory');
+    const { buildIntentSuggestionsPrompt } = await import('../services/ai/prompts/session-utils.prompt');
+
+    const systemPrompt = buildIntentSuggestionsPrompt(mode, conversationHistory, talentContext);
+    const agent = createIntentSuggestionsAgent(systemPrompt);
+
+    let suggestions: string[] = [];
+    try {
+      const result = await run(agent, 'Génère les 4 suggestions.');
+      const text = result.finalOutput?.trim() || '[]';
+      suggestions = JSON.parse(text);
+
+      if (!Array.isArray(suggestions) || suggestions.length < 4) {
+        throw new Error('Invalid format');
+      }
+      suggestions = suggestions.slice(0, 4);
+
+      // Update cache
+      suggestionsCache.set(cacheKey, {
+        suggestions,
+        lastMessageCount: conversationHistory.length,
+        timestamp: Date.now()
+      });
+    } catch {
+      suggestions = mode === 'study'
+        ? ['Approfondir cette notion', 'Évaluer mes acquis', 'Élucider ce concept', 'Synthétiser la session']
+        : ['Explorer les opportunités d\'élite', 'Solliciter cette institution', 'Bonifier mon profil', 'Découvrir des écosystèmes'];
+    }
+
+    res.json({
+      success: true,
+      data: { suggestions },
+    });
   } catch (error) {
-    logger.error('Error generating suggestions:', error);
-    res.json({ success: true, data: { suggestions: [] } });
+    logger.error('Error in suggestions:', error);
+    res.json({
+      success: true,
+      data: {
+        suggestions: ['Comment puis-je vous guider ?', 'Explorer les opportunités', 'Découvrir les communautés', 'Bonifier votre profil'],
+      },
+    });
   }
 });
+
+// ═══════════════════════════════════════════════════════════════
+// AUDIO TRANSCRIPTION (Whisper STT)
+// ═══════════════════════════════════════════════════════════════
+
+const AUDIO_MIME_TYPES = [
+  'audio/webm',
+  'audio/mp4',
+  'audio/m4a',
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/x-m4a',
+] as const;
+
+const audioUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 25 * 1024 * 1024, // 25MB max (Whisper limit)
+    files: 1,
+  },
+  fileFilter: (req, file, cb) => {
+    if (AUDIO_MIME_TYPES.includes(file.mimetype as (typeof AUDIO_MIME_TYPES)[number])) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Type audio non supporté: ${file.mimetype}. Formats acceptés: webm, mp4, m4a, mp3, wav`));
+    }
+  },
+});
+
+/**
+ * POST /api/copilot/transcribe - Transcribe audio using OpenAI Whisper
+ * Body: FormData with 'audio' file field
+ * Returns: { text: string }
+ */
+router.post(
+  '/transcribe',
+  authMiddleware,
+  audioUpload.single('audio'),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const talentId = req.talentId;
+      if (!talentId) {
+        return res.status(401).json({ error: 'Non authentifié' });
+      }
+
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ error: 'Aucun fichier audio fourni' });
+      }
+
+      // Import OpenAI client
+      const OpenAI = (await import('openai')).default;
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+      // Create a File-like object from buffer for the API
+      const audioFile = new File([file.buffer], file.originalname, {
+        type: file.mimetype,
+      });
+
+      // Call Whisper API
+      const transcription = await openai.audio.transcriptions.create({
+        file: audioFile,
+        model: 'whisper-1',
+        language: 'fr', // French by default, auto-detect if not specified
+        response_format: 'text',
+      });
+
+      logger.info(`Audio transcribed for talent ${talentId}: ${transcription.slice(0, 50)}...`);
+
+      res.json({
+        success: true,
+        data: {
+          text: transcription,
+        },
+      });
+    } catch (error: any) {
+      logger.error('Error transcribing audio:', error);
+
+      // Handle specific OpenAI errors
+      if (error?.status === 400) {
+        return res.status(400).json({
+          error: 'Format audio non valide ou fichier corrompu',
+        });
+      }
+
+      res.status(500).json({
+        error: 'Erreur lors de la transcription audio',
+      });
+    }
+  }
+);
 
 // ═══════════════════════════════════════════════════════════════
 // ATTACHMENT UPLOAD (Copilot file attachments → documents)
@@ -415,8 +558,7 @@ router.post('/sessions', authMiddleware, async (req: AuthRequest, res: Response)
     }
 
     const { mode } = req.body;
-    const validMode: CopilotMode =
-      mode === COPILOT_MODES.STUDY ? COPILOT_MODES.STUDY : COPILOT_MODES.EXPLORE;
+    const validMode: CopilotMode = COPILOT_MODES.EXPLORE;
 
     const session = await copilotService.createSession(talentId, validMode);
 
@@ -528,304 +670,5 @@ router.get('/sessions/:id/messages', authMiddleware, async (req: AuthRequest, re
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
-// LEARNING ENDPOINTS (For study mode)
-// ═══════════════════════════════════════════════════════════════
-
-import { pool } from '../services/database';
-
-import { logger } from '../utils';
-/**
- * GET /api/copilot/learning/progress - Get learning progress summary
- * Returns: { topics, totalFlashcards, dueFlashcards, streak, etc. }
- */
-router.get('/learning/progress', authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    const talentId = req.talentId;
-    if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
-    }
-
-    // Get topics with flashcard counts
-    const topicsResult = await pool.query(
-      `
-      SELECT
-        lt.id, lt.topic_name, lt.mastery_level, lt.last_studied_at,
-        COUNT(lf.id) as flashcard_count,
-        COUNT(lf.id) FILTER (WHERE lf.next_review_at <= CURRENT_DATE) as due_count
-      FROM learning_topics lt
-      LEFT JOIN learning_flashcards lf ON lt.id = lf.topic_id
-      WHERE lt.talent_id = $1
-      GROUP BY lt.id
-      ORDER BY lt.topic_name
-      `,
-      [talentId]
-    );
-
-    // Get overall stats
-    const statsResult = await pool.query(
-      `
-      SELECT
-        COUNT(DISTINCT lt.id) as total_topics,
-        COUNT(lf.id) as total_flashcards,
-        COUNT(lf.id) FILTER (WHERE lf.next_review_at <= CURRENT_DATE) as due_flashcards
-      FROM learning_topics lt
-      LEFT JOIN learning_flashcards lf ON lt.id = lf.topic_id
-      WHERE lt.talent_id = $1
-      `,
-      [talentId]
-    );
-
-    // Get streak
-    const streakResult = await pool.query(
-      `
-      SELECT current_streak_days, total_study_time_minutes, last_study_date
-      FROM learning_preferences
-      WHERE talent_id = $1
-      `,
-      [talentId]
-    );
-
-    res.json({
-      success: true,
-      data: {
-        topics: topicsResult.rows.map((t) => ({
-          id: t.id,
-          name: t.topic_name,
-          masteryLevel: t.mastery_level || 0,
-          flashcardCount: parseInt(t.flashcard_count) || 0,
-          dueCount: parseInt(t.due_count) || 0,
-          lastStudiedAt: t.last_studied_at,
-        })),
-        totalTopics: parseInt(statsResult.rows[0]?.total_topics) || 0,
-        totalFlashcards: parseInt(statsResult.rows[0]?.total_flashcards) || 0,
-        dueFlashcards: parseInt(statsResult.rows[0]?.due_flashcards) || 0,
-        streakDays: streakResult.rows[0]?.current_streak_days || 0,
-        totalStudyTimeMinutes: streakResult.rows[0]?.total_study_time_minutes || 0,
-        lastStudyDate: streakResult.rows[0]?.last_study_date,
-      },
-    });
-  } catch (error) {
-    logger.error('Error getting learning progress:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la récupération de la progression',
-    });
-  }
-});
-
-/**
- * GET /api/copilot/learning/due - Get due flashcards for review
- * Query: { topicId?: string, limit?: number }
- * Returns: { flashcards: Array<{ id, front, back, topic, difficulty }> }
- */
-router.get('/learning/due', authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    const talentId = req.talentId;
-    if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
-    }
-
-    const topicId = req.query.topicId as string;
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
-
-    let query = `
-      SELECT
-        lf.id, lf.front_content, lf.back_content, lf.difficulty, lf.ease_factor,
-        lf.interval_days, lf.repetitions, lf.next_review_at,
-        lt.id as topic_id, lt.topic_name as topic_name
-      FROM learning_flashcards lf
-      JOIN learning_topics lt ON lf.topic_id = lt.id
-      WHERE lt.talent_id = $1 AND lf.next_review_at <= CURRENT_DATE
-    `;
-    const params: any[] = [talentId];
-
-    if (topicId) {
-      query += ` AND lf.topic_id = $2`;
-      params.push(topicId);
-    }
-
-    query += ` ORDER BY lf.next_review_at ASC, lf.difficulty DESC LIMIT $${params.length + 1}`;
-    params.push(limit);
-
-    const result = await pool.query(query, params);
-
-    res.json({
-      success: true,
-      data: {
-        flashcards: result.rows.map((f) => ({
-          id: f.id,
-          front: f.front_content,
-          back: f.back_content,
-          difficulty: f.difficulty,
-          topic: {
-            id: f.topic_id,
-            name: f.topic_name,
-          },
-          easinessFactor: f.ease_factor,
-          intervalDays: f.interval_days,
-          repetitionCount: f.repetitions,
-          nextReviewDate: f.next_review_at,
-        })),
-        count: result.rows.length,
-      },
-    });
-  } catch (error) {
-    logger.error('Error getting due flashcards:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la récupération des cartes',
-    });
-  }
-});
-
-/**
- * POST /api/copilot/learning/review - Record a flashcard review
- * Body: { flashcardId: string, quality: number (0-5) }
- * Quality scale: 0=complete blackout, 1=wrong, 2=hard, 3=correct hard, 4=correct easy, 5=perfect
- * Returns: { updated flashcard stats, next review date }
- */
-router.post('/learning/review', authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    const talentId = req.talentId;
-    if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
-    }
-
-    const { flashcardId, quality } = req.body;
-
-    // Validate quality
-    if (typeof quality !== 'number' || quality < 0 || quality > 5) {
-      return res.status(400).json({ error: 'La qualité doit être un nombre entre 0 et 5' });
-    }
-
-    // Verify flashcard belongs to user
-    const verifyResult = await pool.query(
-      `
-      SELECT lf.id, lf.ease_factor, lf.interval_days, lf.repetitions
-      FROM learning_flashcards lf
-      JOIN learning_topics lt ON lf.topic_id = lt.id
-      WHERE lf.id = $1 AND lt.talent_id = $2
-      `,
-      [flashcardId, talentId]
-    );
-
-    if (verifyResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Carte non trouvée' });
-    }
-
-    // Inline SM-2 algorithm
-    const card = verifyResult.rows[0];
-    let ef = card.ease_factor;
-    let interval = card.interval_days;
-    let reps = card.repetitions;
-
-    // SM-2: update ease factor
-    ef = ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-    if (ef < 1.3) ef = 1.3;
-
-    if (quality < 3) {
-      reps = 0;
-      interval = 1;
-    } else {
-      reps += 1;
-      if (reps === 1) {
-        interval = 1;
-      } else if (reps === 2) {
-        interval = 6;
-      } else {
-        interval = Math.round(interval * ef);
-      }
-    }
-
-    const nextReviewAt = new Date();
-    nextReviewAt.setDate(nextReviewAt.getDate() + interval);
-
-    // Update card
-    const updatedResult = await pool.query(
-      `
-      UPDATE learning_flashcards SET
-        ease_factor = $1,
-        interval_days = $2,
-        repetitions = $3,
-        next_review_at = $4,
-        last_reviewed_at = CURRENT_TIMESTAMP,
-        last_quality = $5,
-        total_reviews = total_reviews + 1,
-        correct_reviews = correct_reviews + CASE WHEN $5 >= 3 THEN 1 ELSE 0 END,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = $6
-      RETURNING id, ease_factor, interval_days, repetitions, next_review_at, last_reviewed_at
-      `,
-      [ef, interval, reps, nextReviewAt, quality, flashcardId]
-    );
-
-    res.json({
-      success: true,
-      data: {
-        flashcardId,
-        quality,
-        newStats: {
-          easinessFactor: updatedResult.rows[0].ease_factor,
-          intervalDays: updatedResult.rows[0].interval_days,
-          repetitionCount: updatedResult.rows[0].repetitions,
-          nextReviewDate: updatedResult.rows[0].next_review_at,
-          lastReviewedAt: updatedResult.rows[0].last_reviewed_at,
-        },
-      },
-    });
-  } catch (error) {
-    logger.error('Error recording flashcard review:', error);
-    res.status(500).json({
-      error: 'Erreur lors de l\'enregistrement de la révision',
-    });
-  }
-});
-
-/**
- * GET /api/copilot/learning/topics - Get user's learning topics
- * Returns: { topics: Array<{ id, name, masteryLevel, flashcardCount }> }
- */
-router.get('/learning/topics', authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    const talentId = req.talentId;
-    if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
-    }
-
-    const result = await pool.query(
-      `
-      SELECT
-        lt.id, lt.topic_name, lt.parent_topic_id,
-        lt.mastery_level, lt.last_studied_at, lt.created_at,
-        COUNT(lf.id) as flashcard_count
-      FROM learning_topics lt
-      LEFT JOIN learning_flashcards lf ON lt.id = lf.topic_id
-      WHERE lt.talent_id = $1
-      GROUP BY lt.id
-      ORDER BY lt.topic_name
-      `,
-      [talentId]
-    );
-
-    res.json({
-      success: true,
-      data: {
-        topics: result.rows.map((t) => ({
-          id: t.id,
-          name: t.topic_name,
-          parentTopicId: t.parent_topic_id,
-          masteryLevel: t.mastery_level || 0,
-          flashcardCount: parseInt(t.flashcard_count) || 0,
-          lastStudiedAt: t.last_studied_at,
-          createdAt: t.created_at,
-        })),
-      },
-    });
-  } catch (error) {
-    logger.error('Error getting learning topics:', error);
-    res.status(500).json({
-      error: 'Erreur lors de la récupération des sujets',
-    });
-  }
-});
 
 export default router;

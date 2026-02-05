@@ -67,7 +67,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
                 size={ICON.size.md}
                 color={action.color || colors.gray400}
                 strokeWidth={ICON.strokeWidth}
-                fill={action.fill}
+                fill={action.fill || 'none'}
               />
             </TouchableOpacity>
           ))}

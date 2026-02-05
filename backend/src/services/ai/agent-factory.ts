@@ -77,3 +77,16 @@ export function createSuggestionsAgent(systemPrompt: string): Agent {
     instructions: systemPrompt,
   });
 }
+
+/**
+ * Create an intent prediction agent using gpt-4.1-nano
+ * Fast, lightweight model for predicting user's next likely questions
+ */
+export function createIntentSuggestionsAgent(systemPrompt: string): Agent {
+  return new Agent({
+    name: 'Intent Predictor',
+    model: 'gpt-4.1-nano', // Fast, cost-effective model for quick predictions
+    instructions: systemPrompt,
+  });
+}
+

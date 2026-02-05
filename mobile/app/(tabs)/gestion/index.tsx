@@ -181,12 +181,14 @@ export default function GestionScreen() {
 
       setRecentActivities(activities.slice(0, 5));
 
-      // Generate daily insight
+      // Objectif du jour (message pertinent pour les organisations)
       const activeOpps = opportunities.filter(o => o.status === 'OPEN').length;
-      if (activeOpps > 0 || totalApplications > 0) {
-        setDailyInsight(`Vous avez ${activeOpps} opportunité(s) active(s) et ${totalApplications} candidature(s) à examiner.`);
+      if (totalApplications > 0) {
+        setDailyInsight(`Priorisez l'examen des ${totalApplications} candidature(s) en attente pour ne pas faire attendre les talents.`);
+      } else if (activeOpps > 0) {
+        setDailyInsight(`Vous avez ${activeOpps} opportunité(s) ouverte(s). Pensez à les promouvoir auprès de vos communautés pour maximiser les candidatures.`);
       } else {
-        setDailyInsight('Créez votre première offre pour attirer des talents !');
+        setDailyInsight('Publiez votre première opportunité, créez une communauté ou ajoutez un espace pour commencer à attirer des talents.');
       }
     } catch (error) {
       console.error('[Gestion] Error loading data:', error);
@@ -359,11 +361,11 @@ export default function GestionScreen() {
               </Text>
             </View>
 
-            {/* AI Daily Summary */}
+            {/* Objectif du jour (organisations) */}
             <View style={[styles.insightContainer, { backgroundColor: PASTEL_COLORS.indigo.bg }]}>
               <View style={styles.insightHeader}>
-                <Sparkles size={16} color={PASTEL_COLORS.indigo.icon} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.insightLabel, { color: PASTEL_COLORS.indigo.text }]}>Résumé du jour</Text>
+                <Target size={16} color={PASTEL_COLORS.indigo.icon} strokeWidth={ICON.strokeWidth} />
+                <Text style={[styles.insightLabel, { color: PASTEL_COLORS.indigo.text }]}>Objectif du jour</Text>
               </View>
               <Text style={[styles.insightText, { color: colors.textPrimary }]}>
                 {dailyInsight}

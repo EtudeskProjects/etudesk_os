@@ -34,6 +34,8 @@ export interface CopilotMessage {
   content: string;
   toolCalls?: any;
   toolResults?: any;
+  outputData?: any;
+  attachments?: any[];
   createdAt: string;
 }
 
@@ -140,7 +142,7 @@ export async function updateSessionTitle(sessionId: string, title: string): Prom
 
 export async function getSessionMessages(sessionId: string, limit: number = 50): Promise<CopilotMessage[]> {
   const result = await pool.query(
-    `SELECT id, session_id, role, content, tool_calls, tool_results, created_at
+    `SELECT id, session_id, role, content, tool_calls, tool_results, output_data, attachments, created_at
      FROM copilot_messages
      WHERE session_id = $1
      ORDER BY created_at ASC
@@ -155,6 +157,8 @@ export async function getSessionMessages(sessionId: string, limit: number = 50):
     content: row.content,
     toolCalls: row.tool_calls,
     toolResults: row.tool_results,
+    outputData: row.output_data,
+    attachments: row.attachments,
     createdAt: row.created_at,
   }));
 }

@@ -132,11 +132,16 @@ export default function MyCommunityDetailsScreen() {
     try {
       const response = await communityMembershipMessageService.getMessages(membership.id);
       setMessages(response.data || []);
-
-      // Mark all as read
-      await communityMembershipMessageService.markAllAsRead(membership.id);
-    } catch (error) {
-      console.error('Error loading messages:', error);
+      try {
+        await communityMembershipMessageService.markAllAsRead(membership.id);
+      } catch (_) {
+        // ignore (e.g. endpoint not available)
+      }
+    } catch (error: any) {
+      if (error?.status !== 404) {
+        console.error('Error loading messages:', error);
+      }
+      setMessages([]);
     } finally {
       setIsLoadingMessages(false);
     }

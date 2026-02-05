@@ -8,17 +8,17 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
-  TouchableWithoutFeedback,
-  ActivityIndicator,
+  Alert,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import * as DocumentPicker from 'expo-document-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   SendHorizontal,
   Paperclip,
   Mic,
-  Sparkles,
+  MicOff,
   Compass,
   BookOpen,
   Lightbulb,
@@ -26,8 +26,14 @@ import {
   Plus,
   AlertCircle,
   X,
+  Trash2,
+  Brain,
+  RefreshCw,
+  Pencil,
   Copy,
+  Loader2,
 } from 'lucide-react-native';
+import { useAudioRecorder } from '../../../src/hooks/useAudioRecorder';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
@@ -37,8 +43,10 @@ import { Header, FooterNav } from '../../../src/components/ui';
 import {
   MarkdownRenderer,
   CopyButton,
-  ToolTrace,
-  ToolTraceItem,
+  ThinkingIndicator,
+  ToolBlock,
+  PulsingOrb,
+  SuggestionsTooltip,
 } from '../../../src/components/copilot';
 import {
   copilotService,
@@ -46,26 +54,32 @@ import {
   COPILOT_MODES,
   CopilotMessage,
   SessionSummary,
+  MessageSegment,
 } from '../../../src/services/copilotService';
+import { formatRelativeTime } from '../../../src/utils/date';
 
 type Mode = 'explore' | 'study';
-
-const MODE_COLORS = {
-  explore: { bg: '#F5F5F5', text: '#757575' },
-  study: { bg: '#EDE7F6', text: '#7E57C2' },
-};
 
 const MODE_ICONS = {
   explore: Compass,
   study: BookOpen,
 };
 
+interface AttachmentInfo {
+  name: string;
+  type: string;
+  size?: number;
+}
+
 interface StreamingMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  toolTraces?: ToolTraceItem[];
+  segments: MessageSegment[];
+  attachments?: AttachmentInfo[];
   isStreaming?: boolean;
+  error?: string;
+  lastUserMessage?: string;
 }
 
 export default function AssistantScreen() {
@@ -85,8 +99,20 @@ export default function AssistantScreen() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(false);
+  const [attachments, setAttachments] = useState<any[]>([]);
+
+  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
+  // Audio recording hook
+  const audioRecorder = useAudioRecorder();
 
   const { colors } = useTheme();
+  const modeColors = {
+    explore: { bg: colors.surface, text: colors.textSecondary },
+    study: { bg: withOpacity(colors.success, OPACITY[10]), text: colors.success },
+  };
   const { t } = useI18n();
   const { isOrganizationSpace } = useSpace();
   const { user } = useAuth();
@@ -100,26 +126,21 @@ export default function AssistantScreen() {
     { id: 'explore' as Mode, label: t('assistant.modes.explore'), icon: MODE_ICONS.explore },
     { id: 'study' as Mode, label: t('assistant.modes.study'), icon: MODE_ICONS.study },
   ];
-
-  const MODES = isOrganizationSpace ? ALL_MODES.filter((m) => m.id !== 'study') : ALL_MODES;
+  const MODES = isOrganizationSpace ? ALL_MODES.filter(m => m.id === 'explore') : ALL_MODES;
 
   // Set initial mode from URL parameter
   useEffect(() => {
-    if (mode && (mode === 'explore' || mode === 'study')) {
-      if (mode === 'study' && isOrganizationSpace) {
-        setActiveMode('explore');
-      } else {
-        setActiveMode(mode);
-      }
+    if (mode === 'explore' || mode === 'study') {
+      setActiveMode(mode);
     }
-  }, [mode, isOrganizationSpace]);
+  }, [mode]);
 
-  // Reset to explore mode if organization space is activated while in study mode
+  // Reset to explore mode if organization space is activated
   useEffect(() => {
-    if (isOrganizationSpace && activeMode === 'study') {
+    if (isOrganizationSpace) {
       setActiveMode('explore');
     }
-  }, [isOrganizationSpace, activeMode]);
+  }, [isOrganizationSpace]);
 
   // Handle prompt and focus from URL parameters
   useEffect(() => {
@@ -164,19 +185,53 @@ export default function AssistantScreen() {
       setSessionId(session.id);
       setActiveMode(session.mode as Mode);
 
-      // Convert to StreamingMessage format
+      // Convert to StreamingMessage format with segments
       const converted: StreamingMessage[] = (sessionMessages || [])
         .filter((m: CopilotMessage) => m.role === 'user' || m.role === 'assistant')
-        .map((m: CopilotMessage) => ({
-          id: m.id,
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-          toolTraces: m.toolCalls?.map((tc: any) => ({
-            name: tc.name,
-            duration: tc.duration,
-            status: 'done' as const,
-          })),
-        }));
+        .map((m: CopilotMessage) => {
+          let segments: MessageSegment[] = [];
+
+          if (m.role === 'assistant') {
+            if (m.outputData && Array.isArray(m.outputData) && m.outputData.length > 0) {
+              // New format: use persisted segments, finalize any running tools as success
+              segments = m.outputData.map((seg: MessageSegment) => {
+                if (seg.type === 'tool' && seg.tool?.status === 'running') {
+                  return { ...seg, tool: { ...seg.tool, status: 'success' as const } };
+                }
+                return seg;
+              });
+            } else {
+              // Backward compat: reconstruct from tool_calls + content
+              if (m.toolCalls && Array.isArray(m.toolCalls)) {
+                for (const tc of m.toolCalls) {
+                  segments.push({
+                    type: 'tool',
+                    tool: {
+                      callId: tc.id || `${tc.name}-legacy`,
+                      name: tc.name,
+                      duration: (tc as any).duration,
+                      status: 'success',
+                      summary: undefined,
+                    },
+                  });
+                }
+              }
+              if (m.content) {
+                segments.push({ type: 'text', content: m.content });
+              }
+            }
+          }
+
+          return {
+            id: m.id,
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+            segments,
+            attachments: m.attachments && Array.isArray(m.attachments) && m.attachments.length > 0
+              ? m.attachments.map((a: any) => ({ name: a.name, type: a.type, size: a.size }))
+              : undefined,
+          };
+        });
       setMessages(converted);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -197,119 +252,267 @@ export default function AssistantScreen() {
     }
   };
 
-  // Send message with SSE streaming
-  const handleSend = async () => {
-    if (!inputText.trim() || isSending) return;
+  // Core streaming function — used by handleSend, handleQuizAnswer, and handleRetry
+  const handlePickFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'image/*'],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
 
-    const userContent = inputText.trim();
-    setInputText('');
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+
+        // Check file size
+        if (file.size && file.size > MAX_FILE_SIZE) {
+          Alert.alert('Fichier trop volumineux', 'La taille maximale est de 20 Mo.');
+          return;
+        }
+
+        // Check max attachments
+        if (attachments.length >= 3) {
+          Alert.alert('Limite atteinte', 'Vous pouvez ajouter jusqu\'à 3 pièces jointes.');
+          return;
+        }
+
+        setAttachments((prev) => [
+          ...prev,
+          {
+            name: file.name,
+            uri: file.uri,
+            type: file.mimeType || 'application/octet-stream',
+            size: file.size,
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error('Error picking file:', error);
+      Alert.alert('Erreur', 'Impossible de sélectionner le fichier.');
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const startStream = useCallback(async (userContent: string, attachmentFiles: any[] = []) => {
     setIsSending(true);
     setError(null);
 
-    // Add user message
     const userMsg: StreamingMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
       content: userContent,
+      segments: [],
+      attachments: attachmentFiles.length > 0
+        ? attachmentFiles.map((a: any) => ({ name: a.name, type: a.type, size: a.size }))
+        : undefined,
     };
 
-    // Add assistant streaming message placeholder
-    const assistantMsgId = `assistant-${Date.now()}`;
+    const assistantMsgId = `assistant-${Date.now() + 1}`;
     const assistantMsg: StreamingMessage = {
       id: assistantMsgId,
       role: 'assistant',
       content: '',
-      toolTraces: [],
+      segments: [],
       isStreaming: true,
+      lastUserMessage: userContent,
     };
 
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
 
-    // Start SSE stream
-    abortControllerRef.current = copilotService.sendMessageStream(
-      userContent,
-      activeMode as CopilotMode,
-      sessionId || undefined,
-      {
-        onTextDelta: (delta) => {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantMsgId
-                ? { ...m, content: m.content + delta }
-                : m
-            )
-          );
-        },
-        onToolStart: (tool) => {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantMsgId
-                ? {
+    try {
+      let attachmentIds: string[] = [];
+
+      // 1. Upload attachments if present
+      if (attachmentFiles.length > 0) {
+        const uploadRes = await copilotService.uploadAttachments(
+          attachmentFiles.map((a) => ({ uri: a.uri, type: a.type, name: a.name }))
+        );
+
+        if (!uploadRes.success || !uploadRes.data?.documents) {
+          throw new Error(uploadRes.error || "Erreur lors de l'upload des pièces jointes");
+        }
+
+        attachmentIds = uploadRes.data.documents.map((doc: any) => doc.id);
+      }
+
+      abortControllerRef.current = copilotService.sendMessageStream(
+        userContent,
+        activeMode,
+        sessionId || undefined,
+        {
+          onTextDelta: (delta) => {
+            setMessages((prev) =>
+              prev.map((m) => {
+                if (m.id !== assistantMsgId) return m;
+                const newSegments = [...m.segments];
+                const lastSeg = newSegments[newSegments.length - 1];
+                if (lastSeg && lastSeg.type === 'text') {
+                  newSegments[newSegments.length - 1] = {
+                    ...lastSeg,
+                    content: (lastSeg.content || '') + delta,
+                  };
+                } else {
+                  newSegments.push({ type: 'text', content: delta });
+                }
+                return { ...m, content: m.content + delta, segments: newSegments };
+              })
+            );
+          },
+          onToolStart: (tool) => {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMsgId
+                  ? {
                     ...m,
-                    toolTraces: [
-                      ...(m.toolTraces || []),
-                      { name: tool.name, status: 'running' as const },
+                    segments: [
+                      ...m.segments,
+                      { type: 'tool' as const, tool: { callId: tool.callId, name: tool.name, args: tool.args, status: 'running' as const } },
                     ],
                   }
-                : m
-            )
-          );
-        },
-        onToolEnd: (tool) => {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantMsgId
-                ? {
+                  : m
+              )
+            );
+          },
+          onToolEnd: (tool) => {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMsgId
+                  ? {
                     ...m,
-                    toolTraces: (m.toolTraces || []).map((t) =>
-                      t.name === tool.name && t.status === 'running'
-                        ? { ...t, status: 'done' as const, duration: tool.duration }
-                        : t
+                    segments: m.segments.map((seg) =>
+                      seg.type === 'tool' && seg.tool?.callId === tool.callId
+                        ? { ...seg, tool: { ...seg.tool!, summary: tool.summary, duration: tool.duration, status: tool.status, error: tool.error } }
+                        : seg
                     ),
                   }
-                : m
-            )
-          );
+                  : m
+              )
+            );
+          },
+          onDone: (newSessionId) => {
+            setSessionId(newSessionId);
+            setIsSending(false);
+            setMessages((prev) =>
+              prev.map((m) => {
+                if (m.id !== assistantMsgId) return m;
+                // Finalize any tools still in 'running' state
+                const finalSegments = m.segments.map((seg) =>
+                  seg.type === 'tool' && seg.tool?.status === 'running'
+                    ? { ...seg, tool: { ...seg.tool, status: 'success' as const } }
+                    : seg
+                );
+                return { ...m, isStreaming: false, segments: finalSegments };
+              })
+            );
+            abortControllerRef.current = null;
+          },
+          onError: (errorMsg) => {
+            setIsSending(false);
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMsgId
+                  ? { ...m, isStreaming: false, error: errorMsg }
+                  : m
+              )
+            );
+            abortControllerRef.current = null;
+          },
+          onLimitReached: (_reason, message) => {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMsgId
+                  ? {
+                    ...m,
+                    segments: [...m.segments, { type: 'text' as const, content: `\n\n> ${message}` }],
+                    content: m.content + `\n\n> ${message}`,
+                  }
+                  : m
+              )
+            );
+          },
         },
-        onDone: (newSessionId) => {
-          setSessionId(newSessionId);
-          setIsSending(false);
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantMsgId ? { ...m, isStreaming: false } : m
-            )
-          );
-          abortControllerRef.current = null;
-        },
-        onError: (errorMsg) => {
-          setError(errorMsg);
-          setIsSending(false);
-          // Remove empty assistant message on error
-          setMessages((prev) =>
-            prev.filter((m) => !(m.id === assistantMsgId && !m.content))
-          );
-          abortControllerRef.current = null;
-        },
-      }
-    );
-  };
-
-  // Handle mode toggle
-  const handleToggleMode = () => {
-    const currentIndex = MODES.findIndex((m) => m.id === activeMode);
-    const nextIndex = (currentIndex + 1) % MODES.length;
-    const newMode = MODES[nextIndex].id;
-
-    if (newMode !== activeMode) {
-      setActiveMode(newMode);
-      setSessionId(null);
-      setMessages([]);
+        undefined, // organizationId
+        attachmentIds.length > 0 ? attachmentIds : undefined
+      );
+    } catch (err: any) {
+      setIsSending(false);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantMsgId
+            ? { ...m, isStreaming: false, error: err.message || "Erreur lors de l'envoi" }
+            : m
+        )
+      );
     }
+  }, [activeMode, sessionId]);
+
+  // Audio recording handlers
+  const handleMicPress = useCallback(async () => {
+    if (audioRecorder.state.isRecording) {
+      // Stop recording and transcribe
+      const audioUri = await audioRecorder.stopRecording();
+      if (audioUri) {
+        setIsTranscribing(true);
+        try {
+          const result = await copilotService.transcribeAudio(audioUri, 'audio/m4a');
+          if (result.success && result.data?.text) {
+            // Append transcribed text to input (or replace if empty)
+            setInputText(prev => prev.trim() ? `${prev} ${result.data!.text}` : result.data!.text);
+            inputRef.current?.focus();
+          } else {
+            Alert.alert('Erreur', result.error || 'Impossible de transcrire l\'audio');
+          }
+        } catch (err: any) {
+          Alert.alert('Erreur', err.message || 'Erreur de transcription');
+        } finally {
+          setIsTranscribing(false);
+        }
+      }
+    } else {
+      // Start recording
+      await audioRecorder.startRecording();
+    }
+  }, [audioRecorder]);
+
+  const handleCancelRecording = useCallback(async () => {
+    await audioRecorder.cancelRecording();
+  }, [audioRecorder]);
+
+  // Auto-stop recording when reaching 30 seconds
+  useEffect(() => {
+    if (audioRecorder.remainingTime === 0 && audioRecorder.state.isRecording) {
+      handleMicPress(); // This will stop and transcribe
+    }
+  }, [audioRecorder.remainingTime, audioRecorder.state.isRecording, handleMicPress]);
+
+  // Format recording duration as mm:ss
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Send message from input
+  const handleSend = () => {
+    if ((!inputText.trim() && attachments.length === 0) || isSending) return;
+    const text = inputText.trim();
+    const currentAttachments = [...attachments];
+    setInputText('');
+    setAttachments([]);
+    startStream(text, currentAttachments);
+  };
+
+  // Auto-submit quiz answer (tapping an option sends it as a message)
+  const handleQuizAnswer = useCallback((answer: string) => {
+    if (isSending) return;
+    startStream(answer);
+  }, [isSending, startStream]);
 
   // Start new conversation
   const handleNewConversation = () => {
-    // Abort any running stream
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
     setSessionId(null);
@@ -317,6 +520,61 @@ export default function AssistantScreen() {
     setError(null);
     setIsSending(false);
   };
+
+  // Retry a failed message
+  const handleRetry = useCallback((messageId: string) => {
+    const msg = messages.find((m) => m.id === messageId);
+    if (!msg?.lastUserMessage) return;
+    const retryText = msg.lastUserMessage;
+    setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    startStream(retryText);
+  }, [messages, startStream]);
+
+  // Long-press on user message: copy (all), edit+resend (last only)
+  const handleUserMessageLongPress = useCallback((messageId: string, content: string) => {
+    if (isSending) return;
+
+    // Find all user messages to determine if this is the last one
+    const userMessages = messages.filter((m) => m.role === 'user');
+    const isLastUserMessage = userMessages.length > 0 && userMessages[userMessages.length - 1].id === messageId;
+
+    if (isLastUserMessage) {
+      Alert.alert(
+        'Message',
+        undefined,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Copier',
+            onPress: () => Clipboard.setStringAsync(content),
+          },
+          {
+            text: 'Modifier et renvoyer',
+            onPress: () => {
+              // Remove this user message and its following assistant response
+              const msgIndex = messages.findIndex((m) => m.id === messageId);
+              if (msgIndex === -1) return;
+              setMessages((prev) => prev.slice(0, msgIndex));
+              setInputText(content);
+              setTimeout(() => inputRef.current?.focus(), 100);
+            },
+          },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Message',
+        undefined,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Copier',
+            onPress: () => Clipboard.setStringAsync(content),
+          },
+        ]
+      );
+    }
+  }, [messages, isSending]);
 
   // Open history panel
   const handleOpenHistory = async () => {
@@ -345,7 +603,20 @@ export default function AssistantScreen() {
 
   const currentMode = MODES.find((m) => m.id === activeMode);
   const ModeIcon = currentMode?.icon || Compass;
-  const userName = user?.firstName || user?.displayName || 'toi';
+  const firstName = user?.firstName || user?.displayName?.split(' ')[0] || 'toi';
+
+  // Human-readable relative timestamp from message ID (which embeds Date.now())
+  const formatTimestamp = (messageId: string): string => {
+    const match = messageId.match(/(\d{13})/);
+    if (!match) return '';
+    const ts = parseInt(match[1], 10);
+    const diff = Date.now() - ts;
+    if (diff < 60_000) return "À l'instant";
+    if (diff < 3_600_000) return `Il y a ${Math.floor(diff / 60_000)} min`;
+    if (diff < 86_400_000) return `Il y a ${Math.floor(diff / 3_600_000)}h`;
+    const d = new Date(ts);
+    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  };
 
   const renderEmptyState = () => (
     <ScrollView
@@ -353,55 +624,12 @@ export default function AssistantScreen() {
       contentContainerStyle={styles.emptyState}
       showsVerticalScrollIndicator={false}
     >
-      <View style={[styles.assistantIcon, { backgroundColor: colors.surface }]}>
-        <Sparkles size={ICON.size.xl * 1.5} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+      <View style={styles.orbContainer}>
+        <PulsingOrb size={100} />
       </View>
-
-      <Text style={[styles.greeting, { color: colors.textSecondary }]}>{t('assistant.greeting')}</Text>
-      <Text style={[styles.userName, { color: colors.primary }]}>{userName} ?</Text>
-
-      {/* Quick prompts */}
-      <View style={styles.quickPromptsContainer}>
-        {activeMode === 'explore' ? (
-          <>
-            <TouchableOpacity
-              style={[styles.quickPrompt, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-              onPress={() => setInputText(t('assistant.prompts.explore.opportunities'))}
-            >
-              <Text style={[styles.quickPromptText, { color: colors.textPrimary }]}>
-                {t('assistant.prompts.explore.opportunities')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.quickPrompt, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-              onPress={() => setInputText(t('assistant.prompts.explore.communities'))}
-            >
-              <Text style={[styles.quickPromptText, { color: colors.textPrimary }]}>
-                {t('assistant.prompts.explore.communities')}
-              </Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <TouchableOpacity
-              style={[styles.quickPrompt, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-              onPress={() => setInputText('Je veux apprendre React Native')}
-            >
-              <Text style={[styles.quickPromptText, { color: colors.textPrimary }]}>
-                Je veux apprendre React Native
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.quickPrompt, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-              onPress={() => setInputText('Évalue mon niveau en JavaScript')}
-            >
-              <Text style={[styles.quickPromptText, { color: colors.textPrimary }]}>
-                Évalue mon niveau en JavaScript
-              </Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
+      <Text style={[styles.greeting, { color: colors.textPrimary }]}>
+        Bienvenue <Text style={{ color: colors.primary, fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold }}>{firstName}</Text>. Comment puis-je éclairer votre chemin aujourd'hui ?
+      </Text>
     </ScrollView>
   );
 
@@ -411,47 +639,98 @@ export default function AssistantScreen() {
       style={styles.messagesContainer}
       contentContainerStyle={styles.messagesContent}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
     >
-      {messages.map((message) => (
+      {messages.map((message, msgIdx) => (
         <View key={message.id} style={styles.messageWrapper}>
           {message.role === 'user' ? (
-            /* User message: bubble style (right-aligned) */
-            <View style={[styles.userMessage, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.userMessageText, { color: colors.textOnPrimary }]}>
-                {message.content}
-              </Text>
+            /* User message: bubble style (right-aligned), long-press for actions */
+            <View style={styles.userMessageContainer}>
+              <TouchableOpacity
+                style={[styles.userMessage, { backgroundColor: colors.primary }]}
+                onLongPress={() => handleUserMessageLongPress(message.id, message.content)}
+                activeOpacity={0.8}
+                delayLongPress={400}
+              >
+                {message.content ? (
+                  <Text style={[styles.userMessageText, { color: colors.textOnPrimary }]}>
+                    {message.content}
+                  </Text>
+                ) : null}
+                {message.attachments && message.attachments.length > 0 && (
+                  <View style={[styles.userAttachments, message.content ? { marginTop: 6 } : undefined]}>
+                    {message.attachments.map((att, i) => (
+                      <View key={i} style={[styles.userAttachmentChip, { backgroundColor: withOpacity(colors.textOnPrimary, OPACITY[20]) }]}>
+                        <Paperclip size={10} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                        <Text style={[styles.userAttachmentText, { color: colors.textOnPrimary }]} numberOfLines={1}>
+                          {att.name}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </TouchableOpacity>
             </View>
           ) : (
-            /* Assistant message: transparent, full-width, with copy button */
+            /* Assistant message: transparent, full-width */
             <View style={styles.assistantMessage}>
-              {/* Copy button */}
-              {message.content && !message.isStreaming && (
-                <View style={styles.copyButtonRow}>
-                  <CopyButton content={message.content} />
-                </View>
-              )}
-
-              {/* Tool traces */}
-              {message.toolTraces && message.toolTraces.length > 0 && (
-                <ToolTrace traces={message.toolTraces} />
-              )}
-
-              {/* Markdown-rendered content */}
-              {message.content ? (
-                <MarkdownRenderer content={message.content} />
+              {/* Inline segments: ordered text/tool blocks */}
+              {message.segments.length > 0 ? (
+                message.segments.map((seg, idx) => {
+                  if (seg.type === 'tool' && seg.tool) {
+                    return <ToolBlock key={`seg-${idx}`} tool={seg.tool} />;
+                  }
+                  if (seg.type === 'text' && seg.content) {
+                    const isInteractiveQuiz = msgIdx === messages.length - 1 && !message.isStreaming && !isSending;
+                    return (
+                      <MarkdownRenderer
+                        key={`seg-${idx}`}
+                        content={seg.content}
+                        onQuizAnswer={isInteractiveQuiz ? handleQuizAnswer : undefined}
+                      />
+                    );
+                  }
+                  return null;
+                })
               ) : message.isStreaming ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                  <Text style={{ color: colors.textSecondary, fontSize: TYPOGRAPHY.fontSize.sm }}>
-                    {activeMode === 'study' ? 'Préparation du contenu' : 'Recherche en cours'}
+                <ThinkingIndicator />
+              ) : message.error ? null : null}
+
+              {/* Error state with retry */}
+              {message.error && (
+                <View style={[styles.messageError, { backgroundColor: withOpacity(colors.error, OPACITY[5]) }]}>
+                  <AlertCircle size={14} color={colors.error} />
+                  <Text style={[styles.messageErrorText, { color: colors.error }]}>
+                    {message.error}
                   </Text>
+                  {message.lastUserMessage && (
+                    <TouchableOpacity
+                      style={[styles.retryButton, { borderColor: colors.error }]}
+                      onPress={() => handleRetry(message.id)}
+                      activeOpacity={0.7}
+                    >
+                      <RefreshCw size={12} color={colors.error} />
+                      <Text style={[styles.retryText, { color: colors.error }]}>Réessayer</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
-              ) : null}
+              )}
 
               {/* Streaming cursor */}
               {message.isStreaming && message.content && (
                 <View style={styles.streamingCursor}>
                   <View style={[styles.cursorDot, { backgroundColor: colors.primary }]} />
+                </View>
+              )}
+
+              {/* Footer: copy button + generation timestamp — at the bottom */}
+              {message.content && !message.isStreaming && !message.error && (
+                <View style={styles.messageFooter}>
+                  <Text style={[styles.messageTimestamp, { color: colors.textDisabled }]}>
+                    {formatTimestamp(message.id)}
+                  </Text>
+                  <CopyButton content={message.content} />
                 </View>
               )}
             </View>
@@ -464,7 +743,7 @@ export default function AssistantScreen() {
   const renderHistoryPanel = () => (
     <View style={[styles.historyPanel, { backgroundColor: colors.background }]}>
       <View style={[styles.historyHeader, { borderBottomColor: colors.borderColor }]}>
-        <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>Historique</Text>
+        <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>Archives des sessions</Text>
         <TouchableOpacity onPress={() => setShowHistory(false)}>
           <X size={24} color={colors.textSecondary} />
         </TouchableOpacity>
@@ -487,24 +766,26 @@ export default function AssistantScreen() {
               onPress={() => handleSelectSession(session)}
             >
               <View style={styles.historyItemContent}>
-                <View
-                  style={[
-                    styles.historyModeBadge,
-                    { backgroundColor: MODE_COLORS[session.mode as Mode]?.bg || colors.surface },
-                  ]}
-                >
-                  {session.mode === 'explore' ? (
-                    <Compass size={14} color={MODE_COLORS.explore.text} />
-                  ) : (
-                    <BookOpen size={14} color={MODE_COLORS.study.text} />
-                  )}
-                </View>
+                {(() => {
+                  const sessionMode = (session.mode as Mode) || 'explore';
+                  const SessionModeIcon = MODE_ICONS[sessionMode] || Compass;
+                  return (
+                    <View
+                      style={[
+                        styles.historyModeBadge,
+                        { backgroundColor: modeColors[sessionMode]?.bg || colors.surface },
+                      ]}
+                    >
+                      <SessionModeIcon size={14} color={modeColors[sessionMode]?.text || colors.textSecondary} />
+                    </View>
+                  );
+                })()}
                 <View style={styles.historyItemText}>
                   <Text style={[styles.historyItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {session.title || 'Nouvelle conversation'}
+                    {session.title || 'Session sans titre'}
                   </Text>
                   <Text style={[styles.historyItemMeta, { color: colors.textSecondary }]}>
-                    {session.messageCount} messages
+                    {session.messageCount} messages · {formatRelativeTime(session.lastMessageAt || session.createdAt)}
                   </Text>
                 </View>
               </View>
@@ -512,7 +793,7 @@ export default function AssistantScreen() {
                 style={styles.historyItemDelete}
                 onPress={() => handleDeleteSession(session.id)}
               >
-                <X size={16} color={colors.textDisabled} />
+                <Trash2 size={16} color={colors.textDisabled} />
               </TouchableOpacity>
             </TouchableOpacity>
           ))
@@ -521,140 +802,253 @@ export default function AssistantScreen() {
     </View>
   );
 
-  const dismissKeyboard = () => {
-    Keyboard.dismiss();
-  };
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <TouchableWithoutFeedback onPress={dismissKeyboard} accessible={false}>
-          <View style={styles.keyboardView}>
-            {/* Header */}
-            <Header
-              title={t('assistant.title')}
-              rightContent={
-                <View style={styles.headerActions}>
-                  <TouchableOpacity
-                    style={styles.headerButton}
-                    activeOpacity={0.8}
-                    onPress={handleOpenHistory}
-                  >
-                    <History size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.headerButton}
-                    activeOpacity={0.8}
-                    onPress={handleNewConversation}
-                  >
-                    <Plus size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-                  </TouchableOpacity>
-                </View>
-              }
-            />
-
-            {/* Error banner */}
-            {error && (
-              <View style={[styles.errorBanner, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}>
-                <AlertCircle size={16} color={colors.error} />
-                <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-                <TouchableOpacity onPress={() => setError(null)}>
-                  <X size={16} color={colors.error} />
+        <View style={styles.keyboardView}>
+          {/* Header */}
+          <Header
+            title={t('assistant.title')}
+            rightContent={
+              <View style={styles.headerActions}>
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  activeOpacity={0.8}
+                  onPress={handleOpenHistory}
+                >
+                  <History size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.headerButton}
+                  activeOpacity={0.8}
+                  onPress={handleNewConversation}
+                >
+                  <Plus size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
                 </TouchableOpacity>
               </View>
-            )}
+            }
+          />
 
-            {/* Loading state */}
-            {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color={colors.primary} />
-              </View>
-            ) : (
-              <View style={styles.content}>
-                {messages.length === 0 ? renderEmptyState() : renderMessages()}
-              </View>
-            )}
+          {/* Error banner */}
+          {error && (
+            <View style={[styles.errorBanner, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}>
+              <AlertCircle size={16} color={colors.error} />
+              <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+              <TouchableOpacity onPress={() => setError(null)}>
+                <X size={16} color={colors.error} />
+              </TouchableOpacity>
+            </View>
+          )}
 
-            {/* Input Area */}
-            <View style={styles.inputArea}>
-              <View
-                style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-              >
-                {/* Row 1: TextInput + Mic + Send */}
-                <View style={styles.inputRow}>
-                  <TextInput
-                    ref={inputRef}
-                    style={[styles.input, { color: colors.textPrimary }]}
-                    placeholder={t('assistant.inputPlaceholder')}
-                    placeholderTextColor={colors.gray500}
-                    value={inputText}
-                    onChangeText={setInputText}
-                    multiline
-                    maxLength={500}
-                    editable={!isSending}
-                  />
+          {/* Loading state */}
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ThinkingIndicator label="Chargement..." />
+            </View>
+          ) : (
+            <View style={styles.content}>
+              {messages.length === 0 ? renderEmptyState() : renderMessages()}
+            </View>
+          )}
 
-                  <TouchableOpacity style={styles.inputAction} activeOpacity={0.8}>
-                    <Mic size={ICON.size.md} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.sendButton,
-                      { backgroundColor: colors.primary },
-                      (!inputText.trim() || isSending) && { backgroundColor: colors.gray200 },
-                    ]}
-                    onPress={handleSend}
-                    disabled={!inputText.trim() || isSending}
-                    activeOpacity={0.8}
-                  >
-                    {isSending ? (
-                      <ActivityIndicator size="small" color={colors.gray400} />
+          {/* Input Area */}
+          <View style={styles.inputArea}>
+            <View
+              style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+            >
+              {/* Recording Overlay */}
+              {(audioRecorder.state.isRecording || audioRecorder.state.isPreparing || isTranscribing) && (
+                <View style={[styles.recordingOverlay, { backgroundColor: withOpacity(colors.error, OPACITY[10]) }]}>
+                  <View style={styles.recordingContent}>
+                    {isTranscribing ? (
+                      <>
+                        <View style={[styles.transcribingIcon, { backgroundColor: colors.primary }]}>
+                          <Loader2 size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                        </View>
+                        <Text style={[styles.recordingText, { color: colors.textPrimary }]}>
+                          Transcription en cours...
+                        </Text>
+                      </>
+                    ) : audioRecorder.state.isPreparing ? (
+                      <>
+                        <View style={[styles.recordingDot, { backgroundColor: colors.warning }]} />
+                        <Text style={[styles.recordingText, { color: colors.textPrimary }]}>
+                          Préparation...
+                        </Text>
+                      </>
                     ) : (
-                      <SendHorizontal
-                        size={ICON.size.md}
-                        color={inputText.trim() ? colors.textOnPrimary : colors.gray400}
-                        strokeWidth={ICON.strokeWidth}
-                      />
+                      <>
+                        <View style={[styles.recordingDot, { backgroundColor: colors.error }]} />
+                        <Text style={[styles.recordingText, { color: colors.textPrimary }]}>
+                          {formatDuration(audioRecorder.state.duration)} / 0:30
+                        </Text>
+                        <View style={styles.recordingProgress}>
+                          <View
+                            style={[
+                              styles.recordingProgressBar,
+                              { backgroundColor: colors.error, width: `${audioRecorder.progress * 100}%` }
+                            ]}
+                          />
+                        </View>
+                      </>
                     )}
-                  </TouchableOpacity>
+                  </View>
+                  {/* Stop/cancel actions handled by the MicOff button in the input row */}
                 </View>
+              )}
 
-                {/* Row 2: Actions */}
-                <View style={styles.actionsRow}>
-                  <TouchableOpacity style={styles.inputAction} activeOpacity={0.8}>
-                    <Paperclip size={ICON.size.md} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                  </TouchableOpacity>
+              {/* Attachment Preview */}
+              {attachments.length > 0 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.attachmentPreviewContainer}
+                >
+                  {attachments.map((file, index) => (
+                    <View
+                      key={index}
+                      style={[styles.attachmentPreview, { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]}
+                    >
+                      <View style={styles.attachmentPreviewContent}>
+                        <Text
+                          style={[styles.attachmentPreviewText, { color: colors.primary }]}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {file.name}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={[styles.removeAttachmentButton, { backgroundColor: colors.primary }]}
+                        onPress={() => removeAttachment(index)}
+                      >
+                        <X size={10} color={colors.textOnPrimary} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
 
-                  <TouchableOpacity style={styles.inputAction} activeOpacity={0.8}>
-                    <Lightbulb size={ICON.size.md} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                  </TouchableOpacity>
+              {/* Row 1: TextInput + Mic + Send */}
+              <View style={styles.inputRow}>
+                <TextInput
+                  ref={inputRef}
+                  style={[styles.input, { color: colors.textPrimary }]}
+                  placeholder={audioRecorder.state.isRecording ? 'Enregistrement en cours...' : t('assistant.inputPlaceholder')}
+                  placeholderTextColor={colors.gray500}
+                  value={inputText}
+                  onChangeText={setInputText}
+                  multiline
+                  maxLength={500}
+                  editable={!isSending && !audioRecorder.state.isRecording && !isTranscribing}
+                />
 
-                  <TouchableOpacity
-                    style={[styles.modeToggle, { backgroundColor: MODE_COLORS[activeMode].bg }]}
-                    onPress={handleToggleMode}
-                    activeOpacity={0.8}
-                  >
-                    <ModeIcon
-                      size={ICON.size.sm}
-                      color={MODE_COLORS[activeMode].text}
+                <TouchableOpacity
+                  style={[
+                    styles.inputAction,
+                    audioRecorder.state.isRecording && styles.micButtonRecording,
+                    audioRecorder.state.isRecording && { backgroundColor: withOpacity(colors.error, OPACITY[20]) },
+                  ]}
+                  onPress={handleMicPress}
+                  disabled={isSending || audioRecorder.state.isPreparing || isTranscribing}
+                  activeOpacity={0.8}
+                >
+                  {audioRecorder.state.isRecording ? (
+                    <MicOff size={ICON.size.md} color={colors.error} strokeWidth={ICON.strokeWidth} />
+                  ) : (
+                    <Mic
+                      size={ICON.size.md}
+                      color={isSending || isTranscribing ? colors.gray300 : colors.gray500}
                       strokeWidth={ICON.strokeWidth}
                     />
-                    <Text style={[styles.modeToggleText, { color: MODE_COLORS[activeMode].text }]}>
-                      {currentMode?.label}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.sendButton,
+                    { backgroundColor: colors.primary },
+                    ((!inputText.trim() && attachments.length === 0) || isSending || audioRecorder.state.isRecording) && { backgroundColor: colors.gray200 },
+                  ]}
+                  onPress={handleSend}
+                  disabled={(!inputText.trim() && attachments.length === 0) || isSending || audioRecorder.state.isRecording}
+                  activeOpacity={0.8}
+                >
+                  {isSending ? (
+                    <Brain size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+                  ) : (
+                    <SendHorizontal
+                      size={ICON.size.md}
+                      color={(inputText.trim() || attachments.length > 0) && !audioRecorder.state.isRecording ? colors.textOnPrimary : colors.gray400}
+                      strokeWidth={ICON.strokeWidth}
+                    />
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* Row 2: Actions */}
+              <View style={styles.actionsRow}>
+                <TouchableOpacity
+                  style={styles.inputAction}
+                  activeOpacity={0.8}
+                  onPress={handlePickFile}
+                  disabled={isSending || audioRecorder.state.isRecording || isTranscribing}
+                >
+                  <Plus
+                    size={ICON.size.md}
+                    color={(isSending || audioRecorder.state.isRecording || isTranscribing) ? colors.gray300 : colors.gray500}
+                    strokeWidth={ICON.strokeWidth}
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.inputAction}
+                  activeOpacity={0.8}
+                  onPress={() => setIsSuggestionsVisible(true)}
+                >
+                  <Lightbulb size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modeToggle, { backgroundColor: modeColors[activeMode].bg }]}
+                  onPress={
+                    MODES.length > 1
+                      ? () => setActiveMode(activeMode === 'explore' ? 'study' : 'explore')
+                      : undefined
+                  }
+                  activeOpacity={MODES.length > 1 ? 0.8 : 1}
+                  disabled={MODES.length === 1}
+                >
+                  <ModeIcon
+                    size={ICON.size.sm}
+                    color={modeColors[activeMode].text}
+                    strokeWidth={ICON.strokeWidth}
+                  />
+                  <Text style={[styles.modeToggleText, { color: modeColors[activeMode].text }]}>
+                    {currentMode?.label}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
-
-            {/* History Panel (overlay) */}
-            {showHistory && renderHistoryPanel()}
           </View>
-        </TouchableWithoutFeedback>
+
+          <SuggestionsTooltip
+            visible={isSuggestionsVisible}
+            onClose={() => setIsSuggestionsVisible(false)}
+            onSelectSuggestion={(suggestion) => {
+              setInputText(suggestion);
+              setIsSuggestionsVisible(false);
+            }}
+            mode={activeMode}
+            sessionId={sessionId}
+          />
+
+          {/* History Panel (overlay) */}
+          {showHistory && renderHistoryPanel()}
+        </View>
       </KeyboardAvoidingView>
       <FooterNav activeTab="assistant" />
     </SafeAreaView>
@@ -696,10 +1090,10 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.sm,
     gap: SPACING.sm,
   },
-
   errorText: {
     flex: 1,
-    ...TYPOGRAPHY.caption,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
 
   // Loading
@@ -720,31 +1114,22 @@ const styles = StyleSheet.create({
   },
 
   emptyState: {
+    flexGrow: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xxl,
     paddingBottom: SPACING.xl,
   },
 
-  assistantIcon: {
-    width: 80,
-    height: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.lg,
-    borderRadius: BORDER.radius.lg,
+  orbContainer: {
+    marginBottom: SPACING.xl,
   },
 
   greeting: {
     fontSize: TYPOGRAPHY.fontSize.xl,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
-  },
-
-  userName: {
-    fontSize: TYPOGRAPHY.fontSize.xxl,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    lineHeight: TYPOGRAPHY.fontSize.xl * 1.4,
   },
 
   quickPromptsContainer: {
@@ -760,7 +1145,8 @@ const styles = StyleSheet.create({
   },
 
   quickPromptText: {
-    ...TYPOGRAPHY.body,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
   },
 
@@ -779,6 +1165,10 @@ const styles = StyleSheet.create({
   },
 
   // User message: bubble, right-aligned
+  userMessageContainer: {
+    alignItems: 'flex-end',
+  },
+
   userMessage: {
     alignSelf: 'flex-end',
     maxWidth: '85%',
@@ -792,15 +1182,43 @@ const styles = StyleSheet.create({
     lineHeight: TYPOGRAPHY.fontSize.md * TYPOGRAPHY.lineHeight.normal,
   },
 
+  userAttachments: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+
+  userAttachmentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
+    maxWidth: '100%',
+  },
+
+  userAttachmentText: {
+    fontSize: 10,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    flexShrink: 1,
+  },
+
   // Assistant message: transparent, full-width
   assistantMessage: {
     width: '100%',
   },
 
-  copyButtonRow: {
+  messageFooter: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: SPACING.xs,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: SPACING.sm,
+    paddingTop: SPACING.xs,
+  },
+  messageTimestamp: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
 
   streamingCursor: {
@@ -813,6 +1231,34 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 1,
     opacity: 0.7,
+  },
+
+  messageError: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+    padding: SPACING.sm,
+    borderRadius: BORDER.radius.sm,
+    marginTop: SPACING.xs,
+  },
+  messageErrorText: {
+    flex: 1,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    borderWidth: 1,
+    borderRadius: BORDER.radius.xs,
+  },
+  retryText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
 
   // Input Area
@@ -900,7 +1346,8 @@ const styles = StyleSheet.create({
   },
 
   historyTitle: {
-    ...TYPOGRAPHY.h3,
+    fontSize: TYPOGRAPHY.fontSize.xxl,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
 
   historyList: {
@@ -908,7 +1355,8 @@ const styles = StyleSheet.create({
   },
 
   historyEmpty: {
-    ...TYPOGRAPHY.body,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
     padding: SPACING.xl,
   },
@@ -941,16 +1389,130 @@ const styles = StyleSheet.create({
   },
 
   historyItemTitle: {
-    ...TYPOGRAPHY.body,
-    fontWeight: '500',
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
 
   historyItemMeta: {
-    ...TYPOGRAPHY.caption,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginTop: 2,
   },
 
   historyItemDelete: {
     padding: SPACING.sm,
+  },
+
+  // Audio Recording UI
+  recordingOverlay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER.radius.sm,
+    marginBottom: SPACING.xs,
+  },
+
+  recordingContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+
+  recordingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+
+  transcribingIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  recordingText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
+
+  recordingProgress: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    overflow: 'hidden',
+  },
+
+  recordingProgressBar: {
+    height: '100%',
+    borderRadius: 2,
+  },
+
+  recordingActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+
+  recordingActionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  recordingStopButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  micButtonRecording: {
+    borderRadius: BORDER.radius.sm,
+  },
+  attachmentPreviewContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    gap: SPACING.sm,
+  },
+  attachmentPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: SPACING.sm,
+    paddingRight: 4,
+    paddingVertical: 4,
+    borderRadius: BORDER.radius.sm,
+    borderWidth: 1,
+    gap: SPACING.xs,
+    maxWidth: 160,
+  },
+  attachmentPreviewContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    flex: 1,
+  },
+  attachmentPreviewText: {
+    fontSize: 10,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
+  removeAttachmentButton: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
   },
 });

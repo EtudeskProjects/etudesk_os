@@ -475,7 +475,7 @@ export class CommunityActivityService {
                 `
                     SELECT
                         c.*,
-                        COALESCE(c.replies_count, 0) as replies_count,
+                        (SELECT COUNT(*)::int FROM community_activity_comments r WHERE r.parent_id = c.id AND r.deleted_at IS NULL) as replies_count,
                         0 as likes_count,
                         json_build_object(
                             'id', u.id,
@@ -774,7 +774,6 @@ export class CommunityActivityService {
                 a.created_at,
                 a.reactions_count,
                 a.comments_count,
-                a.bookmarks_count,
                 json_build_object(
                     'id', c.id,
                     'name', c.name,
@@ -927,7 +926,7 @@ export class CommunityActivityService {
         const commentsQuery = `
             SELECT
                 c.*,
-                COALESCE(c.replies_count, 0) as replies_count,
+                (SELECT COUNT(*)::int FROM community_activity_comments r WHERE r.parent_id = c.id AND r.deleted_at IS NULL) as replies_count,
                 0 as likes_count,
                 json_build_object(
                     'id', u.id,

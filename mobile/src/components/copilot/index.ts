@@ -7,7 +7,10 @@
 export { MarkdownRenderer } from './MarkdownRenderer';
 export { EntityCard } from './EntityCard';
 export { CopyButton } from './CopyButton';
-export { ToolTrace, type ToolTraceItem } from './ToolTrace';
+export { ThinkingIndicator } from './ThinkingIndicator';
+export { ToolBlock } from './ToolBlock';
+export { PulsingOrb } from './PulsingOrb';
+export { SuggestionsTooltip } from './SuggestionsTooltip';
 
 // Block components
 export { QuizBlock } from './blocks/QuizBlock';

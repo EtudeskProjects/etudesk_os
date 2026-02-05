@@ -106,7 +106,6 @@ export interface CommunityActivity {
   // Counters (denormalized)
   reactions_count: number;     // Likes count
   comments_count: number;
-  bookmarks_count: number;
 
   // Timestamps
   created_at: Date;

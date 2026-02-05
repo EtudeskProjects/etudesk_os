@@ -98,6 +98,7 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
       profile_tags,
       goals,
       sectors,
+      learning_preferences,
     } = req.body;
 
     // Content moderation for user-generated text fields
@@ -209,6 +210,14 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
       params.push(goals);
     }
 
+    if (learning_preferences !== undefined) {
+      if (typeof learning_preferences !== 'object' || learning_preferences === null) {
+        return res.status(400).json({ error: 'learning_preferences must be an object' });
+      }
+      updates.push(`learning_preferences = $${paramIndex++}::jsonb`);
+      params.push(JSON.stringify(learning_preferences));
+    }
+
     if (updates.length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
     }
@@ -303,12 +312,24 @@ router.get('/:id', async (req, res) => {
 
     const result = await pool.query(`
       SELECT
-        t.id, t.slug, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio, t.avatar_url,
-        t.city, t.region, t.country, t.remote_ready, t.willing_to_relocate,
-        t.profile_tags, t.goals, t.created_at,
-        (SELECT COUNT(*) FROM talent_skills WHERE talent_id = t.id) as skill_count
+        t.id, t.slug, t.first_name, t.last_name,
+        COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
+        t.email, t.bio, t.avatar_url, t.gender,
+        t.city, t.region, t.country,
+        t.remote_ready, t.willing_to_relocate,
+        t.sectors, t.profile_tags, t.goals, t.created_at,
+        COALESCE(
+          (SELECT json_agg(json_build_object('name', ts.canonical_name, 'type', ts.type))
+           FROM talent_skills ts
+           WHERE ts.talent_id = t.id), '[]'::json
+        ) as skills,
+        COALESCE(
+          (SELECT json_agg(json_build_object('language', tl.language, 'proficiency_level', tl.proficiency_level))
+           FROM talent_languages tl
+           WHERE tl.talent_id = t.id), '[]'::json
+        ) as languages
       FROM talents t
-      WHERE (t.id = $1 OR t.slug = $1) AND t.deleted_at IS NULL
+      WHERE (t.id::text = $1 OR t.slug = $1) AND t.deleted_at IS NULL
     `, [id]);
 
     if (result.rows.length === 0) {

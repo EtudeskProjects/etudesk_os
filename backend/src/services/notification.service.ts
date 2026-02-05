@@ -571,8 +571,8 @@ async function sendApplicationStatusEmail(
 
   const statusColor = status === 'ACCEPTED' ? '#10B981'
     : status === 'REJECTED' ? '#EF4444'
-    : status === 'IN_REVIEW' ? '#3B82F6'
-    : BRAND_BLUE;
+      : status === 'IN_REVIEW' ? '#3B82F6'
+        : BRAND_BLUE;
 
   const html = `
 <!DOCTYPE html>
@@ -590,7 +590,7 @@ async function sendApplicationStatusEmail(
           <!-- Logo -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height: 36px; width: auto;" />
+              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px; width: auto;" />
             </td>
           </tr>
 
@@ -678,7 +678,7 @@ async function sendNewMessageEmail(
           <!-- Logo -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height: 36px; width: auto;" />
+              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px; width: auto;" />
             </td>
           </tr>
 
@@ -762,7 +762,7 @@ async function sendNewApplicationEmail(
           <!-- Logo -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height: 36px; width: auto;" />
+              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px; width: auto;" />
             </td>
           </tr>
 
@@ -858,7 +858,7 @@ async function sendInterviewScheduledEmail(
           <!-- Logo -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height: 36px; width: auto;" />
+              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px; width: auto;" />
             </td>
           </tr>
 

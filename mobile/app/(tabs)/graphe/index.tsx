@@ -399,14 +399,14 @@ const renderOrganizationContent = () => (
       </Text>
     </View>
 
-    {/* AI Daily Summary */}
+    {/* Objectif du jour (organisations) */}
     <View style={[styles.insightContainer, { backgroundColor: CARD_THEMES.space.bg }]}>
       <View style={styles.insightHeader}>
-        <Info size={16} color={CARD_THEMES.space.icon} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.insightLabel, { color: CARD_THEMES.space.text }]}>Résumé du jour</Text>
+        <Target size={16} color={CARD_THEMES.space.icon} strokeWidth={ICON.strokeWidth} />
+        <Text style={[styles.insightLabel, { color: CARD_THEMES.space.text }]}>Objectif du jour</Text>
       </View>
       <Text style={[styles.insightText, { color: colors.textPrimary }]}>
-        {dailyInsight}
+        {dailyInsight || 'Pilotez vos offres, communautés et espaces pour maximiser votre impact et attirer les bons talents.'}
       </Text>
     </View>
 
@@ -529,20 +529,14 @@ const renderTalentContent = () => (
       </Text>
     </View>
 
-    {/* AI Daily Summary */}
+    {/* Objectif du jour (talents) */}
     <View style={[styles.insightContainer, { backgroundColor: CARD_THEMES.space.bg }]}>
       <View style={styles.insightHeader}>
-        {dailyInsight ? (
-          <Info size={16} color={CARD_THEMES.space.icon} strokeWidth={ICON.strokeWidth} />
-        ) : (
-          <Target size={16} color={CARD_THEMES.space.icon} strokeWidth={ICON.strokeWidth} />
-        )}
-        <Text style={[styles.insightLabel, { color: CARD_THEMES.space.text }]}>
-          {dailyInsight ? 'Résumé du jour' : 'Objectif du jour'}
-        </Text>
+        <Target size={16} color={CARD_THEMES.space.icon} strokeWidth={ICON.strokeWidth} />
+        <Text style={[styles.insightLabel, { color: CARD_THEMES.space.text }]}>Objectif du jour</Text>
       </View>
       <Text style={[styles.insightText, { color: colors.textPrimary }]}>
-        {dailyInsight || 'Explorez les nouvelles opportunités et restez connecté avec votre communauté !'}
+        {dailyInsight || 'Explorez les opportunités qui vous correspondent, renforcez votre profil et restez connecté à vos communautés.'}
       </Text>
     </View>
 

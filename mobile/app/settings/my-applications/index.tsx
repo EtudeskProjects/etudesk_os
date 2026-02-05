@@ -38,7 +38,7 @@ export default function MyApplicationsScreen() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [filter, setFilter] = useState<FilterStatus>('SUBMITTED');
+  const [filter, setFilter] = useState<FilterStatus>('all');
 
   const loadApplications = useCallback(async () => {
     try {

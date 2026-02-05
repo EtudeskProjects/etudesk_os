@@ -385,8 +385,7 @@ export default function OpportunityApplicationsScreen() {
               <Text
                 style={[
                   styles.filterChipText,
-                  { color: colors.gray700 },
-                  isActive && { color: colors.textOnPrimary },
+                  { color: isActive ? colors.textOnPrimary : colors.textPrimary },
                 ]}
               >
                 {chip.label} ({chip.count})

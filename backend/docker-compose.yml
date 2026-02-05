@@ -32,26 +32,5 @@ services:
   #     - postgres_data:/var/lib/postgresql/data
   #   restart: unless-stopped
 
-  # Neo4j Graph Database (optional - if not using Neo4j Aura)
-  # Web UI: http://localhost:7474
-  # Bolt: bolt://localhost:7687
-  # neo4j:
-  #   image: neo4j:5.15-community
-  #   container_name: etudesk-neo4j
-  #   ports:
-  #     - "7474:7474"  # HTTP/Browser
-  #     - "7687:7687"  # Bolt protocol
-  #   environment:
-  #     - NEO4J_AUTH=neo4j/etudesk_graph_2024
-  #     - NEO4J_PLUGINS=["apoc"]
-  #     - NEO4J_dbms_memory_heap_initial__size=512m
-  #     - NEO4J_dbms_memory_heap_max__size=1G
-  #   volumes:
-  #     - neo4j_data:/data
-  #     - neo4j_logs:/logs
-  #   restart: unless-stopped
-
 # volumes:
 #   postgres_data:
-#   neo4j_data:
-#   neo4j_logs:

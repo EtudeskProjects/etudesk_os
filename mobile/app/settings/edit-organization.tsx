@@ -184,7 +184,8 @@ export default function EditOrganizationScreen() {
         setOrganizationId(org.id);
         form.setValues({
           name: org.name || '',
-          orgTypes: org.type ? [org.type as OrganizationType] : [],
+          orgTypes: (org.types && Array.isArray(org.types)) ? org.types as OrganizationType[] : (org.type ? [org.type as OrganizationType] : []),
+          sectors: (org.sectors && Array.isArray(org.sectors)) ? org.sectors as Sector[] : [],
           description: org.description || '',
           logoUri: org.logo_url || null,
           country: org.headquarters_country || '',
@@ -348,7 +349,7 @@ export default function EditOrganizationScreen() {
             onPress={pickLogo}
           >
             {logoUri ? (
-              <Image source={{ uri: logoUri }} style={styles.logoImage} />
+              <Image source={{ uri: logoUri }} style={styles.logoImage} resizeMode="cover" />
             ) : (
               <Camera size={ICON.size.lg} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
             )}

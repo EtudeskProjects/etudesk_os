@@ -29,8 +29,8 @@ const transporter = nodemailer.createTransport(EMAIL_CONFIG);
 const DEFAULT_FROM = process.env.EMAIL_FROM || 'Etudesk <noreply@etudesk.com>';
 
 // Brand colors
-const BRAND_BLUE = '#26449F';
-const BRAND_BLUE_LIGHT = '#3a5bc7';
+const BRAND_BLACK = '#1A1A1A';
+const BRAND_GRAY = '#4D4840';
 
 // Email templates
 export const EmailTemplates = {
@@ -56,7 +56,7 @@ export const EmailTemplates = {
           <!-- Logo -->
           <tr>
             <td style="padding-bottom: 40px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height: 32px; width: auto;" />
+              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 32px; width: auto;" />
             </td>
           </tr>
 
@@ -69,7 +69,7 @@ export const EmailTemplates = {
 
               <!-- OTP Code -->
               <div style="margin-bottom: 24px;">
-                <span style="font-family: 'SF Mono', 'Roboto Mono', monospace; font-size: 32px; font-weight: 600; letter-spacing: 6px; color: ${BRAND_BLUE};">
+                <span style="font-family: 'SF Mono', 'Roboto Mono', monospace; font-size: 32px; font-weight: 600; letter-spacing: 6px; color: ${BRAND_BLACK};">
                   ${code}
                 </span>
               </div>
@@ -133,7 +133,7 @@ Ne partagez jamais ce code.
           <!-- Header -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height: 40px; width: auto;" />
+              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 40px; width: auto;" />
             </td>
           </tr>
 
@@ -298,7 +298,7 @@ export async function sendOrganizationInviteEmail(
           <!-- Logo -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height: 36px; width: auto;" />
+              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px; width: auto;" />
             </td>
           </tr>
 
@@ -315,7 +315,7 @@ export async function sendOrganizationInviteEmail(
 
               <!-- Organization Card -->
               <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
-                <p style="margin: 0 0 8px; font-size: 20px; font-weight: 600; color: ${BRAND_BLUE};">
+                <p style="margin: 0 0 8px; font-size: 20px; font-weight: 600; color: ${BRAND_BLACK};">
                   ${organizationName}
                 </p>
                 <p style="margin: 0; font-size: 14px; color: #6b7280;">
@@ -329,7 +329,7 @@ export async function sendOrganizationInviteEmail(
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 20px;">
-                <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLUE}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
                   Voir l'invitation
                 </a>
               </div>
@@ -417,7 +417,7 @@ export async function sendCommunityInviteEmail(
           <!-- Logo -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height: 36px; width: auto;" />
+              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px; width: auto;" />
             </td>
           </tr>
 
@@ -438,7 +438,7 @@ export async function sendCommunityInviteEmail(
 
               <!-- Community Card -->
               <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
-                <p style="margin: 0 0 8px; font-size: 20px; font-weight: 600; color: ${BRAND_BLUE};">
+                <p style="margin: 0 0 8px; font-size: 20px; font-weight: 600; color: ${BRAND_BLACK};">
                   ${communityName}
                 </p>
                 <p style="margin: 0; font-size: 14px; color: #6b7280;">
@@ -460,7 +460,7 @@ export async function sendCommunityInviteEmail(
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 20px;">
-                <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLUE}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
                   Voir l'invitation
                 </a>
               </div>
@@ -537,18 +537,18 @@ export async function sendSpaceInviteEmail(
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" style="width: 100%; max-width: 500px; background-color: #ffffff; border-radius: 12px;">
           <tr><td style="padding: 40px 40px 20px; text-align: center;">
-            <img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height: 36px;" />
+            <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px;" />
           </td></tr>
           <tr><td style="padding: 20px 40px;">
             <h1 style="margin: 0 0 24px; font-size: 22px; text-align: center; color: #1a1a1a;">Invitation à un espace</h1>
             <p style="margin: 0 0 10px; font-size: 16px; color: #4a4a4a;">Bonjour <strong>${displayName}</strong>,</p>
             <p style="margin: 0 0 20px; font-size: 16px; color: #4a4a4a;"><strong>${inviterName}</strong> vous invite à découvrir l'espace</p>
             <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
-              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${BRAND_BLUE};">${spaceName}</p>
+              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${BRAND_BLACK};">${spaceName}</p>
             </div>
             ${message ? `<div style="background-color: #fefce8; border-left: 4px solid #facc15; padding: 12px 16px; margin-bottom: 24px;"><p style="margin: 0; font-size: 14px; color: #713f12; font-style: italic;">"${message}"</p></div>` : ''}
             <div style="text-align: center; margin-bottom: 20px;">
-              <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLUE}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Voir l'invitation</a>
+              <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Voir l'invitation</a>
             </div>
           </td></tr>
           <tr><td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
@@ -597,19 +597,19 @@ export async function sendOpportunityInviteEmail(
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" style="width: 100%; max-width: 500px; background-color: #ffffff; border-radius: 12px;">
           <tr><td style="padding: 40px 40px 20px; text-align: center;">
-            <img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height: 36px;" />
+            <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px;" />
           </td></tr>
           <tr><td style="padding: 20px 40px;">
             <h1 style="margin: 0 0 24px; font-size: 22px; text-align: center; color: #1a1a1a;">Invitation à postuler</h1>
             <p style="margin: 0 0 10px; font-size: 16px; color: #4a4a4a;">Bonjour <strong>${displayName}</strong>,</p>
             <p style="margin: 0 0 20px; font-size: 16px; color: #4a4a4a;"><strong>${inviterName}</strong> de <strong>${organizationName}</strong> vous invite à postuler à l'opportunité</p>
             <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
-              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${BRAND_BLUE};">${opportunityTitle}</p>
+              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${BRAND_BLACK};">${opportunityTitle}</p>
               <p style="margin: 8px 0 0; font-size: 14px; color: #6b7280;">${organizationName}</p>
             </div>
             ${message ? `<div style="background-color: #fefce8; border-left: 4px solid #facc15; padding: 12px 16px; margin-bottom: 24px;"><p style="margin: 0; font-size: 14px; color: #713f12; font-style: italic;">"${message}"</p></div>` : ''}
             <div style="text-align: center; margin-bottom: 20px;">
-              <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLUE}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Voir l'opportunité</a>
+              <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Voir l'opportunité</a>
             </div>
           </td></tr>
           <tr><td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">

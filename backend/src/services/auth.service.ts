@@ -55,13 +55,17 @@ export interface UserProfile {
   hasTalentProfile: boolean;
   // Flattened talent data for mobile app
   displayName: string | null;
+  firstName: string | null;
+  lastName: string | null;
   avatarUrl: string | null;
   talent?: {
     id: string;
     slug: string;
     displayName: string;
     avatarUrl: string | null;
+    gender?: string | null;
   };
+  gender?: string | null;
   createdAt: string;
   lastLoginAt: string | null;
 }
@@ -297,7 +301,10 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
          u.last_login_at,
          t.id as talent_id,
          t.slug as talent_slug,
-         COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_display_name,
+         t.first_name,
+         t.last_name,
+         t.gender,
+         COALESCE(NULLIF(CONCAT_WS(' ', t.first_name, t.last_name), ''), u.email) as talent_display_name,
          t.avatar_url as talent_avatar_url
        FROM users u
        LEFT JOIN talents t ON u.talent_id = t.id AND t.deleted_at IS NULL
@@ -319,12 +326,16 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
       hasTalentProfile: !!row.talent_id,
       // Flatten talent data to top level for mobile app
       displayName: row.talent_display_name || null,
+      firstName: row.first_name || null,
+      lastName: row.last_name || null,
       avatarUrl: row.talent_avatar_url || null,
+      gender: row.gender || null,
       talent: row.talent_id ? {
         id: row.talent_id,
         slug: row.talent_slug,
         displayName: row.talent_display_name,
         avatarUrl: row.talent_avatar_url,
+        gender: row.gender || null,
       } : undefined,
       createdAt: row.created_at,
       lastLoginAt: row.last_login_at,

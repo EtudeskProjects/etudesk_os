@@ -10,7 +10,7 @@ interface UserOrganization {
   name: string;
   type: string;
   logoUrl?: string;
-  role: 'OWNER' | 'ADMIN' | 'MANAGER' | 'OBSERVATEUR' | 'member';
+  role: 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER';
 }
 
 interface SpaceContextType {

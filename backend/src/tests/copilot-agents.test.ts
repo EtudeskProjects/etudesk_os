@@ -1,6 +1,7 @@
 /**
- * Copilot Agent Integration Tests
- * Tests Explorer and Study agent outputs for a test talent
+ * Copilot Agent Calibration Tests
+ * Tests all 3 agents (Explorer, Study, Org) with real prompts
+ * Analyzes: verbosity, proactivity, tool usage, entity cards
  *
  * Usage: npx tsx src/tests/copilot-agents.test.ts
  */
@@ -8,17 +9,20 @@
 import 'dotenv/config';
 import { run } from '@openai/agents';
 import type { Agent } from '@openai/agents';
+import * as fs from 'fs';
+import * as path from 'path';
 import { pool } from '../services/database';
-import { graphService } from '../services/graph';
-import { neo4jClient } from '../services/graph/neo4j.client';
 import { createTalentAgent } from '../services/copilot/agents/talent.agent';
-import type { TalentContext } from '../services/copilot/types';
+import { createOrgAgent } from '../services/copilot/agents/organization.agent';
+import type { TalentContext, OrgContext } from '../services/copilot/types';
 
 // ═══════════════════════════════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════════════════════════════
 
-const COLORS = {
+const AUDIT_FILE = path.resolve(__dirname, '../../../docs/copilot-calibration-audit.md');
+
+const C = {
   reset: '\x1b[0m',
   red: '\x1b[31m',
   green: '\x1b[32m',
@@ -29,8 +33,8 @@ const COLORS = {
   bold: '\x1b[1m',
 };
 
-function log(color: keyof typeof COLORS, ...args: any[]) {
-  console.log(COLORS[color], ...args, COLORS.reset);
+function log(color: keyof typeof C, ...args: any[]) {
+  console.log(C[color], ...args, C.reset);
 }
 
 function header(title: string) {
@@ -46,183 +50,250 @@ function section(title: string) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TEST TALENT SETUP
+// TEST SETUP
 // ═══════════════════════════════════════════════════════════════
 
-interface TestTalent {
-  id: string;
-  name: string;
-}
-
-async function findOrCreateTestTalent(): Promise<TestTalent> {
-  // Find an existing talent with the most skills (richest data)
+async function findTestTalent(): Promise<{ id: string; name: string }> {
   const existing = await pool.query(`
     SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name
     FROM talents t
     WHERE t.deleted_at IS NULL
-    ORDER BY (
-      SELECT COUNT(*) FROM talent_skills ts WHERE ts.talent_id = t.id
-    ) DESC
+    ORDER BY (SELECT COUNT(*) FROM talent_skills ts WHERE ts.talent_id = t.id) DESC
     LIMIT 1
   `);
 
   if (existing.rows.length > 0) {
     const t = existing.rows[0];
-    log('green', `✓ Using existing talent: ${t.display_name} (${t.id})`);
+    log('green', `  Talent: ${t.display_name} (${t.id})`);
     return { id: t.id, name: t.display_name };
   }
 
-  throw new Error('No talent found in database. Run seed first: npm run seed');
+  throw new Error('No talent found in database.');
 }
 
-async function buildTestContext(talentId: string): Promise<TalentContext> {
-  // Load talent profile
+async function findTestOrg(talentId: string): Promise<{ id: string; name: string; role: string } | null> {
+  const result = await pool.query(`
+    SELECT o.id, o.name, om.role
+    FROM organization_members om
+    JOIN organizations o ON o.id = om.organization_id
+    WHERE om.talent_id = $1 AND o.deleted_at IS NULL
+    ORDER BY om.role ASC
+    LIMIT 1
+  `, [talentId]);
+
+  if (result.rows.length > 0) {
+    const row = result.rows[0];
+    log('green', `  Organization: ${row.name} (${row.id}) — role: ${row.role}`);
+    return { id: row.id, name: row.name, role: row.role };
+  }
+
+  log('yellow', '  No organization found for this talent — skipping org tests');
+  return null;
+}
+
+async function buildTestContext(talentId: string, mode: 'explore' | 'study'): Promise<TalentContext> {
   const profileRes = await pool.query(`
-    SELECT t.id, t.first_name, t.last_name, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio as headline,
-           t.city, t.country, t.email
-    FROM talents t
-    WHERE t.id = $1
+    SELECT t.id, t.first_name, t.last_name, t.bio, t.city, t.country, t.email, t.remote_ready
+    FROM talents t WHERE t.id = $1
   `, [talentId]);
 
   const profile = profileRes.rows[0];
   if (!profile) throw new Error(`Talent ${talentId} not found`);
 
-  // Load skills
-  const skillsRes = await pool.query(`
-    SELECT canonical_name as name, proficiency_level as level
-    FROM talent_skills
-    WHERE talent_id = $1
-  `, [talentId]);
+  const skillsRes = await pool.query(
+    `SELECT canonical_name as name, proficiency_level as level FROM talent_skills WHERE talent_id = $1`,
+    [talentId]
+  );
 
-  // Load languages (table may not exist)
-  const langsRes = await pool.query(`
-    SELECT language, proficiency_level as level FROM talent_languages WHERE talent_id = $1
-  `, [talentId]).catch(() => ({ rows: [] }));
+  const langsRes = await pool.query(
+    `SELECT language, proficiency_level as level FROM talent_languages WHERE talent_id = $1`,
+    [talentId]
+  ).catch(() => ({ rows: [] }));
 
-  // Load documents count
   const docsRes = await pool.query(`
     SELECT COUNT(*) as total,
-           COUNT(*) FILTER (WHERE document_type IN ('cv', 'resume')) as cv_count,
-           COUNT(*) FILTER (WHERE document_type IN ('diploma', 'degree')) as diploma_count
+           COUNT(*) FILTER (WHERE document_type IN ('cv', 'resume', 'CV')) as cv_count,
+           COUNT(*) FILTER (WHERE document_type IN ('diploma', 'degree', 'DIPLOMA')) as diploma_count
     FROM talent_documents WHERE talent_id = $1 AND deleted_at IS NULL
   `, [talentId]).catch(() => ({ rows: [{ total: 0, cv_count: 0, diploma_count: 0 }] }));
 
-  // Load applications count
   const appsRes = await pool.query(`
     SELECT COUNT(*) as total,
-           COUNT(*) FILTER (WHERE status NOT IN ('REJECTED', 'WITHDRAWN', 'CLOSED')) as active
+           COUNT(*) FILTER (WHERE status NOT IN ('REJECTED')) as active
     FROM opportunity_applications WHERE talent_id = $1
   `, [talentId]).catch(() => ({ rows: [{ total: 0, active: 0 }] }));
 
-  // Load memberships
-  const membRes = await pool.query(`
-    SELECT COUNT(*) as total FROM community_members
-    WHERE talent_id = $1 AND status = 'ACTIVE'
-  `, [talentId]).catch(() => ({ rows: [{ total: 0 }] }));
-
-  // Load learning
-  const learnRes = await pool.query(`
-    SELECT
-      (SELECT COUNT(*) FROM learning_topics WHERE talent_id = $1) as topics,
-      (SELECT COUNT(*) FROM learning_flashcards lf JOIN learning_topics lt ON lf.topic_id = lt.id WHERE lt.talent_id = $1) as flashcards,
-      (SELECT COUNT(*) FROM learning_flashcards lf JOIN learning_topics lt ON lf.topic_id = lt.id WHERE lt.talent_id = $1 AND lf.next_review_at <= CURRENT_DATE) as due,
-      0 as streak
-  `, [talentId]).catch(() => ({ rows: [{ topics: 0, flashcards: 0, due: 0, streak: 0 }] }));
-
-  // Check graph availability
-  let graphAvailable = false;
-  let skillGaps: Array<{ skillName: string; priority: string }> = [];
-  try {
-    if (neo4jClient.isConnected()) {
-      graphAvailable = true;
-      const gaps = await graphService.getSkillGaps(talentId, { limit: 5 });
-      skillGaps = gaps.map(g => ({
-        skillName: g.skill?.canonical_name || 'unknown',
-        priority: g.priority,
-      }));
-    }
-  } catch {
-    // Graph not available
-  }
+  const membRes = await pool.query(
+    `SELECT COUNT(*) as total FROM community_members WHERE talent_id = $1 AND status = 'ACTIVE'`,
+    [talentId]
+  ).catch(() => ({ rows: [{ total: 0 }] }));
 
   const docs = docsRes.rows[0];
   const apps = appsRes.rows[0];
   const memb = membRes.rows[0];
-  const learn = learnRes.rows[0];
 
   return {
     talentId,
-    talentName: profile.display_name || `${profile.first_name} ${profile.last_name}`,
+    talentName: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email,
     profile: {
+      id: talentId,
+      email: profile.email || '',
       firstName: profile.first_name || '',
       lastName: profile.last_name || '',
       city: profile.city,
       country: profile.country,
-      remotePreference: 'ANY',
-      skills: skillsRes.rows.map(s => ({ name: s.name, level: s.level })),
-      languages: langsRes.rows.map(l => ({ language: l.language, level: l.level })),
+      remoteReady: profile.remote_ready || false,
+      skills: skillsRes.rows.map((s: any) => ({ name: s.name, level: s.level })),
+      languages: langsRes.rows.map((l: any) => ({ language: l.language, level: l.level })),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
     documents: {
       totalCount: parseInt(docs.total) || 0,
+      documents: [],
       hasCV: parseInt(docs.cv_count) > 0,
       hasDiplomas: parseInt(docs.diploma_count) > 0,
+      hasCertificates: false,
     },
     applications: {
       totalCount: parseInt(apps.total) || 0,
       activeCount: parseInt(apps.active) || 0,
+      applications: [],
+      byStatus: {},
     },
     memberships: {
       totalCount: parseInt(memb.total) || 0,
+      memberships: [],
+      adminOf: [],
     },
-    learning: {
-      totalTopics: parseInt(learn.topics) || 0,
-      totalFlashcards: parseInt(learn.flashcards) || 0,
-      dueFlashcards: parseInt(learn.due) || 0,
-      streakDays: parseInt(learn.streak) || 0,
+    session: {
+      currentMode: mode,
+      conversationTopic: mode === 'study' ? 'General learning' : undefined,
     },
-    graph: {
-      isGraphAvailable: graphAvailable,
-      skillGaps,
-    },
+    contextLoadedAt: new Date().toISOString(),
+    contextVersion: '1.0',
+  };
+}
+
+function buildOrgTestContext(talentId: string, talentName: string, org: { id: string; name: string; role: string }): OrgContext {
+  return {
+    talentId,
+    talentName,
+    organizationId: org.id,
+    organizationName: org.name,
+    role: org.role,
   };
 }
 
 // ═══════════════════════════════════════════════════════════════
-// AGENT TEST RUNNER
+// AGENT RUNNER — FULL CAPTURE
 // ═══════════════════════════════════════════════════════════════
+
+interface ToolCallCapture {
+  name: string;
+  args: any;
+  output: any;
+  error?: string;
+  durationMs?: number;
+}
+
+interface CalibrationMetrics {
+  charCount: number;
+  sentenceCount: number;
+  asksQuestion: boolean;
+  questionCount: number;
+  entityCardCount: number;
+  entityCardsWithScore: number;
+  usedToolsImmediately: boolean;
+  toolCallCount: number;
+  verbosityRating: 'concise' | 'ok' | 'verbose' | 'very_verbose';
+  proactivityRating: 'proactive' | 'ok' | 'passive';
+}
 
 interface TestResult {
   testName: string;
-  mode: 'explorer' | 'study';
+  agentType: 'explorer' | 'study' | 'org';
+  targetTool: string;
   message: string;
   success: boolean;
   output: string;
-  toolCalls: Array<{ name: string; args?: any; output?: string; error?: string }>;
+  toolCalls: ToolCallCapture[];
   duration: number;
   errors: string[];
-  warnings: string[];
+  calibration: CalibrationMetrics;
+}
+
+function analyzeCalibration(output: string, toolCalls: ToolCallCapture[]): CalibrationMetrics {
+  const charCount = output.length;
+
+  // Count sentences (split on period/exclamation/question mark followed by space or end)
+  const sentences = output.split(/[.!?]+\s/).filter(s => s.trim().length > 5);
+  const sentenceCount = sentences.length;
+
+  // Check if agent asks unnecessary questions — exclude ? inside code blocks
+  const textOnly = output.replace(/`{2,}[\s\S]*?`{2,}/g, ''); // strip fenced blocks
+  const questionMatches = textOnly.match(/\?/g) || [];
+  const questionCount = questionMatches.length;
+  const asksQuestion = questionCount > 0;
+
+  // Entity cards
+  const entityCardRegex = /`{2,}entity:\w+/g;
+  const entityCards = output.match(entityCardRegex) || [];
+  const entityCardCount = entityCards.length;
+
+  // Check matchScore in entity cards
+  const matchScoreRegex = /matchScore/g;
+  const entityCardsWithScore = (output.match(matchScoreRegex) || []).length;
+
+  // Tool usage
+  const toolCallCount = toolCalls.length;
+  const usedToolsImmediately = toolCallCount > 0;
+
+  // Verbosity rating
+  let verbosityRating: CalibrationMetrics['verbosityRating'] = 'ok';
+  if (charCount < 300) verbosityRating = 'concise';
+  else if (charCount > 1500) verbosityRating = 'verbose';
+  if (charCount > 2500) verbosityRating = 'very_verbose';
+
+  // Proactivity rating
+  let proactivityRating: CalibrationMetrics['proactivityRating'] = 'ok';
+  if (usedToolsImmediately && questionCount <= 1) proactivityRating = 'proactive';
+  if (!usedToolsImmediately || questionCount > 2) proactivityRating = 'passive';
+
+  return {
+    charCount,
+    sentenceCount,
+    asksQuestion,
+    questionCount,
+    entityCardCount,
+    entityCardsWithScore,
+    usedToolsImmediately,
+    toolCallCount,
+    verbosityRating,
+    proactivityRating,
+  };
 }
 
 async function runAgentTest(
   agent: Agent,
   testName: string,
-  mode: 'explorer' | 'study',
+  agentType: 'explorer' | 'study' | 'org',
+  targetTool: string,
   message: string
 ): Promise<TestResult> {
   const start = Date.now();
-  const toolCalls: TestResult['toolCalls'] = [];
+  const toolCalls: ToolCallCapture[] = [];
   const errors: string[] = [];
-  const warnings: string[] = [];
   let output = '';
+  let currentToolStart = 0;
 
   section(`TEST: ${testName}`);
-  log('dim', `Mode: ${mode} | Message: "${message}"`);
+  log('dim', `Agent: ${agentType} | Message: "${message}"`);
 
   try {
     const result = await run(agent, message, { stream: true });
 
     for await (const event of result as AsyncIterable<any>) {
-      // Capture text deltas
       if (event.type === 'raw_model_stream_event') {
         const data = event.data as any;
         if (data?.type === 'output_text_delta') {
@@ -230,54 +301,52 @@ async function runAgentTest(
         }
       }
 
-      // Capture tool calls
       if (event.type === 'run_item_stream_event') {
         const item = event.item as any;
 
         if (event.name === 'tool_called') {
-          const toolName = item?.call?.name || item?.name || 'unknown';
-          const toolArgs = item?.call?.args || item?.arguments;
-          log('blue', `  🔧 Tool called: ${toolName}`);
-          if (toolArgs) {
-            try {
-              const parsed = typeof toolArgs === 'string' ? JSON.parse(toolArgs) : toolArgs;
-              log('dim', `     Args: ${JSON.stringify(parsed, null, 2).slice(0, 200)}`);
-            } catch {
-              log('dim', `     Args: ${String(toolArgs).slice(0, 200)}`);
-            }
+          currentToolStart = Date.now();
+          const toolName = item?.rawItem?.name || item?.name || 'unknown';
+          let toolArgs: any;
+          try {
+            const rawArgs = item?.rawItem?.arguments || item?.arguments;
+            toolArgs = typeof rawArgs === 'string' ? JSON.parse(rawArgs) : rawArgs;
+          } catch {
+            toolArgs = item?.rawItem?.arguments || item?.arguments;
           }
-          toolCalls.push({ name: toolName, args: toolArgs });
+          log('blue', `  Tool: ${toolName}`);
+          log('dim', `     Args: ${JSON.stringify(toolArgs, null, 2)}`);
+          toolCalls.push({ name: toolName, args: toolArgs, output: null });
         }
 
         if (event.name === 'tool_output') {
-          const toolName = item?.call?.name || item?.name || 'unknown';
-          const toolOutput = item?.output;
-          const lastCall = [...toolCalls].reverse().find((tc: { name: string }) => tc.name === toolName);
+          const toolName = item?.rawItem?.name || item?.name || 'unknown';
+          const rawOutput = item?.output;
+          const toolDuration = Date.now() - currentToolStart;
 
-          if (typeof toolOutput === 'string' && toolOutput.includes('error')) {
-            try {
-              const parsed = JSON.parse(toolOutput);
-              if (parsed.error) {
-                errors.push(`Tool ${toolName}: ${parsed.error}`);
-                log('red', `  ✗ Tool error: ${toolName} → ${parsed.error}`);
-              }
-            } catch {
-              // Not JSON error, ignore
-            }
+          let parsedOutput: any;
+          try {
+            parsedOutput = typeof rawOutput === 'string' ? JSON.parse(rawOutput) : rawOutput;
+          } catch {
+            parsedOutput = rawOutput;
           }
 
+          const lastCall = [...toolCalls].reverse().find(tc => tc.name === toolName && !tc.output);
           if (lastCall) {
-            lastCall.output = typeof toolOutput === 'string'
-              ? toolOutput.slice(0, 300)
-              : JSON.stringify(toolOutput).slice(0, 300);
+            lastCall.output = parsedOutput;
+            lastCall.durationMs = toolDuration;
           }
 
-          log('green', `  ✓ Tool output: ${toolName} (${String(toolOutput).slice(0, 100)}...)`);
+          if (parsedOutput?.error) {
+            errors.push(`${toolName}: ${parsedOutput.error}`);
+            log('red', `  ERROR: ${toolName}: ${parsedOutput.error}`);
+          } else {
+            log('green', `  OK: ${toolName} (${toolDuration}ms)`);
+          }
         }
       }
     }
 
-    // Fallback capture
     await (result as any).completed;
     if (!output && (result as any).finalOutput) {
       output = typeof (result as any).finalOutput === 'string'
@@ -285,253 +354,247 @@ async function runAgentTest(
         : JSON.stringify((result as any).finalOutput);
     }
   } catch (error: any) {
-    errors.push(`Agent execution error: ${error.message}`);
-    log('red', `  ✗ AGENT ERROR: ${error.message}`);
+    errors.push(`Agent error: ${error.message}`);
+    log('red', `  AGENT ERROR: ${error.message}`);
   }
 
   const duration = Date.now() - start;
+  const calibration = analyzeCalibration(output, toolCalls);
 
-  // ─── OUTPUT AUDIT ──────────────────────────────────────────
-  log('yellow', `\n  📝 Output (${output.length} chars, ${duration}ms):`);
-  console.log('  ' + output.slice(0, 500));
-  if (output.length > 500) log('dim', `  ... (${output.length - 500} more chars)`);
+  // Print output
+  log('yellow', `\n  Output (${calibration.charCount} chars, ${duration}ms):`);
+  console.log(output);
 
-  // Audit checks
-  if (!output || output.length === 0) {
-    errors.push('Empty output');
-  }
-  if (output.length < 20) {
-    warnings.push(`Very short output: ${output.length} chars`);
-  }
+  // Calibration summary
+  const vColor = calibration.verbosityRating === 'concise' || calibration.verbosityRating === 'ok' ? 'green' : 'yellow';
+  const pColor = calibration.proactivityRating === 'proactive' ? 'green' : calibration.proactivityRating === 'ok' ? 'yellow' : 'red';
 
-  // Check for French
-  const frenchIndicators = ['je ', 'de ', 'les ', 'des ', 'une ', 'est ', 'pour ', 'avec ', 'dans '];
-  const hasFrench = frenchIndicators.some(w => output.toLowerCase().includes(w));
-  if (!hasFrench && output.length > 50) {
-    warnings.push('Output may not be in French');
+  log(vColor, `  Verbosity: ${calibration.verbosityRating} (${calibration.charCount} chars, ${calibration.sentenceCount} sentences)`);
+  log(pColor, `  Proactivity: ${calibration.proactivityRating} (${calibration.toolCallCount} tools, ${calibration.questionCount} questions)`);
+  if (calibration.entityCardCount > 0) {
+    log('green', `  Entity cards: ${calibration.entityCardCount} (${calibration.entityCardsWithScore} with matchScore)`);
   }
 
-  // Check for entity cards (Explorer mode)
-  if (mode === 'explorer') {
-    const entityCardPattern = /```entity:\w+/g;
-    const entityCards = output.match(entityCardPattern);
-    if (entityCards) {
-      log('green', `  ✓ Entity cards found: ${entityCards.length}`);
-    }
-  }
-
-  // Check for study blocks (Study mode)
-  if (mode === 'study') {
-    const studyPatterns = [
-      { name: 'quiz', pattern: /```quiz/g },
-      { name: 'flashcard', pattern: /```flashcard/g },
-      { name: 'diagram', pattern: /```(mermaid|diagram)/g },
-      { name: 'youtube', pattern: /```youtube/g },
-      { name: 'code', pattern: /```(\w+)\n/g },
-    ];
-    for (const sp of studyPatterns) {
-      const matches = output.match(sp.pattern);
-      if (matches) {
-        log('green', `  ✓ ${sp.name} blocks: ${matches.length}`);
-      }
-    }
-  }
-
-  // Check tool usage
-  if (toolCalls.length === 0 && output.length > 100) {
-    warnings.push('No tool calls made — agent may not be using tools');
-  }
-
-  // Report
-  const success = errors.length === 0;
+  const success = errors.length === 0 && output.length > 20;
   if (success) {
-    log('green', `\n  ✅ PASS (${duration}ms, ${toolCalls.length} tool calls)`);
+    log('green', `\n  PASS (${duration}ms)`);
   } else {
-    log('red', `\n  ❌ FAIL (${errors.length} errors)`);
+    log('red', `\n  FAIL`);
     errors.forEach(e => log('red', `     - ${e}`));
   }
-  if (warnings.length > 0) {
-    warnings.forEach(w => log('yellow', `  ⚠ ${w}`));
-  }
 
-  return { testName, mode, message, success, output, toolCalls, duration, errors, warnings };
+  return { testName, agentType, targetTool, message, success, output, toolCalls, duration, errors, calibration };
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TEST SUITES
+// TEST DEFINITIONS
 // ═══════════════════════════════════════════════════════════════
 
-async function runExplorerTests(context: TalentContext): Promise<TestResult[]> {
-  header('EXPLORER AGENT TESTS');
-  const agent = createTalentAgent('explorer', context);
-  const results: TestResult[] = [];
-
-  const tests = [
-    {
-      name: 'Profile Summary',
-      message: `Résume mon profil et mes compétences principales. Mon talentId est ${context.talentId}.`,
-    },
-    {
-      name: 'Opportunity Search',
-      message: `Cherche des opportunités qui correspondent à mon profil. Mon talentId est ${context.talentId}.`,
-    },
-    {
-      name: 'Skill Gaps',
-      message: `Quelles compétences me manquent pour les opportunités du marché ? Mon talentId est ${context.talentId}.`,
-    },
-    {
-      name: 'Community Discovery',
-      message: `Quelles communautés me recommandes-tu de rejoindre ? Mon talentId est ${context.talentId}.`,
-    },
-  ];
-
-  for (const test of tests) {
-    try {
-      const result = await runAgentTest(agent, test.name, 'explorer', test.message);
-      results.push(result);
-    } catch (error: any) {
-      log('red', `  ✗ Test "${test.name}" crashed: ${error.message}`);
-      results.push({
-        testName: test.name,
-        mode: 'explorer',
-        message: test.message,
-        success: false,
-        output: '',
-        toolCalls: [],
-        duration: 0,
-        errors: [`Crash: ${error.message}`],
-        warnings: [],
-      });
-    }
-  }
-
-  return results;
+interface TestDef {
+  name: string;
+  agentType: 'explorer' | 'study' | 'org';
+  targetTool: string;
+  message: string;
 }
 
-async function runStudyTests(context: TalentContext): Promise<TestResult[]> {
-  header('STUDY AGENT TESTS');
-  const agent = createTalentAgent('study', context);
-  const results: TestResult[] = [];
-
-  // Pick a skill from context for study tests
-  const skillName = context.profile.skills[0]?.name || 'JavaScript';
-
-  const tests = [
-    {
-      name: 'Learning Progress',
-      message: `Quel est mon progrès d'apprentissage ? Mon talentId est ${context.talentId}.`,
-    },
-    {
-      name: 'Teach Concept',
-      message: `Explique-moi les concepts fondamentaux de ${skillName}. Mon talentId est ${context.talentId}.`,
-    },
-    {
-      name: 'Quiz Generation',
-      message: `Fais-moi un quiz sur ${skillName} pour tester mes connaissances. Mon talentId est ${context.talentId}.`,
-    },
-    {
-      name: 'Learning Path',
-      message: `Quel chemin d'apprentissage me recommandes-tu pour devenir expert en ${skillName} ? Mon talentId est ${context.talentId}.`,
-    },
-  ];
-
-  for (const test of tests) {
-    try {
-      const result = await runAgentTest(agent, test.name, 'study', test.message);
-      results.push(result);
-    } catch (error: any) {
-      log('red', `  ✗ Test "${test.name}" crashed: ${error.message}`);
-      results.push({
-        testName: test.name,
-        mode: 'study',
-        message: test.message,
-        success: false,
-        output: '',
-        toolCalls: [],
-        duration: 0,
-        errors: [`Crash: ${error.message}`],
-        warnings: [],
-      });
-    }
-  }
-
-  return results;
-}
+const TESTS: TestDef[] = [
+  // ─── TALENT EXPLORER TESTS ─────────────────────
+  {
+    name: 'Explorer — Opportunites pertinentes',
+    agentType: 'explorer',
+    targetTool: 'vector_query',
+    message: 'Liste moi les opportunités pertinentes pour moi',
+  },
+  {
+    name: 'Explorer — Espaces coworking Abidjan',
+    agentType: 'explorer',
+    targetTool: 'vector_query',
+    message: 'Dans quel espace de coworking je peux travailler a Abidjan ?',
+  },
+  {
+    name: 'Explorer — Communautes tech Abidjan',
+    agentType: 'explorer',
+    targetTool: 'vector_query',
+    message: "Je veux m'impregner de l'écosysteme tech a Abidjan, peux-tu me recommander des communauté ?",
+  },
+  {
+    name: 'Explorer — Generer CV',
+    agentType: 'explorer',
+    targetTool: 'generate_document',
+    message: 'Genere moi un nouveau CV',
+  },
+  {
+    name: 'Explorer — Actualites communautes',
+    agentType: 'explorer',
+    targetTool: 'sql_query',
+    message: 'Quelles sont les actualités récentes de mes communautés ?',
+  },
+  // ─── TALENT STUDY TESTS ────────────────────────
+  {
+    name: 'Study — Formation Marketing Digital',
+    agentType: 'study',
+    targetTool: 'vector_query',
+    message: 'Je veux me former en Marketing Digital',
+  },
+  {
+    name: 'Study — Evaluer lacunes finance',
+    agentType: 'study',
+    targetTool: 'sql_query',
+    message: "Aide-moi a évaluer mes lacunes sur la finance",
+  },
+  {
+    name: 'Study — C est quoi l IA',
+    agentType: 'study',
+    targetTool: 'vector_query',
+    message: "C'est quoi l'IA ?",
+  },
+  {
+    name: 'Study — Schema biologie cellulaire',
+    agentType: 'study',
+    targetTool: 'generate_diagram',
+    message: 'Genere moi un schema sur la biologie cellulaire',
+  },
+  {
+    name: 'Study — Video YouTube agriculture',
+    agentType: 'study',
+    targetTool: 'youtube_search',
+    message: 'Donne moi un auto video YouTube sur l\'agriculture',
+  },
+  // ─── ORGANIZATION EXPLORER TESTS ───────────────
+  {
+    name: 'Org — Talents disponibles Abidjan',
+    agentType: 'org',
+    targetTool: 'vector_query',
+    message: 'Je cherche des talents disponibles a Abidjan pour mon offre de Marketing Digital',
+  },
+  {
+    name: 'Org — Stats organisation',
+    agentType: 'org',
+    targetTool: 'sql_query',
+    message: 'Donne moi un aperçu global de mon organisation',
+  },
+  {
+    name: 'Org — Generer fiche de poste',
+    agentType: 'org',
+    targetTool: 'generate_document',
+    message: "Genere moi une fiche de poste pour un développeur fullstack junior",
+  },
+];
 
 // ═══════════════════════════════════════════════════════════════
-// AUDIT REPORT
+// CALIBRATION REPORT
 // ═══════════════════════════════════════════════════════════════
 
-function printAuditReport(results: TestResult[]) {
-  header('AUDIT REPORT');
+function writeCalibrationReport(results: TestResult[]) {
+  let md = `# Copilot Calibration Report\n\n`;
+  md += `> Generated: ${new Date().toISOString()}\n`;
+  md += `> Tests: ${results.length} | Passed: ${results.filter(r => r.success).length} | Failed: ${results.filter(r => !r.success).length}\n\n`;
 
-  const total = results.length;
-  const passed = results.filter(r => r.success).length;
-  const failed = total - passed;
-  const totalWarnings = results.reduce((sum, r) => sum + r.warnings.length, 0);
-  const avgDuration = Math.round(results.reduce((sum, r) => sum + r.duration, 0) / total);
+  // ── CALIBRATION SUMMARY TABLE ──
+  md += `## Calibration Summary\n\n`;
+  md += `| Test | Agent | Chars | Questions | Tools | Verbosity | Proactivity | Cards |\n`;
+  md += `|------|-------|-------|-----------|-------|-----------|-------------|-------|\n`;
 
-  log('bold', `  Total: ${total} | Passed: ${passed} | Failed: ${failed} | Warnings: ${totalWarnings}`);
-  log('dim', `  Average duration: ${avgDuration}ms`);
-
-  // Tool usage summary
-  section('Tool Usage Summary');
-  const toolStats = new Map<string, { calls: number; errors: number }>();
   for (const r of results) {
-    for (const tc of r.toolCalls) {
-      const stats = toolStats.get(tc.name) || { calls: 0, errors: 0 };
-      stats.calls++;
-      if (tc.error) stats.errors++;
-      toolStats.set(tc.name, stats);
+    const c = r.calibration;
+    const status = r.success ? '✅' : '❌';
+    md += `| ${status} ${r.testName} | ${r.agentType} | ${c.charCount} | ${c.questionCount} | ${c.toolCallCount} | ${c.verbosityRating} | ${c.proactivityRating} | ${c.entityCardCount} (${c.entityCardsWithScore} scored) |\n`;
+  }
+
+  // ── CALIBRATION ISSUES ──
+  md += `\n## Calibration Issues\n\n`;
+
+  const verbose = results.filter(r => r.calibration.verbosityRating === 'verbose' || r.calibration.verbosityRating === 'very_verbose');
+  if (verbose.length > 0) {
+    md += `### Too Verbose (>${1500} chars)\n`;
+    for (const r of verbose) {
+      md += `- **${r.testName}**: ${r.calibration.charCount} chars, ${r.calibration.sentenceCount} sentences\n`;
+    }
+    md += '\n';
+  }
+
+  const passive = results.filter(r => r.calibration.proactivityRating === 'passive');
+  if (passive.length > 0) {
+    md += `### Not Proactive Enough\n`;
+    for (const r of passive) {
+      md += `- **${r.testName}**: ${r.calibration.toolCallCount} tool calls, ${r.calibration.questionCount} questions asked\n`;
+    }
+    md += '\n';
+  }
+
+  const noScore = results.filter(r => r.calibration.entityCardCount > 0 && r.calibration.entityCardsWithScore < r.calibration.entityCardCount);
+  if (noScore.length > 0) {
+    md += `### Entity Cards Missing matchScore\n`;
+    for (const r of noScore) {
+      md += `- **${r.testName}**: ${r.calibration.entityCardCount} cards, only ${r.calibration.entityCardsWithScore} have matchScore\n`;
+    }
+    md += '\n';
+  }
+
+  // ── DETAILED RESULTS ──
+  md += `---\n\n## Detailed Results\n\n`;
+
+  const agentGroups = ['explorer', 'study', 'org'] as const;
+  for (const agentType of agentGroups) {
+    const agentResults = results.filter(r => r.agentType === agentType);
+    if (agentResults.length === 0) continue;
+
+    md += `### ${agentType.charAt(0).toUpperCase() + agentType.slice(1)} Agent\n\n`;
+
+    for (const r of agentResults) {
+      const status = r.success ? '✅' : '❌';
+      md += `#### ${status} ${r.testName} (${r.duration}ms)\n\n`;
+      md += `**Prompt:** \`${r.message}\`\n\n`;
+
+      // Calibration
+      md += `**Calibration:** Verbosity=${r.calibration.verbosityRating}, Proactivity=${r.calibration.proactivityRating}, `;
+      md += `Chars=${r.calibration.charCount}, Questions=${r.calibration.questionCount}, Tools=${r.calibration.toolCallCount}\n\n`;
+
+      // Tool calls
+      for (const tc of r.toolCalls) {
+        md += `**Tool: \`${tc.name}\`** (${tc.durationMs || '?'}ms)\n`;
+        md += `\`\`\`json\n${JSON.stringify(tc.args, null, 2)}\n\`\`\`\n\n`;
+      }
+
+      // Agent output
+      md += `**Agent Output:**\n`;
+      md += `\`\`\`markdown\n${r.output}\n\`\`\`\n\n`;
+
+      if (r.errors.length > 0) {
+        md += `**Errors:**\n`;
+        for (const e of r.errors) {
+          md += `- ${e}\n`;
+        }
+        md += '\n';
+      }
+
+      md += `---\n\n`;
     }
   }
-  for (const [name, stats] of toolStats) {
-    const statusIcon = stats.errors > 0 ? '⚠' : '✓';
-    log(stats.errors > 0 ? 'yellow' : 'green',
-      `  ${statusIcon} ${name}: ${stats.calls} calls, ${stats.errors} errors`
-    );
+
+  // ── RECOMMENDATIONS ──
+  md += `## Prompt Tuning Recommendations\n\n`;
+
+  const avgChars = results.reduce((sum, r) => sum + r.calibration.charCount, 0) / results.length;
+  const avgQuestions = results.reduce((sum, r) => sum + r.calibration.questionCount, 0) / results.length;
+  const avgTools = results.reduce((sum, r) => sum + r.calibration.toolCallCount, 0) / results.length;
+
+  md += `- **Average response length:** ${Math.round(avgChars)} chars (target: 300-800)\n`;
+  md += `- **Average questions per response:** ${avgQuestions.toFixed(1)} (target: 0-1)\n`;
+  md += `- **Average tool calls per response:** ${avgTools.toFixed(1)} (target: 1-3)\n\n`;
+
+  if (avgChars > 1200) {
+    md += `> **ACTION: Reduce verbosity.** Add explicit length constraint to prompts: "Keep responses between 3-5 sentences plus entity cards."\n\n`;
+  }
+  if (avgQuestions > 1.5) {
+    md += `> **ACTION: Reduce questions.** Agent asks too many questions instead of executing. Add: "Do NOT ask clarifying questions — use tools immediately based on available context."\n\n`;
+  }
+  if (avgTools < 1) {
+    md += `> **ACTION: Increase tool usage.** Agent not using tools enough. Reinforce: "ALWAYS use at least one tool before responding."\n\n`;
   }
 
-  // Failed tests details
-  const failedTests = results.filter(r => !r.success);
-  if (failedTests.length > 0) {
-    section('Failed Tests');
-    for (const r of failedTests) {
-      log('red', `  ✗ [${r.mode}] ${r.testName}`);
-      r.errors.forEach(e => log('red', `    - ${e}`));
-    }
-  }
-
-  // Warnings
-  const warningTests = results.filter(r => r.warnings.length > 0);
-  if (warningTests.length > 0) {
-    section('Warnings');
-    for (const r of warningTests) {
-      log('yellow', `  ⚠ [${r.mode}] ${r.testName}`);
-      r.warnings.forEach(w => log('yellow', `    - ${w}`));
-    }
-  }
-
-  // Output quality audit
-  section('Output Quality Audit');
-  for (const r of results) {
-    const outputLen = r.output.length;
-    const quality = outputLen === 0 ? 'EMPTY' :
-      outputLen < 50 ? 'TOO_SHORT' :
-      outputLen > 3000 ? 'VERBOSE' : 'OK';
-    const icon = quality === 'OK' ? '✓' : quality === 'VERBOSE' ? '⚠' : '✗';
-    const color = quality === 'OK' ? 'green' : quality === 'VERBOSE' ? 'yellow' : 'red';
-    log(color, `  ${icon} [${r.mode}] ${r.testName}: ${outputLen} chars (${quality}), ${r.duration}ms`);
-  }
-
-  // Final summary
-  console.log('\n' + '═'.repeat(70));
-  if (failed === 0) {
-    log('green', `  ✅ ALL ${total} TESTS PASSED`);
-  } else {
-    log('red', `  ❌ ${failed}/${total} TESTS FAILED`);
-  }
-  console.log('═'.repeat(70) + '\n');
+  fs.writeFileSync(AUDIT_FILE, md, 'utf-8');
+  log('green', `\n  Report written: ${AUDIT_FILE}`);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -539,57 +602,154 @@ function printAuditReport(results: TestResult[]) {
 // ═══════════════════════════════════════════════════════════════
 
 async function main() {
-  header('COPILOT AGENT INTEGRATION TESTS');
+  header('COPILOT AGENT CALIBRATION');
   log('dim', `  Date: ${new Date().toISOString()}`);
-  log('dim', `  OpenAI Key: ${process.env.OPENAI_API_KEY ? '✓ set' : '✗ missing'}`);
-  log('dim', `  Pinecone Key: ${process.env.PINECONE_API_KEY ? '✓ set' : '✗ missing'}`);
+  log('dim', `  OpenAI Key: ${process.env.OPENAI_API_KEY ? 'set' : 'MISSING'}`);
+  log('dim', `  Pinecone Key: ${process.env.PINECONE_API_KEY ? 'set' : 'MISSING'}`);
+  log('dim', `  YouTube Key: ${process.env.YOUTUBE_API_KEY ? 'set' : 'MISSING'}`);
 
   if (!process.env.OPENAI_API_KEY) {
-    log('red', '\n  ✗ OPENAI_API_KEY not set. Cannot run agent tests.');
+    log('red', '  OPENAI_API_KEY not set.');
     process.exit(1);
   }
 
   try {
-    // Initialize graph if available
-    try {
-      await graphService.initialize();
-      log('green', '  ✓ Neo4j connected');
-    } catch {
-      log('yellow', '  ⚠ Neo4j not available — graph tools will fail gracefully');
+    section('Setup');
+    const talent = await findTestTalent();
+    const org = await findTestOrg(talent.id);
+    const allResults: TestResult[] = [];
+
+    // Group tests by agent type
+    const explorerTests = TESTS.filter(t => t.agentType === 'explorer');
+    const studyTests = TESTS.filter(t => t.agentType === 'study');
+    const orgTests = TESTS.filter(t => t.agentType === 'org');
+
+    // ─── EXPLORER TESTS ────────────────────────────
+    if (explorerTests.length > 0) {
+      header('TALENT EXPLORER AGENT');
+      const explorerCtx = await buildTestContext(talent.id, 'explore');
+      const explorerAgent = createTalentAgent(explorerCtx);
+      log('dim', `  Skills: ${explorerCtx.profile.skills?.length || 0}`);
+
+      for (const test of explorerTests) {
+        try {
+          const result = await runAgentTest(explorerAgent, test.name, test.agentType, test.targetTool, test.message);
+          allResults.push(result);
+        } catch (error: any) {
+          log('red', `  "${test.name}" crashed: ${error.message}`);
+          allResults.push({
+            testName: test.name, agentType: test.agentType, targetTool: test.targetTool,
+            message: test.message, success: false, output: '', toolCalls: [],
+            duration: 0, errors: [`Crash: ${error.message}`],
+            calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive' },
+          });
+        }
+      }
     }
 
-    // Find/create test talent
-    section('Setup');
-    const talent = await findOrCreateTestTalent();
+    // ─── STUDY TESTS ─────────────────────────────
+    if (studyTests.length > 0) {
+      header('TALENT STUDY AGENT');
+      const studyCtx = await buildTestContext(talent.id, 'study');
+      const studyAgent = createTalentAgent(studyCtx);
 
-    // Build context
-    const context = await buildTestContext(talent.id);
-    log('green', `  ✓ Context loaded:`);
-    log('dim', `    Skills: ${context.profile.skills.length}`);
-    log('dim', `    Documents: ${context.documents?.totalCount || 0}`);
-    log('dim', `    Applications: ${context.applications?.totalCount || 0}`);
-    log('dim', `    Communities: ${context.memberships?.totalCount || 0}`);
-    log('dim', `    Learning topics: ${context.learning?.totalTopics || 0}`);
-    log('dim', `    Graph available: ${context.graph?.isGraphAvailable}`);
+      for (const test of studyTests) {
+        try {
+          const result = await runAgentTest(studyAgent, test.name, test.agentType, test.targetTool, test.message);
+          allResults.push(result);
+        } catch (error: any) {
+          log('red', `  "${test.name}" crashed: ${error.message}`);
+          allResults.push({
+            testName: test.name, agentType: test.agentType, targetTool: test.targetTool,
+            message: test.message, success: false, output: '', toolCalls: [],
+            duration: 0, errors: [`Crash: ${error.message}`],
+            calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive' },
+          });
+        }
+      }
+    }
 
-    // Run tests
-    const explorerResults = await runExplorerTests(context);
-    const studyResults = await runStudyTests(context);
+    // ─── ORG TESTS ───────────────────────────────
+    if (orgTests.length > 0 && org) {
+      header('ORGANIZATION AGENT');
+      const orgCtx = buildOrgTestContext(talent.id, talent.name, org);
+      const orgAgent = createOrgAgent(orgCtx);
 
-    // Print audit report
-    const allResults = [...explorerResults, ...studyResults];
-    printAuditReport(allResults);
+      for (const test of orgTests) {
+        try {
+          const result = await runAgentTest(orgAgent, test.name, test.agentType, test.targetTool, test.message);
+          allResults.push(result);
+        } catch (error: any) {
+          log('red', `  "${test.name}" crashed: ${error.message}`);
+          allResults.push({
+            testName: test.name, agentType: test.agentType, targetTool: test.targetTool,
+            message: test.message, success: false, output: '', toolCalls: [],
+            duration: 0, errors: [`Crash: ${error.message}`],
+            calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive' },
+          });
+        }
+      }
+    } else if (orgTests.length > 0 && !org) {
+      log('yellow', '  Skipping org tests — no organization found');
+    }
 
-    // Close connections
-    await graphService.close().catch(() => {});
+    // ─── SUMMARY ─────────────────────────────────
+    header('CALIBRATION SUMMARY');
+
+    const passed = allResults.filter(r => r.success).length;
+    const failed = allResults.length - passed;
+    log('bold', `  Total: ${allResults.length} | Passed: ${passed} | Failed: ${failed}`);
+
+    // Calibration overview
+    section('Calibration Metrics');
+    const avgChars = allResults.reduce((sum, r) => sum + r.calibration.charCount, 0) / allResults.length;
+    const avgQuestions = allResults.reduce((sum, r) => sum + r.calibration.questionCount, 0) / allResults.length;
+    const avgTools = allResults.reduce((sum, r) => sum + r.calibration.toolCallCount, 0) / allResults.length;
+
+    log('bold', `  Avg response length: ${Math.round(avgChars)} chars`);
+    log('bold', `  Avg questions/response: ${avgQuestions.toFixed(1)}`);
+    log('bold', `  Avg tool calls/response: ${avgTools.toFixed(1)}`);
+
+    const verboseCount = allResults.filter(r => r.calibration.verbosityRating === 'verbose' || r.calibration.verbosityRating === 'very_verbose').length;
+    const passiveCount = allResults.filter(r => r.calibration.proactivityRating === 'passive').length;
+
+    if (verboseCount > 0) log('yellow', `  ${verboseCount}/${allResults.length} responses too verbose`);
+    if (passiveCount > 0) log('red', `  ${passiveCount}/${allResults.length} responses not proactive enough`);
+
+    // Per-test summary
+    section('Per-Test Results');
+    for (const r of allResults) {
+      const status = r.success ? 'PASS' : 'FAIL';
+      const statusColor = r.success ? 'green' : 'red';
+      const vFlag = (r.calibration.verbosityRating === 'verbose' || r.calibration.verbosityRating === 'very_verbose') ? ' [VERBOSE]' : '';
+      const pFlag = r.calibration.proactivityRating === 'passive' ? ' [PASSIVE]' : '';
+      log(statusColor, `  ${status} ${r.testName} — ${r.calibration.charCount}ch, ${r.calibration.toolCallCount}t, ${r.calibration.questionCount}q${vFlag}${pFlag}`);
+    }
+
+    // Tool usage
+    section('Tool Usage');
+    const toolStats = new Map<string, { calls: number; errors: number }>();
+    for (const r of allResults) {
+      for (const tc of r.toolCalls) {
+        const s = toolStats.get(tc.name) || { calls: 0, errors: 0 };
+        s.calls++;
+        if (tc.error) s.errors++;
+        toolStats.set(tc.name, s);
+      }
+    }
+    for (const [name, s] of toolStats) {
+      log(s.errors > 0 ? 'yellow' : 'green', `  ${name}: ${s.calls} calls, ${s.errors} errors`);
+    }
+
+    // Write report
+    writeCalibrationReport(allResults);
+
     await pool.end();
-
-    const hasFailed = allResults.some(r => !r.success);
-    process.exit(hasFailed ? 1 : 0);
+    process.exit(failed > 0 ? 1 : 0);
   } catch (error: any) {
-    log('red', `\n  ✗ FATAL: ${error.message}`);
+    log('red', `  FATAL: ${error.message}`);
     console.error(error);
-    await pool.end().catch(() => {});
+    await pool.end().catch(() => { });
     process.exit(1);
   }
 }

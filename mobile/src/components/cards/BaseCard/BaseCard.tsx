@@ -128,9 +128,9 @@ export const BaseCard: React.FC<BaseCardProps> = React.memo(({
                 >
                   <action.Icon
                     size={ICON.size.md}
-                    color={action.color}
+                    color={action.color || colors.gray400}
                     strokeWidth={ICON.strokeWidth}
-                    fill={action.fill}
+                    fill={action.fill || 'none'}
                   />
                 </TouchableOpacity>
               ))}

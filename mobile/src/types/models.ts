@@ -5,6 +5,13 @@ export type UUID = string;
 export type ISODate = string;
 export type ISOTimestamp = string;
 
+export interface LearningPreference {
+  style?: 'VISUAL' | 'AUDITORY' | 'TEXT_BASED' | 'INTERACTIVE';
+  interaction?: 'SOCRATIC' | 'DIRECT' | 'EXPLORATORY';
+  depth?: 'THEORETICAL' | 'PRACTICAL' | 'BALANCED';
+  difficulty?: 'GENTLE' | 'STANDARD' | 'CHALLENGING';
+}
+
 // ═══════════════════════════════════════════════════════════════
 // INTERFACES - USER & AUTH
 // ═══════════════════════════════════════════════════════════════
@@ -20,6 +27,7 @@ export interface User {
   firstName?: string;
   lastName?: string;
   avatarUrl?: string;
+  gender?: string | null;
   // Profile link
   talentId?: UUID;
   hasTalentProfile?: boolean;
@@ -520,6 +528,7 @@ export interface Organization {
   slug: string;
   name: string;
   type?: OrganizationType;
+  types?: OrganizationType[];
   sectors?: string[];
   description?: string;
   logo_url?: string;
@@ -533,6 +542,8 @@ export interface Organization {
   headquarters_city?: string;
   headquarters_region?: string;
   headquarters_country?: string;
+  headquarters_latitude?: number | string;
+  headquarters_longitude?: number | string;
   // Goals
   goals?: string[];
   // Verification
@@ -569,6 +580,7 @@ export interface TalentObjectData {
   email: string | null;
   remote_ready: boolean;
   willing_to_relocate: boolean;
+  learning_preferences: LearningPreference;
   skills: string[];
   documents_metadata: { id: string; original_filename: string; document_type: string | null; title: string | null; uploaded_at: string }[];
 }
@@ -593,6 +605,7 @@ export interface Talent {
   // === PRÉFÉRENCES ===
   remote_ready?: boolean;
   willing_to_relocate?: boolean;
+  learning_preferences?: LearningPreference;
   // === COMPÉTENCES & INTÉRÊTS ===
   sectors?: string[];
   profile_tags?: string[];
@@ -637,10 +650,6 @@ export interface Community {
   // Visibility & Access
   visibility?: Visibility;
   access_type?: AccessType; // Legacy, maps to visibility
-  // Pricing
-  is_paid?: boolean;
-  monthly_price?: number;
-  currency?: string;
   // Rules & Questions
   rules?: string;
   application_questions?: string[] | ApplicationQuestion[];
@@ -787,7 +796,6 @@ export interface DashboardActivity {
 // ═══════════════════════════════════════════════════════════════
 
 export const APPLICATION_STATUS = {
-  PENDING: 'PENDING',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
   ACCEPTED: 'ACCEPTED',
@@ -796,7 +804,6 @@ export const APPLICATION_STATUS = {
 export type ApplicationStatus = (typeof APPLICATION_STATUS)[keyof typeof APPLICATION_STATUS];
 
 export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
-  PENDING: 'En attente',
   SUBMITTED: 'Soumise',
   IN_REVIEW: 'En cours d\'examen',
   ACCEPTED: 'Acceptée',
@@ -884,7 +891,7 @@ export const ORGANIZATION_ROLES = {
   OWNER: 'OWNER',       // Full control
   ADMIN: 'ADMIN',       // Can do everything except delete organization
   MANAGER: 'MANAGER',   // Can manage opportunities, communities, spaces (CRUD)
-  OBSERVATEUR: 'OBSERVATEUR', // Read-only access
+  MEMBER: 'MEMBER',     // Basic member access
 } as const;
 export type OrganizationRole = (typeof ORGANIZATION_ROLES)[keyof typeof ORGANIZATION_ROLES];
 
@@ -892,14 +899,14 @@ export const ORGANIZATION_ROLE_LABELS: Record<OrganizationRole, string> = {
   OWNER: 'Propriétaire',
   ADMIN: 'Administrateur',
   MANAGER: 'Manager',
-  OBSERVATEUR: 'Observateur',
+  MEMBER: 'Membre',
 };
 
 export const ORGANIZATION_ROLE_DESCRIPTIONS: Record<OrganizationRole, string> = {
   OWNER: 'Contrôle total de l\'organisation',
   ADMIN: 'Accès complet sauf suppression',
   MANAGER: 'Gestion des contenus (opportunités, espaces, communautés)',
-  OBSERVATEUR: 'Accès en lecture seule',
+  MEMBER: 'Accès membre de base',
 };
 
 // Role-based permission helpers
@@ -962,7 +969,6 @@ export interface OrganizationInvitation {
 export const ASSISTANT_MODES = {
   EXPLORE: 'explore',
   STUDY: 'study',
-  LEGAL: 'legal',
 } as const;
 export type AssistantMode = (typeof ASSISTANT_MODES)[keyof typeof ASSISTANT_MODES];
 

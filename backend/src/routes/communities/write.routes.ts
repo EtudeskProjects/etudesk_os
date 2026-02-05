@@ -82,10 +82,6 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       country,
       cover_image_url,
       images,
-      is_paid = false,
-      monthly_price,
-      currency = 'XOF',
-      trial_period_days = 0,
     } = req.body;
 
     if (!name || !organization_id) {
@@ -119,10 +115,9 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         name, slug, organization_id, type, description, rules,
         application_questions, access_type, visibility, tags, sectors,
         city, region, country, cover_image_url, images,
-        is_paid, monthly_price, currency, trial_period_days,
         created_by, status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 'ACTIVE')
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'ACTIVE')
       RETURNING *
     `, [
       name, slug, organization_id, type, description, rules,
@@ -131,7 +126,6 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       sectors ? JSON.stringify(sectors) : null,
       city, region, country, cover_image_url,
       images || [],
-      is_paid, monthly_price, currency, trial_period_days,
       talentId
     ]);
 
@@ -170,8 +164,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     const {
       name, type, description, rules, application_questions,
       access_type, visibility, tags, sectors,
-      city, region, country, cover_image_url, images,
-      is_paid, monthly_price, currency, trial_period_days, status
+      city, region, country, cover_image_url, images, status
     } = req.body;
 
     const result = await pool.query(`
@@ -190,21 +183,16 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         country = COALESCE($12, country),
         cover_image_url = COALESCE($13, cover_image_url),
         images = COALESCE($14, images),
-        is_paid = COALESCE($15, is_paid),
-        monthly_price = COALESCE($16, monthly_price),
-        currency = COALESCE($17, currency),
-        trial_period_days = COALESCE($18, trial_period_days),
-        status = COALESCE($19, status),
+        status = COALESCE($15, status),
         updated_at = NOW()
-      WHERE id = $20 AND deleted_at IS NULL
+      WHERE id = $16 AND deleted_at IS NULL
       RETURNING *
     `, [
       name, type, description, rules, application_questions,
       access_type, visibility,
       tags ? JSON.stringify(tags) : null,
       sectors ? JSON.stringify(sectors) : null,
-      city, region, country, cover_image_url, images,
-      is_paid, monthly_price, currency, trial_period_days, status,
+      city, region, country, cover_image_url, images, status,
       id
     ]);
 

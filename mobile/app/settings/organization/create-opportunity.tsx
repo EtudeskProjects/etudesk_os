@@ -157,6 +157,7 @@ export default function CreateOpportunityScreen() {
   // UI state (not form data)
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [orgLocationLoaded, setOrgLocationLoaded] = useState(false);
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
@@ -552,13 +553,17 @@ export default function CreateOpportunityScreen() {
   });
 
   const handleSaveDraft = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const imageUrls = await buildImagesPayload();
       if (imageUrls === null) {
+        setIsSubmitting(false);
         return;
       }
       const attachmentPayload = await buildAttachmentsPayload();
       if (attachmentPayload === null) {
+        setIsSubmitting(false);
         return;
       }
       const data = buildOpportunityData(imageUrls, attachmentPayload);
@@ -570,17 +575,23 @@ export default function CreateOpportunityScreen() {
       );
     } catch (error: any) {
       Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de l\'enregistrement.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handlePublish = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const imageUrls = await buildImagesPayload();
       if (imageUrls === null) {
+        setIsSubmitting(false);
         return;
       }
       const attachmentPayload = await buildAttachmentsPayload();
       if (attachmentPayload === null) {
+        setIsSubmitting(false);
         return;
       }
       const data = { ...buildOpportunityData(imageUrls, attachmentPayload), status: 'OPEN' as const };
@@ -592,6 +603,8 @@ export default function CreateOpportunityScreen() {
       );
     } catch (error: any) {
       Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de la publication.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

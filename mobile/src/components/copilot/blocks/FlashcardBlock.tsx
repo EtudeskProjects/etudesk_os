@@ -4,34 +4,26 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { Lightbulb, RotateCw } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { RotateCw } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 
 interface FlashcardBlockProps {
   data: {
-    id: string;
     topic: string;
     front: string;
     back: string;
     difficulty: string;
-    hint?: string;
   };
 }
 
 export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
   const { colors } = useTheme();
   const [isFlipped, setIsFlipped] = useState(false);
-  const [showHint, setShowHint] = useState(false);
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
-    setShowHint(false);
-  };
-
-  const handleToggleHint = () => {
-    setShowHint(!showHint);
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -113,34 +105,6 @@ export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
           </Text>
         </View>
       </TouchableOpacity>
-
-      {/* Hint Button */}
-      {!isFlipped && data.hint && (
-        <View style={styles.hintSection}>
-          <TouchableOpacity
-            style={[styles.hintButton, { borderColor: colors.borderColor }]}
-            onPress={handleToggleHint}
-            activeOpacity={0.7}
-          >
-            <Lightbulb
-              size={ICON.size.sm}
-              color={showHint ? colors.warning : colors.textSecondary}
-              strokeWidth={ICON.strokeWidth}
-            />
-            <Text style={[styles.hintButtonText, { color: colors.textSecondary }]}>
-              {showHint ? 'Masquer l\'indice' : 'Voir un indice'}
-            </Text>
-          </TouchableOpacity>
-
-          {showHint && (
-            <View style={[styles.hintContent, { backgroundColor: colors.warningLight }]}>
-              <Text style={[styles.hintText, { color: colors.warning }]}>
-                {data.hint}
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
     </View>
   );
 };
@@ -201,33 +165,6 @@ const styles = StyleSheet.create({
   flipText: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.xs,
-  },
-  hintSection: {
-    marginTop: SPACING.md,
-  },
-  hintButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: BORDER.radius.md,
-    borderWidth: BORDER.width.thin,
-  },
-  hintButtonText: {
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-  },
-  hintContent: {
-    marginTop: SPACING.sm,
-    padding: SPACING.md,
-    borderRadius: BORDER.radius.md,
-  },
-  hintText: {
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    lineHeight: TYPOGRAPHY.fontSize.sm * TYPOGRAPHY.lineHeight.normal,
   },
 });
 

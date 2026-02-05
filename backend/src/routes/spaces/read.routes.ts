@@ -59,18 +59,38 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
       logger.warn('Failed to check space_invitations table', { error: String(checkError) });
     }
 
-    // Get user email for invitation check
+    // Get user profile for matching
+    let userProfile: any = null;
     let userEmail: string | null = null;
+
     if (talentId) {
       try {
-        const userResult = await pool.query('SELECT email FROM talents WHERE id = $1', [talentId]);
+        const userResult = await pool.query(`
+          SELECT id, email, city, region, country, remote_ready, willing_to_relocate,
+            sectors, profile_tags, goals, bio
+          FROM talents 
+          WHERE id = $1
+        `, [talentId]);
+
         if (userResult.rows.length > 0) {
-          userEmail = userResult.rows[0].email;
+          userProfile = userResult.rows[0];
+          userEmail = userProfile.email;
         }
       } catch (emailError) {
         logger.warn('Failed to fetch user email for invitation check', { error: String(emailError) });
       }
     }
+
+    const { MatchingUtils } = await import('../../utils/MatchingUtils');
+    // Build matching criteria
+    const criteria = {
+      city: userProfile?.city,
+      region: userProfile?.region,
+      country: userProfile?.country,
+      sectors: userProfile?.sectors || [],
+    };
+
+    const matchScore = MatchingUtils.buildMatchScore('s', criteria);
 
     // Base query: only PUBLIC spaces OR those where user is invited
     let query = `
@@ -79,14 +99,15 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
         o.logo_url as organization_logo,
         (SELECT COUNT(*) FROM space_bookings sb
          WHERE sb.space_id = s.id AND sb.status = 'CONFIRMED'
-         AND sb.end_datetime > NOW()) as active_bookings_count
+         AND sb.end_datetime > NOW()) as active_bookings_count,
+        ${matchScore} as match_score
       FROM spaces s
       LEFT JOIN organizations o ON s.organization_id = o.id
       WHERE s.deleted_at IS NULL AND s.status = 'ACTIVE'
       AND (
         ${hasVisibilityColumn
-          ? `COALESCE(s.visibility, 'PUBLIC') = 'PUBLIC'`
-          : `TRUE`}
+        ? `COALESCE(s.visibility, 'PUBLIC') = 'PUBLIC'`
+        : `TRUE`}
     `;
 
     const params: QueryParam[] = [];
@@ -158,7 +179,8 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
       params.push(String(is_accessible) === 'true');
     }
 
-    query += ` ORDER BY s.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    // Sort by Match Score, then Recency
+    query += ` ORDER BY match_score DESC, s.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(pagination.limit, pagination.offset);
 
     const result = await pool.query(query, params);
@@ -168,10 +190,10 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
       ...row,
       organization: row.organization_name
         ? {
-            id: row.organization_id,
-            name: row.organization_name,
-            logo_url: row.organization_logo,
-          }
+          id: row.organization_id,
+          name: row.organization_name,
+          logo_url: row.organization_logo,
+        }
         : undefined,
     }));
 
@@ -265,7 +287,7 @@ router.get('/:id', async (req: Request, res: Response) => {
          WHERE sa.space_id = s.id AND sa.is_active = true) as availabilities
       FROM spaces s
       LEFT JOIN organizations o ON s.organization_id = o.id
-      WHERE s.id = $1 AND s.deleted_at IS NULL
+      WHERE (s.id::text = $1 OR s.slug = $1) AND s.deleted_at IS NULL
     `,
       [id]
     );
@@ -280,11 +302,11 @@ router.get('/:id', async (req: Request, res: Response) => {
         ...space,
         organization: space.organization_name
           ? {
-              id: space.organization_id,
-              name: space.organization_name,
-              logo_url: space.organization_logo,
-              city: space.organization_city,
-            }
+            id: space.organization_id,
+            name: space.organization_name,
+            logo_url: space.organization_logo,
+            city: space.organization_city,
+          }
           : undefined,
       },
     });

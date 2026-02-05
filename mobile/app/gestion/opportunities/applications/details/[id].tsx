@@ -46,6 +46,7 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../.
 import { Button, FooterNav } from '../../../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
+import { API_CONFIG } from '../../../../../src/constants/config';
 import { applicationService, applicationMessageService } from '../../../../../src/services';
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import type { Application, ApplicationMessage, ApplicationStatus } from '../../../../../src/types/models';
@@ -130,6 +131,7 @@ export default function ApplicationOrgDetailsScreen() {
 
   // CV Viewer
   const [showCVViewer, setShowCVViewer] = useState(false);
+  const [cvLoadState, setCvLoadState] = useState<'loading' | 'loaded' | 'error'>('loading');
 
   // Status picker
   const [showStatusPicker, setShowStatusPicker] = useState(false);
@@ -154,6 +156,20 @@ export default function ApplicationOrgDetailsScreen() {
   useEffect(() => {
     loadApplication();
   }, [id]);
+
+  // Reset CV load state when application or resume_url changes
+  useEffect(() => {
+    if (application?.resume_url) {
+      setCvLoadState('loading');
+    }
+  }, [application?.resume_url]);
+
+  // Timeout: if CV WebView still loading after 8s, show fallback (PDF often doesn't render in WebView)
+  useEffect(() => {
+    if (!application?.resume_url || cvLoadState !== 'loading') return;
+    const t = setTimeout(() => setCvLoadState('error'), 8000);
+    return () => clearTimeout(t);
+  }, [application?.resume_url, cvLoadState]);
 
   useEffect(() => {
     if (activeTab === 'messages' && application) {
@@ -327,19 +343,30 @@ export default function ApplicationOrgDetailsScreen() {
     return (f + l).toUpperCase() || '?';
   };
 
-  // Check if URL is a local file
-  const isLocalFile = (url: string) => url.startsWith('file://');
+  // Server path wrongly returned as file:///uploads/... → convert to HTTP URL
+  const getResumeOpenUrl = (url: string) => {
+    if (url.startsWith('file:///uploads/') || (url.startsWith('file://') && url.includes('/uploads/'))) {
+      const path = url.replace(/^file:\/\//, '');
+      const base = API_CONFIG.BASE_URL.replace(/\/$/, '');
+      return `${base}/${path.startsWith('/') ? path.slice(1) : path}`;
+    }
+    return url;
+  };
 
-  // Open CV - handles both local files and remote URLs
+  // True only for real local device paths (e.g. file:///var/... or file:///data/...), not server path
+  const isLocalFile = (url: string) =>
+    url.startsWith('file://') && !url.startsWith('file:///uploads/') && !url.includes('/uploads/');
+
+  // Open CV - handles local files, server paths (file:///uploads/...) and remote HTTP URLs
   const handleOpenCV = async () => {
     if (!application?.resume_url) return;
 
+    const openUrl = getResumeOpenUrl(application.resume_url);
+
     try {
       if (isLocalFile(application.resume_url)) {
-        // Local file - use sharing
         const isAvailable = await Sharing.isAvailableAsync();
         if (isAvailable) {
-          // Check if file exists
           const fileInfo = await FileSystem.getInfoAsync(application.resume_url);
           if (fileInfo.exists) {
             await Sharing.shareAsync(application.resume_url, {
@@ -353,8 +380,7 @@ export default function ApplicationOrgDetailsScreen() {
           Alert.alert('Non disponible', 'Le partage de fichiers n\'est pas disponible sur cet appareil.');
         }
       } else {
-        // Remote URL - open in browser
-        await Linking.openURL(application.resume_url);
+        await Linking.openURL(openUrl);
       }
     } catch (error) {
       console.error('Error opening CV:', error);
@@ -524,7 +550,7 @@ export default function ApplicationOrgDetailsScreen() {
 
             {/* Status picker */}
             <TouchableOpacity
-              style={[styles.statusPickerButton, { borderColor: colors.gray300 }]}
+              style={[styles.statusPickerButton, { borderColor: colors.gray300, backgroundColor: colors.gray100 }]}
               onPress={() => setShowStatusPicker(!showStatusPicker)}
             >
               <Text style={[styles.statusPickerButtonText, { color: colors.textPrimary }]}>
@@ -540,7 +566,7 @@ export default function ApplicationOrgDetailsScreen() {
 
             {/* Status options */}
             {showStatusPicker && (
-              <View style={[styles.statusOptions, { borderColor: colors.gray200 }]}>
+              <View style={[styles.statusOptions, { borderColor: colors.gray200, backgroundColor: colors.surface }]}>
                 {(Object.keys(STATUS_FLOW) as ApplicationStatus[])
                   .filter(status => status !== application.status)
                   .map((status) => {
@@ -551,7 +577,7 @@ export default function ApplicationOrgDetailsScreen() {
                     return (
                       <TouchableOpacity
                         key={status}
-                        style={[styles.statusOption, { borderBottomColor: colors.gray100 }]}
+                        style={[styles.statusOption, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}
                         onPress={() => handleUpdateStatus(status)}
                       >
                         <View style={[styles.statusOptionIcon, { backgroundColor: withOpacity(config.color, OPACITY[15]) }]}>
@@ -581,25 +607,41 @@ export default function ApplicationOrgDetailsScreen() {
           {application?.resume_url && (
             <>
               <Text style={[styles.subsectionTitle, { color: colors.gray600 }]}>CV du candidat</Text>
-              {/* PDF Viewer */}
-              <View style={styles.cvContainer}>
-                <WebView
-                  source={{ uri: application.resume_url }}
-                  style={styles.cvWebView}
-                  originWhitelist={['*']}
-                  allowFileAccess={true}
-                  allowFileAccessFromFileURLs={true}
-                  allowUniversalAccessFromFileURLs={true}
-                  startInLoadingState={true}
-                  renderLoading={() => (
-                    <View style={styles.cvLoading}>
-                      <ActivityIndicator size="large" color={colors.primary} />
-                      <Text style={[styles.cvLoadingText, { color: colors.gray500 }]}>
-                        Chargement du CV...
-                      </Text>
-                    </View>
-                  )}
-                />
+              <View style={[styles.cvContainer, { borderColor: colors.gray200 }]}>
+                {cvLoadState === 'error' ? (
+                  <View style={[styles.cvFallback, { backgroundColor: colors.gray50 }]}>
+                    <FileText size={40} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+                    <Text style={[styles.cvFallbackTitle, { color: colors.textPrimary }]}>
+                      Affichage indisponible
+                    </Text>
+                    <Text style={[styles.cvFallbackText, { color: colors.gray500 }]}>
+                      Ouvrez le CV avec le bouton ci-dessous pour le consulter.
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <WebView
+                      source={{ uri: getResumeOpenUrl(application.resume_url) }}
+                      style={[styles.cvWebView, { backgroundColor: colors.gray50 }]}
+                      originWhitelist={['*']}
+                      allowFileAccess={true}
+                      allowFileAccessFromFileURLs={true}
+                      allowUniversalAccessFromFileURLs={true}
+                      startInLoadingState={false}
+                      onLoadEnd={() => setCvLoadState('loaded')}
+                      onError={() => setCvLoadState('error')}
+                      onHttpError={() => setCvLoadState('error')}
+                    />
+                    {cvLoadState === 'loading' && (
+                      <View style={[StyleSheet.absoluteFill, styles.cvLoading, { backgroundColor: colors.gray50 }]} pointerEvents="none">
+                        <ActivityIndicator size="large" color={colors.primary} />
+                        <Text style={[styles.cvLoadingText, { color: colors.gray500 }]}>
+                          Chargement du CV...
+                        </Text>
+                      </View>
+                    )}
+                  </>
+                )}
               </View>
 
               <TouchableOpacity
@@ -607,7 +649,7 @@ export default function ApplicationOrgDetailsScreen() {
                 onPress={handleOpenCV}
               >
                 <FileText size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.cvDownloadButtonText, { color: colors.primary }]}>Télécharger le CV</Text>
+                <Text style={[styles.cvDownloadButtonText, { color: colors.primary }]}>Ouvrir le CV</Text>
               </TouchableOpacity>
             </>
           )}
@@ -843,7 +885,7 @@ export default function ApplicationOrgDetailsScreen() {
               </View>
             </View>
             <WebView
-              source={{ uri: application.resume_url }}
+              source={{ uri: getResumeOpenUrl(application.resume_url) }}
               style={styles.cvModalWebView}
               startInLoadingState={true}
               renderLoading={() => (
@@ -1482,28 +1524,43 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.md,
     overflow: 'hidden',
     borderWidth: BORDER.width.thin,
-    borderColor: '#E5E7EB',
+    minHeight: 280,
+    position: 'relative',
   },
 
   cvWebView: {
     height: 400,
-    backgroundColor: '#F3F4F6',
   },
 
   cvLoading: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
   },
 
   cvLoadingText: {
     marginTop: SPACING.sm,
     fontSize: TYPOGRAPHY.fontSize.sm,
+  },
+
+  cvFallback: {
+    minHeight: 280,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  cvFallbackTitle: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    marginTop: SPACING.md,
+    textAlign: 'center',
+  },
+
+  cvFallbackText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    marginTop: SPACING.xs,
+    textAlign: 'center',
+    paddingHorizontal: SPACING.lg,
   },
 
   cvPlaceholder: {

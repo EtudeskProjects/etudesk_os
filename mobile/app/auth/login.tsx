@@ -25,10 +25,6 @@ export default function LoginScreen() {
     showComingSoonAlert('Google');
   };
 
-  const handleAppleLogin = () => {
-    showComingSoonAlert('Apple');
-  };
-
   const handleWhatsAppLogin = () => {
     showComingSoonAlert('WhatsApp');
   };
@@ -42,7 +38,7 @@ export default function LoginScreen() {
       <View style={styles.content}>
         <View style={styles.header}>
           <Image
-            source={require('../../assets/etudesk_logo_blue.png')}
+            source={require('../../assets/etudesk_logo_black.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -61,23 +57,11 @@ export default function LoginScreen() {
             onPress={handleGoogleLogin}
             activeOpacity={0.8}
           >
-            <Mail
-              size={ICON.size.lg}
-              color={colors.textPrimary}
-              strokeWidth={ICON.strokeWidth}
+            <Image
+              source={require('../../assets/google_icon.png')}
+              style={styles.socialIcon}
             />
             <Text style={[styles.authButtonText, { color: colors.textPrimary }]}>Google</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.authButton, styles.authButtonApple]}
-            onPress={handleAppleLogin}
-            activeOpacity={0.8}
-          >
-            <View style={styles.appleIcon}>
-              <Text style={styles.appleIconText}>A</Text>
-            </View>
-            <Text style={[styles.authButtonText, { color: colors.textOnPrimary }]}>Apple</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -85,12 +69,11 @@ export default function LoginScreen() {
             onPress={handleWhatsAppLogin}
             activeOpacity={0.8}
           >
-            <MessageCircle
-              size={ICON.size.lg}
-              color={colors.textOnPrimary}
-              strokeWidth={ICON.strokeWidth}
+            <Image
+              source={require('../../assets/whatsapp_icon.png')}
+              style={styles.socialIcon}
             />
-            <Text style={[styles.authButtonText, { color: colors.textOnPrimary }]}>WhatsApp</Text>
+            <Text style={[styles.authButtonText, { color: colors.textPrimary }]}>WhatsApp</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -172,14 +155,15 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.sm,
   },
 
-  authButtonApple: {
-    backgroundColor: '#1F1C18',
-    borderColor: '#1F1C18',
+  authButtonWhatsApp: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#25D366',
   },
 
-  authButtonWhatsApp: {
-    backgroundColor: '#25D366',
-    borderColor: '#25D366',
+  socialIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
   },
 
   authButtonText: {
@@ -189,19 +173,6 @@ const styles = StyleSheet.create({
 
   authButtonEmail: {
     // Dynamic colors applied inline
-  },
-
-  appleIcon: {
-    width: ICON.size.lg,
-    height: ICON.size.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  appleIconText: {
-    fontSize: ICON.size.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: '#FFFCF9',
   },
 
   footer: {

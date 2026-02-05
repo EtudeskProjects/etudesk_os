@@ -1,212 +1,111 @@
 /**
- * QuizBlock Component
- * Interactive quiz component showing questions one by one
+ * QuizBlock — Single interactive quiz question
+ * Tapping an option auto-submits the answer via onAnswer callback
+ * Creates a fluid back-and-forth conversational quiz experience
  */
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { BookOpen, CheckCircle, XCircle, ChevronRight } from 'lucide-react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { BookOpen } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
-
-interface QuizQuestion {
-  id: string;
-  question: string;
-  type: string;
-  options?: string[];
-  correctAnswer?: number;
-  explanation?: string;
-}
 
 interface QuizBlockProps {
   data: {
     topic: string;
-    questions: QuizQuestion[];
+    // New format: single question
+    question?: string;
+    options?: string[];
+    // Backward compat: old format with questions array
+    questions?: Array<{
+      id?: string;
+      question: string;
+      options?: string[];
+      correctAnswer?: number;
+      explanation?: string;
+    }>;
   };
+  onAnswer?: (answer: string) => void;
 }
 
-export const QuizBlock: React.FC<QuizBlockProps> = ({ data }) => {
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
   const { colors } = useTheme();
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
-  const [revealedAnswers, setRevealedAnswers] = useState<Record<number, boolean>>({});
 
-  const question = data.questions[currentQuestion];
-  const isAnswered = revealedAnswers[currentQuestion];
-  const selectedAnswer = selectedAnswers[currentQuestion];
-
-  const handleSelectOption = (optionIndex: number) => {
-    if (isAnswered) return;
-    setSelectedAnswers({ ...selectedAnswers, [currentQuestion]: optionIndex });
-  };
-
-  const handleCheckAnswer = () => {
-    setRevealedAnswers({ ...revealedAnswers, [currentQuestion]: true });
-  };
-
-  const handleNextQuestion = () => {
-    if (currentQuestion < data.questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
+  // Normalize data: support both new (single question) and old (questions array) format
+  const { topic, question, options } = useMemo(() => {
+    if (data.question && data.options) {
+      return { topic: data.topic, question: data.question, options: data.options };
     }
-  };
-
-  const handlePreviousQuestion = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
+    if (data.questions?.length) {
+      const q = data.questions[0];
+      return { topic: data.topic, question: q.question, options: q.options || [] };
     }
+    return { topic: data.topic || '', question: '', options: [] as string[] };
+  }, [data]);
+
+  const handleOptionPress = (option: string, index: number) => {
+    if (!onAnswer) return;
+    onAnswer(`${OPTION_LETTERS[index]}) ${option}`);
   };
 
-  const isCorrect = selectedAnswer === question.correctAnswer;
+  if (!question) return null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <BookOpen size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.topic, { color: colors.textPrimary }]}>
-            {data.topic}
-          </Text>
-        </View>
-        <View style={[styles.progressBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-          <Text style={[styles.progressText, { color: colors.primary }]}>
-            {currentQuestion + 1}/{data.questions.length}
-          </Text>
-        </View>
-      </View>
-
-      {/* Progress Bar */}
-      <View style={[styles.progressBar, { backgroundColor: colors.borderColor }]}>
-        <View
-          style={[
-            styles.progressFill,
-            {
-              backgroundColor: colors.primary,
-              width: `${((currentQuestion + 1) / data.questions.length) * 100}%`,
-            },
-          ]}
-        />
+        <BookOpen size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+        <Text style={[styles.topic, { color: colors.primary }]} numberOfLines={1}>
+          {topic}
+        </Text>
       </View>
 
       {/* Question */}
       <Text style={[styles.question, { color: colors.textPrimary }]}>
-        {question.question}
+        {question}
       </Text>
 
       {/* Options */}
       <View style={styles.optionsContainer}>
-        {question.options?.map((option, index) => {
-          const isSelected = selectedAnswer === index;
-          const showCorrect = isAnswered && index === question.correctAnswer;
-          const showWrong = isAnswered && isSelected && !isCorrect;
-
-          let backgroundColor = colors.background;
-          let borderColor = colors.borderColor;
-          let textColor = colors.textPrimary;
-
-          if (showCorrect) {
-            backgroundColor = colors.successLight;
-            borderColor = colors.success;
-            textColor = colors.success;
-          } else if (showWrong) {
-            backgroundColor = colors.errorLight;
-            borderColor = colors.error;
-            textColor = colors.error;
-          } else if (isSelected) {
-            backgroundColor = withOpacity(colors.primary, OPACITY[15]);
-            borderColor = colors.primary;
-            textColor = colors.primary;
-          }
-
-          return (
-            <TouchableOpacity
-              key={index}
-              style={[styles.option, { backgroundColor, borderColor }]}
-              onPress={() => handleSelectOption(index)}
-              disabled={isAnswered}
-              activeOpacity={0.7}
-            >
-              <View style={styles.optionContent}>
-                <View
-                  style={[
-                    styles.radioButton,
-                    { borderColor },
-                    isSelected && { backgroundColor: borderColor },
-                  ]}
-                >
-                  {isSelected && (
-                    <View style={[styles.radioButtonInner, { backgroundColor: colors.white }]} />
-                  )}
-                </View>
-                <Text style={[styles.optionText, { color: textColor }]}>
-                  {option}
-                </Text>
-              </View>
-              {showCorrect && (
-                <CheckCircle size={ICON.size.md} color={colors.success} strokeWidth={ICON.strokeWidth} />
-              )}
-              {showWrong && (
-                <XCircle size={ICON.size.md} color={colors.error} strokeWidth={ICON.strokeWidth} />
-              )}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {/* Explanation */}
-      {isAnswered && question.explanation && (
-        <View style={[styles.explanationContainer, { backgroundColor: colors.background }]}>
-          <Text style={[styles.explanationTitle, { color: colors.textPrimary }]}>
-            Explication
-          </Text>
-          <Text style={[styles.explanationText, { color: colors.textSecondary }]}>
-            {question.explanation}
-          </Text>
-        </View>
-      )}
-
-      {/* Action Buttons */}
-      <View style={styles.actions}>
-        {!isAnswered && selectedAnswer !== undefined && (
+        {options.map((option, index) => (
           <TouchableOpacity
-            style={[styles.checkButton, { backgroundColor: colors.primary }]}
-            onPress={handleCheckAnswer}
-            activeOpacity={0.8}
+            key={index}
+            style={[
+              styles.option,
+              {
+                borderColor: onAnswer ? colors.borderColor : withOpacity(colors.borderColor, OPACITY[50]),
+                backgroundColor: colors.background,
+              },
+            ]}
+            onPress={() => handleOptionPress(option, index)}
+            disabled={!onAnswer}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.checkButtonText, { color: colors.textOnPrimary }]}>
-              Vérifier la réponse
+            <View style={[styles.optionLetter, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
+              <Text style={[styles.optionLetterText, { color: colors.primary }]}>
+                {OPTION_LETTERS[index]}
+              </Text>
+            </View>
+            <Text
+              style={[
+                styles.optionText,
+                { color: onAnswer ? colors.textPrimary : colors.textSecondary },
+              ]}
+            >
+              {option}
             </Text>
           </TouchableOpacity>
-        )}
-
-        {isAnswered && (
-          <View style={styles.navigationButtons}>
-            {currentQuestion > 0 && (
-              <TouchableOpacity
-                style={[styles.navButton, { borderColor: colors.borderColor }]}
-                onPress={handlePreviousQuestion}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.navButtonText, { color: colors.textPrimary }]}>
-                  Précédent
-                </Text>
-              </TouchableOpacity>
-            )}
-            {currentQuestion < data.questions.length - 1 && (
-              <TouchableOpacity
-                style={[styles.navButton, styles.nextButton, { backgroundColor: colors.primary }]}
-                onPress={handleNextQuestion}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.navButtonText, { color: colors.textOnPrimary }]}>
-                  Suivant
-                </Text>
-                <ChevronRight size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
+        ))}
       </View>
+
+      {/* Hint when not interactive */}
+      {!onAnswer && (
+        <Text style={[styles.answeredHint, { color: colors.textDisabled }]}>
+          Question déjà répondue
+        </Text>
+      )}
     </View>
   );
 };
@@ -220,39 +119,14 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  headerLeft: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    flex: 1,
+    marginBottom: SPACING.md,
   },
   topic: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.md,
+    fontSize: TYPOGRAPHY.fontSize.sm,
     flex: 1,
-  },
-  progressBadge: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER.radius.full,
-  },
-  progressText: {
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
-  progressBar: {
-    height: 4,
-    borderRadius: BORDER.radius.xs,
-    marginBottom: SPACING.lg,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: BORDER.radius.xs,
   },
   question: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
@@ -266,29 +140,22 @@ const styles = StyleSheet.create({
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     padding: SPACING.md,
     borderRadius: BORDER.radius.md,
     borderWidth: BORDER.width.thin,
-  },
-  optionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: SPACING.md,
-    flex: 1,
   },
-  radioButton: {
-    width: 20,
-    height: 20,
-    borderRadius: BORDER.radius.full,
-    borderWidth: BORDER.width.medium,
-    justifyContent: 'center',
+  optionLetter: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  radioButtonInner: {
-    width: 8,
-    height: 8,
-    borderRadius: BORDER.radius.full,
+  optionLetterText: {
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
   },
   optionText: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -296,54 +163,11 @@ const styles = StyleSheet.create({
     lineHeight: TYPOGRAPHY.fontSize.md * TYPOGRAPHY.lineHeight.normal,
     flex: 1,
   },
-  explanationContainer: {
-    marginTop: SPACING.lg,
-    padding: SPACING.md,
-    borderRadius: BORDER.radius.md,
-  },
-  explanationTitle: {
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    marginBottom: SPACING.xs,
-  },
-  explanationText: {
+  answeredHint: {
+    textAlign: 'center',
+    fontSize: TYPOGRAPHY.fontSize.xs,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    lineHeight: TYPOGRAPHY.fontSize.sm * TYPOGRAPHY.lineHeight.normal,
-  },
-  actions: {
-    marginTop: SPACING.lg,
-  },
-  checkButton: {
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER.radius.md,
-    alignItems: 'center',
-  },
-  checkButtonText: {
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.md,
-  },
-  navigationButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: SPACING.sm,
-  },
-  navButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER.radius.md,
-    borderWidth: BORDER.width.thin,
-    gap: SPACING.xs,
-  },
-  nextButton: {
-    borderWidth: 0,
-    flex: 1,
-  },
-  navButtonText: {
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.md,
+    marginTop: SPACING.sm,
   },
 });
 

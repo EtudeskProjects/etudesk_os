@@ -65,7 +65,7 @@ router.get('/:orgId/members', authMiddleware, async (req: AuthRequest, res: Resp
 
     const result = await pool.query(`
       SELECT
-        om.id, om.organization_id, om.talent_id as user_id, om.role, om.permissions,
+        om.id, om.organization_id, om.talent_id as user_id, om.role,
         om.joined_at, om.created_at, om.updated_at,
         COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.avatar_url, t.email, t.bio as title
       FROM organization_members om
@@ -102,7 +102,7 @@ router.get('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res: 
 
     // Check if user has permission to view invitations
     const memberCheck = await pool.query(`
-      SELECT role, permissions FROM organization_members
+      SELECT role FROM organization_members
       WHERE organization_id = $1 AND talent_id = $2
     `, [orgId, req.talentId]);
 
@@ -419,7 +419,7 @@ router.post('/:orgId/invitations/:invitationId/resend', authMiddleware, async (r
 
     // Check permission
     const memberCheck = await pool.query(`
-      SELECT role, permissions FROM organization_members
+      SELECT role FROM organization_members
       WHERE organization_id = $1 AND talent_id = $2
     `, [orgId, req.talentId]);
 
@@ -506,7 +506,7 @@ router.get('/invitations/received', authMiddleware, async (req: AuthRequest, res
     try {
       result = await pool.query(`
         SELECT
-          oi.id, oi.organization_id, oi.email, oi.role, oi.permissions,
+          oi.id, oi.organization_id, oi.email, oi.role,
           oi.token, oi.expires_at, oi.status, oi.created_at,
           o.name as organization_name, o.logo_url as organization_logo,
           o.types as organization_types, o.sectors as organization_sectors,

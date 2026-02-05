@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { communityActivityService } from '../services/community-activity.service';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
-import { communityPaidAccessMiddleware } from '../middleware/community-access.middleware';
+import { communityMemberMiddleware } from '../middleware/community-access.middleware';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -35,7 +35,7 @@ const upload = multer({
 });
 
 // GET /api/communities/:communityId/activities
-router.get('/:communityId/activities', authMiddleware, communityPaidAccessMiddleware, async (req: any, res: Response) => {
+router.get('/:communityId/activities', authMiddleware, communityMemberMiddleware, async (req: any, res: Response) => {
     try {
         const { communityId } = req.params;
         const { limit, cursor } = req.query;

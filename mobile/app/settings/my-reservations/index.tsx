@@ -43,7 +43,7 @@ export default function MyReservationsScreen() {
   const [bookings, setBookings] = useState<SpaceBookingDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [filter, setFilter] = useState<FilterStatus>('PENDING');
+  const [filter, setFilter] = useState<FilterStatus>('all');
 
   const loadBookings = useCallback(async () => {
     try {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import {
   User,
   Users,
@@ -35,25 +35,29 @@ import { Header, FooterNav } from '../../../src/components/ui';
 
 export default function AccountScreen() {
   const router = useRouter();
-  const [isKYCVerified, setIsKYCVerified] = useState(false);
+  const [kycStatus, setKycStatus] = useState<string>('NONE');
+  const isKYCVerified = kycStatus === 'VERIFIED';
   const { colors } = useTheme();
 
-  useEffect(() => {
-    const fetchKYCStatus = async () => {
-      try {
-        const response = await kycService.getStatus();
-        if (response.data?.status === 'VERIFIED') {
-          setIsKYCVerified(true);
-        }
-      } catch (error) {
-        // Silently fail
-      }
-    };
-    fetchKYCStatus();
-  }, []);
   const { t, language } = useI18n();
   const { currentSpace, selectedOrgId, selectedOrg, userOrganizations, setSpace } = useSpace();
   const { signOut, user } = useAuth();
+
+  const fetchKYCStatus = async () => {
+    try {
+      const response = await kycService.getStatus();
+      const status = response.data?.status || 'NONE';
+      setKycStatus(status);
+    } catch (error) {
+      // Silently fail
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchKYCStatus();
+    }, [])
+  );
 
   const handleSelectSpace = (type: 'talent' | 'organization', orgId?: string) => {
     setSpace(type, orgId);
@@ -255,7 +259,7 @@ export default function AccountScreen() {
               )}
               <View style={styles.profileInfo}>
                 <Text style={[styles.profileName, { color: colors.textPrimary }]}>{selectedOrg?.name}</Text>
-                <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{selectedOrg?.type} • {selectedOrg?.role === 'admin' ? 'Admin' : 'Membre'}</Text>
+                <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{selectedOrg?.type} • {selectedOrg?.role === 'ADMIN' ? 'Admin' : 'Membre'}</Text>
               </View>
             </>
           )}
@@ -343,13 +347,24 @@ export default function AccountScreen() {
                 { backgroundColor: colors.surface, borderColor: colors.gray300, borderStyle: 'dashed' },
               ]}
               onPress={() => {
-                if (!isKYCVerified) {
+                const ADMIN_EMAILS = ['admin@etudesk.com']; // Sync with backend
+                const isAdmin = user?.email && (ADMIN_EMAILS.includes(user.email.toLowerCase()) || user.email.endsWith('@etudesk.com'));
+
+                if (!isKYCVerified && !isAdmin) {
+                  const alertTitle = kycStatus === 'PENDING' ? 'Vérification en cours' : 'Vérification requise';
+                  const alertMessage = kycStatus === 'PENDING'
+                    ? 'Votre vérificaton d\'identité est en cours de traitement. Vous pourrez créer une organisation dès qu\'elle sera validée.'
+                    : 'Vous devez vérifier votre identité (KYC) avant de créer une organisation.';
+
                   Alert.alert(
-                    'Vérification requise',
-                    'Vous devez vérifier votre identité (KYC) avant de créer une organisation.',
+                    alertTitle,
+                    alertMessage,
                     [
                       { text: 'Annuler', style: 'cancel' },
-                      { text: 'Vérifier mon identité', onPress: () => router.push('/settings/kyc') },
+                      {
+                        text: kycStatus === 'PENDING' ? 'Voir le statut' : 'Vérifier mon identité',
+                        onPress: () => router.push('/settings/kyc')
+                      },
                     ]
                   );
                   return;

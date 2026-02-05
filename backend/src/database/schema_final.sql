@@ -142,6 +142,8 @@ CREATE TABLE talents (
     goals TEXT[],
     sectors TEXT[],
     payment_methods JSONB DEFAULT '[]'::jsonb,
+    learning_preferences JSONB DEFAULT '{}'::jsonb,
+    is_visible BOOLEAN DEFAULT TRUE,
     embedding VECTOR(1536),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -151,6 +153,7 @@ CREATE TABLE talents (
 CREATE INDEX idx_talents_slug ON talents(slug);
 CREATE INDEX idx_talents_email ON talents(email);
 CREATE INDEX idx_talents_country ON talents(country);
+CREATE INDEX idx_talents_phone ON talents(phone) WHERE deleted_at IS NULL;
 CREATE INDEX idx_talents_deleted_at ON talents(deleted_at) WHERE deleted_at IS NULL;
 
 CREATE TRIGGER trigger_talents_updated_at
@@ -261,6 +264,7 @@ CREATE TABLE organizations (
     headquarters_country CHAR(2),
     headquarters_coordinates POINT,
     verification_status VARCHAR(50) DEFAULT 'CLAIMED',
+    is_visible BOOLEAN DEFAULT TRUE,
     embedding VECTOR(1536),
     culture_summary TEXT,
     created_by UUID REFERENCES talents(id) ON DELETE SET NULL,
@@ -283,6 +287,7 @@ CREATE TABLE organization_members (
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     talent_id UUID NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
     role VARCHAR(20) NOT NULL DEFAULT 'MEMBER' CHECK (role IN ('OWNER', 'ADMIN', 'MANAGER', 'MEMBER')),
+    permissions TEXT[] DEFAULT '{}',
     status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('PENDING', 'ACTIVE', 'SUSPENDED')),
     joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -1085,7 +1090,7 @@ CREATE TRIGGER trigger_push_tokens_updated_at
 CREATE TABLE copilot_sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     talent_id UUID NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
-    mode VARCHAR(50) NOT NULL DEFAULT 'explore' CHECK (mode IN ('explore', 'study')),
+    mode VARCHAR(50) NOT NULL DEFAULT 'explore' CHECK (mode IN ('explore')),
     title VARCHAR(255),
     context JSONB DEFAULT '{}'::jsonb,
     last_message_at TIMESTAMP WITH TIME ZONE,
@@ -1123,226 +1128,6 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trigger_update_copilot_session_timestamp
     AFTER INSERT ON copilot_messages FOR EACH ROW EXECUTE FUNCTION update_copilot_session_timestamp();
 
--- ═══════════════════════════════════════════════════════════════════════════════
--- SECTION 14: LEARNING MEMORY (Study Mode)
--- ═══════════════════════════════════════════════════════════════════════════════
-
-CREATE TABLE learning_topics (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
-    topic_name VARCHAR(255) NOT NULL,
-    topic_slug VARCHAR(255) NOT NULL,
-    parent_topic_id UUID REFERENCES learning_topics(id) ON DELETE SET NULL,
-    first_studied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    last_studied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    mastery_level INTEGER DEFAULT 0 CHECK (mastery_level >= 0 AND mastery_level <= 100),
-    total_study_time_minutes INTEGER DEFAULT 0,
-    flashcards_created INTEGER DEFAULT 0,
-    flashcards_reviewed INTEGER DEFAULT 0,
-    quizzes_taken INTEGER DEFAULT 0,
-    quizzes_passed INTEGER DEFAULT 0,
-    code_exercises_completed INTEGER DEFAULT 0,
-    videos_watched INTEGER DEFAULT 0,
-    articles_read INTEGER DEFAULT 0,
-    average_quiz_score DECIMAL(5,2),
-    best_quiz_score INTEGER,
-    current_streak_days INTEGER DEFAULT 0,
-    longest_streak_days INTEGER DEFAULT 0,
-    tags TEXT[] DEFAULT '{}',
-    notes TEXT,
-    source_document_ids UUID[] DEFAULT '{}',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(talent_id, topic_slug)
-);
-
-CREATE INDEX idx_learning_topics_talent ON learning_topics(talent_id);
-CREATE INDEX idx_learning_topics_slug ON learning_topics(talent_id, topic_slug);
-CREATE INDEX idx_learning_topics_mastery ON learning_topics(talent_id, mastery_level DESC);
-CREATE INDEX idx_learning_topics_last_studied ON learning_topics(talent_id, last_studied_at DESC);
-
-CREATE TABLE learning_flashcards (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
-    topic_id UUID REFERENCES learning_topics(id) ON DELETE CASCADE,
-    front_content TEXT NOT NULL,
-    back_content TEXT NOT NULL,
-    hint TEXT,
-    explanation TEXT,
-    tags TEXT[] DEFAULT '{}',
-    difficulty VARCHAR(20) DEFAULT 'medium' CHECK (difficulty IN ('easy', 'medium', 'hard')),
-    next_review_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    interval_days DECIMAL(10,2) DEFAULT 1,
-    ease_factor DECIMAL(4,2) DEFAULT 2.5 CHECK (ease_factor >= 1.3),
-    repetitions INTEGER DEFAULT 0,
-    lapses INTEGER DEFAULT 0,
-    last_reviewed_at TIMESTAMP WITH TIME ZONE,
-    last_quality INTEGER CHECK (last_quality >= 0 AND last_quality <= 5),
-    total_reviews INTEGER DEFAULT 0,
-    correct_reviews INTEGER DEFAULT 0,
-    source_type VARCHAR(50),
-    source_document_id UUID REFERENCES talent_documents(id) ON DELETE SET NULL,
-    copilot_session_id UUID REFERENCES copilot_sessions(id) ON DELETE SET NULL,
-    is_suspended BOOLEAN DEFAULT FALSE,
-    is_archived BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_learning_flashcards_talent ON learning_flashcards(talent_id);
-CREATE INDEX idx_learning_flashcards_topic ON learning_flashcards(topic_id);
-CREATE INDEX idx_learning_flashcards_review_queue ON learning_flashcards(talent_id, next_review_at) WHERE is_suspended = FALSE AND is_archived = FALSE;
-CREATE INDEX idx_learning_flashcards_due ON learning_flashcards(talent_id, next_review_at) WHERE is_suspended = FALSE AND is_archived = FALSE;
-
-CREATE TABLE learning_sessions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
-    topic_id UUID REFERENCES learning_topics(id) ON DELETE SET NULL,
-    copilot_session_id UUID REFERENCES copilot_sessions(id) ON DELETE SET NULL,
-    started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    ended_at TIMESTAMP WITH TIME ZONE,
-    duration_minutes INTEGER,
-    activities JSONB DEFAULT '[]'::jsonb,
-    flashcards_reviewed INTEGER DEFAULT 0,
-    flashcards_correct INTEGER DEFAULT 0,
-    quiz_questions_answered INTEGER DEFAULT 0,
-    quiz_questions_correct INTEGER DEFAULT 0,
-    code_exercises_attempted INTEGER DEFAULT 0,
-    code_exercises_passed INTEGER DEFAULT 0,
-    notes TEXT,
-    mood VARCHAR(20),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_learning_sessions_talent ON learning_sessions(talent_id);
-CREATE INDEX idx_learning_sessions_date ON learning_sessions(talent_id, started_at DESC);
-CREATE INDEX idx_learning_sessions_topic ON learning_sessions(topic_id);
-
-CREATE TABLE learning_quiz_results (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
-    topic_id UUID REFERENCES learning_topics(id) ON DELETE CASCADE,
-    session_id UUID REFERENCES learning_sessions(id) ON DELETE SET NULL,
-    copilot_session_id UUID REFERENCES copilot_sessions(id) ON DELETE SET NULL,
-    quiz_title VARCHAR(255),
-    quiz_type VARCHAR(50) DEFAULT 'adaptive',
-    difficulty VARCHAR(20),
-    questions JSONB NOT NULL,
-    total_questions INTEGER NOT NULL,
-    score INTEGER NOT NULL,
-    percentage DECIMAL(5,2) NOT NULL,
-    passed BOOLEAN NOT NULL,
-    passing_score INTEGER DEFAULT 70,
-    time_limit_seconds INTEGER,
-    time_taken_seconds INTEGER,
-    strengths TEXT[],
-    weaknesses TEXT[],
-    recommendations TEXT[],
-    completed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_learning_quiz_results_talent ON learning_quiz_results(talent_id);
-CREATE INDEX idx_learning_quiz_results_topic ON learning_quiz_results(topic_id);
-CREATE INDEX idx_learning_quiz_results_date ON learning_quiz_results(talent_id, completed_at DESC);
-
-CREATE TABLE learning_preferences (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
-    learning_style VARCHAR(50) DEFAULT 'visual' CHECK (learning_style IN ('visual', 'auditory', 'kinesthetic', 'reading')),
-    preferred_difficulty VARCHAR(20) DEFAULT 'medium' CHECK (preferred_difficulty IN ('easy', 'medium', 'hard', 'adaptive')),
-    preferred_session_length INTEGER DEFAULT 25,
-    daily_goal_minutes INTEGER DEFAULT 30,
-    weekly_goal_minutes INTEGER DEFAULT 150,
-    monthly_goal_topics INTEGER DEFAULT 4,
-    current_streak_days INTEGER DEFAULT 0,
-    longest_streak_days INTEGER DEFAULT 0,
-    last_study_date DATE,
-    total_study_time_minutes INTEGER DEFAULT 0,
-    total_topics_studied INTEGER DEFAULT 0,
-    total_flashcards_reviewed INTEGER DEFAULT 0,
-    total_quizzes_completed INTEGER DEFAULT 0,
-    average_quiz_score DECIMAL(5,2),
-    experience_points INTEGER DEFAULT 0,
-    level INTEGER DEFAULT 1,
-    achievements JSONB DEFAULT '[]'::jsonb,
-    badges JSONB DEFAULT '[]'::jsonb,
-    reminder_enabled BOOLEAN DEFAULT TRUE,
-    reminder_time TIME DEFAULT '09:00:00',
-    reminder_days INTEGER[] DEFAULT '{1,2,3,4,5}',
-    show_progress_bar BOOLEAN DEFAULT TRUE,
-    show_streak_counter BOOLEAN DEFAULT TRUE,
-    enable_sounds BOOLEAN DEFAULT TRUE,
-    dark_mode_cards BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(talent_id)
-);
-
-CREATE TABLE learning_code_exercises (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    talent_id UUID NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
-    topic_id UUID REFERENCES learning_topics(id) ON DELETE SET NULL,
-    session_id UUID REFERENCES learning_sessions(id) ON DELETE SET NULL,
-    title VARCHAR(255) NOT NULL,
-    language VARCHAR(50) NOT NULL,
-    difficulty VARCHAR(20) DEFAULT 'medium',
-    exercise_type VARCHAR(50) DEFAULT 'implement',
-    instructions TEXT NOT NULL,
-    starter_code TEXT,
-    user_solution TEXT,
-    reference_solution TEXT,
-    test_cases JSONB,
-    tests_passed INTEGER DEFAULT 0,
-    tests_total INTEGER DEFAULT 0,
-    passed BOOLEAN DEFAULT FALSE,
-    execution_time_ms INTEGER,
-    memory_used_kb INTEGER,
-    attempt_count INTEGER DEFAULT 1,
-    hints_used INTEGER DEFAULT 0,
-    started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_learning_code_exercises_talent ON learning_code_exercises(talent_id);
-CREATE INDEX idx_learning_code_exercises_topic ON learning_code_exercises(topic_id);
-CREATE INDEX idx_learning_code_exercises_language ON learning_code_exercises(talent_id, language);
-
--- Learning triggers
-CREATE OR REPLACE FUNCTION update_topic_flashcard_stats()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.last_reviewed_at IS NOT NULL AND (OLD.last_reviewed_at IS NULL OR NEW.last_reviewed_at > OLD.last_reviewed_at) THEN
-        UPDATE learning_topics SET flashcards_reviewed = flashcards_reviewed + 1, last_studied_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = NEW.topic_id;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_update_topic_flashcard_stats AFTER UPDATE ON learning_flashcards FOR EACH ROW EXECUTE FUNCTION update_topic_flashcard_stats();
-
-CREATE OR REPLACE FUNCTION update_preferences_after_session()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.ended_at IS NOT NULL AND OLD.ended_at IS NULL AND NEW.duration_minutes IS NOT NULL THEN
-        UPDATE learning_preferences SET total_study_time_minutes = total_study_time_minutes + NEW.duration_minutes, last_study_date = CURRENT_DATE, updated_at = CURRENT_TIMESTAMP WHERE talent_id = NEW.talent_id;
-        UPDATE learning_preferences SET current_streak_days = CASE WHEN last_study_date = CURRENT_DATE - INTERVAL '1 day' THEN current_streak_days + 1 WHEN last_study_date = CURRENT_DATE THEN current_streak_days ELSE 1 END, longest_streak_days = GREATEST(longest_streak_days, current_streak_days + 1) WHERE talent_id = NEW.talent_id;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_update_preferences_after_session AFTER UPDATE ON learning_sessions FOR EACH ROW EXECUTE FUNCTION update_preferences_after_session();
-
-CREATE OR REPLACE FUNCTION create_default_learning_preferences()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO learning_preferences (talent_id) VALUES (NEW.id) ON CONFLICT (talent_id) DO NOTHING;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_create_learning_preferences AFTER INSERT ON talents FOR EACH ROW EXECUTE FUNCTION create_default_learning_preferences();
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- SECTION 15: HELPER FUNCTIONS
@@ -1387,25 +1172,7 @@ BEGIN UPDATE sessions SET is_active = FALSE, revoked_reason = 'EXPIRED' WHERE ex
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION calculate_sm2_interval(p_quality INTEGER, p_repetitions INTEGER, p_ease_factor DECIMAL, p_interval DECIMAL)
-RETURNS TABLE(new_interval DECIMAL, new_ease_factor DECIMAL, new_repetitions INTEGER) AS $$
-DECLARE v_ease DECIMAL; v_interval DECIMAL; v_reps INTEGER;
-BEGIN
-    v_ease := p_ease_factor; v_interval := p_interval; v_reps := p_repetitions;
-    IF p_quality < 3 THEN v_reps := 0; v_interval := 1;
-    ELSE IF v_reps = 0 THEN v_interval := 1; ELSIF v_reps = 1 THEN v_interval := 6; ELSE v_interval := v_interval * v_ease; END IF; v_reps := v_reps + 1; END IF;
-    v_ease := v_ease + (0.1 - (5 - p_quality) * (0.08 + (5 - p_quality) * 0.02)); IF v_ease < 1.3 THEN v_ease := 1.3; END IF;
-    new_interval := v_interval; new_ease_factor := v_ease; new_repetitions := v_reps;
-    RETURN NEXT;
-END;
-$$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION get_due_flashcards(p_talent_id UUID, p_limit INTEGER DEFAULT 20, p_topic_id UUID DEFAULT NULL)
-RETURNS SETOF learning_flashcards AS $$
-BEGIN
-    RETURN QUERY SELECT * FROM learning_flashcards WHERE talent_id = p_talent_id AND next_review_at <= CURRENT_TIMESTAMP AND is_suspended = FALSE AND is_archived = FALSE AND (p_topic_id IS NULL OR topic_id = p_topic_id) ORDER BY next_review_at ASC LIMIT p_limit;
-END;
-$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION get_talent_document_count(p_talent_id UUID) RETURNS INTEGER AS $$
 DECLARE doc_count INTEGER;

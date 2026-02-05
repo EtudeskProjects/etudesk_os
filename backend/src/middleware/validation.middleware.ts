@@ -128,7 +128,17 @@ const baseOpportunitySchema = z.object({
   status: z.enum(['DRAFT', 'OPEN', 'PAUSED', 'FILLED', 'EXPIRED']).optional(),
   cv_required: z.boolean().optional(),
   application_questions: z.array(customQuestionSchema).max(10, 'Maximum 10 questions personnalisées').optional(),
-  organization_id: z.string().uuid('ID d\'organisation invalide').optional()
+  organization_id: z.string().uuid('ID d\'organisation invalide').optional(),
+  visibility: z.enum(['PUBLIC', 'PRIVATE']).optional(),
+  // Media (illustrations et pièces jointes)
+  cover_image_url: z.string().max(2000).optional(),
+  images: z.array(z.string().max(2000)).max(20).optional(),
+  attachments: z.array(z.object({
+    name: z.string().max(255),
+    url: z.string().max(2000),
+    type: z.string().max(100).optional(),
+    size: z.number().int().min(0).optional(),
+  })).max(20).optional(),
 });
 
 // Compensation refinement function

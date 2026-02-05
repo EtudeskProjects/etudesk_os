@@ -5,7 +5,7 @@
 
 import { Router, Response } from 'express';
 import { pool } from '../../services/database';
-import { authMiddleware, AuthRequest } from '../../middleware/auth.middleware';
+import { authMiddleware, optionalAuthMiddleware, AuthRequest } from '../../middleware/auth.middleware';
 import {
   getPaginationParams,
   handleRouteError,
@@ -19,30 +19,74 @@ type QueryParam = string | number | boolean | null | Date;
 /**
  * GET /api/organizations - List all organizations
  */
-router.get('/', async (req, res) => {
+router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { type, country } = req.query;
+    const { type, country, search } = req.query;
     const pagination = getPaginationParams(req);
+    const talentId = req.talentId;
+
+    // Get user profile for matching
+    let userProfile: any = null;
+
+    if (talentId) {
+      const userResult = await pool.query(`
+        SELECT id, email, city, region, country, remote_ready, willing_to_relocate,
+          sectors, profile_tags, goals, bio
+        FROM talents 
+        WHERE id = $1
+      `, [talentId]);
+
+      if (userResult.rows.length > 0) {
+        userProfile = userResult.rows[0];
+      }
+    }
+
+    const { MatchingUtils } = await import('../../utils/MatchingUtils');
+    // Build matching criteria
+    const criteria = {
+      city: userProfile?.city,
+      region: userProfile?.region,
+      country: userProfile?.country,
+      remote: userProfile?.remote_ready,
+      sectors: userProfile?.sectors || [],
+      query: (search as string) || undefined
+    };
+
+    const matchScore = MatchingUtils.buildMatchScore('org', criteria);
+
+    // Filter invisible organizations unless searching specifically or direct access?
+    // User requirement: "si c'est false, le copilote ne peut que voir les talents et organsations is visible a true"
+    // Assuming for general listing we also hide them.
 
     let query = `
-      SELECT o.*,
-        (SELECT COUNT(*) FROM organization_members WHERE organization_id = o.id) as member_count
-      FROM organizations o
-      WHERE o.deleted_at IS NULL
+      SELECT org.*,
+        (SELECT COUNT(*) FROM organization_members WHERE organization_id = org.id) as member_count,
+        ${matchScore} as match_score
+      FROM organizations org
+      WHERE org.deleted_at IS NULL
+      AND org.is_visible = TRUE
     `;
+
     const params: QueryParam[] = [];
     let paramIndex = 1;
 
     if (type) {
-      query += ` AND $${paramIndex++} = ANY(o.types)`;
+      query += ` AND $${paramIndex++} = ANY(org.types)`;
       params.push(type as string);
     }
     if (country) {
-      query += ` AND o.headquarters_country = $${paramIndex++}`;
+      query += ` AND org.headquarters_country = $${paramIndex++}`;
       params.push(country as string);
     }
 
-    query += ` ORDER BY o.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    if (search) {
+      query += ` AND (org.name ILIKE $${paramIndex} OR org.description ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    // Sort by Match Score, then Recency
+    query += ` ORDER BY match_score DESC, org.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(pagination.limit, pagination.offset);
 
     const result = await pool.query(query, params);

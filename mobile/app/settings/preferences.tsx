@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     View,
     Text,
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    useColorScheme,
     ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,25 +24,44 @@ import {
     Briefcase,
     Calendar,
     Smartphone,
+    BookOpen,
+    Brain,
+    Layers,
+    Gauge,
+    Headphones,
+    FileText,
+    MousePointer2,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, ThemeMode } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
+import { STORAGE_KEYS } from '../../src/constants/config';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useNotifications, NotificationPreferences } from '../../src/hooks/useNotifications';
 import { Toggle } from '../../src/components/ui';
 import { Language } from '../../src/i18n';
+import { talentService } from '../../src/services/talentService';
+import {
+    LEARNING_STYLE_DATA,
+    LEARNING_INTERACTION_DATA,
+    LEARNING_DEPTH_DATA,
+    LEARNING_DIFFICULTY_DATA,
+} from '../../src/constants/talent';
+import { LearningPreference } from '../../src/types/models';
 
-type ThemePreference = 'light' | 'dark' | 'system';
+import type { ThemePreference } from '../../src/contexts/ThemeContext';
+
+const DEFAULT_LEARNING_PREFS: LearningPreference = {
+    style: 'TEXT_BASED',
+    interaction: 'SOCRATIC',
+    depth: 'BALANCED',
+    difficulty: 'STANDARD',
+};
 
 export default function PreferencesScreen() {
     const router = useRouter();
-    const { colors, mode, setTheme, isDark } = useTheme();
+    const { colors, themePreference, setTheme } = useTheme();
     const { language, setLanguage, t } = useI18n();
-    const systemColorScheme = useColorScheme();
     const { preferences, updatePreferences, fetchPreferences } = useNotifications();
-
-    // Theme preference (includes 'system' option)
-    const [themePreference, setThemePreference] = useState<ThemePreference>('system');
 
     // Local notification preferences state
     const [localPrefs, setLocalPrefs] = useState<NotificationPreferences>({
@@ -56,21 +76,70 @@ export default function PreferencesScreen() {
 
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
 
-    // Privacy settings (local only for now)
+    const [learningPrefs, setLearningPrefs] = useState<LearningPreference>({ ...DEFAULT_LEARNING_PREFS });
+
+    // Privacy settings (persisted locally to AsyncStorage)
     const [profilePublic, setProfilePublic] = useState(true);
     const [showEmail, setShowEmail] = useState(false);
     const [showPhone, setShowPhone] = useState(false);
 
-    // Load preferences from server
-    useEffect(() => {
-        const loadPreferences = async () => {
-            setIsLoading(true);
+    const setProfilePublicAndSave = useCallback((value: boolean) => {
+        setProfilePublic(value);
+        AsyncStorage.setItem(
+            STORAGE_KEYS.PRIVACY_PREFERENCES,
+            JSON.stringify({ profilePublic: value, showEmail, showPhone })
+        ).catch(() => { });
+    }, [showEmail, showPhone]);
+    const setShowEmailAndSave = useCallback((value: boolean) => {
+        setShowEmail(value);
+        AsyncStorage.setItem(
+            STORAGE_KEYS.PRIVACY_PREFERENCES,
+            JSON.stringify({ profilePublic, showEmail: value, showPhone })
+        ).catch(() => { });
+    }, [profilePublic, showPhone]);
+    const setShowPhoneAndSave = useCallback((value: boolean) => {
+        setShowPhone(value);
+        AsyncStorage.setItem(
+            STORAGE_KEYS.PRIVACY_PREFERENCES,
+            JSON.stringify({ profilePublic, showEmail, showPhone: value })
+        ).catch(() => { });
+    }, [profilePublic, showEmail]);
+
+    const loadPreferences = useCallback(async () => {
+        setIsLoading(true);
+        setLoadError(false);
+        try {
             await fetchPreferences();
+            const talentResponse = await talentService.getMyProfile();
+            setLearningPrefs(prev => ({
+                ...DEFAULT_LEARNING_PREFS,
+                ...prev,
+                ...talentResponse.data?.learning_preferences,
+            }));
+            const storedPrivacy = await AsyncStorage.getItem(STORAGE_KEYS.PRIVACY_PREFERENCES);
+            if (storedPrivacy) {
+                try {
+                    const parsed = JSON.parse(storedPrivacy);
+                    if (typeof parsed.profilePublic === 'boolean') setProfilePublic(parsed.profilePublic);
+                    if (typeof parsed.showEmail === 'boolean') setShowEmail(parsed.showEmail);
+                    if (typeof parsed.showPhone === 'boolean') setShowPhone(parsed.showPhone);
+                } catch {
+                    // ignore invalid JSON
+                }
+            }
+        } catch (error) {
+            console.error('Error loading preferences:', error);
+            setLoadError(true);
+        } finally {
             setIsLoading(false);
-        };
+        }
+    }, [fetchPreferences]);
+
+    useEffect(() => {
         loadPreferences();
-    }, []);
+    }, [loadPreferences]);
 
     // Sync server preferences to local state
     useEffect(() => {
@@ -95,20 +164,34 @@ export default function PreferencesScreen() {
         }
     };
 
-    // Handle theme preference change
+    // Handle theme preference change (context persists to AsyncStorage)
     const handleThemeChange = (preference: ThemePreference) => {
-        setThemePreference(preference);
-        if (preference === 'system') {
-            const systemMode: ThemeMode = systemColorScheme === 'dark' ? 'dark' : 'light';
-            setTheme(systemMode);
-        } else {
-            setTheme(preference as ThemeMode);
-        }
+        setTheme(preference);
     };
 
     // Handle language change
     const handleLanguageChange = (lang: Language) => {
         setLanguage(lang);
+    };
+
+    // Handle learning preference change
+    const handleLearningPreferenceChange = async (key: keyof LearningPreference, value: string) => {
+        const previousPrefs = learningPrefs;
+        const newPrefs = { ...learningPrefs, [key]: value };
+        setLearningPrefs(newPrefs);
+
+        setIsSaving(true);
+        try {
+            await talentService.updateMyProfile({
+                learning_preferences: newPrefs as any,
+            });
+        } catch (error) {
+            console.error('Error saving learning preference:', error);
+            setLearningPrefs(previousPrefs);
+            Alert.alert(t('common.error'), t('preferences.learningSaveError'), [{ text: t('common.confirm') }]);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const THEME_OPTIONS: { id: ThemePreference; labelKey: string; icon: any }[] = [
@@ -172,6 +255,29 @@ export default function PreferencesScreen() {
         );
     }
 
+    if (loadError) {
+        return (
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
+                    </TouchableOpacity>
+                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('preferences.title')}</Text>
+                    <View style={styles.headerSpacer} />
+                </View>
+                <View style={styles.loadingContainer}>
+                    <Text style={[styles.errorText, { color: colors.textSecondary }]}>{t('preferences.loadError')}</Text>
+                    <TouchableOpacity
+                        style={[styles.retryButton, { backgroundColor: colors.primary }]}
+                        onPress={() => loadPreferences()}
+                    >
+                        <Text style={[styles.retryButtonText, { color: colors.textOnPrimary }]}>{t('preferences.retry')}</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
             {/* Header */}
@@ -194,10 +300,10 @@ export default function PreferencesScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {/* Appearance Section */}
-                {renderSection(
+                {/* Appearance Section - HIDDEN as per user request (Dark mode disabled) */}
+                {/* {renderSection(
                     t('preferences.display'),
                     <>
-                        {/* Theme */}
                         <View style={styles.settingItem}>
                             <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{t('preferences.theme')}</Text>
                         </View>
@@ -234,7 +340,7 @@ export default function PreferencesScreen() {
                             })}
                         </View>
                     </>
-                )}
+                )} */}
 
                 {/* Language Section */}
                 {renderSection(
@@ -278,7 +384,7 @@ export default function PreferencesScreen() {
 
                 {/* Notification Channels Section */}
                 {renderSection(
-                    language === 'fr' ? 'Canaux de notification' : 'Notification Channels',
+                    t('preferences.notificationChannels'),
                     <>
                         {renderSwitchItem(
                             <Smartphone size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />,
@@ -300,7 +406,7 @@ export default function PreferencesScreen() {
 
                 {/* Notification Types Section */}
                 {renderSection(
-                    language === 'fr' ? 'Types de notifications' : 'Notification Types',
+                    t('preferences.notificationTypes'),
                     <>
                         {renderSwitchItem(
                             <Briefcase size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />,
@@ -322,8 +428,8 @@ export default function PreferencesScreen() {
                         <View style={[styles.divider, { backgroundColor: colors.borderColor }]} />
                         {renderSwitchItem(
                             <Bell size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />,
-                            language === 'fr' ? 'Candidatures' : 'Applications',
-                            language === 'fr' ? 'Mises à jour de vos candidatures' : 'Updates on your applications',
+                            t('preferences.applications'),
+                            t('preferences.applicationsDesc'),
                             localPrefs.notify_applications,
                             (value) => handlePreferenceChange('notify_applications', value),
                             !localPrefs.push_enabled && !localPrefs.email_enabled
@@ -331,8 +437,8 @@ export default function PreferencesScreen() {
                         <View style={[styles.divider, { backgroundColor: colors.borderColor }]} />
                         {renderSwitchItem(
                             <Calendar size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />,
-                            language === 'fr' ? 'Rappels' : 'Reminders',
-                            language === 'fr' ? 'Rappels d\'événements et échéances' : 'Event and deadline reminders',
+                            t('preferences.reminders'),
+                            t('preferences.remindersDesc'),
                             localPrefs.notify_reminders,
                             (value) => handlePreferenceChange('notify_reminders', value),
                             !localPrefs.push_enabled && !localPrefs.email_enabled
@@ -340,32 +446,210 @@ export default function PreferencesScreen() {
                     </>
                 )}
 
+                {/* Learning Preferences Section */}
+                {renderSection(
+                    t('preferences.learningPreferences'),
+                    <>
+                        {/* Learning Style */}
+                        <View style={styles.settingItem}>
+                            <View style={styles.settingInfo}>
+                                <Eye size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
+                                <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
+                                    {t('preferences.learningStyle')}
+                                </Text>
+                            </View>
+                        </View>
+                        <View style={styles.optionsRow}>
+                            {LEARNING_STYLE_DATA.map((option) => {
+                                let Icon;
+                                switch (option.id) {
+                                    case 'VISUAL': Icon = Eye; break;
+                                    case 'AUDITORY': Icon = Headphones; break;
+                                    case 'TEXT_BASED': Icon = FileText; break;
+                                    case 'INTERACTIVE': Icon = MousePointer2; break;
+                                    default: Icon = BookOpen;
+                                }
+                                const isSelected = learningPrefs.style === option.id;
+                                return (
+                                    <TouchableOpacity
+                                        key={option.id}
+                                        style={[
+                                            styles.optionButton,
+                                            { backgroundColor: colors.gray100, borderColor: colors.borderColor },
+                                            isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+                                        ]}
+                                        onPress={() => handleLearningPreferenceChange('style', option.id)}
+                                    >
+                                        <Icon
+                                            size={ICON.size.sm}
+                                            color={isSelected ? colors.textOnPrimary : colors.gray600}
+                                            strokeWidth={ICON.strokeWidth}
+                                        />
+                                        <Text
+                                            style={[
+                                                styles.optionButtonText,
+                                                { color: colors.textSecondary },
+                                                isSelected && { color: colors.textOnPrimary },
+                                            ]}
+                                        >
+                                            {language === 'fr' ? option.label : option.id}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+
+                        <View style={[styles.divider, { backgroundColor: colors.borderColor }]} />
+
+                        {/* Interaction Mode */}
+                        <View style={styles.settingItem}>
+                            <View style={styles.settingInfo}>
+                                <Brain size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
+                                <View style={styles.settingTextContainer}>
+                                    <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
+                                        {t('preferences.interactionMode')}
+                                    </Text>
+                                    <Text style={[styles.settingDescription, { color: colors.gray500 }]}>
+                                        {learningPrefs.interaction === 'SOCRATIC'
+                                            ? t('preferences.interactionSocratic')
+                                            : learningPrefs.interaction === 'DIRECT'
+                                                ? t('preferences.interactionDirect')
+                                                : t('preferences.interactionExploratory')}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                        <View style={styles.optionsRow}>
+                            {LEARNING_INTERACTION_DATA.map((option) => {
+                                const isSelected = learningPrefs.interaction === option.id;
+                                return (
+                                    <TouchableOpacity
+                                        key={option.id}
+                                        style={[
+                                            styles.optionButton,
+                                            { backgroundColor: colors.gray100, borderColor: colors.borderColor },
+                                            isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+                                        ]}
+                                        onPress={() => handleLearningPreferenceChange('interaction', option.id)}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.optionButtonText,
+                                                { color: colors.textSecondary },
+                                                isSelected && { color: colors.textOnPrimary },
+                                            ]}
+                                        >
+                                            {language === 'fr' ? option.label : option.id}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+
+                        <View style={[styles.divider, { backgroundColor: colors.borderColor }]} />
+
+                        {/* Content Depth */}
+                        <View style={styles.settingItem}>
+                            <View style={styles.settingInfo}>
+                                <Layers size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
+                                <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
+                                    {t('preferences.contentDepth')}
+                                </Text>
+                            </View>
+                        </View>
+                        <View style={styles.optionsRow}>
+                            {LEARNING_DEPTH_DATA.map((option) => {
+                                const isSelected = learningPrefs.depth === option.id;
+                                return (
+                                    <TouchableOpacity
+                                        key={option.id}
+                                        style={[
+                                            styles.optionButton,
+                                            { backgroundColor: colors.gray100, borderColor: colors.borderColor },
+                                            isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+                                        ]}
+                                        onPress={() => handleLearningPreferenceChange('depth', option.id)}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.optionButtonText,
+                                                { color: colors.textSecondary },
+                                                isSelected && { color: colors.textOnPrimary },
+                                            ]}
+                                        >
+                                            {language === 'fr' ? option.label : option.id}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+
+                        <View style={[styles.divider, { backgroundColor: colors.borderColor }]} />
+
+                        {/* Difficulty */}
+                        <View style={styles.settingItem}>
+                            <View style={styles.settingInfo}>
+                                <Gauge size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
+                                <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
+                                    {t('preferences.difficultyLevel')}
+                                </Text>
+                            </View>
+                        </View>
+                        <View style={styles.optionsRow}>
+                            {LEARNING_DIFFICULTY_DATA.map((option) => {
+                                const isSelected = learningPrefs.difficulty === option.id;
+                                return (
+                                    <TouchableOpacity
+                                        key={option.id}
+                                        style={[
+                                            styles.optionButton,
+                                            { backgroundColor: colors.gray100, borderColor: colors.borderColor },
+                                            isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+                                        ]}
+                                        onPress={() => handleLearningPreferenceChange('difficulty', option.id)}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.optionButtonText,
+                                                { color: colors.textSecondary },
+                                                isSelected && { color: colors.textOnPrimary },
+                                            ]}
+                                        >
+                                            {language === 'fr' ? option.label : option.id}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </>
+                )}
+
                 {/* Privacy Section */}
                 {renderSection(
-                    language === 'fr' ? 'Confidentialité' : 'Privacy',
+                    t('preferences.privacy'),
                     <>
                         {renderSwitchItem(
                             <Eye size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />,
-                            language === 'fr' ? 'Profil public' : 'Public Profile',
-                            language === 'fr' ? 'Votre profil est visible par tous' : 'Your profile is visible to everyone',
+                            t('preferences.publicProfile'),
+                            t('preferences.publicProfileDesc'),
                             profilePublic,
-                            setProfilePublic
+                            setProfilePublicAndSave
                         )}
                         <View style={[styles.divider, { backgroundColor: colors.borderColor }]} />
                         {renderSwitchItem(
                             <Mail size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />,
-                            language === 'fr' ? 'Afficher mon email' : 'Show my email',
-                            language === 'fr' ? 'Visible sur votre profil public' : 'Visible on your public profile',
+                            t('preferences.showEmail'),
+                            t('preferences.showEmailDesc'),
                             showEmail,
-                            setShowEmail
+                            setShowEmailAndSave
                         )}
                         <View style={[styles.divider, { backgroundColor: colors.borderColor }]} />
                         {renderSwitchItem(
                             <MessageSquare size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />,
-                            language === 'fr' ? 'Afficher mon téléphone' : 'Show my phone',
-                            language === 'fr' ? 'Visible sur votre profil public' : 'Visible on your public profile',
+                            t('preferences.showPhone'),
+                            t('preferences.showPhoneDesc'),
                             showPhone,
-                            setShowPhone
+                            setShowPhoneAndSave
                         )}
                     </>
                 )}
@@ -418,6 +702,24 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+
+    errorText: {
+        fontSize: TYPOGRAPHY.fontSize.md,
+        textAlign: 'center',
+        marginBottom: SPACING.lg,
+        paddingHorizontal: SPACING.xl,
+    },
+
+    retryButton: {
+        paddingHorizontal: SPACING.xl,
+        paddingVertical: SPACING.md,
+        borderRadius: BORDER.radius.md,
+    },
+
+    retryButtonText: {
+        fontSize: TYPOGRAPHY.fontSize.md,
+        fontWeight: TYPOGRAPHY.fontWeight.semibold,
     },
 
     scrollView: {

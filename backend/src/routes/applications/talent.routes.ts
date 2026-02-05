@@ -84,7 +84,7 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
     const result = await pool.query(`
       INSERT INTO opportunity_applications (
         id, talent_id, opportunity_id, cover_letter, custom_answers, cv_url, status, applied_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, 'SUBMITTED', NOW())
       RETURNING *
     `, [id, talentId, opportunity_id, cover_letter || null, applicationAnswers ? JSON.stringify(applicationAnswers) : null, resume_url || null]);
 

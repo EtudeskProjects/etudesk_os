@@ -272,7 +272,7 @@ export default function CreateOrganizationScreen() {
             onPress={pickLogo}
           >
             {logoUri ? (
-              <Image source={{ uri: logoUri }} style={styles.logoImage} />
+              <Image source={{ uri: logoUri }} style={styles.logoImage} resizeMode="cover" />
             ) : (
               <Camera size={ICON.size.lg} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
             )}

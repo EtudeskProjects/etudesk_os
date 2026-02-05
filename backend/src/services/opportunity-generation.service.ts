@@ -178,7 +178,7 @@ const OPPORTUNITY_SCHEMA = {
 async function getOrganizationContext(organizationId: string): Promise<OrganizationContext | null> {
   try {
     const result = await pool.query(
-      `SELECT name, types, sectors, size, description,
+      `SELECT name, types, sectors, description,
               headquarters_city, headquarters_region, headquarters_country,
               culture_summary
        FROM organizations

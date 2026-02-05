@@ -44,7 +44,6 @@ interface OrganizationContext {
   name: string;
   types?: string[];
   sectors?: string[];
-  size?: string;
   description?: string;
   headquarters_city?: string;
   headquarters_region?: string;
@@ -59,7 +58,7 @@ interface OrganizationContext {
 async function getOrganizationContext(organizationId: string): Promise<OrganizationContext | null> {
   try {
     const result = await pool.query(
-      `SELECT name, types, sectors, size, description,
+      `SELECT name, types, sectors, description,
               headquarters_city, headquarters_region, headquarters_country,
               culture_summary
        FROM organizations

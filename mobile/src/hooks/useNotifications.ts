@@ -63,7 +63,13 @@ export function useNotifications() {
     if (finalStatus !== 'granted') return null;
 
     try {
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+      const projectId =
+        Constants.expoConfig?.extra?.eas?.projectId ??
+        (Constants as any).easConfig?.projectId;
+      if (!projectId) {
+        console.warn('Push notifications: no projectId found — skipping token registration');
+        return null;
+      }
       const token = await Notifications.getExpoPushTokenAsync({ projectId });
 
       if (Platform.OS === 'android') {

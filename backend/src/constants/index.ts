@@ -142,3 +142,14 @@ export const ORGANIZATION_ROLE = {
   MANAGER: 'MANAGER',
   MEMBER: 'MEMBER',
 } as const;
+
+// ═══════════════════════════════════════════════════════════════
+// LEARNING PREFERENCES (Study Mode Analysis)
+// ═══════════════════════════════════════════════════════════════
+
+export const LEARNING_PREFERENCES = {
+  STYLE: ['VISUAL', 'AUDITORY', 'TEXT_BASED', 'INTERACTIVE'],
+  INTERACTION: ['SOCRATIC', 'DIRECT', 'EXPLORATORY'],
+  DEPTH: ['THEORETICAL', 'PRACTICAL', 'BALANCED'],
+  DIFFICULTY: ['GENTLE', 'STANDARD', 'CHALLENGING'],
+} as const;

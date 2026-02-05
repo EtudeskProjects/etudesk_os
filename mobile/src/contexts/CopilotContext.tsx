@@ -12,8 +12,6 @@ import {
   CopilotSession,
   SessionSummary,
   ChatResponse,
-  CopilotOutputData,
-  OutputType,
 } from '../services/copilotService';
 import { logger } from '../services/logService';
 
@@ -36,7 +34,7 @@ export interface CopilotState {
 interface CopilotContextType extends CopilotState {
   // Actions
   setMode: (mode: CopilotMode) => void;
-  sendMessage: (message: string) => Promise<CopilotMessage | null>;
+  sendMessage: (message: string, attachments?: any[]) => Promise<CopilotMessage | null>;
   loadSession: (sessionId: string) => Promise<void>;
   startNewSession: () => void;
   loadSessions: () => Promise<void>;
@@ -91,16 +89,32 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
   // SEND MESSAGE
   // ─────────────────────────────────────────────────────────────
   const sendMessage = useCallback(
-    async (message: string): Promise<CopilotMessage | null> => {
+    async (message: string, attachments?: any[]): Promise<CopilotMessage | null> => {
       setState((prev) => ({ ...prev, isSending: true, error: null }));
 
       try {
-        // Add optimistic user message
+        let attachmentIds: string[] = [];
+
+        // 1. Upload attachments if present
+        if (attachments && attachments.length > 0) {
+          const uploadRes = await copilotService.uploadAttachments(
+            attachments.map((a) => ({ uri: a.uri, type: a.type, name: a.name }))
+          );
+
+          if (!uploadRes.success || !uploadRes.data?.documents) {
+            throw new Error(uploadRes.error || "Erreur lors de l'upload des pièces jointes");
+          }
+
+          attachmentIds = uploadRes.data.documents.map((doc) => doc.id);
+        }
+
+        // 2. Add optimistic user message
         const userMessage: CopilotMessage = {
           id: `temp-${Date.now()}`,
           sessionId: state.sessionId || '',
           role: 'user',
           content: message,
+          attachments: attachments, // Show local attachments optimistically
           createdAt: new Date().toISOString(),
         };
 
@@ -109,17 +123,22 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
           messages: [...prev.messages, userMessage],
         }));
 
-        // Send to API
-        const response = await copilotService.sendMessage(message, state.mode, state.sessionId || undefined);
+        // 3. Send to API with attachment IDs
+        const response = await copilotService.sendMessage(
+          message,
+          state.mode,
+          state.sessionId || undefined,
+          attachmentIds.length > 0 ? attachmentIds : undefined
+        );
 
         if (response.error || !response.data?.data) {
-          throw new Error(response.error || 'Erreur lors de l\'envoi du message');
+          throw new Error(response.error || "Erreur lors de l'envoi du message");
         }
 
         const chatResponse = response.data.data as ChatResponse;
         const assistantMessage = chatResponse.message;
 
-        // Update state with real messages
+        // 4. Update state with real messages
         setState((prev) => {
           // Replace temp user message and add assistant response
           const messagesWithoutTemp = prev.messages.filter((m) => !m.id.startsWith('temp-'));
@@ -129,6 +148,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
             ...userMessage,
             id: `user-${Date.now()}`,
             sessionId: chatResponse.sessionId,
+            attachments: assistantMessage.attachments, // Use persisted attachments
           };
 
           return {
@@ -141,7 +161,6 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
 
         logger.debug(LOG_SOURCE, 'Message sent successfully', {
           sessionId: chatResponse.sessionId,
-          outputType: assistantMessage.outputType,
         });
 
         return assistantMessage;
@@ -301,4 +320,4 @@ export function useCopilot(): CopilotContextType {
 }
 
 // Re-export types for convenience
-export { COPILOT_MODES, type CopilotMode, type CopilotMessage, type CopilotOutputData, type OutputType };
+export { COPILOT_MODES, type CopilotMode, type CopilotMessage };

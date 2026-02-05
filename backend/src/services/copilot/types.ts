@@ -1,64 +1,18 @@
 /**
  * Copilot — Shared Types
- * OpenAI Agents SDK + GPT-5 + SSE Streaming
+ * OpenAI Agents SDK + GPT-4.1 + SSE Streaming
  */
 
 // ═══════════════════════════════════════════════════════════════
 // CONTEXT TYPES
 // ═══════════════════════════════════════════════════════════════
 
-export interface TalentContext {
+import { TalentContext as BaseTalentContext } from './context';
+
+export interface TalentContext extends BaseTalentContext {
   talentId: string;
   talentName: string;
   vectorStoreId?: string;
-  profile: {
-    firstName: string;
-    lastName: string;
-    city?: string;
-    country?: string;
-    remotePreference?: string;
-    skills: Array<{ name: string; level?: string }>;
-    languages: Array<{ language: string; level: string }>;
-  };
-  documents?: {
-    totalCount: number;
-    hasCV: boolean;
-    hasDiplomas: boolean;
-  };
-  applications?: {
-    totalCount: number;
-    activeCount: number;
-  };
-  memberships?: {
-    totalCount: number;
-  };
-  reservations?: {
-    totalCount: number;
-    upcomingCount: number;
-  };
-  invitations?: {
-    pendingCount: number;
-  };
-  organizations?: {
-    isOrgAdmin: boolean;
-    adminOfCount: number;
-    organizations: Array<{
-      organizationId: string;
-      organizationName: string;
-      role: string;
-    }>;
-  };
-  learning?: {
-    totalTopics: number;
-    totalFlashcards: number;
-    dueFlashcards: number;
-    streakDays: number;
-  };
-  graph?: {
-    isGraphAvailable: boolean;
-    skillGaps?: Array<{ skillName: string; priority: string }>;
-    suggestedSkills?: Array<{ skillName: string; reason: string }>;
-  };
 }
 
 export interface OrgContext {
@@ -68,6 +22,27 @@ export interface OrgContext {
   organizationId: string;
   organizationName: string;
   role: string;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MESSAGE SEGMENTS (ordered text/tool blocks for inline rendering)
+// ═══════════════════════════════════════════════════════════════
+
+export interface ToolSegmentData {
+  callId: string;
+  name: string;
+  args?: Record<string, unknown>;
+  result?: unknown;
+  summary?: string;
+  duration?: number;
+  status: 'running' | 'success' | 'error';
+  error?: string;
+}
+
+export interface MessageSegment {
+  type: 'text' | 'tool';
+  content?: string;
+  tool?: ToolSegmentData;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -82,6 +57,7 @@ export interface SSETextDeltaEvent {
 export interface SSEToolStartEvent {
   type: 'tool_start';
   tool: {
+    callId: string;
     name: string;
     args?: Record<string, unknown>;
   };
@@ -90,9 +66,13 @@ export interface SSEToolStartEvent {
 export interface SSEToolEndEvent {
   type: 'tool_end';
   tool: {
+    callId: string;
     name: string;
+    summary?: string;
     result?: unknown;
     duration?: number;
+    status: 'success' | 'error';
+    error?: string;
   };
 }
 
@@ -106,12 +86,19 @@ export interface SSEErrorEvent {
   error: string;
 }
 
+export interface SSELimitReachedEvent {
+  type: 'limit_reached';
+  reason: 'max_tools' | 'max_duration';
+  message: string;
+}
+
 export type SSEEvent =
   | SSETextDeltaEvent
   | SSEToolStartEvent
   | SSEToolEndEvent
   | SSEDoneEvent
-  | SSEErrorEvent;
+  | SSEErrorEvent
+  | SSELimitReachedEvent;
 
 // ═══════════════════════════════════════════════════════════════
 // TOOL CONTEXT (passed to tool execute functions)

@@ -680,8 +680,8 @@ async function sendApplicationStatusEmail(
   const applicationLink = `${APP_URL}/my-applications/${applicationId}`;
   const statusColor = status === 'ACCEPTED' ? '#10B981'
     : status === 'REJECTED' ? '#EF4444'
-    : status === 'IN_REVIEW' ? '#3B82F6'
-    : BRAND_BLUE;
+      : status === 'IN_REVIEW' ? '#3B82F6'
+        : BRAND_BLUE;
 
   const html = `
 <!DOCTYPE html>
@@ -692,7 +692,7 @@ async function sendApplicationStatusEmail(
     <tr>
       <td align="center" style="padding:40px 20px;">
         <table style="width:100%;max-width:500px;border-collapse:collapse;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
+          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
           <tr>
             <td style="padding:20px 40px;">
               <p style="margin:0 0 20px;font-size:16px;color:#4a4a4a;">Bonjour ${talentName},</p>
@@ -742,7 +742,7 @@ async function sendNewMessageEmail(
     <tr>
       <td align="center" style="padding:40px 20px;">
         <table style="width:100%;max-width:500px;border-collapse:collapse;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
+          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
           <tr>
             <td style="padding:20px 40px;">
               <p style="margin:0 0 20px;font-size:16px;color:#4a4a4a;">Bonjour ${talentName},</p>
@@ -790,7 +790,7 @@ async function sendNewApplicationEmail(
     <tr>
       <td align="center" style="padding:40px 20px;">
         <table style="width:100%;max-width:500px;border-collapse:collapse;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
+          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
           <tr>
             <td style="padding:20px 40px;">
               <p style="margin:0 0 20px;font-size:16px;color:#4a4a4a;">Bonjour ${memberName},</p>
@@ -844,7 +844,7 @@ async function sendInterviewScheduledEmail(
     <tr>
       <td align="center" style="padding:40px 20px;">
         <table style="width:100%;max-width:500px;border-collapse:collapse;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="https://etudesk.com/etudesk_logo_blue.png" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
+          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
           <tr>
             <td style="padding:20px 40px;">
               <p style="margin:0 0 20px;font-size:16px;color:#4a4a4a;">Bonjour ${talentName},</p>

@@ -13,8 +13,8 @@ import membersRoutes from './members.routes';
 const router = Router();
 
 // Mount sub-routers
+router.use('/', membersRoutes); // Must be first to handle specific paths like /memberships/me
 router.use('/', readRoutes);
 router.use('/', writeRoutes);
-router.use('/', membersRoutes);
 
 export default router;

@@ -6,11 +6,16 @@
 import { Response } from 'express';
 import { run } from '@openai/agents';
 import type { Agent, AgentInputItem } from '@openai/agents';
-import { SSEEvent } from '../types';
+import { SSEEvent, MessageSegment } from '../types';
 import { createTitleAgent, createSuggestionsAgent } from '../../ai/agent-factory';
 import { buildSuggestionsSystemPrompt } from '../../ai/prompts/session-utils.prompt';
+import { generateToolSummary } from './tool-summary';
+import { getFileBuffer } from '../../storage.service';
 
 import { logger } from '../../../utils';
+
+const MAX_TOOL_CALLS = 12;
+const MAX_TURN_DURATION_MS = 120_000; // 2 minutes
 /**
  * Initialize SSE headers on the response
  */
@@ -31,29 +36,101 @@ export function sendSSE(res: Response, event: SSEEvent): void {
 
 /**
  * Run an agent with SSE streaming
- * Returns the final output text for DB persistence
+ * Returns the final output text, tool trace, and ordered segments for DB persistence
  */
 export async function runAgentWithSSE(
   agent: Agent,
   message: string,
   history: Array<{ role: string; content: string }>,
-  res: Response
+  res: Response,
+  attachments?: Array<{ id: string; name: string; url: string; type: string; size?: number }>
 ): Promise<{
   finalOutput: string;
   toolTrace: Array<{ name: string; args?: any; result?: any; duration?: number }>;
+  segments: MessageSegment[];
 }> {
   const toolTrace: Array<{ name: string; args?: any; result?: any; duration?: number }> = [];
+  const segments: MessageSegment[] = [];
   let finalOutput = '';
   const toolStartTimes = new Map<string, number>();
+  let toolCallCounter = 0;
+  const turnStart = Date.now();
+  let limitReached = false;
 
   try {
-    // Build input: just pass the current message as string
-    // History is handled by the agent's conversation context
-    const input = message;
+    // Build input with history + attachment context
+    const inputItems: AgentInputItem[] = [];
 
+    // Add conversation history
+    for (const h of history) {
+      if (h.role === 'user') {
+        inputItems.push({ role: 'user', content: h.content });
+      } else if (h.role === 'assistant') {
+        inputItems.push({
+          role: 'assistant',
+          status: 'completed',
+          content: [{ type: 'output_text', text: h.content }],
+        } as AgentInputItem);
+      }
+    }
+
+    // Separate image attachments (vision) from document attachments (FileReaderAgent)
+    const imageAttachments = attachments?.filter((a) => a.type.startsWith('image/')) || [];
+    const docAttachments = attachments?.filter((a) => !a.type.startsWith('image/')) || [];
+
+    let userMessage = message;
+
+    // For documents (PDFs, etc.) → FileReaderAgent with documentId
+    if (docAttachments.length > 0) {
+      const docList = docAttachments
+        .map((a) => `- ${a.name} (${a.type}) [documentId: ${a.id}]`)
+        .join('\n');
+      userMessage += `\n\n[Pièces jointes — Documents]\n${docList}\nIMPORTANT: Hand off to FileReaderAgent with the documentId above to read and analyze each attached document.`;
+    }
+
+    // For images → include as vision content parts (GPT-4.1 multimodal)
+    if (imageAttachments.length > 0) {
+      const imgNames = imageAttachments.map((a) => `- ${a.name}`).join('\n');
+      userMessage += `\n\n[Pièces jointes — Images]\n${imgNames}\nThe images are provided below for direct visual analysis. Describe and analyze them.`;
+
+      // Build multimodal content: text + image_url parts
+      const contentParts: any[] = [{ type: 'input_text', text: userMessage }];
+      for (const img of imageAttachments) {
+        try {
+          const buffer = await getFileBuffer(img.url);
+          if (!buffer || buffer.length === 0) {
+            throw new Error('Empty file buffer');
+          }
+          const base64 = buffer.toString('base64');
+          const mimeType = img.type || 'image/png';
+          contentParts.push({
+            type: 'input_image',
+            image: `data:${mimeType};base64,${base64}`,
+            detail: 'auto',
+          });
+        } catch (err: any) {
+          logger.error(`Failed to load image ${img.name}: ${err.message}`);
+          // Fallback: mention file cannot be loaded
+          contentParts[0] = { type: 'input_text', text: userMessage + `\n(Note: impossible de charger l'image ${img.name})` };
+        }
+      }
+
+      inputItems.push({ role: 'user', content: contentParts } as AgentInputItem);
+    } else {
+      inputItems.push({ role: 'user', content: userMessage });
+    }
+
+    const input = inputItems;
     const result = await run(agent, input, { stream: true });
 
     for await (const event of result as AsyncIterable<any>) {
+      // Check duration limit
+      if (!limitReached && Date.now() - turnStart > MAX_TURN_DURATION_MS) {
+        limitReached = true;
+        const limitMsg = 'Temps maximum atteint. Voici les résultats disponibles.';
+        sendSSE(res, { type: 'limit_reached', reason: 'max_duration', message: limitMsg });
+      }
+
       // Handle text deltas
       if (event.type === 'raw_model_stream_event') {
         const data = event.data as any;
@@ -61,6 +138,14 @@ export async function runAgentWithSSE(
           const delta = data.delta as string;
           finalOutput += delta;
           sendSSE(res, { type: 'text_delta', delta });
+
+          // Append to last text segment or create a new one
+          const lastSeg = segments[segments.length - 1];
+          if (lastSeg && lastSeg.type === 'text') {
+            lastSeg.content = (lastSeg.content || '') + delta;
+          } else {
+            segments.push({ type: 'text', content: delta });
+          }
         }
       }
 
@@ -69,39 +154,88 @@ export async function runAgentWithSSE(
         const item = event.item as any;
 
         if (event.name === 'tool_called') {
-          const toolName = item?.call?.name || item?.name || 'unknown';
-          toolStartTimes.set(toolName, Date.now());
+          toolCallCounter++;
+          const toolName = item?.rawItem?.name || item?.call?.name || item?.name || item?.type || 'unknown';
+          const toolArgs = item?.rawItem?.arguments || item?.call?.args || item?.arguments;
+          const callId = `${toolName}-${Date.now()}-${toolCallCounter}`;
+          toolStartTimes.set(callId, Date.now());
+
+          // Store callId on the item for matching in tool_output
+          if (item) item._callId = callId;
+
+          // Check tool count limit
+          if (!limitReached && toolCallCounter > MAX_TOOL_CALLS) {
+            limitReached = true;
+            const limitMsg = `Limite de ${MAX_TOOL_CALLS} outils atteinte. Voici les résultats disponibles.`;
+            sendSSE(res, { type: 'limit_reached', reason: 'max_tools', message: limitMsg });
+          }
+
+          // Push tool segment
+          segments.push({
+            type: 'tool',
+            tool: {
+              callId,
+              name: toolName,
+              args: typeof toolArgs === 'string' ? safeParseArgs(toolArgs) : toolArgs,
+              status: 'running',
+            },
+          });
+
           sendSSE(res, {
             type: 'tool_start',
             tool: {
+              callId,
               name: toolName,
-              args: item?.call?.args || item?.arguments,
+              args: typeof toolArgs === 'string' ? safeParseArgs(toolArgs) : toolArgs,
             },
           });
         }
 
         if (event.name === 'tool_output') {
-          const toolName = item?.call?.name || item?.name || 'unknown';
-          const startTime = toolStartTimes.get(toolName);
+          const toolName = item?.rawItem?.name || item?.call?.name || item?.name || item?.type || 'unknown';
+          const toolArgs = item?.rawItem?.arguments || item?.call?.args || item?.arguments;
+          const callId = item?._callId || `${toolName}-unknown`;
+          const startTime = toolStartTimes.get(callId);
           const duration = startTime ? Date.now() - startTime : undefined;
-          toolStartTimes.delete(toolName);
+          toolStartTimes.delete(callId);
+
+          const output = item?.output;
+          const isError = !!(output?.error || output?.isError);
+          const parsedArgs = typeof toolArgs === 'string' ? safeParseArgs(toolArgs) : toolArgs;
+          const summary = generateToolSummary(toolName, output, isError, parsedArgs);
 
           const traceEntry = {
             name: toolName,
-            args: item?.call?.args || item?.arguments,
-            result: item?.output,
+            args: toolArgs,
+            result: output,
             duration,
           };
           toolTrace.push(traceEntry);
 
+          // Update matching segment
+          const toolSeg = segments.find(
+            (s) => s.type === 'tool' && s.tool?.callId === callId
+          );
+          if (toolSeg && toolSeg.tool) {
+            toolSeg.tool.result = output;
+            toolSeg.tool.summary = summary;
+            toolSeg.tool.duration = duration;
+            toolSeg.tool.status = isError ? 'error' : 'success';
+            if (isError) {
+              toolSeg.tool.error = typeof output === 'string' ? output : (output as any)?.message || (output as any)?.error;
+            }
+          }
+
           sendSSE(res, {
             type: 'tool_end',
             tool: {
+              callId,
               name: toolName,
-              result: typeof item?.output === 'string'
-                ? item.output.slice(0, 200)
-                : item?.output,
+              summary,
+              result: typeof output === 'string' ? output.slice(0, 200) : output,
               duration,
+              status: isError ? 'error' : 'success',
+              error: isError ? (typeof output === 'string' ? output : (output as any)?.message) : undefined,
             },
           });
         }
@@ -120,7 +254,16 @@ export async function runAgentWithSSE(
     sendSSE(res, { type: 'error', error: error.message || 'Erreur interne' });
   }
 
-  return { finalOutput, toolTrace };
+  return { finalOutput, toolTrace, segments };
+}
+
+/** Safely parse JSON args string, fallback to wrapping as-is */
+function safeParseArgs(args: string): Record<string, unknown> | undefined {
+  try {
+    return JSON.parse(args);
+  } catch {
+    return args ? { raw: args } : undefined;
+  }
 }
 
 /**

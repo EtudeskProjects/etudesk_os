@@ -27,6 +27,7 @@ const VALID_PROFILE_TAGS = [
 const VALID_GOALS = [
   'LEARN_NEW_SKILLS', 'PREPARE_EXAMS', 'FIND_JOB', 'ADVANCE_CAREER',
   'RESEARCH_SUPPORT', 'IMPROVE_PRODUCTIVITY', 'COLLABORATIVE_LEARNING',
+  'TEACH_OR_MENTOR', 'BUILD_NETWORK_OR_VISIBILITY', 'CONTRIBUTE_OR_GIVE_BACK',
 ];
 
 interface OnboardingData {
@@ -42,6 +43,7 @@ interface OnboardingData {
   remoteReady?: boolean;
   willingToRelocate?: boolean;
   phone: string;
+  gender?: string;
 }
 
 /**
@@ -175,6 +177,20 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
         });
       }
 
+      // Check if phone number is already used by another talent
+      const phoneCheckResult = await client.query(
+        `SELECT id FROM talents WHERE phone = $1 AND deleted_at IS NULL`,
+        [data.phone.trim()]
+      );
+
+      if (phoneCheckResult.rows.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Ce numéro de téléphone est déjà associé à un profil talent',
+          field: 'phone',
+        });
+      }
+
       // Generate unique slug
       const displayNameForSlug = [data.firstName, data.lastName].filter(Boolean).join(' ') || 'talent';
       let slug = generateSlug(displayNameForSlug);
@@ -205,11 +221,11 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
           `INSERT INTO talents (
             id, slug, first_name, last_name, bio, email, phone,
             city, region, country, remote_ready, willing_to_relocate,
-            profile_tags, goals, sectors, created_at, updated_at
+            profile_tags, goals, sectors, gender, created_at, updated_at
           ) VALUES (
             $1, $2, $3, $4, $5, $6, $7,
             $8, $9, $10, $11, $12,
-            $13, $14, $15, NOW(), NOW()
+            $13, $14, $15, $16, NOW(), NOW()
           )`,
           [
             talentId,
@@ -227,6 +243,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
             data.profileTags || [],
             data.goals || [],
             data.sectors || [],
+            data.gender || null,
           ]
         );
       } catch (insertError: any) {
@@ -236,11 +253,11 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
             `INSERT INTO talents (
               id, slug, first_name, last_name, bio, email, phone,
               city, region, country, remote_ready, willing_to_relocate,
-              profile_tags, goals, created_at, updated_at
+              profile_tags, goals, gender, created_at, updated_at
             ) VALUES (
               $1, $2, $3, $4, $5, $6, $7,
               $8, $9, $10, $11, $12,
-              $13, $14, NOW(), NOW()
+              $13, $14, $15, NOW(), NOW()
             )`,
             [
               talentId,
@@ -257,6 +274,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
               data.willingToRelocate || false,
               data.profileTags || [],
               data.goals || [],
+              data.gender || null,
             ]
           );
         } else {
@@ -426,6 +444,9 @@ function getGoalLabel(goal: string): string {
     RESEARCH_SUPPORT: 'Support à la recherche',
     IMPROVE_PRODUCTIVITY: 'Améliorer ma productivité',
     COLLABORATIVE_LEARNING: 'Apprentissage collaboratif',
+    TEACH_OR_MENTOR: 'Enseigner ou mentorer',
+    BUILD_NETWORK_OR_VISIBILITY: 'Développer mon réseau / visibilité',
+    CONTRIBUTE_OR_GIVE_BACK: 'Contribuer / Redonner',
   };
   return labels[goal] || goal;
 }

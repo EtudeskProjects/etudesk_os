@@ -276,7 +276,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       needsOnboarding: false,
       user: prev.user ? { ...prev.user, hasTalentProfile: true, onboardingComplete: true } : null,
     }));
-  }, []);
+    // Proactively refresh user data from server to get full profile (firstName, lastName, etc.)
+    refreshUser();
+  }, [refreshUser]);
 
   // ─────────────────────────────────────────────────────────────
   // ORGANIZATION HELPERS

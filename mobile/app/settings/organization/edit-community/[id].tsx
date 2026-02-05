@@ -47,7 +47,6 @@ import {
   MAX_MEMBERSHIP_QUESTIONS,
 } from '../../../../src/constants/community';
 import { SECTOR_DATA, MAX_SECTORS } from '../../../../src/constants/talent';
-import { getCurrencySymbol } from '../../../../src/constants/opportunity';
 import {
   CommunityType,
   Visibility,
@@ -115,9 +114,6 @@ export default function EditCommunityScreen() {
 
   // Form state - Conditions
   const [visibility, setVisibility] = useState<Visibility | null>('PUBLIC');
-  const [isPaid, setIsPaid] = useState(false);
-  const [monthlyPrice, setMonthlyPrice] = useState('');
-  const [currency, setCurrency] = useState('XOF');
   const [rules, setRules] = useState('');
   const [applicationQuestions, setApplicationQuestions] = useState<ApplicationQuestion[]>([]);
 
@@ -163,9 +159,6 @@ export default function EditCommunityScreen() {
       
       // New fields
       setVisibility(comm.visibility || (comm.access_type === 'PUBLIC' ? 'PUBLIC' : comm.access_type === 'MEMBERSHIP' ? 'PRIVATE' : 'PUBLIC'));
-      setIsPaid(comm.is_paid || false);
-      setMonthlyPrice(comm.monthly_price ? Math.floor(comm.monthly_price).toString() : '');
-      setCurrency(comm.currency || 'XOF');
       setSelectedTags(comm.tags || []);
       setSelectedSectors(comm.sectors || []);
       
@@ -262,9 +255,6 @@ export default function EditCommunityScreen() {
         tags: selectedTags.length > 0 ? selectedTags : undefined,
         sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
         visibility: visibility || undefined,
-        is_paid: isPaid,
-        monthly_price: isPaid && monthlyPrice ? parseFloat(monthlyPrice) : undefined,
-        currency: isPaid ? currency : undefined,
         rules: rules || undefined,
         application_questions: applicationQuestions.filter(q => q.question.trim().length > 0).map(q => q.question),
         city: communityType === 'HYBRID' ? city || undefined : undefined,
@@ -297,11 +287,6 @@ export default function EditCommunityScreen() {
 
         if (data.rules) setRules(data.rules);
         if (data.visibility) setVisibility(data.visibility);
-        
-        // Pricing
-        if (data.is_paid !== undefined) setIsPaid(data.is_paid);
-        if (data.monthly_price) setMonthlyPrice(Math.floor(data.monthly_price).toString());
-        if (data.currency) setCurrency(data.currency);
 
         // Application questions
         if (data.application_questions && data.application_questions.length > 0) {
@@ -405,9 +390,6 @@ export default function EditCommunityScreen() {
         tags: selectedTags.length > 0 ? selectedTags : undefined,
         sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
         visibility: visibility || undefined,
-        is_paid: isPaid,
-        monthly_price: isPaid && monthlyPrice ? parseFloat(monthlyPrice) : undefined,
-        currency: isPaid ? currency : undefined,
         city: communityType === 'HYBRID' ? city || undefined : undefined,
         region: communityType === 'HYBRID' ? region || undefined : undefined,
         country: communityType === 'HYBRID' ? country || undefined : undefined,
@@ -472,12 +454,6 @@ export default function EditCommunityScreen() {
     return ids
       .map((id) => SECTOR_DATA.find((s) => s.id === id)?.label || id)
       .join(', ');
-  };
-
-  const formatNumber = (num: string | number | null | undefined): string => {
-    if (!num) return '';
-    const numStr = typeof num === 'number' ? num.toString() : num;
-    return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   };
 
   const getStatusColor = () => {
@@ -887,57 +863,6 @@ export default function EditCommunityScreen() {
           </View>
         </View>
 
-        {/* Pricing Toggle */}
-        <View style={[styles.toggleContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-          <View style={styles.toggleInfo}>
-            <View style={styles.toggleTextContainer}>
-              <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>
-                Communauté {isPaid ? 'payante' : 'gratuite'}
-              </Text>
-              <Text style={[styles.toggleDescription, { color: colors.gray500 }]}>
-                {isPaid ? 'Les membres devront payer un abonnement' : 'Accès gratuit pour tous les membres'}
-              </Text>
-            </View>
-          </View>
-          <Toggle
-            value={isPaid}
-            onValueChange={setIsPaid}
-          />
-        </View>
-
-        {/* Monthly Price (if paid) */}
-        {isPaid && (
-          <>
-            <View style={styles.rowFields}>
-              <View style={styles.halfField}>
-                <Input
-                  label="Coût abonnement mensuel *"
-                  placeholder="5000"
-                  value={monthlyPrice}
-                  onChangeText={setMonthlyPrice}
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={styles.halfField}>
-                <View style={styles.fieldContainer}>
-                  <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Devise (ex: XOF, EUR)</Text>
-                  <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-                    <TextInput
-                      style={[styles.textArea, { color: colors.textPrimary, minHeight: 44 }]}
-                      value={currency}
-                      onChangeText={setCurrency}
-                      placeholder="XOF"
-                      placeholderTextColor={colors.gray400}
-                      maxLength={10}
-                      autoCapitalize="characters"
-                    />
-                  </View>
-                </View>
-              </View>
-            </View>
-          </>
-        )}
-
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
 
         {/* Règles */}
@@ -1218,20 +1143,6 @@ export default function EditCommunityScreen() {
               {visibility ? VISIBILITY_LABELS[visibility] : 'Non définie'}
             </Text>
           </View>
-          <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Tarification</Text>
-            <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
-              {isPaid ? 'Payante' : 'Gratuite'}
-            </Text>
-          </View>
-          {isPaid && (
-            <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Prix mensuel</Text>
-              <Text style={[styles.previewValue, { color: monthlyPrice ? colors.textPrimary : colors.gray400 }]}>
-                {monthlyPrice ? `${formatNumber(monthlyPrice)} ${getCurrencySymbol(currency)}` : 'Non défini'}
-              </Text>
-            </View>
-          )}
         </View>
 
         {/* Description */}

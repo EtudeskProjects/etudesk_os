@@ -64,7 +64,7 @@ export default function InviteMemberScreen() {
   const { inviteMember } = useOrganizationMembers();
 
   const [email, setEmail] = useState('');
-  const [selectedRole, setSelectedRole] = useState<OrganizationRole>(ORGANIZATION_ROLES.OBSERVATEUR);
+  const [selectedRole, setSelectedRole] = useState<OrganizationRole>(ORGANIZATION_ROLES.MEMBER);
   const [isSending, setIsSending] = useState(false);
 
   const isValidEmail = (email: string) => {
@@ -96,7 +96,7 @@ export default function InviteMemberScreen() {
   const availableRoles: OrganizationRole[] = [
     ORGANIZATION_ROLES.ADMIN,
     ORGANIZATION_ROLES.MANAGER,
-    ORGANIZATION_ROLES.OBSERVATEUR,
+    ORGANIZATION_ROLES.MEMBER,
   ];
 
   return (
