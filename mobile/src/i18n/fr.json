@@ -16,141 +16,142 @@
     "close": "Fermer",
     "search": "Rechercher...",
     "seeMore": "Voir plus",
-    "seeAll": "Voir tout",
+    "seeAll": "Tout voir",
     "noResults": "Aucun résultat",
     "retry": "Réessayer",
     "yes": "Oui",
     "no": "Non",
     "or": "ou",
     "and": "et",
-    "optional": "Optionnel",
-    "required": "Requis"
+    "optional": "Facultatif",
+    "required": "Obligatoire",
+    "free": "Gratuit"
   },
   "auth": {
     "login": {
       "title": "Connexion",
-      "subtitle": "Ton avenir commence ici",
+      "subtitle": "Construis ton avenir avec nous",
       "continueWith": "Continuer avec",
-      "emailPlaceholder": "Email",
+      "emailPlaceholder": "Adresse email",
       "passwordPlaceholder": "Mot de passe",
       "forgotPassword": "Mot de passe oublié ?",
-      "noAccount": "Pas encore de compte ?",
-      "signUp": "S'inscrire",
+      "noAccount": "Pas encore inscrit ?",
+      "signUp": "Créer un compte",
       "orContinueWith": "Ou continuer avec",
       "termsPrefix": "En continuant, tu acceptes nos"
     },
     "welcome": {
-      "congrats": "Félicitations !",
+      "congrats": "Bienvenue !",
       "title": "Ton profil est prêt",
       "subtitle": "Tu fais maintenant partie de la communauté Etudesk",
       "getStarted": "C'est parti !",
       "whatYouCanDo": "Ce que tu peux faire",
       "features": {
         "explore": {
-          "title": "Explore les opportunités",
-          "description": "Offres d'emploi, stages, formations et événements adaptés à ton profil."
+          "title": "Trouve des opportunités",
+          "description": "Emplois, stages, formations et événements près de chez toi"
         },
         "connect": {
-          "title": "Connecte-toi",
-          "description": "Rejoins des communautés et développe ton réseau."
+          "title": "Rejoins des communautés",
+          "description": "Connecte-toi avec des professionnels de ton domaine"
         },
         "assistant": {
-          "title": "Ton assistant personnel",
-          "description": "Obtiens des conseils personnalisés pour ta carrière et tes projets."
+          "title": "Un assistant pour toi",
+          "description": "Reçois des conseils personnalisés pour ta carrière"
         }
       }
     },
     "createProfile": {
       "title": "Créer mon profil",
-      "tellUsAboutYou": "Parle-nous un peu de toi",
-      "step1Title": "Informations personnelles",
-      "step2Title": "Localisation",
-      "step3Title": "Domaines d'intérêt",
-      "step4Title": "Photo de profil",
+      "tellUsAboutYou": "Parle-nous de toi",
+      "step1Title": "Qui es-tu ?",
+      "step2Title": "Où te trouves-tu ?",
+      "step3Title": "Qu'est-ce qui t'intéresse ?",
+      "step4Title": "Ta photo",
       "firstName": "Prénom",
-      "lastName": "Nom",
+      "lastName": "Nom de famille",
       "email": "Email",
       "phone": "Téléphone",
       "birthDate": "Date de naissance",
-      "selectDate": "Sélectionner une date",
+      "selectDate": "Choisir une date",
       "gender": "Genre",
       "yourProfile": "Ton profil",
-      "bio": "Bio",
-      "bioPlaceholder": "Parle-nous un peu de toi en quelques mots...",
+      "bio": "Présentation",
+      "bioPlaceholder": "Décris-toi en quelques mots : ton parcours, tes ambitions...",
       "country": "Pays",
-      "region": "Région",
-      "city": "Ville/Commune",
-      "commune": "Commune / Ville",
-      "useMyLocation": "Utiliser ma position actuelle",
-      "locating": "Localisation en cours...",
-      "selectInterests": "Sélectionne tes centres d'intérêt",
+      "region": "Région / District",
+      "city": "Ville / Commune",
+      "commune": "Commune",
+      "useMyLocation": "Utiliser ma position",
+      "locating": "Localisation...",
+      "selectInterests": "Choisis tes centres d'intérêt",
       "addPhoto": "Ajouter une photo",
-      "photoHint": "Appuie pour ajouter ta photo de profil",
+      "photoHint": "Une photo aide les recruteurs à te reconnaître",
       "complete": "Terminer",
       "continue": "Continuer",
       "workPreferences": "Préférences de travail",
-      "remoteAvailable": "Disponible en remote",
+      "remoteAvailable": "Disponible en télétravail",
       "remoteAvailableDesc": "Je peux travailler à distance",
-      "willingToRelocate": "Ouvert à la relocalisation",
-      "willingToRelocateDesc": "Je peux déménager pour une opportunité",
-      "yourSectors": "Tes secteurs",
-      "sectorsHint": "Choisis jusqu'à {{max}} secteurs qui t'intéressent",
+      "willingToRelocate": "Prêt à me déplacer",
+      "willingToRelocateDesc": "Je peux changer de ville pour une bonne opportunité",
+      "yourSectors": "Tes domaines",
+      "sectorsHint": "Choisis jusqu'à {{max}} secteurs",
       "selected": "{{count}}/{{max}} sélectionnés",
       "yourGoals": "Tes objectifs",
-      "goalsHint": "Choisis jusqu'à {{max}} objectifs prioritaires",
-      "permissionRequired": "Permission requise",
-      "photoPermissionMessage": "Nous avons besoin de ta permission pour accéder à tes photos.",
-      "photoError": "Une erreur est survenue lors de la sélection de l'image. Réessaie."
+      "goalsHint": "Qu'est-ce que tu recherches ? ({{max}} max)",
+      "permissionRequired": "Autorisation nécessaire",
+      "photoPermissionMessage": "Autorise l'accès à tes photos pour continuer.",
+      "photoError": "Impossible de sélectionner l'image. Réessaie."
     },
     "emailLogin": {
       "title": "Connexion par email",
-      "subtitle": "Entre ton adresse email pour recevoir un code de vérification",
+      "subtitle": "Entre ton adresse email pour recevoir un code",
       "emailLabel": "Adresse email",
-      "sendCode": "Envoyer le code",
-      "infoText": "Nous t'enverrons un code à 6 chiffres pour te connecter sans mot de passe",
-      "sendError": "Impossible d'envoyer le code. Vérifie ton adresse email et réessaie."
+      "sendCode": "Recevoir le code",
+      "infoText": "Tu recevras un code à 6 chiffres pour te connecter",
+      "sendError": "Impossible d'envoyer le code. Vérifie ton email."
     },
     "verifyOtp": {
       "title": "Vérifie ton email",
-      "subtitle": "Entre le code à 6 chiffres envoyé à",
+      "subtitle": "Entre le code envoyé à",
       "verify": "Vérifier",
       "resendCode": "Renvoyer le code",
       "resendIn": "Renvoyer dans {{seconds}}s",
-      "incompleteCode": "Entre le code complet à 6 chiffres",
-      "invalidCode": "Code invalide. Vérifie et réessaie.",
-      "verifyError": "Erreur lors de la vérification. Réessaie.",
-      "codeSent": "Un nouveau code a été envoyé à ton adresse email",
+      "incompleteCode": "Entre les 6 chiffres",
+      "invalidCode": "Code incorrect. Vérifie et réessaie.",
+      "verifyError": "Erreur de vérification. Réessaie.",
+      "codeSent": "Nouveau code envoyé !",
       "verified": "Email vérifié !",
-      "redirecting": "Redirection en cours..."
+      "redirecting": "Connexion en cours..."
     }
   },
   "tabs": {
-    "assistant": "Copilote",
+    "assistant": "Assistant",
     "explore": "Explorer",
-    "ecosystem": "Écosystème",
-    "management": "Gestion",
-    "settings": "Paramètres"
+    "ecosystem": "Accueil",
+    "management": "Activité",
+    "settings": "Profil"
   },
   "assistant": {
-    "title": "Copilote",
-    "greeting": "Comment puis-je t'aider",
-    "inputPlaceholder": "Écris ton message...",
+    "title": "Assistant",
+    "greeting": "Comment puis-je t'aider ?",
+    "inputPlaceholder": "Pose ta question...",
     "suggestions": "Suggestions",
     "modes": {
-      "explore": "Explorer",
-      "study": "Étudier"
+      "explore": "Découvrir",
+      "study": "Apprendre"
     },
     "prompts": {
       "explore": {
         "opportunities": "Quelles opportunités correspondent à mon profil ?",
-        "spaces": "Quels espaces sont disponibles à Abidjan ?",
-        "communities": "Recommande-moi des communautés tech"
+        "spaces": "Où trouver un espace de coworking ?",
+        "communities": "Quelles communautés rejoindre dans mon domaine ?"
       },
       "study": {
-        "skills": "Comment améliorer mes compétences en React Native ?",
-        "plan": "Crée-moi un plan d'apprentissage en UX Design",
-        "certifications": "Quelles certifications sont recommandées pour mon domaine ?",
-        "basics": "Explique-moi les bases du Product Management"
+        "skills": "Comment développer mes compétences ?",
+        "plan": "Crée-moi un plan d'apprentissage",
+        "certifications": "Quelles certifications sont utiles pour moi ?",
+        "basics": "Explique-moi les bases du marketing digital"
       }
     }
   },
@@ -161,32 +162,32 @@
       "spaces": "Espaces",
       "communities": "Communautés"
     },
-    "filters": "Filtres",
+    "filters": "Filtrer",
     "sortBy": "Trier par",
     "sortOptions": {
       "relevance": "Pertinence",
-      "relevanceDesc": "Résultats correspondant à ton profil",
+      "relevanceDesc": "Les plus adaptés à ton profil",
       "proximity": "Proximité",
-      "proximityDesc": "Du plus proche au plus éloigné",
-      "recent": "Plus récents",
+      "proximityDesc": "Les plus proches de toi",
+      "recent": "Récents",
       "recentDesc": "Les dernières publications",
-      "popularity": "Popularité",
+      "popularity": "Populaires",
       "popularityDesc": "Les plus consultés"
     },
-    "noResultsSearch": "Aucun résultat pour \"{{query}}\"",
+    "noResultsSearch": "Aucun résultat pour « {{query}} »",
     "resultsCount": "{{count}} résultat(s)",
-    "remote": "Remote",
+    "remote": "À distance",
     "members": "membres",
     "create": "Créer",
-    "whatToCreate": "Que souhaites-tu créer pour {{name}} ?",
+    "whatToCreate": "Que veux-tu créer pour {{name}} ?",
     "opportunity": "Opportunité",
     "space": "Espace",
     "community": "Communauté"
   },
   "ecosystem": {
     "title": "Accueil",
-    "weeklyInsight": "{{name}}, tu as eu une semaine chargée ! Tu as acquis {{skills}} nouvelles compétences et complété {{modules}} modules de formation.",
-    "train": "Se former",
+    "weeklyInsight": "{{name}}, belle semaine ! Tu as acquis {{skills}} compétences et terminé {{modules}} modules.",
+    "train": "Me former",
     "notifications": "Notifications",
     "agenda": "Agenda",
     "documents": "Documents",
@@ -213,48 +214,48 @@
     }
   },
   "management": {
-    "title": "Gestion",
+    "title": "Mon activité",
     "offers": "Offres",
-    "overview": "Vue d'ensemble",
+    "overview": "Aperçu",
     "recentActivity": "Activité récente",
-    "noOrganization": "Aucune organisation sélectionnée",
-    "selectOrganization": "Sélectionne une organisation dans les paramètres pour accéder à la gestion.",
+    "noOrganization": "Pas d'organisation",
+    "selectOrganization": "Sélectionne une organisation dans les paramètres.",
     "goToSettings": "Aller aux paramètres",
     "myApplications": "Mes candidatures",
     "myBookings": "Mes réservations",
     "myCommunities": "Mes communautés",
     "empty": {
-      "applications": "Aucune candidature en cours",
+      "applications": "Aucune candidature",
       "bookings": "Aucune réservation",
-      "communities": "Aucune communauté rejointe"
+      "communities": "Aucune communauté"
     }
   },
   "settings": {
-    "title": "Paramètres",
+    "title": "Mon profil",
     "profile": "Profil",
-    "editProfile": "Modifier le profil",
-    "viewProfile": "Voir le profil",
+    "editProfile": "Modifier mon profil",
+    "viewProfile": "Voir mon profil",
     "spaces": {
       "title": "Espaces",
-      "talent": "Mon espace talent",
+      "talent": "Espace talent",
       "organization": "Organisation"
     },
     "menu": {
-      "team": "Gestion de l'organisation",
-      "teamDesc": "Gérer les membres et les permissions",
+      "team": "Mon équipe",
+      "teamDesc": "Gérer les membres",
       "kyc": "Vérification d'identité",
-      "kycDesc": "Vérifier ton identité",
-      "payment": "Moyens de paiement",
-      "paymentDesc": "Gérer tes moyens de paiement",
+      "kycDesc": "Faire vérifier mon identité",
+      "payment": "Paiement",
+      "paymentDesc": "Mobile Money, carte bancaire",
       "preferences": "Préférences",
-      "preferencesDesc": "Langue, thème et notifications",
+      "preferencesDesc": "Langue, thème, notifications",
       "help": "Aide",
-      "helpDesc": "FAQ et support",
+      "helpDesc": "Questions fréquentes",
       "legal": "Mentions légales",
-      "legalDesc": "Conditions et confidentialité"
+      "legalDesc": "Conditions d'utilisation"
     },
-    "logout": "Déconnexion",
-    "logoutConfirm": "Es-tu sûr de vouloir te déconnecter ?",
+    "logout": "Se déconnecter",
+    "logoutConfirm": "Tu veux vraiment te déconnecter ?",
     "version": "Version"
   },
   "preferences": {
@@ -264,80 +265,80 @@
     "themes": {
       "light": "Clair",
       "dark": "Sombre",
-      "system": "Système"
+      "system": "Automatique"
     },
     "language": "Langue",
-    "notificationChannels": "Canaux de notification",
+    "notificationChannels": "Canaux",
     "notificationTypes": "Types de notifications",
     "applications": "Candidatures",
-    "applicationsDesc": "Mises à jour de vos candidatures",
+    "applicationsDesc": "Suivi de tes candidatures",
     "reminders": "Rappels",
-    "remindersDesc": "Rappels d'événements et échéances",
-    "learningPreferences": "Préférences d'apprentissage",
+    "remindersDesc": "Événements et échéances",
+    "learningPreferences": "Apprentissage",
     "learningStyle": "Style d'apprentissage",
     "interactionMode": "Mode d'interaction",
-    "interactionSocratic": "Apprentissage par le questionnement",
-    "interactionDirect": "Instructions directes",
+    "interactionSocratic": "Questions-réponses",
+    "interactionDirect": "Explications directes",
     "interactionExploratory": "Exploration libre",
-    "contentDepth": "Profondeur du contenu",
-    "difficultyLevel": "Niveau de difficulté",
-    "learningSaveError": "Impossible d'enregistrer la préférence. Réessaie plus tard.",
+    "contentDepth": "Niveau de détail",
+    "difficultyLevel": "Difficulté",
+    "learningSaveError": "Impossible d'enregistrer. Réessaie.",
     "privacy": "Confidentialité",
-    "publicProfile": "Profil public",
-    "publicProfileDesc": "Votre profil est visible par tous",
+    "publicProfile": "Profil visible",
+    "publicProfileDesc": "Tout le monde peut voir ton profil",
     "showEmail": "Afficher mon email",
-    "showEmailDesc": "Visible sur votre profil public",
+    "showEmailDesc": "Visible sur ton profil",
     "showPhone": "Afficher mon téléphone",
-    "showPhoneDesc": "Visible sur votre profil public",
+    "showPhoneDesc": "Visible sur ton profil",
     "loadError": "Impossible de charger les préférences",
     "retry": "Réessayer",
     "notifications": {
       "title": "Notifications",
       "push": "Notifications push",
-      "pushDesc": "Recevoir des notifications sur ton appareil",
-      "email": "Notifications par email",
+      "pushDesc": "Recevoir des alertes sur ton téléphone",
+      "email": "Notifications email",
       "emailDesc": "Recevoir des résumés par email",
       "opportunities": "Nouvelles opportunités",
-      "opportunitiesDesc": "Être notifié des nouvelles offres",
+      "opportunitiesDesc": "Quand une offre correspond à ton profil",
       "messages": "Messages",
-      "messagesDesc": "Notifications pour les nouveaux messages"
+      "messagesDesc": "Quand tu reçois un message"
     }
   },
   "profile": {
-    "title": "Modifier le profil",
+    "title": "Mon profil",
     "personalInfo": "Informations personnelles",
     "location": "Localisation",
     "interests": "Centres d'intérêt",
     "photo": "Photo de profil",
-    "changePhoto": "Appuie pour changer la photo",
-    "saved": "Profil enregistré avec succès"
+    "changePhoto": "Changer la photo",
+    "saved": "Profil enregistré !"
   },
   "organization": {
     "title": "Organisation",
     "create": "Créer une organisation",
-    "edit": "Modifier l'organisation",
+    "edit": "Modifier",
     "name": "Nom de l'organisation",
-    "type": "Type d'organisation",
+    "type": "Type",
     "size": "Taille",
     "description": "Description",
     "website": "Site web",
     "logo": "Logo",
-    "changeLogo": "Appuie pour changer le logo",
+    "changeLogo": "Changer le logo",
     "location": "Localisation",
     "industries": "Secteurs d'activité",
-    "saved": "Organisation enregistrée avec succès",
+    "saved": "Organisation enregistrée !",
     "members": {
       "title": "Équipe",
       "members": "Membres",
       "invitations": "Invitations",
       "invite": "Inviter",
-      "inviteMember": "Inviter un membre",
+      "inviteMember": "Inviter quelqu'un",
       "email": "Adresse email",
       "role": "Rôle",
       "roles": {
         "owner": "Propriétaire",
         "admin": "Administrateur",
-        "manager": "Manager",
+        "manager": "Responsable",
         "member": "Membre"
       },
       "status": {
@@ -349,15 +350,15 @@
         "changeRole": "Changer le rôle",
         "remove": "Retirer de l'équipe",
         "resend": "Renvoyer l'invitation",
-        "cancel": "Annuler l'invitation"
+        "cancel": "Annuler"
       },
       "empty": {
-        "members": "Aucun membre dans l'équipe",
-        "invitations": "Aucune invitation en attente"
+        "members": "Aucun membre",
+        "invitations": "Aucune invitation"
       },
-      "inviteSent": "Invitation envoyée avec succès",
-      "memberRemoved": "Membre retiré avec succès",
-      "roleUpdated": "Rôle mis à jour avec succès"
+      "inviteSent": "Invitation envoyée !",
+      "memberRemoved": "Membre retiré",
+      "roleUpdated": "Rôle modifié"
     }
   },
   "kyc": {
@@ -365,17 +366,17 @@
     "subtitle": "Vérifie ton identité pour accéder à toutes les fonctionnalités",
     "status": {
       "notStarted": "Non commencée",
-      "pending": "En cours de vérification",
+      "pending": "En cours",
       "verified": "Vérifié",
-      "rejected": "Rejetée"
+      "rejected": "Refusée"
     },
     "steps": {
       "identity": "Pièce d'identité",
       "selfie": "Photo selfie",
       "address": "Justificatif de domicile"
     },
-    "start": "Commencer la vérification",
-    "uploadDocument": "Télécharger le document"
+    "start": "Commencer",
+    "uploadDocument": "Télécharger"
   },
   "payment": {
     "title": "Moyens de paiement",
@@ -385,10 +386,16 @@
       "mobileMoney": "Mobile Money",
       "bankTransfer": "Virement bancaire"
     },
-    "empty": "Aucun moyen de paiement enregistré",
+    "empty": "Aucun moyen de paiement",
     "default": "Par défaut",
     "setDefault": "Définir par défaut",
-    "remove": "Supprimer"
+    "remove": "Supprimer",
+    "mobileMoneyProviders": {
+      "orange": "Orange Money",
+      "mtn": "MTN Money",
+      "wave": "Wave",
+      "moov": "Moov Money"
+    }
   },
   "help": {
     "title": "Aide",
@@ -396,13 +403,13 @@
     "contact": "Contacter le support",
     "email": "Email",
     "phone": "Téléphone",
-    "chat": "Chat en direct"
+    "chat": "WhatsApp"
   },
   "legal": {
     "title": "Mentions légales",
     "terms": "Conditions d'utilisation",
-    "privacy": "Politique de confidentialité",
-    "cookies": "Politique des cookies"
+    "privacy": "Confidentialité",
+    "cookies": "Cookies"
   },
   "notifications": {
     "title": "Notifications",
@@ -415,11 +422,11 @@
     }
   },
   "calendar": {
-    "title": "Calendrier",
+    "title": "Agenda",
     "today": "Aujourd'hui",
     "upcoming": "À venir",
     "past": "Passés",
-    "noEvents": "Aucun événement",
+    "noEvents": "Rien de prévu",
     "eventTypes": {
       "interview": "Entretien",
       "deadline": "Date limite",
@@ -428,10 +435,10 @@
   },
   "documents": {
     "title": "Documents",
-    "upload": "Télécharger un document",
+    "upload": "Ajouter un document",
     "types": {
       "cv": "CV",
-      "certificate": "Certificat",
+      "certificate": "Certificat / Diplôme",
       "portfolio": "Portfolio",
       "other": "Autre"
     },
@@ -446,14 +453,14 @@
     "saved": "Sauvegardé",
     "share": "Partager",
     "deadline": "Date limite",
-    "postedAt": "Publié",
+    "postedAt": "Publié le",
     "description": "Description",
-    "requirements": "Prérequis",
+    "requirements": "Profil recherché",
     "benefits": "Avantages",
     "views": "Vues",
     "applications": "Candidatures",
-    "location": "Localisation",
-    "salary": "Salaire",
+    "location": "Lieu",
+    "salary": "Rémunération",
     "startDate": "Début",
     "duration": "Durée",
     "niceToHave": "Atouts",
@@ -463,20 +470,20 @@
       "internship": "Stage",
       "consultancy": "Consultance",
       "volunteer": "Bénévolat",
-      "gig": "Mission",
+      "gig": "Mission ponctuelle",
       "apprenticeship": "Apprentissage",
-      "fellowship": "Bourse"
+      "fellowship": "Bourse / Fellowship"
     },
     "workTypes": {
       "fullTime": "Temps plein",
       "partTime": "Temps partiel",
-      "contract": "Contrat",
+      "contract": "CDD",
       "freelance": "Freelance",
       "internship": "Stage",
-      "apprenticeship": "Apprentissage"
+      "apprenticeship": "Alternance"
     },
     "locationTypes": {
-      "onSite": "Sur site",
+      "onSite": "Sur place",
       "remote": "À distance",
       "hybrid": "Hybride"
     }
@@ -487,17 +494,18 @@
     "about": "À propos",
     "amenities": "Équipements",
     "pricing": "Tarifs",
-    "location": "Localisation",
+    "location": "Adresse",
     "accessTypes": {
       "public": "Accès libre",
-      "membership": "Sur adhésion",
+      "membership": "Sur abonnement",
       "private": "Privé"
     },
     "types": {
       "coworking": "Coworking",
       "incubator": "Incubateur",
       "accelerator": "Accélérateur",
-      "lab": "Lab"
+      "lab": "Fablab / Lab",
+      "hub": "Hub"
     }
   },
   "community": {
@@ -519,58 +527,58 @@
       "events": "Événements",
       "polls": "Sondages",
       "voteError": "Impossible de voter",
-      "pinError": "Impossible de modifier l'épingle",
+      "pinError": "Erreur",
       "deleteTitle": "Supprimer",
-      "deleteMessage": "Êtes-vous sûr de vouloir supprimer cette activité ?",
+      "deleteMessage": "Supprimer cette publication ?",
       "deleteError": "Impossible de supprimer",
-      "subscribersOnly": "Contenu réservé aux abonnés",
-      "expiredSubscription": "Votre abonnement a expiré. Renouvelez pour accéder au contenu de \"{{name}}\".",
-      "subscribePrompt": "Abonnez-vous pour accéder au contenu exclusif de \"{{name}}\".",
+      "subscribersOnly": "Réservé aux abonnés",
+      "expiredSubscription": "Ton abonnement a expiré. Renouvelle pour accéder au contenu.",
+      "subscribePrompt": "Abonne-toi pour accéder au contenu de « {{name}} ».",
       "perMonth": "/mois",
       "renew": "Renouveler",
       "subscribe": "S'abonner",
-      "loadMore": "Charger plus",
+      "loadMore": "Voir plus",
       "noActivity": "Aucune activité"
     },
     "comments": {
       "title": "Commentaires",
-      "viewMore": "Voir {{count}} autre(s) commentaire(s)",
-      "noComments": "Aucun commentaire. Soyez le premier !",
+      "viewMore": "Voir {{count}} commentaire(s) de plus",
+      "noComments": "Sois le premier à commenter !",
       "replyTo": "Répondre à {{name}}",
-      "replyPlaceholder": "Votre réponse...",
-      "addPlaceholder": "Ajouter un commentaire...",
-      "deleteTitle": "Supprimer le commentaire",
-      "deleteMessage": "Êtes-vous sûr de vouloir supprimer ce commentaire ?",
-      "deleteError": "Impossible de supprimer le commentaire.",
+      "replyPlaceholder": "Ta réponse...",
+      "addPlaceholder": "Écris un commentaire...",
+      "deleteTitle": "Supprimer",
+      "deleteMessage": "Supprimer ce commentaire ?",
+      "deleteError": "Impossible de supprimer",
       "report": "Signaler",
       "options": "Options",
-      "publishError": "Impossible de publier."
+      "publishError": "Impossible de publier"
     },
     "paywall": {
       "expiredTitle": "Abonnement expiré",
       "cancelledTitle": "Abonnement annulé",
-      "subscribersOnly": "Contenu réservé aux abonnés",
-      "renewDescription": "Renouvelez votre abonnement pour accéder au contenu de cette communauté.",
-      "subscribeDescription": "Abonnez-vous pour accéder à tout le contenu exclusif de cette communauté.",
+      "subscribersOnly": "Réservé aux abonnés",
+      "renewDescription": "Renouvelle ton abonnement pour continuer à accéder au contenu.",
+      "subscribeDescription": "Abonne-toi pour accéder à tout le contenu exclusif.",
       "monthlySubscription": "Abonnement mensuel",
       "perMonth": "/mois",
       "trialDays": "{{days}} jours d'essai gratuit",
-      "benefitPosts": "Accès à toutes les publications",
-      "benefitEvents": "Participation aux événements",
+      "benefitPosts": "Toutes les publications",
+      "benefitEvents": "Accès aux événements",
       "benefitPolls": "Sondages et discussions",
-      "startTrial": "Commencer l'essai gratuit",
-      "renewSubscription": "Renouveler mon abonnement",
-      "subscribeNow": "S'abonner maintenant",
+      "startTrial": "Essayer gratuitement",
+      "renewSubscription": "Renouveler",
+      "subscribeNow": "S'abonner",
       "later": "Plus tard",
-      "trialActivated": "Essai gratuit activé",
+      "trialActivated": "Essai activé !",
       "paymentInProgress": "Paiement en cours",
-      "paymentMessage": "Complétez le paiement dans votre navigateur. Revenez ici une fois terminé."
+      "paymentMessage": "Termine le paiement puis reviens ici."
     },
     "activity": {
       "unpin": "Désépingler",
       "pin": "Épingler",
       "scheduled": "Programmé",
-      "pollLoading": "Chargement des options du sondage...",
+      "pollLoading": "Chargement...",
       "votes": "{{count}} vote(s)",
       "dateLabel": "Date",
       "online": "En ligne",
@@ -578,9 +586,9 @@
       "meetingLinkAvailable": "Lien de réunion disponible",
       "detailsComingSoon": "Détails à venir",
       "locationTbc": "Lieu à confirmer",
-      "likes": "{{count}} J'aime",
-      "comments": "{{count}} Commentaire(s)",
-      "bookmarks": "{{count}} Bookmark(s)"
+      "likes": "{{count}} j'aime",
+      "comments": "{{count}} commentaire(s)",
+      "bookmarks": "{{count}} sauvegarde(s)"
     }
   },
   "date": {
@@ -588,8 +596,8 @@
     "yesterday": "Hier",
     "tomorrow": "Demain",
     "daysAgo": "Il y a {{days}} jours",
-    "hoursAgo": "Il y a {{hours}} heures",
-    "minutesAgo": "Il y a {{minutes}} minutes",
+    "hoursAgo": "Il y a {{hours}}h",
+    "minutesAgo": "Il y a {{minutes}} min",
     "justNow": "À l'instant",
     "inDays": "Dans {{days}} jours",
     "expired": "Expiré",
@@ -608,18 +616,18 @@
       "december": "décembre"
     },
     "monthsShort": {
-      "january": "jan.",
-      "february": "fév.",
-      "march": "mars",
-      "april": "avr.",
+      "january": "jan",
+      "february": "fév",
+      "march": "mar",
+      "april": "avr",
       "may": "mai",
       "june": "juin",
-      "july": "juil.",
+      "july": "juil",
       "august": "août",
-      "september": "sept.",
-      "october": "oct.",
-      "november": "nov.",
-      "december": "déc."
+      "september": "sept",
+      "october": "oct",
+      "november": "nov",
+      "december": "déc"
     }
   },
   "chat": {
@@ -628,114 +636,114 @@
       "meetingRequest": "Demande de rendez-vous",
       "availability": "Disponibilité"
     },
-    "calendarPermission": "Veuillez autoriser l'accès au calendrier pour ajouter cet événement.",
+    "calendarPermission": "Autorise l'accès au calendrier pour ajouter l'événement.",
     "noCalendar": "Aucun calendrier disponible.",
     "appointment": "Rendez-vous",
-    "eventAdded": "L'événement a été ajouté à votre calendrier.",
-    "eventAddError": "Impossible d'ajouter l'événement au calendrier.",
+    "eventAdded": "Événement ajouté à ton calendrier.",
+    "eventAddError": "Impossible d'ajouter l'événement.",
     "proposedSlot": "Créneau proposé",
-    "writeMessage": "Écrivez votre message...",
+    "writeMessage": "Écris ton message...",
     "fileTooLarge": "Fichier trop volumineux",
-    "fileSizeLimit": "Le fichier ne doit pas dépasser {{size}}.",
+    "fileSizeLimit": "Taille max : {{size}}",
     "limitReached": "Limite atteinte",
-    "maxFiles": "Vous pouvez joindre maximum 3 fichiers.",
+    "maxFiles": "3 fichiers maximum.",
     "fileSelectError": "Impossible de sélectionner le fichier.",
-    "proposal": "Proposition: {{date}} à {{time}}",
+    "proposal": "Proposition : {{date}} à {{time}}",
     "proposeDate": "Proposer une date"
   },
   "input": {
-    "errorHint": "Erreur: {{error}}",
-    "hidePassword": "Masquer le mot de passe",
-    "showPassword": "Afficher le mot de passe",
-    "togglePasswordHint": "Active pour basculer la visibilité du mot de passe"
+    "errorHint": "Erreur : {{error}}",
+    "hidePassword": "Masquer",
+    "showPassword": "Afficher",
+    "togglePasswordHint": "Afficher ou masquer le mot de passe"
   },
   "errorBoundary": {
     "errorReportTitle": "Rapport d'erreur Etudesk",
     "title": "Oups ! Une erreur s'est produite",
-    "subtitle": "Nous sommes désolés, quelque chose s'est mal passé.",
+    "subtitle": "Désolé, quelque chose ne s'est pas passé comme prévu.",
     "unknownError": "Erreur inconnue",
     "technicalDetails": "Détails techniques",
-    "stackTrace": "Stack Trace:",
-    "componentStack": "Component Stack:",
+    "stackTrace": "Stack Trace :",
+    "componentStack": "Component Stack :",
     "shareError": "Partager l'erreur",
     "loadError": "Erreur de chargement",
     "pageLoadError": "Cette page n'a pas pu être chargée."
   },
   "geolocation": {
-    "servicesDisabled": "Services de localisation désactivés",
-    "enableServices": "Veuillez activer les services de localisation dans les paramètres de votre appareil.",
+    "servicesDisabled": "Localisation désactivée",
+    "enableServices": "Active la localisation dans les paramètres de ton téléphone.",
     "settings": "Paramètres",
-    "permissionDenied": "Permission refusée",
-    "permissionMessage": "Etudesk a besoin de votre permission pour accéder à votre localisation.",
-    "addressError": "Impossible de déterminer votre adresse",
-    "unsupportedCountry": "Pays non supporté",
-    "unsupportedCountryMessage": "Nous ne supportons pas encore {{country}}. Veuillez sélectionner votre localisation manuellement.",
-    "timeout": "La localisation a pris trop de temps. Veuillez réessayer.",
-    "genericError": "Une erreur est survenue lors de la récupération de votre position.",
+    "permissionDenied": "Accès refusé",
+    "permissionMessage": "Etudesk a besoin d'accéder à ta position.",
+    "addressError": "Impossible de déterminer ton adresse",
+    "unsupportedCountry": "Pays non disponible",
+    "unsupportedCountryMessage": "{{country}} n'est pas encore disponible. Sélectionne ta localisation manuellement.",
+    "timeout": "La localisation a pris trop de temps. Réessaie.",
+    "genericError": "Erreur lors de la récupération de ta position.",
     "errorTitle": "Erreur de localisation",
-    "errorMessage": "Impossible de récupérer votre position. Veuillez réessayer ou sélectionner votre localisation manuellement."
+    "errorMessage": "Impossible de récupérer ta position. Réessaie ou sélectionne manuellement."
   },
   "audioRecorder": {
-    "permissionRequired": "Permission requise",
-    "micPermissionMessage": "L'accès au microphone est nécessaire pour enregistrer votre voix.",
+    "permissionRequired": "Autorisation nécessaire",
+    "micPermissionMessage": "Autorise l'accès au micro pour enregistrer.",
     "startError": "Impossible de démarrer l'enregistrement",
-    "stopError": "Erreur lors de l'arrêt de l'enregistrement"
+    "stopError": "Erreur lors de l'arrêt"
   },
   "map": {
-    "permissionDenied": "Permission refusée",
-    "permissionMessage": "Nous avons besoin de votre permission pour accéder à votre position.",
+    "permissionDenied": "Accès refusé",
+    "permissionMessage": "Autorise l'accès à ta position.",
     "locationError": "Erreur de localisation",
-    "locationErrorMessage": "Impossible de récupérer votre position.",
+    "locationErrorMessage": "Impossible de récupérer ta position.",
     "loadingMap": "Chargement de la carte...",
     "selectedPosition": "Position sélectionnée",
-    "tapToSelect": "Touchez la carte pour sélectionner une position"
+    "tapToSelect": "Touche la carte pour choisir un emplacement"
   },
   "copilotImage": {
     "openLinkError": "Impossible d'ouvrir le lien",
-    "openLinkErrorMessage": "Une erreur est survenue lors de l'ouverture du lien",
-    "loadError": "Impossible de charger l'image"
+    "openLinkErrorMessage": "Une erreur s'est produite.",
+    "loadError": "Image non disponible"
   },
   "imageService": {
-    "permissionRequired": "Permission requise",
-    "photoPermission": "Nous avons besoin de votre permission pour accéder à vos photos.",
-    "cameraPermission": "Nous avons besoin de votre permission pour accéder à la caméra.",
-    "optimizeError": "Erreur lors de l'optimisation de l'image",
-    "pickError": "Une erreur est survenue lors de la sélection de l'image.",
-    "captureError": "Une erreur est survenue lors de la capture de la photo.",
-    "chooseImage": "Choisir une image",
-    "chooseImageMessage": "Comment souhaitez-vous ajouter votre image ?",
+    "permissionRequired": "Autorisation nécessaire",
+    "photoPermission": "Autorise l'accès à tes photos.",
+    "cameraPermission": "Autorise l'accès à la caméra.",
+    "optimizeError": "Erreur lors de l'optimisation",
+    "pickError": "Impossible de sélectionner l'image.",
+    "captureError": "Impossible de prendre la photo.",
+    "chooseImage": "Ajouter une image",
+    "chooseImageMessage": "Comment veux-tu ajouter ton image ?",
     "takePhoto": "Prendre une photo",
-    "fromGallery": "Choisir depuis la galerie",
-    "uploadError": "Erreur lors de l'upload de l'image"
+    "fromGallery": "Choisir dans la galerie",
+    "uploadError": "Erreur lors de l'envoi"
   },
   "copilotService": {
     "connectionError": "Erreur de connexion",
     "httpError": "Erreur {{status}}",
-    "transcriptionError": "Erreur lors de la transcription",
-    "audioTranscriptionError": "Erreur lors de la transcription audio",
-    "uploadError": "Erreur lors de l'upload des fichiers"
+    "transcriptionError": "Erreur de transcription",
+    "audioTranscriptionError": "Impossible de transcrire l'audio",
+    "uploadError": "Erreur lors de l'envoi des fichiers"
   },
   "copilotContext": {
-    "attachmentUploadError": "Erreur lors de l'upload des pièces jointes",
-    "sendError": "Erreur lors de l'envoi du message",
-    "sessionNotFound": "Session non trouvée",
+    "attachmentUploadError": "Erreur lors de l'envoi des pièces jointes",
+    "sendError": "Impossible d'envoyer le message",
+    "sessionNotFound": "Session introuvable",
     "unknownError": "Erreur inconnue",
-    "loadSessionsError": "Erreur lors du chargement des sessions"
+    "loadSessionsError": "Impossible de charger les sessions"
   },
   "otpService": {
-    "sendError": "Erreur lors de l'envoi du code"
+    "sendError": "Impossible d'envoyer le code"
   },
   "errors": {
-    "generic": "Une erreur est survenue",
-    "network": "Erreur de connexion",
-    "unauthorized": "Non autorisé",
+    "generic": "Une erreur s'est produite",
+    "network": "Problème de connexion",
+    "unauthorized": "Accès non autorisé",
     "notFound": "Non trouvé",
     "validation": "Données invalides",
-    "required": "Ce champ est requis",
+    "required": "Champ obligatoire",
     "invalidEmail": "Email invalide",
-    "invalidPhone": "Numéro de téléphone invalide",
-    "photoSelection": "Erreur lors de la sélection de la photo",
-    "location": "Erreur de géolocalisation"
+    "invalidPhone": "Numéro invalide",
+    "photoSelection": "Erreur de sélection photo",
+    "location": "Erreur de localisation"
   },
   "alert": {
     "ok": "OK",
@@ -745,16 +753,16 @@
     "no": "Non",
     "close": "Fermer",
     "delete": "Supprimer",
-    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ?",
-    "deleteSuccess": "Supprimé avec succès",
-    "saveSuccess": "Enregistré avec succès",
-    "updateSuccess": "Mis à jour avec succès",
-    "actionSuccess": "Action effectuée avec succès",
-    "actionError": "Une erreur est survenue",
-    "networkError": "Erreur de connexion. Vérifiez votre connexion internet.",
+    "deleteConfirm": "Confirmer la suppression ?",
+    "deleteSuccess": "Supprimé !",
+    "saveSuccess": "Enregistré !",
+    "updateSuccess": "Modifié !",
+    "actionSuccess": "Action effectuée",
+    "actionError": "Une erreur s'est produite",
+    "networkError": "Vérifie ta connexion internet.",
     "sessionExpired": "Session expirée",
-    "sessionExpiredMessage": "Ta session a expiré. Reconnecte-toi.",
-    "permissionDenied": "Permission refusée",
-    "permissionDeniedMessage": "Vous n'avez pas les droits pour effectuer cette action."
+    "sessionExpiredMessage": "Reconnecte-toi pour continuer.",
+    "permissionDenied": "Accès refusé",
+    "permissionDeniedMessage": "Tu n'as pas les droits pour cette action."
   }
 }

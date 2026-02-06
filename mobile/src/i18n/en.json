@@ -24,133 +24,134 @@
     "or": "or",
     "and": "and",
     "optional": "Optional",
-    "required": "Required"
+    "required": "Required",
+    "free": "Free"
   },
   "auth": {
     "login": {
-      "title": "Login",
-      "subtitle": "Your future starts here",
+      "title": "Sign in",
+      "subtitle": "Build your future with us",
       "continueWith": "Continue with",
-      "emailPlaceholder": "Email",
+      "emailPlaceholder": "Email address",
       "passwordPlaceholder": "Password",
       "forgotPassword": "Forgot password?",
-      "noAccount": "Don't have an account?",
-      "signUp": "Sign up",
+      "noAccount": "Not registered yet?",
+      "signUp": "Create account",
       "orContinueWith": "Or continue with",
       "termsPrefix": "By continuing, you agree to our"
     },
     "welcome": {
-      "congrats": "Congratulations!",
+      "congrats": "Welcome!",
       "title": "Your profile is ready",
       "subtitle": "You're now part of the Etudesk community",
       "getStarted": "Let's go!",
       "whatYouCanDo": "What you can do",
       "features": {
         "explore": {
-          "title": "Explore opportunities",
-          "description": "Jobs, internships, trainings and events tailored to your profile."
+          "title": "Find opportunities",
+          "description": "Jobs, internships, trainings and events near you"
         },
         "connect": {
-          "title": "Connect",
-          "description": "Join communities and grow your network."
+          "title": "Join communities",
+          "description": "Connect with professionals in your field"
         },
         "assistant": {
           "title": "Your personal assistant",
-          "description": "Get personalized advice for your career and projects."
+          "description": "Get personalized career advice"
         }
       }
     },
     "createProfile": {
       "title": "Create my profile",
-      "tellUsAboutYou": "Tell us a bit about yourself",
-      "step1Title": "Personal Information",
-      "step2Title": "Location",
-      "step3Title": "Areas of Interest",
-      "step4Title": "Profile Photo",
-      "firstName": "First Name",
-      "lastName": "Last Name",
+      "tellUsAboutYou": "Tell us about yourself",
+      "step1Title": "Who are you?",
+      "step2Title": "Where are you?",
+      "step3Title": "What interests you?",
+      "step4Title": "Your photo",
+      "firstName": "First name",
+      "lastName": "Last name",
       "email": "Email",
       "phone": "Phone",
-      "birthDate": "Date of Birth",
+      "birthDate": "Date of birth",
       "selectDate": "Select a date",
       "gender": "Gender",
       "yourProfile": "Your profile",
-      "bio": "Bio",
-      "bioPlaceholder": "Tell us a bit about yourself in a few words...",
+      "bio": "About me",
+      "bioPlaceholder": "Describe yourself briefly: your background, your goals...",
       "country": "Country",
-      "region": "Region",
-      "city": "City/Town",
-      "commune": "City / Town",
-      "useMyLocation": "Use my current location",
+      "region": "Region / District",
+      "city": "City / Town",
+      "commune": "Town",
+      "useMyLocation": "Use my location",
       "locating": "Locating...",
       "selectInterests": "Select your interests",
       "addPhoto": "Add a photo",
-      "photoHint": "Tap to add your profile photo",
+      "photoHint": "A photo helps recruiters recognize you",
       "complete": "Complete",
       "continue": "Continue",
       "workPreferences": "Work preferences",
-      "remoteAvailable": "Available for remote",
+      "remoteAvailable": "Available for remote work",
       "remoteAvailableDesc": "I can work remotely",
       "willingToRelocate": "Willing to relocate",
-      "willingToRelocateDesc": "I can move for an opportunity",
-      "yourSectors": "Your sectors",
-      "sectorsHint": "Choose up to {{max}} sectors that interest you",
+      "willingToRelocateDesc": "I can move for the right opportunity",
+      "yourSectors": "Your fields",
+      "sectorsHint": "Choose up to {{max}} sectors",
       "selected": "{{count}}/{{max}} selected",
       "yourGoals": "Your goals",
-      "goalsHint": "Choose up to {{max}} priority goals",
-      "permissionRequired": "Permission required",
-      "photoPermissionMessage": "We need your permission to access your photos.",
-      "photoError": "An error occurred while selecting the image. Please try again."
+      "goalsHint": "What are you looking for? ({{max}} max)",
+      "permissionRequired": "Permission needed",
+      "photoPermissionMessage": "Allow access to your photos to continue.",
+      "photoError": "Unable to select image. Please try again."
     },
     "emailLogin": {
-      "title": "Login with Email",
-      "subtitle": "Enter your email address to receive a verification code",
+      "title": "Sign in with email",
+      "subtitle": "Enter your email to receive a code",
       "emailLabel": "Email address",
-      "sendCode": "Send code",
-      "infoText": "We'll send you a 6-digit code to log in without a password",
-      "sendError": "Unable to send code. Check your email address and try again."
+      "sendCode": "Get code",
+      "infoText": "You'll receive a 6-digit code to sign in",
+      "sendError": "Unable to send code. Check your email."
     },
     "verifyOtp": {
       "title": "Check your email",
-      "subtitle": "Enter the 6-digit code sent to",
+      "subtitle": "Enter the code sent to",
       "verify": "Verify",
       "resendCode": "Resend code",
       "resendIn": "Resend in {{seconds}}s",
-      "incompleteCode": "Enter the full 6-digit code",
-      "invalidCode": "Invalid code. Check and try again.",
-      "verifyError": "Verification error. Please try again.",
-      "codeSent": "A new code has been sent to your email",
+      "incompleteCode": "Enter all 6 digits",
+      "invalidCode": "Wrong code. Check and try again.",
+      "verifyError": "Verification error. Please retry.",
+      "codeSent": "New code sent!",
       "verified": "Email verified!",
-      "redirecting": "Redirecting..."
+      "redirecting": "Signing in..."
     }
   },
   "tabs": {
-    "assistant": "Copilot",
+    "assistant": "Assistant",
     "explore": "Explore",
-    "ecosystem": "Ecosystem",
-    "management": "Management",
-    "settings": "Settings"
+    "ecosystem": "Home",
+    "management": "Activity",
+    "settings": "Profile"
   },
   "assistant": {
-    "title": "Copilot",
-    "greeting": "How can I help you",
-    "inputPlaceholder": "Type your message...",
+    "title": "Assistant",
+    "greeting": "How can I help you?",
+    "inputPlaceholder": "Ask a question...",
     "suggestions": "Suggestions",
     "modes": {
-      "explore": "Explore",
-      "study": "Study"
+      "explore": "Discover",
+      "study": "Learn"
     },
     "prompts": {
       "explore": {
         "opportunities": "What opportunities match my profile?",
-        "spaces": "What spaces are available in Abidjan?",
-        "communities": "Recommend me some tech communities"
+        "spaces": "Where can I find a coworking space?",
+        "communities": "What communities should I join in my field?"
       },
       "study": {
-        "skills": "How to improve my React Native skills?",
-        "plan": "Create a learning plan for UX Design",
-        "certifications": "What certifications are recommended for my field?",
-        "basics": "Explain the basics of Product Management"
+        "skills": "How can I develop my skills?",
+        "plan": "Create a learning plan for me",
+        "certifications": "What certifications are useful for me?",
+        "basics": "Explain the basics of digital marketing"
       }
     }
   },
@@ -161,16 +162,16 @@
       "spaces": "Spaces",
       "communities": "Communities"
     },
-    "filters": "Filters",
+    "filters": "Filter",
     "sortBy": "Sort by",
     "sortOptions": {
       "relevance": "Relevance",
-      "relevanceDesc": "Results matching your profile",
+      "relevanceDesc": "Best matches for your profile",
       "proximity": "Proximity",
-      "proximityDesc": "From nearest to farthest",
-      "recent": "Most Recent",
-      "recentDesc": "Latest publications",
-      "popularity": "Popularity",
+      "proximityDesc": "Closest to you",
+      "recent": "Recent",
+      "recentDesc": "Latest posts",
+      "popularity": "Popular",
       "popularityDesc": "Most viewed"
     },
     "noResultsSearch": "No results for \"{{query}}\"",
@@ -178,14 +179,14 @@
     "remote": "Remote",
     "members": "members",
     "create": "Create",
-    "whatToCreate": "What would you like to create for {{name}}?",
+    "whatToCreate": "What do you want to create for {{name}}?",
     "opportunity": "Opportunity",
     "space": "Space",
     "community": "Community"
   },
   "ecosystem": {
     "title": "Home",
-    "weeklyInsight": "{{name}}, you had a busy week! You gained {{skills}} new skills and completed {{modules}} training modules.",
+    "weeklyInsight": "{{name}}, great week! You gained {{skills}} skills and completed {{modules}} modules.",
     "train": "Learn",
     "notifications": "Notifications",
     "agenda": "Agenda",
@@ -213,48 +214,48 @@
     }
   },
   "management": {
-    "title": "Management",
+    "title": "My activity",
     "offers": "Offers",
     "overview": "Overview",
-    "recentActivity": "Recent Activity",
-    "noOrganization": "No organization selected",
-    "selectOrganization": "Select an organization in settings to access management.",
+    "recentActivity": "Recent activity",
+    "noOrganization": "No organization",
+    "selectOrganization": "Select an organization in settings.",
     "goToSettings": "Go to settings",
-    "myApplications": "My Applications",
-    "myBookings": "My Bookings",
-    "myCommunities": "My Communities",
+    "myApplications": "My applications",
+    "myBookings": "My bookings",
+    "myCommunities": "My communities",
     "empty": {
-      "applications": "No active applications",
+      "applications": "No applications",
       "bookings": "No bookings",
-      "communities": "No communities joined"
+      "communities": "No communities"
     }
   },
   "settings": {
-    "title": "Settings",
+    "title": "My profile",
     "profile": "Profile",
-    "editProfile": "Edit Profile",
-    "viewProfile": "View Profile",
+    "editProfile": "Edit my profile",
+    "viewProfile": "View my profile",
     "spaces": {
       "title": "Spaces",
-      "talent": "My talent space",
+      "talent": "Talent space",
       "organization": "Organization"
     },
     "menu": {
-      "team": "Team",
-      "teamDesc": "Manage members and permissions",
-      "kyc": "Identity Verification",
-      "kycDesc": "Verify your identity",
-      "payment": "Payment Methods",
-      "paymentDesc": "Manage your payment methods",
+      "team": "My team",
+      "teamDesc": "Manage members",
+      "kyc": "Identity verification",
+      "kycDesc": "Verify my identity",
+      "payment": "Payment",
+      "paymentDesc": "Mobile Money, credit card",
       "preferences": "Preferences",
-      "preferencesDesc": "Language, theme and notifications",
+      "preferencesDesc": "Language, theme, notifications",
       "help": "Help",
-      "helpDesc": "FAQ and support",
+      "helpDesc": "FAQ",
       "legal": "Legal",
-      "legalDesc": "Terms and privacy"
+      "legalDesc": "Terms of use"
     },
-    "logout": "Log out",
-    "logoutConfirm": "Are you sure you want to log out?",
+    "logout": "Sign out",
+    "logoutConfirm": "Are you sure you want to sign out?",
     "version": "Version"
   },
   "preferences": {
@@ -264,79 +265,79 @@
     "themes": {
       "light": "Light",
       "dark": "Dark",
-      "system": "System"
+      "system": "Auto"
     },
     "language": "Language",
-    "notificationChannels": "Notification Channels",
-    "notificationTypes": "Notification Types",
+    "notificationChannels": "Channels",
+    "notificationTypes": "Notification types",
     "applications": "Applications",
-    "applicationsDesc": "Updates on your applications",
+    "applicationsDesc": "Track your applications",
     "reminders": "Reminders",
-    "remindersDesc": "Event and deadline reminders",
-    "learningPreferences": "Learning Preferences",
-    "learningStyle": "Learning Style",
-    "interactionMode": "Interaction Mode",
-    "interactionSocratic": "Socratic questioning",
-    "interactionDirect": "Direct instructions",
+    "remindersDesc": "Events and deadlines",
+    "learningPreferences": "Learning",
+    "learningStyle": "Learning style",
+    "interactionMode": "Interaction mode",
+    "interactionSocratic": "Q&A style",
+    "interactionDirect": "Direct explanations",
     "interactionExploratory": "Free exploration",
-    "contentDepth": "Content Depth",
-    "difficultyLevel": "Difficulty Level",
-    "learningSaveError": "Could not save preference. Please try again later.",
+    "contentDepth": "Detail level",
+    "difficultyLevel": "Difficulty",
+    "learningSaveError": "Unable to save. Please retry.",
     "privacy": "Privacy",
-    "publicProfile": "Public Profile",
-    "publicProfileDesc": "Your profile is visible to everyone",
+    "publicProfile": "Public profile",
+    "publicProfileDesc": "Anyone can see your profile",
     "showEmail": "Show my email",
-    "showEmailDesc": "Visible on your public profile",
+    "showEmailDesc": "Visible on your profile",
     "showPhone": "Show my phone",
-    "showPhoneDesc": "Visible on your public profile",
-    "loadError": "Could not load preferences",
+    "showPhoneDesc": "Visible on your profile",
+    "loadError": "Unable to load preferences",
     "retry": "Retry",
     "notifications": {
       "title": "Notifications",
-      "push": "Push Notifications",
-      "pushDesc": "Receive notifications on your device",
-      "email": "Email Notifications",
-      "emailDesc": "Receive email summaries",
-      "opportunities": "New Opportunities",
-      "opportunitiesDesc": "Be notified of new offers",
+      "push": "Push notifications",
+      "pushDesc": "Get alerts on your phone",
+      "email": "Email notifications",
+      "emailDesc": "Get email summaries",
+      "opportunities": "New opportunities",
+      "opportunitiesDesc": "When an offer matches your profile",
       "messages": "Messages",
-      "messagesDesc": "Notifications for new messages"
+      "messagesDesc": "When you receive a message"
     }
   },
   "profile": {
-    "title": "Edit Profile",
-    "personalInfo": "Personal Information",
+    "title": "My profile",
+    "personalInfo": "Personal information",
     "location": "Location",
     "interests": "Interests",
-    "photo": "Profile Photo",
-    "changePhoto": "Tap to change photo",
-    "saved": "Profile saved successfully"
+    "photo": "Profile photo",
+    "changePhoto": "Change photo",
+    "saved": "Profile saved!"
   },
   "organization": {
     "title": "Organization",
-    "create": "Create an Organization",
-    "edit": "Edit Organization",
-    "name": "Organization Name",
-    "type": "Organization Type",
+    "create": "Create an organization",
+    "edit": "Edit",
+    "name": "Organization name",
+    "type": "Type",
     "size": "Size",
     "description": "Description",
     "website": "Website",
     "logo": "Logo",
-    "changeLogo": "Tap to change logo",
+    "changeLogo": "Change logo",
     "location": "Location",
     "industries": "Industries",
-    "saved": "Organization saved successfully",
+    "saved": "Organization saved!",
     "members": {
       "title": "Team",
       "members": "Members",
       "invitations": "Invitations",
       "invite": "Invite",
-      "inviteMember": "Invite a Member",
-      "email": "Email Address",
+      "inviteMember": "Invite someone",
+      "email": "Email address",
       "role": "Role",
       "roles": {
         "owner": "Owner",
-        "admin": "Administrator",
+        "admin": "Admin",
         "manager": "Manager",
         "member": "Member"
       },
@@ -346,63 +347,69 @@
         "expired": "Expired"
       },
       "actions": {
-        "changeRole": "Change Role",
-        "remove": "Remove from Team",
-        "resend": "Resend Invitation",
-        "cancel": "Cancel Invitation"
+        "changeRole": "Change role",
+        "remove": "Remove from team",
+        "resend": "Resend invitation",
+        "cancel": "Cancel"
       },
       "empty": {
-        "members": "No team members",
-        "invitations": "No pending invitations"
+        "members": "No members",
+        "invitations": "No invitations"
       },
-      "inviteSent": "Invitation sent successfully",
-      "memberRemoved": "Member removed successfully",
-      "roleUpdated": "Role updated successfully"
+      "inviteSent": "Invitation sent!",
+      "memberRemoved": "Member removed",
+      "roleUpdated": "Role updated"
     }
   },
   "kyc": {
-    "title": "Identity Verification",
+    "title": "Identity verification",
     "subtitle": "Verify your identity to access all features",
     "status": {
-      "notStarted": "Not Started",
-      "pending": "Under Review",
+      "notStarted": "Not started",
+      "pending": "In progress",
       "verified": "Verified",
       "rejected": "Rejected"
     },
     "steps": {
-      "identity": "ID Document",
-      "selfie": "Selfie Photo",
-      "address": "Proof of Address"
+      "identity": "ID document",
+      "selfie": "Selfie",
+      "address": "Proof of address"
     },
-    "start": "Start Verification",
-    "uploadDocument": "Upload Document"
+    "start": "Start",
+    "uploadDocument": "Upload"
   },
   "payment": {
-    "title": "Payment Methods",
-    "addMethod": "Add Payment Method",
+    "title": "Payment methods",
+    "addMethod": "Add payment method",
     "methods": {
-      "card": "Credit Card",
+      "card": "Credit card",
       "mobileMoney": "Mobile Money",
-      "bankTransfer": "Bank Transfer"
+      "bankTransfer": "Bank transfer"
     },
-    "empty": "No payment methods saved",
+    "empty": "No payment methods",
     "default": "Default",
-    "setDefault": "Set as Default",
-    "remove": "Remove"
+    "setDefault": "Set as default",
+    "remove": "Remove",
+    "mobileMoneyProviders": {
+      "orange": "Orange Money",
+      "mtn": "MTN Money",
+      "wave": "Wave",
+      "moov": "Moov Money"
+    }
   },
   "help": {
     "title": "Help",
-    "faq": "Frequently Asked Questions",
-    "contact": "Contact Support",
+    "faq": "FAQ",
+    "contact": "Contact support",
     "email": "Email",
     "phone": "Phone",
-    "chat": "Live Chat"
+    "chat": "WhatsApp"
   },
   "legal": {
     "title": "Legal",
-    "terms": "Terms of Service",
-    "privacy": "Privacy Policy",
-    "cookies": "Cookie Policy"
+    "terms": "Terms of use",
+    "privacy": "Privacy",
+    "cookies": "Cookies"
   },
   "notifications": {
     "title": "Notifications",
@@ -415,11 +422,11 @@
     }
   },
   "calendar": {
-    "title": "Calendar",
+    "title": "Agenda",
     "today": "Today",
     "upcoming": "Upcoming",
     "past": "Past",
-    "noEvents": "No events",
+    "noEvents": "Nothing planned",
     "eventTypes": {
       "interview": "Interview",
       "deadline": "Deadline",
@@ -428,10 +435,10 @@
   },
   "documents": {
     "title": "Documents",
-    "upload": "Upload a Document",
+    "upload": "Add a document",
     "types": {
       "cv": "Resume",
-      "certificate": "Certificate",
+      "certificate": "Certificate / Diploma",
       "portfolio": "Portfolio",
       "other": "Other"
     },
@@ -440,12 +447,13 @@
   },
   "opportunity": {
     "apply": "Apply",
-    "applied": "Application Sent",
+    "viewApplication": "View my application",
+    "applied": "Application sent",
     "save": "Save",
     "saved": "Saved",
     "share": "Share",
     "deadline": "Deadline",
-    "postedAt": "Posted",
+    "postedAt": "Posted on",
     "description": "Description",
     "requirements": "Requirements",
     "benefits": "Benefits",
@@ -453,9 +461,9 @@
     "applications": "Applications",
     "location": "Location",
     "salary": "Salary",
-    "startDate": "Start Date",
+    "startDate": "Start date",
     "duration": "Duration",
-    "niceToHave": "Nice to Have",
+    "niceToHave": "Nice to have",
     "aboutOrg": "About {{name}}",
     "types": {
       "employment": "Employment",
@@ -467,15 +475,15 @@
       "fellowship": "Fellowship"
     },
     "workTypes": {
-      "fullTime": "Full Time",
-      "partTime": "Part Time",
+      "fullTime": "Full time",
+      "partTime": "Part time",
       "contract": "Contract",
       "freelance": "Freelance",
       "internship": "Internship",
       "apprenticeship": "Apprenticeship"
     },
     "locationTypes": {
-      "onSite": "On Site",
+      "onSite": "On site",
       "remote": "Remote",
       "hybrid": "Hybrid"
     }
@@ -486,17 +494,18 @@
     "about": "About",
     "amenities": "Amenities",
     "pricing": "Pricing",
-    "location": "Location",
+    "location": "Address",
     "accessTypes": {
-      "public": "Public Access",
-      "membership": "Membership Required",
+      "public": "Open access",
+      "membership": "Membership",
       "private": "Private"
     },
     "types": {
       "coworking": "Coworking",
       "incubator": "Incubator",
       "accelerator": "Accelerator",
-      "lab": "Lab"
+      "lab": "Fablab / Lab",
+      "hub": "Hub"
     }
   },
   "community": {
@@ -509,7 +518,7 @@
     "discussions": "Discussions",
     "types": {
       "online": "Online",
-      "offline": "In-Person",
+      "offline": "In-person",
       "hybrid": "Hybrid"
     },
     "feed": {
@@ -518,13 +527,13 @@
       "events": "Events",
       "polls": "Polls",
       "voteError": "Unable to vote",
-      "pinError": "Unable to change pin",
+      "pinError": "Error",
       "deleteTitle": "Delete",
-      "deleteMessage": "Are you sure you want to delete this activity?",
+      "deleteMessage": "Delete this post?",
       "deleteError": "Unable to delete",
       "subscribersOnly": "Subscribers only",
-      "expiredSubscription": "Your subscription has expired. Renew to access \"{{name}}\" content.",
-      "subscribePrompt": "Subscribe to access exclusive content from \"{{name}}\".",
+      "expiredSubscription": "Your subscription expired. Renew to access content.",
+      "subscribePrompt": "Subscribe to access content from \"{{name}}\".",
       "perMonth": "/month",
       "renew": "Renew",
       "subscribe": "Subscribe",
@@ -534,52 +543,52 @@
     "comments": {
       "title": "Comments",
       "viewMore": "View {{count}} more comment(s)",
-      "noComments": "No comments. Be the first!",
+      "noComments": "Be the first to comment!",
       "replyTo": "Reply to {{name}}",
       "replyPlaceholder": "Your reply...",
-      "addPlaceholder": "Add a comment...",
-      "deleteTitle": "Delete comment",
-      "deleteMessage": "Are you sure you want to delete this comment?",
-      "deleteError": "Unable to delete comment.",
+      "addPlaceholder": "Write a comment...",
+      "deleteTitle": "Delete",
+      "deleteMessage": "Delete this comment?",
+      "deleteError": "Unable to delete",
       "report": "Report",
       "options": "Options",
-      "publishError": "Unable to post."
+      "publishError": "Unable to post"
     },
     "paywall": {
       "expiredTitle": "Subscription expired",
       "cancelledTitle": "Subscription cancelled",
       "subscribersOnly": "Subscribers only",
-      "renewDescription": "Renew your subscription to access this community's content.",
-      "subscribeDescription": "Subscribe to access all exclusive content from this community.",
+      "renewDescription": "Renew your subscription to keep accessing content.",
+      "subscribeDescription": "Subscribe to access all exclusive content.",
       "monthlySubscription": "Monthly subscription",
       "perMonth": "/month",
       "trialDays": "{{days}} days free trial",
-      "benefitPosts": "Access to all posts",
-      "benefitEvents": "Participation in events",
+      "benefitPosts": "All posts",
+      "benefitEvents": "Event access",
       "benefitPolls": "Polls and discussions",
-      "startTrial": "Start free trial",
-      "renewSubscription": "Renew my subscription",
-      "subscribeNow": "Subscribe now",
+      "startTrial": "Try for free",
+      "renewSubscription": "Renew",
+      "subscribeNow": "Subscribe",
       "later": "Later",
-      "trialActivated": "Free trial activated",
+      "trialActivated": "Trial activated!",
       "paymentInProgress": "Payment in progress",
-      "paymentMessage": "Complete the payment in your browser. Come back here when done."
+      "paymentMessage": "Complete the payment then come back here."
     },
     "activity": {
       "unpin": "Unpin",
       "pin": "Pin",
       "scheduled": "Scheduled",
-      "pollLoading": "Loading poll options...",
+      "pollLoading": "Loading...",
       "votes": "{{count}} vote(s)",
       "dateLabel": "Date",
       "online": "Online",
       "location": "Location",
       "meetingLinkAvailable": "Meeting link available",
       "detailsComingSoon": "Details coming soon",
-      "locationTbc": "Location to be confirmed",
-      "likes": "{{count}} Like(s)",
-      "comments": "{{count}} Comment(s)",
-      "bookmarks": "{{count}} Bookmark(s)"
+      "locationTbc": "Location TBC",
+      "likes": "{{count}} like(s)",
+      "comments": "{{count}} comment(s)",
+      "bookmarks": "{{count}} save(s)"
     }
   },
   "date": {
@@ -587,8 +596,8 @@
     "yesterday": "Yesterday",
     "tomorrow": "Tomorrow",
     "daysAgo": "{{days}} days ago",
-    "hoursAgo": "{{hours}} hours ago",
-    "minutesAgo": "{{minutes}} minutes ago",
+    "hoursAgo": "{{hours}}h ago",
+    "minutesAgo": "{{minutes}} min ago",
     "justNow": "Just now",
     "inDays": "In {{days}} days",
     "expired": "Expired",
@@ -627,31 +636,31 @@
       "meetingRequest": "Meeting request",
       "availability": "Availability"
     },
-    "calendarPermission": "Please allow calendar access to add this event.",
+    "calendarPermission": "Allow calendar access to add the event.",
     "noCalendar": "No calendar available.",
     "appointment": "Appointment",
-    "eventAdded": "The event has been added to your calendar.",
-    "eventAddError": "Unable to add event to calendar.",
+    "eventAdded": "Event added to your calendar.",
+    "eventAddError": "Unable to add event.",
     "proposedSlot": "Proposed slot",
     "writeMessage": "Write your message...",
     "fileTooLarge": "File too large",
-    "fileSizeLimit": "File must not exceed {{size}}.",
+    "fileSizeLimit": "Max size: {{size}}",
     "limitReached": "Limit reached",
-    "maxFiles": "You can attach up to 3 files.",
+    "maxFiles": "3 files maximum.",
     "fileSelectError": "Unable to select file.",
     "proposal": "Proposal: {{date}} at {{time}}",
     "proposeDate": "Propose a date"
   },
   "input": {
     "errorHint": "Error: {{error}}",
-    "hidePassword": "Hide password",
-    "showPassword": "Show password",
-    "togglePasswordHint": "Tap to toggle password visibility"
+    "hidePassword": "Hide",
+    "showPassword": "Show",
+    "togglePasswordHint": "Show or hide password"
   },
   "errorBoundary": {
     "errorReportTitle": "Etudesk Error Report",
     "title": "Oops! Something went wrong",
-    "subtitle": "We're sorry, something went wrong.",
+    "subtitle": "Sorry, something didn't work as expected.",
     "unknownError": "Unknown error",
     "technicalDetails": "Technical details",
     "stackTrace": "Stack Trace:",
@@ -661,80 +670,80 @@
     "pageLoadError": "This page could not be loaded."
   },
   "geolocation": {
-    "servicesDisabled": "Location services disabled",
-    "enableServices": "Please enable location services in your device settings.",
+    "servicesDisabled": "Location disabled",
+    "enableServices": "Enable location in your phone settings.",
     "settings": "Settings",
-    "permissionDenied": "Permission denied",
-    "permissionMessage": "Etudesk needs your permission to access your location.",
+    "permissionDenied": "Access denied",
+    "permissionMessage": "Etudesk needs access to your location.",
     "addressError": "Unable to determine your address",
-    "unsupportedCountry": "Country not supported",
-    "unsupportedCountryMessage": "We don't support {{country}} yet. Please select your location manually.",
-    "timeout": "Location took too long. Please try again.",
-    "genericError": "An error occurred while getting your location.",
+    "unsupportedCountry": "Country not available",
+    "unsupportedCountryMessage": "{{country}} is not yet available. Please select your location manually.",
+    "timeout": "Location took too long. Please retry.",
+    "genericError": "Error getting your location.",
     "errorTitle": "Location error",
-    "errorMessage": "Unable to get your location. Please try again or select your location manually."
+    "errorMessage": "Unable to get your location. Retry or select manually."
   },
   "audioRecorder": {
-    "permissionRequired": "Permission required",
-    "micPermissionMessage": "Microphone access is required to record your voice.",
+    "permissionRequired": "Permission needed",
+    "micPermissionMessage": "Allow microphone access to record.",
     "startError": "Unable to start recording",
     "stopError": "Error stopping recording"
   },
   "map": {
-    "permissionDenied": "Permission denied",
-    "permissionMessage": "We need your permission to access your location.",
+    "permissionDenied": "Access denied",
+    "permissionMessage": "Allow access to your location.",
     "locationError": "Location error",
     "locationErrorMessage": "Unable to get your location.",
     "loadingMap": "Loading map...",
     "selectedPosition": "Selected position",
-    "tapToSelect": "Tap the map to select a position"
+    "tapToSelect": "Tap the map to select a location"
   },
   "copilotImage": {
     "openLinkError": "Unable to open link",
-    "openLinkErrorMessage": "An error occurred while opening the link",
-    "loadError": "Unable to load image"
+    "openLinkErrorMessage": "An error occurred.",
+    "loadError": "Image not available"
   },
   "imageService": {
-    "permissionRequired": "Permission required",
-    "photoPermission": "We need your permission to access your photos.",
-    "cameraPermission": "We need your permission to access the camera.",
+    "permissionRequired": "Permission needed",
+    "photoPermission": "Allow access to your photos.",
+    "cameraPermission": "Allow camera access.",
     "optimizeError": "Error optimizing image",
-    "pickError": "An error occurred while selecting the image.",
-    "captureError": "An error occurred while taking the photo.",
-    "chooseImage": "Choose an image",
-    "chooseImageMessage": "How would you like to add your image?",
+    "pickError": "Unable to select image.",
+    "captureError": "Unable to take photo.",
+    "chooseImage": "Add an image",
+    "chooseImageMessage": "How do you want to add your image?",
     "takePhoto": "Take a photo",
     "fromGallery": "Choose from gallery",
-    "uploadError": "Error uploading image"
+    "uploadError": "Upload error"
   },
   "copilotService": {
     "connectionError": "Connection error",
     "httpError": "Error {{status}}",
-    "transcriptionError": "Error during transcription",
-    "audioTranscriptionError": "Error during audio transcription",
-    "uploadError": "Error uploading files"
+    "transcriptionError": "Transcription error",
+    "audioTranscriptionError": "Unable to transcribe audio",
+    "uploadError": "File upload error"
   },
   "copilotContext": {
-    "attachmentUploadError": "Error uploading attachments",
-    "sendError": "Error sending message",
+    "attachmentUploadError": "Attachment upload error",
+    "sendError": "Unable to send message",
     "sessionNotFound": "Session not found",
     "unknownError": "Unknown error",
-    "loadSessionsError": "Error loading sessions"
+    "loadSessionsError": "Unable to load sessions"
   },
   "otpService": {
-    "sendError": "Error sending code"
+    "sendError": "Unable to send code"
   },
   "errors": {
     "generic": "An error occurred",
-    "network": "Connection error",
+    "network": "Connection issue",
     "unauthorized": "Unauthorized",
     "notFound": "Not found",
     "validation": "Invalid data",
-    "required": "This field is required",
+    "required": "Required field",
     "invalidEmail": "Invalid email",
-    "invalidPhone": "Invalid phone number",
-    "photoSelection": "Error selecting photo",
-    "location": "Geolocation error"
+    "invalidPhone": "Invalid number",
+    "photoSelection": "Photo selection error",
+    "location": "Location error"
   },
   "alert": {
     "ok": "OK",
@@ -744,16 +753,16 @@
     "no": "No",
     "close": "Close",
     "delete": "Delete",
-    "deleteConfirm": "Are you sure you want to delete?",
-    "deleteSuccess": "Deleted successfully",
-    "saveSuccess": "Saved successfully",
-    "updateSuccess": "Updated successfully",
-    "actionSuccess": "Action completed successfully",
+    "deleteConfirm": "Confirm deletion?",
+    "deleteSuccess": "Deleted!",
+    "saveSuccess": "Saved!",
+    "updateSuccess": "Updated!",
+    "actionSuccess": "Done",
     "actionError": "An error occurred",
-    "networkError": "Connection error. Please check your internet connection.",
+    "networkError": "Check your internet connection.",
     "sessionExpired": "Session expired",
-    "sessionExpiredMessage": "Your session has expired. Please log in again.",
-    "permissionDenied": "Permission denied",
-    "permissionDeniedMessage": "You don't have permission to perform this action."
+    "sessionExpiredMessage": "Sign in again to continue.",
+    "permissionDenied": "Access denied",
+    "permissionDeniedMessage": "You don't have permission for this action."
   }
 }
