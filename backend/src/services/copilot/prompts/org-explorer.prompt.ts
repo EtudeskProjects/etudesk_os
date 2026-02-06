@@ -90,38 +90,42 @@ Respond in structured markdown. Use the following block types to render rich con
 
 ## Entity Cards (clickable, navigate to detail screen)
 
+CRITICAL: Entity cards contain ONLY the ID. The frontend fetches full data from the API.
+
 \`\`\`entity:talent
-{"id":"uuid","name":"Name","headline":"Title","location":"City","topSkills":["React","Node"]}
+{"id":"uuid-from-tool-result"}
 \`\`\`
 
 \`\`\`entity:opportunity
-{"id":"uuid","slug":"slug","title":"Title","organization":"${context.organizationName}","applicationsCount":12,"status":"OPEN"}
+{"id":"uuid-from-tool-result"}
 \`\`\`
 
 \`\`\`entity:community
-{"id":"uuid","slug":"slug","name":"Name","organization":"${context.organizationName}","memberCount":42,"type":"ONLINE","matchScore":78}
+{"id":"uuid-from-tool-result"}
 \`\`\`
 
 \`\`\`entity:space
-{"id":"uuid","slug":"slug","name":"Name","organization":"${context.organizationName}","city":"City","capacity":20,"hourlyRate":"5000 XOF/h","matchScore":72}
+{"id":"uuid-from-tool-result"}
 \`\`\`
 
 \`\`\`entity:organization
-{"id":"uuid","slug":"slug","name":"Name","sectors":["Tech"],"location":"City","openOpportunities":3,"matchScore":80}
+{"id":"uuid-from-tool-result"}
 \`\`\`
+
+NEVER include name, title, location, matchScore, applicationsCount, or any other data in entity cards. Only the id field.
 
 ## Document Cards (after generate_document results)
 
-When generate_document returns successfully, render a document card using the EXACT downloadUrl and filename from the tool result:
+When generate_document returns successfully, render a document card with ONLY the ID:
 
 \`\`\`entity:document
-{"id":"from-tool-result-or-omit","title":"Document Title","file_url":"/uploads/generated/file.pdf","filename":"file.pdf","document_type":"PDF"}
+{"id":"uuid-from-generate-document-result"}
 \`\`\`
 
 CRITICAL DOCUMENT RULES:
-- Use the \`downloadUrl\` from generate_document result as the \`file_url\` field.
-- Use the \`filename\` from the tool result.
-- Do NOT invent or hallucinate document fields. Only use what the tool returned.
+- Use ONLY the \`id\` returned by generate_document. The frontend fetches all other data from the API.
+- Do NOT include title, file_url, filename, or document_type in the card — only the id.
+- If the tool did not return an id, do NOT render an entity:document card.
 
 CRITICAL: The tag MUST always start with \`entity:\` prefix (e.g. \`entity:community\`, NOT just \`community\`). Supported entity types: opportunity, community, space, organization, talent, event, document, skill, notification, maps.
 
@@ -143,7 +147,8 @@ When showing stats, distributions, or comparisons:
 - Show a maximum of 5 results by default.
 - Add a short explanation of why each result is relevant.
 - NEVER render an entity card without a real id from tool results. If a result has no id, skip it — do not invent or placeholder an id.
-- Always include slug when available.
+- Entity cards contain ONLY the id field. The frontend fetches all display data from the API.
+- NEVER include name, title, slug, matchScore, or any other data in entity cards — only {"id":"uuid"}.
 - For statistics, use clear numbers and comparisons. Prefer chart blocks for visual data.
 
 # Ontology (Platform Knowledge)
