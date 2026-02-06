@@ -148,101 +148,101 @@ export const LIGHT_COLORS = {
 
 // ─────────────────────────────────────────────────────────────
 // DARK THEME
-// Same primary color, darker background
+// Optimized for contrast and visibility
 // ─────────────────────────────────────────────────────────────
 export const DARK_COLORS = {
-  // Primary - SAME as light mode for brand consistency
-  primary: '#3B2416',           // Same rich brown as light mode
-  primaryLight: '#5C3D2E',
-  primaryDark: '#2A1A10',
-  primaryMuted: '#8B7355',
+  // Primary - LIGHTER for dark mode visibility (not the same dark brown)
+  primary: '#C9A070',           // Warm gold-brown - visible on dark
+  primaryLight: '#DDB88A',      // Lighter variant
+  primaryDark: '#A68050',       // Darker variant
+  primaryMuted: '#8B7355',      // Muted variant
 
-  // Neutrals - Inverted warm scale
+  // Neutrals - Inverted warm scale with better contrast
   white: '#0D0B0A',             // Very dark for "white" elements
-  black: '#FAF9F7',
+  black: '#F5F3F0',             // Light for "black" elements
 
-  gray50: '#121110',            // Darker background levels
-  gray100: '#1A1816',
-  gray200: '#242220',
-  gray300: '#302D2A',
-  gray400: '#4D4840',
-  gray500: '#6E675C',
-  gray600: '#918A7E',
-  gray700: '#B8B2A8',
-  gray800: '#D9D5CF',
-  gray900: '#F5F3F0',
+  gray50: '#0D0B0A',            // Darkest - main background
+  gray100: '#161412',           // Slightly lighter
+  gray200: '#1E1C1A',           // Card backgrounds
+  gray300: '#2A2826',           // Elevated surfaces
+  gray400: '#3D3A36',           // Borders, dividers
+  gray500: '#5C5850',           // Disabled elements
+  gray600: '#8A847A',           // Tertiary text
+  gray700: '#A8A29A',           // Secondary text
+  gray800: '#D4D0CA',           // Primary text
+  gray900: '#F5F3F0',           // Headings, emphasis
 
-  // Semantic - Lighter for dark mode visibility
-  success: '#6A9A60',
-  successLight: '#1A241A',
-  successDark: '#4A7A40',
+  // Semantic - MUCH lighter for dark mode visibility
+  success: '#7CB870',           // Bright green
+  successLight: '#1A2418',      // Dark green background
+  successDark: '#5CA050',       // Pressed state
 
-  error: '#B87060',
-  errorLight: '#241A18',
-  errorDark: '#984848',
+  error: '#E08070',             // Bright terracotta
+  errorLight: '#2A1816',        // Dark red background
+  errorDark: '#C86050',         // Pressed state
 
-  warning: '#C9A070',
-  warningLight: '#241E18',
-  warningDark: '#A88050',
+  warning: '#E8B870',           // Bright amber
+  warningLight: '#2A2418',      // Dark amber background
+  warningDark: '#C8A050',       // Pressed state
 
-  info: '#908070',
-  infoLight: '#1E1C1A',
-  infoDark: '#706050',
+  info: '#A89888',              // Lighter taupe
+  infoLight: '#1E1C1A',         // Dark taupe background
+  infoDark: '#8A7868',          // Pressed state
 
-  // Backgrounds & Surfaces - DARKER
+  // Backgrounds & Surfaces
   background: '#0D0B0A',        // Very dark background
-  backgroundSecondary: '#121110',
-  backgroundTertiary: '#1A1816',
-  surface: '#1A1816',           // Cards on dark bg
-  surfaceElevated: '#242220',
+  backgroundSecondary: '#121110', // Slightly lighter
+  backgroundTertiary: '#1A1816',  // Card background level
+  surface: '#1E1C1A',           // Cards on dark bg
+  surfaceElevated: '#2A2826',   // Elevated cards, modals
 
-  // Text - High contrast on dark
-  textPrimary: '#F5F3F0',
-  textSecondary: '#B8B2A8',
-  textTertiary: '#918A7E',
-  textDisabled: '#6E675C',
-  textInverse: '#0D0B0A',
-  textOnPrimary: '#FFFFFF',     // White text on primary (dark primary)
+  // Text - High contrast on dark backgrounds
+  textPrimary: '#F5F3F0',       // Primary text - very light
+  textSecondary: '#B8B2A8',     // Secondary text - still readable
+  textTertiary: '#8A847A',      // Tertiary/hint text
+  textDisabled: '#5C5850',      // Disabled text
+  textInverse: '#0D0B0A',       // Text on light backgrounds
+  textOnPrimary: '#0D0B0A',     // Dark text on primary (now light primary)
 
-  // Borders & Dividers
-  borderColor: '#242220',
-  borderColorStrong: '#302D2A',
-  divider: '#242220',
+  // Borders & Dividers - Subtle but visible
+  borderColor: '#2A2826',       // Default border
+  borderColorStrong: '#3D3A36', // Emphasized border
+  divider: '#2A2826',           // Horizontal dividers
 
-  // Quick Access Cards - Dark variants
-  cardTalent: '#1A1816',
-  cardTalentAccent: '#3D3530',
-  cardTalentText: '#D4C4B0',
+  // Quick Access Cards - Dark variants with BRIGHT accents for badges
+  cardTalent: '#1E1C1A',
+  cardTalentAccent: '#C9A070',    // Bright warm gold (same as primary)
+  cardTalentText: '#E8DED0',
 
-  cardOrg: '#1A1816',
-  cardOrgAccent: '#3A3230',
-  cardOrgText: '#C9B8A8',
+  cardOrg: '#1E1C1A',
+  cardOrgAccent: '#B89878',       // Bright warm brown
+  cardOrgText: '#E0D0C0',
 
-  cardOpportunity: '#1A1816',
-  cardOpportunityAccent: '#3D3830',
-  cardOpportunityText: '#D6CBBC',
+  cardOpportunity: '#1E1C1A',
+  cardOpportunityAccent: '#D4B896', // Bright sand
+  cardOpportunityText: '#E8E0D0',
 
-  cardCommunity: '#181A16',
-  cardCommunityAccent: '#303828',
-  cardCommunityText: '#C4D4B8',
+  cardCommunity: '#1A1C18',
+  cardCommunityAccent: '#7CB870',  // Bright green (same as success)
+  cardCommunityText: '#D8E8C8',
 
-  cardSpace: '#1A1918',
-  cardSpaceAccent: '#302D2A',
-  cardSpaceText: '#D0CCC4',
+  cardSpace: '#1C1A18',
+  cardSpaceAccent: '#A89888',      // Bright warm gray
+  cardSpaceText: '#E0DCD8',
 
-  // Interactive States
-  overlay: 'rgba(0, 0, 0, 0.8)',
+  // Interactive States - Using lighter primary for visibility
+  overlay: 'rgba(0, 0, 0, 0.85)',
   overlayLight: 'rgba(0, 0, 0, 0.6)',
-  pressed: 'rgba(59, 36, 22, 0.30)',   // Same primary with opacity
-  focused: 'rgba(59, 36, 22, 0.40)',
-  hover: 'rgba(59, 36, 22, 0.20)',
+  pressed: 'rgba(201, 160, 112, 0.20)',   // Light primary with opacity
+  focused: 'rgba(201, 160, 112, 0.30)',
+  hover: 'rgba(201, 160, 112, 0.12)',
 
-  // Status Colors - Same as light but slightly adjusted
-  statusPending: '#C9A070',
-  statusActive: '#6A9A60',
-  statusRejected: '#B87060',
-  statusSuspended: '#908070',
-  statusArchived: '#4D4840',
+  // Status Colors - Bright for dark mode
+  statusPending: '#E8B870',     // Bright amber
+  statusActive: '#7CB870',      // Bright green
+  statusRejected: '#E08070',    // Bright terracotta
+  statusSuspended: '#A89888',   // Lighter taupe
+  statusArchived: '#5C5850',    // Muted gray
 } as const;
 
 // Default export for backwards compatibility
@@ -634,24 +634,25 @@ export const COMPONENT = {
 
 // ═══════════════════════════════════════════════════════════════
 // MATCH CATEGORY COLORS (for application matching scores)
+// Uses Luxe Africain semantic colors
 // ═══════════════════════════════════════════════════════════════
 
 export const MATCH_COLORS = {
   excellent: {
-    color: '#059669',
-    bgColor: 'rgba(5, 150, 105, 0.08)',
+    color: LIGHT_COLORS.success,           // #4A6741 - Forest green
+    bgColor: LIGHT_COLORS.successLight,    // #E8EFE6
   },
   good: {
-    color: '#2563eb',
-    bgColor: 'rgba(37, 99, 235, 0.08)',
+    color: LIGHT_COLORS.primaryMuted,      // #8B7355 - Muted brown
+    bgColor: 'rgba(139, 115, 85, 0.08)',
   },
   average: {
-    color: '#d97706',
-    bgColor: 'rgba(217, 119, 6, 0.08)',
+    color: LIGHT_COLORS.warning,           // #A67C52 - Warm amber
+    bgColor: LIGHT_COLORS.warningLight,    // #F7F0E8
   },
   low: {
-    color: '#dc2626',
-    bgColor: 'rgba(220, 38, 38, 0.08)',
+    color: LIGHT_COLORS.error,             // #8B4A3C - Terracotta
+    bgColor: LIGHT_COLORS.errorLight,      // #F5EBE8
   },
 } as const;
 

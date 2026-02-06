@@ -887,7 +887,7 @@ export default function BookSpaceScreen() {
                     style={[
                       styles.calendarDayText,
                       { color: isAvailable ? colors.textPrimary : colors.gray300 },
-                      isSelected && { color: '#FFFFFF' },
+                      isSelected && { color: colors.textOnPrimary },
                     ]}
                   >
                     {date.getDate()}
@@ -937,7 +937,7 @@ export default function BookSpaceScreen() {
                     <Text
                       style={[
                         styles.timeSlotText,
-                        { color: isSelected ? '#FFFFFF' : colors.textPrimary },
+                        { color: isSelected ? colors.textOnPrimary : colors.textPrimary },
                       ]}
                     >
                       {time}
@@ -1105,7 +1105,7 @@ export default function BookSpaceScreen() {
               acceptedRules && { backgroundColor: colors.primary },
             ]}
           >
-            {acceptedRules && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
+            {acceptedRules && <Check size={14} color={colors.textOnPrimary} strokeWidth={3} />}
           </View>
           <Text style={[styles.checkboxLabel, { color: colors.textPrimary }]}>
             J'accepte les conditions d'utilisation de l'espace
@@ -1219,7 +1219,7 @@ export default function BookSpaceScreen() {
           </View>
 
           {/* Date & Time Info */}
-          <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.primary, OPACITY['08']) }]}>
+          <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.primary, OPACITY[8]) }]}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
               Date & Heure
             </Text>
@@ -1468,7 +1468,7 @@ export default function BookSpaceScreen() {
               fullWidth
               icon={
                 isCheckingAvailability ? undefined : (
-                  <ChevronRight size={18} color="#FFFFFF" strokeWidth={ICON.strokeWidth} />
+                  <ChevronRight size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
                 )
               }
               iconPosition="right"

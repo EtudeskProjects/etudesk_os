@@ -420,8 +420,18 @@ export async function updatePreferences(
 // APPLICATION NOTIFICATION HELPERS (Enhanced with Email)
 // ═══════════════════════════════════════════════════════════════
 
-const BRAND_BLUE = '#26449F';
-const APP_URL = process.env.APP_URL || 'https://etudesk.com';
+// ═══════════════════════════════════════════════════════════════
+// BRAND DESIGN SYSTEM - Luxe Africain
+// ═══════════════════════════════════════════════════════════════
+const BRAND_PRIMARY = '#3B2416';
+const BRAND_PRIMARY_LIGHT = '#5C3D2E';
+const BRAND_SUCCESS = '#4A6741';
+const BRAND_ERROR = '#8B4A3C';
+
+// Logo URL (web assets)
+const LOGO_URL = 'https://etudesk.org/images/etudesk_logo_black.png';
+
+const APP_URL = process.env.APP_URL || 'https://etudesk.org';
 
 const APPLICATION_STATUS_LABELS: Record<string, string> = {
   SUBMITTED: 'Soumise',
@@ -678,21 +688,22 @@ async function sendApplicationStatusEmail(
   applicationId: string
 ): Promise<void> {
   const applicationLink = `${APP_URL}/my-applications/${applicationId}`;
-  const statusColor = status === 'ACCEPTED' ? '#10B981'
-    : status === 'REJECTED' ? '#EF4444'
-      : status === 'IN_REVIEW' ? '#3B82F6'
-        : BRAND_BLUE;
+  // Semantic colors from Luxe Africain design system
+  const statusColor = status === 'ACCEPTED' ? BRAND_SUCCESS
+    : status === 'REJECTED' ? BRAND_ERROR
+      : status === 'IN_REVIEW' ? '#A67C52' // Warning/Info tone
+        : BRAND_PRIMARY;
 
   const html = `
 <!DOCTYPE html>
 <html lang="fr">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background-color:#f5f5f5;">
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background-color:#FAF9F7;">
   <table style="width:100%;border-collapse:collapse;">
     <tr>
       <td align="center" style="padding:40px 20px;">
         <table style="width:100%;max-width:500px;border-collapse:collapse;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
+          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="${LOGO_URL}" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
           <tr>
             <td style="padding:20px 40px;">
               <p style="margin:0 0 20px;font-size:16px;color:#4a4a4a;">Bonjour ${talentName},</p>
@@ -703,11 +714,11 @@ async function sendApplicationStatusEmail(
                 <p style="margin:0;font-size:18px;font-weight:600;color:${statusColor};">${statusLabel}</p>
               </div>
               <div style="text-align:center;margin-bottom:20px;">
-                <a href="${applicationLink}" style="display:inline-block;background-color:${BRAND_BLUE};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600;">Voir ma candidature</a>
+                <a href="${applicationLink}" style="display:inline-block;background-color:${BRAND_PRIMARY};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600;">Voir ma candidature</a>
               </div>
             </td>
           </tr>
-          <tr><td style="padding:24px 40px;background-color:#f8f9fa;border-radius:0 0 12px 12px;"><p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">© ${new Date().getFullYear()} Etudesk</p></td></tr>
+          <tr><td style="padding:24px 40px;background-color:#F5F3F0;border-radius:0 0 12px 12px;"><p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">© ${new Date().getFullYear()} Etudesk</p></td></tr>
         </table>
       </td>
     </tr>
@@ -737,26 +748,26 @@ async function sendNewMessageEmail(
 <!DOCTYPE html>
 <html lang="fr">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background-color:#f5f5f5;">
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background-color:#FAF9F7;">
   <table style="width:100%;border-collapse:collapse;">
     <tr>
       <td align="center" style="padding:40px 20px;">
         <table style="width:100%;max-width:500px;border-collapse:collapse;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
+          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="${LOGO_URL}" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
           <tr>
             <td style="padding:20px 40px;">
               <p style="margin:0 0 20px;font-size:16px;color:#4a4a4a;">Bonjour ${talentName},</p>
               <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:#4a4a4a;">Vous avez reçu un nouveau message de <strong>${organizationName}</strong>.</p>
-              <div style="background-color:#f8f9fa;border-radius:8px;padding:16px;margin-bottom:24px;">
+              <div style="background-color:#F5F3F0;border-radius:8px;padding:16px;margin-bottom:24px;">
                 <p style="margin:0 0 8px;font-size:12px;color:#6b7280;">${opportunityTitle}</p>
                 <p style="margin:0;font-size:14px;color:#374151;font-style:italic;">"${messageContent.substring(0, 200)}${messageContent.length > 200 ? '...' : ''}"</p>
               </div>
               <div style="text-align:center;margin-bottom:20px;">
-                <a href="${applicationLink}" style="display:inline-block;background-color:${BRAND_BLUE};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600;">Répondre</a>
+                <a href="${applicationLink}" style="display:inline-block;background-color:${BRAND_PRIMARY};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600;">Répondre</a>
               </div>
             </td>
           </tr>
-          <tr><td style="padding:24px 40px;background-color:#f8f9fa;border-radius:0 0 12px 12px;"><p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">© ${new Date().getFullYear()} Etudesk</p></td></tr>
+          <tr><td style="padding:24px 40px;background-color:#F5F3F0;border-radius:0 0 12px 12px;"><p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">© ${new Date().getFullYear()} Etudesk</p></td></tr>
         </table>
       </td>
     </tr>
@@ -785,26 +796,26 @@ async function sendNewApplicationEmail(
 <!DOCTYPE html>
 <html lang="fr">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background-color:#f5f5f5;">
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background-color:#FAF9F7;">
   <table style="width:100%;border-collapse:collapse;">
     <tr>
       <td align="center" style="padding:40px 20px;">
         <table style="width:100%;max-width:500px;border-collapse:collapse;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
+          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="${LOGO_URL}" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
           <tr>
             <td style="padding:20px 40px;">
               <p style="margin:0 0 20px;font-size:16px;color:#4a4a4a;">Bonjour ${memberName},</p>
               <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:#4a4a4a;">Une nouvelle candidature a été reçue!</p>
-              <div style="background-color:${BRAND_BLUE}10;border-radius:8px;padding:20px;margin-bottom:24px;">
-                <p style="margin:0 0 8px;font-size:18px;font-weight:600;color:${BRAND_BLUE};">${talentName}</p>
+              <div style="background-color:${BRAND_PRIMARY}10;border-radius:8px;padding:20px;margin-bottom:24px;">
+                <p style="margin:0 0 8px;font-size:18px;font-weight:600;color:${BRAND_PRIMARY};">${talentName}</p>
                 <p style="margin:0;font-size:14px;color:#6b7280;">a postulé pour "${opportunityTitle}"</p>
               </div>
               <div style="text-align:center;margin-bottom:20px;">
-                <a href="${applicationLink}" style="display:inline-block;background-color:${BRAND_BLUE};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600;">Voir la candidature</a>
+                <a href="${applicationLink}" style="display:inline-block;background-color:${BRAND_PRIMARY};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600;">Voir la candidature</a>
               </div>
             </td>
           </tr>
-          <tr><td style="padding:24px 40px;background-color:#f8f9fa;border-radius:0 0 12px 12px;"><p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">© ${new Date().getFullYear()} Etudesk</p></td></tr>
+          <tr><td style="padding:24px 40px;background-color:#F5F3F0;border-radius:0 0 12px 12px;"><p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">© ${new Date().getFullYear()} Etudesk</p></td></tr>
         </table>
       </td>
     </tr>
@@ -839,28 +850,28 @@ async function sendInterviewScheduledEmail(
 <!DOCTYPE html>
 <html lang="fr">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background-color:#f5f5f5;">
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background-color:#FAF9F7;">
   <table style="width:100%;border-collapse:collapse;">
     <tr>
       <td align="center" style="padding:40px 20px;">
         <table style="width:100%;max-width:500px;border-collapse:collapse;background-color:#ffffff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
+          <tr><td style="padding:40px 40px 20px;text-align:center;"><img src="${LOGO_URL}" alt="Etudesk" style="height:36px;width:auto;"/></td></tr>
           <tr>
             <td style="padding:20px 40px;">
               <p style="margin:0 0 20px;font-size:16px;color:#4a4a4a;">Bonjour ${talentName},</p>
               <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:#4a4a4a;">Un entretien a été programmé!</p>
-              <div style="background-color:#8B5CF610;border-radius:8px;padding:20px;margin-bottom:24px;border-left:4px solid #8B5CF6;">
+              <div style="background-color:${BRAND_PRIMARY_LIGHT}10;border-radius:8px;padding:20px;margin-bottom:24px;border-left:4px solid ${BRAND_PRIMARY_LIGHT};">
                 <p style="margin:0 0 8px;font-size:14px;color:#6b7280;">${opportunityTitle} • ${organizationName}</p>
-                <p style="margin:0 0 12px;font-size:18px;font-weight:600;color:#8B5CF6;">📅 ${formattedDate}</p>
+                <p style="margin:0 0 12px;font-size:18px;font-weight:600;color:${BRAND_PRIMARY_LIGHT};">📅 ${formattedDate}</p>
                 <p style="margin:0;font-size:14px;color:#374151;"><strong>Type:</strong> ${interviewType}</p>
                 ${interviewLocation ? `<p style="margin:8px 0 0;font-size:14px;color:#374151;"><strong>Lieu/Lien:</strong> ${interviewLocation}</p>` : ''}
               </div>
               <div style="text-align:center;margin-bottom:20px;">
-                <a href="${applicationLink}" style="display:inline-block;background-color:${BRAND_BLUE};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600;">Voir les détails</a>
+                <a href="${applicationLink}" style="display:inline-block;background-color:${BRAND_PRIMARY};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600;">Voir les détails</a>
               </div>
             </td>
           </tr>
-          <tr><td style="padding:24px 40px;background-color:#f8f9fa;border-radius:0 0 12px 12px;"><p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">© ${new Date().getFullYear()} Etudesk</p></td></tr>
+          <tr><td style="padding:24px 40px;background-color:#F5F3F0;border-radius:0 0 12px 12px;"><p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">© ${new Date().getFullYear()} Etudesk</p></td></tr>
         </table>
       </td>
     </tr>

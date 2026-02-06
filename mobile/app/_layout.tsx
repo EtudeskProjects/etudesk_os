@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, useColorScheme } from 'react-native';
 import { useFonts, Montserrat_400Regular, Montserrat_500Medium, Montserrat_600SemiBold, Montserrat_700Bold } from '@expo-google-fonts/montserrat';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -13,7 +13,7 @@ import { AlertProvider } from '../src/contexts/AlertContext';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { ToastProvider } from '../src/components/ui/Toast';
 import { useTheme } from '../src/hooks/useTheme';
-import { LIGHT_COLORS } from '../src/constants/theme';
+import { LIGHT_COLORS, DARK_COLORS } from '../src/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,6 +37,10 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const themeColors = isDark ? DARK_COLORS : LIGHT_COLORS;
+
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_500Medium,
@@ -52,8 +56,8 @@ export default function RootLayout() {
 
   if (!fontsLoaded) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={LIGHT_COLORS.primary} />
+      <View style={[styles.loadingContainer, { backgroundColor: themeColors.background }]}>
+        <ActivityIndicator size="large" color={themeColors.primary} />
       </View>
     );
   }
@@ -87,6 +91,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: LIGHT_COLORS.background,
   },
 });

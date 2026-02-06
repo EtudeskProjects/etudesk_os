@@ -50,7 +50,7 @@ export default function SplashScreen() {
 
     // If authenticated and has complete profile, go to main app
     if (status === 'authenticated' && !needsOnboarding) {
-      router.replace('/(tabs)/graphe');
+      router.replace('/(tabs)/home');
       return;
     }
 

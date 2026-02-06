@@ -35,7 +35,7 @@ export const YouTubeBlock: React.FC<YouTubeBlockProps> = ({ data }) => {
         <View style={[styles.playerContainer, { height: playerHeight }]}>
           <WebView
             source={{ uri: EMBED_URL(data.videoId) }}
-            style={styles.webview}
+            style={[styles.webview, { backgroundColor: colors.background }]}
             allowsFullscreenVideo
             allowsInlineMediaPlayback
             mediaPlaybackRequiresUserAction={false}
@@ -170,7 +170,6 @@ const styles = StyleSheet.create({
   webview: {
     flex: 1,
     width: '100%',
-    backgroundColor: '#000',
   },
 });
 

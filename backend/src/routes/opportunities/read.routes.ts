@@ -156,11 +156,12 @@ router.get('/organization/:orgId', optionalAuthMiddleware, async (req: AuthReque
     const { status } = req.query;
     const pagination = getPaginationParams(req);
 
-    // Build count query
+    // Build count query - check both direct organization_id and opportunity_posters table
     let countQuery = `
       SELECT COUNT(*) as total FROM opportunities o
-      JOIN opportunity_posters op ON o.id = op.opportunity_id
-      WHERE op.poster_organization_id = $1 AND o.deleted_at IS NULL
+      WHERE (o.organization_id = $1 OR o.id IN (
+        SELECT opportunity_id FROM opportunity_posters WHERE poster_organization_id = $1
+      )) AND o.deleted_at IS NULL
     `;
     const countParams: QueryParam[] = [orgId];
     let countParamIndex = 2;
@@ -173,7 +174,7 @@ router.get('/organization/:orgId', optionalAuthMiddleware, async (req: AuthReque
     const countResult = await pool.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].total);
 
-    // Build data query
+    // Build data query - check both direct organization_id and opportunity_posters table
     let query = `
       SELECT
         o.*,
@@ -181,8 +182,9 @@ router.get('/organization/:orgId', optionalAuthMiddleware, async (req: AuthReque
         (SELECT COUNT(*) FROM opportunity_applications WHERE opportunity_id = o.id AND status = 'SUBMITTED') as pending_count,
         (SELECT COUNT(*) FROM opportunity_applications WHERE opportunity_id = o.id AND viewed_at IS NULL) as unread_count
       FROM opportunities o
-      JOIN opportunity_posters op ON o.id = op.opportunity_id
-      WHERE op.poster_organization_id = $1 AND o.deleted_at IS NULL
+      WHERE (o.organization_id = $1 OR o.id IN (
+        SELECT opportunity_id FROM opportunity_posters WHERE poster_organization_id = $1
+      )) AND o.deleted_at IS NULL
     `;
     const params: QueryParam[] = [orgId];
     let paramIndex = 2;

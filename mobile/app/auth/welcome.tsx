@@ -15,7 +15,7 @@ export default function WelcomeScreen() {
   const { t } = useI18n();
 
   const handleStart = () => {
-    router.replace('/(tabs)/graphe');
+    router.replace('/(tabs)/home');
   };
 
   const features = [
@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
   },
 
   iconContainer: {
+    // Large icon container for welcome celebration - intentional oversized display
     width: 100,
     height: 100,
     alignItems: 'center',

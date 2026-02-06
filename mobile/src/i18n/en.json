@@ -372,6 +372,10 @@
     "phone": "Phone",
     "onEtudeskSince": "On Etudesk since",
     "culture": "Company culture",
+    "communities": "Communities",
+    "noCommunities": "No communities at the moment",
+    "spaces": "Learning spaces",
+    "noSpaces": "No spaces at the moment",
     "openOpportunities": "Open opportunities",
     "noOpportunities": "No opportunities at the moment",
     "contact": "Contact"

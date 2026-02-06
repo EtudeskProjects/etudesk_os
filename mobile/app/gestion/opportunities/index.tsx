@@ -170,7 +170,7 @@ export default function OpportunitiesListScreen() {
               onPress={() => router.push('/settings/organization/create-opportunity' as any)}
             >
               <Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              <Text style={styles.emptyButtonText}>Créer une opportunité</Text>
+              <Text style={[styles.emptyButtonText, { color: colors.textOnPrimary }]}>Créer une opportunité</Text>
             </TouchableOpacity>
           </View>
         }
@@ -237,7 +237,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: BORDER.radius.sm,
-    backgroundColor: '#F3F4F6',
   },
   cardInfo: {
     flex: 1,
@@ -299,7 +298,6 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     paddingTop: SPACING.sm,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: '#F3F4F6',
   },
   statItem: {
     flexDirection: 'row',
@@ -354,6 +352,5 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: '#FFFFFF',
   },
 });

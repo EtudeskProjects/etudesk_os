@@ -242,7 +242,7 @@ export default function InvitationDetailScreen() {
             disabled={isResending}
           >
             <RefreshCw size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-            <Text style={styles.actionButtonText}>
+            <Text style={[styles.actionButtonText, { color: colors.textOnPrimary }]}>
               {isResending ? 'Envoi...' : 'Renvoyer l\'invitation'}
             </Text>
           </TouchableOpacity>
@@ -418,7 +418,6 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: '#FFFFFF',
   },
 
   cancelButton: {

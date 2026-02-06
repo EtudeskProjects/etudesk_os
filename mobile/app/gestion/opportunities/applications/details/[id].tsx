@@ -42,7 +42,7 @@ import {
   ChevronDown,
   TrendingUp,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS } from '../../../../../src/constants/theme';
 import { Button, FooterNav } from '../../../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
@@ -90,12 +90,12 @@ const getStatusFlow = (colors: any): Record<ApplicationStatus, {
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Match category configuration
+// Match category configuration - Luxe Africain design system
 const MATCH_CATEGORY_CONFIG = {
-  excellent: { label: 'Excellent', color: '#059669', bgColor: withOpacity('#059669', OPACITY[15]) },
-  good: { label: 'Bon', color: '#2563eb', bgColor: withOpacity('#2563eb', OPACITY[15]) },
-  average: { label: 'Moyen', color: '#d97706', bgColor: withOpacity('#d97706', OPACITY[15]) },
-  low: { label: 'Faible', color: '#dc2626', bgColor: withOpacity('#dc2626', OPACITY[15]) },
+  excellent: { label: 'Excellent', color: MATCH_COLORS.excellent.color, bgColor: MATCH_COLORS.excellent.bgColor },
+  good: { label: 'Bon', color: MATCH_COLORS.good.color, bgColor: MATCH_COLORS.good.bgColor },
+  average: { label: 'Moyen', color: MATCH_COLORS.average.color, bgColor: MATCH_COLORS.average.bgColor },
+  low: { label: 'Faible', color: MATCH_COLORS.low.color, bgColor: MATCH_COLORS.low.bgColor },
 };
 
 type MatchCategory = 'excellent' | 'good' | 'average' | 'low';
@@ -1593,7 +1593,6 @@ const styles = StyleSheet.create({
   },
 
   cvOpenButtonText: {
-    color: '#FFFFFF',
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },

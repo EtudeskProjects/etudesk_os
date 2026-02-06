@@ -73,7 +73,8 @@ export default function LoginScreen() {
               source={require('../../assets/whatsapp_icon.png')}
               style={styles.socialIcon}
             />
-            <Text style={[styles.authButtonText, { color: colors.textPrimary }]}>WhatsApp</Text>
+            {/* WhatsApp button always has white bg, so text must always be dark */}
+            <Text style={[styles.authButtonText, { color: '#1A1A1A' }]}>WhatsApp</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -156,6 +157,7 @@ const styles = StyleSheet.create({
   },
 
   authButtonWhatsApp: {
+    // WhatsApp brand colors - intentionally hardcoded for brand compliance
     backgroundColor: '#FFFFFF',
     borderColor: '#25D366',
   },

@@ -189,3 +189,6 @@ export {
   getStatusColor,
   getCategoryIcon,
 } from './documentService';
+
+export { dailyObjectiveService } from './dailyObjectiveService';
+export type { DailyObjective } from './dailyObjectiveService';

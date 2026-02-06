@@ -191,7 +191,7 @@ export default function InviteMemberScreen() {
             disabled={!isValidEmail(email) || isSending}
           >
             <Send size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-            <Text style={styles.sendButtonText}>
+            <Text style={[styles.sendButtonText, { color: colors.textOnPrimary }]}>
               {isSending ? 'Envoi...' : 'Envoyer l\'invitation'}
             </Text>
           </TouchableOpacity>
@@ -330,6 +330,5 @@ const styles = StyleSheet.create({
   sendButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: '#FFFFFF',
   },
 });

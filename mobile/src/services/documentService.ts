@@ -4,6 +4,7 @@
  */
 
 import { api } from './api';
+import { LIGHT_COLORS } from '../constants/theme';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -419,22 +420,23 @@ export function isAllowedFileType(mimeType: string): boolean {
 /**
  * Get status color
  */
+// Document status colors - Luxe Africain design system
 export function getStatusColor(status: DocumentStatus): string {
   switch (status) {
     case 'PENDING':
-      return '#F59E0B'; // Yellow
+      return LIGHT_COLORS.warning;        // #A67C52 - Warm amber
     case 'PROCESSING':
-      return '#3B82F6'; // Blue
+      return LIGHT_COLORS.info;           // #6B5E52 - Warm taupe
     case 'PROCESSED':
-      return '#10B981'; // Green
+      return LIGHT_COLORS.success;        // #4A6741 - Forest green
     case 'FAILED':
-      return '#EF4444'; // Red
+      return LIGHT_COLORS.error;          // #8B4A3C - Terracotta
     case 'VERIFIED':
-      return '#059669'; // Emerald
+      return LIGHT_COLORS.successDark;    // #3A5233 - Dark green
     case 'REJECTED':
-      return '#DC2626'; // Red
+      return LIGHT_COLORS.errorDark;      // #6B3A2E - Dark terracotta
     default:
-      return '#6B7280'; // Gray
+      return LIGHT_COLORS.gray500;        // #918A7E - Neutral gray
   }
 }
 

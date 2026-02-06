@@ -727,7 +727,7 @@ export interface PaymentMethod {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// INTERFACES - GRAPH (utilisé dans graphe.tsx)
+// INTERFACES - HOME (utilisé dans home.tsx)
 // ═══════════════════════════════════════════════════════════════
 
 export const GRAPH_NODE_TYPES = {

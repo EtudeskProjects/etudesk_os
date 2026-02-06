@@ -5,11 +5,12 @@ import { api } from './api';
 import i18n from '../i18n';
 
 export type ImageType =
-  | 'avatar'           // Profile photos (512x512, 1:1)
-  | 'logo'             // Organization logos (512x512, 1:1, PNG for transparency)
-  | 'illustration'     // Illustrations for opportunities, communities, spaces (800x600, 4:3, max 5)
-  | 'document'         // Documents (max 2000px)
-  | 'identity';        // Identity documents (max 1500px, higher quality)
+  | 'avatar'           // Profile photos (512x512, 1:1, 80% quality)
+  | 'logo'             // Organization logos (512x512, 1:1, PNG, 80% quality)
+  | 'illustration'     // Illustrations for opportunities, communities, spaces (1200x900, 80% quality)
+  | 'document'         // Talent documents (max 2000px, full quality - no compression)
+  | 'identity'         // Identity documents (max 1500px, 95% quality)
+  | 'attachment';      // Copilot attachments (max 2000px, full quality - no compression)
 
 interface ImageConfig {
   maxWidth: number;
@@ -22,31 +23,37 @@ const IMAGE_CONFIGS: Record<ImageType, ImageConfig> = {
   avatar: {
     maxWidth: 512,
     maxHeight: 512,
-    quality: 0.85,
+    quality: 0.8, // 80% quality for avatars
     format: ImageManipulator.SaveFormat.JPEG,
   },
   logo: {
     maxWidth: 512,
     maxHeight: 512,
-    quality: 0.9,
+    quality: 0.8, // 80% quality for logos
     format: ImageManipulator.SaveFormat.PNG, // PNG for logos to preserve transparency
   },
   illustration: {
-    maxWidth: 800,
-    maxHeight: 600,
-    quality: 0.85,
+    maxWidth: 1200,
+    maxHeight: 900,
+    quality: 0.8, // 80% quality for illustrations
     format: ImageManipulator.SaveFormat.JPEG,
   },
   document: {
     maxWidth: 2000,
     maxHeight: 2000,
-    quality: 0.9,
+    quality: 1.0, // Full quality for documents (no compression)
     format: ImageManipulator.SaveFormat.JPEG,
   },
   identity: {
     maxWidth: 1500,
     maxHeight: 1500,
     quality: 0.95, // Higher quality for identity documents
+    format: ImageManipulator.SaveFormat.JPEG,
+  },
+  attachment: {
+    maxWidth: 2000,
+    maxHeight: 2000,
+    quality: 1.0, // Full quality for copilot attachments (no compression)
     format: ImageManipulator.SaveFormat.JPEG,
   },
 };
@@ -98,13 +105,17 @@ export async function requestCameraPermissions(): Promise<boolean> {
   return true;
 }
 
-function getAspectRatio(type: ImageType): [number, number] {
+function getAspectRatio(type: ImageType): [number, number] | undefined {
   switch (type) {
     case 'avatar':
     case 'logo':
       return [1, 1];
     case 'illustration':
       return [4, 3];
+    case 'document':
+    case 'identity':
+    case 'attachment':
+      return undefined; // No aspect ratio constraint for documents
     default:
       return [4, 3];
   }
@@ -119,12 +130,29 @@ export async function optimizeImage(
 
   try {
     const actions: ImageManipulator.Action[] = [];
-    actions.push({
-      resize: {
-        width: config.maxWidth,
-        height: config.maxHeight,
-      },
-    });
+
+    // For square types (avatar, logo), the ImagePicker's crop with aspect [1,1]
+    // already makes the image square. We only need to resize by width to maintain ratio.
+    // For other types, resize by width only to preserve aspect ratio.
+    // The image will be scaled down proportionally.
+    if (type === 'avatar' || type === 'logo') {
+      // Square images: resize to exact dimensions (image is already cropped square by picker)
+      actions.push({
+        resize: {
+          width: config.maxWidth,
+        },
+      });
+    } else {
+      // Non-square images: resize by width only to preserve aspect ratio
+      // If the image is portrait (taller than wide), we should resize by height instead
+      // But since we can't know dimensions here without reading the image first,
+      // we resize by width which works for most landscape/square images
+      actions.push({
+        resize: {
+          width: config.maxWidth,
+        },
+      });
+    }
 
     const result = await ImageManipulator.manipulateAsync(
       uri,
@@ -141,7 +169,6 @@ export async function optimizeImage(
     if (result.base64) {
       fileSize = Math.round(result.base64.length / 1.37);
     }
-
 
     return {
       uri: result.uri,

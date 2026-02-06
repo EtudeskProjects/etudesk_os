@@ -16,7 +16,7 @@ import {
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { MapPin, Navigation, X } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, BORDER, LIGHT_COLORS } from '../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../contexts/I18nContext';
 
@@ -332,7 +332,7 @@ export function MapLocationPicker({
         <WebView
           ref={webViewRef}
           source={{ html: getMapHTML(centerCoords.latitude, centerCoords.longitude, !!initialCoordinates, colors.primary) }}
-          style={styles.map}
+          style={[styles.map, { backgroundColor: colors.gray100 }]}
           onMessage={handleWebViewMessage}
           onLoad={() => {
             // Fallback: if mapReady message wasn't received, hide loading after WebView loads
@@ -431,7 +431,6 @@ const styles = StyleSheet.create({
 
   map: {
     flex: 1,
-    backgroundColor: LIGHT_COLORS.gray100,
   },
 
   loadingOverlay: {

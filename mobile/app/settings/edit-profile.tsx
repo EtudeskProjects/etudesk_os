@@ -294,7 +294,7 @@ export default function EditProfileScreen() {
               <Image source={{ uri: avatarUri }} style={styles.photoImage} resizeMode="cover" />
             ) : (
               <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
-                <Text style={styles.avatarText}>{getInitials()}</Text>
+                <Text style={[styles.avatarText, { color: colors.textOnPrimary }]}>{getInitials()}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -421,7 +421,7 @@ export default function EditProfileScreen() {
               ) : (
                 <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
               )}
-              <Text style={styles.generateButtonText}>
+              <Text style={[styles.generateButtonText, { color: colors.textOnPrimary }]}>
                 {isGeneratingBio ? 'Suggestion...' : 'Suggérer'}
               </Text>
             </TouchableOpacity>
@@ -880,7 +880,6 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: TYPOGRAPHY.fontSize.xxl,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: '#FFFFFF',
   },
 
   separator: {
@@ -969,7 +968,6 @@ const styles = StyleSheet.create({
   generateButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: '#FFFFFF',
   },
 
   textAreaContainer: {

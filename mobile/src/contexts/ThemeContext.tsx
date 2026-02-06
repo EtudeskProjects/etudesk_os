@@ -86,18 +86,18 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     });
   }, []);
 
-  // Force light mode for now as per user request
-  const colors = LIGHT_COLORS; // was: mode === 'dark' ? DARK_COLORS : LIGHT_COLORS;
+  // Dynamic theme based on user preference
+  const colors = mode === 'dark' ? DARK_COLORS : LIGHT_COLORS;
 
   return (
     <ThemeContext.Provider
       value={{
-        mode: 'light', // Force 'light' instead of passing internal 'mode' state
+        mode,
         themePreference,
         colors,
-        toggleTheme: () => { }, // Disable toggling
+        toggleTheme,
         setTheme,
-        isDark: false, // Force false
+        isDark: mode === 'dark',
       }}
     >
       {children}

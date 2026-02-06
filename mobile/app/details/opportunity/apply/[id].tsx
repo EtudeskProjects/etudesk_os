@@ -567,7 +567,7 @@ export default function ApplyOpportunityScreen() {
                         { backgroundColor: colors.gray50, borderColor: colors.gray200 },
                         selectedExistingCV?.id === cv.id && {
                           borderColor: colors.primary,
-                          backgroundColor: withOpacity(colors.primary, OPACITY['08']),
+                          backgroundColor: withOpacity(colors.primary, OPACITY[8]),
                         },
                       ]}
                       onPress={() => selectExistingCV(cv)}
@@ -727,7 +727,7 @@ export default function ApplyOpportunityScreen() {
           </View>
 
           {/* Profile Preview */}
-          <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.primary, OPACITY['08']) }]}>
+          <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.primary, OPACITY[8]) }]}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
               Votre profil
             </Text>
@@ -1032,7 +1032,6 @@ const styles = StyleSheet.create({
   stepNumber: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: '#FFFFFF',
   },
 
   stepLabel: {

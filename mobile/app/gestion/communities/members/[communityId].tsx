@@ -200,7 +200,7 @@ export default function CommunityMembersScreen() {
             {(item.unread_messages || 0) > 0 && (
               <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>
                 <MessageCircle size={10} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                <Text style={styles.unreadText}>{item.unread_messages}</Text>
+                <Text style={[styles.unreadText, { color: colors.textOnPrimary }]}>{item.unread_messages}</Text>
               </View>
             )}
 
@@ -462,7 +462,6 @@ const styles = StyleSheet.create({
 
   unreadText: {
     fontSize: TYPOGRAPHY.fontSize.xs - 1,
-    color: '#FFFFFF',
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 

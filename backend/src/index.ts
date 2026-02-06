@@ -28,6 +28,7 @@ import calendarRouter from './routes/calendar.routes';
 import copilotRouter from './routes/copilot';
 import documentsRouter from './routes/documents';
 import skillsRouter from './routes/skills';
+import dailyObjectiveRouter from './routes/daily-objective';
 import { verifyEmailConnection } from './services/email.service';
 import { cleanupExpiredOTPs } from './services/otp.service';
 import { apiLimiter, authLimiter, otpLimiter } from './middleware/rateLimit.middleware';
@@ -147,6 +148,7 @@ v1Router.use('/calendar', calendarRouter);
 v1Router.use('/copilot', copilotRouter);
 v1Router.use('/documents', documentsRouter);
 v1Router.use('/skills', skillsRouter);
+v1Router.use('/daily-objective', dailyObjectiveRouter);
 
 // Mount versioned API
 app.use('/api/v1', v1Router);

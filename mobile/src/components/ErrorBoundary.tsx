@@ -22,19 +22,20 @@ import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../constants/theme';
 import { logger } from '../services/logService';
 import i18n from '../i18n';
 
-// Hardcoded colors for error boundary (must work without theme context)
+// Hardcoded Luxe Africain colors for error boundary
+// Must work without theme context (which may be unavailable during errors)
 const ERROR_COLORS = {
-  background: '#FFFCF9',
-  surface: '#FFFFFF',
-  primary: '#3B2416',
-  error: '#8B4A3C',
-  warning: '#A67C52',
-  white: '#FFFFFF',
-  gray100: '#F5F3F0',
-  gray200: '#E8E4DF',
-  gray600: '#6B6560',
-  gray700: '#4A4540',
-  gray900: '#1F1C18',
+  background: '#FFFFFF',     // LIGHT_COLORS.background
+  surface: '#FFFFFF',        // LIGHT_COLORS.surface
+  primary: '#3B2416',        // LIGHT_COLORS.primary
+  error: '#8B4A3C',          // LIGHT_COLORS.error
+  warning: '#A67C52',        // LIGHT_COLORS.warning
+  white: '#FFFFFF',          // LIGHT_COLORS.white
+  gray100: '#F5F3F0',        // LIGHT_COLORS.gray100
+  gray200: '#EBE8E4',        // LIGHT_COLORS.gray200
+  gray600: '#6E675C',        // LIGHT_COLORS.gray600
+  gray700: '#4D4840',        // LIGHT_COLORS.gray700
+  gray900: '#1F1C18',        // LIGHT_COLORS.gray900
 };
 
 interface Props {

@@ -50,6 +50,9 @@ interface OrganizationFormValues {
   description: string;
   logoUri: string | null;
   sectors: Sector[];
+  websiteUrl: string;
+  contactEmail: string;
+  contactPhone: string;
   country: string;
   region: string;
   city: string;
@@ -70,6 +73,9 @@ export default function CreateOrganizationScreen() {
       description: { initialValue: '' },
       logoUri: { initialValue: null },
       sectors: { initialValue: [] },
+      websiteUrl: { initialValue: '' },
+      contactEmail: { initialValue: '' },
+      contactPhone: { initialValue: '' },
       country: { initialValue: '', required: true, requiredMessage: 'Le pays est requis' },
       region: { initialValue: '' },
       city: { initialValue: '' },
@@ -86,6 +92,9 @@ export default function CreateOrganizationScreen() {
         headquarters_country: values.country || undefined,
         headquarters_coordinates: values.coordinates || undefined,
         sectors: values.sectors.length > 0 ? values.sectors : undefined,
+        website_url: values.websiteUrl.trim() || undefined,
+        contact_email: values.contactEmail.trim() || undefined,
+        contact_phone: values.contactPhone.trim() || undefined,
       });
 
       await refreshOrganizations();
@@ -112,6 +121,9 @@ export default function CreateOrganizationScreen() {
   const description = form.getValue('description');
   const logoUri = form.getValue('logoUri');
   const coordinates = form.getValue('coordinates');
+  const websiteUrl = form.getValue('websiteUrl');
+  const contactEmail = form.getValue('contactEmail');
+  const contactPhone = form.getValue('contactPhone');
 
   // Auto-scroll to selected country
   useEffect(() => {
@@ -389,6 +401,35 @@ export default function CreateOrganizationScreen() {
           </View>
           <Text style={[styles.charCount, { color: colors.gray500 }]}>{description.length}/500</Text>
         </View>
+
+        {/* Contact - Site web */}
+        <Input
+          label="Site web"
+          placeholder="https://www.exemple.com"
+          value={websiteUrl}
+          onChangeText={(value) => form.setValue('websiteUrl', value)}
+          keyboardType="url"
+          autoCapitalize="none"
+        />
+
+        {/* Contact - Email */}
+        <Input
+          label="Email de contact"
+          placeholder="contact@exemple.com"
+          value={contactEmail}
+          onChangeText={(value) => form.setValue('contactEmail', value)}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        {/* Contact - Téléphone */}
+        <Input
+          label="Téléphone"
+          placeholder="+225 00 00 00 00 00"
+          value={contactPhone}
+          onChangeText={(value) => form.setValue('contactPhone', value)}
+          keyboardType="phone-pad"
+        />
       </View>
     </View>
   );

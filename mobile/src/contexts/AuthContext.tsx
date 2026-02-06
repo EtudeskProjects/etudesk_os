@@ -105,7 +105,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const isCreateProfilePage = inAuthGroup && segments[1] === 'create-profile';
         if ((inAuthGroup && !isWelcomePage && !isCreateProfilePage) || isOnboarding) {
           // On auth screen (except welcome/create-profile) or onboarding but already logged in - go to main app
-          router.replace('/(tabs)/graphe');
+          router.replace('/(tabs)/home');
         }
       }
     }

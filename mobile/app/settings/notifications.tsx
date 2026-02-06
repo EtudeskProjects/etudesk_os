@@ -20,7 +20,7 @@ import {
   MapPin,
   Trash2,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useNotifications, NotificationData } from '../../src/hooks/useNotifications';
 
@@ -55,14 +55,15 @@ const getNotificationIcon = (type: string) => {
   }
 };
 
-const getNotificationColor = (type: string): string => {
+// Notification colors - Luxe Africain design system
+const getNotificationColor = (type: string, colors: ThemeColors): string => {
   switch (type) {
-    case 'OPPORTUNITY': return '#4CAF50';
-    case 'APPLICATION': return '#9C27B0';
-    case 'MESSAGE': return '#FF9800';
-    case 'REMINDER': return '#2196F3';
-    case 'SPACE': return '#00BCD4';
-    default: return '#607D8B';
+    case 'OPPORTUNITY': return colors.success;      // Forest green
+    case 'APPLICATION': return colors.primary;      // Rich brown
+    case 'MESSAGE': return colors.warning;          // Warm amber
+    case 'REMINDER': return colors.info;            // Warm taupe
+    case 'SPACE': return colors.primaryLight;       // Light brown
+    default: return colors.gray500;                 // Neutral gray
   }
 };
 
@@ -154,7 +155,7 @@ export default function NotificationsScreen() {
           <View style={[styles.notificationsList, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
             {notifications.map((notification, index) => {
               const NotifIcon = getNotificationIcon(notification.type);
-              const notifColor = getNotificationColor(notification.type);
+              const notifColor = getNotificationColor(notification.type, colors);
               const isLast = index === notifications.length - 1;
 
               return (

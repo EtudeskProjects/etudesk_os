@@ -11,7 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 interface PageLayoutProps {
@@ -99,9 +99,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   },
-  backButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  backButton: { width: LAYOUT.inputHeightSm, height: LAYOUT.inputHeightSm, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: TYPOGRAPHY.fontSize.lg, fontWeight: TYPOGRAPHY.fontWeight.semibold },
-  headerSpacer: { width: 40 },
+  headerSpacer: { width: LAYOUT.inputHeightSm },
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.xxl },
 });

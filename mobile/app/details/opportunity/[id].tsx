@@ -580,7 +580,7 @@ export default function OpportunityDetailScreen() {
                                     body {
                                       margin: 0;
                                       padding: 0;
-                                      background: #000;
+                                      background: ${colors.background};
                                       display: flex;
                                       align-items: center;
                                       justify-content: center;
@@ -736,7 +736,7 @@ export default function OpportunityDetailScreen() {
                               body {
                                 margin: 0;
                                 padding: 0;
-                                background: #000;
+                                background: ${colors.background};
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;

@@ -30,8 +30,16 @@ const APPLICATION_STATUS_LABELS: Record<string, string> = {
   REJECTED: 'Non retenue',
 };
 
-// Brand colors for emails
-const BRAND_BLUE = '#26449F';
+// ═══════════════════════════════════════════════════════════════
+// BRAND DESIGN SYSTEM - Luxe Africain
+// ═══════════════════════════════════════════════════════════════
+const BRAND_PRIMARY = '#3B2416';
+const BRAND_PRIMARY_LIGHT = '#5C3D2E';
+const BRAND_SUCCESS = '#4A6741';
+const BRAND_ERROR = '#8B4A3C';
+
+// Logo URL (web assets)
+const LOGO_URL = 'https://etudesk.org/images/etudesk_logo_black.png';
 
 export interface NotificationData {
   talentId: string;
@@ -569,10 +577,11 @@ async function sendApplicationStatusEmail(
   const appUrl = process.env.APP_URL || 'https://etudesk.com';
   const applicationLink = `${appUrl}/my-applications/${applicationId}`;
 
-  const statusColor = status === 'ACCEPTED' ? '#10B981'
-    : status === 'REJECTED' ? '#EF4444'
-      : status === 'IN_REVIEW' ? '#3B82F6'
-        : BRAND_BLUE;
+  // Semantic colors from Luxe Africain design system
+  const statusColor = status === 'ACCEPTED' ? BRAND_SUCCESS
+    : status === 'REJECTED' ? BRAND_ERROR
+      : status === 'IN_REVIEW' ? '#A67C52' // Warning/Info tone
+        : BRAND_PRIMARY;
 
   const html = `
 <!DOCTYPE html>
@@ -582,7 +591,7 @@ async function sendApplicationStatusEmail(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mise à jour de votre candidature</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #FAF9F7;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
@@ -590,7 +599,7 @@ async function sendApplicationStatusEmail(
           <!-- Logo -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px; width: auto;" />
+              <img src="${LOGO_URL}" alt="Etudesk" style="height: 36px; width: auto;" />
             </td>
           </tr>
 
@@ -620,7 +629,7 @@ async function sendApplicationStatusEmail(
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 20px;">
-                <a href="${applicationLink}" style="display: inline-block; background-color: ${BRAND_BLUE}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                <a href="${applicationLink}" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
                   Voir ma candidature
                 </a>
               </div>
@@ -629,7 +638,7 @@ async function sendApplicationStatusEmail(
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
+            <td style="padding: 24px 40px; background-color: #F5F3F0; border-radius: 0 0 12px 12px;">
               <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
                 © ${new Date().getFullYear()} Etudesk. Tous droits réservés.
               </p>
@@ -670,7 +679,7 @@ async function sendNewMessageEmail(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nouveau message</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #FAF9F7;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
@@ -678,7 +687,7 @@ async function sendNewMessageEmail(
           <!-- Logo -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px; width: auto;" />
+              <img src="${LOGO_URL}" alt="Etudesk" style="height: 36px; width: auto;" />
             </td>
           </tr>
 
@@ -694,7 +703,7 @@ async function sendNewMessageEmail(
               </p>
 
               <!-- Message Preview -->
-              <div style="background-color: #f8f9fa; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+              <div style="background-color: #F5F3F0; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
                 <p style="margin: 0 0 8px; font-size: 12px; color: #6b7280;">
                   ${opportunityTitle}
                 </p>
@@ -705,7 +714,7 @@ async function sendNewMessageEmail(
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 20px;">
-                <a href="${applicationLink}" style="display: inline-block; background-color: ${BRAND_BLUE}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                <a href="${applicationLink}" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
                   Répondre au message
                 </a>
               </div>
@@ -714,7 +723,7 @@ async function sendNewMessageEmail(
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
+            <td style="padding: 24px 40px; background-color: #F5F3F0; border-radius: 0 0 12px 12px;">
               <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
                 © ${new Date().getFullYear()} Etudesk. Tous droits réservés.
               </p>
@@ -754,7 +763,7 @@ async function sendNewApplicationEmail(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nouvelle candidature</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #FAF9F7;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
@@ -762,7 +771,7 @@ async function sendNewApplicationEmail(
           <!-- Logo -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px; width: auto;" />
+              <img src="${LOGO_URL}" alt="Etudesk" style="height: 36px; width: auto;" />
             </td>
           </tr>
 
@@ -778,8 +787,8 @@ async function sendNewApplicationEmail(
               </p>
 
               <!-- Application Card -->
-              <div style="background-color: ${BRAND_BLUE}10; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-                <p style="margin: 0 0 8px; font-size: 18px; font-weight: 600; color: ${BRAND_BLUE};">
+              <div style="background-color: ${BRAND_PRIMARY}10; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                <p style="margin: 0 0 8px; font-size: 18px; font-weight: 600; color: ${BRAND_PRIMARY};">
                   ${talentName}
                 </p>
                 <p style="margin: 0; font-size: 14px; color: #6b7280;">
@@ -789,7 +798,7 @@ async function sendNewApplicationEmail(
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 20px;">
-                <a href="${applicationLink}" style="display: inline-block; background-color: ${BRAND_BLUE}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                <a href="${applicationLink}" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
                   Voir la candidature
                 </a>
               </div>
@@ -798,7 +807,7 @@ async function sendNewApplicationEmail(
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
+            <td style="padding: 24px 40px; background-color: #F5F3F0; border-radius: 0 0 12px 12px;">
               <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
                 © ${new Date().getFullYear()} Etudesk. Tous droits réservés.
               </p>
@@ -850,7 +859,7 @@ async function sendInterviewScheduledEmail(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Entretien programmé</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #FAF9F7;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
@@ -858,7 +867,7 @@ async function sendInterviewScheduledEmail(
           <!-- Logo -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px; width: auto;" />
+              <img src="${LOGO_URL}" alt="Etudesk" style="height: 36px; width: auto;" />
             </td>
           </tr>
 
@@ -874,11 +883,11 @@ async function sendInterviewScheduledEmail(
               </p>
 
               <!-- Interview Card -->
-              <div style="background-color: #8B5CF610; border-radius: 8px; padding: 20px; margin-bottom: 24px; border-left: 4px solid #8B5CF6;">
+              <div style="background-color: ${BRAND_PRIMARY_LIGHT}10; border-radius: 8px; padding: 20px; margin-bottom: 24px; border-left: 4px solid ${BRAND_PRIMARY_LIGHT};">
                 <p style="margin: 0 0 8px; font-size: 14px; color: #6b7280;">
                   ${opportunityTitle} • ${organizationName}
                 </p>
-                <p style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: #8B5CF6;">
+                <p style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: ${BRAND_PRIMARY_LIGHT};">
                   📅 ${formattedDate}
                 </p>
                 <p style="margin: 0; font-size: 14px; color: #374151;">
@@ -889,7 +898,7 @@ async function sendInterviewScheduledEmail(
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 20px;">
-                <a href="${applicationLink}" style="display: inline-block; background-color: ${BRAND_BLUE}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                <a href="${applicationLink}" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
                   Voir les détails
                 </a>
               </div>
@@ -898,7 +907,7 @@ async function sendInterviewScheduledEmail(
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
+            <td style="padding: 24px 40px; background-color: #F5F3F0; border-radius: 0 0 12px 12px;">
               <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
                 © ${new Date().getFullYear()} Etudesk. Tous droits réservés.
               </p>

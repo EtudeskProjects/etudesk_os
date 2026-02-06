@@ -9,11 +9,12 @@ import {
   Globe,
   Share,
   CheckCircle,
-  ExternalLink,
   Calendar,
   Mail,
   Phone,
   ChevronRight,
+  Users,
+  BookOpen,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
@@ -30,6 +31,9 @@ import {
 } from '../../../src/types/models';
 import { organizationService } from '../../../src/services/organizationService';
 import { opportunityService } from '../../../src/services/opportunityService';
+import { communityService } from '../../../src/services/communityService';
+import { spaceService } from '../../../src/services/spaceService';
+import type { Community, Space } from '../../../src/types/models';
 
 // Sector labels for display
 const SECTOR_LABELS: Record<string, string> = {
@@ -66,13 +70,19 @@ export default function OrganizationDetailScreen() {
 
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [spaces, setSpaces] = useState<Space[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingOpportunities, setIsLoadingOpportunities] = useState(true);
+  const [isLoadingCommunities, setIsLoadingCommunities] = useState(true);
+  const [isLoadingSpaces, setIsLoadingSpaces] = useState(true);
 
   useEffect(() => {
     if (id) {
       loadOrganization();
       loadOpportunities();
+      loadCommunities();
+      loadSpaces();
     }
   }, [id]);
 
@@ -100,9 +110,36 @@ export default function OrganizationDetailScreen() {
       }
     } catch (error: any) {
       console.error('Error loading opportunities:', error);
-      // Silent fail for opportunities - not critical
     } finally {
       setIsLoadingOpportunities(false);
+    }
+  };
+
+  const loadCommunities = async () => {
+    try {
+      setIsLoadingCommunities(true);
+      const response = await communityService.getByOrganization(id!);
+      if (response.data) {
+        setCommunities(response.data);
+      }
+    } catch (error: any) {
+      console.error('Error loading communities:', error);
+    } finally {
+      setIsLoadingCommunities(false);
+    }
+  };
+
+  const loadSpaces = async () => {
+    try {
+      setIsLoadingSpaces(true);
+      const response = await spaceService.getByOrganization(id!);
+      if (response.data) {
+        setSpaces(response.data);
+      }
+    } catch (error: any) {
+      console.error('Error loading spaces:', error);
+    } finally {
+      setIsLoadingSpaces(false);
     }
   };
 
@@ -308,7 +345,6 @@ export default function OrganizationDetailScreen() {
                     {organization.website_url.replace(/^https?:\/\//, '')}
                   </Text>
                 </View>
-                <ExternalLink size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
               </TouchableOpacity>
             )}
 
@@ -323,7 +359,6 @@ export default function OrganizationDetailScreen() {
                     {contactEmail}
                   </Text>
                 </View>
-                <ExternalLink size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
               </TouchableOpacity>
             )}
 
@@ -338,7 +373,6 @@ export default function OrganizationDetailScreen() {
                     {contactPhone}
                   </Text>
                 </View>
-                <ExternalLink size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
               </TouchableOpacity>
             )}
 
@@ -366,6 +400,102 @@ export default function OrganizationDetailScreen() {
               </Text>
             </View>
           )}
+
+          {/* Communities */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('organizationDetail.communities')}
+              </Text>
+            </View>
+
+            {isLoadingCommunities ? (
+              <View style={styles.loadingOpportunities}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : communities.length === 0 ? (
+              <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                  {t('organizationDetail.noCommunities')}
+                </Text>
+              </View>
+            ) : (
+              communities.slice(0, 3).map((community) => (
+                <TouchableOpacity
+                  key={community.id}
+                  style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+                  onPress={() => router.push(`/details/community/${community.id}`)}
+                >
+                  {community.logo_url ? (
+                    <Image source={{ uri: getFullImageUrl(community.logo_url) }} style={styles.itemLogo} />
+                  ) : (
+                    <View style={[styles.itemLogoPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
+                      <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                    </View>
+                  )}
+                  <View style={styles.itemContent}>
+                    <Text style={[styles.itemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {community.name}
+                    </Text>
+                    {community.members_count !== undefined && (
+                      <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
+                        {community.members_count} {t('explore.members')}
+                      </Text>
+                    )}
+                  </View>
+                  <ChevronRight size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
+
+          {/* Spaces */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('organizationDetail.spaces')}
+              </Text>
+            </View>
+
+            {isLoadingSpaces ? (
+              <View style={styles.loadingOpportunities}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : spaces.length === 0 ? (
+              <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                  {t('organizationDetail.noSpaces')}
+                </Text>
+              </View>
+            ) : (
+              spaces.slice(0, 3).map((space) => (
+                <TouchableOpacity
+                  key={space.id}
+                  style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+                  onPress={() => router.push(`/details/space/${space.id}`)}
+                >
+                  {space.logo_url ? (
+                    <Image source={{ uri: getFullImageUrl(space.logo_url) }} style={styles.itemLogo} />
+                  ) : (
+                    <View style={[styles.itemLogoPlaceholder, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
+                      <BookOpen size={ICON.size.md} color={colors.success} strokeWidth={ICON.strokeWidth} />
+                    </View>
+                  )}
+                  <View style={styles.itemContent}>
+                    <Text style={[styles.itemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {space.name}
+                    </Text>
+                    {space.members_count !== undefined && (
+                      <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
+                        {space.members_count} {t('explore.members')}
+                      </Text>
+                    )}
+                  </View>
+                  <ChevronRight size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
 
           {/* Open Opportunities */}
           <View style={styles.section}>
@@ -679,6 +809,44 @@ const styles = StyleSheet.create({
 
   opportunityBadgeText: {
     fontSize: TYPOGRAPHY.fontSize.xs,
+  },
+
+  itemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.sm,
+    marginBottom: SPACING.sm,
+    gap: SPACING.md,
+  },
+
+  itemLogo: {
+    width: 44,
+    height: 44,
+    borderRadius: BORDER.radius.sm,
+  },
+
+  itemLogoPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: BORDER.radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  itemContent: {
+    flex: 1,
+    gap: 2,
+  },
+
+  itemTitle: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+
+  itemMeta: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
   },
 
   footer: {

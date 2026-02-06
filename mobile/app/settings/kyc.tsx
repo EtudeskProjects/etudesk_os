@@ -200,13 +200,13 @@ export default function KYCScreen() {
         <View style={[styles.imagesRow]}>
           <View style={[styles.submittedImageCard, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}>
             <Text style={[styles.submittedImageLabel, { color: colors.textSecondary }]}>Recto</Text>
-            <Image source={{ uri: getFullImageUrl(submittedFrontImage) }} style={styles.submittedImage} />
+            <Image source={{ uri: getFullImageUrl(submittedFrontImage) }} style={[styles.submittedImage, { backgroundColor: colors.gray100 }]} />
           </View>
 
           {submittedBackImage && (
             <View style={[styles.submittedImageCard, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}>
               <Text style={[styles.submittedImageLabel, { color: colors.textSecondary }]}>Verso</Text>
-              <Image source={{ uri: getFullImageUrl(submittedBackImage) }} style={styles.submittedImage} />
+              <Image source={{ uri: getFullImageUrl(submittedBackImage) }} style={[styles.submittedImage, { backgroundColor: colors.gray100 }]} />
             </View>
           )}
         </View>
@@ -587,7 +587,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 150,
     resizeMode: 'contain',
-    backgroundColor: '#F3F4F6',
   },
 
   footer: {

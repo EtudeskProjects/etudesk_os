@@ -25,7 +25,7 @@ import {
 } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS, ThemeColors } from '../../../../src/constants/theme';
 import { PageLayout, EmptyState } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { applicationService, opportunityService } from '../../../../src/services';
@@ -34,28 +34,20 @@ import { formatRelativeTime } from '../../../../src/utils/date';
 import type { ApplicationStatus, Opportunity } from '../../../../src/types/models';
 import { APPLICATION_STATUS_LABELS } from '../../../../src/types/models';
 
-// Status color constants for static configuration
-const STATUS_COLORS = {
-  warning: '#F59E0B',
-  info: '#3B82F6',
-  success: '#10B981',
-  error: '#EF4444',
-};
+// Status configuration - Luxe Africain design system
+const getStatusConfig = (colors: ThemeColors): Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> => ({
+  SUBMITTED: { color: colors.warning, icon: Clock, bgColor: colors.warningLight },
+  IN_REVIEW: { color: colors.info, icon: Eye, bgColor: colors.infoLight },
+  ACCEPTED: { color: colors.success, icon: CheckCircle2, bgColor: colors.successLight },
+  REJECTED: { color: colors.error, icon: XCircle, bgColor: colors.errorLight },
+});
 
-// Status configuration
-const STATUS_CONFIG: Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> = {
-  SUBMITTED: { color: STATUS_COLORS.warning, icon: Clock, bgColor: withOpacity(STATUS_COLORS.warning, OPACITY[15]) },
-  IN_REVIEW: { color: STATUS_COLORS.info, icon: Eye, bgColor: withOpacity(STATUS_COLORS.info, OPACITY[15]) },
-  ACCEPTED: { color: STATUS_COLORS.success, icon: CheckCircle2, bgColor: withOpacity(STATUS_COLORS.success, OPACITY[15]) },
-  REJECTED: { color: STATUS_COLORS.error, icon: XCircle, bgColor: withOpacity(STATUS_COLORS.error, OPACITY[15]) },
-};
-
-// Match category configuration
+// Match category configuration - Luxe Africain design system
 const MATCH_CATEGORY_CONFIG = {
-  excellent: { label: 'Excellent', color: '#059669', bgColor: withOpacity('#059669', OPACITY[15]) },
-  good: { label: 'Bon', color: '#2563eb', bgColor: withOpacity('#2563eb', OPACITY[15]) },
-  average: { label: 'Moyen', color: '#d97706', bgColor: withOpacity('#d97706', OPACITY[15]) },
-  low: { label: 'Faible', color: '#dc2626', bgColor: withOpacity('#dc2626', OPACITY[15]) },
+  excellent: { label: 'Excellent', color: MATCH_COLORS.excellent.color, bgColor: MATCH_COLORS.excellent.bgColor },
+  good: { label: 'Bon', color: MATCH_COLORS.good.color, bgColor: MATCH_COLORS.good.bgColor },
+  average: { label: 'Moyen', color: MATCH_COLORS.average.color, bgColor: MATCH_COLORS.average.bgColor },
+  low: { label: 'Faible', color: MATCH_COLORS.low.color, bgColor: MATCH_COLORS.low.bgColor },
 };
 
 type FilterStatus = 'all' | ApplicationStatus;
@@ -248,7 +240,8 @@ export default function OpportunityApplicationsScreen() {
   };
 
   const renderApplicationItem = ({ item }: { item: RankedApplication }) => {
-    const statusConfig = STATUS_CONFIG[item.status as ApplicationStatus] || STATUS_CONFIG.SUBMITTED;
+    const statusConfigs = getStatusConfig(colors);
+    const statusConfig = statusConfigs[item.status as ApplicationStatus] || statusConfigs.SUBMITTED;
     const StatusIcon = statusConfig.icon;
     const talent = item.talent;
     const matchConfig = item.matchCategory ? MATCH_CATEGORY_CONFIG[item.matchCategory] : null;

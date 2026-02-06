@@ -18,7 +18,7 @@ import {
   Download,
 } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity, MATCH_COLORS } from '../../constants/theme';
 
 interface EntityCardProps {
   type: string;
@@ -161,10 +161,10 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data }) => {
                 {
                   backgroundColor:
                     data.matchScore < 50
-                      ? 'rgba(220, 38, 38, 0.15)'
+                      ? MATCH_COLORS.low.bgColor
                       : data.matchScore < 70
-                        ? 'rgba(202, 138, 4, 0.15)'
-                        : 'rgba(22, 163, 74, 0.15)',
+                        ? MATCH_COLORS.average.bgColor
+                        : MATCH_COLORS.excellent.bgColor,
                 },
               ]}
             >
@@ -174,10 +174,10 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data }) => {
                   {
                     color:
                       data.matchScore < 50
-                        ? '#dc2626'
+                        ? MATCH_COLORS.low.color
                         : data.matchScore < 70
-                          ? '#ca8a04'
-                          : '#16a34a',
+                          ? MATCH_COLORS.average.color
+                          : MATCH_COLORS.excellent.color,
                   },
                 ]}
               >

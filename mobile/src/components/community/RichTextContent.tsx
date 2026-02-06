@@ -97,7 +97,7 @@ const YouTubeEmbed: React.FC<{ videoId: string; onPress?: () => void }> = ({ vid
 
     if (isPlaying) {
         return (
-            <View style={[styles.youtubeContainer, { height: playerHeight }]}>
+            <View style={[styles.youtubeContainer, { height: playerHeight, backgroundColor: colors.surface }]}>
                 <WebView
                     source={{ uri: `https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1` }}
                     style={styles.webview}
@@ -111,7 +111,7 @@ const YouTubeEmbed: React.FC<{ videoId: string; onPress?: () => void }> = ({ vid
     }
 
     return (
-        <View style={[styles.youtubeContainer, { height: playerHeight }]}>
+        <View style={[styles.youtubeContainer, { height: playerHeight, backgroundColor: colors.surface }]}>
             <Image
                 source={{ uri: thumbnailUrl }}
                 style={styles.thumbnail}
@@ -129,7 +129,7 @@ const YouTubeEmbed: React.FC<{ videoId: string; onPress?: () => void }> = ({ vid
                 <ExternalLink size={ICON.size.sm} color={colors.white} />
             </TouchableOpacity>
             <View style={styles.youtubeBadge}>
-                <Text style={styles.youtubeBadgeText}>YouTube</Text>
+                <Text style={[styles.youtubeBadgeText, { color: colors.textInverse }]}>YouTube</Text>
             </View>
         </View>
     );
@@ -431,7 +431,6 @@ const styles = StyleSheet.create({
         width: '100%',
         borderRadius: BORDER.radius.md,
         overflow: 'hidden',
-        backgroundColor: '#1F1C18', // gray900
         position: 'relative',
     },
     thumbnail: {
@@ -473,7 +472,6 @@ const styles = StyleSheet.create({
         borderRadius: BORDER.radius.xs,
     },
     youtubeBadgeText: {
-        color: '#FFFFFF',
         fontFamily: TYPOGRAPHY.fontFamily.medium,
         fontSize: TYPOGRAPHY.fontSize.xs,
         fontWeight: TYPOGRAPHY.fontWeight.medium,

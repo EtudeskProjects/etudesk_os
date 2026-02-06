@@ -49,6 +49,8 @@ import {
   spaceBookingService,
   opportunityService,
   documentService,
+  dailyObjectiveService,
+  type DailyObjective,
 } from '../../../src/services';
 import skillService from '../../../src/services/skillService';
 import { communityInvitationService } from '../../../src/services/communityInvitationService';
@@ -69,7 +71,8 @@ export default function EcosystemScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [dailyInsight, setDailyInsight] = useState<string>('');
+  const [dailyObjective, setDailyObjective] = useState<DailyObjective | null>(null);
+  const [isObjectiveExpanded, setIsObjectiveExpanded] = useState(false);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<EcoNotification[]>([]);
   const [quickActionCounts, setQuickActionCounts] = useState({
@@ -262,6 +265,22 @@ export default function EcosystemScreen() {
     return `${Math.floor(d / 7)} sem.`;
   };
 
+  // Truncate objective to 200 characters for "Voir plus"
+  const OBJECTIVE_TRUNCATE_LENGTH = 200;
+  const getDisplayedObjective = (): string => {
+    if (!dailyObjective?.objective) {
+      return isOrganizationSpace
+        ? 'Pilotez vos offres, communautés et espaces pour maximiser votre impact.'
+        : 'Explorez les opportunités qui vous correspondent et renforcez votre profil.';
+    }
+    if (isObjectiveExpanded || dailyObjective.objective.length <= OBJECTIVE_TRUNCATE_LENGTH) {
+      return dailyObjective.objective;
+    }
+    return dailyObjective.objective.slice(0, OBJECTIVE_TRUNCATE_LENGTH) + '...';
+  };
+
+  const shouldShowSeeMore = dailyObjective?.objective && dailyObjective.objective.length > OBJECTIVE_TRUNCATE_LENGTH;
+
   const loadNotifications = useCallback(async () => {
     try {
       const response: any = await notificationService.getNotifications({ limit: 5 });
@@ -270,9 +289,52 @@ export default function EcosystemScreen() {
         setNotifications(notifs);
       }
     } catch (error) {
-      console.error('[Ecosystem] Failed to load notifications:', error);
+      console.error('[Home] Failed to load notifications:', error);
     }
   }, []);
+
+  const loadDailyObjective = useCallback(async () => {
+    try {
+      const response = isOrganizationSpace && selectedOrg?.id
+        ? await dailyObjectiveService.getOrganizationObjective(selectedOrg.id)
+        : await dailyObjectiveService.getTalentObjective();
+
+      console.log('[Home] Daily objective response:', JSON.stringify(response, null, 2));
+
+      if (response.data) {
+        setDailyObjective(response.data);
+        setIsObjectiveExpanded(false);
+        console.log('[Home] Daily objective set:', response.data.objective?.slice(0, 50));
+      } else {
+        console.log('[Home] No data in response');
+      }
+    } catch (error) {
+      console.error('[Home] Failed to load daily objective:', error);
+    }
+  }, [isOrganizationSpace, selectedOrg?.id]);
+
+  // Auto-refresh objective when it expires
+  useEffect(() => {
+    if (!dailyObjective?.expiresAt) return;
+
+    const expiresAt = new Date(dailyObjective.expiresAt).getTime();
+    const now = Date.now();
+    const timeUntilExpiry = expiresAt - now;
+
+    // If already expired or expires within 5 seconds, refresh immediately
+    if (timeUntilExpiry <= 5000) {
+      loadDailyObjective();
+      return;
+    }
+
+    // Set timeout to refresh when objective expires
+    const timeoutId = setTimeout(() => {
+      console.log('[Home] Daily objective expired, auto-refreshing...');
+      loadDailyObjective();
+    }, timeUntilExpiry);
+
+    return () => clearTimeout(timeoutId);
+  }, [dailyObjective?.expiresAt, loadDailyObjective]);
 
   const loadQuickActionCounts = useCallback(async () => {
     try {
@@ -362,16 +424,17 @@ export default function EcosystemScreen() {
   // Refresh handler
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await Promise.all([loadQuickActionCounts(), loadNotifications()]);
+    setIsObjectiveExpanded(false);
+    await Promise.all([loadQuickActionCounts(), loadNotifications(), loadDailyObjective()]);
     setIsRefreshing(false);
-  }, [loadQuickActionCounts, loadNotifications]);
+  }, [loadQuickActionCounts, loadNotifications, loadDailyObjective]);
 
   // Load data
   useEffect(() => {
     let isMounted = true;
     const loadData = async () => {
       setIsLoading(true);
-      await Promise.all([loadQuickActionCounts(), loadNotifications()]);
+      await Promise.all([loadQuickActionCounts(), loadNotifications(), loadDailyObjective()]);
       if (isMounted) {
         setIsLoading(false);
       }
@@ -380,7 +443,7 @@ export default function EcosystemScreen() {
     return () => {
       isMounted = false;
     };
-  }, [loadQuickActionCounts, loadNotifications]);
+  }, [loadQuickActionCounts, loadNotifications, loadDailyObjective]);
 
 // Render Organization Content
 const renderOrganizationContent = () => (
@@ -406,7 +469,15 @@ const renderOrganizationContent = () => (
         <Text style={[styles.insightLabel, { color: CARD_THEMES.space.text }]}>Objectif du jour</Text>
       </View>
       <Text style={[styles.insightText, { color: colors.textPrimary }]}>
-        {dailyInsight || 'Pilotez vos offres, communautés et espaces pour maximiser votre impact et attirer les bons talents.'}
+        {getDisplayedObjective()}
+        {shouldShowSeeMore && !isObjectiveExpanded && (
+          <Text
+            style={[styles.seeMoreLink, { color: colors.primary }]}
+            onPress={() => setIsObjectiveExpanded(true)}
+          >
+            {' '}Voir plus
+          </Text>
+        )}
       </Text>
     </View>
 
@@ -536,7 +607,15 @@ const renderTalentContent = () => (
         <Text style={[styles.insightLabel, { color: CARD_THEMES.space.text }]}>Objectif du jour</Text>
       </View>
       <Text style={[styles.insightText, { color: colors.textPrimary }]}>
-        {dailyInsight || 'Explorez les opportunités qui vous correspondent, renforcez votre profil et restez connecté à vos communautés.'}
+        {getDisplayedObjective()}
+        {shouldShowSeeMore && !isObjectiveExpanded && (
+          <Text
+            style={[styles.seeMoreLink, { color: colors.primary }]}
+            onPress={() => setIsObjectiveExpanded(true)}
+          >
+            {' '}Voir plus
+          </Text>
+        )}
       </Text>
     </View>
 
@@ -746,18 +825,18 @@ const styles = StyleSheet.create({
 
   notificationBadge: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    top: SPACING.xs,
+    right: SPACING.xs,
+    width: SPACING.lg,
+    height: SPACING.lg,
+    borderRadius: SPACING.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   notificationBadgeText: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: TYPOGRAPHY.fontSize.xxs,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
   scrollView: {
@@ -809,6 +888,11 @@ const styles = StyleSheet.create({
     lineHeight: TYPOGRAPHY.fontSize.sm * 1.5,
   },
 
+  seeMoreLink: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+
   // Section
   section: {
     marginBottom: SPACING.lg,
@@ -847,7 +931,7 @@ const styles = StyleSheet.create({
 
   countBadge: {
     paddingHorizontal: SPACING.xs,
-    paddingVertical: 2,
+    paddingVertical: SPACING.xxs,
     borderRadius: BORDER.radius.full,
     marginLeft: SPACING.xs,
   },
@@ -892,17 +976,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: SPACING.sm,
     right: SPACING.sm,
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
+    minWidth: SPACING.xl,
+    height: SPACING.xl,
+    borderRadius: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: SPACING.xs,
   },
 
   quickActionBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: TYPOGRAPHY.fontSize.xxs,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
   // Action Button

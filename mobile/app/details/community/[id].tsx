@@ -370,7 +370,7 @@ export default function CommunityDetailScreen() {
                   </Text>
                   {community.activities_count !== undefined && community.activities_count > 0 && (
                     <View style={[styles.tabBadge, { backgroundColor: activeTab === 'activities' ? colors.primary : colors.textSecondary }]}>
-                      <Text style={styles.tabBadgeText}>
+                      <Text style={[styles.tabBadgeText, { color: colors.textOnPrimary }]}>
                         {community.activities_count > 99 ? '99+' : community.activities_count}
                       </Text>
                     </View>
@@ -393,7 +393,7 @@ export default function CommunityDetailScreen() {
                   </Text>
                   {community.members_count !== undefined && community.members_count > 0 && (
                     <View style={[styles.tabBadge, { backgroundColor: activeTab === 'members' ? colors.primary : colors.textSecondary }]}>
-                      <Text style={styles.tabBadgeText}>
+                      <Text style={[styles.tabBadgeText, { color: colors.textOnPrimary }]}>
                         {community.members_count > 99 ? '99+' : community.members_count}
                       </Text>
                     </View>
@@ -1018,7 +1018,6 @@ const styles = StyleSheet.create({
   tabBadgeText: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
-    color: '#FFFFFF',
   },
   tabIndicator: {
     position: 'absolute',

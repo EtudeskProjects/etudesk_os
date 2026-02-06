@@ -557,7 +557,7 @@ export default function JoinCommunityScreen() {
           </View>
 
           {/* Profile Preview */}
-          <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.primary, OPACITY['08']) }]}>
+          <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.primary, OPACITY[8]) }]}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
               Votre profil
             </Text>
@@ -836,7 +836,6 @@ const styles = StyleSheet.create({
   stepNumber: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: '#FFFFFF',
   },
   stepLabel: {
     fontSize: TYPOGRAPHY.fontSize.xs,

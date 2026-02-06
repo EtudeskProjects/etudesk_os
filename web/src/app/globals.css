@@ -1,84 +1,273 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+/**
+ * ETUDESK DESIGN SYSTEM - Web
+ *
+ * Philosophy: Ultra-moderne, minimaliste, luxe africain
+ * - NO heavy shadows (subtle only)
+ * - NO gradients (except phone mockup)
+ * - Warm color palette with rich brown primary
+ *
+ * Typography: Outfit (closest to Satoshi for web)
+ * Brand: Warm luxury, African elegance, clarity, engagement, community
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;900&display=swap');
 
 :root {
-  /* Primary */
-  --primary: #26449F;
-  --primary-light: #3a5bc7;
-  --primary-dark: #1a3280;
+  /* ═══════════════════════════════════════════════════════════════
+     COLOR PALETTE - Luxe Africain
+     ═══════════════════════════════════════════════════════════════ */
 
-  /* Neutrals */
+  /* Primary - Marron Luxe (Rich Brown) */
+  --primary: #3B2416;
+  --primary-light: #5C3D2E;
+  --primary-dark: #2A1A10;
+  --primary-muted: #8B7355;
+
+  /* Neutrals - Warm Gray Scale (brown undertone) */
   --white: #FFFFFF;
-  --black: #000000;
-  --gray-50: #FAFAFA;
-  --gray-100: #F5F5F5;
-  --gray-200: #EEEEEE;
-  --gray-300: #E0E0E0;
-  --gray-400: #BDBDBD;
-  --gray-500: #9E9E9E;
-  --gray-600: #757575;
-  --gray-700: #616161;
-  --gray-800: #424242;
-  --gray-900: #212121;
+  --black: #1A1A1A;
+  --gray-50: #FAF9F7;
+  --gray-100: #F5F3F0;
+  --gray-200: #EBE8E4;
+  --gray-300: #D9D5CF;
+  --gray-400: #B8B2A8;
+  --gray-500: #918A7E;
+  --gray-600: #6E675C;
+  --gray-700: #4D4840;
+  --gray-800: #332F2A;
+  --gray-900: #1F1C18;
 
-  /* Semantic */
-  --success: #2E7D32;
-  --error: #C62828;
-  --warning: #F57C00;
-  --info: #1565C0;
+  /* Semantic - Earth Tones */
+  --success: #4A6741;
+  --success-light: #E8EFE6;
+  --success-dark: #3A5233;
+  --error: #8B4A3C;
+  --error-light: #F5EBE8;
+  --error-dark: #6B3A2E;
+  --warning: #A67C52;
+  --warning-light: #F7F0E8;
+  --warning-dark: #866340;
+  --info: #6B5E52;
+  --info-light: #F2EFEC;
+  --info-dark: #524940;
 
   /* Background & Surface */
   --background: #FFFFFF;
-  --background-secondary: #FAFAFA;
+  --background-secondary: #FAF9F7;
+  --background-tertiary: #F5F3F0;
   --surface: #FFFFFF;
+  --surface-elevated: #FAF9F7;
 
   /* Text */
-  --text-primary: #212121;
-  --text-secondary: #757575;
-  --text-disabled: #BDBDBD;
+  --text-primary: #1F1C18;
+  --text-secondary: #6E675C;
+  --text-tertiary: #918A7E;
+  --text-disabled: #B8B2A8;
+  --text-inverse: #FFFFFF;
+  --text-on-primary: #FFFFFF;
 
-  /* Border */
-  --border-color: #E0E0E0;
+  /* Border & Dividers */
+  --border-color: #EBE8E4;
+  --border-strong: #D9D5CF;
+  --divider: #EBE8E4;
+
+  /* Interactive States */
+  --overlay: rgba(26, 26, 26, 0.5);
+  --overlay-light: rgba(26, 26, 26, 0.3);
+  --pressed: rgba(59, 36, 22, 0.08);
+  --focused: rgba(59, 36, 22, 0.12);
+  --hover: rgba(59, 36, 22, 0.04);
+
+  /* ═══════════════════════════════════════════════════════════════
+     TYPOGRAPHY
+     ═══════════════════════════════════════════════════════════════ */
+
+  --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Font Sizes - Harmonic scale */
+  --font-size-xxs: 0.625rem;   /* 10px */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-md: 1rem;        /* 16px - base */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  --font-size-xxl: 1.5rem;     /* 24px */
+  --font-size-xxxl: 2rem;      /* 32px */
+  --font-size-display: 2.5rem; /* 40px */
+  --font-size-display-lg: 3rem;/* 48px */
+
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-black: 900;
+
+  /* Line Heights */
+  --line-height-none: 1;
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.65;
+  --line-height-loose: 1.8;
+
+  /* Letter Spacing */
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
+
+  /* ═══════════════════════════════════════════════════════════════
+     SPACING - 4px Grid
+     ═══════════════════════════════════════════════════════════════ */
+
+  --space-xxs: 0.125rem;  /* 2px */
+  --space-xs: 0.25rem;    /* 4px */
+  --space-sm: 0.5rem;     /* 8px */
+  --space-md: 1rem;       /* 16px */
+  --space-lg: 1.5rem;     /* 24px */
+  --space-xl: 2rem;       /* 32px */
+  --space-xxl: 3rem;      /* 48px */
+  --space-xxxl: 4rem;     /* 64px */
+
+  /* ═══════════════════════════════════════════════════════════════
+     BORDER RADIUS - Minimal, clean
+     ═══════════════════════════════════════════════════════════════ */
+
+  --radius-none: 0;
+  --radius-xs: 0.25rem;   /* 4px - badges */
+  --radius-sm: 0.5rem;    /* 8px - buttons, inputs */
+  --radius-md: 0.75rem;   /* 12px - cards */
+  --radius-lg: 1rem;      /* 16px - large cards */
+  --radius-xl: 1.25rem;   /* 20px - featured cards */
+  --radius-xxl: 1.5rem;   /* 24px - pills */
+  --radius-full: 9999px;  /* circles */
+
+  /* ═══════════════════════════════════════════════════════════════
+     LAYOUT
+     ═══════════════════════════════════════════════════════════════ */
+
+  --max-width-content: 1200px;
+  --max-width-text: 900px;
+
+  /* Button Heights */
+  --button-height-sm: 2.25rem;  /* 36px */
+  --button-height: 2.75rem;     /* 44px */
+  --button-height-lg: 3.25rem;  /* 52px */
+
+  /* Input Heights */
+  --input-height-sm: 2.5rem;    /* 40px */
+  --input-height: 3rem;         /* 48px */
+  --input-height-lg: 3.5rem;    /* 56px */
+
+  /* Touch target minimum */
+  --touch-target: 2.75rem;      /* 44px - WCAG minimum */
+
+  /* ═══════════════════════════════════════════════════════════════
+     SHADOWS - Subtle only (NO heavy shadows)
+     ═══════════════════════════════════════════════════════════════ */
+
+  --shadow-none: none;
+  --shadow-xs: 0 1px 2px rgba(31, 28, 24, 0.04);
+  --shadow-sm: 0 2px 4px rgba(31, 28, 24, 0.06);
+  --shadow-md: 0 4px 8px rgba(31, 28, 24, 0.08);
+  --shadow-lg: 0 8px 16px rgba(31, 28, 24, 0.08);
+
+  /* ═══════════════════════════════════════════════════════════════
+     TRANSITIONS
+     ═══════════════════════════════════════════════════════════════ */
+
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* ═══════════════════════════════════════════════════════════════
+     Z-INDEX
+     ═══════════════════════════════════════════════════════════════ */
+
+  --z-dropdown: 50;
+  --z-sticky: 100;
+  --z-fixed: 100;
+  --z-modal-backdrop: 200;
+  --z-modal: 300;
+  --z-toast: 400;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK THEME
+   ═══════════════════════════════════════════════════════════════ */
 
 [data-theme="dark"] {
-  /* Primary (légèrement plus lumineux pour le contraste) */
-  --primary: #4a6fd1;
-  --primary-light: #6b8ce0;
-  --primary-dark: #26449F;
+  /* Primary - Bright warm gold for visibility on dark backgrounds */
+  --primary: #C9A070;
+  --primary-light: #DDB88A;
+  --primary-dark: #A68050;
+  --primary-muted: #8B7355;
 
-  /* Neutrals inversés */
-  --white: #121212;
-  --black: #FFFFFF;
-  --gray-50: #1a1a1a;
-  --gray-100: #212121;
-  --gray-200: #2d2d2d;
-  --gray-300: #3d3d3d;
-  --gray-400: #5c5c5c;
-  --gray-500: #7a7a7a;
-  --gray-600: #9e9e9e;
-  --gray-700: #b3b3b3;
-  --gray-800: #cfcfcf;
-  --gray-900: #e8e8e8;
+  /* Neutrals - Inverted warm scale with better contrast */
+  --white: #0D0B0A;
+  --black: #F5F3F0;
+  --gray-50: #0D0B0A;
+  --gray-100: #161412;
+  --gray-200: #1E1C1A;
+  --gray-300: #2A2826;
+  --gray-400: #3D3A36;
+  --gray-500: #5C5850;
+  --gray-600: #8A847A;
+  --gray-700: #A8A29A;
+  --gray-800: #D4D0CA;
+  --gray-900: #F5F3F0;
 
-  /* Semantic (légèrement ajustés pour le dark mode) */
-  --success: #4CAF50;
-  --error: #EF5350;
-  --warning: #FFB74D;
-  --info: #42A5F5;
+  /* Semantic - BRIGHT colors for dark mode visibility */
+  --success: #7CB870;
+  --success-light: #1A2418;
+  --success-dark: #5CA050;
+  --error: #E08070;
+  --error-light: #2A1816;
+  --error-dark: #C86050;
+  --warning: #E8B870;
+  --warning-light: #2A2418;
+  --warning-dark: #C8A050;
+  --info: #A89888;
+  --info-light: #1E1C1A;
+  --info-dark: #8A7868;
 
   /* Background & Surface */
-  --background: #121212;
-  --background-secondary: #1a1a1a;
-  --surface: #1e1e1e;
+  --background: #0D0B0A;
+  --background-secondary: #121110;
+  --background-tertiary: #1A1816;
+  --surface: #1E1C1A;
+  --surface-elevated: #2A2826;
 
-  /* Text */
-  --text-primary: #e8e8e8;
-  --text-secondary: #b3b3b3;
-  --text-disabled: #5c5c5c;
+  /* Text - High contrast */
+  --text-primary: #F5F3F0;
+  --text-secondary: #B8B2A8;
+  --text-tertiary: #8A847A;
+  --text-disabled: #5C5850;
+  --text-inverse: #0D0B0A;
+  --text-on-primary: #0D0B0A;
 
-  /* Border */
-  --border-color: #3d3d3d;
+  /* Border & Dividers - Subtle but visible */
+  --border-color: #2A2826;
+  --border-strong: #3D3A36;
+  --divider: #2A2826;
+
+  /* Interactive States - Using brighter primary */
+  --overlay: rgba(0, 0, 0, 0.85);
+  --overlay-light: rgba(0, 0, 0, 0.6);
+  --pressed: rgba(201, 160, 112, 0.20);
+  --focused: rgba(201, 160, 112, 0.30);
+  --hover: rgba(201, 160, 112, 0.12);
+
+  /* Shadows - Subtle in dark mode */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.45);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════════════════ */
 
 * {
   margin: 0;
@@ -88,21 +277,95 @@
 
 html {
   color-scheme: light dark;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  letter-spacing: var(--letter-spacing-normal);
   background-color: var(--background);
   color: var(--text-primary);
-  line-height: 1.6;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color var(--transition-slow), color var(--transition-slow);
 }
 
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--text-primary);
+}
+
+h1 { font-size: var(--font-size-xxxl); }
+h2 { font-size: var(--font-size-xxl); }
+h3 { font-size: var(--font-size-xl); }
+h4 { font-size: var(--font-size-lg); }
+h5 { font-size: var(--font-size-md); }
+h6 { font-size: var(--font-size-sm); }
+
+p {
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+/* Links */
 a {
   color: var(--primary);
   text-decoration: none;
+  transition: color var(--transition-fast);
 }
 
 a:hover {
+  color: var(--primary-light);
   text-decoration: underline;
 }
+
+/* Selection */
+::selection {
+  background-color: var(--primary);
+  color: var(--text-on-primary);
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Scrollbar (WebKit) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILITY CLASSES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Text colors */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-tertiary); }
+
+/* Background colors */
+.bg-primary { background-color: var(--primary); }
+.bg-surface { background-color: var(--surface); }
+.bg-secondary { background-color: var(--background-secondary); }

@@ -160,7 +160,7 @@ export default function SpacesListScreen() {
               onPress={() => router.push('/settings/organization/create-space' as any)}
             >
               <Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              <Text style={styles.emptyButtonText}>Creer un espace</Text>
+              <Text style={[styles.emptyButtonText, { color: colors.textOnPrimary }]}>Creer un espace</Text>
             </TouchableOpacity>
           </View>
         }
@@ -247,6 +247,5 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: '#FFFFFF',
   },
 });

@@ -24,7 +24,7 @@ import {
   Users,
   ChevronDown,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors } from '../../src/constants/theme';
 import { Button, PageLayout, EmptyState, Input } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import skillService, {
@@ -34,12 +34,13 @@ import skillService, {
   PROFICIENCY_LEVELS,
 } from '../../src/services/skillService';
 
-const PROFICIENCY_COLORS: Record<string, string> = {
-  BEGINNER: '#94a3b8',
-  INTERMEDIATE: '#3b82f6',
-  EXPERT: '#f59e0b',
-  MASTER: '#10b981',
-};
+// Proficiency colors - Luxe Africain design system
+const getProficiencyColors = (colors: ThemeColors): Record<string, string> => ({
+  BEGINNER: colors.gray500,      // Neutral
+  INTERMEDIATE: colors.info,     // Warm taupe
+  EXPERT: colors.warning,        // Warm amber
+  MASTER: colors.success,        // Forest green
+});
 
 const ORIGIN_LABELS: Record<string, string> = {
   declared: 'Déclarée',
@@ -172,8 +173,10 @@ export default function SkillsScreen() {
     );
   };
 
+  const proficiencyColors = getProficiencyColors(colors);
+
   const renderSkill = (skill: TalentSkill) => {
-    const profColor = PROFICIENCY_COLORS[skill.proficiency_level] || colors.textSecondary;
+    const profColor = proficiencyColors[skill.proficiency_level] || colors.textSecondary;
     const originLabel = ORIGIN_LABELS[skill.origin] || skill.origin;
     const contextText = skill.context;
     const relativeDate = formatRelativeDate(skill.created_at);
@@ -356,7 +359,7 @@ export default function SkillsScreen() {
               <View style={styles.chipRow}>
                 {PROFICIENCY_LEVELS.map((level) => {
                   const isActive = selectedProficiency === level;
-                  const levelColor = PROFICIENCY_COLORS[level];
+                  const levelColor = proficiencyColors[level];
                   return (
                     <TouchableOpacity
                       key={level}

@@ -148,7 +148,7 @@ export default function CreateProfileScreen() {
           // Check if user already has a profile - redirect to main app
           if (user.hasTalentProfile === true || user.onboardingComplete === true || user.talentId) {
             completeOnboarding();
-            router.replace('/(tabs)/graphe');
+            router.replace('/(tabs)/home');
             return;
           }
 
@@ -295,7 +295,7 @@ export default function CreateProfileScreen() {
       const errorMsg = error.error || error.message || '';
       if (errorMsg.includes('existe déjà') || errorMsg.includes('already exists')) {
         completeOnboarding();
-        router.replace('/(tabs)/graphe');
+        router.replace('/(tabs)/home');
         return;
       }
 
@@ -994,7 +994,7 @@ const styles = StyleSheet.create({
   },
 
   optionButtonTextSelected: {
-    color: '#FFFFFF',
+    // color applied inline with colors.textOnPrimary
   },
 
   horizontalScroll: {
@@ -1020,7 +1020,7 @@ const styles = StyleSheet.create({
   },
 
   optionChipTextSelected: {
-    color: '#FFFFFF',
+    // color applied inline with colors.textOnPrimary
   },
 
   datePickerButton: {

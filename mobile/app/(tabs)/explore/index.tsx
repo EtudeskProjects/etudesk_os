@@ -368,12 +368,12 @@ export default function ExploreScreen() {
       onRequestClose={() => setShowFilterModal(false)}
     >
       <TouchableOpacity
-        style={styles.modalOverlay}
+        style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
         activeOpacity={1}
         onPress={() => setShowFilterModal(false)}
       >
         <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-          <View style={styles.modalHeader}>
+          <View style={[styles.modalHeader, { borderBottomColor: withOpacity(colors.black, OPACITY[10]) }]}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
               {t('explore.sortBy')}
             </Text>
@@ -449,6 +449,7 @@ export default function ExploreScreen() {
             >
               <View style={[
                 styles.categoryTabOverlay,
+                { backgroundColor: withOpacity(colors.black, OPACITY[50]) },
                 isActive && { backgroundColor: withOpacity(colors.primary, OPACITY[80]) }
               ]}>
                 <IconComponent
@@ -700,16 +701,16 @@ const styles = StyleSheet.create({
 
   // Header
   filterButton: {
-    width: 40,
-    height: 40,
+    width: LAYOUT.inputHeightSm,
+    height: LAYOUT.inputHeightSm,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: BORDER.radius.sm,
   },
 
   headerButton: {
-    width: 40,
-    height: 40,
+    width: LAYOUT.inputHeightSm,
+    height: LAYOUT.inputHeightSm,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: BORDER.radius.sm,
@@ -729,7 +730,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    height: 40,
+    height: LAYOUT.inputHeightSm,
     paddingHorizontal: SPACING.md,
     borderWidth: BORDER.width.thin,
     borderRadius: BORDER.radius.sm,
@@ -745,7 +746,6 @@ const styles = StyleSheet.create({
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
 
@@ -761,7 +761,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: SPACING.lg,
     borderBottomWidth: BORDER.width.thin,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
 
   modalTitle: {
@@ -787,8 +786,8 @@ const styles = StyleSheet.create({
   },
 
   filterIconContainer: {
-    width: 40,
-    height: 40,
+    width: LAYOUT.inputHeightSm,
+    height: LAYOUT.inputHeightSm,
     borderRadius: BORDER.radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
@@ -835,7 +834,6 @@ const styles = StyleSheet.create({
 
   categoryTabOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.xs,

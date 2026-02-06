@@ -27,7 +27,7 @@ import {
   MapPin,
   TrendingUp,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { FooterNav } from '../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../src/components/chat';
@@ -46,11 +46,12 @@ const getStatusConfig = (colors: any): Record<string, { color: string; icon: typ
   REJECTED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]) },
 });
 
+// Match category config - Uses Luxe Africain design system colors
 const MATCH_CATEGORY_CONFIG = {
-  excellent: { label: 'Excellent match', color: '#059669', bgColor: '#05966915' },
-  good: { label: 'Bon match', color: '#2563eb', bgColor: '#2563eb15' },
-  average: { label: 'Match moyen', color: '#d97706', bgColor: '#d9770615' },
-  low: { label: 'Match faible', color: '#dc2626', bgColor: '#dc262615' },
+  excellent: { label: 'Excellent match', color: MATCH_COLORS.excellent.color, bgColor: MATCH_COLORS.excellent.bgColor },
+  good: { label: 'Bon match', color: MATCH_COLORS.good.color, bgColor: MATCH_COLORS.good.bgColor },
+  average: { label: 'Match moyen', color: MATCH_COLORS.average.color, bgColor: MATCH_COLORS.average.bgColor },
+  low: { label: 'Match faible', color: MATCH_COLORS.low.color, bgColor: MATCH_COLORS.low.bgColor },
 };
 
 type Tab = 'details' | 'messages';

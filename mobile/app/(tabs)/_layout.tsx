@@ -37,9 +37,9 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="graphe/index"
+        name="home/index"
         options={{
-          href: isOrganizationSpace ? null : '/(tabs)/graphe',
+          href: isOrganizationSpace ? null : '/(tabs)/home',
         }}
       />
       <Tabs.Screen

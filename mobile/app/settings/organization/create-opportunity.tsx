@@ -722,7 +722,7 @@ export default function CreateOpportunityScreen() {
               ) : (
                 <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
               )}
-              <Text style={styles.generateButtonText}>
+              <Text style={[styles.generateButtonText, { color: colors.textOnPrimary }]}>
                 {isGenerating ? 'Suggestion...' : 'Suggérer'}
               </Text>
             </TouchableOpacity>
@@ -2012,7 +2012,6 @@ const styles = StyleSheet.create({
   generateButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: '#FFFFFF',
   },
 
   textAreaContainer: {

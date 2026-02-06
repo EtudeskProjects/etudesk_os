@@ -60,9 +60,31 @@ logger.info(`📧 Email provider: ${EMAIL_PROVIDER.toUpperCase()}${EMAIL_PROVIDE
 // HELPERS
 // ═══════════════════════════════════════════════════════════════
 
-// Brand colors
-const BRAND_BLACK = '#1A1A1A';
+// ═══════════════════════════════════════════════════════════════
+// BRAND DESIGN SYSTEM - Luxe Africain
+// ═══════════════════════════════════════════════════════════════
+
+// Primary - Marron Luxe (Rich Brown)
+const BRAND_PRIMARY = '#3B2416';
+const BRAND_PRIMARY_LIGHT = '#5C3D2E';
+const BRAND_PRIMARY_DARK = '#2A1A10';
+
+// Neutrals - Warm Gray Scale
+const BRAND_BLACK = '#1F1C18';
 const BRAND_GRAY = '#4D4840';
+const BRAND_GRAY_LIGHT = '#918A7E';
+
+// Semantic
+const BRAND_SUCCESS = '#4A6741';
+const BRAND_ERROR = '#8B4A3C';
+const BRAND_WARNING = '#A67C52';
+
+// Backgrounds
+const BRAND_BG_LIGHT = '#FAF9F7';
+const BRAND_BG_SECONDARY = '#F5F3F0';
+
+// Logo URL (web assets)
+const LOGO_URL = 'https://etudesk.org/images/etudesk_logo_black.png';
 
 // Helper to get translation function for a specific language
 function getT(language: EmailLanguage = 'fr') {
@@ -157,7 +179,7 @@ export const EmailTemplates = {
           <!-- Logo -->
           <tr>
             <td style="padding-bottom: 40px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 32px; width: auto;" />
+              <img src="${LOGO_URL}" alt="Etudesk" style="height: 32px; width: auto;" />
             </td>
           </tr>
 
@@ -170,7 +192,7 @@ export const EmailTemplates = {
 
               <!-- OTP Code -->
               <div style="margin-bottom: 24px;">
-                <span style="font-family: 'SF Mono', 'Roboto Mono', monospace; font-size: 32px; font-weight: 600; letter-spacing: 6px; color: ${BRAND_BLACK};">
+                <span style="font-family: 'SF Mono', 'Roboto Mono', monospace; font-size: 32px; font-weight: 600; letter-spacing: 6px; color: ${BRAND_PRIMARY};">
                   ${code}
                 </span>
               </div>
@@ -232,7 +254,7 @@ ${t('emails:otp.neverShare')}.
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${t('emails:welcome.title')}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: ${BRAND_BG_LIGHT};">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
     <tr>
       <td align="center" style="padding: 40px 0;">
@@ -240,7 +262,7 @@ ${t('emails:otp.neverShare')}.
           <!-- Header -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 40px; width: auto;" />
+              <img src="${LOGO_URL}" alt="Etudesk" style="height: 40px; width: auto;" />
             </td>
           </tr>
 
@@ -266,7 +288,7 @@ ${t('emails:otp.neverShare')}.
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 30px;">
-                <a href="https://etudesk.com/explore" style="display: inline-block; background-color: #E63946; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                <a href="https://etudesk.org/explore" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
                   ${t('emails:welcome.exploreButton')}
                 </a>
               </div>
@@ -275,7 +297,7 @@ ${t('emails:otp.neverShare')}.
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 30px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
+            <td style="padding: 30px 40px; background-color: ${BRAND_BG_SECONDARY}; border-radius: 0 0 12px 12px;">
               <p style="margin: 0 0 10px; font-size: 12px; color: #999999; text-align: center;">
                 ${t('emails:welcome.copyright', { year })}
               </p>
@@ -361,7 +383,7 @@ export async function sendOrganizationInviteEmail(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${t('emails:orgInvite.title')}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: ${BRAND_BG_LIGHT};">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
@@ -370,7 +392,7 @@ export async function sendOrganizationInviteEmail(
           <!-- Logo -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px; width: auto;" />
+              <img src="${LOGO_URL}" alt="Etudesk" style="height: 36px; width: auto;" />
             </td>
           </tr>
 
@@ -386,8 +408,8 @@ export async function sendOrganizationInviteEmail(
               </p>
 
               <!-- Organization Card -->
-              <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
-                <p style="margin: 0 0 8px; font-size: 20px; font-weight: 600; color: ${BRAND_BLACK};">
+              <div style="background-color: ${BRAND_BG_SECONDARY}; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
+                <p style="margin: 0 0 8px; font-size: 20px; font-weight: 600; color: ${BRAND_PRIMARY};">
                   ${organizationName}
                 </p>
                 <p style="margin: 0; font-size: 14px; color: #6b7280;">
@@ -401,7 +423,7 @@ export async function sendOrganizationInviteEmail(
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 20px;">
-                <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
                   ${t('emails:orgInvite.viewInvitation')}
                 </a>
               </div>
@@ -410,7 +432,7 @@ export async function sendOrganizationInviteEmail(
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
+            <td style="padding: 24px 40px; background-color: ${BRAND_BG_SECONDARY}; border-radius: 0 0 12px 12px;">
               <p style="margin: 0 0 8px; font-size: 12px; color: #9ca3af; text-align: center;">
                 ${t('emails:orgInvite.expiresIn')}
               </p>
@@ -480,7 +502,7 @@ export async function sendCommunityInviteEmail(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${t('emails:communityInvite.title')}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: ${BRAND_BG_LIGHT};">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
@@ -489,7 +511,7 @@ export async function sendCommunityInviteEmail(
           <!-- Logo -->
           <tr>
             <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px; width: auto;" />
+              <img src="${LOGO_URL}" alt="Etudesk" style="height: 36px; width: auto;" />
             </td>
           </tr>
 
@@ -509,8 +531,8 @@ export async function sendCommunityInviteEmail(
               </p>
 
               <!-- Community Card -->
-              <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
-                <p style="margin: 0 0 8px; font-size: 20px; font-weight: 600; color: ${BRAND_BLACK};">
+              <div style="background-color: ${BRAND_BG_SECONDARY}; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
+                <p style="margin: 0 0 8px; font-size: 20px; font-weight: 600; color: ${BRAND_PRIMARY};">
                   ${communityName}
                 </p>
                 <p style="margin: 0; font-size: 14px; color: #6b7280;">
@@ -519,8 +541,8 @@ export async function sendCommunityInviteEmail(
               </div>
 
               ${message ? `
-              <div style="background-color: #fefce8; border-left: 4px solid #facc15; padding: 12px 16px; margin-bottom: 24px; border-radius: 0 8px 8px 0;">
-                <p style="margin: 0; font-size: 14px; color: #713f12; font-style: italic;">
+              <div style="background-color: #F7F0E8; border-left: 4px solid ${BRAND_WARNING}; padding: 12px 16px; margin-bottom: 24px; border-radius: 0 8px 8px 0;">
+                <p style="margin: 0; font-size: 14px; color: ${BRAND_GRAY}; font-style: italic;">
                   "${message}"
                 </p>
               </div>
@@ -532,7 +554,7 @@ export async function sendCommunityInviteEmail(
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 20px;">
-                <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
                   ${t('emails:communityInvite.viewInvitation')}
                 </a>
               </div>
@@ -541,7 +563,7 @@ export async function sendCommunityInviteEmail(
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
+            <td style="padding: 24px 40px; background-color: ${BRAND_BG_SECONDARY}; border-radius: 0 0 12px 12px;">
               <p style="margin: 0 0 8px; font-size: 12px; color: #9ca3af; text-align: center;">
                 ${t('emails:communityInvite.expiresIn')}
               </p>
@@ -606,27 +628,27 @@ export async function sendSpaceInviteEmail(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: ${BRAND_BG_LIGHT};">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" style="width: 100%; max-width: 500px; background-color: #ffffff; border-radius: 12px;">
           <tr><td style="padding: 40px 40px 20px; text-align: center;">
-            <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px;" />
+            <img src="${LOGO_URL}" alt="Etudesk" style="height: 36px;" />
           </td></tr>
           <tr><td style="padding: 20px 40px;">
             <h1 style="margin: 0 0 24px; font-size: 22px; text-align: center; color: #1a1a1a;">${t('emails:spaceInvite.title')}</h1>
             <p style="margin: 0 0 10px; font-size: 16px; color: #4a4a4a;">${t('emails:spaceInvite.greeting', { name: displayName })}</p>
             <p style="margin: 0 0 20px; font-size: 16px; color: #4a4a4a;">${t('emails:spaceInvite.inviterInvites', { inviter: inviterName })}</p>
-            <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
-              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${BRAND_BLACK};">${spaceName}</p>
+            <div style="background-color: ${BRAND_BG_SECONDARY}; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
+              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${BRAND_PRIMARY};">${spaceName}</p>
             </div>
-            ${message ? `<div style="background-color: #fefce8; border-left: 4px solid #facc15; padding: 12px 16px; margin-bottom: 24px;"><p style="margin: 0; font-size: 14px; color: #713f12; font-style: italic;">"${message}"</p></div>` : ''}
+            ${message ? `<div style="background-color: #F7F0E8; border-left: 4px solid ${BRAND_WARNING}; padding: 12px 16px; margin-bottom: 24px;"><p style="margin: 0; font-size: 14px; color: ${BRAND_GRAY}; font-style: italic;">"${message}"</p></div>` : ''}
             <div style="text-align: center; margin-bottom: 20px;">
-              <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">${t('emails:spaceInvite.viewInvitation')}</a>
+              <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">${t('emails:spaceInvite.viewInvitation')}</a>
             </div>
           </td></tr>
-          <tr><td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
+          <tr><td style="padding: 24px 40px; background-color: ${BRAND_BG_SECONDARY}; border-radius: 0 0 12px 12px;">
             <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">${t('emails:spaceInvite.expiresIn')}</p>
           </td></tr>
         </table>
@@ -669,28 +691,28 @@ export async function sendOpportunityInviteEmail(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: ${BRAND_BG_LIGHT};">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
     <tr>
       <td align="center" style="padding: 40px 20px;">
         <table role="presentation" style="width: 100%; max-width: 500px; background-color: #ffffff; border-radius: 12px;">
           <tr><td style="padding: 40px 40px 20px; text-align: center;">
-            <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px;" />
+            <img src="${LOGO_URL}" alt="Etudesk" style="height: 36px;" />
           </td></tr>
           <tr><td style="padding: 20px 40px;">
             <h1 style="margin: 0 0 24px; font-size: 22px; text-align: center; color: #1a1a1a;">${t('emails:opportunityInvite.title')}</h1>
             <p style="margin: 0 0 10px; font-size: 16px; color: #4a4a4a;">${t('emails:opportunityInvite.greeting', { name: displayName })}</p>
             <p style="margin: 0 0 20px; font-size: 16px; color: #4a4a4a;">${t('emails:opportunityInvite.inviterInvites', { inviter: inviterName, organization: organizationName })}</p>
-            <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
-              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${BRAND_BLACK};">${opportunityTitle}</p>
+            <div style="background-color: ${BRAND_BG_SECONDARY}; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
+              <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${BRAND_PRIMARY};">${opportunityTitle}</p>
               <p style="margin: 8px 0 0; font-size: 14px; color: #6b7280;">${organizationName}</p>
             </div>
-            ${message ? `<div style="background-color: #fefce8; border-left: 4px solid #facc15; padding: 12px 16px; margin-bottom: 24px;"><p style="margin: 0; font-size: 14px; color: #713f12; font-style: italic;">"${message}"</p></div>` : ''}
+            ${message ? `<div style="background-color: #F7F0E8; border-left: 4px solid ${BRAND_WARNING}; padding: 12px 16px; margin-bottom: 24px;"><p style="margin: 0; font-size: 14px; color: ${BRAND_GRAY}; font-style: italic;">"${message}"</p></div>` : ''}
             <div style="text-align: center; margin-bottom: 20px;">
-              <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">${t('emails:opportunityInvite.viewOpportunity')}</a>
+              <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">${t('emails:opportunityInvite.viewOpportunity')}</a>
             </div>
           </td></tr>
-          <tr><td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
+          <tr><td style="padding: 24px 40px; background-color: ${BRAND_BG_SECONDARY}; border-radius: 0 0 12px 12px;">
             <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">${t('emails:opportunityInvite.expiresIn')}</p>
           </td></tr>
         </table>

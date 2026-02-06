@@ -1574,7 +1574,7 @@ export default function EditSpaceScreen() {
                     style={[
                       styles.availabilityPreviewCard,
                       {
-                        backgroundColor: dayAvail.isOpen ? withOpacity(colors.primary, OPACITY['08']) : colors.gray50,
+                        backgroundColor: dayAvail.isOpen ? withOpacity(colors.primary, OPACITY[8]) : colors.gray50,
                         borderColor: dayAvail.isOpen ? withOpacity(colors.primary, OPACITY[30]) : colors.gray200,
                       },
                     ]}

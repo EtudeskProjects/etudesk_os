@@ -16,7 +16,7 @@ import {
   FileText,
   Send,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { PageLayout, EmptyState } from '../../src/components/ui';
 import { api } from '../../src/services/api';
@@ -39,13 +39,14 @@ const MONTHS = [
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
 ];
 
-const getEventColor = (type: EventType): string => {
+// Event colors - Luxe Africain design system
+const getEventColor = (type: EventType, colors: ThemeColors): string => {
   switch (type) {
-    case 'event': return '#9C27B0';
-    case 'scheduled_post': return '#2196F3';
-    case 'opportunity': return '#4CAF50';
-    case 'reservation': return '#FF9800';
-    default: return '#757575';
+    case 'event': return colors.primary;          // Rich brown
+    case 'scheduled_post': return colors.info;    // Warm taupe
+    case 'opportunity': return colors.success;    // Forest green
+    case 'reservation': return colors.warning;    // Warm amber
+    default: return colors.gray500;               // Neutral gray
   }
 };
 
@@ -199,15 +200,15 @@ export default function CalendarScreen() {
       {/* Legend */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: getEventColor('event') }]} />
+          <View style={[styles.legendDot, { backgroundColor: getEventColor('event', colors) }]} />
           <Text style={[styles.legendText, { color: colors.textSecondary }]}>Événements</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: getEventColor('scheduled_post') }]} />
+          <View style={[styles.legendDot, { backgroundColor: getEventColor('scheduled_post', colors) }]} />
           <Text style={[styles.legendText, { color: colors.textSecondary }]}>Publications</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: getEventColor('opportunity') }]} />
+          <View style={[styles.legendDot, { backgroundColor: getEventColor('opportunity', colors) }]} />
           <Text style={[styles.legendText, { color: colors.textSecondary }]}>Opportunités</Text>
         </View>
       </View>
@@ -238,7 +239,7 @@ export default function CalendarScreen() {
 
             <View style={[styles.eventsContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
               {dateEvents.map((event, index) => {
-                const eventColor = getEventColor(event.type);
+                const eventColor = getEventColor(event.type, colors);
                 const EventIcon = getEventIcon(event.type);
                 const isLast = index === dateEvents.length - 1;
 

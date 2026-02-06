@@ -300,8 +300,7 @@ export default function PreferencesScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {/* Appearance Section */}
-                {/* Appearance Section - HIDDEN as per user request (Dark mode disabled) */}
-                {/* {renderSection(
+                {renderSection(
                     t('preferences.display'),
                     <>
                         <View style={styles.settingItem}>
@@ -340,7 +339,7 @@ export default function PreferencesScreen() {
                             })}
                         </View>
                     </>
-                )} */}
+                )}
 
                 {/* Language Section */}
                 {renderSection(

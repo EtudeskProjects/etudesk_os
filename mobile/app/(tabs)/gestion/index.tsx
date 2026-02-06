@@ -34,7 +34,7 @@ import {
   FileText,
   Search,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, ThemeColors } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -49,17 +49,17 @@ import {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Palette de couleurs pâles cohérentes
-const PASTEL_COLORS = {
-  green: { bg: '#E8F5E9', icon: '#4CAF50', text: '#2E7D32' },
-  blue: { bg: '#E3F2FD', icon: '#2196F3', text: '#1565C0' },
-  purple: { bg: '#F3E5F5', icon: '#9C27B0', text: '#7B1FA2' },
-  orange: { bg: '#FFF3E0', icon: '#FF9800', text: '#EF6C00' },
-  red: { bg: '#FFEBEE', icon: '#F44336', text: '#C62828' },
-  teal: { bg: '#E0F2F1', icon: '#009688', text: '#00796B' },
-  indigo: { bg: '#E8EAF6', icon: '#3F51B5', text: '#303F9F' },
-  amber: { bg: '#FFF8E1', icon: '#FFC107', text: '#FF8F00' },
-};
+// Palette Luxe Africain - Theme-aware colors for quick action cards
+const getPastelColors = (colors: ThemeColors) => ({
+  green: { bg: colors.successLight, icon: colors.success, text: colors.successDark },
+  blue: { bg: colors.infoLight, icon: colors.info, text: colors.infoDark },
+  purple: { bg: colors.cardTalent, icon: colors.primaryMuted, text: colors.primaryDark },
+  orange: { bg: colors.warningLight, icon: colors.warning, text: colors.warningDark },
+  red: { bg: colors.errorLight, icon: colors.error, text: colors.errorDark },
+  teal: { bg: colors.cardCommunity, icon: colors.cardCommunityText, text: colors.success },
+  indigo: { bg: colors.cardOrg, icon: colors.primary, text: colors.primaryDark },
+  amber: { bg: colors.cardOpportunity, icon: colors.warning, text: colors.warningDark },
+});
 
 interface QuickStats {
   opportunities: number;
@@ -80,6 +80,7 @@ interface Activity {
 export default function GestionScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const PASTEL_COLORS = getPastelColors(colors);
   const { t } = useI18n();
   const { selectedOrg, isOrganizationSpace } = useSpace();
   const [showCreateModal, setShowCreateModal] = useState(false);

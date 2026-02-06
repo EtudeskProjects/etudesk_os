@@ -378,7 +378,7 @@ export default function MemberDetailScreen() {
             onPress={handleSave}
             disabled={isSaving}
           >
-            <Text style={styles.saveButtonText}>
+            <Text style={[styles.saveButtonText, { color: colors.textOnPrimary }]}>
               {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
             </Text>
           </TouchableOpacity>
@@ -643,7 +643,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
-    color: '#FFFFFF',
   },
 
   // Empty State

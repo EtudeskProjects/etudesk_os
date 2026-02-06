@@ -38,7 +38,7 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
   const insets = useSafeAreaInsets();
 
   const tabs: { name: TabName; icon: typeof Home; route: string }[] = [
-    { name: 'home', icon: Home, route: '/(tabs)/graphe' },
+    { name: 'home', icon: Home, route: '/(tabs)/home' },
     { name: 'assistant', icon: MessageCircle, route: '/(tabs)/assistant' },
     { name: 'explore', icon: Compass, route: '/(tabs)/explore' },
     { name: 'settings', icon: Settings, route: '/(tabs)/settings' },

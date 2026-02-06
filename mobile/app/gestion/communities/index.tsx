@@ -165,7 +165,7 @@ export default function CommunitiesListScreen() {
                 onPress={() => router.push('/settings/organization/create-community' as any)}
               >
                 <Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                <Text style={styles.emptyButtonText}>Créer une communauté</Text>
+                <Text style={[styles.emptyButtonText, { color: colors.textOnPrimary }]}>Créer une communauté</Text>
               </TouchableOpacity>
             </View>
           }
@@ -226,7 +226,6 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     height: 100,
-    backgroundColor: '#F3F4F6',
   },
   coverImage: {
     width: '100%',
@@ -335,7 +334,6 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-    color: '#FFFFFF',
   },
   membersButton: {
     flexDirection: 'row',
