@@ -1,94 +1,51 @@
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
   MapPin,
-  Users,
   Globe,
   Share,
-  Briefcase,
-  Building2,
   CheckCircle,
   ExternalLink,
   Calendar,
-  Award,
+  Mail,
+  Phone,
+  ChevronRight,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
-import { Button, ImageSlider, FooterNav } from '../../../src/components/ui';
+import { Button, FooterNav } from '../../../src/components/ui';
 import { formatRelativeTime } from '../../../src/utils/date';
+import { getFullImageUrl } from '../../../src/utils/image';
 import type { Organization, Opportunity } from '../../../src/types/models';
 import {
   ORGANIZATION_TYPE_LABELS,
+  WORK_RHYTHM_LABELS,
+  LOCATION_TYPE_LABELS,
 } from '../../../src/types/models';
+import { organizationService } from '../../../src/services/organizationService';
+import { opportunityService } from '../../../src/services/opportunityService';
 
-// Mock data - in real app, fetch from API based on id
-const MOCK_ORGANIZATION: Organization & {
-  founded_year?: number;
-  social_links?: { type: string; url: string }[];
-  opportunities?: Opportunity[];
-  images?: string[];
-} = {
-  id: '1',
-  name: 'TechCorp Africa',
-  slug: 'techcorp-africa',
-  type: 'STARTUP',
-  sectors: ['DIGITAL', 'FINANCE'],
-  description: `TechCorp Africa est une startup technologique qui développe des solutions innovantes pour le marché africain.
-
-Notre mission est de démocratiser l'accès aux services financiers numériques en Afrique de l'Ouest.
-
-Nous croyons en l'innovation locale et au potentiel des talents africains.`,
-  logo_url: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=400&q=80',
-  website_url: 'https://techcorp.africa',
-  headquarters_city: 'Abidjan',
-  headquarters_region: 'Lagunes',
-  headquarters_country: 'CI',
-  verification_status: 'VERIFIED',
-  culture_summary: 'Culture remote-first, équipe diverse et inclusive, focus sur l\'innovation.',
-  created_at: '2022-06-15T00:00:00Z',
-  // Extended data
-  images: [
-    'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=800&q=80',
-    'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80',
-    'https://images.unsplash.com/photo-1497215842964-222b430dc094?w=800&q=80',
-  ],
-  founded_year: 2020,
-  social_links: [
-    { type: 'twitter', url: 'https://twitter.com/techcorpafrica' },
-  ],
-  opportunities: [
-    {
-      id: '1',
-      title: 'Développeur React Native Senior',
-      slug: 'dev-react-native-senior',
-      type: 'EMPLOYMENT',
-      contract_type: 'CDI',
-      work_rhythm: 'FULL_TIME',
-      location_type: 'HYBRID',
-      posted_at: '2026-01-15T10:00:00Z',
-    },
-    {
-      id: '2',
-      title: 'Product Designer',
-      slug: 'product-designer',
-      type: 'EMPLOYMENT',
-      contract_type: 'CDI',
-      work_rhythm: 'FULL_TIME',
-      location_type: 'REMOTE',
-      posted_at: '2026-01-10T10:00:00Z',
-    },
-  ],
-};
-
+// Sector labels for display
 const SECTOR_LABELS: Record<string, string> = {
   DIGITAL: 'Digital & Tech',
   FINANCE: 'Finance',
   COMMERCE: 'Commerce',
   EDUCATION: 'Éducation',
   HEALTH: 'Santé',
+  AGRICULTURE: 'Agriculture',
+  ENERGY: 'Énergie',
+  TRANSPORT: 'Transport',
+  CONSTRUCTION: 'Construction',
+  MANUFACTURING: 'Industrie',
+  SERVICES: 'Services',
+  PUBLIC: 'Secteur public',
+  NGO: 'ONG / Associatif',
 };
 
 const getInitials = (name: string): string => {
@@ -104,12 +61,128 @@ export default function OrganizationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { currentSpace } = useSpace();
 
-  // In real app, fetch organization by id
-  const organization = MOCK_ORGANIZATION;
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingOpportunities, setIsLoadingOpportunities] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      loadOrganization();
+      loadOpportunities();
+    }
+  }, [id]);
+
+  const loadOrganization = async () => {
+    try {
+      setIsLoading(true);
+      const response = await organizationService.get(id!);
+      if (response.data) {
+        setOrganization(response.data);
+      }
+    } catch (error: any) {
+      console.error('Error loading organization:', error);
+      Alert.alert(t('common.error'), t('organizationDetail.loadError'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadOpportunities = async () => {
+    try {
+      setIsLoadingOpportunities(true);
+      const response = await opportunityService.getByOrganization(id!, { status: 'OPEN' });
+      if (response.data) {
+        setOpportunities(response.data);
+      }
+    } catch (error: any) {
+      console.error('Error loading opportunities:', error);
+      // Silent fail for opportunities - not critical
+    } finally {
+      setIsLoadingOpportunities(false);
+    }
+  };
+
+  const handleOpenWebsite = async () => {
+    if (!organization?.website_url) return;
+    try {
+      let url = organization.website_url;
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = `https://${url}`;
+      }
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.error('Error opening website:', error);
+    }
+  };
+
+  const handleContact = async (type: 'email' | 'phone') => {
+    try {
+      const value = type === 'email'
+        ? (organization?.contact_email || organization?.email)
+        : (organization?.contact_phone || organization?.phone);
+
+      if (!value) return;
+
+      const url = type === 'email' ? `mailto:${value}` : `tel:${value}`;
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.error(`Error opening ${type}:`, error);
+    }
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Error state
+  if (!organization) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.loadingContainer}>
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+            {t('organizationDetail.notFound')}
+          </Text>
+          <Button
+            title={t('common.back')}
+            onPress={() => router.back()}
+            variant="outline"
+            style={{ marginTop: SPACING.md }}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const createdAt = organization.created_at ? formatRelativeTime(organization.created_at) : null;
+  const contactEmail = organization.contact_email || organization.email;
+  const contactPhone = organization.contact_phone || organization.phone;
+  const primaryType = organization.types?.[0] || organization.type;
+  const logoUrl = organization.logo_url ? getFullImageUrl(organization.logo_url) : null;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -131,187 +204,237 @@ export default function OrganizationDetailScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Image Slider */}
-        <View style={styles.sliderContainer}>
-          <ImageSlider
-            images={organization.images || []}
-            height={220}
-          />
-        </View>
-
         <View style={styles.contentPadded}>
-        {/* Organization Header */}
-        <View style={styles.orgHeader}>
-          {organization.logo_url ? (
-            <Image source={{ uri: organization.logo_url }} style={styles.logo} />
-          ) : (
-            <View style={[styles.logoPlaceholder, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.logoPlaceholderText, { color: colors.textOnPrimary }]}>
-                {getInitials(organization.name)}
+          {/* Organization Header */}
+          <View style={styles.orgHeader}>
+            {logoUrl ? (
+              <Image source={{ uri: logoUrl }} style={styles.logo} />
+            ) : (
+              <View style={[styles.logoPlaceholder, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.logoPlaceholderText, { color: colors.textOnPrimary }]}>
+                  {getInitials(organization.name)}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.nameRow}>
+              <Text style={[styles.name, { color: colors.textPrimary }]}>
+                {organization.name}
+              </Text>
+              {organization.verification_status === 'VERIFIED' && (
+                <CheckCircle size={ICON.size.lg} color={colors.success} fill={colors.success} strokeWidth={0} />
+              )}
+            </View>
+
+            {/* Type & Location */}
+            <View style={styles.infoRow}>
+              {primaryType && (
+                <View style={[styles.typeBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
+                  <Text style={[styles.typeBadgeText, { color: colors.primary }]}>
+                    {ORGANIZATION_TYPE_LABELS[primaryType] || primaryType}
+                  </Text>
+                </View>
+              )}
+              {organization.headquarters_city && (
+                <View style={styles.infoItem}>
+                  <MapPin size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.infoText, { color: colors.textSecondary }]}>
+                    {organization.headquarters_city}
+                    {organization.headquarters_country ? `, ${organization.headquarters_country}` : ''}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* About */}
+          {organization.description && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('organizationDetail.about')}
+              </Text>
+              <Text style={[styles.sectionText, { color: colors.textSecondary }]}>
+                {organization.description}
               </Text>
             </View>
           )}
 
-          <View style={styles.nameRow}>
-            <Text style={[styles.name, { color: colors.textPrimary }]}>
-              {organization.name}
-            </Text>
-            {organization.verification_status === 'VERIFIED' && (
-              <CheckCircle size={ICON.size.lg} color={colors.success} fill={colors.success} strokeWidth={0} />
-            )}
-          </View>
-
-          {/* Type & Location */}
-          <View style={styles.infoRow}>
-            {organization.type && (
-              <View style={[styles.typeBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-                <Text style={[styles.typeBadgeText, { color: colors.primary }]}>
-                  {ORGANIZATION_TYPE_LABELS[organization.type] || organization.type}
-                </Text>
-              </View>
-            )}
-            {organization.headquarters_city && (
-              <View style={styles.infoItem}>
-                <MapPin size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-                  {organization.headquarters_city}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* Stats */}
-        <View style={[styles.statsCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-          {organization.founded_year && (
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.primary }]}>{organization.founded_year}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Fondée</Text>
-            </View>
-          )}
-        </View>
-
-        {/* About */}
-        {organization.description && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>À propos</Text>
-            <Text style={[styles.sectionText, { color: colors.textSecondary }]}>
-              {organization.description}
-            </Text>
-          </View>
-        )}
-
-        {/* Sectors */}
-        {organization.sectors && organization.sectors.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Secteurs</Text>
-            <View style={styles.tagsContainer}>
-              {organization.sectors.map((sector, index) => (
-                <View key={index} style={[styles.tag, { backgroundColor: colors.gray100 }]}>
-                  <Text style={[styles.tagText, { color: colors.textSecondary }]}>
-                    {SECTOR_LABELS[sector] || sector}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Info Card */}
-        <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-          {organization.size && (
-            <View style={styles.infoCardRow}>
-              <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              <View style={styles.infoCardContent}>
-                <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>Taille</Text>
-                <Text style={[styles.infoCardValue, { color: colors.textPrimary }]}>
-                  {ORGANIZATION_SIZE_LABELS[organization.size] || organization.size}
-                </Text>
-              </View>
-            </View>
-          )}
-          {organization.website_url && (
-            <TouchableOpacity style={styles.infoCardRow}>
-              <Globe size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              <View style={styles.infoCardContent}>
-                <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>Site web</Text>
-                <Text style={[styles.infoCardValue, { color: colors.primary }]}>
-                  {organization.website_url.replace('https://', '')}
-                </Text>
-              </View>
-              <ExternalLink size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
-          )}
-          {createdAt && (
-            <View style={styles.infoCardRow}>
-              <Calendar size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              <View style={styles.infoCardContent}>
-                <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>Sur Etudesk depuis</Text>
-                <Text style={[styles.infoCardValue, { color: colors.textPrimary }]}>{createdAt}</Text>
-              </View>
-            </View>
-          )}
-        </View>
-
-        {/* Culture */}
-        {organization.culture_summary && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Culture d'entreprise</Text>
-            <Text style={[styles.sectionText, { color: colors.textSecondary }]}>
-              {organization.culture_summary}
-            </Text>
-          </View>
-        )}
-
-        {/* Open Opportunities */}
-        {organization.opportunities && organization.opportunities.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Opportunités ouvertes</Text>
-              <TouchableOpacity>
-                <Text style={[styles.seeAllText, { color: colors.primary }]}>Voir tout</Text>
-              </TouchableOpacity>
-            </View>
-            {organization.opportunities.map((opportunity) => (
-              <TouchableOpacity
-                key={opportunity.id}
-                style={[styles.opportunityCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-                onPress={() => router.push(`/details/opportunity/${opportunity.id}`)}
-              >
-                <View style={styles.opportunityContent}>
-                  <Text style={[styles.opportunityTitle, { color: colors.textPrimary }]}>
-                    {opportunity.title}
-                  </Text>
-                  <View style={styles.opportunityMeta}>
-                    <View style={[styles.opportunityBadge, { backgroundColor: colors.gray100 }]}>
-                      <Text style={[styles.opportunityBadgeText, { color: colors.textSecondary }]}>
-                        {opportunity.work_rhythm === 'FULL_TIME' ? 'Temps plein' : opportunity.work_rhythm}
-                      </Text>
-                    </View>
-                    {opportunity.location_type === 'REMOTE' && (
-                      <View style={[styles.opportunityBadge, { backgroundColor: colors.gray100 }]}>
-                        <Text style={[styles.opportunityBadgeText, { color: colors.textSecondary }]}>
-                          Remote
-                        </Text>
-                      </View>
-                    )}
+          {/* Sectors */}
+          {organization.sectors && organization.sectors.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('organizationDetail.sectors')}
+              </Text>
+              <View style={styles.tagsContainer}>
+                {organization.sectors.map((sector, index) => (
+                  <View key={index} style={[styles.tag, { backgroundColor: colors.gray100 }]}>
+                    <Text style={[styles.tagText, { color: colors.textSecondary }]}>
+                      {SECTOR_LABELS[sector] || sector}
+                    </Text>
                   </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Goals */}
+          {organization.goals && organization.goals.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('organizationDetail.goals')}
+              </Text>
+              <View style={styles.tagsContainer}>
+                {organization.goals.map((goal, index) => (
+                  <View key={index} style={[styles.tag, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
+                    <Text style={[styles.tagText, { color: colors.primary }]}>
+                      {goal}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Info Card */}
+          <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+            {organization.website_url && (
+              <TouchableOpacity style={styles.infoCardRow} onPress={handleOpenWebsite}>
+                <Globe size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                <View style={styles.infoCardContent}>
+                  <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>
+                    {t('organizationDetail.website')}
+                  </Text>
+                  <Text style={[styles.infoCardValue, { color: colors.primary }]} numberOfLines={1}>
+                    {organization.website_url.replace(/^https?:\/\//, '')}
+                  </Text>
                 </View>
                 <ExternalLink size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
               </TouchableOpacity>
-            ))}
+            )}
+
+            {contactEmail && (
+              <TouchableOpacity style={styles.infoCardRow} onPress={() => handleContact('email')}>
+                <Mail size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                <View style={styles.infoCardContent}>
+                  <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>
+                    {t('organizationDetail.email')}
+                  </Text>
+                  <Text style={[styles.infoCardValue, { color: colors.primary }]} numberOfLines={1}>
+                    {contactEmail}
+                  </Text>
+                </View>
+                <ExternalLink size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+              </TouchableOpacity>
+            )}
+
+            {contactPhone && (
+              <TouchableOpacity style={styles.infoCardRow} onPress={() => handleContact('phone')}>
+                <Phone size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                <View style={styles.infoCardContent}>
+                  <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>
+                    {t('organizationDetail.phone')}
+                  </Text>
+                  <Text style={[styles.infoCardValue, { color: colors.primary }]}>
+                    {contactPhone}
+                  </Text>
+                </View>
+                <ExternalLink size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+              </TouchableOpacity>
+            )}
+
+            {createdAt && (
+              <View style={styles.infoCardRow}>
+                <Calendar size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                <View style={styles.infoCardContent}>
+                  <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>
+                    {t('organizationDetail.onEtudeskSince')}
+                  </Text>
+                  <Text style={[styles.infoCardValue, { color: colors.textPrimary }]}>{createdAt}</Text>
+                </View>
+              </View>
+            )}
           </View>
-        )}
+
+          {/* Culture */}
+          {organization.culture_summary && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('organizationDetail.culture')}
+              </Text>
+              <Text style={[styles.sectionText, { color: colors.textSecondary }]}>
+                {organization.culture_summary}
+              </Text>
+            </View>
+          )}
+
+          {/* Open Opportunities */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('organizationDetail.openOpportunities')}
+              </Text>
+              {opportunities.length > 3 && (
+                <TouchableOpacity onPress={() => router.push(`/search?organization=${id}` as any)}>
+                  <Text style={[styles.seeAllText, { color: colors.primary }]}>
+                    {t('common.seeAll')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {isLoadingOpportunities ? (
+              <View style={styles.loadingOpportunities}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : opportunities.length === 0 ? (
+              <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                  {t('organizationDetail.noOpportunities')}
+                </Text>
+              </View>
+            ) : (
+              opportunities.slice(0, 5).map((opportunity) => (
+                <TouchableOpacity
+                  key={opportunity.id}
+                  style={[styles.opportunityCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+                  onPress={() => router.push(`/details/opportunity/${opportunity.id}`)}
+                >
+                  <View style={styles.opportunityContent}>
+                    <Text style={[styles.opportunityTitle, { color: colors.textPrimary }]} numberOfLines={2}>
+                      {opportunity.title}
+                    </Text>
+                    <View style={styles.opportunityMeta}>
+                      {opportunity.work_rhythm && (
+                        <View style={[styles.opportunityBadge, { backgroundColor: colors.gray100 }]}>
+                          <Text style={[styles.opportunityBadgeText, { color: colors.textSecondary }]}>
+                            {WORK_RHYTHM_LABELS[opportunity.work_rhythm] || opportunity.work_rhythm}
+                          </Text>
+                        </View>
+                      )}
+                      {opportunity.location_type && (
+                        <View style={[styles.opportunityBadge, { backgroundColor: colors.gray100 }]}>
+                          <Text style={[styles.opportunityBadgeText, { color: colors.textSecondary }]}>
+                            {LOCATION_TYPE_LABELS[opportunity.location_type] || opportunity.location_type}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                  <ChevronRight size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
         </View>
       </ScrollView>
 
-      {/* Footer with Floating CTA and Navigation */}
+      {/* Footer */}
       <View style={[styles.footer, { backgroundColor: colors.background }]}>
-        {currentSpace !== 'organization' && (
+        {currentSpace !== 'organization' && contactEmail && (
           <View style={styles.ctaContainer}>
             <Button
-              title="Suivre l'organisation"
-              onPress={() => {}}
+              title={t('organizationDetail.contact')}
+              onPress={() => handleContact('email')}
               fullWidth
             />
           </View>
@@ -325,6 +448,17 @@ export default function OrganizationDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  errorText: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    textAlign: 'center',
   },
 
   header: {
@@ -351,17 +485,14 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xl,
   },
 
-  sliderContainer: {
-    marginBottom: SPACING.lg,
-  },
-
   contentPadded: {
     paddingHorizontal: SPACING.lg,
   },
 
   orgHeader: {
     alignItems: 'center',
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
+    paddingTop: SPACING.md,
   },
 
   logo: {
@@ -402,6 +533,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
 
   typeBadge: {
@@ -423,35 +556,6 @@ const styles = StyleSheet.create({
 
   infoText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
-  },
-
-  statsCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    padding: SPACING.lg,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.md,
-    marginBottom: SPACING.lg,
-  },
-
-  statItem: {
-    alignItems: 'center',
-  },
-
-  statValue: {
-    fontSize: TYPOGRAPHY.fontSize.xl,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-  },
-
-  statLabel: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    marginTop: SPACING.xs,
-  },
-
-  statDivider: {
-    width: 1,
-    height: 40,
   },
 
   section: {
@@ -526,6 +630,22 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
+  loadingOpportunities: {
+    paddingVertical: SPACING.xl,
+    alignItems: 'center',
+  },
+
+  emptyCard: {
+    padding: SPACING.lg,
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.md,
+    alignItems: 'center',
+  },
+
+  emptyText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+  },
+
   opportunityCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -548,6 +668,7 @@ const styles = StyleSheet.create({
   opportunityMeta: {
     flexDirection: 'row',
     gap: SPACING.xs,
+    flexWrap: 'wrap',
   },
 
   opportunityBadge: {

@@ -361,6 +361,21 @@
       "roleUpdated": "Rôle modifié"
     }
   },
+  "organizationDetail": {
+    "loadError": "Impossible de charger cette organisation",
+    "notFound": "Organisation introuvable",
+    "about": "À propos",
+    "sectors": "Secteurs d'activité",
+    "goals": "Objectifs",
+    "website": "Site web",
+    "email": "Email",
+    "phone": "Téléphone",
+    "onEtudeskSince": "Sur Etudesk depuis",
+    "culture": "Culture d'entreprise",
+    "openOpportunities": "Opportunités ouvertes",
+    "noOpportunities": "Aucune opportunité pour le moment",
+    "contact": "Contacter"
+  },
   "kyc": {
     "title": "Vérification d'identité",
     "subtitle": "Vérifie ton identité pour accéder à toutes les fonctionnalités",

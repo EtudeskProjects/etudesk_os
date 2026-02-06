@@ -361,6 +361,21 @@
       "roleUpdated": "Role updated"
     }
   },
+  "organizationDetail": {
+    "loadError": "Unable to load this organization",
+    "notFound": "Organization not found",
+    "about": "About",
+    "sectors": "Industries",
+    "goals": "Goals",
+    "website": "Website",
+    "email": "Email",
+    "phone": "Phone",
+    "onEtudeskSince": "On Etudesk since",
+    "culture": "Company culture",
+    "openOpportunities": "Open opportunities",
+    "noOpportunities": "No opportunities at the moment",
+    "contact": "Contact"
+  },
   "kyc": {
     "title": "Identity verification",
     "subtitle": "Verify your identity to access all features",
