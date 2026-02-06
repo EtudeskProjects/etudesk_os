@@ -1,19 +1,68 @@
 /**
  * Email Service
  *
- * Uses Nodemailer with Mailhog for development
- * Production-ready: just update SMTP settings for production
- * Supports bilingual emails (FR/EN) via i18next
+ * Supports two providers:
+ * - SMTP (Mailhog for local development)
+ * - Resend (for production)
+ *
+ * Set EMAIL_PROVIDER=smtp or EMAIL_PROVIDER=resend in .env
  */
 
 import nodemailer from 'nodemailer';
 import type Mail from 'nodemailer/lib/mailer';
+import { Resend } from 'resend';
 import i18next from 'i18next';
 
 import { logger } from '../utils';
 
-// Type for supported languages
+// ═══════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════
+
 export type EmailLanguage = 'fr' | 'en';
+export type EmailProvider = 'smtp' | 'resend';
+
+export interface SendEmailOptions {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  from?: string;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════════════
+
+// Determine which provider to use
+const EMAIL_PROVIDER: EmailProvider = (process.env.EMAIL_PROVIDER as EmailProvider) || 'smtp';
+const DEFAULT_FROM = process.env.EMAIL_FROM || 'Etudesk <noreply@etudesk.com>';
+
+// SMTP configuration (Mailhog for local dev)
+const SMTP_CONFIG = {
+  host: process.env.SMTP_HOST || 'localhost',
+  port: parseInt(process.env.SMTP_PORT || '1025', 10),
+  secure: process.env.SMTP_SECURE === 'true',
+  auth: process.env.SMTP_USER ? {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  } : undefined,
+};
+
+// Create transporters
+const smtpTransporter = nodemailer.createTransport(SMTP_CONFIG);
+const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
+// Log which provider is active
+logger.info(`📧 Email provider: ${EMAIL_PROVIDER.toUpperCase()}${EMAIL_PROVIDER === 'smtp' ? ` (${SMTP_CONFIG.host}:${SMTP_CONFIG.port})` : ''}`);
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+// Brand colors
+const BRAND_BLACK = '#1A1A1A';
+const BRAND_GRAY = '#4D4840';
 
 // Helper to get translation function for a specific language
 function getT(language: EmailLanguage = 'fr') {
@@ -21,30 +70,66 @@ function getT(language: EmailLanguage = 'fr') {
     return i18next.t(key, { lng: language, ...options });
   };
 }
-// Email configuration
-const EMAIL_CONFIG = {
-  // Mailhog defaults (development)
-  host: process.env.SMTP_HOST || 'localhost',
-  port: parseInt(process.env.SMTP_PORT || '1025', 10),
-  secure: process.env.SMTP_SECURE === 'true',
-  // Auth (optional for Mailhog, required for production)
-  auth: process.env.SMTP_USER ? {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  } : undefined,
-};
 
-// Create transporter
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+// ═══════════════════════════════════════════════════════════════
+// SEND EMAIL (Core function)
+// ═══════════════════════════════════════════════════════════════
 
-// Default sender
-const DEFAULT_FROM = process.env.EMAIL_FROM || 'Etudesk <noreply@etudesk.com>';
+/**
+ * Send an email using the configured provider
+ */
+export async function sendEmail(options: SendEmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const from = options.from || DEFAULT_FROM;
 
-// Brand colors
-const BRAND_BLACK = '#1A1A1A';
-const BRAND_GRAY = '#4D4840';
+  try {
+    if (EMAIL_PROVIDER === 'resend') {
+      // Use Resend API
+      if (!resendClient) {
+        throw new Error('RESEND_API_KEY not configured');
+      }
 
-// Email templates
+      const { data, error } = await resendClient.emails.send({
+        from,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      logger.info(`📧 Email sent via Resend to ${options.to}: ${data?.id}`);
+      return { success: true, messageId: data?.id };
+
+    } else {
+      // Use SMTP (Mailhog for local dev)
+      const mailOptions: Mail.Options = {
+        from,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text,
+      };
+
+      const info = await smtpTransporter.sendMail(mailOptions);
+      logger.info(`📧 Email sent via SMTP to ${options.to}: ${info.messageId}`);
+      return { success: true, messageId: info.messageId };
+    }
+  } catch (error) {
+    logger.error('❌ Failed to send email:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EMAIL TEMPLATES
+// ═══════════════════════════════════════════════════════════════
+
 export const EmailTemplates = {
   /**
    * OTP Login Email Template - Minimalist Design
@@ -222,43 +307,9 @@ ${t('emails:welcome.copyright', { year })}
   },
 };
 
-export interface SendEmailOptions {
-  to: string;
-  subject: string;
-  html: string;
-  text?: string;
-  from?: string;
-}
-
-/**
- * Send an email
- */
-export async function sendEmail(options: SendEmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  try {
-    const mailOptions: Mail.Options = {
-      from: options.from || DEFAULT_FROM,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-      text: options.text,
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-
-    logger.info(`📧 Email sent to ${options.to}: ${info.messageId}`);
-
-    return {
-      success: true,
-      messageId: info.messageId,
-    };
-  } catch (error) {
-    logger.error('❌ Failed to send email:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
-}
+// ═══════════════════════════════════════════════════════════════
+// EMAIL FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
 
 /**
  * Send OTP login email
@@ -654,14 +705,29 @@ export async function sendOpportunityInviteEmail(
   return sendEmail({ to: email, ...template });
 }
 
+// ═══════════════════════════════════════════════════════════════
+// HEALTH CHECK
+// ═══════════════════════════════════════════════════════════════
+
 /**
  * Verify email connection (health check)
  */
 export async function verifyEmailConnection(): Promise<boolean> {
   try {
-    await transporter.verify();
-    logger.info('✅ Email service connected');
-    return true;
+    if (EMAIL_PROVIDER === 'resend') {
+      // Resend doesn't have a verify endpoint, just check if API key is set
+      if (!resendClient) {
+        logger.error('❌ Resend API key not configured');
+        return false;
+      }
+      logger.info('✅ Resend email service ready');
+      return true;
+    } else {
+      // SMTP verification
+      await smtpTransporter.verify();
+      logger.info('✅ SMTP email service connected');
+      return true;
+    }
   } catch (error) {
     logger.error('❌ Email service connection failed:', error);
     return false;
