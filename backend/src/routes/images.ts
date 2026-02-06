@@ -130,7 +130,7 @@ async function processImage(
 router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRequest, res: Response) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'Aucun fichier fourni' });
+      return res.status(400).json({ error: req.t('common:noFileProvided') });
     }
 
     const imageType = (req.body.image_type || 'document') as string;
@@ -140,7 +140,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
     // Get configuration for image type
     const config = IMAGE_CONFIGS[imageType];
     if (!config) {
-      return res.status(400).json({ error: 'Type d\'image invalide' });
+      return res.status(400).json({ error: req.t('common:invalidImageType') });
     }
 
     // Process and optimize the image
@@ -182,7 +182,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
     });
   } catch (error: any) {
     logger.error('[Images] Upload error:', error);
-    res.status(500).json({ error: error.message || 'Erreur lors de l\'upload de l\'image' });
+    res.status(500).json({ error: error.message || req.t('common:uploadFailed') });
   }
 });
 
@@ -193,13 +193,13 @@ router.post('/upload-multiple', authMiddleware, upload.array('files', 10), async
   try {
     const files = req.files as Express.Multer.File[];
     if (!files || files.length === 0) {
-      return res.status(400).json({ error: 'Aucun fichier fourni' });
+      return res.status(400).json({ error: req.t('common:noFileProvided') });
     }
 
     const imageType = (req.body.image_type || 'document') as string;
     const config = IMAGE_CONFIGS[imageType];
     if (!config) {
-      return res.status(400).json({ error: 'Type d\'image invalide' });
+      return res.status(400).json({ error: req.t('common:invalidImageType') });
     }
 
     const baseUrl = process.env.API_URL || `http://localhost:${process.env.PORT || 3000}`;
@@ -233,7 +233,7 @@ router.post('/upload-multiple', authMiddleware, upload.array('files', 10), async
     res.status(201).json({ data: results });
   } catch (error: any) {
     logger.error('[Images] Multiple upload error:', error);
-    res.status(500).json({ error: error.message || 'Erreur lors de l\'upload des images' });
+    res.status(500).json({ error: error.message || req.t('common:uploadFailed') });
   }
 });
 
@@ -252,15 +252,15 @@ router.delete('/:fileId', authMiddleware, async (req: AuthRequest, res: Response
         if (fs.existsSync(filePath)) {
           await fs.promises.unlink(filePath);
           logger.info(`[Images] Deleted: ${dir}/${fileId}.${ext}`);
-          return res.json({ success: true, message: 'Image supprimée' });
+          return res.json({ success: true, message: req.t('common:imageDeleted') });
         }
       }
     }
 
-    return res.status(404).json({ error: 'Image non trouvée' });
+    return res.status(404).json({ error: req.t('common:imageNotFound') });
   } catch (error: any) {
     logger.error('[Images] Delete error:', error);
-    res.status(500).json({ error: 'Erreur lors de la suppression de l\'image' });
+    res.status(500).json({ error: req.t('common:serverError') });
   }
 });
 

@@ -28,15 +28,15 @@ router.post('/:communityId/invitations', authMiddleware, async (req: AuthRequest
     const { invitations } = req.body;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: req.t('communities:notAuthenticated') });
     }
 
     if (!invitations || !Array.isArray(invitations) || invitations.length === 0) {
-      return res.status(400).json({ error: 'Au moins une invitation est requise' });
+      return res.status(400).json({ error: req.t('communities:atLeastOneInvitationRequired') });
     }
 
     if (invitations.length > 50) {
-      return res.status(400).json({ error: 'Maximum 50 invitations à la fois' });
+      return res.status(400).json({ error: req.t('communities:maxInvitationsExceeded') });
     }
 
     // Verify user is admin of the community
@@ -58,7 +58,7 @@ router.post('/:communityId/invitations', authMiddleware, async (req: AuthRequest
       `, [communityId, talentId]);
 
       if (orgCheck.rows.length === 0) {
-        return res.status(403).json({ error: 'Vous n\'avez pas les droits pour inviter des membres' });
+        return res.status(403).json({ error: req.t('communities:noPermissionToInvite') });
       }
     }
 
@@ -70,7 +70,7 @@ router.post('/:communityId/invitations', authMiddleware, async (req: AuthRequest
       const { email, name, message, role = 'MEMBER' } = invitation;
 
       if (!email || !email.includes('@')) {
-        errors.push({ email, error: 'Email invalide' });
+        errors.push({ email, error: req.t('communities:invalidEmail') });
         continue;
       }
 
@@ -84,7 +84,7 @@ router.post('/:communityId/invitations', authMiddleware, async (req: AuthRequest
       if (memberCheck.rows.length > 0) {
         const status = memberCheck.rows[0].status;
         if (status === 'ACTIVE') {
-          errors.push({ email, error: 'Déjà membre de la communauté' });
+          errors.push({ email, error: req.t('communities:alreadyMemberOfCommunity') });
           continue;
         }
       }
@@ -96,7 +96,7 @@ router.post('/:communityId/invitations', authMiddleware, async (req: AuthRequest
       `, [communityId, email]);
 
       if (existingInvitation.rows.length > 0) {
-        errors.push({ email, error: 'Une invitation en attente existe déjà' });
+        errors.push({ email, error: req.t('communities:pendingInvitationExists') });
         continue;
       }
 
@@ -154,6 +154,10 @@ router.post('/:communityId/invitations', authMiddleware, async (req: AuthRequest
       }
     }
 
+    const message = errors.length > 0
+      ? req.t('communities:invitationsSentWithErrors', { sent: results.length, failed: errors.length })
+      : req.t('communities:invitationsSent', { count: results.length });
+
     res.status(201).json({
       success: true,
       data: {
@@ -162,12 +166,12 @@ router.post('/:communityId/invitations', authMiddleware, async (req: AuthRequest
         invitations: results,
         errors,
       },
-      message: `${results.length} invitation(s) envoyée(s)${errors.length > 0 ? `, ${errors.length} échec(s)` : ''}`,
+      message,
     });
   } catch (error: any) {
     logger.error('Error sending invitations:', error);
-    res.status(500).json({ 
-      error: 'Erreur lors de l\'envoi des invitations',
+    res.status(500).json({
+      error: req.t('communities:errorSendingInvitations'),
       message: error?.message || 'Unknown error',
     });
   }
@@ -194,7 +198,7 @@ router.get('/:communityId/invitations', authMiddleware, async (req: AuthRequest,
     `, [communityId, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Accès non autorisé' });
+      return res.status(403).json({ error: req.t('communities:accessNotAuthorized') });
     }
 
     let query = `
@@ -239,7 +243,7 @@ router.get('/:communityId/invitations', authMiddleware, async (req: AuthRequest,
     });
   } catch (error: any) {
     logger.error('Error fetching invitations:', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération des invitations' });
+    res.status(500).json({ error: req.t('communities:errorFetchingInvitations') });
   }
 });
 
@@ -263,7 +267,7 @@ router.delete('/:communityId/invitations/:invitationId', authMiddleware, async (
     `, [communityId, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Acces non autorise' });
+      return res.status(403).json({ error: req.t('communities:accessNotAuthorized') });
     }
 
     // DELETE the invitation from DB
@@ -274,13 +278,13 @@ router.delete('/:communityId/invitations/:invitationId', authMiddleware, async (
     `, [invitationId, communityId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation non trouvee' });
+      return res.status(404).json({ error: req.t('communities:inviteNotFound') });
     }
 
-    res.json({ success: true, message: 'Invitation annulee' });
+    res.json({ success: true, message: req.t('communities:invitationCancelled') });
   } catch (error: any) {
     logger.error('Error cancelling invitation:', error);
-    res.status(500).json({ error: 'Erreur lors de l\'annulation de l\'invitation' });
+    res.status(500).json({ error: req.t('communities:errorCancellingInvitation') });
   }
 });
 
@@ -304,7 +308,7 @@ router.post('/:communityId/invitations/:invitationId/resend', authMiddleware, as
     `, [communityId, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Accès non autorisé' });
+      return res.status(403).json({ error: req.t('communities:accessNotAuthorized') });
     }
 
     const invitation = await pool.query(`
@@ -315,7 +319,7 @@ router.post('/:communityId/invitations/:invitationId/resend', authMiddleware, as
     `, [invitationId, communityId]);
 
     if (invitation.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation non trouvée ou déjà traitée' });
+      return res.status(404).json({ error: req.t('communities:invitationNotFoundOrProcessed') });
     }
 
     // Update sent_at and extend expiration
@@ -352,10 +356,10 @@ router.post('/:communityId/invitations/:invitationId/resend', authMiddleware, as
       // Don't fail the resend if email fails
     }
 
-    res.json({ success: true, message: 'Invitation renvoyée' });
+    res.json({ success: true, message: req.t('communities:invitationResent') });
   } catch (error: any) {
     logger.error('Error resending invitation:', error);
-    res.status(500).json({ error: 'Erreur lors du renvoi de l\'invitation' });
+    res.status(500).json({ error: req.t('communities:errorResendingInvitation') });
   }
 });
 
@@ -372,13 +376,13 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     const { status, limit = 50, offset = 0 } = req.query;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: req.t('communities:notAuthenticated') });
     }
 
     // Get user's email
     const userResult = await pool.query('SELECT email FROM talents WHERE id = $1', [talentId]);
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+      return res.status(404).json({ error: req.t('communities:userNotFound') });
     }
     const userEmail = userResult.rows[0].email;
 
@@ -442,7 +446,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     logger.error('Error fetching user invitations:', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération des invitations' });
+    res.status(500).json({ error: req.t('communities:errorFetchingUserInvitations') });
   }
 });
 
@@ -455,13 +459,13 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
     const talentId = req.talentId;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: req.t('communities:notAuthenticated') });
     }
 
     // Get user's email
     const userResult = await pool.query('SELECT email FROM talents WHERE id = $1', [talentId]);
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+      return res.status(404).json({ error: req.t('communities:userNotFound') });
     }
     const userEmail = userResult.rows[0].email;
 
@@ -477,7 +481,7 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
     `, [invitationId, talentId, userEmail]);
 
     if (invitation.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation non trouvée ou déjà traitée' });
+      return res.status(404).json({ error: req.t('communities:invitationNotFoundOrProcessed') });
     }
 
     const inv = invitation.rows[0];
@@ -487,7 +491,7 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
       await pool.query(`
         UPDATE community_invitations SET status = 'EXPIRED', updated_at = NOW() WHERE id = $1
       `, [invitationId]);
-      return res.status(400).json({ error: 'Cette invitation a expiré' });
+      return res.status(400).json({ error: req.t('communities:invitationExpired') });
     }
 
     // If community is paid, redirect to payment flow
@@ -499,7 +503,7 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
         monthly_price: inv.monthly_price,
         currency: inv.currency,
         invitation_id: invitationId,
-        message: 'Cette communauté nécessite un abonnement payant. Vous serez redirigé vers le paiement.',
+        message: req.t('communities:requiresPayment'),
       });
     }
 
@@ -514,7 +518,7 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
       if (memberStatus === 'ACTIVE') {
         // Already a member, just DELETE the invitation
         await pool.query('DELETE FROM community_invitations WHERE id = $1', [invitationId]);
-        return res.json({ success: true, message: 'Vous etes deja membre de cette communaute' });
+        return res.json({ success: true, message: req.t('communities:alreadyMemberMessage') });
       }
       // Update existing membership to active
       await pool.query(`
@@ -536,12 +540,12 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
 
     res.json({
       success: true,
-      message: `Bienvenue dans ${inv.community_name} !`,
+      message: req.t('communities:welcomeToCommunity', { name: inv.community_name }),
       community_id: inv.community_id,
     });
   } catch (error: any) {
     logger.error('Error accepting invitation:', error);
-    res.status(500).json({ error: 'Erreur lors de l\'acceptation de l\'invitation' });
+    res.status(500).json({ error: req.t('communities:errorAcceptingInvitation') });
   }
 });
 
@@ -554,13 +558,13 @@ router.post('/:invitationId/decline', authMiddleware, async (req: AuthRequest, r
     const talentId = req.talentId;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifie' });
+      return res.status(401).json({ error: req.t('communities:notAuthenticated') });
     }
 
     // Get user's email
     const userResult = await pool.query('SELECT email FROM talents WHERE id = $1', [talentId]);
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Utilisateur non trouve' });
+      return res.status(404).json({ error: req.t('communities:userNotFound') });
     }
     const userEmail = userResult.rows[0].email;
 
@@ -573,13 +577,13 @@ router.post('/:invitationId/decline', authMiddleware, async (req: AuthRequest, r
     `, [invitationId, talentId, userEmail]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation non trouvee' });
+      return res.status(404).json({ error: req.t('communities:inviteNotFound') });
     }
 
-    res.json({ success: true, message: 'Invitation declinee' });
+    res.json({ success: true, message: req.t('communities:inviteDeclined') });
   } catch (error: any) {
     logger.error('Error declining invitation:', error);
-    res.status(500).json({ error: 'Erreur lors du refus de l\'invitation' });
+    res.status(500).json({ error: req.t('communities:errorDecliningInvitation') });
   }
 });
 
@@ -607,7 +611,7 @@ router.get('/token/:token', async (req: Request, res: Response) => {
     `, [token]);
 
     if (invitation.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation invalide ou expirée' });
+      return res.status(404).json({ error: req.t('communities:invalidOrExpiredInvitation') });
     }
 
     const inv = invitation.rows[0];
@@ -617,7 +621,7 @@ router.get('/token/:token', async (req: Request, res: Response) => {
       await pool.query(`
         UPDATE community_invitations SET status = 'EXPIRED', updated_at = NOW() WHERE id = $1
       `, [inv.id]);
-      return res.status(400).json({ error: 'Cette invitation a expiré' });
+      return res.status(400).json({ error: req.t('communities:invitationExpired') });
     }
 
     // Mark as viewed
@@ -642,7 +646,7 @@ router.get('/token/:token', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('Error verifying invitation token:', error);
-    res.status(500).json({ error: 'Erreur lors de la vérification de l\'invitation' });
+    res.status(500).json({ error: req.t('communities:errorVerifyingInvitation') });
   }
 });
 

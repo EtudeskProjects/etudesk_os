@@ -15,6 +15,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 import { CommunityActivity, ActivityComment, PollOption } from '../../types/activity';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, withOpacity, OPACITY } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../contexts/I18nContext';
 import {
     Heart,
     MessageCircle,
@@ -70,6 +71,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
     onVote,
 }) => {
     const { colors } = useTheme();
+    const { t } = useTranslation();
 
     // State - Initialize from activity data
     const [liked, setLiked] = useState<boolean>(activity.is_liked || false);
@@ -214,7 +216,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
         // Pin option - only for admins
         if (isAdmin && onPin) {
             options.push({
-                text: isPinned ? 'Désépingler' : 'Épingler',
+                text: isPinned ? t('community.activity.unpin') : t('community.activity.pin'),
                 onPress: () => onPin(activity.id),
             });
         }
@@ -222,7 +224,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
         // Edit option - only for author
         if (isAuthor && onEdit) {
             options.push({
-                text: 'Modifier',
+                text: t('common.edit'),
                 onPress: () => onEdit(activity),
             });
         }
@@ -230,14 +232,14 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
         // Delete option - for author or admin
         if ((isAuthor || isAdmin) && onDelete) {
             options.push({
-                text: 'Supprimer',
+                text: t('common.delete'),
                 style: 'destructive',
                 onPress: () => onDelete(activity.id),
             });
         }
 
         // Cancel option - always shown
-        options.push({ text: 'Annuler', style: 'cancel' });
+        options.push({ text: t('common.cancel'), style: 'cancel' });
 
         Alert.alert('Options', undefined, options);
     }, [isAuthor, isAdmin, isPinned, onEdit, onPin, onDelete, activity]);
@@ -260,7 +262,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                                 <View style={[styles.scheduledBadge, { backgroundColor: colors.warningLight }]}>
                                     <Clock size={10} color={colors.warning} />
                                     <Text style={[styles.scheduledBadgeText, { color: colors.warning }]}>
-                                        Programmé
+                                        {t('community.activity.scheduled')}
                                     </Text>
                                 </View>
                             )}
@@ -299,7 +301,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
             {isPoll && pollOptions.length === 0 && (
                 <View style={[styles.pollContainer, { paddingVertical: SPACING.sm }]}>
                     <Text style={{ color: colors.textSecondary, fontSize: TYPOGRAPHY.fontSize.sm, textAlign: 'center' }}>
-                        Chargement des options du sondage...
+                        {t('community.activity.pollLoading')}
                     </Text>
                 </View>
             )}
@@ -364,7 +366,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                         );
                     })}
                     <Text style={[styles.pollVotesCount, { color: colors.textSecondary }]}>
-                        {totalVotes} vote{totalVotes > 1 ? 's' : ''}
+                        {t('community.activity.votes', { count: totalVotes })}
                     </Text>
                 </View>
             )}
@@ -378,7 +380,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                             <Calendar size={16} color={colors.primary} />
                         </View>
                         <View style={styles.eventInfo}>
-                            <Text style={[styles.eventLabel, { color: colors.textSecondary }]}>Date</Text>
+                            <Text style={[styles.eventLabel, { color: colors.textSecondary }]}>{t('community.activity.dateLabel')}</Text>
                             <Text style={[styles.eventValue, { color: colors.textPrimary }]}>
                                 {eventStartDate.toLocaleDateString('fr-FR', {
                                     weekday: 'long',
@@ -405,12 +407,12 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                         </View>
                         <View style={styles.eventInfo}>
                             <Text style={[styles.eventLabel, { color: colors.textSecondary }]}>
-                                {isOnlineEvent ? 'En ligne' : 'Lieu'}
+                                {isOnlineEvent ? t('community.activity.online') : t('community.activity.location')}
                             </Text>
                             <Text style={[styles.eventValue, { color: colors.textPrimary }]}>
                                 {isOnlineEvent
-                                    ? (meetingUrl ? 'Lien de réunion disponible' : 'Détails à venir')
-                                    : (eventLocation || 'Lieu à confirmer')
+                                    ? (meetingUrl ? t('community.activity.meetingLinkAvailable') : t('community.activity.detailsComingSoon'))
+                                    : (eventLocation || t('community.activity.locationTbc'))
                                 }
                             </Text>
                         </View>
@@ -477,7 +479,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                         styles.engagementText,
                         { color: liked ? colors.error : colors.textSecondary }
                     ]}>
-                        {formatCount(likesCount)} J'aime{likesCount > 1 ? 's' : ''}
+                        {t('community.activity.likes', { count: formatCount(likesCount) })}
                     </Text>
                 </TouchableOpacity>
 
@@ -496,7 +498,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                         styles.engagementText,
                         { color: showComments ? colors.primary : colors.textSecondary }
                     ]}>
-                        {formatCount(commentsCount)} Commentaire{commentsCount > 1 ? 's' : ''}
+                        {t('community.activity.comments', { count: formatCount(commentsCount) })}
                     </Text>
                 </TouchableOpacity>
 
@@ -518,7 +520,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                         styles.engagementText,
                         { color: isBookmarked ? colors.primary : colors.textSecondary }
                     ]}>
-                        {formatCount(bookmarksCount)} Bookmark{bookmarksCount > 1 ? 's' : ''}
+                        {t('community.activity.bookmarks', { count: formatCount(bookmarksCount) })}
                     </Text>
                 </TouchableOpacity>
             </View>

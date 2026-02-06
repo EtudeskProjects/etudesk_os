@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { Alert, Linking, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../constants/location';
+import { useTranslation } from '../contexts/I18nContext';
 
 interface GeolocationResult {
   country: string;
@@ -94,6 +95,7 @@ const findMatchingCity = (countryCode: string, regionCode: string, geocodedCity:
 };
 
 export function useGeolocation(): UseGeolocationReturn {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -114,11 +116,11 @@ export function useGeolocation(): UseGeolocationReturn {
       const serviceEnabled = await Location.hasServicesEnabledAsync();
       if (!serviceEnabled) {
         Alert.alert(
-          'Services de localisation désactivés',
-          'Veuillez activer les services de localisation dans les paramètres de votre appareil.',
+          t('geolocation.servicesDisabled'),
+          t('geolocation.enableServices'),
           [
-            { text: 'Annuler', style: 'cancel' },
-            { text: 'Paramètres', onPress: openSettings },
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('geolocation.settings'), onPress: openSettings },
           ]
         );
         setIsLoading(false);
@@ -130,11 +132,11 @@ export function useGeolocation(): UseGeolocationReturn {
 
       if (status !== 'granted') {
         Alert.alert(
-          'Permission refusée',
-          'Etudesk a besoin de votre permission pour accéder à votre localisation.',
+          t('geolocation.permissionDenied'),
+          t('geolocation.permissionMessage'),
           [
-            { text: 'Annuler', style: 'cancel' },
-            { text: 'Paramètres', onPress: openSettings },
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('geolocation.settings'), onPress: openSettings },
           ]
         );
         setIsLoading(false);
@@ -152,7 +154,7 @@ export function useGeolocation(): UseGeolocationReturn {
       const [geocodeResult] = await Location.reverseGeocodeAsync({ latitude, longitude });
 
       if (!geocodeResult) {
-        setError('Impossible de déterminer votre adresse');
+        setError(t('geolocation.addressError'));
         setIsLoading(false);
         return null;
       }
@@ -167,8 +169,8 @@ export function useGeolocation(): UseGeolocationReturn {
       const supportedCountry = COUNTRIES.find(c => c.id === countryCode);
       if (!supportedCountry) {
         Alert.alert(
-          'Pays non supporté',
-          `Nous ne supportons pas encore ${countryName}. Veuillez sélectionner votre localisation manuellement.`
+          t('geolocation.unsupportedCountry'),
+          t('geolocation.unsupportedCountryMessage', { country: countryName })
         );
         setIsLoading(false);
         return null;
@@ -193,14 +195,14 @@ export function useGeolocation(): UseGeolocationReturn {
       console.error('Geolocation error:', err);
 
       if (err.code === 'ERR_LOCATION_TIMEOUT') {
-        setError('La localisation a pris trop de temps. Veuillez réessayer.');
+        setError(t('geolocation.timeout'));
       } else {
-        setError('Une erreur est survenue lors de la récupération de votre position.');
+        setError(t('geolocation.genericError'));
       }
 
       Alert.alert(
-        'Erreur de localisation',
-        'Impossible de récupérer votre position. Veuillez réessayer ou sélectionner votre localisation manuellement.'
+        t('geolocation.errorTitle'),
+        t('geolocation.errorMessage')
       );
 
       setIsLoading(false);

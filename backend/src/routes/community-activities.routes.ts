@@ -81,7 +81,7 @@ router.post('/:communityId/activities', authMiddleware, upload.array('attachment
                 try {
                     parsedMetadata = JSON.parse(metadata);
                 } catch (parseError) {
-                    return res.status(400).json({ error: 'Invalid metadata format: must be valid JSON' });
+                    return res.status(400).json({ error: req.t('communities:invalidMetadataFormat') });
                 }
             } else {
                 parsedMetadata = metadata; // Already an object
@@ -325,7 +325,7 @@ router.get('/:communityId/activities/drafts', authMiddleware, async (req: any, r
         // Validate type if provided
         const validTypes = ['POST', 'EVENT', 'POLL'];
         if (type && !validTypes.includes(type)) {
-            return res.status(400).json({ error: `Invalid type. Must be one of: ${validTypes.join(', ')}` });
+            return res.status(400).json({ error: req.t('communities:invalidTypeError', { types: validTypes.join(', ') }) });
         }
 
         const drafts = await communityActivityService.getDrafts(communityId, userId, type);
@@ -346,7 +346,7 @@ router.get('/:communityId/activities/draft/:type', authMiddleware, async (req: a
         // Validate type
         const validTypes = ['POST', 'EVENT', 'POLL'];
         if (!validTypes.includes(type)) {
-            return res.status(400).json({ error: `Invalid type. Must be one of: ${validTypes.join(', ')}` });
+            return res.status(400).json({ error: req.t('communities:invalidTypeError', { types: validTypes.join(', ') }) });
         }
 
         const draft = await communityActivityService.getDraftByType(communityId, userId, type);

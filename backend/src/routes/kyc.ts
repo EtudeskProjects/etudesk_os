@@ -29,7 +29,7 @@ const VERIFICATION_STATUSES = ['PENDING', 'VERIFIED', 'REJECTED'];
 router.get('/status', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const result = await pool.query(`
@@ -55,7 +55,7 @@ router.get('/status', authMiddleware, async (req: AuthRequest, res: Response) =>
     res.json({ data: result.rows[0] });
   } catch (error) {
     logger.error('Error fetching KYC status:', error);
-    res.status(500).json({ error: 'Failed to fetch KYC status' });
+    res.status(500).json({ error: req.t('kyc:fetchStatusError') });
   }
 });
 
@@ -66,7 +66,7 @@ router.get('/status', authMiddleware, async (req: AuthRequest, res: Response) =>
 router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const {
@@ -78,13 +78,13 @@ router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) =
     // Validation
     if (!document_type || !VALID_DOCUMENT_TYPES.includes(document_type)) {
       return res.status(400).json({
-        error: 'Invalid document type',
+        error: req.t('kyc:invalidDocumentType'),
         validTypes: VALID_DOCUMENT_TYPES
       });
     }
 
     if (!front_image_url) {
-      return res.status(400).json({ error: 'Front image is required' });
+      return res.status(400).json({ error: req.t('kyc:frontImageRequired') });
     }
 
     // Check if already verified
@@ -95,7 +95,7 @@ router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) =
 
     if (existingVerified.rows.length > 0) {
       return res.status(400).json({
-        error: 'Your identity is already verified.'
+        error: req.t('kyc:alreadyVerified')
       });
     }
 
@@ -208,7 +208,7 @@ router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) =
     });
   } catch (error) {
     logger.error('Error submitting KYC:', error);
-    res.status(500).json({ error: 'Failed to submit KYC verification' });
+    res.status(500).json({ error: req.t('kyc:submitError') });
   }
 });
 
@@ -220,20 +220,20 @@ router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) =
 router.post('/upload-url', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const { filename, content_type } = req.body;
 
     if (!filename || !content_type) {
-      return res.status(400).json({ error: 'filename and content_type are required' });
+      return res.status(400).json({ error: req.t('common:filenameAndContentTypeRequired') });
     }
 
     // Validate content type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(content_type)) {
       return res.status(400).json({
-        error: 'Invalid file type. Only JPEG, PNG, and WebP are allowed.',
+        error: req.t('common:invalidFileTypeAllowed'),
         allowedTypes
       });
     }
@@ -264,7 +264,7 @@ router.post('/upload-url', authMiddleware, async (req: AuthRequest, res: Respons
     });
   } catch (error) {
     logger.error('Error generating upload URL:', error);
-    res.status(500).json({ error: 'Failed to generate upload URL' });
+    res.status(500).json({ error: req.t('kyc:uploadUrlError') });
   }
 });
 
@@ -275,7 +275,7 @@ router.post('/upload-url', authMiddleware, async (req: AuthRequest, res: Respons
 router.get('/history', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const result = await pool.query(`
@@ -290,7 +290,7 @@ router.get('/history', authMiddleware, async (req: AuthRequest, res: Response) =
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
     logger.error('Error fetching KYC history:', error);
-    res.status(500).json({ error: 'Failed to fetch KYC history' });
+    res.status(500).json({ error: req.t('kyc:fetchHistoryError') });
   }
 });
 

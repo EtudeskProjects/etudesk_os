@@ -21,6 +21,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { CommentItem } from './CommentItem';
 import { SPACING, TYPOGRAPHY, BORDER, withOpacity, OPACITY } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../contexts/I18nContext';
 import { Send, X, ChevronDown } from 'lucide-react-native';
 
 // Extended comment type for optimistic updates
@@ -51,6 +52,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     autoFocus = false,
 }) => {
     const { colors } = useTheme();
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [comments, setComments] = useState<OptimisticComment[]>(initialComments || []);
     const [loading, setLoading] = useState(!initialComments);
@@ -301,8 +303,8 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             // Reopen modal so user can retry
             setIsInputFocused(true);
 
-            const message = error?.response?.data?.error || error?.message || 'Impossible de publier.';
-            Alert.alert('Erreur', message);
+            const message = error?.response?.data?.error || error?.message || t('community.comments.publishError');
+            Alert.alert(t('common.error'), message);
         } finally {
             setSubmitting(false);
             isSubmittingRef.current = false;
@@ -350,7 +352,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             console.error('[CommentSection] Failed to delete comment:', error);
             // Reload comments on error
             loadComments();
-            Alert.alert('Erreur', 'Impossible de supprimer le commentaire.');
+            Alert.alert(t('common.error'), t('community.comments.deleteError'));
         }
     };
 
@@ -359,8 +361,8 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
         if (Platform.OS === 'ios') {
             const options = isAuthor
-                ? ['Supprimer', 'Annuler']
-                : ['Signaler', 'Annuler'];
+                ? [t('common.delete'), t('common.cancel')]
+                : [t('community.comments.report'), t('common.cancel')];
             const destructiveButtonIndex = isAuthor ? 0 : undefined;
             const cancelButtonIndex = isAuthor ? 1 : 1;
 
@@ -373,12 +375,12 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                 (buttonIndex) => {
                     if (isAuthor && buttonIndex === 0) {
                         Alert.alert(
-                            'Supprimer le commentaire',
-                            'Êtes-vous sûr de vouloir supprimer ce commentaire ?',
+                            t('community.comments.deleteTitle'),
+                            t('community.comments.deleteMessage'),
                             [
-                                { text: 'Annuler', style: 'cancel' },
+                                { text: t('common.cancel'), style: 'cancel' },
                                 {
-                                    text: 'Supprimer',
+                                    text: t('common.delete'),
                                     style: 'destructive',
                                     onPress: () => handleDeleteComment(comment)
                                 },
@@ -391,21 +393,21 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             // Android - use Alert
             if (isAuthor) {
                 Alert.alert(
-                    'Options',
+                    t('community.comments.options'),
                     '',
                     [
-                        { text: 'Annuler', style: 'cancel' },
+                        { text: t('common.cancel'), style: 'cancel' },
                         {
-                            text: 'Supprimer',
+                            text: t('common.delete'),
                             style: 'destructive',
                             onPress: () => {
                                 Alert.alert(
-                                    'Supprimer le commentaire',
-                                    'Êtes-vous sûr de vouloir supprimer ce commentaire ?',
+                                    t('community.comments.deleteTitle'),
+                                    t('community.comments.deleteMessage'),
                                     [
-                                        { text: 'Annuler', style: 'cancel' },
+                                        { text: t('common.cancel'), style: 'cancel' },
                                         {
-                                            text: 'Supprimer',
+                                            text: t('common.delete'),
                                             style: 'destructive',
                                             onPress: () => handleDeleteComment(comment)
                                         },
@@ -442,7 +444,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             {hasComments && (
                 <View style={styles.commentsHeader}>
                     <Text style={[styles.commentsTitle, { color: colors.textSecondary }]}>
-                        Commentaires
+                        {t('community.comments.title')}
                     </Text>
                 </View>
             )}
@@ -477,7 +479,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                             <View style={[styles.showMoreLine, { backgroundColor: colors.borderColor }]} />
                             <View style={[styles.showMoreButton, { backgroundColor: colors.surface }]}>
                                 <Text style={[styles.showMoreText, { color: colors.primary }]}>
-                                    Voir {hiddenCount} autre{hiddenCount > 1 ? 's' : ''} commentaire{hiddenCount > 1 ? 's' : ''}
+                                    {t('community.comments.viewMore', { count: hiddenCount })}
                                 </Text>
                                 <ChevronDown size={14} color={colors.primary} />
                             </View>
@@ -487,7 +489,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             ) : (
                 <View style={styles.commentsList}>
                     <Text style={{ color: colors.textSecondary, fontSize: 12, textAlign: 'center', paddingVertical: 8 }}>
-                        Aucun commentaire. Soyez le premier !
+                        {t('community.comments.noComments')}
                     </Text>
                 </View>
             )}
@@ -500,7 +502,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                         <View style={[styles.replyIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
                             <View style={styles.replyContent}>
                                 <Text style={[styles.replyIndicatorText, { color: colors.primary }]} numberOfLines={1}>
-                                    Répondre à {replyingTo.author?.display_name || 'utilisateur'}
+                                    {t('community.comments.replyTo', { name: replyingTo.author?.display_name || '' })}
                                 </Text>
                                 <Text style={[styles.replyMessagePreview, { color: colors.textSecondary }]} numberOfLines={1}>
                                     {replyingTo.content}
@@ -525,7 +527,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                         activeOpacity={0.7}
                     >
                         <Text style={[styles.inputPlaceholder, { color: colors.gray400 }]}>
-                            {replyingTo ? "Votre réponse..." : "Ajouter un commentaire..."}
+                            {replyingTo ? t('community.comments.replyPlaceholder') : t('community.comments.addPlaceholder')}
                         </Text>
                         <View style={[styles.inlineSendButton, { backgroundColor: colors.gray300 }]}>
                             <Send size={16} color={colors.textOnPrimary} />
@@ -565,7 +567,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                             <View style={[styles.replyIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
                                 <View style={styles.replyContent}>
                                     <Text style={[styles.replyIndicatorText, { color: colors.primary }]} numberOfLines={1}>
-                                        Répondre à {replyingTo.author?.display_name || 'utilisateur'}
+                                        {t('community.comments.replyTo', { name: replyingTo.author?.display_name || '' })}
                                     </Text>
                                     <Text style={[styles.replyMessagePreview, { color: colors.textSecondary }]} numberOfLines={1}>
                                         {replyingTo.content}
@@ -588,7 +590,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                             <TextInput
                                 ref={inputRef}
                                 style={[styles.modalInput, { color: colors.textPrimary }]}
-                                placeholder={replyingTo ? "Votre réponse..." : "Ajouter un commentaire..."}
+                                placeholder={replyingTo ? t('community.comments.replyPlaceholder') : t('community.comments.addPlaceholder')}
                                 placeholderTextColor={colors.gray400}
                                 value={commentText}
                                 onChangeText={setCommentText}

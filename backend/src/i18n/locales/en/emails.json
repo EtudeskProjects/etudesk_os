@@ -1,0 +1,68 @@
+{
+  "otp": {
+    "subject": "{{code}} - Login code",
+    "title": "Login code",
+    "yourCode": "Your login code",
+    "validFor": "Valid {{minutes}} min",
+    "neverShare": "Never share this code"
+  },
+  "welcome": {
+    "subject": "Welcome to Etudesk, {{name}}! 🎉",
+    "title": "Welcome to Etudesk! 🎉",
+    "greeting": "Hello {{name}},",
+    "congratulations": "Congratulations! Your talent profile is now created on Etudesk. You can now:",
+    "feature1": "Discover job opportunities, internships and freelance missions",
+    "feature2": "Join professional communities",
+    "feature3": "Find coworking spaces and incubators",
+    "feature4": "Grow your professional network",
+    "exploreButton": "Explore Etudesk",
+    "copyright": "© {{year}} Etudesk. All rights reserved."
+  },
+  "orgInvite": {
+    "subject": "{{inviter}} invites you to join {{organization}} on Etudesk",
+    "title": "You're invited!",
+    "inviterInvites": "{{inviter}} invites you to join the organization",
+    "asRole": "as {{role}}",
+    "connectToAccept": "Log in to Etudesk to accept this invitation and start collaborating.",
+    "viewInvitation": "View invitation",
+    "expiresIn": "This invitation expires in 7 days.",
+    "copyright": "© {{year}} Etudesk. All rights reserved.",
+    "roles": {
+      "OWNER": "Owner",
+      "ADMIN": "Administrator",
+      "MANAGER": "Manager",
+      "OBSERVATEUR": "Observer"
+    }
+  },
+  "communityInvite": {
+    "subject": "{{inviter}} invites you to join {{community}}",
+    "title": "You're invited!",
+    "greeting": "Hello {{name}},",
+    "inviterInvites": "{{inviter}} invites you to join the community",
+    "asRole": "as {{role}}",
+    "connectToAccept": "Log in to Etudesk to accept this invitation and join the community.",
+    "viewInvitation": "View invitation",
+    "expiresIn": "This invitation expires in 7 days.",
+    "copyright": "© {{year}} Etudesk. All rights reserved.",
+    "roles": {
+      "ADMIN": "Administrator",
+      "MEMBER": "Member"
+    }
+  },
+  "spaceInvite": {
+    "subject": "{{inviter}} invites you to discover {{space}}",
+    "title": "Space Invitation",
+    "greeting": "Hello {{name}},",
+    "inviterInvites": "{{inviter}} invites you to discover the space",
+    "viewInvitation": "View invitation",
+    "expiresIn": "This invitation expires in 7 days."
+  },
+  "opportunityInvite": {
+    "subject": "{{inviter}} invites you to apply - {{opportunity}}",
+    "title": "Invitation to Apply",
+    "greeting": "Hello {{name}},",
+    "inviterInvites": "{{inviter}} from {{organization}} invites you to apply for the opportunity",
+    "viewOpportunity": "View opportunity",
+    "expiresIn": "This invitation expires in 7 days."
+  }
+}

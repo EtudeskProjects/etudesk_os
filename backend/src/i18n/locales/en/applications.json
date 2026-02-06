@@ -1,0 +1,23 @@
+{
+  "created": "Application submitted successfully",
+  "updated": "Application updated successfully",
+  "deleted": "Application deleted successfully",
+  "deletedCanReapply": "Application deleted. You can apply again.",
+  "notFound": "Application not found",
+  "alreadyApplied": "You have already applied to this opportunity",
+  "withdrawn": "Application withdrawn",
+  "statusUpdated": "Status updated",
+  "notAuthorized": "You are not authorized to manage this application",
+  "notAuthorizedOpportunity": "You are not authorized to access this opportunity",
+  "accessDenied": "Access denied",
+  "cannotWithdraw": "Cannot withdraw an application that has already been processed",
+  "opportunityClosed": "This opportunity is no longer accepting applications",
+  "opportunityNotFound": "Opportunity not found",
+  "deadlinePassed": "The application deadline has passed",
+  "cannotApplyOwnOpportunity": "You cannot apply to your own opportunity",
+  "ratingUpdated": "Rating updated",
+  "noteUpdated": "Note updated",
+  "messageEmpty": "Message cannot be empty",
+  "organizationFirstMessage": "You cannot initiate the conversation. Please wait for the organization to contact you.",
+  "unableToGenerateRecommendation": "Unable to generate a recommendation"
+}

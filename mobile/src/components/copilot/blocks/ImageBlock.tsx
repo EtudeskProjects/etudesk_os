@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, Alert, ActivityIndicator } from 'react-native';
 import { Image as ImageIcon, ExternalLink } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
+import { useTranslation } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../constants/theme';
 
 interface ImageBlockProps {
@@ -20,6 +21,7 @@ interface ImageBlockProps {
 
 export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [aspectRatio, setAspectRatio] = useState(16 / 9);
@@ -45,10 +47,10 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
       if (supported) {
         await Linking.openURL(data.source);
       } else {
-        Alert.alert('Erreur', 'Impossible d\'ouvrir le lien');
+        Alert.alert(t('common.error'), t('copilotImage.openLinkError'));
       }
     } catch (err) {
-      Alert.alert('Erreur', 'Une erreur est survenue lors de l\'ouverture du lien');
+      Alert.alert(t('common.error'), t('copilotImage.openLinkErrorMessage'));
     }
   };
 
@@ -70,7 +72,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
               strokeWidth={ICON.strokeWidth}
             />
             <Text style={[styles.errorText, { color: colors.textTertiary }]}>
-              Impossible de charger l'image
+              {t('copilotImage.loadError')}
             </Text>
           </View>
         ) : (

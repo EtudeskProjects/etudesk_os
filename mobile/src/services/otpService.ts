@@ -10,6 +10,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from './logService';
 import { API_CONFIG, STORAGE_KEYS } from '../constants/config';
+import i18n from '../i18n';
 
 const LOG_SOURCE = 'OTP';
 
@@ -39,7 +40,7 @@ async function sendOTP(email: string): Promise<void> {
 
     if (!response.ok) {
       logger.apiError(LOG_SOURCE, response.status, data.error || 'Failed to send OTP', '/api/auth/request-otp');
-      throw new Error(data.error || 'Erreur lors de l\'envoi du code');
+      throw new Error(data.error || i18n.t('otpService.sendError'));
     }
 
     logger.info(LOG_SOURCE, `OTP sent to ${email}`);

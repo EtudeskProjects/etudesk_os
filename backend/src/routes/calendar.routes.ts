@@ -18,14 +18,14 @@ router.get('/events', authMiddleware, async (req: AuthRequest, res: Response) =>
         const { start_date, end_date } = req.query;
 
         if (!start_date || !end_date) {
-            return res.status(400).json({ error: 'start_date and end_date are required' });
+            return res.status(400).json({ error: req.t('calendar:startEndDateRequired') });
         }
 
         const startDate = new Date(start_date as string);
         const endDate = new Date(end_date as string);
 
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-            return res.status(400).json({ error: 'Invalid date format' });
+            return res.status(400).json({ error: req.t('calendar:invalidDateFormat') });
         }
 
         // Fetch all calendar-related items for the user

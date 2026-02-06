@@ -161,7 +161,7 @@ router.get('/:id/membership', optionalAuthMiddleware, async (req: Request, res: 
       [id]
     );
     if (communityResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Community not found', code: 'NOT_FOUND' });
+      return res.status(404).json({ error: (req as AuthRequest).t?.('communities:notFound') || 'Community not found', code: 'NOT_FOUND' });
     }
     const communityId = communityResult.rows[0].id;
 
@@ -225,7 +225,7 @@ router.get('/:id', optionalAuthMiddleware, async (req: Request, res: Response) =
     `, [id]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Community not found' });
+      return res.status(404).json({ error: (req as AuthRequest).t?.('communities:notFound') || 'Community not found' });
     }
 
     const community = result.rows[0];

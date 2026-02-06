@@ -36,7 +36,7 @@ router.post('/paystack', express.raw({ type: 'application/json' }), async (req: 
         // Verify signature
         if (!verifyPaystackSignature(payload, signature)) {
             logger.error('[Webhook] Invalid Paystack signature');
-            return res.status(401).json({ error: 'Invalid signature' });
+            return res.status(401).json({ error: 'Invalid signature' }); // Webhook - no i18n needed
         }
 
         const event = JSON.parse(payload);
@@ -63,7 +63,7 @@ router.post('/paystack', express.raw({ type: 'application/json' }), async (req: 
  */
 router.get('/paystack/test', (req: Request, res: Response) => {
     if (process.env.NODE_ENV === 'production') {
-        return res.status(404).json({ error: 'Not found' });
+        return res.status(404).json({ error: 'Not found' }); // Dev endpoint - no i18n needed
     }
 
     res.json({

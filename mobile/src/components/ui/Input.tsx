@@ -11,6 +11,7 @@ import {
 import { Eye, EyeOff } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, LAYOUT, BORDER, ICON } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../contexts/I18nContext';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -39,6 +40,7 @@ export function Input({
   ...props
 }: InputProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -80,7 +82,7 @@ export function Input({
           secureTextEntry={isPassword && !isPasswordVisible}
           accessible={true}
           accessibilityLabel={accessibilityLabel || label}
-          accessibilityHint={accessibilityHint || (error ? `Erreur: ${error}` : hint)}
+          accessibilityHint={accessibilityHint || (error ? t('input.errorHint', { error: error || '' }) : hint)}
           accessibilityState={{
             disabled: props.editable === false,
           }}
@@ -93,8 +95,8 @@ export function Input({
             onPress={() => setIsPasswordVisible(!isPasswordVisible)}
             accessible={true}
             accessibilityRole="button"
-            accessibilityLabel={isPasswordVisible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-            accessibilityHint="Active pour basculer la visibilité du mot de passe"
+            accessibilityLabel={isPasswordVisible ? t('input.hidePassword') : t('input.showPassword')}
+            accessibilityHint={t('input.togglePasswordHint')}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             {isPasswordVisible ? (

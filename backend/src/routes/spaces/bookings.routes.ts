@@ -104,7 +104,7 @@ router.post('/:id/book', authMiddleware, async (req: AuthRequest, res: Response)
       [spaceId]
     );
     if (spaceResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Space not found or not bookable' });
+      return res.status(404).json({ error: req.t('spaces:notBookable') });
     }
     const space = spaceResult.rows[0];
 
@@ -124,7 +124,7 @@ router.post('/:id/book', authMiddleware, async (req: AuthRequest, res: Response)
     );
 
     if (parseInt(conflicts.rows[0].count) > 0) {
-      return res.status(400).json({ error: 'This time slot is not available' });
+      return res.status(400).json({ error: req.t('spaces:slotNotAvailable') });
     }
 
     // Calculate pricing
@@ -432,7 +432,7 @@ router.post('/bookings/:id/confirm', authMiddleware, async (req: AuthRequest, re
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Booking not found or already processed' });
+      return res.status(404).json({ error: req.t('spaces:bookingNotFoundOrProcessed') });
     }
 
     res.json({ data: result.rows[0] });
@@ -462,7 +462,7 @@ router.post('/bookings/:id/cancel', authMiddleware, async (req: AuthRequest, res
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Booking not found or cannot be cancelled' });
+      return res.status(404).json({ error: req.t('spaces:bookingNotFoundOrCannotCancel') });
     }
 
     res.json({ data: result.rows[0] });
@@ -490,7 +490,7 @@ router.post('/bookings/:id/complete', authMiddleware, async (req: AuthRequest, r
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Booking not found or not confirmed' });
+      return res.status(404).json({ error: req.t('spaces:bookingNotFoundOrNotConfirmed') });
     }
 
     res.json({ data: result.rows[0] });
@@ -566,7 +566,7 @@ router.put('/bookings/:id/rating', authMiddleware, async (req: AuthRequest, res:
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Booking not found or access denied' });
+      return res.status(404).json({ error: req.t('spaces:bookingNotFoundOrAccessDenied') });
     }
 
     res.json({ data: result.rows[0] });
@@ -590,7 +590,7 @@ router.post('/bookings/:id/no-show', authMiddleware, async (req: AuthRequest, re
     `, [id]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Booking not found or not confirmed' });
+      return res.status(404).json({ error: req.t('spaces:bookingNotFoundOrNotConfirmed') });
     }
 
     res.json({ data: result.rows[0] });
@@ -614,7 +614,7 @@ router.delete('/bookings/:id', authMiddleware, async (req: AuthRequest, res: Res
       throw createNotFoundError('Booking');
     }
 
-    res.json({ success: true, message: 'Booking deleted' });
+    res.json({ success: true, message: req.t('spaces:bookingDeleted') });
   } catch (error) {
     handleRouteError(res, error, 'Error deleting booking');
   }

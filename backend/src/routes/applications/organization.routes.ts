@@ -46,7 +46,7 @@ router.get('/opportunity/:opportunityId', authMiddleware, validate(opportunityId
     `, [opportunityId, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé à cette opportunité');
+      throw createForbiddenError(req.t('applications:notAuthorizedOpportunity'));
     }
 
     let query = `
@@ -114,7 +114,7 @@ router.get('/opportunity/:opportunityId/ranked', authMiddleware, validate(opport
     `, [opportunityId, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé à cette opportunité');
+      throw createForbiddenError(req.t('applications:notAuthorizedOpportunity'));
     }
 
     const rankedApplications = await rankApplications(opportunityId, status as string | undefined);
@@ -164,7 +164,7 @@ router.get('/opportunity/:opportunityId/export-csv', authMiddleware, validate(op
     `, [opportunityId, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé à cette opportunité');
+      throw createForbiddenError(req.t('applications:notAuthorizedOpportunity'));
     }
 
     const opportunityTitle = accessCheck.rows[0].title;
@@ -262,13 +262,13 @@ router.get('/:id/recommendation', authMiddleware, validate(uuidParamSchema, 'par
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé');
+      throw createForbiddenError(req.t('applications:accessDenied'));
     }
 
     const recommendation = await getApplicationRecommendation(id);
 
     if (!recommendation) {
-      return res.status(404).json({ error: 'Impossible de générer une recommandation' });
+      return res.status(404).json({ error: req.t('applications:unableToGenerateRecommendation') });
     }
 
     res.json({
@@ -302,7 +302,7 @@ router.put('/:id/status', authMiddleware, validate(uuidParamSchema, 'params'), v
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé à cette candidature');
+      throw createForbiddenError(req.t('applications:notAuthorized'));
     }
 
     const oldStatusResult = await pool.query(
@@ -326,7 +326,7 @@ router.put('/:id/status', authMiddleware, validate(uuidParamSchema, 'params'), v
     res.json({
       success: true,
       data: result.rows[0],
-      message: 'Statut mis à jour'
+      message: req.t('applications:statusUpdated')
     });
   } catch (error) {
     handleRouteError(res, error, 'Error updating application status');
@@ -352,7 +352,7 @@ router.put('/:id/notes', authMiddleware, validate(uuidParamSchema, 'params'), va
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé');
+      throw createForbiddenError(req.t('applications:accessDenied'));
     }
 
     const result = await pool.query(`
@@ -387,7 +387,7 @@ router.put('/:id/rating', authMiddleware, validate(uuidParamSchema, 'params'), v
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé');
+      throw createForbiddenError(req.t('applications:accessDenied'));
     }
 
     const result = await pool.query(`
@@ -421,7 +421,7 @@ router.put('/:id/view', authMiddleware, async (req: AuthRequest, res: Response) 
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé');
+      throw createForbiddenError(req.t('applications:accessDenied'));
     }
 
     const result = await pool.query(`
@@ -492,13 +492,13 @@ router.delete('/:id/organization', authMiddleware, async (req: AuthRequest, res:
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé');
+      throw createForbiddenError(req.t('applications:accessDenied'));
     }
 
     await pool.query('DELETE FROM application_messages WHERE application_id = $1', [id]);
     await pool.query('DELETE FROM opportunity_applications WHERE id = $1', [id]);
 
-    res.json({ success: true, message: 'Candidature supprimée' });
+    res.json({ success: true, message: req.t('applications:deleted') });
   } catch (error) {
     handleRouteError(res, error, 'Error deleting application (org)');
   }

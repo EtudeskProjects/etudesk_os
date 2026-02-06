@@ -89,7 +89,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   } catch (error) {
     logger.error('Error listing documents:', error);
     return res.status(500).json({
-      error: 'Erreur lors de la récupération des documents',
+      error: req.t('documents:fetchError'),
       details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
@@ -121,7 +121,7 @@ router.get('/stats', authMiddleware, async (req: AuthRequest, res: Response) => 
   } catch (error) {
     logger.error('Error getting document stats:', error);
     return res.status(500).json({
-      error: 'Erreur lors de la récupération des statistiques',
+      error: req.t('documents:fetchStatsError'),
     });
   }
 });
@@ -152,19 +152,19 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(404).json({ error: 'Profil talent non trouvé' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const document = await getDocument(req.params.id, talentId);
     if (!document) {
-      return res.status(404).json({ error: 'Document non trouvé' });
+      return res.status(404).json({ error: req.t('documents:notFound') });
     }
 
     return res.json({ data: document });
   } catch (error) {
     logger.error('Error getting document:', error);
     return res.status(500).json({
-      error: 'Erreur lors de la récupération du document',
+      error: req.t('documents:fetchSingleError'),
     });
   }
 });
@@ -181,7 +181,7 @@ router.post(
     try {
       const talentId = req.talentId;
       if (!talentId) {
-        return res.status(404).json({ error: 'Profil talent non trouvé' });
+        return res.status(404).json({ error: req.t('talents:profileNotFound') });
       }
 
       // KYC gate: require verified identity before uploading documents
@@ -194,9 +194,9 @@ router.post(
 
       if (identityCheck.rows.length === 0) {
         return res.status(403).json({
-          error: 'Identité non vérifiée',
+          error: req.t('documents:identityNotVerified'),
           code: 'IDENTITY_REQUIRED',
-          message: 'Vous devez vérifier votre identité avant d\'ajouter des documents. Rendez-vous dans Paramètres > Vérification d\'identité.',
+          message: req.t('documents:identityRequiredMessage'),
         });
       }
 
@@ -204,7 +204,7 @@ router.post(
 
       // Support both single file (req.file) and multi-file (req.files)
       if (!files || files.length === 0) {
-        return res.status(400).json({ error: 'Aucun fichier fourni' });
+        return res.status(400).json({ error: req.t('common:noFileProvided') });
       }
 
       if (files.length > DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST) {
@@ -237,7 +237,7 @@ router.post(
 
       // Validate document type if provided
       if (document_type && !isValidDocumentType(document_type)) {
-        return res.status(400).json({ error: 'Type de document invalide' });
+        return res.status(400).json({ error: req.t('documents:invalidDocumentType') });
       }
 
       const uploadedDocuments = [];
@@ -285,7 +285,7 @@ router.post(
     } catch (error) {
       logger.error('Error uploading document:', error);
       return res.status(500).json({
-        error: "Erreur lors de l'upload du document",
+        error: req.t('documents:uploadError'),
         details: error instanceof Error ? error.message : 'Unknown error',
       });
     }
@@ -300,14 +300,14 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(404).json({ error: 'Profil talent non trouvé' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const { document_type, title, description, is_public, tags } = req.body;
 
     // Validate document type if provided
     if (document_type && !isValidDocumentType(document_type)) {
-      return res.status(400).json({ error: 'Type de document invalide' });
+      return res.status(400).json({ error: req.t('documents:invalidDocumentType') });
     }
 
     const document = await updateDocument(req.params.id, talentId, {
@@ -319,17 +319,17 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
     });
 
     if (!document) {
-      return res.status(404).json({ error: 'Document non trouvé' });
+      return res.status(404).json({ error: req.t('documents:notFound') });
     }
 
     return res.json({
-      message: 'Document mis à jour',
+      message: req.t('documents:updateSuccess'),
       document,
     });
   } catch (error) {
     logger.error('Error updating document:', error);
     return res.status(500).json({
-      error: 'Erreur lors de la mise à jour du document',
+      error: req.t('documents:updateError'),
     });
   }
 });
@@ -342,19 +342,19 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(404).json({ error: 'Profil talent non trouvé' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const deleted = await deleteDocument(req.params.id, talentId);
     if (!deleted) {
-      return res.status(404).json({ error: 'Document non trouvé' });
+      return res.status(404).json({ error: req.t('documents:notFound') });
     }
 
-    return res.json({ message: 'Document supprimé' });
+    return res.json({ message: req.t('documents:deleteSuccess') });
   } catch (error) {
     logger.error('Error deleting document:', error);
     return res.status(500).json({
-      error: 'Erreur lors de la suppression du document',
+      error: req.t('documents:deleteError'),
     });
   }
 });
@@ -367,21 +367,21 @@ router.post('/:id/retry', authMiddleware, async (req: AuthRequest, res: Response
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(404).json({ error: 'Profil talent non trouvé' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const success = await retryExtraction(req.params.id, talentId);
     if (!success) {
-      return res.status(404).json({ error: 'Document non trouvé' });
+      return res.status(404).json({ error: req.t('documents:notFound') });
     }
 
     return res.json({
-      message: "Nouvelle tentative d'extraction lancée",
+      message: req.t('documents:retrySuccess'),
     });
   } catch (error) {
     logger.error('Error retrying extraction:', error);
     return res.status(500).json({
-      error: error instanceof Error ? error.message : "Erreur lors de la tentative d'extraction",
+      error: error instanceof Error ? error.message : req.t('documents:retryError'),
     });
   }
 });

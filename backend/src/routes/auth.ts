@@ -65,20 +65,20 @@ router.post('/request-otp', validate(requestOtpSchema), async (req: Request, res
       logger.error('❌ Failed to send OTP email:', emailResult.error);
       return res.status(500).json({
         success: false,
-        error: 'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.',
+        error: req.t('auth:otpEmailFailed'),
       });
     }
 
     return res.json({
       success: true,
-      message: 'Code envoyé par email',
+      message: req.t('auth:otpSent'),
       expiresAt: otpResult.expiresAt,
     });
   } catch (error) {
     logger.error('❌ Request OTP error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Erreur serveur',
+      error: req.t('common:serverError'),
     });
   }
 });
@@ -124,7 +124,7 @@ router.post('/verify-otp', validate(verifyOtpSchema), async (req: Request, res: 
 
     return res.json({
       success: true,
-      message: verifyResult.isNewUser ? 'Compte créé avec succès' : 'Connexion réussie',
+      message: verifyResult.isNewUser ? req.t('auth:accountCreated') : req.t('auth:loginSuccess'),
       tokens: {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
@@ -138,7 +138,7 @@ router.post('/verify-otp', validate(verifyOtpSchema), async (req: Request, res: 
     logger.error('❌ Verify OTP error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Erreur serveur',
+      error: req.t('common:serverError'),
     });
   }
 });
@@ -169,7 +169,7 @@ router.post('/refresh', validate(refreshTokenSchema), async (req: Request, res: 
     logger.error('❌ Refresh token error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Erreur serveur',
+      error: req.t('common:serverError'),
     });
   }
 });
@@ -188,7 +188,7 @@ router.post('/logout', authMiddleware, async (req: AuthRequest, res: Response) =
       const count = await revokeAllSessions(req.userId!, 'USER_LOGOUT_ALL');
       return res.json({
         success: true,
-        message: `Déconnecté de ${count} appareil(s)`,
+        message: req.t('auth:logoutAllDevices', { count }),
       });
     }
 
@@ -202,13 +202,13 @@ router.post('/logout', authMiddleware, async (req: AuthRequest, res: Response) =
 
     return res.json({
       success: true,
-      message: 'Déconnexion réussie',
+      message: req.t('auth:logoutSuccess'),
     });
   } catch (error) {
     logger.error('❌ Logout error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Erreur serveur',
+      error: req.t('common:serverError'),
     });
   }
 });
@@ -225,7 +225,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     if (!profile) {
       return res.status(404).json({
         success: false,
-        error: 'Utilisateur non trouvé',
+        error: req.t('auth:userNotFound'),
       });
     }
 
@@ -240,7 +240,43 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     logger.error('❌ Get profile error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Erreur serveur',
+      error: req.t('common:serverError'),
+    });
+  }
+});
+
+/**
+ * PUT /auth/language
+ *
+ * Update user's preferred language
+ */
+router.put('/language', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { language } = req.body;
+
+    if (!language || !['fr', 'en'].includes(language)) {
+      return res.status(400).json({
+        success: false,
+        error: req.t('auth:invalidLanguage'),
+      });
+    }
+
+    const { pool } = await import('../services/database');
+    await pool.query(
+      'UPDATE users SET preferred_language = $1, updated_at = NOW() WHERE id = $2',
+      [language, req.userId]
+    );
+
+    return res.json({
+      success: true,
+      message: req.t('auth:languageUpdated'),
+      language,
+    });
+  } catch (error) {
+    logger.error('❌ Update language error:', error);
+    return res.status(500).json({
+      success: false,
+      error: req.t('common:serverError'),
     });
   }
 });

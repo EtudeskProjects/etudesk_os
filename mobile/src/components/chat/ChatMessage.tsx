@@ -27,6 +27,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as ExpoCalendar from 'expo-calendar';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../contexts/I18nContext';
 import { formatRelativeTime, formatDate, formatTime } from '../../utils/date';
 
 interface Attachment {
@@ -63,13 +64,6 @@ const getFileIcon = (type: string) => {
   return FileText;
 };
 
-// Datetime type labels
-const DATETIME_TYPE_LABELS = {
-  INTERVIEW_PROPOSAL: 'Proposition d\'entretien',
-  MEETING_REQUEST: 'Demande de rendez-vous',
-  AVAILABILITY: 'Disponibilité',
-};
-
 // Truncate filename keeping extension
 const truncateFilename = (name: string, maxLength: number = 20): string => {
   if (name.length <= maxLength) return name;
@@ -89,6 +83,13 @@ export function ChatMessage({
   attachments = [],
 }: ChatMessageProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+
+  const datetimeTypeLabels = {
+    INTERVIEW_PROPOSAL: t('chat.datetimeTypes.interviewProposal'),
+    MEETING_REQUEST: t('chat.datetimeTypes.meetingRequest'),
+    AVAILABILITY: t('chat.datetimeTypes.availability'),
+  };
 
   const handleLinkPress = async (url: string) => {
     try {
@@ -134,7 +135,7 @@ export function ChatMessage({
       const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
 
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Veuillez autoriser l\'accès au calendrier pour ajouter cet événement.');
+        Alert.alert(t('auth.createProfile.permissionRequired'), t('chat.calendarPermission'));
         return;
       }
 
@@ -145,13 +146,13 @@ export function ChatMessage({
       ) || calendars.find((cal) => cal.allowsModifications);
 
       if (!defaultCalendar) {
-        Alert.alert('Erreur', 'Aucun calendrier disponible.');
+        Alert.alert(t('common.error'), t('chat.noCalendar'));
         return;
       }
 
       const startDate = new Date(proposedDatetime);
       const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour duration
-      const title = DATETIME_TYPE_LABELS[datetimeType as keyof typeof DATETIME_TYPE_LABELS] || 'Rendez-vous';
+      const title = datetimeTypeLabels[datetimeType as keyof typeof datetimeTypeLabels] || t('chat.appointment');
 
       // Create event
       await ExpoCalendar.createEventAsync(defaultCalendar.id, {
@@ -161,10 +162,10 @@ export function ChatMessage({
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
 
-      Alert.alert('Succès', 'L\'événement a été ajouté à votre calendrier.');
+      Alert.alert(t('common.success'), t('chat.eventAdded'));
     } catch (error) {
       console.error('Error adding to calendar:', error);
-      Alert.alert('Erreur', 'Impossible d\'ajouter l\'événement au calendrier.');
+      Alert.alert(t('common.error'), t('chat.eventAddError'));
     }
   };
 
@@ -267,7 +268,7 @@ export function ChatMessage({
           <View style={styles.datetimeInfo}>
             {datetimeType && (
               <Text style={[styles.datetimeLabel, { color: isMe ? withOpacity(colors.textOnPrimary, OPACITY[80]) : colors.primary }]}>
-                {DATETIME_TYPE_LABELS[datetimeType] || 'Créneau proposé'}
+                {datetimeTypeLabels[datetimeType] || t('chat.proposedSlot')}
               </Text>
             )}
             <Text style={[styles.datetimeText, { color: isMe ? colors.textOnPrimary : colors.primary }]}>

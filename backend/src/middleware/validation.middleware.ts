@@ -5,6 +5,9 @@ import { logger } from '../utils';
 /**
  * Validation middleware factory
  * Creates a middleware that validates request body/params/query against a Zod schema
+ *
+ * Zod messages are translation keys (e.g., 'validation:opportunity.titleMinLength')
+ * The validate() middleware translates them using req.t()
  */
 export const validate = (schema: ZodSchema, target: 'body' | 'params' | 'query' = 'body') => {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -16,11 +19,12 @@ export const validate = (schema: ZodSchema, target: 'body' | 'params' | 'query' 
         const zodError = result.error as ZodError;
         const errors = zodError.issues.map((issue) => ({
           field: issue.path.join('.'),
-          message: issue.message
+          // Translate the message key if it looks like a translation key
+          message: issue.message.includes(':') ? req.t(issue.message) : issue.message
         }));
 
         return res.status(400).json({
-          error: 'Validation échouée',
+          error: req.t('validation:validationFailed'),
           details: errors
         });
       }
@@ -30,7 +34,7 @@ export const validate = (schema: ZodSchema, target: 'body' | 'params' | 'query' 
       next();
     } catch (error) {
       logger.error('Validation error:', error);
-      res.status(500).json({ error: 'Erreur de validation interne' });
+      res.status(500).json({ error: req.t('validation:internalError') });
     }
   };
 };
@@ -41,14 +45,14 @@ export const validate = (schema: ZodSchema, target: 'body' | 'params' | 'query' 
 
 // Application answer schema
 const applicationAnswerSchema = z.object({
-  question_id: z.string().min(1, 'ID de question requis'),
-  answer: z.string().max(2000, 'La réponse ne doit pas dépasser 2000 caractères')
+  question_id: z.string().min(1, 'validation:application.questionIdRequired'),
+  answer: z.string().max(2000, 'validation:application.answerMaxLength')
 });
 
 // Create application schema
 export const createApplicationSchema = z.object({
-  opportunity_id: z.string().uuid('ID d\'opportunité invalide'),
-  cover_letter: z.string().max(5000, 'La lettre de motivation ne doit pas dépasser 5000 caractères').optional(),
+  opportunity_id: z.string().uuid('validation:application.invalidOpportunityId'),
+  cover_letter: z.string().max(5000, 'validation:application.coverLetterMaxLength').optional(),
   custom_answers: z.array(applicationAnswerSchema).optional(),
   answers: z.array(applicationAnswerSchema).optional(), // Accept both "answers" and "custom_answers"
   resume_url: z.string().optional() // Accept any string (URL or file:// URI for mobile)
@@ -57,31 +61,31 @@ export const createApplicationSchema = z.object({
 // Update application status schema
 export const updateApplicationStatusSchema = z.object({
   status: z.enum(['SUBMITTED', 'IN_REVIEW', 'ACCEPTED', 'REJECTED'], {
-    message: 'Statut invalide'
+    message: 'validation:application.invalidStatus'
   })
 });
 
 // Update application notes schema
 export const updateApplicationNotesSchema = z.object({
-  notes: z.string().max(10000, 'Les notes ne doivent pas dépasser 10000 caractères').nullable()
+  notes: z.string().max(10000, 'validation:application.notesMaxLength').nullable()
 });
 
 // Update application rating schema
 export const updateApplicationRatingSchema = z.object({
   rating: z.number()
-    .int('La note doit être un nombre entier')
-    .min(1, 'La note minimum est 1')
-    .max(5, 'La note maximum est 5')
+    .int('validation:application.ratingMustBeInt')
+    .min(1, 'validation:application.ratingMin')
+    .max(5, 'validation:application.ratingMax')
     .nullable()
 });
 
 // Bulk update status schema
 export const bulkUpdateStatusSchema = z.object({
-  application_ids: z.array(z.string().uuid('ID de candidature invalide'))
-    .min(1, 'Au moins une candidature est requise')
-    .max(100, 'Maximum 100 candidatures à la fois'),
+  application_ids: z.array(z.string().uuid('validation:application.invalidApplicationId'))
+    .min(1, 'validation:application.atLeastOne')
+    .max(100, 'validation:application.maxBulk'),
   status: z.enum(['SUBMITTED', 'IN_REVIEW', 'ACCEPTED', 'REJECTED'], {
-    message: 'Statut invalide'
+    message: 'validation:application.invalidStatus'
   })
 });
 
@@ -93,14 +97,14 @@ export const bulkUpdateStatusSchema = z.object({
 const opportunityLocationSchema = z.object({
   city: z.string().max(100).optional(),
   region: z.string().max(100).optional(),
-  country: z.string().length(2, 'Le code pays doit être au format ISO 3166-1 alpha-2').optional(),
+  country: z.string().length(2, 'validation:common.countryCodeFormat').optional(),
   is_primary: z.boolean().optional()
 });
 
 // Custom question schema
 const customQuestionSchema = z.object({
   id: z.string(),
-  question: z.string().max(500, 'La question ne doit pas dépasser 500 caractères'),
+  question: z.string().max(500, 'validation:opportunity.questionMaxLength'),
   required: z.boolean(),
   max_length: z.number().int().min(50).max(5000).optional()
 });
@@ -108,17 +112,17 @@ const customQuestionSchema = z.object({
 // Base opportunity schema (without refinements for .partial() compatibility in Zod v4)
 const baseOpportunitySchema = z.object({
   title: z.string()
-    .min(3, 'Le titre doit contenir au moins 3 caractères')
-    .max(200, 'Le titre ne doit pas dépasser 200 caractères'),
+    .min(3, 'validation:opportunity.titleMinLength')
+    .max(200, 'validation:opportunity.titleMaxLength'),
   type: z.enum(['EMPLOYMENT', 'INTERNSHIP', 'ENTREPRENEURSHIP', 'ALTERNATION', 'FREELANCE', 'VOLUNTEER']).optional(),
   contract_type: z.enum(['CDI', 'CDD', 'APPRENTICESHIP', 'INTERNSHIP', 'FREELANCE', 'SERVICE', 'INTERIM']).optional(),
   work_rhythm: z.enum(['FULL_TIME', 'PART_TIME', 'FLEXIBLE', 'OCCASIONAL']).optional(),
-  summary: z.string().max(5000, 'Le résumé ne doit pas dépasser 5000 caractères').optional(),
-  requirements: z.string().max(10000, 'Les exigences ne doivent pas dépasser 10000 caractères').optional(),
-  nice_to_have: z.string().max(5000, 'Les atouts ne doivent pas dépasser 5000 caractères').optional(),
+  summary: z.string().max(5000, 'validation:opportunity.summaryMaxLength').optional(),
+  requirements: z.string().max(10000, 'validation:opportunity.requirementsMaxLength').optional(),
+  nice_to_have: z.string().max(5000, 'validation:opportunity.niceToHaveMaxLength').optional(),
   compensation_min: z.number().min(0).optional(),
   compensation_max: z.number().min(0).optional(),
-  currency: z.string().length(3, 'La devise doit être au format ISO 4217').optional(),
+  currency: z.string().length(3, 'validation:common.currencyFormat').optional(),
   compensation_frequency: z.enum(['HOURLY', 'MONTHLY', 'YEARLY', 'PROJECT']).optional(),
   location_type: z.enum(['ON_SITE', 'REMOTE', 'HYBRID']).optional(),
   locations: z.array(opportunityLocationSchema).max(10).optional(),
@@ -127,8 +131,8 @@ const baseOpportunitySchema = z.object({
   duration: z.string().max(100).optional(),
   status: z.enum(['DRAFT', 'OPEN', 'PAUSED', 'FILLED', 'EXPIRED']).optional(),
   cv_required: z.boolean().optional(),
-  application_questions: z.array(customQuestionSchema).max(10, 'Maximum 10 questions personnalisées').optional(),
-  organization_id: z.string().uuid('ID d\'organisation invalide').optional(),
+  application_questions: z.array(customQuestionSchema).max(10, 'validation:opportunity.maxQuestions').optional(),
+  organization_id: z.string().uuid('validation:common.invalidOrgId').optional(),
   visibility: z.enum(['PUBLIC', 'PRIVATE']).optional(),
   // Media (illustrations et pièces jointes)
   cover_image_url: z.string().max(2000).optional(),
@@ -149,17 +153,17 @@ const compensationRefinement = (data: any) =>
 export const createOpportunitySchema = baseOpportunitySchema
   .refine(
     (data) => !!data.deadline,
-    { message: 'La date limite est obligatoire', path: ['deadline'] }
+    { message: 'validation:opportunity.deadlineRequired', path: ['deadline'] }
   )
   .refine(
     compensationRefinement,
-    { message: 'Le salaire minimum ne peut pas être supérieur au salaire maximum', path: ['compensation_min'] }
+    { message: 'validation:opportunity.compensationRange', path: ['compensation_min'] }
   );
 
 // Update opportunity schema (all fields optional, with refinements)
 export const updateOpportunitySchema = baseOpportunitySchema.partial().refine(
   compensationRefinement,
-  { message: 'Le salaire minimum ne peut pas être supérieur au salaire maximum', path: ['compensation_min'] }
+  { message: 'validation:opportunity.compensationRange', path: ['compensation_min'] }
 );
 
 // ═══════════════════════════════════════════════════════════════
@@ -167,11 +171,11 @@ export const updateOpportunitySchema = baseOpportunitySchema.partial().refine(
 // ═══════════════════════════════════════════════════════════════
 
 export const uuidParamSchema = z.object({
-  id: z.string().uuid('ID invalide')
+  id: z.string().uuid('validation:common.invalidId')
 });
 
 export const opportunityIdParamSchema = z.object({
-  opportunityId: z.string().uuid('ID d\'opportunité invalide')
+  opportunityId: z.string().uuid('validation:application.invalidOpportunityId')
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -180,22 +184,22 @@ export const opportunityIdParamSchema = z.object({
 
 export const requestOtpSchema = z.object({
   email: z.string()
-    .email('Email invalide')
-    .max(255, 'Email trop long')
+    .email('validation:auth.invalidEmail')
+    .max(255, 'validation:auth.emailTooLong')
     .transform((v) => v.toLowerCase().trim())
 });
 
 export const verifyOtpSchema = z.object({
   email: z.string()
-    .email('Email invalide')
+    .email('validation:auth.invalidEmail')
     .transform((v) => v.toLowerCase().trim()),
   code: z.string()
-    .length(6, 'Le code doit contenir 6 chiffres')
-    .regex(/^\d{6}$/, 'Le code doit être composé de 6 chiffres')
+    .length(6, 'validation:auth.codeLength')
+    .regex(/^\d{6}$/, 'validation:auth.codeDigits')
 });
 
 export const refreshTokenSchema = z.object({
-  refreshToken: z.string().min(1, 'Token de rafraîchissement requis')
+  refreshToken: z.string().min(1, 'validation:auth.refreshTokenRequired')
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -221,36 +225,36 @@ const VALID_SECTORS = [
 
 export const onboardingSchema = z.object({
   firstName: z.string()
-    .min(1, 'Prénom requis')
-    .max(100, 'Prénom trop long')
+    .min(1, 'validation:onboarding.firstNameRequired')
+    .max(100, 'validation:onboarding.firstNameTooLong')
     .transform((v) => v.trim()),
   lastName: z.string()
-    .min(1, 'Nom requis')
-    .max(100, 'Nom trop long')
+    .min(1, 'validation:onboarding.lastNameRequired')
+    .max(100, 'validation:onboarding.lastNameTooLong')
     .transform((v) => v.trim()),
   bio: z.string()
-    .max(2000, 'Bio trop longue')
+    .max(2000, 'validation:onboarding.bioTooLong')
     .optional(),
   phone: z.string()
-    .max(20, 'Numéro de téléphone trop long')
+    .max(20, 'validation:onboarding.phoneTooLong')
     .optional(),
   city: z.string()
-    .max(100, 'Ville trop longue')
+    .max(100, 'validation:onboarding.cityTooLong')
     .optional(),
   region: z.string()
-    .max(100, 'Région trop longue')
+    .max(100, 'validation:onboarding.regionTooLong')
     .optional(),
   country: z.string()
-    .length(2, 'Le code pays doit être au format ISO 3166-1 alpha-2')
+    .length(2, 'validation:common.countryCodeFormat')
     .optional(),
   profileTags: z.array(z.enum(VALID_PROFILE_TAGS))
-    .max(3, 'Maximum 3 tags de profil')
+    .max(3, 'validation:onboarding.maxProfileTags')
     .optional(),
   goals: z.array(z.enum(VALID_GOALS))
-    .max(3, 'Maximum 3 objectifs')
+    .max(3, 'validation:onboarding.maxGoals')
     .optional(),
   sectors: z.array(z.enum(VALID_SECTORS))
-    .max(5, 'Maximum 5 secteurs')
+    .max(5, 'validation:onboarding.maxSectors')
     .optional(),
   remoteReady: z.boolean().optional(),
   willingToRelocate: z.boolean().optional()
@@ -271,17 +275,17 @@ const COMMUNITY_ACCESS_TYPES = [
 
 export const createCommunitySchema = z.object({
   name: z.string()
-    .min(3, 'Le nom doit contenir au moins 3 caractères')
-    .max(100, 'Le nom ne doit pas dépasser 100 caractères'),
+    .min(3, 'validation:community.nameMinLength')
+    .max(100, 'validation:community.nameMaxLength'),
   description: z.string()
-    .max(5000, 'La description ne doit pas dépasser 5000 caractères')
+    .max(5000, 'validation:community.descriptionMaxLength')
     .optional(),
   type: z.enum(COMMUNITY_TYPES).optional(),
   access_type: z.enum(COMMUNITY_ACCESS_TYPES).optional(),
-  organization_id: z.string().uuid('ID d\'organisation invalide').optional(),
+  organization_id: z.string().uuid('validation:common.invalidOrgId').optional(),
   is_paid: z.boolean().optional(),
   monthly_price: z.number().min(0).optional(),
-  currency: z.string().length(3, 'La devise doit être au format ISO 4217').optional(),
+  currency: z.string().length(3, 'validation:common.currencyFormat').optional(),
   trial_days: z.number().int().min(0).max(90).optional(),
   sectors: z.array(z.string()).max(10).optional(),
   rules: z.string().max(10000).optional(),
@@ -291,7 +295,7 @@ export const createCommunitySchema = z.object({
 export const updateCommunitySchema = createCommunitySchema.partial();
 
 export const joinCommunitySchema = z.object({
-  join_reason: z.string().max(1000, 'La raison ne doit pas dépasser 1000 caractères').optional()
+  join_reason: z.string().max(1000, 'validation:community.joinReasonMaxLength').optional()
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -305,16 +309,16 @@ const ORGANIZATION_TYPES = [
 
 export const createOrganizationSchema = z.object({
   name: z.string()
-    .min(2, 'Le nom doit contenir au moins 2 caractères')
-    .max(200, 'Le nom ne doit pas dépasser 200 caractères'),
+    .min(2, 'validation:organization.nameMinLength')
+    .max(200, 'validation:organization.nameMaxLength'),
   description: z.string()
-    .max(5000, 'La description ne doit pas dépasser 5000 caractères')
+    .max(5000, 'validation:organization.descriptionMaxLength')
     .optional(),
   type: z.enum(ORGANIZATION_TYPES).optional(),
-  website: z.string().url('URL invalide').optional().or(z.literal('')),
+  website: z.string().url('validation:common.invalidUrl').optional().or(z.literal('')),
   city: z.string().max(100).optional(),
   region: z.string().max(100).optional(),
-  country: z.string().length(2, 'Le code pays doit être au format ISO 3166-1 alpha-2').optional(),
+  country: z.string().length(2, 'validation:common.countryCodeFormat').optional(),
   sectors: z.array(z.enum(VALID_SECTORS)).max(5).optional(),
   employee_count: z.number().int().min(1).optional(),
   founded_year: z.number().int().min(1800).max(new Date().getFullYear()).optional()
@@ -332,9 +336,9 @@ const DOCUMENT_TYPES = [
 
 export const kycSubmitSchema = z.object({
   document_type: z.enum(DOCUMENT_TYPES, {
-    message: 'Type de document invalide'
+    message: 'validation:kyc.invalidDocumentType'
   }),
-  front_image_url: z.string().min(1, 'Image recto requise'),
+  front_image_url: z.string().min(1, 'validation:kyc.frontImageRequired'),
   back_image_url: z.string().optional()
 });
 
@@ -371,10 +375,10 @@ export const paginationQuerySchema = z.object({
 // ═══════════════════════════════════════════════════════════════
 
 export const createBookingSchema = z.object({
-  space_id: z.string().uuid('ID d\'espace invalide'),
-  date: z.string().refine((v) => !isNaN(Date.parse(v)), 'Date invalide'),
-  start_time: z.string().regex(/^\d{2}:\d{2}$/, 'Format heure invalide (HH:MM)'),
-  end_time: z.string().regex(/^\d{2}:\d{2}$/, 'Format heure invalide (HH:MM)'),
+  space_id: z.string().uuid('validation:space.invalidSpaceId'),
+  date: z.string().refine((v) => !isNaN(Date.parse(v)), 'validation:common.invalidDate'),
+  start_time: z.string().regex(/^\d{2}:\d{2}$/, 'validation:space.invalidTimeFormat'),
+  end_time: z.string().regex(/^\d{2}:\d{2}$/, 'validation:space.invalidTimeFormat'),
   purpose: z.string().max(500).optional(),
   attendees_count: z.number().int().min(1).optional()
 });
@@ -384,17 +388,17 @@ export const createBookingSchema = z.object({
 // ═══════════════════════════════════════════════════════════════
 
 export const communityInvitationSchema = z.object({
-  email: z.string().email('Email invalide').optional(),
+  email: z.string().email('validation:auth.invalidEmail').optional(),
   invitee_talent_id: z.string().uuid().optional(),
   role: z.enum(['MEMBER', 'MODERATOR', 'ADMIN']).optional(),
   message: z.string().max(500).optional()
 }).refine(
   (data) => data.email || data.invitee_talent_id,
-  { message: 'Email ou ID du talent requis' }
+  { message: 'validation:invitation.emailOrTalentRequired' }
 );
 
 export const organizationInvitationSchema = z.object({
-  email: z.string().email('Email invalide'),
+  email: z.string().email('validation:auth.invalidEmail'),
   role: z.enum(['MEMBER', 'ADMIN', 'OWNER']),
   message: z.string().max(500).optional()
 });

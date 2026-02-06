@@ -34,7 +34,7 @@ router.get('/:id/applications', authMiddleware, async (req: AuthRequest, res: Re
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé à cette opportunité');
+      throw createForbiddenError(req.t('applications:notAuthorizedOpportunity'));
     }
 
     let query = `
@@ -125,7 +125,7 @@ router.get('/:id/applications/counts', authMiddleware, async (req: AuthRequest, 
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé');
+      throw createForbiddenError(req.t('applications:accessDenied'));
     }
 
     const result = await pool.query(`

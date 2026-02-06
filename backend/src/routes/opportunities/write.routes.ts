@@ -34,14 +34,14 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
 
     if (!canGenerate(title, type)) {
       return res.status(400).json({
-        error: 'Title (min 3 chars) and type are required',
+        error: req.t('opportunities:titleTypeRequired'),
         canGenerate: false,
       });
     }
 
     if (!organization_id) {
       return res.status(400).json({
-        error: 'organization_id is required',
+        error: req.t('opportunities:organizationIdRequired'),
         canGenerate: false,
       });
     }
@@ -54,7 +54,7 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
     );
 
     if (memberCheck.rows.length === 0) {
-      throw createForbiddenError('Vous n\'êtes pas membre de cette organisation');
+      throw createForbiddenError(req.t('opportunities:notMemberOrg'));
     }
 
     const input: GenerationInput = { title, type, organization_id, existing_data };
@@ -62,7 +62,7 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
 
     if (!result.success) {
       return res.status(500).json({
-        error: result.error || 'Échec de la génération',
+        error: result.error || req.t('opportunities:generationFailed'),
       });
     }
 
@@ -107,7 +107,7 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
     } = req.body;
 
     if (!title) {
-      return res.status(400).json({ error: 'Title is required' });
+      return res.status(400).json({ error: req.t('opportunities:titleRequired') });
     }
 
     // Content moderation
@@ -132,7 +132,7 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
         [organization_id, talentId]
       );
       if (memberCheck.rows.length === 0) {
-        throw createForbiddenError('Vous n\'êtes pas membre de cette organisation');
+        throw createForbiddenError(req.t('opportunities:notMemberOrg'));
       }
     }
 
@@ -218,7 +218,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Vous n\'avez pas les droits pour modifier cette opportunité');
+      throw createForbiddenError(req.t('opportunities:notAuthorizedModify'));
     }
 
     // Content moderation
@@ -310,7 +310,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Vous n\'avez pas les droits pour supprimer cette opportunité');
+      throw createForbiddenError(req.t('opportunities:notAuthorizedDelete'));
     }
 
     const result = await pool.query(`
@@ -323,7 +323,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
       throw createNotFoundError('Opportunity');
     }
 
-    res.json({ success: true, message: 'Opportunity deleted' });
+    res.json({ success: true, message: req.t('opportunities:deleted') });
   } catch (error) {
     handleRouteError(res, error, 'Error deleting opportunity');
   }

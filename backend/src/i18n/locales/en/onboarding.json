@@ -1,0 +1,39 @@
+{
+  "profileCreated": "Profile created successfully",
+  "profileCreationFailed": "Error creating profile",
+  "talentProfileExists": "A talent profile already exists for this user",
+  "phoneAlreadyUsed": "This phone number is already associated with a talent profile",
+  "countryCodeInvalid": "Country code must be in ISO 3166-1 alpha-2 format (e.g., CI, FR, SN)",
+  "phoneMinLength": "Phone number is required (minimum 8 characters)",
+  "goalsMaximum": "Maximum 3 goals allowed",
+  "invalidGoal": "Invalid goal: {{goal}}",
+  "invalidTag": "Invalid tag: {{tag}}",
+  "profileTagsMustBeArray": "profileTags must be an array",
+  "goalsMustBeArray": "goals must be an array",
+  "profileTags": {
+    "STUDENT": "Student",
+    "PUPIL": "Pupil",
+    "JOB_SEEKER": "Job Seeker",
+    "SALARIED": "Employee",
+    "ENTREPRENEUR": "Entrepreneur",
+    "CIVIL_SERVANT": "Civil Servant",
+    "MANAGER": "Manager",
+    "CONSULTANT": "Consultant",
+    "INVESTOR": "Investor",
+    "CONTENT_CREATOR": "Content Creator",
+    "COACH": "Coach / Trainer",
+    "RETIRED": "Retired"
+  },
+  "goals": {
+    "LEARN_NEW_SKILLS": "Learn new skills",
+    "PREPARE_EXAMS": "Prepare for exams",
+    "FIND_JOB": "Find a job",
+    "ADVANCE_CAREER": "Advance my career",
+    "RESEARCH_SUPPORT": "Research support",
+    "IMPROVE_PRODUCTIVITY": "Improve my productivity",
+    "COLLABORATIVE_LEARNING": "Collaborative learning",
+    "TEACH_OR_MENTOR": "Teach or mentor",
+    "BUILD_NETWORK_OR_VISIBILITY": "Build my network / visibility",
+    "CONTRIBUTE_OR_GIVE_BACK": "Contribute / Give back"
+  }
+}

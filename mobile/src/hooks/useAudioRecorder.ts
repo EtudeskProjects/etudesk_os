@@ -7,6 +7,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Audio } from 'expo-av';
 import { Platform, Alert } from 'react-native';
+import { useTranslation } from '../contexts/I18nContext';
 
 // Recording limit in seconds
 const MAX_RECORDING_DURATION_SECONDS = 30;
@@ -30,6 +31,7 @@ interface UseAudioRecorderReturn {
 }
 
 export function useAudioRecorder(): UseAudioRecorderReturn {
+    const { t } = useTranslation();
     const [state, setState] = useState<AudioRecorderState>({
         isRecording: false,
         isPreparing: false,
@@ -63,8 +65,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             const { status } = await Audio.requestPermissionsAsync();
             if (status !== 'granted') {
                 Alert.alert(
-                    'Permission requise',
-                    'L\'accès au microphone est nécessaire pour enregistrer votre voix.',
+                    t('audioRecorder.permissionRequired'),
+                    t('audioRecorder.micPermissionMessage'),
                     [{ text: 'OK' }]
                 );
                 return false;
@@ -193,7 +195,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
                 ...prev,
                 isRecording: false,
                 isPreparing: false,
-                error: error.message || 'Impossible de démarrer l\'enregistrement',
+                error: error.message || t('audioRecorder.startError'),
             }));
         }
     }, [requestPermissions, state.isPreparing, state.isRecording]);
@@ -239,7 +241,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
                 ...prev,
                 isRecording: false,
                 isProcessing: false,
-                error: error.message || 'Erreur lors de l\'arrêt de l\'enregistrement',
+                error: error.message || t('audioRecorder.stopError'),
             }));
             return null;
         }

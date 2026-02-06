@@ -29,15 +29,15 @@ router.post('/:opportunityId/invitations', authMiddleware, async (req: AuthReque
     const { invitations } = req.body;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifie' });
+      return res.status(401).json({ error: req.t('common:unauthorized') });
     }
 
     if (!invitations || !Array.isArray(invitations) || invitations.length === 0) {
-      return res.status(400).json({ error: 'Au moins une invitation est requise' });
+      return res.status(400).json({ error: req.t('opportunities:inviteAtLeastOne') });
     }
 
     if (invitations.length > 50) {
-      return res.status(400).json({ error: 'Maximum 50 invitations a la fois' });
+      return res.status(400).json({ error: req.t('opportunities:inviteMax50') });
     }
 
     // Verify user has access to the opportunity (via org membership)
@@ -55,7 +55,7 @@ router.post('/:opportunityId/invitations', authMiddleware, async (req: AuthReque
     `, [opportunityId, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Vous n\'avez pas les droits pour inviter des personnes' });
+      return res.status(403).json({ error: req.t('opportunities:notAuthorizedInvite') });
     }
 
     const opportunityTitle = accessCheck.rows[0].opportunity_title;
@@ -68,7 +68,7 @@ router.post('/:opportunityId/invitations', authMiddleware, async (req: AuthReque
       const { email, name, message } = invitation;
 
       if (!email || !email.includes('@')) {
-        errors.push({ email, error: 'Email invalide' });
+        errors.push({ email, error: req.t('opportunities:inviteInvalidEmail') });
         continue;
       }
 
@@ -80,7 +80,7 @@ router.post('/:opportunityId/invitations', authMiddleware, async (req: AuthReque
       `, [opportunityId, email]);
 
       if (applicationCheck.rows.length > 0) {
-        errors.push({ email, error: 'Cette personne a deja postule' });
+        errors.push({ email, error: req.t('opportunities:invitePersonAlreadyApplied') });
         continue;
       }
 
@@ -91,7 +91,7 @@ router.post('/:opportunityId/invitations', authMiddleware, async (req: AuthReque
       `, [opportunityId, email]);
 
       if (existingInvitation.rows.length > 0) {
-        errors.push({ email, error: 'Une invitation existe deja' });
+        errors.push({ email, error: req.t('opportunities:inviteAlreadySent') });
         continue;
       }
 
@@ -127,6 +127,7 @@ router.post('/:opportunityId/invitations', authMiddleware, async (req: AuthReque
       }
     }
 
+    const failuresText = errors.length > 0 ? `, ${errors.length} echec(s)` : '';
     res.status(201).json({
       success: true,
       data: {
@@ -135,12 +136,12 @@ router.post('/:opportunityId/invitations', authMiddleware, async (req: AuthReque
         invitations: results,
         errors,
       },
-      message: `${results.length} invitation(s) envoyee(s)${errors.length > 0 ? `, ${errors.length} echec(s)` : ''}`,
+      message: req.t('opportunities:invitesSent', { count: results.length, failures: failuresText }),
     });
   } catch (error: any) {
     logger.error('Error sending opportunity invitations:', error);
     res.status(500).json({
-      error: 'Erreur lors de l\'envoi des invitations',
+      error: req.t('opportunities:errorSendingInvites'),
       message: error?.message || 'Unknown error',
     });
   }
@@ -165,7 +166,7 @@ router.get('/:opportunityId/invitations', authMiddleware, async (req: AuthReques
     `, [opportunityId, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Acces non autorise' });
+      return res.status(403).json({ error: req.t('opportunities:accessDenied') });
     }
 
     const result = await pool.query(`
@@ -193,7 +194,7 @@ router.get('/:opportunityId/invitations', authMiddleware, async (req: AuthReques
     });
   } catch (error: any) {
     logger.error('Error fetching opportunity invitations:', error);
-    res.status(500).json({ error: 'Erreur lors de la recuperation des invitations' });
+    res.status(500).json({ error: req.t('opportunities:errorFetchingInvites') });
   }
 });
 
@@ -215,7 +216,7 @@ router.delete('/:opportunityId/invitations/:invitationId', authMiddleware, async
     `, [opportunityId, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Acces non autorise' });
+      return res.status(403).json({ error: req.t('opportunities:accessDenied') });
     }
 
     // DELETE the invitation from DB
@@ -226,13 +227,13 @@ router.delete('/:opportunityId/invitations/:invitationId', authMiddleware, async
     `, [invitationId, opportunityId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation non trouvee' });
+      return res.status(404).json({ error: req.t('opportunities:inviteNotFound') });
     }
 
-    res.json({ success: true, message: 'Invitation annulee' });
+    res.json({ success: true, message: req.t('opportunities:inviteCancelled') });
   } catch (error: any) {
     logger.error('Error cancelling opportunity invitation:', error);
-    res.status(500).json({ error: 'Erreur lors de l\'annulation de l\'invitation' });
+    res.status(500).json({ error: req.t('opportunities:errorCancellingInvite') });
   }
 });
 
@@ -254,7 +255,7 @@ router.post('/:opportunityId/invitations/:invitationId/resend', authMiddleware, 
     `, [opportunityId, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'Acces non autorise' });
+      return res.status(403).json({ error: req.t('opportunities:accessDenied') });
     }
 
     const invitation = await pool.query(`
@@ -265,7 +266,7 @@ router.post('/:opportunityId/invitations/:invitationId/resend', authMiddleware, 
     `, [invitationId, opportunityId]);
 
     if (invitation.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation non trouvee' });
+      return res.status(404).json({ error: req.t('opportunities:inviteNotFound') });
     }
 
     // Update sent_at and extend expiration
@@ -288,10 +289,10 @@ router.post('/:opportunityId/invitations/:invitationId/resend', authMiddleware, 
       inv.invitation_token
     ).catch(() => {});
 
-    res.json({ success: true, message: 'Invitation renvoyee' });
+    res.json({ success: true, message: req.t('opportunities:inviteResent') });
   } catch (error: any) {
     logger.error('Error resending opportunity invitation:', error);
-    res.status(500).json({ error: 'Erreur lors du renvoi de l\'invitation' });
+    res.status(500).json({ error: req.t('opportunities:errorResendingInvite') });
   }
 });
 
@@ -308,13 +309,13 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     const { limit = 50, offset = 0 } = req.query;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifie' });
+      return res.status(401).json({ error: req.t('common:unauthorized') });
     }
 
     // Get user's email
     const userResult = await pool.query('SELECT email FROM talents WHERE id = $1', [talentId]);
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Utilisateur non trouve' });
+      return res.status(404).json({ error: req.t('opportunities:userNotFound') });
     }
     const userEmail = userResult.rows[0].email;
 
@@ -362,7 +363,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     logger.error('Error fetching user opportunity invitations:', error);
-    res.status(500).json({ error: 'Erreur lors de la recuperation des invitations' });
+    res.status(500).json({ error: req.t('opportunities:errorFetchingInvites') });
   }
 });
 
@@ -375,13 +376,13 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
     const talentId = req.talentId;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifie' });
+      return res.status(401).json({ error: req.t('common:unauthorized') });
     }
 
     // Get user's email
     const userResult = await pool.query('SELECT email FROM talents WHERE id = $1', [talentId]);
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Utilisateur non trouve' });
+      return res.status(404).json({ error: req.t('opportunities:userNotFound') });
     }
     const userEmail = userResult.rows[0].email;
 
@@ -396,7 +397,7 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
     `, [invitationId, talentId, userEmail]);
 
     if (invitation.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation non trouvee' });
+      return res.status(404).json({ error: req.t('opportunities:inviteNotFound') });
     }
 
     const inv = invitation.rows[0];
@@ -405,7 +406,7 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
     if (inv.expires_at && new Date(inv.expires_at) < new Date()) {
       // DELETE expired invitation
       await pool.query('DELETE FROM opportunity_invitations WHERE id = $1', [invitationId]);
-      return res.status(400).json({ error: 'Cette invitation a expire' });
+      return res.status(400).json({ error: req.t('opportunities:inviteExpired') });
     }
 
     // For opportunities, accepting means the user can now apply
@@ -416,12 +417,12 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
 
     res.json({
       success: true,
-      message: `Invitation acceptee pour "${inv.opportunity_title}"`,
+      message: req.t('opportunities:inviteAccepted', { title: inv.opportunity_title }),
       opportunity_id: inv.opportunity_id,
     });
   } catch (error: any) {
     logger.error('Error accepting opportunity invitation:', error);
-    res.status(500).json({ error: 'Erreur lors de l\'acceptation de l\'invitation' });
+    res.status(500).json({ error: req.t('opportunities:errorAcceptingInvite') });
   }
 });
 
@@ -434,13 +435,13 @@ router.post('/:invitationId/decline', authMiddleware, async (req: AuthRequest, r
     const talentId = req.talentId;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifie' });
+      return res.status(401).json({ error: req.t('common:unauthorized') });
     }
 
     // Get user's email
     const userResult = await pool.query('SELECT email FROM talents WHERE id = $1', [talentId]);
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Utilisateur non trouve' });
+      return res.status(404).json({ error: req.t('opportunities:userNotFound') });
     }
     const userEmail = userResult.rows[0].email;
 
@@ -453,13 +454,13 @@ router.post('/:invitationId/decline', authMiddleware, async (req: AuthRequest, r
     `, [invitationId, talentId, userEmail]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation non trouvee' });
+      return res.status(404).json({ error: req.t('opportunities:inviteNotFound') });
     }
 
-    res.json({ success: true, message: 'Invitation declinee' });
+    res.json({ success: true, message: req.t('opportunities:inviteDeclined') });
   } catch (error: any) {
     logger.error('Error declining opportunity invitation:', error);
-    res.status(500).json({ error: 'Erreur lors du refus de l\'invitation' });
+    res.status(500).json({ error: req.t('opportunities:errorDecliningInvite') });
   }
 });
 
@@ -484,7 +485,7 @@ router.get('/token/:token', async (req: Request, res: Response) => {
     `, [token]);
 
     if (invitation.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation invalide ou expiree' });
+      return res.status(404).json({ error: req.t('opportunities:inviteInvalidOrExpired') });
     }
 
     const inv = invitation.rows[0];
@@ -492,7 +493,7 @@ router.get('/token/:token', async (req: Request, res: Response) => {
     // Check if expired
     if (inv.expires_at && new Date(inv.expires_at) < new Date()) {
       await pool.query('DELETE FROM opportunity_invitations WHERE id = $1', [inv.id]);
-      return res.status(400).json({ error: 'Cette invitation a expire' });
+      return res.status(400).json({ error: req.t('opportunities:inviteExpired') });
     }
 
     res.json({
@@ -509,7 +510,7 @@ router.get('/token/:token', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     logger.error('Error verifying opportunity invitation token:', error);
-    res.status(500).json({ error: 'Erreur lors de la verification de l\'invitation' });
+    res.status(500).json({ error: req.t('opportunities:errorVerifyingInvite') });
   }
 });
 

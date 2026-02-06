@@ -1,0 +1,23 @@
+{
+  "created": "Candidature soumise avec succès",
+  "updated": "Candidature mise à jour avec succès",
+  "deleted": "Candidature supprimée avec succès",
+  "deletedCanReapply": "Candidature supprimée. Vous pouvez postuler à nouveau.",
+  "notFound": "Candidature non trouvée",
+  "alreadyApplied": "Vous avez déjà postulé à cette opportunité",
+  "withdrawn": "Candidature retirée",
+  "statusUpdated": "Statut mis à jour",
+  "notAuthorized": "Vous n'êtes pas autorisé à gérer cette candidature",
+  "notAuthorizedOpportunity": "Accès non autorisé à cette opportunité",
+  "accessDenied": "Accès non autorisé",
+  "cannotWithdraw": "Impossible de retirer une candidature déjà traitée",
+  "opportunityClosed": "Cette opportunité n'accepte plus de candidatures",
+  "opportunityNotFound": "Opportunité non trouvée",
+  "deadlinePassed": "La date limite de candidature est dépassée",
+  "cannotApplyOwnOpportunity": "Vous ne pouvez pas postuler à votre propre opportunité",
+  "ratingUpdated": "Note mise à jour",
+  "noteUpdated": "Commentaire mis à jour",
+  "messageEmpty": "Le message ne peut pas être vide",
+  "organizationFirstMessage": "Vous ne pouvez pas initier la conversation. Veuillez attendre que l'organisation vous contacte.",
+  "unableToGenerateRecommendation": "Impossible de générer une recommandation"
+}

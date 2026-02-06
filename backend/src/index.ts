@@ -37,6 +37,7 @@ import { communityActivityService } from './services/community-activity.service'
 import { AppError, isAppError, RateLimitError } from './errors';
 import { createVersionedRouter, CURRENT_API_VERSION } from './middleware/api-version.middleware';
 import { logger } from './utils';
+import { i18nMiddleware } from './i18n';
 
 dotenv.config();
 
@@ -84,6 +85,7 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(i18nMiddleware);
 
 // Serve uploaded files statically
 const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');

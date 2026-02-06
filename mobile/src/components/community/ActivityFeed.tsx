@@ -7,6 +7,7 @@ import { ActivityCard } from './ActivityCard';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../contexts/I18nContext';
 import { MessageSquare, Lock } from 'lucide-react-native';
 import { Button } from '../ui';
 
@@ -33,6 +34,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     onCommentPress,
 }) => {
     const { colors } = useTheme();
+    const { t } = useTranslation();
     const router = useRouter();
     const [activities, setActivities] = useState<CommunityActivity[]>([]);
     const [loading, setLoading] = useState(true);
@@ -49,10 +51,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     const [activeFilter, setActiveFilter] = useState<FilterType>('ALL');
 
     const filterChips: { key: FilterType; label: string }[] = [
-        { key: 'ALL', label: 'Tout' },
-        { key: 'POST', label: 'Publications' },
-        { key: 'EVENT', label: 'Événements' },
-        { key: 'POLL', label: 'Sondages' },
+        { key: 'ALL', label: t('community.feed.all') },
+        { key: 'POST', label: t('community.feed.posts') },
+        { key: 'EVENT', label: t('community.feed.events') },
+        { key: 'POLL', label: t('community.feed.polls') },
     ];
 
     const filteredActivities = useMemo(() => {
@@ -160,7 +162,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             // Optimistic update is already handled in ActivityCard
         } catch (error) {
             console.error('Vote failed:', error);
-            Alert.alert('Erreur', 'Impossible de voter');
+            Alert.alert(t('common.error'), t('community.feed.voteError'));
         }
     }, []);
 
@@ -170,27 +172,27 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             refreshFeed();
         } catch (error) {
             console.error('Toggle pin failed:', error);
-            Alert.alert('Erreur', 'Impossible de modifier l\'épingle');
+            Alert.alert(t('common.error'), t('community.feed.pinError'));
         }
     }, [refreshFeed]);
 
     const handleDelete = useCallback((activityId: string) => {
         Alert.alert(
-            'Supprimer',
-            'Êtes-vous sûr de vouloir supprimer cette activité ?',
+            t('community.feed.deleteTitle'),
+            t('community.feed.deleteMessage'),
             [
-                { text: 'Annuler', style: 'cancel' },
-                { text: 'Supprimer', style: 'destructive', onPress: async () => {
+                { text: t('common.cancel'), style: 'cancel' },
+                { text: t('common.delete'), style: 'destructive', onPress: async () => {
                     try {
                         await communityActivityService.deleteActivity(activityId);
                         refreshFeed();
                     } catch (e) {
-                        Alert.alert('Erreur', 'Impossible de supprimer');
+                        Alert.alert(t('common.error'), t('community.feed.deleteError'));
                     }
                 }}
             ]
         );
-    }, [refreshFeed]);
+    }, [refreshFeed, t]);
 
     const handleActivityPress = useCallback((activity: CommunityActivity) => {
         // Navigate to activity detail
@@ -255,21 +257,21 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                     <Lock size={48} color={colors.primary} strokeWidth={1.5} />
                 </View>
                 <Text style={[styles.paywallTitle, { color: colors.textPrimary }]}>
-                    Contenu réservé aux abonnés
+                    {t('community.feed.subscribersOnly')}
                 </Text>
                 <Text style={[styles.paywallSubtext, { color: colors.textSecondary }]}>
                     {paywallInfo.subscription_status === 'EXPIRED'
-                        ? `Votre abonnement a expiré. Renouvelez pour accéder au contenu de "${paywallInfo.community_name}".`
-                        : `Abonnez-vous pour accéder au contenu exclusif de "${paywallInfo.community_name}".`
+                        ? t('community.feed.expiredSubscription', { name: paywallInfo.community_name })
+                        : t('community.feed.subscribePrompt', { name: paywallInfo.community_name })
                     }
                 </Text>
                 <View style={styles.paywallPrice}>
                     <Text style={[styles.paywallPriceText, { color: colors.primary }]}>
-                        {paywallInfo.monthly_price.toLocaleString()} {paywallInfo.currency}/mois
+                        {paywallInfo.monthly_price.toLocaleString()} {paywallInfo.currency}{t('community.feed.perMonth')}
                     </Text>
                 </View>
                 <Button
-                    title={paywallInfo.subscription_status === 'EXPIRED' ? 'Renouveler' : "S'abonner"}
+                    title={paywallInfo.subscription_status === 'EXPIRED' ? t('community.feed.renew') : t('community.feed.subscribe')}
                     onPress={handleSubscribe}
                     style={styles.paywallButton}
                 />
@@ -295,7 +297,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 onPress={() => loadFeed(false)}
             >
                 <Text style={[styles.loadMoreText, { color: colors.primary }]}>
-                    Charger plus
+                    {t('community.feed.loadMore')}
                 </Text>
             </TouchableOpacity>
         );
@@ -308,7 +310,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             <View style={styles.emptyContainer}>
                 <MessageSquare size={32} color={colors.gray300} strokeWidth={1.5} />
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                    Aucune activité
+                    {t('community.feed.noActivity')}
                 </Text>
             </View>
         );

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../contexts/I18nContext';
 import { formatDate, formatTime } from '../../utils/date';
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
@@ -63,12 +64,13 @@ const formatFileSize = (bytes?: number): string => {
 
 export function ChatInput({
   onSend,
-  placeholder = 'Écrivez votre message...',
+  placeholder,
   disabled = false,
   isSending = false,
   showDatetimeOption = true,
 }: ChatInputProps) {
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const inputRef = useRef<TextInput>(null);
 
   const [messageText, setMessageText] = useState('');
@@ -97,15 +99,15 @@ export function ChatInput({
         // Check file size
         if (file.size && file.size > MAX_FILE_SIZE) {
           Alert.alert(
-            'Fichier trop volumineux',
-            `Le fichier ne doit pas dépasser ${formatFileSize(MAX_FILE_SIZE)}.`
+            t('chat.fileTooLarge'),
+            t('chat.fileSizeLimit', { size: formatFileSize(MAX_FILE_SIZE) })
           );
           return;
         }
 
         // Check max attachments
         if (attachments.length >= 3) {
-          Alert.alert('Limite atteinte', 'Vous pouvez joindre maximum 3 fichiers.');
+          Alert.alert(t('chat.limitReached'), t('chat.maxFiles'));
           return;
         }
 
@@ -121,7 +123,7 @@ export function ChatInput({
       }
     } catch (error) {
       console.error('Error picking file:', error);
-      Alert.alert('Erreur', 'Impossible de sélectionner le fichier.');
+      Alert.alert(t('common.error'), t('chat.fileSelectError'));
     }
   };
 
@@ -184,7 +186,7 @@ export function ChatInput({
         <View style={[styles.datetimeIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
           <Calendar size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.datetimeIndicatorText, { color: colors.primary }]}>
-            Proposition: {formatDate(proposedDatetime.toISOString())} à {formatTime(proposedDatetime.toISOString())}
+            {t('chat.proposal', { date: formatDate(proposedDatetime.toISOString()), time: formatTime(proposedDatetime.toISOString()) })}
           </Text>
           <TouchableOpacity onPress={handleRemoveDatetime} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <X size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
@@ -230,10 +232,10 @@ export function ChatInput({
         <View style={[styles.datePickerContainer, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}>
           <View style={styles.datePickerHeader}>
             <Text style={[styles.datePickerTitle, { color: colors.textPrimary }]}>
-              Proposer une date
+              {t('chat.proposeDate')}
             </Text>
             <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-              <Text style={[styles.datePickerDone, { color: colors.primary }]}>OK</Text>
+              <Text style={[styles.datePickerDone, { color: colors.primary }]}>{t('alert.ok')}</Text>
             </TouchableOpacity>
           </View>
           <DateTimePicker
@@ -297,7 +299,7 @@ export function ChatInput({
         <TextInput
           ref={inputRef}
           style={[styles.textInput, { backgroundColor: colors.gray100, color: colors.textPrimary }]}
-          placeholder={placeholder}
+          placeholder={placeholder || t('chat.writeMessage')}
           placeholderTextColor={colors.gray500}
           value={messageText}
           onChangeText={setMessageText}

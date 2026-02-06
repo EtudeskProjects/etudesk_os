@@ -6,6 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from './logService';
 import { API_CONFIG, STORAGE_KEYS } from '../constants/config';
+import i18n from '../i18n';
 
 const API_BASE_URL = API_CONFIG.BASE_URL;
 const API_TIMEOUT = API_CONFIG.TIMEOUT;
@@ -204,6 +205,7 @@ class ApiService {
         method,
         headers: {
           'Content-Type': 'application/json',
+          'Accept-Language': i18n.locale,
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
           ...headers,
         },

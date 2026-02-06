@@ -50,18 +50,18 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
     }
 
     const { sessionId: inputSessionId, message, mode, organizationId, attachmentIds } = req.body;
 
     // Validate message
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
-      return res.status(400).json({ error: 'Le message est requis' });
+      return res.status(400).json({ error: req.t('copilot:messageRequired') });
     }
 
     if (message.length > 4000) {
-      return res.status(400).json({ error: 'Le message est trop long (max 4000 caractères)' });
+      return res.status(400).json({ error: req.t('copilot:messageTooLong') });
     }
 
     // Validate mode
@@ -105,6 +105,7 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
         organizationId,
         organizationName: orgInfo?.organizationName || 'Organisation',
         role: orgInfo?.role || 'MEMBER',
+        language: (req.language === 'en' ? 'en' : 'fr') as 'fr' | 'en',
       };
       agent = createOrgAgent(orgCtx);
     } else {
@@ -112,6 +113,7 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
         ...talentContext,
         talentId,
         talentName: `${talentContext.profile.firstName || ''} ${talentContext.profile.lastName || ''}`.trim() || talentContext.profile.email,
+        language: (req.language === 'en' ? 'en' : 'fr') as 'fr' | 'en',
         session: {
           currentMode: session.mode,
           conversationTopic: session.title,
@@ -186,10 +188,10 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
     logger.error('Error in copilot chat:', error);
     // If headers already sent (SSE started), send error event
     if (res.headersSent) {
-      sendSSE(res, { type: 'error', error: 'Erreur lors du traitement du message' });
+      sendSSE(res, { type: 'error', error: req.t('copilot:processingError') });
       res.end();
     } else {
-      res.status(500).json({ error: 'Erreur lors du traitement du message' });
+      res.status(500).json({ error: req.t('copilot:processingError') });
     }
   }
 });
@@ -213,7 +215,7 @@ router.get('/suggestions', authMiddleware, async (req: AuthRequest, res: Respons
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
     }
 
     const mode = (req.query.mode as string) || 'explore';
@@ -351,12 +353,12 @@ router.post(
     try {
       const talentId = req.talentId;
       if (!talentId) {
-        return res.status(401).json({ error: 'Non authentifié' });
+        return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
       }
 
       const file = req.file;
       if (!file) {
-        return res.status(400).json({ error: 'Aucun fichier audio fourni' });
+        return res.status(400).json({ error: req.t('copilot:noAudioFile') });
       }
 
       // Import OpenAI client
@@ -390,12 +392,12 @@ router.post(
       // Handle specific OpenAI errors
       if (error?.status === 400) {
         return res.status(400).json({
-          error: 'Format audio non valide ou fichier corrompu',
+          error: req.t('copilot:invalidAudioFormat'),
         });
       }
 
       res.status(500).json({
-        error: 'Erreur lors de la transcription audio',
+        error: req.t('copilot:transcriptionError'),
       });
     }
   }
@@ -435,12 +437,12 @@ router.post(
     try {
       const talentId = req.talentId;
       if (!talentId) {
-        return res.status(401).json({ error: 'Non authentifié' });
+        return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
       }
 
       const files = req.files as Express.Multer.File[] | undefined;
       if (!files || files.length === 0) {
-        return res.status(400).json({ error: 'Aucun fichier fourni' });
+        return res.status(400).json({ error: req.t('copilot:noFileProvided') });
       }
 
       if (files.length > DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST) {
@@ -507,7 +509,7 @@ router.post(
     } catch (error) {
       logger.error('Error uploading copilot attachment:', error);
       res.status(500).json({
-        error: "Erreur lors de l'upload du fichier",
+        error: req.t('copilot:uploadError'),
       });
     }
   }
@@ -526,7 +528,7 @@ router.get('/sessions', authMiddleware, async (req: AuthRequest, res: Response) 
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
     }
 
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
@@ -540,7 +542,7 @@ router.get('/sessions', authMiddleware, async (req: AuthRequest, res: Response) 
   } catch (error) {
     logger.error('Error listing copilot sessions:', error);
     res.status(500).json({
-      error: 'Erreur lors de la récupération des sessions',
+      error: req.t('copilot:sessionsError'),
     });
   }
 });
@@ -554,7 +556,7 @@ router.post('/sessions', authMiddleware, async (req: AuthRequest, res: Response)
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
     }
 
     const { mode } = req.body;
@@ -569,7 +571,7 @@ router.post('/sessions', authMiddleware, async (req: AuthRequest, res: Response)
   } catch (error) {
     logger.error('Error creating copilot session:', error);
     res.status(500).json({
-      error: 'Erreur lors de la création de la session',
+      error: req.t('copilot:sessionCreateError'),
     });
   }
 });
@@ -582,14 +584,14 @@ router.get('/sessions/:id', authMiddleware, async (req: AuthRequest, res: Respon
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
     }
 
     const sessionId = req.params.id;
 
     const session = await copilotService.getSession(sessionId, talentId);
     if (!session) {
-      return res.status(404).json({ error: 'Session non trouvée' });
+      return res.status(404).json({ error: req.t('copilot:sessionNotFound') });
     }
 
     const messages = await copilotService.getSessionMessages(sessionId);
@@ -601,7 +603,7 @@ router.get('/sessions/:id', authMiddleware, async (req: AuthRequest, res: Respon
   } catch (error) {
     logger.error('Error getting copilot session:', error);
     res.status(500).json({
-      error: 'Erreur lors de la récupération de la session',
+      error: req.t('copilot:sessionFetchError'),
     });
   }
 });
@@ -613,24 +615,24 @@ router.delete('/sessions/:id', authMiddleware, async (req: AuthRequest, res: Res
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
     }
 
     const sessionId = req.params.id;
 
     const deleted = await copilotService.deleteSession(sessionId, talentId);
     if (!deleted) {
-      return res.status(404).json({ error: 'Session non trouvée' });
+      return res.status(404).json({ error: req.t('copilot:sessionNotFound') });
     }
 
     res.json({
       success: true,
-      message: 'Session supprimée',
+      message: req.t('copilot:sessionDeleted'),
     });
   } catch (error) {
     logger.error('Error deleting copilot session:', error);
     res.status(500).json({
-      error: 'Erreur lors de la suppression de la session',
+      error: req.t('copilot:sessionDeleteError'),
     });
   }
 });
@@ -644,7 +646,7 @@ router.get('/sessions/:id/messages', authMiddleware, async (req: AuthRequest, re
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
     }
 
     const sessionId = req.params.id;
@@ -653,7 +655,7 @@ router.get('/sessions/:id/messages', authMiddleware, async (req: AuthRequest, re
     // Verify session belongs to user
     const session = await copilotService.getSession(sessionId, talentId);
     if (!session) {
-      return res.status(404).json({ error: 'Session non trouvée' });
+      return res.status(404).json({ error: req.t('copilot:sessionNotFound') });
     }
 
     const messages = await copilotService.getSessionMessages(sessionId, limit);
@@ -665,7 +667,7 @@ router.get('/sessions/:id/messages', authMiddleware, async (req: AuthRequest, re
   } catch (error) {
     logger.error('Error getting copilot messages:', error);
     res.status(500).json({
-      error: 'Erreur lors de la récupération des messages',
+      error: req.t('copilot:messagesError'),
     });
   }
 });

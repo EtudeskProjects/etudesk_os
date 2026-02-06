@@ -94,7 +94,7 @@ router.post('/bookings/:id/messages', authMiddleware, async (req: AuthRequest, r
     const { content, attachments, proposed_datetime, datetime_type } = req.body;
 
     if (!content || content.trim().length === 0) {
-      return res.status(400).json({ error: 'Message content is required' });
+      return res.status(400).json({ error: req.t('spaces:messageContentRequired') });
     }
 
     // Get booking and verify access

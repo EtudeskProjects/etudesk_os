@@ -14,6 +14,7 @@ import {
   ChatResponse,
 } from '../services/copilotService';
 import { logger } from '../services/logService';
+import { useTranslation } from './I18nContext';
 
 const LOG_SOURCE = 'Copilot';
 
@@ -57,6 +58,7 @@ interface CopilotProviderProps {
 }
 
 export function CopilotProvider({ children }: CopilotProviderProps) {
+  const { t } = useTranslation();
   const [state, setState] = useState<CopilotState>({
     mode: COPILOT_MODES.EXPLORE,
     sessionId: null,
@@ -102,7 +104,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
           );
 
           if (!uploadRes.success || !uploadRes.data?.documents) {
-            throw new Error(uploadRes.error || "Erreur lors de l'upload des pièces jointes");
+            throw new Error(uploadRes.error || t('copilotContext.attachmentUploadError'));
           }
 
           attachmentIds = uploadRes.data.documents.map((doc) => doc.id);
@@ -132,7 +134,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
         );
 
         if (response.error || !response.data?.data) {
-          throw new Error(response.error || "Erreur lors de l'envoi du message");
+          throw new Error(response.error || t('copilotContext.sendError'));
         }
 
         const chatResponse = response.data.data as ChatResponse;
@@ -165,7 +167,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
 
         return assistantMessage;
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+        const errorMessage = error instanceof Error ? error.message : t('copilotContext.unknownError');
         logger.error(LOG_SOURCE, 'Failed to send message', error);
 
         setState((prev) => ({
@@ -192,7 +194,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
       const response = await copilotService.getSession(sessionId);
 
       if (response.error || !response.data) {
-        throw new Error(response.error || 'Session non trouvée');
+        throw new Error(response.error || t('copilotContext.sessionNotFound'));
       }
 
       const { session, messages } = response.data;
@@ -207,7 +209,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
 
       logger.debug(LOG_SOURCE, 'Session loaded', { sessionId, messageCount: messages?.length });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      const errorMessage = error instanceof Error ? error.message : t('copilotContext.unknownError');
       logger.error(LOG_SOURCE, 'Failed to load session', error);
 
       setState((prev) => ({
@@ -240,7 +242,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
       const response = await copilotService.listSessions(20);
 
       if (response.error || !response.data) {
-        throw new Error(response.error || 'Erreur lors du chargement des sessions');
+        throw new Error(response.error || t('copilotContext.loadSessionsError'));
       }
 
       setState((prev) => ({

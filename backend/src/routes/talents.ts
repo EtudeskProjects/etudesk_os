@@ -26,16 +26,16 @@ const router = Router();
 router.get('/me/talent-object', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
     const obj = await buildTalentObject(req.talentId);
     if (!obj) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
     res.json({ data: obj });
   } catch (error) {
     logger.error('Error fetching talent object:', error);
-    res.status(500).json({ error: 'Failed to fetch talent object' });
+    res.status(500).json({ error: req.t('talents:fetchObjectError') });
   }
 });
 
@@ -46,7 +46,7 @@ router.get('/me/talent-object', authMiddleware, async (req: AuthRequest, res: Re
 router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const result = await pool.query(`
@@ -63,13 +63,13 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     `, [req.talentId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     res.json({ data: result.rows[0] });
   } catch (error) {
     logger.error('Error fetching talent profile:', error);
-    res.status(500).json({ error: 'Failed to fetch talent profile' });
+    res.status(500).json({ error: req.t('talents:fetchError') });
   }
 });
 
@@ -80,7 +80,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
 router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const {
@@ -165,7 +165,7 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
       const countryCode = normalizeCountryCode(country);
       if (country && !countryCode) {
         return res.status(400).json({
-          error: 'Country must be a 2-letter ISO code or a recognized country name',
+          error: req.t('common:countryMustBeIsoCode'),
           provided: country,
         });
       }
@@ -185,7 +185,7 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     if (profile_tags !== undefined) {
       if (!Array.isArray(profile_tags)) {
-        return res.status(400).json({ error: 'profile_tags must be an array' });
+        return res.status(400).json({ error: req.t('common:profileTagsMustBeArray') });
       }
       updates.push(`profile_tags = $${paramIndex++}`);
       params.push(profile_tags);
@@ -193,7 +193,7 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     if (sectors !== undefined) {
       if (!Array.isArray(sectors)) {
-        return res.status(400).json({ error: 'sectors must be an array' });
+        return res.status(400).json({ error: req.t('common:sectorsMustBeArray') });
       }
       updates.push(`sectors = $${paramIndex++}`);
       params.push(sectors);
@@ -201,10 +201,10 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     if (goals !== undefined) {
       if (!Array.isArray(goals)) {
-        return res.status(400).json({ error: 'goals must be an array' });
+        return res.status(400).json({ error: req.t('common:goalsMustBeArray') });
       }
       if (goals.length > 3) {
-        return res.status(400).json({ error: 'Maximum 3 goals allowed' });
+        return res.status(400).json({ error: req.t('common:maxGoalsAllowed') });
       }
       updates.push(`goals = $${paramIndex++}`);
       params.push(goals);
@@ -212,14 +212,14 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     if (learning_preferences !== undefined) {
       if (typeof learning_preferences !== 'object' || learning_preferences === null) {
-        return res.status(400).json({ error: 'learning_preferences must be an object' });
+        return res.status(400).json({ error: req.t('common:learningPreferencesMustBeObject') });
       }
       updates.push(`learning_preferences = $${paramIndex++}::jsonb`);
       params.push(JSON.stringify(learning_preferences));
     }
 
     if (updates.length === 0) {
-      return res.status(400).json({ error: 'No fields to update' });
+      return res.status(400).json({ error: req.t('common:noFieldsToUpdate') });
     }
 
     // Add talent_id to params
@@ -234,7 +234,7 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     `, params);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     // Generate/update embedding for semantic search (async, non-blocking)
@@ -245,7 +245,7 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     res.json({ data: result.rows[0] });
   } catch (error) {
     logger.error('Error updating talent profile:', error);
-    res.status(500).json({ error: 'Failed to update talent profile' });
+    res.status(500).json({ error: req.t('talents:updateError') });
   }
 });
 
@@ -276,7 +276,7 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
     }
 
     if (!contextText) {
-      return res.status(400).json({ error: 'Pas assez d\'informations pour générer une bio. Remplis d\'abord ton profil.' });
+      return res.status(400).json({ error: req.t('common:notEnoughInfoForBio') });
     }
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -292,13 +292,13 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
     const bio = (choice?.message?.content ?? choice?.message?.refusal)?.trim();
     if (!bio) {
       logger.error('Bio generation empty response:', JSON.stringify(choice));
-      return res.status(500).json({ error: 'Échec de la génération' });
+      return res.status(500).json({ error: req.t('common:bioGenerationFailed') });
     }
 
     res.json({ data: { bio: bio.slice(0, 250) } });
   } catch (error) {
     logger.error('Error generating bio:', error);
-    res.status(500).json({ error: 'Erreur lors de la génération de la bio' });
+    res.status(500).json({ error: req.t('common:bioGenerationError') });
   }
 });
 
@@ -333,13 +333,13 @@ router.get('/:id', async (req, res) => {
     `, [id]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Talent not found' });
+      return res.status(404).json({ error: req.t('talents:notFound') });
     }
 
     res.json({ data: result.rows[0] });
   } catch (error) {
     logger.error('Error fetching talent:', error);
-    res.status(500).json({ error: 'Failed to fetch talent' });
+    res.status(500).json({ error: req.t('talents:fetchError') });
   }
 });
 

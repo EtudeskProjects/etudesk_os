@@ -36,7 +36,7 @@ router.get('/:id/messages', authMiddleware, async (req: AuthRequest, res: Respon
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé');
+      throw createForbiddenError(req.t('applications:accessDenied'));
     }
 
     const result = await pool.query(`
@@ -63,7 +63,7 @@ router.post('/:id/messages', authMiddleware, async (req: AuthRequest, res: Respo
     const { content, attachments, proposed_datetime, datetime_type } = req.body;
 
     if (!content || content.trim().length === 0) {
-      return res.status(400).json({ error: 'Le message ne peut pas être vide' });
+      return res.status(400).json({ error: req.t('applications:messageEmpty') });
     }
 
     const accessCheck = await pool.query(`
@@ -78,7 +78,7 @@ router.post('/:id/messages', authMiddleware, async (req: AuthRequest, res: Respo
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé');
+      throw createForbiddenError(req.t('applications:accessDenied'));
     }
 
     const senderType = accessCheck.rows[0].sender_type;
@@ -92,7 +92,7 @@ router.post('/:id/messages', authMiddleware, async (req: AuthRequest, res: Respo
 
       if (existingMessages.rows.length === 0) {
         return res.status(403).json({
-          error: 'Vous ne pouvez pas initier la conversation. Veuillez attendre que l\'organisation vous contacte.',
+          error: req.t('applications:organizationFirstMessage'),
           code: 'ORGANIZATION_FIRST_MESSAGE_REQUIRED'
         });
       }
@@ -145,7 +145,7 @@ router.put('/:id/messages/read-all', authMiddleware, async (req: AuthRequest, re
     `, [id, talentId]);
 
     if (accessCheck.rows.length === 0) {
-      throw createForbiddenError('Accès non autorisé');
+      throw createForbiddenError(req.t('applications:accessDenied'));
     }
 
     const isApplicant = accessCheck.rows[0].talent_id === talentId;

@@ -143,7 +143,7 @@ router.post('/members/:memberId/messages', authMiddleware, async (req: AuthReque
     const { content, attachments, proposed_datetime, datetime_type } = req.body;
 
     if (!content || String(content).trim().length === 0) {
-      return res.status(400).json({ error: 'Le message ne peut pas être vide' });
+      return res.status(400).json({ error: req.t('communities:messageCannotBeEmpty') });
     }
 
     const access = await checkMembershipMessageAccess(memberId, talentId);
@@ -256,7 +256,7 @@ router.get('/members/:memberId', authMiddleware, async (req: AuthRequest, res: R
     )).rows.length > 0;
 
     if (!isTalentOwner && !isOrgAdmin) {
-      throw createForbiddenError('Accès non autorisé à cette adhésion');
+      throw createForbiddenError(req.t('communities:accessNotAuthorizedToMembership'));
     }
 
     const talent = row.talent as any;
@@ -293,7 +293,7 @@ router.get('/members/:memberId/permissions', authMiddleware, async (req: AuthReq
       [communityId, talentId]
     );
     if (adminCheck.rows.length === 0) {
-      throw createForbiddenError('Seuls les admins de la communauté peuvent voir les permissions');
+      throw createForbiddenError(req.t('communities:onlyAdminsCanViewPermissions'));
     }
 
     const data = await communityPermissionService.getMembershipPermissions(memberId);
@@ -327,7 +327,7 @@ router.put('/members/:memberId/permissions', authMiddleware, async (req: AuthReq
       [communityId, talentId]
     );
     if (adminCheck.rows.length === 0) {
-      throw createForbiddenError('Seuls les admins de la communauté peuvent modifier les permissions');
+      throw createForbiddenError(req.t('communities:onlyAdminsCanUpdatePermissions'));
     }
 
     const updated = await communityPermissionService.updateMemberPermissions(memberId, permissions ?? null);
@@ -336,7 +336,7 @@ router.put('/members/:memberId/permissions', authMiddleware, async (req: AuthReq
       data: {
         permissions: updated,
         isCustom: data.isCustom,
-        message: permissions === null ? 'Permissions réinitialisées aux valeurs par défaut.' : 'Permissions mises à jour.',
+        message: permissions === null ? req.t('communities:permissionsResetToDefault') : req.t('communities:permissionsUpdated'),
       },
     });
   } catch (error) {
@@ -362,7 +362,7 @@ async function requireMembershipAdmin(memberId: string, talentId: string): Promi
     [communityId, talentId]
   );
   if (adminCheck.rows.length === 0) {
-    throw createForbiddenError('Seuls les admins de la communauté peuvent effectuer cette action');
+    throw createForbiddenError('Only community admins can perform this action'); // Used in helper function without req
   }
   return communityId;
 }
@@ -377,7 +377,7 @@ router.put('/members/:memberId/rating', authMiddleware, async (req: AuthRequest,
     const { rating } = req.body;
 
     if (typeof rating !== 'number' || rating < 1 || rating > 5) {
-      return res.status(400).json({ error: 'La note doit être entre 1 et 5' });
+      return res.status(400).json({ error: req.t('communities:ratingMustBeBetween1And5') });
     }
 
     await requireMembershipAdmin(memberId, talentId);
@@ -538,10 +538,10 @@ router.post('/:id/join', authMiddleware, async (req: AuthRequest, res: Response)
     if (existingMember.rows.length > 0) {
       const member = existingMember.rows[0];
       if (member.status === 'ACTIVE') {
-        return res.status(400).json({ error: 'Already a member' });
+        return res.status(400).json({ error: req.t('communities:alreadyMemberError') });
       }
       if (member.status === 'PENDING') {
-        return res.status(400).json({ error: 'Request already pending' });
+        return res.status(400).json({ error: req.t('communities:requestAlreadyPending') });
       }
     }
 
@@ -559,7 +559,7 @@ router.post('/:id/join', authMiddleware, async (req: AuthRequest, res: Response)
 
     res.status(201).json({
       data: result.rows[0],
-      message: 'Demande d\'adhésion envoyée. L\'organisation doit la valider.',
+      message: req.t('communities:membershipRequestSent'),
     });
   } catch (error) {
     handleRouteError(res, error, 'Error joining community');
@@ -580,7 +580,7 @@ router.delete('/:id/leave', authMiddleware, async (req: AuthRequest, res: Respon
     `, [id, talentId]);
 
     if (memberCheck.rows.length === 0) {
-      return res.status(400).json({ error: 'Not a member' });
+      return res.status(400).json({ error: req.t('communities:notMember') });
     }
 
     if (memberCheck.rows[0].role === 'ADMIN') {
@@ -592,7 +592,7 @@ router.delete('/:id/leave', authMiddleware, async (req: AuthRequest, res: Respon
 
       if (parseInt(otherAdmins.rows[0].count) === 0) {
         return res.status(400).json({
-          error: 'Cannot leave: You are the only admin. Transfer ownership first.',
+          error: req.t('communities:cannotLeaveOnlyAdmin'),
         });
       }
     }
@@ -602,7 +602,7 @@ router.delete('/:id/leave', authMiddleware, async (req: AuthRequest, res: Respon
       [id, talentId]
     );
 
-    res.json({ success: true, message: 'Left community' });
+    res.json({ success: true, message: req.t('communities:leftCommunity') });
   } catch (error) {
     handleRouteError(res, error, 'Error leaving community');
   }
@@ -624,7 +624,7 @@ router.put('/:id/members/:memberId', authMiddleware, async (req: AuthRequest, re
     `, [id, talentId]);
 
     if (adminCheck.rows.length === 0) {
-      throw createForbiddenError('Only admins can update members');
+      throw createForbiddenError(req.t('communities:onlyAdminsCanPerformAction'));
     }
 
     const result = await pool.query(`
@@ -662,7 +662,7 @@ router.delete('/:id/members/:memberId', authMiddleware, async (req: AuthRequest,
     `, [id, talentId]);
 
     if (adminCheck.rows.length === 0) {
-      throw createForbiddenError('Only admins can remove members');
+      throw createForbiddenError(req.t('communities:onlyAdminsCanPerformAction'));
     }
 
     await pool.query(
@@ -670,7 +670,7 @@ router.delete('/:id/members/:memberId', authMiddleware, async (req: AuthRequest,
       [memberId, id]
     );
 
-    res.json({ success: true, message: 'Member removed' });
+    res.json({ success: true, message: req.t('communities:memberRemoved') });
   } catch (error) {
     handleRouteError(res, error, 'Error removing member');
   }

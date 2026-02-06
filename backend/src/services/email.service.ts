@@ -3,12 +3,24 @@
  *
  * Uses Nodemailer with Mailhog for development
  * Production-ready: just update SMTP settings for production
+ * Supports bilingual emails (FR/EN) via i18next
  */
 
 import nodemailer from 'nodemailer';
 import type Mail from 'nodemailer/lib/mailer';
+import i18next from 'i18next';
 
 import { logger } from '../utils';
+
+// Type for supported languages
+export type EmailLanguage = 'fr' | 'en';
+
+// Helper to get translation function for a specific language
+function getT(language: EmailLanguage = 'fr') {
+  return (key: string, options?: Record<string, string | number>) => {
+    return i18next.t(key, { lng: language, ...options });
+  };
+}
 // Email configuration
 const EMAIL_CONFIG = {
   // Mailhog defaults (development)
@@ -37,15 +49,19 @@ export const EmailTemplates = {
   /**
    * OTP Login Email Template - Minimalist Design
    */
-  otpLogin: (code: string, expiresInMinutes: number = 10): { subject: string; html: string; text: string } => ({
-    subject: `${code} - Code de connexion`,
-    html: `
+  otpLogin: (code: string, expiresInMinutes: number = 10, language: EmailLanguage = 'fr'): { subject: string; html: string; text: string } => {
+    const t = getT(language);
+    const lang = language === 'en' ? 'en' : 'fr';
+
+    return {
+      subject: t('emails:otp.subject', { code }),
+      html: `
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Code de connexion</title>
+  <title>${t('emails:otp.title')}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #ffffff;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -64,7 +80,7 @@ export const EmailTemplates = {
           <tr>
             <td style="text-align: center;">
               <p style="margin: 0 0 24px; font-size: 15px; color: #6b7280;">
-                Votre code de connexion
+                ${t('emails:otp.yourCode')}
               </p>
 
               <!-- OTP Code -->
@@ -75,7 +91,7 @@ export const EmailTemplates = {
               </div>
 
               <p style="margin: 0 0 40px; font-size: 13px; color: #9ca3af;">
-                Valide ${expiresInMinutes} min
+                ${t('emails:otp.validFor', { minutes: expiresInMinutes })}
               </p>
             </td>
           </tr>
@@ -91,7 +107,7 @@ export const EmailTemplates = {
           <tr>
             <td style="padding-top: 24px; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #d1d5db;">
-                Ne partagez jamais ce code
+                ${t('emails:otp.neverShare')}
               </p>
             </td>
           </tr>
@@ -102,28 +118,34 @@ export const EmailTemplates = {
   </table>
 </body>
 </html>
-    `.trim(),
-    text: `
-Code de connexion Etudesk: ${code}
+      `.trim(),
+      text: `
+${t('emails:otp.yourCode')}: ${code}
 
-Valide ${expiresInMinutes} minutes.
+${t('emails:otp.validFor', { minutes: expiresInMinutes })}.
 
-Ne partagez jamais ce code.
-    `.trim(),
-  }),
+${t('emails:otp.neverShare')}.
+      `.trim(),
+    };
+  },
 
   /**
    * Welcome Email Template (after onboarding)
    */
-  welcome: (displayName: string): { subject: string; html: string; text: string } => ({
-    subject: `Bienvenue sur Etudesk, ${displayName}! 🎉`,
-    html: `
+  welcome: (displayName: string, language: EmailLanguage = 'fr'): { subject: string; html: string; text: string } => {
+    const t = getT(language);
+    const lang = language === 'en' ? 'en' : 'fr';
+    const year = new Date().getFullYear();
+
+    return {
+      subject: t('emails:welcome.subject', { name: displayName }),
+      html: `
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bienvenue sur Etudesk</title>
+  <title>${t('emails:welcome.title')}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -141,26 +163,26 @@ Ne partagez jamais ce code.
           <tr>
             <td style="padding: 20px 40px;">
               <h1 style="margin: 0 0 20px; font-size: 28px; font-weight: 600; color: #1a1a1a; text-align: center;">
-                Bienvenue sur Etudesk! 🎉
+                ${t('emails:welcome.title')}
               </h1>
               <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #666666;">
-                Bonjour <strong>${displayName}</strong>,
+                ${t('emails:welcome.greeting', { name: displayName })}
               </p>
               <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #666666;">
-                Félicitations! Votre profil talent est maintenant créé sur Etudesk. Vous pouvez désormais:
+                ${t('emails:welcome.congratulations')}
               </p>
 
               <ul style="margin: 0 0 30px; padding-left: 20px; font-size: 16px; line-height: 1.8; color: #666666;">
-                <li>Découvrir des opportunités d'emploi, stages et missions</li>
-                <li>Rejoindre des communautés de professionnels</li>
-                <li>Trouver des espaces de coworking et incubateurs</li>
-                <li>Développer votre réseau professionnel</li>
+                <li>${t('emails:welcome.feature1')}</li>
+                <li>${t('emails:welcome.feature2')}</li>
+                <li>${t('emails:welcome.feature3')}</li>
+                <li>${t('emails:welcome.feature4')}</li>
               </ul>
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 30px;">
                 <a href="https://etudesk.com/explore" style="display: inline-block; background-color: #E63946; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
-                  Explorer Etudesk
+                  ${t('emails:welcome.exploreButton')}
                 </a>
               </div>
             </td>
@@ -170,7 +192,7 @@ Ne partagez jamais ce code.
           <tr>
             <td style="padding: 30px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
               <p style="margin: 0 0 10px; font-size: 12px; color: #999999; text-align: center;">
-                © ${new Date().getFullYear()} Etudesk. Tous droits réservés.
+                ${t('emails:welcome.copyright', { year })}
               </p>
             </td>
           </tr>
@@ -180,23 +202,24 @@ Ne partagez jamais ce code.
   </table>
 </body>
 </html>
-    `.trim(),
-    text: `
-Bienvenue sur Etudesk, ${displayName}!
+      `.trim(),
+      text: `
+${t('emails:welcome.title')}
 
-Félicitations! Votre profil talent est maintenant créé sur Etudesk.
+${t('emails:welcome.greeting', { name: displayName })}
 
-Vous pouvez désormais:
-- Découvrir des opportunités d'emploi, stages et missions
-- Rejoindre des communautés de professionnels
-- Trouver des espaces de coworking et incubateurs
-- Développer votre réseau professionnel
+${t('emails:welcome.congratulations')}
+- ${t('emails:welcome.feature1')}
+- ${t('emails:welcome.feature2')}
+- ${t('emails:welcome.feature3')}
+- ${t('emails:welcome.feature4')}
 
-Explorez Etudesk: https://etudesk.com/explore
+${t('emails:welcome.exploreButton')}: https://etudesk.com/explore
 
-© ${new Date().getFullYear()} Etudesk. Tous droits réservés.
-    `.trim(),
-  }),
+${t('emails:welcome.copyright', { year })}
+      `.trim(),
+    };
+  },
 };
 
 export interface SendEmailOptions {
@@ -240,8 +263,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
 /**
  * Send OTP login email
  */
-export async function sendOTPEmail(email: string, code: string): Promise<{ success: boolean; error?: string }> {
-  const template = EmailTemplates.otpLogin(code);
+export async function sendOTPEmail(email: string, code: string, language: EmailLanguage = 'fr'): Promise<{ success: boolean; error?: string }> {
+  const template = EmailTemplates.otpLogin(code, 10, language);
   return sendEmail({
     to: email,
     ...template,
@@ -251,8 +274,8 @@ export async function sendOTPEmail(email: string, code: string): Promise<{ succe
 /**
  * Send welcome email after onboarding
  */
-export async function sendWelcomeEmail(email: string, displayName: string): Promise<{ success: boolean; error?: string }> {
-  const template = EmailTemplates.welcome(displayName);
+export async function sendWelcomeEmail(email: string, displayName: string, language: EmailLanguage = 'fr'): Promise<{ success: boolean; error?: string }> {
+  const template = EmailTemplates.welcome(displayName, language);
   return sendEmail({
     to: email,
     ...template,
@@ -267,27 +290,25 @@ export async function sendOrganizationInviteEmail(
   organizationName: string,
   inviterName: string,
   role: string,
-  token: string
+  token: string,
+  language: EmailLanguage = 'fr'
 ): Promise<{ success: boolean; error?: string }> {
-  const roleLabels: Record<string, string> = {
-    OWNER: 'Propriétaire',
-    ADMIN: 'Administrateur',
-    MANAGER: 'Manager',
-    OBSERVATEUR: 'Observateur',
-  };
-  const roleLabel = roleLabels[role] || role;
+  const t = getT(language);
+  const lang = language === 'en' ? 'en' : 'fr';
+  const roleLabel = t(`emails:orgInvite.roles.${role}`) || role;
   const appUrl = process.env.APP_URL || 'https://etudesk.com';
   const inviteLink = `${appUrl}/invitation/${token}`;
+  const year = new Date().getFullYear();
 
   const template = {
-    subject: `${inviterName} vous invite à rejoindre ${organizationName} sur Etudesk`,
+    subject: t('emails:orgInvite.subject', { inviter: inviterName, organization: organizationName }),
     html: `
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invitation à rejoindre ${organizationName}</title>
+  <title>${t('emails:orgInvite.title')}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -306,11 +327,11 @@ export async function sendOrganizationInviteEmail(
           <tr>
             <td style="padding: 20px 40px;">
               <h1 style="margin: 0 0 24px; font-size: 22px; font-weight: 600; color: #1a1a1a; text-align: center;">
-                Vous êtes invité(e)!
+                ${t('emails:orgInvite.title')}
               </h1>
 
               <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #4a4a4a; text-align: center;">
-                <strong>${inviterName}</strong> vous invite à rejoindre l'organisation
+                ${t('emails:orgInvite.inviterInvites', { inviter: inviterName })}
               </p>
 
               <!-- Organization Card -->
@@ -319,18 +340,18 @@ export async function sendOrganizationInviteEmail(
                   ${organizationName}
                 </p>
                 <p style="margin: 0; font-size: 14px; color: #6b7280;">
-                  en tant que <strong>${roleLabel}</strong>
+                  ${t('emails:orgInvite.asRole', { role: roleLabel })}
                 </p>
               </div>
 
               <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #6b7280; text-align: center;">
-                Connectez-vous à Etudesk pour accepter cette invitation et commencer à collaborer.
+                ${t('emails:orgInvite.connectToAccept')}
               </p>
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 20px;">
                 <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
-                  Voir l'invitation
+                  ${t('emails:orgInvite.viewInvitation')}
                 </a>
               </div>
             </td>
@@ -340,10 +361,10 @@ export async function sendOrganizationInviteEmail(
           <tr>
             <td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
               <p style="margin: 0 0 8px; font-size: 12px; color: #9ca3af; text-align: center;">
-                Cette invitation expire dans 7 jours.
+                ${t('emails:orgInvite.expiresIn')}
               </p>
               <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
-                © ${new Date().getFullYear()} Etudesk. Tous droits réservés.
+                ${t('emails:orgInvite.copyright', { year })}
               </p>
             </td>
           </tr>
@@ -355,16 +376,16 @@ export async function sendOrganizationInviteEmail(
 </html>
     `.trim(),
     text: `
-${inviterName} vous invite à rejoindre ${organizationName} sur Etudesk!
+${t('emails:orgInvite.subject', { inviter: inviterName, organization: organizationName })}
 
-Vous êtes invité(e) en tant que ${roleLabel}.
+${t('emails:orgInvite.asRole', { role: roleLabel })}.
 
-Connectez-vous à Etudesk pour accepter cette invitation:
+${t('emails:orgInvite.connectToAccept')}
 ${inviteLink}
 
-Cette invitation expire dans 7 jours.
+${t('emails:orgInvite.expiresIn')}
 
-© ${new Date().getFullYear()} Etudesk. Tous droits réservés.
+${t('emails:orgInvite.copyright', { year })}
     `.trim(),
   };
 
@@ -384,29 +405,29 @@ export async function sendCommunityInviteEmail(
   inviterName: string,
   role: string,
   message: string | null,
-  invitationToken: string | null
+  invitationToken: string | null,
+  language: EmailLanguage = 'fr'
 ): Promise<{ success: boolean; error?: string }> {
-  const roleLabels: Record<string, string> = {
-    ADMIN: 'Administrateur',
-    MEMBER: 'Membre',
-  };
-  const roleLabel = roleLabels[role] || 'Membre';
+  const t = getT(language);
+  const lang = language === 'en' ? 'en' : 'fr';
+  const roleLabel = t(`emails:communityInvite.roles.${role}`) || role;
   const appUrl = process.env.APP_URL || 'https://etudesk.com';
   const inviteLink = invitationToken
     ? `${appUrl}/community-invitation/${invitationToken}`
     : `${appUrl}/invitations`;
+  const year = new Date().getFullYear();
 
   const displayName = inviteeName || email.split('@')[0];
 
   const template = {
-    subject: `${inviterName} vous invite à rejoindre ${communityName}`,
+    subject: t('emails:communityInvite.subject', { inviter: inviterName, community: communityName }),
     html: `
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invitation à rejoindre ${communityName}</title>
+  <title>${t('emails:communityInvite.title')}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -425,15 +446,15 @@ export async function sendCommunityInviteEmail(
           <tr>
             <td style="padding: 20px 40px;">
               <h1 style="margin: 0 0 24px; font-size: 22px; font-weight: 600; color: #1a1a1a; text-align: center;">
-                Vous êtes invité(e)!
+                ${t('emails:communityInvite.title')}
               </h1>
 
               <p style="margin: 0 0 10px; font-size: 16px; line-height: 1.6; color: #4a4a4a;">
-                Bonjour <strong>${displayName}</strong>,
+                ${t('emails:communityInvite.greeting', { name: displayName })}
               </p>
 
               <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #4a4a4a;">
-                <strong>${inviterName}</strong> vous invite à rejoindre la communauté
+                ${t('emails:communityInvite.inviterInvites', { inviter: inviterName })}
               </p>
 
               <!-- Community Card -->
@@ -442,7 +463,7 @@ export async function sendCommunityInviteEmail(
                   ${communityName}
                 </p>
                 <p style="margin: 0; font-size: 14px; color: #6b7280;">
-                  en tant que <strong>${roleLabel}</strong>
+                  ${t('emails:communityInvite.asRole', { role: roleLabel })}
                 </p>
               </div>
 
@@ -455,13 +476,13 @@ export async function sendCommunityInviteEmail(
               ` : ''}
 
               <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #6b7280; text-align: center;">
-                Connectez-vous à Etudesk pour accepter cette invitation et rejoindre la communauté.
+                ${t('emails:communityInvite.connectToAccept')}
               </p>
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 20px;">
                 <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
-                  Voir l'invitation
+                  ${t('emails:communityInvite.viewInvitation')}
                 </a>
               </div>
             </td>
@@ -471,10 +492,10 @@ export async function sendCommunityInviteEmail(
           <tr>
             <td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
               <p style="margin: 0 0 8px; font-size: 12px; color: #9ca3af; text-align: center;">
-                Cette invitation expire dans 7 jours.
+                ${t('emails:communityInvite.expiresIn')}
               </p>
               <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
-                © ${new Date().getFullYear()} Etudesk. Tous droits réservés.
+                ${t('emails:communityInvite.copyright', { year })}
               </p>
             </td>
           </tr>
@@ -486,18 +507,18 @@ export async function sendCommunityInviteEmail(
 </html>
     `.trim(),
     text: `
-Bonjour ${displayName},
+${t('emails:communityInvite.greeting', { name: displayName })}
 
-${inviterName} vous invite à rejoindre la communauté "${communityName}" sur Etudesk!
+${t('emails:communityInvite.inviterInvites', { inviter: inviterName })} "${communityName}"
 
-Vous êtes invité(e) en tant que ${roleLabel}.
+${t('emails:communityInvite.asRole', { role: roleLabel })}.
 ${message ? `\nMessage: "${message}"\n` : ''}
-Connectez-vous à Etudesk pour accepter cette invitation:
+${t('emails:communityInvite.connectToAccept')}
 ${inviteLink}
 
-Cette invitation expire dans 7 jours.
+${t('emails:communityInvite.expiresIn')}
 
-© ${new Date().getFullYear()} Etudesk. Tous droits réservés.
+${t('emails:communityInvite.copyright', { year })}
     `.trim(),
   };
 
@@ -516,17 +537,20 @@ export async function sendSpaceInviteEmail(
   spaceName: string,
   inviterName: string,
   message: string | null,
-  invitationToken: string
+  invitationToken: string,
+  language: EmailLanguage = 'fr'
 ): Promise<{ success: boolean; error?: string }> {
+  const t = getT(language);
+  const lang = language === 'en' ? 'en' : 'fr';
   const appUrl = process.env.APP_URL || 'https://etudesk.com';
   const inviteLink = `${appUrl}/space-invitation/${invitationToken}`;
   const displayName = inviteeName || email.split('@')[0];
 
   const template = {
-    subject: `${inviterName} vous invite à découvrir ${spaceName}`,
+    subject: t('emails:spaceInvite.subject', { inviter: inviterName, space: spaceName }),
     html: `
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -540,19 +564,19 @@ export async function sendSpaceInviteEmail(
             <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px;" />
           </td></tr>
           <tr><td style="padding: 20px 40px;">
-            <h1 style="margin: 0 0 24px; font-size: 22px; text-align: center; color: #1a1a1a;">Invitation à un espace</h1>
-            <p style="margin: 0 0 10px; font-size: 16px; color: #4a4a4a;">Bonjour <strong>${displayName}</strong>,</p>
-            <p style="margin: 0 0 20px; font-size: 16px; color: #4a4a4a;"><strong>${inviterName}</strong> vous invite à découvrir l'espace</p>
+            <h1 style="margin: 0 0 24px; font-size: 22px; text-align: center; color: #1a1a1a;">${t('emails:spaceInvite.title')}</h1>
+            <p style="margin: 0 0 10px; font-size: 16px; color: #4a4a4a;">${t('emails:spaceInvite.greeting', { name: displayName })}</p>
+            <p style="margin: 0 0 20px; font-size: 16px; color: #4a4a4a;">${t('emails:spaceInvite.inviterInvites', { inviter: inviterName })}</p>
             <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
               <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${BRAND_BLACK};">${spaceName}</p>
             </div>
             ${message ? `<div style="background-color: #fefce8; border-left: 4px solid #facc15; padding: 12px 16px; margin-bottom: 24px;"><p style="margin: 0; font-size: 14px; color: #713f12; font-style: italic;">"${message}"</p></div>` : ''}
             <div style="text-align: center; margin-bottom: 20px;">
-              <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Voir l'invitation</a>
+              <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">${t('emails:spaceInvite.viewInvitation')}</a>
             </div>
           </td></tr>
           <tr><td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
-            <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">Cette invitation expire dans 7 jours.</p>
+            <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">${t('emails:spaceInvite.expiresIn')}</p>
           </td></tr>
         </table>
       </td>
@@ -560,7 +584,7 @@ export async function sendSpaceInviteEmail(
   </table>
 </body>
 </html>`.trim(),
-    text: `Bonjour ${displayName},\n\n${inviterName} vous invite à découvrir l'espace "${spaceName}" sur Etudesk.\n${message ? `Message: "${message}"\n` : ''}\nVoir l'invitation: ${inviteLink}\n\nCette invitation expire dans 7 jours.`.trim(),
+    text: `${t('emails:spaceInvite.greeting', { name: displayName })}\n\n${t('emails:spaceInvite.inviterInvites', { inviter: inviterName })} "${spaceName}".\n${message ? `Message: "${message}"\n` : ''}\n${t('emails:spaceInvite.viewInvitation')}: ${inviteLink}\n\n${t('emails:spaceInvite.expiresIn')}`.trim(),
   };
 
   return sendEmail({ to: email, ...template });
@@ -576,17 +600,20 @@ export async function sendOpportunityInviteEmail(
   organizationName: string,
   inviterName: string,
   message: string | null,
-  invitationToken: string
+  invitationToken: string,
+  language: EmailLanguage = 'fr'
 ): Promise<{ success: boolean; error?: string }> {
+  const t = getT(language);
+  const lang = language === 'en' ? 'en' : 'fr';
   const appUrl = process.env.APP_URL || 'https://etudesk.com';
   const inviteLink = `${appUrl}/opportunity-invitation/${invitationToken}`;
   const displayName = inviteeName || email.split('@')[0];
 
   const template = {
-    subject: `${inviterName} vous invite à postuler - ${opportunityTitle}`,
+    subject: t('emails:opportunityInvite.subject', { inviter: inviterName, opportunity: opportunityTitle }),
     html: `
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -600,20 +627,20 @@ export async function sendOpportunityInviteEmail(
             <img src="https://etudesk.com/etudesk_logo_black.png" alt="Etudesk" style="height: 36px;" />
           </td></tr>
           <tr><td style="padding: 20px 40px;">
-            <h1 style="margin: 0 0 24px; font-size: 22px; text-align: center; color: #1a1a1a;">Invitation à postuler</h1>
-            <p style="margin: 0 0 10px; font-size: 16px; color: #4a4a4a;">Bonjour <strong>${displayName}</strong>,</p>
-            <p style="margin: 0 0 20px; font-size: 16px; color: #4a4a4a;"><strong>${inviterName}</strong> de <strong>${organizationName}</strong> vous invite à postuler à l'opportunité</p>
+            <h1 style="margin: 0 0 24px; font-size: 22px; text-align: center; color: #1a1a1a;">${t('emails:opportunityInvite.title')}</h1>
+            <p style="margin: 0 0 10px; font-size: 16px; color: #4a4a4a;">${t('emails:opportunityInvite.greeting', { name: displayName })}</p>
+            <p style="margin: 0 0 20px; font-size: 16px; color: #4a4a4a;">${t('emails:opportunityInvite.inviterInvites', { inviter: inviterName, organization: organizationName })}</p>
             <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
               <p style="margin: 0; font-size: 20px; font-weight: 600; color: ${BRAND_BLACK};">${opportunityTitle}</p>
               <p style="margin: 8px 0 0; font-size: 14px; color: #6b7280;">${organizationName}</p>
             </div>
             ${message ? `<div style="background-color: #fefce8; border-left: 4px solid #facc15; padding: 12px 16px; margin-bottom: 24px;"><p style="margin: 0; font-size: 14px; color: #713f12; font-style: italic;">"${message}"</p></div>` : ''}
             <div style="text-align: center; margin-bottom: 20px;">
-              <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">Voir l'opportunité</a>
+              <a href="${inviteLink}" style="display: inline-block; background-color: ${BRAND_BLACK}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">${t('emails:opportunityInvite.viewOpportunity')}</a>
             </div>
           </td></tr>
           <tr><td style="padding: 24px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
-            <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">Cette invitation expire dans 7 jours.</p>
+            <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">${t('emails:opportunityInvite.expiresIn')}</p>
           </td></tr>
         </table>
       </td>
@@ -621,7 +648,7 @@ export async function sendOpportunityInviteEmail(
   </table>
 </body>
 </html>`.trim(),
-    text: `Bonjour ${displayName},\n\n${inviterName} de ${organizationName} vous invite à postuler à l'opportunité "${opportunityTitle}" sur Etudesk.\n${message ? `Message: "${message}"\n` : ''}\nVoir l'opportunité: ${inviteLink}\n\nCette invitation expire dans 7 jours.`.trim(),
+    text: `${t('emails:opportunityInvite.greeting', { name: displayName })}\n\n${t('emails:opportunityInvite.inviterInvites', { inviter: inviterName, organization: organizationName })} "${opportunityTitle}".\n${message ? `Message: "${message}"\n` : ''}\n${t('emails:opportunityInvite.viewOpportunity')}: ${inviteLink}\n\n${t('emails:opportunityInvite.expiresIn')}`.trim(),
   };
 
   return sendEmail({ to: email, ...template });

@@ -6,6 +6,7 @@
 import { api, ApiResponse } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG, STORAGE_KEYS } from '../constants/config';
+import i18n from '../i18n';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -253,16 +254,16 @@ class CopilotService {
         };
 
         xhr.onerror = () => {
-          callbacks.onError('Erreur de connexion');
+          callbacks.onError(i18n.t('copilotService.connectionError'));
         };
 
         xhr.onload = () => {
           if (xhr.status >= 400) {
             try {
               const errorData = JSON.parse(xhr.responseText);
-              callbacks.onError(errorData.error || `Erreur ${xhr.status}`);
+              callbacks.onError(errorData.error || i18n.t('copilotService.httpError', { status: xhr.status }));
             } catch {
-              callbacks.onError(`Erreur ${xhr.status}`);
+              callbacks.onError(i18n.t('copilotService.httpError', { status: xhr.status }));
             }
           }
         };
@@ -276,7 +277,7 @@ class CopilotService {
 
       } catch (error: any) {
         if (error.name !== 'AbortError') {
-          callbacks.onError(error.message || 'Erreur de connexion');
+          callbacks.onError(error.message || i18n.t('copilotService.connectionError'));
         }
       }
     })();
@@ -363,7 +364,7 @@ class CopilotService {
       if (!response.ok) {
         return {
           success: false,
-          error: data.error || 'Erreur lors de la transcription',
+          error: data.error || i18n.t('copilotService.transcriptionError'),
           data: { text: '' },
         };
       }
@@ -376,7 +377,7 @@ class CopilotService {
       console.error('Transcription error:', error);
       return {
         success: false,
-        error: error.message || 'Erreur lors de la transcription audio',
+        error: error.message || i18n.t('copilotService.audioTranscriptionError'),
         data: { text: '' },
       };
     }
@@ -413,7 +414,7 @@ class CopilotService {
       if (!response.ok) {
         return {
           success: false,
-          error: data.error || "Erreur lors de l'upload des fichiers",
+          error: data.error || i18n.t('copilotService.uploadError'),
           data: { documents: [] },
         };
       }
@@ -426,7 +427,7 @@ class CopilotService {
       console.error('Upload error:', error);
       return {
         success: false,
-        error: error.message || "Erreur lors de l'upload des fichiers",
+        error: error.message || i18n.t('copilotService.uploadError'),
         data: { documents: [] },
       };
     }

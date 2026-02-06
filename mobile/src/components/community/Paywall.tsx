@@ -11,6 +11,7 @@ import {
 import { Lock, CreditCard, Calendar, CheckCircle } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useTranslation } from '../../contexts/I18nContext';
 import { PaywallInfo, communitySubscriptionService } from '../../services';
 
 interface PaywallProps {
@@ -30,6 +31,7 @@ export const Paywall: React.FC<PaywallProps> = ({
     onClose,
 }) => {
     const { colors } = useTheme();
+    const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(false);
     const [step, setStep] = useState<'info' | 'processing'>('info');
 
@@ -54,7 +56,7 @@ export const Paywall: React.FC<PaywallProps> = ({
             // If it's a trial, we're done
             if (subscription.status === 'TRIAL') {
                 Alert.alert(
-                    'Essai gratuit activé',
+                    t('community.paywall.trialActivated'),
                     subscribeResult.data.message,
                     [{ text: 'OK', onPress: onSubscriptionSuccess }]
                 );
@@ -77,8 +79,8 @@ export const Paywall: React.FC<PaywallProps> = ({
                 await Linking.openURL(paymentResult.data.authorization_url);
                 // Payment verification will happen when user returns via deep link
                 Alert.alert(
-                    'Paiement en cours',
-                    'Complétez le paiement dans votre navigateur. Revenez ici une fois terminé.',
+                    t('community.paywall.paymentInProgress'),
+                    t('community.paywall.paymentMessage'),
                     [{ text: 'OK' }]
                 );
             } else {
@@ -87,7 +89,7 @@ export const Paywall: React.FC<PaywallProps> = ({
         } catch (error: any) {
             console.error('Subscription error:', error);
             Alert.alert(
-                'Erreur',
+                t('common.error'),
                 error?.message || 'Une erreur est survenue. Veuillez réessayer.'
             );
             setStep('info');
@@ -110,7 +112,7 @@ export const Paywall: React.FC<PaywallProps> = ({
 
             {/* Title */}
             <Text style={[styles.title, { color: colors.textPrimary }]}>
-                {isExpired ? 'Abonnement expiré' : isCancelled ? 'Abonnement annulé' : 'Contenu réservé aux abonnés'}
+                {isExpired ? t('community.paywall.expiredTitle') : isCancelled ? t('community.paywall.cancelledTitle') : t('community.paywall.subscribersOnly')}
             </Text>
 
             {/* Community Name */}
@@ -121,8 +123,8 @@ export const Paywall: React.FC<PaywallProps> = ({
             {/* Description */}
             <Text style={[styles.description, { color: colors.textSecondary }]}>
                 {isExpired || isCancelled
-                    ? 'Renouvelez votre abonnement pour accéder au contenu de cette communauté.'
-                    : 'Abonnez-vous pour accéder à tout le contenu exclusif de cette communauté.'}
+                    ? t('community.paywall.renewDescription')
+                    : t('community.paywall.subscribeDescription')}
             </Text>
 
             {/* Price Card */}
@@ -130,18 +132,18 @@ export const Paywall: React.FC<PaywallProps> = ({
                 <View style={styles.priceRow}>
                     <CreditCard size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>
-                        Abonnement mensuel
+                        {t('community.paywall.monthlySubscription')}
                     </Text>
                 </View>
                 <Text style={[styles.price, { color: colors.textPrimary }]}>
-                    {formatPrice(paywall.monthly_price, paywall.currency)}/mois
+                    {formatPrice(paywall.monthly_price, paywall.currency)}{t('community.paywall.perMonth')}
                 </Text>
 
                 {hasTrial && !isExpired && !isCancelled && (
                     <View style={[styles.trialBadge, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
                         <Calendar size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
                         <Text style={[styles.trialText, { color: colors.success }]}>
-                            {paywall.trial_days} jours d'essai gratuit
+                            {t('community.paywall.trialDays', { days: paywall.trial_days })}
                         </Text>
                     </View>
                 )}
@@ -149,7 +151,7 @@ export const Paywall: React.FC<PaywallProps> = ({
 
             {/* Benefits */}
             <View style={styles.benefits}>
-                {['Accès à toutes les publications', 'Participation aux événements', 'Sondages et discussions'].map((benefit, index) => (
+                {[t('community.paywall.benefitPosts'), t('community.paywall.benefitEvents'), t('community.paywall.benefitPolls')].map((benefit, index) => (
                     <View key={index} style={styles.benefitRow}>
                         <CheckCircle size={16} color={colors.success} fill={colors.success} strokeWidth={0} />
                         <Text style={[styles.benefitText, { color: colors.textSecondary }]}>
@@ -170,10 +172,10 @@ export const Paywall: React.FC<PaywallProps> = ({
                 ) : (
                     <Text style={[styles.subscribeButtonText, { color: colors.textOnPrimary }]}>
                         {hasTrial && !isExpired && !isCancelled
-                            ? `Commencer l'essai gratuit`
+                            ? t('community.paywall.startTrial')
                             : isExpired || isCancelled
-                                ? 'Renouveler mon abonnement'
-                                : "S'abonner maintenant"}
+                                ? t('community.paywall.renewSubscription')
+                                : t('community.paywall.subscribeNow')}
                     </Text>
                 )}
             </TouchableOpacity>
@@ -182,7 +184,7 @@ export const Paywall: React.FC<PaywallProps> = ({
             {onClose && (
                 <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                     <Text style={[styles.closeButtonText, { color: colors.textSecondary }]}>
-                        Plus tard
+                        {t('community.paywall.later')}
                     </Text>
                 </TouchableOpacity>
             )}

@@ -25,14 +25,14 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
 
     if (!canGenerate(name)) {
       return res.status(400).json({
-        error: 'Name (min 3 chars) is required',
+        error: req.t('common:nameMinCharsRequired'),
         canGenerate: false,
       });
     }
 
     if (!organization_id) {
       return res.status(400).json({
-        error: 'organization_id is required',
+        error: req.t('common:organizationIdRequired'),
         canGenerate: false,
       });
     }
@@ -44,14 +44,14 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
     );
 
     if (memberCheck.rows.length === 0) {
-      throw createForbiddenError('Vous n\'êtes pas membre de cette organisation');
+      throw createForbiddenError(req.t('communities:notOrgMember'));
     }
 
     const input: GenerationInput = { name, organization_id, existing_data };
     const result = await generateCommunitySuggestion(input);
 
     if (!result.success) {
-      return res.status(500).json({ error: result.error || 'Échec de la génération' });
+      return res.status(500).json({ error: result.error || req.t('communities:generationFailed') });
     }
 
     res.json({ success: true, data: result.data });
@@ -85,7 +85,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     } = req.body;
 
     if (!name || !organization_id) {
-      return res.status(400).json({ error: 'Name and organization_id are required' });
+      return res.status(400).json({ error: req.t('common:nameAndOrgIdRequired') });
     }
 
     // Verify organization membership
@@ -95,7 +95,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     );
 
     if (memberCheck.rows.length === 0) {
-      throw createForbiddenError('You must be a member of this organization');
+      throw createForbiddenError(req.t('common:mustBeOrgMember'));
     }
 
     // Generate unique slug
@@ -158,7 +158,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     `, [id, talentId]);
 
     if (adminCheck.rows.length === 0) {
-      throw createForbiddenError('Only community admins can update');
+      throw createForbiddenError(req.t('common:onlyAdminsCanUpdate'));
     }
 
     const {
@@ -221,7 +221,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     `, [id, talentId]);
 
     if (adminCheck.rows.length === 0) {
-      throw createForbiddenError('Only community admins can delete');
+      throw createForbiddenError(req.t('common:onlyAdminsCanDelete'));
     }
 
     await pool.query(
@@ -229,7 +229,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
       [id]
     );
 
-    res.json({ success: true, message: 'Community deleted' });
+    res.json({ success: true, message: req.t('communities:deleted') });
   } catch (error) {
     handleRouteError(res, error, 'Error deleting community');
   }

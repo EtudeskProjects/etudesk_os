@@ -1,0 +1,10 @@
+{
+  "fetchError": "Failed to fetch payment methods",
+  "invalidProvider": "Invalid payment provider",
+  "invalidPhone": "Invalid phone number",
+  "alreadyExists": "This payment method already exists",
+  "addError": "Failed to add payment method",
+  "notFound": "Payment method not found",
+  "setDefaultError": "Failed to set default payment method",
+  "deleteError": "Failed to delete payment method"
+}

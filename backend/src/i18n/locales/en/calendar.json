@@ -1,0 +1,4 @@
+{
+  "startEndDateRequired": "start_date and end_date are required",
+  "invalidDateFormat": "Invalid date format"
+}

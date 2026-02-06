@@ -1,0 +1,10 @@
+{
+  "fetchError": "Échec de la récupération des méthodes de paiement",
+  "invalidProvider": "Fournisseur de paiement invalide",
+  "invalidPhone": "Numéro de téléphone invalide",
+  "alreadyExists": "Cette méthode de paiement existe déjà",
+  "addError": "Échec de l'ajout de la méthode de paiement",
+  "notFound": "Méthode de paiement non trouvée",
+  "setDefaultError": "Échec de la définition de la méthode de paiement par défaut",
+  "deleteError": "Échec de la suppression de la méthode de paiement"
+}

@@ -33,21 +33,21 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
 
     if (!name || name.length < 3) {
       return res.status(400).json({
-        error: 'Name (min 3 chars) is required',
+        error: req.t('spaces:nameMinChars'),
         canGenerate: false,
       });
     }
 
     if (!type || !Object.values(SPACE_TYPES).includes(type)) {
       return res.status(400).json({
-        error: 'Valid space type is required',
+        error: req.t('spaces:validSpaceTypeRequired'),
         canGenerate: false,
       });
     }
 
     if (!organization_id) {
       return res.status(400).json({
-        error: 'organization_id is required',
+        error: req.t('spaces:organizationIdRequired'),
         canGenerate: false,
       });
     }
@@ -60,7 +60,7 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
     );
 
     if (memberCheck.rows.length === 0) {
-      throw createForbiddenError('Vous n\'êtes pas membre de cette organisation');
+      throw createForbiddenError(req.t('spaces:notOrgMember'));
     }
 
     const input = { name, type, organization_id, existing_data };
@@ -68,7 +68,7 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
 
     if (!result.success) {
       return res.status(500).json({
-        error: result.error || 'Échec de la génération',
+        error: result.error || req.t('spaces:generationFailed'),
       });
     }
 
@@ -88,16 +88,16 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     // Validation
     if (!input.name || input.name.length < 3) {
-      return res.status(400).json({ error: 'Name must be at least 3 characters' });
+      return res.status(400).json({ error: req.t('spaces:nameMustBe3Chars') });
     }
     if (!input.type || !Object.values(SPACE_TYPES).includes(input.type)) {
-      return res.status(400).json({ error: 'Invalid space type' });
+      return res.status(400).json({ error: req.t('spaces:invalidSpaceType') });
     }
     if (!input.surface_m2 || input.surface_m2 <= 0) {
-      return res.status(400).json({ error: 'Surface area is required and must be positive' });
+      return res.status(400).json({ error: req.t('spaces:surfaceAreaRequired') });
     }
     if (!input.organization_id) {
-      return res.status(400).json({ error: 'Organization ID is required' });
+      return res.status(400).json({ error: req.t('spaces:organizationIdRequired') });
     }
 
     // Check organization exists and user is member (OWNER/ADMIN)
@@ -109,7 +109,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       [input.organization_id, talentId]
     );
     if (orgCheck.rows.length === 0) {
-      throw createForbiddenError('Non autorisé à créer un espace pour cette organisation');
+      throw createForbiddenError(req.t('spaces:notAuthorized'));
     }
 
     const id = uuidv4();
@@ -252,7 +252,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         [space.organization_id, req.talentId]
       );
       if (memberCheck.rows.length === 0) {
-        throw createForbiddenError('Non autorisé à modifier cet espace');
+        throw createForbiddenError(req.t('spaces:notAuthorized'));
       }
     }
 
@@ -452,7 +452,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
         [spaceCheck.rows[0].organization_id, req.talentId]
       );
       if (memberCheck.rows.length === 0) {
-        throw createForbiddenError('Non autorisé à supprimer cet espace');
+        throw createForbiddenError(req.t('spaces:notAuthorized'));
       }
     }
 
@@ -466,7 +466,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
 
     if (parseInt(activeBookings.rows[0].count) > 0) {
       return res.status(400).json({
-        error: 'Cannot delete space with active bookings. Cancel bookings first.',
+        error: req.t('spaces:cannotDeleteWithActiveBookings'),
       });
     }
 
@@ -476,7 +476,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
       [id]
     );
 
-    res.json({ success: true, message: 'Space deleted' });
+    res.json({ success: true, message: req.t('spaces:deleted') });
   } catch (error) {
     handleRouteError(res, error, 'Error deleting space');
   }

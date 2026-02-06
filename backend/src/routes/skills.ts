@@ -38,7 +38,7 @@ router.get('/my', async (req: AuthRequest, res: Response) => {
     return res.json({ data: result.rows });
   } catch (error) {
     logger.error('Error fetching skills:', error);
-    return res.status(500).json({ error: 'Erreur lors du chargement des compétences' });
+    return res.status(500).json({ error: req.t('skills:fetchError') });
   }
 });
 
@@ -50,21 +50,21 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(400).json({ error: 'Profil talent requis' });
+      return res.status(400).json({ error: req.t('common:talentProfileRequired') });
     }
 
     const { skillName, proficiencyLevel, type, context } = req.body;
 
     if (!proficiencyLevel || !isValidProficiencyLevel(proficiencyLevel)) {
-      return res.status(400).json({ error: 'Niveau de compétence invalide' });
+      return res.status(400).json({ error: req.t('skills:invalidProficiencyLevel') });
     }
 
     if (!skillName) {
-      return res.status(400).json({ error: 'skillName requis' });
+      return res.status(400).json({ error: req.t('skills:skillNameRequired') });
     }
 
     if (!type || !isValidSkillType(type)) {
-      return res.status(400).json({ error: 'Le type de compétence est requis (KNOWLEDGE, HARD_SKILL, SOFT_SKILL)' });
+      return res.status(400).json({ error: req.t('skills:skillTypeRequired') });
     }
 
     const canonicalName = skillName.trim();
@@ -93,7 +93,7 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
     return res.status(201).json({ data: { id: result.rows[0].id } });
   } catch (error) {
     logger.error('Error adding skill:', error);
-    return res.status(500).json({ error: "Erreur lors de l'ajout de la compétence" });
+    return res.status(500).json({ error: req.t('skills:addError') });
   }
 });
 
@@ -105,12 +105,12 @@ router.put('/my/:id', async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(400).json({ error: 'Profil talent requis' });
+      return res.status(400).json({ error: req.t('common:talentProfileRequired') });
     }
 
     const { proficiencyLevel } = req.body;
     if (!proficiencyLevel || !isValidProficiencyLevel(proficiencyLevel)) {
-      return res.status(400).json({ error: 'Niveau de compétence invalide' });
+      return res.status(400).json({ error: req.t('skills:invalidProficiencyLevel') });
     }
 
     const result = await pool.query(
@@ -121,13 +121,13 @@ router.put('/my/:id', async (req: AuthRequest, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Compétence non trouvée' });
+      return res.status(404).json({ error: req.t('skills:notFound') });
     }
 
     return res.json({ data: { id: result.rows[0].id } });
   } catch (error) {
     logger.error('Error updating skill:', error);
-    return res.status(500).json({ error: 'Erreur lors de la mise à jour' });
+    return res.status(500).json({ error: req.t('skills:updateError') });
   }
 });
 
@@ -139,7 +139,7 @@ router.delete('/my/:id', async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(400).json({ error: 'Profil talent requis' });
+      return res.status(400).json({ error: req.t('common:talentProfileRequired') });
     }
 
     const result = await pool.query(
@@ -148,13 +148,13 @@ router.delete('/my/:id', async (req: AuthRequest, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Compétence non trouvée' });
+      return res.status(404).json({ error: req.t('skills:notFound') });
     }
 
     return res.json({ data: { deleted: true } });
   } catch (error) {
     logger.error('Error deleting skill:', error);
-    return res.status(500).json({ error: 'Erreur lors de la suppression' });
+    return res.status(500).json({ error: req.t('skills:deleteError') });
   }
 });
 
@@ -166,14 +166,14 @@ router.post('/my/merge', async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(400).json({ error: 'Profil talent requis' });
+      return res.status(400).json({ error: req.t('common:talentProfileRequired') });
     }
 
     const report = await mergeExtractedSkills(talentId);
     return res.json({ data: report });
   } catch (error) {
     logger.error('Error merging skills:', error);
-    return res.status(500).json({ error: 'Erreur lors de la fusion des compétences' });
+    return res.status(500).json({ error: req.t('skills:mergeError') });
   }
 });
 

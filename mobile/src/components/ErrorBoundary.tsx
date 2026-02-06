@@ -20,6 +20,7 @@ import {
 import { AlertTriangle, RefreshCw, Bug, Share2, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../constants/theme';
 import { logger } from '../services/logService';
+import i18n from '../i18n';
 
 // Hardcoded colors for error boundary (must work without theme context)
 const ERROR_COLORS = {
@@ -100,10 +101,10 @@ Time: ${new Date().toISOString()}
     try {
       await Share.share({
         message: errorText,
-        title: 'Rapport d\'erreur Etudesk',
+        title: i18n.t('errorBoundary.errorReportTitle'),
       });
     } catch (e) {
-      Alert.alert('Erreur', errorText);
+      Alert.alert(i18n.t('common.error'), errorText);
     }
   };
 
@@ -131,15 +132,15 @@ Time: ${new Date().toISOString()}
             </View>
 
             {/* Title */}
-            <Text style={styles.title}>Oups ! Une erreur s'est produite</Text>
+            <Text style={styles.title}>{i18n.t('errorBoundary.title')}</Text>
             <Text style={styles.subtitle}>
-              Nous sommes désolés, quelque chose s'est mal passé.
+              {i18n.t('errorBoundary.subtitle')}
             </Text>
 
             {/* Error message (simplified for users) */}
             <View style={styles.errorBox}>
               <Text style={styles.errorMessage} numberOfLines={showFullError ? undefined : 2}>
-                {error?.message || 'Erreur inconnue'}
+                {error?.message || i18n.t('errorBoundary.unknownError')}
               </Text>
             </View>
 
@@ -151,7 +152,7 @@ Time: ${new Date().toISOString()}
                 activeOpacity={0.8}
               >
                 <RefreshCw size={ICON.size.sm} color={ERROR_COLORS.white} strokeWidth={ICON.strokeWidth} />
-                <Text style={styles.primaryButtonText}>Réessayer</Text>
+                <Text style={styles.primaryButtonText}>{i18n.t('common.retry')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -164,7 +165,7 @@ Time: ${new Date().toISOString()}
                   activeOpacity={0.7}
                 >
                   <Bug size={ICON.size.sm} color={ERROR_COLORS.gray600} strokeWidth={ICON.strokeWidth} />
-                  <Text style={styles.devToggleText}>Détails techniques</Text>
+                  <Text style={styles.devToggleText}>{i18n.t('errorBoundary.technicalDetails')}</Text>
                   {showFullError ? (
                     <ChevronUp size={ICON.size.sm} color={ERROR_COLORS.gray600} strokeWidth={ICON.strokeWidth} />
                   ) : (
@@ -175,12 +176,12 @@ Time: ${new Date().toISOString()}
                 {showFullError && (
                   <View style={styles.devDetails}>
                     <ScrollView style={styles.stackScroll} nestedScrollEnabled>
-                      <Text style={styles.stackTitle}>Stack Trace:</Text>
+                      <Text style={styles.stackTitle}>{i18n.t('errorBoundary.stackTrace')}</Text>
                       <Text style={styles.stackText}>{error?.stack}</Text>
 
                       {errorInfo?.componentStack && (
                         <>
-                          <Text style={styles.stackTitle}>Component Stack:</Text>
+                          <Text style={styles.stackTitle}>{i18n.t('errorBoundary.componentStack')}</Text>
                           <Text style={styles.stackText}>{errorInfo.componentStack}</Text>
                         </>
                       )}
@@ -192,7 +193,7 @@ Time: ${new Date().toISOString()}
                       activeOpacity={0.7}
                     >
                       <Share2 size={ICON.size.sm} color={ERROR_COLORS.primary} strokeWidth={ICON.strokeWidth} />
-                      <Text style={styles.copyButtonText}>Partager l'erreur</Text>
+                      <Text style={styles.copyButtonText}>{i18n.t('errorBoundary.shareError')}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -247,9 +248,9 @@ export class ScreenErrorBoundary extends Component<
       return (
         <View style={styles.screenErrorContainer}>
           <AlertTriangle size={32} color={ERROR_COLORS.warning} strokeWidth={1.5} />
-          <Text style={styles.screenErrorTitle}>Erreur de chargement</Text>
+          <Text style={styles.screenErrorTitle}>{i18n.t('errorBoundary.loadError')}</Text>
           <Text style={styles.screenErrorMessage}>
-            Cette page n'a pas pu être chargée.
+            {i18n.t('errorBoundary.pageLoadError')}
           </Text>
           <View style={styles.screenErrorActions}>
             <TouchableOpacity
@@ -257,14 +258,14 @@ export class ScreenErrorBoundary extends Component<
               onPress={this.handleRetry}
             >
               <RefreshCw size={16} color={ERROR_COLORS.primary} strokeWidth={2} />
-              <Text style={styles.screenErrorButtonText}>Réessayer</Text>
+              <Text style={styles.screenErrorButtonText}>{i18n.t('common.retry')}</Text>
             </TouchableOpacity>
             {this.props.onGoBack && (
               <TouchableOpacity
                 style={[styles.screenErrorButton, styles.screenErrorButtonSecondary]}
                 onPress={this.props.onGoBack}
               >
-                <Text style={styles.screenErrorButtonTextSecondary}>Retour</Text>
+                <Text style={styles.screenErrorButtonTextSecondary}>{i18n.t('common.back')}</Text>
               </TouchableOpacity>
             )}
           </View>

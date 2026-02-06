@@ -1,6 +1,6 @@
 /**
  * Talent Study Prompt — GPT-4.1 optimized
- * English system prompt with French user-facing responses
+ * English system prompt with dynamic user-facing response language
  * Follows GPT-4.1 prompt skeleton: Role → Instructions → Tool Sequencing → Output Format → Context
  */
 
@@ -8,18 +8,44 @@ import { TalentContext } from '../types';
 import { getContextForPrompt } from '../context';
 import { getOntology } from '../ontology.cache';
 
+/** Get language-specific instructions for the prompt */
+function getLanguageInstructions(language?: 'fr' | 'en') {
+   if (language === 'en') {
+      return {
+         noSkillsMessage: 'No skills declared.',
+         levelDefault: 'not specified',
+         responseLanguage: 'always respond in clear, professional English',
+         coreBehavior: 'Always respond in English, regardless of the language of the user\'s message.',
+         finalReminder: 'Respond in English. Be pedagogical and encouraging.',
+         redirectMessage: 'To explore opportunities, communities, or spaces, switch to Explorer mode.',
+         confirmGenerate: 'I\'ll generate [description], OK?',
+      };
+   }
+   // Default to French
+   return {
+      noSkillsMessage: 'Aucune compétence déclarée.',
+      levelDefault: 'non défini',
+      responseLanguage: 'always respond in French',
+      coreBehavior: 'Always respond in French, regardless of the language of the user\'s message.',
+      finalReminder: 'Respond in French. Be pedagogical and encouraging.',
+      redirectMessage: 'Pour explorer les opportunités, communautés ou espaces, passe en mode Exploration.',
+      confirmGenerate: 'Je génère [description], OK ?',
+   };
+}
+
 /**
  * Build a compact skills block for injection into the prompt.
  * Format: "name (level)" one per line, max 50.
  */
 function buildSkillsBlock(context: TalentContext): string {
    const skills = context.profile.skills;
+   const lang = getLanguageInstructions(context.language);
    if (!skills || skills.length === 0) {
-      return '<skills count="0">\nAucune compétence déclarée.\n</skills>';
+      return `<skills count="0">\n${lang.noSkillsMessage}\n</skills>`;
    }
 
    const lines = skills.slice(0, 50).map((s) => {
-      const level = s.level || 'non défini';
+      const level = s.level || lang.levelDefault;
       return `- ${s.name} (${level})`;
    });
 
@@ -29,17 +55,18 @@ function buildSkillsBlock(context: TalentContext): string {
 export function buildTalentStudyPrompt(context: TalentContext): string {
    const baseContext = getContextForPrompt(context);
    const skillsBlock = buildSkillsBlock(context);
+   const lang = getLanguageInstructions(context.language);
 
    return `# Role and Objective
 
-You are the Etudesk Study Companion. You help talents learn, practice, and master skills through structured teaching, exercises, and spaced repetition. You are pedagogical, encouraging, and always respond in French.
+You are the Etudesk Study Companion. You help talents learn, practice, and master skills through structured teaching, exercises, and spaced repetition. You are pedagogical, encouraging, and ${lang.responseLanguage}.
 
 You are an autonomous agent. Keep working until the user's learning question is fully addressed before yielding back. If the user asks to learn a concept, explain it thoroughly, provide examples, and suggest next steps.
 
 # Instructions
 
 ## Core Behavior
-- Always respond in French, regardless of the language of the user's message.
+- ${lang.coreBehavior}
 - Explain concepts clearly with concrete, real-world examples relevant to the African tech ecosystem when possible.
 - Structure explanations using: bullet points, numbered steps, code blocks, diagrams, and visual aids.
 - Be encouraging and positive — learning is hard, celebrate progress.
@@ -87,11 +114,11 @@ You have access ONLY to the learner's personal data:
 - \`sql_query\` with \`my_profile\`, \`my_skills\`, \`my_documents\` ONLY. All other intents are BLOCKED.
 - You do NOT have access to \`vector_query\`. Do NOT attempt to search for opportunities, communities, or spaces.
 - NEVER generate entity cards for opportunities, communities, or spaces. You do NOT have the data for these.
-- If the user asks about opportunities, communities, or spaces, politely redirect them to the Explorer mode: "Pour explorer les opportunités, communautés ou espaces, passe en mode Exploration."
+- If the user asks about opportunities, communities, or spaces, politely redirect them to the Explorer mode: "${lang.redirectMessage}"
 
 ## Confirmation Protocol for Generative Tools
 - **generate_diagram**: Generate IMMEDIATELY when the user asks for a schema/diagram. Do NOT ask for confirmation — just generate it.
-- **generate_image**: Ask for brief confirmation before generating ("Je génère [description], OK ?").
+- **generate_image**: Ask for brief confirmation before generating ("${lang.confirmGenerate}").
 - **generate_document**: Ask for confirmation before generating.
 
 ## Planning
@@ -220,7 +247,7 @@ Use the skills list above to:
 # Final Reminder
 
 CRITICAL RULES (violations will degrade user experience):
-1. Respond in French. Be pedagogical and encouraging.
+1. ${lang.finalReminder}
 2. ALWAYS call at least one tool (youtube_search) per response — do NOT answer purely from your own knowledge.
 3. Keep text UNDER 1200 characters (excluding interactive blocks). Count your characters. No long lists, no multi-section responses.
 4. Maximum ONE question per response, at the very end. Zero questions is acceptable. NEVER ask 2+ questions.

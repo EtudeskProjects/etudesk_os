@@ -31,7 +31,7 @@ export async function authMiddleware(
   if (!authHeader) {
     res.status(401).json({
       success: false,
-      error: 'Token d\'authentification requis',
+      error: req.t('common:missingToken'),
       code: 'MISSING_TOKEN',
     });
     return;
@@ -42,7 +42,7 @@ export async function authMiddleware(
   if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
     res.status(401).json({
       success: false,
-      error: 'Format de token invalide',
+      error: req.t('common:invalidTokenFormat'),
       code: 'INVALID_TOKEN_FORMAT',
     });
     return;
@@ -56,7 +56,7 @@ export async function authMiddleware(
   if (!payload) {
     res.status(401).json({
       success: false,
-      error: 'Token invalide ou expiré',
+      error: req.t('common:invalidToken'),
       code: 'INVALID_TOKEN',
     });
     return;
@@ -148,9 +148,9 @@ export function requireTalentProfile(
   if (!req.talentId) {
     res.status(403).json({
       success: false,
-      error: 'Profil talent requis',
+      error: req.t('common:talentProfileRequired'),
       code: 'ONBOARDING_REQUIRED',
-      message: 'Veuillez compléter votre profil pour accéder à cette ressource',
+      message: req.t('common:completeProfile'),
     });
     return;
   }
@@ -184,9 +184,9 @@ export function requireAdmin(
   if (!isAdmin(req.userEmail)) {
     res.status(403).json({
       success: false,
-      error: 'Accès refusé',
+      error: req.t('common:accessDenied'),
       code: 'ADMIN_REQUIRED',
-      message: 'Vous devez être administrateur pour accéder à cette ressource',
+      message: req.t('common:adminRequired'),
     });
     return;
   }

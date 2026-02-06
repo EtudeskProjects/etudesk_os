@@ -73,7 +73,7 @@ router.post('/:communityId/subscribe', authMiddleware, async (req: any, res: Res
 
         if (memberResult.rows.length === 0) {
             return res.status(400).json({
-                error: 'You must join the community first',
+                error: req.t('communities:subscriptionMustJoinFirst'),
                 code: 'NOT_MEMBER'
             });
         }
@@ -83,28 +83,28 @@ router.post('/:communityId/subscribe', authMiddleware, async (req: any, res: Res
         // Membership must be approved (ACTIVE) before subscribing
         if (memberStatus === 'PENDING') {
             return res.status(403).json({
-                error: 'Votre demande d\'adhésion est en attente d\'approbation. Vous pourrez souscrire après validation par l\'administration.',
+                error: req.t('communities:subscriptionPendingApproval'),
                 code: 'MEMBERSHIP_PENDING_APPROVAL'
             });
         }
 
         if (memberStatus === 'REJECTED') {
             return res.status(403).json({
-                error: 'Votre demande d\'adhésion a été refusée.',
+                error: req.t('communities:subscriptionRequestRejected'),
                 code: 'MEMBERSHIP_REJECTED'
             });
         }
 
         if (memberStatus === 'SUSPENDED') {
             return res.status(403).json({
-                error: 'Votre adhésion a été suspendue.',
+                error: req.t('communities:subscriptionMembershipSuspended'),
                 code: 'MEMBERSHIP_SUSPENDED'
             });
         }
 
         if (memberStatus !== 'ACTIVE') {
             return res.status(403).json({
-                error: 'Votre adhésion doit être approuvée avant de pouvoir souscrire.',
+                error: req.t('communities:subscriptionApprovalRequired'),
                 code: 'MEMBERSHIP_NOT_ACTIVE'
             });
         }
@@ -125,7 +125,7 @@ router.post('/:communityId/subscribe', authMiddleware, async (req: any, res: Res
 
             if (orgAdminCheck.rows.length > 0) {
                 return res.status(400).json({
-                    error: 'Vous avez déjà un accès gratuit à cette communauté en tant qu\'administrateur de l\'organisation',
+                    error: req.t('communities:subscriptionAlreadyFreeAccess'),
                     code: 'ORG_ADMIN_FREE_ACCESS'
                 });
             }
@@ -166,7 +166,7 @@ router.post('/:subscriptionId/pay', authMiddleware, async (req: any, res: Respon
         );
 
         if (userResult.rows.length === 0) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ error: req.t('communities:userNotFound') });
         }
 
         const payment = await communityPaymentService.initializePayment({
@@ -220,7 +220,7 @@ router.post('/:subscriptionId/cancel', authMiddleware, async (req: any, res: Res
         res.json({
             success: true,
             subscription,
-            message: `Abonnement annulé. Vous aurez accès jusqu'au ${new Date(subscription.current_period_end).toLocaleDateString('fr-FR')}`
+            message: req.t('communities:subscriptionCancelledWithAccess', { date: new Date(subscription.current_period_end).toLocaleDateString(req.language === 'en' ? 'en-US' : 'fr-FR') })
         });
     } catch (error: any) {
         logger.error('Error cancelling subscription:', error);
@@ -239,7 +239,7 @@ router.post('/:subscriptionId/reactivate', authMiddleware, async (req: any, res:
         const { payment_id } = req.body;
 
         if (!payment_id) {
-            return res.status(400).json({ error: 'Payment ID required' });
+            return res.status(400).json({ error: req.t('communities:paymentIdRequired') });
         }
 
         const subscription = await communitySubscriptionService.reactivateSubscription(
@@ -336,7 +336,7 @@ router.get('/invoices/:invoiceId', authMiddleware, async (req: any, res: Respons
         const invoice = await communityPaymentService.getInvoice(invoiceId, talentId);
 
         if (!invoice) {
-            return res.status(404).json({ error: 'Invoice not found' });
+            return res.status(404).json({ error: req.t('communities:invoiceNotFound') });
         }
 
         res.json({ data: invoice });
@@ -358,7 +358,7 @@ router.get('/invoices/number/:invoiceNumber', authMiddleware, async (req: any, r
         const invoice = await communityPaymentService.getInvoiceByNumber(invoiceNumber, talentId);
 
         if (!invoice) {
-            return res.status(404).json({ error: 'Invoice not found' });
+            return res.status(404).json({ error: req.t('communities:invoiceNotFound') });
         }
 
         res.json({ data: invoice });
@@ -384,7 +384,7 @@ router.get('/admin/:communityId/stats', authMiddleware, async (req: any, res: Re
         // Check admin access (includes org admins)
         const role = await communityPermissionService.getUserRole(talentId, communityId);
         if (role !== 'ADMIN') {
-            return res.status(403).json({ error: 'Admin access required' });
+            return res.status(403).json({ error: req.t('communities:adminAccessRequired') });
         }
 
         const stats = await communitySubscriptionService.getCommunitySubscriptionStats(communityId);
@@ -409,7 +409,7 @@ router.get('/admin/:communityId/revenue', authMiddleware, async (req: any, res: 
         // Check admin access (includes org admins)
         const role = await communityPermissionService.getUserRole(talentId, communityId);
         if (role !== 'ADMIN') {
-            return res.status(403).json({ error: 'Admin access required' });
+            return res.status(403).json({ error: req.t('communities:adminAccessRequired') });
         }
 
         const stats = await communityPaymentService.getCommunityRevenueStats(
@@ -443,7 +443,7 @@ router.get('/admin/:communityId/subscribers', authMiddleware, async (req: any, r
 
         if (adminResult.rows.length === 0) {
             return res.status(403).json({ 
-                error: 'Admin access required: seuls les administrateurs explicites de la communauté peuvent voir les abonnés' 
+                error: req.t('communities:subscriptionAdminAccessRequired') 
             });
         }
 

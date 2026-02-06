@@ -24,11 +24,11 @@ router.post('/push-token', authMiddleware, async (req: AuthRequest, res: Respons
     const { token, platform, deviceName } = req.body;
 
     if (!token || !platform) {
-      return res.status(400).json({ error: 'Token and platform are required' });
+      return res.status(400).json({ error: req.t('common:tokenAndPlatformRequired') });
     }
 
     if (!['ios', 'android', 'web'].includes(platform)) {
-      return res.status(400).json({ error: 'Platform must be ios, android, or web' });
+      return res.status(400).json({ error: req.t('common:invalidPlatform') });
     }
 
     const result = await pushService.registerPushToken(talentId, token, platform, deviceName);
@@ -37,10 +37,10 @@ router.post('/push-token', authMiddleware, async (req: AuthRequest, res: Respons
       return res.status(400).json({ error: result.error });
     }
 
-    res.json({ success: true, message: 'Push token registered' });
+    res.json({ success: true, message: req.t('common:pushTokenRegistered') });
   } catch (error) {
     logger.error('Error registering push token:', error);
-    res.status(500).json({ error: 'Failed to register push token' });
+    res.status(500).json({ error: req.t('notifications:registerError') });
   }
 });
 
@@ -54,14 +54,14 @@ router.delete('/push-token', authMiddleware, async (req: AuthRequest, res: Respo
     const { token } = req.body;
 
     if (!token) {
-      return res.status(400).json({ error: 'Token is required' });
+      return res.status(400).json({ error: req.t('common:tokenRequired') });
     }
 
     await pushService.deactivatePushToken(talentId, token);
-    res.json({ success: true, message: 'Push token deactivated' });
+    res.json({ success: true, message: req.t('common:pushTokenDeactivated') });
   } catch (error) {
     logger.error('Error deactivating push token:', error);
-    res.status(500).json({ error: 'Failed to deactivate push token' });
+    res.status(500).json({ error: req.t('notifications:deactivateError') });
   }
 });
 
@@ -90,7 +90,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     logger.error('Error fetching notifications:', error);
-    res.status(500).json({ error: 'Failed to fetch notifications' });
+    res.status(500).json({ error: req.t('notifications:fetchError') });
   }
 });
 
@@ -106,13 +106,13 @@ router.put('/:id/read', authMiddleware, async (req: AuthRequest, res: Response) 
     const success = await pushService.markAsRead(id, talentId);
 
     if (!success) {
-      return res.status(404).json({ error: 'Notification not found or already read' });
+      return res.status(404).json({ error: req.t('common:notificationNotFound') });
     }
 
     res.json({ success: true });
   } catch (error) {
     logger.error('Error marking notification as read:', error);
-    res.status(500).json({ error: 'Failed to mark notification as read' });
+    res.status(500).json({ error: req.t('notifications:markReadError') });
   }
 });
 
@@ -127,7 +127,7 @@ router.put('/read-all', authMiddleware, async (req: AuthRequest, res: Response) 
     res.json({ success: true, count });
   } catch (error) {
     logger.error('Error marking all notifications as read:', error);
-    res.status(500).json({ error: 'Failed to mark all as read' });
+    res.status(500).json({ error: req.t('notifications:markAllReadError') });
   }
 });
 
@@ -143,13 +143,13 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     const success = await pushService.deleteNotification(id, talentId);
 
     if (!success) {
-      return res.status(404).json({ error: 'Notification not found' });
+      return res.status(404).json({ error: req.t('common:notificationNotFound') });
     }
 
     res.json({ success: true });
   } catch (error) {
     logger.error('Error deleting notification:', error);
-    res.status(500).json({ error: 'Failed to delete notification' });
+    res.status(500).json({ error: req.t('notifications:deleteError') });
   }
 });
 
@@ -168,7 +168,7 @@ router.get('/preferences', authMiddleware, async (req: AuthRequest, res: Respons
     res.json({ success: true, data: preferences });
   } catch (error) {
     logger.error('Error fetching preferences:', error);
-    res.status(500).json({ error: 'Failed to fetch preferences' });
+    res.status(500).json({ error: req.t('notifications:fetchPreferencesError') });
   }
 });
 
@@ -202,7 +202,7 @@ router.put('/preferences', authMiddleware, async (req: AuthRequest, res: Respons
     res.json({ success: true, data: preferences });
   } catch (error) {
     logger.error('Error updating preferences:', error);
-    res.status(500).json({ error: 'Failed to update preferences' });
+    res.status(500).json({ error: req.t('notifications:updatePreferencesError') });
   }
 });
 

@@ -250,7 +250,7 @@ router.get('/organization/:orgId', async (req: Request, res: Response) => {
 /**
  * GET /api/spaces/slug/:slug - Get space by slug
  */
-router.get('/slug/:slug', async (req: Request, res: Response) => {
+router.get('/slug/:slug', async (req: AuthRequest, res: Response) => {
   try {
     const { slug } = req.params;
 
@@ -260,7 +260,7 @@ router.get('/slug/:slug', async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Space not found' });
+      return res.status(404).json({ error: req.t('spaces:notFound') });
     }
 
     res.json({ data: result.rows[0] });
@@ -272,7 +272,7 @@ router.get('/slug/:slug', async (req: Request, res: Response) => {
 /**
  * GET /api/spaces/:id - Get single space with availabilities
  */
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -293,7 +293,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Space not found' });
+      return res.status(404).json({ error: req.t('spaces:notFound') });
     }
 
     const space = result.rows[0];
@@ -318,7 +318,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 /**
  * GET /api/spaces/:id/availabilities - Get space availabilities
  */
-router.get('/:id/availabilities', async (req: Request, res: Response) => {
+router.get('/:id/availabilities', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -328,7 +328,7 @@ router.get('/:id/availabilities', async (req: Request, res: Response) => {
     );
 
     if (spaceCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Space not found' });
+      return res.status(404).json({ error: req.t('spaces:notFound') });
     }
 
     const result = await pool.query(
@@ -347,13 +347,13 @@ router.get('/:id/availabilities', async (req: Request, res: Response) => {
 /**
  * GET /api/spaces/:id/availability-check - Check if slot is available
  */
-router.get('/:id/availability-check', async (req: Request, res: Response) => {
+router.get('/:id/availability-check', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { start_datetime, end_datetime } = req.query;
 
     if (!start_datetime || !end_datetime) {
-      return res.status(400).json({ error: 'start_datetime and end_datetime are required' });
+      return res.status(400).json({ error: req.t('spaces:startEndDatetimeRequired') });
     }
 
     // Check for conflicting bookings

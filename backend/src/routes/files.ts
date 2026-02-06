@@ -51,7 +51,7 @@ function ensureDirExists(dirPath: string): void {
 router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRequest, res: Response) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'Aucun fichier fourni' });
+      return res.status(400).json({ error: req.t('common:noFileProvided') });
     }
 
     const category = sanitizeCategory(req.body.category || 'general');
@@ -84,7 +84,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
     });
   } catch (error: any) {
     logger.error('[Files] Upload error:', error);
-    res.status(500).json({ error: error.message || 'Erreur lors de l\'upload du fichier' });
+    res.status(500).json({ error: error.message || req.t('common:uploadFailed') });
   }
 });
 

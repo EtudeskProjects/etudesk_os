@@ -2,6 +2,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Platform } from 'react-native';
 import { api } from './api';
+import i18n from '../i18n';
 
 export type ImageType =
   | 'avatar'           // Profile photos (512x512, 1:1)
@@ -75,8 +76,8 @@ export async function requestImagePermissions(): Promise<boolean> {
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (status !== 'granted') {
     Alert.alert(
-      'Permission requise',
-      'Nous avons besoin de votre permission pour accéder à vos photos.',
+      i18n.t('imageService.permissionRequired'),
+      i18n.t('imageService.photoPermission'),
       [{ text: 'OK' }]
     );
     return false;
@@ -88,8 +89,8 @@ export async function requestCameraPermissions(): Promise<boolean> {
   const { status } = await ImagePicker.requestCameraPermissionsAsync();
   if (status !== 'granted') {
     Alert.alert(
-      'Permission requise',
-      'Nous avons besoin de votre permission pour accéder à la caméra.',
+      i18n.t('imageService.permissionRequired'),
+      i18n.t('imageService.cameraPermission'),
       [{ text: 'OK' }]
     );
     return false;
@@ -151,7 +152,7 @@ export async function optimizeImage(
     };
   } catch (error) {
     console.error('[ImageService] Error optimizing image:', error);
-    throw new Error('Erreur lors de l\'optimisation de l\'image');
+    throw new Error(i18n.t('imageService.optimizeError'));
   }
 }
 
@@ -181,8 +182,8 @@ export async function pickImage(options: PickImageOptions): Promise<OptimizedIma
   } catch (error) {
     console.error('[ImageService] Error picking image:', error);
     Alert.alert(
-      'Erreur',
-      'Une erreur est survenue lors de la sélection de l\'image.',
+      i18n.t('common.error'),
+      i18n.t('imageService.pickError'),
       [{ text: 'OK' }]
     );
     return null;
@@ -214,8 +215,8 @@ export async function takePhoto(options: PickImageOptions): Promise<OptimizedIma
   } catch (error) {
     console.error('[ImageService] Error taking photo:', error);
     Alert.alert(
-      'Erreur',
-      'Une erreur est survenue lors de la capture de la photo.',
+      i18n.t('common.error'),
+      i18n.t('imageService.captureError'),
       [{ text: 'OK' }]
     );
     return null;
@@ -225,25 +226,25 @@ export async function takePhoto(options: PickImageOptions): Promise<OptimizedIma
 export async function pickOrTakeImage(options: PickImageOptions): Promise<OptimizedImage | null> {
   return new Promise((resolve) => {
     Alert.alert(
-      'Choisir une image',
-      'Comment souhaitez-vous ajouter votre image ?',
+      i18n.t('imageService.chooseImage'),
+      i18n.t('imageService.chooseImageMessage'),
       [
         {
-          text: 'Prendre une photo',
+          text: i18n.t('imageService.takePhoto'),
           onPress: async () => {
             const result = await takePhoto(options);
             resolve(result);
           },
         },
         {
-          text: 'Choisir depuis la galerie',
+          text: i18n.t('imageService.fromGallery'),
           onPress: async () => {
             const result = await pickImage(options);
             resolve(result);
           },
         },
         {
-          text: 'Annuler',
+          text: i18n.t('common.cancel'),
           style: 'cancel',
           onPress: () => resolve(null),
         },
@@ -330,7 +331,7 @@ export async function uploadImage(
     };
   } catch (error: any) {
     console.error('[ImageService] Error uploading image:', error);
-    throw new Error(error.message || 'Erreur lors de l\'upload de l\'image');
+    throw new Error(error.message || i18n.t('imageService.uploadError'));
   }
 }
 

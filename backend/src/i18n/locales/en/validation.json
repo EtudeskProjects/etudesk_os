@@ -1,0 +1,152 @@
+{
+  "validationFailed": "Validation failed",
+  "internalError": "Internal validation error",
+
+  "required": "{{field}} is required",
+  "minLength": "{{field}} must contain at least {{min}} characters",
+  "maxLength": "{{field}} must not exceed {{max}} characters",
+  "invalidFormat": "{{field}} format is invalid",
+  "invalidUrl": "Invalid URL",
+  "invalidDate": "Invalid date",
+  "invalidEnum": "Invalid value for {{field}}",
+  "numberMin": "{{field}} must be at least {{min}}",
+  "numberMax": "{{field}} must not exceed {{max}}",
+  "arrayMinItems": "{{field}} must contain at least {{min}} items",
+  "arrayMaxItems": "{{field}} must not contain more than {{max}} items",
+
+  "common": {
+    "invalidId": "Invalid ID",
+    "invalidOrgId": "Invalid organization ID",
+    "invalidUrl": "Invalid URL",
+    "invalidDate": "Invalid date",
+    "countryCodeFormat": "Country code must be in ISO 3166-1 alpha-2 format",
+    "currencyFormat": "Currency must be in ISO 4217 format"
+  },
+
+  "auth": {
+    "invalidEmail": "Invalid email",
+    "emailTooLong": "Email is too long",
+    "codeLength": "Code must be 6 digits",
+    "codeDigits": "Code must consist of 6 digits",
+    "refreshTokenRequired": "Refresh token is required"
+  },
+
+  "opportunity": {
+    "titleMinLength": "Title must contain at least 3 characters",
+    "titleMaxLength": "Title must not exceed 200 characters",
+    "descriptionMinLength": "Description must contain at least 10 characters",
+    "descriptionMaxLength": "Description must not exceed 10000 characters",
+    "summaryMaxLength": "Summary must not exceed 5000 characters",
+    "requirementsMaxLength": "Requirements must not exceed 10000 characters",
+    "niceToHaveMaxLength": "Nice-to-have section must not exceed 5000 characters",
+    "questionMaxLength": "Question must not exceed 500 characters",
+    "maxQuestions": "Maximum 10 custom questions",
+    "deadlineRequired": "Deadline is required",
+    "compensationRange": "Minimum salary cannot exceed maximum salary",
+    "invalidType": "Type must be JOB, INTERNSHIP, FREELANCE, or VOLUNTEERING",
+    "invalidStatus": "Status must be DRAFT, OPEN, CLOSED, or ARCHIVED",
+    "invalidLocationType": "Location type must be REMOTE, ONSITE, or HYBRID",
+    "invalidExperienceLevel": "Experience level must be JUNIOR, INTERMEDIATE, SENIOR, or LEAD",
+    "invalidContractType": "Contract type must be FULL_TIME, PART_TIME, CONTRACT, or TEMPORARY",
+    "salaryMinInvalid": "Minimum salary must be a positive number",
+    "salaryMaxInvalid": "Maximum salary must be greater than minimum salary",
+    "maxSkills": "Maximum 20 skills allowed",
+    "invalidApplicationDeadline": "Application deadline must be a valid future date"
+  },
+
+  "application": {
+    "questionIdRequired": "Question ID is required",
+    "answerMaxLength": "Answer must not exceed 2000 characters",
+    "invalidOpportunityId": "Invalid opportunity ID",
+    "coverLetterMaxLength": "Cover letter must not exceed 5000 characters",
+    "invalidStatus": "Invalid status",
+    "notesMaxLength": "Notes must not exceed 10000 characters",
+    "ratingMustBeInt": "Rating must be an integer",
+    "ratingMin": "Minimum rating is 1",
+    "ratingMax": "Maximum rating is 5",
+    "invalidApplicationId": "Invalid application ID",
+    "atLeastOne": "At least one application is required",
+    "maxBulk": "Maximum 100 applications at once",
+    "invalidRating": "Rating must be between 1 and 5"
+  },
+
+  "onboarding": {
+    "firstNameRequired": "First name is required",
+    "firstNameTooLong": "First name is too long",
+    "lastNameRequired": "Last name is required",
+    "lastNameTooLong": "Last name is too long",
+    "bioTooLong": "Bio is too long",
+    "phoneTooLong": "Phone number is too long",
+    "cityTooLong": "City is too long",
+    "regionTooLong": "Region is too long",
+    "maxProfileTags": "Maximum 3 profile tags",
+    "maxGoals": "Maximum 3 goals",
+    "maxSectors": "Maximum 5 sectors"
+  },
+
+  "community": {
+    "nameMinLength": "Community name must contain at least 3 characters",
+    "nameMaxLength": "Community name must not exceed 100 characters",
+    "descriptionMaxLength": "Description must not exceed 5000 characters",
+    "joinReasonMaxLength": "Join reason must not exceed 1000 characters",
+    "invalidVisibility": "Visibility must be PUBLIC or PRIVATE",
+    "invalidMemberRole": "Role must be ADMIN or MEMBER",
+    "priceInvalid": "Monthly price must be a positive number",
+    "trialDaysInvalid": "Trial days must be between 0 and 90"
+  },
+
+  "organization": {
+    "nameMinLength": "Organization name must contain at least 2 characters",
+    "nameMaxLength": "Organization name must not exceed 200 characters",
+    "descriptionMaxLength": "Description must not exceed 5000 characters"
+  },
+
+  "space": {
+    "invalidSpaceId": "Invalid space ID",
+    "invalidTimeFormat": "Invalid time format (HH:MM)",
+    "nameMinLength": "Space name must contain at least 2 characters",
+    "nameMaxLength": "Space name must not exceed 100 characters",
+    "descriptionMaxLength": "Description must not exceed 5000 characters",
+    "invalidVisibility": "Visibility must be PUBLIC or PRIVATE"
+  },
+
+  "kyc": {
+    "invalidDocumentType": "Invalid document type",
+    "frontImageRequired": "Front image is required"
+  },
+
+  "invitation": {
+    "emailOrTalentRequired": "Email or talent ID is required"
+  },
+
+  "activity": {
+    "titleMinLength": "Title must contain at least 2 characters",
+    "titleMaxLength": "Title must not exceed 200 characters",
+    "contentRequired": "Content is required for posts",
+    "invalidType": "Type must be POST, EVENT, or POLL",
+    "eventStartRequired": "Event start date is required",
+    "eventEndAfterStart": "Event end date must be after start date",
+    "pollMinOptions": "A poll must have at least 2 options",
+    "pollMaxOptions": "A poll must not exceed 10 options",
+    "pollOptionMinLength": "Each option must contain at least 1 character",
+    "pollExpiresRequired": "Poll expiration date is required"
+  },
+
+  "talent": {
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "bioMaxLength": "Bio must not exceed 500 characters",
+    "invalidExperienceLevel": "Invalid experience level"
+  },
+
+  "document": {
+    "titleMinLength": "Title must contain at least 2 characters",
+    "titleMaxLength": "Title must not exceed 200 characters",
+    "invalidType": "Invalid document type"
+  },
+
+  "email": {
+    "subjectRequired": "Email subject is required",
+    "bodyRequired": "Email body is required"
+  }
+}

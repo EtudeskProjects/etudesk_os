@@ -29,7 +29,7 @@ const VALID_PROVIDERS: PaymentProvider[] = ['orange_money', 'mtn_money', 'moov_m
 router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const result = await pool.query(
@@ -38,14 +38,14 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const paymentMethods = result.rows[0].payment_methods || [];
     res.json({ data: paymentMethods });
   } catch (error) {
     logger.error('Error fetching payment methods:', error);
-    res.status(500).json({ error: 'Failed to fetch payment methods' });
+    res.status(500).json({ error: req.t('payments:fetchError') });
   }
 });
 
@@ -56,18 +56,18 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const { provider, phone } = req.body;
 
     // Validate input
     if (!provider || !VALID_PROVIDERS.includes(provider)) {
-      return res.status(400).json({ error: 'Invalid payment provider' });
+      return res.status(400).json({ error: req.t('payments:invalidProvider') });
     }
 
     if (!phone || typeof phone !== 'string' || phone.trim().length < 8) {
-      return res.status(400).json({ error: 'Invalid phone number' });
+      return res.status(400).json({ error: req.t('payments:invalidPhone') });
     }
 
     // Get current payment methods
@@ -77,7 +77,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const paymentMethods: PaymentMethod[] = result.rows[0].payment_methods || [];
@@ -87,7 +87,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       (m) => m.provider === provider && m.phone === phone.trim()
     );
     if (exists) {
-      return res.status(400).json({ error: 'This payment method already exists' });
+      return res.status(400).json({ error: req.t('payments:alreadyExists') });
     }
 
     // Create new payment method
@@ -110,7 +110,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     res.status(201).json({ data: newMethod });
   } catch (error) {
     logger.error('Error adding payment method:', error);
-    res.status(500).json({ error: 'Failed to add payment method' });
+    res.status(500).json({ error: req.t('payments:addError') });
   }
 });
 
@@ -121,7 +121,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 router.put('/:id/default', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const { id } = req.params;
@@ -133,7 +133,7 @@ router.put('/:id/default', authMiddleware, async (req: AuthRequest, res: Respons
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const paymentMethods: PaymentMethod[] = result.rows[0].payment_methods || [];
@@ -141,7 +141,7 @@ router.put('/:id/default', authMiddleware, async (req: AuthRequest, res: Respons
     // Find the method
     const methodIndex = paymentMethods.findIndex((m) => m.id === id);
     if (methodIndex === -1) {
-      return res.status(404).json({ error: 'Payment method not found' });
+      return res.status(404).json({ error: req.t('payments:notFound') });
     }
 
     // Update defaults
@@ -159,7 +159,7 @@ router.put('/:id/default', authMiddleware, async (req: AuthRequest, res: Respons
     res.json({ data: paymentMethods });
   } catch (error) {
     logger.error('Error setting default payment method:', error);
-    res.status(500).json({ error: 'Failed to set default payment method' });
+    res.status(500).json({ error: req.t('payments:setDefaultError') });
   }
 });
 
@@ -170,7 +170,7 @@ router.put('/:id/default', authMiddleware, async (req: AuthRequest, res: Respons
 router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     const { id } = req.params;
@@ -182,7 +182,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Talent profile not found' });
+      return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
 
     let paymentMethods: PaymentMethod[] = result.rows[0].payment_methods || [];
@@ -190,7 +190,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     // Find the method
     const methodIndex = paymentMethods.findIndex((m) => m.id === id);
     if (methodIndex === -1) {
-      return res.status(404).json({ error: 'Payment method not found' });
+      return res.status(404).json({ error: req.t('payments:notFound') });
     }
 
     const wasDefault = paymentMethods[methodIndex].isDefault;
@@ -213,7 +213,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     res.json({ data: paymentMethods });
   } catch (error) {
     logger.error('Error deleting payment method:', error);
-    res.status(500).json({ error: 'Failed to delete payment method' });
+    res.status(500).json({ error: req.t('payments:deleteError') });
   }
 });
 

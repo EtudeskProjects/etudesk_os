@@ -3,6 +3,7 @@ import { Platform, NativeModules } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n, { Language } from '../i18n';
 import { STORAGE_KEYS } from '../constants/config';
+import { api } from '../services/api';
 
 interface I18nContextType {
   language: Language;
@@ -61,10 +62,20 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
     i18n.locale = language;
   }, [language]);
 
-  const setLanguage = useCallback((lang: Language) => {
+  const setLanguage = useCallback(async (lang: Language) => {
     setLanguageState(lang);
     i18n.locale = lang;
     AsyncStorage.setItem(STORAGE_KEYS.LANGUAGE, lang).catch(() => {});
+
+    // Sync language preference to backend (fire-and-forget)
+    try {
+      const isAuthenticated = await api.isAuthenticated();
+      if (isAuthenticated) {
+        api.put('/api/auth/language', { language: lang }).catch(() => {});
+      }
+    } catch {
+      // Ignore sync errors - local preference is the source of truth
+    }
   }, []);
 
   // Translation function with interpolation support

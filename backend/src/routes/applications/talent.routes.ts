@@ -41,16 +41,16 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
     );
 
     if (oppResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Opportunité non trouvée' });
+      return res.status(404).json({ error: req.t('applications:opportunityNotFound') });
     }
 
     const opportunity = oppResult.rows[0];
     if (opportunity.status !== 'OPEN') {
-      return res.status(400).json({ error: 'Cette opportunité n\'accepte plus de candidatures' });
+      return res.status(400).json({ error: req.t('applications:opportunityClosed') });
     }
 
     if (opportunity.deadline && new Date(opportunity.deadline) < new Date()) {
-      return res.status(400).json({ error: 'La date limite de candidature est dépassée' });
+      return res.status(400).json({ error: req.t('applications:deadlinePassed') });
     }
 
     // Check if user owns this opportunity
@@ -64,7 +64,7 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
     `, [opportunity_id, talentId]);
 
     if (ownerCheck.rows.length > 0) {
-      throw createForbiddenError('Vous ne pouvez pas postuler à votre propre opportunité');
+      throw createForbiddenError(req.t('applications:cannotApplyOwnOpportunity'));
     }
 
     // Check for existing application
@@ -75,7 +75,7 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
 
     if (existingApp.rows.length > 0) {
       return res.status(409).json({
-        error: 'Vous avez déjà postulé à cette opportunité',
+        error: req.t('applications:alreadyApplied'),
         application_id: existingApp.rows[0].id
       });
     }
@@ -93,7 +93,7 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
     res.status(201).json({
       success: true,
       data: result.rows[0],
-      message: 'Candidature soumise avec succès'
+      message: req.t('applications:created')
     });
   } catch (error) {
     handleRouteError(res, error, 'Error creating application');
@@ -296,7 +296,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     `, [id]);
 
     if (result.rows.length === 0) {
-      throw createNotFoundError('Candidature');
+      throw createNotFoundError(req.t('applications:notFound'));
     }
 
     const row = result.rows[0];
@@ -315,7 +315,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     }
 
     if (!isApplicant && !isOrgMember) {
-      throw createForbiddenError('Accès non autorisé à cette candidature');
+      throw createForbiddenError(req.t('applications:notAuthorized'));
     }
 
     let matchScore: number | undefined;
@@ -413,11 +413,11 @@ router.put('/:id/withdraw', authMiddleware, requireTalentProfile, async (req: Au
     );
 
     if (existing.rows.length === 0) {
-      throw createNotFoundError('Candidature');
+      throw createNotFoundError(req.t('applications:notFound'));
     }
 
     if (['ACCEPTED', 'REJECTED'].includes(existing.rows[0].status)) {
-      return res.status(400).json({ error: 'Impossible de retirer une candidature déjà traitée' });
+      return res.status(400).json({ error: req.t('applications:cannotWithdraw') });
     }
 
     const result = await pool.query(`
@@ -430,7 +430,7 @@ router.put('/:id/withdraw', authMiddleware, requireTalentProfile, async (req: Au
     res.json({
       success: true,
       data: result.rows[0],
-      message: 'Candidature retirée'
+      message: req.t('applications:withdrawn')
     });
   } catch (error) {
     handleRouteError(res, error, 'Error withdrawing application');
@@ -452,7 +452,7 @@ router.delete('/:id', authMiddleware, requireTalentProfile, async (req: AuthRequ
     );
 
     if (existing.rows.length === 0) {
-      throw createNotFoundError('Candidature');
+      throw createNotFoundError(req.t('applications:notFound'));
     }
 
     // First delete related messages
@@ -460,7 +460,7 @@ router.delete('/:id', authMiddleware, requireTalentProfile, async (req: AuthRequ
     // Then delete the application
     await pool.query('DELETE FROM opportunity_applications WHERE id = $1', [id]);
 
-    res.json({ success: true, message: 'Candidature supprimée. Vous pouvez postuler à nouveau.' });
+    res.json({ success: true, message: req.t('applications:deletedCanReapply') });
   } catch (error) {
     handleRouteError(res, error, 'Error deleting application');
   }

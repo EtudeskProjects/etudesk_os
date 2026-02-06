@@ -41,7 +41,7 @@ router.get('/:orgId/members', authMiddleware, async (req: AuthRequest, res: Resp
     const { orgId } = req.params;
 
     if (!req.talentId) {
-      return res.status(403).json({ error: 'Authentication required' });
+      return res.status(403).json({ error: req.t('organizations:authRequired') });
     }
 
     // Check if organization exists
@@ -50,7 +50,7 @@ router.get('/:orgId/members', authMiddleware, async (req: AuthRequest, res: Resp
     `, [orgId]);
 
     if (orgCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Organization not found' });
+      return res.status(404).json({ error: req.t('organizations:notFound') });
     }
 
     // Check if user is a member of this organization
@@ -60,7 +60,7 @@ router.get('/:orgId/members', authMiddleware, async (req: AuthRequest, res: Resp
     `, [orgId, req.talentId]);
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'You are not a member of this organization' });
+      return res.status(403).json({ error: req.t('organizations:notMember') });
     }
 
     const result = await pool.query(`
@@ -84,7 +84,7 @@ router.get('/:orgId/members', authMiddleware, async (req: AuthRequest, res: Resp
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
     logger.error('Error fetching organization members:', error);
-    res.status(500).json({ error: 'Failed to fetch members' });
+    res.status(500).json({ error: req.t('organizations:fetchMembersError') });
   }
 });
 
@@ -97,7 +97,7 @@ router.get('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res: 
     const { orgId } = req.params;
 
     if (!req.talentId) {
-      return res.status(403).json({ error: 'Authentication required' });
+      return res.status(403).json({ error: req.t('organizations:authRequired') });
     }
 
     // Check if user has permission to view invitations
@@ -107,7 +107,7 @@ router.get('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res: 
     `, [orgId, req.talentId]);
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'You are not a member of this organization' });
+      return res.status(403).json({ error: req.t('organizations:notMember') });
     }
 
     const result = await pool.query(`
@@ -123,7 +123,7 @@ router.get('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res: 
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
     logger.error('Error fetching invitations:', error);
-    res.status(500).json({ error: 'Failed to fetch invitations' });
+    res.status(500).json({ error: req.t('organizations:fetchInvitationsError') });
   }
 });
 
@@ -137,17 +137,17 @@ router.post('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res:
     const { email, role } = req.body;
 
     if (!req.talentId) {
-      return res.status(403).json({ error: 'Authentication required' });
+      return res.status(403).json({ error: req.t('organizations:authRequired') });
     }
 
     // Validate email
     if (!email || typeof email !== 'string' || !email.includes('@')) {
-      return res.status(400).json({ error: 'Valid email is required' });
+      return res.status(400).json({ error: req.t('organizations:validEmailRequired') });
     }
 
     // Validate role
     if (role && !VALID_ROLES.includes(role)) {
-      return res.status(400).json({ error: 'Invalid role', validRoles: VALID_ROLES });
+      return res.status(400).json({ error: req.t('organizations:invalidRole'), validRoles: VALID_ROLES });
     }
 
     // Check if user has permission to invite
@@ -157,19 +157,19 @@ router.post('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res:
     `, [orgId, req.talentId]);
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'You are not a member of this organization' });
+      return res.status(403).json({ error: req.t('organizations:notMember') });
     }
 
     const currentRole = memberCheck.rows[0].role;
 
     if (!canInviteMembers(currentRole)) {
-      return res.status(403).json({ error: 'You do not have permission to invite members' });
+      return res.status(403).json({ error: req.t('organizations:noInvitePermission') });
     }
 
     // Cannot invite with higher role than yourself
     const inviteRole = role || 'OBSERVATEUR';
     if (ROLE_HIERARCHY[inviteRole] >= ROLE_HIERARCHY[currentRole]) {
-      return res.status(403).json({ error: 'Cannot invite with a role equal to or higher than your own' });
+      return res.status(403).json({ error: req.t('organizations:cannotInviteHigherRole') });
     }
 
     // Check if already a member
@@ -180,7 +180,7 @@ router.post('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res:
     `, [orgId, email.toLowerCase()]);
 
     if (existingMember.rows.length > 0) {
-      return res.status(400).json({ error: 'This user is already a member of the organization' });
+      return res.status(400).json({ error: req.t('organizations:alreadyMember') });
     }
 
     // Check if invitation already exists
@@ -190,7 +190,7 @@ router.post('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res:
     `, [orgId, email.toLowerCase()]);
 
     if (existingInvite.rows.length > 0) {
-      return res.status(400).json({ error: 'An invitation is already pending for this email' });
+      return res.status(400).json({ error: req.t('organizations:invitationAlreadyPending') });
     }
 
     // Create invitation
@@ -229,7 +229,7 @@ router.post('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res:
     res.status(201).json({ data: result.rows[0] });
   } catch (error) {
     logger.error('Error creating invitation:', error);
-    res.status(500).json({ error: 'Failed to create invitation' });
+    res.status(500).json({ error: req.t('organizations:createInvitationError') });
   }
 });
 
@@ -243,7 +243,7 @@ router.put('/:orgId/members/:memberId', authMiddleware, async (req: AuthRequest,
     const { role } = req.body;
 
     if (!req.talentId) {
-      return res.status(403).json({ error: 'Authentication required' });
+      return res.status(403).json({ error: req.t('organizations:authRequired') });
     }
 
     // Check if user has permission to edit members
@@ -253,13 +253,13 @@ router.put('/:orgId/members/:memberId', authMiddleware, async (req: AuthRequest,
     `, [orgId, req.talentId]);
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'You are not a member of this organization' });
+      return res.status(403).json({ error: req.t('organizations:notMember') });
     }
 
     const currentRole = memberCheck.rows[0].role;
 
     if (!canManageMembers(currentRole)) {
-      return res.status(403).json({ error: 'You do not have permission to edit members' });
+      return res.status(403).json({ error: req.t('organizations:noEditMemberPermission') });
     }
 
     // Get target member
@@ -268,22 +268,22 @@ router.put('/:orgId/members/:memberId', authMiddleware, async (req: AuthRequest,
     `, [memberId, orgId]);
 
     if (targetMember.rows.length === 0) {
-      return res.status(404).json({ error: 'Member not found' });
+      return res.status(404).json({ error: req.t('organizations:memberRemoved') });
     }
 
     // Cannot edit owner unless you are owner
     if (targetMember.rows[0].role === 'OWNER' && currentRole !== 'OWNER') {
-      return res.status(403).json({ error: 'Cannot modify the organization owner' });
+      return res.status(403).json({ error: req.t('organizations:cannotModifyOwner') });
     }
 
     // Validate role
     if (role && !VALID_ROLES.includes(role)) {
-      return res.status(400).json({ error: 'Invalid role' });
+      return res.status(400).json({ error: req.t('organizations:invalidRole') });
     }
 
     // Cannot assign higher role than yourself
     if (role && ROLE_HIERARCHY[role] >= ROLE_HIERARCHY[currentRole]) {
-      return res.status(403).json({ error: 'Cannot assign a role equal to or higher than your own' });
+      return res.status(403).json({ error: req.t('organizations:cannotAssignHigherRole') });
     }
 
     const result = await pool.query(`
@@ -297,7 +297,7 @@ router.put('/:orgId/members/:memberId', authMiddleware, async (req: AuthRequest,
     res.json({ data: result.rows[0] });
   } catch (error) {
     logger.error('Error updating member:', error);
-    res.status(500).json({ error: 'Failed to update member' });
+    res.status(500).json({ error: req.t('organizations:updateMemberError') });
   }
 });
 
@@ -310,7 +310,7 @@ router.delete('/:orgId/members/:memberId', authMiddleware, async (req: AuthReque
     const { orgId, memberId } = req.params;
 
     if (!req.talentId) {
-      return res.status(403).json({ error: 'Authentication required' });
+      return res.status(403).json({ error: req.t('organizations:authRequired') });
     }
 
     // Check if user has permission to remove members
@@ -320,13 +320,13 @@ router.delete('/:orgId/members/:memberId', authMiddleware, async (req: AuthReque
     `, [orgId, req.talentId]);
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'You are not a member of this organization' });
+      return res.status(403).json({ error: req.t('organizations:notMember') });
     }
 
     const currentRole = memberCheck.rows[0].role;
 
     if (!canManageMembers(currentRole)) {
-      return res.status(403).json({ error: 'You do not have permission to remove members' });
+      return res.status(403).json({ error: req.t('organizations:noRemoveMemberPermission') });
     }
 
     // Get target member
@@ -335,27 +335,27 @@ router.delete('/:orgId/members/:memberId', authMiddleware, async (req: AuthReque
     `, [memberId, orgId]);
 
     if (targetMember.rows.length === 0) {
-      return res.status(404).json({ error: 'Member not found' });
+      return res.status(404).json({ error: req.t('organizations:memberRemoved') });
     }
 
     // Cannot remove owner
     if (targetMember.rows[0].role === 'OWNER') {
-      return res.status(403).json({ error: 'Cannot remove the organization owner' });
+      return res.status(403).json({ error: req.t('organizations:cannotRemoveOwner') });
     }
 
     // Cannot remove yourself (use leave instead)
     if (targetMember.rows[0].talent_id === req.talentId) {
-      return res.status(400).json({ error: 'Cannot remove yourself. Use leave instead.' });
+      return res.status(400).json({ error: req.t('organizations:useLeaveInstead') });
     }
 
     await pool.query(`
       DELETE FROM organization_members WHERE id = $1 AND organization_id = $2
     `, [memberId, orgId]);
 
-    res.json({ success: true, message: 'Member removed' });
+    res.json({ success: true, message: req.t('organizations:memberRemoved') });
   } catch (error) {
     logger.error('Error removing member:', error);
-    res.status(500).json({ error: 'Failed to remove member' });
+    res.status(500).json({ error: req.t('organizations:removeMemberError') });
   }
 });
 
@@ -368,7 +368,7 @@ router.delete('/:orgId/invitations/:invitationId', authMiddleware, async (req: A
     const { orgId, invitationId } = req.params;
 
     if (!req.talentId) {
-      return res.status(403).json({ error: 'Authentication required' });
+      return res.status(403).json({ error: req.t('organizations:authRequired') });
     }
 
     // Check permission
@@ -378,13 +378,13 @@ router.delete('/:orgId/invitations/:invitationId', authMiddleware, async (req: A
     `, [orgId, req.talentId]);
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'You are not a member of this organization' });
+      return res.status(403).json({ error: req.t('organizations:notMember') });
     }
 
     const currentRole = memberCheck.rows[0].role;
 
     if (!canInviteMembers(currentRole)) {
-      return res.status(403).json({ error: 'You do not have permission to cancel invitations' });
+      return res.status(403).json({ error: req.t('organizations:noCancelInvitePermission') });
     }
 
     const result = await pool.query(`
@@ -395,13 +395,13 @@ router.delete('/:orgId/invitations/:invitationId', authMiddleware, async (req: A
     `, [invitationId, orgId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation not found or already processed' });
+      return res.status(404).json({ error: req.t('organizations:inviteNotFoundOrProcessed') });
     }
 
-    res.json({ success: true, message: 'Invitation cancelled' });
+    res.json({ success: true, message: req.t('organizations:invitationCancelled') });
   } catch (error) {
     logger.error('Error cancelling invitation:', error);
-    res.status(500).json({ error: 'Failed to cancel invitation' });
+    res.status(500).json({ error: req.t('organizations:cancelInvitationError') });
   }
 });
 
@@ -414,7 +414,7 @@ router.post('/:orgId/invitations/:invitationId/resend', authMiddleware, async (r
     const { orgId, invitationId } = req.params;
 
     if (!req.talentId) {
-      return res.status(403).json({ error: 'Authentication required' });
+      return res.status(403).json({ error: req.t('organizations:authRequired') });
     }
 
     // Check permission
@@ -424,7 +424,7 @@ router.post('/:orgId/invitations/:invitationId/resend', authMiddleware, async (r
     `, [orgId, req.talentId]);
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'You are not a member of this organization' });
+      return res.status(403).json({ error: req.t('organizations:notMember') });
     }
 
     const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -437,7 +437,7 @@ router.post('/:orgId/invitations/:invitationId/resend', authMiddleware, async (r
     `, [newExpiresAt, invitationId, orgId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation not found or already processed' });
+      return res.status(404).json({ error: req.t('organizations:inviteNotFoundOrProcessed') });
     }
 
     // Resend invitation email
@@ -462,7 +462,7 @@ router.post('/:orgId/invitations/:invitationId/resend', authMiddleware, async (r
     res.json({ data: result.rows[0] });
   } catch (error) {
     logger.error('Error resending invitation:', error);
-    res.status(500).json({ error: 'Failed to resend invitation' });
+    res.status(500).json({ error: req.t('organizations:resendInvitationError') });
   }
 });
 
@@ -477,7 +477,7 @@ router.post('/:orgId/invitations/:invitationId/resend', authMiddleware, async (r
 router.get('/invitations/received', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(403).json({ error: 'Authentication required' });
+      return res.status(403).json({ error: req.t('organizations:authRequired') });
     }
 
     // Get user email from talent
@@ -490,13 +490,13 @@ router.get('/invitations/received', authMiddleware, async (req: AuthRequest, res
       // Handle connection errors
       if (dbError.code === 'ECONNRESET' || dbError.code === 'ECONNREFUSED' || dbError.code === 'ETIMEDOUT') {
         logger.error('Database connection error fetching received invitations:', dbError);
-        return res.status(503).json({ error: 'Service temporairement indisponible. Veuillez réessayer.' });
+        return res.status(503).json({ error: req.t('common:serviceUnavailable') });
       }
       throw dbError;
     }
 
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: req.t('common:userNotFound') });
     }
 
     const userEmail = userResult.rows[0].email;
@@ -524,7 +524,7 @@ router.get('/invitations/received', authMiddleware, async (req: AuthRequest, res
       // Handle connection errors
       if (dbError.code === 'ECONNRESET' || dbError.code === 'ECONNREFUSED' || dbError.code === 'ETIMEDOUT') {
         logger.error('Database connection error fetching received invitations:', dbError);
-        return res.status(503).json({ error: 'Service temporairement indisponible. Veuillez réessayer.' });
+        return res.status(503).json({ error: req.t('common:serviceUnavailable') });
       }
       throw dbError;
     }
@@ -532,13 +532,13 @@ router.get('/invitations/received', authMiddleware, async (req: AuthRequest, res
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error: any) {
     logger.error('Error fetching received invitations:', error);
-    
+
     // Handle specific database connection errors
     if (error.code === 'ECONNRESET' || error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
-      return res.status(503).json({ error: 'Service temporairement indisponible. Veuillez réessayer.' });
+      return res.status(503).json({ error: req.t('common:serviceUnavailable') });
     }
-    
-    res.status(500).json({ error: 'Failed to fetch invitations' });
+
+    res.status(500).json({ error: req.t('organizations:fetchReceivedInvitationsError') });
   }
 });
 
@@ -551,7 +551,7 @@ router.post('/invitations/:invitationId/accept', authMiddleware, async (req: Aut
     const { invitationId } = req.params;
 
     if (!req.talentId) {
-      return res.status(403).json({ error: 'Authentication required' });
+      return res.status(403).json({ error: req.t('organizations:authRequired') });
     }
 
     // Get user email
@@ -560,7 +560,7 @@ router.post('/invitations/:invitationId/accept', authMiddleware, async (req: Aut
     `, [req.talentId]);
 
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: req.t('common:userNotFound') });
     }
 
     const userEmail = userResult.rows[0].email.toLowerCase();
@@ -572,7 +572,7 @@ router.post('/invitations/:invitationId/accept', authMiddleware, async (req: Aut
     `, [invitationId, userEmail]);
 
     if (inviteResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation not found or already processed' });
+      return res.status(404).json({ error: req.t('organizations:inviteNotFoundOrProcessed') });
     }
 
     const invitation = inviteResult.rows[0];
@@ -583,7 +583,7 @@ router.post('/invitations/:invitationId/accept', authMiddleware, async (req: Aut
         UPDATE organization_invitations SET status = 'EXPIRED', updated_at = NOW()
         WHERE id = $1
       `, [invitationId]);
-      return res.status(400).json({ error: 'Cette invitation a expiré' });
+      return res.status(400).json({ error: req.t('organizations:invitationExpired') });
     }
 
     // Check if already a member
@@ -598,7 +598,7 @@ router.post('/invitations/:invitationId/accept', authMiddleware, async (req: Aut
         UPDATE organization_invitations SET status = 'ACCEPTED', updated_at = NOW()
         WHERE id = $1
       `, [invitationId]);
-      return res.status(400).json({ error: 'Vous êtes déjà membre de cette organisation' });
+      return res.status(400).json({ error: req.t('organizations:alreadyOrgMember') });
     }
 
     // Start transaction
@@ -629,7 +629,7 @@ router.post('/invitations/:invitationId/accept', authMiddleware, async (req: Aut
 
       res.json({
         success: true,
-        message: 'Invitation acceptée',
+        message: req.t('organizations:invitationAccepted'),
         data: {
           member_id: memberId,
           organization: orgResult.rows[0],
@@ -644,7 +644,7 @@ router.post('/invitations/:invitationId/accept', authMiddleware, async (req: Aut
     }
   } catch (error) {
     logger.error('Error accepting invitation:', error);
-    res.status(500).json({ error: 'Failed to accept invitation' });
+    res.status(500).json({ error: req.t('organizations:acceptInvitationError') });
   }
 });
 
@@ -657,7 +657,7 @@ router.post('/invitations/:invitationId/decline', authMiddleware, async (req: Au
     const { invitationId } = req.params;
 
     if (!req.talentId) {
-      return res.status(403).json({ error: 'Authentication required' });
+      return res.status(403).json({ error: req.t('organizations:authRequired') });
     }
 
     // Get user email
@@ -666,7 +666,7 @@ router.post('/invitations/:invitationId/decline', authMiddleware, async (req: Au
     `, [req.talentId]);
 
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: req.t('common:userNotFound') });
     }
 
     const userEmail = userResult.rows[0].email.toLowerCase();
@@ -680,13 +680,13 @@ router.post('/invitations/:invitationId/decline', authMiddleware, async (req: Au
     `, [invitationId, userEmail]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation not found or already processed' });
+      return res.status(404).json({ error: req.t('organizations:inviteNotFoundOrProcessed') });
     }
 
-    res.json({ success: true, message: 'Invitation refusée' });
+    res.json({ success: true, message: req.t('organizations:invitationDeclined') });
   } catch (error) {
     logger.error('Error declining invitation:', error);
-    res.status(500).json({ error: 'Failed to decline invitation' });
+    res.status(500).json({ error: req.t('organizations:declineInvitationError') });
   }
 });
 
@@ -711,7 +711,7 @@ router.get('/invitations/by-token/:token', async (req: AuthRequest, res: Respons
     `, [token]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Invitation not found' });
+      return res.status(404).json({ error: req.t('organizations:inviteNotFound') });
     }
 
     const invitation = result.rows[0];
@@ -720,23 +720,23 @@ router.get('/invitations/by-token/:token', async (req: AuthRequest, res: Respons
     if (invitation.status !== 'PENDING') {
       return res.status(400).json({
         error: invitation.status === 'ACCEPTED'
-          ? 'Cette invitation a déjà été acceptée'
+          ? req.t('organizations:inviteAlreadyAccepted')
           : invitation.status === 'EXPIRED'
-          ? 'Cette invitation a expiré'
-          : 'Cette invitation a été annulée',
+          ? req.t('organizations:inviteAlreadyExpired')
+          : req.t('organizations:inviteAlreadyCancelled'),
         status: invitation.status
       });
     }
 
     // Check expiration
     if (new Date(invitation.expires_at) < new Date()) {
-      return res.status(400).json({ error: 'Cette invitation a expiré', status: 'EXPIRED' });
+      return res.status(400).json({ error: req.t('organizations:invitationExpired'), status: 'EXPIRED' });
     }
 
     res.json({ data: invitation });
   } catch (error) {
     logger.error('Error fetching invitation by token:', error);
-    res.status(500).json({ error: 'Failed to fetch invitation' });
+    res.status(500).json({ error: req.t('organizations:fetchInvitationByTokenError') });
   }
 });
 

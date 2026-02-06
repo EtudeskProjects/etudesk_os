@@ -65,7 +65,7 @@ router.post('/read', authMiddleware, async (req: any, res: Response) => {
             count = await communityNotificationService.markAsRead(talentId, undefined, community_id);
         } else {
             return res.status(400).json({
-                error: 'Provide notification_ids, community_id, or set all to true'
+                error: req.t('communities:provideNotificationIdsOrCommunityIdOrAll')
             });
         }
 

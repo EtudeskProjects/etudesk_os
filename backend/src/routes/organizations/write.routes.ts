@@ -53,9 +53,9 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     if (!isAdmin && identityCheck.rows.length === 0) {
       return res.status(403).json({
-        error: 'Verified identity required',
+        error: req.t('organizations:verifiedIdentityRequired'),
         code: 'IDENTITY_REQUIRED',
-        message: 'Vous devez vérifier votre identité avant de créer une organisation.'
+        message: req.t('organizations:identityVerificationMessage')
       });
     }
 
@@ -68,15 +68,15 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     // Validation
     if (!name || typeof name !== 'string' || name.trim().length < 2) {
-      return res.status(400).json({ error: 'Organization name must be at least 2 characters' });
+      return res.status(400).json({ error: req.t('organizations:nameMinLength') });
     }
 
     if (types) {
       if (!Array.isArray(types) || types.length > MAX_ORG_TYPES) {
-        return res.status(400).json({ error: `types must be an array of max ${MAX_ORG_TYPES} items`, validTypes: VALID_ORG_TYPES });
+        return res.status(400).json({ error: req.t('organizations:typesMaxItems', { max: MAX_ORG_TYPES }), validTypes: VALID_ORG_TYPES });
       }
       if (types.some((t: string) => !VALID_ORG_TYPES.includes(t))) {
-        return res.status(400).json({ error: 'Invalid organization type', validTypes: VALID_ORG_TYPES });
+        return res.status(400).json({ error: req.t('organizations:invalidType'), validTypes: VALID_ORG_TYPES });
       }
     }
 
@@ -84,7 +84,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     const normalizedCountry = headquarters_country ? normalizeCountryCode(headquarters_country) : null;
     if (headquarters_country && !normalizedCountry) {
       return res.status(400).json({
-        error: 'Country must be a 2-letter ISO code or a recognized country name',
+        error: req.t('organizations:countryMustBeIsoCode'),
         provided: headquarters_country,
       });
     }
@@ -212,10 +212,10 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     // Validation
     if (types !== undefined) {
       if (types !== null && (!Array.isArray(types) || types.length > MAX_ORG_TYPES)) {
-        return res.status(400).json({ error: `types must be an array of max ${MAX_ORG_TYPES} items` });
+        return res.status(400).json({ error: req.t('organizations:typesMaxItems', { max: MAX_ORG_TYPES }) });
       }
       if (types && types.some((t: string) => !VALID_ORG_TYPES.includes(t))) {
-        return res.status(400).json({ error: 'Invalid organization type', validTypes: VALID_ORG_TYPES });
+        return res.status(400).json({ error: req.t('organizations:invalidType'), validTypes: VALID_ORG_TYPES });
       }
     }
 
@@ -223,7 +223,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     const normalizedCountry = headquarters_country ? normalizeCountryCode(headquarters_country) : undefined;
     if (headquarters_country && !normalizedCountry) {
       return res.status(400).json({
-        error: 'Country must be a 2-letter ISO code or a recognized country name',
+        error: req.t('organizations:countryMustBeIsoCode'),
         provided: headquarters_country,
       });
     }
@@ -247,7 +247,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     if (name !== undefined) {
       if (typeof name !== 'string' || name.trim().length < 2) {
-        return res.status(400).json({ error: 'Name must be at least 2 characters' });
+        return res.status(400).json({ error: req.t('organizations:nameMinLength') });
       }
       updates.push(`name = $${paramIndex++}`);
       params.push(name.trim());
@@ -317,7 +317,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     }
 
     if (updates.length === 0) {
-      return res.status(400).json({ error: 'No fields to update' });
+      return res.status(400).json({ error: req.t('organizations:noFieldsToUpdate') });
     }
 
     params.push(id);
@@ -371,7 +371,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
       throw createNotFoundError('Organization');
     }
 
-    res.json({ success: true, message: 'Organization deleted' });
+    res.json({ success: true, message: req.t('organizations:deleted') });
   } catch (error) {
     handleRouteError(res, error, 'Error deleting organization');
   }

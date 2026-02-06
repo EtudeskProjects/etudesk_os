@@ -58,7 +58,7 @@ router.get('/opportunities', authMiddleware, async (req: AuthRequest, res: Respo
     const talentId = req.talentId;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Profil talent requis' });
+      return res.status(401).json({ error: req.t('common:talentProfileRequired') });
     }
 
     const { limit = 50, offset = 0 } = req.query;
@@ -97,7 +97,7 @@ router.get('/opportunities', authMiddleware, async (req: AuthRequest, res: Respo
     });
   } catch (error) {
     logger.error('Error fetching opportunity bookmarks:', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération des favoris' });
+    res.status(500).json({ error: req.t('bookmarks:fetchError') });
   }
 });
 
@@ -110,7 +110,7 @@ router.get('/opportunities/ids', authMiddleware, async (req: AuthRequest, res: R
     const talentId = req.talentId;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Profil talent requis' });
+      return res.status(401).json({ error: req.t('common:talentProfileRequired') });
     }
 
     const result = await pool.query(`
@@ -124,7 +124,7 @@ router.get('/opportunities/ids', authMiddleware, async (req: AuthRequest, res: R
     res.json({ data: ids });
   } catch (error) {
     logger.error('Error fetching opportunity bookmark IDs:', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération des favoris' });
+    res.status(500).json({ error: req.t('bookmarks:fetchError') });
   }
 });
 
@@ -138,7 +138,7 @@ router.get('/opportunities/:id/status', authMiddleware, async (req: AuthRequest,
     const { id } = req.params;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Profil talent requis' });
+      return res.status(401).json({ error: req.t('common:talentProfileRequired') });
     }
 
     const result = await pool.query(`
@@ -151,7 +151,7 @@ router.get('/opportunities/:id/status', authMiddleware, async (req: AuthRequest,
     });
   } catch (error) {
     logger.error('Error checking opportunity bookmark status:', error);
-    res.status(500).json({ error: 'Erreur lors de la vérification du favori' });
+    res.status(500).json({ error: req.t('bookmarks:checkStatusError') });
   }
 });
 
@@ -166,7 +166,7 @@ router.post('/opportunities/:id', authMiddleware, async (req: AuthRequest, res: 
     const { notes } = req.body;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Profil talent requis' });
+      return res.status(401).json({ error: req.t('common:talentProfileRequired') });
     }
 
     // Check if opportunity exists
@@ -176,7 +176,7 @@ router.post('/opportunities/:id', authMiddleware, async (req: AuthRequest, res: 
     );
 
     if (oppCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Opportunité non trouvée' });
+      return res.status(404).json({ error: req.t('bookmarks:opportunityNotFound') });
     }
 
     // Upsert bookmark (insert or update notes)
@@ -190,12 +190,12 @@ router.post('/opportunities/:id', authMiddleware, async (req: AuthRequest, res: 
 
     res.status(201).json({
       success: true,
-      message: 'Ajouté aux favoris',
+      message: req.t('bookmarks:addedToBookmarks'),
       isBookmarked: true
     });
   } catch (error) {
     logger.error('Error adding opportunity bookmark:', error);
-    res.status(500).json({ error: 'Erreur lors de l\'ajout aux favoris' });
+    res.status(500).json({ error: req.t('bookmarks:addError') });
   }
 });
 
@@ -209,7 +209,7 @@ router.delete('/opportunities/:id', authMiddleware, async (req: AuthRequest, res
     const { id } = req.params;
 
     if (!talentId) {
-      return res.status(401).json({ error: 'Profil talent requis' });
+      return res.status(401).json({ error: req.t('common:talentProfileRequired') });
     }
 
     await pool.query(`
@@ -221,12 +221,12 @@ router.delete('/opportunities/:id', authMiddleware, async (req: AuthRequest, res
 
     res.json({
       success: true,
-      message: 'Retiré des favoris',
+      message: req.t('bookmarks:removedFromBookmarks'),
       isBookmarked: false
     });
   } catch (error) {
     logger.error('Error removing opportunity bookmark:', error);
-    res.status(500).json({ error: 'Erreur lors du retrait des favoris' });
+    res.status(500).json({ error: req.t('bookmarks:removeError') });
   }
 });
 
@@ -265,7 +265,7 @@ const ensureBookmarkTable = async (entityType: EntityType): Promise<void> => {
 router.get('/spaces', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
-    if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
+    if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
     await ensureBookmarkTable('space');
 
@@ -289,7 +289,7 @@ router.get('/spaces', authMiddleware, async (req: AuthRequest, res: Response) =>
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
     logger.error('Error fetching space bookmarks:', error);
-    res.status(500).json({ error: 'Erreur' });
+    res.status(500).json({ error: req.t('bookmarks:error') });
   }
 });
 
@@ -299,7 +299,7 @@ router.get('/spaces', authMiddleware, async (req: AuthRequest, res: Response) =>
 router.get('/spaces/ids', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
-    if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
+    if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
     await ensureBookmarkTable('space');
 
@@ -310,7 +310,7 @@ router.get('/spaces/ids', authMiddleware, async (req: AuthRequest, res: Response
     res.json({ data: result.rows.map(r => r.space_id) });
   } catch (error) {
     logger.error('Error fetching space bookmark IDs:', error);
-    res.status(500).json({ error: 'Erreur' });
+    res.status(500).json({ error: req.t('bookmarks:error') });
   }
 });
 
@@ -321,13 +321,13 @@ router.post('/spaces/:id', authMiddleware, async (req: AuthRequest, res: Respons
   try {
     const talentId = req.talentId;
     const { id } = req.params;
-    if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
+    if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
     await ensureBookmarkTable('space');
 
     const check = await pool.query('SELECT id FROM spaces WHERE id = $1 AND deleted_at IS NULL', [id]);
     if (check.rows.length === 0) {
-      return res.status(404).json({ error: 'Espace non trouvé' });
+      return res.status(404).json({ error: req.t('bookmarks:spaceNotFound') });
     }
 
     await pool.query(`
@@ -339,7 +339,7 @@ router.post('/spaces/:id', authMiddleware, async (req: AuthRequest, res: Respons
     res.status(201).json({ success: true, isBookmarked: true });
   } catch (error) {
     logger.error('Error adding space bookmark:', error);
-    res.status(500).json({ error: 'Erreur' });
+    res.status(500).json({ error: req.t('bookmarks:error') });
   }
 });
 
@@ -350,7 +350,7 @@ router.delete('/spaces/:id', authMiddleware, async (req: AuthRequest, res: Respo
   try {
     const talentId = req.talentId;
     const { id } = req.params;
-    if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
+    if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
     await ensureBookmarkTable('space');
 
@@ -361,7 +361,7 @@ router.delete('/spaces/:id', authMiddleware, async (req: AuthRequest, res: Respo
     res.json({ success: true, isBookmarked: false });
   } catch (error) {
     logger.error('Error removing space bookmark:', error);
-    res.status(500).json({ error: 'Erreur' });
+    res.status(500).json({ error: req.t('bookmarks:error') });
   }
 });
 
@@ -375,7 +375,7 @@ router.delete('/spaces/:id', authMiddleware, async (req: AuthRequest, res: Respo
 router.get('/communities', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
-    if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
+    if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
     await ensureBookmarkTable('community');
 
@@ -396,7 +396,7 @@ router.get('/communities', authMiddleware, async (req: AuthRequest, res: Respons
     res.json({ data: result.rows, count: result.rowCount });
   } catch (error) {
     logger.error('Error fetching community bookmarks:', error);
-    res.status(500).json({ error: 'Erreur' });
+    res.status(500).json({ error: req.t('bookmarks:error') });
   }
 });
 
@@ -406,7 +406,7 @@ router.get('/communities', authMiddleware, async (req: AuthRequest, res: Respons
 router.get('/communities/ids', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
-    if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
+    if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
     await ensureBookmarkTable('community');
 
@@ -417,7 +417,7 @@ router.get('/communities/ids', authMiddleware, async (req: AuthRequest, res: Res
     res.json({ data: result.rows.map(r => r.community_id) });
   } catch (error) {
     logger.error('Error fetching community bookmark IDs:', error);
-    res.status(500).json({ error: 'Erreur' });
+    res.status(500).json({ error: req.t('bookmarks:error') });
   }
 });
 
@@ -428,13 +428,13 @@ router.post('/communities/:id', authMiddleware, async (req: AuthRequest, res: Re
   try {
     const talentId = req.talentId;
     const { id } = req.params;
-    if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
+    if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
     await ensureBookmarkTable('community');
 
     const check = await pool.query('SELECT id FROM communities WHERE id = $1 AND deleted_at IS NULL', [id]);
     if (check.rows.length === 0) {
-      return res.status(404).json({ error: 'Communauté non trouvée' });
+      return res.status(404).json({ error: req.t('bookmarks:communityNotFound') });
     }
 
     await pool.query(`
@@ -446,7 +446,7 @@ router.post('/communities/:id', authMiddleware, async (req: AuthRequest, res: Re
     res.status(201).json({ success: true, isBookmarked: true });
   } catch (error) {
     logger.error('Error adding community bookmark:', error);
-    res.status(500).json({ error: 'Erreur' });
+    res.status(500).json({ error: req.t('bookmarks:error') });
   }
 });
 
@@ -457,7 +457,7 @@ router.delete('/communities/:id', authMiddleware, async (req: AuthRequest, res: 
   try {
     const talentId = req.talentId;
     const { id } = req.params;
-    if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
+    if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
     await ensureBookmarkTable('community');
 
@@ -468,7 +468,7 @@ router.delete('/communities/:id', authMiddleware, async (req: AuthRequest, res: 
     res.json({ success: true, isBookmarked: false });
   } catch (error) {
     logger.error('Error removing community bookmark:', error);
-    res.status(500).json({ error: 'Erreur' });
+    res.status(500).json({ error: req.t('bookmarks:error') });
   }
 });
 
@@ -483,7 +483,7 @@ router.delete('/communities/:id', authMiddleware, async (req: AuthRequest, res: 
 router.get('/all/ids', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
-    if (!talentId) return res.status(401).json({ error: 'Profil talent requis' });
+    if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
     // Ensure all tables exist
     await Promise.all([
@@ -506,7 +506,7 @@ router.get('/all/ids', authMiddleware, async (req: AuthRequest, res: Response) =
     });
   } catch (error) {
     logger.error('Error fetching all bookmark IDs:', error);
-    res.status(500).json({ error: 'Erreur' });
+    res.status(500).json({ error: req.t('bookmarks:error') });
   }
 });
 

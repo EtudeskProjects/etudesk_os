@@ -1,0 +1,11 @@
+{
+  "fetchError": "Erreur lors du chargement des compétences",
+  "invalidProficiencyLevel": "Niveau de compétence invalide",
+  "skillNameRequired": "skillName requis",
+  "skillTypeRequired": "Le type de compétence est requis (KNOWLEDGE, HARD_SKILL, SOFT_SKILL)",
+  "addError": "Erreur lors de l'ajout de la compétence",
+  "updateError": "Erreur lors de la mise à jour",
+  "notFound": "Compétence non trouvée",
+  "deleteError": "Erreur lors de la suppression",
+  "mergeError": "Erreur lors de la fusion des compétences"
+}

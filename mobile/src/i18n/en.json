@@ -511,6 +511,75 @@
       "online": "Online",
       "offline": "In-Person",
       "hybrid": "Hybrid"
+    },
+    "feed": {
+      "all": "All",
+      "posts": "Posts",
+      "events": "Events",
+      "polls": "Polls",
+      "voteError": "Unable to vote",
+      "pinError": "Unable to change pin",
+      "deleteTitle": "Delete",
+      "deleteMessage": "Are you sure you want to delete this activity?",
+      "deleteError": "Unable to delete",
+      "subscribersOnly": "Subscribers only",
+      "expiredSubscription": "Your subscription has expired. Renew to access \"{{name}}\" content.",
+      "subscribePrompt": "Subscribe to access exclusive content from \"{{name}}\".",
+      "perMonth": "/month",
+      "renew": "Renew",
+      "subscribe": "Subscribe",
+      "loadMore": "Load more",
+      "noActivity": "No activity"
+    },
+    "comments": {
+      "title": "Comments",
+      "viewMore": "View {{count}} more comment(s)",
+      "noComments": "No comments. Be the first!",
+      "replyTo": "Reply to {{name}}",
+      "replyPlaceholder": "Your reply...",
+      "addPlaceholder": "Add a comment...",
+      "deleteTitle": "Delete comment",
+      "deleteMessage": "Are you sure you want to delete this comment?",
+      "deleteError": "Unable to delete comment.",
+      "report": "Report",
+      "options": "Options",
+      "publishError": "Unable to post."
+    },
+    "paywall": {
+      "expiredTitle": "Subscription expired",
+      "cancelledTitle": "Subscription cancelled",
+      "subscribersOnly": "Subscribers only",
+      "renewDescription": "Renew your subscription to access this community's content.",
+      "subscribeDescription": "Subscribe to access all exclusive content from this community.",
+      "monthlySubscription": "Monthly subscription",
+      "perMonth": "/month",
+      "trialDays": "{{days}} days free trial",
+      "benefitPosts": "Access to all posts",
+      "benefitEvents": "Participation in events",
+      "benefitPolls": "Polls and discussions",
+      "startTrial": "Start free trial",
+      "renewSubscription": "Renew my subscription",
+      "subscribeNow": "Subscribe now",
+      "later": "Later",
+      "trialActivated": "Free trial activated",
+      "paymentInProgress": "Payment in progress",
+      "paymentMessage": "Complete the payment in your browser. Come back here when done."
+    },
+    "activity": {
+      "unpin": "Unpin",
+      "pin": "Pin",
+      "scheduled": "Scheduled",
+      "pollLoading": "Loading poll options...",
+      "votes": "{{count}} vote(s)",
+      "dateLabel": "Date",
+      "online": "Online",
+      "location": "Location",
+      "meetingLinkAvailable": "Meeting link available",
+      "detailsComingSoon": "Details coming soon",
+      "locationTbc": "Location to be confirmed",
+      "likes": "{{count}} Like(s)",
+      "comments": "{{count}} Comment(s)",
+      "bookmarks": "{{count}} Bookmark(s)"
     }
   },
   "date": {
@@ -551,6 +620,109 @@
       "november": "Nov",
       "december": "Dec"
     }
+  },
+  "chat": {
+    "datetimeTypes": {
+      "interviewProposal": "Interview proposal",
+      "meetingRequest": "Meeting request",
+      "availability": "Availability"
+    },
+    "calendarPermission": "Please allow calendar access to add this event.",
+    "noCalendar": "No calendar available.",
+    "appointment": "Appointment",
+    "eventAdded": "The event has been added to your calendar.",
+    "eventAddError": "Unable to add event to calendar.",
+    "proposedSlot": "Proposed slot",
+    "writeMessage": "Write your message...",
+    "fileTooLarge": "File too large",
+    "fileSizeLimit": "File must not exceed {{size}}.",
+    "limitReached": "Limit reached",
+    "maxFiles": "You can attach up to 3 files.",
+    "fileSelectError": "Unable to select file.",
+    "proposal": "Proposal: {{date}} at {{time}}",
+    "proposeDate": "Propose a date"
+  },
+  "input": {
+    "errorHint": "Error: {{error}}",
+    "hidePassword": "Hide password",
+    "showPassword": "Show password",
+    "togglePasswordHint": "Tap to toggle password visibility"
+  },
+  "errorBoundary": {
+    "errorReportTitle": "Etudesk Error Report",
+    "title": "Oops! Something went wrong",
+    "subtitle": "We're sorry, something went wrong.",
+    "unknownError": "Unknown error",
+    "technicalDetails": "Technical details",
+    "stackTrace": "Stack Trace:",
+    "componentStack": "Component Stack:",
+    "shareError": "Share error",
+    "loadError": "Loading error",
+    "pageLoadError": "This page could not be loaded."
+  },
+  "geolocation": {
+    "servicesDisabled": "Location services disabled",
+    "enableServices": "Please enable location services in your device settings.",
+    "settings": "Settings",
+    "permissionDenied": "Permission denied",
+    "permissionMessage": "Etudesk needs your permission to access your location.",
+    "addressError": "Unable to determine your address",
+    "unsupportedCountry": "Country not supported",
+    "unsupportedCountryMessage": "We don't support {{country}} yet. Please select your location manually.",
+    "timeout": "Location took too long. Please try again.",
+    "genericError": "An error occurred while getting your location.",
+    "errorTitle": "Location error",
+    "errorMessage": "Unable to get your location. Please try again or select your location manually."
+  },
+  "audioRecorder": {
+    "permissionRequired": "Permission required",
+    "micPermissionMessage": "Microphone access is required to record your voice.",
+    "startError": "Unable to start recording",
+    "stopError": "Error stopping recording"
+  },
+  "map": {
+    "permissionDenied": "Permission denied",
+    "permissionMessage": "We need your permission to access your location.",
+    "locationError": "Location error",
+    "locationErrorMessage": "Unable to get your location.",
+    "loadingMap": "Loading map...",
+    "selectedPosition": "Selected position",
+    "tapToSelect": "Tap the map to select a position"
+  },
+  "copilotImage": {
+    "openLinkError": "Unable to open link",
+    "openLinkErrorMessage": "An error occurred while opening the link",
+    "loadError": "Unable to load image"
+  },
+  "imageService": {
+    "permissionRequired": "Permission required",
+    "photoPermission": "We need your permission to access your photos.",
+    "cameraPermission": "We need your permission to access the camera.",
+    "optimizeError": "Error optimizing image",
+    "pickError": "An error occurred while selecting the image.",
+    "captureError": "An error occurred while taking the photo.",
+    "chooseImage": "Choose an image",
+    "chooseImageMessage": "How would you like to add your image?",
+    "takePhoto": "Take a photo",
+    "fromGallery": "Choose from gallery",
+    "uploadError": "Error uploading image"
+  },
+  "copilotService": {
+    "connectionError": "Connection error",
+    "httpError": "Error {{status}}",
+    "transcriptionError": "Error during transcription",
+    "audioTranscriptionError": "Error during audio transcription",
+    "uploadError": "Error uploading files"
+  },
+  "copilotContext": {
+    "attachmentUploadError": "Error uploading attachments",
+    "sendError": "Error sending message",
+    "sessionNotFound": "Session not found",
+    "unknownError": "Unknown error",
+    "loadSessionsError": "Error loading sessions"
+  },
+  "otpService": {
+    "sendError": "Error sending code"
   },
   "errors": {
     "generic": "An error occurred",

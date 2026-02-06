@@ -512,6 +512,75 @@
       "online": "En ligne",
       "offline": "Présentiel",
       "hybrid": "Hybride"
+    },
+    "feed": {
+      "all": "Tout",
+      "posts": "Publications",
+      "events": "Événements",
+      "polls": "Sondages",
+      "voteError": "Impossible de voter",
+      "pinError": "Impossible de modifier l'épingle",
+      "deleteTitle": "Supprimer",
+      "deleteMessage": "Êtes-vous sûr de vouloir supprimer cette activité ?",
+      "deleteError": "Impossible de supprimer",
+      "subscribersOnly": "Contenu réservé aux abonnés",
+      "expiredSubscription": "Votre abonnement a expiré. Renouvelez pour accéder au contenu de \"{{name}}\".",
+      "subscribePrompt": "Abonnez-vous pour accéder au contenu exclusif de \"{{name}}\".",
+      "perMonth": "/mois",
+      "renew": "Renouveler",
+      "subscribe": "S'abonner",
+      "loadMore": "Charger plus",
+      "noActivity": "Aucune activité"
+    },
+    "comments": {
+      "title": "Commentaires",
+      "viewMore": "Voir {{count}} autre(s) commentaire(s)",
+      "noComments": "Aucun commentaire. Soyez le premier !",
+      "replyTo": "Répondre à {{name}}",
+      "replyPlaceholder": "Votre réponse...",
+      "addPlaceholder": "Ajouter un commentaire...",
+      "deleteTitle": "Supprimer le commentaire",
+      "deleteMessage": "Êtes-vous sûr de vouloir supprimer ce commentaire ?",
+      "deleteError": "Impossible de supprimer le commentaire.",
+      "report": "Signaler",
+      "options": "Options",
+      "publishError": "Impossible de publier."
+    },
+    "paywall": {
+      "expiredTitle": "Abonnement expiré",
+      "cancelledTitle": "Abonnement annulé",
+      "subscribersOnly": "Contenu réservé aux abonnés",
+      "renewDescription": "Renouvelez votre abonnement pour accéder au contenu de cette communauté.",
+      "subscribeDescription": "Abonnez-vous pour accéder à tout le contenu exclusif de cette communauté.",
+      "monthlySubscription": "Abonnement mensuel",
+      "perMonth": "/mois",
+      "trialDays": "{{days}} jours d'essai gratuit",
+      "benefitPosts": "Accès à toutes les publications",
+      "benefitEvents": "Participation aux événements",
+      "benefitPolls": "Sondages et discussions",
+      "startTrial": "Commencer l'essai gratuit",
+      "renewSubscription": "Renouveler mon abonnement",
+      "subscribeNow": "S'abonner maintenant",
+      "later": "Plus tard",
+      "trialActivated": "Essai gratuit activé",
+      "paymentInProgress": "Paiement en cours",
+      "paymentMessage": "Complétez le paiement dans votre navigateur. Revenez ici une fois terminé."
+    },
+    "activity": {
+      "unpin": "Désépingler",
+      "pin": "Épingler",
+      "scheduled": "Programmé",
+      "pollLoading": "Chargement des options du sondage...",
+      "votes": "{{count}} vote(s)",
+      "dateLabel": "Date",
+      "online": "En ligne",
+      "location": "Lieu",
+      "meetingLinkAvailable": "Lien de réunion disponible",
+      "detailsComingSoon": "Détails à venir",
+      "locationTbc": "Lieu à confirmer",
+      "likes": "{{count}} J'aime",
+      "comments": "{{count}} Commentaire(s)",
+      "bookmarks": "{{count}} Bookmark(s)"
     }
   },
   "date": {
@@ -552,6 +621,109 @@
       "november": "nov.",
       "december": "déc."
     }
+  },
+  "chat": {
+    "datetimeTypes": {
+      "interviewProposal": "Proposition d'entretien",
+      "meetingRequest": "Demande de rendez-vous",
+      "availability": "Disponibilité"
+    },
+    "calendarPermission": "Veuillez autoriser l'accès au calendrier pour ajouter cet événement.",
+    "noCalendar": "Aucun calendrier disponible.",
+    "appointment": "Rendez-vous",
+    "eventAdded": "L'événement a été ajouté à votre calendrier.",
+    "eventAddError": "Impossible d'ajouter l'événement au calendrier.",
+    "proposedSlot": "Créneau proposé",
+    "writeMessage": "Écrivez votre message...",
+    "fileTooLarge": "Fichier trop volumineux",
+    "fileSizeLimit": "Le fichier ne doit pas dépasser {{size}}.",
+    "limitReached": "Limite atteinte",
+    "maxFiles": "Vous pouvez joindre maximum 3 fichiers.",
+    "fileSelectError": "Impossible de sélectionner le fichier.",
+    "proposal": "Proposition: {{date}} à {{time}}",
+    "proposeDate": "Proposer une date"
+  },
+  "input": {
+    "errorHint": "Erreur: {{error}}",
+    "hidePassword": "Masquer le mot de passe",
+    "showPassword": "Afficher le mot de passe",
+    "togglePasswordHint": "Active pour basculer la visibilité du mot de passe"
+  },
+  "errorBoundary": {
+    "errorReportTitle": "Rapport d'erreur Etudesk",
+    "title": "Oups ! Une erreur s'est produite",
+    "subtitle": "Nous sommes désolés, quelque chose s'est mal passé.",
+    "unknownError": "Erreur inconnue",
+    "technicalDetails": "Détails techniques",
+    "stackTrace": "Stack Trace:",
+    "componentStack": "Component Stack:",
+    "shareError": "Partager l'erreur",
+    "loadError": "Erreur de chargement",
+    "pageLoadError": "Cette page n'a pas pu être chargée."
+  },
+  "geolocation": {
+    "servicesDisabled": "Services de localisation désactivés",
+    "enableServices": "Veuillez activer les services de localisation dans les paramètres de votre appareil.",
+    "settings": "Paramètres",
+    "permissionDenied": "Permission refusée",
+    "permissionMessage": "Etudesk a besoin de votre permission pour accéder à votre localisation.",
+    "addressError": "Impossible de déterminer votre adresse",
+    "unsupportedCountry": "Pays non supporté",
+    "unsupportedCountryMessage": "Nous ne supportons pas encore {{country}}. Veuillez sélectionner votre localisation manuellement.",
+    "timeout": "La localisation a pris trop de temps. Veuillez réessayer.",
+    "genericError": "Une erreur est survenue lors de la récupération de votre position.",
+    "errorTitle": "Erreur de localisation",
+    "errorMessage": "Impossible de récupérer votre position. Veuillez réessayer ou sélectionner votre localisation manuellement."
+  },
+  "audioRecorder": {
+    "permissionRequired": "Permission requise",
+    "micPermissionMessage": "L'accès au microphone est nécessaire pour enregistrer votre voix.",
+    "startError": "Impossible de démarrer l'enregistrement",
+    "stopError": "Erreur lors de l'arrêt de l'enregistrement"
+  },
+  "map": {
+    "permissionDenied": "Permission refusée",
+    "permissionMessage": "Nous avons besoin de votre permission pour accéder à votre position.",
+    "locationError": "Erreur de localisation",
+    "locationErrorMessage": "Impossible de récupérer votre position.",
+    "loadingMap": "Chargement de la carte...",
+    "selectedPosition": "Position sélectionnée",
+    "tapToSelect": "Touchez la carte pour sélectionner une position"
+  },
+  "copilotImage": {
+    "openLinkError": "Impossible d'ouvrir le lien",
+    "openLinkErrorMessage": "Une erreur est survenue lors de l'ouverture du lien",
+    "loadError": "Impossible de charger l'image"
+  },
+  "imageService": {
+    "permissionRequired": "Permission requise",
+    "photoPermission": "Nous avons besoin de votre permission pour accéder à vos photos.",
+    "cameraPermission": "Nous avons besoin de votre permission pour accéder à la caméra.",
+    "optimizeError": "Erreur lors de l'optimisation de l'image",
+    "pickError": "Une erreur est survenue lors de la sélection de l'image.",
+    "captureError": "Une erreur est survenue lors de la capture de la photo.",
+    "chooseImage": "Choisir une image",
+    "chooseImageMessage": "Comment souhaitez-vous ajouter votre image ?",
+    "takePhoto": "Prendre une photo",
+    "fromGallery": "Choisir depuis la galerie",
+    "uploadError": "Erreur lors de l'upload de l'image"
+  },
+  "copilotService": {
+    "connectionError": "Erreur de connexion",
+    "httpError": "Erreur {{status}}",
+    "transcriptionError": "Erreur lors de la transcription",
+    "audioTranscriptionError": "Erreur lors de la transcription audio",
+    "uploadError": "Erreur lors de l'upload des fichiers"
+  },
+  "copilotContext": {
+    "attachmentUploadError": "Erreur lors de l'upload des pièces jointes",
+    "sendError": "Erreur lors de l'envoi du message",
+    "sessionNotFound": "Session non trouvée",
+    "unknownError": "Erreur inconnue",
+    "loadSessionsError": "Erreur lors du chargement des sessions"
+  },
+  "otpService": {
+    "sendError": "Erreur lors de l'envoi du code"
   },
   "errors": {
     "generic": "Une erreur est survenue",

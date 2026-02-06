@@ -59,7 +59,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
     if (!data.firstName || typeof data.firstName !== 'string' || data.firstName.trim().length < 1) {
       return res.status(400).json({
         success: false,
-        error: 'Prénom requis',
+        error: req.t('validation:talent.firstNameRequired'),
         field: 'firstName',
       });
     }
@@ -69,7 +69,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       if (!Array.isArray(data.profileTags)) {
         return res.status(400).json({
           success: false,
-          error: 'profileTags doit être un tableau',
+          error: req.t('onboarding:profileTagsMustBeArray'),
           field: 'profileTags',
         });
       }
@@ -78,7 +78,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
         if (!VALID_PROFILE_TAGS.includes(tag)) {
           return res.status(400).json({
             success: false,
-            error: `Tag invalide: ${tag}`,
+            error: req.t('onboarding:invalidTag', { tag }),
             field: 'profileTags',
             validTags: VALID_PROFILE_TAGS,
           });
@@ -91,7 +91,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       if (!Array.isArray(data.goals)) {
         return res.status(400).json({
           success: false,
-          error: 'goals doit être un tableau',
+          error: req.t('onboarding:goalsMustBeArray'),
           field: 'goals',
         });
       }
@@ -99,7 +99,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       if (data.goals.length > 3) {
         return res.status(400).json({
           success: false,
-          error: 'Maximum 3 objectifs autorisés',
+          error: req.t('onboarding:goalsMaximum'),
           field: 'goals',
         });
       }
@@ -108,7 +108,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
         if (!VALID_GOALS.includes(goal)) {
           return res.status(400).json({
             success: false,
-            error: `Objectif invalide: ${goal}`,
+            error: req.t('onboarding:invalidGoal', { goal }),
             field: 'goals',
             validGoals: VALID_GOALS,
           });
@@ -120,7 +120,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
     if (!data.phone || data.phone.trim().length < 8) {
       return res.status(400).json({
         success: false,
-        error: 'Le numéro de téléphone est requis (minimum 8 caractères)',
+        error: req.t('onboarding:phoneMinLength'),
         field: 'phone',
       });
     }
@@ -129,7 +129,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
     if (data.country && data.country.length !== 2) {
       return res.status(400).json({
         success: false,
-        error: 'Le code pays doit être au format ISO 3166-1 alpha-2 (ex: CI, FR, SN)',
+        error: req.t('onboarding:countryCodeInvalid'),
         field: 'country',
       });
     }
@@ -163,7 +163,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       if (userResult.rows.length === 0) {
         return res.status(404).json({
           success: false,
-          error: 'Utilisateur non trouvé',
+          error: req.t('auth:userNotFound'),
         });
       }
 
@@ -172,7 +172,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       if (user.talent_id) {
         return res.status(400).json({
           success: false,
-          error: 'Un profil talent existe déjà pour cet utilisateur',
+          error: req.t('onboarding:talentProfileExists'),
           talentId: user.talent_id,
         });
       }
@@ -186,7 +186,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
       if (phoneCheckResult.rows.length > 0) {
         return res.status(400).json({
           success: false,
-          error: 'Ce numéro de téléphone est déjà associé à un profil talent',
+          error: req.t('onboarding:phoneAlreadyUsed'),
           field: 'phone',
         });
       }
@@ -318,7 +318,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
             expiresIn: tokens.expiresIn,
           },
         },
-        message: 'Profil créé avec succès',
+        message: req.t('onboarding:profileCreated'),
       });
     } catch (error) {
       await client.query('ROLLBACK');
@@ -330,7 +330,7 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
     logger.error('❌ Onboarding error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Erreur lors de la création du profil',
+      error: req.t('onboarding:profileCreationFailed'),
       details: error?.message || 'Unknown error',
       code: error?.code || null,
     });
@@ -360,7 +360,7 @@ router.get('/status', authMiddleware, async (req: AuthRequest, res: Response) =>
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        error: 'Utilisateur non trouvé',
+        error: req.t('auth:userNotFound'),
       });
     }
 
@@ -384,7 +384,7 @@ router.get('/status', authMiddleware, async (req: AuthRequest, res: Response) =>
     logger.error('❌ Get onboarding status error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Erreur serveur',
+      error: req.t('common:serverError'),
     });
   }
 });
@@ -400,55 +400,15 @@ router.get('/options', async (req, res) => {
       options: {
         profileTags: VALID_PROFILE_TAGS.map(tag => ({
           value: tag,
-          label: getProfileTagLabel(tag),
+          label: req.t(`onboarding:profileTags.${tag}`),
         })),
         goals: VALID_GOALS.map(goal => ({
           value: goal,
-          label: getGoalLabel(goal),
+          label: req.t(`onboarding:goals.${goal}`),
         })),
       },
     },
   });
 });
-
-/**
- * Helper: Get profile tag label in French
- */
-function getProfileTagLabel(tag: string): string {
-  const labels: Record<string, string> = {
-    STUDENT: 'Étudiant(e)',
-    PUPIL: 'Élève',
-    JOB_SEEKER: 'En recherche d\'emploi',
-    SALARIED: 'Salarié(e)',
-    ENTREPRENEUR: 'Entrepreneur(e)',
-    CIVIL_SERVANT: 'Fonctionnaire',
-    MANAGER: 'Manager',
-    CONSULTANT: 'Consultant(e)',
-    INVESTOR: 'Investisseur',
-    CONTENT_CREATOR: 'Créateur de contenu',
-    COACH: 'Coach / Formateur',
-    RETIRED: 'Retraité(e)',
-  };
-  return labels[tag] || tag;
-}
-
-/**
- * Helper: Get goal label in French
- */
-function getGoalLabel(goal: string): string {
-  const labels: Record<string, string> = {
-    LEARN_NEW_SKILLS: 'Apprendre de nouvelles compétences',
-    PREPARE_EXAMS: 'Préparer des examens',
-    FIND_JOB: 'Trouver un emploi',
-    ADVANCE_CAREER: 'Faire avancer ma carrière',
-    RESEARCH_SUPPORT: 'Support à la recherche',
-    IMPROVE_PRODUCTIVITY: 'Améliorer ma productivité',
-    COLLABORATIVE_LEARNING: 'Apprentissage collaboratif',
-    TEACH_OR_MENTOR: 'Enseigner ou mentorer',
-    BUILD_NETWORK_OR_VISIBILITY: 'Développer mon réseau / visibilité',
-    CONTRIBUTE_OR_GIVE_BACK: 'Contribuer / Redonner',
-  };
-  return labels[goal] || goal;
-}
 
 export default router;

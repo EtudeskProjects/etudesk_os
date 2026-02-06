@@ -1,0 +1,11 @@
+{
+  "fetchError": "Error loading skills",
+  "invalidProficiencyLevel": "Invalid proficiency level",
+  "skillNameRequired": "skillName required",
+  "skillTypeRequired": "Skill type is required (KNOWLEDGE, HARD_SKILL, SOFT_SKILL)",
+  "addError": "Error adding skill",
+  "updateError": "Error updating skill",
+  "notFound": "Skill not found",
+  "deleteError": "Error deleting skill",
+  "mergeError": "Error merging skills"
+}

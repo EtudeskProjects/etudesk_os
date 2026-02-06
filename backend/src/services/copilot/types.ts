@@ -13,6 +13,8 @@ export interface TalentContext extends BaseTalentContext {
   talentId: string;
   talentName: string;
   vectorStoreId?: string;
+  /** User's preferred language for copilot responses */
+  language?: 'fr' | 'en';
 }
 
 export interface OrgContext {
@@ -22,6 +24,8 @@ export interface OrgContext {
   organizationId: string;
   organizationName: string;
   role: string;
+  /** User's preferred language for copilot responses */
+  language?: 'fr' | 'en';
 }
 
 // ═══════════════════════════════════════════════════════════════

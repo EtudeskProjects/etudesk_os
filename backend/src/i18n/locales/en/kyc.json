@@ -1,0 +1,9 @@
+{
+  "fetchStatusError": "Failed to fetch KYC status",
+  "invalidDocumentType": "Invalid document type",
+  "frontImageRequired": "Front image is required",
+  "alreadyVerified": "Your identity is already verified.",
+  "submitError": "Failed to submit KYC verification",
+  "uploadUrlError": "Failed to generate upload URL",
+  "fetchHistoryError": "Failed to fetch KYC history"
+}

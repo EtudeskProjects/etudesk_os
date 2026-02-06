@@ -1,0 +1,10 @@
+{
+  "registerError": "Failed to register push token",
+  "deactivateError": "Failed to deactivate push token",
+  "fetchError": "Failed to fetch notifications",
+  "markReadError": "Failed to mark notification as read",
+  "markAllReadError": "Failed to mark all as read",
+  "deleteError": "Failed to delete notification",
+  "fetchPreferencesError": "Failed to fetch preferences",
+  "updatePreferencesError": "Failed to update preferences"
+}

@@ -18,6 +18,7 @@ import * as Location from 'expo-location';
 import { MapPin, Navigation, X } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, BORDER, LIGHT_COLORS } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from '../contexts/I18nContext';
 
 interface Coordinates {
   latitude: number;
@@ -213,6 +214,7 @@ export function MapLocationPicker({
   inline = false,
 }: MapLocationPickerProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const webViewRef = useRef<WebView>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
@@ -262,8 +264,8 @@ export function MapLocationPicker({
 
       if (status !== 'granted') {
         Alert.alert(
-          'Permission refusée',
-          'Nous avons besoin de votre permission pour accéder à votre position.'
+          t('map.permissionDenied'),
+          t('map.permissionMessage')
         );
         return;
       }
@@ -286,8 +288,8 @@ export function MapLocationPicker({
       }
     } catch (error) {
       Alert.alert(
-        'Erreur de localisation',
-        'Impossible de récupérer votre position.'
+        t('map.locationError'),
+        t('map.locationErrorMessage')
       );
     } finally {
       setIsLocating(false);
@@ -360,7 +362,7 @@ export function MapLocationPicker({
           <View style={[styles.loadingOverlay, { backgroundColor: colors.surface }]}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-              Chargement de la carte...
+              {t('map.loadingMap')}
             </Text>
           </View>
         )}
@@ -397,7 +399,7 @@ export function MapLocationPicker({
                [selectedLocation.city, selectedLocation.region, selectedLocation.country]
                  .filter(Boolean)
                  .join(', ') ||
-               'Position sélectionnée'}
+               t('map.selectedPosition')}
             </Text>
           </View>
         </View>
@@ -407,7 +409,7 @@ export function MapLocationPicker({
       {!selectedLocation && !isLoading && !inline && (
         <View style={[styles.instructions, { backgroundColor: colors.gray50, borderTopColor: colors.borderColor }]}>
           <Text style={[styles.instructionsText, { color: colors.textSecondary }]}>
-            Touchez la carte pour sélectionner une position
+            {t('map.tapToSelect')}
           </Text>
         </View>
       )}
