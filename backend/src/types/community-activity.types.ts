@@ -1,11 +1,6 @@
-// ═══════════════════════════════════════════════════════════════
 // COMMUNITY ACTIVITY TYPES
 // Updated: 2026-01-25
-// ═══════════════════════════════════════════════════════════════
-
-// ─────────────────────────────────────────────────────────────────
-// ENUMS & CONSTANTS
-// ─────────────────────────────────────────────────────────────────
+// --- Enums & Constants ---
 
 // Simplified roles: ADMIN (org members) or MEMBER (regular users)
 export type CommunityRole = 'ADMIN' | 'MEMBER';
@@ -16,22 +11,7 @@ export type ModerationStatus = 'APPROVED' | 'FLAGGED' | 'PENDING' | 'REJECTED';
 
 export type EventLocationType = 'ONLINE' | 'PHYSICAL';
 
-// Trial period options (in days)
-export type TrialPeriodDays = 0 | 1 | 3 | 7 | 30;
-
-// ─────────────────────────────────────────────────────────────────
-// SUBSCRIPTION & PAYMENT TYPES
-// ─────────────────────────────────────────────────────────────────
-
-export type SubscriptionStatus = 'ACTIVE' | 'CANCELLED' | 'EXPIRED' | 'TRIAL' | 'PAST_DUE';
-
-export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
-
-export type InvoiceStatus = 'DRAFT' | 'ISSUED' | 'PAID' | 'VOID';
-
-// ─────────────────────────────────────────────────────────────────
-// NOTIFICATION TYPES
-// ─────────────────────────────────────────────────────────────────
+// --- Notification Types ---
 
 export type CommunityNotificationType =
   | 'MENTION'
@@ -39,16 +19,10 @@ export type CommunityNotificationType =
   | 'NEW_ACTIVITY'
   | 'EVENT_REMINDER_1D'
   | 'EVENT_REMINDER_1H'
-  | 'SUBSCRIPTION_EXPIRING'
-  | 'SUBSCRIPTION_EXPIRED'
-  | 'PAYMENT_FAILED'
-  | 'PAYMENT_SUCCESS'
   | 'MEMBERSHIP_APPROVED'
   | 'MEMBERSHIP_REJECTED';
 
-// ─────────────────────────────────────────────────────────────────
-// ACTIVITY METADATA
-// ─────────────────────────────────────────────────────────────────
+// --- Activity Metadata ---
 
 export interface EventMetadata {
   start_date: string;
@@ -80,9 +54,7 @@ export interface CommunityActivityMetadata {
   options?: string[];
 }
 
-// ─────────────────────────────────────────────────────────────────
-// ACTIVITY INTERFACES
-// ─────────────────────────────────────────────────────────────────
+// --- Activity Interfaces ---
 
 export interface CommunityActivity {
   id: string;
@@ -127,9 +99,7 @@ export interface ActivityAuthor {
   headline?: string;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// POLL INTERFACES
-// ─────────────────────────────────────────────────────────────────
+// --- Poll Interfaces ---
 
 export interface PollOption {
   id: string;
@@ -147,9 +117,7 @@ export interface PollVote {
   created_at: Date;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// COMMENT INTERFACES
-// ─────────────────────────────────────────────────────────────────
+// --- Comment Interfaces ---
 
 export interface ActivityComment {
   id: string;
@@ -178,9 +146,7 @@ export interface ActivityComment {
   replies?: ActivityComment[];
 }
 
-// ─────────────────────────────────────────────────────────────────
-// BOOKMARK INTERFACE
-// ─────────────────────────────────────────────────────────────────
+// --- Bookmark Interface ---
 
 export interface ActivityBookmark {
   activity_id: string;
@@ -188,9 +154,7 @@ export interface ActivityBookmark {
   created_at: Date;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// LIKE INTERFACE (simplified from reactions)
-// ─────────────────────────────────────────────────────────────────
+// --- Like Interface Simplified From Reactions ---
 
 export interface ActivityLike {
   activity_id: string;
@@ -198,98 +162,7 @@ export interface ActivityLike {
   created_at: Date;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// SUBSCRIPTION INTERFACES
-// ─────────────────────────────────────────────────────────────────
-
-export interface CommunitySubscription {
-  id: string;
-  community_id: string;
-  talent_id: string;
-
-  status: SubscriptionStatus;
-
-  // Dates
-  started_at: Date;
-  trial_ends_at?: Date | null;
-  current_period_start: Date;
-  current_period_end: Date;
-  cancelled_at?: Date | null;
-
-  // Pricing
-  amount: number;
-  currency: string;
-
-  // Paystack
-  paystack_subscription_code?: string;
-  paystack_customer_code?: string;
-  paystack_email_token?: string;
-  paystack_plan_code?: string;
-
-  auto_renew: boolean;
-
-  created_at: Date;
-  updated_at: Date;
-}
-
-export interface CommunityPayment {
-  id: string;
-  subscription_id: string;
-
-  amount: number;
-  currency: string;
-  status: PaymentStatus;
-
-  // Paystack
-  paystack_reference?: string;
-  paystack_transaction_id?: string;
-  paystack_authorization_code?: string;
-
-  // Period
-  period_start: Date;
-  period_end: Date;
-
-  // Failure handling
-  failure_reason?: string;
-  failure_code?: string;
-  retry_count: number;
-  next_retry_at?: Date | null;
-
-  metadata?: Record<string, unknown>;
-
-  paid_at?: Date | null;
-  created_at: Date;
-}
-
-export interface CommunityInvoice {
-  id: string;
-  payment_id: string;
-  subscription_id: string;
-  talent_id: string;
-  community_id: string;
-
-  invoice_number: string;
-
-  amount: number;
-  currency: string;
-
-  community_name: string;  // Snapshot
-
-  period_start: Date;
-  period_end: Date;
-
-  pdf_url?: string;
-  pdf_generated_at?: Date | null;
-
-  status: InvoiceStatus;
-
-  issued_at: Date;
-  created_at: Date;
-}
-
-// ─────────────────────────────────────────────────────────────────
-// NOTIFICATION INTERFACES
-// ─────────────────────────────────────────────────────────────────
+// --- Notification Interfaces ---
 
 export interface CommunityNotification {
   id: string;
@@ -327,9 +200,7 @@ export interface CommunityNotification {
   };
 }
 
-// ─────────────────────────────────────────────────────────────────
-// DTOs (Data Transfer Objects)
-// ─────────────────────────────────────────────────────────────────
+// --- Dtos Data Transfer Objects ---
 
 export interface CreateActivityDTO {
   community_id: string;
@@ -362,21 +233,13 @@ export interface UpdateCommentDTO {
   mentions?: string[];
 }
 
-export interface CreateSubscriptionDTO {
-  community_id: string;
-  talent_id: string;
-  paystack_reference: string;
-}
-
 export interface VotePollDTO {
   activity_id: string;
   option_id: string;
   user_id: string;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// QUERY FILTERS
-// ─────────────────────────────────────────────────────────────────
+// --- Query Filters ---
 
 export interface ActivityFilters {
   community_id: string;
@@ -405,9 +268,7 @@ export interface NotificationFilters {
   offset?: number;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// VALIDATION CONSTANTS
-// ─────────────────────────────────────────────────────────────────
+// --- Validation Constants ---
 
 export const ACTIVITY_VALIDATION = {
   MAX_CONTENT_LENGTH: 2500,      // ~500 words

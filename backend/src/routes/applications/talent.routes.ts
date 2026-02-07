@@ -21,7 +21,7 @@ import {
   logger,
 } from '../../utils';
 import { calculateMatchingScore, getMatchCategory } from '../../services/matching.service';
-import * as pushService from '../../services/push-notification.service';
+import * as notificationService from '../../services/notification.service';
 
 const router = Router();
 
@@ -88,7 +88,8 @@ router.post('/', applicationLimiter, authMiddleware, requireTalentProfile, valid
       RETURNING *
     `, [id, talentId, opportunity_id, cover_letter || null, applicationAnswers ? JSON.stringify(applicationAnswers) : null, resume_url || null]);
 
-    pushService.notifyNewApplication(id).catch(err => logger.error('Notification error:', err));
+    notificationService.notifyNewApplication(id).catch(err => logger.error('Notification error:', err));
+    notificationService.scheduleOpportunityDeadlineReminder(id).catch(err => logger.error('Deadline reminder error:', err));
 
     res.status(201).json({
       success: true,

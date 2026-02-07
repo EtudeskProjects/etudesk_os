@@ -13,9 +13,6 @@ import { logger } from '../services/logService';
 
 const LOG_SOURCE = 'Auth';
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -42,15 +39,11 @@ const STORAGE_KEYS = {
   ONBOARDING_SHOWN: 'onboarding_shown',
 };
 
-// ═══════════════════════════════════════════════════════════════
-// CONTEXT
-// ═══════════════════════════════════════════════════════════════
+// --- Context ---
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// ═══════════════════════════════════════════════════════════════
-// PROVIDER
-// ═══════════════════════════════════════════════════════════════
+// --- Provider ---
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -67,16 +60,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
   const segments = useSegments();
 
-  // ─────────────────────────────────────────────────────────────
   // INITIALIZATION - Check auth state on mount
-  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     checkAuthState();
   }, []);
 
-  // ─────────────────────────────────────────────────────────────
   // NAVIGATION GUARD - Redirect based on auth state
-  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (state.status === 'loading') return;
 
@@ -111,9 +100,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [state.status, state.needsOnboarding, segments]);
 
-  // ─────────────────────────────────────────────────────────────
   // CHECK AUTH STATE
-  // ─────────────────────────────────────────────────────────────
   const checkAuthState = async () => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
@@ -211,9 +198,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // ─────────────────────────────────────────────────────────────
   // SIGN IN
-  // ─────────────────────────────────────────────────────────────
   const signIn = useCallback(async (email: string, code: string): Promise<boolean> => {
     try {
       logger.debug(LOG_SOURCE, 'Attempting sign in', { email });
@@ -233,9 +218,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  // ─────────────────────────────────────────────────────────────
   // SIGN OUT
-  // ─────────────────────────────────────────────────────────────
   const signOut = useCallback(async (allDevices: boolean = false) => {
     try {
       logger.info(LOG_SOURCE, 'Signing out', { allDevices });
@@ -254,9 +237,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [router]);
 
-  // ─────────────────────────────────────────────────────────────
   // REFRESH USER
-  // ─────────────────────────────────────────────────────────────
   const refreshUser = useCallback(async () => {
     const freshUser = await otpService.getCurrentUser();
     if (freshUser) {
@@ -267,9 +248,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  // ─────────────────────────────────────────────────────────────
   // COMPLETE ONBOARDING
-  // ─────────────────────────────────────────────────────────────
   const completeOnboarding = useCallback(() => {
     setState(prev => ({
       ...prev,
@@ -280,9 +259,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     refreshUser();
   }, [refreshUser]);
 
-  // ─────────────────────────────────────────────────────────────
   // ORGANIZATION HELPERS
-  // ─────────────────────────────────────────────────────────────
   const hasOrganizationAccess = useCallback((orgId: string): boolean => {
     if (!state.user?.organizationMemberships) return false;
     return state.user.organizationMemberships.some(m => m.organizationId === orgId);
@@ -294,9 +271,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return membership?.role || null;
   }, [state.user]);
 
-  // ─────────────────────────────────────────────────────────────
   // CONTEXT VALUE
-  // ─────────────────────────────────────────────────────────────
   const contextValue: AuthContextType = {
     ...state,
     signIn,
@@ -314,9 +289,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// HOOK
-// ═══════════════════════════════════════════════════════════════
+// --- Hook ---
 
 export function useAuth() {
   const context = useContext(AuthContext);
@@ -326,9 +299,7 @@ export function useAuth() {
   return context;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// PROTECTED ROUTE COMPONENT
-// ═══════════════════════════════════════════════════════════════
+// --- Protected Route Component ---
 
 interface ProtectedRouteProps {
   children: ReactNode;

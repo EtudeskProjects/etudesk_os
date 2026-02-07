@@ -19,6 +19,9 @@ import {
   Clock,
   MapPin,
   Trash2,
+  Users,
+  CalendarCheck,
+  UserCheck,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
@@ -51,6 +54,18 @@ const getNotificationIcon = (type: string) => {
     case 'MESSAGE': return MessageCircle;
     case 'REMINDER': return Clock;
     case 'SPACE': return MapPin;
+    case 'BOOKING': return MapPin;
+    case 'NEW_ACTIVITY': return Users;
+    case 'MENTION': return MessageCircle;
+    case 'COMMENT_REPLY': return MessageCircle;
+    case 'EVENT_REMINDER':
+    case 'EVENT_REMINDER_1D':
+    case 'EVENT_REMINDER_1H': return CalendarCheck;
+    case 'BOOKING_REMINDER': return CalendarCheck;
+    case 'OPPORTUNITY_REMINDER': return CalendarCheck;
+    case 'APPLICATION_REMINDER': return CalendarCheck;
+    case 'MEMBERSHIP_APPROVED':
+    case 'MEMBERSHIP_REJECTED': return UserCheck;
     default: return Bell;
   }
 };
@@ -117,6 +132,16 @@ export default function NotificationsScreen() {
       router.push(`/settings/my-reservations/${data.bookingId}`);
     } else if (notification.type === 'SPACE' && data.spaceId) {
       router.push(`/details/space/${data.spaceId}`);
+    } else if ((notification.type === 'EVENT_REMINDER' || notification.type === 'EVENT_REMINDER_1D' || notification.type === 'EVENT_REMINDER_1H' || notification.type === 'NEW_ACTIVITY' || notification.type === 'MENTION' || notification.type === 'COMMENT_REPLY') && data.communityId) {
+      router.push(`/details/community/${data.communityId}`);
+    } else if (notification.type === 'BOOKING_REMINDER' && data.bookingId) {
+      router.push(`/settings/my-reservations/${data.bookingId}`);
+    } else if (notification.type === 'OPPORTUNITY_REMINDER' && data.opportunityId) {
+      router.push(`/details/opportunity/${data.opportunityId}`);
+    } else if (notification.type === 'APPLICATION_REMINDER' && data.applicationId) {
+      router.push(`/settings/my-applications/${data.applicationId}`);
+    } else if ((notification.type === 'MEMBERSHIP_APPROVED' || notification.type === 'MEMBERSHIP_REJECTED') && data.communityId) {
+      router.push(`/details/community/${data.communityId}`);
     }
   };
 

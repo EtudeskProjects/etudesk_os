@@ -12,9 +12,7 @@ export interface LearningPreference {
   difficulty?: 'GENTLE' | 'STANDARD' | 'CHALLENGING';
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - USER & AUTH
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - User & Auth ---
 
 export interface User {
   id: UUID;
@@ -44,9 +42,7 @@ export interface User {
   lastLoginAt?: ISOTimestamp;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ENUMS - OPPORTUNITY
-// ═══════════════════════════════════════════════════════════════
+// --- Enums - Opportunity ---
 
 export const OPPORTUNITY_TYPES = {
   EMPLOYMENT: 'EMPLOYMENT',
@@ -152,9 +148,7 @@ export const OPPORTUNITY_STATUS_LABELS: Record<OpportunityStatus, string> = {
   EXPIRED: 'Expirée',
 };
 
-// ═══════════════════════════════════════════════════════════════
-// ENUMS - ORGANIZATION
-// ═══════════════════════════════════════════════════════════════
+// --- Enums - Organization ---
 
 export const ORGANIZATION_TYPES = {
   COMPANY: 'COMPANY',
@@ -204,9 +198,7 @@ export const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {
   NOT_STARTED: 'Non démarré',
 };
 
-// ═══════════════════════════════════════════════════════════════
-// ENUMS - SPACE (Espaces réservables)
-// ═══════════════════════════════════════════════════════════════
+// --- Enums - Space Espaces RéServables ---
 
 // Types d'espaces réservables
 export const SPACE_TYPES = {
@@ -334,9 +326,7 @@ export const ACCESS_TYPE_LABELS: Record<AccessType, string> = {
   MEMBERSHIP: 'Adhésion requise',
 };
 
-// ═══════════════════════════════════════════════════════════════
-// ENUMS - COMMUNITY
-// ═══════════════════════════════════════════════════════════════
+// --- Enums - Community ---
 
 export const COMMUNITY_TYPES = {
   ONLINE: 'ONLINE',
@@ -378,13 +368,9 @@ export const COMMUNITY_STATUS_LABELS: Record<CommunityStatus, string> = {
 // Sector type (used for filtering)
 export type Sector = string;
 
-// ═══════════════════════════════════════════════════════════════
-// ENUMS - DOCUMENT
-// ═══════════════════════════════════════════════════════════════
+// --- Enums - Document ---
 
-// ═══════════════════════════════════════════════════════════════
-// ENUMS - NOTIFICATIONS & CALENDAR
-// ═══════════════════════════════════════════════════════════════
+// --- Enums - Notifications & Calendar ---
 
 export const NOTIFICATION_TYPES = {
   OPPORTUNITY: 'OPPORTUNITY',
@@ -408,9 +394,7 @@ export const CALENDAR_EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
   DEADLINE: 'Date limite',
 };
 
-// ═══════════════════════════════════════════════════════════════
-// ENUMS - PAYMENT
-// ═══════════════════════════════════════════════════════════════
+// --- Enums - Payment ---
 
 export const PAYMENT_PROVIDERS = {
   ORANGE_MONEY: 'ORANGE_MONEY',
@@ -443,9 +427,7 @@ export const PAYMENT_PROVIDER_COLORS: Record<PaymentProvider, string> = {
   CARD: '#1A1A1A',
 };
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - LOCATION
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Location ---
 
 export interface OpportunityLocation {
   city?: string;
@@ -454,9 +436,7 @@ export interface OpportunityLocation {
   is_primary?: boolean;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - OPPORTUNITY
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Opportunity ---
 
 export interface OpportunityAttachment {
   name: string;
@@ -512,9 +492,7 @@ export interface Opportunity {
   updated_at?: ISOTimestamp;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - APPLICATION QUESTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Application Questions ---
 
 export interface ApplicationQuestion {
   id: string;
@@ -523,9 +501,7 @@ export interface ApplicationQuestion {
   max_length?: number; // Default 200 characters
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - ORGANIZATION
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Organization ---
 
 export interface Organization {
   id: UUID;
@@ -561,9 +537,7 @@ export interface Organization {
   updated_at?: ISOTimestamp;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - TALENT
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Talent ---
 
 // TalentObject — rich profile snapshot from backend (skills + documents)
 export interface TalentObjectData {
@@ -628,14 +602,9 @@ export interface Talent {
   updated_at?: ISOTimestamp;
 }
 
-// ═══════════════════════════════════════════════════════════════
 // INTERFACES - SPACE (Espaces réservables)
 // Note: Space types/interfaces are defined in spaceService.ts
-// ═══════════════════════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - COMMUNITY
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Community ---
 
 export interface CommunityMemberPreview {
   id: UUID;
@@ -656,7 +625,7 @@ export interface Community {
   description?: string;
   // Visibility & Access
   visibility?: Visibility;
-  access_type?: AccessType; // Legacy, maps to visibility
+  access_type?: AccessType;
   // Rules & Questions
   rules?: string;
   application_questions?: string[] | ApplicationQuestion[];
@@ -689,9 +658,7 @@ export interface Community {
   updated_at?: ISOTimestamp;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - NOTIFICATIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Notifications ---
 
 export interface Notification {
   id: UUID;
@@ -703,9 +670,7 @@ export interface Notification {
   created_at: ISOTimestamp;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - CALENDAR
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Calendar ---
 
 export interface CalendarEvent {
   id: UUID;
@@ -721,9 +686,7 @@ export interface CalendarEvent {
   space_id?: UUID;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - PAYMENT
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Payment ---
 
 export interface PaymentMethod {
   id: UUID;
@@ -734,9 +697,7 @@ export interface PaymentMethod {
   created_at: ISOTimestamp;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - HOME (utilisé dans home.tsx)
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Home Utilisé Dans Home.Tsx ---
 
 export const GRAPH_NODE_TYPES = {
   OPPORTUNITIES: 'opportunities',
@@ -770,9 +731,7 @@ export interface GraphNode {
   relationToCenter?: string;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - DASHBOARD / GESTION (utilisé dans gestion.tsx)
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Dashboard / Gestion Utilisé Dans Gestion.Tsx ---
 
 export interface DashboardStatCard {
   id: string;
@@ -799,9 +758,7 @@ export interface DashboardActivity {
   applications?: number;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - APPLICATIONS (candidatures)
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Applications Candidatures ---
 
 export const APPLICATION_STATUS = {
   SUBMITTED: 'SUBMITTED',
@@ -874,9 +831,7 @@ export interface ApplicationMessage {
   updated_at?: ISOTimestamp;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ORGANIZATION MEMBERS & PERMISSIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Organization Members & Permissions ---
 
 export const MEMBER_STATUS = {
   ACTIVE: 'ACTIVE',
@@ -891,9 +846,7 @@ export const MEMBER_STATUS_LABELS: Record<MemberStatus, string> = {
   INACTIVE: 'Inactif',
 };
 
-// ═══════════════════════════════════════════════════════════════
-// ORGANIZATION ROLES (simplified - no granular permissions)
-// ═══════════════════════════════════════════════════════════════
+// --- Organization Roles Simplified - No Granular Permissions ---
 
 export const ORGANIZATION_ROLES = {
   OWNER: 'OWNER',       // Full control
@@ -972,9 +925,7 @@ export interface OrganizationInvitation {
   created_at: ISOTimestamp;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ORGANIZATION PERMISSIONS (stub — feature in progress)
-// ═══════════════════════════════════════════════════════════════
+// --- Organization Permissions Stub — Feature In Progress ---
 
 export type OrganizationPermission = string;
 
@@ -989,9 +940,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<OrganizationRole, string[]> = {
   MEMBER: [],
 };
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES - ASSISTANT / CHAT (utilisé dans assistant.tsx)
-// ═══════════════════════════════════════════════════════════════
+// --- Interfaces - Assistant / Chat Utilisé Dans Assistant.Tsx ---
 
 export const ASSISTANT_MODES = {
   EXPLORE: 'explore',

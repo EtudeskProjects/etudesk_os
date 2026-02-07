@@ -31,9 +31,7 @@ import {
 
 const router = Router();
 
-// ═══════════════════════════════════════════════════════════════
-// MULTER CONFIGURATION
-// ═══════════════════════════════════════════════════════════════
+// --- Multer Configuration ---
 
 const storage = multer.memoryStorage();
 
@@ -52,14 +50,10 @@ const upload = multer({
   },
 });
 
-// ═══════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Helper Functions ---
 
 
-// ═══════════════════════════════════════════════════════════════
-// ROUTES
-// ═══════════════════════════════════════════════════════════════
+// --- Routes ---
 
 /**
  * GET /api/documents
@@ -386,9 +380,7 @@ router.post('/:id/retry', authMiddleware, async (req: AuthRequest, res: Response
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
-// ERROR HANDLING FOR MULTER
-// ═══════════════════════════════════════════════════════════════
+// --- Error Handling For Multer ---
 
 router.use((error: Error, req: Request, res: Response, next: Function) => {
   if (error instanceof multer.MulterError) {

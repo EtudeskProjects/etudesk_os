@@ -11,9 +11,6 @@ import { buildKYCVerificationPrompt, buildQuickCheckPrompt, KYC_SYSTEM_PROMPT } 
 import { buildTalentObject } from './ai/talent-object';
 
 import { logger } from '../utils';
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export type DocumentType = 'ID_CARD' | 'PASSPORT' | 'DRIVER_LICENSE' | 'STUDENT_CARD';
 
@@ -67,9 +64,7 @@ export interface VerificationResult {
   error?: string;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// JSON Schema for structured output
-// ═══════════════════════════════════════════════════════════════
+// --- Json Schema For Structured Output ---
 
 const DOCUMENT_ANALYSIS_SCHEMA = {
   type: 'object',
@@ -101,9 +96,7 @@ const DOCUMENT_ANALYSIS_SCHEMA = {
   ],
 };
 
-// ═══════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Helper Functions ---
 
 const UPLOAD_BASE_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads');
 
@@ -219,9 +212,7 @@ function levenshteinDistance(s1: string, s2: string): number {
   return dp[m][n];
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ERROR RESULT HELPER
-// ═══════════════════════════════════════════════════════════════
+// --- Error Result Helper ---
 
 function errorResult(
   issues: string[],
@@ -256,9 +247,7 @@ function errorResult(
   };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MAIN VERIFICATION FUNCTION
-// ═══════════════════════════════════════════════════════════════
+// --- Main Verification Function ---
 
 export async function verifyKYCDocument(
   talentId: string,

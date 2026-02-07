@@ -14,9 +14,7 @@ import { pool } from './database';
 import { buildTalentObject } from './ai/talent-object';
 
 import { logger } from '../utils';
-// ═══════════════════════════════════════════════════════════════
-// CLIENT INITIALIZATION
-// ═══════════════════════════════════════════════════════════════
+// --- Client Initialization ---
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -34,9 +32,7 @@ const EMBEDDING_DIMENSION = parseInt(process.env.PINECONE_DIMENSION || '1536', 1
 const embeddingCache = new Map<string, { embedding: number[]; timestamp: number }>();
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
-// ═══════════════════════════════════════════════════════════════
-// EMBEDDING TEXT BUILDERS
-// ═══════════════════════════════════════════════════════════════
+// --- Embedding Text Builders ---
 
 /**
  * Build embedding text for a talent profile
@@ -252,9 +248,7 @@ export function buildSpaceEmbeddingText(space: {
   return parts.join('. ').slice(0, 800);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// EMBEDDING GENERATION
-// ═══════════════════════════════════════════════════════════════
+// --- Embedding Generation ---
 
 /**
  * Generate embedding for text using OpenAI
@@ -287,9 +281,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// PINECONE OPERATIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Pinecone Operations ---
 
 /**
  * Get Pinecone index
@@ -437,9 +429,7 @@ export async function upsertSpaceEmbedding(
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SIMILARITY CALCULATION
-// ═══════════════════════════════════════════════════════════════
+// --- Similarity Calculation ---
 
 /**
  * Calculate cosine similarity between two vectors

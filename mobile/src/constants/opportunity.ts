@@ -15,9 +15,7 @@ import {
   Visibility,
 } from '../types/models';
 
-// ═══════════════════════════════════════════════════════════════
-// OPTIONS FORMATÉES POUR LES FORMULAIRES
-// ═══════════════════════════════════════════════════════════════
+// --- Options FormatéEs Pour Les Formulaires ---
 
 export const OPPORTUNITY_TYPE_DATA: Array<{ id: OpportunityType; label: string }> = [
   { id: 'EMPLOYMENT', label: OPPORTUNITY_TYPE_LABELS.EMPLOYMENT },
@@ -72,18 +70,14 @@ export function getCurrencySymbol(code: string): string {
 
 // Note: EXPERIENCE_LEVEL_DATA removed - no longer used
 
-// ═══════════════════════════════════════════════════════════════
-// VISIBILITY
-// ═══════════════════════════════════════════════════════════════
+// --- Visibility ---
 
 export const OPPORTUNITY_VISIBILITY_DATA: Array<{ id: Visibility; label: string; description: string }> = [
   { id: 'PUBLIC', label: VISIBILITY_LABELS.PUBLIC, description: 'Visible dans l\'exploration et la recherche' },
   { id: 'PRIVATE', label: VISIBILITY_LABELS.PRIVATE, description: 'Accessible uniquement via invitation' },
 ];
 
-// ═══════════════════════════════════════════════════════════════
-// UTILITAIRE - GÉNÉRATION DE SLUG
-// ═══════════════════════════════════════════════════════════════
+// --- Utilitaire - GéNéRation De Slug ---
 
 /**
  * Génère un slug unique à partir du titre de l'opportunité

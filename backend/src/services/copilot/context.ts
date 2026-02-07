@@ -5,9 +5,7 @@
 
 import { z } from 'zod';
 
-// ═══════════════════════════════════════════════════════════════
-// TALENT PROFILE CONTEXT
-// ═══════════════════════════════════════════════════════════════
+// --- Talent Profile Context ---
 
 export const TalentProfileSchema = z.object({
   id: z.string(),
@@ -61,9 +59,7 @@ export const TalentProfileSchema = z.object({
 
 export type TalentProfile = z.infer<typeof TalentProfileSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// KYC CONTEXT (Verified information)
-// ═══════════════════════════════════════════════════════════════
+// --- KYC Context ---
 
 export const KYCContextSchema = z.object({
   isVerified: z.boolean(),
@@ -74,9 +70,7 @@ export const KYCContextSchema = z.object({
 
 export type KYCContext = z.infer<typeof KYCContextSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// DOCUMENTS CONTEXT
-// ═══════════════════════════════════════════════════════════════
+// --- Documents Context ---
 
 export const DocumentSummarySchema = z.object({
   id: z.string(),
@@ -116,9 +110,7 @@ export const DocumentsContextSchema = z.object({
 export type DocumentSummary = z.infer<typeof DocumentSummarySchema>;
 export type DocumentsContext = z.infer<typeof DocumentsContextSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// APPLICATIONS CONTEXT
-// ═══════════════════════════════════════════════════════════════
+// --- Applications Context ---
 
 export const ApplicationSummarySchema = z.object({
   id: z.string(),
@@ -150,9 +142,7 @@ export const ApplicationsContextSchema = z.object({
 export type ApplicationSummary = z.infer<typeof ApplicationSummarySchema>;
 export type ApplicationsContext = z.infer<typeof ApplicationsContextSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// MEMBERSHIPS CONTEXT (Communities)
-// ═══════════════════════════════════════════════════════════════
+// --- Memberships Context ---
 
 export const MembershipSummarySchema = z.object({
   id: z.string(),
@@ -172,9 +162,7 @@ export const MembershipsContextSchema = z.object({
 export type MembershipSummary = z.infer<typeof MembershipSummarySchema>;
 export type MembershipsContext = z.infer<typeof MembershipsContextSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// RESERVATIONS CONTEXT (Spaces)
-// ═══════════════════════════════════════════════════════════════
+// --- Reservations Context ---
 
 export const ReservationSummarySchema = z.object({
   id: z.string(),
@@ -195,9 +183,7 @@ export const ReservationsContextSchema = z.object({
 export type ReservationSummary = z.infer<typeof ReservationSummarySchema>;
 export type ReservationsContext = z.infer<typeof ReservationsContextSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// NOTIFICATIONS CONTEXT
-// ═══════════════════════════════════════════════════════════════
+// --- Notifications Context ---
 
 export const NotificationSummarySchema = z.object({
   id: z.string(),
@@ -216,9 +202,7 @@ export const NotificationsContextSchema = z.object({
 export type NotificationSummary = z.infer<typeof NotificationSummarySchema>;
 export type NotificationsContext = z.infer<typeof NotificationsContextSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// BOOKMARKS CONTEXT
-// ═══════════════════════════════════════════════════════════════
+// --- Bookmarks Context ---
 
 export const BookmarkSummarySchema = z.object({
   id: z.string(),
@@ -237,9 +221,7 @@ export const BookmarksContextSchema = z.object({
 export type BookmarkSummary = z.infer<typeof BookmarkSummarySchema>;
 export type BookmarksContext = z.infer<typeof BookmarksContextSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// CALENDAR CONTEXT
-// ═══════════════════════════════════════════════════════════════
+// --- Calendar Context ---
 
 export const CalendarEventSchema = z.object({
   id: z.string(),
@@ -261,9 +243,7 @@ export const CalendarContextSchema = z.object({
 export type CalendarEvent = z.infer<typeof CalendarEventSchema>;
 export type CalendarContext = z.infer<typeof CalendarContextSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// INVITATIONS CONTEXT
-// ═══════════════════════════════════════════════════════════════
+// --- Invitations Context ---
 
 export const InvitationSummarySchema = z.object({
   id: z.string(),
@@ -283,9 +263,7 @@ export const InvitationsContextSchema = z.object({
 export type InvitationSummary = z.infer<typeof InvitationSummarySchema>;
 export type InvitationsContext = z.infer<typeof InvitationsContextSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// ORGANIZATIONS CONTEXT (For admin users)
-// ═══════════════════════════════════════════════════════════════
+// --- Organizations Context For Admin Users ---
 
 export const OrganizationRoleSchema = z.object({
   organizationId: z.string(),
@@ -304,9 +282,7 @@ export type OrganizationRole = z.infer<typeof OrganizationRoleSchema>;
 export type OrganizationsContext = z.infer<typeof OrganizationsContextSchema>;
 
 
-// ═══════════════════════════════════════════════════════════════
-// FULL TALENT CONTEXT
-// ═══════════════════════════════════════════════════════════════
+// --- Full Talent Context ---
 
 export const TalentContextSchema = z.object({
   // Core profile
@@ -349,9 +325,7 @@ export const TalentContextSchema = z.object({
 
 export type TalentContext = z.infer<typeof TalentContextSchema>;
 
-// ═══════════════════════════════════════════════════════════════
-// CONTEXT LOADING OPTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Context Loading Options ---
 
 export interface ContextLoadOptions {
   includeDocuments?: boolean;
@@ -406,9 +380,7 @@ export const EXPLORER_CONTEXT_OPTIONS: ContextLoadOptions = {
 };
 
 
-// ═══════════════════════════════════════════════════════════════
-// CONTEXT HELPERS
-// ═══════════════════════════════════════════════════════════════
+// --- Context Helpers ---
 
 export function summarizeContext(context: TalentContext): string {
   const parts: string[] = [];
@@ -469,9 +441,7 @@ ${summarizeContext(context)}
 `;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// CONTEXT LOADING FROM DATABASE
-// ═══════════════════════════════════════════════════════════════
+// --- Context Loading From Database ---
 
 import { pool } from '../database';
 
@@ -578,9 +548,7 @@ export async function loadTalentContext(
   return context as TalentContext;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INDIVIDUAL LOADERS
-// ═══════════════════════════════════════════════════════════════
+// --- Individual Loaders ---
 
 async function loadProfile(talentId: string): Promise<TalentProfile> {
   const result = await pool.query(
@@ -1023,9 +991,7 @@ async function loadOrganizations(talentId: string): Promise<OrganizationsContext
 }
 
 
-// ═══════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Helper Functions ---
 
 function mapProficiencyLevel(level: string | null): 'beginner' | 'intermediate' | 'advanced' | 'expert' | undefined {
   if (!level) return undefined;

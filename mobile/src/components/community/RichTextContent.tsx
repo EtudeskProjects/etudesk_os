@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Play, ExternalLink } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity, LIGHT_COLORS } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 interface RichTextContentProps {
@@ -439,14 +439,14 @@ const styles = StyleSheet.create({
     },
     youtubeOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(26, 26, 26, 0.3)', // black 30% opacity
+        backgroundColor: LIGHT_COLORS.overlayLight,
         alignItems: 'center',
         justifyContent: 'center',
     },
     playButton: {
         width: 68,
         height: 48,
-        backgroundColor: 'rgba(139, 74, 60, 0.9)', // error/terracotta 90% opacity
+        backgroundColor: withOpacity(LIGHT_COLORS.error, OPACITY[90]),
         borderRadius: BORDER.radius.md,
         alignItems: 'center',
         justifyContent: 'center',
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: SPACING.sm,
         right: SPACING.sm,
-        backgroundColor: 'rgba(26, 26, 26, 0.6)', // black 60% opacity
+        backgroundColor: LIGHT_COLORS.overlay,
         padding: SPACING.xs,
         borderRadius: BORDER.radius.sm,
     },
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: SPACING.sm,
         left: SPACING.sm,
-        backgroundColor: 'rgba(139, 74, 60, 0.9)', // error/terracotta 90% opacity
+        backgroundColor: withOpacity(LIGHT_COLORS.error, OPACITY[90]),
         paddingHorizontal: SPACING.sm,
         paddingVertical: SPACING.xxs,
         borderRadius: BORDER.radius.xs,

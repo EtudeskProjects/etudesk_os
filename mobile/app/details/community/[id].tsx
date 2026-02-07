@@ -151,7 +151,6 @@ export default function CommunityDetailScreen() {
 
   const toggleBookmark = async () => {
     setIsBookmarked(!isBookmarked);
-    // TODO: Implement bookmark service for communities
   };
 
   const handleJoin = () => {

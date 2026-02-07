@@ -16,9 +16,7 @@ import { createTalentAgent } from '../services/copilot/agents/talent.agent';
 import { createOrgAgent } from '../services/copilot/agents/organization.agent';
 import type { TalentContext, OrgContext } from '../services/copilot/types';
 
-// ═══════════════════════════════════════════════════════════════
-// CONFIG
-// ═══════════════════════════════════════════════════════════════
+// --- Config ---
 
 const AUDIT_FILE = path.resolve(__dirname, '../../../docs/copilot-calibration-audit.md');
 
@@ -53,9 +51,7 @@ function section(title: string) {
   console.log('─'.repeat(50));
 }
 
-// ═══════════════════════════════════════════════════════════════
-// TEST SETUP
-// ═══════════════════════════════════════════════════════════════
+// --- Test Setup ---
 
 async function findTestTalent(): Promise<{ id: string; name: string }> {
   const existing = await pool.query(`
@@ -189,9 +185,7 @@ function buildOrgTestContext(talentId: string, talentName: string, org: { id: st
   };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// AGENT RUNNER — FULL CAPTURE
-// ═══════════════════════════════════════════════════════════════
+// --- Agent Runner — Full Capture ---
 
 interface ToolCallCapture {
   name: string;
@@ -413,9 +407,7 @@ async function runAgentTest(
   return { testName, agentType, targetTool, message, success, output, toolCalls, duration, errors, calibration };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// TEST DEFINITIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Test Definitions ---
 
 interface TestDef {
   name: string;
@@ -425,7 +417,7 @@ interface TestDef {
 }
 
 const TESTS: TestDef[] = [
-  // ─── TALENT EXPLORER TESTS ─────────────────────
+  // --- Talent Explorer Tests ---
   {
     name: 'Explorer — Opportunites matching profil',
     agentType: 'explorer',
@@ -456,7 +448,7 @@ const TESTS: TestDef[] = [
     targetTool: 'sql_query',
     message: 'Quoi de neuf dans mes communautes cette semaine ?',
   },
-  // ─── TALENT STUDY TESTS ────────────────────────
+  // --- Talent Study Tests ---
   {
     name: 'Study — Debuter marketing digital',
     agentType: 'study',
@@ -487,7 +479,7 @@ const TESTS: TestDef[] = [
     targetTool: 'youtube_search',
     message: 'Trouve-moi une bonne video YouTube sur l\'agriculture durable',
   },
-  // ─── ORGANIZATION EXPLORER TESTS ───────────────
+  // --- Organization Explorer Tests ---
   {
     name: 'Org — Recruter profils marketing',
     agentType: 'org',
@@ -514,16 +506,14 @@ const TESTS: TestDef[] = [
   },
 ];
 
-// ═══════════════════════════════════════════════════════════════
-// CALIBRATION REPORT
-// ═══════════════════════════════════════════════════════════════
+// --- Calibration Report ---
 
 function writeCalibrationReport(results: TestResult[]) {
   let md = `# Copilot Calibration Report\n\n`;
   md += `> Generated: ${new Date().toISOString()}\n`;
   md += `> Tests: ${results.length} | Passed: ${results.filter(r => r.success).length} | Failed: ${results.filter(r => !r.success).length}\n\n`;
 
-  // ── CALIBRATION SUMMARY TABLE ──
+  // --- Calibration Summary Table ---
   md += `## Calibration Summary\n\n`;
   md += `| Test | Agent | Chars | Questions | Tools | Verbosity | Proactivity | Quick Ack | Cards |\n`;
   md += `|------|-------|-------|-----------|-------|-----------|-------------|-----------|-------|\n`;
@@ -536,7 +526,7 @@ function writeCalibrationReport(results: TestResult[]) {
     md += `| ${status} ${r.testName} | ${r.agentType} | ${c.charCount} | ${c.questionCount} | ${c.toolCallCount} | ${c.verbosityRating} | ${c.proactivityRating} | ${ackInfo} | ${cardsInfo} |\n`;
   }
 
-  // ── CALIBRATION ISSUES ──
+  // --- Calibration Issues ---
   md += `\n## Calibration Issues\n\n`;
 
   const verbose = results.filter(r => r.calibration.verbosityRating === 'verbose' || r.calibration.verbosityRating === 'very_verbose');
@@ -577,7 +567,7 @@ function writeCalibrationReport(results: TestResult[]) {
     md += '\n';
   }
 
-  // ── DETAILED RESULTS ──
+  // --- Detailed Results ---
   md += `---\n\n## Detailed Results\n\n`;
 
   const agentGroups = ['explorer', 'study', 'org'] as const;
@@ -618,7 +608,7 @@ function writeCalibrationReport(results: TestResult[]) {
     }
   }
 
-  // ── RECOMMENDATIONS ──
+  // --- Recommendations ---
   md += `## Prompt Tuning Recommendations\n\n`;
 
   const avgChars = results.reduce((sum, r) => sum + r.calibration.charCount, 0) / results.length;
@@ -643,9 +633,7 @@ function writeCalibrationReport(results: TestResult[]) {
   log('green', `\n  Report written: ${AUDIT_FILE}`);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MAIN
-// ═══════════════════════════════════════════════════════════════
+// --- Main ---
 
 async function main() {
   header('COPILOT AGENT CALIBRATION');
@@ -684,7 +672,7 @@ async function main() {
     const studyTests = filteredTests.filter(t => t.agentType === 'study');
     const orgTests = filteredTests.filter(t => t.agentType === 'org');
 
-    // ─── EXPLORER TESTS ────────────────────────────
+    // --- Explorer Tests ---
     if (explorerTests.length > 0) {
       header('TALENT EXPLORER AGENT');
       const explorerCtx = await buildTestContext(talent.id, 'explore');
@@ -707,7 +695,7 @@ async function main() {
       }
     }
 
-    // ─── STUDY TESTS ─────────────────────────────
+    // --- Study Tests ---
     if (studyTests.length > 0) {
       await pool.query('SELECT 1'); // keepalive between batches
       header('TALENT STUDY AGENT');
@@ -730,7 +718,7 @@ async function main() {
       }
     }
 
-    // ─── ORG TESTS ───────────────────────────────
+    // --- Org Tests ---
     if (orgTests.length > 0 && org) {
       await pool.query('SELECT 1'); // keepalive between batches
       header('ORGANIZATION AGENT');
@@ -755,7 +743,7 @@ async function main() {
       log('yellow', '  Skipping org tests — no organization found');
     }
 
-    // ─── SUMMARY ─────────────────────────────────
+    // --- Summary ---
     header('CALIBRATION SUMMARY');
 
     const passed = allResults.filter(r => r.success).length;

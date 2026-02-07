@@ -5,9 +5,6 @@
 
 import { api, ApiResponse } from './api';
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES
-// ═══════════════════════════════════════════════════════════════
 
 export interface BookingMessageAttachment {
   name: string;
@@ -45,9 +42,7 @@ export interface SendBookingMessageData {
   datetime_type?: 'BOOKING_PROPOSAL' | 'RESCHEDULE_REQUEST' | 'AVAILABILITY';
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SERVICE CLASS
-// ═══════════════════════════════════════════════════════════════
+// --- Service Class ---
 
 class SpaceBookingMessageService {
   /**

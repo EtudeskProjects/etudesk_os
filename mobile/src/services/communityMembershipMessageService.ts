@@ -5,9 +5,6 @@
 
 import { api, ApiResponse } from './api';
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES
-// ═══════════════════════════════════════════════════════════════
 
 export interface MembershipMessage {
   id: string;
@@ -47,9 +44,7 @@ export interface SendMessageData {
   datetime_type?: 'MEETING_PROPOSAL' | 'EVENT_INVITATION' | 'AVAILABILITY';
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SERVICE CLASS
-// ═══════════════════════════════════════════════════════════════
+// --- Service Class ---
 
 class CommunityMembershipMessageService {
   /**

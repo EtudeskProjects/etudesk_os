@@ -6,9 +6,6 @@
 import { api } from './api';
 import { LIGHT_COLORS } from '../constants/theme';
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export type DocumentType =
   | 'CV'
@@ -162,9 +159,7 @@ export interface ListDocumentsParams {
   offset?: number;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// DOCUMENT TYPE LABELS (French)
-// ═══════════════════════════════════════════════════════════════
+// --- Document Type Labels French ---
 
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   CV: 'CV / Curriculum Vitae',
@@ -199,9 +194,7 @@ export const DOCUMENT_STATUS_LABELS: Record<DocumentStatus, string> = {
   REJECTED: 'Rejeté',
 };
 
-// ═══════════════════════════════════════════════════════════════
-// API FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Api Functions ---
 
 /**
  * Get document types and limits
@@ -381,9 +374,7 @@ async function retryExtraction(documentId: string): Promise<{ message: string }>
   return response.data;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Helper Functions ---
 
 /**
  * Format file size for display

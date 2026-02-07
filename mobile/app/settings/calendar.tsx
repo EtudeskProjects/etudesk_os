@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import {
   Calendar,
   Briefcase,
@@ -31,6 +32,7 @@ interface CalendarEvent {
   date: string;
   time: string;
   location?: string;
+  community_id?: string;
   community_name?: string;
 }
 
@@ -79,6 +81,7 @@ const formatTime = (dateStr: string): string => {
 
 export default function CalendarScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
   const now = new Date();
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
   const [currentYear, setCurrentYear] = useState(now.getFullYear());
@@ -122,6 +125,7 @@ export default function CalendarScreen() {
             date: eventDate?.split('T')[0] || new Date().toISOString().split('T')[0],
             time: formatTime(eventDate || new Date().toISOString()),
             location: item.location || item.metadata?.location,
+            community_id: item.community_id,
             community_name: item.community_name || item.community?.name,
           };
         });
@@ -176,6 +180,16 @@ export default function CalendarScreen() {
     acc[event.date].push(event);
     return acc;
   }, {} as Record<string, CalendarEvent[]>);
+
+  const handleEventPress = (event: CalendarEvent) => {
+    if ((event.type === 'event' || event.type === 'scheduled_post') && event.community_id) {
+      router.push(`/details/community/${event.community_id}`);
+    } else if (event.type === 'opportunity') {
+      router.push(`/details/opportunity/${event.id}`);
+    } else if (event.type === 'reservation') {
+      router.push(`/settings/my-reservations/${event.id}`);
+    }
+  };
 
   const sortedDates = Object.keys(groupedEvents).sort();
 
@@ -251,6 +265,7 @@ export default function CalendarScreen() {
                       { borderBottomColor: colors.gray100 },
                       isLast && styles.eventItemLast,
                     ]}
+                    onPress={() => handleEventPress(event)}
                     activeOpacity={0.8}
                   >
                     <View style={[styles.eventIndicator, { backgroundColor: eventColor }]} />

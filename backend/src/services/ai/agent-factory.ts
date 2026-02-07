@@ -11,9 +11,7 @@ import { OPPORTUNITY_GEN_SYSTEM_PROMPT } from './prompts/opportunity-gen.prompt'
 import { RECOMMENDATION_SYSTEM_PROMPT } from './prompts/recommendation.prompt';
 import { SESSION_TITLE_SYSTEM_PROMPT } from './prompts/session-utils.prompt';
 
-// ═══════════════════════════════════════════════════════════════
-// SPACE GENERATION
-// ═══════════════════════════════════════════════════════════════
+// --- Space Generation ---
 
 export function createSpaceGenAgent(): Agent {
   return new Agent({
@@ -23,9 +21,7 @@ export function createSpaceGenAgent(): Agent {
   });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// COMMUNITY GENERATION
-// ═══════════════════════════════════════════════════════════════
+// --- Community Generation ---
 
 export function createCommunityGenAgent(): Agent {
   return new Agent({
@@ -35,9 +31,7 @@ export function createCommunityGenAgent(): Agent {
   });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// OPPORTUNITY GENERATION
-// ═══════════════════════════════════════════════════════════════
+// --- Opportunity Generation ---
 
 export function createOpportunityGenAgent(): Agent {
   return new Agent({
@@ -47,9 +41,7 @@ export function createOpportunityGenAgent(): Agent {
   });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// RECOMMENDATION
-// ═══════════════════════════════════════════════════════════════
+// --- Recommendation ---
 
 export function createRecommendationAgent(): Agent {
   return new Agent({
@@ -59,9 +51,7 @@ export function createRecommendationAgent(): Agent {
   });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SESSION UTILS (Title + Suggestions)
-// ═══════════════════════════════════════════════════════════════
+// --- Session Utils Title + Suggestions ---
 
 export function createTitleAgent(): Agent {
   return new Agent({

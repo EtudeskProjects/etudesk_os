@@ -3,9 +3,7 @@
  * Centralized constants to avoid magic numbers/strings
  */
 
-// ═══════════════════════════════════════════════════════════════
-// PAGINATION
-// ═══════════════════════════════════════════════════════════════
+// --- Pagination ---
 
 export const PAGINATION = {
   DEFAULT_LIMIT: 50,
@@ -13,9 +11,7 @@ export const PAGINATION = {
   DEFAULT_OFFSET: 0,
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
-// FILE UPLOAD
-// ═══════════════════════════════════════════════════════════════
+// --- File Upload ---
 
 export const FILE_UPLOAD = {
   MAX_ATTACHMENTS: 5,
@@ -26,9 +22,7 @@ export const FILE_UPLOAD = {
   ALLOWED_DOCUMENT_TYPES: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
-// TIME INTERVALS (in milliseconds)
-// ═══════════════════════════════════════════════════════════════
+// --- Time Intervals In Milliseconds ---
 
 export const TIME_MS = {
   SECOND: 1000,
@@ -39,9 +33,7 @@ export const TIME_MS = {
   MONTH_30: 30 * 24 * 60 * 60 * 1000,
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
-// CRON INTERVALS
-// ═══════════════════════════════════════════════════════════════
+// --- Cron Intervals ---
 
 export const CRON_INTERVALS = {
   OTP_CLEANUP: TIME_MS.HOUR,                    // Every hour
@@ -52,9 +44,7 @@ export const CRON_INTERVALS = {
   NOTIFICATION_CLEANUP: TIME_MS.WEEK,           // Every week
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
-// SUBSCRIPTION / PAYMENT
-// ═══════════════════════════════════════════════════════════════
+// --- Subscription / Payment ---
 
 export const SUBSCRIPTION = {
   MAX_RETRY_COUNT: 3,
@@ -64,18 +54,14 @@ export const SUBSCRIPTION = {
   OLD_NOTIFICATIONS_DAYS: 90,
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
-// DOCUMENT LIMITS
-// ═══════════════════════════════════════════════════════════════
+// --- Document Limits ---
 
 export const DOCUMENT = {
   MAX_PER_TALENT: 20,
   MAX_FILENAME_LENGTH: 255,
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
-// STATUS VALUES
-// ═══════════════════════════════════════════════════════════════
+// --- Status Values ---
 
 export const MEMBER_STATUS = {
   PENDING: 'PENDING',
@@ -112,9 +98,7 @@ export const PAYMENT_STATUS = {
   REFUNDED: 'REFUNDED',
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
-// ACCESS TYPES
-// ═══════════════════════════════════════════════════════════════
+// --- Access Types ---
 
 export const ACCESS_TYPE = {
   PUBLIC: 'PUBLIC',
@@ -127,9 +111,7 @@ export const VISIBILITY = {
   PRIVATE: 'PRIVATE',
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
-// ROLES
-// ═══════════════════════════════════════════════════════════════
+// --- Roles ---
 
 export const COMMUNITY_ROLE = {
   ADMIN: 'ADMIN',
@@ -143,9 +125,7 @@ export const ORGANIZATION_ROLE = {
   MEMBER: 'MEMBER',
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
-// LEARNING PREFERENCES (Study Mode Analysis)
-// ═══════════════════════════════════════════════════════════════
+// --- Learning Preferences Study Mode Analysis ---
 
 export const LEARNING_PREFERENCES = {
   STYLE: ['VISUAL', 'AUDITORY', 'TEXT_BASED', 'INTERACTIVE'],

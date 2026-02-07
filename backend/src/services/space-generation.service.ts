@@ -14,9 +14,6 @@ import { SpaceType, SPACE_TYPES } from '../types/space.types';
 import { SPACE_GEN_SYSTEM_PROMPT, buildSpaceGenPrompt } from './ai/prompts/space-gen.prompt';
 
 import { logger } from '../utils';
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export interface GenerationInput {
   name: string;
@@ -52,9 +49,7 @@ interface OrganizationContext {
   headquarters_country?: string;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Helper Functions ---
 
 async function getOrganizationContext(organizationId: string): Promise<OrganizationContext | null> {
   try {
@@ -77,9 +72,7 @@ async function getOrganizationContext(organizationId: string): Promise<Organizat
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MAIN SERVICE FUNCTION
-// ═══════════════════════════════════════════════════════════════
+// --- Main Service Function ---
 
 export async function generateSpaceSuggestion(
   input: GenerationInput

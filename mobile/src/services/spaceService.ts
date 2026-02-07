@@ -7,9 +7,6 @@
 import { api, ApiResponse } from './api';
 import type { SpaceType as ModelSpaceType, Visibility } from '../types/models';
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export type SpaceType = ModelSpaceType;
 
@@ -266,9 +263,7 @@ export interface AvailabilityCheckResult {
   };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SERVICE
-// ═══════════════════════════════════════════════════════════════
+// --- Service ---
 
 class SpaceService {
   /**
@@ -323,10 +318,7 @@ class SpaceService {
     return api.delete(`/api/spaces/${id}`);
   }
 
-  // ═══════════════════════════════════════════════════════════════
   // AVAILABILITY MANAGEMENT
-  // ═══════════════════════════════════════════════════════════════
-
   /**
    * Get space availabilities
    */
@@ -364,10 +356,7 @@ class SpaceService {
     });
   }
 
-  // ═══════════════════════════════════════════════════════════════
   // BOOKING MANAGEMENT
-  // ═══════════════════════════════════════════════════════════════
-
   /**
    * Create a booking
    */

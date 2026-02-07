@@ -154,10 +154,7 @@ class CommunityService {
     return this.update(id, { status: 'ARCHIVED' });
   }
 
-  // ─────────────────────────────────────────────────────────────
   // USER MEMBERSHIP METHODS
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Get communities the current user is a member of (including PENDING requests).
    * Backend returns { data: array, pagination }; we normalize to { data: { memberships } }.
@@ -230,10 +227,7 @@ class CommunityService {
     return api.post<{ views_count: number }>(`/api/communities/${id}/views`, {});
   }
 
-  // ─────────────────────────────────────────────────────────────
   // ORGANIZATION MEMBER MANAGEMENT METHODS
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Get all members of a community (for organization)
    */
@@ -289,10 +283,7 @@ class CommunityService {
     return api.delete(`/api/communities/members/${membershipId}`);
   }
 
-  // ─────────────────────────────────────────────────────────────
   // MEMBER PERMISSIONS
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Get permissions for a specific member
    */
@@ -338,9 +329,7 @@ class CommunityService {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ADDITIONAL TYPES
-// ═══════════════════════════════════════════════════════════════
+// --- Additional Types ---
 
 export type MemberStatus = 'PENDING' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED';
 

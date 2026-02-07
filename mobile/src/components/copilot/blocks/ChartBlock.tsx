@@ -7,7 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { BarChart3 } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 
 interface ChartData {
   label: string;
@@ -101,7 +101,7 @@ export const ChartBlock: React.FC<ChartBlockProps> = ({ data }) => {
       </View>
 
       {/* Legend */}
-      <View style={[styles.legend, { backgroundColor: colors.backgroundSecondary }]}>
+      <View style={[styles.legend, { backgroundColor: colors.backgroundSecondary, borderTopColor: withOpacity(colors.textPrimary, OPACITY[5]) }]}>
         <Text style={[styles.legendText, { color: colors.textTertiary }]}>
           Valeur maximale: {maxValue}
         </Text>
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+    borderTopColor: 'transparent',
   },
   legendText: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,

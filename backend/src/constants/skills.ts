@@ -3,9 +3,7 @@
  * Aligned with database schema (talent_skills table)
  */
 
-// ═══════════════════════════════════════════════════════════════
-// SKILL TYPES (talent_skills.type)
-// ═══════════════════════════════════════════════════════════════
+// --- Skill Types Talent_skills.Type ---
 
 export const SKILL_TYPES = {
   KNOWLEDGE: 'KNOWLEDGE',       // Savoir (theoretical knowledge)
@@ -19,9 +17,7 @@ export function isValidSkillType(type: string): type is SkillType {
   return Object.values(SKILL_TYPES).includes(type as SkillType);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// PROFICIENCY LEVELS (talent_skills.proficiency_level)
-// ═══════════════════════════════════════════════════════════════
+// --- Proficiency Levels Talent_skills.Proficiency_level ---
 
 export const PROFICIENCY_LEVELS = {
   BEGINNER: 'BEGINNER',
@@ -36,9 +32,7 @@ export function isValidProficiencyLevel(level: string): level is ProficiencyLeve
   return Object.values(PROFICIENCY_LEVELS).includes(level as ProficiencyLevel);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SKILL ORIGIN (talent_skills.origin)
-// ═══════════════════════════════════════════════════════════════
+// --- Skill Origin Talent_skills.Origin ---
 
 export const SKILL_ORIGINS = {
   DECLARED: 'declared',     // User manually declared the skill
@@ -52,9 +46,7 @@ export function isValidSkillOrigin(origin: string): origin is SkillOrigin {
   return Object.values(SKILL_ORIGINS).includes(origin as SkillOrigin);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// DOCUMENT SKILL EXTRACTION LIMITS
-// ═══════════════════════════════════════════════════════════════
+// --- Document Skill Extraction Limits ---
 
 export const SKILL_EXTRACTION_LIMITS = {
   MIN_SKILLS_PER_DOCUMENT: 3,

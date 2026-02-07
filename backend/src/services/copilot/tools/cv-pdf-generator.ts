@@ -8,9 +8,7 @@ import PDFDocument from 'pdfkit';
 import { getFileBuffer } from '../../storage.service';
 import { logger } from '../../../utils';
 
-// ═══════════════════════════════════════════════════════════════
-// ETUDESK DESIGN TOKENS — Light Theme
-// ═══════════════════════════════════════════════════════════════
+// --- Etudesk Design Tokens — Light Theme ---
 
 const C = {
   primary: '#3B2416',
@@ -56,9 +54,7 @@ const MAIN_WIDTH = PAGE.width - SIDEBAR_WIDTH - MAIN_PADDING_LEFT - MAIN_PADDING
 const SIDEBAR_CONTENT_X = SIDEBAR_PADDING;
 const SIDEBAR_CONTENT_WIDTH = SIDEBAR_WIDTH - SIDEBAR_PADDING * 2;
 
-// ═══════════════════════════════════════════════════════════════
-// CV DATA STRUCTURE
-// ═══════════════════════════════════════════════════════════════
+// --- Cv Data Structure ---
 
 export interface CVData {
   firstName: string;
@@ -100,9 +96,7 @@ export interface CVData {
   }>;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════════
+// --- Helpers ---
 
 function skillLevelToPercent(level?: string): number {
   const map: Record<string, number> = {
@@ -175,9 +169,7 @@ function addPageWithSidebar(doc: PDFKit.PDFDocument): void {
   doc.rect(0, 0, SIDEBAR_WIDTH, PAGE.height).fillColor(C.primary).fill();
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MAIN CV GENERATOR
-// ═══════════════════════════════════════════════════════════════
+// --- Main Cv Generator ---
 
 export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
   return new Promise(async (resolve, reject) => {
@@ -198,15 +190,10 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      // ─────────────────────────────────────────────────────────
       // SIDEBAR BACKGROUND (full page height, left column)
-      // ─────────────────────────────────────────────────────────
       doc.rect(0, 0, SIDEBAR_WIDTH, PAGE.height).fillColor(C.primary).fill();
 
-      // ─────────────────────────────────────────────────────────
       // HEADER AREA — Avatar + Name + Contact
-      // ─────────────────────────────────────────────────────────
-
       // Subtle header background on main area
       doc.rect(SIDEBAR_WIDTH, 0, PAGE.width - SIDEBAR_WIDTH, HEADER_HEIGHT)
         .fillColor(C.surface).fill();
@@ -266,10 +253,7 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
       doc.moveTo(SIDEBAR_WIDTH, headerLineY).lineTo(PAGE.width, headerLineY)
         .lineWidth(0.5).strokeColor(C.border).stroke();
 
-      // ─────────────────────────────────────────────────────────
       // SIDEBAR CONTENT (below avatar)
-      // ─────────────────────────────────────────────────────────
-
       let sideY = avatarLoaded || !cvData.avatarUrl ? avatarY + avatarSize + 24 : avatarY + avatarSize + 24;
 
       // --- CONTACT DETAILS in sidebar ---
@@ -379,10 +363,7 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
         }
       }
 
-      // ─────────────────────────────────────────────────────────
       // MAIN CONTENT — Right column
-      // ─────────────────────────────────────────────────────────
-
       let mainY = HEADER_HEIGHT + 18;
 
       // --- BIO / PROFIL ---
@@ -544,10 +525,7 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
         }
       }
 
-      // ─────────────────────────────────────────────────────────
       // FOOTER — Etudesk branding on every page
-      // ─────────────────────────────────────────────────────────
-
       const totalPages = doc.bufferedPageRange().count;
       for (let i = 0; i < totalPages; i++) {
         doc.switchToPage(i);

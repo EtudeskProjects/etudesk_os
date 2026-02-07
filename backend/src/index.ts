@@ -19,11 +19,9 @@ import filesRouter from './routes/files';
 import paymentMethodsRouter from './routes/payment-methods';
 import communityActivitiesRouter from './routes/community-activities.routes';
 
-import communityNotificationsRouter from './routes/community-notifications.routes';
 import communityInvitationsRouter from './routes/community-invitations.routes';
 import opportunityInvitationsRouter from './routes/opportunity-invitations.routes';
 import spaceInvitationsRouter from './routes/space-invitations.routes';
-import webhooksRouter from './routes/webhooks.routes';
 import calendarRouter from './routes/calendar.routes';
 import copilotRouter from './routes/copilot';
 import documentsRouter from './routes/documents';
@@ -33,7 +31,7 @@ import { verifyEmailConnection } from './services/email.service';
 import { cleanupExpiredOTPs } from './services/otp.service';
 import { apiLimiter, authLimiter, otpLimiter } from './middleware/rateLimit.middleware';
 
-import { communityNotificationService } from './services/community-notification.service';
+import * as notificationService from './services/notification.service';
 import { communityActivityService } from './services/community-activity.service';
 import { AppError, isAppError, RateLimitError } from './errors';
 import { createVersionedRouter, CURRENT_API_VERSION } from './middleware/api-version.middleware';
@@ -102,13 +100,8 @@ app.get('/health', async (req, res) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
-// API v1 ROUTER (Versioned)
-// ═══════════════════════════════════════════════════════════════
+// --- API v1 Router (Versioned) ---
 const v1Router = createVersionedRouter('v1');
-
-// Webhooks route BEFORE rate limiter (needs raw body parsing for signature verification)
-v1Router.use('/webhooks', webhooksRouter);
 
 // Apply rate limiter to v1 routes
 v1Router.use(apiLimiter);
@@ -129,7 +122,6 @@ v1Router.use('/applications', applicationsRouter);
 v1Router.use('/communities', communitiesRouter);
 v1Router.use('/', communityActivitiesRouter);
 
-v1Router.use('/community-notifications', communityNotificationsRouter);
 v1Router.use('/communities', communityInvitationsRouter);
 v1Router.use('/community-invitations', communityInvitationsRouter); // Fix: Explicit mount for /me path
 
@@ -216,9 +208,7 @@ app.listen(PORT, async () => {
     cleanupExpiredOTPs();
   }, 60 * 60 * 1000);
 
-  // ═══════════════════════════════════════════════════════════════
-  // CRON JOBS
-  // ═══════════════════════════════════════════════════════════════
+  // --- Cron Jobs ---
   const cronLogger = logger.child({ module: 'cron' });
 
   cronLogger.info('Cron jobs initialized');
@@ -226,7 +216,7 @@ app.listen(PORT, async () => {
   // Process scheduled notifications every 10 minutes
   const runNotificationCron = async () => {
     try {
-      const count = await communityNotificationService.processScheduledNotifications();
+      const count = await notificationService.processScheduled();
       if (count > 0) {
         cronLogger.info('Sent scheduled notifications', { count });
       }
@@ -253,7 +243,7 @@ app.listen(PORT, async () => {
   // Cleanup old notifications weekly
   const runNotificationCleanupCron = async () => {
     try {
-      const count = await communityNotificationService.deleteOldNotifications(90);
+      const count = await notificationService.cleanup(90);
       if (count > 0) {
         cronLogger.info('Deleted old notifications', { count });
       }

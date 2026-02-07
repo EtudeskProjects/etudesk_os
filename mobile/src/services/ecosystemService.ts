@@ -6,9 +6,6 @@
 import { api, ApiResponse } from './api';
 import { Notification } from './notificationService';
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export interface EcosystemNode {
   id: string;
@@ -59,9 +56,7 @@ export interface CalendarEvent {
   type: 'interview' | 'deadline' | 'booking';
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SERVICE
-// ═══════════════════════════════════════════════════════════════
+// --- Service ---
 
 class EcosystemService {
   /**

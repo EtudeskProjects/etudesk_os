@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { COLORS, SPACING, TYPOGRAPHY, ICON, BORDER } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 
 export interface Step {
@@ -35,9 +35,9 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({ steps, currentStep
                             ]}
                         >
                             {isCompleted ? (
-                                <Check size={12} color={COLORS.white} strokeWidth={ICON.strokeWidth + 0.5} />
+                                <Check size={12} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth + 0.5} />
                             ) : (
-                                <Text style={[styles.stepNumber, isCurrent && { color: COLORS.white }]}>
+                                <Text style={[styles.stepNumber, { color: colors.textSecondary }, isCurrent && { color: colors.textOnPrimary }]}>
                                     {index + 1}
                                 </Text>
                             )}
@@ -80,7 +80,6 @@ const styles = StyleSheet.create({
     stepNumber: {
         fontSize: TYPOGRAPHY.fontSize.sm,
         fontWeight: TYPOGRAPHY.fontWeight.semibold,
-        color: COLORS.gray600,
     },
     stepLabel: {
         fontSize: TYPOGRAPHY.fontSize.xs,

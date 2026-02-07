@@ -1,8 +1,6 @@
 // Données du modèle Talent - synchronisées avec le backend
 
-// ═══════════════════════════════════════════════════════════════
-// SECTEURS (5 choix max)
-// ═══════════════════════════════════════════════════════════════
+// --- Secteurs 5 Choix Max ---
 
 export const SECTORS = {
   AGRICULTURE: 'AGRICULTURE',
@@ -56,9 +54,7 @@ export const SECTOR_DATA: Array<{ id: Sector; label: string }> = [
 
 export const MAX_SECTORS = 5;
 
-// ═══════════════════════════════════════════════════════════════
-// PROFILE TAGS (3 choix max)
-// ═══════════════════════════════════════════════════════════════
+// --- Profile Tags 3 Choix Max ---
 
 export const PROFILE_TAG = {
   STUDENT: 'STUDENT',
@@ -94,9 +90,7 @@ export const PROFILE_TAG_DATA: Array<{ id: ProfileTag; label: string }> = [
 
 export const MAX_PROFILE_TAGS = 3;
 
-// ═══════════════════════════════════════════════════════════════
-// GOALS / OBJECTIFS (3 choix max)
-// ═══════════════════════════════════════════════════════════════
+// --- Goals / Objectifs 3 Choix Max ---
 
 export const GOAL = {
   LEARN_NEW_SKILLS: 'LEARN_NEW_SKILLS',
@@ -128,9 +122,7 @@ export const GOAL_DATA: Array<{ id: Goal; label: string }> = [
 
 export const MAX_GOALS = 3;
 
-// ═══════════════════════════════════════════════════════════════
-// LEARNING PREFERENCES (Study Mode)
-// ═══════════════════════════════════════════════════════════════
+// --- Learning Preferences Study Mode ---
 
 export const LEARNING_STYLE = {
   VISUAL: 'VISUAL',

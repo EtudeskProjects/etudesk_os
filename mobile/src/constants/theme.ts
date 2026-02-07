@@ -13,9 +13,7 @@
  * Brand: Warm luxury, African elegance, clarity, engagement, community
  */
 
-// ═══════════════════════════════════════════════════════════════
-// COLOR PALETTE - Luxe Africain
-// ═══════════════════════════════════════════════════════════════
+// --- Color Palette - Luxe Africain ---
 
 /**
  * Primary: Rich Brown (#3B2416) - Luxe African warmth
@@ -26,17 +24,13 @@
  */
 
 export const LIGHT_COLORS = {
-  // ─────────────────────────────────────────────────────────────
   // PRIMARY - Marron Luxe
-  // ─────────────────────────────────────────────────────────────
   primary: '#3B2416',           // Main brand color - Rich brown
   primaryLight: '#5C3D2E',      // Lighter variant
   primaryDark: '#2A1A10',       // Darker variant
   primaryMuted: '#8B7355',      // Muted/soft variant
 
-  // ─────────────────────────────────────────────────────────────
   // NEUTRALS - Warm Gray Scale
-  // ─────────────────────────────────────────────────────────────
   white: '#FFFFFF',
   black: '#1A1A1A',
 
@@ -52,9 +46,7 @@ export const LIGHT_COLORS = {
   gray800: '#332F2A',           // Body text primary
   gray900: '#1F1C18',           // Headings
 
-  // ─────────────────────────────────────────────────────────────
   // SEMANTIC - Earth Tones
-  // ─────────────────────────────────────────────────────────────
   success: '#4A6741',           // Forest pale green
   successLight: '#E8EFE6',      // Success background
   successDark: '#3A5233',       // Success pressed
@@ -71,18 +63,14 @@ export const LIGHT_COLORS = {
   infoLight: '#F2EFEC',         // Info background
   infoDark: '#524940',          // Info pressed
 
-  // ─────────────────────────────────────────────────────────────
   // BACKGROUNDS & SURFACES
-  // ─────────────────────────────────────────────────────────────
   background: '#FFFFFF',        // Main app background
   backgroundSecondary: '#FAF9F7', // Secondary surfaces
   backgroundTertiary: '#F5F3F0', // Cards on secondary bg
   surface: '#FFFFFF',           // Card surfaces
   surfaceElevated: '#FAF9F7',   // Elevated cards
 
-  // ─────────────────────────────────────────────────────────────
   // TEXT
-  // ─────────────────────────────────────────────────────────────
   textPrimary: '#1F1C18',       // Main text
   textSecondary: '#6E675C',     // Secondary text
   textTertiary: '#918A7E',      // Tertiary/hint text
@@ -90,18 +78,13 @@ export const LIGHT_COLORS = {
   textInverse: '#FFFFFF',       // Text on dark backgrounds
   textOnPrimary: '#FFFFFF',     // Text on primary color
 
-  // ─────────────────────────────────────────────────────────────
   // BORDERS & DIVIDERS
-  // ─────────────────────────────────────────────────────────────
   borderColor: '#EBE8E4',       // Default border
   borderColorStrong: '#D9D5CF', // Emphasized border
   divider: '#EBE8E4',           // Horizontal dividers
 
-  // ─────────────────────────────────────────────────────────────
   // QUICK ACCESS CARDS - Harmonized Palette
   // Each card type has a cohesive color set
-  // ─────────────────────────────────────────────────────────────
-
   // Talent Cards - Warm beige/cream
   cardTalent: '#F7F4F0',
   cardTalentAccent: '#D4C4B0',
@@ -127,18 +110,14 @@ export const LIGHT_COLORS = {
   cardSpaceAccent: '#D0CCC4',
   cardSpaceText: '#4D4840',
 
-  // ─────────────────────────────────────────────────────────────
   // INTERACTIVE STATES
-  // ─────────────────────────────────────────────────────────────
   overlay: 'rgba(26, 26, 26, 0.5)',      // Modal overlay
   overlayLight: 'rgba(26, 26, 26, 0.3)', // Light overlay
   pressed: 'rgba(59, 36, 22, 0.08)',     // Pressed state
   focused: 'rgba(59, 36, 22, 0.12)',     // Focus ring
   hover: 'rgba(59, 36, 22, 0.04)',       // Hover state
 
-  // ─────────────────────────────────────────────────────────────
   // STATUS COLORS
-  // ─────────────────────────────────────────────────────────────
   statusPending: '#A67C52',     // Warm amber
   statusActive: '#4A6741',      // Forest green
   statusRejected: '#8B4A3C',    // Terracotta
@@ -146,10 +125,8 @@ export const LIGHT_COLORS = {
   statusArchived: '#918A7E',    // Muted gray
 } as const;
 
-// ─────────────────────────────────────────────────────────────
 // DARK THEME
 // Optimized for contrast and visibility
-// ─────────────────────────────────────────────────────────────
 export const DARK_COLORS = {
   // Primary - LIGHTER for dark mode visibility (not the same dark brown)
   primary: '#C9A070',           // Warm gold-brown - visible on dark
@@ -252,11 +229,8 @@ export const COLORS = LIGHT_COLORS;
 export type ThemeColors = typeof LIGHT_COLORS;
 export type ThemeMode = 'light' | 'dark';
 
-// ═══════════════════════════════════════════════════════════════
 // SPACING SYSTEM
 // Consistent 4px grid for all spacing
-// ═══════════════════════════════════════════════════════════════
-
 export const SPACING = {
   // Base unit: 4px
   xxs: 2,       // 2px - Micro spacing (icon gaps)
@@ -265,15 +239,12 @@ export const SPACING = {
   md: 16,       // 16px - Default spacing
   lg: 24,       // 24px - Comfortable spacing
   xl: 32,       // 32px - Generous spacing
-  xxl: 48,      // 48px - Section spacing
-  xxxl: 64,     // 64px - Large section spacing
+  xxl: 40,      // 40px - Section spacing
+  xxxl: 48,     // 48px - Large section spacing
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // TYPOGRAPHY
 // Primary: Satoshi | Secondary: Grotesques
-// ═══════════════════════════════════════════════════════════════
-
 export const TYPOGRAPHY = {
   // Font Families
   fontFamily: {
@@ -337,11 +308,8 @@ export const TYPOGRAPHY = {
   },
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // ICON SYSTEM
 // Lucide React Native only
-// ═══════════════════════════════════════════════════════════════
-
 export const ICON = {
   // Stroke width - Consistent across all icons
   strokeWidth: 1.5,
@@ -362,11 +330,8 @@ export const ICON = {
   },
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // BORDER SYSTEM
 // Clean, minimal borders
-// ═══════════════════════════════════════════════════════════════
-
 export const BORDER = {
   // Border radius scale
   radius: {
@@ -389,11 +354,8 @@ export const BORDER = {
   },
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // LAYOUT SYSTEM
 // Consistent dimensions
-// ═══════════════════════════════════════════════════════════════
-
 export const LAYOUT = {
   // Screen padding
   screenPadding: SPACING.lg,    // 24px
@@ -440,11 +402,8 @@ export const LAYOUT = {
   bottomSheetHandleHeight: 4,
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // OPACITY SCALE
 // For consistent transparency
-// ═══════════════════════════════════════════════════════════════
-
 export const OPACITY = {
   transparent: 0,
   5: 0.05,
@@ -477,9 +436,7 @@ export const withOpacity = (hexColor: string, opacity: number): string => {
   return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
 
-// ═══════════════════════════════════════════════════════════════
-// ANIMATION (for future use - no shadows/gradients)
-// ═══════════════════════════════════════════════════════════════
+// --- Animation For Future Use - No Shadows/Gradients ---
 
 export const ANIMATION = {
   // Durations
@@ -500,9 +457,7 @@ export const ANIMATION = {
   },
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
-// Z-INDEX SCALE
-// ═══════════════════════════════════════════════════════════════
+// --- Z-Index Scale ---
 
 export const Z_INDEX = {
   base: 0,
@@ -517,11 +472,8 @@ export const Z_INDEX = {
   max: 100,
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // COMPONENT TOKENS
 // Pre-defined component configurations
-// ═══════════════════════════════════════════════════════════════
-
 export const COMPONENT = {
   // Button variants
   button: {
@@ -632,11 +584,8 @@ export const COMPONENT = {
   },
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
 // MATCH CATEGORY COLORS (for application matching scores)
 // Uses Luxe Africain semantic colors
-// ═══════════════════════════════════════════════════════════════
-
 export const MATCH_COLORS = {
   excellent: {
     color: LIGHT_COLORS.success,           // #4A6741 - Forest green

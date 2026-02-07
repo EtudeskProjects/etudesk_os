@@ -18,9 +18,6 @@ import { useTranslation } from './I18nContext';
 
 const LOG_SOURCE = 'Copilot';
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export interface CopilotState {
   mode: CopilotMode;
@@ -43,15 +40,11 @@ interface CopilotContextType extends CopilotState {
   clearError: () => void;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// CONTEXT
-// ═══════════════════════════════════════════════════════════════
+// --- Context ---
 
 const CopilotContext = createContext<CopilotContextType | null>(null);
 
-// ═══════════════════════════════════════════════════════════════
-// PROVIDER
-// ═══════════════════════════════════════════════════════════════
+// --- Provider ---
 
 interface CopilotProviderProps {
   children: ReactNode;
@@ -69,9 +62,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
     error: null,
   });
 
-  // ─────────────────────────────────────────────────────────────
   // SET MODE
-  // ─────────────────────────────────────────────────────────────
   const setMode = useCallback((mode: CopilotMode) => {
     setState((prev) => {
       // If mode changes, start a new session
@@ -87,9 +78,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
     });
   }, []);
 
-  // ─────────────────────────────────────────────────────────────
   // SEND MESSAGE
-  // ─────────────────────────────────────────────────────────────
   const sendMessage = useCallback(
     async (message: string, attachments?: any[]): Promise<CopilotMessage | null> => {
       setState((prev) => ({ ...prev, isSending: true, error: null }));
@@ -184,9 +173,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
     [state.mode, state.sessionId]
   );
 
-  // ─────────────────────────────────────────────────────────────
   // LOAD SESSION
-  // ─────────────────────────────────────────────────────────────
   const loadSession = useCallback(async (sessionId: string) => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
@@ -220,9 +207,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
     }
   }, []);
 
-  // ─────────────────────────────────────────────────────────────
   // START NEW SESSION
-  // ─────────────────────────────────────────────────────────────
   const startNewSession = useCallback(() => {
     setState((prev) => ({
       ...prev,
@@ -232,9 +217,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
     }));
   }, []);
 
-  // ─────────────────────────────────────────────────────────────
   // LOAD SESSIONS LIST
-  // ─────────────────────────────────────────────────────────────
   const loadSessions = useCallback(async () => {
     setState((prev) => ({ ...prev, isLoading: true }));
 
@@ -256,9 +239,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
     }
   }, []);
 
-  // ─────────────────────────────────────────────────────────────
   // DELETE SESSION
-  // ─────────────────────────────────────────────────────────────
   const deleteSession = useCallback(
     async (sessionId: string) => {
       try {
@@ -281,16 +262,12 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
     []
   );
 
-  // ─────────────────────────────────────────────────────────────
   // CLEAR ERROR
-  // ─────────────────────────────────────────────────────────────
   const clearError = useCallback(() => {
     setState((prev) => ({ ...prev, error: null }));
   }, []);
 
-  // ─────────────────────────────────────────────────────────────
   // CONTEXT VALUE
-  // ─────────────────────────────────────────────────────────────
   const contextValue: CopilotContextType = {
     ...state,
     setMode,
@@ -309,9 +286,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// HOOK
-// ═══════════════════════════════════════════════════════════════
+// --- Hook ---
 
 export function useCopilot(): CopilotContextType {
   const context = useContext(CopilotContext);

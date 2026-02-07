@@ -90,9 +90,6 @@ export default function JoinCommunityScreen() {
 
     activeSteps.push('preview');
 
-    // Note: Paywall step is no longer in join flow
-    // Payment happens after admin approves the membership request
-
     activeSteps.push('success');
 
     return activeSteps;

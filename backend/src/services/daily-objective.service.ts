@@ -44,9 +44,7 @@ interface OrganizationContext {
   recentPublications: any[];
 }
 
-// ═══════════════════════════════════════════════════════════════
-// TALENT DAILY OBJECTIVE
-// ═══════════════════════════════════════════════════════════════
+// --- Talent Daily Objective ---
 
 async function getTalentContext(talentId: string): Promise<TalentContext> {
   const today = new Date();
@@ -295,9 +293,7 @@ export async function getTalentDailyObjective(talentId: string): Promise<DailyOb
   };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ORGANIZATION DAILY OBJECTIVE
-// ═══════════════════════════════════════════════════════════════
+// --- Organization Daily Objective ---
 
 async function getOrganizationContext(organizationId: string): Promise<OrganizationContext> {
   const today = new Date();

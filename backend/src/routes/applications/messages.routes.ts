@@ -13,7 +13,7 @@ import {
   createForbiddenError,
   logger,
 } from '../../utils';
-import * as pushService from '../../services/push-notification.service';
+import * as notificationService from '../../services/notification.service';
 
 const router = Router();
 
@@ -118,7 +118,7 @@ router.post('/:id/messages', authMiddleware, async (req: AuthRequest, res: Respo
       datetime_type || null
     ]);
 
-    pushService.notifyApplicationMessage(id, messageId, senderType)
+    notificationService.notifyApplicationMessage(id, messageId, senderType)
       .catch(err => logger.error('Notification error:', err));
 
     res.status(201).json({ data: result.rows[0] });

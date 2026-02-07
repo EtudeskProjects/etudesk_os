@@ -12,9 +12,6 @@ import {
 } from './spaceService';
 import { Talent, Organization } from '../types/models';
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES
-// ═══════════════════════════════════════════════════════════════
 
 export interface SpaceBookingDetails extends SpaceBooking {
   talent?: Talent;
@@ -47,15 +44,10 @@ export interface BookingExportResult {
   expires_at: string;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SERVICE CLASS
-// ═══════════════════════════════════════════════════════════════
+// --- Service Class ---
 
 class SpaceBookingService {
-  // ─────────────────────────────────────────────────────────────
   // BOOKING DETAILS
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Get detailed booking information with related entities
    */
@@ -63,10 +55,7 @@ class SpaceBookingService {
     return api.get<SpaceBookingDetails>(`/api/spaces/bookings/${bookingId}`);
   }
 
-  // ─────────────────────────────────────────────────────────────
   // TALENT ENDPOINTS
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Get all bookings for the current talent
    */
@@ -74,10 +63,7 @@ class SpaceBookingService {
     return api.get<SpaceBookingDetails[]>('/api/spaces/bookings/my', filters);
   }
 
-  // ─────────────────────────────────────────────────────────────
   // ORGANIZATION ENDPOINTS
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Get all bookings for an organization
    */
@@ -98,10 +84,7 @@ class SpaceBookingService {
     return api.get<SpaceBookingDetails[]>(`/api/spaces/${spaceId}/bookings`, filters);
   }
 
-  // ─────────────────────────────────────────────────────────────
   // BOOKING MANAGEMENT
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Update booking status with optional reason
    */
@@ -143,10 +126,7 @@ class SpaceBookingService {
     return api.delete(`/api/spaces/bookings/${bookingId}`);
   }
 
-  // ─────────────────────────────────────────────────────────────
   // EXPORT ENDPOINTS
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Export bookings to PDF for a specific space
    */
@@ -188,10 +168,7 @@ class SpaceBookingService {
     return queryString ? `${url}?${queryString}` : url;
   }
 
-  // ─────────────────────────────────────────────────────────────
   // STATISTICS & COUNTS
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Get booking counts by status for a space
    */

@@ -5,14 +5,12 @@
 
 import { Router, Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
-import * as pushService from '../services/push-notification.service';
+import * as notificationService from '../services/notification.service';
 
 import { logger } from '../utils';
 const router = Router();
 
-// ═══════════════════════════════════════════════════════════════
-// PUSH TOKENS
-// ═══════════════════════════════════════════════════════════════
+// --- Push Tokens ---
 
 /**
  * POST /api/notifications/push-token
@@ -31,7 +29,7 @@ router.post('/push-token', authMiddleware, async (req: AuthRequest, res: Respons
       return res.status(400).json({ error: req.t('common:invalidPlatform') });
     }
 
-    const result = await pushService.registerPushToken(talentId, token, platform, deviceName);
+    const result = await notificationService.registerPushToken(talentId, token, platform, deviceName);
 
     if (!result.success) {
       return res.status(400).json({ error: result.error });
@@ -57,7 +55,7 @@ router.delete('/push-token', authMiddleware, async (req: AuthRequest, res: Respo
       return res.status(400).json({ error: req.t('common:tokenRequired') });
     }
 
-    await pushService.deactivatePushToken(talentId, token);
+    await notificationService.deactivatePushToken(talentId, token);
     res.json({ success: true, message: req.t('common:pushTokenDeactivated') });
   } catch (error) {
     logger.error('Error deactivating push token:', error);
@@ -65,9 +63,7 @@ router.delete('/push-token', authMiddleware, async (req: AuthRequest, res: Respo
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
-// NOTIFICATIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Notifications ---
 
 /**
  * GET /api/notifications
@@ -80,7 +76,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     const offset = parseInt(req.query.offset as string) || 0;
     const unreadOnly = req.query.unread === 'true';
 
-    const result = await pushService.getNotifications(talentId, { limit, offset, unreadOnly });
+    const result = await notificationService.getAll(talentId, { limit, offset, unreadOnly });
 
     res.json({
       success: true,
@@ -103,7 +99,7 @@ router.put('/:id/read', authMiddleware, async (req: AuthRequest, res: Response) 
     const talentId = req.talentId!;
     const { id } = req.params;
 
-    const success = await pushService.markAsRead(id, talentId);
+    const success = await notificationService.markAsRead(id, talentId);
 
     if (!success) {
       return res.status(404).json({ error: req.t('common:notificationNotFound') });
@@ -123,7 +119,7 @@ router.put('/:id/read', authMiddleware, async (req: AuthRequest, res: Response) 
 router.put('/read-all', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId!;
-    const count = await pushService.markAllAsRead(talentId);
+    const count = await notificationService.markAllAsRead(talentId);
     res.json({ success: true, count });
   } catch (error) {
     logger.error('Error marking all notifications as read:', error);
@@ -140,7 +136,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     const talentId = req.talentId!;
     const { id } = req.params;
 
-    const success = await pushService.deleteNotification(id, talentId);
+    const success = await notificationService.deleteNotification(id, talentId);
 
     if (!success) {
       return res.status(404).json({ error: req.t('common:notificationNotFound') });
@@ -153,9 +149,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
-// PREFERENCES
-// ═══════════════════════════════════════════════════════════════
+// --- Preferences ---
 
 /**
  * GET /api/notifications/preferences
@@ -164,7 +158,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
 router.get('/preferences', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId!;
-    const preferences = await pushService.getPreferences(talentId);
+    const preferences = await notificationService.getPreferences(talentId);
     res.json({ success: true, data: preferences });
   } catch (error) {
     logger.error('Error fetching preferences:', error);
@@ -189,7 +183,7 @@ router.put('/preferences', authMiddleware, async (req: AuthRequest, res: Respons
       notify_reminders,
     } = req.body;
 
-    const preferences = await pushService.updatePreferences(talentId, {
+    const preferences = await notificationService.updatePreferences(talentId, {
       ...(push_enabled !== undefined && { push_enabled }),
       ...(email_enabled !== undefined && { email_enabled }),
       ...(sms_enabled !== undefined && { sms_enabled }),

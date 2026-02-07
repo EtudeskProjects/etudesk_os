@@ -35,6 +35,7 @@ router.get('/events', authMiddleware, async (req: AuthRequest, res: Response) =>
         const scheduledPostsResult = await pool.query(`
             SELECT
                 ca.id,
+                ca.community_id,
                 ca.type,
                 ca.content,
                 ca.scheduled_at,
@@ -58,6 +59,7 @@ router.get('/events', authMiddleware, async (req: AuthRequest, res: Response) =>
                 content: row.content,
                 scheduled_at: row.scheduled_at,
                 metadata: row.metadata,
+                community_id: row.community_id,
                 community_name: row.community_name,
             });
         }
@@ -66,6 +68,7 @@ router.get('/events', authMiddleware, async (req: AuthRequest, res: Response) =>
         const communityEventsResult = await pool.query(`
             SELECT
                 ca.id,
+                ca.community_id,
                 ca.type,
                 ca.content,
                 ca.metadata,
@@ -92,6 +95,7 @@ router.get('/events', authMiddleware, async (req: AuthRequest, res: Response) =>
                 end_date: meta.end_date,
                 location: meta.location,
                 metadata: meta,
+                community_id: row.community_id,
                 community_name: row.community_name,
             });
         }

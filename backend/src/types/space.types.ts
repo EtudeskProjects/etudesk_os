@@ -3,9 +3,7 @@
  * Bookable spaces directly linked to Organizations
  */
 
-// ═══════════════════════════════════════════════════════════════
-// ENUMS & CONSTANTS
-// ═══════════════════════════════════════════════════════════════
+// --- Enums & Constants ---
 
 export const SPACE_TYPES = {
   // Formation
@@ -179,9 +177,6 @@ export const ACCESSIBILITY_FEATURES = [
 
 export type AccessibilityFeature = (typeof ACCESSIBILITY_FEATURES)[number];
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES
-// ═══════════════════════════════════════════════════════════════
 
 export interface Space {
   id: string;
@@ -348,9 +343,7 @@ export interface SpaceBooking {
   };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// API REQUEST/RESPONSE TYPES
-// ═══════════════════════════════════════════════════════════════
+// --- Api Request/Response Types ---
 
 export interface CreateSpaceInput {
   name: string;
@@ -440,9 +433,7 @@ export interface BookingFilters {
   offset?: number;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// UTILITY FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Utility Functions ---
 
 export function calculateCapacity(surfaceM2: number, spaceType: SpaceType): number {
   const density = SPACE_TYPE_DENSITY[spaceType] || 2;

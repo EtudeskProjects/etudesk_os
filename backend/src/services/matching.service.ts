@@ -12,9 +12,7 @@
 import { pool } from './database';
 
 import { logger } from '../utils';
-// ═══════════════════════════════════════════════════════════════
-// TYPES & CONSTANTS
-// ═══════════════════════════════════════════════════════════════
+// --- Types & Constants ---
 
 export interface MatchingScore {
   totalScore: number;
@@ -91,9 +89,7 @@ const EXPERIENCE_YEARS: Record<string, { min: number; max: number }> = {
 // Proficiency level mapping
 const PROFICIENCY_ORDER = ['A', 'A+', 'B', 'B+', 'C', 'C+'];
 
-// ═══════════════════════════════════════════════════════════════
-// LOCATION SCORING (25 points)
-// ═══════════════════════════════════════════════════════════════
+// --- Location Scoring 25 Points ---
 
 /**
  * Calculate location match score
@@ -161,9 +157,7 @@ function calculateLocationScore(
   return maxScore * 0.4; // 10/25 = 40%
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SKILLS SCORING (30 points)
-// ═══════════════════════════════════════════════════════════════
+// --- Skills Scoring 30 Points ---
 
 /**
  * Calculate skills match score
@@ -203,9 +197,7 @@ async function calculateSkillsScore(
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// EXPERIENCE SCORING (20 points)
-// ═══════════════════════════════════════════════════════════════
+// --- Experience Scoring 20 Points ---
 
 /**
  * Calculate experience level match score
@@ -255,9 +247,7 @@ function calculateExperienceScore(
   return maxScore * 0.5;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SECTORS SCORING (15 points)
-// ═══════════════════════════════════════════════════════════════
+// --- Sectors Scoring 15 Points ---
 
 /**
  * Calculate sector alignment score
@@ -318,9 +308,7 @@ function calculateSectorsScore(
   return maxScore * 0.5;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// WORK TYPE SCORING (10 points)
-// ═══════════════════════════════════════════════════════════════
+// --- Work Type Scoring 10 Points ---
 
 /**
  * Calculate work type compatibility score
@@ -394,9 +382,7 @@ function calculateWorkTypeScore(
   return maxScore * 0.5;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MAIN SCORING FUNCTION
-// ═══════════════════════════════════════════════════════════════
+// --- Main Scoring Function ---
 
 /**
  * Calculate complete matching score for a talent-opportunity pair

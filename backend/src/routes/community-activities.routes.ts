@@ -310,9 +310,7 @@ router.get('/activities/:activityId', authMiddleware, async (req: any, res: Resp
     }
 });
 
-// ═══════════════════════════════════════════════════════════════
-// DRAFTS ROUTES
-// ═══════════════════════════════════════════════════════════════
+// --- Drafts Routes ---
 
 // GET /api/:communityId/activities/drafts - Get user's drafts for a community
 // Query params: ?type=POST|EVENT|POLL (optional)

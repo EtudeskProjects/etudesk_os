@@ -140,6 +140,16 @@ export function useNotifications() {
           router.push(`/details/opportunity/${data.opportunityId}`);
         } else if (type === 'SPACE' && data.spaceId) {
           router.push(`/details/space/${data.spaceId}`);
+        } else if ((type === 'EVENT_REMINDER' || type === 'EVENT_REMINDER_1D' || type === 'EVENT_REMINDER_1H' || type === 'NEW_ACTIVITY' || type === 'MENTION' || type === 'COMMENT_REPLY') && data.communityId) {
+          router.push(`/details/community/${data.communityId}`);
+        } else if (type === 'BOOKING_REMINDER' && data.bookingId) {
+          router.push(`/settings/my-reservations/${data.bookingId}`);
+        } else if (type === 'OPPORTUNITY_REMINDER' && data.opportunityId) {
+          router.push(`/details/opportunity/${data.opportunityId}`);
+        } else if (type === 'APPLICATION_REMINDER' && data.applicationId) {
+          router.push(`/settings/my-applications/${data.applicationId}`);
+        } else if ((type === 'MEMBERSHIP_APPROVED' || type === 'MEMBERSHIP_REJECTED') && data.communityId) {
+          router.push(`/details/community/${data.communityId}`);
         }
       } catch (e) {
         // Navigation may fail if router not ready

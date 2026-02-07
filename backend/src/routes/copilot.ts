@@ -45,9 +45,7 @@ import { copilotChatLimiter, copilotGeneralLimiter } from '../middleware/rateLim
 
 const router = Router();
 
-// ═══════════════════════════════════════════════════════════════
-// CHAT ENDPOINT — SSE STREAMING
-// ═══════════════════════════════════════════════════════════════
+// --- Chat Endpoint — Sse Streaming ---
 
 /**
  * POST /api/copilot/chat - Send a message to the copilot (SSE streaming)
@@ -324,9 +322,7 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
-// ACTION CONFIRMATION
-// ═══════════════════════════════════════════════════════════════
+// --- Action Confirmation ---
 
 /**
  * POST /api/copilot/confirm - Execute a confirmed action
@@ -361,9 +357,7 @@ router.post('/confirm', authMiddleware, async (req: AuthRequest, res: Response) 
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
-// AUDIO TRANSCRIPTION (Whisper STT)
-// ═══════════════════════════════════════════════════════════════
+// --- Audio Transcription Whisper Stt ---
 
 const AUDIO_MIME_TYPES = [
   'audio/webm',
@@ -454,9 +448,7 @@ router.post(
   }
 );
 
-// ═══════════════════════════════════════════════════════════════
-// ATTACHMENT UPLOAD (Copilot file attachments → documents)
-// ═══════════════════════════════════════════════════════════════
+// --- Attachment Upload Copilot File Attachments → Documents ---
 
 const copilotUpload = multer({
   storage: multer.memoryStorage(),
@@ -566,9 +558,7 @@ router.post(
   }
 );
 
-// ═══════════════════════════════════════════════════════════════
-// SESSION MANAGEMENT
-// ═══════════════════════════════════════════════════════════════
+// --- Session Management ---
 
 /**
  * GET /api/copilot/sessions - List user's copilot sessions

@@ -16,9 +16,6 @@ import { EXTRACTION_SYSTEM_PROMPT, buildExtractionPrompt } from '../ai/prompts/e
 import { buildTalentObject, talentObjectToText } from '../ai/talent-object';
 
 import { logger } from '../../utils';
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export interface ExtractedSkill {
   name: string;
@@ -73,9 +70,7 @@ export interface ExtractionResult {
   error?: string;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// EXTRACTION FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Extraction Functions ---
 
 /**
  * Extract metadata from a document using gpt-5-mini vision
@@ -225,9 +220,7 @@ export async function detectDocumentType(
   };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Helper Functions ---
 
 function normalizeDocumentType(type?: string): DocumentType {
   if (!type) return DOCUMENT_TYPES.OTHER;

@@ -395,9 +395,6 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
         c.cover_image_url,
         c.type as community_type,
         c.visibility,
-        c.is_paid,
-        c.monthly_price,
-        c.currency,
         (SELECT COUNT(*) FROM community_members WHERE community_id = c.id AND status = 'ACTIVE') as members_count,
         COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name,
         t.avatar_url as invited_by_avatar,
@@ -471,7 +468,7 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
 
     // Verify invitation belongs to user and is pending
     const invitation = await pool.query(`
-      SELECT ci.*, c.name as community_name, c.is_paid, c.monthly_price, c.currency
+      SELECT ci.*, c.name as community_name
       FROM community_invitations ci
       JOIN communities c ON ci.community_id = c.id
       WHERE ci.id = $1 
@@ -492,19 +489,6 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
         UPDATE community_invitations SET status = 'EXPIRED', updated_at = NOW() WHERE id = $1
       `, [invitationId]);
       return res.status(400).json({ error: req.t('communities:invitationExpired') });
-    }
-
-    // If community is paid, redirect to payment flow
-    if (inv.is_paid && inv.monthly_price > 0) {
-      return res.json({
-        requires_payment: true,
-        community_id: inv.community_id,
-        community_name: inv.community_name,
-        monthly_price: inv.monthly_price,
-        currency: inv.currency,
-        invitation_id: invitationId,
-        message: req.t('communities:requiresPayment'),
-      });
     }
 
     // Check if already a member
@@ -600,9 +584,6 @@ router.get('/token/:token', async (req: Request, res: Response) => {
         c.name as community_name,
         c.description as community_description,
         c.cover_image_url,
-        c.is_paid,
-        c.monthly_price,
-        c.currency,
         COALESCE(t.first_name || ' ' || t.last_name, t.email) as invited_by_name
       FROM community_invitations ci
       JOIN communities c ON ci.community_id = c.id
@@ -638,9 +619,6 @@ router.get('/token/:token', async (req: Request, res: Response) => {
         invited_by_name: inv.invited_by_name,
         message: inv.message,
         role: inv.role,
-        is_paid: inv.is_paid,
-        monthly_price: inv.monthly_price,
-        currency: inv.currency,
         expires_at: inv.expires_at,
       },
     });

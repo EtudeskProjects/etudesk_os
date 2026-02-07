@@ -19,9 +19,7 @@ export interface ApplicationAnswer {
   answer: string;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// CONSTANTS / ENUMS
-// ═══════════════════════════════════════════════════════════════
+// --- Constants / Enums ---
 
 export const SKILL_TYPES = {
   KNOWLEDGE: "KNOWLEDGE",
@@ -213,7 +211,6 @@ export const WORK_RHYTHM = {
 export type WorkRhythm = typeof WORK_RHYTHM[keyof typeof WORK_RHYTHM];
 
 
-
 export const COMPENSATION_FREQUENCY = {
   HOURLY: "HOURLY",
   MONTHLY: "MONTHLY",
@@ -356,9 +353,7 @@ export const COMMUNITY_STATUS = {
 } as const;
 export type CommunityStatus = typeof COMMUNITY_STATUS[keyof typeof COMMUNITY_STATUS];
 
-// ═══════════════════════════════════════════════════════════════
-// CORE INTERFACES
-// ═══════════════════════════════════════════════════════════════
+// --- Core Interfaces ---
 
 export interface Talent {
   id: UUID;
@@ -434,9 +429,7 @@ export interface Community {
   // Sectors
   sectors?: Sector[]; // Max 5
 
-  // Visibility (replaces access_type)
   visibility?: Visibility;
-  // Legacy access_type for backward compatibility
   access_type?: AccessType;
 
   // Location
@@ -524,9 +517,7 @@ export interface Opportunity {
   deleted_at?: ISOTimestamp; // Soft delete
 }
 
-// ═══════════════════════════════════════════════════════════════
-// RELATION INTERFACES
-// ═══════════════════════════════════════════════════════════════
+// --- Relation Interfaces ---
 
 export interface TalentSkill {
   id: UUID;

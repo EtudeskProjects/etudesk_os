@@ -552,7 +552,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                 >
                     {/* Backdrop */}
                     <TouchableOpacity
-                        style={styles.modalBackdrop}
+                        style={[styles.modalBackdrop, { backgroundColor: 'rgba(0, 0, 0, 0.3)' }]}
                         activeOpacity={1}
                         onPress={() => {
                             Keyboard.dismiss();
@@ -561,7 +561,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                     />
 
                     {/* Input area at bottom */}
-                    <View style={[styles.modalInputContainer, { backgroundColor: colors.surface }]}>
+                    <View style={[styles.modalInputContainer, { backgroundColor: colors.surface, borderTopColor: withOpacity(colors.textPrimary, OPACITY[8]) }]}>
                         {/* Reply indicator with message preview */}
                         {replyingTo && (
                             <View style={[styles.replyIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
@@ -710,14 +710,14 @@ const styles = StyleSheet.create({
     },
     modalBackdrop: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        backgroundColor: 'transparent',
     },
     modalInputContainer: {
         paddingHorizontal: SPACING.md,
         paddingTop: SPACING.sm,
         paddingBottom: SPACING.sm,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(0,0,0,0.08)',
+        borderTopColor: 'transparent',
     },
     modalInputPill: {
         flexDirection: 'row',

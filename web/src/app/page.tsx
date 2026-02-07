@@ -1645,10 +1645,7 @@ export default function Home() {
           }
         }
 
-        /* ═══════════════════════════════════════════════════════════════
-           DARK MODE OVERRIDES
-           Fix contrast issues for sections that use inverted colors
-           ═══════════════════════════════════════════════════════════════ */
+        /* --- Dark Mode Overrides --- */
 
         [data-theme="dark"] .copilot-section {
           background: var(--surface);

@@ -3,9 +3,7 @@
  * OpenAI Agents SDK + GPT-4.1 + SSE Streaming
  */
 
-// ═══════════════════════════════════════════════════════════════
-// CONTEXT TYPES
-// ═══════════════════════════════════════════════════════════════
+// --- Context Types ---
 
 import { TalentContext as BaseTalentContext } from './context';
 
@@ -28,9 +26,7 @@ export interface OrgContext {
   language?: 'fr' | 'en';
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MESSAGE SEGMENTS (ordered text/tool blocks for inline rendering)
-// ═══════════════════════════════════════════════════════════════
+// --- Message Segments Ordered Text/Tool Blocks For Inline Rendering ---
 
 export interface ToolSegmentData {
   callId: string;
@@ -49,9 +45,7 @@ export interface MessageSegment {
   tool?: ToolSegmentData;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SSE EVENT TYPES
-// ═══════════════════════════════════════════════════════════════
+// --- Sse Event Types ---
 
 export interface SSETextDeltaEvent {
   type: 'text_delta';
@@ -104,9 +98,7 @@ export type SSEEvent =
   | SSEErrorEvent
   | SSELimitReachedEvent;
 
-// ═══════════════════════════════════════════════════════════════
-// TOOL CONTEXT (passed to tool execute functions)
-// ═══════════════════════════════════════════════════════════════
+// --- Tool Context Passed To Tool Execute Functions ---
 
 export interface ToolContext {
   talentId: string;

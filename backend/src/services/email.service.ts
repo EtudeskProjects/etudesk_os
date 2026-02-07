@@ -15,9 +15,6 @@ import i18next from 'i18next';
 
 import { logger } from '../utils';
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export type EmailLanguage = 'fr' | 'en';
 export type EmailProvider = 'smtp' | 'resend';
@@ -30,9 +27,7 @@ export interface SendEmailOptions {
   from?: string;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// CONFIGURATION
-// ═══════════════════════════════════════════════════════════════
+// --- Configuration ---
 
 // Determine which provider to use
 const EMAIL_PROVIDER: EmailProvider = (process.env.EMAIL_PROVIDER as EmailProvider) || 'smtp';
@@ -56,13 +51,9 @@ const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_
 // Log which provider is active
 logger.info(`📧 Email provider: ${EMAIL_PROVIDER.toUpperCase()}${EMAIL_PROVIDER === 'smtp' ? ` (${SMTP_CONFIG.host}:${SMTP_CONFIG.port})` : ''}`);
 
-// ═══════════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════════
+// --- Helpers ---
 
-// ═══════════════════════════════════════════════════════════════
-// BRAND DESIGN SYSTEM - Luxe Africain
-// ═══════════════════════════════════════════════════════════════
+// --- Brand Design System - Luxe Africain ---
 
 // Primary - Marron Luxe (Rich Brown)
 const BRAND_PRIMARY = '#3B2416';
@@ -93,9 +84,7 @@ function getT(language: EmailLanguage = 'fr') {
   };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SEND EMAIL (Core function)
-// ═══════════════════════════════════════════════════════════════
+// --- Send Email Core Function ---
 
 /**
  * Send an email using the configured provider
@@ -148,9 +137,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// EMAIL TEMPLATES
-// ═══════════════════════════════════════════════════════════════
+// --- Email Templates ---
 
 export const EmailTemplates = {
   /**
@@ -329,9 +316,7 @@ ${t('emails:welcome.copyright', { year })}
   },
 };
 
-// ═══════════════════════════════════════════════════════════════
-// EMAIL FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Email Functions ---
 
 /**
  * Send OTP login email
@@ -727,9 +712,7 @@ export async function sendOpportunityInviteEmail(
   return sendEmail({ to: email, ...template });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// HEALTH CHECK
-// ═══════════════════════════════════════════════════════════════
+// --- Health Check ---
 
 /**
  * Verify email connection (health check)

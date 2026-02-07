@@ -26,9 +26,6 @@ import {
 import { OPPORTUNITY_GEN_SYSTEM_PROMPT, buildOpportunityGenPrompt } from './ai/prompts/opportunity-gen.prompt';
 
 import { logger } from '../utils';
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export interface GenerationInput {
   title: string;
@@ -79,9 +76,7 @@ interface OrganizationContext {
   culture_summary?: string;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// JSON Schema for structured output
-// ═══════════════════════════════════════════════════════════════
+// --- Json Schema For Structured Output ---
 
 const OPPORTUNITY_SCHEMA = {
   type: 'object',
@@ -172,9 +167,7 @@ const OPPORTUNITY_SCHEMA = {
   ],
 };
 
-// ═══════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Helper Functions ---
 
 async function getOrganizationContext(organizationId: string): Promise<OrganizationContext | null> {
   try {
@@ -198,9 +191,7 @@ async function getOrganizationContext(organizationId: string): Promise<Organizat
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MAIN SERVICE FUNCTION
-// ═══════════════════════════════════════════════════════════════
+// --- Main Service Function ---
 
 export async function generateOpportunitySuggestion(
   input: GenerationInput
@@ -297,9 +288,7 @@ export async function generateOpportunitySuggestion(
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// VALIDATION HELPER
-// ═══════════════════════════════════════════════════════════════
+// --- Validation Helper ---
 
 export function canGenerate(title?: string, type?: string): boolean {
   return !!(

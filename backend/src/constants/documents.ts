@@ -3,9 +3,7 @@
  * Types, limits, and configurations for talent documents
  */
 
-// ═══════════════════════════════════════════════════════════════
-// DOCUMENT TYPES
-// ═══════════════════════════════════════════════════════════════
+// --- Document Types ---
 
 export const DOCUMENT_TYPES = {
   // Professional documents
@@ -78,9 +76,7 @@ export const DOCUMENT_TYPE_CATEGORIES: Record<DocumentType, DocumentCategory> = 
   OTHER: 'OTHER',
 };
 
-// ═══════════════════════════════════════════════════════════════
-// FILE LIMITS AND CONSTRAINTS
-// ═══════════════════════════════════════════════════════════════
+// --- File Limits And Constraints ---
 
 export const DOCUMENT_LIMITS = {
   // Maximum number of documents per talent
@@ -111,9 +107,7 @@ export type AllowedMimeType = (typeof ALLOWED_MIME_TYPES)[number];
 // Allowed file extensions
 export const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'] as const;
 
-// ═══════════════════════════════════════════════════════════════
-// DOCUMENT STATUS
-// ═══════════════════════════════════════════════════════════════
+// --- Document Status ---
 
 export const DOCUMENT_STATUS = {
   PENDING: 'PENDING', // Uploaded, awaiting processing
@@ -126,9 +120,7 @@ export const DOCUMENT_STATUS = {
 
 export type DocumentStatus = (typeof DOCUMENT_STATUS)[keyof typeof DOCUMENT_STATUS];
 
-// ═══════════════════════════════════════════════════════════════
-// EXTRACTION FIELDS
-// ═══════════════════════════════════════════════════════════════
+// --- Extraction Fields ---
 
 // Fields that can be extracted from documents
 export const EXTRACTABLE_FIELDS = {
@@ -154,9 +146,7 @@ export const EXTRACTABLE_FIELDS = {
   DOCUMENT_NUMBER: 'document_number',
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
-// STORAGE PATHS
-// ═══════════════════════════════════════════════════════════════
+// --- Storage Paths ---
 
 export const DOCUMENT_STORAGE = {
   // Base path for document storage
@@ -166,9 +156,7 @@ export const DOCUMENT_STORAGE = {
     `documents/${talentId}/${documentId}/${filename}`,
 } as const;
 
-// ═══════════════════════════════════════════════════════════════
-// VALIDATION HELPERS
-// ═══════════════════════════════════════════════════════════════
+// --- Validation Helpers ---
 
 export const isValidDocumentType = (type: string): type is DocumentType => {
   return Object.values(DOCUMENT_TYPES).includes(type as DocumentType);

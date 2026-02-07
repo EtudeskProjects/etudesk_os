@@ -6,11 +6,6 @@ export type CommunityNotificationType =
     | 'NEW_ACTIVITY'
     | 'EVENT_REMINDER_1D'
     | 'EVENT_REMINDER_1H'
-    | 'SUBSCRIPTION_EXPIRING'
-    | 'SUBSCRIPTION_EXPIRED'
-    | 'PAYMENT_SUCCESS'
-    | 'PAYMENT_FAILED'
-    | 'TRIAL_ENDING'
     | 'MEMBERSHIP_APPROVED'
     | 'MEMBERSHIP_REJECTED';
 

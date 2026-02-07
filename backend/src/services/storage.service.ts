@@ -7,16 +7,12 @@
 import fs from 'fs';
 import path from 'path';
 
-// ═══════════════════════════════════════════════════════════════
-// CONFIGURATION
-// ═══════════════════════════════════════════════════════════════
+// --- Configuration ---
 
 const LOCAL_STORAGE_PATH = process.env.LOCAL_STORAGE_PATH || './uploads';
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
-// ═══════════════════════════════════════════════════════════════
-// LOCAL STORAGE FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Local Storage Functions ---
 
 /**
  * Ensure directory exists

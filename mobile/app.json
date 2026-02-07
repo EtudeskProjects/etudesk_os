@@ -22,7 +22,10 @@
         "foregroundImage": "./assets/etudesk_squared_icon.png",
         "backgroundColor": "#2F4ABF"
       },
-      "package": "com.etudesk.app"
+      "package": "com.etudesk.app",
+      "navigationBarColor": "#FFFFFF",
+      "navigationBarStyle": "dark",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "plugins": [
       "expo-router",

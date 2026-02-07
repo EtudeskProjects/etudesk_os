@@ -8,9 +8,7 @@ import {
   VISIBILITY_LABELS,
 } from '../types/models';
 
-// ═══════════════════════════════════════════════════════════════
-// OPTIONS FORMATÉES POUR LES FORMULAIRES
-// ═══════════════════════════════════════════════════════════════
+// --- Options FormatéEs Pour Les Formulaires ---
 
 export const COMMUNITY_TYPE_DATA: Array<{ id: CommunityType; label: string; description: string }> = [
   { id: 'HYBRID', label: COMMUNITY_TYPE_LABELS.HYBRID, description: 'Mix événements en ligne et physiques' },
@@ -22,9 +20,7 @@ export const VISIBILITY_DATA: Array<{ id: Visibility; label: string; description
   { id: 'PRIVATE', label: VISIBILITY_LABELS.PRIVATE, description: 'Seuls les membres peuvent voir le contenu' },
 ];
 
-// ═══════════════════════════════════════════════════════════════
-// TAGS DE COMMUNAUTÉS (remplace les catégories)
-// ═══════════════════════════════════════════════════════════════
+// --- Tags De CommunautéS Remplace Les CatéGories ---
 
 export const COMMUNITY_TAGS = {
   PROFESSIONAL: 'PROFESSIONAL',
@@ -56,9 +52,7 @@ export const COMMUNITY_TAG_DATA: Array<{ id: CommunityTag; label: string }> = [
 
 export const MAX_COMMUNITY_TAGS = 3;
 
-// ═══════════════════════════════════════════════════════════════
-// QUESTIONS D'ADHÉSION PRÉDÉFINIES
-// ═══════════════════════════════════════════════════════════════
+// --- Questions D'AdhéSion PréDéFinies ---
 
 export const DEFAULT_MEMBERSHIP_QUESTIONS: Array<{ id: string; question: string }> = [
   { id: 'motivation', question: 'Pourquoi souhaitez-vous rejoindre cette communauté ?' },

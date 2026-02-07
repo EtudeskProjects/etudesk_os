@@ -23,7 +23,7 @@ import {
 } from '../../utils';
 import { rankApplications } from '../../services/matching.service';
 import { getApplicationRecommendation } from '../../services/recommendation.service';
-import * as pushService from '../../services/push-notification.service';
+import * as notificationService from '../../services/notification.service';
 
 const router = Router();
 
@@ -319,7 +319,7 @@ router.put('/:id/status', authMiddleware, validate(uuidParamSchema, 'params'), v
     `, [status, id]);
 
     if (oldStatus && oldStatus !== status) {
-      pushService.notifyApplicationStatusChanged(id, oldStatus, status)
+      notificationService.notifyApplicationStatusChanged(id, oldStatus, status)
         .catch(err => logger.error('Notification error:', err));
     }
 

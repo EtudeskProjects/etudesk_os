@@ -177,21 +177,7 @@ export default function InvitationsScreen() {
     setProcessingId(invitation.id);
     try {
       const response = await communityInvitationService.acceptInvitation(invitation.id);
-      if (response.data?.requires_payment) {
-        Alert.alert(
-          'Abonnement requis',
-          `Cette communaute necessite un abonnement de ${response.data.monthly_price} ${response.data.currency}/mois.`,
-          [
-            { text: 'Annuler', style: 'cancel' },
-            {
-              text: 'Continuer',
-              onPress: () => {
-                router.push(`/details/community/join/${response.data?.community_id}` as any);
-              },
-            },
-          ]
-        );
-      } else if (response.data?.success) {
+      if (response.data?.success) {
         Alert.alert(
           'Bienvenue !',
           response.data.message || `Vous avez rejoint la communaute !`,
@@ -532,14 +518,6 @@ export default function InvitationsScreen() {
                 </View>
               )}
 
-              {inv.is_paid && (
-                <View style={styles.detailRow}>
-                  <CreditCard size={14} color={colors.warning} strokeWidth={ICON.strokeWidth} />
-                  <Text style={[styles.detailText, { color: colors.warning }]}>
-                    {inv.monthly_price} {inv.currency}/mois
-                  </Text>
-                </View>
-              )}
             </View>
 
             <View style={styles.detailRow}>
@@ -571,7 +549,7 @@ export default function InvitationsScreen() {
                 <>
                   <Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
                   <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>
-                    {inv.is_paid ? 'Rejoindre (payant)' : 'Accepter'}
+                    Accepter
                   </Text>
                 </>
               )}

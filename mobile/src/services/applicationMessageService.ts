@@ -6,9 +6,6 @@
 import { api, ApiResponse } from './api';
 import { ApplicationMessage } from '../types/models';
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES
-// ═══════════════════════════════════════════════════════════════
 
 export interface MessageFilters {
   limit?: number;
@@ -28,9 +25,7 @@ export interface SendMessageData {
   datetime_type?: 'INTERVIEW_PROPOSAL' | 'MEETING_REQUEST' | 'AVAILABILITY';
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SERVICE CLASS
-// ═══════════════════════════════════════════════════════════════
+// --- Service Class ---
 
 class ApplicationMessageService {
   /**

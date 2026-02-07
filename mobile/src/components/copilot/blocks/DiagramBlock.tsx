@@ -7,7 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { FileCode } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 
 interface DiagramBlockProps {
   data: {
@@ -41,7 +41,7 @@ export const DiagramBlock: React.FC<DiagramBlockProps> = ({ data }) => {
 
       {/* Code Block */}
       <View style={[styles.codeContainer, { backgroundColor: colors.gray900, borderColor: colors.borderColor }]}>
-        <View style={[styles.codeHeader, { backgroundColor: colors.gray800 }]}>
+        <View style={[styles.codeHeader, { backgroundColor: colors.gray800, borderBottomColor: withOpacity(colors.gray100, OPACITY[10]) }]}>
           <Text style={[styles.codeLanguage, { color: colors.gray400 }]}>
             mermaid
           </Text>
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderBottomWidth: BORDER.width.thin,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: 'transparent',
   },
   codeLanguage: {
     fontFamily: 'Courier',

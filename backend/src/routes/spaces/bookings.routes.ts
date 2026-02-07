@@ -167,8 +167,8 @@ router.post('/:id/book', authMiddleware, async (req: AuthRequest, res: Response)
     );
 
     // Notify organization about new booking
-    const pushService = await import('../../services/push-notification.service');
-    pushService.notifyNewBooking(bookingId).catch(err => logger.error('Booking notification error:', err));
+    const { notifyNewBooking } = await import('../../services/notification.service');
+    notifyNewBooking(bookingId).catch(err => logger.error('Booking notification error:', err));
 
     res.status(201).json({ data: result.rows[0] });
   } catch (error) {
@@ -433,6 +433,10 @@ router.post('/bookings/:id/confirm', authMiddleware, async (req: AuthRequest, re
     if (result.rows.length === 0) {
       return res.status(404).json({ error: req.t('spaces:bookingNotFoundOrProcessed') });
     }
+
+    // Schedule booking reminders (J-1 and H-1)
+    const { scheduleBookingReminders } = await import('../../services/notification.service');
+    scheduleBookingReminders(id).catch(err => logger.error('Booking reminder scheduling error:', err));
 
     res.json({ data: result.rows[0] });
   } catch (error) {

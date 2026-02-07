@@ -21,9 +21,7 @@ export function safeParseJson<T>(value: unknown, fallback: T): T {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// STRUCTURED LOGGER
-// ═══════════════════════════════════════════════════════════════
+// --- Structured Logger ---
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -219,9 +217,7 @@ export const logger = {
   },
 };
 
-// ═══════════════════════════════════════════════════════════════
-// UTILITY FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Utility Functions ---
 
 /**
  * Generate a request ID for tracing

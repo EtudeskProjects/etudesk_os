@@ -17,9 +17,6 @@ import {
 import { COMMUNITY_GEN_SYSTEM_PROMPT, buildCommunityGenPrompt } from './ai/prompts/community-gen.prompt';
 
 import { logger } from '../utils';
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export interface GenerationInput {
   name: string;
@@ -35,9 +32,6 @@ export interface GeneratedCommunity {
   sectors?: Sector[];
   rules?: string;
   visibility?: Visibility;
-  is_paid?: boolean;
-  monthly_price?: number;
-  currency?: string;
   application_questions?: string[];
 }
 
@@ -52,9 +46,7 @@ interface OrganizationContext {
   culture_summary?: string;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Helper Functions ---
 
 async function getOrganizationContext(organizationId: string): Promise<OrganizationContext | null> {
   try {
@@ -78,9 +70,7 @@ async function getOrganizationContext(organizationId: string): Promise<Organizat
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MAIN SERVICE FUNCTION
-// ═══════════════════════════════════════════════════════════════
+// --- Main Service Function ---
 
 export async function generateCommunitySuggestion(
   input: GenerationInput
@@ -151,16 +141,6 @@ export async function generateCommunitySuggestion(
         .slice(0, 5) as Sector[];
     }
 
-    // Set default currency if not provided
-    if (!generatedData.currency) {
-      generatedData.currency = 'XOF';
-    }
-
-    // Ensure monthly_price is set if is_paid is true
-    if (generatedData.is_paid && !generatedData.monthly_price) {
-      generatedData.monthly_price = 10000; // Default 10,000 XOF
-    }
-
     return { success: true, data: generatedData };
   } catch (error) {
     logger.error('Error generating community suggestion:', error);
@@ -171,9 +151,7 @@ export async function generateCommunitySuggestion(
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// VALIDATION HELPER
-// ═══════════════════════════════════════════════════════════════
+// --- Validation Helper ---
 
 export function canGenerate(name?: string): boolean {
   return !!(name && name.length >= 3);

@@ -66,7 +66,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
   return (
     <View style={[styles.container, { backgroundColor: colors.gray900, borderColor: colors.borderColor }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.gray800 }]}>
+      <View style={[styles.header, { backgroundColor: colors.gray800, borderBottomColor: withOpacity(colors.gray100, OPACITY[10]) }]}>
         <View style={styles.headerLeft}>
           <Code
             size={ICON.size.sm}
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderBottomWidth: BORDER.width.thin,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: 'transparent',
   },
   headerLeft: {
     flexDirection: 'row',

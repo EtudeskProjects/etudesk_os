@@ -42,7 +42,7 @@ interface ConfirmationBlockProps {
 
 type BlockState = 'idle' | 'loading' | 'success' | 'error';
 
-// ── Human-readable mappings ──────────────────────────────────
+// --- Human-Readable Mappings ---
 const CONTRACT_LABELS: Record<string, string> = {
   CDI: 'CDI', CDD: 'CDD', STAGE: 'Stage', FREELANCE: 'Freelance',
   ALTERNANCE: 'Alternance', INTERIM: 'Intérim', BENEVOLAT: 'Bénévolat',
@@ -73,8 +73,7 @@ function formatCurrency(amount: number): string {
   return amount.toString();
 }
 
-// ── Preview renderers ────────────────────────────────────────
-
+// --- Preview Renderers ---
 function OpportunityPreview({ data, colors }: { data: Record<string, any>; colors: any }) {
   const contract = CONTRACT_LABELS[data.contract_type] || data.contract_type;
   const rhythm = RHYTHM_LABELS[data.work_rhythm] || null;
@@ -222,8 +221,7 @@ function SpacePreview({ data, colors }: { data: Record<string, any>; colors: any
   );
 }
 
-// ── Shared small components ──────────────────────────────────
-
+// --- Shared Small Components ---
 function Chip({ icon: Icon, label, colors }: { icon: any; label: string; colors: any }) {
   return (
     <View style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
@@ -242,8 +240,7 @@ function DetailRow({ icon: Icon, text, colors }: { icon: any; text: string; colo
   );
 }
 
-// ── Determine which preview to render ────────────────────────
-
+// --- Determine Which Preview To Render ---
 function renderPreview(action: string, data: Record<string, any> | undefined, colors: any) {
   if (!data) return null;
 
@@ -259,8 +256,7 @@ function renderPreview(action: string, data: Record<string, any> | undefined, co
   }
 }
 
-// ── Main component ───────────────────────────────────────────
-
+// --- Main Component ---
 export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
   data,
   sessionId,
@@ -433,7 +429,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
 
-  // ── Preview styles ────────────────────────────────────────
+  // --- Preview Styles ---
   previewBody: {
     gap: SPACING.sm,
     marginBottom: SPACING.md,
@@ -514,7 +510,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  // ── Button styles ─────────────────────────────────────────
+  // --- Button Styles ---
   buttonsRow: {
     flexDirection: 'row',
     gap: SPACING.sm,

@@ -5,9 +5,6 @@
 
 import { pool } from '../database';
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export const COPILOT_MODES = {
   EXPLORE: 'explore',
@@ -39,9 +36,7 @@ export interface CopilotMessage {
   createdAt: string;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SESSION MANAGEMENT
-// ═══════════════════════════════════════════════════════════════
+// --- Session Management ---
 
 export async function createSession(
   talentId: string,

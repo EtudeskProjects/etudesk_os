@@ -17,6 +17,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, ICON, BORDER, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { Platform } from 'react-native';
 
 type TabName = 'home' | 'assistant' | 'explore' | 'settings';
 
@@ -45,7 +46,7 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingBottom: Math.max(insets.bottom, SPACING.xs) }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, borderTopColor: colors.borderColor, paddingBottom: Math.max(insets.bottom, SPACING.sm) }]}>
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.name;
@@ -89,7 +90,8 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    paddingTop: SPACING.xs,
+    borderTopWidth: BORDER.width.thin,
+    paddingTop: SPACING.sm,
   },
   tab: {
     flex: 1,

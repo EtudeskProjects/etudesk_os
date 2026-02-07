@@ -10,9 +10,6 @@ import {
   ApplicationAnswer,
 } from '../types/models';
 
-// ═══════════════════════════════════════════════════════════════
-// INTERFACES
-// ═══════════════════════════════════════════════════════════════
 
 export interface ApplicationFilters {
   status?: ApplicationStatus;
@@ -33,15 +30,10 @@ export interface UpdateApplicationData {
   rating?: number;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SERVICE CLASS
-// ═══════════════════════════════════════════════════════════════
+// --- Service Class ---
 
 class ApplicationService {
-  // ─────────────────────────────────────────────────────────────
   // TALENT ENDPOINTS
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Create a new application (for talents)
    */
@@ -84,10 +76,7 @@ class ApplicationService {
     return api.get(`/api/applications/check/${opportunityId}`);
   }
 
-  // ─────────────────────────────────────────────────────────────
   // ORGANIZATION ENDPOINTS
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Get all applications for an organization
    */
@@ -189,10 +178,7 @@ class ApplicationService {
     return queryString ? `${url}?${queryString}` : url;
   }
 
-  // ─────────────────────────────────────────────────────────────
   // MATCHING & RECOMMENDATIONS
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Get ranked applications for an opportunity (sorted by match score)
    * Applications are returned within each status group, sorted by relevance

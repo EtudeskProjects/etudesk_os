@@ -28,9 +28,6 @@ import {
   isValidExtension,
 } from '../../constants/documents';
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export interface TalentDocument {
   id: string;
@@ -90,9 +87,7 @@ export interface DocumentListOptions {
   offset?: number;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// VALIDATION
-// ═══════════════════════════════════════════════════════════════
+// --- Validation ---
 
 /**
  * Validate file before upload
@@ -162,9 +157,7 @@ export async function canUploadDocument(talentId: string): Promise<{
   };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// CRUD OPERATIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Crud Operations ---
 
 /**
  * Upload and create a new document

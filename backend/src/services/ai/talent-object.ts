@@ -7,9 +7,7 @@
 
 import { pool } from '../database';
 
-// ═══════════════════════════════════════════════════════════════
-// TYPE
-// ═══════════════════════════════════════════════════════════════
+// --- Type ---
 
 export interface TalentObject {
   id: string;
@@ -41,9 +39,7 @@ export interface DocumentMeta {
   uploaded_at: string;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// BUILDER
-// ═══════════════════════════════════════════════════════════════
+// --- Builder ---
 
 /**
  * Build a complete TalentObject from the database.
@@ -123,9 +119,7 @@ export async function buildTalentObject(talentId: string): Promise<TalentObject 
   };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SERIALIZERS — Convert TalentObject to text for AI prompts
-// ═══════════════════════════════════════════════════════════════
+// --- Serializers — Convert Talentobject To Text For Ai Prompts ---
 
 /**
  * Full text summary for AI agent context injection.

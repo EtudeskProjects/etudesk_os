@@ -6,9 +6,7 @@
 
 import { Visibility, VISIBILITY_LABELS } from '../types/models';
 
-// ═══════════════════════════════════════════════════════════════
-// SPACE TYPES
-// ═══════════════════════════════════════════════════════════════
+// --- Space Types ---
 
 export const SPACE_TYPES = {
   // Formation
@@ -114,9 +112,7 @@ export const SPACE_TYPE_CATEGORIES: Record<SpaceType, SpaceCategory> = {
   TERRASSE: 'EVENEMENT',
 };
 
-// ═══════════════════════════════════════════════════════════════
-// SPACE TYPE DATA FOR FORMS
-// ═══════════════════════════════════════════════════════════════
+// --- Space Type Data For Forms ---
 
 export const SPACE_TYPE_DATA: Array<{
   id: SpaceType;
@@ -148,9 +144,7 @@ export const SPACE_TYPE_DATA: Array<{
   { id: 'TERRASSE', label: SPACE_TYPE_LABELS.TERRASSE, icon: 'sunset', density: 2, category: 'EVENEMENT' },
 ];
 
-// ═══════════════════════════════════════════════════════════════
-// STATUS
-// ═══════════════════════════════════════════════════════════════
+// --- Status ---
 
 export const SPACE_STATUS = {
   ACTIVE: 'ACTIVE',
@@ -200,9 +194,7 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   REFUNDED: 'Rembourse',
 };
 
-// ═══════════════════════════════════════════════════════════════
-// PRICING
-// ═══════════════════════════════════════════════════════════════
+// --- Pricing ---
 
 export const PRICING_TYPES = {
   HOURLY: 'HOURLY',
@@ -227,9 +219,7 @@ export const PRICING_TYPE_UNITS: Record<PricingType, string> = {
   MONTHLY: '/mois',
 };
 
-// ═══════════════════════════════════════════════════════════════
-// EQUIPMENT & AMENITIES
-// ═══════════════════════════════════════════════════════════════
+// --- Equipment & Amenities ---
 
 export const SPACE_EQUIPMENT = [
   'VIDEOPROJECTOR',
@@ -325,9 +315,7 @@ export const SPACE_AMENITY_DATA: Array<{ id: SpaceAmenity; label: string; icon: 
   { id: 'SOUNDPROOF', label: SPACE_AMENITY_LABELS.SOUNDPROOF, icon: 'volume-x' },
 ];
 
-// ═══════════════════════════════════════════════════════════════
-// ACCESSIBILITY
-// ═══════════════════════════════════════════════════════════════
+// --- Accessibility ---
 
 export const ACCESSIBILITY_FEATURES = [
   'WHEELCHAIR_ACCESS',
@@ -364,9 +352,7 @@ export const ACCESSIBILITY_DATA: Array<{ id: AccessibilityFeature; label: string
   { id: 'BRAILLE_SIGNAGE', label: ACCESSIBILITY_FEATURE_LABELS.BRAILLE_SIGNAGE, icon: 'eye-off' },
 ];
 
-// ═══════════════════════════════════════════════════════════════
-// WEEKDAYS
-// ═══════════════════════════════════════════════════════════════
+// --- Weekdays ---
 
 export const WEEKDAYS = [
   { id: 0, label: 'Dimanche', short: 'Dim' },
@@ -378,18 +364,14 @@ export const WEEKDAYS = [
   { id: 6, label: 'Samedi', short: 'Sam' },
 ] as const;
 
-// ═══════════════════════════════════════════════════════════════
-// VISIBILITY
-// ═══════════════════════════════════════════════════════════════
+// --- Visibility ---
 
 export const SPACE_VISIBILITY_DATA: Array<{ id: Visibility; label: string; description: string }> = [
   { id: 'PUBLIC', label: VISIBILITY_LABELS.PUBLIC, description: 'Visible dans l\'exploration et la recherche' },
   { id: 'PRIVATE', label: VISIBILITY_LABELS.PRIVATE, description: 'Seuls les membres de l\'organisation peuvent voir' },
 ];
 
-// ═══════════════════════════════════════════════════════════════
-// UTILITY FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
+// --- Utility Functions ---
 
 /**
  * Calculate capacity based on surface and space type

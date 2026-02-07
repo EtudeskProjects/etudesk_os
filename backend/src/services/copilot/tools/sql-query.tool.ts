@@ -102,7 +102,7 @@ export function createSqlQueryTool(
 
       try {
         switch (intent) {
-          // ─── TALENT ────────────────────────────────────────────
+          // --- Talent ---
           case 'my_profile': {
             const res = await pool.query(
               `SELECT t.id, t.first_name, t.last_name, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio,
@@ -226,7 +226,7 @@ export function createSqlQueryTool(
             return { skills: res.rows };
           }
 
-          // ─── ORG ───────────────────────────────────────────────
+          // --- Org ---
           case 'org_members': {
             const orgId = params?.organizationId as string;
             if (!orgId) return { error: 'organizationId requis' };
@@ -344,7 +344,7 @@ export function createSqlQueryTool(
             return { invitations: res.rows };
           }
 
-          // ─── SEARCH ────────────────────────────────────────────
+          // --- Search ---
           case 'search_opportunities': {
             const { query: q, type, contractType, location, limit: lim } = params || {};
             let sql = `

@@ -8,9 +8,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG, STORAGE_KEYS } from '../constants/config';
 import i18n from '../i18n';
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export const COPILOT_MODES = {
   EXPLORE: 'explore',
@@ -20,10 +17,7 @@ export const COPILOT_MODES = {
 export type CopilotMode = (typeof COPILOT_MODES)[keyof typeof COPILOT_MODES];
 
 
-
-// ═══════════════════════════════════════════════════════════════
-// SEGMENT TYPES (mirrors backend MessageSegment)
-// ═══════════════════════════════════════════════════════════════
+// --- Segment Types Mirrors Backend Messagesegment ---
 
 export interface ToolSegmentData {
   callId: string;
@@ -97,9 +91,7 @@ export interface ChatResponse {
   context?: SessionContext;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SERVICE
-// ═══════════════════════════════════════════════════════════════
+// --- Service ---
 
 class CopilotService {
   async sendMessage(
@@ -157,10 +149,7 @@ class CopilotService {
   }
 
 
-  // ═══════════════════════════════════════════════════════════════
   // SSE STREAMING
-  // ═══════════════════════════════════════════════════════════════
-
   /**
    * Send a message with SSE streaming
    * Returns an AbortController to cancel the stream

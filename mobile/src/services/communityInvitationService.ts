@@ -6,9 +6,6 @@
 import { api, ApiResponse } from './api';
 import { Community } from '../types/models';
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' | 'CANCELLED';
 export type InvitationRole = 'ADMIN' | 'MEMBER';
@@ -38,9 +35,6 @@ export interface CommunityInvitation {
   cover_image_url?: string;
   community_type?: string;
   visibility?: string;
-  is_paid?: boolean;
-  monthly_price?: number;
-  currency?: string;
   members_count?: number;
   organization?: {
     id: string;
@@ -77,21 +71,13 @@ export interface AcceptInvitationResult {
   success: boolean;
   message: string;
   community_id?: string;
-  requires_payment?: boolean;
-  monthly_price?: number;
-  currency?: string;
   invitation_id?: string;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SERVICE
-// ═══════════════════════════════════════════════════════════════
+// --- Service ---
 
 class CommunityInvitationService {
-  // ─────────────────────────────────────────────────────────────
   // ADMIN METHODS (for community managers)
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Send invitations to join a community
    */
@@ -136,10 +122,7 @@ class CommunityInvitationService {
     return api.post(`/api/communities/${communityId}/invitations/${invitationId}/resend`, {});
   }
 
-  // ─────────────────────────────────────────────────────────────
   // USER METHODS (for invitees)
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Get invitations received by current user
    */
@@ -183,19 +166,13 @@ class CommunityInvitationService {
       invited_by_name: string;
       message?: string;
       role: InvitationRole;
-      is_paid: boolean;
-      monthly_price?: number;
-      currency?: string;
       expires_at: string;
     };
   }>> {
     return api.get(`/api/community-invitations/token/${token}`);
   }
 
-  // ─────────────────────────────────────────────────────────────
   // HELPER METHODS
-  // ─────────────────────────────────────────────────────────────
-
   /**
    * Get pending invitations count for badge display
    */

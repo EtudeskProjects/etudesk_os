@@ -133,10 +133,7 @@ class CommunityActivityService {
     return api.delete(`/api/activities/${activityId}/comments/${commentId}`);
   }
 
-  // ═══════════════════════════════════════════════════════════════
   // DRAFTS
-  // ═══════════════════════════════════════════════════════════════
-
   /**
    * Get user's drafts for a community
    */

@@ -108,17 +108,6 @@ export type {
 
 export { communityActivityService } from './communityActivityService';
 
-export { communitySubscriptionService } from './communitySubscriptionService';
-export type {
-  SubscriptionStatus,
-  PaymentStatus,
-  CommunitySubscription,
-  CommunityPayment,
-  CommunityInvoice,
-  SubscriptionCheckResult,
-  PaywallInfo
-} from './communitySubscriptionService';
-
 export { communityNotificationService } from './communityNotificationService';
 export type {
   CommunityNotificationType,

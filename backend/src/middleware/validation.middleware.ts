@@ -39,9 +39,7 @@ export const validate = (schema: ZodSchema, target: 'body' | 'params' | 'query' 
   };
 };
 
-// ═══════════════════════════════════════════════════════════════
-// APPLICATION SCHEMAS
-// ═══════════════════════════════════════════════════════════════
+// --- Application Schemas ---
 
 // Application answer schema
 const applicationAnswerSchema = z.object({
@@ -89,9 +87,7 @@ export const bulkUpdateStatusSchema = z.object({
   })
 });
 
-// ═══════════════════════════════════════════════════════════════
-// OPPORTUNITY SCHEMAS
-// ═══════════════════════════════════════════════════════════════
+// --- Opportunity Schemas ---
 
 // Opportunity location schema
 const opportunityLocationSchema = z.object({
@@ -166,9 +162,7 @@ export const updateOpportunitySchema = baseOpportunitySchema.partial().refine(
   { message: 'validation:opportunity.compensationRange', path: ['compensation_min'] }
 );
 
-// ═══════════════════════════════════════════════════════════════
-// UUID PARAM SCHEMA
-// ═══════════════════════════════════════════════════════════════
+// --- Uuid Param Schema ---
 
 export const uuidParamSchema = z.object({
   id: z.string().uuid('validation:common.invalidId')
@@ -178,9 +172,7 @@ export const opportunityIdParamSchema = z.object({
   opportunityId: z.string().uuid('validation:application.invalidOpportunityId')
 });
 
-// ═══════════════════════════════════════════════════════════════
-// AUTH SCHEMAS
-// ═══════════════════════════════════════════════════════════════
+// --- Auth Schemas ---
 
 export const requestOtpSchema = z.object({
   email: z.string()
@@ -202,9 +194,7 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1, 'validation:auth.refreshTokenRequired')
 });
 
-// ═══════════════════════════════════════════════════════════════
-// ONBOARDING SCHEMAS
-// ═══════════════════════════════════════════════════════════════
+// --- Onboarding Schemas ---
 
 const VALID_PROFILE_TAGS = [
   'STUDENT', 'YOUNG_GRADUATE', 'EXPERIENCED',
@@ -260,9 +250,7 @@ export const onboardingSchema = z.object({
   willingToRelocate: z.boolean().optional()
 });
 
-// ═══════════════════════════════════════════════════════════════
-// COMMUNITY SCHEMAS
-// ═══════════════════════════════════════════════════════════════
+// --- Community Schemas ---
 
 const COMMUNITY_TYPES = [
   'GENERAL', 'PROFESSIONAL', 'ALUMNI',
@@ -298,9 +286,7 @@ export const joinCommunitySchema = z.object({
   join_reason: z.string().max(1000, 'validation:community.joinReasonMaxLength').optional()
 });
 
-// ═══════════════════════════════════════════════════════════════
-// ORGANIZATION SCHEMAS
-// ═══════════════════════════════════════════════════════════════
+// --- Organization Schemas ---
 
 const ORGANIZATION_TYPES = [
   'COMPANY', 'STARTUP', 'NGO', 'SCHOOL',
@@ -326,9 +312,7 @@ export const createOrganizationSchema = z.object({
 
 export const updateOrganizationSchema = createOrganizationSchema.partial();
 
-// ═══════════════════════════════════════════════════════════════
-// KYC SCHEMAS
-// ═══════════════════════════════════════════════════════════════
+// --- Kyc Schemas ---
 
 const DOCUMENT_TYPES = [
   'NATIONAL_ID', 'PASSPORT', 'DRIVER_LICENSE', 'RESIDENCE_PERMIT'
@@ -342,9 +326,7 @@ export const kycSubmitSchema = z.object({
   back_image_url: z.string().optional()
 });
 
-// ═══════════════════════════════════════════════════════════════
-// TALENT SCHEMAS
-// ═══════════════════════════════════════════════════════════════
+// --- Talent Schemas ---
 
 export const updateTalentSchema = z.object({
   first_name: z.string().min(1).max(100).optional(),
@@ -361,18 +343,14 @@ export const updateTalentSchema = z.object({
   willing_to_relocate: z.boolean().optional()
 });
 
-// ═══════════════════════════════════════════════════════════════
-// PAGINATION SCHEMAS
-// ═══════════════════════════════════════════════════════════════
+// --- Pagination Schemas ---
 
 export const paginationQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   offset: z.coerce.number().int().min(0).default(0)
 });
 
-// ═══════════════════════════════════════════════════════════════
-// BOOKING / SPACE SCHEMAS
-// ═══════════════════════════════════════════════════════════════
+// --- Booking / Space Schemas ---
 
 export const createBookingSchema = z.object({
   space_id: z.string().uuid('validation:space.invalidSpaceId'),
@@ -383,9 +361,7 @@ export const createBookingSchema = z.object({
   attendees_count: z.number().int().min(1).optional()
 });
 
-// ═══════════════════════════════════════════════════════════════
-// INVITATION SCHEMAS
-// ═══════════════════════════════════════════════════════════════
+// --- Invitation Schemas ---
 
 export const communityInvitationSchema = z.object({
   email: z.string().email('validation:auth.invalidEmail').optional(),

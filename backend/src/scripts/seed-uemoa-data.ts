@@ -19,9 +19,7 @@ import {
   batchUpdateSpaceEmbeddings,
 } from '../services/embedding.service';
 
-// ═══════════════════════════════════════════════════════════════════
-// UEMOA DATA CONSTANTS
-// ═══════════════════════════════════════════════════════════════════
+// --- Uemoa Data Constants ---
 
 const UEMOA_CITIES = {
   CI: [
@@ -115,9 +113,7 @@ const SPACE_TYPES = [
   'PRIVATE_OFFICE', 'EVENT_SPACE', 'STUDIO',
 ];
 
-// ═══════════════════════════════════════════════════════════════════
-// IMAGE URLs — Contextually relevant Unsplash images per entity type
-// ═══════════════════════════════════════════════════════════════════
+// --- Image Urls — Contextually Relevant Unsplash Images Per Entity Type ---
 
 const AVATAR_MALE = [
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80',
@@ -189,9 +185,7 @@ const SPACE_COVERS = [
   'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800&h=400&fit=crop&q=80', // solar training
 ];
 
-// ═══════════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════
+// --- Helper Functions ---
 
 function randomPick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -226,9 +220,7 @@ function generateEmail(firstName: string, lastName: string, domain: string): str
   return `${slugify(firstName)}.${slugify(lastName)}@${domain}`.toLowerCase();
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// SEED FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════
+// --- Seed Functions ---
 
 async function seedTalents(count: number): Promise<string[]> {
   console.log(`\n📌 Seeding ${count} talents...`);
@@ -606,9 +598,7 @@ async function seedSpaces(count: number, orgIds: string[], talentIds: string[]):
   return spaceIds;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// MAIN
-// ═══════════════════════════════════════════════════════════════════
+// --- Main ---
 
 async function main() {
   console.log('═══════════════════════════════════════════════════════════');

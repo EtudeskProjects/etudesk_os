@@ -9,16 +9,11 @@ import { createRecommendationAgent } from './ai/agent-factory';
 import { buildRecommendationPrompt } from './ai/prompts/recommendation.prompt';
 
 import { logger } from '../utils';
-// ═══════════════════════════════════════════════════════════════
-// In-memory cache for recommendations
-// ═══════════════════════════════════════════════════════════════
+// --- In-Memory Cache For Recommendations ---
 
 const recommendationCache = new Map<string, { text: string; timestamp: number }>();
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
-// ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
 
 export interface ApplicationForRecommendation {
   id: string;
@@ -43,9 +38,7 @@ export interface ApplicationForRecommendation {
   matchCategory?: 'excellent' | 'good' | 'average' | 'low';
 }
 
-// ═══════════════════════════════════════════════════════════════
-// RECOMMENDATION GENERATION
-// ═══════════════════════════════════════════════════════════════
+// --- Recommendation Generation ---
 
 /**
  * Generate a 30-word recommendation for an application
