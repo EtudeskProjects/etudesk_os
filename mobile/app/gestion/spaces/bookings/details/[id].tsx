@@ -595,7 +595,7 @@ export default function BookingDetailsScreen() {
                 senderName={message.sender_type?.toUpperCase() === 'TALENT' ? (message.sender_name || talentName) : undefined}
                 createdAt={message.created_at}
                 proposedDatetime={message.proposed_datetime}
-                datetimeType={message.datetime_type}
+                datetimeType={message.datetime_type as any}
                 attachments={message.attachments}
               />
             ))

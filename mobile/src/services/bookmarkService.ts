@@ -117,6 +117,13 @@ class BookmarkService {
   }
 
   /**
+   * Check if a space is bookmarked
+   */
+  async isSpaceBookmarked(id: string): Promise<ApiResponse<{ isBookmarked: boolean }>> {
+    return api.get<{ isBookmarked: boolean }>(`/api/bookmarks/spaces/${id}/status`);
+  }
+
+  /**
    * Add a space to bookmarks
    */
   async addSpace(id: string): Promise<ApiResponse<BookmarkToggleResponse>> {

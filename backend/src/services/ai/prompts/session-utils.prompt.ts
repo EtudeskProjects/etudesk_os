@@ -39,51 +39,60 @@ ${contextSummary}
 
 /**
  * Build a prompt for intent prediction based on conversation history
- * Used with gpt-4.1-nano for fast, contextual suggestions
+ * Used with gpt-5-nano for fast, contextual suggestions
  */
 export function buildIntentSuggestionsPrompt(
   mode: string,
   conversationHistory: Array<{ role: string; content: string }>,
   talentContext?: { firstName?: string; goals?: string[]; sectors?: string[] }
 ): string {
-  const modeLabel = mode === 'study' ? "d'étude" : "d'exploration";
-
-  // Format recent history (last 6 messages max)
-  const recentHistory = conversationHistory.slice(-6);
+  // Format recent history (last 4 messages max)
+  const recentHistory = conversationHistory.slice(-4);
   const historyText = recentHistory.length > 0
-    ? recentHistory.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content.slice(0, 150)}${m.content.length > 150 ? '...' : ''}`).join('\n')
-    : 'Aucun historique';
+    ? recentHistory.map(m => `${m.role === 'user' ? 'Utilisateur' : 'Assistant'}: ${m.content.slice(0, 120)}`).join('\n')
+    : '';
 
   // Format talent context if available
   const contextParts: string[] = [];
-  if (talentContext?.firstName) contextParts.push(`Prénom: ${talentContext.firstName}`);
+  if (talentContext?.firstName) contextParts.push(`Prenom: ${talentContext.firstName}`);
   if (talentContext?.goals?.length) contextParts.push(`Objectifs: ${talentContext.goals.slice(0, 3).join(', ')}`);
   if (talentContext?.sectors?.length) contextParts.push(`Secteurs: ${talentContext.sectors.slice(0, 3).join(', ')}`);
-  const talentInfo = contextParts.length > 0 ? contextParts.join('\n') : '';
+  const talentInfo = contextParts.length > 0 ? contextParts.join(' | ') : '';
 
-  return `<role>Éminence grise pour l'anticipation d'intentions ${modeLabel}</role>
+  // Platform capabilities per mode
+  const capabilities = mode === 'study'
+    ? `- Expliquer un sujet ou concept en detail
+- Creer un quiz ou des flashcards sur un sujet
+- Creer un plan de revision personnalise
+- Resumer ou analyser un document uploade (CV, cours, memo)
+- Preparer un entretien (questions types, simulation)
+- Generer un CV PDF personnalise
+- Evaluer mes competences et identifier les lacunes
+- Rechercher des infos sur le web (tendances, salaires, metiers)`
+    : `- Chercher des opportunites qui matchent mon profil (emploi, stage, freelance)
+- Decouvrir des communautes par secteur ou interet
+- Trouver et reserver des espaces de coworking
+- Generer un CV PDF a partir de mon profil
+- Ajouter ou mettre a jour mes competences
+- Analyser mon profil et suggerer des ameliorations
+- Postuler a une offre ou rejoindre une communaute
+- Rechercher des organisations ou entreprises
+- Preparer un entretien pour une offre specifique`;
 
-<task>Anticipez avec sagacité les 4 prochaines orientations ou requêtes probables de l'utilisateur pour guider son ascension.</task>
+  return `Tu es un assistant qui predit les 4 prochaines questions qu'un utilisateur pourrait poser sur une plateforme de carriere et formation en Afrique.
 
-<user_profile>
-${talentInfo || 'Non disponible'}
-</user_profile>
+<capacites_plateforme>
+${capabilities}
+</capacites_plateforme>
+${talentInfo ? `\n<profil_utilisateur>\n${talentInfo}\n</profil_utilisateur>` : ''}
+${historyText ? `\n<derniers_messages>\n${historyText}\n</derniers_messages>` : ''}
 
-<recent_chat>
-${historyText}
-</recent_chat>
+Genere exactement 4 suggestions courtes (max 45 caracteres) que l'utilisateur taperait. Chaque suggestion doit etre une action concrete liee aux capacites de la plateforme.
+${historyText ? "Base-toi sur le contexte de la conversation pour proposer la suite logique." : "Propose des actions de decouverte variees et utiles."}
 
-<output_format>
-["suggestion d'instruction 1", "suggestion 2", "suggestion 3", "suggestion 4"]
-</output_format>
-
-<rules>
-1. Retourne UNIQUEMENT un JSON array de 4 strings.
-2. Chaque suggestion est une ORIENTATION ou une QUESTION de haute valeur (max 50 car.) que l'utilisateur formulerait.
-3. Sois très spécifique au contexte du dernier message si présent.
-4. ${mode === 'study' ? 'Ex: "Approfondir cette notion", "Évaluer mes acquis", "Élucider ce concept"' : 'Ex: "Explorer les opportunités d\'élite", "Solliciter cette institution", "Bonifier mon profil"'}
-5. Aucun préambule, uniquement le tableau JSON.
-6. Langage élégant et français.
-</rules>`;
+Retourne UNIQUEMENT un JSON array de 4 strings, rien d'autre.
+${mode === 'study'
+    ? 'Exemple: ["Prepare-moi pour un entretien", "Evalue mes competences en Python", "Cree un quiz sur le marketing digital", "Resume mon CV et conseille-moi"]'
+    : 'Exemple: ["Offres de stage en marketing a Abidjan", "Genere mon CV en PDF", "Communautes tech dans mon secteur", "Ajoute React a mes competences"]'}`;
 }
 

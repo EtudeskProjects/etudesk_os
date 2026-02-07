@@ -174,11 +174,12 @@ class CommunityService {
     pagination?: { total: number; limit: number; offset: number; hasMore: boolean };
   }>> {
     const res = await api.get<{ data: any[]; pagination?: any }>('/api/communities/memberships/me', filters);
-    const list = Array.isArray(res?.data) ? res.data : (res as any)?.memberships ?? [];
+    const resData = res?.data as any;
+    const list = Array.isArray(resData) ? resData : resData?.memberships ?? (res as any)?.memberships ?? [];
     return {
       data: {
         memberships: list,
-        ...(res?.pagination && { pagination: res.pagination }),
+        ...(resData?.pagination && { pagination: resData.pagination }),
       },
     } as any;
   }
@@ -226,7 +227,7 @@ class CommunityService {
    * Increment view count for a community
    */
   async incrementViews(id: string): Promise<ApiResponse<{ views_count: number }>> {
-    return api.post<{ views_count: number }>(`/api/communities/${id}/views`);
+    return api.post<{ views_count: number }>(`/api/communities/${id}/views`, {});
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -238,7 +239,7 @@ class CommunityService {
    */
   async getCommunityMembers(
     communityId: string,
-    filters?: { status?: MemberStatus; limit?: number; offset?: number }
+    filters?: { status?: MemberStatus; limit?: number; offset?: number; search?: string }
   ): Promise<ApiResponse<{ data: CommunityMember[]; count: number; statusCounts: Record<string, number> }>> {
     return api.get(`/api/communities/${communityId}/members`, filters);
   }

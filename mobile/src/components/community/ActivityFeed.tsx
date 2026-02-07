@@ -204,13 +204,13 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         const baseUrl = `/details/community/${activity.community_id}`;
         switch (activity.type) {
             case 'POST':
-                router.push(`${baseUrl}/create-post?activityId=${activity.id}`);
+                router.push(`${baseUrl}/create-post?activityId=${activity.id}` as any);
                 break;
             case 'EVENT':
-                router.push(`${baseUrl}/create-event?activityId=${activity.id}`);
+                router.push(`${baseUrl}/create-event?activityId=${activity.id}` as any);
                 break;
             case 'POLL':
-                router.push(`${baseUrl}/create-poll?activityId=${activity.id}`);
+                router.push(`${baseUrl}/create-poll?activityId=${activity.id}` as any);
                 break;
         }
     }, [router]);

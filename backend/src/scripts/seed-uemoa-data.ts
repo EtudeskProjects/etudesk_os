@@ -116,6 +116,80 @@ const SPACE_TYPES = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════
+// IMAGE URLs — Contextually relevant Unsplash images per entity type
+// ═══════════════════════════════════════════════════════════════════
+
+const AVATAR_MALE = [
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1463453091185-61582044d556?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&q=80',
+];
+
+const AVATAR_FEMALE = [
+  'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&h=400&fit=crop&q=80',
+];
+
+const ORG_COVERS = [
+  'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=400&fit=crop&q=80', // modern office
+  'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&h=400&fit=crop&q=80', // coworking
+  'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=400&fit=crop&q=80', // skyscraper
+  'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=400&fit=crop&q=80', // construction
+  'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&h=400&fit=crop&q=80',   // startup office
+  'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800&h=400&fit=crop&q=80', // solar panels
+  'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop&q=80', // team laptops
+  'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&h=400&fit=crop&q=80', // people meeting
+];
+
+const OPPORTUNITY_COVERS = [
+  'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop&q=80', // coding laptop
+  'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800&h=400&fit=crop&q=80',   // code editor
+  'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=400&fit=crop&q=80', // code screen
+  'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=400&fit=crop&q=80', // laptop code
+  'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=400&fit=crop&q=80', // team working
+  'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop&q=80', // analytics
+  'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop&q=80',   // dashboard
+  'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop&q=80', // team laptops
+  'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=400&fit=crop&q=80', // construction
+  'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=400&fit=crop&q=80',   // design work
+  'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=400&fit=crop&q=80',   // whiteboard
+  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=400&fit=crop&q=80', // cloud/servers
+];
+
+const COMMUNITY_COVERS = [
+  'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&h=400&fit=crop&q=80', // group meeting
+  'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&h=400&fit=crop&q=80', // discussion
+  'https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&h=400&fit=crop&q=80', // networking
+  'https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&h=400&fit=crop&q=80', // women business
+  'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&h=400&fit=crop&q=80',   // startup
+  'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop&q=80', // coding
+  'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800&h=400&fit=crop&q=80', // solar
+  'https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=800&h=400&fit=crop&q=80', // agriculture
+];
+
+const SPACE_COVERS = [
+  'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&h=400&fit=crop&q=80', // coworking
+  'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&h=400&fit=crop&q=80', // conference
+  'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&h=400&fit=crop&q=80', // classroom
+  'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=400&fit=crop&q=80', // office
+  'https://images.unsplash.com/photo-1462826303086-329426d1aef5?w=800&h=400&fit=crop&q=80', // meeting room
+  'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop&q=80', // event space
+  'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop&q=80', // open workspace
+  'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800&h=400&fit=crop&q=80', // solar training
+];
+
+// ═══════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════
 
@@ -174,6 +248,7 @@ async function seedTalents(count: number): Promise<string[]> {
     const skills = randomPicks(TECH_SKILLS, 3, 8);
     const softSkills = randomPicks(SOFT_SKILLS, 2, 4);
     const sectors = randomPicks(SECTORS, 1, 3);
+    const avatarUrl = randomPick(isMale ? AVATAR_MALE : AVATAR_FEMALE);
 
     const bios = [
       `Développeur passionné avec ${Math.floor(Math.random() * 8 + 2)} ans d'expérience en ${skills.slice(0, 3).join(', ')}. Basé à ${location.city}, ${country}.`,
@@ -184,8 +259,8 @@ async function seedTalents(count: number): Promise<string[]> {
 
     try {
       await pool.query(
-        `INSERT INTO talents (id, slug, first_name, last_name, email, phone, bio, city, region, country, remote_ready, willing_to_relocate, sectors, profile_tags, goals, is_visible)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        `INSERT INTO talents (id, slug, first_name, last_name, email, phone, bio, city, region, country, remote_ready, willing_to_relocate, sectors, profile_tags, goals, is_visible, avatar_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
          ON CONFLICT (email) DO NOTHING`,
         [
           id, slug, firstName, lastName, email, phone,
@@ -194,7 +269,7 @@ async function seedTalents(count: number): Promise<string[]> {
           Math.random() > 0.3, Math.random() > 0.6,
           sectors, skills.concat(softSkills),
           ['Trouver un emploi', 'Développer mes compétences', 'Réseauter'],
-          true,
+          true, avatarUrl,
         ]
       );
 
@@ -266,8 +341,8 @@ async function seedOrganizations(count: number, talentIds: string[]): Promise<st
 
     try {
       await pool.query(
-        `INSERT INTO organizations (id, name, slug, types, sectors, description, headquarters_city, headquarters_region, headquarters_country, verification_status, is_visible, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        `INSERT INTO organizations (id, name, slug, types, sectors, description, headquarters_city, headquarters_region, headquarters_country, verification_status, is_visible, created_by, logo_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
          ON CONFLICT (slug) DO NOTHING`,
         [
           id, name, slug,
@@ -275,7 +350,7 @@ async function seedOrganizations(count: number, talentIds: string[]): Promise<st
           sectors, randomPick(descriptions),
           location.city, location.region, country,
           randomPick(['CLAIMED', 'VERIFIED', 'OFFICIAL']),
-          true, createdBy,
+          true, createdBy, randomPick(ORG_COVERS),
         ]
       );
 
@@ -356,8 +431,8 @@ async function seedOpportunities(count: number, orgIds: string[], talentIds: str
 
     try {
       await pool.query(
-        `INSERT INTO opportunities (id, title, slug, type, contract_type, summary, requirements, sectors, location_type, locations, compensation_min, compensation_max, currency, compensation_frequency, status, deadline, visibility)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        `INSERT INTO opportunities (id, title, slug, type, contract_type, summary, requirements, sectors, location_type, locations, compensation_min, compensation_max, currency, compensation_frequency, status, deadline, visibility, cover_image_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
          ON CONFLICT (slug) DO NOTHING`,
         [
           id, title, slug, type, contractType,
@@ -367,7 +442,7 @@ async function seedOpportunities(count: number, orgIds: string[], talentIds: str
           salaryMin, salaryMax, 'XOF', 'MONTHLY',
           'OPEN',
           new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000), // Random deadline in next 30 days
-          'PUBLIC',
+          'PUBLIC', randomPick(OPPORTUNITY_COVERS),
         ]
       );
 
@@ -433,15 +508,15 @@ async function seedCommunities(count: number, orgIds: string[], talentIds: strin
 
     try {
       await pool.query(
-        `INSERT INTO communities (id, name, slug, type, description, city, region, country, access_type, is_paid, monthly_price, currency, status, created_by, organization_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        `INSERT INTO communities (id, name, slug, type, description, city, region, country, access_type, is_paid, monthly_price, currency, status, created_by, organization_id, cover_image_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
          ON CONFLICT (slug) DO NOTHING`,
         [
           id, name, slug, type, randomPick(descriptions),
           location.city, location.region, country,
           randomPick(['PUBLIC', 'PRIVATE', 'INVITE_ONLY']),
           isPaid, isPaid ? Math.floor(Math.random() * 10000 + 5000) : null, 'XOF',
-          'ACTIVE', createdBy, orgId,
+          'ACTIVE', createdBy, orgId, randomPick(COMMUNITY_COVERS),
         ]
       );
 
@@ -508,8 +583,8 @@ async function seedSpaces(count: number, orgIds: string[], talentIds: string[]):
 
     try {
       await pool.query(
-        `INSERT INTO spaces (id, name, slug, description, type, surface_m2, capacity, city, region, country, hourly_rate, daily_rate, equipment, amenities, organization_id, created_by, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        `INSERT INTO spaces (id, name, slug, description, type, surface_m2, capacity, city, region, country, hourly_rate, daily_rate, equipment, amenities, organization_id, created_by, status, cover_image_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
          ON CONFLICT (slug) DO NOTHING`,
         [
           id, name, slug, randomPick(descriptions), type,
@@ -517,7 +592,7 @@ async function seedSpaces(count: number, orgIds: string[], talentIds: string[]):
           hourlyRate, hourlyRate * 8,
           ['WiFi', 'Vidéoprojecteur', 'Tableau blanc', 'Climatisation'],
           ['Café', 'Thé', 'Parking', 'Accueil'],
-          orgId, createdBy, 'ACTIVE',
+          orgId, createdBy, 'ACTIVE', randomPick(SPACE_COVERS),
         ]
       );
 

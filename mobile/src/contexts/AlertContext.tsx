@@ -127,7 +127,7 @@ export function AlertProvider({ children }: AlertProviderProps) {
   }, []);
 
   const handleClose = useCallback(() => {
-    alertState.resolve?.();
+    alertState.resolve?.(undefined);
     hideAlert();
   }, [alertState.resolve, hideAlert]);
 

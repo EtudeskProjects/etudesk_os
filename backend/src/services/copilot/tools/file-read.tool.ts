@@ -2,10 +2,11 @@
  * File Read Tool — Agent Handoff pattern with document access
  * Factory function creates a FileReaderAgent with a read_document tool
  * that can access the talent's documents from storage (with IDOR protection)
- * Model: gpt-4.1-mini (cost-efficient for document analysis)
+ * Model: gpt-5-mini (cost-efficient for document analysis)
  */
 
 import { Agent, tool } from '@openai/agents';
+import { MODEL_T2 } from '../../ai/models';
 import { z } from 'zod';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
@@ -135,14 +136,14 @@ function createReadDocumentTool(talentId: string) {
 export function createFileReaderAgent(talentId: string): Agent {
   return new Agent({
     name: 'FileReaderAgent',
-    model: 'gpt-4.1-mini',
+    model: MODEL_T2,
     instructions: `# Role and Objective
 
 You are a document analysis specialist. Use the read_document tool to read the talent's uploaded documents and provide structured analysis in French.
 
 # Instructions
 
-- The documentId is provided in the handoff message (from the [Pièces jointes] section). Use it directly with read_document — do NOT ask the user for it.
+- The documentId is provided in the message (from the [Pièces jointes] section). Use it directly with read_document — do NOT ask the user for it.
 - If multiple documentIds are provided, read each one sequentially.
 - Analyze the content and return a structured summary in French.
 - Be factual and concise in your analysis.
@@ -163,5 +164,19 @@ Return analysis in French with clear sections using markdown headings. For CVs, 
 - **Formation**: education history
 - **Certifications**: if any`,
     tools: [createReadDocumentTool(talentId)],
+  });
+}
+
+/**
+ * Creates a file_reader tool using asTool() pattern
+ * The main agent keeps control and can synthesize results from this sub-agent.
+ * SECURITY: talentId is injected via factory, not from LLM
+ */
+export function createFileReaderTool(talentId: string) {
+  return createFileReaderAgent(talentId).asTool({
+    toolName: 'file_reader',
+    toolDescription:
+      'Read and analyze talent documents (CVs, diplomas, certificates). Pass the documentId(s) from [Pièces jointes] or from sql_query my_documents results as input message.',
+    runOptions: { maxTurns: 5 },
   });
 }

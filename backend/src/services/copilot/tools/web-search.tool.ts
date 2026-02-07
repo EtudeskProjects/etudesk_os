@@ -1,10 +1,11 @@
 /**
  * Web Search Tool — Agent Handoff pattern
  * Uses OpenAI Agents SDK webSearchTool() via a sub-agent handoff
- * Model: gpt-4.1-mini (cost-efficient for search synthesis)
+ * Model: gpt-5-mini (cost-efficient for search synthesis)
  */
 
 import { Agent, webSearchTool } from '@openai/agents';
+import { MODEL_T2 } from '../../ai/models';
 
 /**
  * WebSearchAgent — A sub-agent that performs web searches
@@ -14,7 +15,7 @@ import { Agent, webSearchTool } from '@openai/agents';
  */
 export const webSearchAgent = new Agent({
   name: 'WebSearchAgent',
-  model: 'gpt-4.1-mini',
+  model: MODEL_T2,
   instructions: `# Role and Objective
 
 You are a web search specialist for the Etudesk platform. Use the web_search tool to find current, reliable information and return structured results in French.
@@ -47,4 +48,15 @@ Return results as a structured list in French:
 
 Always cite your sources.`,
   tools: [webSearchTool()],
+});
+
+/**
+ * Web search as a tool using asTool() pattern
+ * The main agent keeps control and can synthesize web search results.
+ */
+export const webSearchAsTool = webSearchAgent.asTool({
+  toolName: 'web_search',
+  toolDescription:
+    'Search the web for current information (salary benchmarks, company info, market trends, training resources). Pass the search query as input message. Use ONLY when internal data is insufficient.',
+  runOptions: { maxTurns: 5 },
 });

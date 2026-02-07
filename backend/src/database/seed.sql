@@ -1009,6 +1009,81 @@ VALUES
     NOW() + INTERVAL '90 days'
   );
 
+-- ═══════════════════════════════════════════════════════════════
+-- 10. IMAGES — Avatars, logos, cover images (Unsplash)
+-- ═══════════════════════════════════════════════════════════════
+
+-- ── Talent Avatars ──
+UPDATE talents SET avatar_url = 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&h=400&fit=crop&q=80' WHERE id = 'a1b2c3d4-1111-4000-a000-000000000001'; -- Aminata (dev F)
+UPDATE talents SET avatar_url = 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&q=80' WHERE id = 'a1b2c3d4-2222-4000-a000-000000000002'; -- Moussa (civil eng M)
+UPDATE talents SET avatar_url = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&q=80' WHERE id = 'a1b2c3d4-3333-4000-a000-000000000003'; -- Fatou (marketing F)
+UPDATE talents SET avatar_url = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80' WHERE id = 'a1b2c3d4-4444-4000-a000-000000000004'; -- Ibrahima (devops M)
+UPDATE talents SET avatar_url = 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&q=80' WHERE id = 'a1b2c3d4-5555-4000-a000-000000000005'; -- Aissatou (architect F)
+
+-- ── Organization Logos ──
+UPDATE organizations SET logo_url = 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=400&fit=crop&q=80' WHERE id = 'b1b2c3d4-1111-4000-b000-000000000001'; -- AfriTech Solutions (fintech/office)
+UPDATE organizations SET logo_url = 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=400&fit=crop&q=80' WHERE id = 'b1b2c3d4-2222-4000-b000-000000000002'; -- BTP CI (construction crane)
+UPDATE organizations SET logo_url = 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&h=400&fit=crop&q=80' WHERE id = 'b1b2c3d4-3333-4000-b000-000000000003'; -- Dakar Digital Hub (coworking)
+UPDATE organizations SET logo_url = 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800&h=400&fit=crop&q=80' WHERE id = 'b1b2c3d4-4444-4000-b000-000000000004'; -- Sénégal Énergie Verte (solar panels)
+
+-- ── Opportunity Covers — CI EMPLOYMENT ──
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000001-0001-4000-c000-000000000001'; -- Dev Full Stack (coding)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000001-0002-4000-c000-000000000002'; -- Marketing Digital (analytics)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000001-0003-4000-c000-000000000003'; -- Chef Projet BTP (construction)
+
+-- ── Opportunity Covers — CI INTERNSHIP ──
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000002-0001-4000-c000-000000000001'; -- Stage Mobile (team working)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000002-0002-4000-c000-000000000002'; -- Stage GC (building construction)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000002-0003-4000-c000-000000000003'; -- Stage Community (social media)
+
+-- ── Opportunity Covers — CI FREELANCE ──
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000003-0001-4000-c000-000000000001'; -- Backend API (code editor)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000003-0002-4000-c000-000000000002'; -- UI/UX Designer (design)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000003-0003-4000-c000-000000000003'; -- Géomètre (surveying/terrain)
+
+-- ── Opportunity Covers — CI ENTREPRENEURSHIP ──
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000004-0001-4000-c000-000000000001'; -- CTO AgriTech (agriculture)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000004-0002-4000-c000-000000000002'; -- Associé BTP (skyscraper)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1533750516457-a7f992034fec?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000004-0003-4000-c000-000000000003'; -- Agence Marketing (digital)
+
+-- ── Opportunity Covers — CI ALTERNATION ──
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000005-0001-4000-c000-000000000001'; -- Data Analyst (dashboard)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000005-0002-4000-c000-000000000002'; -- Conducteur Travaux (hard hat)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000005-0003-4000-c000-000000000003'; -- Comptabilité (finance)
+
+-- ── Opportunity Covers — CI VOLUNTEER ──
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000006-0001-4000-c000-000000000001'; -- Mentor Tech (group mentoring)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000006-0002-4000-c000-000000000002'; -- Construction École (charity)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000006-0003-4000-c000-000000000003'; -- Littératie Numérique (teaching)
+
+-- ── Opportunity Covers — SÉNÉGAL ──
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000007-0001-4000-c000-000000000001'; -- DevOps Cloud (servers/data)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000007-0002-4000-c000-000000000002'; -- Stage Dev Web (team laptops)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000007-0003-4000-c000-000000000003'; -- Consultant Solaire (solar)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000007-0004-4000-c000-000000000004'; -- Co-fondateur EdTech (education)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1559302504-64aae6ca6b6d?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000007-0005-4000-c000-000000000005'; -- Technicien Solaire (solar install)
+UPDATE opportunities SET cover_image_url = 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&h=400&fit=crop&q=80' WHERE id = 'c0000007-0006-4000-c000-000000000006'; -- Formateur Coding (people learning)
+
+-- ── Community Covers ──
+UPDATE communities SET cover_image_url = 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&h=400&fit=crop&q=80' WHERE id = 'e0000001-0001-4000-e000-000000000001'; -- Tech Abidjan (tech meetup)
+UPDATE communities SET cover_image_url = 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=400&fit=crop&q=80' WHERE id = 'e0000001-0002-4000-e000-000000000002'; -- BTP CI (construction)
+UPDATE communities SET cover_image_url = 'https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&h=400&fit=crop&q=80' WHERE id = 'e0000001-0003-4000-e000-000000000003'; -- Femmes Entrepreneures (women business)
+UPDATE communities SET cover_image_url = 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=800&h=400&fit=crop&q=80' WHERE id = 'e0000001-0004-4000-e000-000000000004'; -- AgriTech CI (agriculture)
+UPDATE communities SET cover_image_url = 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&h=400&fit=crop&q=80' WHERE id = 'e0000001-0005-4000-e000-000000000005'; -- Dakar Startup (startup team)
+UPDATE communities SET cover_image_url = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop&q=80' WHERE id = 'e0000001-0006-4000-e000-000000000006'; -- Développeurs SN (coding)
+UPDATE communities SET cover_image_url = 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800&h=400&fit=crop&q=80' WHERE id = 'e0000001-0007-4000-e000-000000000007'; -- Énergie SN (solar panels)
+UPDATE communities SET cover_image_url = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop&q=80' WHERE id = 'e0000001-0008-4000-e000-000000000008'; -- Marketing Digital AO (analytics)
+
+-- ── Space Covers ──
+UPDATE spaces SET cover_image_url = 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&h=400&fit=crop&q=80' WHERE id = 'f0000001-0001-4000-f000-000000000001'; -- Coworking Cocody (coworking)
+UPDATE spaces SET cover_image_url = 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&h=400&fit=crop&q=80' WHERE id = 'f0000001-0002-4000-f000-000000000002'; -- Salle Conférence Plateau (conference)
+UPDATE spaces SET cover_image_url = 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&h=400&fit=crop&q=80' WHERE id = 'f0000001-0003-4000-f000-000000000003'; -- Centre Formation BTP (classroom)
+UPDATE spaces SET cover_image_url = 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=400&fit=crop&q=80' WHERE id = 'f0000001-0004-4000-f000-000000000004'; -- Bureau Privé Marcory (modern office)
+UPDATE spaces SET cover_image_url = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop&q=80' WHERE id = 'f0000001-0005-4000-f000-000000000005'; -- DDH Almadies (open workspace)
+UPDATE spaces SET cover_image_url = 'https://images.unsplash.com/photo-1462826303086-329426d1aef5?w=800&h=400&fit=crop&q=80' WHERE id = 'f0000001-0006-4000-f000-000000000006'; -- Salle Réunion Mermoz (meeting room)
+UPDATE spaces SET cover_image_url = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop&q=80' WHERE id = 'f0000001-0007-4000-f000-000000000007'; -- Espace Événementiel (event space)
+UPDATE spaces SET cover_image_url = 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800&h=400&fit=crop&q=80' WHERE id = 'f0000001-0008-4000-f000-000000000008'; -- Centre Solaire Thiès (solar panels)
+
 COMMIT;
 
 -- ═══════════════════════════════════════════════════════════════

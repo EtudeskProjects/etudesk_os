@@ -39,9 +39,9 @@ type MemberFilterStatus = 'all' | 'PENDING' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED
 
 interface Membership {
   id: string;
-  community_id: string;
+  community_id?: string;
   status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'SUSPENDED';
-  role: string;
+  role: 'ADMIN' | 'MEMBER';
   joined_at: string;
   community: {
     id: string;

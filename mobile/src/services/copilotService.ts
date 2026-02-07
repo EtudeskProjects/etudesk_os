@@ -172,7 +172,7 @@ class CopilotService {
     callbacks: {
       onTextDelta: (delta: string) => void;
       onToolStart: (tool: { callId: string; name: string; args?: Record<string, unknown> }) => void;
-      onToolEnd: (tool: { callId: string; name: string; summary?: string; duration?: number; status: 'success' | 'error'; error?: string }) => void;
+      onToolEnd: (tool: { callId: string; name: string; summary?: string; result?: unknown; duration?: number; status: 'success' | 'error'; error?: string }) => void;
       onDone: (sessionId: string) => void;
       onError: (error: string) => void;
       onLimitReached?: (reason: string, message: string) => void;
@@ -232,6 +232,7 @@ class CopilotService {
                     callId: event.tool.callId,
                     name: event.tool.name,
                     summary: event.tool.summary,
+                    result: event.tool.result,
                     duration: event.tool.duration,
                     status: event.tool.status || 'success',
                     error: event.tool.error,
@@ -381,6 +382,18 @@ class CopilotService {
         data: { text: '' },
       };
     }
+  }
+
+  /**
+   * Confirm a copilot action (apply, join, book, etc.)
+   */
+  async confirmAction(
+    action: string,
+    entityId: string,
+    sessionId?: string,
+    data?: Record<string, any>
+  ): Promise<ApiResponse<{ message: string; [key: string]: any }>> {
+    return api.post('/api/copilot/confirm', { action, entityId, sessionId, data });
   }
 
   /**

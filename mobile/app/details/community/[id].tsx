@@ -97,7 +97,7 @@ export default function CommunityDetailScreen() {
       }
     } catch (error: any) {
       console.error('Error loading community:', error);
-      Alert.alert('Erreur', 'Impossible de charger cette communauté');
+      Alert.alert(t('common.error'), t('community.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -157,24 +157,24 @@ export default function CommunityDetailScreen() {
   const handleJoin = () => {
     if (membershipStatus?.is_member) {
       // Already a member - could navigate to community feed/chat
-      Alert.alert('Information', 'Vous êtes déjà membre de cette communauté.');
+      Alert.alert(t('common.information'), t('community.alreadyMember'));
     } else if (membershipStatus?.has_pending_request) {
       // Cancel pending request
       Alert.alert(
-        'Annuler la demande',
-        'Voulez-vous annuler votre demande d\'adhésion ?',
+        t('community.cancelRequestTitle'),
+        t('community.cancelRequestConfirm'),
         [
-          { text: 'Non', style: 'cancel' },
+          { text: t('common.no'), style: 'cancel' },
           {
-            text: 'Oui, annuler',
+            text: t('community.cancelRequestYes'),
             style: 'destructive',
             onPress: async () => {
               try {
                 await communityService.cancelRequest(id as string);
                 setMembershipStatus(prev => prev ? { ...prev, has_pending_request: false } : null);
-                Alert.alert('Succès', 'Votre demande a été annulée.');
+                Alert.alert(t('common.success'), t('community.requestCancelled'));
               } catch (error) {
-                Alert.alert('Erreur', 'Impossible d\'annuler la demande.');
+                Alert.alert(t('common.error'), t('community.cancelRequestError'));
               }
             },
           },
@@ -188,12 +188,12 @@ export default function CommunityDetailScreen() {
 
   const getButtonText = () => {
     if (membershipStatus?.is_member) {
-      return 'Membre';
+      return t('community.joined');
     }
     if (membershipStatus?.has_pending_request) {
-      return 'Annuler ma demande';
+      return t('community.cancelRequest');
     }
-    return 'Rejoindre la communaute';
+    return t('community.joinCommunity');
   };
 
   const getButtonVariant = (): 'primary' | 'outline' => {
@@ -217,7 +217,7 @@ export default function CommunityDetailScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <Text style={{ color: colors.textPrimary }}>Communauté non trouvée</Text>
+          <Text style={{ color: colors.textPrimary }}>{t('community.notFound')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -252,7 +252,7 @@ export default function CommunityDetailScreen() {
         </View>
       </View>
 
-      {activeTab !== 'activities' && (
+      {(activeTab as string) !== 'activities' && (
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
@@ -275,10 +275,10 @@ export default function CommunityDetailScreen() {
 
         <View style={styles.contentPadded}>
           {/* Organization Card */}
-          {community.organization && (
+          {community.organization?.id && (
             <TouchableOpacity
               style={[styles.orgCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-              onPress={() => router.push(`/details/organization/${community.organization?.id}`)}
+              onPress={() => router.push(`/details/organization/${community.organization!.id}`)}
             >
               {community.organization.logo_url ? (
                 <Image source={{ uri: getFullImageUrl(community.organization.logo_url) || '' }} style={styles.orgLogo} />
@@ -334,7 +334,7 @@ export default function CommunityDetailScreen() {
                   <Globe size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                 )}
                 <Text style={[styles.tagText, { color: colors.primary, marginLeft: 4 }]}>
-                  {community.type === 'ONLINE' ? 'En ligne' : community.type === 'HYBRID' ? 'Hybride' : 'Présentiel'}
+                  {community.type === 'ONLINE' ? t('community.types.online') : community.type === 'HYBRID' ? t('community.types.hybrid') : t('community.types.offline')}
                 </Text>
               </View>
             )}
@@ -351,7 +351,7 @@ export default function CommunityDetailScreen() {
                   styles.tabText,
                   { color: activeTab === 'presentation' ? colors.primary : colors.textSecondary }
                 ]}>
-                  Présentation
+                  {t('community.presentation')}
                 </Text>
                 {activeTab === 'presentation' && (
                   <View style={[styles.tabIndicator, { backgroundColor: colors.primary }]} />
@@ -366,7 +366,7 @@ export default function CommunityDetailScreen() {
                     styles.tabText,
                     { color: activeTab === 'activities' ? colors.primary : colors.textSecondary }
                   ]}>
-                    Activités
+                    {t('community.activities')}
                   </Text>
                   {community.activities_count !== undefined && community.activities_count > 0 && (
                     <View style={[styles.tabBadge, { backgroundColor: activeTab === 'activities' ? colors.primary : colors.textSecondary }]}>
@@ -389,7 +389,7 @@ export default function CommunityDetailScreen() {
                     styles.tabText,
                     { color: activeTab === 'members' ? colors.primary : colors.textSecondary }
                   ]}>
-                    Membres
+                    {t('community.members')}
                   </Text>
                   {community.members_count !== undefined && community.members_count > 0 && (
                     <View style={[styles.tabBadge, { backgroundColor: activeTab === 'members' ? colors.primary : colors.textSecondary }]}>
@@ -417,7 +417,7 @@ export default function CommunityDetailScreen() {
                 <View style={styles.metaItem}>
                   <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                   <View>
-                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Membres</Text>
+                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('community.members')}</Text>
                     <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
                       {community.members_count?.toLocaleString() || '0'}
                     </Text>
@@ -430,18 +430,18 @@ export default function CommunityDetailScreen() {
                 <View style={styles.metaItem}>
                   <MapPin size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                   <View>
-                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Lieu</Text>
+                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('community.location')}</Text>
                     <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
                       {community.type === 'ONLINE'
-                        ? 'En ligne'
-                        : [community.city, community.country].filter(Boolean).join(', ') || 'Non spécifié'}
+                        ? t('community.types.online')
+                        : [community.city, community.country].filter(Boolean).join(', ') || t('common.notSpecified')}
                     </Text>
                   </View>
                 </View>
                 <View style={styles.metaItem}>
                   <Calendar size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                   <View>
-                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Créée le</Text>
+                    <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('community.createdAt')}</Text>
                     <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
                       {community.created_at ? formatDate(community.created_at) : '-'}
                     </Text>
@@ -453,7 +453,7 @@ export default function CommunityDetailScreen() {
             {/* Tags/Categories Section */}
             {tags.length > 0 && (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tags</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('community.tags')}</Text>
                 <View style={styles.categoriesRow}>
                   {tags.map((tag, index) => (
                     <View key={index} style={[styles.categoryTag, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
@@ -467,7 +467,7 @@ export default function CommunityDetailScreen() {
             {/* About Section */}
             {community.description && (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>À propos</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('community.about')}</Text>
                 <Text style={[styles.sectionText, { color: colors.textSecondary }]}>
                   {community.description}
                 </Text>
@@ -478,9 +478,9 @@ export default function CommunityDetailScreen() {
             {membersPreview.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Membres</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('community.members')}</Text>
                   <TouchableOpacity onPress={() => setActiveTab('members')}>
-                    <Text style={[styles.seeAllText, { color: colors.primary }]}>Voir tout</Text>
+                    <Text style={[styles.seeAllText, { color: colors.primary }]}>{t('common.seeAll')}</Text>
                   </TouchableOpacity>
                 </View>
                 <View style={styles.membersList}>
@@ -552,7 +552,7 @@ export default function CommunityDetailScreen() {
                         <View style={styles.memberItemInfo}>
                         <View style={styles.memberItemNameRow}>
                           <Text style={[styles.memberItemName, { color: colors.textPrimary }]} numberOfLines={1}>
-                            {member.display_name || 'Membre'}
+                            {member.display_name || t('community.joined')}
                           </Text>
                           {member.role === 'ADMIN' && (
                             <View style={[styles.adminBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
@@ -579,7 +579,7 @@ export default function CommunityDetailScreen() {
                         {/* Joined date */}
                         {member.joined_at && (
                           <Text style={[styles.memberItemJoined, { color: colors.gray400 }]}>
-                            Membre depuis {formatRelativeTime(member.joined_at)}
+                            {t('community.memberSince')} {formatRelativeTime(member.joined_at)}
                           </Text>
                         )}
                       </View>
@@ -590,10 +590,10 @@ export default function CommunityDetailScreen() {
                 <View style={[styles.emptyMembersContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
                   <Users size={ICON.size.xl} color={colors.textDisabled} strokeWidth={ICON.strokeWidth} />
                   <Text style={[styles.emptyMembersText, { color: colors.textSecondary }]}>
-                    Aucun membre pour le moment
+                    {t('community.noMembers')}
                   </Text>
                   <Text style={[styles.emptyMembersSubtext, { color: colors.textDisabled }]}>
-                    Les membres apparaîtront ici une fois qu'ils auront rejoint la communauté
+                    {t('community.noMembersSubtext')}
                   </Text>
                 </View>
               )}
@@ -604,7 +604,7 @@ export default function CommunityDetailScreen() {
       )}
 
       {/* Activities Tab - Rendered outside ScrollView to avoid FlatList nesting issue */}
-      {activeTab === 'activities' && (
+      {(activeTab as string) === 'activities' && (
         <View style={styles.activitiesContainer}>
           {/* Compact Header for Activities Tab */}
           <View style={styles.activitiesHeader}>
@@ -621,7 +621,7 @@ export default function CommunityDetailScreen() {
                   styles.tabText,
                   { color: activeTab === 'presentation' ? colors.primary : colors.textSecondary }
                 ]}>
-                  Présentation
+                  {t('community.presentation')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -632,7 +632,7 @@ export default function CommunityDetailScreen() {
                   styles.tabText,
                   { color: activeTab === 'activities' ? colors.primary : colors.textSecondary }
                 ]}>
-                  Activités
+                  {t('community.activities')}
                 </Text>
                 {activeTab === 'activities' && (
                   <View style={[styles.tabIndicator, { backgroundColor: colors.primary }]} />
@@ -646,7 +646,7 @@ export default function CommunityDetailScreen() {
                   styles.tabText,
                   { color: activeTab === 'members' ? colors.primary : colors.textSecondary }
                 ]}>
-                  Membres
+                  {t('community.members')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -662,11 +662,11 @@ export default function CommunityDetailScreen() {
 
       {/* Action Footer */}
       <View style={[styles.footer, { backgroundColor: colors.background }]}>
-        {activeTab !== 'activities' && (
+        {(activeTab as string) !== 'activities' && (
           <View style={styles.ctaContainer}>
             {canManageCommunity ? (
               <Button
-                title="Gerer la communaute"
+                title={t('community.manage')}
                 onPress={() => router.push(`/settings/organization/community-members/${id}` as any)}
                 fullWidth
                 variant="outline"
@@ -678,7 +678,7 @@ export default function CommunityDetailScreen() {
             ) : membershipStatus?.is_member ? (
               // Members see "Voir l'actualité" button
               <Button
-                title="Voir l'actualite"
+                title={t('community.viewActivity')}
                 onPress={() => {
                   setActiveTab('activities');
                   scrollViewRef.current?.scrollTo({ y: 0, animated: true });

@@ -148,7 +148,7 @@ export const SpaceCard: React.FC<SpaceCardProps> = ({
   return (
     <CardContainer onPress={onPress} isLast={isLast}>
       <CardImage
-        imageUrl={space.cover_image_url}
+        imageUrl={space.cover_image_url || space.gallery_images?.[0]}
         PlaceholderIcon={MapPin}
         height={LAYOUT.cardImageHeightSm + 20}
       >

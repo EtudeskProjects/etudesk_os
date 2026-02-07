@@ -398,7 +398,7 @@ class LogService {
       filtered = filtered.filter((e) => e.category === options.category);
     }
     if (options.source) {
-      filtered = filtered.filter((e) => e.source.includes(options.source));
+      filtered = filtered.filter((e) => e.source.includes(options.source!));
     }
     if (options.limit) {
       filtered = filtered.slice(0, options.limit);

@@ -5,6 +5,7 @@
  */
 
 import { tool } from '@openai/agents';
+import { MODEL_IMAGE } from '../../ai/models';
 import { z } from 'zod';
 import OpenAI from 'openai';
 import { uploadFile } from '../../storage.service';
@@ -35,7 +36,7 @@ export const generateImageTool = tool({
     try {
       // Generate image via gpt-image-1
       const response = await openai.images.generate({
-        model: 'gpt-image-1',
+        model: MODEL_IMAGE,
         prompt,
         size,
         quality,
@@ -67,7 +68,7 @@ export const generateImageTool = tool({
           sizeBytes: imageBuffer.length,
           dimensions: size,
           quality,
-          model: 'gpt-image-1',
+          model: MODEL_IMAGE,
         },
       };
     } catch (error: any) {

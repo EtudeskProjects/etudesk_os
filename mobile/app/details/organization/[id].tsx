@@ -33,7 +33,8 @@ import { organizationService } from '../../../src/services/organizationService';
 import { opportunityService } from '../../../src/services/opportunityService';
 import { communityService } from '../../../src/services/communityService';
 import { spaceService } from '../../../src/services/spaceService';
-import type { Community, Space } from '../../../src/types/models';
+import type { Community } from '../../../src/types/models';
+import type { Space } from '../../../src/services/spaceService';
 
 // Sector labels for display
 const SECTOR_LABELS: Record<string, string> = {
@@ -77,8 +78,10 @@ export default function OrganizationDetailScreen() {
   const [isLoadingCommunities, setIsLoadingCommunities] = useState(true);
   const [isLoadingSpaces, setIsLoadingSpaces] = useState(true);
 
+  const isValidId = !!id && id !== 'null' && id !== 'undefined';
+
   useEffect(() => {
-    if (id) {
+    if (isValidId) {
       loadOrganization();
       loadOpportunities();
       loadCommunities();
@@ -426,8 +429,8 @@ export default function OrganizationDetailScreen() {
                   style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
                   onPress={() => router.push(`/details/community/${community.id}`)}
                 >
-                  {community.logo_url ? (
-                    <Image source={{ uri: getFullImageUrl(community.logo_url) }} style={styles.itemLogo} />
+                  {(community.logo_url || community.cover_image_url) ? (
+                    <Image source={{ uri: getFullImageUrl((community.logo_url || community.cover_image_url)!) }} style={styles.itemLogo} />
                   ) : (
                     <View style={[styles.itemLogoPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                       <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
@@ -474,8 +477,8 @@ export default function OrganizationDetailScreen() {
                   style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
                   onPress={() => router.push(`/details/space/${space.id}`)}
                 >
-                  {space.logo_url ? (
-                    <Image source={{ uri: getFullImageUrl(space.logo_url) }} style={styles.itemLogo} />
+                  {space.cover_image_url ? (
+                    <Image source={{ uri: getFullImageUrl(space.cover_image_url) }} style={styles.itemLogo} />
                   ) : (
                     <View style={[styles.itemLogoPlaceholder, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
                       <BookOpen size={ICON.size.md} color={colors.success} strokeWidth={ICON.strokeWidth} />
@@ -485,9 +488,9 @@ export default function OrganizationDetailScreen() {
                     <Text style={[styles.itemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
                       {space.name}
                     </Text>
-                    {space.members_count !== undefined && (
+                    {space.capacity !== undefined && (
                       <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
-                        {space.members_count} {t('explore.members')}
+                        {space.capacity} {t('common.places')}
                       </Text>
                     )}
                   </View>

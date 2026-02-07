@@ -40,7 +40,7 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
     name: org.name,
     type: (org.types && org.types.length > 0 ? org.types[0] : org.type) || 'COMPANY',
     logoUrl: org.logo_url,
-    role: org.user_role || 'member',
+    role: (org.user_role?.toUpperCase() || 'MEMBER') as 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER',
   });
 
   const fetchOrganizations = useCallback(async () => {

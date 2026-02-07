@@ -126,7 +126,7 @@ class OpportunityService {
    * Increment view count for an opportunity
    */
   async incrementViews(id: string): Promise<ApiResponse<{ success: boolean; views_count: number }>> {
-    return api.post<{ success: boolean; views_count: number }>(`/api/opportunities/${id}/view`);
+    return api.post<{ success: boolean; views_count: number }>(`/api/opportunities/${id}/view`, {});
   }
 
   /**

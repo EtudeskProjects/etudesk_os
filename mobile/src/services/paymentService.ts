@@ -46,7 +46,7 @@ async function addPaymentMethod(data: AddPaymentMethodData): Promise<ApiResponse
  * Set a payment method as default
  */
 async function setDefaultPaymentMethod(id: string): Promise<ApiResponse<PaymentMethod[]>> {
-  return api.put<PaymentMethod[]>(`/api/payment-methods/${id}/default`);
+  return api.put<PaymentMethod[]>(`/api/payment-methods/${id}/default`, {});
 }
 
 /**

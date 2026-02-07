@@ -175,7 +175,7 @@ export default function EditCommunityScreen() {
       setCountry(comm.country || 'CI');
       setRegion(comm.region || '');
       setCity(comm.city || '');
-      setStatus(comm.status || 'INACTIVE');
+      setStatus((comm as any).status || 'INACTIVE');
       setOrganizationId(comm.organization_id || null);
       
       // Load images
@@ -1491,7 +1491,7 @@ const styles = StyleSheet.create({
   previewGridItem: { width: '50%', padding: SPACING.md, borderWidth: 0.5 },
   previewLabel: { fontSize: TYPOGRAPHY.fontSize.xs, marginBottom: 2 },
   previewValue: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
-  previewSection: { padding: SPACING.md, borderRadius: BORDER.radius.md },
+  previewSectionCard: { padding: SPACING.md, borderRadius: BORDER.radius.md },
   
   // Preview application settings styles
   previewApplicationSettings: {

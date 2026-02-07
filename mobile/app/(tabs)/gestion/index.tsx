@@ -489,7 +489,7 @@ export default function GestionScreen() {
         isVisible={showCreateModal}
         onClose={() => setShowCreateModal(false)}
       />
-      <FooterNav activeTab="gestion" />
+      <FooterNav />
     </SafeAreaView>
   );
 }

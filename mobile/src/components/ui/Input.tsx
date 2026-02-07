@@ -71,8 +71,8 @@ export function Input({
           style={[
             styles.input,
             { color: colors.textPrimary },
-            leftIcon && styles.inputWithLeftIcon,
-            (rightIcon || isPassword) && styles.inputWithRightIcon,
+            !!leftIcon && styles.inputWithLeftIcon,
+            !!(rightIcon || isPassword) && styles.inputWithRightIcon,
             multiline && { height: undefined, paddingTop: SPACING.md, paddingBottom: SPACING.md, textAlignVertical: 'top' as const },
           ]}
           multiline={multiline}
@@ -84,7 +84,7 @@ export function Input({
           accessibilityLabel={accessibilityLabel || label}
           accessibilityHint={accessibilityHint || (error ? t('input.errorHint', { error: error || '' }) : hint)}
           accessibilityState={{
-            disabled: props.editable === false,
+            disabled: props.editable === false ? true : undefined,
           }}
           {...props}
         />

@@ -41,7 +41,7 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
-  }),
+  } as any),
 });
 
 class NotificationService {
@@ -106,7 +106,7 @@ class NotificationService {
         deviceName: Device.deviceName,
       });
 
-      return response.success;
+      return response.success ?? true;
     } catch (error) {
       console.error('Error registering token with backend:', error);
       return false;

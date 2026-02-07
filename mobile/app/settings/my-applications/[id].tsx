@@ -146,7 +146,7 @@ export default function ApplicationDetailsScreen() {
           name: a.name,
           url: a.uri, // In production, upload first and use returned URL
           type: a.type,
-          size: a.size,
+          size: a.size || 0,
         })),
         proposed_datetime: data.proposedDatetime,
         datetime_type: data.datetimeType as any,

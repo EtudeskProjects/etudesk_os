@@ -55,7 +55,7 @@ export const vectorQueryTool = tool({
       'talents',
       'organizations',
     ]).describe('The entity type to search. Choose based on what the user is looking for.'),
-    topK: z.number().min(1).max(20).default(5).describe('Number of results to return. Default 5.'),
+    topK: z.number().min(1).max(30).default(10).describe('Number of results to return. Default 10. Use higher values (15-20) when the user needs comprehensive results.'),
     filtersJson: z
       .string()
       .nullable()
@@ -104,13 +104,30 @@ export const vectorQueryTool = tool({
         return { results: [], message: 'Aucun résultat trouvé pour cette recherche.' };
       }
 
-      // Fetch full records from PostgreSQL
+      // Fetch full records from PostgreSQL (with retry for transient connection errors)
       const entityIds = ids.map((i) => i.id);
       let results: any[] = [];
 
+      const queryWithRetry = async (text: string, params: any[], retries = 2): Promise<any> => {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+          try {
+            return await pool.query(text, params);
+          } catch (err: any) {
+            const isTransient = err.code === 'ECONNRESET' || err.message?.includes('ECONNRESET') ||
+              err.code === 'EPIPE' || err.code === 'ETIMEDOUT' || err.code === 'CONNECTION_ENDED';
+            if (isTransient && attempt < retries) {
+              logger.warn(`[vector_query] DB transient error (attempt ${attempt + 1}/${retries + 1}): ${err.message}`);
+              await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+              continue;
+            }
+            throw err;
+          }
+        }
+      };
+
       switch (namespace) {
         case 'opportunities': {
-          const res = await pool.query(
+          const res = await queryWithRetry(
             `SELECT o.id, o.title, o.summary, o.type, o.contract_type, o.location_type,
                     o.locations, o.status, o.deadline, o.slug,
                     org.name as org_name, org.slug as org_slug
@@ -120,7 +137,7 @@ export const vectorQueryTool = tool({
              WHERE o.id = ANY($1::uuid[]) AND o.status = 'OPEN' AND o.deleted_at IS NULL`,
             [entityIds]
           );
-          results = res.rows.map((r) => ({
+          results = res.rows.map((r: any) => ({
             id: r.id,
             title: r.title,
             summary: r.summary?.slice(0, 200),
@@ -135,7 +152,7 @@ export const vectorQueryTool = tool({
           break;
         }
         case 'communities': {
-          const res = await pool.query(
+          const res = await queryWithRetry(
             `SELECT c.id, c.name, c.description, c.type, c.slug, c.is_paid, c.city,
                     org.name as org_name,
                     (SELECT COUNT(*) FROM community_members cm WHERE cm.community_id = c.id AND cm.status = 'ACTIVE') as member_count
@@ -144,7 +161,7 @@ export const vectorQueryTool = tool({
              WHERE c.id = ANY($1::uuid[]) AND c.status = 'ACTIVE' AND c.deleted_at IS NULL`,
             [entityIds]
           );
-          results = res.rows.map((r) => ({
+          results = res.rows.map((r: any) => ({
             id: r.id,
             name: r.name,
             description: r.description?.slice(0, 200),
@@ -157,7 +174,7 @@ export const vectorQueryTool = tool({
           break;
         }
         case 'spaces': {
-          const res = await pool.query(
+          const res = await queryWithRetry(
             `SELECT s.id, s.name, s.description, s.type, s.slug, s.capacity,
                     s.hourly_rate, s.city,
                     org.name as org_name
@@ -166,7 +183,7 @@ export const vectorQueryTool = tool({
              WHERE s.id = ANY($1::uuid[]) AND s.status = 'ACTIVE' AND s.deleted_at IS NULL`,
             [entityIds]
           );
-          results = res.rows.map((r) => ({
+          results = res.rows.map((r: any) => ({
             id: r.id,
             name: r.name,
             description: r.description?.slice(0, 200),
@@ -181,13 +198,13 @@ export const vectorQueryTool = tool({
           break;
         }
         case 'organizations': {
-          const res = await pool.query(
+          const res = await queryWithRetry(
             `SELECT o.id, o.name, o.description, o.sectors, o.slug, o.city, o.country
              FROM organizations o
              WHERE o.id = ANY($1::uuid[]) AND o.deleted_at IS NULL`,
             [entityIds]
           );
-          results = res.rows.map((r) => ({
+          results = res.rows.map((r: any) => ({
             id: r.id,
             name: r.name,
             description: r.description?.slice(0, 200),
@@ -199,13 +216,13 @@ export const vectorQueryTool = tool({
           break;
         }
         case 'talents': {
-          const res = await pool.query(
+          const res = await queryWithRetry(
             `SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio, t.city, t.country
              FROM talents t
              WHERE t.id = ANY($1::uuid[]) AND t.deleted_at IS NULL`,
             [entityIds]
           );
-          results = res.rows.map((r) => ({
+          results = res.rows.map((r: any) => ({
             id: r.id,
             name: r.display_name,
             bio: r.bio?.slice(0, 200),

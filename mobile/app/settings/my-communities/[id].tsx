@@ -196,7 +196,7 @@ export default function MyCommunityDetailsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await communityService.leave(membership.community_id);
+              await communityService.leave(membership.community_id!);
               Alert.alert('Succès', 'Vous avez quitté la communauté.', [
                 { text: 'OK', onPress: () => router.back() },
               ]);
@@ -259,7 +259,7 @@ export default function MyCommunityDetailsScreen() {
             <Text style={[styles.statusDate, { color: colors.gray600 }]}>
               {membership.status === 'ACTIVE' && membership.joined_at
                 ? `Membre depuis ${formatRelativeTime(membership.joined_at)}`
-                : `Demande envoyée ${formatRelativeTime(membership.created_at)}`}
+                : `Demande envoyée ${formatRelativeTime(membership.created_at!)}`}
             </Text>
           </View>
         </View>

@@ -97,7 +97,7 @@ export default function CalendarScreen() {
       });
 
       if (response?.data) {
-        const transformedEvents: CalendarEvent[] = response.data.map((item: any) => {
+        const transformedEvents: CalendarEvent[] = (response.data as any[]).map((item: any) => {
           let type: EventType = 'event';
           let title = item.title || item.name || 'Sans titre';
           let eventDate = item.scheduled_at || item.start_date || item.date;

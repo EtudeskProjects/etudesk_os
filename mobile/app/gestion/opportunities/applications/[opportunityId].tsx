@@ -28,6 +28,7 @@ import * as Sharing from 'expo-sharing';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS, ThemeColors } from '../../../../src/constants/theme';
 import { PageLayout, EmptyState } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 import { applicationService, opportunityService } from '../../../../src/services';
 import { RankedApplication } from '../../../../src/services/applicationService';
 import { formatRelativeTime } from '../../../../src/utils/date';
@@ -56,6 +57,7 @@ export default function OpportunityApplicationsScreen() {
   const { opportunityId } = useLocalSearchParams<{ opportunityId: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null);
   const [applications, setApplications] = useState<RankedApplication[]>([]);
@@ -79,10 +81,10 @@ export default function OpportunityApplicationsScreen() {
       ]);
 
       setOpportunity(oppResponse.data);
-      setApplications(appsResponse.data || []);
+      setApplications(appsResponse.data?.data || []);
 
       const recos: Record<string, string> = {};
-      (appsResponse.data || []).forEach((app: RankedApplication) => {
+      (appsResponse.data?.data || []).forEach((app: RankedApplication) => {
         if (app.ai_recommendation) {
           recos[app.id] = app.ai_recommendation;
         }
@@ -102,10 +104,10 @@ export default function OpportunityApplicationsScreen() {
     setIsRefreshing(true);
     try {
       const response = await applicationService.getRankedApplications(opportunityId);
-      setApplications(response.data || []);
+      setApplications(response.data?.data || []);
 
       const recos: Record<string, string> = {};
-      (response.data || []).forEach((app: RankedApplication) => {
+      (response.data?.data || []).forEach((app: RankedApplication) => {
         if (app.ai_recommendation) {
           recos[app.id] = app.ai_recommendation;
         }
@@ -258,8 +260,8 @@ export default function OpportunityApplicationsScreen() {
         activeOpacity={0.7}
       >
         <View style={styles.cardHeader}>
-          {talent?.profile_picture_url ? (
-            <Image source={{ uri: talent.profile_picture_url }} style={styles.avatar} />
+          {(talent?.profile_picture_url || talent?.avatar_url) ? (
+            <Image source={{ uri: (talent.profile_picture_url || talent.avatar_url)! }} style={styles.avatar} />
           ) : (
             <View style={[styles.avatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
               <Text style={[styles.avatarText, { color: colors.primary }]}>
@@ -283,7 +285,7 @@ export default function OpportunityApplicationsScreen() {
               )}
             </View>
             <Text style={[styles.talentTitle, { color: colors.gray500 }]} numberOfLines={1}>
-              {talent?.current_role || talent?.display_name || 'Candidat'}
+              {talent?.current_role || talent?.headline || talent?.display_name || t('common.candidate')}
             </Text>
           </View>
 

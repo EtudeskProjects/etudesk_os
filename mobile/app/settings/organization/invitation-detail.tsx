@@ -214,8 +214,8 @@ export default function InvitationDetailScreen() {
         {/* Permissions */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Permissions accordées</Text>
         <View style={[styles.permissionsList, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-          {invitation.permissions.map((permission, index) => {
-            const isLast = index === invitation.permissions.length - 1;
+          {(invitation.permissions || []).map((permission: any, index: number) => {
+            const isLast = index === (invitation.permissions || []).length - 1;
 
             return (
               <View

@@ -7,6 +7,7 @@ import { api, ApiResponse } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from './logService';
 import { STORAGE_KEYS } from '../constants/config';
+import type { Talent } from '../types/models';
 
 const LOG_SOURCE = 'Onboarding';
 

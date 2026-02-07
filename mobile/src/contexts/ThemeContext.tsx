@@ -87,7 +87,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   }, []);
 
   // Dynamic theme based on user preference
-  const colors = mode === 'dark' ? DARK_COLORS : LIGHT_COLORS;
+  const colors = (mode === 'dark' ? DARK_COLORS : LIGHT_COLORS) as ThemeColors;
 
   return (
     <ThemeContext.Provider

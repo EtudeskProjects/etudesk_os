@@ -302,7 +302,7 @@ export default function CreateCommunityScreen() {
 
         // Sectors - apply up to 5 sectors
         if (data.sectors && data.sectors.length > 0) {
-          updates.selectedSectors = data.sectors.slice(0, MAX_SECTORS);
+          updates.selectedSectors = data.sectors.slice(0, MAX_SECTORS) as Sector[];
         }
 
         if (data.rules) updates.rules = data.rules;

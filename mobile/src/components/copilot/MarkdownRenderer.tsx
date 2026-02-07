@@ -17,15 +17,18 @@ import { DiagramBlock } from './blocks/DiagramBlock';
 import { ImageBlock } from './blocks/ImageBlock';
 import { ChartBlock } from './blocks/ChartBlock';
 import { CodeBlock } from './blocks/CodeBlock';
+import { ConfirmationBlock } from './blocks/ConfirmationBlock';
 
 interface MarkdownRendererProps {
   content: string;
   onQuizAnswer?: (answer: string) => void;
+  sessionId?: string;
+  interactiveConfirmation?: boolean;
 }
 
 // Parse content into blocks
 interface Block {
-  type: 'text' | 'entity' | 'quiz' | 'flashcard' | 'youtube' | 'diagram' | 'image' | 'chart' | 'code';
+  type: 'text' | 'entity' | 'quiz' | 'flashcard' | 'youtube' | 'diagram' | 'image' | 'chart' | 'code' | 'confirmation';
   content: string;
   meta?: string; // entity type, language, etc.
   data?: any; // parsed JSON data
@@ -129,6 +132,13 @@ function parseBlocks(content: string): Block[] {
       const data = tryParseJSON(body);
       if (data) blocks.push({ type: 'chart', content: body, data });
     }
+    // Confirmation block
+    else if (tag === 'confirmation') {
+      const data = tryParseJSON(body);
+      if (data && data.action && data.entity_id && data.title) {
+        blocks.push({ type: 'confirmation', content: body, data });
+      }
+    }
     // Code blocks: code:javascript or just javascript, python, etc.
     else {
       const language = tag.replace('code:', '');
@@ -198,12 +208,14 @@ function renderInlineMarkdown(text: string, colors: any): React.ReactNode[] {
         </Text>
       );
     } else if (m[6] && m[7]) {
-      // [text](url)
+      // [text](url) — resolve relative URLs to absolute for mobile
+      const rawUrl = m![7];
+      const resolvedUrl = rawUrl.startsWith('/') ? `${process.env.EXPO_PUBLIC_API_URL || ''}${rawUrl}` : rawUrl;
       parts.push(
         <Text
           key={key++}
           style={{ color: colors.primary, textDecorationLine: 'underline' }}
-          onPress={() => Linking.openURL(m![7])}
+          onPress={() => Linking.openURL(resolvedUrl)}
         >
           {m[6]}
         </Text>
@@ -368,7 +380,7 @@ function TextBlock({ content, colors }: { content: string; colors: any }) {
   return <View>{elements}</View>;
 }
 
-export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQuizAnswer }) => {
+export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQuizAnswer, sessionId, interactiveConfirmation }) => {
   const { colors } = useTheme();
 
   const blocks = useMemo(() => parseBlocks(content), [content]);
@@ -393,6 +405,15 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQ
             return <ImageBlock key={index} data={block.data} />;
           case 'chart':
             return <ChartBlock key={index} data={block.data} />;
+          case 'confirmation':
+            return (
+              <ConfirmationBlock
+                key={index}
+                data={block.data}
+                sessionId={sessionId}
+                interactive={interactiveConfirmation}
+              />
+            );
           case 'code':
             return (
               <CodeBlock key={index} language={block.meta || ''} code={block.content} />

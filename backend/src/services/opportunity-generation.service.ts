@@ -4,6 +4,7 @@
  */
 
 import OpenAI from 'openai';
+import { MODEL_T3 } from './ai/models';
 import { pool } from './database';
 import {
   OpportunityType,
@@ -255,7 +256,7 @@ export async function generateOpportunitySuggestion(
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: MODEL_T3,
       messages: [
         { role: 'system', content: OPPORTUNITY_GEN_SYSTEM_PROMPT },
         { role: 'user', content: prompt },

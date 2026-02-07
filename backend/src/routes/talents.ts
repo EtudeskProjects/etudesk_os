@@ -9,6 +9,7 @@ import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { onTalentProfileUpdate } from '../services/embedding.service';
 import { autoModerationService } from '../services/auto-moderation.service';
 import OpenAI from 'openai';
+import { MODEL_T3 } from '../services/ai/models';
 import { BIO_GEN_SYSTEM_PROMPT } from '../services/ai/prompts/bio-gen.prompt';
 import { buildTalentObject, talentObjectToText } from '../services/ai/talent-object';
 import { normalizeCountryCode } from '../constants/countries';
@@ -281,7 +282,7 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: MODEL_T3,
       messages: [
         { role: 'system', content: BIO_GEN_SYSTEM_PROMPT },
         { role: 'user', content: `Génère une bio pour ce profil :\n${contextText}` },

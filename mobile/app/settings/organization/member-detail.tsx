@@ -70,11 +70,12 @@ export default function MemberDetailScreen() {
   const {
     members,
     currentUserMember,
-    canEditRoles,
-    canRemoveMembers,
-    updateMemberRole,
+    canManageMembers: canEditRoles,
+    canManageMembers: canRemoveMembers,
+    updateMemberRole: _updateMemberRole,
     removeMember,
   } = useOrganizationMembers();
+  const updateMemberRole = (id: string, role: OrganizationRole, _permissions?: OrganizationPermission[]) => _updateMemberRole(id, role);
 
   const member = members.find(m => m.id === id);
   const [selectedRole, setSelectedRole] = useState<OrganizationRole>(member?.role || ORGANIZATION_ROLES.MEMBER);
@@ -89,14 +90,14 @@ export default function MemberDetailScreen() {
   useEffect(() => {
     if (member) {
       setSelectedRole(member.role);
-      setPermissions(member.permissions);
+      setPermissions(member.permissions || []);
     }
   }, [member]);
 
   useEffect(() => {
     if (member) {
       const roleChanged = selectedRole !== member.role;
-      const permissionsChanged = JSON.stringify([...permissions].sort()) !== JSON.stringify([...member.permissions].sort());
+      const permissionsChanged = JSON.stringify([...permissions].sort()) !== JSON.stringify([...(member.permissions || [])].sort());
       setHasChanges(roleChanged || permissionsChanged);
     }
   }, [selectedRole, permissions, member]);

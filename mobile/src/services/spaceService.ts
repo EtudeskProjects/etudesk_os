@@ -124,12 +124,13 @@ export interface SpaceBooking {
     id: string;
     first_name?: string;
     last_name?: string;
-    full_name: string;
+    display_name?: string;
     avatar_url?: string;
     profile_picture_url?: string;
     email?: string;
     phone?: string;
     headline?: string;
+    current_role?: string;
     city?: string;
     country?: string;
     bio?: string;
@@ -250,6 +251,7 @@ export interface BookingFilters {
 
 export interface AvailabilityCheckResult {
   available: boolean;
+  is_available?: boolean;
   conflicts?: Array<{
     start_datetime: string;
     end_datetime: string;

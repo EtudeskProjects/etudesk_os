@@ -22,6 +22,10 @@ import type { TalentContext, OrgContext } from '../services/copilot/types';
 
 const AUDIT_FILE = path.resolve(__dirname, '../../../docs/copilot-calibration-audit.md');
 
+// CLI args: pass test names as arguments to run only specific tests
+// Usage: npx tsx src/tests/copilot-agents.test.ts "Espaces coworking" "Generer CV"
+const FILTER_ARGS = process.argv.slice(2).map(a => a.toLowerCase());
+
 const C = {
   reset: '\x1b[0m',
   red: '\x1b[31m',
@@ -208,6 +212,8 @@ interface CalibrationMetrics {
   toolCallCount: number;
   verbosityRating: 'concise' | 'ok' | 'verbose' | 'very_verbose';
   proactivityRating: 'proactive' | 'ok' | 'passive';
+  hasQuickAck: boolean; // Agent output text BEFORE first tool call
+  quickAckText: string; // The text before first tool call
 }
 
 interface TestResult {
@@ -223,7 +229,7 @@ interface TestResult {
   calibration: CalibrationMetrics;
 }
 
-function analyzeCalibration(output: string, toolCalls: ToolCallCapture[]): CalibrationMetrics {
+function analyzeCalibration(output: string, toolCalls: ToolCallCapture[], textBeforeFirstTool: string = ''): CalibrationMetrics {
   const charCount = output.length;
 
   // Count sentences (split on period/exclamation/question mark followed by space or end)
@@ -241,7 +247,8 @@ function analyzeCalibration(output: string, toolCalls: ToolCallCapture[]): Calib
   const entityCards = output.match(entityCardRegex) || [];
   const entityCardCount = entityCards.length;
 
-  // Check matchScore in entity cards
+  // Check for FORBIDDEN extra data in entity cards (matchScore, title, name, etc.)
+  // Per perimeter: entity cards must contain ONLY {"id":"uuid"} — matchScore is a VIOLATION, not a feature
   const matchScoreRegex = /matchScore/g;
   const entityCardsWithScore = (output.match(matchScoreRegex) || []).length;
 
@@ -260,6 +267,10 @@ function analyzeCalibration(output: string, toolCalls: ToolCallCapture[]): Calib
   if (usedToolsImmediately && questionCount <= 1) proactivityRating = 'proactive';
   if (!usedToolsImmediately || questionCount > 2) proactivityRating = 'passive';
 
+  // Quick ack: agent output text before first tool call (for streaming responsiveness)
+  const ackTrimmed = textBeforeFirstTool.trim();
+  const hasQuickAck = toolCallCount > 0 && ackTrimmed.length > 3;
+
   return {
     charCount,
     sentenceCount,
@@ -271,6 +282,8 @@ function analyzeCalibration(output: string, toolCalls: ToolCallCapture[]): Calib
     toolCallCount,
     verbosityRating,
     proactivityRating,
+    hasQuickAck,
+    quickAckText: ackTrimmed.slice(0, 80),
   };
 }
 
@@ -286,18 +299,22 @@ async function runAgentTest(
   const errors: string[] = [];
   let output = '';
   let currentToolStart = 0;
+  let textBeforeFirstTool = '';
+  let firstToolSeen = false;
 
   section(`TEST: ${testName}`);
   log('dim', `Agent: ${agentType} | Message: "${message}"`);
 
   try {
-    const result = await run(agent, message, { stream: true });
+    const result = await run(agent, message, { stream: true, maxTurns: 15 });
 
     for await (const event of result as AsyncIterable<any>) {
       if (event.type === 'raw_model_stream_event') {
         const data = event.data as any;
         if (data?.type === 'output_text_delta') {
-          output += data.delta as string;
+          const delta = data.delta as string;
+          output += delta;
+          if (!firstToolSeen) textBeforeFirstTool += delta;
         }
       }
 
@@ -305,6 +322,7 @@ async function runAgentTest(
         const item = event.item as any;
 
         if (event.name === 'tool_called') {
+          if (!firstToolSeen) firstToolSeen = true;
           currentToolStart = Date.now();
           const toolName = item?.rawItem?.name || item?.name || 'unknown';
           let toolArgs: any;
@@ -354,12 +372,17 @@ async function runAgentTest(
         : JSON.stringify((result as any).finalOutput);
     }
   } catch (error: any) {
-    errors.push(`Agent error: ${error.message}`);
-    log('red', `  AGENT ERROR: ${error.message}`);
+    const errorDetail = error.code ? `${error.message} (code: ${error.code})` : error.message;
+    errors.push(`Agent error: ${errorDetail}`);
+    log('red', `  AGENT ERROR: ${errorDetail}`);
+    if (error.stack) {
+      const relevantStack = error.stack.split('\n').slice(0, 4).join('\n');
+      log('dim', `  ${relevantStack}`);
+    }
   }
 
   const duration = Date.now() - start;
-  const calibration = analyzeCalibration(output, toolCalls);
+  const calibration = analyzeCalibration(output, toolCalls, textBeforeFirstTool);
 
   // Print output
   log('yellow', `\n  Output (${calibration.charCount} chars, ${duration}ms):`);
@@ -371,6 +394,10 @@ async function runAgentTest(
 
   log(vColor, `  Verbosity: ${calibration.verbosityRating} (${calibration.charCount} chars, ${calibration.sentenceCount} sentences)`);
   log(pColor, `  Proactivity: ${calibration.proactivityRating} (${calibration.toolCallCount} tools, ${calibration.questionCount} questions)`);
+  if (calibration.toolCallCount > 0) {
+    const ackColor = calibration.hasQuickAck ? 'green' : 'red';
+    log(ackColor, `  Quick Ack: ${calibration.hasQuickAck ? 'YES' : 'NO'}${calibration.quickAckText ? ` — "${calibration.quickAckText}"` : ''}`);
+  }
   if (calibration.entityCardCount > 0) {
     log('green', `  Entity cards: ${calibration.entityCardCount} (${calibration.entityCardsWithScore} with matchScore)`);
   }
@@ -400,84 +427,90 @@ interface TestDef {
 const TESTS: TestDef[] = [
   // ─── TALENT EXPLORER TESTS ─────────────────────
   {
-    name: 'Explorer — Opportunites pertinentes',
+    name: 'Explorer — Opportunites matching profil',
     agentType: 'explorer',
     targetTool: 'vector_query',
-    message: 'Liste moi les opportunités pertinentes pour moi',
+    message: 'Quels postes correspondent a mon profil en ce moment ?',
   },
   {
     name: 'Explorer — Espaces coworking Abidjan',
     agentType: 'explorer',
     targetTool: 'vector_query',
-    message: 'Dans quel espace de coworking je peux travailler a Abidjan ?',
+    message: 'Je cherche un espace de travail calme sur Abidjan avec wifi',
   },
   {
-    name: 'Explorer — Communautes tech Abidjan',
+    name: 'Explorer — Communautes tech',
     agentType: 'explorer',
     targetTool: 'vector_query',
-    message: "Je veux m'impregner de l'écosysteme tech a Abidjan, peux-tu me recommander des communauté ?",
+    message: 'Quelles communautes tech actives existent a Abidjan ?',
   },
   {
-    name: 'Explorer — Generer CV',
+    name: 'Explorer — Generer CV a jour',
     agentType: 'explorer',
     targetTool: 'generate_document',
-    message: 'Genere moi un nouveau CV',
+    message: 'Fais-moi un CV a jour stp',
   },
   {
     name: 'Explorer — Actualites communautes',
     agentType: 'explorer',
     targetTool: 'sql_query',
-    message: 'Quelles sont les actualités récentes de mes communautés ?',
+    message: 'Quoi de neuf dans mes communautes cette semaine ?',
   },
   // ─── TALENT STUDY TESTS ────────────────────────
   {
-    name: 'Study — Formation Marketing Digital',
+    name: 'Study — Debuter marketing digital',
     agentType: 'study',
-    targetTool: 'vector_query',
-    message: 'Je veux me former en Marketing Digital',
+    targetTool: 'none',
+    message: 'Je debute en marketing digital, par ou commencer ?',
   },
   {
-    name: 'Study — Evaluer lacunes finance',
+    name: 'Study — Diagnostic competences finance',
     agentType: 'study',
-    targetTool: 'sql_query',
-    message: "Aide-moi a évaluer mes lacunes sur la finance",
+    targetTool: 'none',
+    message: "Fais-moi un diagnostic de mes competences en finance d'entreprise",
   },
   {
-    name: 'Study — C est quoi l IA',
+    name: 'Study — Expliquer le machine learning',
     agentType: 'study',
-    targetTool: 'vector_query',
-    message: "C'est quoi l'IA ?",
+    targetTool: 'none',
+    message: 'Explique-moi le machine learning simplement',
   },
   {
-    name: 'Study — Schema biologie cellulaire',
+    name: 'Study — Schema cycle de Krebs',
     agentType: 'study',
     targetTool: 'generate_diagram',
-    message: 'Genere moi un schema sur la biologie cellulaire',
+    message: 'Dessine-moi le cycle de Krebs en biologie',
   },
   {
-    name: 'Study — Video YouTube agriculture',
+    name: 'Study — Video YouTube agriculture durable',
     agentType: 'study',
     targetTool: 'youtube_search',
-    message: 'Donne moi un auto video YouTube sur l\'agriculture',
+    message: 'Trouve-moi une bonne video YouTube sur l\'agriculture durable',
   },
   // ─── ORGANIZATION EXPLORER TESTS ───────────────
   {
-    name: 'Org — Talents disponibles Abidjan',
+    name: 'Org — Recruter profils marketing',
     agentType: 'org',
     targetTool: 'vector_query',
-    message: 'Je cherche des talents disponibles a Abidjan pour mon offre de Marketing Digital',
+    message: 'Trouve-moi 5 profils marketing digital seniors disponibles sur Abidjan',
   },
   {
-    name: 'Org — Stats organisation',
+    name: 'Org — Dashboard organisation',
     agentType: 'org',
     targetTool: 'sql_query',
-    message: 'Donne moi un aperçu global de mon organisation',
+    message: 'Comment se porte mon organisation ?',
   },
   {
     name: 'Org — Generer fiche de poste',
     agentType: 'org',
     targetTool: 'generate_document',
-    message: "Genere moi une fiche de poste pour un développeur fullstack junior",
+    message: 'Redige une fiche de poste pour un developpeur fullstack junior Node.js',
+  },
+  {
+    name: 'Org — Publier offre stage',
+    agentType: 'org',
+    targetTool: 'none',
+    message: 'Publie une offre de stage en communication digitale a Abidjan, 3 mois',
   },
 ];
 
@@ -492,13 +525,15 @@ function writeCalibrationReport(results: TestResult[]) {
 
   // ── CALIBRATION SUMMARY TABLE ──
   md += `## Calibration Summary\n\n`;
-  md += `| Test | Agent | Chars | Questions | Tools | Verbosity | Proactivity | Cards |\n`;
-  md += `|------|-------|-------|-----------|-------|-----------|-------------|-------|\n`;
+  md += `| Test | Agent | Chars | Questions | Tools | Verbosity | Proactivity | Quick Ack | Cards |\n`;
+  md += `|------|-------|-------|-----------|-------|-----------|-------------|-----------|-------|\n`;
 
   for (const r of results) {
     const c = r.calibration;
     const status = r.success ? '✅' : '❌';
-    md += `| ${status} ${r.testName} | ${r.agentType} | ${c.charCount} | ${c.questionCount} | ${c.toolCallCount} | ${c.verbosityRating} | ${c.proactivityRating} | ${c.entityCardCount} (${c.entityCardsWithScore} scored) |\n`;
+    const cardsInfo = c.entityCardsWithScore > 0 ? `${c.entityCardCount} (⚠️ ${c.entityCardsWithScore} with matchScore)` : `${c.entityCardCount}`;
+    const ackInfo = c.toolCallCount > 0 ? (c.hasQuickAck ? '✅' : '❌') : 'N/A';
+    md += `| ${status} ${r.testName} | ${r.agentType} | ${c.charCount} | ${c.questionCount} | ${c.toolCallCount} | ${c.verbosityRating} | ${c.proactivityRating} | ${ackInfo} | ${cardsInfo} |\n`;
   }
 
   // ── CALIBRATION ISSUES ──
@@ -522,11 +557,22 @@ function writeCalibrationReport(results: TestResult[]) {
     md += '\n';
   }
 
-  const noScore = results.filter(r => r.calibration.entityCardCount > 0 && r.calibration.entityCardsWithScore < r.calibration.entityCardCount);
-  if (noScore.length > 0) {
-    md += `### Entity Cards Missing matchScore\n`;
-    for (const r of noScore) {
-      md += `- **${r.testName}**: ${r.calibration.entityCardCount} cards, only ${r.calibration.entityCardsWithScore} have matchScore\n`;
+  // Check missing quick ack (agent didn't output text before first tool call)
+  const noAck = results.filter(r => r.calibration.toolCallCount > 0 && !r.calibration.hasQuickAck);
+  if (noAck.length > 0) {
+    md += `### ❌ Missing Quick Acknowledgment (slow time-to-first-token)\n`;
+    for (const r of noAck) {
+      md += `- **${r.testName}**: No text before first tool call — user sees nothing until tool completes\n`;
+    }
+    md += '\n';
+  }
+
+  // Check entity cards have FORBIDDEN extra data (matchScore is a violation per perimeter)
+  const withScore = results.filter(r => r.calibration.entityCardsWithScore > 0);
+  if (withScore.length > 0) {
+    md += `### ❌ Entity Cards Contain Forbidden matchScore\n`;
+    for (const r of withScore) {
+      md += `- **${r.testName}**: ${r.calibration.entityCardsWithScore} cards have matchScore (VIOLATION — cards must only contain {"id":"uuid"})\n`;
     }
     md += '\n';
   }
@@ -615,14 +661,28 @@ async function main() {
 
   try {
     section('Setup');
+
+    // DB pool warmup — prevent ECONNRESET on first queries
+    await pool.query('SELECT 1');
+    log('green', '  DB pool warmed up');
+
     const talent = await findTestTalent();
     const org = await findTestOrg(talent.id);
     const allResults: TestResult[] = [];
 
+    // Filter tests if CLI args provided
+    const filteredTests = FILTER_ARGS.length > 0
+      ? TESTS.filter(t => FILTER_ARGS.some(f => t.name.toLowerCase().includes(f)))
+      : TESTS;
+
+    if (FILTER_ARGS.length > 0) {
+      log('cyan', `  Running ${filteredTests.length}/${TESTS.length} tests (filter: ${FILTER_ARGS.join(', ')})`);
+    }
+
     // Group tests by agent type
-    const explorerTests = TESTS.filter(t => t.agentType === 'explorer');
-    const studyTests = TESTS.filter(t => t.agentType === 'study');
-    const orgTests = TESTS.filter(t => t.agentType === 'org');
+    const explorerTests = filteredTests.filter(t => t.agentType === 'explorer');
+    const studyTests = filteredTests.filter(t => t.agentType === 'study');
+    const orgTests = filteredTests.filter(t => t.agentType === 'org');
 
     // ─── EXPLORER TESTS ────────────────────────────
     if (explorerTests.length > 0) {
@@ -641,7 +701,7 @@ async function main() {
             testName: test.name, agentType: test.agentType, targetTool: test.targetTool,
             message: test.message, success: false, output: '', toolCalls: [],
             duration: 0, errors: [`Crash: ${error.message}`],
-            calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive' },
+            calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive', hasQuickAck: false, quickAckText: '' },
           });
         }
       }
@@ -649,6 +709,7 @@ async function main() {
 
     // ─── STUDY TESTS ─────────────────────────────
     if (studyTests.length > 0) {
+      await pool.query('SELECT 1'); // keepalive between batches
       header('TALENT STUDY AGENT');
       const studyCtx = await buildTestContext(talent.id, 'study');
       const studyAgent = createTalentAgent(studyCtx);
@@ -663,7 +724,7 @@ async function main() {
             testName: test.name, agentType: test.agentType, targetTool: test.targetTool,
             message: test.message, success: false, output: '', toolCalls: [],
             duration: 0, errors: [`Crash: ${error.message}`],
-            calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive' },
+            calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive', hasQuickAck: false, quickAckText: '' },
           });
         }
       }
@@ -671,6 +732,7 @@ async function main() {
 
     // ─── ORG TESTS ───────────────────────────────
     if (orgTests.length > 0 && org) {
+      await pool.query('SELECT 1'); // keepalive between batches
       header('ORGANIZATION AGENT');
       const orgCtx = buildOrgTestContext(talent.id, talent.name, org);
       const orgAgent = createOrgAgent(orgCtx);
@@ -685,7 +747,7 @@ async function main() {
             testName: test.name, agentType: test.agentType, targetTool: test.targetTool,
             message: test.message, success: false, output: '', toolCalls: [],
             duration: 0, errors: [`Crash: ${error.message}`],
-            calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive' },
+            calibration: { charCount: 0, sentenceCount: 0, asksQuestion: false, questionCount: 0, entityCardCount: 0, entityCardsWithScore: 0, usedToolsImmediately: false, toolCallCount: 0, verbosityRating: 'concise', proactivityRating: 'passive', hasQuickAck: false, quickAckText: '' },
           });
         }
       }
@@ -723,7 +785,8 @@ async function main() {
       const statusColor = r.success ? 'green' : 'red';
       const vFlag = (r.calibration.verbosityRating === 'verbose' || r.calibration.verbosityRating === 'very_verbose') ? ' [VERBOSE]' : '';
       const pFlag = r.calibration.proactivityRating === 'passive' ? ' [PASSIVE]' : '';
-      log(statusColor, `  ${status} ${r.testName} — ${r.calibration.charCount}ch, ${r.calibration.toolCallCount}t, ${r.calibration.questionCount}q${vFlag}${pFlag}`);
+      const aFlag = (r.calibration.toolCallCount > 0 && !r.calibration.hasQuickAck) ? ' [NO ACK]' : '';
+      log(statusColor, `  ${status} ${r.testName} — ${r.calibration.charCount}ch, ${r.calibration.toolCallCount}t, ${r.calibration.questionCount}q${vFlag}${pFlag}${aFlag}`);
     }
 
     // Tool usage

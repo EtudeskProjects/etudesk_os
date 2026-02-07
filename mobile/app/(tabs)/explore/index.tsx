@@ -246,9 +246,10 @@ export default function ExploreScreen() {
     }
   };
 
-  // Filtered and sorted data (excluding expired)
+  // Filtered and sorted data (excluding expired and private)
   const allFilteredOpportunities = useMemo(() => {
-    const nonExpired = filterExpired(opportunities);
+    const publicOnly = opportunities.filter(opp => (opp.visibility || 'PUBLIC') === 'PUBLIC');
+    const nonExpired = filterExpired(publicOnly);
     return sortItems(filterBySearch(nonExpired, searchQuery), sortOption);
   }, [opportunities, searchQuery, sortOption]);
 

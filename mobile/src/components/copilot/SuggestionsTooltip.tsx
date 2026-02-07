@@ -49,12 +49,12 @@ export function SuggestionsTooltip({
     const getDefaultSuggestions = useCallback(() => {
         if (mode === 'study') {
             return isOrg
-                ? ['Analyser l\'engagement', 'Gérer les ressources', 'Optimiser la formation', 'Synthèse des membres']
-                : ['Élucider ce concept', 'Évaluer mes acquis', 'Synthétiser la session', 'Approfondir la leçon'];
+                ? ['Évalue les candidats reçus', 'Comment rédiger une offre ?', 'Résume ce document', 'Tendances emploi du secteur']
+                : ['Prépare-moi pour un entretien', 'Analyse mes compétences', 'Crée un quiz sur un sujet', 'Résume mon CV et conseille-moi'];
         } else {
             return isOrg
-                ? ['Statistiques d\'excellence', 'Découvrir des talents', 'Raffiner une annonce', 'Convier des membres']
-                : ['Explorer les opportunités', 'Bonifier mon profil', 'Institutions partenaires', 'Écosystèmes de croissance'];
+                ? ['Candidatures de ce mois', 'Trouve des profils développeurs', 'Stats de mes offres', 'Génère une fiche de poste']
+                : ['Offres qui matchent mon profil', 'Génère mon CV en PDF', 'Communautés dans mon secteur', 'Ajoute une compétence'];
         }
     }, [mode, isOrg]);
 
@@ -161,7 +161,7 @@ export function SuggestionsTooltip({
                                     size={14}
                                     color={colors.primary}
                                     strokeWidth={ICON.strokeWidth}
-                                    style={isLoading ? styles.spinning : undefined}
+                                    style={isLoading ? { opacity: 0.5 } : undefined}
                                 />
                             </TouchableOpacity>
                             {/* Close button */}

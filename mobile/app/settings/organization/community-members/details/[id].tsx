@@ -653,7 +653,7 @@ export default function CommunityMemberDetailsScreen() {
                                 {
                                   text: 'Refuser',
                                   style: 'destructive',
-                                  onPress: (reason) => handleUpdateStatus(status, reason),
+                                  onPress: (reason?: string) => handleUpdateStatus(status, reason),
                                 },
                               ],
                               'plain-text'
@@ -698,7 +698,7 @@ export default function CommunityMemberDetailsScreen() {
           <View style={styles.metaRow}>
             <Text style={[styles.metaLabel, { color: colors.gray500 }]}>Date de demande:</Text>
             <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
-              {formatDate(member?.created_at)}
+              {formatDate(member?.created_at!)}
             </Text>
           </View>
           {member?.joined_at && (
@@ -818,7 +818,7 @@ export default function CommunityMemberDetailsScreen() {
                 senderName={message.sender_type === 'TALENT' ? (message.sender_name || member?.talent?.first_name || 'Membre') : undefined}
                 createdAt={message.created_at}
                 proposedDatetime={message.proposed_datetime}
-                datetimeType={message.datetime_type}
+                datetimeType={message.datetime_type as any}
                 attachments={message.attachments}
               />
             ))

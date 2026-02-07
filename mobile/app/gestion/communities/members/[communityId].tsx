@@ -205,7 +205,7 @@ export default function CommunityMembersScreen() {
             )}
 
             <Text style={[styles.appliedDate, { color: colors.gray500 }]}>
-              {formatRelativeTime(item.created_at)}
+              {formatRelativeTime(item.created_at!)}
             </Text>
           </View>
         </View>

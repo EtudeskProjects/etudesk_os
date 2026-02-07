@@ -27,7 +27,7 @@ import {
   AlertCircle,
   X,
   Trash2,
-  Brain,
+  Square,
   RefreshCw,
   Pencil,
   Copy,
@@ -114,7 +114,7 @@ export default function AssistantScreen() {
     study: { bg: withOpacity(colors.success, OPACITY[10]), text: colors.success },
   };
   const { t } = useI18n();
-  const { isOrganizationSpace } = useSpace();
+  const { isOrganizationSpace, selectedOrg } = useSpace();
   const { user } = useAuth();
   const router = useRouter();
   const inputRef = useRef<TextInput>(null);
@@ -384,7 +384,7 @@ export default function AssistantScreen() {
                     ...m,
                     segments: m.segments.map((seg) =>
                       seg.type === 'tool' && seg.tool?.callId === tool.callId
-                        ? { ...seg, tool: { ...seg.tool!, summary: tool.summary, duration: tool.duration, status: tool.status, error: tool.error } }
+                        ? { ...seg, tool: { ...seg.tool!, summary: tool.summary, result: tool.result, duration: tool.duration, status: tool.status, error: tool.error } }
                         : seg
                     ),
                   }
@@ -511,6 +511,20 @@ export default function AssistantScreen() {
     startStream(answer);
   }, [isSending, startStream]);
 
+  // Stop the current stream
+  const handleStop = useCallback(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setIsSending(false);
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.isStreaming
+          ? { ...m, isStreaming: false, segments: m.segments.map((seg) => seg.type === 'tool' && seg.tool?.status === 'running' ? { ...seg, tool: { ...seg.tool, status: 'success' as const } } : seg) }
+          : m
+      )
+    );
+  }, []);
+
   // Start new conversation
   const handleNewConversation = () => {
     abortControllerRef.current?.abort();
@@ -627,9 +641,15 @@ export default function AssistantScreen() {
       <View style={styles.orbContainer}>
         <PulsingOrb size={100} />
       </View>
-      <Text style={[styles.greeting, { color: colors.textPrimary }]}>
-        Bienvenue <Text style={{ color: colors.primary, fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold }}>{firstName}</Text>. Comment puis-je éclairer votre chemin aujourd'hui ?
-      </Text>
+      {isOrganizationSpace ? (
+        <Text style={[styles.greeting, { color: colors.textPrimary }]}>
+          <Text style={{ color: colors.primary, fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold }}>{selectedOrg?.name || 'Organisation'}</Text> — recrutement, talents, communautés ou espaces : que souhaitez-vous piloter ?
+        </Text>
+      ) : (
+        <Text style={[styles.greeting, { color: colors.textPrimary }]}>
+          Bienvenue <Text style={{ color: colors.primary, fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold }}>{firstName}</Text>. Comment puis-je éclairer votre chemin aujourd'hui ?
+        </Text>
+      )}
     </ScrollView>
   );
 
@@ -682,12 +702,14 @@ export default function AssistantScreen() {
                     return <ToolBlock key={`seg-${idx}`} tool={seg.tool} />;
                   }
                   if (seg.type === 'text' && seg.content) {
-                    const isInteractiveQuiz = msgIdx === messages.length - 1 && !message.isStreaming && !isSending;
+                    const isLastMessage = msgIdx === messages.length - 1 && !message.isStreaming && !isSending;
                     return (
                       <MarkdownRenderer
                         key={`seg-${idx}`}
                         content={seg.content}
-                        onQuizAnswer={isInteractiveQuiz ? handleQuizAnswer : undefined}
+                        onQuizAnswer={isLastMessage ? handleQuizAnswer : undefined}
+                        sessionId={sessionId || undefined}
+                        interactiveConfirmation={!message.isStreaming}
                       />
                     );
                   }
@@ -970,15 +992,17 @@ export default function AssistantScreen() {
                 <TouchableOpacity
                   style={[
                     styles.sendButton,
-                    { backgroundColor: colors.primary },
-                    ((!inputText.trim() && attachments.length === 0) || isSending || audioRecorder.state.isRecording) && { backgroundColor: colors.gray200 },
+                    isSending
+                      ? { backgroundColor: colors.textPrimary }
+                      : { backgroundColor: colors.primary },
+                    !isSending && ((!inputText.trim() && attachments.length === 0) || audioRecorder.state.isRecording) && { backgroundColor: colors.gray200 },
                   ]}
-                  onPress={handleSend}
-                  disabled={(!inputText.trim() && attachments.length === 0) || isSending || audioRecorder.state.isRecording}
+                  onPress={isSending ? handleStop : handleSend}
+                  disabled={!isSending && ((!inputText.trim() && attachments.length === 0) || audioRecorder.state.isRecording)}
                   activeOpacity={0.8}
                 >
                   {isSending ? (
-                    <Brain size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+                    <Square size={ICON.size.sm} color={colors.textOnPrimary} fill={colors.textOnPrimary} strokeWidth={0} />
                   ) : (
                     <SendHorizontal
                       size={ICON.size.md}

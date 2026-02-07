@@ -372,7 +372,7 @@ export default function SpaceInvitationsScreen() {
         </View>
       </Modal>
 
-      <FooterNav activeTab="gestion" />
+      <FooterNav />
     </SafeAreaView>
   );
 }

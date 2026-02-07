@@ -192,7 +192,7 @@ export default function EditSpaceScreen() {
           setRegion(space.region || '');
           setCity(space.city || '');
           setSurfaceM2(space.surface_m2 ? Math.round(space.surface_m2).toString() : '');
-          setCapacity(space.capacity_max ? Math.round(space.capacity_max).toString() : (space.capacity ? Math.round(space.capacity).toString() : ''));
+          setCapacity(space.capacity ? Math.round(space.capacity).toString() : '');
           setSelectedEquipment((space.equipment as SpaceEquipment[]) || []);
           setSelectedAmenities((space.amenities as SpaceAmenity[]) || []);
           setIsAccessible(space.is_accessible || false);
@@ -287,7 +287,7 @@ export default function EditSpaceScreen() {
         sectors: selectedSectors.length > 0 ? selectedSectors : undefined,
         equipment: selectedEquipment.length > 0 ? selectedEquipment : undefined,
         amenities: selectedAmenities.length > 0 ? selectedAmenities : undefined,
-        rules: rules || undefined,
+        booking_rules: rules ? [rules] : undefined,
         hourly_rate: hourlyRate ? parseFloat(hourlyRate) : undefined,
         daily_rate: dailyRate ? parseFloat(dailyRate) : undefined,
         weekly_rate: weeklyRate ? parseFloat(weeklyRate) : undefined,

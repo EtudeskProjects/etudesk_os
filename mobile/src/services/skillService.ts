@@ -61,7 +61,7 @@ const skillService = {
   },
 
   async mergeSkills(): Promise<MergeReport> {
-    const response = await api.post<MergeReport>('/api/skills/my/merge');
+    const response = await api.post<MergeReport>('/api/skills/my/merge', {});
     return response.data;
   },
 };

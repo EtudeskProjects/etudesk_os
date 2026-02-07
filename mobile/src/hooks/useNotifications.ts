@@ -18,7 +18,7 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
-  }),
+  } as any),
 });
 
 export interface NotificationData {
@@ -177,7 +177,7 @@ export function useNotifications() {
   // Mark as read
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
-      await api.put(`/api/notifications/${notificationId}/read`);
+      await api.put(`/api/notifications/${notificationId}/read`, {});
       setNotifications(prev =>
         prev.map(n => n.id === notificationId ? { ...n, read_at: new Date().toISOString() } : n)
       );
@@ -191,7 +191,7 @@ export function useNotifications() {
   // Mark all as read
   const markAllAsRead = useCallback(async () => {
     try {
-      await api.put('/api/notifications/read-all');
+      await api.put('/api/notifications/read-all', {});
       setNotifications(prev =>
         prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() }))
       );

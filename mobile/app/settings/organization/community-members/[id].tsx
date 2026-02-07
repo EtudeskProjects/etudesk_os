@@ -67,8 +67,8 @@ export default function CommunityMembersScreen() {
 
       setCommunity(communityResponse.data);
       // Backend returns { data: members[], count, statusCounts }
-      setMembers(membersResponse.data || []);
-      setStatusCounts(membersResponse.statusCounts || {});
+      setMembers(membersResponse.data?.data || []);
+      setStatusCounts(membersResponse.data?.statusCounts || {});
     } catch (error: any) {
       console.error('Error loading data:', error);
       Alert.alert('Erreur', error?.error || 'Impossible de charger les membres.');
@@ -83,8 +83,8 @@ export default function CommunityMembersScreen() {
     setIsRefreshing(true);
     try {
       const response = await communityService.getCommunityMembers(communityId);
-      setMembers(response.data || []);
-      setStatusCounts(response.statusCounts || {});
+      setMembers(response.data?.data || []);
+      setStatusCounts(response.data?.statusCounts || {});
     } catch (error) {
       console.error('Error refreshing members:', error);
     } finally {
@@ -128,7 +128,7 @@ export default function CommunityMembersScreen() {
         {
           text: 'Refuser',
           style: 'destructive',
-          onPress: (reason) => handleUpdateStatus(membershipId, 'REJECTED', reason),
+          onPress: (reason?: string) => handleUpdateStatus(membershipId, 'REJECTED', reason),
         },
       ],
       'plain-text'

@@ -4,7 +4,7 @@
  */
 
 import { Response } from 'express';
-import { run } from '@openai/agents';
+import { run, InputGuardrailTripwireTriggered } from '@openai/agents';
 import type { Agent, AgentInputItem } from '@openai/agents';
 import { SSEEvent, MessageSegment } from '../types';
 import { createTitleAgent, createSuggestionsAgent } from '../../ai/agent-factory';
@@ -14,7 +14,7 @@ import { getFileBuffer } from '../../storage.service';
 
 import { logger } from '../../../utils';
 
-const MAX_TOOL_CALLS = 12;
+const MAX_TOOL_CALLS = 20;
 const MAX_TURN_DURATION_MS = 120_000; // 2 minutes
 /**
  * Initialize SSE headers on the response
@@ -88,7 +88,7 @@ export async function runAgentWithSSE(
       userMessage += `\n\n[Pièces jointes — Documents]\n${docList}\nIMPORTANT: Hand off to FileReaderAgent with the documentId above to read and analyze each attached document.`;
     }
 
-    // For images → include as vision content parts (GPT-4.1 multimodal)
+    // For images → include as vision content parts (GPT-5 multimodal)
     if (imageAttachments.length > 0) {
       const imgNames = imageAttachments.map((a) => `- ${a.name}`).join('\n');
       userMessage += `\n\n[Pièces jointes — Images]\n${imgNames}\nThe images are provided below for direct visual analysis. Describe and analyze them.`;
@@ -250,8 +250,17 @@ export async function runAgentWithSSE(
         : JSON.stringify((result as any).finalOutput);
     }
   } catch (error: any) {
-    logger.error('SSE stream error:', error);
-    sendSSE(res, { type: 'error', error: error.message || 'Erreur interne' });
+    if (error instanceof InputGuardrailTripwireTriggered) {
+      const classification = error.result?.output?.outputInfo?.classification || 'BLOCKED';
+      logger.warn(`[guardrail] Input blocked — classification: ${classification}`);
+      const userMessage = classification === 'INJECTION'
+        ? 'Je ne peux pas répondre à ce type de requête. Reformulez votre question en lien avec la plateforme.'
+        : 'Cette requête ne peut pas être traitée. Je suis là pour vous accompagner sur la plateforme Etudesk.';
+      sendSSE(res, { type: 'error', error: userMessage });
+    } else {
+      logger.error('SSE stream error:', error);
+      sendSSE(res, { type: 'error', error: error.message || 'Erreur interne' });
+    }
   }
 
   return { finalOutput, toolTrace, segments };
@@ -267,7 +276,7 @@ function safeParseArgs(args: string): Record<string, unknown> | undefined {
 }
 
 /**
- * Generate a session title using Agents SDK (gpt-4o-mini)
+ * Generate a session title using Agents SDK (gpt-5-nano)
  */
 export async function generateSessionTitle(message: string): Promise<string> {
   try {
@@ -282,7 +291,7 @@ export async function generateSessionTitle(message: string): Promise<string> {
 }
 
 /**
- * Generate prompt suggestions using Agents SDK (gpt-4o-mini)
+ * Generate prompt suggestions using Agents SDK (gpt-5-nano)
  */
 export async function generateSuggestions(
   mode: string,

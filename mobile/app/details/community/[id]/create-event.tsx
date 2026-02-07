@@ -180,7 +180,7 @@ export default function CreateEventScreen() {
             const metadata = {
                 title: title.trim(),
                 location,
-                location_type: isOnline ? 'ONLINE' : 'PHYSICAL',
+                location_type: (isOnline ? 'ONLINE' : 'IN_PERSON') as 'ONLINE' | 'IN_PERSON',
                 start_date: startDate.toISOString(),
                 end_date: endDate.toISOString(),
             };
@@ -223,7 +223,7 @@ export default function CreateEventScreen() {
             const metadata = {
                 title: title.trim(),
                 location,
-                location_type: isOnline ? 'ONLINE' : 'PHYSICAL',
+                location_type: (isOnline ? 'ONLINE' : 'IN_PERSON') as 'ONLINE' | 'IN_PERSON',
                 start_date: startDate.toISOString(),
                 end_date: endDate.toISOString(),
             };

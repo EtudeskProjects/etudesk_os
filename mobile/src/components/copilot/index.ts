@@ -20,3 +20,4 @@ export { DiagramBlock } from './blocks/DiagramBlock';
 export { ImageBlock } from './blocks/ImageBlock';
 export { ChartBlock } from './blocks/ChartBlock';
 export { CodeBlock } from './blocks/CodeBlock';
+export { ConfirmationBlock } from './blocks/ConfirmationBlock';

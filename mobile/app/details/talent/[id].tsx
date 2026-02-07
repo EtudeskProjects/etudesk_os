@@ -199,7 +199,9 @@ export default function TalentDetailScreen() {
 
   const createdAt = talent.created_at ? formatRelativeTime(talent.created_at) : null;
   const skills: Array<{ name: string; type?: string }> =
-    Array.isArray(talent.skills) ? talent.skills : [];
+    Array.isArray(talent.skills)
+      ? talent.skills.map((s: any) => typeof s === 'string' ? { name: s } : s)
+      : [];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>

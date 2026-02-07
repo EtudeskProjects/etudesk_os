@@ -459,7 +459,7 @@ export default function InvitationsScreen() {
 
     if (invitation._type === 'community') {
       const inv = invitation as CommunityInvitation & { _type: 'community' };
-      const isPrivate = inv.access_type === 'PRIVATE' || inv.access_type === 'MEMBERSHIP';
+      const isPrivate = (inv as any).access_type === 'PRIVATE' || (inv as any).access_type === 'MEMBERSHIP';
 
       return (
         <View

@@ -375,6 +375,9 @@ export const COMMUNITY_STATUS_LABELS: Record<CommunityStatus, string> = {
   ARCHIVED: 'Archivé',
 };
 
+// Sector type (used for filtering)
+export type Sector = string;
+
 // ═══════════════════════════════════════════════════════════════
 // ENUMS - DOCUMENT
 // ═══════════════════════════════════════════════════════════════
@@ -491,8 +494,9 @@ export interface Opportunity {
   deadline?: ISOTimestamp;
   start_date?: ISODate;
   duration?: string;
-  // Status
+  // Status & Visibility
   status?: OpportunityStatus;
+  visibility?: Visibility;
   // Metrics (utilisé dans explore.tsx et gestion.tsx)
   applications_count?: number;
   // User interaction state (utilisé dans explore.tsx)
@@ -595,8 +599,11 @@ export interface Talent {
   email: string;
   phone?: string;
   avatar_url?: string;
+  profile_picture_url?: string;
   // === PROFIL ===
   bio?: string;
+  headline?: string;
+  current_role?: string;
   gender?: 'M' | 'F' | 'OTHER';
   // === LOCALISATION ===
   city?: string;
@@ -658,6 +665,7 @@ export interface Community {
   sectors?: string[];
   // Images
   cover_image_url?: string; // Hero image (main image)
+  logo_url?: string;
   images?: string[]; // Gallery images
   // Location (pour communautés offline/hybrid)
   city?: string;
@@ -928,6 +936,7 @@ export interface OrganizationMember {
   user_id: UUID;
   role: OrganizationRole;
   status: MemberStatus;
+  permissions?: OrganizationPermission[];
   // User info
   display_name: string;
   email: string;
@@ -954,6 +963,7 @@ export interface OrganizationInvitation {
   organization_id: UUID;
   email: string;
   role: OrganizationRole;
+  permissions?: OrganizationPermission[];
   token: string;
   invited_by: UUID;
   invited_by_name?: string;
@@ -961,6 +971,23 @@ export interface OrganizationInvitation {
   status: InvitationStatus;
   created_at: ISOTimestamp;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// ORGANIZATION PERMISSIONS (stub — feature in progress)
+// ═══════════════════════════════════════════════════════════════
+
+export type OrganizationPermission = string;
+
+export const PERMISSION_LABELS: Record<string, string> = {};
+
+export const PERMISSION_GROUPS: Record<string, { label: string; permissions: string[] }> = {};
+
+export const DEFAULT_ROLE_PERMISSIONS: Record<OrganizationRole, string[]> = {
+  OWNER: [],
+  ADMIN: [],
+  MANAGER: [],
+  MEMBER: [],
+};
 
 // ═══════════════════════════════════════════════════════════════
 // INTERFACES - ASSISTANT / CHAT (utilisé dans assistant.tsx)

@@ -1,6 +1,6 @@
 /**
  * KYC Verification Prompt
- * Model: gpt-4o-mini (vision) | Output: JSON schema
+ * Model: gpt-5-mini (vision) | Output: JSON schema
  */
 
 export function buildKYCVerificationPrompt(

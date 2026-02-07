@@ -22,6 +22,7 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { PageLayout, EmptyState } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { spaceService, Space, SpaceBooking } from '../../../src/services';
 import { formatRelativeTime } from '../../../src/utils/date';
 import { formatPrice } from '../../../src/constants/space';
@@ -31,17 +32,18 @@ type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
 type FilterStatus = 'all' | BookingStatus;
 
 // Status configuration
-const getStatusConfig = (colors: any): Record<BookingStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
-  PENDING: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]), label: 'En attente' },
-  CONFIRMED: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]), label: 'Confirmée' },
-  CANCELLED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]), label: 'Annulée' },
-  COMPLETED: { color: colors.info, icon: CheckCircle2, bgColor: withOpacity(colors.info, OPACITY[15]), label: 'Terminée' },
+const getStatusConfig = (colors: any, t: (key: string) => string): Record<BookingStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
+  PENDING: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]), label: t('gestion.bookingStatus.pending') },
+  CONFIRMED: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]), label: t('gestion.bookingStatus.confirmed') },
+  CANCELLED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]), label: t('gestion.bookingStatus.cancelled') },
+  COMPLETED: { color: colors.info, icon: CheckCircle2, bgColor: withOpacity(colors.info, OPACITY[15]), label: t('gestion.bookingStatus.completed') },
 });
 
 export default function SpaceBookingsManagementScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [space, setSpace] = useState<Space | null>(null);
   const [bookings, setBookings] = useState<SpaceBooking[]>([]);
@@ -75,7 +77,7 @@ export default function SpaceBookingsManagementScreen() {
       setStatusCounts(counts);
     } catch (error) {
       console.error('Error loading data:', error);
-      Alert.alert('Erreur', 'Impossible de charger les réservations.');
+      Alert.alert(t('common.error'), t('gestion.bookings.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -110,18 +112,18 @@ export default function SpaceBookingsManagementScreen() {
       );
       handleRefresh();
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
+      Alert.alert(t('common.error'), error.error || t('gestion.bookings.statusUpdateError'));
     }
   };
 
   const handleConfirmBooking = (bookingId: string) => {
     Alert.alert(
-      'Confirmer la réservation',
-      'Voulez-vous confirmer cette réservation ?',
+      t('gestion.bookings.confirmTitle'),
+      t('gestion.bookings.confirmMessage'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Confirmer',
+          text: t('common.confirm'),
           onPress: () => handleUpdateStatus(bookingId, 'CONFIRMED'),
         },
       ]
@@ -130,12 +132,12 @@ export default function SpaceBookingsManagementScreen() {
 
   const handleCancelBooking = (bookingId: string) => {
     Alert.alert(
-      'Annuler la réservation',
-      'Voulez-vous annuler cette réservation ?',
+      t('gestion.bookings.cancelTitle'),
+      t('gestion.bookings.cancelMessage'),
       [
-        { text: 'Non', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Oui, annuler',
+          text: t('gestion.bookings.cancelYes'),
           style: 'destructive',
           onPress: () => handleUpdateStatus(bookingId, 'CANCELLED'),
         },
@@ -167,7 +169,7 @@ export default function SpaceBookingsManagementScreen() {
     return `${dateStr} - ${startTime} à ${endTime}`;
   };
 
-  const STATUS_CONFIG = getStatusConfig(colors);
+  const STATUS_CONFIG = getStatusConfig(colors, t);
 
   const renderBookingItem = ({ item }: { item: SpaceBooking }) => {
     const statusConfig = STATUS_CONFIG[item.status as BookingStatus] || STATUS_CONFIG.PENDING;
@@ -175,7 +177,7 @@ export default function SpaceBookingsManagementScreen() {
     const talent = item.talent;
     const bookerName = talent?.first_name && talent?.last_name
       ? `${talent.first_name} ${talent.last_name}`
-      : talent?.display_name || 'Utilisateur';
+      : talent?.display_name || t('common.user');
 
     return (
       <TouchableOpacity

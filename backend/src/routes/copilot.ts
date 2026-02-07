@@ -18,6 +18,7 @@ import {
   canUploadDocument,
   validateFile,
 } from '../services/documents/document.service';
+import { MODEL_STT } from '../services/ai/models';
 import {
   copilotService,
   createTalentAgent,
@@ -28,12 +29,19 @@ import {
   generateSessionTitle,
   generateSuggestions,
   loadTalentContext,
-  EXPLORER_CONTEXT_OPTIONS,
   COPILOT_MODES,
   type CopilotMode,
   type TalentContext,
   type OrgContext,
 } from '../services/copilot';
+import {
+  EXPLORER_CONTEXT_OPTIONS,
+  STUDY_CONTEXT_OPTIONS,
+  ORG_CONTEXT_OPTIONS,
+} from '../services/copilot/context-options';
+import { summarizeHistoryIfNeeded } from '../services/copilot/session-summarizer';
+import { handleConfirmation } from '../services/copilot/actions/action.handler';
+import { copilotChatLimiter, copilotGeneralLimiter } from '../middleware/rateLimit.middleware';
 
 const router = Router();
 
@@ -46,7 +54,7 @@ const router = Router();
  * Body: { sessionId?: string, message: string, mode?: 'explore' | 'study', organizationId?: string }
  * Response: Server-Sent Events stream
  */
-router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
@@ -72,12 +80,15 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
     // Initialize SSE
     initSSE(res);
 
-    // Get or create session
+    // Get existing session or create a new one
     let sessionId = inputSessionId;
     let session: any = null;
 
     if (sessionId) {
+      // Load the existing session (ownership check via talentId)
+      session = await copilotService.getSession(sessionId, talentId);
       if (!session) {
+        // Session not found or doesn't belong to user — create a fresh one
         session = await copilotService.createSession(talentId, validMode);
         sessionId = session.id;
       }
@@ -86,12 +97,29 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
       sessionId = session.id;
     }
 
-    // Load talent context
-    const contextOptions = EXPLORER_CONTEXT_OPTIONS;
+    // Load talent context with mode-specific options
+    const isOrg = !!organizationId;
+    const contextOptions = isOrg
+      ? ORG_CONTEXT_OPTIONS
+      : validMode === COPILOT_MODES.STUDY
+        ? STUDY_CONTEXT_OPTIONS
+        : EXPLORER_CONTEXT_OPTIONS;
     const talentContext = await loadTalentContext(talentId, contextOptions);
 
+    // Get user's preferred language from DB (takes priority over Accept-Language header)
+    let userLanguage: 'fr' | 'en' = 'fr';
+    if (req.userId) {
+      const langRes = await pool.query(
+        'SELECT preferred_language FROM users WHERE id = $1',
+        [req.userId]
+      );
+      const dbLang = langRes.rows[0]?.preferred_language;
+      if (dbLang === 'en' || dbLang === 'fr') {
+        userLanguage = dbLang;
+      }
+    }
+
     // Build agent context
-    const isOrg = !!organizationId;
     let agent: any;
 
     if (isOrg) {
@@ -105,7 +133,7 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
         organizationId,
         organizationName: orgInfo?.organizationName || 'Organisation',
         role: orgInfo?.role || 'MEMBER',
-        language: (req.language === 'en' ? 'en' : 'fr') as 'fr' | 'en',
+        language: userLanguage,
       };
       agent = createOrgAgent(orgCtx);
     } else {
@@ -113,7 +141,7 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
         ...talentContext,
         talentId,
         talentName: `${talentContext.profile.firstName || ''} ${talentContext.profile.lastName || ''}`.trim() || talentContext.profile.email,
-        language: (req.language === 'en' ? 'en' : 'fr') as 'fr' | 'en',
+        language: userLanguage,
         session: {
           currentMode: session.mode,
           conversationTopic: session.title,
@@ -145,11 +173,12 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
        WHERE session_id = $1 ORDER BY created_at ASC LIMIT 20`,
       [sessionId]
     );
-    // Exclude the user message we just added (last one)
-    const history = historyRes.rows.slice(0, -1).map((r: any) => ({
+    // Exclude the user message we just added (last one), then summarize if needed
+    const rawHistory = historyRes.rows.slice(0, -1).map((r: any) => ({
       role: r.role,
       content: r.content,
     }));
+    const history = await summarizeHistoryIfNeeded(rawHistory);
 
     // Run agent with SSE streaming (pass attachments so agent sees file context)
     const parsedAttachments = messageAttachments ? JSON.parse(messageAttachments) : undefined;
@@ -205,13 +234,12 @@ router.post('/chat', authMiddleware, async (req: AuthRequest, res: Response) => 
 // Simple in-memory cache for suggestions to boost speed
 interface CacheEntry {
   suggestions: string[];
-  lastMessageCount: number;
   timestamp: number;
 }
 const suggestionsCache = new Map<string, CacheEntry>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
-router.get('/suggestions', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
@@ -221,55 +249,45 @@ router.get('/suggestions', authMiddleware, async (req: AuthRequest, res: Respons
     const mode = (req.query.mode as string) || 'explore';
     const sessionId = req.query.sessionId as string | undefined;
 
-    // 1. Parallel data fetching for context and history
-    let conversationHistory: Array<{ role: string; content: string }> = [];
-    let talentContext: { firstName?: string; goals?: string[]; sectors?: string[] } | undefined;
-
-    const [historyRes, contextRes] = await Promise.all([
-      sessionId ? (async () => {
-        try {
-          const { pool } = await import('../services/database');
-          const result = await pool.query(
-            `SELECT role, content FROM copilot_messages 
-             WHERE session_id = $1 
-             ORDER BY created_at DESC 
-             LIMIT 4`,
-            [sessionId]
-          );
-          return result.rows.reverse();
-        } catch { return []; }
-      })() : Promise.resolve([]),
-      (async () => {
-        try {
-          const context = await loadTalentContext(talentId, EXPLORER_CONTEXT_OPTIONS);
-          return {
-            firstName: context.profile?.firstName,
-            goals: (context.profile as any)?.goals,
-            sectors: context.profile?.sectorsOfInterest,
-          };
-        } catch { return undefined; }
-      })()
-    ]);
-
-    conversationHistory = historyRes;
-    talentContext = contextRes;
-
-    // 2. Check Cache with secondary hit detection (matching history length)
+    // 1. Check cache FIRST — before any DB/AI calls
     const cacheKey = `${talentId}:${sessionId || 'new'}:${mode}`;
     const cached = suggestionsCache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp < CACHE_TTL) && cached.lastMessageCount === conversationHistory.length) {
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
       return res.json({
         success: true,
         data: { suggestions: cached.suggestions }
       });
     }
 
-    // 3. Generate suggestions with gpt-4.1-nano
+    // 2. Cache miss — lightweight parallel data fetch (NO loadTalentContext)
+    const { pool: dbPool } = await import('../services/database');
+
+    const [historyRows, profileRow] = await Promise.all([
+      sessionId
+        ? dbPool.query(
+            `SELECT role, content FROM copilot_messages
+             WHERE session_id = $1 ORDER BY created_at DESC LIMIT 4`,
+            [sessionId]
+          ).then(r => r.rows.reverse()).catch(() => [])
+        : Promise.resolve([]),
+      dbPool.query(
+        `SELECT first_name, goals, sectors FROM talents WHERE id = $1`,
+        [talentId]
+      ).then(r => r.rows[0]).catch(() => null)
+    ]);
+
+    const talentContext = profileRow ? {
+      firstName: profileRow.first_name,
+      goals: profileRow.goals,
+      sectors: profileRow.sectors,
+    } : undefined;
+
+    // 3. Generate suggestions with gpt-5-nano
     const { run } = await import('@openai/agents');
     const { createIntentSuggestionsAgent } = await import('../services/ai/agent-factory');
     const { buildIntentSuggestionsPrompt } = await import('../services/ai/prompts/session-utils.prompt');
 
-    const systemPrompt = buildIntentSuggestionsPrompt(mode, conversationHistory, talentContext);
+    const systemPrompt = buildIntentSuggestionsPrompt(mode, historyRows, talentContext);
     const agent = createIntentSuggestionsAgent(systemPrompt);
 
     let suggestions: string[] = [];
@@ -284,15 +302,11 @@ router.get('/suggestions', authMiddleware, async (req: AuthRequest, res: Respons
       suggestions = suggestions.slice(0, 4);
 
       // Update cache
-      suggestionsCache.set(cacheKey, {
-        suggestions,
-        lastMessageCount: conversationHistory.length,
-        timestamp: Date.now()
-      });
+      suggestionsCache.set(cacheKey, { suggestions, timestamp: Date.now() });
     } catch {
       suggestions = mode === 'study'
-        ? ['Approfondir cette notion', 'Évaluer mes acquis', 'Élucider ce concept', 'Synthétiser la session']
-        : ['Explorer les opportunités d\'élite', 'Solliciter cette institution', 'Bonifier mon profil', 'Découvrir des écosystèmes'];
+        ? ['Prépare-moi pour un entretien', 'Analyse mes compétences', 'Crée un quiz sur un sujet', 'Résume mon CV et conseille-moi']
+        : ['Offres qui matchent mon profil', 'Génère mon CV en PDF', 'Communautés dans mon secteur', 'Ajoute une compétence'];
     }
 
     res.json({
@@ -304,9 +318,46 @@ router.get('/suggestions', authMiddleware, async (req: AuthRequest, res: Respons
     res.json({
       success: true,
       data: {
-        suggestions: ['Comment puis-je vous guider ?', 'Explorer les opportunités', 'Découvrir les communautés', 'Bonifier votre profil'],
+        suggestions: ['Offres qui matchent mon profil', 'Génère mon CV en PDF', 'Communautés dans mon secteur', 'Analyse mes compétences'],
       },
     });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// ACTION CONFIRMATION
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/copilot/confirm - Execute a confirmed action
+ * Body: { action: string, entityId: string, sessionId?: string, data?: object }
+ * Returns: { success: boolean, message: string, data?: object }
+ */
+router.post('/confirm', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const talentId = req.talentId;
+    if (!talentId) {
+      return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
+    }
+
+    const { action, entityId, sessionId, data } = req.body;
+
+    if (!action || !entityId) {
+      return res.status(400).json({ error: 'action and entityId are required' });
+    }
+
+    const result = await handleConfirmation(talentId, { action, entityId, sessionId, data });
+
+    res.json({
+      success: result.success,
+      data: {
+        message: result.message,
+        ...result.data,
+      },
+    });
+  } catch (error) {
+    logger.error('Error in copilot confirm:', error);
+    res.status(500).json({ error: req.t('copilot:processingError') });
   }
 });
 
@@ -373,7 +424,7 @@ router.post(
       // Call Whisper API
       const transcription = await openai.audio.transcriptions.create({
         file: audioFile,
-        model: 'whisper-1',
+        model: MODEL_STT,
         language: 'fr', // French by default, auto-detect if not specified
         response_format: 'text',
       });

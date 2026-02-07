@@ -218,11 +218,11 @@ export default function EditOpportunityScreen() {
       setCompensationFrequency(opp.compensation_frequency || null);
       setDuration(opp.duration || '');
       setStatus(opp.status || 'DRAFT');
-      setVisibility((opp.visibility as Visibility) || 'PUBLIC');
+      setVisibility(((opp as any).visibility as Visibility) || 'PUBLIC');
 
       // Set organization ID for AI generation
-      if (opp.organizations && opp.organizations.length > 0) {
-        setOrganizationId(opp.organizations[0].id);
+      if ((opp as any).organizations && (opp as any).organizations.length > 0) {
+        setOrganizationId((opp as any).organizations[0].id);
       }
 
       if (opp.locations && opp.locations.length > 0) {
@@ -1234,7 +1234,7 @@ export default function EditOpportunityScreen() {
       <View style={styles.stepHeader}>
         <Eye size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
         <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Aperçu</Text>
-        <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
+        <Text style={[styles.toggleDescription, { color: colors.textSecondary }]}>
           Vérifiez toutes les informations avant enregistrement
         </Text>
       </View>

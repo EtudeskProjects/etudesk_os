@@ -85,7 +85,7 @@ class SpaceInvitationService {
    */
   async getSpaceInvitations(
     spaceId: string,
-    filters?: { limit?: number; offset?: number }
+    filters?: { status?: string; limit?: number; offset?: number }
   ): Promise<ApiResponse<{
     data: SpaceInvitation[];
     count: number;

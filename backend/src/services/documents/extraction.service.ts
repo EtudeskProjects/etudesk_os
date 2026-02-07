@@ -1,9 +1,10 @@
 /**
  * Document Extraction Service
- * Uses OpenAI gpt-4o-mini vision for structured metadata extraction from documents
+ * Uses OpenAI gpt-5-mini vision for structured metadata extraction from documents
  */
 
 import OpenAI from 'openai';
+import { MODEL_T2 } from '../ai/models';
 import {
   DocumentType,
   DOCUMENT_TYPES,
@@ -77,7 +78,7 @@ export interface ExtractionResult {
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * Extract metadata from a document using gpt-4o-mini vision
+ * Extract metadata from a document using gpt-5-mini vision
  */
 export async function extractDocumentMetadata(
   fileUrl: string,
@@ -136,7 +137,7 @@ export async function extractDocumentMetadata(
     }
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: MODEL_T2,
       messages: [
         { role: 'system', content: EXTRACTION_SYSTEM_PROMPT },
         { role: 'user', content: contentParts },

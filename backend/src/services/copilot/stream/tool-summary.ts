@@ -91,8 +91,12 @@ export function generateToolSummary(
         return count > 0 ? `${count} vidéo${count > 1 ? 's' : ''} trouvée${count > 1 ? 's' : ''}` : 'Aucune vidéo';
       }
 
-      case 'generate_document':
-        return 'Document généré';
+      case 'generate_document': {
+        const docId = (output as any)?.id;
+        const docTitle = (output as any)?.metadata?.title || (output as any)?.filename;
+        const label = docTitle ? `Document généré · ${String(docTitle).slice(0, 50)}` : 'Document généré';
+        return docId ? `${label} (sauvegardé)` : label;
+      }
 
       case 'generate_image':
         return 'Image générée';
@@ -101,11 +105,39 @@ export function generateToolSummary(
         return 'Diagramme généré';
 
       case 'web_search':
-        return 'Recherche terminée';
+        return 'Recherche web terminée';
 
+      case 'file_reader':
       case 'file_read': {
+        // Try to extract document title from the output (sub-agent result)
+        const docTitle = (output as any)?.document?.title
+          || (output as any)?.title;
+        if (docTitle) return `Lu · ${String(docTitle).slice(0, 60)}`;
         const name = args?.fileName || args?.name || args?.file;
         return name ? `Lu · ${String(name).slice(0, 60)}` : 'Document lu';
+      }
+
+      case 'manage_skills': {
+        const action = args?.action as string | undefined;
+        const skill = args?.skillName as string | undefined;
+        const actionLabels: Record<string, string> = {
+          add: 'Ajoutée',
+          update: 'Mise à jour',
+        };
+        const actionLabel = action ? actionLabels[action] || action : 'Modifiée';
+        return skill ? `${actionLabel} · ${skill}` : `Compétence ${actionLabel.toLowerCase()}`;
+      }
+
+      case 'execute_action': {
+        const action = args?.action as string | undefined;
+        const actionLabels: Record<string, string> = {
+          apply_opportunity: 'Candidature soumise',
+          join_community: 'Communauté rejointe',
+          book_space: 'Espace réservé',
+          accept_invitation: 'Invitation acceptée',
+          decline_invitation: 'Invitation déclinée',
+        };
+        return action ? actionLabels[action] || 'Action effectuée' : 'Action effectuée';
       }
 
       default:

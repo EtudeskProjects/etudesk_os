@@ -1,10 +1,11 @@
 /**
  * Daily Objective Service
- * Generates personalized daily objectives for talents and organizations using GPT-4.1-mini
+ * Generates personalized daily objectives for talents and organizations using GPT-4.1-nano
  * Cached for 24h per user/organization for cost efficiency
  */
 
 import OpenAI from 'openai';
+import { MODEL_T3 } from './ai/models';
 import { pool } from './database';
 import { logger } from '../utils';
 
@@ -227,7 +228,7 @@ Génère l'objectif (500 caractères max):`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: MODEL_T3,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 200,
       temperature: 0.7,
@@ -508,7 +509,7 @@ Génère l'objectif (500 caractères max):`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: MODEL_T3,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 200,
       temperature: 0.7,

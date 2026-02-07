@@ -80,6 +80,30 @@ export const searchLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Copilot chat limiter (expensive AI calls)
+export const copilotChatLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: isDev ? 30 : 10, // 10 messages per minute per IP in production
+  message: {
+    error: 'Trop de messages envoyés. Veuillez patienter quelques instants.',
+    retry_after: 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Copilot general limiter (suggestions, sessions, etc.)
+export const copilotGeneralLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: isDev ? 100 : 30, // 30 requests per minute per IP in production
+  message: {
+    error: 'Trop de requêtes copilot. Veuillez patienter.',
+    retry_after: 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Export endpoint limiter (PDFs, etc.)
 export const exportLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour

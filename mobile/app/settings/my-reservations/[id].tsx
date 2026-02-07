@@ -245,7 +245,7 @@ export default function ReservationDetailsScreen() {
               {statusConfig?.label || booking.status}
             </Text>
             <Text style={[styles.statusDate, { color: colors.gray600 }]}>
-              Ref: {booking.reference || booking.id.slice(0, 8).toUpperCase()}
+              Ref: {(booking as any).reference || booking.id.slice(0, 8).toUpperCase()}
             </Text>
           </View>
         </View>
@@ -329,14 +329,14 @@ export default function ReservationDetailsScreen() {
         </View>
 
         {/* Price Details */}
-        {booking.total_price && booking.total_price > 0 && (
+        {(booking as any).total_price && (booking as any).total_price > 0 && (
           <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
             <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Details du prix</Text>
 
             <View style={[styles.priceRow, styles.priceTotalRow, { borderTopColor: colors.gray200 }]}>
               <Text style={[styles.priceTotalLabel, { color: colors.textPrimary }]}>Total</Text>
               <Text style={[styles.priceTotalValue, { color: colors.primary }]}>
-                {booking.total_price.toLocaleString()} FCFA
+                {(booking as any).total_price.toLocaleString()} FCFA
               </Text>
             </View>
           </View>

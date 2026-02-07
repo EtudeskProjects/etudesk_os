@@ -323,7 +323,7 @@ export const SEED_OPPORTUNITIES: Opportunity[] = [
 // SPACES (Espaces réservables)
 // ============================================================================
 
-export const SEED_SPACES: Space[] = [
+export const SEED_SPACES: any[] = [
   {
     id: 'space-1',
     slug: 'salle-reunion-cocody',

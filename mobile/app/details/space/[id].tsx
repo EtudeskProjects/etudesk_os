@@ -65,6 +65,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { Button, ImageSlider, FooterNav } from '../../../src/components/ui';
 import { spaceService, Space, bookmarkService } from '../../../src/services';
@@ -144,6 +145,7 @@ export default function SpaceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { currentSpace, selectedOrg } = useSpace();
 
   const [space, setSpace] = useState<Space | null>(null);
@@ -185,7 +187,7 @@ export default function SpaceDetailScreen() {
       }
     } catch (error) {
       console.error('Error loading space:', error);
-      Alert.alert('Erreur', 'Impossible de charger cet espace');
+      Alert.alert(t('common.error'), t('space.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -308,7 +310,7 @@ export default function SpaceDetailScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Chargement de l'espace...
+            {t('space.loading')}
           </Text>
         </View>
       </SafeAreaView>
@@ -321,10 +323,10 @@ export default function SpaceDetailScreen() {
         <View style={styles.errorContainer}>
           <X size={48} color={colors.textDisabled} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>
-            Espace non trouve
+            {t('space.notFound')}
           </Text>
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>
-            Cet espace n'existe pas ou a ete supprime.
+            {t('space.notFoundDesc')}
           </Text>
           <TouchableOpacity
             style={[styles.errorButton, { backgroundColor: colors.primary }]}
@@ -389,10 +391,10 @@ export default function SpaceDetailScreen() {
 
         <View style={styles.contentPadded}>
           {/* Organization Card */}
-          {space.organization && (
+          {space.organization?.id && (
             <TouchableOpacity
               style={[styles.orgCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-              onPress={() => router.push(`/details/organization/${space.organization?.id}`)}
+              onPress={() => router.push(`/details/organization/${space.organization!.id}`)}
             >
               {space.organization.logo_url ? (
                 <Image
@@ -419,7 +421,7 @@ export default function SpaceDetailScreen() {
                   {(space.organization as any).type && (
                     <View style={[styles.orgTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                       <Text style={[styles.orgTagText, { color: colors.primary }]}>
-                        {ORGANIZATION_TYPE_LABELS[(space.organization as any).type] || (space.organization as any).type}
+                        {(ORGANIZATION_TYPE_LABELS as Record<string, string>)[(space.organization as any).type] || (space.organization as any).type}
                       </Text>
                     </View>
                   )}
@@ -451,7 +453,7 @@ export default function SpaceDetailScreen() {
             {space.is_accessible && (
               <View style={[styles.tag, { backgroundColor: withOpacity(colors.info, OPACITY[15]) }]}>
                 <Accessibility size={12} color={colors.info} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.tagText, { color: colors.info, marginLeft: 4 }]}>Accessible PMR</Text>
+                <Text style={[styles.tagText, { color: colors.info, marginLeft: 4 }]}>{t('space.accessible')}</Text>
               </View>
             )}
           </View>
@@ -463,16 +465,16 @@ export default function SpaceDetailScreen() {
               <View style={styles.metaItem}>
                 <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                 <View>
-                  <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Capacite</Text>
+                  <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('space.capacity')}</Text>
                   <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
-                    {space.capacity} {space.capacity > 1 ? 'personnes' : 'personne'}
+                    {space.capacity} {t('common.places')}
                   </Text>
                 </View>
               </View>
               <View style={styles.metaItem}>
                 <Ruler size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                 <View>
-                  <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Surface</Text>
+                  <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('space.surface')}</Text>
                   <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
                     {Math.round(space.surface_m2)} m2
                   </Text>
@@ -484,9 +486,9 @@ export default function SpaceDetailScreen() {
             <View style={styles.metaRowFull}>
               <MapPin size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
               <View style={styles.metaItemFull}>
-                <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Adresse</Text>
+                <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('space.address')}</Text>
                 <Text style={[styles.metaValue, { color: colors.textPrimary }]} numberOfLines={2}>
-                  {space.address || space.city || 'Non specifiee'}
+                  {space.address || space.city || t('common.notSpecified')}
                 </Text>
               </View>
             </View>
@@ -494,16 +496,16 @@ export default function SpaceDetailScreen() {
 
           {/* Pricing Section */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tarification</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('space.pricing')}</Text>
             <View style={[styles.pricingCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
               {isFreeSpace() ? (
                 <View style={styles.priceRow}>
                   <View style={styles.priceLeft}>
                     <CheckCircle size={ICON.size.sm} color={colors.success} strokeWidth={ICON.strokeWidth} />
-                    <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Acces</Text>
+                    <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>{t('space.access')}</Text>
                   </View>
                   <Text style={[styles.priceValue, { color: colors.success, fontWeight: '600' }]}>
-                    Gratuit
+                    {t('common.free')}
                   </Text>
                 </View>
               ) : (
@@ -512,10 +514,10 @@ export default function SpaceDetailScreen() {
                     <View style={styles.priceRow}>
                       <View style={styles.priceLeft}>
                         <Clock size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                        <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>A l'heure</Text>
+                        <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>{t('space.hourly')}</Text>
                       </View>
                       <Text style={[styles.priceValue, { color: colors.textPrimary }]}>
-                        {formatPrice(space.hourly_rate)}
+                        {formatPrice(space.hourly_rate!)}
                       </Text>
                     </View>
                   )}
@@ -523,10 +525,10 @@ export default function SpaceDetailScreen() {
                     <View style={styles.priceRow}>
                       <View style={styles.priceLeft}>
                         <Calendar size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                        <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>A la journee</Text>
+                        <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>{t('space.daily')}</Text>
                       </View>
                       <Text style={[styles.priceValue, { color: colors.textPrimary }]}>
-                        {formatPrice(space.daily_rate)}
+                        {formatPrice(space.daily_rate!)}
                       </Text>
                     </View>
                   )}
@@ -534,10 +536,10 @@ export default function SpaceDetailScreen() {
                     <View style={styles.priceRow}>
                       <View style={styles.priceLeft}>
                         <Calendar size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                        <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>A la semaine</Text>
+                        <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>{t('space.weekly')}</Text>
                       </View>
                       <Text style={[styles.priceValue, { color: colors.textPrimary }]}>
-                        {formatPrice(space.weekly_rate)}
+                        {formatPrice(space.weekly_rate!)}
                       </Text>
                     </View>
                   )}
@@ -545,10 +547,10 @@ export default function SpaceDetailScreen() {
                     <View style={styles.priceRow}>
                       <View style={styles.priceLeft}>
                         <Calendar size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                        <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Au mois</Text>
+                        <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>{t('space.monthly')}</Text>
                       </View>
                       <Text style={[styles.priceValue, { color: colors.textPrimary }]}>
-                        {formatPrice(space.monthly_rate)}
+                        {formatPrice(space.monthly_rate!)}
                       </Text>
                     </View>
                   )}
@@ -767,7 +769,7 @@ export default function SpaceDetailScreen() {
         <View style={styles.ctaContainer}>
           {canManageSpace ? (
             <Button
-              title="Gerer l'espace"
+              title={t('space.manage')}
               onPress={handleManageSpace}
               fullWidth
               variant="outline"
@@ -775,7 +777,7 @@ export default function SpaceDetailScreen() {
             />
           ) : currentSpace !== 'organization' && space.is_bookable && space.status === 'ACTIVE' ? (
             <Button
-              title="Reserver l'espace"
+              title={t('space.bookSpace')}
               onPress={handleBookNow}
               fullWidth
               variant="primary"

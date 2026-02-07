@@ -16,7 +16,8 @@ class CommunityActivityService {
   ): Promise<{ data: CommunityActivity[], nextCursor: string | null }> {
     const params: any = { limit };
     if (cursor) params.cursor = cursor;
-    return api.get(`/api/${communityId}/activities`, params);
+    const response = await api.get<any>(`/api/${communityId}/activities`, params);
+    return { data: response.data?.data ?? response.data ?? [], nextCursor: response.data?.nextCursor ?? null };
   }
 
   /**

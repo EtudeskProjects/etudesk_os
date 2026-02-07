@@ -23,3 +23,7 @@ dist/
 
 # Uploads
 backend/uploads/
+
+# Generated copilot outputs
+backend/generated-docs/
+backend/generated-images/

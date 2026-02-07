@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { getFullImageUrl } from '../../utils/image';
 import {
   MapPin,
   Clock,
@@ -129,7 +130,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     return (
       <View style={styles.orgRow}>
         {opportunity.organization?.logo_url ? (
-          <Image source={{ uri: opportunity.organization.logo_url }} style={styles.orgLogo} />
+          <Image source={{ uri: getFullImageUrl(opportunity.organization.logo_url) || '' }} style={styles.orgLogo} />
         ) : (
           <View style={[styles.orgLogoPlaceholder, { backgroundColor: colors.gray200 }]}>
             <Text style={[styles.orgLogoText, { color: colors.gray500 }]}>

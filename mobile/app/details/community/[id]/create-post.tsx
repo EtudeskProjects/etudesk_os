@@ -280,8 +280,8 @@ export default function CreatePostScreen() {
                 limit: 20,
                 search: searchTerm
             });
-            if (response?.data) {
-                setMembers(response.data);
+            if (response?.data?.data) {
+                setMembers(response.data.data);
             }
         } catch (error) {
             setMembers([]);

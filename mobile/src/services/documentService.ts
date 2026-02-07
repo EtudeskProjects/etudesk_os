@@ -84,6 +84,7 @@ export interface TalentDocument {
   title?: string;
   description?: string;
   is_public: boolean;
+  is_primary?: boolean;
   is_verified: boolean;
   verified_at?: string;
   skills_count?: number;
@@ -293,10 +294,10 @@ async function uploadDocument(
     formData
   );
 
-  if (!response.document) {
+  if (!response.data?.document) {
     throw new Error(response.error || 'Failed to upload document');
   }
-  return response;
+  return response.data;
 }
 
 /**
@@ -369,15 +370,15 @@ async function updateDocument(
  */
 async function deleteDocument(documentId: string): Promise<{ message: string }> {
   const response = await api.delete<{ message: string }>(`/api/documents/${documentId}`);
-  return response;
+  return response.data;
 }
 
 /**
  * Retry document extraction
  */
 async function retryExtraction(documentId: string): Promise<{ message: string }> {
-  const response = await api.post<{ message: string }>(`/api/documents/${documentId}/retry`);
-  return response;
+  const response = await api.post<{ message: string }>(`/api/documents/${documentId}/retry`, {});
+  return response.data;
 }
 
 // ═══════════════════════════════════════════════════════════════

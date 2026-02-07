@@ -167,7 +167,7 @@ export default function SpacesListScreen() {
       />
       )}
 
-      <FooterNav activeTab="gestion" />
+      <FooterNav />
     </SafeAreaView>
   );
 }

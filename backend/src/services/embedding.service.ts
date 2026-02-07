@@ -9,6 +9,7 @@
 
 import OpenAI from 'openai';
 import { Pinecone } from '@pinecone-database/pinecone';
+import { MODEL_EMBEDDING } from './ai/models';
 import { pool } from './database';
 import { buildTalentObject } from './ai/talent-object';
 
@@ -26,7 +27,7 @@ const pinecone = new Pinecone({
 });
 
 const PINECONE_INDEX = process.env.PINECONE_INDEX || 'etudesk';
-const EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small';
+const EMBEDDING_MODEL = MODEL_EMBEDDING;
 const EMBEDDING_DIMENSION = parseInt(process.env.PINECONE_DIMENSION || '1536', 10);
 
 // Cache for embeddings to reduce API calls

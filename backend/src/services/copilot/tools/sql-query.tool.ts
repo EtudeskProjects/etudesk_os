@@ -148,7 +148,7 @@ export function createSqlQueryTool(
              JOIN spaces s ON r.space_id = s.id
              LEFT JOIN organizations org ON s.organization_id = org.id
              WHERE r.talent_id = $1
-             ORDER BY r.start_datetime DESC LIMIT 10`,
+             ORDER BY r.start_datetime DESC LIMIT 20`,
               [talentId]
             );
             return { reservations: res.rows };
@@ -361,7 +361,7 @@ export function createSqlQueryTool(
             if (contractType) { sql += ` AND o.contract_type = $${idx}`; p.push(contractType); idx++; }
             if (location) { sql += ` AND o.locations::text ILIKE '%' || $${idx} || '%'`; p.push(location); idx++; }
             sql += ` ORDER BY o.posted_at DESC NULLS LAST LIMIT $${idx}`;
-            p.push((lim as number) || 5);
+            p.push((lim as number) || 10);
             const res = await pool.query(sql, p);
             return { opportunities: res.rows };
           }
@@ -378,7 +378,7 @@ export function createSqlQueryTool(
             if (q) { sql += ` AND (c.name ILIKE '%' || $${idx} || '%' OR c.description ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
             if (type) { sql += ` AND c.type = $${idx}`; p.push(type); idx++; }
             sql += ` ORDER BY member_count DESC LIMIT $${idx}`;
-            p.push((lim as number) || 5);
+            p.push((lim as number) || 10);
             const res = await pool.query(sql, p);
             return { communities: res.rows };
           }
@@ -396,7 +396,7 @@ export function createSqlQueryTool(
             if (type) { sql += ` AND s.type = $${idx}`; p.push(type); idx++; }
             if (location) { sql += ` AND s.city ILIKE '%' || $${idx} || '%'`; p.push(location); idx++; }
             sql += ` ORDER BY s.created_at DESC NULLS LAST LIMIT $${idx}`;
-            p.push((lim as number) || 5);
+            p.push((lim as number) || 10);
             const res = await pool.query(sql, p);
             return { spaces: res.rows };
           }
@@ -413,7 +413,7 @@ export function createSqlQueryTool(
             if (q) { sql += ` AND (o.name ILIKE '%' || $${idx} || '%' OR o.description ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
             if (sectors) { sql += ` AND o.sectors && $${idx}::text[]`; p.push(sectors); idx++; }
             sql += ` ORDER BY o.name LIMIT $${idx}`;
-            p.push((lim as number) || 5);
+            p.push((lim as number) || 10);
             const res = await pool.query(sql, p);
             return { organizations: res.rows };
           }
@@ -429,7 +429,7 @@ export function createSqlQueryTool(
             let idx = 1;
             if (q) { sql += ` AND (COALESCE(t.first_name || ' ' || t.last_name, t.email) ILIKE '%' || $${idx} || '%' OR t.bio ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
             sql += ` ORDER BY t.first_name, t.last_name LIMIT $${idx}`;
-            p.push((lim as number) || 5);
+            p.push((lim as number) || 10);
             const res = await pool.query(sql, p);
             return { talents: res.rows };
           }

@@ -143,7 +143,7 @@ export const Paywall: React.FC<PaywallProps> = ({
                     <View style={[styles.trialBadge, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
                         <Calendar size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
                         <Text style={[styles.trialText, { color: colors.success }]}>
-                            {t('community.paywall.trialDays', { days: paywall.trial_days })}
+                            {t('community.paywall.trialDays', { days: paywall.trial_days || 0 })}
                         </Text>
                     </View>
                 )}

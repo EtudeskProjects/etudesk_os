@@ -1,10 +1,11 @@
 # Copilot Agent Perimeter — Guide des Cas d'Usage
 
-> Définition exacte du périmètre de chaque mode avec exemples, processus de réflexion et réponses idéales.
+> Definition exacte du perimetre de chaque mode avec exemples, processus de reflexion et reponses ideales.
+> Mis a jour : Fevrier 2026 (v2 — ajout actions de creation d'entites)
 
 ---
 
-## RÈGLE CRITIQUE : Rendu des Entités
+## REGLE CRITIQUE : Rendu des Entites
 
 ### Format Obligatoire
 
@@ -15,110 +16,120 @@
 ```
 
 **L'agent retourne UNIQUEMENT :**
-- Le **type** d'entité (`opportunity`, `community`, `space`, `talent`, `organization`)
-- L'**ID** (UUID) provenant des résultats des tools
+- Le **type** d'entite (`opportunity`, `community`, `space`, `talent`, `organization`, `document`)
+- L'**ID** (UUID) provenant des resultats des tools
 
-**L'agent ne génère JAMAIS :**
+**L'agent ne genere JAMAIS :**
 - Titre, nom, description
 - Localisation, prix, dates
 - Statistiques, scores
-- Aucune autre donnée
+- Aucune autre donnee
 
 ### Pourquoi ?
 
 | Raison | Explication |
 |--------|-------------|
-| **Anti-hallucination** | L'IA ne peut pas inventer de données — elle retourne ce que les tools renvoient |
-| **Cohérence** | Les données affichées sont toujours fraîches (récupérées de la DB au rendu) |
-| **Sécurité** | Pas de fuite de données via le modèle IA |
-| **Performance** | Payload SSE minimal, rendu optimisé côté client |
+| **Anti-hallucination** | L'IA ne peut pas inventer de donnees — elle retourne ce que les tools renvoient |
+| **Coherence** | Les donnees affichees sont toujours fraiches (recuperees de la DB au rendu) |
+| **Securite** | Pas de fuite de donnees via le modele IA |
+| **Performance** | Payload SSE minimal, rendu optimise cote client |
 
 ### Flow de Rendu
 
 ```
 1. Agent appelle tool (vector_query, sql_query)
-2. Tool retourne des résultats avec IDs
-3. Agent génère: ```entity:type {"id":"uuid"}```
+2. Tool retourne des resultats avec IDs
+3. Agent genere: ```entity:type {"id":"uuid"}```
 4. Frontend parse le markdown
 5. Frontend fetch GET /api/<entity>/<id>
-6. Frontend affiche la carte avec données fraîches
+6. Frontend affiche la carte avec donnees fraiches
 ```
 
 ---
 
-## Entités de la Plateforme
+## Entites de la Plateforme
 
-### Types d'Entités Supportés
+### Types d'Entites Supportes
 
 | Type | Table DB | Endpoint API | Description |
 |------|----------|--------------|-------------|
 | `talent` | `talents` | `/api/talents/:id` | Profil utilisateur |
 | `organization` | `organizations` | `/api/organizations/:id` | Organisation/entreprise |
 | `opportunity` | `opportunities` | `/api/opportunities/:id` | Offre (emploi, stage, freelance) |
-| `community` | `communities` | `/api/communities/:id` | Communauté |
-| `space` | `spaces` | `/api/spaces/:id` | Espace réservable |
+| `community` | `communities` | `/api/communities/:id` | Communaute |
+| `space` | `spaces` | `/api/spaces/:id` | Espace reservable |
+| `document` | `talent_documents` | `/api/talents/documents/:id` | Document genere (CV, rapport) |
 
-### Entités NON Rendues en Carte
+### Entites NON Rendues en Carte
 
 | Type | Raison | Comment les afficher |
 |------|--------|---------------------|
-| `talent_document` | Données privées | Mentionner dans le texte uniquement |
 | `publication` | Contenu contextuel | Lien ou citation inline |
 | `application` | Relation, pas ressource | Tableau ou liste texte |
 | `booking` | Relation, pas ressource | Tableau ou liste texte |
-| `notification` | Éphémère | Liste texte |
+| `notification` | Ephemere | Liste texte |
 
 ---
 
 ## Vue d'ensemble des 3 Modes
 
-| Mode | Agent | Objectif | Entités Affichables |
+| Mode | Agent | Objectif | Entites Affichables |
 |------|-------|----------|---------------------|
-| **Explore** | TalentAgent | Découverte plateforme | `opportunity`, `community`, `space`, `talent`, `organization` |
-| **Study** | TalentAgent | Apprentissage | Aucune (mode pédagogique) |
-| **Organization** | OrgAgent | Gestion organisation | `talent`, `opportunity` (propres) |
+| **Explore** | TalentAgent | Decouverte plateforme + actions talent | `opportunity`, `community`, `space`, `talent`, `organization`, `document` |
+| **Study** | TalentAgent | Apprentissage + gestion competences | Aucune (mode pedagogique) |
+| **Organization** | OrgAgent | Gestion organisation + creation d'entites | `talent`, `opportunity`, `document` |
 
 ---
 
 ## Mode 1 : EXPLORE
 
-### Périmètre
+### Perimetre
 
-| Catégorie | Accessible | Non Accessible |
+| Categorie | Accessible | Non Accessible |
 |-----------|------------|----------------|
-| **Opportunités** | Recherche, détails, recommandations | Création, modification |
-| **Communautés** | Recherche, détails, membres | Création, modération |
-| **Espaces** | Recherche, disponibilités | Réservation directe |
-| **Talents** | Recherche profils publics | Données privées |
-| **Documents perso** | Lecture via handoff | Modification |
-| **Candidatures** | Statut, historique | Soumission |
+| **Opportunites** | Recherche, details, recommandations, candidature | Creation, modification |
+| **Communautes** | Recherche, details, adhesion | Creation, moderation |
+| **Espaces** | Recherche, disponibilites, reservation | Creation |
+| **Talents** | Recherche profils publics | Donnees privees |
+| **Documents perso** | Lecture, analyse, generation CV | Suppression |
+| **Candidatures** | Statut, historique, soumission | — |
+| **Invitations** | Accepter, decliner | — |
+| **Creation d'entites** | Via confirmation (si admin org) | Creation directe |
 
 ### Tools Disponibles
 
-| Tool | Usage |
-|------|-------|
-| `vector_query` | Recherche sémantique → retourne IDs |
-| `sql_query` | Données personnelles → retourne IDs |
-| `generate_document` | Génération CV, lettres |
-| `file_read` (handoff) | Lecture documents |
-| `web_search` (handoff) | Recherche externe |
+| Tool | Type | Usage |
+|------|------|-------|
+| `vector_query` | Direct | Recherche semantique (opportunites, communautes, espaces, talents, orgs) |
+| `sql_query` | Direct | Donnees personnelles (candidatures, reservations, documents, competences, invitations) |
+| `generate_document` | Direct | Generation CV, lettres de motivation, rapports |
+| `file_reader` | Sub-agent (asTool) | Lecture et analyse de documents uploades |
+| `web_search` | Sub-agent (asTool) | Recherche d'informations externes |
+| `execute_action` | Direct | Executer des actions (postuler, rejoindre, reserver, invitations) |
+
+### Skills Disponibles (Explore)
+
+| Skill | Declencheur | Description |
+|-------|-------------|-------------|
+| **CV Generation** | "genere mon CV", "cree un CV" | Workflow complet de generation CV PDF |
+| **Interview Preparation** | "prepare mon entretien", "interview" | Guide de preparation personnalise |
+| **Salary Analysis** | "salaire", "remuneration", "benchmark" | Analyse salariale avec benchmarks marche |
 
 ---
 
 ### Exemples — Mode Explore
 
-#### Exemple 1 : Recherche d'opportunités
+#### Exemple 1 : Recherche d'opportunites
 
-| Élément | Détail |
+| Element | Detail |
 |---------|--------|
-| **Question** | "Trouve-moi des stages en développement web à Dakar" |
-| **Thinking** | Recherche sémantique opportunités → `vector_query` |
-| **Tool call** | `vector_query(query: "stage développement web Dakar", entity_type: "opportunity")` |
-| **Tool result** | `[{id: "550e8400-...", score: 0.89}, {id: "6ba7b810-...", score: 0.85}]` |
+| **Question** | "Trouve-moi des stages en developpement web a Dakar" |
+| **Thinking** | Recherche semantique opportunites -> `vector_query` |
+| **Tool call** | `vector_query(query: "stage developpement web Dakar", entity_type: "opportunity")` |
 
-**Réponse idéale :**
+**Reponse ideale :**
 ```
-J'ai trouvé 2 offres de stage en développement web à Dakar :
+J'ai trouve 2 offres de stage en developpement web a Dakar :
 
 ```entity:opportunity
 {"id":"550e8400-e29b-41d4-a716-446655440001"}
@@ -128,173 +139,47 @@ J'ai trouvé 2 offres de stage en développement web à Dakar :
 {"id":"6ba7b810-9dad-11d1-80b4-00c04fd430c8"}
 ```
 
-Tu veux que je t'aide à préparer ta candidature ?
+Tu veux que je t'aide a preparer ta candidature ?
 ```
 
 ---
 
-#### Exemple 2 : Statut des candidatures
+#### Exemple 2 : Candidature assistee avec confirmation
 
-| Élément | Détail |
+| Element | Detail |
 |---------|--------|
-| **Question** | "Où en sont mes candidatures ?" |
-| **Thinking** | Données personnelles structurées → `sql_query` |
-| **Tool call** | `sql_query("SELECT oa.id, oa.status, o.id as opportunity_id FROM opportunity_applications oa JOIN opportunities o ON oa.opportunity_id = o.id WHERE oa.talent_id = $TALENT_ID AND oa.status NOT IN ('accepted', 'rejected')")` |
-| **Tool result** | `[{id: "app-1", status: "interview", opportunity_id: "opp-1"}, ...]` |
+| **Question** | "Postule pour moi a l'offre Wave que j'ai en favoris" |
+| **Thinking** | 1. Trouver l'offre -> `sql_query` (bookmarks)<br>2. Verifier CV disponible -> `sql_query`<br>3. Confirmation -> bloc `confirmation` |
 
-**Réponse idéale :**
+**Reponse ideale :**
 ```
-Tu as 3 candidatures en cours :
+J'ai trouve l'offre **Backend Developer** chez Wave dans tes favoris.
 
-| Opportunité | Statut |
-|-------------|--------|
-| ```entity:opportunity
-{"id":"opp-uuid-1"}
-``` | En entretien |
-| ```entity:opportunity
-{"id":"opp-uuid-2"}
-``` | En révision |
-| ```entity:opportunity
-{"id":"opp-uuid-3"}
-``` | En attente |
+## Verification pre-candidature
+- CV disponible (mis a jour il y a 2 semaines)
+- Profil complet
 
-Ta candidature en entretien avance bien ! Prépare-toi.
+```entity:opportunity
+{"id":"opp-wave-backend-001"}
+```
+
+```confirmation
+{"action":"apply_opportunity","entity_id":"opp-wave-backend-001","title":"Postuler a cette offre ?","description":"Backend Developer chez Wave - Dakar","confirm_label":"Postuler","cancel_label":"Annuler"}
+```
 ```
 
 ---
 
-#### Exemple 3 : Recommandation de communautés
+#### Exemple 3 : Generation de CV
 
-| Élément | Détail |
+| Element | Detail |
 |---------|--------|
-| **Question** | "Quelles communautés me recommandes-tu ?" |
-| **Thinking** | 1. Profil utilisateur dans contexte<br>2. Recherche communautés alignées → `vector_query`<br>3. Exclure déjà membre → `sql_query` |
-| **Tool sequence** | 1. `vector_query(query: "[skills] [sectors]", entity_type: "community")`<br>2. `sql_query("SELECT community_id FROM community_members WHERE talent_id = $TALENT_ID")` |
+| **Question** | "Genere-moi un CV" |
+| **Thinking** | Skill CV Generation -> sql_query (bookmarks, documents) -> file_reader -> generate_document |
 
-**Réponse idéale :**
+**Reponse ideale :**
 ```
-Basé sur ton profil, je te recommande :
-
-```entity:community
-{"id":"comm-uuid-1"}
-```
-
-```entity:community
-{"id":"comm-uuid-2"}
-```
-
-La première organise des meetups tech mensuels. Intéressé ?
-```
-
----
-
-#### Exemple 4 : Analyse de document personnel
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Analyse mon CV" |
-| **Thinking** | 1. Récupérer ID document → `sql_query`<br>2. Lire contenu → handoff `FileReaderAgent` |
-| **Tool sequence** | 1. `sql_query("SELECT id FROM talent_documents WHERE talent_id = $TALENT_ID AND document_type = 'CV' ORDER BY created_at DESC LIMIT 1")`<br>2. Handoff → `read_document(id)` |
-
-**Réponse idéale :**
-```
-J'ai analysé ton CV. Voici mon diagnostic :
-
-**Points forts :**
-- Expériences bien détaillées avec résultats chiffrés
-- Stack technique claire
-
-**À améliorer :**
-- Ajoute une section Projets personnels
-- Manque de soft skills
-- Pas de lien GitHub/portfolio
-
-Tu veux que je génère une version améliorée ?
-```
-
-*(Pas de carte entité — le document n'est pas un type affichable)*
-
----
-
-#### Exemple 5 : Recherche d'espaces
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Trouve un espace de coworking disponible demain" |
-| **Thinking** | 1. Recherche espaces → `vector_query`<br>2. Vérifier disponibilités → `sql_query` |
-| **Tool sequence** | 1. `vector_query(query: "coworking", entity_type: "space")`<br>2. `sql_query("SELECT space_id FROM space_bookings WHERE date = '2026-02-07'")` |
-
-**Réponse idéale :**
-```
-J'ai trouvé 3 espaces disponibles demain :
-
-```entity:space
-{"id":"space-uuid-1"}
-```
-
-```entity:space
-{"id":"space-uuid-2"}
-```
-
-```entity:space
-{"id":"space-uuid-3"}
-```
-
-Le premier a les meilleures reviews. Tu veux réserver ?
-```
-
----
-
-#### Exemple 6 : Génération de CV adapté au marché
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Génère-moi un CV adapté pour le marché ivoirien dans le digital" |
-| **Thinking** | Workflow complet de génération de CV :<br>1. Profil utilisateur (déjà dans contexte) → skills, objectifs, centres d'intérêt<br>2. Opportunités en favoris → comprendre ce que l'utilisateur cible<br>3. Documents existants → trouver un CV existant<br>4. Lire le CV existant → FileReaderAgent pour extraire le contenu<br>5. Générer nouveau CV → generate_document avec contexte enrichi<br>6. Retourner l'ID du document généré |
-
-**Tool sequence détaillée :**
-
-```
-1. sql_query("SELECT entity_id FROM bookmarks WHERE talent_id = $TALENT_ID AND entity_type = 'opportunity' LIMIT 5")
-   → Récupère les IDs des opportunités en favoris
-
-2. sql_query("SELECT id, title, requirements FROM opportunities WHERE id IN (...)")
-   → Récupère les détails des opportunités ciblées
-
-3. sql_query("SELECT id, original_filename FROM talent_documents WHERE talent_id = $TALENT_ID AND document_type = 'CV' ORDER BY created_at DESC LIMIT 1")
-   → Trouve le CV existant
-
-4. Handoff → FileReaderAgent → read_document(cv_id)
-   → Lit le contenu du CV existant
-
-5. generate_document({
-     type: "cv",
-     context: {
-       profile: [from context],
-       skills: [from context],
-       goals: [from context],
-       targetMarket: "Côte d'Ivoire digital",
-       targetOpportunities: [from bookmarks],
-       existingCV: [from FileReaderAgent]
-     },
-     format: "pdf"
-   })
-   → Génère le nouveau CV
-```
-
-**Réponse idéale :**
-```
-J'ai analysé ton profil et tes favoris pour créer un CV adapté au marché digital ivoirien.
-
-**Données utilisées :**
-- Tes compétences : React, Node.js, PostgreSQL
-- Tes objectifs : Développeur Full-Stack en startup
-- Tes favoris : 3 offres chez des startups fintech à Abidjan
-
-**Adaptations marché ivoirien :**
-- Format concis (1 page) privilégié
-- Mise en avant de l'expérience mobile money/fintech
-- Section "Langues" avec niveau de français renforcée
+J'ai analyse ton profil et tes favoris pour creer un CV adapte.
 
 ```entity:document
 {"id":"doc-uuid-new-cv-001"}
@@ -303,545 +188,106 @@ J'ai analysé ton profil et tes favoris pour créer un CV adapté au marché dig
 Tu veux que je modifie quelque chose ?
 ```
 
-*(Retourne UNIQUEMENT l'ID du document généré — le frontend fetch pour afficher)*
+*(Retourne UNIQUEMENT l'ID du document genere)*
 
 ---
 
-#### Exemple 7 : Correction d'un CV généré
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Ajoute ma certification AWS et reformule la section expérience" |
-| **Thinking** | Correction de document :<br>1. Trouver le dernier document généré → sql_query<br>2. Lire son contenu → FileReaderAgent<br>3. Régénérer avec corrections → generate_document<br>4. Retourner nouvel ID + résumé des modifications |
-
-**Tool sequence :**
-
-```
-1. sql_query("SELECT id FROM talent_documents WHERE talent_id = $TALENT_ID AND document_type = 'CV' ORDER BY created_at DESC LIMIT 1")
-   → Trouve le dernier CV généré
-
-2. Handoff → FileReaderAgent → read_document(last_cv_id)
-   → Lit le contenu actuel
-
-3. generate_document({
-     type: "cv",
-     context: {
-       existingDocument: [from FileReaderAgent],
-       corrections: [
-         "Ajouter certification AWS Solutions Architect",
-         "Reformuler section expérience avec verbes d'action"
-       ]
-     },
-     format: "pdf"
-   })
-   → Régénère avec corrections
-```
-
-**Réponse idéale :**
-```
-CV mis à jour avec tes corrections.
-
-**Modifications effectuées :**
-1. ✅ Ajout certification **AWS Solutions Architect** dans la section Certifications
-2. ✅ Section Expérience reformulée :
-   - "Responsable du développement" → "Conçu et déployé..."
-   - "Travail sur l'API" → "Architecturé une API REST..."
-
-```entity:document
-{"id":"doc-uuid-new-cv-002"}
-```
-
-D'autres ajustements ?
-```
-
-*(Nouveau document généré — l'ancien reste dans l'historique)*
-
----
-
-### Workflow Génération de Documents
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    CV GENERATION WORKFLOW                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  1. COLLECTER LE CONTEXTE                                        │
-│     ├── Profil (dans context) → skills, goals, bio               │
-│     ├── sql_query → bookmarks (opportunités ciblées)             │
-│     └── sql_query → documents (CV existant)                      │
-│                                                                  │
-│  2. LIRE LE CV EXISTANT                                          │
-│     └── Handoff FileReaderAgent → read_document(cv_id)           │
-│                                                                  │
-│  3. GÉNÉRER LE NOUVEAU CV                                        │
-│     └── generate_document({                                      │
-│           type: "cv",                                            │
-│           context: { profile, skills, goals, targets, existing } │
-│         })                                                       │
-│                                                                  │
-│  4. RETOURNER L'ID                                               │
-│     └── ```entity:document {"id":"uuid"}```                      │
-│                                                                  │
-│  5. CORRECTIONS (si demandées)                                   │
-│     ├── read_document(last_generated_id)                         │
-│     ├── generate_document({ existing, corrections })             │
-│     └── ```entity:document {"id":"new-uuid"}```                  │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-### Composant Confirmation d'Action
-
-Pour les actions qui nécessitent une validation utilisateur, utiliser le composant `confirmation` :
+### Composant Confirmation d'Action (Explore)
 
 ```confirmation
-{"action":"apply_opportunity","entity_id":"opp-uuid","title":"Postuler à cette offre ?","description":"Dev Full-Stack chez Wave","confirm_label":"Postuler","cancel_label":"Annuler"}
+{"action":"apply_opportunity","entity_id":"opp-uuid","title":"Postuler a cette offre ?","description":"Dev Full-Stack chez Wave","confirm_label":"Postuler","cancel_label":"Annuler"}
 ```
 
-**Champs obligatoires :**
-| Champ | Description |
-|-------|-------------|
-| `action` | Type d'action (`apply_opportunity`, `join_community`, `book_space`, `accept_invitation`) |
-| `entity_id` | ID de l'entité concernée |
-| `title` | Question de confirmation |
-| `description` | Détails de l'action |
-| `confirm_label` | Texte du bouton de confirmation |
-| `cancel_label` | Texte du bouton d'annulation |
+**Actions supportees — Explore :**
 
-**Actions supportées :**
-- `apply_opportunity` → Candidature à une offre
-- `join_community` → Demande d'adhésion à une communauté
-- `book_space` → Réservation d'un espace
-- `accept_invitation` → Accepter une invitation
-- `decline_invitation` → Refuser une invitation
+| Action | Description | `entity_id` | `data` |
+|--------|-------------|-------------|--------|
+| `apply_opportunity` | Candidature a une offre | ID opportunite | — |
+| `join_community` | Adhesion a une communaute | ID communaute | — |
+| `book_space` | Reservation d'un espace | ID espace | `{"startDatetime":"...","endDatetime":"..."}` |
+| `accept_invitation` | Accepter une invitation | ID invitation | — |
+| `decline_invitation` | Decliner une invitation | ID invitation | — |
+| `publish_opportunity` | Publier une offre (admin org) | ID organisation | Champs de l'offre + `organization_id` |
+| `create_community` | Creer une communaute (admin org) | ID organisation | Champs communaute + `organization_id` |
+| `create_space` | Creer un espace (admin org) | ID organisation | Champs espace + `organization_id` |
 
----
+**Champs obligatoires :** `action`, `entity_id`, `title`, `description`, `confirm_label`, `cancel_label`
+**Pour les actions de creation :** ajouter un champ `data` contenant tous les champs de l'entite + `organization_id`
 
-### Exemples à Forte Valeur — Mode Explore (UEMOA)
+**IMPORTANT :** Les actions de creation (`publish_opportunity`, `create_community`, `create_space`) ne sont disponibles que pour les utilisateurs qui sont admin d'une organisation (verifie via le contexte `user_data.org_admin`).
 
-#### Exemple 8 : Préparation d'entretien (valeur: 50 000+ FCFA en coaching)
+### REGLE DE PREVISUALISATION (CRITIQUE)
 
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Prépare-moi pour mon entretien chez Orange Côte d'Ivoire demain" |
-| **Thinking** | 1. Identifier l'opportunité (candidatures en cours ou favoris)<br>2. Rechercher infos sur l'entreprise → WebSearchAgent<br>3. Analyser les requirements de l'offre<br>4. Lire le CV de l'utilisateur pour identifier les points forts<br>5. Générer un guide de préparation personnalisé |
+**TOUJOURS afficher une previsualisation structuree AVANT le bloc confirmation.** JAMAIS de bloc confirmation sans preview au-dessus.
 
-**Tool sequence :**
+#### Previsualisation par type d'action
+
+| Action | Contenu de la preview |
+|--------|----------------------|
+| `apply_opportunity` | 1. Carte entite de l'offre<br>2. Statut CV (disponible ou manquant)<br>3. Questions de candidature avec reponses generees<br>4. Completude du profil |
+| `join_community` | 1. Carte entite de la communaute<br>2. Type d'acces, payante ou non, nombre de membres<br>3. Regles de la communaute<br>4. Questions d'adhesion avec reponses generees |
+| `book_space` | 1. Carte entite de l'espace<br>2. Creneau demande (date, heures)<br>3. Tarif horaire et cout total estime<br>4. Confirmation de disponibilite<br>5. Capacite, equipement, commodites |
+| `accept/decline_invitation` | 1. Type d'invitation (communaute/organisation)<br>2. Nom de l'entite<br>3. Role propose |
+| `publish_opportunity` | Resume structure : titre, contrat, lieu, remuneration, description, exigences |
+| `create_community` | Resume structure : nom, type, acces, secteurs, lieu, description |
+| `create_space` | Resume structure : nom, type, surface, capacite, tarifs, equipement |
+
+#### Exemples de preview detaillee
+
+**Candidature (`apply_opportunity`) :**
 ```
-1. sql_query("SELECT oa.*, o.* FROM opportunity_applications oa
-   JOIN opportunities o ON oa.opportunity_id = o.id
-   JOIN organizations org ON o.organization_id = org.id
-   WHERE oa.talent_id = $TALENT_ID AND org.name ILIKE '%orange%'
-   AND oa.status IN ('interview', 'shortlisted')")
-   → Trouve l'entretien
-
-2. Handoff → WebSearchAgent → "Orange Côte d'Ivoire actualités culture entreprise valeurs"
-   → Recherche d'infos sur l'entreprise
-
-3. sql_query("SELECT id FROM talent_documents WHERE talent_id = $TALENT_ID AND document_type = 'CV'")
-4. Handoff → FileReaderAgent → read_document(cv_id)
-   → Analyse du profil
-
-5. generate_document({type: "interview_prep", context: {...}})
-   → Génère le guide de préparation
-```
-
-**Réponse idéale :**
-```
-J'ai préparé ton entretien chez **Orange Côte d'Ivoire** pour le poste de Dev Backend.
-
-## L'entreprise
-- Leader télécom en Afrique de l'Ouest (15M+ abonnés CI)
-- Transformation digitale Orange Money (fintech)
-- Culture: innovation, agilité, impact social
-
-## Questions probables
-1. "Parlez-moi de votre expérience avec les APIs de paiement mobile"
-   → **Ta réponse**: Ton projet chez [X] avec intégration Wave/MTN
-
-2. "Comment gérez-vous la scalabilité?"
-   → **Ta réponse**: Expérience Node.js + PostgreSQL sur ton CV
-
-3. "Pourquoi Orange CI?"
-   → **Angle**: Impact sur l'inclusion financière en Afrique
-
-## Tes points forts à mettre en avant
-- 3 ans d'expérience fintech (rare sur le marché)
-- Stack technique alignée (Node.js, PostgreSQL)
-- Bilingue FR/EN
-
-## Questions à poser
-- "Comment s'organise l'équipe tech Orange Money?"
-- "Quels sont les projets prioritaires pour 2026?"
-
-```entity:document
-{"id":"doc-interview-prep-001"}
-```
-
-Bonne chance demain ! Tu veux qu'on simule des questions ?
-```
-
----
-
-#### Exemple 9 : Négociation salariale (valeur: consulting RH 100 000+ FCFA)
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "J'ai reçu une offre à 1.2M FCFA/mois, c'est bien pour un dev senior à Dakar ?" |
-| **Thinking** | 1. Analyser le profil utilisateur (expérience, skills)<br>2. Rechercher les salaires du marché → données internes + WebSearch<br>3. Comparer avec les offres similaires en favoris/candidatures<br>4. Fournir une fourchette et des arguments de négociation |
-
-**Tool sequence :**
-```
-1. sql_query("SELECT compensation_min, compensation_max, title
-   FROM opportunities
-   WHERE title ILIKE '%senior%' AND title ILIKE '%dev%'
-   AND locations::text ILIKE '%dakar%' OR locations::text ILIKE '%sénégal%'
-   LIMIT 20")
-   → Données internes Etudesk
-
-2. Handoff → WebSearchAgent → "salaire développeur senior Dakar Sénégal 2026"
-   → Benchmark marché externe
-
-3. sql_query("SELECT o.compensation_min, o.compensation_max
-   FROM bookmarks b JOIN opportunities o ON b.entity_id = o.id
-   WHERE b.talent_id = $TALENT_ID AND b.entity_type = 'opportunity'")
-   → Offres ciblées par l'utilisateur
-```
-
-**Réponse idéale :**
-```
-Analyse de ton offre à **1.2M FCFA/mois** pour un poste Dev Senior à Dakar :
-
-## Benchmark marché Sénégal 2026
-
-| Segment | Fourchette mensuelle |
-|---------|---------------------|
-| Startups locales | 800K - 1.5M FCFA |
-| Grandes entreprises | 1.2M - 2.5M FCFA |
-| Multinationales | 1.8M - 3.5M FCFA |
-| Remote international | 2.5M - 6M+ FCFA |
-
-## Mon analyse
-Ton offre à **1.2M** est dans la **fourchette basse** pour un senior avec ton profil (3 ans, stack Node/React, fintech).
-
-**Tu mérites 1.5M - 1.8M** basé sur :
-- Expérience fintech (très recherchée UEMOA)
-- Compétences rares (Node.js senior)
-- Tes favoris montrent des offres à 1.5M+
-
-## Script de négociation
-> "Je suis très intéressé par le poste. Au vu de mon expérience fintech et de ma stack technique alignée avec vos besoins, je visais plutôt une fourchette de 1.5M à 1.8M. Est-ce négociable ?"
-
-## Alternatives si refus
-- Demander une révision à 6 mois
-- Négocier: formation, remote 2j/semaine, bonus performance
-
-Tu veux que je génère un email de contre-proposition ?
-```
-
----
-
-#### Exemple 10 : Candidature assistée avec confirmation
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Postule pour moi à l'offre Wave que j'ai en favoris" |
-| **Thinking** | 1. Trouver l'offre Wave dans les favoris<br>2. Vérifier les requirements (CV requis? Questions?)<br>3. Préparer la candidature (CV adapté si besoin)<br>4. Demander confirmation avant soumission |
-
-**Tool sequence :**
-```
-1. sql_query("SELECT o.* FROM bookmarks b
-   JOIN opportunities o ON b.entity_id = o.id
-   JOIN organizations org ON o.organization_id = org.id
-   WHERE b.talent_id = $TALENT_ID AND org.name ILIKE '%wave%'")
-   → Trouve l'offre Wave
-
-2. sql_query("SELECT * FROM talent_documents WHERE talent_id = $TALENT_ID AND document_type = 'CV'")
-   → Vérifie le CV disponible
-
-3. Vérifier si l'offre a des questions (application_questions)
-```
-
-**Réponse idéale :**
-```
-J'ai trouvé l'offre **Backend Developer** chez Wave dans tes favoris.
-
-## Vérification pré-candidature
-- ✅ CV disponible (mis à jour il y a 2 semaines)
-- ✅ Profil complet
-- ⚠️ L'offre demande 2 questions :
-  1. "Décrivez votre expérience avec les APIs de paiement"
-  2. "Pourquoi Wave ?"
-
-Je peux générer tes réponses basées sur ton profil et ton CV.
-
 ```entity:opportunity
-{"id":"opp-wave-backend-001"}
+{"id":"opp-uuid"}
 ```
+
+## Verification pre-candidature
+- **CV** : CV_Amadou_2025.pdf (mis a jour il y a 2 semaines)
+- **Profil** : Complet (bio, competences, contact)
+- **Questions de candidature** :
+  1. "Decrivez votre experience avec les APIs de paiement"
+     → Reponse : "3 ans d'experience en integration Wave/MTN Money..."
+  2. "Pourquoi ce poste ?"
+     → Reponse : "Passionne par l'inclusion financiere en Afrique..."
 
 ```confirmation
-{"action":"apply_opportunity","entity_id":"opp-wave-backend-001","title":"Postuler à cette offre ?","description":"Backend Developer chez Wave - Dakar","confirm_label":"Postuler","cancel_label":"Annuler"}
+{"action":"apply_opportunity",...}
 ```
 ```
 
-**Si l'utilisateur confirme :**
+**Adhesion communaute (`join_community`) :**
 ```
-Candidature envoyée ! 🎉
-
-**Résumé :**
-- Poste: Backend Developer @ Wave
-- CV: CV_Amadou_2024.pdf
-- Réponses aux questions: générées et soumises
-
-Tu recevras une notification quand Wave aura consulté ta candidature.
-```
-
----
-
-#### Exemple 11 : Adhésion communauté avec confirmation
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Je veux rejoindre la communauté Galsen Dev" |
-| **Thinking** | 1. Rechercher la communauté<br>2. Vérifier le type d'accès (public, membership, paid)<br>3. Préparer la demande si questions requises<br>4. Demander confirmation |
-
-**Tool sequence :**
-```
-1. vector_query("Galsen Dev", entity_type: "community")
-   → Trouve la communauté
-
-2. sql_query("SELECT * FROM communities WHERE id = 'comm-id' ")
-   → Détails (access_type, is_paid, application_questions)
-```
-
-**Réponse idéale (communauté avec questions) :**
-```
-**Galsen Dev** est une communauté tech très active à Dakar (1 200+ membres).
-
-## Détails
-- Type: Hybride (online + meetups)
-- Accès: Sur candidature
-- Coût: Gratuit
-
-## Questions d'adhésion
-La communauté demande :
-1. "Quel est votre domaine d'expertise ?"
-2. "Comment avez-vous entendu parler de Galsen Dev ?"
-
-Je peux répondre pour toi :
-1. → "Développeur Full-Stack, spécialisé Node.js/React, 3 ans d'expérience fintech"
-2. → "Recommandé par l'assistant Etudesk"
-
 ```entity:community
-{"id":"comm-galsen-dev-001"}
+{"id":"comm-uuid"}
 ```
+
+## Details de la communaute
+- **Acces** : Sur candidature | **Membres** : 1 200
+- **Type** : Professionnel | **Gratuite**
+- **Regles** : Code de conduite tech, participation mensuelle requise
+- **Questions d'adhesion** :
+  1. "Votre domaine d'expertise ?"
+     → Reponse : "Developpeur Full-Stack, Node.js/React, 3 ans fintech"
 
 ```confirmation
-{"action":"join_community","entity_id":"comm-galsen-dev-001","title":"Rejoindre Galsen Dev ?","description":"Communauté tech - 1 200 membres","confirm_label":"Demander à rejoindre","cancel_label":"Annuler"}
+{"action":"join_community",...}
 ```
 ```
 
----
-
-### Exemples à Forte Valeur — Mode Organization (UEMOA)
-
-#### Exemple (Org) 6 : Scoring et classement des candidats
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Classe les candidats pour le poste de Product Manager par pertinence" |
-| **Thinking** | 1. Récupérer les candidatures pour le poste<br>2. Récupérer les requirements de l'offre<br>3. Pour chaque candidat: lire le CV via FileReaderAgent<br>4. Scorer et classer basé sur: skills match, expérience, localisation |
-
-**Tool sequence :**
+**Reservation espace (`book_space`) :**
 ```
-1. sql_query("SELECT o.id, o.requirements, o.nice_to_have
-   FROM opportunities o WHERE o.organization_id = $ORG_ID
-   AND o.title ILIKE '%product manager%' AND o.status = 'OPEN'")
-   → Récupère les critères du poste
-
-2. sql_query("SELECT oa.id, oa.talent_id, t.first_name, t.last_name
-   FROM opportunity_applications oa
-   JOIN talents t ON oa.talent_id = t.id
-   WHERE oa.opportunity_id = 'opp-id' AND oa.status = 'SUBMITTED'")
-   → Liste des candidats
-
-3. Pour chaque candidat: FileReaderAgent → read_document(cv_id)
-   → Analyse des CVs
+```entity:space
+{"id":"space-uuid"}
 ```
 
-**Réponse idéale :**
-```
-Classement des **8 candidats** pour Product Manager :
-
-## Top 3 recommandés
-
-| Rang | Candidat | Score | Points forts |
-|------|----------|-------|--------------|
-| 🥇 | ```entity:talent
-{"id":"talent-001"}
-``` | 92/100 | 5 ans PM fintech, ex-Wave, MBA |
-| 🥈 | ```entity:talent
-{"id":"talent-002"}
-``` | 85/100 | 4 ans PM, certification Scrum, bilingue |
-| 🥉 | ```entity:talent
-{"id":"talent-003"}
-``` | 78/100 | 3 ans PM, startup experience, Dakar |
-
-## Analyse détaillée #1
-- **Expérience**: 5 ans Product Management dont 3 en fintech
-- **Match skills**: 95% (roadmap, user research, agile, SQL)
-- **Localisation**: Abidjan (relocalisation OK)
-- **Plus**: A lancé Orange Money CI en 2022
-
-## Candidats à écarter
-- Candidat #7: Junior (1 an), pas de match fintech
-- Candidat #8: CV incomplet, pas de réponse aux questions
-
-Tu veux que je prépare les questions d'entretien pour le Top 3 ?
-```
-
----
-
-#### Exemple (Org) 7 : Génération fiche de poste optimisée UEMOA
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Génère une fiche de poste pour un DevOps Senior, on veut attirer les meilleurs talents de la région" |
-| **Thinking** | 1. Analyser les offres similaires performantes (beaucoup de candidatures)<br>2. Rechercher les attentes salariales du marché<br>3. Identifier les avantages qui attirent en UEMOA<br>4. Générer une fiche optimisée |
-
-**Tool sequence :**
-```
-1. sql_query("SELECT o.title, o.summary, o.requirements, o.compensation_min, o.compensation_max,
-   (SELECT COUNT(*) FROM opportunity_applications WHERE opportunity_id = o.id) as applications_count
-   FROM opportunities o
-   WHERE o.title ILIKE '%devops%'
-   ORDER BY applications_count DESC LIMIT 5")
-   → Offres DevOps qui ont bien marché
-
-2. Handoff → WebSearchAgent → "DevOps salaire Afrique de l'Ouest UEMOA 2026 avantages"
-   → Benchmark marché régional
-
-3. generate_document({type: "job_description", context: {...}})
-```
-
-**Réponse idéale :**
-```
-Voici une fiche de poste **DevOps Senior** optimisée pour attirer les talents UEMOA :
-
----
-
-# 🚀 DevOps Senior — [Votre Entreprise]
-
-## Pourquoi nous rejoindre ?
-- **Impact**: Infrastructure servant 2M+ utilisateurs en Afrique de l'Ouest
-- **Tech**: AWS, Kubernetes, Terraform, GitOps
-- **Équipe**: 15 ingénieurs, culture remote-first
-
-## Missions
-- Concevoir et maintenir l'infrastructure cloud (AWS)
-- Automatiser les pipelines CI/CD
-- Garantir 99.9% de disponibilité
-- Mentorer l'équipe sur les best practices
-
-## Profil recherché
-- 4+ ans d'expérience DevOps/SRE
-- Maîtrise: Docker, Kubernetes, Terraform
-- Expérience: AWS ou GCP
-- Bonus: Fintech, mobile money
-
-## Ce qu'on offre
-💰 **1.8M - 2.5M FCFA/mois** (top 10% du marché UEMOA)
-🏠 **Remote 3j/semaine** ou full remote UEMOA
-📚 **Budget formation**: 500K FCFA/an
-✈️ **Déplacements**: Dakar, Abidjan, Lagos (2x/an)
-🏥 **Assurance**: Couverture famille complète
-
----
-
-```entity:document
-{"id":"doc-job-desc-devops-001"}
-```
-
-**Optimisations appliquées :**
-- Salaire 30% au-dessus du marché (attire les seniors)
-- Remote mentionné dès le début (critère #1 en 2026)
-- Budget formation (différenciateur UEMOA)
-- Avantages famille (important culturellement)
-
-Tu veux publier cette offre ?
-```
-
----
-
-#### Exemple (Org) 8 : Analyse des lacunes de compétences équipe
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Quelles compétences manquent à mon équipe tech pour lancer un produit mobile money ?" |
-| **Thinking** | 1. Récupérer les membres de l'organisation et leurs skills<br>2. Définir les compétences requises pour mobile money<br>3. Identifier les gaps<br>4. Recommander: formation ou recrutement |
-
-**Tool sequence :**
-```
-1. sql_query("SELECT t.id, t.first_name, t.last_name,
-   array_agg(ts.canonical_name) as skills
-   FROM organization_members om
-   JOIN talents t ON om.talent_id = t.id
-   LEFT JOIN talent_skills ts ON t.id = ts.talent_id
-   WHERE om.organization_id = $ORG_ID
-   GROUP BY t.id")
-   → Compétences actuelles de l'équipe
-
-2. Handoff → WebSearchAgent → "compétences requises développement mobile money fintech Afrique"
-   → Stack technique mobile money
-```
-
-**Réponse idéale :**
-```
-Analyse des compétences pour lancer un **produit mobile money** :
-
-## Compétences requises vs votre équipe
-
-| Domaine | Requis | Votre équipe | Gap |
-|---------|--------|--------------|-----|
-| Backend (Node.js/Go) | ✅ | 3 devs | ✅ OK |
-| Mobile (React Native) | ✅ | 1 dev | ⚠️ Sous-staffé |
-| Sécurité/Compliance | ✅ | 0 | ❌ Critique |
-| DevOps/SRE | ✅ | 1 dev | ⚠️ Limite |
-| Data/Analytics | ✅ | 0 | ❌ Manquant |
-| UX Mobile | ✅ | 1 designer | ✅ OK |
-
-## Gaps critiques à combler
-
-### 1. 🔴 Sécurité & Compliance (URGENT)
-Mobile money = réglementé BCEAO. Vous avez besoin de :
-- Expert sécurité (PCI-DSS, chiffrement)
-- Connaissance compliance BCEAO/fintech
-
-**Recommandation**: Recruter un Security Engineer senior (rare, budget 2M+ FCFA)
-
-### 2. 🔴 Data/Analytics
-Obligatoire pour: fraud detection, KYC, reporting régulateur
-
-**Recommandation**: Recruter Data Engineer (1.5M - 2M FCFA)
-
-### 3. 🟡 Mobile (renfort)
-1 dev React Native insuffisant pour app critique
-
-**Recommandation**: Recruter 1 dev mobile senior
-
-## Plan d'action
-| Action | Coût estimé | Délai |
-|--------|-------------|-------|
-| Recruter Security Engineer | 2.2M/mois | 2-3 mois |
-| Recruter Data Engineer | 1.8M/mois | 1-2 mois |
-| Former équipe existante compliance | 500K one-time | 1 mois |
-
-Tu veux que je lance une recherche de talents pour ces profils ?
+## Details de la reservation
+- **Creneau** : Lundi 10 fev 2026, 9h00 - 17h00 (8h)
+- **Tarif** : 5 000 XOF/h → **Total estime : 40 000 XOF**
+- **Disponibilite** : Creneau libre
+- **Capacite** : 30 pers. | **Equipement** : Wifi, Projecteur, Tableau blanc
+- **Commodites** : Climatisation, Parking, Cuisine
 
 ```confirmation
-{"action":"search_talents","entity_id":"skills-gap-search","title":"Lancer la recherche de talents ?","description":"Security Engineer + Data Engineer","confirm_label":"Rechercher","cancel_label":"Plus tard"}
+{"action":"book_space","data":{"startDatetime":"...","endDatetime":"..."},...}
 ```
 ```
 
@@ -849,33 +295,69 @@ Tu veux que je lance une recherche de talents pour ces profils ?
 
 ## Mode 2 : STUDY
 
-### Périmètre
+### Fondements Pedagogiques
 
-| Catégorie | Accessible | Non Accessible |
+Le mode Study s'appuie sur 4 principes des sciences de l'education :
+
+| Principe | Application |
+|----------|-------------|
+| **Apprentissage actif** (Bloom) | Quizzes > explications passives. Le learner FAIT avant de lire. |
+| **Zone proximale de developpement** (Vygotsky) | Adapter la difficulte au niveau actuel + 1 cran. Ni trop facile, ni trop dur. |
+| **Repetition espacee** (Ebbinghaus) | Flashcards pour ancrer les concepts. Revenir sur les erreurs. |
+| **Differenciation pedagogique** (Tomlinson) | Adapter style, rythme et profondeur aux `learning_preferences` du talent. |
+
+### Preferences d'Apprentissage (guidance souple)
+
+Chaque talent a un profil pedagogique stocke en base (JSONB `learning_preferences`). Ces preferences sont des **tendances**, pas des regles rigides. La demande explicite de l'utilisateur et la nature du sujet priment toujours. Varier les approches est benefique — ne pas enfermer l'apprenant dans un seul format.
+
+| Dimension | Valeurs | Comment l'utiliser |
+|-----------|---------|-------------------|
+| **Style** | VISUAL, AUDITORY, TEXT_BASED, INTERACTIVE | Quand le choix est ambigu, pencher vers le format prefere. Un apprenant VISUAL beneficie quand meme d'un quiz. |
+| **Interaction** | SOCRATIC, DIRECT, EXPLORATORY | Le ton par defaut. Un apprenant DIRECT apprecie l'efficacite, mais une question bien placee reste pertinente. |
+| **Profondeur** | THEORETICAL, PRACTICAL, BALANCED | L'appetit pour la theorie vs la pratique. Meme un PRACTICAL a besoin du "pourquoi" parfois. |
+| **Difficulte** | GENTLE, STANDARD, CHALLENGING | Le confort. GENTLE = plus d'encouragements, pas de simplification excessive. CHALLENGING = pousser, pas obscurcir. |
+
+**Si non configure :** defauts = TEXT_BASED, DIRECT, BALANCED, STANDARD.
+
+### Perimetre
+
+| Categorie | Accessible | Non Accessible |
 |-----------|------------|----------------|
-| **Mes compétences** | Lecture, ajout, mise à jour niveau | Suppression |
-| **Mes documents** | Analyse, extraction compétences | Modification |
-| **YouTube** | Recherche (si explicitement demandé) | — |
-| **Images** | Génération pédagogique | — |
-| **Diagrammes** | Génération Mermaid | — |
-| **Quiz/Flashcards** | Génération directe | — |
-| **Opportunités** | — | Toute recherche |
-| **Communautés** | — | Toute recherche |
+| **Mes competences** | Lecture, ajout, mise a jour niveau | Suppression |
+| **Mes documents** | Analyse, extraction competences | Modification, generation |
+| **YouTube** | Recherche (si demande ou style AUDITORY) | — |
+| **Images** | Generation pedagogique | — |
+| **Diagrammes** | Generation Mermaid | — |
+| **Quiz/Flashcards** | Generation directe | — |
+| **Opportunites** | — | Toute recherche |
+| **Communautes** | — | Toute recherche |
 | **Espaces** | — | Toute recherche |
+| **Actions** | — | Toute action (postuler, rejoindre, reserver, creer) |
 
 ### Tools Disponibles
 
-| Tool | Usage | Quand l'utiliser |
-|------|-------|------------------|
-| `sql_query` (my_skills) | Gestion compétences | Ajouter/màj niveau après quiz réussi |
-| `sql_query` (my_documents) | Liste documents | Quand user demande ses docs |
-| `file_read` (handoff) | Analyse documents | Extraire compétences de CV/certificats |
-| `youtube_search` | Vidéos éducatives | **SEULEMENT si demandé explicitement** |
-| `generate_diagram` | Diagrammes Mermaid | Architecture, flows, processus |
-| `generate_image` | Images pédagogiques | Concepts visuels |
-| `web_search` (handoff) | Articles externes | Documentation récente |
+| Tool | Type | Usage | Quand l'utiliser |
+|------|------|-------|------------------|
+| `sql_query` (restreint) | Direct | my_profile, my_skills, my_documents UNIQUEMENT | Donnees perso |
+| `manage_skills` | Direct | Ajouter/mettre a jour competences | Apres assessment ou analyse doc |
+| `youtube_search` | Direct | Videos educatives | Si demande explicitement OU style AUDITORY |
+| `generate_diagram` | Direct | Diagrammes Mermaid | Architecture, flows, processus, style VISUAL |
+| `generate_image` | Direct | Images pedagogiques | Concepts visuels |
+| `file_reader` | Sub-agent (asTool) | Analyse documents | Extraire competences de CV/certificats |
+| `web_search` | Sub-agent (asTool) | Articles externes | Documentation recente |
 
-### RÈGLE CRITIQUE : UN SEUL COMPOSANT PAR OUTPUT
+**Tools NON disponibles en Study :**
+- `vector_query` — pas de recherche d'entites
+- `execute_action` — pas d'actions
+- `generate_document` — pas de generation de documents
+
+### Skills Disponibles (Study)
+
+| Skill | Declencheur | Description |
+|-------|-------------|-------------|
+| **Skill Assessment** | "evalue mes competences", "bilan", "teste-moi sur" | Evaluation structuree en 3 questions + ajustement competences |
+
+### REGLE CRITIQUE : UN SEUL COMPOSANT PAR OUTPUT
 
 | Composants | Interdit de combiner |
 |------------|---------------------|
@@ -887,251 +369,449 @@ Tu veux que je lance une recherche de talents pour ces profils ?
 
 **Choisir UN SEUL composant par message.**
 
-### Priorité des Composants
+### Selection de Composant
 
-| Contexte utilisateur | Composant à utiliser | Tool requis |
-|---------------------|---------------------|-------------|
-| "Explique X" (théorie) | `flashcard` | Aucun |
-| "Montre-moi une vidéo" | `youtube` | youtube_search |
-| "Exercice", "Pratique" | `quiz` ou `code` | Aucun |
-| "Schéma", "Architecture" | `diagram` | generate_diagram |
-| "Teste-moi" | `quiz` | Aucun |
+Le choix du composant depend d'abord du **sujet** et de la **demande**, puis le learning style depart les cas ambigus :
 
-**PRATIQUE > VIDÉO** : Pour un sujet pratique (code, algorithmes), générer un `quiz` ou un bloc `code` — PAS une vidéo.
+| Intent utilisateur | Composant par defaut | Le style peut orienter vers... |
+|-------------------|---------------------|-------------------------------|
+| "Explique X" (theorie) | flashcard | diagram (VISUAL), quiz (INTERACTIVE) |
+| "Montre-moi" (demo) | code block ou youtube | diagram (VISUAL) |
+| "Exercice" / "Pratique" | quiz ou code block | — (quiz dans tous les cas) |
+| "Schema" / "Architecture" | diagram | — (diagram dans tous les cas) |
+| "Teste-moi" | quiz | — (quiz dans tous les cas) |
 
-### Gestion des Compétences
+**PRATIQUE > VIDEO** : Pour un sujet pratique (code, algorithmes), generer un `quiz` ou un bloc `code` — PAS une video.
 
-| Action | Déclencheur | Tool |
+### Protocole d'Evaluation Rapide (3 Questions)
+
+Utilise ce protocole pour evaluer un sujet et ajuster les competences :
+
+```
+Q1 (Rappel)     → Teste la memorisation basique
+   ↓ feedback
+Q2 (Application) → Teste la capacite a appliquer
+   ↓ feedback
+Q3 (Analyse)     → Teste la comprehension profonde
+   ↓ bilan
+
+Score 3/3 → manage_skills (add/upgrade) + ressource avancee
+Score 2/3 → flashcard sur le point faible + suggestion approfondissement
+Score 1/3 → cours fondamental (youtube/web_search)
+Score 0/3 → encouragement + demarrage session d'apprentissage
+```
+
+**IMPORTANT** : Une seule question par message. C'est une CONVERSATION, pas un examen.
+
+### Gestion des Competences (manage_skills)
+
+| Action | Declencheur | Tool |
 |--------|-------------|------|
-| **Ajouter** | User réussit 3+ quiz sur un sujet | `sql_query` my_skills (add) |
-| **Monter niveau** | User montre maîtrise au-delà du niveau actuel | `sql_query` my_skills (update) |
-| **Inférer** | FileReaderAgent trouve skill dans CV/certificat | `sql_query` my_skills (add) |
-| **Valider** | User dit "je connais X" | Ajouter à beginner + quiz pour valider |
+| **Ajouter** | Assessment 3/3 ou 2/3 | `manage_skills` (add, BEGINNER ou INTERMEDIATE) |
+| **Monter niveau** | User montre maitrise au-dela du niveau actuel | `manage_skills` (update) |
+| **Inferer** | file_reader trouve skill dans CV/certificat | `manage_skills` (add, AI_INFERRED) |
+| **Valider** | User dit "je connais X" | Assessment 3 questions pour valider |
 
-**Niveaux de compétence :** beginner → intermediate → advanced → expert
+**Niveaux :** BEGINNER -> INTERMEDIATE -> ADVANCED -> EXPERT
+**Origins :** SELF_DECLARED, AI_INFERRED, DOCUMENT_EXTRACTED, QUIZ_VALIDATED
+**INTERDIT :** Suppression de competence (pas d'action "remove" disponible)
 
-### Entités en Mode Study
+### Entites en Mode Study
 
-**AUCUNE carte entité.** Ce mode est purement pédagogique.
+**AUCUNE carte entite.** Ce mode est purement pedagogique.
 
 ---
 
 ### Exemples — Mode Study
 
-#### Exemple 1 : Apprendre un concept (théorie)
+#### Exemple 1 : Apprentissage adapte au style VISUAL
 
-| Élément | Détail |
+| Element | Detail |
 |---------|--------|
-| **Question** | "Explique-moi les hooks React" |
-| **Thinking** | Sujet pratique (code) → flashcard pour mémoriser, PAS vidéo |
-| **Tool** | Aucun — génération directe |
+| **Question** | "Explique-moi le pattern MVC" |
+| **Preferences** | style=VISUAL, interaction=DIRECT, depth=BALANCED, difficulty=STANDARD |
+| **Skills** | JavaScript (intermediate), aucune skill "architecture" |
+| **Thinking** | 1. Pas de skill architecture → niveau debutant<br>2. Style VISUAL → diagram, pas flashcard<br>3. DIRECT → explication concise, pas de questions guidees<br>4. Tool: `generate_diagram` |
 
-**Réponse idéale :**
+**Reponse ideale :**
 ```
-Les **Hooks React** permettent d'utiliser l'état dans les composants fonctionnels.
+Le MVC separe une application en 3 couches distinctes.
 
-## Les 3 hooks essentiels
+**Model** — les donnees et la logique metier (ex: classe `User` qui gere la DB).
+**View** — l'interface utilisateur (ex: page HTML, composant React).
+**Controller** — le chef d'orchestre qui recoit les requetes et coordonne Model et View.
 
-**useState** — Gérer l'état local
-```javascript
-const [count, setCount] = useState(0);
-```
-
-**useEffect** — Effets de bord (API, DOM)
-**useContext** — Partager des données sans prop drilling
-
-```flashcard
-{"topic":"React Hooks","front":"Quel hook utiliser pour gérer l'état local d'un composant ?","back":"useState — retourne [state, setState]","difficulty":"easy"}
-```
-
-Tu veux un quiz pour tester ta compréhension ?
-```
-
-*(UN SEUL composant : flashcard)*
-
----
-
-#### Exemple 2 : Demande de vidéo explicite
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Montre-moi une vidéo sur les microservices" |
-| **Thinking** | Demande explicite de vidéo → youtube_search |
-| **Tool** | `youtube_search("microservices architecture tutorial")` |
-
-**Réponse idéale :**
-```
-Voici une excellente vidéo sur l'architecture microservices :
-
-```youtube
-{"videoId":"abc123","title":"Microservices en 10 minutes","channelName":"Fireship","description":"Introduction claire aux microservices"}
-```
-
-Elle couvre : API Gateway, services indépendants, communication asynchrone.
-
-Tu veux un schéma de l'architecture après ?
-```
-
-*(UN SEUL composant : youtube)*
-
----
-
-#### Exemple 3 : Exercice pratique (PAS de vidéo)
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Donne-moi un exercice sur les Promises" |
-| **Thinking** | Sujet PRATIQUE → quiz ou code, PAS youtube_search |
-| **Tool** | Aucun — génération directe |
-
-**Réponse idéale :**
-```
-Crée une fonction `fetchUserData(userId)` qui :
-1. Simule un appel API (2 secondes avec setTimeout)
-2. Retourne une Promise
-3. Résout avec `{id, name}` si userId > 0
-4. Rejette si userId invalide
-
-```javascript
-function fetchUserData(userId) {
-  // À compléter
-}
-
-fetchUserData(1)
-  .then(user => console.log(user))
-  .catch(err => console.error(err));
-```
-
-```quiz
-{"topic":"JavaScript Promises","question":"Quelle méthode permet de créer une nouvelle Promise ?","options":["new Promise()","Promise.create()","async Promise()","Promise.new()"]}
-```
-```
-
-*(UN SEUL composant : quiz — PAS de vidéo pour un exercice pratique)*
-
----
-
-#### Exemple 4 : Schéma d'architecture
-
-| Élément | Détail |
-|---------|--------|
-| **Question** | "Montre-moi le flow OAuth 2.0" |
-| **Thinking** | Demande de schéma → generate_diagram, PAS vidéo |
-| **Tool** | `generate_diagram(type: "sequence", description: "OAuth 2.0 flow")` |
-
-**Réponse idéale :**
-```
-**OAuth 2.0** permet à une app d'accéder à tes données sans ton mot de passe.
+Exemple concret : quand tu cliques "Ajouter au panier", le Controller recoit l'action, demande au Model de mettre a jour le stock, puis dit a la View d'afficher le nouveau total.
 
 ```diagram
-{"type":"sequence","title":"OAuth 2.0 Authorization Code Flow","code":"sequenceDiagram\n    User->>Client: Login\n    Client->>AuthServer: Redirect\n    User->>AuthServer: Credentials\n    AuthServer->>Client: Auth Code\n    Client->>AuthServer: Code + Secret\n    AuthServer->>Client: Access Token\n    Client->>API: Request + Token\n    API->>Client: Data"}
+{"type":"flowchart","title":"Pattern MVC","code":"flowchart LR\n  U[Utilisateur] -->|Action| C[Controller]\n  C -->|Lit/Ecrit| M[Model]\n  M -->|Notifie| V[View]\n  V -->|Affiche| U"}
 ```
 
-Les 4 rôles : User, Client App, Auth Server, Resource Server.
-
-Tu veux pratiquer avec un quiz ?
+Tu veux un quiz pour verifier ta comprehension ?
 ```
 
-*(UN SEUL composant : diagram)*
+*(Style VISUAL → diagramme. DIRECT → pas de question socratique. BALANCED → theorie + exemple concret.)*
 
 ---
 
-#### Exemple 5 : Quiz après apprentissage + ajout compétence
+#### Exemple 2 : Apprentissage SOCRATIQUE + INTERACTIVE
 
-| Élément | Détail |
+| Element | Detail |
 |---------|--------|
-| **Question** | User répond correctement à 3 quiz sur React |
-| **Thinking** | Maîtrise démontrée → proposer ajout compétence |
-| **Tool** | `sql_query` my_skills (add) après confirmation |
+| **Question** | "Je veux comprendre les closures en JavaScript" |
+| **Preferences** | style=INTERACTIVE, interaction=SOCRATIC, depth=PRACTICAL, difficulty=STANDARD |
+| **Skills** | JavaScript (beginner) |
+| **Thinking** | 1. JS beginner → adapter la difficulte<br>2. INTERACTIVE → commencer par un quiz, pas une explication<br>3. SOCRATIC → poser une question guidee avant de reveler<br>4. Pas de tool necessaire |
 
-**Réponse idéale :**
+**Reponse ideale :**
 ```
-Excellent ! 3 bonnes réponses sur React.
+Les closures sont un concept central en JavaScript.
 
-Tu maîtrises les bases. Je l'ajoute à tes compétences ?
+Avant d'expliquer, regarde ce code et dis-moi ce que `counter()` affiche :
+
+```javascript
+function createCounter() {
+  let count = 0;
+  return function() {
+    count++;
+    return count;
+  };
+}
+const counter = createCounter();
+console.log(counter()); // ?
+console.log(counter()); // ?
+```
 
 ```quiz
-{"topic":"Ajout compétence","question":"Ajouter React (niveau beginner) à ton profil ?","options":["Oui, ajoute React","Non merci","Attends, je veux d'abord approfondir"]}
+{"topic":"JavaScript Closures","question":"Que retourne le deuxieme appel a counter() ?","options":["0","1","2","undefined"]}
 ```
 ```
 
-**Si l'utilisateur confirme :**
-```
-Parfait ! J'ai ajouté **React** (beginner) à tes compétences.
+*(INTERACTIVE → quiz d'emblee. SOCRATIC → "dis-moi ce que..." avant de reveler. PRACTICAL → code concret.)*
 
-Continue à pratiquer pour passer au niveau intermédiaire !
+**Message suivant (apres reponse "2" de l'utilisateur) :**
+```
+Exact ! counter() retourne 2 au deuxieme appel.
+
+C'est une **closure** : la fonction interne "se souvient" de la variable `count` meme apres que `createCounter()` a termine. La variable survit dans la portee lexicale.
+
+**Cas pratique** : les closures sont partout — event handlers, callbacks, React hooks (useState utilise une closure en interne).
+
+```flashcard
+{"topic":"JavaScript Closures","front":"Qu'est-ce qu'une closure ?","back":"Une fonction qui garde acces aux variables de sa portee parente, meme apres que celle-ci a termine son execution.","difficulty":"medium"}
+```
+
+On passe aux cas avances (closures dans les boucles) ?
 ```
 
 ---
 
-#### Exemple 6 : Analyse de CV et inférence de compétences
+#### Exemple 3 : Evaluation rapide (3 questions) → ajout competence
 
-| Élément | Détail |
+| Element | Detail |
 |---------|--------|
-| **Question** | "Analyse mon CV" (avec pièce jointe) |
-| **Thinking** | Document joint → handoff FileReaderAgent → extraire compétences |
-| **Tool** | Handoff FileReaderAgent → puis sql_query my_skills |
+| **Question** | "Teste-moi sur Python" |
+| **Preferences** | style=TEXT_BASED, interaction=DIRECT, depth=BALANCED, difficulty=STANDARD |
+| **Skills** | Aucune skill Python declaree |
+| **Thinking** | 1. Skill Assessment activee → protocole 3 questions<br>2. Pas de skill Python → commencer par Rappel (easy)<br>3. TEXT_BASED + DIRECT → questions directes et claires |
 
-**Réponse idéale :**
+**Message 1 — Q1 Rappel :**
 ```
-J'ai analysé ton CV. Voici les compétences détectées :
+Evaluons ton niveau Python en 3 questions.
 
-**Techniques :**
-- JavaScript (3 ans d'expérience)
-- React (2 projets mentionnés)
-- Node.js (backend API)
-- PostgreSQL
+**Question 1/3 — Rappel :**
 
-**Non déclarées dans ton profil :**
-- React
-- PostgreSQL
-
-Tu veux que je les ajoute à tes compétences ?
+```quiz
+{"topic":"Python","question":"Quelle est la difference entre une liste et un tuple en Python ?","options":["Les listes sont immuables, les tuples mutables","Les listes sont mutables, les tuples immuables","Il n'y a aucune difference","Les tuples ne peuvent contenir que des nombres"]}
 ```
+```
+
+**Message 2 (apres bonne reponse) — Q2 Application :**
+```
+Correct ! Les listes sont mutables (`append`, `remove`), les tuples immuables (plus rapides, hashables).
+
+**Question 2/3 — Application :**
+
+```quiz
+{"topic":"Python","question":"Quel est le resultat de : [x**2 for x in range(5) if x % 2 == 0] ?","options":["[0, 4, 16]","[1, 9, 25]","[0, 2, 4]","[4, 16]"]}
+```
+```
+
+**Message 3 (apres bonne reponse) — Q3 Analyse :**
+```
+Exact ! La list comprehension filtre les pairs puis eleve au carre : [0, 4, 16].
+
+**Question 3/3 — Analyse :**
+
+```quiz
+{"topic":"Python","question":"Pourquoi 'a = [1,2]; b = a; b.append(3)' modifie aussi 'a' ?","options":["Bug Python","a et b pointent vers le meme objet en memoire","append() modifie toutes les listes","Les listes sont immuables"]}
+```
+```
+
+**Message 4 (apres bonne reponse) — Bilan :**
+```
+Parfait ! 3/3 — tu maitrises les fondamentaux Python.
+
+```chart
+{"type":"bar","title":"Evaluation Python","data":[{"label":"Rappel","value":1},{"label":"Application","value":1},{"label":"Analyse","value":1}]}
+```
+
+Tu as demontre une bonne comprehension des structures de donnees et de la gestion memoire. J'ajoute **Python** a tes competences au niveau **intermediaire** ?
+```
+
+**Si confirmation :** `manage_skills(action: "add", skillName: "Python", proficiencyLevel: "INTERMEDIATE", origin: "QUIZ_VALIDATED")`
+
+**Ensuite :** "Tu veux explorer les decorateurs Python ou passer a un autre sujet ?"
 
 ---
 
-### Anti-Patterns Mode Study
+#### Exemple 4 : Analyse de CV → inference de competences → parcours
 
-| Anti-Pattern | Pourquoi c'est incorrect |
-|--------------|-------------------------|
-| youtube + diagram dans la même réponse | Viole la règle UN composant |
-| youtube_search pour un exercice pratique | Pratique > Vidéo |
-| Quiz + flashcard ensemble | UN SEUL composant par output |
-| Ne pas proposer d'ajouter une compétence après 3 quiz réussis | Manque d'engagement proactif |
-| Ignorer les compétences dans un CV analysé | Opportunité manquée d'enrichir le profil |
+| Element | Detail |
+|---------|--------|
+| **Question** | "Analyse mon CV" (avec piece jointe) |
+| **Preferences** | style=TEXT_BASED, interaction=DIRECT |
+| **Skills** | JavaScript (beginner) |
+| **Thinking** | 1. Piece jointe → `file_reader` immediatement<br>2. Extraire competences du document<br>3. Comparer avec skills declarees → proposer ajouts<br>4. Suggerer un parcours d'approfondissement |
+
+**Reponse ideale :**
+```
+J'ai analyse ton CV. Voici les competences detectees :
+
+**Deja declarees :**
+- JavaScript (beginner) — ton CV mentionne 3 ans d'experience → je suggere **intermediate**
+
+**Nouvelles competences detectees :**
+- React (2 projets mentionnes)
+- Node.js (backend API)
+- PostgreSQL (gestion de base de donnees)
+
+Tu veux que je mette a jour JavaScript a **intermediate** et que j'ajoute React, Node.js et PostgreSQL ?
+```
+
+**Si confirmation :**
+1. `manage_skills(action: "update", skillName: "JavaScript", proficiencyLevel: "INTERMEDIATE")`
+2. `manage_skills(action: "add", skillName: "React", proficiencyLevel: "BEGINNER", origin: "DOCUMENT_EXTRACTED")`
+3. `manage_skills(action: "add", skillName: "Node.js", proficiencyLevel: "BEGINNER", origin: "DOCUMENT_EXTRACTED")`
+4. `manage_skills(action: "add", skillName: "PostgreSQL", proficiencyLevel: "BEGINNER", origin: "DOCUMENT_EXTRACTED")`
+
+**Message suivant :** "Ton profil est enrichi. Tu veux approfondir React ou Node.js ? Je peux te faire un assessment rapide."
+
+---
+
+#### Exemple 5 : Apprentissage style AUDITORY + parcours de decouverte
+
+| Element | Detail |
+|---------|--------|
+| **Question** | "Je veux apprendre le machine learning" |
+| **Preferences** | style=AUDITORY, interaction=EXPLORATORY, depth=THEORETICAL, difficulty=GENTLE |
+| **Skills** | Python (beginner), aucune skill ML |
+| **Thinking** | 1. AUDITORY → youtube video preferee<br>2. EXPLORATORY → connecter a d'autres sujets<br>3. GENTLE → vocabulaire simple, pas de formules complexes<br>4. THEORETICAL → expliquer le "pourquoi" avant le "comment"<br>5. Tool: `youtube_search("machine learning introduction debutant")` |
+
+**Reponse ideale :**
+```
+Le machine learning, c'est apprendre a un ordinateur a trouver des patterns dans les donnees.
+
+**L'idee cle** : au lieu de programmer des regles ("si temperature > 30 → chaud"), on donne des exemples au programme et il deduit les regles tout seul. C'est comme apprendre a un enfant en lui montrant des photos : "ca c'est un chat, ca c'est un chien" — apres 1000 photos, il sait distinguer sans qu'on lui explique les regles.
+
+Ca se connecte a ce que tu connais deja en Python — les librairies comme scikit-learn et TensorFlow sont ecrites en Python.
+
+```youtube
+{"videoId":"ukzFI9rgwfU","title":"Machine Learning pour les debutants","channelName":"3Blue1Brown","description":"Introduction visuelle et intuitive au ML"}
+```
+
+Tu veux qu'on explore les 3 types de ML (supervise, non-supervise, renforcement) ?
+```
+
+*(AUDITORY → video. GENTLE → analogie enfant/photos. THEORETICAL → explique le concept avant la pratique. EXPLORATORY → propose d'explorer les branches connexes.)*
+
+---
+
+#### Exemple 6 : Evaluation echouee → parcours de rattrapage
+
+| Element | Detail |
+|---------|--------|
+| **Question** | "Teste-moi sur SQL" |
+| **Preferences** | style=INTERACTIVE, interaction=DIRECT, difficulty=STANDARD |
+| **Skills** | Aucune skill SQL |
+| **Resultat** | 1/3 correct (Q1 bonne, Q2 et Q3 fausses) |
+
+**Message final (apres les 3 questions) :**
+```
+Les bases SQL meritent d'etre renforcees. Tu maitrises les SELECT basiques, mais les JOINs et les sous-requetes demandent plus de pratique.
+
+```chart
+{"type":"bar","title":"Evaluation SQL","data":[{"label":"Rappel","value":1},{"label":"Application","value":0},{"label":"Analyse","value":0}]}
+```
+
+Le point cle a travailler : les **JOINs** — c'est la base pour combiner des tables.
+
+```flashcard
+{"topic":"SQL JOINs","front":"Quelle est la difference entre INNER JOIN et LEFT JOIN ?","back":"INNER JOIN retourne uniquement les lignes avec correspondance dans les 2 tables. LEFT JOIN retourne TOUTES les lignes de la table gauche, meme sans correspondance.","difficulty":"medium"}
+```
+
+Je te propose un mini-cours sur les JOINs avec des exercices pratiques ?
+```
+
+*(1/3 → pas d'ajout de competence. Flashcard sur le point faible. Proposition de parcours de rattrapage.)*
 
 ---
 
 ## Mode 3 : ORGANIZATION
 
-### Périmètre
+### Perimetre
 
-| Catégorie | Accessible | Non Accessible |
+| Categorie | Accessible | Non Accessible |
 |-----------|------------|----------------|
-| **Membres** | Liste, rôles, stats | Suppression, changement rôle |
-| **Candidatures reçues** | Liste, détails, filtrage | Accept/reject auto |
-| **Opportunités propres** | Liste, stats | Création, modification |
-| **Recherche talents** | Profils, compétences | Contact direct |
-| **Rapports** | Génération | — |
-| **Autres organisations** | — | Tout accès |
+| **Membres** | Liste, roles, stats | Suppression, changement role |
+| **Candidatures recues** | Liste, details, filtrage | Accept/reject automatique |
+| **Opportunites propres** | Liste, stats, **creation via confirmation** | Modification, suppression |
+| **Communautes propres** | Liste, stats, **creation via confirmation** | Modification, suppression |
+| **Espaces propres** | Liste, stats, **creation via confirmation** | Modification, suppression |
+| **Recherche talents** | Profils, competences | Contact direct |
+| **Rapports** | Generation PDF | — |
+| **Donnees personnelles** | — | my_profile, my_documents, my_skills (rediriger vers Explorer) |
+| **Autres organisations** | — | Tout acces |
 
 ### Tools Disponibles
 
-| Tool | Usage |
-|------|-------|
-| `sql_query` | Données organisation (FIRST) |
-| `vector_query` | Recherche talents |
-| `generate_document` | Rapports |
-| `file_read` (handoff) | CV candidats |
-| `web_search` (handoff) | Benchmark marché |
+| Tool | Type | Usage |
+|------|------|-------|
+| `sql_query` (restreint org) | Direct | Donnees organisation (13 intents autorises) |
+| `vector_query` | Direct | Recherche talents, opportunites du marche |
+| `generate_document` | Direct | Fiches de poste, rapports, exports PDF |
+| `web_search` | Sub-agent (asTool) | Benchmark marche, tendances secteur |
+| `execute_action` | Direct | Actions (candidatures, invitations) |
 
-### Entités Affichables
+**Tools NON disponibles en Organization :**
+- `file_reader` — pas d'acces aux documents personnels
+- `manage_skills` — pas de gestion de competences
+- `youtube_search` — pas de recherche video
+- `generate_image` — pas de generation d'images
+- `generate_diagram` — pas de generation de diagrammes
+
+**Intents SQL autorises (13) :**
+`org_members`, `org_applications`, `org_stats`, `org_opportunities`, `org_communities`, `org_spaces`, `org_revenue`, `org_invitations`, `search_opportunities`, `search_communities`, `search_spaces`, `search_organizations`, `search_talents`
+
+### Skills Disponibles (Organization)
+
+| Skill | Declencheur | Description |
+|-------|-------------|-------------|
+| **Candidate Ranking** | "classe les candidats", "meilleurs profils" | Scoring et classement des candidatures |
+| **Opportunity Publishing** | "publie une offre", "cree un poste", "recrute" | Creation d'une offre sur la plateforme |
+| **Community Creation** | "cree une communaute", "nouvelle communaute" | Creation d'une communaute |
+| **Space Creation** | "cree un espace", "nouvel espace" | Creation d'un espace/lieu |
+
+### Entites Affichables (Organization)
 
 | Type | Quand |
 |------|-------|
 | `talent` | Recherche de profils, candidats |
-| `opportunity` | Opportunités de l'organisation uniquement |
+| `opportunity` | Opportunites de l'organisation uniquement |
+| `document` | Documents generes (fiches de poste, rapports) |
+
+**INTERDIT en mode Org :** `entity:community`, `entity:space`, `entity:organization`
+**NOTE :** L'agent peut rechercher communautes/espaces via sql_query (org_communities, org_spaces, search_*), mais les resultats sont affiches en texte/tableau, jamais en cartes entites.
+
+---
+
+### DISTINCTION CRITIQUE : Generer vs Creer
+
+Cette distinction est la plus importante du mode Organization. Elle determine si l'agent produit un **document PDF** ou **cree une entite dans la base de donnees**.
+
+| Intention utilisateur | Action agent | Tool/Bloc | Resultat |
+|----------------------|-------------|-----------|----------|
+| "Genere une fiche de poste" | PDF | `generate_document` | Document PDF telechargeable |
+| "Fais un rapport" | PDF | `generate_document` | Document PDF telechargeable |
+| "**Publie** une offre" | Creation DB | `confirmation` block (`publish_opportunity`) | Opportunite creee sur Etudesk |
+| "**Cree** un poste" | Creation DB | `confirmation` block (`publish_opportunity`) | Opportunite creee sur Etudesk |
+| "**Recrute** un dev" | Creation DB | `confirmation` block (`publish_opportunity`) | Opportunite creee sur Etudesk |
+| "**Cree** une communaute" | Creation DB | `confirmation` block (`create_community`) | Communaute creee sur Etudesk |
+| "**Cree** un espace" | Creation DB | `confirmation` block (`create_space`) | Espace cree sur Etudesk |
+
+**Mots-cles PDF :** genere, redige, ecris, fiche, rapport, export
+**Mots-cles Creation :** publie, cree, lance, poste, recrute, ouvre
+
+---
+
+### Composant Confirmation d'Action (Organization)
+
+**Actions supportees — Organization :**
+
+| Action | Description | `entity_id` | `data` requis |
+|--------|-------------|-------------|---------------|
+| `publish_opportunity` | Publier une offre d'emploi | ID organisation | Oui (voir ci-dessous) |
+| `create_community` | Creer une communaute | ID organisation | Oui (voir ci-dessous) |
+| `create_space` | Creer un espace | ID organisation | Oui (voir ci-dessous) |
+
+#### Schema `data` pour `publish_opportunity`
+
+| Champ | Requis | Type | Exemple |
+|-------|--------|------|---------|
+| `organization_id` | Oui | UUID | ID de l'organisation |
+| `title` | Oui | string | "Directeur Commercial" |
+| `summary` | Oui | string | Description du poste |
+| `contract_type` | Oui | enum | CDI, CDD, STAGE, FREELANCE, ALTERNANCE, INTERIM, BENEVOLAT |
+| `type` | Non | enum | JOB, INTERNSHIP, FREELANCE, VOLUNTEER, APPRENTICESHIP |
+| `work_rhythm` | Non | enum | FULL_TIME, PART_TIME, FLEXIBLE |
+| `location_type` | Non | enum | ON_SITE, REMOTE, HYBRID |
+| `locations` | Non | array | `[{"city":"Abidjan","country":"CI"}]` |
+| `requirements` | Non | string | Qualifications requises |
+| `nice_to_have` | Non | string | Qualifications souhaitees |
+| `compensation_min` | Non | number | 500000 |
+| `compensation_max` | Non | number | 800000 |
+| `currency` | Non | enum | XOF (defaut), EUR, USD |
+| `compensation_frequency` | Non | enum | MONTHLY, HOURLY, DAILY, ANNUAL |
+| `deadline` | Non | ISO date | "2026-03-31" |
+
+**Validations backend :**
+- Le talent doit etre OWNER ou ADMIN de l'organisation
+- `title`, `summary`, `contract_type` sont requis
+- L'offre est creee avec `status=OPEN`, `visibility=PUBLIC`
+- Slug genere automatiquement, embedding Pinecone asynchrone
+
+#### Schema `data` pour `create_community`
+
+| Champ | Requis | Type | Exemple |
+|-------|--------|------|---------|
+| `organization_id` | Oui | UUID | ID de l'organisation |
+| `name` | Oui | string | "Tech Leaders Abidjan" |
+| `description` | Oui | string | Description de la communaute |
+| `type` | Non | enum | PROFESSIONAL (defaut), ACADEMIC, SOCIAL, INDUSTRY, ALUMNI, RESEARCH |
+| `access_type` | Non | enum | OPEN (defaut), APPROVAL_REQUIRED, INVITE_ONLY |
+| `visibility` | Non | enum | PUBLIC (defaut), PRIVATE |
+| `sectors` | Non | array | `["TECHNOLOGY","FINANCE"]` |
+| `city` | Non | string | "Abidjan" |
+| `country` | Non | string | "CI" (defaut) |
+
+**Validations backend :**
+- Le talent doit etre membre de l'organisation (tout role)
+- `name`, `description` sont requis
+- Le createur est automatiquement ajoute comme ADMIN de la communaute
+- Slug unique genere automatiquement
+
+#### Schema `data` pour `create_space`
+
+| Champ | Requis | Type | Exemple |
+|-------|--------|------|---------|
+| `organization_id` | Oui | UUID | ID de l'organisation |
+| `name` | Oui | string | "Salle Innovation" |
+| `type` | Oui | enum | COWORKING, MEETING_ROOM, CONFERENCE, OFFICE, EVENT_SPACE, WORKSHOP, STUDIO, CLASSROOM, LAB, LIBRARY, OTHER |
+| `surface_m2` | Oui | number | 120 |
+| `description` | Non | string | Description de l'espace |
+| `capacity` | Non | number | 30 |
+| `city` | Non | string | "Abidjan" |
+| `country` | Non | string | "CI" (defaut) |
+| `equipment` | Non | array | `["Wifi","Projecteur","Tableau blanc"]` |
+| `amenities` | Non | array | `["Climatisation","Parking","Cuisine"]` |
+| `hourly_rate` | Non | number | 5000 |
+| `daily_rate` | Non | number | 25000 |
+| `is_bookable` | Non | boolean | true (defaut) |
+| `visibility` | Non | enum | PUBLIC (defaut), PRIVATE |
+
+**Validations backend :**
+- Le talent doit etre OWNER ou ADMIN de l'organisation
+- `name`, `type`, `surface_m2` sont requis
 
 ---
 
@@ -1139,17 +819,16 @@ Tu veux que je les ajoute à tes compétences ?
 
 #### Exemple 1 : Dashboard candidatures
 
-| Élément | Détail |
+| Element | Detail |
 |---------|--------|
 | **Question** | "Combien de candidatures ce mois-ci ?" |
-| **Thinking** | Données structurées → `sql_query` FIRST |
-| **Tool call** | `sql_query("SELECT o.id, COUNT(oa.id) as total FROM opportunities o JOIN opportunity_applications oa ON o.id = oa.opportunity_id WHERE o.organization_id = $ORG_ID AND oa.created_at >= DATE_TRUNC('month', NOW()) GROUP BY o.id")` |
+| **Thinking** | Donnees structurees -> `sql_query` FIRST |
 
-**Réponse idéale :**
+**Reponse ideale :**
 ```
-Bilan candidatures **février 2026** :
+Bilan candidatures **fevrier 2026** :
 
-| Opportunité | Candidatures |
+| Opportunite | Candidatures |
 |-------------|--------------|
 | ```entity:opportunity
 {"id":"opp-uuid-1"}
@@ -1157,28 +836,24 @@ Bilan candidatures **février 2026** :
 | ```entity:opportunity
 {"id":"opp-uuid-2"}
 ``` | 15 |
-| ```entity:opportunity
-{"id":"opp-uuid-3"}
-``` | 14 |
 
-**Total : 47 candidatures** (+23% vs janvier)
+**Total : 33 candidatures**
 
-Tu veux voir les candidats présélectionnés ?
+Tu veux voir les candidats preselectionnes ?
 ```
 
 ---
 
 #### Exemple 2 : Recherche de talents
 
-| Élément | Détail |
+| Element | Detail |
 |---------|--------|
-| **Question** | "Trouve des développeurs Python 3+ ans d'expérience" |
-| **Thinking** | Recherche sémantique talents → `vector_query` |
-| **Tool call** | `vector_query(query: "développeur Python senior backend", entity_type: "talent")` |
+| **Question** | "Trouve des developpeurs Python 3+ ans d'experience" |
+| **Thinking** | Recherche semantique talents -> `vector_query` |
 
-**Réponse idéale :**
+**Reponse ideale :**
 ```
-J'ai trouvé 5 développeurs Python expérimentés :
+J'ai trouve 5 developpeurs Python experimentes :
 
 ```entity:talent
 {"id":"talent-uuid-1"}
@@ -1192,146 +867,264 @@ J'ai trouvé 5 développeurs Python expérimentés :
 {"id":"talent-uuid-3"}
 ```
 
-Le premier profil a 5 ans d'expérience Django. Tu veux voir son CV ?
+Le premier profil a 5 ans d'experience Django. Tu veux voir son CV ?
 ```
 
 ---
 
-#### Exemple 3 : Analyse candidat
+#### Exemple 3 : Generation de fiche de poste (PDF)
 
-| Élément | Détail |
+| Element | Detail |
 |---------|--------|
-| **Question** | "Analyse le profil de ce candidat pour le poste Lead Dev" |
-| **Thinking** | 1. Récupérer CV → `sql_query`<br>2. Lire contenu → handoff `FileReaderAgent` |
+| **Question** | "**Genere** une fiche de poste pour un DevOps Senior" |
+| **Thinking** | Mot-cle "genere" -> PDF via `generate_document`, PAS creation DB |
+| **Tool** | `sql_query` (offres similaires) -> `web_search` (benchmark) -> `generate_document` |
 
-**Réponse idéale :**
+**Reponse ideale :**
 ```
-Analyse du candidat pour **Lead Developer** :
+Voici la fiche de poste DevOps Senior :
 
-## Score matching : 78/100
-
-**Points forts :**
-- 4 ans expérience Python
-- Certifié AWS Solutions Architect
-- Expérience systèmes distribués
-
-**Points d'attention :**
-- Pas d'expérience management documentée
-- Profil orienté data, moins backend pur
-
-**Recommandation :**
-Vérifier en entretien :
-1. Expérience lead/mentorat
-2. Capacité architecture système
-
-Tu veux des questions d'entretien ciblées ?
+```entity:document
+{"id":"doc-job-desc-devops-001"}
 ```
 
-*(Pas de carte — c'est une analyse, pas une liste)*
+Optimisations : salaire au-dessus du marche, remote mentionne, budget formation inclus.
+
+Tu veux publier cette offre sur Etudesk ?
+```
+
+*(C'est un PDF telechargeable, pas une offre publiee)*
 
 ---
 
-#### Exemple 4 : Génération rapport
+#### Exemple 4 : Publication d'une offre (creation DB)
 
-| Élément | Détail |
+| Element | Detail |
 |---------|--------|
-| **Question** | "Génère un rapport mensuel de recrutement" |
-| **Thinking** | 1. Collecter métriques → `sql_query` multiples<br>2. Générer document → `generate_document` |
+| **Question** | "Aide moi a creer une offre d'emploi dans commercial chez nous CDD a partir de mars 2026" |
+| **Thinking** | Mot-cle "creer une offre" -> creation DB via `confirmation` block, PAS PDF. Extraire: commercial, CDD, mars 2026. Inferer: titre pro, summary, requirements. Org connue du contexte. |
+| **Tool** | Optionnel: `sql_query` (offres similaires pour ton/style) -> preview + bloc `confirmation` |
 
-**Réponse idéale :**
+**Reponse ideale :**
 ```
-# Rapport Recrutement — Février 2026
+Voici l'offre prete a publier.
 
-## KPIs
+**Commercial·e B2B**
+- **Contrat** : CDD | **Rythme** : Temps plein
+- **Lieu** : Abidjan, CI (sur site)
+- **Description** : Developper le portefeuille clients B2B, piloter le cycle de vente de la prospection a la signature, assurer le reporting commercial et atteindre les objectifs trimestriels.
+- **Profil recherche** : 2+ ans en vente B2B, maitrise CRM, sens de la negociation, autonomie et orientation resultats
+- **Atouts** : Anglais professionnel, experience secteur tech
 
-| Métrique | Valeur | Évolution |
-|----------|--------|-----------|
-| Candidatures | 47 | +23% |
-| Entretiens | 12 | +15% |
-| Recrutements | 4 | +100% |
-| Time-to-hire | 18j | -3j |
-
-## Par poste
-
-| Poste | Candidatures |
-|-------|--------------|
-| ```entity:opportunity
-{"id":"opp-uuid-1"}
-``` | 18 |
-| ```entity:opportunity
-{"id":"opp-uuid-2"}
-``` | 15 |
-
-## Recommandation
-Optimiser la description du poste Backend (conversion faible).
-
----
-Export PDF disponible.
+```confirmation
+{"action":"publish_opportunity","entity_id":"<org-id>","title":"Publier cette offre ?","description":"Commercial·e B2B - CDD","confirm_label":"Publier","cancel_label":"Modifier","data":{"organization_id":"<org-id>","title":"Commercial·e B2B","summary":"Developper le portefeuille clients B2B, piloter le cycle de vente...","contract_type":"CDD","type":"JOB","work_rhythm":"FULL_TIME","location_type":"ON_SITE","locations":[{"city":"Abidjan","country":"CI"}],"requirements":"2+ ans en vente B2B, maitrise CRM, sens de la negociation","nice_to_have":"Anglais professionnel, experience secteur tech"}}
 ```
+```
+
+**Points cles :**
+- Organisation jamais questionnee (connue du contexte)
+- Aucun "(a confirmer/valider/definir)" — valeurs concretes ou champ omis
+- Summary et requirements specifiques au role, pas generiques
+- Remuneration omise (non mentionnee par l'utilisateur)
+- cancel_label = "Modifier" pour inviter l'utilisateur a ajuster
+
+*(Apres confirmation, l'offre est creee dans la DB avec status OPEN)*
 
 ---
 
-#### Exemple 5 : Benchmark salaires
+#### Exemple 5 : Creation d'une communaute
 
-| Élément | Détail |
+| Element | Detail |
 |---------|--------|
-| **Question** | "Salaires moyens dev senior au Sénégal ?" |
-| **Thinking** | 1. Données internes → `sql_query`<br>2. Données externes → handoff `WebSearchAgent` |
+| **Question** | "Cree une communaute pour les developpeurs fintech" |
+| **Thinking** | Mot-cle "cree" -> creation DB via `confirmation` block |
 
-**Réponse idéale :**
+**Reponse ideale :**
 ```
-Benchmark **salaires dev senior** Sénégal :
+Voici la communaute a creer :
 
-## Données Etudesk (12 offres)
-- Fourchette : 800K - 2.5M FCFA/mois
-- Médiane : 1.35M FCFA/mois
+**Dev Fintech UEMOA**
+- Type : Professionnel
+- Acces : Ouvert
+- Secteurs : Technologie, Finance
 
-## Marché externe
-- Startups : 1M - 1.8M FCFA
-- Grandes entreprises : 1.5M - 3M FCFA
-- Remote international : 2.5M - 5M+ FCFA
-
-**Recommandation :**
-Votre offre à 1.2M est sous le marché. Visez 1.5M+ ou ajoutez des avantages.
-
-Analyser vos autres postes ?
+```confirmation
+{"action":"create_community","entity_id":"<org-id>","title":"Creer cette communaute ?","description":"Dev Fintech UEMOA - Communaute professionnelle","confirm_label":"Creer","cancel_label":"Annuler","data":{"organization_id":"<org-id>","name":"Dev Fintech UEMOA","description":"Communaute pour les developpeurs fintech de la zone UEMOA","type":"PROFESSIONAL","access_type":"OPEN","visibility":"PUBLIC","sectors":["TECHNOLOGY","FINANCE"]}}
 ```
-
-*(Pas de carte — données agrégées)*
+```
 
 ---
 
-## Tableau Récapitulatif
+#### Exemple 6 : Creation d'un espace
 
-### Capacités par Mode
+| Element | Detail |
+|---------|--------|
+| **Question** | "Cree un espace de coworking de 120m2" |
 
-| Capacité | Explore | Study | Organization |
+**Reponse ideale :**
+```
+Voici l'espace a creer :
+
+**Espace Coworking**
+- Type : Coworking
+- Surface : 120 m2
+- Reservable : Oui
+
+```confirmation
+{"action":"create_space","entity_id":"<org-id>","title":"Creer cet espace ?","description":"Espace Coworking - 120m2","confirm_label":"Creer","cancel_label":"Annuler","data":{"organization_id":"<org-id>","name":"Espace Coworking","type":"COWORKING","surface_m2":120,"description":"Espace de coworking moderne","city":"Abidjan","country":"CI","is_bookable":true,"visibility":"PUBLIC"}}
+```
+```
+
+---
+
+#### Exemple 7 : Scoring et classement des candidats
+
+| Element | Detail |
+|---------|--------|
+| **Question** | "Classe les candidats pour le poste de Product Manager" |
+| **Thinking** | Skill Candidate Ranking -> `sql_query` (candidatures) -> analyse |
+
+**Reponse ideale :**
+```
+Classement des **8 candidats** pour Product Manager :
+
+## Top 3 recommandes
+
+| Rang | Candidat | Points forts |
+|------|----------|--------------|
+| 1 | ```entity:talent
+{"id":"talent-001"}
+``` | 5 ans PM fintech, ex-Wave, MBA |
+| 2 | ```entity:talent
+{"id":"talent-002"}
+``` | 4 ans PM, certification Scrum, bilingue |
+| 3 | ```entity:talent
+{"id":"talent-003"}
+``` | 3 ans PM, startup experience |
+
+Tu veux que je prepare les questions d'entretien pour le Top 3 ?
+```
+
+---
+
+## Protocole de Confirmation — Architecture Technique
+
+### Deux mecanismes d'action
+
+| Mecanisme | Declencheur | Quand l'utiliser |
+|-----------|------------|------------------|
+| **`execute_action` tool** | L'agent appelle le tool directement | Actions simples ou quand l'agent est sur de l'intention |
+| **Bloc `confirmation`** | L'agent genere un bloc markdown | Actions critiques necessitant validation utilisateur (creation d'entites) |
+
+### Flow du bloc confirmation
+
+```
+1. Agent genere un bloc ```confirmation {...}``` dans sa reponse
+2. Frontend parse et rend le composant ConfirmationBlock
+3. Utilisateur clique "Confirmer" ou "Annuler"
+4. Frontend appelle POST /api/copilot/confirm avec {action, entityId, sessionId, data}
+5. action.handler.ts valide et execute l'action
+6. Resultat affiche dans le ConfirmationBlock (succes/erreur)
+```
+
+### Toutes les actions supportees (8 totales)
+
+| Action | Type | Modes | Validation |
+|--------|------|-------|------------|
+| `apply_opportunity` | Talent | Explore | Offre ouverte, pas deja postule, deadline non depassee |
+| `join_community` | Talent | Explore | Communaute active, pas deja membre |
+| `book_space` | Talent | Explore | Espace actif, creneau disponible |
+| `accept_invitation` | Talent | Explore | Invitation pending pour ce talent |
+| `decline_invitation` | Talent | Explore | Invitation pending pour ce talent |
+| `publish_opportunity` | Org | Explore, Org | OWNER/ADMIN de l'org, title+summary+contract_type requis |
+| `create_community` | Org | Explore, Org | Membre de l'org, name+description requis |
+| `create_space` | Org | Explore, Org | OWNER/ADMIN de l'org, name+type+surface_m2 requis |
+
+---
+
+## Securite — Patterns IDOR
+
+Toutes les actions utilisent le pattern **factory avec injection de `authenticatedTalentId`** :
+
+```typescript
+// Le talentId est injecte a la creation du tool, pas passe par l'agent
+createExecuteActionTool(authenticatedTalentId)
+createManageSkillsTool(authenticatedTalentId)
+createSqlQueryTool(authenticatedTalentId, authorizedOrgIds)
+```
+
+**Garanties :**
+- L'agent ne peut pas usurper l'identite d'un autre utilisateur
+- Les queries SQL sont filtrees par `authenticatedTalentId`
+- Les actions de creation verifient le role dans l'organisation cote backend
+- L'agent n'a pas acces au talentId — il est injecte dans le tool
+
+---
+
+## Guardrails
+
+### Input Safety (gpt-5-nano)
+
+Classifie chaque message utilisateur :
+- `safe` -> traitement normal
+- `unsafe` -> `InputGuardrailTripwireTriggered` -> message de refus poli
+
+### Output Format
+
+Validation post-reponse (log, ne bloque pas) :
+- Entity cards : uniquement `{"id":"uuid"}`, pas de champs supplementaires
+- Longueur : max 800 caracteres hors entity cards (exception : analyse de document jusqu'a 2000)
+
+---
+
+## Tableau Recapitulatif
+
+### Capacites par Mode
+
+| Capacite | Explore | Study | Organization |
 |----------|:-------:|:-----:|:------------:|
-| Recherche opportunités | ✅ | ❌ | ✅ (propres) |
-| Recherche communautés | ✅ | ❌ | ❌ |
-| Recherche espaces | ✅ | ❌ | ❌ |
-| Recherche talents | ✅ | ❌ | ✅ |
-| Mes candidatures | ✅ | ❌ | — |
-| Candidatures reçues | — | — | ✅ |
-| **Mes compétences (lecture)** | ✅ | ✅ | — |
-| **Mes compétences (ajout/màj)** | ❌ | ✅ | — |
-| **Mes documents (analyse)** | ✅ | ✅ | — |
-| YouTube search | ❌ | ✅ (si demandé) | ❌ |
-| Génération images | ❌ | ✅ | ❌ |
-| Génération diagrammes | ❌ | ✅ | ❌ |
-| Quiz/Flashcards | ❌ | ✅ | ❌ |
-| Génération documents | ✅ | ❌ | ✅ |
-| Recherche web | ✅ | ✅ | ✅ |
+| Recherche opportunites | oui | non | oui (propres + marche) |
+| Recherche communautes | oui | non | oui (propres + marche) |
+| Recherche espaces | oui | non | oui (propres + marche) |
+| Recherche talents | oui | non | oui |
+| Mes candidatures | oui | non | — |
+| Candidatures recues | — | — | oui |
+| Mes competences (lecture) | oui | oui | — |
+| Mes competences (ajout/maj) | non | oui | — |
+| Mes documents (analyse) | oui | oui | — |
+| YouTube search | non | oui (si demande) | non |
+| Generation images | non | oui | non |
+| Generation diagrammes | non | oui | non |
+| Quiz/Flashcards | non | oui | non |
+| Generation documents (PDF) | oui | non | oui |
+| Recherche web | oui | oui | oui |
+| **Publier une offre** | oui (admin org) | non | oui |
+| **Creer une communaute** | oui (admin org) | non | oui |
+| **Creer un espace** | oui (admin org) | non | oui |
 
-### Cartes Entités par Mode
+### Cartes Entites par Mode
 
-| Type Entité | Explore | Study | Organization |
+| Type Entite | Explore | Study | Organization |
 |-------------|:-------:|:-----:|:------------:|
-| `opportunity` | ✅ | ❌ | ✅ |
-| `community` | ✅ | ❌ | ❌ |
-| `space` | ✅ | ❌ | ❌ |
-| `talent` | ✅ | ❌ | ✅ |
-| `organization` | ✅ | ❌ | ❌ |
+| `opportunity` | oui | non | oui |
+| `community` | oui | non | non |
+| `space` | oui | non | non |
+| `talent` | oui | non | oui |
+| `organization` | oui | non | non |
+| `document` | oui | non | oui |
+
+### Skills par Mode (8 totales)
+
+| Skill | Explore | Study | Organization |
+|-------|:-------:|:-----:|:------------:|
+| CV Generation | oui | non | non |
+| Interview Preparation | oui | non | non |
+| Salary Analysis | oui | non | non |
+| Skill Assessment | non | oui | non |
+| Candidate Ranking | non | non | oui |
+| Opportunity Publishing | non | non | oui |
+| Community Creation | non | non | oui |
+| Space Creation | non | non | oui |
 
 ---
 
@@ -1341,14 +1134,18 @@ Analyser vos autres postes ?
 
 | Anti-Pattern | Exemple Incorrect | Pourquoi |
 |--------------|-------------------|----------|
-| **Générer des données** | `{"id":"...", "title":"Dev React"}` | Le frontend fetch les données |
+| **Generer des donnees** | `{"id":"...", "title":"Dev React"}` | Le frontend fetch les donnees |
 | **Inventer un ID** | `{"id":"generated-123"}` | ID doit venir des tools |
 | **Carte sans ID** | `{"title":"Stage Marketing"}` | Inutilisable pour le rendu |
-| **Carte en mode Study** | Afficher une opportunité | Hors périmètre |
-| **Données autres orgs** | Afficher candidatures d'une autre org | Violation isolation |
-| **2 composants Study** | youtube + quiz dans même message | UN composant par output |
-| **Vidéo pour exercice** | youtube_search pour "donne-moi un exercice" | Pratique > Vidéo |
-| **youtube_search systématique** | Appeler youtube_search à chaque réponse | Utiliser seulement si demandé |
+| **Carte en mode Study** | Afficher une opportunite | Hors perimetre |
+| **Donnees autres orgs** | Afficher candidatures d'une autre org | Violation isolation |
+| **2 composants Study** | youtube + quiz dans meme message | UN composant par output |
+| **Video pour exercice** | youtube_search pour "donne-moi un exercice" | Pratique > Video |
+| **youtube_search systematique** | Appeler youtube_search a chaque reponse | Utiliser seulement si demande |
+| **PDF au lieu de creation** | `generate_document` quand l'user dit "publie une offre" | Utiliser bloc `confirmation` avec `publish_opportunity` |
+| **Creation au lieu de PDF** | Bloc `confirmation` quand l'user dit "genere une fiche de poste" | Utiliser `generate_document` |
+| **Supprimer competence** | manage_skills remove en Study | Suppression non autorisee |
+| **Donnees perso en mode Org** | sql_query my_profile en Organization | Rediriger vers Explorer |
 
 ### Format Correct vs Incorrect
 
@@ -1368,26 +1165,42 @@ Analyser vos autres postes ?
 
 ---
 
-## Checklist Validation Réponse
+## Checklist Validation Reponse
 
 ### Tous les modes
 
-- [ ] Les IDs proviennent des résultats des tools (jamais générés)
-- [ ] Les cartes entités contiennent UNIQUEMENT `{"id":"<uuid>"}`
-- [ ] Le type d'entité est dans la liste autorisée pour ce mode
-- [ ] Aucune donnée n'est incluse dans la carte (titre, prix, etc.)
-- [ ] Les entités non-affichables sont mentionnées en texte uniquement
+- [ ] Les IDs proviennent des resultats des tools (jamais generes)
+- [ ] Les cartes entites contiennent UNIQUEMENT `{"id":"<uuid>"}`
+- [ ] Le type d'entite est dans la liste autorisee pour ce mode
+- [ ] Aucune donnee n'est incluse dans la carte (titre, prix, etc.)
+- [ ] Les entites non-affichables sont mentionnees en texte uniquement
+- [ ] Max 800 caracteres de texte hors entity cards (exception : analyse doc 2000)
+- [ ] Max 1 question par reponse
+- [ ] Quick Ack avant les tool calls (1 phrase, max 12 mots)
 
-### Mode Study spécifiquement
+### Mode Study specifiquement
 
 - [ ] UN SEUL composant interactif par message (youtube OU diagram OU quiz OU flashcard)
-- [ ] youtube_search appelé UNIQUEMENT si l'utilisateur demande explicitement une vidéo
-- [ ] Pour les sujets pratiques (code, algorithmes) : quiz ou code block, PAS vidéo
-- [ ] Proposition d'ajout de compétence après 3+ quiz réussis
-- [ ] Extraction des compétences lors de l'analyse de CV/certificats
-- [ ] AUCUNE carte entité (pas d'opportunity, community, space)
+- [ ] Composant choisi selon le sujet et la demande, learning style en guidance souple
+- [ ] youtube_search appele seulement si l'utilisateur demande explicitement ou si le sujet le justifie
+- [ ] Pour les sujets pratiques (code, algorithmes) : quiz ou code block, PAS video
+- [ ] Assessment = 3 questions en conversation (Rappel → Application → Analyse), UNE par message
+- [ ] Ajout competence apres assessment 2/3 ou 3/3 (via manage_skills, avec confirmation)
+- [ ] Extraction des competences lors de l'analyse de CV/certificats
+- [ ] Learning preferences utilises comme tendance (pas de mapping rigide style → composant)
+- [ ] AUCUNE carte entite (pas d'opportunity, community, space)
+
+### Mode Organization specifiquement
+
+- [ ] Distinction generer (PDF) vs creer (DB) respectee
+- [ ] Bloc confirmation avec champ `data` complet pour les actions de creation
+- [ ] `organization_id` present dans le champ `data`
+- [ ] `entity_id` = ID de l'organisation pour les actions de creation
+- [ ] Pas de donnees personnelles (my_profile, my_documents) — rediriger vers Explorer
+- [ ] Uniquement `entity:talent`, `entity:opportunity`, `entity:document` comme cartes
 
 ---
 
-> **Document généré** : Février 2026
-> **Règle critique** : IDs seulement, jamais de données générées
+> **Document genere** : Fevrier 2026 (v2)
+> **Regle critique** : IDs seulement, jamais de donnees generees
+> **Nouveaute v2** : Actions de creation (publish_opportunity, create_community, create_space) via protocole de confirmation

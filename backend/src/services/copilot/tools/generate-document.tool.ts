@@ -1,16 +1,21 @@
 /**
  * Generate Document Tool — PDF, DOCX, XLS, CSV, TXT generation
  * Uses pdfkit, docx, exceljs, csv-stringify for real document generation
+ * Factory pattern: injects talentId for auto-save to user's documents library
  */
 
 import { tool } from '@openai/agents';
 import { z } from 'zod';
+import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType } from 'docx';
 import ExcelJS from 'exceljs';
 import { stringify } from 'csv-stringify/sync';
 import { uploadFile } from '../../storage.service';
+import { pool } from '../../database';
+import { processDocumentExtraction } from '../../documents/document.service';
 import { logger } from '../../../utils';
+import { generateCVPDF, CVData } from './cv-pdf-generator';
 
 // Content JSON structure types
 interface SectionContent {
@@ -28,6 +33,11 @@ function isSectionContent(data: any): data is SectionContent {
 
 function isTableContent(data: any): data is TableContent {
   return data && Array.isArray(data.headers) && Array.isArray(data.rows);
+}
+
+/** Detect CVData-structured content (has firstName + lastName + skills array) */
+function isCVContent(data: any): data is CVData {
+  return data && typeof data.firstName === 'string' && typeof data.lastName === 'string' && Array.isArray(data.skills);
 }
 
 /**
@@ -264,6 +274,146 @@ const FORMAT_MIMETYPES: Record<string, string> = {
   TXT: 'text/plain',
 };
 
+/**
+ * Factory: create generate_document tool with injected talentId
+ * The generated document is auto-saved to the user's documents library
+ * and triggers the extraction + skill merge pipeline.
+ */
+export function createGenerateDocumentTool(talentId: string, avatarUrl?: string) {
+  return tool({
+    name: 'generate_document',
+    description:
+      'Generate a downloadable document (CV, cover letter, report, data export). Supports PDF, DOCX, XLS, CSV, TXT formats. Use AFTER gathering data via sql_query or vector_query. Returns a persistent download URL and document ID. The document is automatically saved to the user documents library. For CV generation, use the CV JSON format (see contentJson description).',
+    parameters: z.object({
+      format: z
+        .enum(['PDF', 'DOCX', 'XLS', 'CSV', 'TXT'])
+        .default('PDF')
+        .describe('Output format: PDF (default, good for CVs/letters), DOCX (editable), XLS (spreadsheets), CSV (data export), TXT (plain text)'),
+      title: z.string().describe('Document title displayed at the top of the generated file'),
+      contentJson: z
+        .string()
+        .describe(
+          'Content as JSON string. Three formats supported: (1) CV format (PREFERRED for CV/resume): {"firstName":"John","lastName":"Doe","email":"john@example.com","phone":"+221...","city":"Dakar","country":"Senegal","bio":"Profile summary...","skills":[{"name":"Python","type":"hard","level":"expert"}],"languages":[{"language":"Francais","level":"native"}],"interests":["AI","Fintech"],"goals":["Lead developer"],"experiences":[{"title":"Dev Senior","company":"Wave","location":"Dakar","period":"2022 - Present","description":"Led team of 5..."}],"education":[{"degree":"Master Informatique","institution":"ESP Dakar","location":"Dakar","period":"2018 - 2020","description":"Specialisation IA"}],"certifications":[{"name":"AWS Solutions Architect","issuer":"Amazon","date":"2023"}]} (2) Sections: {"sections":[{"heading":"Title","body":"Content"}]} — for letters, reports. (3) Table: {"headers":[...],"rows":[...]} — for data exports.'
+        ),
+      instructions: z.string().describe('Generation instructions describing the purpose and style of the document'),
+    }),
+    execute: async ({ format, title, contentJson, instructions }) => {
+      try {
+        const data = JSON.parse(contentJson);
+        const documentId = uuidv4();
+        const extension = FORMAT_EXTENSIONS[format];
+        const mimeType = FORMAT_MIMETYPES[format];
+        const safeTitle = title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
+        const storedFilename = `${documentId}.${extension}`;
+        const filename = `${safeTitle}.${extension}`;
+
+        // Store in user's document folder (same path as uploaded documents)
+        const storagePath = `documents/${talentId}/${storedFilename}`;
+
+        let buffer: Buffer;
+        let isCV = false;
+
+        switch (format) {
+          case 'PDF':
+            // Route CV-structured content to the specialized elegant generator
+            if (isCVContent(data)) {
+              isCV = true;
+              // Inject user's avatar if available and not already provided
+              if (avatarUrl && !data.avatarUrl) {
+                data.avatarUrl = avatarUrl;
+              }
+              buffer = await generateCVPDF(data);
+            } else {
+              buffer = await generatePDF(title, data);
+            }
+            break;
+          case 'DOCX':
+            buffer = await generateDOCX(title, data);
+            break;
+          case 'XLS':
+            buffer = await generateXLSX(title, data);
+            break;
+          case 'CSV': {
+            const csv = generateCSV(data);
+            buffer = Buffer.from(csv, 'utf-8');
+            break;
+          }
+          case 'TXT': {
+            const txt = generateTXT(title, data);
+            buffer = Buffer.from(txt, 'utf-8');
+            break;
+          }
+          default:
+            return { success: false, error: `Format non supporté: ${format}` };
+        }
+
+        // Upload to storage
+        const fileUrl = await uploadFile(buffer, storagePath, mimeType);
+
+        // Auto-save to user's documents library
+        await pool.query(
+          `INSERT INTO talent_documents (
+            id, talent_id, original_filename, stored_filename, mime_type,
+            file_size, file_url, document_type, category, status,
+            title, description, is_public
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+          [
+            documentId,
+            talentId,
+            filename,
+            storedFilename,
+            mimeType,
+            buffer.length,
+            fileUrl,
+            isCV ? 'CV' : 'OTHER',
+            'PROFESSIONAL',
+            'PENDING',
+            title,
+            `Document generated by copilot: ${instructions.slice(0, 200)}`,
+            false,
+          ]
+        );
+
+        // Trigger extraction + skill merge pipeline (async, non-blocking)
+        // Only for extractable formats (PDF, DOCX) — skip CSV/TXT/XLS
+        if (['PDF', 'DOCX'].includes(format)) {
+          processDocumentExtraction(documentId, fileUrl, mimeType).catch((err) =>
+            logger.error(`[generate_document] Extraction failed for ${documentId}:`, err)
+          );
+        } else {
+          // Mark non-extractable formats as processed immediately
+          pool.query(
+            `UPDATE talent_documents SET status = 'PROCESSED', processed_at = CURRENT_TIMESTAMP WHERE id = $1`,
+            [documentId]
+          ).catch(() => {});
+        }
+
+        logger.info(`[generate_document] Generated & saved ${format} document: ${filename} (${buffer.length} bytes) → ${documentId}`);
+
+        return {
+          success: true,
+          id: documentId,
+          documentType: format,
+          downloadUrl: fileUrl,
+          filename,
+          metadata: {
+            generatedAt: new Date().toISOString(),
+            sizeBytes: buffer.length,
+            title,
+          },
+        };
+      } catch (error: any) {
+        logger.error(`[generate_document] Error: ${error.message}`);
+        return {
+          success: false,
+          error: `Erreur lors de la génération du document: ${error.message}`,
+        };
+      }
+    },
+  });
+}
+
+// Keep backward-compatible static export (no auto-save, for non-authenticated contexts)
 export const generateDocumentTool = tool({
   name: 'generate_document',
   description:

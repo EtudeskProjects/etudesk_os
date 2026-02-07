@@ -11,11 +11,17 @@ export { createOrgAgent } from './agents/organization.agent';
 export { vectorQueryTool } from './tools/vector-query.tool';
 export { createSqlQueryTool } from './tools/sql-query.tool';
 export { youtubeSearchTool } from './tools/youtube-search.tool';
-export { generateDocumentTool } from './tools/generate-document.tool';
+export { generateDocumentTool, createGenerateDocumentTool } from './tools/generate-document.tool';
 export { generateImageTool } from './tools/generate-image.tool';
 export { generateDiagramTool } from './tools/generate-diagram.tool';
-export { createFileReaderAgent } from './tools/file-read.tool';
-export { webSearchAgent } from './tools/web-search.tool';
+export { createFileReaderAgent, createFileReaderTool } from './tools/file-read.tool';
+export { webSearchAgent, webSearchAsTool } from './tools/web-search.tool';
+export { createManageSkillsTool } from './tools/manage-skills.tool';
+export { createExecuteActionTool } from './tools/execute-action.tool';
+
+// Guardrails
+export { inputSafetyGuardrail } from './guardrails/input.guardrail';
+export { outputFormatGuardrail } from './guardrails/output.guardrail';
 
 // Prompts
 export { buildTalentExplorerPrompt } from './prompts/talent-explorer.prompt';
@@ -46,10 +52,21 @@ export {
 } from './session.service';
 
 // Context
-export { loadTalentContext, EXPLORER_CONTEXT_OPTIONS } from './context';
+export { loadTalentContext } from './context';
+export { EXPLORER_CONTEXT_OPTIONS, STUDY_CONTEXT_OPTIONS, ORG_CONTEXT_OPTIONS } from './context-options';
+
+// Run Context
+export { createCopilotRunContext, type CopilotRunContext } from './run-context';
+
+// Session Summarizer
+export { summarizeHistoryIfNeeded } from './session-summarizer';
 
 // Ontology
 export { getOntology, reloadOntology } from './ontology.cache';
+
+// Skills Library
+export { loadAllSkillMetadata, getSkillsForMode, getSkillBody, reloadSkills } from './skills/skill.loader';
+export type { SkillDefinition, SkillMetadata } from './skills/skill.types';
 
 // Types
 export type {

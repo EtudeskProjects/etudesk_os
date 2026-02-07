@@ -80,7 +80,7 @@ class ApplicationService {
   /**
    * Check if talent has already applied to an opportunity
    */
-  async hasApplied(opportunityId: string): Promise<ApiResponse<{ applied: boolean; application?: { id: string; status: string; applied_at: string } }>> {
+  async hasApplied(opportunityId: string): Promise<ApiResponse<{ applied: boolean; application_id?: string; is_owner?: boolean; application?: { id: string; status: string; applied_at: string } }>> {
     return api.get(`/api/applications/check/${opportunityId}`);
   }
 

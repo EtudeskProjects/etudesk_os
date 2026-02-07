@@ -57,8 +57,8 @@ const getInitials = (name: string): string => {
     .slice(0, 2);
 };
 
-const formatSalary = (min?: number, max?: number, currency?: string, frequency?: string): string => {
-  if (!min && !max) return 'Non spécifié';
+const formatSalary = (min?: number, max?: number, currency?: string, frequency?: string, notSpecifiedLabel?: string): string => {
+  if (!min && !max) return notSpecifiedLabel || 'Non spécifié';
   const currencyCode = currency || 'XOF';
   const currencySymbol = getCurrencySymbol(currencyCode);
   
@@ -172,7 +172,7 @@ export default function OpportunityDetailScreen() {
       }
     } catch (error: any) {
       console.error('Error loading opportunity:', error);
-      Alert.alert('Erreur', 'Impossible de charger cette opportunité');
+      Alert.alert(t('common.error'), t('opportunity.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -183,7 +183,7 @@ export default function OpportunityDetailScreen() {
       const response = await applicationService.hasApplied(id!);
       if (response.data) {
         setHasApplied(response.data.applied || false);
-        setApplicationId(response.data.application_id || null);
+        setApplicationId(response.data.application_id || response.data.application?.id || null);
         setIsOwner(response.data.is_owner || false);
       }
     } catch (error) {
@@ -208,11 +208,11 @@ export default function OpportunityDetailScreen() {
       if (canOpen) {
         await Linking.openURL(fullUrl);
       } else {
-        Alert.alert('Erreur', 'Impossible d\'ouvrir ce fichier');
+        Alert.alert(t('common.error'), t('opportunity.openError'));
       }
     } catch (error) {
       console.error('Error opening attachment:', error);
-      Alert.alert('Erreur', 'Impossible d\'ouvrir ce fichier');
+      Alert.alert(t('common.error'), t('opportunity.openError'));
     }
   };
 
@@ -246,7 +246,7 @@ export default function OpportunityDetailScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <Text style={{ color: colors.textPrimary }}>Opportunité non trouvée</Text>
+          <Text style={{ color: colors.textPrimary }}>{t('opportunity.notFound')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -297,45 +297,47 @@ export default function OpportunityDetailScreen() {
 
         <View style={styles.contentPadded}>
           {/* Organization Card */}
-          <TouchableOpacity
-            style={[styles.orgCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-            onPress={() => router.push(`/details/organization/${opportunity.organization?.id}`)}
-          >
-            {opportunity.organization?.logo_url ? (
-              <Image source={{ uri: opportunity.organization.logo_url }} style={styles.orgLogo} />
-            ) : (
-              <View style={[styles.orgLogoPlaceholder, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.orgLogoText, { color: colors.textOnPrimary }]}>
-                  {getInitials(opportunity.organization?.name || '')}
-                </Text>
-              </View>
-            )}
-            <View style={styles.orgInfo}>
-              <View style={styles.orgNameRow}>
-                <Text style={[styles.orgName, { color: colors.textPrimary }]}>
-                  {opportunity.organization?.name}
-                </Text>
-                {opportunity.organization?.verification_status === 'VERIFIED' && (
-                  <CheckCircle size={ICON.size.sm} color={colors.success} fill={colors.success} strokeWidth={0} />
-                )}
-              </View>
-              <View style={styles.orgTagsRow}>
-                {opportunity.organization?.type && (
-                  <View style={[styles.orgTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-                    <Text style={[styles.orgTagText, { color: colors.primary }]}>
-                      {ORGANIZATION_TYPE_LABELS[opportunity.organization.type] || opportunity.organization.type}
-                    </Text>
-                  </View>
-                )}
-                {opportunity.organization?.headquarters_city && (
-                  <Text style={[styles.orgLocation, { color: colors.textSecondary }]}>
-                    {opportunity.organization.headquarters_city}{opportunity.organization?.headquarters_country ? `, ${opportunity.organization.headquarters_country}` : ''}
+          {opportunity.organization?.id && (
+            <TouchableOpacity
+              style={[styles.orgCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+              onPress={() => router.push(`/details/organization/${opportunity.organization!.id}`)}
+            >
+              {opportunity.organization.logo_url ? (
+                <Image source={{ uri: opportunity.organization.logo_url }} style={styles.orgLogo} />
+              ) : (
+                <View style={[styles.orgLogoPlaceholder, { backgroundColor: colors.primary }]}>
+                  <Text style={[styles.orgLogoText, { color: colors.textOnPrimary }]}>
+                    {getInitials(opportunity.organization.name || '')}
                   </Text>
-                )}
+                </View>
+              )}
+              <View style={styles.orgInfo}>
+                <View style={styles.orgNameRow}>
+                  <Text style={[styles.orgName, { color: colors.textPrimary }]}>
+                    {opportunity.organization.name}
+                  </Text>
+                  {opportunity.organization.verification_status === 'VERIFIED' && (
+                    <CheckCircle size={ICON.size.sm} color={colors.success} fill={colors.success} strokeWidth={0} />
+                  )}
+                </View>
+                <View style={styles.orgTagsRow}>
+                  {opportunity.organization.type && (
+                    <View style={[styles.orgTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
+                      <Text style={[styles.orgTagText, { color: colors.primary }]}>
+                        {ORGANIZATION_TYPE_LABELS[opportunity.organization.type] || opportunity.organization.type}
+                      </Text>
+                    </View>
+                  )}
+                  {opportunity.organization.headquarters_city && (
+                    <Text style={[styles.orgLocation, { color: colors.textSecondary }]}>
+                      {opportunity.organization.headquarters_city}{opportunity.organization.headquarters_country ? `, ${opportunity.organization.headquarters_country}` : ''}
+                    </Text>
+                  )}
+                </View>
               </View>
-            </View>
-            <ChevronRight size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
+              <ChevronRight size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+            </TouchableOpacity>
+          )}
 
           {/* Title */}
           <Text style={[styles.title, { color: colors.textPrimary }]}>
@@ -349,7 +351,7 @@ export default function OpportunityDetailScreen() {
               onPress={async () => {
                 const url = `https://etudesk.com/public/opportunities/${opportunity.slug}`;
                 await Clipboard.setStringAsync(url);
-                Alert.alert('Copié !', 'Le lien a été copié dans le presse-papier.');
+                Alert.alert(t('common.copied'), t('opportunity.linkCopied'));
               }}
             >
               <Link size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
@@ -451,13 +453,14 @@ export default function OpportunityDetailScreen() {
             <View style={styles.metaRowFull}>
               <Banknote size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
               <View style={styles.metaItemFull}>
-                <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Rémunération</Text>
+                <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('opportunity.salary')}</Text>
                 <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
                   {formatSalary(
                     opportunity.compensation_min,
                     opportunity.compensation_max,
                     opportunity.currency,
-                    opportunity.compensation_frequency
+                    opportunity.compensation_frequency,
+                    t('common.notSpecified')
                   )}
                 </Text>
               </View>
@@ -505,7 +508,7 @@ export default function OpportunityDetailScreen() {
 
             return (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pièces jointes</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('opportunity.attachments')}</Text>
                 {uploadedAttachments.map((attachment, index) => {
                   const fileType = getFileType(attachment.url, attachment.type);
                   const fullUrl = getFullFileUrl(attachment.url);
@@ -559,7 +562,7 @@ export default function OpportunityDetailScreen() {
                             <View style={styles.attachmentLoading}>
                               <ActivityIndicator size="large" color={colors.primary} />
                               <Text style={[styles.attachmentLoadingText, { color: colors.textSecondary }]}>
-                                Chargement du PDF...
+                                {t('opportunity.loadingPdf')}
                               </Text>
                             </View>
                           )}
@@ -596,7 +599,7 @@ export default function OpportunityDetailScreen() {
                                 <body>
                                   <video controls autoplay>
                                     <source src="${fullUrl}" type="video/mp4">
-                                    Votre navigateur ne supporte pas la lecture de vidéos.
+                                    ${t('opportunity.videoNotSupported')}
                                   </video>
                                 </body>
                               </html>
@@ -609,7 +612,7 @@ export default function OpportunityDetailScreen() {
                             <View style={styles.attachmentLoading}>
                               <ActivityIndicator size="large" color={colors.primary} />
                               <Text style={[styles.attachmentLoadingText, { color: colors.textSecondary }]}>
-                                Chargement de la vidéo...
+                                {t('opportunity.loadingVideo')}
                               </Text>
                             </View>
                           )}
@@ -620,7 +623,7 @@ export default function OpportunityDetailScreen() {
                     {fileType === 'other' && (
                       <View style={styles.attachmentOtherContainer}>
                         <Text style={[styles.attachmentOtherText, { color: colors.textSecondary }]}>
-                          Ce fichier ne peut pas être prévisualisé. Utilisez le bouton de téléchargement pour l'ouvrir.
+                          {t('opportunity.unsupportedFile')}
                         </Text>
                       </View>
                     )}
@@ -650,7 +653,7 @@ export default function OpportunityDetailScreen() {
         <View style={styles.ctaContainer}>
           {canManageOpportunity ? (
             <Button
-              title="Gerer l'opportunite"
+              title={t('opportunity.manage')}
               onPress={() => router.push(`/gestion/opportunities/applications/${id}` as any)}
               fullWidth
               variant="outline"
@@ -715,7 +718,7 @@ export default function OpportunityDetailScreen() {
                       <View style={styles.attachmentModalLoading}>
                         <ActivityIndicator size="large" color={colors.primary} />
                         <Text style={[styles.attachmentModalLoadingText, { color: colors.textSecondary }]}>
-                          Chargement du PDF...
+                          {t('opportunity.loadingPdf')}
                         </Text>
                       </View>
                     )}
@@ -752,7 +755,7 @@ export default function OpportunityDetailScreen() {
                           <body>
                             <video controls autoplay>
                               <source src="${fullUrl}" type="video/mp4">
-                              Votre navigateur ne supporte pas la lecture de vidéos.
+                              ${t('opportunity.videoNotSupported')}
                             </video>
                           </body>
                         </html>
@@ -765,7 +768,7 @@ export default function OpportunityDetailScreen() {
                       <View style={styles.attachmentModalLoading}>
                         <ActivityIndicator size="large" color={colors.primary} />
                         <Text style={[styles.attachmentModalLoadingText, { color: colors.textSecondary }]}>
-                          Chargement de la vidéo...
+                          {t('opportunity.loadingVideo')}
                         </Text>
                       </View>
                     )}

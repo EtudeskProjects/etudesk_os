@@ -46,6 +46,7 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS }
 import { Button, FooterNav } from '../../../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
+import { useI18n } from '../../../../../src/contexts/I18nContext';
 import { API_CONFIG } from '../../../../../src/constants/config';
 import { applicationService, applicationMessageService } from '../../../../../src/services';
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
@@ -61,29 +62,29 @@ const getStatusConfig = (colors: any): Record<ApplicationStatus, { color: string
 });
 
 // Status flow with descriptions - colors are set dynamically using theme colors
-const getStatusFlow = (colors: any): Record<ApplicationStatus, {
+const getStatusFlow = (colors: any, t: (key: string) => string): Record<ApplicationStatus, {
   label: string;
   description: string;
   color: string;
 }> => ({
   SUBMITTED: {
-    label: 'Soumise',
-    description: 'Candidature reçue',
+    label: t('applicationDetail.status.submitted'),
+    description: t('applicationDetail.status.submittedDesc'),
     color: colors.warning,
   },
   IN_REVIEW: {
-    label: 'En cours d\'examen',
-    description: 'Candidature en cours d\'évaluation',
+    label: t('applicationDetail.status.inReview'),
+    description: t('applicationDetail.status.inReviewDesc'),
     color: colors.info,
   },
   ACCEPTED: {
-    label: 'Acceptée',
-    description: 'Candidature retenue',
+    label: t('applicationDetail.status.accepted'),
+    description: t('applicationDetail.status.acceptedDesc'),
     color: colors.success,
   },
   REJECTED: {
-    label: 'Refusée',
-    description: 'Candidature non retenue',
+    label: t('applicationDetail.status.rejected'),
+    description: t('applicationDetail.status.rejectedDesc'),
     color: colors.error,
   },
 });
@@ -91,12 +92,12 @@ const getStatusFlow = (colors: any): Record<ApplicationStatus, {
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Match category configuration - Luxe Africain design system
-const MATCH_CATEGORY_CONFIG = {
-  excellent: { label: 'Excellent', color: MATCH_COLORS.excellent.color, bgColor: MATCH_COLORS.excellent.bgColor },
-  good: { label: 'Bon', color: MATCH_COLORS.good.color, bgColor: MATCH_COLORS.good.bgColor },
-  average: { label: 'Moyen', color: MATCH_COLORS.average.color, bgColor: MATCH_COLORS.average.bgColor },
-  low: { label: 'Faible', color: MATCH_COLORS.low.color, bgColor: MATCH_COLORS.low.bgColor },
-};
+const getMatchCategoryConfig = (t: (key: string) => string) => ({
+  excellent: { label: t('applicationDetail.match.excellent'), color: MATCH_COLORS.excellent.color, bgColor: MATCH_COLORS.excellent.bgColor },
+  good: { label: t('applicationDetail.match.good'), color: MATCH_COLORS.good.color, bgColor: MATCH_COLORS.good.bgColor },
+  average: { label: t('applicationDetail.match.average'), color: MATCH_COLORS.average.color, bgColor: MATCH_COLORS.average.bgColor },
+  low: { label: t('applicationDetail.match.low'), color: MATCH_COLORS.low.color, bgColor: MATCH_COLORS.low.bgColor },
+});
 
 type MatchCategory = 'excellent' | 'good' | 'average' | 'low';
 
@@ -106,10 +107,12 @@ export default function ApplicationOrgDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
 
   const STATUS_CONFIG = getStatusConfig(colors);
-  const STATUS_FLOW = getStatusFlow(colors);
+  const STATUS_FLOW = getStatusFlow(colors, t);
+  const MATCH_CATEGORY_CONFIG = getMatchCategoryConfig(t);
 
   const [application, setApplication] = useState<Application | null>(null);
   const [messages, setMessages] = useState<ApplicationMessage[]>([]);
@@ -206,7 +209,7 @@ export default function ApplicationOrgDetailsScreen() {
         loadRecommendation(id);
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de charger les détails de la candidature.');
+      Alert.alert(t('common.error'), t('applicationDetail.loadError'));
       router.back();
     } finally {
       setIsLoading(false);
@@ -249,29 +252,29 @@ export default function ApplicationOrgDetailsScreen() {
       await applicationService.updateStatus(application.id, newStatus);
       setApplication((prev) => prev ? { ...prev, status: newStatus } : null);
       setShowStatusPicker(false);
-      Alert.alert('Succès', `Statut mis à jour: ${APPLICATION_STATUS_LABELS[newStatus]}`);
+      Alert.alert(t('common.success'), t('applicationDetail.statusUpdated', { status: APPLICATION_STATUS_LABELS[newStatus] }));
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
+      Alert.alert(t('common.error'), error.error || t('applicationDetail.statusUpdateError'));
     }
   };
 
   const handleDeleteApplication = () => {
     Alert.alert(
-      'Supprimer la candidature',
-      'Êtes-vous sûr de vouloir supprimer cette candidature ? Cette action est irréversible.',
+      t('applicationDetail.deleteTitle'),
+      t('applicationDetail.deleteConfirm'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               // For now, we'll reject the application as there's no delete endpoint
               await applicationService.updateStatus(application!.id, 'REJECTED');
-              Alert.alert('Succès', 'Candidature supprimée.');
+              Alert.alert(t('common.success'), t('applicationDetail.deleteSuccess'));
               router.back();
             } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Impossible de supprimer la candidature.');
+              Alert.alert(t('common.error'), error.error || t('applicationDetail.deleteError'));
             }
           },
         },
@@ -285,9 +288,9 @@ export default function ApplicationOrgDetailsScreen() {
     try {
       await applicationService.updateNotes(application.id, internalNotes);
       setIsEditingNotes(false);
-      Alert.alert('Succès', 'Notes enregistrées.');
+      Alert.alert(t('common.success'), t('applicationDetail.notesSaved'));
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de sauvegarder les notes.');
+      Alert.alert(t('common.error'), error.error || t('applicationDetail.notesSaveError'));
     }
   };
 
@@ -298,7 +301,7 @@ export default function ApplicationOrgDetailsScreen() {
       await applicationService.updateRating(application.id, newRating);
       setRating(newRating);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre à jour la note.');
+      Alert.alert(t('common.error'), error.error || t('applicationDetail.ratingUpdateError'));
     }
   };
 
@@ -318,7 +321,7 @@ export default function ApplicationOrgDetailsScreen() {
           name: a.name,
           url: a.uri, // In production, upload first and use returned URL
           type: a.type,
-          size: a.size,
+          size: a.size || 0,
         })),
         proposed_datetime: data.proposedDatetime,
         datetime_type: data.datetimeType as any,
@@ -330,7 +333,7 @@ export default function ApplicationOrgDetailsScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      Alert.alert(t('common.error'), error.error || t('applicationDetail.sendMessageError'));
       throw error;
     } finally {
       setIsSending(false);
@@ -371,20 +374,20 @@ export default function ApplicationOrgDetailsScreen() {
           if (fileInfo.exists) {
             await Sharing.shareAsync(application.resume_url, {
               mimeType: 'application/pdf',
-              dialogTitle: 'CV du candidat',
+              dialogTitle: t('applicationDetail.cvDialogTitle'),
             });
           } else {
-            Alert.alert('Fichier introuvable', 'Le CV n\'est plus disponible sur cet appareil.');
+            Alert.alert(t('applicationDetail.cvFileNotFound'), t('applicationDetail.cvFileNotFoundDesc'));
           }
         } else {
-          Alert.alert('Non disponible', 'Le partage de fichiers n\'est pas disponible sur cet appareil.');
+          Alert.alert(t('applicationDetail.sharingUnavailable'), t('applicationDetail.sharingUnavailableDesc'));
         }
       } else {
         await Linking.openURL(openUrl);
       }
     } catch (error) {
       console.error('Error opening CV:', error);
-      Alert.alert('Erreur', 'Impossible d\'ouvrir le CV.');
+      Alert.alert(t('common.error'), t('applicationDetail.cvOpenError'));
     }
   };
 
@@ -416,8 +419,8 @@ export default function ApplicationOrgDetailsScreen() {
       <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
         {/* Talent Info */}
         <View style={[styles.profileHeader, { backgroundColor: colors.gray50 }]}>
-          {talent?.profile_picture_url ? (
-            <Image source={{ uri: talent.profile_picture_url }} style={styles.profileAvatar} />
+          {(talent?.profile_picture_url || talent?.avatar_url) ? (
+            <Image source={{ uri: (talent.profile_picture_url || talent.avatar_url)! }} style={styles.profileAvatar} />
           ) : (
             <View style={[styles.profileAvatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
               <Text style={[styles.profileAvatarText, { color: colors.primary }]}>
@@ -426,7 +429,7 @@ export default function ApplicationOrgDetailsScreen() {
             </View>
           )}
           <Text style={[styles.profileName, { color: colors.textPrimary }]}>
-            {talent ? `${talent.first_name} ${talent.last_name}` : 'Candidat'}
+            {talent ? `${talent.first_name} ${talent.last_name}` : t('common.candidate')}
           </Text>
           {talent?.headline && (
             <Text style={[styles.profileHeadline, { color: colors.gray500 }]}>
@@ -437,7 +440,7 @@ export default function ApplicationOrgDetailsScreen() {
 
         {/* Talent Details - Before Rating */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Informations</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('applicationDetail.information')}</Text>
 
           {/* Location */}
           {(talent?.city || talent?.country) && (
@@ -481,7 +484,7 @@ export default function ApplicationOrgDetailsScreen() {
 
         {/* Rating - Évaluation du candidat */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Évaluation du candidat</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('applicationDetail.candidateRating')}</Text>
           <View style={styles.ratingContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
               <TouchableOpacity key={star} onPress={() => handleUpdateRating(star)}>
@@ -500,7 +503,7 @@ export default function ApplicationOrgDetailsScreen() {
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
           <View style={styles.recommendationHeader}>
             <Text style={[styles.sectionTitle, { color: colors.gray700, marginBottom: 0 }]}>
-              Recommandation
+              {t('applicationDetail.recommendation')}
             </Text>
             {matchCategory && (
               <View style={[styles.matchCategoryBadge, { backgroundColor: MATCH_CATEGORY_CONFIG[matchCategory].bgColor }]}>
@@ -515,7 +518,7 @@ export default function ApplicationOrgDetailsScreen() {
             <View style={styles.recommendationLoading}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={[styles.recommendationLoadingText, { color: colors.gray500 }]}>
-                Analyse en cours...
+                {t('applicationDetail.analyzing')}
               </Text>
             </View>
           ) : recommendation ? (
@@ -526,7 +529,7 @@ export default function ApplicationOrgDetailsScreen() {
             </View>
           ) : (
             <Text style={[styles.noRecommendationText, { color: colors.gray400 }]}>
-              La recommandation sera générée automatiquement.
+              {t('applicationDetail.recommendationAuto')}
             </Text>
           )}
         </View>
@@ -534,7 +537,7 @@ export default function ApplicationOrgDetailsScreen() {
         {/* Current Status with Picker */}
         {application?.status && (
           <View style={[styles.section, { borderColor: colors.gray200 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Statut de la candidature</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('applicationDetail.applicationStatus')}</Text>
 
             {/* Current status display */}
             <View style={[styles.currentStatusDisplay, { backgroundColor: withOpacity(STATUS_FLOW[application.status as ApplicationStatus]?.color || colors.warning, OPACITY[10]) }]}>
@@ -554,7 +557,7 @@ export default function ApplicationOrgDetailsScreen() {
               onPress={() => setShowStatusPicker(!showStatusPicker)}
             >
               <Text style={[styles.statusPickerButtonText, { color: colors.textPrimary }]}>
-                Changer le statut
+                {t('applicationDetail.changeStatus')}
               </Text>
               <ChevronDown
                 size={20}
@@ -601,21 +604,21 @@ export default function ApplicationOrgDetailsScreen() {
 
         {/* Informations complémentaires */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Informations complémentaires</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('applicationDetail.additionalInfo')}</Text>
 
           {/* CV Viewer */}
           {application?.resume_url && (
             <>
-              <Text style={[styles.subsectionTitle, { color: colors.gray600 }]}>CV du candidat</Text>
+              <Text style={[styles.subsectionTitle, { color: colors.gray600 }]}>{t('applicationDetail.candidateCV')}</Text>
               <View style={[styles.cvContainer, { borderColor: colors.gray200 }]}>
                 {cvLoadState === 'error' ? (
                   <View style={[styles.cvFallback, { backgroundColor: colors.gray50 }]}>
                     <FileText size={40} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.cvFallbackTitle, { color: colors.textPrimary }]}>
-                      Affichage indisponible
+                      {t('applicationDetail.cvDisplayUnavailable')}
                     </Text>
                     <Text style={[styles.cvFallbackText, { color: colors.gray500 }]}>
-                      Ouvrez le CV avec le bouton ci-dessous pour le consulter.
+                      {t('applicationDetail.cvDisplayHint')}
                     </Text>
                   </View>
                 ) : (
@@ -636,7 +639,7 @@ export default function ApplicationOrgDetailsScreen() {
                       <View style={[StyleSheet.absoluteFill, styles.cvLoading, { backgroundColor: colors.gray50 }]} pointerEvents="none">
                         <ActivityIndicator size="large" color={colors.primary} />
                         <Text style={[styles.cvLoadingText, { color: colors.gray500 }]}>
-                          Chargement du CV...
+                          {t('applicationDetail.loadingCV')}
                         </Text>
                       </View>
                     )}
@@ -649,7 +652,7 @@ export default function ApplicationOrgDetailsScreen() {
                 onPress={handleOpenCV}
               >
                 <FileText size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.cvDownloadButtonText, { color: colors.primary }]}>Ouvrir le CV</Text>
+                <Text style={[styles.cvDownloadButtonText, { color: colors.primary }]}>{t('applicationDetail.openCV')}</Text>
               </TouchableOpacity>
             </>
           )}
@@ -660,7 +663,7 @@ export default function ApplicationOrgDetailsScreen() {
               {application?.resume_url && (
                 <View style={[styles.separator, { backgroundColor: colors.gray200, marginVertical: SPACING.md }]} />
               )}
-              <Text style={[styles.subsectionTitle, { color: colors.gray600 }]}>Questions complémentaires</Text>
+              <Text style={[styles.subsectionTitle, { color: colors.gray600 }]}>{t('applicationDetail.additionalQuestions')}</Text>
               {application.opportunity.application_questions.map((question, index) => {
                 const answer = application.answers?.find((a) => a.question_id === question.id);
                 return (
@@ -675,7 +678,7 @@ export default function ApplicationOrgDetailsScreen() {
                       </Text>
                     ) : (
                       <Text style={[styles.qaAnswer, { color: colors.gray400, fontStyle: 'italic' }]}>
-                        Aucune réponse fournie
+                        {t('applicationDetail.noAnswer')}
                       </Text>
                     )}
                   </View>
@@ -689,7 +692,7 @@ export default function ApplicationOrgDetailsScreen() {
         {application?.status === 'ACCEPTED' && (
           <View style={[styles.finalStatusCard, { backgroundColor: withOpacity(colors.success, OPACITY[10]), borderColor: withOpacity(colors.success, OPACITY[30]) }]}>
             <Text style={[styles.finalStatusText, { color: colors.success }]}>
-              🎉 Ce candidat a été accepté !
+              {t('applicationDetail.candidateAccepted')}
             </Text>
           </View>
         )}
@@ -701,7 +704,7 @@ export default function ApplicationOrgDetailsScreen() {
         >
           <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.deleteButtonText, { color: colors.error }]}>
-            Supprimer cette candidature
+            {t('applicationDetail.deleteApplication')}
           </Text>
         </TouchableOpacity>
 
@@ -714,7 +717,7 @@ export default function ApplicationOrgDetailsScreen() {
     <View style={styles.tabContent}>
       <View style={[styles.notesCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
         <View style={styles.notesHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Notes internes</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('applicationDetail.internalNotes')}</Text>
           <TouchableOpacity onPress={() => isEditingNotes ? handleSaveNotes() : setIsEditingNotes(true)}>
             {isEditingNotes ? (
               <Save size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
@@ -725,7 +728,7 @@ export default function ApplicationOrgDetailsScreen() {
         </View>
         <TextInput
           style={[styles.notesInput, { backgroundColor: colors.gray50, color: colors.textPrimary }]}
-          placeholder="Ajoutez des notes internes sur ce candidat..."
+          placeholder={t('applicationDetail.notesPlaceholder')}
           placeholderTextColor={colors.gray400}
           value={internalNotes}
           onChangeText={setInternalNotes}
@@ -734,7 +737,7 @@ export default function ApplicationOrgDetailsScreen() {
           editable={isEditingNotes}
         />
         <Text style={[styles.notesHint, { color: colors.gray400 }]}>
-          Ces notes sont visibles uniquement par votre équipe.
+          {t('applicationDetail.notesHint')}
         </Text>
       </View>
     </View>
@@ -770,10 +773,10 @@ export default function ApplicationOrgDetailsScreen() {
             <View style={styles.noMessages}>
               <MessageCircle size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.noMessagesTitle, { color: colors.textPrimary }]}>
-                Pas encore de messages
+                {t('applicationDetail.noMessages')}
               </Text>
               <Text style={[styles.noMessagesText, { color: colors.gray500 }]}>
-                Envoyez un message au candidat pour démarrer la conversation.
+                {t('applicationDetail.noMessagesHint')}
               </Text>
             </View>
           ) : (
@@ -782,7 +785,7 @@ export default function ApplicationOrgDetailsScreen() {
                 key={message.id}
                 content={message.content}
                 isMe={message.sender_type === 'ORGANIZATION'}
-                senderName={message.sender_type === 'TALENT' ? (message.sender_name || application.talent?.first_name || 'Candidat') : undefined}
+                senderName={message.sender_type === 'TALENT' ? (message.sender_name || application?.talent?.first_name || t('common.candidate')) : undefined}
                 createdAt={message.created_at}
                 proposedDatetime={message.proposed_datetime}
                 datetimeType={message.datetime_type}
@@ -796,7 +799,7 @@ export default function ApplicationOrgDetailsScreen() {
         <ChatInput
           onSend={handleSendMessage}
           isSending={isSending}
-          placeholder="Écrivez votre message..."
+          placeholder={t('applicationDetail.writeMessage')}
           showDatetimeOption={true}
         />
       </View>
@@ -815,7 +818,7 @@ export default function ApplicationOrgDetailsScreen() {
     return (
       <SafeAreaView style={[styles.errorContainer, { backgroundColor: colors.background }]}>
         <Text style={[styles.errorText, { color: colors.textPrimary }]}>
-          Candidature non trouvée
+          {t('applicationDetail.notFound')}
         </Text>
       </SafeAreaView>
     );
@@ -844,9 +847,9 @@ export default function ApplicationOrgDetailsScreen() {
 
       {/* Tabs */}
       <View style={[styles.tabsContainer, { borderBottomColor: colors.gray200 }]}>
-        {renderTab('profile', 'Profil')}
-        {renderTab('messages', 'Messages')}
-        {renderTab('notes', 'Notes')}
+        {renderTab('profile', t('applicationDetail.tabProfile'))}
+        {renderTab('messages', t('applicationDetail.tabMessages'))}
+        {renderTab('notes', t('applicationDetail.tabNotes'))}
       </View>
 
       {/* Content */}
