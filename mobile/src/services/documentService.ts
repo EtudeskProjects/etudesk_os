@@ -287,10 +287,13 @@ async function uploadDocument(
     formData
   );
 
-  if (!response.data?.document) {
-    throw new Error(response.error || 'Failed to upload document');
+  // Backend returns { message, document, documents } at top level
+  const result = (response as any);
+  const doc = result.document || result.data?.document;
+  if (!doc) {
+    throw new Error(result.error || 'Failed to upload document');
   }
-  return response.data;
+  return { message: result.message || result.data?.message || '', document: doc };
 }
 
 /**
@@ -326,10 +329,11 @@ async function uploadMultipleDocuments(
     formData
   ) as any;
 
-  if (!response.documents && !response.data?.documents) {
+  const docs = response.documents || response.data?.documents;
+  if (!docs) {
     throw new Error(response.error || 'Failed to upload documents');
   }
-  return response.data || response;
+  return { message: response.message || response.data?.message || '', documents: docs };
 }
 
 /**

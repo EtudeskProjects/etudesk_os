@@ -228,7 +228,7 @@ Génère l'objectif (500 caractères max):`;
     const response = await openai.chat.completions.create({
       model: MODEL_T3,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 200,
+      max_completion_tokens: 200,
       temperature: 0.7,
     });
 
@@ -507,7 +507,7 @@ Génère l'objectif (500 caractères max):`;
     const response = await openai.chat.completions.create({
       model: MODEL_T3,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 200,
+      max_completion_tokens: 200,
       temperature: 0.7,
     });
 
