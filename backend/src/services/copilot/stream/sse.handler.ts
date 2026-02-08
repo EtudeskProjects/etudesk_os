@@ -263,7 +263,63 @@ export async function runAgentWithSSE(
     }
   }
 
+  // Post-process: sanitize Mermaid code in diagram blocks
+  const sanitized = sanitizeDiagramBlocks(finalOutput);
+  if (sanitized !== finalOutput) {
+    finalOutput = sanitized;
+    // Send corrected content so frontend can update its rendered output
+    sendSSE(res, { type: 'content_corrected', content: sanitized });
+    // Also update text segments with sanitized content
+    let fullText = '';
+    for (const seg of segments) {
+      if (seg.type === 'text') {
+        fullText += seg.content || '';
+      }
+    }
+    if (fullText) {
+      const sanitizedFull = sanitizeDiagramBlocks(fullText);
+      if (sanitizedFull !== fullText) {
+        // Rebuild text segments with single sanitized segment
+        const nonTextSegments = segments.filter(s => s.type !== 'text');
+        segments.length = 0;
+        segments.push({ type: 'text', content: sanitizedFull });
+        segments.push(...nonTextSegments);
+      }
+    }
+  }
+
   return { finalOutput, toolTrace, segments };
+}
+
+/**
+ * Post-process finalOutput to sanitize Mermaid code inside ```diagram blocks.
+ * Fixes common LLM issues: <br/> tags, parentheses in [] labels, special chars.
+ */
+function sanitizeDiagramBlocks(text: string): string {
+  return text.replace(/```diagram\s*\n?\s*(\{[\s\S]*?\})\s*\n?\s*```/g, (fullMatch, jsonStr) => {
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (parsed.code && typeof parsed.code === 'string') {
+        let code = parsed.code;
+        // Replace <br/> and <br> with \n
+        code = code.replace(/<br\s*\/?>/gi, '\\n');
+        // Escape parentheses inside square bracket labels []
+        code = code.replace(/\[([^\]]*)\]/g, (_: string, content: string) => {
+          const fixed = content.replace(/\(/g, '&#40;').replace(/\)/g, '&#41;');
+          return `[${fixed}]`;
+        });
+        // Fix pipe-based conditions: |text| must not contain special chars
+        code = code.replace(/\|([^|]*)\|/g, (_: string, content: string) => {
+          const fixed = content.replace(/[<>]/g, '').replace(/≤/g, ' lte ').replace(/≥/g, ' gte ');
+          return `|${fixed}|`;
+        });
+        parsed.code = code;
+      }
+      return '```diagram\n' + JSON.stringify(parsed) + '\n```';
+    } catch {
+      return fullMatch; // If JSON parsing fails, return as-is
+    }
+  });
 }
 
 /** Safely parse JSON args string, fallback to wrapping as-is */

@@ -165,6 +165,7 @@ class CopilotService {
       onDone: (sessionId: string) => void;
       onError: (error: string) => void;
       onLimitReached?: (reason: string, message: string) => void;
+      onContentCorrected?: (content: string) => void;
     },
     organizationId?: string,
     attachmentIds?: string[]
@@ -235,6 +236,9 @@ class CopilotService {
                   break;
                 case 'limit_reached':
                   callbacks.onLimitReached?.(event.reason, event.message);
+                  break;
+                case 'content_corrected':
+                  callbacks.onContentCorrected?.(event.content);
                   break;
               }
             } catch {

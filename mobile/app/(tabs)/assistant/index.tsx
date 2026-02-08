@@ -420,6 +420,20 @@ export default function AssistantScreen() {
             );
             abortControllerRef.current = null;
           },
+          onContentCorrected: (correctedContent) => {
+            // Replace text content with server-sanitized version (fixes Mermaid diagram issues)
+            setMessages((prev) =>
+              prev.map((m) => {
+                if (m.id !== assistantMsgId) return m;
+                const nonTextSegments = m.segments.filter((s) => s.type !== 'text');
+                return {
+                  ...m,
+                  content: correctedContent,
+                  segments: [{ type: 'text' as const, content: correctedContent }, ...nonTextSegments],
+                };
+              })
+            );
+          },
           onLimitReached: (_reason, message) => {
             setMessages((prev) =>
               prev.map((m) =>

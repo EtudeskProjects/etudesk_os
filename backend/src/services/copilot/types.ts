@@ -90,13 +90,19 @@ export interface SSELimitReachedEvent {
   message: string;
 }
 
+export interface SSEContentCorrectedEvent {
+  type: 'content_corrected';
+  content: string;
+}
+
 export type SSEEvent =
   | SSETextDeltaEvent
   | SSEToolStartEvent
   | SSEToolEndEvent
   | SSEDoneEvent
   | SSEErrorEvent
-  | SSELimitReachedEvent;
+  | SSELimitReachedEvent
+  | SSEContentCorrectedEvent;
 
 // --- Tool Context Passed To Tool Execute Functions ---
 

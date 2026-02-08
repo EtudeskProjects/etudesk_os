@@ -21,6 +21,19 @@ interface DiagramBlockProps {
 const MIN_HEIGHT = 200;
 const MAX_HEIGHT = 500;
 
+/** Sanitize Mermaid code to fix common LLM generation issues */
+function sanitizeMermaidCode(code: string): string {
+  let s = code;
+  // Replace <br/> and <br> with \n (Mermaid line break)
+  s = s.replace(/<br\s*\/?>/gi, '\\n');
+  // Escape parentheses inside square bracket labels []
+  s = s.replace(/\[([^\]]*)\]/g, (_, content: string) => {
+    const fixed = content.replace(/\(/g, '&#40;').replace(/\)/g, '&#41;');
+    return `[${fixed}]`;
+  });
+  return s;
+}
+
 const buildMermaidHTML = (code: string, isDark: boolean) => {
   const bg = isDark ? '#1a1a1a' : '#ffffff';
   const theme = isDark ? 'dark' : 'default';
@@ -97,7 +110,7 @@ export const DiagramBlock: React.FC<DiagramBlockProps> = ({ data }) => {
       {/* Mermaid Render */}
       <View style={[styles.webviewContainer, { height: webViewHeight, backgroundColor: isDark ? '#1a1a1a' : '#ffffff' }]}>
         <WebView
-          source={{ html: buildMermaidHTML(data.code, isDark), baseUrl: 'https://cdn.jsdelivr.net' }}
+          source={{ html: buildMermaidHTML(sanitizeMermaidCode(data.code), isDark), baseUrl: 'https://cdn.jsdelivr.net' }}
           style={styles.webview}
           scrollEnabled
           nestedScrollEnabled
