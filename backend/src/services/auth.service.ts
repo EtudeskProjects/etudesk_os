@@ -30,7 +30,7 @@ const getJwtSecret = (envVar: string, name: string): string => {
 const JWT_CONFIG = {
   accessTokenSecret: getJwtSecret('JWT_ACCESS_SECRET', 'JWT_ACCESS_SECRET'),
   refreshTokenSecret: getJwtSecret('JWT_REFRESH_SECRET', 'JWT_REFRESH_SECRET'),
-  accessTokenExpiry: '15m',
+  accessTokenExpiry: '2h',
   refreshTokenExpiry: '30d',
 };
 
@@ -97,7 +97,7 @@ export function generateTokens(userId: string, email: string, talentId?: string)
   return {
     accessToken,
     refreshToken,
-    expiresIn: 15 * 60, // 15 minutes in seconds
+    expiresIn: 2 * 60 * 60, // 2 hours in seconds
   };
 }
 

@@ -252,6 +252,39 @@ class CopilotService {
         };
 
         xhr.onload = () => {
+          if (xhr.status === 401) {
+            // Token expired — try to refresh and retry once
+            (async () => {
+              try {
+                const refreshToken = await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+                if (!refreshToken) {
+                  callbacks.onError(i18n.t('common:invalidToken'));
+                  return;
+                }
+                const refreshRes = await fetch(`${API_CONFIG.BASE_URL}/api/auth/refresh`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ refreshToken }),
+                });
+                if (refreshRes.ok) {
+                  const data = await refreshRes.json();
+                  if (data.success && data.tokens) {
+                    await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.tokens.accessToken);
+                    await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.tokens.refreshToken);
+                    // Retry: re-send the same message (user can also tap "Réessayer")
+                    callbacks.onError(i18n.t('copilotService.sessionRefreshed'));
+                  } else {
+                    callbacks.onError(i18n.t('common:invalidToken'));
+                  }
+                } else {
+                  callbacks.onError(i18n.t('common:invalidToken'));
+                }
+              } catch {
+                callbacks.onError(i18n.t('common:invalidToken'));
+              }
+            })();
+            return;
+          }
           if (xhr.status >= 400) {
             try {
               const errorData = JSON.parse(xhr.responseText);

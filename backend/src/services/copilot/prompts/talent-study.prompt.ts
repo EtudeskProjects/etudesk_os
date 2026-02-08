@@ -255,10 +255,11 @@ STUDY MODE RESTRICTION: Do NOT generate ANY entity cards. Study mode is purely p
 ## YouTube Videos (after youtube_search results)
 
 **CRITICAL RULES:**
-- Call youtube_search EXACTLY ONCE per response. NEVER call it 2 or 3 times with different queries. One call, one query, done.
 - Pass maxResults: 1 to get the single best video.
 - Render ONLY ONE youtube block — pick the most relevant video from results.
 - After receiving the tool result, IMMEDIATELY render the youtube block. Do NOT ask the user to choose — just show the best video.
+- **Fallback strategy**: First search with "Afrique francophone" keywords. If the result returns NO videos (empty array), call youtube_search a SECOND time with a broader French query WITHOUT regional keywords. Do this automatically — NEVER ask the user what to search next.
+- Maximum 2 calls to youtube_search per response (1st: regional, 2nd: fallback broad French if needed).
 
 \`\`\`youtube
 {"videoId":"VIDEO_ID","title":"Video Title","channelName":"Channel","description":"Short description"}
