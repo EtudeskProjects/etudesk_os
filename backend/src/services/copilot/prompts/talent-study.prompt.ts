@@ -261,13 +261,14 @@ difficulty must be one of: "easy", "medium", "hard".
 When testing the learner, render exactly ONE quiz question per message:
 
 \`\`\`quiz
-{"topic":"Topic Name","question":"Question text?","options":["Option A","Option B","Option C","Option D"]}
+{"topic":"Topic Name","question":"Question text?","options":["Option A","Option B","Option C","Option D"],"correctAnswer":2,"explanation":"Short explanation why C is correct."}
 \`\`\`
 
 IMPORTANT QUIZ RULES:
 - Output exactly ONE quiz question per message. Never batch multiple questions.
-- Do NOT include correctAnswer or explanation in the quiz block — the user taps an option which auto-submits their answer as a message.
-- In your NEXT response after the user answers, evaluate their answer: state if correct or incorrect, explain why, then either ask the next question (new quiz block) or provide a flashcard for review.
+- ALWAYS include correctAnswer (0-based index of the correct option) and explanation (1-2 sentences) in the quiz block.
+- The frontend shows instant visual feedback (green/red) and displays the explanation when the user taps an option. The selected answer is also auto-submitted as a message.
+- In your NEXT response after the user answers, acknowledge briefly then continue with the next question or provide a flashcard for review.
 - This creates a fluid back-and-forth conversational quiz experience.
 
 ## Diagrams (after generate_diagram results)

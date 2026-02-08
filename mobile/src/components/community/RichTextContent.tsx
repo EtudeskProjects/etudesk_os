@@ -95,16 +95,19 @@ const YouTubeEmbed: React.FC<{ videoId: string; onPress?: () => void }> = ({ vid
         Linking.openURL(`https://www.youtube.com/watch?v=${videoId}`);
     };
 
+    const playerHTML = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><style>*{margin:0;padding:0;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:0}</style></head><body><iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&origin=https://etudesk.com" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe></body></html>`;
+
     if (isPlaying) {
         return (
             <View style={[styles.youtubeContainer, { height: playerHeight, backgroundColor: colors.surface }]}>
                 <WebView
-                    source={{ uri: `https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1` }}
+                    source={{ html: playerHTML, baseUrl: 'https://etudesk.com' }}
                     style={styles.webview}
                     allowsFullscreenVideo
                     allowsInlineMediaPlayback
                     mediaPlaybackRequiresUserAction={false}
                     javaScriptEnabled
+                    originWhitelist={['*']}
                 />
             </View>
         );

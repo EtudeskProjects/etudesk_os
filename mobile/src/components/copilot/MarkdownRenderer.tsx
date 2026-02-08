@@ -8,7 +8,8 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
+import { ShimmerPlaceholder } from '../ui/ShimmerPlaceholder';
 import { EntityCard } from './EntityCard';
 import { QuizBlock } from './blocks/QuizBlock';
 import { FlashcardBlock } from './blocks/FlashcardBlock';
@@ -28,7 +29,7 @@ interface MarkdownRendererProps {
 
 // Parse content into blocks
 interface Block {
-  type: 'text' | 'entity' | 'quiz' | 'flashcard' | 'youtube' | 'diagram' | 'image' | 'chart' | 'code' | 'confirmation';
+  type: 'text' | 'entity' | 'quiz' | 'flashcard' | 'youtube' | 'diagram' | 'image' | 'chart' | 'code' | 'confirmation' | 'loading';
   content: string;
   meta?: string; // entity type, language, etc.
   data?: any; // parsed JSON data
@@ -148,10 +149,22 @@ function parseBlocks(content: string): Block[] {
     lastIndex = match.index + match[0].length;
   }
 
-  // Add remaining text
+  // Add remaining text — but detect unclosed code blocks (SSE streaming)
   if (lastIndex < content.length) {
-    const text = content.slice(lastIndex).trim();
-    if (text) blocks.push({ type: 'text', content: text });
+    const remaining = content.slice(lastIndex);
+    // Check for unclosed fenced code block: opening backticks+tag without closing backticks
+    const unclosedMatch = remaining.match(/`{2,}([\w:-]+)\n[\s\S]*$/);
+    if (unclosedMatch) {
+      // Text before the unclosed block
+      const textBefore = remaining.slice(0, unclosedMatch.index).trim();
+      if (textBefore) blocks.push({ type: 'text', content: textBefore });
+      // Show loading placeholder instead of raw JSON
+      const tag = unclosedMatch[1];
+      blocks.push({ type: 'loading', content: '', meta: tag });
+    } else {
+      const text = remaining.trim();
+      if (text) blocks.push({ type: 'text', content: text });
+    }
   }
 
   return blocks;
@@ -418,6 +431,16 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQ
             return (
               <CodeBlock key={index} language={block.meta || ''} code={block.content} />
             );
+          case 'loading': {
+            return (
+              <View key={index} style={[styles.loadingBlock, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+                <ShimmerPlaceholder width="60%" height={14} borderRadius={BORDER.radius.sm} />
+                <ShimmerPlaceholder width="100%" height={48} borderRadius={BORDER.radius.md} />
+                <ShimmerPlaceholder width="100%" height={48} borderRadius={BORDER.radius.md} />
+                <ShimmerPlaceholder width="80%" height={48} borderRadius={BORDER.radius.md} />
+              </View>
+            );
+          }
           case 'text':
           default:
             return <TextBlock key={index} content={block.content} colors={colors} />;
@@ -430,6 +453,13 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQ
 const styles = StyleSheet.create({
   container: {
     gap: SPACING.xs,
+  },
+  loadingBlock: {
+    gap: SPACING.sm,
+    padding: SPACING.lg,
+    borderRadius: BORDER.radius.lg,
+    borderWidth: BORDER.width.thin,
+    marginVertical: SPACING.sm,
   },
 });
 

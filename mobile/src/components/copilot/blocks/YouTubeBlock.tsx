@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions, Linking } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Play, Youtube } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
@@ -19,8 +19,21 @@ interface YouTubeBlockProps {
   };
 }
 
-const EMBED_URL = (videoId: string) =>
-  `https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1`;
+const buildPlayerHTML = (videoId: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <style>*{margin:0;padding:0;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:0}</style>
+</head>
+<body>
+  <iframe
+    src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&origin=https://etudesk.com"
+    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+    allowfullscreen
+  ></iframe>
+</body>
+</html>`;
 
 export const YouTubeBlock: React.FC<YouTubeBlockProps> = ({ data }) => {
   const { colors } = useTheme();
@@ -34,12 +47,13 @@ export const YouTubeBlock: React.FC<YouTubeBlockProps> = ({ data }) => {
       <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
         <View style={[styles.playerContainer, { height: playerHeight }]}>
           <WebView
-            source={{ uri: EMBED_URL(data.videoId) }}
-            style={[styles.webview, { backgroundColor: colors.background }]}
+            source={{ html: buildPlayerHTML(data.videoId), baseUrl: 'https://etudesk.com' }}
+            style={[styles.webview, { backgroundColor: '#000' }]}
             allowsFullscreenVideo
             allowsInlineMediaPlayback
             mediaPlaybackRequiresUserAction={false}
             javaScriptEnabled
+            originWhitelist={['*']}
           />
         </View>
         <View style={styles.content}>
