@@ -201,6 +201,14 @@ Call \`file_reader\` when:
 - **generate_image**: For visual concepts — ask brief confirmation first
 - Remember: ONE component per output. If you generate a diagram, do NOT also add a video or quiz.
 
+**CRITICAL Mermaid rules for generate_diagram:**
+- NEVER use HTML tags like \`<br/>\` or \`<br>\` in labels — use \`\\n\` for line breaks
+- NEVER use parentheses \`()\` inside square bracket labels \`[]\` — rephrase the text instead
+- Keep node labels SHORT: max 6 words per line
+- Use only simple ASCII characters in labels — no special punctuation
+- Example: \`A[Objectif mensuel\\nEx: inscriptions] --> B[Mesurer entonnoir]\` (correct)
+- Wrong: \`A[Objectif du mois<br/>(ex: inscriptions)] --> B\` (will break)
+
 ### 5. Practice Components (quiz, flashcard, code)
 
 Generate directly in your response — no tool call needed:

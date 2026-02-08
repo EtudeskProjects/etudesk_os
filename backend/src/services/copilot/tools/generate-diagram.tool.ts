@@ -19,6 +19,24 @@ const VALID_DIAGRAM_PREFIXES: Record<string, string[]> = {
 };
 
 /**
+ * Sanitize Mermaid code to fix common LLM generation issues
+ */
+function sanitizeMermaidCode(code: string): string {
+  let sanitized = code;
+  // Replace <br/> and <br> tags with newline character that Mermaid supports in labels
+  sanitized = sanitized.replace(/<br\s*\/?>/gi, '\\n');
+  // Escape parentheses inside square bracket labels [] — they break Mermaid parsing
+  // Match [...content with (...)...] and replace parens with unicode equivalents
+  sanitized = sanitized.replace(/\[([^\]]*)\]/g, (match, content) => {
+    const fixed = content.replace(/\(/g, '&#40;').replace(/\)/g, '&#41;');
+    return `[${fixed}]`;
+  });
+  // Remove any null bytes
+  sanitized = sanitized.replace(/\u0000/g, '');
+  return sanitized;
+}
+
+/**
  * Basic validation of Mermaid code syntax
  */
 function validateMermaidCode(code: string, diagramType: string): { valid: boolean; error?: string } {
@@ -60,7 +78,7 @@ export const generateDiagramTool = tool({
         'erDiagram',
       ])
       .describe('Mermaid diagram type. Use flowchart for processes, sequenceDiagram for interactions, mindmap for concepts, timeline for history, pie for distributions.'),
-    mermaidCode: z.string().describe('Valid Mermaid code. Must start with the correct diagram type keyword (e.g., "flowchart TD", "sequenceDiagram", "mindmap"). Use French labels for user-facing content.'),
+    mermaidCode: z.string().describe('Valid Mermaid code. Must start with the correct diagram type keyword (e.g., "flowchart TD", "sequenceDiagram", "mindmap"). Use French labels. CRITICAL RULES: 1) NEVER use <br/> or <br> tags — use \\n for line breaks inside labels. 2) NEVER use raw parentheses () inside square bracket labels [] — rephrase or remove them. 3) Keep labels short (max 6 words per line). 4) Use simple ASCII characters only in labels, no special punctuation.'),
   }),
   execute: async ({ title, diagramType, mermaidCode }) => {
     try {
@@ -74,11 +92,13 @@ export const generateDiagramTool = tool({
 
       logger.info(`[generate_diagram] Generated ${diagramType} diagram: "${title}"`);
 
+      const cleanCode = sanitizeMermaidCode(mermaidCode.trim());
+
       return {
         success: true,
         title,
         diagramType,
-        mermaidCode: mermaidCode.trim(),
+        mermaidCode: cleanCode,
         renderHint: 'client-side',
       };
     } catch (error: any) {
