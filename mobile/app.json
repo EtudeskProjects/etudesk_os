@@ -7,7 +7,7 @@
     "scheme": "etudesk",
     "icon": "./assets/etudesk_squared_icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/etudesk_logo_black.png",
       "resizeMode": "contain",
@@ -25,7 +25,12 @@
       "package": "com.etudesk.app",
       "navigationBarColor": "#FFFFFF",
       "navigationBarStyle": "dark",
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -57,6 +62,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c834045e-f5e4-4f29-9f03-9ae5078b2898"
+      }
+    },
+    "owner": "etudesk"
   }
 }
