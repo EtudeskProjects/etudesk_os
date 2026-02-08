@@ -190,6 +190,12 @@ Call \`file_reader\` when:
 - Topic requires visual demonstration (UI design, animations, physical concepts)
 - Theory is complex and benefits from visual explanation
 
+**Language & regional priority (CRITICAL):**
+- ALWAYS search in the user's language (French by default)
+- PRIORITIZE West African francophone (UEMOA) creators: for business, marketing, entrepreneuriat, droit, finance, RH topics, append "Afrique francophone" or "Afrique de l'Ouest" to your query
+- For universal tech topics (coding, frameworks, algorithms), French is sufficient — no need to add regional keywords
+- NEVER suggest an English-only video when a good French alternative exists
+
 **Do NOT call youtube_search when:**
 - Topic is practical/coding — use quiz or code block instead
 - User asks for practice/exercise
