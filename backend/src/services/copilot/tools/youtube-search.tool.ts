@@ -12,10 +12,10 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
 export const youtubeSearchTool = tool({
   name: 'youtube_search',
   description:
-    'Search YouTube for educational videos on a topic. Study mode only. Returns the most relevant French-language video tutorials, prioritizing West African francophone creators. Use this when the learner needs video explanations or visual demonstrations of a concept.',
+    'Search YouTube for educational videos on a topic. Study mode only. Returns the most relevant French-language video tutorials, prioritizing West African francophone creators. Call this tool ONCE per response — never multiple times. Pick the best single query.',
   parameters: z.object({
     query: z.string().describe('Search query for educational videos. ALWAYS write the query in French. Prioritize West African francophone (UEMOA) creators: append "Afrique francophone" or "Afrique de l\'Ouest" to queries when the topic allows it (business, marketing, entrepreneuriat, droit, finance, etc.). For universal tech topics (coding, frameworks), French is enough. Examples: "marketing digital Afrique francophone", "entrepreneuriat UEMOA", "tutoriel React hooks en francais"'),
-    maxResults: z.number().min(1).max(5).default(3).describe('Number of videos to return. Default 3.'),
+    maxResults: z.number().min(1).max(3).describe('Number of videos to return. Always pass 1 — the agent picks the best single video to display.'),
   }),
   execute: async ({ query, maxResults }) => {
     if (!YOUTUBE_API_KEY) {

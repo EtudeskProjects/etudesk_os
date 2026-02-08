@@ -254,7 +254,11 @@ STUDY MODE RESTRICTION: Do NOT generate ANY entity cards. Study mode is purely p
 
 ## YouTube Videos (after youtube_search results)
 
-Render ONLY ONE youtube block per response — pick the single most relevant video. NEVER display 2 or more youtube players in the same response.
+**CRITICAL RULES:**
+- Call youtube_search EXACTLY ONCE per response. NEVER call it 2 or 3 times with different queries. One call, one query, done.
+- Pass maxResults: 1 to get the single best video.
+- Render ONLY ONE youtube block — pick the most relevant video from results.
+- After receiving the tool result, IMMEDIATELY render the youtube block. Do NOT ask the user to choose — just show the best video.
 
 \`\`\`youtube
 {"videoId":"VIDEO_ID","title":"Video Title","channelName":"Channel","description":"Short description"}
