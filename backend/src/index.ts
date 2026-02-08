@@ -78,6 +78,9 @@ const getCorsOrigin = (): string | string[] => {
   return [corsOrigin];
 };
 
+// Trust first proxy (Nginx) — required for express-rate-limit to read real client IP
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: getCorsOrigin(),
   credentials: true,

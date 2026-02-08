@@ -45,6 +45,18 @@ import { copilotChatLimiter, copilotGeneralLimiter } from '../middleware/rateLim
 
 const router = Router();
 
+/** Sanitize strings before PostgreSQL insertion — removes null bytes and fixes broken Unicode escapes */
+function sanitizeForPg(value: string | null | undefined): string | null {
+  if (!value) return value as null;
+  // Remove \u0000 null bytes (PostgreSQL rejects them)
+  return value.replace(/\u0000/g, '').replace(/\\u0000/g, '');
+}
+function sanitizeJsonForPg(value: any): string | null {
+  if (!value) return null;
+  const str = typeof value === 'string' ? value : JSON.stringify(value);
+  return sanitizeForPg(str);
+}
+
 // --- Chat Endpoint — Sse Streaming ---
 
 /**
@@ -162,7 +174,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     // Save user message
     await pool.query(
       `INSERT INTO copilot_messages (session_id, role, content, attachments) VALUES ($1, 'user', $2, $3)`,
-      [sessionId, message.trim(), messageAttachments]
+      [sessionId, sanitizeForPg(message.trim()), sanitizeJsonForPg(messageAttachments)]
     );
 
     // Get conversation history for context
@@ -194,9 +206,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
        VALUES ($1, 'assistant', $2, $3, $4)`,
       [
         sessionId,
-        finalOutput,
-        toolTrace.length > 0 ? JSON.stringify(toolTrace) : null,
-        segments.length > 0 ? JSON.stringify(segments) : null,
+        sanitizeForPg(finalOutput),
+        toolTrace.length > 0 ? sanitizeJsonForPg(toolTrace) : null,
+        segments.length > 0 ? sanitizeJsonForPg(segments) : null,
       ]
     );
 
