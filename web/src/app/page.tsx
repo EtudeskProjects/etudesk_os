@@ -17,7 +17,6 @@ const translations = {
     followUs: 'Suivez-nous',
     terms: 'Conditions d\'utilisation',
     privacy: 'Politique de confidentialité',
-    legal: 'Mentions légales',
     rights: 'Tous droits réservés.',
   },
   en: {
@@ -32,7 +31,6 @@ const translations = {
     followUs: 'Follow us',
     terms: 'Terms of Service',
     privacy: 'Privacy Policy',
-    legal: 'Legal Notice',
     rights: 'All rights reserved.',
   },
 };
@@ -170,8 +168,6 @@ export default function Home() {
           <a href="/terms">{t.terms}</a>
           <span className="footer-dot" aria-hidden="true" />
           <a href="/privacy">{t.privacy}</a>
-          <span className="footer-dot" aria-hidden="true" />
-          <a href="/mentions-legales">{t.legal}</a>
         </div>
         <p className="footer-copy">&copy; {new Date().getFullYear()} Etudesk. {t.rights}</p>
       </footer>
