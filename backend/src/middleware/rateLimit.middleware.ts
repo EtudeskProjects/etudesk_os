@@ -104,6 +104,18 @@ export const copilotGeneralLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Waitlist limiter (public endpoint)
+export const waitlistLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // 5 requests per hour per IP
+  message: {
+    error: 'Trop de demandes. Veuillez réessayer dans 1 heure.',
+    retry_after: 60 * 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Export endpoint limiter (PDFs, etc.)
 export const exportLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour

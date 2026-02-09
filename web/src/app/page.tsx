@@ -4,6 +4,11 @@ import React, { useState, useContext } from 'react';
 import Image from 'next/image';
 import { ThemeContext } from '../contexts/ThemeContext';
 
+const UEMOA_COUNTRIES = [
+  'Bénin', 'Burkina Faso', 'Côte d\'Ivoire', 'Guinée-Bissau',
+  'Mali', 'Niger', 'Sénégal', 'Togo',
+];
+
 const translations = {
   fr: {
     tagline: 'La plateforme qui travaille pour vous',
@@ -18,6 +23,24 @@ const translations = {
     terms: 'Conditions d\'utilisation',
     privacy: 'Politique de confidentialité',
     rights: 'Tous droits réservés.',
+    // Waitlist
+    waitlistTitle: 'Rejoignez la liste d\'attente',
+    typeTalent: 'Talent',
+    typeOrg: 'Organisation',
+    country: 'Pays',
+    countryPlaceholder: 'Sélectionnez votre pays',
+    countryOther: 'Autre',
+    contactEmail: 'Email',
+    contactWhatsapp: 'WhatsApp',
+    emailPlaceholder: 'votre@email.com',
+    whatsappPlaceholder: '+225 07 00 00 00 00',
+    submit: 'S\'inscrire',
+    submitting: 'Inscription...',
+    successMessage: 'Vous êtes sur la liste ! Nous vous contacterons bientôt.',
+    errorMessage: 'Une erreur est survenue. Veuillez réessayer.',
+    errorRate: 'Trop de demandes. Réessayez dans 1 heure.',
+    errorInvalidEmail: 'Adresse email invalide.',
+    errorInvalidWhatsapp: 'Numéro WhatsApp invalide.',
   },
   en: {
     tagline: 'The platform that works for you',
@@ -32,15 +55,90 @@ const translations = {
     terms: 'Terms of Service',
     privacy: 'Privacy Policy',
     rights: 'All rights reserved.',
+    // Waitlist
+    waitlistTitle: 'Join the waiting list',
+    typeTalent: 'Talent',
+    typeOrg: 'Organization',
+    country: 'Country',
+    countryPlaceholder: 'Select your country',
+    countryOther: 'Other',
+    contactEmail: 'Email',
+    contactWhatsapp: 'WhatsApp',
+    emailPlaceholder: 'your@email.com',
+    whatsappPlaceholder: '+225 07 00 00 00 00',
+    submit: 'Sign up',
+    submitting: 'Signing up...',
+    successMessage: 'You\'re on the list! We\'ll contact you soon.',
+    errorMessage: 'Something went wrong. Please try again.',
+    errorRate: 'Too many requests. Try again in 1 hour.',
+    errorInvalidEmail: 'Invalid email address.',
+    errorInvalidWhatsapp: 'Invalid WhatsApp number.',
   },
 };
 
 type Lang = 'fr' | 'en';
+type UserType = 'TALENT' | 'ORGANIZATION';
+type ContactType = 'EMAIL' | 'WHATSAPP';
+type FormStatus = 'idle' | 'loading' | 'success' | 'error';
+
+const API_URL = 'https://api.etudesk.com/api/waitlist';
 
 export default function Home() {
   const [lang, setLang] = useState<Lang>('fr');
   const { isDark, toggleTheme } = useContext(ThemeContext);
   const t = translations[lang];
+
+  // Waitlist form state
+  const [userType, setUserType] = useState<UserType>('TALENT');
+  const [country, setCountry] = useState('');
+  const [contactType, setContactType] = useState<ContactType>('EMAIL');
+  const [contactValue, setContactValue] = useState('');
+  const [status, setStatus] = useState<FormStatus>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('loading');
+    setErrorMsg('');
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: userType,
+          country,
+          contactType,
+          contactValue: contactValue.trim(),
+        }),
+      });
+
+      if (res.status === 429) {
+        setStatus('error');
+        setErrorMsg(t.errorRate);
+        return;
+      }
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setStatus('error');
+        if (data.error?.includes('email') || data.error?.includes('Email')) {
+          setErrorMsg(t.errorInvalidEmail);
+        } else if (data.error?.includes('WhatsApp') || data.error?.includes('whatsapp')) {
+          setErrorMsg(t.errorInvalidWhatsapp);
+        } else {
+          setErrorMsg(t.errorMessage);
+        }
+        return;
+      }
+
+      setStatus('success');
+    } catch {
+      setStatus('error');
+      setErrorMsg(t.errorMessage);
+    }
+  };
 
   return (
     <main className="coming-soon">
@@ -134,6 +232,93 @@ export default function Home() {
               <span className="store-btn-name">{t.downloadAndroid}</span>
             </div>
           </a>
+        </div>
+
+        {/* Waitlist Form */}
+        <div className="waitlist-section">
+          <h2 className="waitlist-title">{t.waitlistTitle}</h2>
+
+          {status === 'success' ? (
+            <div className="waitlist-success">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              <p>{t.successMessage}</p>
+            </div>
+          ) : (
+            <form className="waitlist-form" onSubmit={handleSubmit}>
+              {/* Type toggle */}
+              <div className="pill-toggle">
+                <button
+                  type="button"
+                  className={userType === 'TALENT' ? 'active' : ''}
+                  onClick={() => setUserType('TALENT')}
+                >
+                  {t.typeTalent}
+                </button>
+                <button
+                  type="button"
+                  className={userType === 'ORGANIZATION' ? 'active' : ''}
+                  onClick={() => setUserType('ORGANIZATION')}
+                >
+                  {t.typeOrg}
+                </button>
+              </div>
+
+              {/* Country select */}
+              <select
+                className="waitlist-select"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                required
+              >
+                <option value="" disabled>{t.countryPlaceholder}</option>
+                {UEMOA_COUNTRIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+                <option value="Autre">{t.countryOther}</option>
+              </select>
+
+              {/* Contact type toggle + input */}
+              <div className="contact-row">
+                <div className="pill-toggle pill-toggle-sm">
+                  <button
+                    type="button"
+                    className={contactType === 'EMAIL' ? 'active' : ''}
+                    onClick={() => { setContactType('EMAIL'); setContactValue(''); }}
+                  >
+                    {t.contactEmail}
+                  </button>
+                  <button
+                    type="button"
+                    className={contactType === 'WHATSAPP' ? 'active' : ''}
+                    onClick={() => { setContactType('WHATSAPP'); setContactValue(''); }}
+                  >
+                    {t.contactWhatsapp}
+                  </button>
+                </div>
+                <input
+                  className="waitlist-input"
+                  type={contactType === 'EMAIL' ? 'email' : 'tel'}
+                  placeholder={contactType === 'EMAIL' ? t.emailPlaceholder : t.whatsappPlaceholder}
+                  value={contactValue}
+                  onChange={(e) => setContactValue(e.target.value)}
+                  required
+                />
+              </div>
+
+              {errorMsg && <p className="waitlist-error">{errorMsg}</p>}
+
+              <button
+                type="submit"
+                className="waitlist-submit"
+                disabled={status === 'loading'}
+              >
+                {status === 'loading' ? t.submitting : t.submit}
+              </button>
+            </form>
+          )}
         </div>
 
         {/* Social links */}
@@ -339,6 +524,165 @@ export default function Home() {
           font-weight: var(--font-weight-semibold);
         }
 
+        /* Waitlist section */
+        .waitlist-section {
+          width: 100%;
+          max-width: 420px;
+          margin-top: 2rem;
+          padding: 1.5rem;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-lg, 12px);
+          background: var(--surface, var(--bg-secondary, transparent));
+        }
+
+        .waitlist-title {
+          font-size: var(--font-size-lg);
+          font-weight: var(--font-weight-semibold);
+          color: var(--text-primary);
+          margin-bottom: 1.25rem;
+        }
+
+        .waitlist-form {
+          display: flex;
+          flex-direction: column;
+          gap: 0.875rem;
+        }
+
+        /* Pill toggle */
+        .pill-toggle {
+          display: flex;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-sm);
+          overflow: hidden;
+        }
+
+        .pill-toggle button {
+          flex: 1;
+          padding: 0.5rem 0.75rem;
+          background: none;
+          border: none;
+          font-family: var(--font-family);
+          font-size: var(--font-size-sm);
+          font-weight: var(--font-weight-medium);
+          color: var(--text-tertiary);
+          cursor: pointer;
+          transition: all var(--transition-fast);
+        }
+
+        .pill-toggle button.active {
+          background: var(--primary);
+          color: var(--text-on-primary);
+        }
+
+        .pill-toggle button:not(.active):hover {
+          color: var(--text-primary);
+          background: var(--hover);
+        }
+
+        .pill-toggle-sm {
+          flex-shrink: 0;
+        }
+
+        .pill-toggle-sm button {
+          padding: 0.5rem 0.625rem;
+          font-size: var(--font-size-xs);
+        }
+
+        /* Select */
+        .waitlist-select {
+          width: 100%;
+          padding: 0.625rem 0.75rem;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-sm);
+          background: var(--bg-primary, #fff);
+          color: var(--text-primary);
+          font-family: var(--font-family);
+          font-size: var(--font-size-sm);
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 0.75rem center;
+          cursor: pointer;
+        }
+
+        .waitlist-select:focus {
+          outline: none;
+          border-color: var(--primary);
+        }
+
+        /* Contact row */
+        .contact-row {
+          display: flex;
+          gap: 0.5rem;
+          align-items: stretch;
+        }
+
+        .waitlist-input {
+          flex: 1;
+          min-width: 0;
+          padding: 0.625rem 0.75rem;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-sm);
+          background: var(--bg-primary, #fff);
+          color: var(--text-primary);
+          font-family: var(--font-family);
+          font-size: var(--font-size-sm);
+        }
+
+        .waitlist-input:focus {
+          outline: none;
+          border-color: var(--primary);
+        }
+
+        .waitlist-input::placeholder {
+          color: var(--text-disabled);
+        }
+
+        /* Error */
+        .waitlist-error {
+          font-size: var(--font-size-xs);
+          color: var(--error, #e53e3e);
+        }
+
+        /* Submit */
+        .waitlist-submit {
+          padding: 0.75rem 1.5rem;
+          background: var(--primary);
+          color: var(--text-on-primary);
+          border: none;
+          border-radius: var(--radius-sm);
+          font-family: var(--font-family);
+          font-size: var(--font-size-sm);
+          font-weight: var(--font-weight-semibold);
+          cursor: pointer;
+          transition: opacity var(--transition-fast);
+        }
+
+        .waitlist-submit:hover:not(:disabled) {
+          opacity: 0.9;
+        }
+
+        .waitlist-submit:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        /* Success */
+        .waitlist-success {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 1rem 0;
+          color: var(--success, #38a169);
+        }
+
+        .waitlist-success p {
+          font-size: var(--font-size-sm);
+          color: var(--text-secondary);
+          text-align: center;
+        }
+
         /* Social */
         .social-section {
           margin-top: 1.5rem;
@@ -435,6 +779,14 @@ export default function Home() {
 
           .content {
             padding: 1.5rem 1.25rem;
+          }
+
+          .contact-row {
+            flex-direction: column;
+          }
+
+          .waitlist-section {
+            padding: 1.25rem;
           }
         }
       `}</style>
