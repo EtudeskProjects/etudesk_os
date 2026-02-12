@@ -1,6 +1,6 @@
 /**
  * Copilot — Shared Types
- * OpenAI Agents SDK + GPT-4.1 + SSE Streaming
+ * OpenAI Agents SDK + GPT-5 (MODEL_T1) + SSE Streaming
  */
 
 // --- Context Types ---

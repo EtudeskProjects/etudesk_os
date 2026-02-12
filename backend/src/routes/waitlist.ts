@@ -32,16 +32,22 @@ router.post('/', waitlistLimiter, async (req: Request, res: Response) => {
     }
 
     // Basic WhatsApp validation (digits, optional +, 7-15 chars)
-    if (contactType === 'WHATSAPP' && !/^\+?\d{7,15}$/.test(contactValue)) {
+    // Strip spaces, dashes, parentheses before validating
+    const cleanedWhatsApp = contactType === 'WHATSAPP'
+      ? contactValue.replace(/[\s\-\(\)]/g, '')
+      : contactValue;
+    if (contactType === 'WHATSAPP' && !/^\+?\d{7,15}$/.test(cleanedWhatsApp)) {
       return res.status(400).json({ error: 'Invalid WhatsApp number' });
     }
+
+    const storedContactValue = contactType === 'WHATSAPP' ? cleanedWhatsApp : contactValue;
 
     await pool.query(
       `INSERT INTO waitlist (type, country, contact_type, contact_value)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (contact_value)
        DO UPDATE SET type = EXCLUDED.type, country = EXCLUDED.country, contact_type = EXCLUDED.contact_type`,
-      [type, country, contactType, contactValue],
+      [type, country, contactType, storedContactValue],
     );
 
     logger.info('Waitlist signup', { type, country, contactType });

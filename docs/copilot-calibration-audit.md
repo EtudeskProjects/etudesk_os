@@ -1,31 +1,28 @@
 # Copilot Calibration Report
 
-> Generated: 2026-02-07T02:40:54.284Z
+> Generated: 2026-02-09T17:34:00.512Z
 > Tests: 14 | Passed: 14 | Failed: 0
 
 ## Calibration Summary
 
 | Test | Agent | Chars | Questions | Tools | Verbosity | Proactivity | Quick Ack | Cards |
 |------|-------|-------|-----------|-------|-----------|-------------|-----------|-------|
-| ✅ Explorer — Opportunites matching profil | explorer | 937 | 1 | 3 | ok | proactive | ✅ | 6 |
-| ✅ Explorer — Espaces coworking Abidjan | explorer | 542 | 1 | 1 | ok | proactive | ✅ | 3 |
-| ✅ Explorer — Communautes tech | explorer | 766 | 1 | 1 | ok | proactive | ✅ | 5 |
-| ✅ Explorer — Generer CV a jour | explorer | 304 | 1 | 5 | ok | proactive | ✅ | 1 |
-| ✅ Explorer — Actualites communautes | explorer | 955 | 1 | 2 | ok | proactive | ✅ | 8 |
-| ✅ Study — Debuter marketing digital | study | 1100 | 1 | 0 | ok | passive | N/A | 0 |
-| ✅ Study — Diagnostic competences finance | study | 855 | 0 | 0 | ok | passive | N/A | 0 |
-| ✅ Study — Expliquer le machine learning | study | 1242 | 1 | 0 | ok | passive | N/A | 0 |
-| ✅ Study — Schema cycle de Krebs | study | 1250 | 1 | 1 | ok | proactive | ✅ | 0 |
-| ✅ Study — Video YouTube agriculture durable | study | 851 | 1 | 1 | ok | proactive | ✅ | 0 |
-| ✅ Org — Recruter profils marketing | org | 749 | 1 | 3 | ok | proactive | ✅ | 1 |
-| ✅ Org — Dashboard organisation | org | 562 | 1 | 1 | ok | proactive | ✅ | 0 |
-| ✅ Org — Generer fiche de poste | org | 692 | 1 | 2 | ok | proactive | ✅ | 0 |
-| ✅ Org — Publier offre stage | org | 1657 | 0 | 0 | verbose | passive | N/A | 0 |
+| ✅ Explorer — Opportunites matching profil | explorer | 784 | 1 | 2 | ok | proactive | ✅ | 6 |
+| ✅ Explorer — Espaces coworking Abidjan | explorer | 493 | 1 | 1 | ok | proactive | ✅ | 3 |
+| ✅ Explorer — Communautes tech | explorer | 687 | 1 | 1 | ok | proactive | ✅ | 5 |
+| ✅ Explorer — Generer CV a jour | explorer | 350 | 1 | 6 | ok | proactive | ✅ | 1 |
+| ✅ Explorer — Actualites communautes | explorer | 234 | 1 | 1 | concise | proactive | ✅ | 1 |
+| ✅ Study — Debuter marketing digital | study | 1007 | 1 | 0 | ok | passive | N/A | 0 |
+| ✅ Study — Diagnostic competences finance | study | 722 | 0 | 0 | ok | passive | N/A | 0 |
+| ✅ Study — Expliquer le machine learning | study | 1027 | 1 | 0 | ok | passive | N/A | 0 |
+| ✅ Study — Schema cycle de Krebs | study | 1030 | 1 | 1 | ok | proactive | ✅ | 0 |
+| ✅ Study — Video YouTube agriculture durable | study | 644 | 1 | 1 | ok | proactive | ✅ | 0 |
+| ✅ Org — Recruter profils marketing | org | 553 | 1 | 6 | ok | proactive | ✅ | 1 |
+| ✅ Org — Dashboard organisation | org | 585 | 1 | 1 | ok | proactive | ✅ | 0 |
+| ✅ Org — Generer fiche de poste | org | 868 | 1 | 3 | ok | proactive | ✅ | 0 |
+| ✅ Org — Publier offre stage | org | 1500 | 0 | 0 | ok | passive | N/A | 0 |
 
 ## Calibration Issues
-
-### Too Verbose (>1500 chars)
-- **Org — Publier offre stage**: 1657 chars, 6 sentences
 
 ### Not Proactive Enough
 - **Study — Debuter marketing digital**: 0 tool calls, 1 questions asked
@@ -39,26 +36,16 @@
 
 ### Explorer Agent
 
-#### ✅ Explorer — Opportunites matching profil (73658ms)
+#### ✅ Explorer — Opportunites matching profil (149396ms)
 
 **Prompt:** `Quels postes correspondent a mon profil en ce moment ?`
 
-**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=937, Questions=1, Tools=3
+**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=784, Questions=1, Tools=2
 
-**Tool: `vector_query`** (3261ms)
+**Tool: `vector_query`** (10292ms)
 ```json
 {
-  "query": "opportunités CDI CDD remote Abidjan Côte d’Ivoire Afrique francophone ventes stratégie go-to-market développement commercial key account management CRM pricing forecasting partenariats direction commerciale growth product management innovation IA santé healthtech biomédical bio-informatique gestion de projet consulting leadership management d’équipe francophone",
-  "namespace": "opportunities",
-  "topK": 15,
-  "filtersJson": null
-}
-```
-
-**Tool: `vector_query`** (2133ms)
-```json
-{
-  "query": "opportunités Abidjan Côte d’Ivoire remote Afrique francophone business development manager key account manager responsable partenariats directeur commercial head of sales growth lead stratégie commerciale go-to-market CRM pipeline forecasting pricing développement de comptes clés consulting stratégie numérique innovation IA santé healthtech chef de projet biomédical responsable programme",
+  "query": "opportunites emploi direction commerciale, business development, go-to-market, key account management, CRM, vente complexe, pricing, SaaS, innovation, IA, consulting; egalement gestion de projet biomedical/biotech et bio-informatique; leadership et management d’equipe; francophone; base a Abobo/Abidjan, Cote d’Ivoire; ouvert au remote; secteurs: digital, sante, biotech, fintech; postes: Head of Sales, Sales Manager, Country Manager, Growth Lead, Business Development Manager, Strategic Partnerships, Product Marketing, Healthtech Project Manager, Bioinformatics Analyst (management), Public Policy Strategy; niveau senior/manager; immediatement disponibles",
   "namespace": "opportunities",
   "topK": 20,
   "filtersJson": null
@@ -69,13 +56,13 @@
 ```json
 {
   "intent": "search_opportunities",
-  "paramsJson": "{\"q\":\"commercial business development partenariats account manager strategie Abidjan remote Cote d'Ivoire\",\"limit\":12}"
+  "paramsJson": "{\"q\":\"commercial business development head of sales partenariats marketing go-to-market Abidjan remote CDI\"}"
 }
 ```
 
 **Agent Output:**
 ```markdown
-Voici des postes adaptés à votre profil.Votre profil rayonne en stratégie, développement commercial, innovation et santé/IA. Voici une sélection d’opportunités actuelles, locales et compatibles avec une ouverture au remote, où votre impact peut être déterminant.
+Voici des opportunites alignees avec votre profil.Votre trajectoire conjugue stratégie commerciale, innovation et pilotage de projets. Voici une sélection d’opportunités en phase avec vos forces (GTM, CRM, négociation, leadership), à Abidjan et/ou ouvertes au remote.
 
 ```entity:opportunity
 {"id":"c0000001-0002-4000-c000-000000000002"}
@@ -90,32 +77,32 @@ Voici des postes adaptés à votre profil.Votre profil rayonne en stratégie, d�
 ```
 
 ```entity:opportunity
-{"id":"c0000004-0001-4000-c000-000000000001"}
+{"id":"943d7a09-d777-40b7-a3b5-8c7b88e89ed1"}
 ```
 
 ```entity:opportunity
-{"id":"c0000006-0001-4000-c000-000000000001"}
+{"id":"38905324-f54d-41c8-837d-4674365fb7b3"}
 ```
 
 ```entity:opportunity
 {"id":"c0000001-0003-4000-c000-000000000003"}
 ```
 
-Sélection axée go-to-market, développement de comptes clés, leadership entrepreneurial et pilotage de projets, en phase avec vos atouts (CRM, pricing, KPI, négociation) — souhaitez-vous privilégier santé/IA, digital ou secteur public ?
+Souhaitez-vous privilégier Santé/Biotech, Digital/Fintech, ou rester ouvert ?
 ```
 
 ---
 
-#### ✅ Explorer — Espaces coworking Abidjan (21201ms)
+#### ✅ Explorer — Espaces coworking Abidjan (37973ms)
 
 **Prompt:** `Je cherche un espace de travail calme sur Abidjan avec wifi`
 
-**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=542, Questions=1, Tools=1
+**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=493, Questions=1, Tools=1
 
-**Tool: `vector_query`** (1385ms)
+**Tool: `vector_query`** (2890ms)
 ```json
 {
-  "query": "espace de travail calme wifi Abidjan Cocody Plateau Marcory Riviera coworking salle reunion open space focus silencieux fibre",
+  "query": "espace de travail calme wifi Abidjan coworking open space salle de reunion silencieux Plateau Cocody Riviera Adjame Treichville",
   "namespace": "spaces",
   "topK": 12,
   "filtersJson": null
@@ -124,37 +111,35 @@ Sélection axée go-to-market, développement de comptes clés, leadership entre
 
 **Agent Output:**
 ```markdown
-Voici des espaces calmes avec wifi à Abidjan.Un havre de concentration avec wifi fiable est décisif pour réussir. Voici une sélection ciblée à Abidjan, propice au calme et à l’efficacité.
+Voici des espaces calmes avec wifi à Abidjan.Excellente idée : un lieu calme décuple votre clarté d’esprit. Sélection à Abidjan avec wifi fiable pour concentration et rendez-vous: Cocody (fibre), Plateau (très calme), Zone 4 (bureau privé).
 
 ```entity:space
 {"id":"f0000001-0001-4000-f000-000000000001"}
 ```
 
 ```entity:space
-{"id":"f0000001-0004-4000-f000-000000000004"}
-```
-
-```entity:space
 {"id":"f0000001-0002-4000-f000-000000000002"}
 ```
 
-Sélection: fibre, espaces calmes, quartiers accessibles depuis Abobo.
+```entity:space
+{"id":"f0000001-0004-4000-f000-000000000004"}
+```
 
-Préférez-vous Cocody, Plateau ou Marcory pour que je vérifie les disponibilités ?
+Quel quartier et créneau souhaitez-vous réserver ?
 ```
 
 ---
 
-#### ✅ Explorer — Communautes tech (40582ms)
+#### ✅ Explorer — Communautes tech (66246ms)
 
 **Prompt:** `Quelles communautes tech actives existent a Abidjan ?`
 
-**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=766, Questions=1, Tools=1
+**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=687, Questions=1, Tools=1
 
-**Tool: `vector_query`** (1950ms)
+**Tool: `vector_query`** (1478ms)
 ```json
 {
-  "query": "communautés tech actives Abidjan Côte d'Ivoire développeurs data IA startup entrepreneuriat produit growth no-code cybersécurité cloud Abobo",
+  "query": "communautés tech actives Abidjan Côte d'Ivoire IA data science cloud dev web mobile entrepreneuriat startups innovation networking francophone",
   "namespace": "communities",
   "topK": 15,
   "filtersJson": null
@@ -163,7 +148,7 @@ Préférez-vous Cocody, Plateau ou Marcory pour que je vérifie les disponibilit
 
 **Agent Output:**
 ```markdown
-Voici les meilleures communautés tech à Abidjan.Voici des communautés tech actives et pertinentes à Abidjan, idéales pour élargir votre réseau, croiser IA/data/produit et dynamiser vos projets. Sélection orientée vers IA, data, DevOps et agritech, en phase avec vos atouts en innovation, stratégie et entrepreneuriat.
+Voyons les communautes tech a Abidjan.Voici une sélection de communautés tech actives à Abidjan et en Côte d’Ivoire, alignées avec l’IA, la data, l’innovation et l’entrepreneuriat. Elles offrent rencontres régulières, mentorat et networking au service de votre impact.
 
 ```entity:community
 {"id":"e0000001-0001-4000-e000-000000000001"}
@@ -179,136 +164,10 @@ Voici les meilleures communautés tech à Abidjan.Voici des communautés tech ac
 
 ```entity:community
 {"id":"e0000001-0004-4000-e000-000000000004"}
-```
-
-```entity:community
-{"id":"794cd334-5bbf-4180-a944-ab9eb428a2f4"}
-```
-
-Souhaitez-vous en rejoindre une maintenant ou voir d’autres options (cloud, cybersécurité) ?
-```
-
----
-
-#### ✅ Explorer — Generer CV a jour (94529ms)
-
-**Prompt:** `Fais-moi un CV a jour stp`
-
-**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=304, Questions=1, Tools=5
-
-**Tool: `sql_query`** (27ms)
-```json
-{
-  "intent": "my_profile",
-  "paramsJson": "{}"
-}
-```
-
-**Tool: `sql_query`** (27ms)
-```json
-{
-  "intent": "my_bookmarks",
-  "paramsJson": "{}"
-}
-```
-
-**Tool: `sql_query`** (26ms)
-```json
-{
-  "intent": "my_documents",
-  "paramsJson": "{}"
-}
-```
-
-**Tool: `file_reader`** (24340ms)
-```json
-{
-  "input": "ebb89c86-4144-4751-9bb4-f440cc136df1"
-}
-```
-
-**Tool: `generate_document`** (103ms)
-```json
-{
-  "format": "PDF",
-  "title": "Curriculum Vitae — Lamine Barro",
-  "contentJson": "{\"firstName\":\"Mohamed Lamine\",\"lastName\":\"Barro\",\"email\":\"succes1@gmail.com\",\"phone\":\"+2250574631148\",\"city\":\"Abidjan\",\"country\":\"Côte d’Ivoire\",\"bio\":\"Entrepreneur et stratège digital, j’oriente l’impact à l’intersection éducation, IA et politiques publiques. Leader d’écosystèmes, j’ai dirigé Etudesk, conseillé l’État de Côte d’Ivoire et catalysé des partenariats structurants. Profil data-driven, orienté résultats et création de valeur durable.\",\"skills\":[{\"name\":\"Entrepreneuriat\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Leadership\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Management d'équipe\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Négociation grands comptes\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Stratégie go-to-market\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Stratégie commerciale\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Stratégie numérique\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Gestion de projet\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Pilotage du pipeline\",\"type\":\"hard\",\"level\":\"intermediate\"},{\"name\":\"Gestion de CRM\",\"type\":\"hard\",\"level\":\"intermediate\"},{\"name\":\"Vente complexe\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Pricing\",\"type\":\"hard\",\"level\":\"intermediate\"},{\"name\":\"Forecasting des ventes\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Développement de solutions numériques\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Analyse de données commerciales\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Analyse de données biologiques\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Bio-informatique\",\"type\":\"hard\",\"level\":\"intermediate\"},{\"name\":\"Intelligence artificielle\",\"type\":\"hard\",\"level\":\"intermediate\"},{\"name\":\"Communication\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Communication scientifique\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Mobilisation de fonds\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Réseautage\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Consulting\",\"type\":\"soft\",\"level\":\"expert\"}],\"languages\":[{\"language\":\"Français\",\"level\":\"natif\"}],\"interests\":[\"IA appliquée à l’éducation\",\"Politiques publiques\",\"Entrepreneuriat africain\"],\"goals\":[\"Apprendre de nouvelles compétences\",\"Développer mon réseau et ma visibilité\",\"Soutenir la recherche\"],\"experiences\":[{\"title\":\"Président / Directeur général\",\"company\":\"Etudesk\",\"location\":\"Abidjan\",\"period\":\"Mai 2016 – Présent\",\"description\":\"Direction stratégique et produit; partenariats institutionnels; levées de fonds; management transverse; industrialisation de l’employabilité via l’IA avec ministères et bailleurs internationaux.\"},{\"title\":\"Consultant & Ambassadeur de l’Innovation\",\"company\":\"Gouvernement de la République de Côte d’Ivoire\",\"location\":\"Abidjan\",\"period\":\"Déc. 2021 – Présent\",\"description\":\"Conseil à la Présidence, Primature et ministères sur l’innovation, économie numérique et entrepreneuriat des jeunes; cadrage de politiques publiques et programmes structurants.\"},{\"title\":\"Membre du conseil scientifique\",\"company\":\"Mission laïque française\",\"location\":\"International\",\"period\":\"Fév. 2021 – Présent\",\"description\":\"Contribution aux orientations scientifiques et éducatives; évaluation de projets et innovation pédagogique.\"},{\"title\":\"Vice-président & Membre fondateur\",\"company\":\"#CI20 (Écosystème startups CI)\",\"location\":\"Abidjan\",\"period\":\"Oct. 2020 – Présent\",\"description\":\"Plaidoyer et représentation de l’écosystème; coordination d’initiatives pour la croissance des startups ivoiriennes.\"},{\"title\":\"Président\",\"company\":\"Club informatique de l’UPGC\",\"location\":\"Korhogo\",\"period\":\"Déc. 2013 – Mars 2015\",\"description\":\"Animation de communauté; encadrement de projets étudiants en informatique; organisation d’événements tech.\"},{\"title\":\"MSP / Évangéliste technologiste\",\"company\":\"Microsoft WCA\",\"location\":\"Côte d’Ivoire\",\"period\":\"Janv. 2013 – Déc. 2014\",\"description\":\"Promotion des technologies Microsoft; interventions universitaires et communautés développeurs.\"},{\"title\":\"Président intérimaire\",\"company\":\"Interact Club Bietry\",\"location\":\"Abidjan\",\"period\":\"Juin 2010 – Août 2011\",\"description\":\"Leadership associatif; conception et mise en œuvre d’actions citoyennes.\"}],\"education\":[{\"degree\":\"Executive MBA (HEC Challenge Plus Afrique)\",\"institution\":\"HEC Paris\",\"location\":\"Paris / Abidjan\",\"period\":\"Mai 2022\",\"description\":\"Programme exécutif de 8 mois axé sur croissance, stratégie et innovation.\"},{\"degree\":\"Licence Sciences biologiques — spécialisation Bio-informatique\",\"institution\":\"Université Péléforo Gon Coulibaly (UPGC)\",\"location\":\"Korhogo\",\"period\":\"Oct. 2015\",\"description\":\"Parcours orienté data, bio-informatique et communication scientifique.\"}],\"certifications\":[{\"name\":\"Founder Institute\",\"issuer\":\"Founder Institute (Silicon Valley)\",\"date\":\"Juil. 2016\"}]}",
-  "instructions": "Générer un CV élégant, moderne, 2 colonnes, en français, optimisé ATS. Mettre en avant entrepreneuriat, stratégie, IA, éducation et impact public. Inclure coordonnées complètes, compétences structurées (hard/soft + niveau), frise chronologique des expériences, et rubriques formation et certifications. Ton sobre, orienté résultats avec verbes d’action et indicateurs quantifiables quand disponibles."
-}
-```
-
-**Agent Output:**
-```markdown
-Préparons votre CV professionnel.Votre CV est prêt, élégant et complet.
-
-```entity:document
-{"id":"04bcd6cb-70bc-4c85-90df-c31ff0a55cfb"}
-```
-
-Résumé: coordonnées actualisées, bio percutante, expériences, formation, certifications et compétences structurées. Souhaitez-vous aussi une version en anglais ?
-```
-
----
-
-#### ✅ Explorer — Actualites communautes (34099ms)
-
-**Prompt:** `Quoi de neuf dans mes communautes cette semaine ?`
-
-**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=955, Questions=1, Tools=2
-
-**Tool: `sql_query`** (15ms)
-```json
-{
-  "intent": "my_communities",
-  "paramsJson": "{}"
-}
-```
-
-**Tool: `vector_query`** (1862ms)
-```json
-{
-  "query": "communauté entrepreneuriat startups innovation stratégie numérique IA data Abidjan Côte d'Ivoire Afrique francophone santé numérique bio-informatique business développement commercial leadership réseau",
-  "namespace": "communities",
-  "topK": 8,
-  "filtersJson": null
-}
-```
-
-**Agent Output:**
-```markdown
-Voyons l’activité de vos communautés cette semaine.Voyons l’activité de vos communautés cette semaine.
-Vous n’êtes membre d’aucune communauté pour l’instant, donc aucun fil cette semaine. Pour nourrir votre réseau en IA, data, entrepreneuriat et stratégie numérique à Abidjan, voici des communautés pertinentes à rejoindre.
-
-```entity:community
-{"id":"e0000001-0004-4000-e000-000000000004"}
-```
-
-```entity:community
-{"id":"e0000001-0008-4000-e000-000000000008"}
-```
-
-```entity:community
-{"id":"9c535835-20c7-4689-8555-b59dd2be7509"}
 ```
 
 ```entity:community
 {"id":"15df926d-07b8-409d-ba93-35eb53fe414c"}
-```
-
-```entity:community
-{"id":"b825f144-5fc6-4a79-af5d-dc3d28235bfc"}
-```
-
-```entity:community
-{"id":"bdbc89e0-fff1-4a1c-9d1c-56d325359c3a"}
-```
-
-```entity:community
-{"id":"e0000001-0001-4000-e000-000000000001"}
-```
-
-```entity:community
-{"id":"e0000001-0003-4000-e000-000000000003"}
 ```
 
 Souhaitez-vous que je prépare votre adhésion à l’une d’elles ?
@@ -316,184 +175,307 @@ Souhaitez-vous que je prépare votre adhésion à l’une d’elles ?
 
 ---
 
+#### ✅ Explorer — Generer CV a jour (169944ms)
+
+**Prompt:** `Fais-moi un CV a jour stp`
+
+**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=350, Questions=1, Tools=6
+
+**Tool: `sql_query`** (11ms)
+```json
+{
+  "intent": "my_profile",
+  "paramsJson": "{}"
+}
+```
+
+**Tool: `sql_query`** (11ms)
+```json
+{
+  "intent": "my_bookmarks",
+  "paramsJson": "{}"
+}
+```
+
+**Tool: `sql_query`** (11ms)
+```json
+{
+  "intent": "my_documents",
+  "paramsJson": "{}"
+}
+```
+
+**Tool: `sql_query`** (11ms)
+```json
+{
+  "intent": "my_skills",
+  "paramsJson": "{}"
+}
+```
+
+**Tool: `file_reader`** (48879ms)
+```json
+{
+  "input": "04bcd6cb-70bc-4c85-90df-c31ff0a55cfb"
+}
+```
+
+**Tool: `generate_document`** (5063ms)
+```json
+{
+  "format": "PDF",
+  "title": "CV — Lamine Barro",
+  "contentJson": "{\"firstName\":\"Mohamed Lamine\",\"lastName\":\"Barro\",\"email\":\"succes1@gmail.com\",\"phone\":\"+2250574631148\",\"city\":\"Abobo\",\"country\":\"Côte d’Ivoire\",\"bio\":\"Étudiant et entrepreneur spécialisé dans le digital, l'éducation, le tourisme et le transport. Orienté impact, data et innovation, je développe des stratégies et des produits soutenus par l’IA pour accélérer l’employabilité et la performance des organisations.\",\"skills\":[{\"name\":\"Analyse De Données Biologiques\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Analyse De Données Commerciales\",\"type\":\"knowledge\",\"level\":\"expert\"},{\"name\":\"Bio-informatique\",\"type\":\"hard\",\"level\":\"intermediate\"},{\"name\":\"Communication\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Communication En Français\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Communication Scientifique\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Consulting\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Développement De Comptes Clés\",\"type\":\"hard\",\"level\":\"master\"},{\"name\":\"Développement De Solutions Numériques\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Entrepreneuriat\",\"type\":\"hard\",\"level\":\"master\"},{\"name\":\"Forecasting Des Ventes\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Gestion De Crm\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Gestion De Projet\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Gestion De Projet Biomédical\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Go-to-market\",\"type\":\"knowledge\",\"level\":\"expert\"},{\"name\":\"Innovation\",\"type\":\"knowledge\",\"level\":\"expert\"},{\"name\":\"Intelligence Artificielle\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Leadership\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Management D'équipe\",\"type\":\"soft\",\"level\":\"master\"},{\"name\":\"Mobilisation De Fonds\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Négociation Grands Comptes\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Pilotage Du Pipeline\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Pricing\",\"type\":\"hard\",\"level\":\"master\"},{\"name\":\"Réseautage\",\"type\":\"soft\",\"level\":\"expert\"},{\"name\":\"Stratégie Commerciale\",\"type\":\"knowledge\",\"level\":\"expert\"},{\"name\":\"Stratégie Des Politiques Publiques\",\"type\":\"knowledge\",\"level\":\"master\"},{\"name\":\"Stratégie Go-to-market\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Stratégie Numérique\",\"type\":\"knowledge\",\"level\":\"expert\"},{\"name\":\"Suivi Des Kpi\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Vente Complexe\",\"type\":\"hard\",\"level\":\"expert\"}],\"languages\":[{\"language\":\"Français\",\"level\":\"natif\"}],\"interests\":[\"Digital\",\"Éducation\",\"Tourisme\",\"Transport\"],\"goals\":[\"Acquérir de nouvelles compétences\",\"Développer mon réseau et ma visibilité\",\"Appui à la recherche\"],\"experiences\":[{\"title\":\"Président / Directeur général\",\"company\":\"Etudesk\",\"location\":\"Abidjan\",\"period\":\"Mai 2016 – Présent\",\"description\":\"Direction stratégique et produit ; partenariats institutionnels ; levées de fonds ; management transverse ; industrialisation de l’employabilité via l’IA avec ministères et bailleurs internationaux.\"},{\"title\":\"Consultant & Ambassadeur de l’Innovation\",\"company\":\"Gouvernement de la République de Côte d’Ivoire\",\"location\":\"Abidjan\",\"period\":\"Déc. 2021 – Présent\",\"description\":\"Conseil à la Présidence, Primature et ministères sur innovation, économie numérique et entrepreneuriat des jeunes ; cadrage de politiques publiques et programmes structurants.\"},{\"title\":\"Membre du conseil scientifique\",\"company\":\"Mission laïque française\",\"location\":\"International\",\"period\":\"Fév. 2021 – Présent\",\"description\":\"Contribution aux orientations scientifiques et éducatives ; évaluation de projets et innovation pédagogique.\"},{\"title\":\"Vice-président & Membre fondateur\",\"company\":\"#CI20 (Écosystème startups CI)\",\"location\":\"Abidjan\",\"period\":\"Oct. 2020 – Présent\",\"description\":\"Plaidoyer et représentation de l’écosystème ; coordination d’initiatives pour la croissance des startups ivoiriennes.\"},{\"title\":\"Président\",\"company\":\"Club informatique de l’UPGC\",\"location\":\"Korhogo\",\"period\":\"Déc. 2013 – Mars 2015\",\"description\":\"Animation de communauté ; encadrement de projets étudiants en informatique ; organisation d’événements tech.\"},{\"title\":\"MSP / Évangéliste technologiste\",\"company\":\"Microsoft WCA\",\"location\":\"Côte d’Ivoire\",\"period\":\"Janv. 2013 – Déc. 2014\",\"description\":\"Promotion des technologies Microsoft ; interventions universitaires et auprès des communautés développeurs.\"},{\"title\":\"Président intérimaire\",\"company\":\"Interact Club Bietry\",\"location\":\"Abidjan\",\"period\":\"Juin 2010 – Août 2011\",\"description\":\"Leadership associatif ; conception et mise en œuvre d’actions citoyennes.\"}],\"education\":[{\"degree\":\"Executive MBA (HEC Challenge Plus Afrique)\",\"institution\":\"HEC Paris\",\"location\":\"Paris / Abidjan\",\"period\":\"Mai 2022\",\"description\":\"Programme exécutif axé sur croissance, stratégie et innovation.\"},{\"degree\":\"Licence Sciences biologiques, spécialisation Bio-informatique\",\"institution\":\"Université Péléforo Gon Coulibaly (UPGC)\",\"location\":\"Korhogo\",\"period\":\"2015\",\"description\":\"Parcours orienté data, bio-informatique et communication scientifique.\"}],\"certifications\":[{\"name\":\"Founder Institute\",\"issuer\":\"Founder Institute (Silicon Valley)\",\"date\":\"Juil. 2016\"}]}",
+  "instructions": "Générer un CV PDF élégant, moderne, deux colonnes, en français, optimisé ATS. Mettre en avant leadership, stratégie, IA, éducation et impact public. Structurer clairement compétences (barres de niveau), expériences (timeline), formations et certifications. Utiliser la photo de profil par défaut de l’utilisateur si disponible. Prioriser clarté, concision et résultats mesurables. Adapter le ton pour candidatures direction/innovation/commercial/IA."
+}
+```
+
+**Agent Output:**
+```markdown
+Préparons votre CV professionnel à jour.Votre CV est prêt, actualisé et percutant.
+
+```entity:document
+{"id":"c0e8acef-dd7d-4330-953a-e8c9cf47da02"}
+```
+
+Inclus: vos expériences clés (Etudesk, Gouvernement CI, #CI20), MBA HEC, compétences stratégiques/IA/commerce, et langue.  
+Souhaitez-vous une version ciblée pour un poste précis (titre/secteur) ?
+```
+
+---
+
+#### ✅ Explorer — Actualites communautes (53095ms)
+
+**Prompt:** `Quoi de neuf dans mes communautes cette semaine ?`
+
+**Calibration:** Verbosity=concise, Proactivity=proactive, Chars=234, Questions=1, Tools=1
+
+**Tool: `sql_query`** (12ms)
+```json
+{
+  "intent": "my_communities",
+  "paramsJson": "{}"
+}
+```
+
+**Agent Output:**
+```markdown
+Voyons les nouveautés dans vos communautés.Voici les nouveautés de vos communautés.
+
+```entity:community
+{"id":"e0000001-0002-4000-e000-000000000002"}
+```
+
+Souhaitez-vous que j’affiche les publications et événements de cette semaine ?
+```
+
+---
+
 ### Study Agent
 
-#### ✅ Study — Debuter marketing digital (20899ms)
+#### ✅ Study — Debuter marketing digital (40595ms)
 
 **Prompt:** `Je debute en marketing digital, par ou commencer ?`
 
-**Calibration:** Verbosity=ok, Proactivity=passive, Chars=1100, Questions=1, Tools=0
+**Calibration:** Verbosity=ok, Proactivity=passive, Chars=1007, Questions=1, Tools=0
 
 **Agent Output:**
 ```markdown
-Le marketing digital repose sur quelques fondations essentielles.  
-Commence par définir ton audience (persona) et ta proposition de valeur.  
-Crée une page d’atterrissage claire avec appel à l’action et installe GA4 + Meta Pixel.  
-Produis un contenu utile optimisé SEO, collecte des emails via un petit “lead magnet”.  
-Choisis 1–2 canaux principaux (WhatsApp Business/Instagram en B2C, LinkedIn/email en B2B).  
-Teste des pubs à 1 000–3 000 FCFA/jour et itère chaque semaine; ex: une boutique à Abidjan lance des reels locaux, offre -10% contre inscription, puis recibler.
+Le marketing digital repose sur des fondamentaux simples. 
+Commence par un objectif SMART lié au business (ex: 100 leads en 60 jours). Clarifie ton audience avec 1-2 personas et leur douleur prioritaire. Mets en place la base: landing claire, aimant à prospects (ebook, checklist ou mini-cours WhatsApp), et suivi (GA4, Meta Pixel). Choisis 1-2 canaux au départ: SEO de base + Instagram/TikTok ou Email; ajoute de petits tests publicitaires si besoin. Mesure 3 KPI: conversion, CPL, ROAS, puis itère chaque semaine. Exemple Afrique: une marque de beurre de karité à Abidjan capte des emails via WhatsApp et teste 20 000 FCFA/semaine en Ads.
 
 ```flashcard
-{"topic":"Marketing digital — Débuts","front":"Quelles sont 6 étapes pour lancer ton marketing digital ?","back":"1) Persona + proposition de valeur. 2) Page d’atterrissage + tracking (GA4, Meta Pixel). 3) Lead magnet pour capter les emails. 4) Contenu SEO + social (1–2 canaux focus). 5) Email marketing de base (welcome + promo). 6) Tests publicitaires à petit budget + itérations hebdo basées sur les données.","difficulty":"easy"}
+{"topic":"Marketing digital — bases","front":"Quelles sont les 3 premières étapes pour démarrer efficacement ?","back":"1) Définir un objectif SMART. 2) Décrire 1-2 personas. 3) Poser la base technique: landing + aimant à prospects + analytics (GA4/Pixel).","difficulty":"medium"}
 ```
 
-Quel est ton projet ou secteur pour que je t’adapte un plan 30 jours ?
+Souhaites-tu un plan d’action sur 4 semaines adapté à ton projet ?
 ```
 
 ---
 
-#### ✅ Study — Diagnostic competences finance (14912ms)
+#### ✅ Study — Diagnostic competences finance (25187ms)
 
 **Prompt:** `Fais-moi un diagnostic de mes competences en finance d'entreprise`
 
-**Calibration:** Verbosity=ok, Proactivity=passive, Chars=855, Questions=0, Tools=0
+**Calibration:** Verbosity=ok, Proactivity=passive, Chars=722, Questions=0, Tools=0
 
 **Agent Output:**
 ```markdown
-Diagnostic en finance d’entreprise, excellent choix.
-
-La finance d’entreprise couvre trois piliers: décisions d’investissement (CAPEX, ROI), financement (dette vs equity, WACC) et gestion de trésorerie (liquidité, BFR). L’objectif est de créer de la valeur durable en gérant le risque et le cash. Exemple: une startup SaaS à Abidjan arbitre entre lever en equity ou contracter une dette locale, en comparant le coût du capital et l’impact sur la trésorerie. Pour poser ton diagnostic, on suit une évaluation express en 3 questions.
+Diagnostic finance d'entreprise, commençons par les bases.
+Je te propose un mini test en 3 étapes: rappel, application, analyse. Réponds et je corrige au fur et à mesure, puis j’en déduis ton niveau et des next steps. Première question :
 
 ```quiz
-{"topic":"Finance d’entreprise","question":"Quel est l’objectif principal de la finance d’entreprise ?","options":["Maximiser la valeur de l’entreprise à long terme","Maximiser le bénéfice net du prochain trimestre","Minimiser les impôts quel qu’en soit le coût","Augmenter la part de marché coûte que coûte"]}
+{"topic":"Finance d'entreprise — Diagnostic","question":"Quel est l'objectif principal de la gestion de trésorerie en entreprise ?","options":["Assurer la rentabilité à long terme","Garantir la liquidité pour honorer les engagements à court terme","Maximiser le chiffre d'affaires","Réduire l'impôt sur les sociétés"],"correctAnswer":1,"explanation":"La trésorerie vise d'abord à assurer la liquidité immédiate pour payer fournisseurs, salaires et dettes à court terme."}
 ```
 ```
 
 ---
 
-#### ✅ Study — Expliquer le machine learning (14252ms)
+#### ✅ Study — Expliquer le machine learning (22488ms)
 
 **Prompt:** `Explique-moi le machine learning simplement`
 
-**Calibration:** Verbosity=ok, Proactivity=passive, Chars=1242, Questions=1, Tools=0
+**Calibration:** Verbosity=ok, Proactivity=passive, Chars=1027, Questions=1, Tools=0
 
 **Agent Output:**
 ```markdown
 Le machine learning apprend des modèles à partir des données.
-C’est un ensemble d’algorithmes qui découvrent des régularités pour prédire ou décider, sans coder des règles à la main. Trois approches dominent: supervisé (prédire un prix, détecter du spam), non supervisé (segmenter des clients), et par renforcement (apprendre par essais/erreurs). Le cycle typique: collecter/nettoyer les données, les séparer train/test, choisir un modèle, entraîner, évaluer (précision, MAE…), déployer et surveiller le drift. Exemple concret: une fintech à Dakar anticipe le churn ou le risque crédit via l’historique des transactions; une coopérative agricole détecte des maladies des cultures depuis des photos smartphone.
+
+L’apprentissage automatique regroupe des algorithmes qui détectent des motifs dans des données pour prédire ou décider sans écrire toutes les règles à la main. Étapes clés: collecter/nettoyer les données, sélectionner des variables, entraîner le modèle, évaluer, déployer et surveiller. Types majeurs: supervisé (prédire une étiquette), non supervisé (regrouper/détecter anomalies), renforcement (apprendre par essais/erreurs). Exemple Afrique: sur le mobile money, un modèle supervisé classe des transactions comme frauduleuses ou légitimes; en agriculture, un modèle de vision repère des maladies de feuilles depuis des photos. Données de qualité, bonnes métriques et évitement du surapprentissage sont essentiels.
 
 ```flashcard
-{"topic":"Machine Learning - Bases","front":"Quelles sont les 3 grandes familles d’apprentissage en ML, et à quoi servent-elles ?","back":"• Supervisé: prédire une valeur/étiquette à partir d’exemples étiquetés (prix, fraude).\n• Non supervisé: découvrir des structures cachées (clustering clients, réduction de dimension).\n• Renforcement: apprendre une stratégie par récompenses (recommandations adaptatives, robotique).","difficulty":"medium"}
+{"topic":"Apprentissage automatique","front":"Nomme les 3 grandes familles du machine learning.","back":"Supervisé, non supervisé et par renforcement.","difficulty":"easy"}
 ```
 
-Tu préfères un schéma du cycle ML ou un mini-quiz pour pratiquer ?
+Souhaites-tu un schéma du pipeline ML ou un mini-quiz ?
 ```
 
 ---
 
-#### ✅ Study — Schema cycle de Krebs (40846ms)
+#### ✅ Study — Schema cycle de Krebs (61877ms)
 
 **Prompt:** `Dessine-moi le cycle de Krebs en biologie`
 
-**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=1250, Questions=1, Tools=1
+**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=1030, Questions=1, Tools=1
 
-**Tool: `generate_diagram`** (1ms)
+**Tool: `generate_diagram`** (?ms)
 ```json
 {
-  "title": "Cycle de Krebs (TCA) — Vue synthétique",
+  "title": "Cycle de Krebs",
   "diagramType": "flowchart",
-  "mermaidCode": "flowchart TD\n  subgraph Cycle_de_Krebs [Cycle de Krebs — Matrice mitochondriale]\n    A[Oxaloacétate]\n    A -- + Acétyl-CoA (Citrate synthase) --> B[Citrate]\n    B -- Aconitase --> C[Isocitrate]\n    C -- NAD+ -> NADH + CO2 (Isocitrate déshydrogénase) --> D[α-cétoglutarate]\n    D -- NAD+ -> NADH + CO2 (α-cétoglutarate déshydrogénase) --> E[Succinyl-CoA]\n    E -- GDP+Pi -> GTP + CoA-SH (Succinyl-CoA synthétase) --> F[Succinate]\n    F -- FAD -> FADH2 (Succinate déshydrogénase) --> G[Fumarate]\n    G -- Hydratation (Fumarase) --> H[Malate]\n    H -- NAD+ -> NADH (Malate déshydrogénase) --> A\n  end\n  Z{{Bilan par tour\\n3 NADH, 1 FADH2,\\n1 GTP(ATP), 2 CO2}}\n  Cycle_de_Krebs -.-> Z"
+  "mermaidCode": "flowchart TD\n  A[Acetyl CoA] --> C[Citrate]\n  B[Oxaloacetate] --> C\n  C --> D[Isocitrate]\n  D --> E[Alpha cetoglutarate]\n  E --> F[Succinyl CoA]\n  F --> G[Succinate]\n  G --> H[Fumarate]\n  H --> I[Malate]\n  I --> B[Oxaloacetate]\n  D --> X1[NADH]\n  D --> X2[CO2]\n  E --> X3[NADH]\n  E --> X4[CO2]\n  F --> X5[GTP]\n  G --> X6[FADH2]\n  I --> X7[NADH]"
 }
 ```
 
 **Agent Output:**
 ```markdown
-Voici un schéma clair du cycle de Krebs.Le cycle de Krebs est au cœur du métabolisme énergétique. Il se déroule dans la matrice mitochondriale et oxyde l’acétyl-CoA en CO2. À chaque tour, il produit 3 NADH, 1 FADH2 et 1 GTP, qui alimentent la chaîne respiratoire pour générer de l’ATP. C’est crucial pour l’endurance musculaire et l’activité cérébrale, de l’athlète au chercheur.
+Visualisons le cycle de Krebs.Le cycle de Krebs produit des coenzymes riches en energie.
+
+Le cycle de Krebs oxyde l’acetyl-CoA dans la matrice mitochondriale et regenera l’oxaloacetate en boucle. Les etapes clefs: citrate, isocitrate, alpha cetoglutarate, succinyl CoA, succinate, fumarate, malate, puis retour a l’oxaloacetate. Par tour: 3 NADH, 1 FADH2, 1 GTP et 2 CO2 liberes. Ces coenzymes alimentent la chaine respiratoire pour synthétiser beaucoup d’ATP, essentiel par exemple dans les tissus a forte demande energetique.
 
 ```diagram
-{"type":"flowchart","title":"Cycle de Krebs (TCA) — Vue synthétique","code":"flowchart TD\n  subgraph Cycle_de_Krebs [Cycle de Krebs — Matrice mitochondriale]\n    A[Oxaloacétate]\n    A -- + Acétyl-CoA (Citrate synthase) --> B[Citrate]\n    B -- Aconitase --> C[Isocitrate]\n    C -- NAD+ -> NADH + CO2 (Isocitrate déshydrogénase) --> D[α-cétoglutarate]\n    D -- NAD+ -> NADH + CO2 (α-cétoglutarate déshydrogénase) --> E[Succinyl-CoA]\n    E -- GDP+Pi -> GTP + CoA-SH (Succinyl-CoA synthétase) --> F[Succinate]\n    F -- FAD -> FADH2 (Succinate déshydrogénase) --> G[Fumarate]\n    G -- Hydratation (Fumarase) --> H[Malate]\n    H -- NAD+ -> NADH (Malate déshydrogénase) --> A\n  end\n  Z{{Bilan par tour\\n3 NADH, 1 FADH2,\\n1 GTP(ATP), 2 CO2}}\n  Cycle_de_Krebs -.-> Z"}
+{"type":"flowchart","title":"Cycle de Krebs","code":"flowchart TD\n  A[Acetyl CoA] --> C[Citrate]\n  B[Oxaloacetate] --> C\n  C --> D[Isocitrate]\n  D --> E[Alpha cetoglutarate]\n  E --> F[Succinyl CoA]\n  F --> G[Succinate]\n  G --> H[Fumarate]\n  H --> I[Malate]\n  I --> B[Oxaloacetate]\n  D --> X1[NADH]\n  D --> X2[CO2]\n  E --> X3[NADH]\n  E --> X4[CO2]\n  F --> X5[GTP]\n  G --> X6[FADH2]\n  I --> X7[NADH]"}
 ```
 
-Souhaitez-vous aussi un schéma reliant glycolyse, PDH et chaîne respiratoire ?
+Souhaitez-vous une version annotee avec enzymes et bilans par etape ?
 ```
 
 ---
 
-#### ✅ Study — Video YouTube agriculture durable (19116ms)
+#### ✅ Study — Video YouTube agriculture durable (30867ms)
 
 **Prompt:** `Trouve-moi une bonne video YouTube sur l'agriculture durable`
 
-**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=851, Questions=1, Tools=1
+**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=644, Questions=1, Tools=1
 
-**Tool: `youtube_search`** (705ms)
+**Tool: `youtube_search`** (846ms)
 ```json
 {
-  "query": "agriculture durable principes agroécologie tutoriel français débutant",
-  "maxResults": 3
+  "query": "agriculture durable Afrique de l'Ouest",
+  "maxResults": 1
 }
 ```
 
 **Agent Output:**
 ```markdown
-Bonne idée d’apprendre via une vidéo en français.L’agriculture durable gagne à être comprise en images. 
-Cette vidéo (en français) présente clairement les leviers pour sortir du modèle intensif: agroécologie, rotations, couverts végétaux, santé des sols, et optimisation des intrants. Elle illustre les impacts climatiques et propose des actions concrètes pour démarrer de façon réaliste. Idéale pour un aperçu structuré avant d’aller vers des cas de terrain. Souhaitez-vous plutôt un focus Afrique de l’Ouest après ce visionnage ?
+Cherchons une excellente vidéo sur l’agriculture durable.Excellente idée pour explorer l’agriculture durable.
 
 ```youtube
-{"videoId":"vtjMX5pawJ4","title":"[ LEARN ] - Agriculture durable : quelles pratiques pour sortir d’un modèle intensif ?","channelName":"Carbo","description":"Principes d’agriculture durable expliqués simplement : agroécologie, rotations, santé des sols, réduction des intrants et impacts climatiques."}
+{"videoId":"7R_vVJlUFwY","title":"Engrais et fertilité des sols en Afrique de l’Ouest : tout comprendre","channelName":"Fondation FARM","description":"Vidéo pédagogique en français sur la fertilité des sols, les engrais et les bonnes pratiques adaptées au contexte ouest-africain."}
 ```
+
+Solide ressource francophone, centrée sur la fertilité des sols et des pratiques durables adaptées à l’Afrique de l’Ouest — clé pour la résilience et les rendements. Besoin d’une autre vidéo plus axée agroécologie ou gestion de l’eau?
 ```
 
 ---
 
 ### Org Agent
 
-#### ✅ Org — Recruter profils marketing (62960ms)
+#### ✅ Org — Recruter profils marketing (89023ms)
 
 **Prompt:** `Trouve-moi 5 profils marketing digital seniors disponibles sur Abidjan`
 
-**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=749, Questions=1, Tools=3
+**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=553, Questions=1, Tools=6
 
-**Tool: `vector_query`** (1635ms)
+**Tool: `vector_query`** (2810ms)
 ```json
 {
-  "query": "profils talents marketing digital senior Abidjan disponibilité immédiate SEO SEA Social Ads Facebook Ads Google Ads Analytics contenu growth manager stratégie acquisition CRM email francophone Côte d’Ivoire 8+ ans d’expérience",
+  "query": "talents marketing digital senior Abidjan Côte d’Ivoire SEO SEA Social Media Growth H/F 7+ ans disponible immédiatement freelance ou CDI",
   "namespace": "talents",
-  "topK": 10,
+  "topK": 15,
   "filtersJson": null
 }
 ```
 
-**Tool: `vector_query`** (1696ms)
+**Tool: `vector_query`** (2117ms)
 ```json
 {
-  "query": "Abidjan Côte d’Ivoire talents marketing digital senior confirmé 7-15 ans SEO SEA Google Ads Facebook Ads Social Media Manager Performance Marketing Growth Marketer Content Strategist CRM Email Marketing Analytics GA4 Data Studio disponible immédiatement francophone",
+  "query": "\"marketing digital\" senior Abidjan CI Côte d’Ivoire SEO SEA SEM Social Media Manager Growth Hacker Content Marketing Performance Marketing PPC Email Marketing CRM HubSpot Meta Ads Google Ads Analytics 8-12 ans disponible maintenant",
   "namespace": "talents",
   "topK": 30,
   "filtersJson": null
 }
 ```
 
-**Tool: `sql_query`** (3ms)
+**Tool: `sql_query`** (2117ms)
 ```json
 {
   "intent": "search_talents",
-  "paramsJson": "{\"q\":\"marketing digital senior SEO SEA social media growth\",\"city\":\"Abidjan\",\"country\":\"CI\",\"availability\":\"AVAILABLE\",\"limit\":12}"
+  "paramsJson": "{\"q\":\"marketing digital senior Abidjan CI Côte d’Ivoire SEO SEA Growth Meta Ads Google Ads\",\"limit\":30}"
+}
+```
+
+**Tool: `vector_query`** (1663ms)
+```json
+{
+  "query": "responsable marketing digital senior Abidjan CI Côte d’Ivoire SEO SEA Social Ads Google Ads Meta Ads CRM HubSpot 8 ans 10 ans disponible",
+  "namespace": "talents",
+  "topK": 30,
+  "filtersJson": null
+}
+```
+
+**Tool: `vector_query`** (1663ms)
+```json
+{
+  "query": "social media manager senior Abidjan CI community manager lead paid media content strategist disponible",
+  "namespace": "talents",
+  "topK": 30,
+  "filtersJson": null
+}
+```
+
+**Tool: `vector_query`** (1663ms)
+```json
+{
+  "query": "growth marketer senior Abidjan CI performance marketing PPC acquisition data-driven analytics disponible",
+  "namespace": "talents",
+  "topK": 30,
+  "filtersJson": null
 }
 ```
 
 **Agent Output:**
 ```markdown
-Recherchons des seniors marketing digital à Abidjan.Affinons la recherche pour plus de correspondances locales.Explorons aussi l’index structuré des talents.Voici les correspondances disponibles à Abidjan.
-Notre base actuelle ne remonte qu’un seul profil répondant strictement aux critères (senior marketing digital, Abidjan, disponible). Pour atteindre 5, je peux étendre aux candidats prêts à se relocaliser ou en télétravail.
+Recherchons des seniors marketing digital à Abidjan.Voici les meilleurs profils disponibles à Abidjan alignés sur votre besoin. L’offre est limitée sur des seniors stricts; je propose le plus pertinent identifié et peux élargir le vivier si souhaité.
+- Fatou Traoré — Consultante marketing digital/communication, 6 ans d’expérience, basée à Abidjan.
 
 ```entity:talent
 {"id":"a1b2c3d4-3333-4000-a000-000000000003"}
 ```
 
-- Pertinence: consultante marketing digital, 6 ans d’expérience, basée à Abidjan, disponibilité signalée.
-
-Souhaitez-vous que j’élargisse la recherche (relocalisation/télétravail) pour vous proposer 5 à 10 profils seniors supplémentaires aujourd’hui ?
+Souhaitez-vous que j’élargisse aux profils Abidjan/Grand Abidjan ou que je publie une offre ciblée pour attirer davantage de seniors ?
 ```
 
 ---
 
-#### ✅ Org — Dashboard organisation (10148ms)
+#### ✅ Org — Dashboard organisation (15937ms)
 
 **Prompt:** `Comment se porte mon organisation ?`
 
-**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=562, Questions=1, Tools=1
+**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=585, Questions=1, Tools=1
 
-**Tool: `sql_query`** (14ms)
+**Tool: `sql_query`** (29ms)
 ```json
 {
   "intent": "org_stats",
@@ -503,26 +485,24 @@ Souhaitez-vous que j’élargisse la recherche (relocalisation/télétravail) po
 
 **Agent Output:**
 ```markdown
-Voici l’état de votre organisation.Voici l’état de votre organisation.
-
-Synthèse: 1 membre actif, 0 offres ouvertes, 0 communautés et 0 espaces. La structure est saine mais sous‑exploitée; lancer une première offre ou communauté renforcerait votre dynamique.
+Voici l'état de votre organisation.Votre organisation est opérationnelle, avec une base d’équipe minimale. Aucun recrutement en cours, ni communauté ou espace actif pour animer l’écosystème. Démarrer une première offre ou une communauté amplifiera rapidement la traction.
 
 ```chart
-{"type":"bar","title":"Indicateurs clés — Organisation Test","data":[{"label":"Membres","value":1},{"label":"Offres ouvertes","value":0},{"label":"Communautés","value":0},{"label":"Espaces","value":0}]}
+{"type":"bar","title":"Vue d'ensemble — Organisation Test","data":[{"label":"Membres","value":1},{"label":"Offres ouvertes","value":0},{"label":"Communautés","value":0},{"label":"Espaces","value":0}]}
 ```
 
-Souhaitez-vous prioriser la publication d’une offre ou la création d’une communauté ?
+Souhaitez-vous que je publie une première offre ou crée une communauté pour lancer la dynamique ?
 ```
 
 ---
 
-#### ✅ Org — Generer fiche de poste (34756ms)
+#### ✅ Org — Generer fiche de poste (142731ms)
 
 **Prompt:** `Redige une fiche de poste pour un developpeur fullstack junior Node.js`
 
-**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=692, Questions=1, Tools=2
+**Calibration:** Verbosity=ok, Proactivity=proactive, Chars=868, Questions=1, Tools=3
 
-**Tool: `sql_query`** (38ms)
+**Tool: `sql_query`** (5ms)
 ```json
 {
   "intent": "org_opportunities",
@@ -530,43 +510,57 @@ Souhaitez-vous prioriser la publication d’une offre ou la création d’une co
 }
 ```
 
-**Tool: `sql_query`** (38ms)
+**Tool: `sql_query`** (6ms)
 ```json
 {
   "intent": "search_opportunities",
-  "paramsJson": "{\"query\":\"developpeur fullstack junior Node.js\",\"limit\":8}"
+  "paramsJson": "{\"query\":\"developpeur fullstack junior Node.js\",\"status\":\"OPEN\",\"limit\":8}"
+}
+```
+
+**Tool: `web_search`** (96311ms)
+```json
+{
+  "input": "fiche de poste développeur fullstack junior Node.js responsabilités missions compétences salaire Afrique de l’Ouest XOF"
 }
 ```
 
 **Agent Output:**
 ```markdown
-Préparons une fiche de poste percutante.Voici une proposition de fiche de poste structurée.  
-Aucune offre similaire trouvée chez Test ni sur la plateforme; je m’appuie sur un standard éprouvé du marché.  
-Contenu prévu: Titre, Mission, Responsabilités (développement API REST/GraphQL, front React/Vue, BDD SQL/NoSQL, tests, CI/CD), Stack (Node.js, TypeScript, Express/NestJS, React, PostgreSQL, Git, Docker), Profil (bases solides JS/TS, 0–2 ans ou projets équivalents, logique, autonomie), Soft skills (rigueur, communication, apprentissage), Indicateurs 90j, Modalités (CDI, temps plein, présentiel/hybride), Processus (CV+GitHub, test court).  
-Voulez-vous que je génère la fiche en PDF ?
+Préparons une fiche de poste complète et percutante.Voici une fiche de poste concise et opérationnelle.
+
+Titre: Développeur Fullstack Junior (Node.js)
+Mission: Concevoir, développer et maintenir des fonctionnalités web (backend Node.js, frontend React/Next.js), assurer la qualité, les tests et des déploiements fiables.
+Responsabilités: Dév. fonctionnalités; tests unitaires/intégration; correction de bugs; revues de code; CI/CD basique; documentation.
+Compétences requises: JavaScript/TypeScript; Node.js (Express/Nest); React/Next ou Vue; SQL/NoSQL; Git; Docker; Jest.
+Atouts: GraphQL; AWS/DO; sécurité; monitoring; Next.js/NestJS avancé.
+Profil: Bac+2/3 ou équivalent; 0–2 ans; portfolio/GitHub apprécié.
+Rémunération indicative: 300 000–600 000 XOF/mois selon pays/secteur.
+
+Souhaitez-vous que je génère cette fiche en PDF avec une mise en page professionnelle ?
 ```
 
 ---
 
-#### ✅ Org — Publier offre stage (31406ms)
+#### ✅ Org — Publier offre stage (50061ms)
 
 **Prompt:** `Publie une offre de stage en communication digitale a Abidjan, 3 mois`
 
-**Calibration:** Verbosity=verbose, Proactivity=passive, Chars=1657, Questions=0, Tools=0
+**Calibration:** Verbosity=ok, Proactivity=passive, Chars=1500, Questions=0, Tools=0
 
 **Agent Output:**
 ```markdown
-Proposition d’offre prête à publier.
+Proposition d’offre de stage prête.
 
-Stagiaire Communication Digitale (3 mois)
-- Contrat : Stage | Rythme : Temps plein
-- Lieu : Abidjan, Côte d’Ivoire (Sur site)
-- Description : Vous renforcerez notre présence en ligne via contenu, campagnes et reporting. Production social media, rédaction, animation de communautés et suivi des performances seront au cœur de la mission.
-- Profil recherché : Licence en com/marketing, maîtrise réseaux sociaux, excellente rédaction, Canva/Adobe, bases analytics, rigueur et autonomie.
-- Atouts : SEO, montage vidéo mobile, Meta/Google Ads, Figma/No‑code.
+Stagiaire Communication Digitale
+- Contrat : INTERNSHIP | Rythme : FULL_TIME
+- Lieu : Abidjan, Côte d’Ivoire (ON_SITE)
+- Description : Stage de 3 mois pour produire des contenus, animer les réseaux, piloter des campagnes et suivre la performance.
+- Profil recherché : Licence/Master com/marketing, excellente rédaction, maîtrise réseaux sociaux, Canva/Adobe, notions analytics, rigueur.
+- Atouts : SEO/SEA, montage vidéo, motion design, email marketing, HTML/CSS.
 
 ```confirmation
-{"action":"publish_opportunity","entity_id":"6a80d332-9d56-489c-8314-b65746b4cd78","title":"Publier cette offre ?","description":"Stagiaire Communication Digitale — Stage (3 mois), Abidjan — Temps plein","confirm_label":"Publier","cancel_label":"Modifier","data":{"organization_id":"6a80d332-9d56-489c-8314-b65746b4cd78","title":"Stagiaire Communication Digitale","type":"INTERNSHIP","contract_type":"INTERNSHIP","work_rhythm":"FULL_TIME","location_type":"ON_SITE","locations":[{"city":"Abidjan","country":"Côte d’Ivoire"}],"summary":"Stage de 3 mois pour développer notre communication digitale : création de contenus, animation des réseaux et suivi des performances.","requirements":"Licence en communication/marketing, maîtrise réseaux sociaux, excellente rédaction, Canva/Adobe, notions d’analytics, orthographe irréprochable, autonomie.","nice_to_have":"SEO, montage vidéo mobile, Meta/Google Ads, Figma/No‑code.","duration":"3 mois","compensation_currency":"XOF","compensation_frequency":"MONTHLY","visibility":"PUBLIC","status":"OPEN"}}}
+{"action":"publish_opportunity","entity_id":"6a80d332-9d56-489c-8314-b65746b4cd78","title":"Publier cette offre ?","description":"Stagiaire Communication Digitale - INTERNSHIP","confirm_label":"Publier","cancel_label":"Modifier","data":{"organization_id":"6a80d332-9d56-489c-8314-b65746b4cd78","title":"Stagiaire Communication Digitale","type":"INTERNSHIP","contract_type":"INTERNSHIP","work_rhythm":"FULL_TIME","location_type":"ON_SITE","locations":[{"city":"Abidjan","country":"CI"}],"summary":"Stage de 3 mois pour renforcer notre présence digitale : contenus, animation des réseaux, campagnes et reporting.","requirements":"Licence/Master communication ou marketing, excellente rédaction, réseaux sociaux, Canva/Adobe, notions analytics, rigueur.","nice_to_have":"SEO/SEA, montage vidéo, motion design, email marketing, HTML/CSS.","compensation_currency":"XOF","compensation_frequency":"MONTHLY","cv_required":true,"visibility":"PUBLIC","status":"OPEN","duration":"3 mois"}}
 ```
 ```
 
@@ -574,7 +568,7 @@ Stagiaire Communication Digitale (3 mois)
 
 ## Prompt Tuning Recommendations
 
-- **Average response length:** 890 chars (target: 300-800)
+- **Average response length:** 749 chars (target: 300-800)
 - **Average questions per response:** 0.9 (target: 0-1)
-- **Average tool calls per response:** 1.4 (target: 1-3)
+- **Average tool calls per response:** 1.6 (target: 1-3)
 

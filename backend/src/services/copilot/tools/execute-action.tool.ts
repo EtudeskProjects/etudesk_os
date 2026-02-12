@@ -115,7 +115,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
           case 'book_space': {
             // Check space exists and is active
             const space = await pool.query(
-              `SELECT id, name, status, hourly_rate FROM spaces WHERE id = $1 AND deleted_at IS NULL`,
+              `SELECT id, name, status, hourly_rate, organization_id FROM spaces WHERE id = $1 AND deleted_at IS NULL`,
               [entityId]
             );
             if (space.rows.length === 0) {
@@ -142,18 +142,26 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
               return { success: false, error: 'Ce créneau est déjà réservé.' };
             }
 
+            // Calculate duration and total amount
+            const hourlyRate = parseFloat(space.rows[0].hourly_rate) || 0;
+            const durationMs = new Date(endDatetime).getTime() - new Date(startDatetime).getTime();
+            const durationHours = Math.max(durationMs / (1000 * 60 * 60), 1); // minimum 1 hour
+            const totalAmount = Math.round(hourlyRate * durationHours * 100) / 100;
+
             // Book
             const result = await pool.query(
-              `INSERT INTO space_bookings (talent_id, space_id, start_datetime, end_datetime, status, total_amount, created_at)
-               VALUES ($1, $2, $3, $4, 'PENDING', $5, NOW())
+              `INSERT INTO space_bookings (talent_id, space_id, organization_id, start_datetime, end_datetime,
+               pricing_type, unit_price, units_count, subtotal, total_amount, status, created_at)
+               VALUES ($1, $2, $3, $4, $5, 'HOURLY', $6, $7, $8, $8, 'PENDING', NOW())
                RETURNING id`,
-              [talentId, entityId, startDatetime, endDatetime, space.rows[0].hourly_rate || 0]
+              [talentId, entityId, space.rows[0].organization_id, startDatetime, endDatetime,
+               hourlyRate, durationHours, totalAmount]
             );
 
             logger.info(`[execute_action] Talent ${talentId} booked space ${entityId}`);
             return {
               success: true,
-              message: `Réservation de "${space.rows[0].name}" soumise.`,
+              message: `Réservation de "${space.rows[0].name}" soumise (${durationHours}h — ${totalAmount} FCFA).`,
               bookingId: result.rows[0].id,
             };
           }

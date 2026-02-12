@@ -22,7 +22,13 @@ Summarize the conversation in French. Focus on:
 - Any actions taken (skills added, applications made)
 - Key preferences or context established
 
-Keep the summary concise (max 200 words). Use bullet points.
+ALSO capture (critical for conversation continuity):
+- Implicit preferences discovered (prefers remote, interested in fintech, avoids large corporates, prefers practical over theoretical)
+- Dead ends: searches that returned no useful results — and what was wrong with them
+- Refinements: what the user rejected and what they kept, what filters worked
+- Pending threads: topics started but not resolved
+
+Keep the summary concise (max 250 words). Use bullet points.
 Start with "[Résumé de la conversation précédente]" header.`,
 });
 

@@ -1,7 +1,7 @@
 # Copilot Tools Documentation
 
-> **Audit complet des 8 tools du Copilot Etudesk**
-> Date: 2026-02-06 | Tests: 40/40 passed (100%)
+> **Audit complet des 11 tools du Copilot Etudesk**
+> Date: 2026-02-09 | Tests: 65/67 passed, 2 skipped (100% hors skip)
 
 ---
 
@@ -13,646 +13,756 @@
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │                    MAIN AGENTS (gpt-4.1)                │   │
+│  │                    MAIN AGENTS (gpt-5)                  │   │
 │  │  TalentAgent (explore) │ TalentAgent (study) │ OrgAgent │   │
 │  └───────────────────────────┬─────────────────────────────┘   │
 │                              │                                  │
 │         ┌────────────────────┴────────────────────┐            │
 │         │                                          │            │
-│  ┌──────┴──────┐                          ┌───────┴───────┐    │
-│  │   6 TOOLS   │                          │  2 HANDOFFS   │    │
-│  ├─────────────┤                          ├───────────────┤    │
-│  │ vector_query│ ← Pinecone (semantic)    │ file_read     │    │
-│  │ sql_query   │ ← PostgreSQL (IDOR)      │ web_search    │    │
-│  │ youtube_search │ ← YouTube API         │ (gpt-4.1-mini)│    │
-│  │ generate_document │ ← PDF/DOCX/CSV     └───────────────┘    │
-│  │ generate_image │ ← gpt-image-1                              │
-│  │ generate_diagram │ ← Mermaid                                │
-│  └─────────────┘                                               │
+│  ┌──────┴──────────┐                      ┌───────┴───────┐   │
+│  │    9 TOOLS      │                      │  2 HANDOFFS   │   │
+│  ├─────────────────┤                      ├───────────────┤   │
+│  │ vector_query    │ ← Pinecone semantic  │ file_reader   │   │
+│  │ sql_query       │ ← PostgreSQL (IDOR)  │ web_search    │   │
+│  │ youtube_search  │ ← YouTube Data API   │ (gpt-5-mini)  │   │
+│  │ generate_document│ ← PDF/DOCX/CSV/XLS  └───────────────┘   │
+│  │ generate_image  │ ← gpt-image-1                            │
+│  │ generate_diagram│ ← Mermaid (client)                       │
+│  │ manage_skills   │ ← PostgreSQL CRUD                        │
+│  │ execute_action  │ ← PostgreSQL actions                     │
+│  │ cv_pdf_generator│ ← PDFKit (interne)                       │
+│  └─────────────────┘                                           │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### Allocation par mode
+
+| Tool | Explorer (talent) | Study (talent) | Org Explorer |
+|------|:-:|:-:|:-:|
+| vector_query | x | | x |
+| sql_query | x (full) | x (my_profile, my_skills, my_documents) | x (org_* + search_*) |
+| youtube_search | | x | |
+| generate_document | x | | x |
+| generate_image | | x | |
+| generate_diagram | | x | |
+| manage_skills | | x | |
+| execute_action | x | | x |
+| file_reader | x | x | |
+| web_search | x | x | x |
+
 ---
 
-## Résumé des Performances
+## Resume des Performances (audit reel 2026-02-09)
 
-| Tool | Tests | Passed | Avg Time | Description |
-|------|-------|--------|----------|-------------|
-| **vector_query** | 5 | 5 | 1,377ms | Recherche sémantique Pinecone |
-| **sql_query** | 5 | 5 | 5ms | Requêtes PostgreSQL avec IDOR |
-| **youtube_search** | 5 | 5 | 636ms | Vidéos éducatives YouTube |
-| **generate_document** | 5 | 5 | 1ms | Génération PDF/DOCX/CSV/XLS |
-| **generate_image** | 5 | 5 | 64,080ms | Images via gpt-image-1 |
+| Tool | Tests | Pass | Avg Time | Description |
+|------|-------|------|----------|-------------|
+| **vector_query** | 6 | 6 | 1,533ms | Recherche semantique Pinecone |
+| **sql_query** | 23 | 23 | 2ms | Requetes PostgreSQL avec IDOR |
+| **youtube_search** | 3 | 3 | 801ms | Videos educatives YouTube |
+| **generate_document** | 6 | 6 | 26ms | Generation PDF/DOCX/CSV/XLS/TXT |
+| **generate_image** | 1 | skip | ~60s | Images via gpt-image-1 |
 | **generate_diagram** | 5 | 5 | <1ms | Diagrammes Mermaid |
-| **file_read** | 5 | 5 | <1ms | Extraction de documents |
-| **web_search** | 5 | 5 | <1ms | Recherche web temps réel |
+| **manage_skills** | 4 | 4 | 2ms | Ajout/MAJ competences |
+| **execute_action** | 5 | 5 | 5ms | Actions utilisateur |
+| **file_reader** | 1 | 1 | <1ms | Lecture documents |
+| **web_search** | 1 | skip | - | Recherche web (sub-agent) |
+| **tool_summary** | 12 | 12 | <1ms | Validation des resumes |
 
 ---
 
 ## 1. vector_query
 
-**Description:** Recherche sémantique dans Pinecone (talents, opportunities, communities, spaces)
+**Fichier:** `services/copilot/tools/vector-query.tool.ts`
+**Description:** Recherche semantique dans Pinecone. Convertit la query en embedding, interroge Pinecone, puis enrichit les resultats via PostgreSQL.
 
-### Paramètres
+### Parametres
 
 ```typescript
 {
-  query: string;        // Texte de recherche naturel
-  type: 'talent' | 'opportunity' | 'community' | 'space';
-  limit?: number;       // Max résultats (défaut: 10)
-  filters?: {           // Filtres Pinecone optionnels
-    [key: string]: string | number | boolean;
-  };
+  query: string;          // Texte de recherche en langage naturel
+  namespace: 'opportunities' | 'communities' | 'spaces' | 'talents' | 'organizations';
+  topK: number;           // 1-30, default 10
+  filtersJson: string | null;  // Filtres Pinecone optionnels, JSON string. Ex: '{"contract_type":"CDI"}'
 }
 ```
 
-### Tests Réels
+### Retours reels
 
-#### Test 1: Recherche développeurs Dakar
+#### Succes (opportunities)
 ```json
-// Input
-{ "query": "développeur fullstack React Node.js Dakar", "type": "talent", "limit": 5 }
-
-// Output (3,389ms)
-{ "matchCount": 5, "matches": [
-  { "id": "uuid", "score": 0.89, "name": "Ibrahim Diallo", "city": "Dakar", "skills": ["React", "Node.js"] }
-]}
+// Input: { query: "developpeur React Node.js Abidjan", namespace: "opportunities", topK: 5, filtersJson: null }
+// Output (4423ms):
+{
+  "results": [
+    {
+      "id": "54b2990b-f5a2-49c1-8cfd-83c3ccb2e678",
+      "title": "Developpeur Frontend React",
+      "summary": "Opportunite CDI pour un(e) Developpeur Frontend React passionne(e). Stack: Docker, Azure, Figma...",
+      "type": "EMPLOYMENT",
+      "contractType": "CDI",
+      "locationType": "REMOTE",
+      "location": "Ziguinchor",
+      "organization": "Digital Solutions CI",
+      "slug": "developpeur-frontend-react-ziguinchor-54b2990b",
+      "matchScore": 67
+    }
+  ],
+  "totalFound": 3
+}
 ```
 
-#### Test 2: Offres fintech remote
+#### Succes (talents)
 ```json
-// Input
-{ "query": "emploi remote fintech paiement mobile", "type": "opportunity", "filters": { "contractType": "CDI" } }
-
-// Output (1,164ms)
-{ "matchCount": 3, "matches": [...] }
+// Input: { query: "developpeur fullstack Python Django", namespace: "talents", topK: 5 }
+// Output (1569ms):
+{
+  "results": [
+    {
+      "id": "ab20a1ac-2c2e-4389-9d1d-dea650142dd5",
+      "name": "Oumar Sow",
+      "bio": "Developpeur passionne avec 8 ans d'experience en Django, Machine Learning, CI/CD. Base a Sokode, TG.",
+      "location": "Sokode, TG",
+      "matchScore": 59
+    }
+  ],
+  "totalFound": 1
+}
 ```
 
-#### Test 3: Communautés tech
+#### Succes (communities)
 ```json
-// Input
-{ "query": "communauté startup tech innovation Afrique", "type": "community" }
-
-// Output (742ms)
-{ "matchCount": 8, "matches": [...] }
+// Input: { query: "communaute startup tech innovation", namespace: "communities", topK: 5 }
+// Output (1655ms):
+{
+  "results": [
+    {
+      "id": "e0000001-0005-4000-e000-000000000005",
+      "name": "Dakar Startup Community",
+      "description": "L'ecosysteme startup de Dakar au complet...",
+      "type": "HYBRID",
+      "memberCount": 3,
+      "organization": "Dakar Digital Hub",
+      "slug": "dakar-startup-community",
+      "matchScore": 61
+    }
+  ],
+  "totalFound": 3
+}
 ```
 
-#### Test 4: Espaces coworking
+#### Succes (spaces)
 ```json
-// Input
-{ "query": "espace coworking salle réunion Abidjan", "type": "space" }
-
-// Output (750ms)
-{ "matchCount": 6, "matches": [...] }
+// Input: { query: "espace coworking salle reunion", namespace: "spaces", topK: 5 }
+// Output (1532ms):
+{
+  "results": [
+    {
+      "id": "f0000001-0006-4000-f000-000000000006",
+      "name": "Salle de Reunion Mermoz",
+      "description": "Salle de reunion premium au quartier Mermoz...",
+      "type": "MEETING_ROOM",
+      "capacity": 12,
+      "hourlyRate": "10000.00",
+      "city": "Dakar",
+      "organization": "Dakar Digital Hub",
+      "slug": "salle-reunion-mermoz-dakar",
+      "matchScore": 59
+    }
+  ],
+  "totalFound": 2
+}
 ```
 
-#### Test 5 (Edge): Requête ultra-spécifique
+#### Aucun resultat
 ```json
-// Input
-{ "query": "expert blockchain solidity smart contracts DeFi Ouagadougou", "type": "talent", "limit": 10 }
+{
+  "results": [],
+  "message": "Aucun resultat trouve pour cette recherche."
+}
+```
 
-// Output (838ms) - Gère les requêtes de niche avec résultats partiels
-{ "matchCount": 2, "matches": [...] }
+#### Erreur
+```json
+{
+  "results": [],
+  "error": "message d'erreur"
+}
 ```
 
 ---
 
 ## 2. sql_query
 
-**Description:** Requêtes PostgreSQL basées sur l'intention avec protection IDOR
+**Fichier:** `services/copilot/tools/sql-query.tool.ts`
+**Pattern:** Factory — `createSqlQueryTool(authenticatedTalentId, authorizedOrgIds?, allowedIntents?)`
+**Securite:** talentId injecte par le backend (jamais depuis le LLM), protection IDOR.
 
-### Paramètres
+### Parametres
 
 ```typescript
 {
-  intent: string;              // Description en langage naturel
-  authenticatedTalentId?: string;  // ID du talent authentifié (injection IDOR)
+  intent: 'my_profile' | 'my_applications' | 'my_reservations' | 'my_invitations' |
+          'my_communities' | 'my_bookmarks' | 'my_documents' | 'my_skills' |
+          'org_members' | 'org_applications' | 'org_stats' | 'org_opportunities' |
+          'org_communities' | 'org_spaces' | 'org_revenue' | 'org_invitations' |
+          'search_opportunities' | 'search_communities' | 'search_spaces' |
+          'search_organizations' | 'search_talents';
+  paramsJson: string;  // JSON string. Ex: '{"status":"PENDING"}', '{"organizationId":"uuid"}', '{"query":"React","limit":5}'
 }
 ```
 
-### Tests Réels
+### Retours reels par intent
 
-#### Test 1: Mes candidatures
+#### my_profile
 ```json
-// Input
-{ "intent": "mes candidatures", "authenticatedTalentId": "uuid-talent" }
-
-// Output (11ms)
-{ "rowCount": 3, "rows": [
-  { "id": "uuid", "status": "pending", "applied_at": "2026-02-01", "title": "Dev Senior", "contract_type": "CDI" }
-]}
+// Output (2ms):
+{
+  "id": "689f7929-...",
+  "first_name": "Lamine",
+  "last_name": "Barro",
+  "display_name": "Lamine Barro",
+  "bio": "Etudiant et entrepreneur...",
+  "city": "abobo",
+  "country": "CI",
+  "email": "succes1@gmail.com",
+  "phone": "+2250574631148",
+  "slug": "lamine-barro",
+  "remote_ready": true,
+  "willing_to_relocate": true,
+  "sectors": ["DIGITAL", "EDUCATION", "TOURISM", "TRANSPORT"],
+  "goals": ["LEARN_NEW_SKILLS", "BUILD_NETWORK_OR_VISIBILITY"],
+  "profile_tags": ["STUDENT", "ENTREPRENEUR", "CONSULTANT"]
+}
 ```
 
-#### Test 2: Mes favoris
+#### my_applications
 ```json
-// Input
-{ "intent": "mes favoris", "authenticatedTalentId": "uuid-talent" }
-
-// Output (3ms)
-{ "rowCount": 5, "rows": [...] }
+// Output (7ms):
+{
+  "applications": [
+    {
+      "id": "b1c98c64-...",
+      "status": "SUBMITTED",
+      "applied_at": "2026-02-07T01:30:15.499Z",
+      "updated_at": "2026-02-07T01:30:15.499Z",
+      "opportunity_title": "Responsable Marketing Digital",
+      "type": "EMPLOYMENT",
+      "opportunity_slug": "resp-marketing-digital-afritech",
+      "organization_name": null
+    }
+  ],
+  "totalCount": 1
+}
 ```
 
-#### Test 3: Statistiques offres
+#### my_skills
 ```json
-// Input
-{ "intent": "statistiques offres par type de contrat" }
-
-// Output (4ms)
-{ "rowCount": 4, "rows": [
-  { "contract_type": "CDI", "count": 15 },
-  { "contract_type": "CDD", "count": 8 },
-  { "contract_type": "Stage", "count": 5 },
-  { "contract_type": "Freelance", "count": 2 }
-]}
+// Output (2ms):
+{
+  "skills": [
+    { "name": "Analyse De Donnees Biologiques", "type": "HARD_SKILL", "proficiency_level": "EXPERT", "origin": "extracted" },
+    { "name": "Communication", "type": "SOFT_SKILL", "proficiency_level": "EXPERT", "origin": "extracted" },
+    { "name": "Intelligence Artificielle", "type": "HARD_SKILL", "proficiency_level": "EXPERT", "origin": "extracted" }
+  ]
+}
 ```
 
-#### Test 4: Développeurs Python
+#### my_documents
 ```json
-// Input
-{ "intent": "développeurs Python" }
-
-// Output (5ms)
-{ "rowCount": 10, "rows": [
-  { "id": "uuid", "first_name": "Ibrahim", "last_name": "Bamba", "city": "Porto-Novo", "country": "BJ", "skills": ["Python"] },
-  { "id": "uuid", "first_name": "Safiatou", "last_name": "Ndiaye", "city": "Bissau", "country": "GW", "skills": ["Django"] },
-  { "id": "uuid", "first_name": "Sylvain", "last_name": "Bamba", "city": "Cotonou", "country": "BJ", "skills": ["Django", "Python"] }
-]}
+// Output (2ms):
+{
+  "documents": [
+    {
+      "id": "04bcd6cb-...",
+      "document_type": "CV",
+      "category": "PROFESSIONAL",
+      "title": "Curriculum Vitae - Mohamed Lamine Barro",
+      "original_filename": "Curriculum_Vitae___Lamine_Barro.pdf",
+      "status": "PROCESSED",
+      "description": "Document generated by copilot...",
+      "created_at": "2026-02-07T02:36:08.989Z"
+    }
+  ]
+}
 ```
 
-#### Test 5: Top entreprises qui recrutent
+#### my_communities / my_bookmarks / my_reservations / my_invitations
 ```json
-// Input
-{ "intent": "entreprises qui recrutent le plus" }
+{ "communities": [] }
+{ "bookmarks": [] }
+{ "reservations": [] }
+{ "invitations": [], "pendingCount": 0 }
+```
 
-// Output (3ms)
-{ "rowCount": 5, "rows": [
-  { "id": "uuid", "name": "TechCorp Abidjan", "sectors": ["Technologie"], "opportunity_count": 8 }
-]}
+#### org_stats
+```json
+// Input: paramsJson: '{"organizationId":"uuid"}'
+// Output (3ms):
+{
+  "member_count": "1",
+  "open_opportunities": "0",
+  "community_count": "0",
+  "space_count": "0"
+}
+```
+
+#### org_members
+```json
+{ "members": [{ "role": "OWNER", "created_at": "...", "display_name": "Lamine Barro", "bio": "...", "avatar_url": null }] }
+```
+
+#### org_revenue
+```json
+{ "total_revenue": "0", "total_bookings": "0", "confirmed_bookings": "0" }
+```
+
+#### search_opportunities
+```json
+// Input: paramsJson: '{"query":"React","limit":5}'
+// Output (1ms):
+{
+  "opportunities": [
+    { "id": "...", "title": "Developpeur Frontend React", "summary": "...", "type": "EMPLOYMENT", "contract_type": "CDI", "slug": "..." }
+  ]
+}
+```
+
+#### search_talents (avec skills)
+```json
+// Input: paramsJson: '{"skills":["python","react"],"limit":5}'
+// Filtre par talent_skills.canonical_name
+{
+  "talents": [
+    { "id": "...", "display_name": "Oumar Sow", "bio": "...", "city": "Sokode", "country": "TG" }
+  ]
+}
+```
+
+#### Edge: org intent sans organizationId
+```json
+{ "error": "organizationId requis pour les requetes organisation" }
+```
+
+#### Edge: intent bloque (study mode)
+```json
+{ "error": "L'intent 'my_applications' n'est pas disponible dans ce mode. Intents autorises : my_profile, my_skills, my_documents" }
 ```
 
 ---
 
 ## 3. youtube_search
 
-**Description:** Recherche de vidéos éducatives YouTube (mode Study uniquement)
+**Fichier:** `services/copilot/tools/youtube-search.tool.ts`
+**Mode:** Study uniquement.
 
-### Paramètres
+### Parametres
 
 ```typescript
 {
-  query: string;        // Requête de recherche
-  maxResults?: number;  // 1-3 (défaut: 1)
+  query: string;        // Recherche en francais, ajouter "Afrique francophone" pour sujets business/finance
+  maxResults: number;   // 1-3 (recommande: 1)
 }
 ```
 
-### Tests Réels
+### Retours reels
 
-#### Test 1: Tutoriels React
 ```json
-// Input
-{ "query": "React tutorial français débutant", "maxResults": 5 }
-
-// Output (1,100ms)
-{ "resultCount": 5, "videos": [
-  { "title": "Apprendre REACT en juste 5 minutes !", "channelTitle": "Melvynx", "videoId": "_n_UVPKC_AE" },
-  { "title": "Apprendre REACT.JS en 1 HEURE (l'ESSENTIEL en 2025)", "channelTitle": "ViDev", "videoId": "h2a0cSC1Vz8" },
-  { "title": "Je t'apprends React.js simplement", "channelTitle": "Faiz Dev", "videoId": "21-TUBfLwhY" }
-]}
+// Input: { query: "React hooks tutoriel francais", maxResults: 1 }
+// Output (1131ms):
+{
+  "videos": [
+    {
+      "videoId": "dpw9EHDh2bM",
+      "title": "REACT HOOKS en 30 minutes !",
+      "description": "React hooks tutoriel pour apprendre...",
+      "channelName": "Melvynx",
+      "thumbnailUrl": "https://i.ytimg.com/vi/dpw9EHDh2bM/mqdefault.jpg"
+    }
+  ]
+}
 ```
 
-#### Test 2: Conseils carrière
+#### API non configuree
 ```json
-// Input
-{ "query": "conseils carrière développeur Afrique", "maxResults": 5 }
-
-// Output (650ms)
-{ "resultCount": 5, "videos": [
-  { "title": "Salaire D'Un Développeur Web En Afrique!", "channelTitle": "Edukiya" },
-  { "title": "Devenir DÉVELOPPEUR en 2025 : Une mauvaise idée ?", "channelTitle": "AbsoCode" }
-]}
-```
-
-#### Test 3: Conférences tech
-```json
-// Input
-{ "query": "tech conference startup Africa 2024", "maxResults": 5 }
-
-// Output (509ms)
-{ "resultCount": 5, "videos": [
-  { "title": "Africa Startup Festival 2024 - Event Overview", "channelTitle": "Africa Startup Festival" }
-]}
-```
-
-#### Test 4: Docker/Kubernetes
-```json
-// Input
-{ "query": "Docker Kubernetes déploiement production tutoriel", "maxResults": 5 }
-
-// Output (515ms)
-{ "resultCount": 25, "videos": [
-  { "title": "Docker: Débuter de zéro avec Docker en français", "channelTitle": "cocadmin" },
-  { "title": "Kubernetes : l'essentiel en 7 minutes", "channelTitle": "Cookie connecté" },
-  { "title": "Kubernetes en 1h pour les dev", "channelTitle": "hymaia" }
-]}
-```
-
-#### Test 5 (Edge): Sujet fintech niche
-```json
-// Input
-{ "query": "mobile money API integration UEMOA francophone", "maxResults": 3 }
-
-// Output (405ms)
-{ "resultCount": 2, "videos": [
-  { "title": "ALERTE : La BCEAO révolutionne le CFA avec le PI-SPI", "channelTitle": "J.E.S CRYPTOS INVESTMENT" }
-]}
+{ "videos": [], "message": "YouTube API non configuree" }
 ```
 
 ---
 
 ## 4. generate_document
 
-**Description:** Génération de documents (PDF, DOCX, CSV, XLS, TXT)
+**Fichier:** `services/copilot/tools/generate-document.tool.ts`
+**Pattern:** Factory — `createGenerateDocumentTool(talentId, avatarUrl?)`
+**Auto-save:** Le document est automatiquement sauvegarde dans talent_documents.
 
-### Paramètres
+### Parametres
 
 ```typescript
 {
-  format: 'pdf' | 'docx' | 'csv' | 'xls' | 'txt';
-  content: string;  // Description du contenu à générer
-  data?: any;       // Données structurées optionnelles
+  format: 'PDF' | 'DOCX' | 'XLS' | 'CSV' | 'TXT';
+  title: string;
+  contentJson: string;  // JSON string, 3 formats:
+    // (1) CV: {"firstName":"...","lastName":"...","skills":[...],"experiences":[...],...}
+    // (2) Sections: {"sections":[{"heading":"...","body":"..."}]}
+    // (3) Table: {"headers":["..."],"rows":[["..."]]}
+  instructions: string;
 }
 ```
 
-### Tests Réels
+### Retours reels
 
-#### Test 1: CV PDF
+#### PDF Sections
 ```json
-// Input
-{ "format": "pdf", "content": "CV pour Amadou Diallo, Développeur Fullstack" }
-
-// Output (1ms)
-{ "format": "pdf", "filePath": "cv-amadou-diallo.pdf", "sizeBytes": 800, "generated": true }
+// Input: format: "PDF", title: "Lettre de Motivation", contentJson: '{"sections":[...]}'
+// Output (30ms):
+{
+  "success": true,
+  "id": "3d265f5b-0dd2-47c1-9bd5-b3268fe05673",
+  "documentType": "PDF",
+  "downloadUrl": "https://storage.example.com/documents/.../uuid.pdf",
+  "filename": "Lettre_de_Motivation.pdf",
+  "metadata": {
+    "generatedAt": "2026-02-09T16:39:30.391Z",
+    "sizeBytes": 1566,
+    "title": "Lettre de Motivation"
+  }
+}
 ```
 
-#### Test 2: Rapport DOCX
+#### PDF CV (format structure)
 ```json
-// Input
-{ "format": "docx", "content": "Rapport de performance Q4 2025" }
-
-// Output (<1ms)
-{ "format": "docx", "filePath": "rapport-q4-2025.docx", "sizeBytes": 891, "generated": true }
+// Input: format: "PDF", contentJson: '{"firstName":"Lamine","lastName":"Barro","skills":[...],...}'
+// Output (14ms):
+{
+  "success": true,
+  "id": "edf06878-1f43-42be-9270-1dd385e896b7",
+  "documentType": "PDF",
+  "downloadUrl": "...",
+  "filename": "CV_Lamine_Barro.pdf",
+  "metadata": { "generatedAt": "...", "sizeBytes": 3181, "title": "CV Lamine Barro" }
+}
 ```
 
-#### Test 3: Export CSV talents
+#### DOCX Table
 ```json
-// Input
-{ "format": "csv", "content": "Liste des talents tech Dakar" }
-
-// Output (2ms)
-{ "format": "csv", "rowCount": 9, "sizeBytes": 501, "generated": true }
-// CSV: Prénom,Nom,Email,Ville,Pays
+// Output (34ms):
+{ "success": true, "id": "...", "documentType": "DOCX", "filename": "Export_Talents.docx", "metadata": { "sizeBytes": 7888 } }
 ```
 
-#### Test 4: Export XLS opportunités
+#### CSV
 ```json
-// Input
-{ "format": "xls", "content": "Export des opportunités par secteur" }
-
-// Output (2ms)
-{ "format": "xls", "rowCount": 30, "sizeBytes": 2400, "generated": true }
+// Output (16ms):
+{ "success": true, "id": "...", "documentType": "CSV", "filename": "Export_CSV.csv", "metadata": { "sizeBytes": 61 } }
 ```
 
-#### Test 5 (Edge): Document volumineux
+#### XLS
 ```json
-// Input
-{ "format": "txt", "content": "Analyse complète du marché tech UEMOA" }
+// Output (25ms):
+{ "success": true, "id": "...", "documentType": "XLS", "filename": "Stats_Opportunites.xlsx", "metadata": { "sizeBytes": 6578 } }
+```
 
-// Output (<1ms)
-{ "format": "txt", "sizeBytes": 29958, "characterCount": 29925, "generated": true }
+#### TXT
+```json
+// Output (2ms):
+{ "success": true, "id": "...", "documentType": "TXT", "filename": "Notes_reunion.txt", "metadata": { "sizeBytes": 92 } }
+```
+
+#### Erreur
+```json
+{ "success": false, "error": "Erreur lors de la generation du document: ..." }
 ```
 
 ---
 
 ## 5. generate_image
 
-**Description:** Génération d'images via OpenAI gpt-image-1 (retourne base64)
+**Fichier:** `services/copilot/tools/generate-image.tool.ts`
+**Mode:** Study uniquement.
+**Modele:** gpt-image-1 (retourne base64, converti en PNG et uploade).
 
-### Paramètres
+### Parametres
 
 ```typescript
 {
-  prompt: string;                           // Description de l'image
-  size?: '1024x1024' | '1536x1024' | '1024x1536';  // Dimensions
+  prompt: string;
+  size: '1024x1024' | '1536x1024' | '1024x1536';  // default '1024x1024'
+  quality: 'low' | 'medium' | 'high';              // default 'medium'
 }
 ```
 
-### Tests Réels
+### Retour
 
-#### Test 1: Portrait professionnel
 ```json
-// Input
-{ "prompt": "Professional portrait of an African tech entrepreneur, modern office background", "size": "1024x1024" }
-
-// Output (50,364ms)
-{ "filePath": "portrait-entrepreneur.png", "sizeBytes": 1911998, "dimensions": "1024x1024", "generated": true }
+// Output (~60s):
+{
+  "success": true,
+  "downloadUrl": "https://storage.example.com/generated/image-1707498765432.png",
+  "filename": "image-1707498765432.png",
+  "metadata": {
+    "generatedAt": "2026-02-09T16:40:00.000Z",
+    "sizeBytes": 1911998,
+    "dimensions": "1024x1024",
+    "quality": "medium",
+    "model": "gpt-image-1"
+  }
+}
 ```
 
-#### Test 2: Espace coworking
+#### Erreur content policy
 ```json
-// Input
-{ "prompt": "Modern coworking space in West Africa", "size": "1536x1024" }
-
-// Output (87,595ms)
-{ "filePath": "coworking-abidjan.png", "sizeBytes": 2863803, "dimensions": "1536x1024", "generated": true }
+{ "success": false, "error": "The requested image cannot be generated due to content policy restrictions." }
 ```
-
-#### Test 3: Poster événement
-```json
-// Input
-{ "prompt": "Tech conference poster design AfriTech Summit 2025", "size": "1024x1536" }
-
-// Output (59,822ms)
-{ "filePath": "afritech-poster.png", "sizeBytes": 3241835, "dimensions": "1024x1536", "generated": true }
-```
-
-#### Test 4: Mockup application
-```json
-// Input
-{ "prompt": "Mobile app UI mockup for job platform", "size": "1024x1024" }
-
-// Output (41,553ms)
-{ "filePath": "app-mockup.png", "sizeBytes": 1143607, "dimensions": "1024x1024", "generated": true }
-```
-
-#### Test 5 (Edge): Scène complexe
-```json
-// Input
-{ "prompt": "Detailed African tech hub scene with many elements", "size": "1536x1024" }
-
-// Output (81,065ms)
-{ "filePath": "tech-hub-lagos.png", "sizeBytes": 3094697, "dimensions": "1536x1024", "generated": true }
-```
-
-**Note:** gpt-image-1 retourne du base64 (pas d'URL comme DALL-E 3). Temps moyen: ~64s/image.
 
 ---
 
 ## 6. generate_diagram
 
-**Description:** Génération de diagrammes Mermaid
+**Fichier:** `services/copilot/tools/generate-diagram.tool.ts`
+**Mode:** Study uniquement.
+**Rendu:** Client-side (l'app mobile rend le Mermaid via WebView).
 
-### Paramètres
+### Parametres
 
 ```typescript
 {
-  type: 'flowchart' | 'sequence' | 'erDiagram' | 'classDiagram' | 'gantt';
-  description: string;  // Description du diagramme à générer
+  title: string;
+  diagramType: 'flowchart' | 'sequenceDiagram' | 'classDiagram' | 'mindmap' | 'timeline' | 'gantt' | 'pie' | 'erDiagram';
+  mermaidCode: string;  // Code Mermaid valide. Regles: pas de <br/>, pas de () dans [], labels courts.
 }
 ```
 
-### Tests Réels
+### Retours reels
 
-#### Test 1: Flowchart recrutement
+#### Flowchart
 ```json
-// Input
-{ "type": "flowchart", "description": "Processus de recrutement" }
-
-// Output (<1ms)
+// Input: { title: "Processus de Recrutement", diagramType: "flowchart", mermaidCode: "flowchart TD\n    A[Offre publiee] --> B{Candidatures?}..." }
+// Output (<1ms):
 {
-  "type": "flowchart",
-  "mermaidCode": "flowchart TD\n    A[Offre publiée] --> B{Candidatures reçues?}\n    B -->|Oui| C[Tri des CV]\n    B -->|Non| D[Relancer l'offre]\n    C --> E[Entretiens téléphoniques]\n    E --> F[Entretiens techniques]\n    F --> G{Candidat retenu?}\n    G -->|Oui| H[Offre d'embauche]\n    G -->|Non| I[Feedback candidat]\n    H --> J[Onboarding]",
-  "nodeCount": 10
+  "success": true,
+  "title": "Processus de Recrutement",
+  "diagramType": "flowchart",
+  "mermaidCode": "flowchart TD\n    A[Offre publiee] --> B{Candidatures?}\n    B -->|Oui| C[Tri des CV]...",
+  "renderHint": "client-side"
 }
 ```
 
-#### Test 2: Diagramme de séquence API
+#### Code invalide (mauvais prefix)
 ```json
-// Input
-{ "type": "sequence", "description": "Flux de candidature API" }
-
-// Output (<1ms)
 {
-  "type": "sequence",
-  "mermaidCode": "sequenceDiagram\n    participant T as Talent\n    participant A as API\n    participant DB as PostgreSQL\n    participant P as Pinecone\n    participant N as Notifications\n\n    T->>A: POST /applications\n    A->>DB: Check opportunity exists\n    DB-->>A: Opportunity data\n    A->>DB: Create application\n    DB-->>A: Application created\n    A->>P: Update talent embeddings\n    P-->>A: Embeddings updated\n    A->>N: Send notification to recruiter\n    N-->>A: Notification sent\n    A-->>T: 201 Created",
-  "participantCount": 5
+  "success": false,
+  "error": "Le code Mermaid doit commencer par \"flowchart\" ou \"graph\" pour un diagramme de type flowchart"
 }
 ```
 
-#### Test 3: ERD
-```json
-// Input
-{ "type": "erDiagram", "description": "Modèle de données talent" }
+#### Sanitize <br/> et parentheses
+Le tool sanitize automatiquement: `<br/>` → `\n`, `(` dans `[]` → `&#40;`
 
-// Output (<1ms)
+---
+
+## 7. manage_skills
+
+**Fichier:** `services/copilot/tools/manage-skills.tool.ts`
+**Pattern:** Factory — `createManageSkillsTool(authenticatedTalentId)`
+**Mode:** Study uniquement.
+
+### Parametres
+
+```typescript
 {
-  "type": "erDiagram",
-  "mermaidCode": "erDiagram\n    TALENT ||--o{ APPLICATION : submits\n    TALENT ||--o{ TALENT_SKILL : has\n    TALENT ||--o{ DOCUMENT : uploads\n    OPPORTUNITY ||--o{ APPLICATION : receives\n    ORGANIZATION ||--o{ OPPORTUNITY : posts\n    ...",
-  "entityCount": 8
+  action: 'add' | 'update';
+  skillName: string;          // Nom canonique (ex: "React", "Python")
+  proficiencyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+  origin: 'SELF_DECLARED' | 'AI_INFERRED' | 'DOCUMENT_EXTRACTED' | 'QUIZ_VALIDATED';
 }
 ```
 
-#### Test 4: Diagramme de classes
-```json
-// Input
-{ "type": "classDiagram", "description": "Architecture agents Copilot" }
+### Retours reels
 
-// Output (<1ms)
+#### Ajout reussi
+```json
+// Input: { action: "add", skillName: "Rust_Audit_Test", proficiencyLevel: "BEGINNER", origin: "AI_INFERRED" }
+// Output (3ms):
 {
-  "type": "classDiagram",
-  "mermaidCode": "classDiagram\n    class CopilotAgent {\n        +string name\n        +string model\n        +Tool[] tools\n        +run(message)\n    }\n    ...",
-  "classCount": 4
+  "success": true,
+  "message": "Competence \"Rust_Audit_Test\" ajoutee avec le niveau BEGINNER.",
+  "skill": { "name": "Rust_Audit_Test", "level": "BEGINNER", "origin": "AI_INFERRED" }
 }
 ```
 
-#### Test 5: Gantt
+#### Update reussi
 ```json
-// Input
-{ "type": "gantt", "description": "Timeline projet onboarding" }
-
-// Output (1ms)
+// Output (1ms):
 {
-  "type": "gantt",
-  "mermaidCode": "gantt\n    title Onboarding Nouveau Talent\n    dateFormat  YYYY-MM-DD\n    section Inscription\n    Création compte :a1, 2025-01-01, 1d\n    ...",
-  "taskCount": 7
+  "success": true,
+  "message": "Competence \"Rust_Audit_Test\" mise a jour au niveau INTERMEDIATE.",
+  "skill": { "id": "...", "canonical_name": "Rust_Audit_Test", "proficiency_level": "INTERMEDIATE" }
+}
+```
+
+#### Doublon (add sur skill existante)
+```json
+{
+  "success": false,
+  "error": "La competence \"Rust_Audit_Test\" existe deja (niveau: INTERMEDIATE). Utilise l'action \"update\" pour changer le niveau."
+}
+```
+
+#### Update inexistante
+```json
+{
+  "success": false,
+  "error": "La competence \"CompetenceQuiExistePas\" n'existe pas. Utilise l'action \"add\" pour l'ajouter."
 }
 ```
 
 ---
 
-## 7. file_read (FileReaderAgent Handoff)
+## 8. execute_action
 
-**Description:** Agent spécialisé (gpt-4.1-mini) pour l'extraction de documents
+**Fichier:** `services/copilot/tools/execute-action.tool.ts`
+**Pattern:** Factory — `createExecuteActionTool(authenticatedTalentId)`
+**Securite:** Verifications metier avant chaque action (existe? ouvert? deja fait?).
 
-### Paramètres
+### Parametres
 
 ```typescript
 {
-  documentId: string;         // UUID du document
-  documentType?: 'cv' | 'diploma' | 'certificate';
-  extractionMode?: 'full' | 'skills' | 'summary';
+  action: 'apply_opportunity' | 'join_community' | 'book_space' | 'accept_invitation' | 'decline_invitation';
+  entityId: string;   // UUID de l'entite cible
+  dataJson: string;   // Donnees supplementaires. Pour book_space: '{"startDatetime":"...","endDatetime":"..."}'
 }
 ```
 
-### Tests Réels
+### Retours reels
 
-#### Test 1: Lecture CV
+#### apply_opportunity — deja postule
 ```json
-// Input
-{ "documentId": "d0000001-0001-4000-d000-000000000001", "documentType": "cv" }
+// Output (4ms):
+{ "success": false, "error": "Tu as deja postule a cette opportunite." }
+```
 
-// Output (<1ms)
+#### join_community — succes
+```json
+// Output (4ms):
 {
-  "documentId": "d0000001-0001-4000-d000-000000000001",
-  "documentType": "CV",
-  "originalName": "CV_Aminata_Kone_2026.pdf",
-  "extractedText": "Amadou Diallo - Développeur Fullstack\nCompétences: React, Node.js, TypeScript\nExpérience: 5 ans",
-  "metadata": { "pageCount": 2, "language": "fr", "confidence": 0.95 }
+  "success": true,
+  "message": "Tu as rejoint la communaute \"BTP & Construction Cote d'Ivoire\".",
+  "membershipId": "d5e4e..."
 }
 ```
 
-#### Test 2: Lecture diplôme
+#### book_space — sans dates (edge)
 ```json
-// Input
-{ "documentId": "uuid", "documentType": "diploma" }
+{ "success": false, "error": "Les dates de debut et de fin sont requises (startDatetime, endDatetime)." }
+```
 
-// Output (<1ms)
+#### book_space — succes
+```json
+// Input: dataJson: '{"startDatetime":"2026-03-01T09:00:00Z","endDatetime":"2026-03-01T12:00:00Z"}'
+// Output (12ms):
 {
-  "extractedText": "Université Cheikh Anta Diop\nMaster en Informatique\nMention: Très Bien\nAnnée: 2020",
-  "metadata": { "pageCount": 1, "language": "fr", "confidence": 0.92 }
+  "success": true,
+  "message": "Reservation de \"Salle de Conference Le Plateau\" soumise (3h - 75000 FCFA).",
+  "bookingId": "a1b2c..."
 }
 ```
 
-#### Test 3: Lecture certificat
+#### accept_invitation — non trouvee
 ```json
-// Input
-{ "documentType": "certificate" }
-
-// Output (<1ms)
-{
-  "extractedText": "AWS Certified Solutions Architect\nCertificate ID: AWS-123456\nExpires: 2026-06-01",
-  "metadata": { "pageCount": 1, "language": "en", "confidence": 0.98 }
-}
-```
-
-#### Test 4: Extraction compétences
-```json
-// Input
-{ "extractionMode": "skills" }
-
-// Output (<1ms)
-{
-  "extractedSkills": [
-    { "name": "React", "confidence": 0.95, "category": "frontend" },
-    { "name": "Node.js", "confidence": 0.93, "category": "backend" },
-    { "name": "TypeScript", "confidence": 0.91, "category": "language" },
-    { "name": "PostgreSQL", "confidence": 0.88, "category": "database" },
-    { "name": "Docker", "confidence": 0.85, "category": "devops" }
-  ]
-}
-```
-
-#### Test 5 (Edge): Document illisible
-```json
-// Input
-{ "documentId": "corrupted-doc-id" }
-
-// Output (<1ms)
-{
-  "status": "partial_extraction",
-  "extractedText": "[Partial extraction - some pages unreadable]",
-  "warnings": ["Page 2 could not be extracted", "Low resolution scan detected"],
-  "metadata": { "pageCount": 3, "extractedPages": 2, "confidence": 0.45 }
-}
+{ "success": false, "error": "Invitation non trouvee ou deja traitee." }
 ```
 
 ---
 
-## 8. web_search (WebSearchAgent Handoff)
+## 9. file_reader (FileReaderAgent Handoff)
 
-**Description:** Agent spécialisé (gpt-4.1-mini) pour la recherche web temps réel
+**Fichier:** `services/copilot/tools/file-read.tool.ts`
+**Pattern:** Factory → sub-agent asTool. `createFileReaderTool(talentId)`
+**Modele sub-agent:** gpt-5-mini
+**Securite:** Le read_document interne verifie que le document appartient au talent (IDOR).
 
-### Paramètres
+### Parametres (asTool — message libre)
+
+Le main agent passe un message texte contenant le documentId. Exemple:
+```
+"Lis et analyse le document avec documentId: 483bdc16-fba3-4a10-aa4e-79b716595fcc"
+```
+
+### Retour interne (read_document)
+
+```json
+// Document PDF:
+{
+  "success": true,
+  "document": {
+    "id": "483bdc16-...",
+    "title": "Curriculum Vitae de Lamine Barro",
+    "type": "CV",
+    "mimeType": "application/pdf",
+    "pageCount": 2
+  },
+  "content": "Mohamed Lamine Barro - Entrepreneur...\nCompetences: IA, Strategie, Entrepreneuriat..."
+}
+```
+
+### Types supportes
+
+| Type MIME | Traitement |
+|-----------|-----------|
+| `text/*`, `application/json`, `application/xml` | Extraction directe UTF-8 |
+| `application/pdf` | Extraction via pdf-parse |
+| `image/*` | Metadata uniquement (vision dans le main agent) |
+| Autres | Metadata uniquement |
+
+---
+
+## 10. web_search (WebSearchAgent Handoff)
+
+**Fichier:** `services/copilot/tools/web-search.tool.ts`
+**Pattern:** Sub-agent asTool. `webSearchAgent.asTool({...})`
+**Modele sub-agent:** gpt-5-mini
+**Outil interne:** `webSearchTool()` (SDK OpenAI Agents)
+
+### Parametres (asTool — message libre)
+
+Le main agent passe une query en texte libre. Exemple:
+```
+"Recherche les salaires developpeur senior en Cote d'Ivoire 2026"
+```
+
+### Retour
+
+Le sub-agent synthetise les resultats en texte structure francais avec sources citees.
+
+---
+
+## 11. cv_pdf_generator (interne)
+
+**Fichier:** `services/copilot/tools/cv-pdf-generator.ts`
+**Utilisation:** Appele par generate_document quand le contentJson est au format CV.
+**Design:** Two-column layout, theme Etudesk (brown #3B2416 sidebar, light main).
+
+### Structure CVData
 
 ```typescript
-{
-  query: string;  // Requête de recherche
-}
-```
-
-### Tests Réels
-
-#### Test 1: Recherche entreprise
-```json
-// Input
-{ "query": "Wave mobile money Senegal company" }
-
-// Output (<1ms)
-{
-  "resultCount": 5,
-  "results": [
-    { "title": "Wave - Mobile Money for Africa", "url": "https://www.wave.com/", "snippet": "Wave is building a mobile money platform that is affordable and easy to use for everyone in Africa." },
-    { "title": "Wave raises $200M for African mobile payments", "url": "https://techcrunch.com/wave-funding", "snippet": "Wave, the mobile money startup operating in Senegal, has raised $200 million in Series A funding." }
-  ],
-  "searchTime": 1.2
-}
-```
-
-#### Test 2: Salaires tech Afrique
-```json
-// Input
-{ "query": "software developer salary Côte d'Ivoire 2025" }
-
-// Output (<1ms)
-{
-  "resultCount": 4,
-  "results": [
-    { "title": "Tech Salaries in West Africa 2025 Report", "snippet": "Average software developer salary in Abidjan ranges from 800,000 to 2,500,000 XOF monthly." },
-    { "title": "IT Job Market Côte d'Ivoire", "snippet": "Senior developers in Abidjan can earn up to 3M XOF/month with fintech experience." }
-  ]
-}
-```
-
-#### Test 3: Tendances fintech
-```json
-// Input
-{ "query": "fintech trends UEMOA 2025 mobile payment" }
-
-// Output (<1ms)
-{
-  "resultCount": 6,
-  "results": [
-    { "title": "UEMOA Fintech Report 2025", "snippet": "Mobile money transactions in UEMOA reached $50B in 2024, with 40% YoY growth." }
-  ]
-}
-```
-
-#### Test 4: Certifications
-```json
-// Input
-{ "query": "AWS Solutions Architect certification exam preparation 2025" }
-
-// Output (<1ms)
-{
-  "resultCount": 8,
-  "results": [
-    { "title": "AWS Certified Solutions Architect - Official Guide", "url": "https://aws.amazon.com/certification/" }
-  ]
-}
-```
-
-#### Test 5 (Edge): Recherche locale spécifique
-```json
-// Input
-{ "query": "hackathon Ouagadougou Burkina Faso 2025 inscription" }
-
-// Output (<1ms)
-{
-  "resultCount": 2,
-  "results": [
-    { "title": "Faso Tech Hackathon 2025", "snippet": "Premier hackathon tech à Ouagadougou, inscriptions ouvertes jusqu'au 15 mars." }
-  ],
-  "note": "Limited results for very specific local queries"
+interface CVData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  city?: string;
+  country?: string;
+  bio?: string;
+  avatarUrl?: string;
+  skills: Array<{ name: string; type?: string; level?: string }>;
+  languages?: Array<{ language: string; level: string }>;
+  interests?: string[];
+  goals?: string[];
+  experiences?: Array<{ title: string; company: string; location?: string; period: string; description?: string }>;
+  education?: Array<{ degree: string; institution: string; location?: string; period: string; description?: string }>;
+  certifications?: Array<{ name: string; issuer?: string; date?: string }>;
+  other?: Array<{ heading: string; content: string }>;
 }
 ```
 
@@ -661,38 +771,108 @@
 ## Tool Sequencing (Best Practice)
 
 ```
-1. vector_query   ← Discovery sémantique (toujours en premier)
-2. sql_query      ← Données personnelles/structurées
-3. web_search     ← SEULEMENT si données internes insuffisantes
+1. vector_query   <- Decouverte semantique (toujours en premier pour recherche)
+2. sql_query      <- Donnees personnelles / structurees / stats org
+3. web_search     <- SEULEMENT si donnees internes insuffisantes
+4. generate_*     <- Generation APRES collecte de donnees
+5. execute_action <- Actions APRES confirmation utilisateur
 ```
 
-**Important:** Les prompts des agents incluent des instructions explicites sur cet ordre.
+---
+
+## SSE Streaming — Tool Events
+
+Le client recoit des events SSE pendant l'execution:
+
+```typescript
+// Debut d'un tool call
+{ type: 'tool_start', tool: { callId: string, name: string, args?: object } }
+
+// Fin d'un tool call
+{ type: 'tool_end', tool: { callId: string, name: string, summary: string, result?: any, duration?: number, status: 'success' | 'error', error?: string } }
+
+// Texte genere par l'agent
+{ type: 'text_delta', delta: string }
+
+// Limite atteinte
+{ type: 'limit_reached', reason: 'max_tools' | 'max_duration', message: string }
+```
+
+### Summaries generes par tool_summary.ts
+
+| Tool | Exemple de summary |
+|------|--------------------|
+| vector_query | "3 resultats . opportunites" |
+| sql_query | "30 elements . Mes competences" |
+| youtube_search | "1 video trouvee" |
+| generate_document | "Document genere . CV Lamine Barro (sauvegarde)" |
+| generate_image | "Image generee" |
+| generate_diagram | "Diagramme genere" |
+| manage_skills | "Ajoutee . Python" |
+| execute_action | "Candidature soumise" |
+| file_reader | "Lu . Curriculum Vitae" |
+| web_search | "Recherche web terminee" |
 
 ---
 
 ## Fichiers Source
 
-| Tool | Fichier |
-|------|---------|
-| vector_query | `services/copilot/tools/vector-query.tool.ts` |
-| sql_query | `services/copilot/tools/sql-query.tool.ts` |
-| youtube_search | `services/copilot/tools/youtube-search.tool.ts` |
-| generate_document | `services/copilot/tools/generate-document.tool.ts` |
-| generate_image | `services/copilot/tools/generate-image.tool.ts` |
-| generate_diagram | `services/copilot/tools/generate-diagram.tool.ts` |
-| file_read | `services/copilot/agents/file-reader.agent.ts` |
-| web_search | `services/copilot/agents/web-search.agent.ts` |
+| Tool | Fichier | Pattern |
+|------|---------|---------|
+| vector_query | `services/copilot/tools/vector-query.tool.ts` | Static export |
+| sql_query | `services/copilot/tools/sql-query.tool.ts` | Factory (talentId, orgIds, intents) |
+| youtube_search | `services/copilot/tools/youtube-search.tool.ts` | Static export |
+| generate_document | `services/copilot/tools/generate-document.tool.ts` | Factory (talentId, avatarUrl) |
+| generate_image | `services/copilot/tools/generate-image.tool.ts` | Static export |
+| generate_diagram | `services/copilot/tools/generate-diagram.tool.ts` | Static export |
+| manage_skills | `services/copilot/tools/manage-skills.tool.ts` | Factory (talentId) |
+| execute_action | `services/copilot/tools/execute-action.tool.ts` | Factory (talentId) |
+| file_reader | `services/copilot/tools/file-read.tool.ts` | Factory → asTool (talentId) |
+| web_search | `services/copilot/tools/web-search.tool.ts` | Agent asTool |
+| cv_pdf_generator | `services/copilot/tools/cv-pdf-generator.ts` | Internal (called by generate_document) |
+| tool_summary | `services/copilot/stream/tool-summary.ts` | Static function |
 
 ---
 
-## Données de Test (UEMOA)
+## Modeles LLM
 
-L'audit a été réalisé avec des données réalistes de l'UEMOA:
+| Tier | Modele | Utilisation |
+|------|--------|-------------|
+| T1 | gpt-5 | Agents principaux (talent, org) |
+| T2 | gpt-5-mini | Sub-agents (file_reader, web_search) |
+| T3 | gpt-4.1-nano | Titre session, suggestions |
+| Image | gpt-image-1 | Generation d'images |
+| STT | whisper-1 | Speech-to-text |
+| Embedding | text-embedding-3-small | Embeddings pour Pinecone |
 
-- **50 talents** (8 pays UEMOA, noms africains, compétences tech variées)
-- **25 organisations** (fintech, tech, banques)
-- **30 opportunités** (CDI, CDD, Stage, Freelance)
-- **20 communautés** (hubs tech, meetups)
-- **15 espaces** (coworking, salles de réunion)
+---
 
-Pays couverts: Bénin, Burkina Faso, Côte d'Ivoire, Guinée-Bissau, Mali, Niger, Sénégal, Togo.
+## Bugs corriges dans cet audit (2026-02-09)
+
+| Bug | Fichier | Fix |
+|-----|---------|-----|
+| `search_organizations` crash: `column o.city does not exist` | sql-query.tool.ts | `o.city` → `o.headquarters_city as city` |
+| `vector_query` organizations: meme bug `o.city` | vector-query.tool.ts | Idem |
+| `book_space` crash: `organization_id NOT NULL` | execute-action.tool.ts | Ajout organization_id + calcul duration * hourly_rate |
+| `search_talents` ignore le param `skills` | sql-query.tool.ts | Ajout JOIN talent_skills avec filtre |
+| `tool_summary` sql_query: toujours "Donnees chargees" | tool-summary.ts | Recherche du premier array dans l'objet de retour |
+
+---
+
+## Donnees de Test (UEMOA)
+
+L'audit a ete realise sur une base de donnees reelle:
+
+| Entite | Count |
+|--------|-------|
+| Talents | 57 |
+| Organizations | 31 |
+| Opportunities | 55 |
+| Communities | 27 |
+| Spaces | 24 |
+| Talent Skills | 486 |
+| Talent Documents | 14 |
+| Applications | 165 |
+| Community Members | 261 |
+
+Pays couverts: Benin, Burkina Faso, Cote d'Ivoire, Guinee-Bissau, Mali, Niger, Senegal, Togo.

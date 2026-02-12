@@ -109,7 +109,9 @@ export default function Home() {
           type: userType,
           country,
           contactType,
-          contactValue: contactValue.trim(),
+          contactValue: contactType === 'WHATSAPP'
+            ? contactValue.replace(/[\s\-\(\)]/g, '').trim()
+            : contactValue.trim(),
         }),
       });
 

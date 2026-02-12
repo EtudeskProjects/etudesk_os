@@ -199,7 +199,7 @@ export const vectorQueryTool = tool({
         }
         case 'organizations': {
           const res = await queryWithRetry(
-            `SELECT o.id, o.name, o.description, o.sectors, o.slug, o.city, o.country
+            `SELECT o.id, o.name, o.description, o.sectors, o.slug, o.headquarters_city as city, o.headquarters_country as country
              FROM organizations o
              WHERE o.id = ANY($1::uuid[]) AND o.deleted_at IS NULL`,
             [entityIds]

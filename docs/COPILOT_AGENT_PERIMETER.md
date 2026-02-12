@@ -1,7 +1,7 @@
 # Copilot Agent Perimeter — Guide des Cas d'Usage
 
 > Definition exacte du perimetre de chaque mode avec exemples, processus de reflexion et reponses ideales.
-> Mis a jour : Fevrier 2026 (v2 — ajout actions de creation d'entites)
+> Mis a jour : 09 Fevrier 2026 — aligne avec audit COPILOT_TOOLS_DOCUMENTATION.md
 
 ---
 
@@ -79,6 +79,49 @@
 | **Study** | TalentAgent | Apprentissage + gestion competences | Aucune (mode pedagogique) |
 | **Organization** | OrgAgent | Gestion organisation + creation d'entites | `talent`, `opportunity`, `document` |
 
+### Allocation des 11 Tools par Mode (source : COPILOT_TOOLS_DOCUMENTATION.md)
+
+| Tool | Explorer (talent) | Study (talent) | Org Explorer |
+|------|:-:|:-:|:-:|
+| `vector_query` | x | | x |
+| `sql_query` | x (21 intents) | x (my_profile, my_skills, my_documents) | x (org_* + search_* = 13 intents) |
+| `youtube_search` | | x | |
+| `generate_document` | x | | x |
+| `generate_image` | | x | |
+| `generate_diagram` | | x | |
+| `manage_skills` | | x | |
+| `execute_action` | x | | x |
+| `file_reader` | x | x | |
+| `web_search` | x | x | x |
+| `cv_pdf_generator` | (interne, via generate_document) | | (interne) |
+
+**Modeles LLM :**
+
+| Tier | Modele | Utilisation |
+|------|--------|-------------|
+| T1 | gpt-5 | Agents principaux (talent, org) |
+| T2 | gpt-5-mini | Sub-agents (file_reader, web_search) |
+| T3 | gpt-4.1-nano | Titre session, suggestions, guardrails |
+| Image | gpt-image-1 | Generation d'images |
+| STT | whisper-1 | Speech-to-text |
+| Embedding | text-embedding-3-small | Embeddings Pinecone |
+
+### Performances Audit (09 Fevrier 2026 — tests reels sur DB)
+
+| Tool | Tests | Pass | Avg Time |
+|------|-------|------|----------|
+| vector_query | 6 | 6 | 1,533ms |
+| sql_query | 23 | 23 | 2ms |
+| youtube_search | 3 | 3 | 801ms |
+| generate_document | 6 | 6 | 26ms |
+| generate_image | 1 | skip | ~60s |
+| generate_diagram | 5 | 5 | <1ms |
+| manage_skills | 4 | 4 | 2ms |
+| execute_action | 5 | 5 | 5ms |
+| file_reader | 1 | 1 | <1ms |
+| web_search | 1 | skip | — |
+| tool_summary | 12 | 12 | <1ms |
+
 ---
 
 ## Mode 1 : EXPLORE
@@ -96,16 +139,16 @@
 | **Invitations** | Accepter, decliner | — |
 | **Creation d'entites** | Via confirmation (si admin org) | Creation directe |
 
-### Tools Disponibles
+### Tools Disponibles (6 tools)
 
-| Tool | Type | Usage |
-|------|------|-------|
-| `vector_query` | Direct | Recherche semantique (opportunites, communautes, espaces, talents, orgs) |
-| `sql_query` | Direct | Donnees personnelles (candidatures, reservations, documents, competences, invitations) |
-| `generate_document` | Direct | Generation CV, lettres de motivation, rapports |
-| `file_reader` | Sub-agent (asTool) | Lecture et analyse de documents uploades |
-| `web_search` | Sub-agent (asTool) | Recherche d'informations externes |
-| `execute_action` | Direct | Executer des actions (postuler, rejoindre, reserver, invitations) |
+| Tool | Pattern | Fichier source | Usage |
+|------|---------|---------------|-------|
+| `vector_query` | Static export | vector-query.tool.ts | Recherche semantique Pinecone (5 namespaces : opportunities, communities, spaces, talents, organizations) |
+| `sql_query` | Factory (talentId, orgIds) | sql-query.tool.ts | 21 intents : 8 my_* + 8 org_* + 5 search_* — donnees personnelles et org |
+| `generate_document` | Factory (talentId, avatarUrl) | generate-document.tool.ts | Generation PDF/DOCX/CSV/XLS/TXT + CV elegant via cv_pdf_generator |
+| `file_reader` | Factory → asTool (gpt-5-mini) | file-read.tool.ts | Sub-agent lecture documents (PDF, texte, images metadata) |
+| `web_search` | Agent asTool (gpt-5-mini) | web-search.tool.ts | Sub-agent recherche web externe |
+| `execute_action` | Factory (talentId) | execute-action.tool.ts | 5 actions : apply_opportunity, join_community, book_space, accept/decline_invitation |
 
 ### Skills Disponibles (Explore)
 
@@ -125,7 +168,7 @@
 |---------|--------|
 | **Question** | "Trouve-moi des stages en developpement web a Dakar" |
 | **Thinking** | Recherche semantique opportunites -> `vector_query` |
-| **Tool call** | `vector_query(query: "stage developpement web Dakar", entity_type: "opportunity")` |
+| **Tool call** | `vector_query(query: "stage developpement web Dakar", namespace: "opportunities", topK: 5)` |
 
 **Reponse ideale :**
 ```
@@ -191,6 +234,15 @@ Tu veux que je modifie quelque chose ?
 *(Retourne UNIQUEMENT l'ID du document genere)*
 
 ---
+
+### Retours reels des tools (exemples de l'audit — voir COPILOT_TOOLS_DOCUMENTATION.md pour tous les details)
+
+**vector_query retourne :** `{ results: [{ id, title, summary, type, matchScore, ... }], totalFound: N }`
+**sql_query retourne :** `{ applications: [...] }`, `{ skills: [...] }`, `{ documents: [...] }`, etc. (cle = type d'entite)
+**generate_document retourne :** `{ success: true, id: "uuid", documentType, downloadUrl, filename, metadata }`
+**execute_action retourne :** `{ success: true/false, message: "...", applicationId/membershipId/bookingId }`
+**manage_skills retourne :** `{ success: true/false, message: "...", skill: { name, level, origin } }`
+**generate_diagram retourne :** `{ success: true, title, diagramType, mermaidCode, renderHint: "client-side" }`
 
 ### Composant Confirmation d'Action (Explore)
 
@@ -334,22 +386,23 @@ Chaque talent a un profil pedagogique stocke en base (JSONB `learning_preference
 | **Espaces** | — | Toute recherche |
 | **Actions** | — | Toute action (postuler, rejoindre, reserver, creer) |
 
-### Tools Disponibles
+### Tools Disponibles (7 tools)
 
-| Tool | Type | Usage | Quand l'utiliser |
-|------|------|-------|------------------|
-| `sql_query` (restreint) | Direct | my_profile, my_skills, my_documents UNIQUEMENT | Donnees perso |
-| `manage_skills` | Direct | Ajouter/mettre a jour competences | Apres assessment ou analyse doc |
-| `youtube_search` | Direct | Videos educatives | Si demande explicitement OU style AUDITORY |
-| `generate_diagram` | Direct | Diagrammes Mermaid | Architecture, flows, processus, style VISUAL |
-| `generate_image` | Direct | Images pedagogiques | Concepts visuels |
-| `file_reader` | Sub-agent (asTool) | Analyse documents | Extraire competences de CV/certificats |
-| `web_search` | Sub-agent (asTool) | Articles externes | Documentation recente |
+| Tool | Pattern | Fichier source | Usage |
+|------|---------|---------------|-------|
+| `sql_query` (restreint) | Factory (talentId, orgIds, allowedIntents) | sql-query.tool.ts | 3 intents UNIQUEMENT : my_profile, my_skills, my_documents |
+| `manage_skills` | Factory (talentId) | manage-skills.tool.ts | Actions add/update competences (BEGINNER → EXPERT) |
+| `youtube_search` | Static export | youtube-search.tool.ts | YouTube Data API (maxResults 1-3, priorite francophone UEMOA) |
+| `generate_diagram` | Static export | generate-diagram.tool.ts | Mermaid : flowchart, sequence, class, mindmap, timeline, gantt, pie, ER |
+| `generate_image` | Static export | generate-image.tool.ts | gpt-image-1 (1024x1024, 1536x1024, 1024x1536) |
+| `file_reader` | Factory → asTool (gpt-5-mini) | file-read.tool.ts | Sub-agent lecture documents (PDF, texte) |
+| `web_search` | Agent asTool (gpt-5-mini) | web-search.tool.ts | Sub-agent recherche web externe |
 
-**Tools NON disponibles en Study :**
+**Tools NON disponibles en Study (4 bloques) :**
 - `vector_query` — pas de recherche d'entites
 - `execute_action` — pas d'actions
 - `generate_document` — pas de generation de documents
+- `cv_pdf_generator` — pas de generation CV
 
 ### Skills Disponibles (Study)
 
@@ -673,25 +726,29 @@ Je te propose un mini-cours sur les JOINs avec des exercices pratiques ?
 | **Donnees personnelles** | — | my_profile, my_documents, my_skills (rediriger vers Explorer) |
 | **Autres organisations** | — | Tout acces |
 
-### Tools Disponibles
+### Tools Disponibles (5 tools)
 
-| Tool | Type | Usage |
-|------|------|-------|
-| `sql_query` (restreint org) | Direct | Donnees organisation (13 intents autorises) |
-| `vector_query` | Direct | Recherche talents, opportunites du marche |
-| `generate_document` | Direct | Fiches de poste, rapports, exports PDF |
-| `web_search` | Sub-agent (asTool) | Benchmark marche, tendances secteur |
-| `execute_action` | Direct | Actions (candidatures, invitations) |
+| Tool | Pattern | Fichier source | Usage |
+|------|---------|---------------|-------|
+| `sql_query` (restreint org) | Factory (talentId, [orgId], allowedIntents) | sql-query.tool.ts | org_* (8 intents) + search_* (5 intents) = 13 intents |
+| `vector_query` | Static export | vector-query.tool.ts | Recherche talents, opportunites marche (namespace talents, opportunities) |
+| `generate_document` | Factory (talentId) | generate-document.tool.ts | Fiches de poste, rapports, exports PDF/DOCX/CSV/XLS/TXT |
+| `web_search` | Agent asTool (gpt-5-mini) | web-search.tool.ts | Benchmark marche, tendances secteur |
+| `execute_action` | Factory (talentId) | execute-action.tool.ts | 5 actions talent (apply, join, book, accept/decline) |
 
-**Tools NON disponibles en Organization :**
+**Tools NON disponibles en Organization (6 bloques) :**
 - `file_reader` — pas d'acces aux documents personnels
 - `manage_skills` — pas de gestion de competences
 - `youtube_search` — pas de recherche video
 - `generate_image` — pas de generation d'images
 - `generate_diagram` — pas de generation de diagrammes
+- `cv_pdf_generator` — pas de generation CV
 
-**Intents SQL autorises (13) :**
+**Intents SQL autorises en mode Org (13 sur 21 totaux) :**
 `org_members`, `org_applications`, `org_stats`, `org_opportunities`, `org_communities`, `org_spaces`, `org_revenue`, `org_invitations`, `search_opportunities`, `search_communities`, `search_spaces`, `search_organizations`, `search_talents`
+
+**Intents SQL bloques en mode Org :**
+`my_profile`, `my_applications`, `my_reservations`, `my_invitations`, `my_communities`, `my_bookmarks`, `my_documents`, `my_skills`
 
 ### Skills Disponibles (Organization)
 
@@ -1009,12 +1066,14 @@ Tu veux que je prepare les questions d'entretien pour le Top 3 ?
 
 ## Protocole de Confirmation — Architecture Technique
 
-### Deux mecanismes d'action
+### Deux mecanismes d'action (source : COPILOT_TOOLS_DOCUMENTATION.md + action.handler.ts)
 
-| Mecanisme | Declencheur | Quand l'utiliser |
-|-----------|------------|------------------|
-| **`execute_action` tool** | L'agent appelle le tool directement | Actions simples ou quand l'agent est sur de l'intention |
-| **Bloc `confirmation`** | L'agent genere un bloc markdown | Actions critiques necessitant validation utilisateur (creation d'entites) |
+| Mecanisme | Declencheur | Backend | Actions supportees |
+|-----------|------------|---------|-------------------|
+| **`execute_action` tool** | L'agent appelle le tool apres confirmation verbale dans le chat | execute-action.tool.ts | 5 actions talent : apply, join, book, accept/decline |
+| **Bloc `confirmation`** | L'agent genere un bloc markdown, le frontend l'affiche | action.handler.ts (POST /api/copilot/confirm) | 8 actions : 5 talent + 3 creation (publish, create_community, create_space) |
+
+**IMPORTANT :** Les actions de creation (publish_opportunity, create_community, create_space) passent UNIQUEMENT par le bloc confirmation → action.handler.ts. Elles ne sont PAS dans le tool execute_action.
 
 ### Flow du bloc confirmation
 
@@ -1023,47 +1082,66 @@ Tu veux que je prepare les questions d'entretien pour le Top 3 ?
 2. Frontend parse et rend le composant ConfirmationBlock
 3. Utilisateur clique "Confirmer" ou "Annuler"
 4. Frontend appelle POST /api/copilot/confirm avec {action, entityId, sessionId, data}
-5. action.handler.ts valide et execute l'action
+5. action.handler.ts valide (action.validators.ts) et execute l'action
 6. Resultat affiche dans le ConfirmationBlock (succes/erreur)
+7. Message systeme sauvegarde dans copilot_messages
+```
+
+### Flow du tool execute_action
+
+```
+1. Utilisateur confirme verbalement dans le chat ("oui, postule")
+2. Agent appelle execute_action(action, entityId, dataJson)
+3. execute_action.tool.ts verifie (entite existe, pas deja fait, etc.)
+4. INSERT/UPDATE en base
+5. Retour {success, message} → agent reformule pour l'utilisateur
 ```
 
 ### Toutes les actions supportees (8 totales)
 
-| Action | Type | Modes | Validation |
-|--------|------|-------|------------|
-| `apply_opportunity` | Talent | Explore | Offre ouverte, pas deja postule, deadline non depassee |
-| `join_community` | Talent | Explore | Communaute active, pas deja membre |
-| `book_space` | Talent | Explore | Espace actif, creneau disponible |
-| `accept_invitation` | Talent | Explore | Invitation pending pour ce talent |
-| `decline_invitation` | Talent | Explore | Invitation pending pour ce talent |
-| `publish_opportunity` | Org | Explore, Org | OWNER/ADMIN de l'org, title+summary+contract_type requis |
-| `create_community` | Org | Explore, Org | Membre de l'org, name+description requis |
-| `create_space` | Org | Explore, Org | OWNER/ADMIN de l'org, name+type+surface_m2 requis |
+| Action | Type | Modes | Mecanisme | Validation (backend) |
+|--------|------|-------|-----------|---------------------|
+| `apply_opportunity` | Talent | Explore | execute_action + confirmation | Offre OPEN, pas deja postule, deadline non depassee |
+| `join_community` | Talent | Explore | execute_action + confirmation | Communaute ACTIVE, pas deja membre |
+| `book_space` | Talent | Explore | execute_action + confirmation | Espace ACTIVE, creneau disponible, calcul duration*hourly_rate |
+| `accept_invitation` | Talent | Explore | execute_action + confirmation | Invitation PENDING pour ce talent (community ou organization) |
+| `decline_invitation` | Talent | Explore | execute_action + confirmation | Invitation PENDING pour ce talent |
+| `publish_opportunity` | Org | Explore, Org | confirmation UNIQUEMENT | OWNER/ADMIN de l'org, title+summary+contract_type requis, embedding Pinecone async |
+| `create_community` | Org | Explore, Org | confirmation UNIQUEMENT | Membre de l'org, name+description requis, slug unique, createur = ADMIN |
+| `create_space` | Org | Explore, Org | confirmation UNIQUEMENT | OWNER/ADMIN de l'org, name+type+surface_m2 requis, embedding Pinecone async |
 
 ---
 
-## Securite — Patterns IDOR
+## Securite — Patterns IDOR (source : COPILOT_TOOLS_DOCUMENTATION.md)
 
-Toutes les actions utilisent le pattern **factory avec injection de `authenticatedTalentId`** :
+6 tools sur 11 utilisent le pattern **factory avec injection de `authenticatedTalentId`** :
 
 ```typescript
 // Le talentId est injecte a la creation du tool, pas passe par l'agent
+createSqlQueryTool(authenticatedTalentId, authorizedOrgIds?, allowedIntents?)
 createExecuteActionTool(authenticatedTalentId)
 createManageSkillsTool(authenticatedTalentId)
-createSqlQueryTool(authenticatedTalentId, authorizedOrgIds)
+createGenerateDocumentTool(authenticatedTalentId, avatarUrl?)
+createFileReaderTool(authenticatedTalentId)  // sub-agent, verifie document ownership
+// action.handler.ts recoit aussi authenticatedTalentId pour les confirmations
 ```
+
+**5 tools static (pas de factory) :** vectorQueryTool, youtubeSearchTool, generateImageTool, generateDiagramTool, webSearchAsTool
 
 **Garanties :**
 - L'agent ne peut pas usurper l'identite d'un autre utilisateur
-- Les queries SQL sont filtrees par `authenticatedTalentId`
-- Les actions de creation verifient le role dans l'organisation cote backend
+- Les queries SQL sont filtrees par `authenticatedTalentId` (IDOR impossible)
+- `allowedIntents` restreint les intents par mode (Study: 3, Org: 13, Explore: 21)
+- `authorizedOrgIds` limite l'acces aux organisations du user
+- Les actions de creation verifient le role (OWNER/ADMIN) dans l'organisation cote backend
+- `file_reader` verifie que le document appartient au talent avant lecture
 - L'agent n'a pas acces au talentId — il est injecte dans le tool
 
 ---
 
 ## Guardrails
 
-### Input Safety (gpt-5-nano)
+### Input Safety (gpt-4.1-nano)
 
 Classifie chaque message utilisateur :
 - `safe` -> traitement normal
@@ -1113,18 +1191,59 @@ Validation post-reponse (log, ne bloque pas) :
 | `organization` | oui | non | non |
 | `document` | oui | non | oui |
 
-### Skills par Mode (8 totales)
+### Skills par Mode (8 totales — chargees depuis services/copilot/skills/definitions/*.skill.md)
 
-| Skill | Explore | Study | Organization |
-|-------|:-------:|:-----:|:------------:|
-| CV Generation | oui | non | non |
-| Interview Preparation | oui | non | non |
-| Salary Analysis | oui | non | non |
-| Skill Assessment | non | oui | non |
-| Candidate Ranking | non | non | oui |
-| Opportunity Publishing | non | non | oui |
-| Community Creation | non | non | oui |
-| Space Creation | non | non | oui |
+| Skill | Fichier | Explore | Study | Organization | Tools utilises |
+|-------|---------|:-------:|:-----:|:------------:|---------------|
+| CV Generation | (inline dans prompt) | oui | non | non | sql_query, file_reader, generate_document |
+| Interview Preparation | (inline dans prompt) | oui | non | non | sql_query, web_search |
+| Salary Analysis | (inline dans prompt) | oui | non | non | web_search, sql_query |
+| Skill Assessment | skill-assessment.skill.md | non | oui | non | manage_skills |
+| Candidate Ranking | (inline dans prompt) | non | non | oui | sql_query, vector_query |
+| Opportunity Publishing | opportunity-publishing.skill.md | non | non | oui | sql_query, vector_query, web_search |
+| Community Creation | community-creation.skill.md | non | non | oui | sql_query |
+| Space Creation | space-creation.skill.md | non | non | oui | sql_query |
+
+---
+
+## SSE Streaming — Tool Events (source : COPILOT_TOOLS_DOCUMENTATION.md)
+
+Le client recoit des events SSE pendant l'execution des tools :
+
+| Event | Description |
+|-------|-------------|
+| `tool_start` | Debut d'un tool call (name, args) |
+| `tool_end` | Fin d'un tool call (summary, result, duration, status) |
+| `text_delta` | Texte genere par l'agent (streaming) |
+| `limit_reached` | Limite atteinte (max 20 tools ou 2 minutes) |
+| `content_corrected` | Correction post-traitement (sanitize Mermaid) |
+
+### Summaries affiches dans le UI (tool_summary.ts)
+
+| Tool | Exemple de summary |
+|------|--------------------|
+| vector_query | "3 resultats · opportunites" |
+| sql_query | "30 elements · Mes competences" |
+| youtube_search | "1 video trouvee" |
+| generate_document | "Document genere · CV Lamine Barro (sauvegarde)" |
+| generate_image | "Image generee" |
+| generate_diagram | "Diagramme genere" |
+| manage_skills | "Ajoutee · Python" |
+| execute_action | "Candidature soumise" |
+| file_reader | "Lu · Curriculum Vitae" |
+| web_search | "Recherche web terminee" |
+
+---
+
+## Bugs corriges dans l'audit du 09 Fevrier 2026
+
+| Bug | Fichier | Fix |
+|-----|---------|-----|
+| `search_organizations` crash : `column o.city does not exist` | sql-query.tool.ts | `o.city` → `o.headquarters_city as city` |
+| `vector_query` organizations : meme bug `o.city` | vector-query.tool.ts | Idem |
+| `book_space` crash : `organization_id NOT NULL` | execute-action.tool.ts | Ajout organization_id + calcul duration * hourly_rate |
+| `search_talents` ignore le param `skills` | sql-query.tool.ts | Ajout JOIN talent_skills avec filtre |
+| `tool_summary` sql_query : toujours "Donnees chargees" | tool-summary.ts | Recherche du premier array dans l'objet de retour |
 
 ---
 
@@ -1165,6 +1284,18 @@ Validation post-reponse (log, ne bloque pas) :
 
 ---
 
+## Sequencement des Tools (Best Practice — source : COPILOT_TOOLS_DOCUMENTATION.md)
+
+```
+1. vector_query   ← Decouverte semantique (toujours en premier pour recherche)
+2. sql_query      ← Donnees personnelles / structurees / stats org
+3. web_search     ← SEULEMENT si donnees internes insuffisantes
+4. generate_*     ← Generation APRES collecte de donnees
+5. execute_action ← Actions APRES confirmation utilisateur
+```
+
+---
+
 ## Checklist Validation Reponse
 
 ### Tous les modes
@@ -1201,6 +1332,6 @@ Validation post-reponse (log, ne bloque pas) :
 
 ---
 
-> **Document genere** : Fevrier 2026 (v2)
+> **Document mis a jour** : 09 Fevrier 2026
 > **Regle critique** : IDs seulement, jamais de donnees generees
-> **Nouveaute v2** : Actions de creation (publish_opportunity, create_community, create_space) via protocole de confirmation
+> **Reference technique** : Voir COPILOT_TOOLS_DOCUMENTATION.md pour les parametres, retours reels et exemples d'output de chaque tool

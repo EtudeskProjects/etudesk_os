@@ -21,8 +21,12 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "lamine.barro@etudesk.com",
-        "ascAppId": "6740894818"
+        "appleId": "etudesksas@gmail.com",
+        "ascAppId": "TODO_REMPLACER_APRES_CREATION_COMPTE"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "production"
       }
     }
   }

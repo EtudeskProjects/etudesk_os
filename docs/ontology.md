@@ -86,9 +86,9 @@
 | `websiteUrl` | `xsd:anyURI` | optional |
 | `contactEmail` | `xsd:string` | optional |
 | `contactPhone` | `xsd:string` | optional |
-| `city` | `xsd:string` | optional |
-| `region` | `xsd:string` | optional |
-| `country` | `xsd:string` | optional |
+| `headquarters_city` | `xsd:string` | optional |
+| `headquarters_region` | `xsd:string` | optional |
+| `headquarters_country` | `xsd:string` | optional, CHAR(2) |
 | `coordinates` | `geo:Point` | optional |
 | `verificationStatus` | `VerificationStatus` | enum |
 | `createdBy` | `Talent` | FK, required |
@@ -296,7 +296,7 @@ PricingType := { HOURLY | DAILY | WEEKLY | MONTHLY }
 
 
 DocumentType := { CV | CERTIFICATE | DIPLOMA | LICENSE | PORTFOLIO |
-                  TRANSCRIPT | PUBLICATION |
+                  RECOMMENDATION_LETTER | TRANSCRIPT | PUBLICATION |
                   PATENT | ID_CARD | PASSPORT | DRIVER_LICENSE |
                   STUDENT_CARD | PROOF_OF_ADDRESS | OTHER }
 DocumentCategory := { PROFESSIONAL | ACADEMIC | IDENTITY | OTHER }
@@ -324,7 +324,7 @@ SubscriptionStatus := { ACTIVE | CANCELLED | EXPIRED | TRIAL | PAST_DUE }
 InvitationStatus := { PENDING | ACCEPTED | DECLINED | EXPIRED | CANCELLED }
 
 
-CopilotMode := { EXPLORE | STUDY }
+CopilotMode := { EXPLORE | STUDY | ORG }
 ```
 
 ---
@@ -763,27 +763,81 @@ CANNOT:       Create/update/delete core entities (Talent, Organization)
 
 ---
 
-## 8. Copilot Agent Intent Mapping
+## 8. Copilot Agent Mapping
 
-The Copilot (AI assistant) uses `sql_query` tool intents that map to this ontology:
+The Copilot operates in 3 modes, each with dedicated tools and SQL intents.
 
-| Copilot Intent Pattern | Maps To | Agent Permission |
-|------------------------|---------|------------------|
-| `read_talent_profile` | `read_talent_profile` | READ only |
-| `read_talent_skills` | `read_talent_skill` | READ only |
-| `read_talent_documents` | `read_talent_document` | READ only (own) |
-| `read_org_*` | `read_org_organization` | READ only |
-| `read_community_*` | `read_talent_community` | READ only |
-| `read_opportunity_*` | `read_talent_opportunity` | READ only |
-| `read_talent_applications` | `read_talent_application` | READ only (own) |
-| `read_talent_bookings` | `read_talent_booking` | READ only (own) |
-| `read_talent_notifications` | `read_talent_notification` | READ only (own) |
-| `update_talent_notification` | `update_talent_notification` | Mark as read only |
-| `delete_talent_notification` | `delete_talent_notification` | Own only, **confirm** |
+### 8.1 Modes & Tools
 
-**Copilot Restrictions:**
-- Cannot CREATE profiles, organizations, or any resource
-- Cannot UPDATE profiles or resources (except notifications)
-- Can only READ and surface information
-- DELETE limited to notifications (with confirmation)
-- All write operations must go through the actual API routes
+| Mode | Agent | Tools disponibles |
+|------|-------|-------------------|
+| **EXPLORE** | Talent Explorer | `sql_query`, `vector_query`, `execute_action`, `youtube_search`, `web_search`, `generate_document` |
+| **STUDY** | Talent Study | `sql_query`, `vector_query`, `manage_skills`, `youtube_search`, `web_search`, `generate_document`, `generate_image` |
+| **ORG** | Org Explorer | `sql_query`, `vector_query`, `youtube_search`, `web_search`, `generate_document` |
+
+### 8.2 SQL Intents (sql_query tool)
+
+| Intent | Mode(s) | Maps To |
+|--------|---------|---------|
+| `my_profile` | EXPLORE, STUDY | `read_talent_profile` (own) |
+| `my_applications` | EXPLORE | `read_talent_application` (own) |
+| `my_reservations` | EXPLORE | `read_talent_booking` (own) |
+| `my_invitations` | EXPLORE | `read_talent_invitation` (own) |
+| `my_communities` | EXPLORE | `read_talent_membership` (own) |
+| `my_bookmarks` | EXPLORE | `read_talent_bookmark` (own) |
+| `my_documents` | EXPLORE, STUDY | `read_talent_document` (own) |
+| `my_skills` | STUDY | `read_talent_skill` (own) |
+| `org_members` | ORG | `read_org_membership` |
+| `org_applications` | ORG | `read_org_application` |
+| `org_stats` | ORG | `read_org_organization` (stats) |
+| `org_opportunities` | ORG | `read_org_opportunity` |
+| `org_communities` | ORG | `read_org_community` |
+| `org_spaces` | ORG | `read_org_space` |
+| `org_revenue` | ORG | `read_org_subscription` (revenue) |
+| `org_invitations` | ORG | `read_org_invitation` |
+| `search_opportunities` | EXPLORE, ORG | `read_talent_opportunity` (public) |
+| `search_communities` | EXPLORE, ORG | `read_talent_community` (public) |
+| `search_spaces` | EXPLORE, ORG | `read_talent_space` (public) |
+| `search_organizations` | EXPLORE, ORG | `read_talent_organization` (public) |
+| `search_talents` | ORG | `read_talent_profile` (public) |
+
+### 8.3 Actions (execute_action tool — EXPLORE only)
+
+| Action | Type | Confirmation |
+|--------|------|-------------|
+| `apply_opportunity` | EXECUTE → `create_talent_application` | Verbale (LLM demande confirmation) |
+| `join_community` | EXECUTE → `create_talent_membership` | Verbale |
+| `book_space` | EXECUTE → `create_talent_booking` | Verbale |
+| `accept_invitation` | EXECUTE → `execute_talent_invitation` | Verbale |
+| `decline_invitation` | EXECUTE → `execute_talent_invitation` | Verbale |
+
+### 8.4 Actions (confirmation UI — ORG only)
+
+| Action | Type | Confirmation |
+|--------|------|-------------|
+| `publish_opportunity` | CREATE → `create_org_opportunity` | Bloc de confirmation frontend |
+| `create_community` | CREATE → `create_org_community` | Bloc de confirmation frontend |
+| `create_space` | CREATE → `create_org_space` | Bloc de confirmation frontend |
+
+### 8.5 Skill Management (manage_skills tool — STUDY only)
+
+| Action | Type | Confirmation |
+|--------|------|-------------|
+| `add` | CREATE → `create_talent_skill` | Aucune (inference automatique) |
+| `update` | UPDATE → `update_talent_skill` | Aucune (post-evaluation) |
+
+### 8.6 Document Generation (generate_document tool — tous modes)
+
+| Action | Type | Confirmation |
+|--------|------|-------------|
+| Generate + auto-save | CREATE → `create_talent_document` | Aucune (sauvegarde auto) |
+
+### 8.7 Copilot Restrictions
+
+- **Cannot** CREATE/DELETE profiles (`Talent`) — systeme uniquement (signup/deactivation)
+- **Cannot** CREATE/DELETE organisations (`Organization`) — via API routes uniquement
+- **Cannot** UPDATE profils, organisations, ou ressources existantes (sauf skills via `manage_skills`)
+- **Cannot** DELETE aucune ressource
+- **Cannot** acceder aux donnees personnelles du talent en mode ORG (IDOR par design)
+- **Toutes les actions d'ecriture** passent par confirmation verbale (EXPLORE) ou bloc UI (ORG)
+- Les requetes SQL sont **pre-construites** cote serveur (pas de SQL arbitraire)

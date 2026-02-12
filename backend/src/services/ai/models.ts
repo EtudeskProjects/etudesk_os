@@ -11,7 +11,7 @@ export const MODEL_T1 = 'gpt-5';
 export const MODEL_T2 = 'gpt-5-mini';
 
 /** Simple text generation, classification, summarization */
-export const MODEL_T3 = 'gpt-4.1-nano';
+export const MODEL_T3 = 'gpt-5-nano';
 
 /** Image generation */
 export const MODEL_IMAGE = 'gpt-image-1';

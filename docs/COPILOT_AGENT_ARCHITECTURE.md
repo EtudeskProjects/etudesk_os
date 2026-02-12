@@ -31,28 +31,39 @@
 │  ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐       │
 │  │   TalentAgent     │  │   TalentAgent     │  │     OrgAgent      │       │
 │  │    (explore)      │  │     (study)       │  │   (organization)  │       │
-│  │    gpt-4.1        │  │     gpt-4.1       │  │     gpt-4.1       │       │
+│  │    gpt-5          │  │     gpt-5         │  │     gpt-5         │       │
+│  │    6 tools        │  │     7 tools       │  │     5 tools       │       │
 │  └─────────┬─────────┘  └─────────┬─────────┘  └─────────┬─────────┘       │
 │            │                      │                      │                  │
 │            └──────────────────────┼──────────────────────┘                  │
 │                                   │                                         │
-│                          ┌────────┴────────┐                                │
-│                          │     TOOLS       │                                │
-│                          ├─────────────────┤                                │
-│                          │ • vector_query  │ ← Pinecone (discovery)        │
-│                          │ • sql_query     │ ← PostgreSQL (personal data)  │
-│                          │ • youtube_search│ ← YouTube Data API            │
-│                          │ • generate_doc  │ ← GPT-4.1 (markdown)          │
-│                          │ • generate_image│ ← gpt-image-1 (base64)        │
-│                          │ • generate_diag │ ← GPT-4.1 (Mermaid)           │
-│                          └────────┬────────┘                                │
-│                                   │                                         │
-│                          ┌────────┴────────┐                                │
-│                          │    HANDOFFS     │                                │
-│                          ├─────────────────┤                                │
-│                          │ • FileReader    │ ← gpt-4.1-mini (documents)    │
-│                          │ • WebSearch     │ ← gpt-4.1-mini (web)          │
-│                          └─────────────────┘                                │
+│         ┌─────────────────────────┴─────────────────────────┐              │
+│         │                  9 TOOLS DIRECTS                   │              │
+│         ├───────────────────────────────────────────────────┤              │
+│         │ • vector_query    ← Pinecone semantic search      │              │
+│         │ • sql_query       ← PostgreSQL (intent-based,IDOR)│              │
+│         │ • youtube_search  ← YouTube Data API v3           │              │
+│         │ • generate_document ← PDF/DOCX/XLS/CSV/TXT       │              │
+│         │ • generate_image  ← gpt-image-1 (base64)         │              │
+│         │ • generate_diagram ← Mermaid (client-side)        │              │
+│         │ • manage_skills   ← PostgreSQL CRUD skills        │              │
+│         │ • execute_action  ← PostgreSQL confirmed actions  │              │
+│         │ • cv_pdf_generator ← PDFKit (interne)             │              │
+│         └─────────────────────┬─────────────────────────────┘              │
+│                               │                                             │
+│         ┌─────────────────────┴─────────────────────────┐                  │
+│         │          2 SUB-AGENTS (via asTool)             │                  │
+│         ├───────────────────────────────────────────────┤                  │
+│         │ • file_reader  ← gpt-5-mini (documents)       │                  │
+│         │ • web_search   ← gpt-5-mini (recherche web)   │                  │
+│         └───────────────────────────────────────────────┘                  │
+│                                                                             │
+│         ┌───────────────────────────────────────────────┐                  │
+│         │             GUARDRAILS (gpt-4.1-nano)          │                  │
+│         ├───────────────────────────────────────────────┤                  │
+│         │ • inputSafetyGuardrail  (parallèle, fail-fast) │                  │
+│         │ • outputFormatGuardrail (log-only, no block)   │                  │
+│         └───────────────────────────────────────────────┘                  │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -62,13 +73,14 @@
 | Composant | Technologie |
 |-----------|-------------|
 | Framework Agent | OpenAI Agents SDK (`@openai/agents`) |
-| Modèle Principal | GPT-4.1 (1M tokens context) |
-| Modèle Sub-agents | GPT-4.1-mini (1M tokens context) |
+| Modèle Principal (T1) | GPT-5 (400K tokens context) |
+| Modèle Sub-agents (T2) | GPT-5-mini (400K tokens context) |
+| Modèle Guardrails (T3) | GPT-4.1-nano (1M tokens context) |
 | Génération Images | gpt-image-1 |
 | Vector Search | Pinecone |
 | Base de Données | PostgreSQL |
 | Streaming | Server-Sent Events (SSE) |
-| Validation | Zod v4.3.5 |
+| Validation | Zod |
 
 ---
 
@@ -81,32 +93,36 @@
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `Talent Agent (explore)` |
-| **Modèle** | `gpt-4.1` |
-| **Max Tokens** | Non spécifié (défaut SDK) |
-| **Temperature** | Non spécifié (défaut SDK) |
+| **Modèle** | `MODEL_T1` (gpt-5) |
+| **Guardrails** | inputSafetyGuardrail, outputFormatGuardrail |
 | **Description** | Agent principal pour l'exploration de la plateforme : recherche d'opportunités, communautés, espaces, talents |
 
-**Tools disponibles:**
-| Tool | Description |
-|------|-------------|
-| `vector_query` | Recherche sémantique Pinecone |
-| `sql_query` | Requêtes PostgreSQL (IDOR protégé) |
-| `generate_document` | Génération de documents markdown |
-
-**Handoffs:**
-| Agent | Description |
-|-------|-------------|
-| `FileReaderAgent` | Lecture des documents du talent |
-| `WebSearchAgent` | Recherche web externe |
+**Tools disponibles (6):**
+| Tool | Type | Description |
+|------|------|-------------|
+| `vector_query` | Static | Recherche sémantique Pinecone |
+| `sql_query` | Factory (IDOR) | Requêtes PostgreSQL intent-based (tous intents my_* + search_*) |
+| `generate_document` | Factory (IDOR) | Génération de documents PDF/DOCX/XLS/CSV/TXT |
+| `file_reader` | asTool (gpt-5-mini) | Lecture et analyse des documents du talent |
+| `web_search` | asTool (gpt-5-mini) | Recherche web externe |
+| `execute_action` | Factory (IDOR) | Actions confirmées (apply, join, book, accept/decline) |
 
 ```typescript
 // Création de l'agent (simplifié)
 return new Agent({
   name: `Talent Agent (explore)`,
-  model: 'gpt-4.1',
+  model: MODEL_T1,
   instructions: buildTalentExplorerPrompt(context),
-  tools: [vectorQueryTool, secureSqlTool, generateDocumentTool],
-  handoffs: [handoff(createFileReaderAgent(context.talentId)), handoff(webSearchAgent)],
+  tools: [
+    vectorQueryTool,
+    secureSqlTool,
+    createGenerateDocumentTool(context.profile.id, context.profile.avatarUrl),
+    fileReaderTool,       // asTool(), pas handoff()
+    webSearchAsTool,      // asTool(), pas handoff()
+    createExecuteActionTool(context.profile.id),
+  ],
+  inputGuardrails: [inputSafetyGuardrail],
+  outputGuardrails: [outputFormatGuardrail],
 });
 ```
 
@@ -119,28 +135,26 @@ return new Agent({
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `Talent Agent (study)` |
-| **Modèle** | `gpt-4.1` |
-| **Max Tokens** | Non spécifié (défaut SDK) |
-| **Temperature** | Non spécifié (défaut SDK) |
-| **Description** | Agent pédagogique pour l'apprentissage : recherche YouTube, génération de visuels et diagrammes |
+| **Modèle** | `MODEL_T1` (gpt-5) |
+| **Guardrails** | inputSafetyGuardrail, outputFormatGuardrail |
+| **Description** | Agent pédagogique pour l'apprentissage : recherche YouTube, génération de visuels, évaluation de compétences |
 
-**Tools disponibles:**
-| Tool | Description |
-|------|-------------|
-| `sql_query` | Requêtes PostgreSQL (scope restreint) |
-| `youtube_search` | Recherche de vidéos éducatives |
-| `generate_image` | Génération d'images pédagogiques |
-| `generate_diagram` | Génération de diagrammes Mermaid |
-
-**Handoffs:**
-| Agent | Description |
-|-------|-------------|
-| `FileReaderAgent` | Lecture des documents du talent |
-| `WebSearchAgent` | Recherche web externe |
+**Tools disponibles (7):**
+| Tool | Type | Description |
+|------|------|-------------|
+| `sql_query` | Factory (IDOR, restreint) | Requêtes PostgreSQL (my_profile, my_skills, my_documents uniquement) |
+| `youtube_search` | Static | Recherche de vidéos éducatives YouTube |
+| `generate_image` | Static | Génération d'images pédagogiques (gpt-image-1) |
+| `generate_diagram` | Static | Génération de diagrammes Mermaid (client-side) |
+| `file_reader` | asTool (gpt-5-mini) | Lecture des documents du talent |
+| `web_search` | asTool (gpt-5-mini) | Recherche web externe |
+| `manage_skills` | Factory (IDOR) | Ajout/mise à jour des compétences talent |
 
 **Restrictions Mode Study:**
 - Pas d'accès à `vector_query` (pas d'exploration plateforme)
 - Pas d'accès à `generate_document`
+- Pas d'accès à `execute_action`
+- SQL restreint à 3 intents : `my_profile`, `my_skills`, `my_documents`
 - Focus uniquement sur l'apprentissage et la création de contenu pédagogique
 
 ---
@@ -152,45 +166,60 @@ return new Agent({
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `Organization Explorer` |
-| **Modèle** | `gpt-4.1` |
-| **Max Tokens** | Non spécifié (défaut SDK) |
-| **Temperature** | Non spécifié (défaut SDK) |
-| **Description** | Agent de gestion d'organisation : gestion des membres, candidatures, analytics |
+| **Modèle** | `MODEL_T1` (gpt-5) |
+| **Guardrails** | inputSafetyGuardrail, outputFormatGuardrail |
+| **Description** | Agent de gestion d'organisation : gestion des membres, candidatures, analytics, création de ressources |
 
-**Tools disponibles:**
-| Tool | Description |
-|------|-------------|
-| `vector_query` | Recherche de talents/compétences |
-| `sql_query` | Données organisation (IDOR protégé) |
-| `generate_document` | Génération de rapports/documents |
+**Tools disponibles (5):**
+| Tool | Type | Description |
+|------|------|-------------|
+| `vector_query` | Static | Recherche de talents/compétences |
+| `sql_query` | Factory (IDOR, org scope) | Données organisation (org_* + search_* uniquement) |
+| `generate_document` | Factory (IDOR) | Génération de rapports/fiches de poste |
+| `web_search` | asTool (gpt-5-mini) | Recherche web (données marché) |
+| `execute_action` | Factory (IDOR) | Actions confirmées (publish_opportunity, create_community, create_space via confirmation UI) |
 
-**Handoffs:**
-| Agent | Description |
-|-------|-------------|
-| `FileReaderAgent` | Lecture des documents |
-| `WebSearchAgent` | Recherche web externe |
+**SQL Intents autorisés (13):**
+```
+org_members, org_applications, org_stats, org_opportunities,
+org_communities, org_spaces, org_revenue, org_invitations,
+search_opportunities, search_communities, search_spaces,
+search_organizations, search_talents
+```
+
+**Restrictions Mode Org:**
+- PAS d'accès à `file_reader` (pas de lecture de documents personnels)
+- PAS d'accès aux intents personnels (my_profile, my_documents, my_skills, etc.)
+- PAS d'accès à `youtube_search`, `generate_image`, `generate_diagram`, `manage_skills`
 
 ```typescript
 // Création de l'agent (simplifié)
 return new Agent({
   name: 'Organization Explorer',
-  model: 'gpt-4.1',
+  model: MODEL_T1,
   instructions: buildOrgExplorerPrompt(context),
-  tools: [vectorQueryTool, secureSqlTool, generateDocumentTool],
-  handoffs: [handoff(createFileReaderAgent(context.talentId)), handoff(webSearchAgent)],
+  tools: [
+    vectorQueryTool,
+    secureSqlTool,  // restricted to ORG_ALLOWED_INTENTS
+    createGenerateDocumentTool(context.talentId),
+    webSearchAsTool,
+    createExecuteActionTool(context.talentId),
+  ],
+  inputGuardrails: [inputSafetyGuardrail],
+  outputGuardrails: [outputFormatGuardrail],
 });
 ```
 
 ---
 
-### 2.4 FileReaderAgent (Sub-agent)
+### 2.4 FileReaderAgent (Sub-agent via asTool)
 
 **Fichier:** `src/services/copilot/tools/file-read.tool.ts`
 
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `FileReaderAgent` |
-| **Modèle** | `gpt-4.1-mini` |
+| **Modèle** | `MODEL_T2` (gpt-5-mini) |
 | **Max Tokens** | Non spécifié (défaut SDK) |
 | **Temperature** | Non spécifié (défaut SDK) |
 | **Description** | Sub-agent pour la lecture et l'analyse des documents du talent (CV, diplômes, etc.) |
@@ -215,14 +244,14 @@ Respond in the same language as the user's question.
 
 ---
 
-### 2.5 WebSearchAgent (Sub-agent)
+### 2.5 WebSearchAgent (Sub-agent via asTool)
 
 **Fichier:** `src/services/copilot/tools/web-search.tool.ts`
 
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `WebSearchAgent` |
-| **Modèle** | `gpt-4.1-mini` |
+| **Modèle** | `MODEL_T2` (gpt-5-mini) |
 | **Max Tokens** | Non spécifié (défaut SDK) |
 | **Temperature** | Non spécifié (défaut SDK) |
 | **Description** | Sub-agent pour la recherche d'informations sur le web |
@@ -414,45 +443,21 @@ Active Opportunities: ${context.activeOpportunities}
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `vector_query` |
+| **Type** | Static (pas de factory) |
 | **Description** | Recherche sémantique dans Pinecone |
 | **Disponible dans** | Explore, Organization |
 
 **Paramètres:**
 ```typescript
 {
-  query: string;           // Texte de recherche
-  entity_type: 'talent' | 'opportunity' | 'community' | 'space';
-  filters?: Record<string, unknown>;  // Filtres metadata Pinecone
-  top_k?: number;          // Nombre de résultats (défaut: 10)
+  query: string;           // Texte de recherche en langage naturel
+  namespace: 'opportunities' | 'communities' | 'spaces' | 'talents' | 'organizations';
+  topK?: number;           // Nombre de résultats (1-30, défaut: 10)
+  filtersJson?: string;    // Filtres Pinecone JSON (scalaires uniquement)
 }
 ```
 
-**Implémentation:**
-```typescript
-export const vectorQueryTool = tool({
-  name: 'vector_query',
-  description: 'Search for entities using semantic similarity...',
-  parameters: z.object({
-    query: z.string().describe('Search query'),
-    entity_type: z.enum(['talent', 'opportunity', 'community', 'space']),
-    filters: z.record(z.string(), z.unknown()).optional(),
-    top_k: z.number().optional().default(10),
-  }),
-  execute: async ({ query, entity_type, filters, top_k }) => {
-    const sanitizedFilters = sanitizeFilters(filters);
-    const results = await pinecone.query({
-      namespace: entity_type,
-      vector: await embed(query),
-      filter: sanitizedFilters,
-      topK: top_k,
-      includeMetadata: true,
-    });
-    return results.matches;
-  },
-});
-```
-
-**Sécurité:** `sanitizeFilters()` supprime les valeurs non-scalaires.
+**Sécurité:** `sanitizeFilters()` supprime les valeurs non-scalaires (arrays, objects).
 
 ---
 
@@ -463,42 +468,33 @@ export const vectorQueryTool = tool({
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `sql_query` |
-| **Description** | Requêtes PostgreSQL sécurisées |
-| **Disponible dans** | Explore, Study, Organization |
+| **Type** | Factory (IDOR + scope restriction) |
+| **Description** | Requêtes PostgreSQL intent-based |
+| **Disponible dans** | Explore (full), Study (restreint), Organization (org scope) |
 
 **Paramètres:**
 ```typescript
 {
-  query: string;  // Requête SQL SELECT uniquement
+  intent: SqlIntent;       // Intent pré-défini (ex: 'my_profile', 'org_stats')
+  paramsJson?: string;     // Paramètres JSON optionnels (q, limit, city, etc.)
 }
 ```
 
-**Factory Pattern (IDOR Protection):**
+**Factory Pattern (IDOR + scope restriction):**
 ```typescript
-export function createSqlQueryTool(authenticatedTalentId: string) {
-  return tool({
-    name: 'sql_query',
-    description: 'Execute read-only SQL queries...',
-    parameters: z.object({
-      query: z.string().describe('SELECT query only'),
-    }),
-    execute: async ({ query }) => {
-      // Validation: SELECT only
-      if (!query.trim().toLowerCase().startsWith('select')) {
-        throw new Error('Only SELECT queries allowed');
-      }
-
-      // Injection automatique du talentId pour filtrage
-      const secureQuery = injectTalentIdFilter(query, authenticatedTalentId);
-
-      const result = await pool.query(secureQuery);
-      return result.rows;
-    },
-  });
-}
+export function createSqlQueryTool(
+  authenticatedTalentId: string,
+  authorizedOrgIds?: string[],
+  allowedIntents?: readonly SqlIntent[]
+)
 ```
 
-**Tables accessibles:** `talents`, `talent_skills`, `talent_documents`, `opportunity_applications`, `community_memberships`, `space_bookings`, `notifications`, `bookmarks`, etc.
+**21 intents implémentés:**
+- **Talent (8):** `my_profile`, `my_applications`, `my_reservations`, `my_invitations`, `my_communities`, `my_bookmarks`, `my_documents`, `my_skills`
+- **Org (8):** `org_members`, `org_applications`, `org_stats`, `org_opportunities`, `org_communities`, `org_spaces`, `org_revenue`, `org_invitations`
+- **Search (5):** `search_opportunities`, `search_communities`, `search_spaces`, `search_organizations`, `search_talents`
+
+**Sécurité:** Le `talentId` est injecté côté serveur dans CHAQUE requête SQL. Le LLM ne voit jamais les IDs et ne peut pas écrire de SQL arbitraire.
 
 ---
 
@@ -509,30 +505,27 @@ export function createSqlQueryTool(authenticatedTalentId: string) {
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `youtube_search` |
+| **Type** | Static |
 | **Description** | Recherche de vidéos éducatives YouTube |
 | **Disponible dans** | Study |
 
 **Paramètres:**
 ```typescript
 {
-  query: string;      // Requête de recherche
-  max_results?: number;  // Nombre de résultats (défaut: 5, max: 10)
+  query: string;         // Requête de recherche (en français, append "Afrique francophone")
+  maxResults?: number;   // Nombre de résultats (1-3, toujours passer 1)
 }
 ```
 
 **Retour:**
 ```typescript
-{
-  videos: Array<{
-    id: string;
-    title: string;
-    description: string;
-    thumbnail: string;
-    channelTitle: string;
-    publishedAt: string;
-    url: string;
-  }>;
-}
+Array<{
+  videoId: string;
+  title: string;
+  description: string;
+  channelName: string;
+  thumbnailUrl: string;
+}>
 ```
 
 ---
@@ -544,19 +537,26 @@ export function createSqlQueryTool(authenticatedTalentId: string) {
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `generate_document` |
-| **Description** | Génération de documents markdown structurés |
+| **Type** | Factory (IDOR) |
+| **Description** | Génération multi-format avec auto-save |
 | **Disponible dans** | Explore, Organization |
 
 **Paramètres:**
 ```typescript
 {
-  type: 'cv' | 'cover_letter' | 'report' | 'summary';
-  context: string;    // Instructions de génération
-  format?: 'markdown' | 'plain';
+  format: 'PDF' | 'DOCX' | 'XLS' | 'CSV' | 'TXT';
+  title: string;
+  contentJson: string;    // JSON structuré (CVData, sections, table)
+  instructions: string;   // Instructions de mise en forme
 }
 ```
 
-**Modèle utilisé:** GPT-4.1 (via appel API interne)
+**Formats de contenu (contentJson):**
+1. **CVData** (préféré pour PDF) : `{firstName, lastName, skills[], experiences[], education[], ...}`
+2. **Sections** : `{sections: [{heading, body}]}`
+3. **Table** : `{headers[], rows[][]}`
+
+**Auto-save :** Le document est automatiquement sauvegardé dans `talent_documents` et déclenche le pipeline d'extraction de compétences.
 
 ---
 
@@ -567,6 +567,7 @@ export function createSqlQueryTool(authenticatedTalentId: string) {
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `generate_image` |
+| **Type** | Static |
 | **Description** | Génération d'images pédagogiques |
 | **Disponible dans** | Study |
 | **Modèle** | `gpt-image-1` |
@@ -574,21 +575,15 @@ export function createSqlQueryTool(authenticatedTalentId: string) {
 **Paramètres:**
 ```typescript
 {
-  prompt: string;     // Description de l'image
+  prompt: string;     // Description détaillée de l'image
   size?: '1024x1024' | '1536x1024' | '1024x1536';
-  style?: 'natural' | 'vivid';
+  quality?: 'low' | 'medium' | 'high';
 }
 ```
 
-**Retour:**
-```typescript
-{
-  image_base64: string;  // Image en base64 (PAS une URL)
-  revised_prompt: string;
-}
-```
+**Retour:** Image base64 + URL de stockage persistant.
 
-**Note importante:** `gpt-image-1` retourne du base64, contrairement à DALL-E 3 qui retourne des URLs.
+**Note importante:** `gpt-image-1` retourne du base64, PAS des URLs comme DALL-E 3.
 
 ---
 
@@ -599,62 +594,111 @@ export function createSqlQueryTool(authenticatedTalentId: string) {
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `generate_diagram` |
-| **Description** | Génération de diagrammes Mermaid |
+| **Type** | Static |
+| **Description** | Génération de diagrammes Mermaid (rendu client) |
 | **Disponible dans** | Study |
 
 **Paramètres:**
 ```typescript
 {
-  type: 'flowchart' | 'sequence' | 'class' | 'state' | 'er' | 'gantt' | 'pie';
-  description: string;  // Description du diagramme à générer
+  title: string;          // Titre du diagramme
+  diagramType: 'flowchart' | 'sequenceDiagram' | 'classDiagram' | 'mindmap' | 'timeline' | 'gantt' | 'pie' | 'erDiagram';
+  mermaidCode: string;    // Code Mermaid valide
 }
 ```
 
-**Retour:**
+**Sécurité:** Sanitize `<br/>` → `\n`, escape parenthèses `(` → `&#40;`, validation type ↔ prefix.
+
+---
+
+### 4.7 manage_skills
+
+**Fichier:** `src/services/copilot/tools/manage-skills.tool.ts`
+
+| Propriété | Valeur |
+|-----------|--------|
+| **Nom** | `manage_skills` |
+| **Type** | Factory (IDOR) |
+| **Description** | Ajout et mise à jour des compétences talent |
+| **Disponible dans** | Study |
+
+**Paramètres:**
 ```typescript
 {
-  mermaid_code: string;  // Code Mermaid valide
-  explanation: string;   // Explication du diagramme
+  action: 'add' | 'update';
+  skillName: string;
+  proficiencyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+  origin: 'SELF_DECLARED' | 'AI_INFERRED' | 'DOCUMENT_EXTRACTED' | 'QUIZ_VALIDATED';
 }
 ```
 
 ---
 
-## 5. Handoffs (Délégation)
+### 4.8 execute_action
 
-### 5.1 Concept de Handoff
+**Fichier:** `src/services/copilot/tools/execute-action.tool.ts`
 
-Le SDK OpenAI Agents permet de déléguer des tâches à des sub-agents via `handoff()`. L'agent principal peut transférer le contrôle à un agent spécialisé pour des tâches spécifiques.
+| Propriété | Valeur |
+|-----------|--------|
+| **Nom** | `execute_action` |
+| **Type** | Factory (IDOR) |
+| **Description** | Exécution d'actions confirmées par l'utilisateur |
+| **Disponible dans** | Explore, Organization |
+
+**Paramètres:**
+```typescript
+{
+  action: 'apply_opportunity' | 'join_community' | 'book_space' | 'accept_invitation' | 'decline_invitation';
+  entityId: string;       // UUID de l'entité cible
+  dataJson?: string;      // Données additionnelles (pour book_space: startDatetime, endDatetime)
+}
+```
+
+**Protocole :** Le LLM demande TOUJOURS confirmation verbale avant d'appeler ce tool.
+
+---
+
+## 5. Sub-Agents (via asTool)
+
+### 5.1 Pattern asTool (pas de Handoff)
+
+Etudesk utilise `agent.asTool()` du SDK OpenAI Agents pour encapsuler des sub-agents comme des tools ordinaires. Contrairement à `handoff()` qui transfère le contrôle, `asTool()` garde l'agent principal en contrôle — le sub-agent est exécuté comme un tool call.
 
 ```typescript
-import { handoff } from '@openai/agents';
+// Création du sub-agent
+const fileReaderAgent = createFileReaderAgent(talentId);
 
-// Création du handoff
-const fileReaderHandoff = handoff(createFileReaderAgent(talentId));
+// Encapsulation comme tool (PAS handoff)
+const fileReaderTool = fileReaderAgent.asTool({
+  toolName: 'file_reader',
+  toolDescription: 'Read and analyze talent documents',
+});
 
 // Utilisation dans l'agent principal
 new Agent({
-  // ...
-  handoffs: [fileReaderHandoff, handoff(webSearchAgent)],
+  tools: [fileReaderTool, webSearchAsTool, ...otherTools],
+  // PAS de handoffs: []
 });
 ```
 
-### 5.2 FileReaderAgent Handoff
+### 5.2 FileReaderAgent (asTool)
 
+**Disponible dans:** Explore, Study (PAS Org)
 **Déclencheur:** L'utilisateur demande des informations sur ses documents (CV, diplômes, etc.)
 
 **Flow:**
 ```
-TalentAgent → handoff → FileReaderAgent → read_document tool → retour TalentAgent
+TalentAgent → tool call file_reader → FileReaderAgent → read_document → résultat retourné → TalentAgent continue
 ```
 
-### 5.3 WebSearchAgent Handoff
+### 5.3 WebSearchAgent (asTool)
 
+**Disponible dans:** Explore, Study, Org
 **Déclencheur:** Les données internes sont insuffisantes et une recherche web est nécessaire.
 
 **Flow:**
 ```
-TalentAgent → handoff → WebSearchAgent → webSearchTool → retour TalentAgent
+TalentAgent/OrgAgent → tool call web_search → WebSearchAgent → webSearchTool → résultat retourné → Agent continue
 ```
 
 ---
@@ -823,44 +867,55 @@ export const EXPLORER_CONTEXT_OPTIONS = {
 interface SSETextDeltaEvent {
   type: 'text_delta';
   delta: string;
-  timestamp: number;
 }
 
 // Début d'appel tool
 interface SSEToolStartEvent {
-  type: 'tool_called';
-  toolName: string;
-  toolArgs: Record<string, unknown>;
-  timestamp: number;
+  type: 'tool_start';
+  tool: {
+    callId: string;
+    name: string;
+    args?: Record<string, unknown>;
+  };
 }
 
 // Fin d'appel tool
 interface SSEToolEndEvent {
-  type: 'tool_output';
-  toolName: string;
-  output: unknown;
-  timestamp: number;
+  type: 'tool_end';
+  tool: {
+    callId: string;
+    name: string;
+    summary?: string;     // Résumé français généré par tool-summary.ts
+    result?: unknown;
+    duration?: number;
+    status: 'success' | 'error';
+    error?: string;
+  };
 }
 
 // Fin du stream
 interface SSEDoneEvent {
   type: 'done';
-  segments: MessageSegment[];
-  timestamp: number;
+  sessionId: string;
 }
 
 // Erreur
 interface SSEErrorEvent {
   type: 'error';
   error: string;
-  timestamp: number;
 }
 
 // Limite atteinte
 interface SSELimitReachedEvent {
   type: 'limit_reached';
-  reason: 'max_tool_calls' | 'timeout';
-  timestamp: number;
+  reason: 'max_tools' | 'max_duration';
+  message: string;
+}
+
+// Correction de contenu (output guardrail)
+interface SSEContentCorrectedEvent {
+  type: 'content_corrected';
+  content: string;
 }
 ```
 
@@ -868,17 +923,20 @@ interface SSELimitReachedEvent {
 
 ```typescript
 interface MessageSegment {
-  order: number;
   type: 'text' | 'tool';
   content?: string;        // Pour type 'text'
   tool?: ToolSegmentData;  // Pour type 'tool'
 }
 
 interface ToolSegmentData {
+  callId: string;
   name: string;
-  args: Record<string, unknown>;
-  output: unknown;
-  duration_ms: number;
+  args?: Record<string, unknown>;
+  result?: unknown;
+  summary?: string;        // Résumé français (tool-summary.ts)
+  duration?: number;
+  status: 'running' | 'success' | 'error';
+  error?: string;
 }
 ```
 
@@ -892,9 +950,10 @@ interface ToolSegmentData {
    - raw_model_stream_event (text delta) → SSETextDeltaEvent
    - run_item_stream_event (tool_called) → SSEToolStartEvent
    - run_item_stream_event (tool_output) → SSEToolEndEvent
-5. Fin: SSEDoneEvent avec segments pour persistance
+5. Fin: SSEDoneEvent avec sessionId
 6. Erreur: SSEErrorEvent
-7. Limite: SSELimitReachedEvent (max tools ou timeout)
+7. Limite: SSELimitReachedEvent (max_tools ou max_duration)
+8. Correction: SSEContentCorrectedEvent (si output guardrail corrige)
 ```
 
 ---
@@ -909,16 +968,17 @@ interface ToolSegmentData {
 export const COPILOT_MODES = {
   EXPLORE: 'explore',
   STUDY: 'study',
+  // ORG mode créé dynamiquement quand organizationId est fourni
 } as const;
 ```
 
 ### 8.2 Limites par Mode
 
-| Mode | Max Tool Calls | Timeout | Handoffs | Vector Query | SQL Query |
-|------|----------------|---------|----------|--------------|-----------|
-| Explore | 12 | 2 min | ✅ | ✅ | ✅ (full) |
-| Study | 12 | 2 min | ✅ | ❌ | ✅ (restreint) |
-| Organization | 12 | 2 min | ✅ | ✅ | ✅ (org scope) |
+| Mode | Max Tool Calls | Timeout | Tools | Vector Query | SQL Query | File Reader |
+|------|----------------|---------|-------|--------------|-----------|-------------|
+| Explore | 12 | 2 min | 6 | ✅ | ✅ (full) | ✅ (asTool) |
+| Study | 12 | 2 min | 7 | ❌ | ✅ (3 intents) | ✅ (asTool) |
+| Organization | 12 | 2 min | 5 | ✅ | ✅ (org scope) | ❌ |
 
 ### 8.3 Variables d'environnement
 
@@ -943,34 +1003,29 @@ DATABASE_URL=postgres://...
 
 ### 9.1 Protection IDOR (Insecure Direct Object Reference)
 
-**Pattern Factory pour sql_query:**
+**6 tools utilisent le pattern Factory (injection côté serveur) :**
+
+| Tool | Factory | Paramètres injectés |
+|------|---------|---------------------|
+| `sql_query` | `createSqlQueryTool(talentId, orgIds?, allowedIntents?)` | talentId dans CHAQUE requête SQL |
+| `generate_document` | `createGenerateDocumentTool(talentId, avatarUrl?)` | talentId pour auto-save |
+| `execute_action` | `createExecuteActionTool(talentId)` | talentId pour validation ownership |
+| `manage_skills` | `createManageSkillsTool(talentId)` | talentId pour CRUD skills |
+| `file_reader` | `createFileReaderTool(talentId)` | talentId pour vérifier ownership document |
+| `cv_pdf_generator` | (interne à generate_document) | avatarUrl pour photo CV |
 
 ```typescript
-// Le talentId est injecté côté serveur, JAMAIS côté client
-export function createSqlQueryTool(authenticatedTalentId: string) {
+// Le talentId est injecté côté serveur, le LLM ne le voit JAMAIS
+export function createSqlQueryTool(
+  authenticatedTalentId: string,
+  authorizedOrgIds?: string[],
+  allowedIntents?: readonly SqlIntent[]
+) {
   return tool({
-    execute: async ({ query }) => {
-      // Toutes les requêtes sont filtrées par le talent authentifié
-      const secureQuery = enforceOwnership(query, authenticatedTalentId);
-      // ...
-    },
-  });
-}
-```
-
-**Pattern Factory pour read_document:**
-
-```typescript
-export function createReadDocumentTool(authenticatedTalentId: string) {
-  return tool({
-    execute: async ({ documentId }) => {
-      // Vérification que le document appartient au talent
-      const doc = await db.query(
-        'SELECT * FROM talent_documents WHERE id = $1 AND talent_id = $2',
-        [documentId, authenticatedTalentId]
-      );
-      if (!doc.rows[0]) throw new Error('Document not found');
-      // ...
+    execute: async ({ intent, paramsJson }) => {
+      // 1. Vérifier que l'intent est autorisé pour ce mode
+      // 2. Injecter talentId/orgIds dans la requête SQL pré-construite
+      // 3. Le LLM n'écrit PAS de SQL — il choisit un intent
     },
   });
 }
@@ -979,9 +1034,9 @@ export function createReadDocumentTool(authenticatedTalentId: string) {
 ### 9.2 Validation des Filtres Vector Query
 
 ```typescript
+// Supprime arrays, objects — seuls les scalaires passent
 function sanitizeFilters(filters?: Record<string, unknown>): Record<string, string | number | boolean> {
   if (!filters) return {};
-
   return Object.fromEntries(
     Object.entries(filters)
       .filter(([_, v]) => ['string', 'number', 'boolean'].includes(typeof v))
@@ -991,9 +1046,10 @@ function sanitizeFilters(filters?: Record<string, unknown>): Record<string, stri
 
 ### 9.3 SQL Injection Protection
 
-- Uniquement les requêtes `SELECT` sont autorisées
-- Paramètres préparés via `pg` library
-- Whitelist de tables accessibles
+- **PAS de SQL arbitraire** — le LLM choisit un `intent` parmi 21 pré-définis
+- Requêtes SQL pré-construites côté serveur dans `sql-query.tool.ts`
+- Paramètres préparés via `pg` library ($1, $2, ...)
+- `talentId` et `orgIds` toujours injectés côté serveur
 
 ---
 
@@ -1102,32 +1158,47 @@ flowchart TD
 |---------|-------------|
 | `src/services/copilot/agents/talent.agent.ts` | TalentAgent (explore/study) |
 | `src/services/copilot/agents/organization.agent.ts` | OrgAgent |
-| `src/services/copilot/tools/vector-query.tool.ts` | Tool vector_query |
-| `src/services/copilot/tools/sql-query.tool.ts` | Tool sql_query |
-| `src/services/copilot/tools/youtube-search.tool.ts` | Tool youtube_search |
-| `src/services/copilot/tools/generate-document.tool.ts` | Tool generate_document |
-| `src/services/copilot/tools/generate-image.tool.ts` | Tool generate_image |
-| `src/services/copilot/tools/generate-diagram.tool.ts` | Tool generate_diagram |
-| `src/services/copilot/tools/file-read.tool.ts` | FileReaderAgent + read_document |
-| `src/services/copilot/tools/web-search.tool.ts` | WebSearchAgent |
+| `src/services/copilot/tools/vector-query.tool.ts` | Tool vector_query (static) |
+| `src/services/copilot/tools/sql-query.tool.ts` | Tool sql_query (factory, 21 intents) |
+| `src/services/copilot/tools/youtube-search.tool.ts` | Tool youtube_search (static) |
+| `src/services/copilot/tools/generate-document.tool.ts` | Tool generate_document (factory) |
+| `src/services/copilot/tools/generate-image.tool.ts` | Tool generate_image (static) |
+| `src/services/copilot/tools/generate-diagram.tool.ts` | Tool generate_diagram (static) |
+| `src/services/copilot/tools/manage-skills.tool.ts` | Tool manage_skills (factory) |
+| `src/services/copilot/tools/execute-action.tool.ts` | Tool execute_action (factory) |
+| `src/services/copilot/tools/cv-pdf-generator.ts` | Utilitaire PDF CV (interne) |
+| `src/services/copilot/tools/file-read.tool.ts` | FileReaderAgent (asTool, gpt-5-mini) |
+| `src/services/copilot/tools/web-search.tool.ts` | WebSearchAgent (asTool, gpt-5-mini) |
 | `src/services/copilot/prompts/talent-explorer.prompt.ts` | Prompt mode Explore |
 | `src/services/copilot/prompts/talent-study.prompt.ts` | Prompt mode Study |
 | `src/services/copilot/prompts/org-explorer.prompt.ts` | Prompt Organization |
-| `src/services/copilot/context.ts` | Context loaders + Zod schema |
+| `src/services/copilot/context.ts` | Context loaders |
+| `src/services/copilot/context-options.ts` | Options par mode (EXPLORER, STUDY, ORG) |
 | `src/services/copilot/types.ts` | Types TypeScript |
 | `src/services/copilot/stream/sse.handler.ts` | SSE streaming |
+| `src/services/copilot/stream/tool-summary.ts` | Résumés français des tool calls |
 | `src/services/copilot/session.service.ts` | Session management |
+| `src/services/copilot/session-summarizer.ts` | Summarization historique (gpt-4.1-nano) |
 | `src/services/copilot/ontology.cache.ts` | Ontology caching |
+| `src/services/copilot/skills/skill.loader.ts` | Chargement des skills par mode |
+| `src/services/copilot/guardrails/input.guardrail.ts` | Input safety (gpt-4.1-nano) |
+| `src/services/copilot/guardrails/output.guardrail.ts` | Output format validation |
+| `src/services/copilot/actions/action.handler.ts` | Confirmation actions (8 actions) |
+| `src/services/copilot/actions/action.validators.ts` | Validateurs pre-action |
+| `src/services/ai/models.ts` | MODEL_T1/T2/T3 constants |
 | `src/routes/copilot.ts` | Route handler |
 
 ### B. Références
 
 - [OpenAI Agents SDK Documentation](https://platform.openai.com/docs/agents)
-- [GPT-4.1 Prompting Guide](https://platform.openai.com/docs/guides/gpt-4-1)
+- [GPT-5 Prompting Guide](https://platform.openai.com/docs/guides/gpt-5)
 - [gpt-image-1 Documentation](https://platform.openai.com/docs/guides/images)
 - [Pinecone Documentation](https://docs.pinecone.io/)
+- `docs/COPILOT_TOOLS_DOCUMENTATION.md` — Documentation audit des 11 tools
+- `docs/COPILOT_AGENT_PERIMETER.md` — Périmètre exact de chaque agent
+- `docs/ontology.md` — Ontologie OWL de la plateforme
 
 ---
 
 > **Maintenu par:** Équipe Etudesk
-> **Dernière révision:** Février 2026
+> **Dernière révision:** 9 février 2026 — aligné avec code GPT-5 + asTool pattern

@@ -404,7 +404,7 @@ export function createSqlQueryTool(
           case 'search_organizations': {
             const { query: q, sectors, limit: lim } = params || {};
             let sql = `
-            SELECT o.id, o.name, o.description, o.sectors, o.slug, o.city, o.country
+            SELECT o.id, o.name, o.description, o.sectors, o.slug, o.headquarters_city as city, o.headquarters_country as country
             FROM organizations o
             WHERE o.deleted_at IS NULL AND o.verification_status IN ('VERIFIED', 'OFFICIAL')
             AND o.is_visible = TRUE`;
@@ -428,6 +428,11 @@ export function createSqlQueryTool(
             const p: any[] = [];
             let idx = 1;
             if (q) { sql += ` AND (COALESCE(t.first_name || ' ' || t.last_name, t.email) ILIKE '%' || $${idx} || '%' OR t.bio ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
+            if (skills && Array.isArray(skills) && skills.length > 0) {
+              sql += ` AND EXISTS (SELECT 1 FROM talent_skills ts WHERE ts.talent_id = t.id AND LOWER(ts.canonical_name) = ANY($${idx}::text[]))`;
+              p.push(skills.map((s: string) => s.toLowerCase()));
+              idx++;
+            }
             sql += ` ORDER BY t.first_name, t.last_name LIMIT $${idx}`;
             p.push((lim as number) || 10);
             const res = await pool.query(sql, p);

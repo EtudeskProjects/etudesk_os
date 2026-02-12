@@ -1,6 +1,6 @@
 # Documentation des Modeles AI - Etudesk VF
 
-> **Derniere mise a jour:** 7 fevrier 2026
+> **Derniere mise a jour:** 12 fevrier 2026
 > **Audit realise sur:** Backend Etudesk VF
 
 ---
@@ -298,7 +298,7 @@ La famille GPT-5 est le successeur direct de GPT-4.1. Les trois modeles (GPT-5, 
 - Max output 4x plus grand (128K vs 32K)
 
 **Mapping Etudesk (migration):**
-- `MODEL_T3 = 'gpt-5-nano'` — Guardrails, titres, suggestions, session summarizer
+- `MODEL_T3 = 'gpt-5-nano'` — Guardrails, titres, suggestions, session summarizer (migre fev 2026)
 
 ---
 
@@ -412,7 +412,7 @@ Version de GPT-5.2 optimisee pour le coding agentique dans Codex:
 
 ### GPT-4o-mini
 
-> **Role:** Generation de formulaires, extraction de donnees, vision
+> **Role:** Historiquement utilise pour generation de formulaires, extraction de donnees, vision
 > **Model ID:** `gpt-4o-mini`
 
 | Caracteristique | Valeur |
@@ -427,17 +427,8 @@ Version de GPT-5.2 optimisee pour le coding agentique dans Codex:
 | Input | $0.15 |
 | Output | $0.60 |
 
-**Utilisation dans Etudesk:**
-
-| Fichier | Service |
-|---------|---------|
-| `services/ai/agent-factory.ts` | Generation formulaires (Space, Community, Opportunity) |
-| `services/space-generation.service.ts` | Pre-remplissage formulaire space |
-| `services/community-generation.service.ts` | Pre-remplissage formulaire community |
-| `services/opportunity-generation.service.ts` | Pre-remplissage formulaire opportunity |
-| `routes/talents.ts` | Generation de bio |
-| `services/kyc-verification.service.ts` | Verification KYC (Vision) |
-| `services/documents/extraction.service.ts` | Extraction metadonnees CV/certificats (Vision) |
+**Utilisation dans Etudesk:** Aucune — remplace par MODEL_T3 (gpt-5-nano) dans tous les services.
+Historiquement utilise pour: form generation, bio generation, KYC verification, extraction CV.
 
 ---
 
@@ -569,7 +560,7 @@ Version de GPT-5.2 optimisee pour le coding agentique dans Codex:
 // backend/src/services/ai/models.ts — EN PRODUCTION
 export const MODEL_T1 = 'gpt-5';       // was: 'gpt-4.1'
 export const MODEL_T2 = 'gpt-5-mini';  // was: 'gpt-4.1-mini'
-export const MODEL_T3 = 'gpt-5-nano';  // was: 'gpt-4.1-nano'
+export const MODEL_T3 = 'gpt-5-nano';  // Migre fev 2026 — 2x moins cher en input, image input supporte
 
 // FUTURE OPTION: Migration vers GPT-5.2 (flagship, reasoning)
 // export const MODEL_T1 = 'gpt-5.2';          // ou 'gpt-5.2-chat-latest' pour instant
@@ -739,4 +730,4 @@ L'adherence a ces 3 instructions simples augmente le score SWE-bench Verified de
 
 ---
 
-*Document mis a jour le 7 fevrier 2026 — inclut GPT-5, GPT-5-mini, GPT-5-nano, GPT-5.2, GPT-5.2-Pro, GPT-5.2-Codex*
+*Document mis a jour le 12 fevrier 2026 — inclut GPT-5, GPT-5-mini, GPT-5-nano (MODEL_T3 migre), GPT-5.2, GPT-5.2-Pro, GPT-5.2-Codex*

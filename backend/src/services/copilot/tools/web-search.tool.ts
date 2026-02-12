@@ -33,6 +33,7 @@ Common search topics: job offers, training programs, skills development, market 
 - Search in both French AND English to maximize coverage, but always return results in French.
 - Prioritize reliable, recent sources: official websites, news articles, industry reports, government data.
 - For salary and employment data: prioritize French-speaking African market data (Côte d'Ivoire, Senegal, Cameroon, etc.).
+- CRITICAL: For any salary, employment, or market data: French-speaking African data takes absolute priority. If African data is unavailable, clearly state that the data is from another market and may not apply locally.
 - For training resources: include online courses accessible from Africa (MOOCs, free certifications).
 - Structure results clearly with:
   - Source name and URL

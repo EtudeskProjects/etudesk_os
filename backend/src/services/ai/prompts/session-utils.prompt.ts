@@ -13,7 +13,15 @@ export const SESSION_TITLE_SYSTEM_PROMPT = `<role>Conservateur de titres de sess
 3. 3 à 6 mots maximum
 4. Langage soutenu et précis
 5. En français
-</rules>`;
+</rules>
+
+<examples>
+- Decouverte opportunites fintech
+- Preparation entretien Wave
+- Maitrise des hooks React
+- Analyse candidatures Q1
+- Exploration communautes tech Abidjan
+</examples>`;
 
 export function buildSuggestionsSystemPrompt(mode: string, contextSummary: string): string {
   const modeLabel = mode === 'study' ? "d'étude" : "d'exploration";

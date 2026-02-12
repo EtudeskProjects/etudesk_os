@@ -339,10 +339,19 @@ try {
 ### 1. Architecture Multi-Agent Actuelle
 
 ```
-TalentAgent (explore/study) ─┬─► FileReaderAgent (handoff)
-                             └─► WebSearchAgent (handoff)
-OrgAgent ───────────────────────► (même pattern)
+TalentAgent (explore) ── tools: vector_query, sql_query, generate_document,
+                                file_reader (asTool), web_search (asTool), execute_action
+
+TalentAgent (study)   ── tools: sql_query (restreint), youtube_search, generate_image,
+                                generate_diagram, file_reader (asTool), web_search (asTool),
+                                manage_skills
+
+OrgAgent              ── tools: vector_query, sql_query (org_* + search_*),
+                                generate_document, web_search (asTool), execute_action
 ```
+
+> **Note:** Etudesk utilise `asTool()` (sub-agent encapsulé comme tool), PAS `handoff()`.
+> FileReaderAgent et WebSearchAgent sont des agents gpt-5-mini wrappés via `agent.asTool()`.
 
 ### 2. Memory Pattern Recommandé
 

@@ -90,50 +90,37 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     // Initialize SSE
     initSSE(res);
 
-    // Get existing session or create a new one
-    let sessionId = inputSessionId;
-    let session: any = null;
-
-    if (sessionId) {
-      // Load the existing session (ownership check via talentId)
-      session = await copilotService.getSession(sessionId, talentId);
-      if (!session) {
-        // Session not found or doesn't belong to user — create a fresh one
-        session = await copilotService.createSession(talentId, validMode);
-        sessionId = session.id;
-      }
-    } else {
-      session = await copilotService.createSession(talentId, validMode);
-      sessionId = session.id;
-    }
-
-    // Load talent context with mode-specific options
+    // --- PHASE 1: Session + Context + Language in parallel ---
     const isOrg = !!organizationId;
     const contextOptions = isOrg
       ? ORG_CONTEXT_OPTIONS
       : validMode === COPILOT_MODES.STUDY
         ? STUDY_CONTEXT_OPTIONS
         : EXPLORER_CONTEXT_OPTIONS;
-    const talentContext = await loadTalentContext(talentId, contextOptions);
 
-    // Get user's preferred language from DB (takes priority over Accept-Language header)
-    let userLanguage: 'fr' | 'en' = 'fr';
-    if (req.userId) {
-      const langRes = await pool.query(
-        'SELECT preferred_language FROM users WHERE id = $1',
-        [req.userId]
-      );
-      const dbLang = langRes.rows[0]?.preferred_language;
-      if (dbLang === 'en' || dbLang === 'fr') {
-        userLanguage = dbLang;
-      }
-    }
+    const [session, talentContext, userLanguage] = await Promise.all([
+      // Session (create or get)
+      (async () => {
+        if (inputSessionId) {
+          const existing = await copilotService.getSession(inputSessionId, talentId);
+          if (existing) return existing;
+        }
+        return copilotService.createSession(talentId, validMode);
+      })(),
+      // Context loading
+      loadTalentContext(talentId, contextOptions),
+      // Language preference
+      req.userId
+        ? pool.query('SELECT preferred_language FROM users WHERE id = $1', [req.userId])
+            .then(r => { const l = r.rows[0]?.preferred_language; return (l === 'en' || l === 'fr') ? l as 'fr' | 'en' : 'fr' as const; })
+        : Promise.resolve('fr' as const),
+    ]);
+    const sessionId = session.id;
 
-    // Build agent context
+    // Build agent context (CPU only, instant)
     let agent: any;
 
     if (isOrg) {
-      // Find org info
       const orgInfo = talentContext.organizations?.organizations?.find(
         (o: any) => o.organizationId === organizationId
       );
@@ -160,29 +147,39 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       agent = createTalentAgent(talentCtx);
     }
 
-    // Load attachment details if provided
-    let messageAttachments = null;
-    if (attachmentIds && Array.isArray(attachmentIds) && attachmentIds.length > 0) {
-      const attachRes = await pool.query(
-        `SELECT id, original_filename as name, file_url as url, mime_type as type, file_size as size 
-         FROM talent_documents WHERE id = ANY($1) AND talent_id = $2`,
-        [attachmentIds, talentId]
-      );
-      messageAttachments = JSON.stringify(attachRes.rows);
-    }
-
-    // Save user message
+    // Save user message FIRST (needed in history)
     await pool.query(
       `INSERT INTO copilot_messages (session_id, role, content, attachments) VALUES ($1, 'user', $2, $3)`,
-      [sessionId, sanitizeForPg(message.trim()), sanitizeJsonForPg(messageAttachments)]
+      [sessionId, sanitizeForPg(message.trim()), sanitizeJsonForPg(null)]
     );
 
-    // Get conversation history for context
-    const historyRes = await pool.query(
-      `SELECT role, content FROM copilot_messages
-       WHERE session_id = $1 ORDER BY created_at ASC LIMIT 20`,
-      [sessionId]
-    );
+    // --- PHASE 2: Attachments + Load history in parallel ---
+    const [messageAttachments, historyRes] = await Promise.all([
+      // Attachments (optional)
+      (attachmentIds && Array.isArray(attachmentIds) && attachmentIds.length > 0)
+        ? pool.query(
+            `SELECT id, original_filename as name, file_url as url, mime_type as type, file_size as size
+             FROM talent_documents WHERE id = ANY($1) AND talent_id = $2`,
+            [attachmentIds, talentId]
+          ).then(r => JSON.stringify(r.rows))
+        : Promise.resolve(null as string | null),
+      // Load history (includes the user message we just saved)
+      pool.query(
+        `SELECT role, content FROM copilot_messages
+         WHERE session_id = $1 ORDER BY created_at ASC LIMIT 20`,
+        [sessionId]
+      ),
+    ]);
+
+    // Update user message with attachments if present (non-blocking, fire-and-forget)
+    if (messageAttachments) {
+      pool.query(
+        `UPDATE copilot_messages SET attachments = $1
+         WHERE session_id = $2 AND role = 'user' ORDER BY created_at DESC LIMIT 1`,
+        [sanitizeJsonForPg(messageAttachments), sessionId]
+      ).catch(() => {});
+    }
+
     // Exclude the user message we just added (last one), then summarize if needed
     const rawHistory = historyRes.rows.slice(0, -1).map((r: any) => ({
       role: r.role,

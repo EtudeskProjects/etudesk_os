@@ -76,9 +76,13 @@ export function generateToolSummary(
           const count = output.length;
           countText = count > 0 ? `${count} élément${count > 1 ? 's' : ''}` : 'Aucun résultat';
         } else if (typeof output === 'object' && output !== null) {
-          const rows = (output as any)?.rows || (output as any)?.data;
-          if (Array.isArray(rows)) {
-            const count = rows.length;
+          // Search for the first array value in the output object
+          // Handles: { applications: [...] }, { communities: [...] }, { skills: [...] }, etc.
+          const obj = output as Record<string, unknown>;
+          const arrayKey = Object.keys(obj).find(k => Array.isArray(obj[k]));
+          if (arrayKey) {
+            const arr = obj[arrayKey] as unknown[];
+            const count = arr.length;
             countText = count > 0 ? `${count} élément${count > 1 ? 's' : ''}` : 'Aucun résultat';
           }
         }
