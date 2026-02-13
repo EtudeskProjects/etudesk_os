@@ -1,7 +1,7 @@
 # Copilot Agent Perimeter — Guide des Cas d'Usage
 
 > Definition exacte du perimetre de chaque mode avec exemples, processus de reflexion et reponses ideales.
-> Mis a jour : 09 Fevrier 2026 — aligne avec audit COPILOT_TOOLS_DOCUMENTATION.md
+> Mis a jour : 13 Fevrier 2026 — aligne avec audit COPILOT_TOOLS_DOCUMENTATION.md
 
 ---
 
@@ -84,14 +84,14 @@
 | Tool | Explorer (talent) | Study (talent) | Org Explorer |
 |------|:-:|:-:|:-:|
 | `vector_query` | x | | x |
-| `sql_query` | x (21 intents) | x (my_profile, my_skills, my_documents) | x (org_* + search_* = 13 intents) |
+| `sql_query` | x (28 intents) | x (my_profile, my_skills, my_documents) | x (org_* + search_* = 18 intents) |
 | `youtube_search` | | x | |
 | `generate_document` | x | | x |
 | `generate_image` | | x | |
 | `generate_diagram` | | x | |
 | `manage_skills` | | x | |
 | `execute_action` | x | | x |
-| `file_reader` | x | x | |
+| `file_reader` | x | x | x |
 | `web_search` | x | x | x |
 | `cv_pdf_generator` | (interne, via generate_document) | | (interne) |
 
@@ -138,13 +138,14 @@
 | **Candidatures** | Statut, historique, soumission | — |
 | **Invitations** | Accepter, decliner | — |
 | **Creation d'entites** | Via confirmation (si admin org) | Creation directe |
+| **Communautes (activites)** | Feed d'activites, membres (communautes rejointes) | Creation, moderation |
 
 ### Tools Disponibles (6 tools)
 
 | Tool | Pattern | Fichier source | Usage |
 |------|---------|---------------|-------|
 | `vector_query` | Static export | vector-query.tool.ts | Recherche semantique Pinecone (5 namespaces : opportunities, communities, spaces, talents, organizations) |
-| `sql_query` | Factory (talentId, orgIds) | sql-query.tool.ts | 21 intents : 8 my_* + 8 org_* + 5 search_* — donnees personnelles et org |
+| `sql_query` | Factory (talentId, orgIds) | sql-query.tool.ts | 28 intents : 10 my_* + 13 org_* + 5 search_* — donnees personnelles et org |
 | `generate_document` | Factory (talentId, avatarUrl) | generate-document.tool.ts | Generation PDF/DOCX/CSV/XLS/TXT + CV elegant via cv_pdf_generator |
 | `file_reader` | Factory → asTool (gpt-5-mini) | file-read.tool.ts | Sub-agent lecture documents (PDF, texte, images metadata) |
 | `web_search` | Agent asTool (gpt-5-mini) | web-search.tool.ts | Sub-agent recherche web externe |
@@ -723,29 +724,32 @@ Je te propose un mini-cours sur les JOINs avec des exercices pratiques ?
 | **Espaces propres** | Liste, stats, **creation via confirmation** | Modification, suppression |
 | **Recherche talents** | Profils, competences | Contact direct |
 | **Rapports** | Generation PDF | — |
+| **Documents** | Liste, lecture, analyse (PDF, contrats, fiches de poste) | Suppression, modification |
+| **Talents CRM** | Vue agregee 4 sources, profil detaille, skills | Contact direct |
+| **Activites communautes** | Feed (posts, events, polls), membres | Creation, moderation |
 | **Donnees personnelles** | — | my_profile, my_documents, my_skills (rediriger vers Explorer) |
 | **Autres organisations** | — | Tout acces |
 
-### Tools Disponibles (5 tools)
+### Tools Disponibles (6 tools)
 
 | Tool | Pattern | Fichier source | Usage |
 |------|---------|---------------|-------|
-| `sql_query` (restreint org) | Factory (talentId, [orgId], allowedIntents) | sql-query.tool.ts | org_* (8 intents) + search_* (5 intents) = 13 intents |
+| `sql_query` (restreint org) | Factory (talentId, [orgId], allowedIntents) | sql-query.tool.ts | org_* (13 intents) + search_* (5 intents) = 18 intents |
 | `vector_query` | Static export | vector-query.tool.ts | Recherche talents, opportunites marche (namespace talents, opportunities) |
 | `generate_document` | Factory (talentId) | generate-document.tool.ts | Fiches de poste, rapports, exports PDF/DOCX/CSV/XLS/TXT |
+| `file_reader` | Factory → asTool (gpt-5-mini) | file-read.tool.ts | Sub-agent lecture documents organisation (PDF, contrats, policies) |
 | `web_search` | Agent asTool (gpt-5-mini) | web-search.tool.ts | Benchmark marche, tendances secteur |
 | `execute_action` | Factory (talentId) | execute-action.tool.ts | 5 actions talent (apply, join, book, accept/decline) |
 
-**Tools NON disponibles en Organization (6 bloques) :**
-- `file_reader` — pas d'acces aux documents personnels
+**Tools NON disponibles en Organization (5 bloques) :**
 - `manage_skills` — pas de gestion de competences
 - `youtube_search` — pas de recherche video
 - `generate_image` — pas de generation d'images
 - `generate_diagram` — pas de generation de diagrammes
 - `cv_pdf_generator` — pas de generation CV
 
-**Intents SQL autorises en mode Org (13 sur 21 totaux) :**
-`org_members`, `org_applications`, `org_stats`, `org_opportunities`, `org_communities`, `org_spaces`, `org_revenue`, `org_invitations`, `search_opportunities`, `search_communities`, `search_spaces`, `search_organizations`, `search_talents`
+**Intents SQL autorises en mode Org (18 sur 28 totaux) :**
+`org_members`, `org_applications`, `org_stats`, `org_opportunities`, `org_communities`, `org_spaces`, `org_revenue`, `org_invitations`, `org_documents`, `org_talents`, `org_talent_profile`, `org_community_feed`, `org_community_members`, `search_opportunities`, `search_communities`, `search_spaces`, `search_organizations`, `search_talents`
 
 **Intents SQL bloques en mode Org :**
 `my_profile`, `my_applications`, `my_reservations`, `my_invitations`, `my_communities`, `my_bookmarks`, `my_documents`, `my_skills`
@@ -1114,7 +1118,7 @@ Tu veux que je prepare les questions d'entretien pour le Top 3 ?
 
 ## Securite — Patterns IDOR (source : COPILOT_TOOLS_DOCUMENTATION.md)
 
-6 tools sur 11 utilisent le pattern **factory avec injection de `authenticatedTalentId`** :
+7 tools sur 12 utilisent le pattern **factory avec injection de `authenticatedTalentId`** :
 
 ```typescript
 // Le talentId est injecte a la creation du tool, pas passe par l'agent
@@ -1123,6 +1127,7 @@ createExecuteActionTool(authenticatedTalentId)
 createManageSkillsTool(authenticatedTalentId)
 createGenerateDocumentTool(authenticatedTalentId, avatarUrl?)
 createFileReaderTool(authenticatedTalentId)  // sub-agent, verifie document ownership
+createOrgFileReaderTool(organizationId)  // sub-agent, verifie document ownership org
 // action.handler.ts recoit aussi authenticatedTalentId pour les confirmations
 ```
 
@@ -1131,7 +1136,7 @@ createFileReaderTool(authenticatedTalentId)  // sub-agent, verifie document owne
 **Garanties :**
 - L'agent ne peut pas usurper l'identite d'un autre utilisateur
 - Les queries SQL sont filtrees par `authenticatedTalentId` (IDOR impossible)
-- `allowedIntents` restreint les intents par mode (Study: 3, Org: 13, Explore: 21)
+- `allowedIntents` restreint les intents par mode (Study: 3, Org: 18, Explore: 28)
 - `authorizedOrgIds` limite l'acces aux organisations du user
 - Les actions de creation verifient le role (OWNER/ADMIN) dans l'organisation cote backend
 - `file_reader` verifie que le document appartient au talent avant lecture
@@ -1179,6 +1184,10 @@ Validation post-reponse (log, ne bloque pas) :
 | **Publier une offre** | oui (admin org) | non | oui |
 | **Creer une communaute** | oui (admin org) | non | oui |
 | **Creer un espace** | oui (admin org) | non | oui |
+| Documents organisation (lecture) | — | non | oui |
+| Talents CRM (agregé) | — | non | oui |
+| Activites communautaires | oui (via my_community_feed) | non | oui (via org_community_feed) |
+| Membres communaute | oui (via my_community_members) | non | oui (via org_community_members) |
 
 ### Cartes Entites par Mode
 
@@ -1332,6 +1341,6 @@ Le client recoit des events SSE pendant l'execution des tools :
 
 ---
 
-> **Document mis a jour** : 09 Fevrier 2026
+> **Document mis a jour** : 13 Fevrier 2026
 > **Regle critique** : IDs seulement, jamais de donnees generees
 > **Reference technique** : Voir COPILOT_TOOLS_DOCUMENTATION.md pour les parametres, retours reels et exemples d'output de chaque tool

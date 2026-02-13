@@ -32,7 +32,7 @@
 │  │   TalentAgent     │  │   TalentAgent     │  │     OrgAgent      │       │
 │  │    (explore)      │  │     (study)       │  │   (organization)  │       │
 │  │    gpt-5          │  │     gpt-5         │  │     gpt-5         │       │
-│  │    6 tools        │  │     7 tools       │  │     5 tools       │       │
+│  │    6 tools        │  │     7 tools       │  │     6 tools       │       │
 │  └─────────┬─────────┘  └─────────┬─────────┘  └─────────┬─────────┘       │
 │            │                      │                      │                  │
 │            └──────────────────────┼──────────────────────┘                  │
@@ -170,29 +170,33 @@ return new Agent({
 | **Guardrails** | inputSafetyGuardrail, outputFormatGuardrail |
 | **Description** | Agent de gestion d'organisation : gestion des membres, candidatures, analytics, création de ressources |
 
-**Tools disponibles (5):**
+**Tools disponibles (6):**
 | Tool | Type | Description |
 |------|------|-------------|
 | `vector_query` | Static | Recherche de talents/compétences |
 | `sql_query` | Factory (IDOR, org scope) | Données organisation (org_* + search_* uniquement) |
 | `generate_document` | Factory (IDOR) | Génération de rapports/fiches de poste |
+| `file_reader` | asTool (gpt-5-mini) | Lecture et analyse des documents organisation |
 | `web_search` | asTool (gpt-5-mini) | Recherche web (données marché) |
 | `execute_action` | Factory (IDOR) | Actions confirmées (publish_opportunity, create_community, create_space via confirmation UI) |
 
-**SQL Intents autorisés (13):**
+**SQL Intents autorisés (18):**
 ```
 org_members, org_applications, org_stats, org_opportunities,
 org_communities, org_spaces, org_revenue, org_invitations,
-search_opportunities, search_communities, search_spaces,
-search_organizations, search_talents
+org_documents, org_talents, org_talent_profile, org_community_feed,
+org_community_members, search_opportunities, search_communities,
+search_spaces, search_organizations, search_talents
 ```
 
 **Restrictions Mode Org:**
-- PAS d'accès à `file_reader` (pas de lecture de documents personnels)
+- file_reader disponible pour les documents organisation (PAS les documents personnels du talent)
 - PAS d'accès aux intents personnels (my_profile, my_documents, my_skills, etc.)
 - PAS d'accès à `youtube_search`, `generate_image`, `generate_diagram`, `manage_skills`
 
 ```typescript
+import { createOrgFileReaderTool } from '../tools/file-read.tool';
+
 // Création de l'agent (simplifié)
 return new Agent({
   name: 'Organization Explorer',
@@ -202,6 +206,7 @@ return new Agent({
     vectorQueryTool,
     secureSqlTool,  // restricted to ORG_ALLOWED_INTENTS
     createGenerateDocumentTool(context.talentId),
+    orgFileReaderTool,
     webSearchAsTool,
     createExecuteActionTool(context.talentId),
   ],
@@ -489,10 +494,11 @@ export function createSqlQueryTool(
 )
 ```
 
-**21 intents implémentés:**
+**28 intents implémentés:**
 - **Talent (8):** `my_profile`, `my_applications`, `my_reservations`, `my_invitations`, `my_communities`, `my_bookmarks`, `my_documents`, `my_skills`
-- **Org (8):** `org_members`, `org_applications`, `org_stats`, `org_opportunities`, `org_communities`, `org_spaces`, `org_revenue`, `org_invitations`
+- **Org (13):** `org_members`, `org_applications`, `org_stats`, `org_opportunities`, `org_communities`, `org_spaces`, `org_revenue`, `org_invitations`, `org_documents`, `org_talents`, `org_talent_profile`, `org_community_feed`, `org_community_members`
 - **Search (5):** `search_opportunities`, `search_communities`, `search_spaces`, `search_organizations`, `search_talents`
+- **Talent Community (2):** `my_community_feed`, `my_community_members`
 
 **Sécurité:** Le `talentId` est injecté côté serveur dans CHAQUE requête SQL. Le LLM ne voit jamais les IDs et ne peut pas écrire de SQL arbitraire.
 
@@ -683,7 +689,7 @@ new Agent({
 
 ### 5.2 FileReaderAgent (asTool)
 
-**Disponible dans:** Explore, Study (PAS Org)
+**Disponible dans:** Explore, Study, Org (documents organisation)
 **Déclencheur:** L'utilisateur demande des informations sur ses documents (CV, diplômes, etc.)
 
 **Flow:**
@@ -978,7 +984,7 @@ export const COPILOT_MODES = {
 |------|----------------|---------|-------|--------------|-----------|-------------|
 | Explore | 12 | 2 min | 6 | ✅ | ✅ (full) | ✅ (asTool) |
 | Study | 12 | 2 min | 7 | ❌ | ✅ (3 intents) | ✅ (asTool) |
-| Organization | 12 | 2 min | 5 | ✅ | ✅ (org scope) | ❌ |
+| Organization | 12 | 2 min | 6 | ✅ | ✅ (org scope) | ✅ (org docs) |
 
 ### 8.3 Variables d'environnement
 
@@ -1003,7 +1009,7 @@ DATABASE_URL=postgres://...
 
 ### 9.1 Protection IDOR (Insecure Direct Object Reference)
 
-**6 tools utilisent le pattern Factory (injection côté serveur) :**
+**7 tools utilisent le pattern Factory (injection côté serveur) :**
 
 | Tool | Factory | Paramètres injectés |
 |------|---------|---------------------|
@@ -1012,6 +1018,7 @@ DATABASE_URL=postgres://...
 | `execute_action` | `createExecuteActionTool(talentId)` | talentId pour validation ownership |
 | `manage_skills` | `createManageSkillsTool(talentId)` | talentId pour CRUD skills |
 | `file_reader` | `createFileReaderTool(talentId)` | talentId pour vérifier ownership document |
+| `file_reader (org)` | `createOrgFileReaderTool(orgId)` | orgId pour vérifier ownership document |
 | `cv_pdf_generator` | (interne à generate_document) | avatarUrl pour photo CV |
 
 ```typescript
@@ -1046,7 +1053,7 @@ function sanitizeFilters(filters?: Record<string, unknown>): Record<string, stri
 
 ### 9.3 SQL Injection Protection
 
-- **PAS de SQL arbitraire** — le LLM choisit un `intent` parmi 21 pré-définis
+- **PAS de SQL arbitraire** — le LLM choisit un `intent` parmi 28 pré-définis
 - Requêtes SQL pré-construites côté serveur dans `sql-query.tool.ts`
 - Paramètres préparés via `pg` library ($1, $2, ...)
 - `talentId` et `orgIds` toujours injectés côté serveur
@@ -1159,7 +1166,7 @@ flowchart TD
 | `src/services/copilot/agents/talent.agent.ts` | TalentAgent (explore/study) |
 | `src/services/copilot/agents/organization.agent.ts` | OrgAgent |
 | `src/services/copilot/tools/vector-query.tool.ts` | Tool vector_query (static) |
-| `src/services/copilot/tools/sql-query.tool.ts` | Tool sql_query (factory, 21 intents) |
+| `src/services/copilot/tools/sql-query.tool.ts` | Tool sql_query (factory, 28 intents) |
 | `src/services/copilot/tools/youtube-search.tool.ts` | Tool youtube_search (static) |
 | `src/services/copilot/tools/generate-document.tool.ts` | Tool generate_document (factory) |
 | `src/services/copilot/tools/generate-image.tool.ts` | Tool generate_image (static) |

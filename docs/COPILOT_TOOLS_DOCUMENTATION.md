@@ -41,14 +41,14 @@
 | Tool | Explorer (talent) | Study (talent) | Org Explorer |
 |------|:-:|:-:|:-:|
 | vector_query | x | | x |
-| sql_query | x (full) | x (my_profile, my_skills, my_documents) | x (org_* + search_*) |
+| sql_query | x (28 intents) | x (my_profile, my_skills, my_documents) | x (org_* + search_* = 18 intents) |
 | youtube_search | | x | |
 | generate_document | x | | x |
 | generate_image | | x | |
 | generate_diagram | | x | |
 | manage_skills | | x | |
 | execute_action | x | | x |
-| file_reader | x | x | |
+| file_reader | x | x | x |
 | web_search | x | x | x |
 
 ---
@@ -206,6 +206,8 @@
           'my_communities' | 'my_bookmarks' | 'my_documents' | 'my_skills' |
           'org_members' | 'org_applications' | 'org_stats' | 'org_opportunities' |
           'org_communities' | 'org_spaces' | 'org_revenue' | 'org_invitations' |
+          'org_documents' | 'org_talents' | 'org_talent_profile' | 'org_community_feed' | 'org_community_members' |
+          'my_community_feed' | 'my_community_members' |
           'search_opportunities' | 'search_communities' | 'search_spaces' |
           'search_organizations' | 'search_talents';
   paramsJson: string;  // JSON string. Ex: '{"status":"PENDING"}', '{"organizationId":"uuid"}', '{"query":"React","limit":5}'
@@ -347,6 +349,163 @@
 #### Edge: intent bloque (study mode)
 ```json
 { "error": "L'intent 'my_applications' n'est pas disponible dans ce mode. Intents autorises : my_profile, my_skills, my_documents" }
+```
+
+#### org_documents
+```json
+// Input: paramsJson: '{"organizationId":"uuid","type":"CONTRACT"}'
+// Output:
+{
+  "documents": [
+    {
+      "id": "...",
+      "title": "Contrat de prestation",
+      "original_filename": "contrat_prestation.pdf",
+      "document_type": "CONTRACT",
+      "category": "LEGAL",
+      "status": "PROCESSED",
+      "description": "Contrat de prestation de services",
+      "tags": [],
+      "created_at": "2026-02-10T10:00:00.000Z",
+      "uploader_name": "Lamine Barro"
+    }
+  ]
+}
+```
+
+#### org_talents
+```json
+// Input: paramsJson: '{"organizationId":"uuid","source":"APPLICATION","limit":5}'
+// Output:
+{
+  "talents": [
+    {
+      "id": "...",
+      "display_name": "Amadou Diallo",
+      "bio": "Developpeur Full-Stack...",
+      "city": "Abidjan",
+      "country": "CI",
+      "sources": ["APPLICATION", "COMMUNITY"],
+      "first_interaction": "2026-01-15T08:00:00.000Z",
+      "last_interaction": "2026-02-10T14:00:00.000Z",
+      "is_favorite": true
+    }
+  ]
+}
+```
+
+#### org_talent_profile
+```json
+// Input: paramsJson: '{"organizationId":"uuid","talentId":"talent-uuid"}'
+// Output:
+{
+  "profile": {
+    "id": "talent-uuid",
+    "display_name": "Amadou Diallo",
+    "bio": "Developpeur Full-Stack...",
+    "city": "Abidjan",
+    "country": "CI",
+    "sectors": ["TECHNOLOGY"],
+    "goals": ["FIND_JOB"]
+  },
+  "skills": [
+    { "name": "React", "type": "HARD_SKILL", "proficiency_level": "ADVANCED" },
+    { "name": "Node.js", "type": "HARD_SKILL", "proficiency_level": "INTERMEDIATE" }
+  ]
+}
+```
+
+#### Edge: talent sans interaction avec l'org
+```json
+{ "error": "Ce talent n'a aucune interaction avec votre organisation" }
+```
+
+#### org_community_feed
+```json
+// Input: paramsJson: '{"organizationId":"uuid","communityId":"comm-uuid","type":"EVENT","limit":5}'
+// Output:
+{
+  "activities": [
+    {
+      "id": "...",
+      "type": "EVENT",
+      "content": "Meetup Tech Abidjan #12",
+      "metadata": {"date":"2026-03-01","location":"Hub Cocody"},
+      "reactions_count": 15,
+      "comments_count": 3,
+      "is_pinned": false,
+      "author_name": "Lamine Barro",
+      "published_at": "2026-02-10T12:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### org_community_members
+```json
+// Input: paramsJson: '{"organizationId":"uuid","communityId":"comm-uuid","role":"ADMIN"}'
+// Output:
+{
+  "members": [
+    {
+      "id": "...",
+      "display_name": "Lamine Barro",
+      "role": "ADMIN",
+      "bio": "Entrepreneur tech...",
+      "city": "Abidjan",
+      "country": "CI",
+      "joined_at": "2026-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### Edge: communaute n'appartient pas a l'org
+```json
+{ "error": "Communaute non trouvee ou n'appartient pas a votre organisation" }
+```
+
+#### my_community_feed
+```json
+// Input: paramsJson: '{"communityId":"comm-uuid","limit":5}'
+// Output:
+{
+  "activities": [
+    {
+      "id": "...",
+      "type": "POST",
+      "content": "Bienvenue aux nouveaux membres !",
+      "metadata": {},
+      "reactions_count": 8,
+      "comments_count": 2,
+      "is_pinned": true,
+      "author_name": "Hasma Gbane",
+      "published_at": "2026-02-09T09:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### my_community_members
+```json
+// Input: paramsJson: '{"communityId":"comm-uuid","role":"MEMBER","limit":10}'
+// Output:
+{
+  "members": [
+    {
+      "id": "...",
+      "display_name": "Wilfried Dali",
+      "role": "MEMBER",
+      "bio": "DGA Etudesk...",
+      "joined_at": "2026-01-15T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### Edge: pas membre de la communaute
+```json
+{ "error": "Tu n'es pas membre de cette communaute" }
 ```
 
 ---
@@ -715,6 +874,19 @@ Le main agent passe un message texte contenant le documentId. Exemple:
 | `image/*` | Metadata uniquement (vision dans le main agent) |
 | Autres | Metadata uniquement |
 
+### file_reader pour documents organisation
+
+**Disponible dans:** Organization (en plus de Explore et Study pour les documents talent)
+**Pattern:** Factory → sub-agent asTool. `createOrgFileReaderTool(orgId)`
+**Securite:** Le read_document interne verifie que le document appartient a l'organisation (IDOR).
+
+Le file_reader en mode org fonctionne de la meme maniere que pour les talents, mais interroge la table `organization_documents` au lieu de `talent_documents`.
+
+**Workflow type (mode Org):**
+1. `sql_query` intent `org_documents` → liste des documents
+2. `file_reader` avec documentId → lecture du contenu
+3. Agent analyse et propose des actions (ex: creer une opportunite depuis une fiche de poste)
+
 ---
 
 ## 10. web_search (WebSearchAgent Handoff)
@@ -804,6 +976,13 @@ Le client recoit des events SSE pendant l'execution:
 |------|--------------------|
 | vector_query | "3 resultats . opportunites" |
 | sql_query | "30 elements . Mes competences" |
+| sql_query (org_documents) | "5 documents . Documents organisation" |
+| sql_query (org_talents) | "12 talents . Talents organisation" |
+| sql_query (org_talent_profile) | "Profil talent . Amadou Diallo" |
+| sql_query (org_community_feed) | "8 activites . Feed communaute" |
+| sql_query (org_community_members) | "15 membres . Membres communaute" |
+| sql_query (my_community_feed) | "6 activites . Mon feed communaute" |
+| sql_query (my_community_members) | "10 membres . Membres communaute" |
 | youtube_search | "1 video trouvee" |
 | generate_document | "Document genere . CV Lamine Barro (sauvegarde)" |
 | generate_image | "Image generee" |
@@ -820,7 +999,7 @@ Le client recoit des events SSE pendant l'execution:
 | Tool | Fichier | Pattern |
 |------|---------|---------|
 | vector_query | `services/copilot/tools/vector-query.tool.ts` | Static export |
-| sql_query | `services/copilot/tools/sql-query.tool.ts` | Factory (talentId, orgIds, intents) |
+| sql_query | `services/copilot/tools/sql-query.tool.ts` | Factory (talentId, orgIds, intents) — 28 intents |
 | youtube_search | `services/copilot/tools/youtube-search.tool.ts` | Static export |
 | generate_document | `services/copilot/tools/generate-document.tool.ts` | Factory (talentId, avatarUrl) |
 | generate_image | `services/copilot/tools/generate-image.tool.ts` | Static export |

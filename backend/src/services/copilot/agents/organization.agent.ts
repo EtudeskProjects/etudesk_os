@@ -11,6 +11,7 @@ import { createSqlQueryTool } from '../tools/sql-query.tool';
 import { createGenerateDocumentTool } from '../tools/generate-document.tool';
 import { webSearchAsTool } from '../tools/web-search.tool';
 import { createExecuteActionTool } from '../tools/execute-action.tool';
+import { createOrgFileReaderTool } from '../tools/file-read.tool';
 import { inputSafetyGuardrail } from '../guardrails/input.guardrail';
 import { outputFormatGuardrail } from '../guardrails/output.guardrail';
 import { buildOrgExplorerPrompt } from '../prompts/org-explorer.prompt';
@@ -25,6 +26,11 @@ const ORG_ALLOWED_INTENTS = [
   'org_spaces',
   'org_revenue',
   'org_invitations',
+  'org_documents',
+  'org_talents',
+  'org_talent_profile',
+  'org_community_feed',
+  'org_community_members',
   'search_opportunities',
   'search_communities',
   'search_spaces',
@@ -37,6 +43,8 @@ export function createOrgAgent(context: OrgContext): Agent {
   // SECURITY: blocks my_profile, my_documents, my_skills, etc. — no access to admin's personal data
   const secureSqlTool = createSqlQueryTool(context.talentId, [context.organizationId], ORG_ALLOWED_INTENTS);
 
+  const orgFileReaderTool = createOrgFileReaderTool(context.organizationId);
+
   return new Agent({
     name: 'Organization Explorer',
     model: MODEL_T1,
@@ -47,6 +55,7 @@ export function createOrgAgent(context: OrgContext): Agent {
       createGenerateDocumentTool(context.talentId),
       webSearchAsTool,
       createExecuteActionTool(context.talentId),
+      orgFileReaderTool,
     ],
     inputGuardrails: [inputSafetyGuardrail],
     outputGuardrails: [outputFormatGuardrail],

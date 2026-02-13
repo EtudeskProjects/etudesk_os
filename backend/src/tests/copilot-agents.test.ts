@@ -504,6 +504,49 @@ const TESTS: TestDef[] = [
     targetTool: 'none',
     message: 'Publie une offre de stage en communication digitale a Abidjan, 3 mois',
   },
+  // --- New Intent Tests (Phase Renforcement) ---
+  {
+    name: 'Explorer — Feed communaute',
+    agentType: 'explorer',
+    targetTool: 'sql_query',
+    message: 'Montre-moi les dernieres activites dans mes communautes',
+  },
+  {
+    name: 'Explorer — Membres communaute',
+    agentType: 'explorer',
+    targetTool: 'sql_query',
+    message: 'Qui sont les membres de ma premiere communaute ?',
+  },
+  {
+    name: 'Org — Documents organisation',
+    agentType: 'org',
+    targetTool: 'sql_query',
+    message: 'Liste-moi les documents de mon organisation',
+  },
+  {
+    name: 'Org — Talents CRM',
+    agentType: 'org',
+    targetTool: 'sql_query',
+    message: 'Montre-moi les talents qui ont interagi avec mon organisation',
+  },
+  {
+    name: 'Org — Profil talent candidat',
+    agentType: 'org',
+    targetTool: 'sql_query',
+    message: 'Donne-moi le profil detaille du dernier candidat qui a postule chez nous',
+  },
+  {
+    name: 'Org — Feed communaute org',
+    agentType: 'org',
+    targetTool: 'sql_query',
+    message: 'Quelles sont les dernieres activites dans nos communautes ?',
+  },
+  {
+    name: 'Org — Membres communaute org',
+    agentType: 'org',
+    targetTool: 'sql_query',
+    message: 'Liste les membres de notre premiere communaute',
+  },
 ];
 
 // --- Calibration Report ---

@@ -180,3 +180,167 @@ export function createFileReaderTool(talentId: string) {
     runOptions: { maxTurns: 5 },
   });
 }
+
+// --- Organization Documents ---
+
+/**
+ * Creates a read_document tool scoped to an organization
+ * SECURITY: orgId is injected, never from LLM parameters
+ */
+function createOrgReadDocumentTool(orgId: string) {
+  return tool({
+    name: 'read_document',
+    description:
+      'Read the content of a document belonging to the organization. Returns extracted text or raw file content. Use the documentId from sql_query results (org_documents intent).',
+    parameters: z.object({
+      documentId: z.string().describe('The UUID of the organization document to read. Get this from sql_query org_documents intent.'),
+    }),
+    execute: async ({ documentId }) => {
+      try {
+        // Verify document belongs to this organization (IDOR protection)
+        const result = await pool.query(
+          `SELECT id, title, original_filename, mime_type, file_url, document_type, description
+           FROM organization_documents
+           WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+          [documentId, orgId]
+        );
+
+        if (result.rows.length === 0) {
+          return {
+            success: false,
+            error: 'Document not found or access denied.',
+          };
+        }
+
+        const doc = result.rows[0];
+        const mimeType: string = doc.mime_type;
+
+        // Read file content from storage
+        const buffer = await getFileBuffer(doc.file_url);
+
+        // For text-based files, return content directly
+        if (
+          mimeType.startsWith('text/') ||
+          mimeType === 'application/json' ||
+          mimeType === 'application/xml'
+        ) {
+          return {
+            success: true,
+            document: {
+              id: doc.id,
+              title: doc.title || doc.original_filename,
+              type: doc.document_type,
+              mimeType,
+            },
+            content: buffer.toString('utf-8'),
+          };
+        }
+
+        // For PDFs, extract text with pdf-parse
+        if (mimeType === 'application/pdf') {
+          try {
+            const pdfData = await pdfParse(buffer);
+            return {
+              success: true,
+              document: {
+                id: doc.id,
+                title: doc.title || doc.original_filename,
+                type: doc.document_type,
+                mimeType,
+                pageCount: pdfData.numpages,
+              },
+              content: pdfData.text || '[PDF vide — aucun texte extrait]',
+            };
+          } catch (pdfErr: any) {
+            logger.error(`[read_document] PDF parse error for ${documentId}: ${pdfErr.message}`);
+            return {
+              success: false,
+              error: `Failed to extract text from PDF: ${pdfErr.message}`,
+            };
+          }
+        }
+
+        // For images, return metadata only
+        if (mimeType.startsWith('image/')) {
+          return {
+            success: true,
+            document: {
+              id: doc.id,
+              title: doc.title || doc.original_filename,
+              type: doc.document_type,
+              mimeType,
+              description: doc.description,
+            },
+            content: `[Image: ${doc.original_filename}] — Description: ${doc.description || 'No description available.'}`,
+          };
+        }
+
+        // For other binary formats, return metadata only
+        return {
+          success: true,
+          document: {
+            id: doc.id,
+            title: doc.title || doc.original_filename,
+            type: doc.document_type,
+            mimeType,
+            description: doc.description,
+          },
+          content: `[Unreadable format: ${mimeType}]. Description: ${doc.description || 'No description available.'}`,
+        };
+      } catch (error: any) {
+        logger.error(`[read_document] Error reading org document ${documentId}: ${error.message}`);
+        return {
+          success: false,
+          error: `Error reading document: ${error.message}`,
+        };
+      }
+    },
+  });
+}
+
+/**
+ * Creates an OrgFileReaderAgent scoped to a specific organization
+ * SECURITY: orgId is injected via factory, not from LLM
+ */
+function createOrgFileReaderAgent(orgId: string): Agent {
+  return new Agent({
+    name: 'OrgFileReaderAgent',
+    model: MODEL_T2,
+    instructions: `# Role and Objective
+
+You are a document analysis specialist for organization documents. Use the read_document tool to read organization documents and provide structured analysis in French.
+
+# Instructions
+
+- The documentId is provided in the message. Use it directly with read_document — do NOT ask the user for it.
+- If multiple documentIds are provided, read each one sequentially.
+- Analyze the content and return a structured summary in French.
+- Be factual and concise in your analysis.
+
+## Document-Specific Analysis
+
+- **Fiches de poste**: Extract role title, responsibilities, required qualifications, contract type, compensation if mentioned.
+- **Contracts/Legal**: Identify parties, key terms, dates, obligations, and notable clauses.
+- **Reports**: Summarize key findings, metrics, conclusions, and recommendations.
+- **Policies/Charters**: Extract rules, scope of application, and key provisions.
+- **Presentations/Brochures**: Summarize main message, target audience, and key data points.
+
+# Output Format
+
+Return analysis in French with clear sections using markdown headings.`,
+    tools: [createOrgReadDocumentTool(orgId)],
+  });
+}
+
+/**
+ * Creates an org file_reader tool using asTool() pattern
+ * SECURITY: orgId is injected via factory, not from LLM
+ */
+export function createOrgFileReaderTool(orgId: string) {
+  return createOrgFileReaderAgent(orgId).asTool({
+    toolName: 'file_reader',
+    toolDescription:
+      'Read and analyze organization documents (job descriptions, contracts, policies, reports). Pass the documentId(s) from sql_query org_documents results as input message.',
+    runOptions: { maxTurns: 5 },
+  });
+}

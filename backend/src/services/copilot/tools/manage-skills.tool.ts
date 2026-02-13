@@ -22,8 +22,14 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
       origin: z
         .enum(['SELF_DECLARED', 'AI_INFERRED', 'DOCUMENT_EXTRACTED', 'QUIZ_VALIDATED'])
         .describe('How the skill was identified. Use SELF_DECLARED if the user claims it, AI_INFERRED if you detected it from conversation, DOCUMENT_EXTRACTED from CV/certificates, QUIZ_VALIDATED after passing quizzes.'),
+      type: z
+        .enum(['HARD_SKILL', 'SOFT_SKILL', 'KNOWLEDGE'])
+        .describe('The skill category. HARD_SKILL for technical/domain skills (Python, Data Analysis, Marketing), SOFT_SKILL for interpersonal skills (Leadership, Communication), KNOWLEDGE for theoretical knowledge (Machine Learning Theory, Business Strategy).'),
+      is_visible: z
+        .boolean()
+        .describe('Whether the skill is visible on the public profile. Set to false to hide the skill from public views.'),
     }),
-    execute: async ({ action, skillName, proficiencyLevel, origin }) => {
+    execute: async ({ action, skillName, proficiencyLevel, origin, type, is_visible }) => {
       const talentId = authenticatedTalentId;
 
       try {
@@ -43,9 +49,9 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
             }
 
             await pool.query(
-              `INSERT INTO talent_skills (talent_id, canonical_name, proficiency_level, origin, type)
-               VALUES ($1, $2, $3, $4, 'HARD')`,
-              [talentId, skillName, proficiencyLevel, origin]
+              `INSERT INTO talent_skills (talent_id, canonical_name, proficiency_level, origin, type, is_visible)
+               VALUES ($1, $2, $3, $4, $5, $6)`,
+              [talentId, skillName, proficiencyLevel, origin, type, is_visible !== false]
             );
 
             logger.info(`[manage_skills] Added skill "${skillName}" (${proficiencyLevel}) for talent ${talentId}`);
@@ -57,11 +63,17 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
           }
 
           case 'update': {
+            const updates = ['proficiency_level = $3', 'updated_at = NOW()'];
+            const params: any[] = [talentId, skillName, proficiencyLevel];
+            if (is_visible !== undefined) {
+              params.push(is_visible);
+              updates.push(`is_visible = $${params.length}`);
+            }
             const result = await pool.query(
-              `UPDATE talent_skills SET proficiency_level = $3, updated_at = NOW()
+              `UPDATE talent_skills SET ${updates.join(', ')}
                WHERE talent_id = $1 AND LOWER(canonical_name) = LOWER($2)
-               RETURNING id, canonical_name, proficiency_level`,
-              [talentId, skillName, proficiencyLevel]
+               RETURNING id, canonical_name, proficiency_level, is_visible`,
+              params
             );
 
             if (result.rows.length === 0) {

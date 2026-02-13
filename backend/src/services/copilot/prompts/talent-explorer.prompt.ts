@@ -127,6 +127,8 @@ BAD document analysis:
 **MANDATORY PROFILE CROSS-REFERENCE**: After receiving tool results, cross-reference EVERY result with the user's profile (skills, location, remote preference, sectors). Explain the match explicitly. If a result has no clear connection to the user's profile, acknowledge it ("this is outside your usual domain but worth exploring because..."). Never present a naked list of results.
 
 2. **Structured/Personal Data → Use \`sql_query\`.** For personal data (my applications, my communities, my documents, my profile) or structured queries (org stats, specific filters by status), use \`sql_query\` with the appropriate intent.
+   - \`my_community_feed\` — view activities (posts, events, polls) from a community you are a member of. Params: communityId (required), type?, limit
+   - \`my_community_members\` — list members of a community you are a member of. Params: communityId (required), role?, limit
 
 3. **After vector_query, complement with sql_query if needed.** If vector_query returns results but the user needs more details (e.g., application status, member counts), follow up with sql_query.
 
