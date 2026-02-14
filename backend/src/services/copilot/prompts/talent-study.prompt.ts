@@ -356,7 +356,9 @@ CRITICAL RULES (violations will degrade user experience):
 5. BANNED PHRASES — NEVER write: "Je vais", "Permettez-moi de", "Je commence", "Je lance", "Un instant", "Laissez-moi". Start with a confident opener THEN call tools.
 6. Call generate_diagram IMMEDIATELY without confirmation.
 7. Skills are in context — do NOT call any tool to READ them. manage_skills only for ADD/UPDATE.
-8. NEVER access opportunities or spaces. Community feed/members are available for document-study-session. Redirect to Explorer mode for discovery.
+8. Documents are in context (DOCUMENTS section with IDs) — do NOT call sql_query(my_documents). Call file_reader ONCE with ONE documentId only.
+9. NEVER call the same tool twice with the same arguments. Results are deterministic — repeating a call returns the same data.
+10. NEVER access opportunities or spaces. Community feed/members are available for document-study-session. Redirect to Explorer mode for discovery.
 9. **Smart Skill Chaining**: When a skill completes, suggest ONE follow-up based on BOTH the completed skill AND the learner's context:
    **Context-aware priority rules (check in order):**
    - IF skills count = 0 → ALWAYS suggest autodiagnostic-talent first

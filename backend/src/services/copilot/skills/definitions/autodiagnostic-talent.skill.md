@@ -16,8 +16,8 @@ You are now in Autodiagnostic Talent mode. Your goal: deliver a complete, person
 ## Step 1: Collect Data
 
 1. Read the `<skills>` block from context — DO NOT call any tool for skills. They are already available.
-2. Check the `DOCUMENTS:` section in context — document IDs are listed there. DO NOT call `sql_query(my_documents)` — documents are already loaded.
-3. If a CV document exists in context: call `file_reader` with its documentId to extract experiences, education, and implicit skills (technologies, tools, domains mentioned but not declared).
+2. Check the `DOCUMENTS:` section in context — document IDs are listed there. DO NOT call `sql_query(my_documents)` — documents are already loaded in context.
+3. If a CV document exists in context: call `file_reader` with its documentId (pass ONLY the single UUID, e.g. "Read document abc-123"). Call file_reader ONCE for ONE CV only — do NOT pass multiple IDs. Do NOT call file_reader again if it already returned a result.
 
 ---
 

@@ -66,6 +66,8 @@ export async function runAgentWithSSE(
   let toolCallCounter = 0;
   const turnStart = Date.now();
   let limitReached = false;
+  const toolCallCounts = new Map<string, number>(); // Track per-tool call count for loop detection
+  const TOOL_LOOP_THRESHOLD = 3; // Max times a single tool can be called before aborting
 
   const heartbeatId = setInterval(() => sendHeartbeat(res), HEARTBEAT_INTERVAL_MS);
   logger.info(`[copilot] Start — "${message.slice(0, 100)}" (history: ${history.length} msgs)`);
@@ -173,6 +175,22 @@ export async function runAgentWithSSE(
           const callId = `${toolName}-${Date.now()}-${toolCallCounter}`;
           toolStartTimes.set(callId, Date.now());
           logger.info(`[copilot] Tool #${toolCallCounter}: ${toolName}`, { args: typeof toolArgs === 'string' ? toolArgs.slice(0, 200) : undefined });
+
+          // Loop detection: track per-tool call count
+          const toolCount = (toolCallCounts.get(toolName) || 0) + 1;
+          toolCallCounts.set(toolName, toolCount);
+          if (toolCount >= TOOL_LOOP_THRESHOLD) {
+            logger.error(`[copilot] LOOP DETECTED: ${toolName} called ${toolCount}x — aborting stream`);
+            const loopMsg = 'Désolé, une erreur est survenue. Reformule ta question ou essaie avec moins de détails.';
+            if (!finalOutput) {
+              sendSSE(res, { type: 'text_delta', delta: loopMsg });
+              finalOutput = loopMsg;
+              segments.push({ type: 'text', content: loopMsg });
+            }
+            sendSSE(res, { type: 'error', error: 'loop_detected' } as any);
+            clearInterval(heartbeatId);
+            return { finalOutput, toolTrace, segments };
+          }
 
           // Store callId on the item for matching in tool_output
           if (item) item._callId = callId;
