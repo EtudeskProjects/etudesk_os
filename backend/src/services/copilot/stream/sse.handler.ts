@@ -68,6 +68,7 @@ export async function runAgentWithSSE(
   let limitReached = false;
 
   const heartbeatId = setInterval(() => sendHeartbeat(res), HEARTBEAT_INTERVAL_MS);
+  logger.info(`[copilot] Start — "${message.slice(0, 100)}" (history: ${history.length} msgs)`);
 
   try {
     // Build input with history + attachment context
@@ -133,7 +134,7 @@ export async function runAgentWithSSE(
     }
 
     const input = inputItems;
-    const result = await run(agent, input, { stream: true });
+    const result = await run(agent, input, { stream: true, maxTurns: 15 });
 
     for await (const event of result as AsyncIterable<any>) {
       // Check duration limit
@@ -171,6 +172,7 @@ export async function runAgentWithSSE(
           const toolArgs = item?.rawItem?.arguments || item?.call?.args || item?.arguments;
           const callId = `${toolName}-${Date.now()}-${toolCallCounter}`;
           toolStartTimes.set(callId, Date.now());
+          logger.info(`[copilot] Tool #${toolCallCounter}: ${toolName}`, { args: typeof toolArgs === 'string' ? toolArgs.slice(0, 200) : undefined });
 
           // Store callId on the item for matching in tool_output
           if (item) item._callId = callId;

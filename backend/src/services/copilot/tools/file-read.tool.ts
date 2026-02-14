@@ -177,7 +177,7 @@ export function createFileReaderTool(talentId: string) {
     toolName: 'file_reader',
     toolDescription:
       'Read and analyze talent documents (CVs, diplomas, certificates). Pass the documentId(s) from [Pièces jointes] or from sql_query my_documents results as input message.',
-    runOptions: { maxTurns: 5 },
+    runOptions: { maxTurns: 2 },
   });
 }
 

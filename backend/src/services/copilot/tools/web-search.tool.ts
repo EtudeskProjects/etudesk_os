@@ -62,6 +62,6 @@ export const webSearchAsTool = webSearchAgent.asTool({
   toolName: 'web_search',
   toolDescription:
     'Search the web for current information (salary benchmarks, company info, market trends, training resources). Pass the search query as input message. Use ONLY when internal data is insufficient.',
-  runOptions: { maxTurns: 5 },
+  runOptions: { maxTurns: 2 },
   runConfig: { modelProvider: openaiResponsesProvider },
 });

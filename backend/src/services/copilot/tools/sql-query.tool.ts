@@ -188,7 +188,7 @@ export function createSqlQueryTool(
                     '' as inviter_name, '' as target_name
              FROM organization_invitations orgi
              WHERE orgi.email = (SELECT email FROM talents WHERE id = $1) AND orgi.status = 'PENDING'
-             ORDER BY created_at DESC`,
+             ORDER BY created_at DESC LIMIT 20`,
               [talentId]
             );
             return { invitations: res.rows, pendingCount: res.rows.length };
@@ -203,7 +203,7 @@ export function createSqlQueryTool(
              JOIN communities c ON cm.community_id = c.id
              LEFT JOIN organizations org ON c.organization_id = org.id
              WHERE cm.talent_id = $1 AND cm.status = 'ACTIVE'
-             ORDER BY cm.created_at DESC`,
+             ORDER BY cm.created_at DESC LIMIT 20`,
               [talentId]
             );
             return { communities: res.rows };
@@ -225,7 +225,7 @@ export function createSqlQueryTool(
               `SELECT id, document_type, category, title, original_filename, status, description, created_at
              FROM talent_documents
              WHERE talent_id = $1 AND deleted_at IS NULL
-             ORDER BY created_at DESC`,
+             ORDER BY created_at DESC LIMIT 20`,
               [talentId]
             );
             return { documents: res.rows };
@@ -317,7 +317,7 @@ export function createSqlQueryTool(
                     (SELECT COUNT(*) FROM community_members cm WHERE cm.community_id = c.id AND cm.status = 'ACTIVE') as member_count
              FROM communities c
              WHERE c.organization_id = $1 AND c.deleted_at IS NULL
-             ORDER BY c.created_at DESC`,
+             ORDER BY c.created_at DESC LIMIT 20`,
               [orgId]
             );
             return { communities: res.rows };
@@ -331,7 +331,7 @@ export function createSqlQueryTool(
                     s.hourly_rate, s.city
              FROM spaces s
              WHERE s.organization_id = $1 AND s.deleted_at IS NULL
-             ORDER BY s.created_at DESC`,
+             ORDER BY s.created_at DESC LIMIT 20`,
               [orgId]
             );
             return { spaces: res.rows };
