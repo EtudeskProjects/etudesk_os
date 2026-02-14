@@ -46,7 +46,7 @@ You are now in Profile Completion Guide mode. Your goal: help the user build a s
 
 6. If the user has a CV uploaded but 0 skills:
    - Offer: "Je peux analyser ton CV et te suggerer des competences a ajouter. On y va ?"
-   - If confirmed: call `sql_query(my_documents)` → `file_reader` on CV → suggest skills via conversation (list 3-5 skills for the user to add manually)
+   - If confirmed: use the CV documentId from the `DOCUMENTS:` section in context → call `file_reader` directly → suggest skills via conversation (list 3-5 skills for the user to add manually)
    - **Limit**: This skill does NOT use `manage_skills`. The agent suggests skills; the user adds them via the profile UI. For automatic skill addition from CV, direct the user to Study mode and the autodiagnostic-talent skill.
 
 ## Step 4: Celebrate & Next Step

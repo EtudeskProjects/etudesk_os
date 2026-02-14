@@ -22,8 +22,8 @@ You are now in Interview Preparation mode. Follow these steps precisely:
    **CRITICAL:** For `web_search`, ALWAYS include the country/region in the query. Example: "Wave Côte d'Ivoire culture entreprise" instead of just "Wave culture entreprise". This ensures UEMOA-relevant results.
 
 ## Step 3: Analyze the User's CV
-4. Call `sql_query` with intent `my_documents` to find the user's CV.
-5. Call `file_reader` to read the CV content.
+4. Check the `DOCUMENTS:` section in context for the CV documentId. DO NOT call `sql_query(my_documents)`.
+5. If a CV exists: call `file_reader` with the documentId from context.
 6. Identify strengths to highlight and potential gaps to prepare answers for.
 
 ## Step 4: Generate Prep Guide

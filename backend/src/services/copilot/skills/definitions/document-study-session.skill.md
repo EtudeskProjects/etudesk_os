@@ -25,7 +25,7 @@ You are now in Document Study Session mode. Your goal: transform an uploaded doc
    - Use the post text directly as study material.
    - Adapt the session: fewer flashcards (2-3), shorter quiz (2 questions).
 
-   **D. No content provided** — If the user says "étudie ce doc" or similar WITHOUT a [Pièces jointes] section, call `sql_query` with intent `my_documents` FIRST to list available documents. Present them and ask which one to study. Do NOT ask the user to upload — check existing documents first.
+   **D. No content provided** — If the user says "étudie ce doc" or similar WITHOUT a [Pièces jointes] section, check the `DOCUMENTS:` section in context — document IDs and titles are listed there. Present them and ask which one to study. DO NOT call `sql_query(my_documents)` — documents are already loaded in context.
 
 ## Step 2: Analyze Content
 

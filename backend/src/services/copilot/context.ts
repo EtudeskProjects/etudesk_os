@@ -402,12 +402,12 @@ export function summarizeContext(context: TalentContext): string {
     parts.push(`  Compétences: ${skillNames.join(', ')}`);
   }
 
-  // Documents
+  // Documents (with IDs so agents can call file_reader directly)
   if (context.documents) {
     parts.push(`DOCUMENTS: ${context.documents.totalCount} documents`);
-    if (context.documents.hasCV) parts.push('  - CV disponible');
-    if (context.documents.hasDiplomas) parts.push('  - Diplômes disponibles');
-    if (context.documents.hasCertificates) parts.push('  - Certificats disponibles');
+    for (const doc of context.documents.documents) {
+      parts.push(`  - [${doc.type}] "${doc.title}" (documentId: ${doc.id})`);
+    }
   }
 
   // Applications

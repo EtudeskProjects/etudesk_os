@@ -2,7 +2,7 @@
 name: Autodiagnostic Talent
 description: Bilan complet des compétences — analyse des forces, lacunes, axes d'amélioration et plan de développement personnalisé (sans objectif cible préalable)
 modes: study
-tools: sql_query, file_reader, manage_skills
+tools: file_reader, manage_skills
 triggers: autodiagnostic, auto-diagnostic, diagnostic competences, bilan competences, analyse mes forces, mes lacunes, axes d'amélioration, plan de développement, diagnostic de profil
 priority: 8
 ---
@@ -16,8 +16,8 @@ You are now in Autodiagnostic Talent mode. Your goal: deliver a complete, person
 ## Step 1: Collect Data
 
 1. Read the `<skills>` block from context — DO NOT call any tool for skills. They are already available.
-2. Call `sql_query` with intent `my_documents` to detect if the user has a CV or other documents.
-3. If a CV document exists: call `file_reader` with its documentId to extract experiences, education, and implicit skills (technologies, tools, domains mentioned but not declared).
+2. Check the `DOCUMENTS:` section in context — document IDs are listed there. DO NOT call `sql_query(my_documents)` — documents are already loaded.
+3. If a CV document exists in context: call `file_reader` with its documentId to extract experiences, education, and implicit skills (technologies, tools, domains mentioned but not declared).
 
 ---
 
