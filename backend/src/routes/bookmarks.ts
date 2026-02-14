@@ -4,11 +4,18 @@
  */
 
 import { Router, Response } from 'express';
+import { z } from 'zod';
 import { pool } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
+import { validate, uuidParamSchema } from '../middleware/validation.middleware';
 
 import { logger } from '../utils';
 const router = Router();
+
+// Bookmark notes schema
+const bookmarkNotesSchema = z.object({
+  notes: z.string().max(2000).optional().nullable(),
+});
 
 // Valid entity types for bookmarking
 type EntityType = 'opportunity' | 'space' | 'community';
@@ -159,7 +166,7 @@ router.get('/opportunities/:id/status', authMiddleware, async (req: AuthRequest,
  * POST /api/bookmarks/opportunities/:id
  * Add an opportunity to bookmarks
  */
-router.post('/opportunities/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/opportunities/:id', authMiddleware, validate(uuidParamSchema, 'params'), validate(bookmarkNotesSchema), async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     const { id } = req.params;
@@ -203,7 +210,7 @@ router.post('/opportunities/:id', authMiddleware, async (req: AuthRequest, res: 
  * DELETE /api/bookmarks/opportunities/:id
  * Remove an opportunity from bookmarks
  */
-router.delete('/opportunities/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.delete('/opportunities/:id', authMiddleware, validate(uuidParamSchema, 'params'), async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     const { id } = req.params;
@@ -235,28 +242,22 @@ router.delete('/opportunities/:id', authMiddleware, async (req: AuthRequest, res
 // ============================================================================
 
 /**
- * Helper to ensure bookmark table exists for entity type
+ * Allowed bookmark tables — whitelist to prevent SQL injection via table names.
+ * Tables must be created via migrations, not dynamically at runtime.
  */
-const ensureBookmarkTable = async (entityType: EntityType): Promise<void> => {
-  if (entityType === 'opportunity') return; // Already exists
+const ALLOWED_BOOKMARK_TABLES = new Set([
+  'opportunity_bookmarks',
+  'space_bookmarks',
+  'community_bookmarks',
+]);
 
-  const tableName = getBookmarkTable(entityType);
-  const entityIdColumn = getEntityIdColumn(entityType);
-  const entityTable = ENTITY_CONFIG[entityType].table;
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS ${tableName} (
-      talent_id UUID REFERENCES talents(id) ON DELETE CASCADE,
-      ${entityIdColumn} UUID REFERENCES ${entityTable}(id) ON DELETE CASCADE,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      notes TEXT,
-      PRIMARY KEY (talent_id, ${entityIdColumn})
-    )
-  `);
-
-  await pool.query(`
-    CREATE INDEX IF NOT EXISTS idx_${tableName}_${entityIdColumn} ON ${tableName}(${entityIdColumn})
-  `);
+/**
+ * Validate that a bookmark table name is in the whitelist
+ */
+const assertValidBookmarkTable = (tableName: string): void => {
+  if (!ALLOWED_BOOKMARK_TABLES.has(tableName)) {
+    throw new Error(`Invalid bookmark table: ${tableName}`);
+  }
 };
 
 /**
@@ -267,7 +268,7 @@ router.get('/spaces', authMiddleware, async (req: AuthRequest, res: Response) =>
     const talentId = req.talentId;
     if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
-    await ensureBookmarkTable('space');
+    assertValidBookmarkTable(getBookmarkTable('space'));
 
     const { limit = 50, offset = 0 } = req.query;
 
@@ -301,7 +302,7 @@ router.get('/spaces/ids', authMiddleware, async (req: AuthRequest, res: Response
     const talentId = req.talentId;
     if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
-    await ensureBookmarkTable('space');
+    assertValidBookmarkTable(getBookmarkTable('space'));
 
     const result = await pool.query(`
       SELECT space_id FROM space_bookmarks WHERE talent_id = $1
@@ -317,13 +318,13 @@ router.get('/spaces/ids', authMiddleware, async (req: AuthRequest, res: Response
 /**
  * POST /api/bookmarks/spaces/:id
  */
-router.post('/spaces/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/spaces/:id', authMiddleware, validate(uuidParamSchema, 'params'), async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     const { id } = req.params;
     if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
-    await ensureBookmarkTable('space');
+    assertValidBookmarkTable(getBookmarkTable('space'));
 
     const check = await pool.query('SELECT id FROM spaces WHERE id = $1 AND deleted_at IS NULL', [id]);
     if (check.rows.length === 0) {
@@ -346,13 +347,13 @@ router.post('/spaces/:id', authMiddleware, async (req: AuthRequest, res: Respons
 /**
  * DELETE /api/bookmarks/spaces/:id
  */
-router.delete('/spaces/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.delete('/spaces/:id', authMiddleware, validate(uuidParamSchema, 'params'), async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     const { id } = req.params;
     if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
-    await ensureBookmarkTable('space');
+    assertValidBookmarkTable(getBookmarkTable('space'));
 
     await pool.query(`
       DELETE FROM space_bookmarks WHERE talent_id = $1 AND space_id = $2
@@ -377,7 +378,7 @@ router.get('/communities', authMiddleware, async (req: AuthRequest, res: Respons
     const talentId = req.talentId;
     if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
-    await ensureBookmarkTable('community');
+    assertValidBookmarkTable(getBookmarkTable('community'));
 
     const { limit = 50, offset = 0 } = req.query;
 
@@ -408,7 +409,7 @@ router.get('/communities/ids', authMiddleware, async (req: AuthRequest, res: Res
     const talentId = req.talentId;
     if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
-    await ensureBookmarkTable('community');
+    assertValidBookmarkTable(getBookmarkTable('community'));
 
     const result = await pool.query(`
       SELECT community_id FROM community_bookmarks WHERE talent_id = $1
@@ -424,13 +425,13 @@ router.get('/communities/ids', authMiddleware, async (req: AuthRequest, res: Res
 /**
  * POST /api/bookmarks/communities/:id
  */
-router.post('/communities/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/communities/:id', authMiddleware, validate(uuidParamSchema, 'params'), async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     const { id } = req.params;
     if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
-    await ensureBookmarkTable('community');
+    assertValidBookmarkTable(getBookmarkTable('community'));
 
     const check = await pool.query('SELECT id FROM communities WHERE id = $1 AND deleted_at IS NULL', [id]);
     if (check.rows.length === 0) {
@@ -453,13 +454,13 @@ router.post('/communities/:id', authMiddleware, async (req: AuthRequest, res: Re
 /**
  * DELETE /api/bookmarks/communities/:id
  */
-router.delete('/communities/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.delete('/communities/:id', authMiddleware, validate(uuidParamSchema, 'params'), async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     const { id } = req.params;
     if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
-    await ensureBookmarkTable('community');
+    assertValidBookmarkTable(getBookmarkTable('community'));
 
     await pool.query(`
       DELETE FROM community_bookmarks WHERE talent_id = $1 AND community_id = $2
@@ -485,11 +486,9 @@ router.get('/all/ids', authMiddleware, async (req: AuthRequest, res: Response) =
     const talentId = req.talentId;
     if (!talentId) return res.status(401).json({ error: req.t('common:talentProfileRequired') });
 
-    // Ensure all tables exist
-    await Promise.all([
-      ensureBookmarkTable('space'),
-      ensureBookmarkTable('community'),
-    ]);
+    // Validate table names
+    assertValidBookmarkTable(getBookmarkTable('space'));
+    assertValidBookmarkTable(getBookmarkTable('community'));
 
     const [opportunities, spaces, communities] = await Promise.all([
       pool.query('SELECT opportunity_id as id FROM opportunity_bookmarks WHERE talent_id = $1', [talentId]),

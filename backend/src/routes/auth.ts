@@ -7,7 +7,7 @@
 import { Router, Request, Response } from 'express';
 import { createOTP, createWhatsAppOTP, verifyOTP, verifyOTPByChannel } from '../services/otp.service';
 import { sendOTPEmail } from '../services/email.service';
-import { sendWhatsAppOtp } from '../services/whatsapp.service';
+import { sendWhatsAppOtp, formatPhoneToE164 } from '../services/whatsapp.service';
 import {
   generateTokens,
   createSession,
@@ -19,6 +19,7 @@ import {
   needsOnboarding,
 } from '../services/auth.service';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
+import { auditLog } from '../middleware/audit.middleware';
 import { logger } from '../utils';
 import {
   validate,
@@ -108,8 +109,17 @@ router.post('/request-whatsapp-otp', validate(requestWhatsAppOtpSchema), async (
       });
     }
 
-    const waResult = await sendWhatsAppOtp(phone, otpResult.code!);
+    const formattedPhone = formatPhoneToE164(phone);
+    if (!formattedPhone) {
+      return res.status(400).json({
+        success: false,
+        error: 'Numéro de téléphone invalide',
+      });
+    }
+
+    const waResult = await sendWhatsAppOtp(formattedPhone, otpResult.code!);
     if (!waResult.success) {
+      logger.error('❌ Failed to send WhatsApp OTP:', waResult.error);
       return res.status(500).json({
         success: false,
         error: req.t('auth:otpWhatsAppFailed'),
@@ -135,7 +145,7 @@ router.post('/request-whatsapp-otp', validate(requestWhatsAppOtpSchema), async (
  *
  * Verify OTP and create session
  */
-router.post('/verify-otp', validate(verifyOtpSchema), async (req: Request, res: Response) => {
+router.post('/verify-otp', validate(verifyOtpSchema), auditLog('AUTH_VERIFY_OTP'), async (req: Request, res: Response) => {
   try {
     const { email, code } = req.body; // Already validated by Zod
 
@@ -195,7 +205,7 @@ router.post('/verify-otp', validate(verifyOtpSchema), async (req: Request, res: 
  *
  * Verify WhatsApp OTP and create session
  */
-router.post('/verify-whatsapp-otp', validate(verifyWhatsAppOtpSchema), async (req: Request, res: Response) => {
+router.post('/verify-whatsapp-otp', validate(verifyWhatsAppOtpSchema), auditLog('AUTH_VERIFY_WHATSAPP_OTP'), async (req: Request, res: Response) => {
   try {
     const { phone, code } = req.body;
 
@@ -280,7 +290,7 @@ router.post('/refresh', validate(refreshTokenSchema), async (req: Request, res: 
  *
  * Logout current session
  */
-router.post('/logout', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/logout', authMiddleware, auditLog('AUTH_LOGOUT'), async (req: AuthRequest, res: Response) => {
   try {
     const { refreshToken, allDevices } = req.body;
 

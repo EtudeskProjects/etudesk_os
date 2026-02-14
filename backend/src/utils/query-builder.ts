@@ -41,24 +41,7 @@ export function addCondition(
 }
 
 /**
- * Add a LIKE condition (case insensitive)
- */
-export function addLikeCondition(
-  builder: QueryBuilder,
-  column: string,
-  value: string,
-  operator: 'AND' | 'OR' = 'AND'
-): QueryBuilder {
-  return addCondition(
-    builder,
-    `${column} ILIKE '%' || ? || '%'`,
-    value,
-    operator
-  );
-}
-
-/**
- * Add multiple LIKE conditions with OR
+ * Add multiple LIKE conditions with OR (for search across columns)
  */
 export function addSearchCondition(
   builder: QueryBuilder,
@@ -74,26 +57,6 @@ export function addSearchCondition(
     sql: `${builder.sql} AND (${conditions})`,
     params: [...builder.params, value],
     paramIndex: builder.paramIndex + 1,
-  };
-}
-
-/**
- * Add an IN condition
- */
-export function addInCondition(
-  builder: QueryBuilder,
-  column: string,
-  values: QueryParam[],
-  operator: 'AND' | 'OR' = 'AND'
-): QueryBuilder {
-  if (values.length === 0) return builder;
-
-  const placeholders = values.map((_, i) => `$${builder.paramIndex + i}`).join(', ');
-
-  return {
-    sql: `${builder.sql} ${operator} ${column} IN (${placeholders})`,
-    params: [...builder.params, ...values],
-    paramIndex: builder.paramIndex + values.length,
   };
 }
 

@@ -31,7 +31,7 @@ const upload = multer({
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Type de fichier non supporté. Types acceptés: JPEG, PNG, WebP, GIF, HEIC'));
+      cb(new Error('UNSUPPORTED_IMAGE_TYPE'));
     }
   },
 });
@@ -151,7 +151,13 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
     const extension = config.format === 'png' ? 'png' : 'jpg';
     const filename = `${fileId}.${extension}`;
     const relativePath = `${config.directory}/${filename}`;
-    const absolutePath = path.join(UPLOAD_BASE_DIR, relativePath);
+    const absolutePath = path.resolve(UPLOAD_BASE_DIR, relativePath);
+
+    // Path traversal protection
+    const resolvedBase = path.resolve(UPLOAD_BASE_DIR);
+    if (!absolutePath.startsWith(resolvedBase + path.sep)) {
+      return res.status(400).json({ error: 'Invalid file path' });
+    }
 
     // Save the optimized image
     await fs.promises.writeFile(absolutePath, buffer);
@@ -212,7 +218,13 @@ router.post('/upload-multiple', authMiddleware, upload.array('files', 10), async
       const extension = config.format === 'png' ? 'png' : 'jpg';
       const filename = `${fileId}.${extension}`;
       const relativePath = `${config.directory}/${filename}`;
-      const absolutePath = path.join(UPLOAD_BASE_DIR, relativePath);
+      const absolutePath = path.resolve(UPLOAD_BASE_DIR, relativePath);
+
+      // Path traversal protection
+      const resolvedBase = path.resolve(UPLOAD_BASE_DIR);
+      if (!absolutePath.startsWith(resolvedBase + path.sep)) {
+        return res.status(400).json({ error: 'Invalid file path' });
+      }
 
       await fs.promises.writeFile(absolutePath, buffer);
 

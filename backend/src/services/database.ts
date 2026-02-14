@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import { logger } from '../utils';
 
 dotenv.config();
 
@@ -11,6 +12,18 @@ export const pool = new Pool({
   max: 20,
   keepAlive: true,
   keepAliveInitialDelayMillis: 10_000,
+});
+
+pool.on('error', (err) => {
+  logger.error('Database pool error', err);
+});
+
+pool.on('connect', () => {
+  logger.debug('New database connection established', {
+    total: pool.totalCount,
+    idle: pool.idleCount,
+    waiting: pool.waitingCount,
+  });
 });
 
 export const generateSlug = (name: string): string => {

@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { whatsappWebhookLimiter } from '../middleware/rateLimit.middleware';
 import { handleWhatsAppAssistantMessage } from '../services/whatsapp-assistant.service';
 import { formatPhoneToE164 } from '../services/whatsapp.service';
 import { logger } from '../utils';
@@ -79,6 +80,6 @@ const handleWebhook = async (req: Request, res: Response) => {
   }
 };
 
-router.post('/webhook', handleWebhook);
+router.post('/webhook', whatsappWebhookLimiter, handleWebhook);
 
 export default router;

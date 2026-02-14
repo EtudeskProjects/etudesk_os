@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import path from 'path';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -34,9 +35,11 @@ import skillsRouter from './routes/skills';
 import dailyObjectiveRouter from './routes/daily-objective';
 import waitlistRouter from './routes/waitlist';
 import whatsappRouter from './routes/whatsapp';
+import communityNotificationsRouter from './routes/community-notifications.routes';
+import ecosystemRouter from './routes/ecosystem.routes';
 import { verifyEmailConnection } from './services/email.service';
 import { cleanupExpiredOTPs } from './services/otp.service';
-import { apiLimiter, authLimiter, otpLimiter } from './middleware/rateLimit.middleware';
+import { apiLimiter, authLimiter, otpLimiter, writeLimiter } from './middleware/rateLimit.middleware';
 
 import * as notificationService from './services/notification.service';
 import { communityActivityService } from './services/community-activity.service';
@@ -44,6 +47,9 @@ import { AppError, isAppError, RateLimitError } from './errors';
 import { createVersionedRouter, CURRENT_API_VERSION } from './middleware/api-version.middleware';
 import { logger } from './utils';
 import { i18nMiddleware } from './i18n';
+import { pool } from './services/database';
+import { v4 as uuidv4 } from 'uuid';
+import { precomputeSkillEmbeddings } from './services/copilot/skills/skill.loader';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -86,6 +92,32 @@ const getCorsOrigin = (): string | string[] => {
 // Trust first proxy (Nginx) — required for express-rate-limit to read real client IP
 app.set('trust proxy', 1);
 
+// Request ID tracking — generates X-Request-Id for every request
+app.use((req, res, next) => {
+  const requestId = (req.headers['x-request-id'] as string) || uuidv4();
+  req.headers['x-request-id'] = requestId;
+  res.setHeader('X-Request-Id', requestId);
+  next();
+});
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://api.paystack.co", "https://api.openai.com", "https://api.anthropic.com", "https://generativelanguage.googleapis.com"],
+      fontSrc: ["'self'", "https:", "data:"],
+      objectSrc: ["'none'"],
+      frameSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
+
 app.use(cors({
   origin: getCorsOrigin(),
   credentials: true,
@@ -113,12 +145,13 @@ app.get('/health', async (req, res) => {
     name: 'Etudesk API',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
+    db: {
+      totalConnections: pool.totalCount,
+      idleConnections: pool.idleCount,
+      waitingClients: pool.waitingCount,
+    },
   });
 });
-
-// WhatsApp webhook (non-versioned for provider compatibility)
-app.use('/api/whatsapp', whatsappRouter);
-app.use('/whatsapp', whatsappRouter);
 
 // --- API v1 Router (Versioned) ---
 const v1Router = createVersionedRouter('v1');
@@ -134,7 +167,7 @@ v1Router.use('/auth/verify-whatsapp-otp', authLimiter);
 v1Router.use('/auth', authRouter);
 v1Router.use('/onboarding', onboardingRouter);
 
-// Domain Routes
+// Domain Routes (writeLimiter on mutation-heavy routes)
 v1Router.use('/talents', talentsRouter);
 v1Router.use('/organizations', organizationsRouter);
 v1Router.use('/organizations', organizationMembersRouter);
@@ -142,19 +175,16 @@ v1Router.use('/kyc', kycRouter);
 v1Router.use('/opportunities', opportunitiesRouter);
 v1Router.use('/applications', applicationsRouter);
 v1Router.use('/communities', communitiesRouter);
-v1Router.use('/', communityActivitiesRouter);
-
-v1Router.use('/communities', communityInvitationsRouter);
-v1Router.use('/community-invitations', communityInvitationsRouter); // Fix: Explicit mount for /me path
-
-v1Router.use('/opportunities', opportunityInvitationsRouter);
-v1Router.use('/opportunity-invitations', opportunityInvitationsRouter); // Fix: Explicit mount for /me path
+v1Router.use('/communities', communityActivitiesRouter);
+v1Router.use('/community-invitations', communityInvitationsRouter);
+v1Router.use('/opportunity-invitations', opportunityInvitationsRouter);
 
 v1Router.use('/spaces', spacesRouter);
-v1Router.use('/spaces', spaceInvitationsRouter);
-v1Router.use('/space-invitations', spaceInvitationsRouter); // Fix: Explicit mount for /me path
-v1Router.use('/bookmarks', bookmarksRouter);
+v1Router.use('/space-invitations', spaceInvitationsRouter);
+v1Router.use('/bookmarks', writeLimiter, bookmarksRouter);
 v1Router.use('/notifications', notificationsRouter);
+v1Router.use('/community-notifications', communityNotificationsRouter);
+v1Router.use('/ecosystem', ecosystemRouter);
 v1Router.use('/images', imagesRouter);
 v1Router.use('/files', filesRouter);
 v1Router.use('/payment-methods', paymentMethodsRouter);
@@ -168,9 +198,11 @@ v1Router.use('/skills', skillsRouter);
 v1Router.use('/daily-objective', dailyObjectiveRouter);
 v1Router.use('/waitlist', waitlistRouter);
 
-// Mount versioned API
+// WhatsApp — versioned under /api/v1/whatsapp
+v1Router.use('/whatsapp', whatsappRouter);
+
+// Mount versioned API — source unique /api/v1
 app.use('/api/v1', v1Router);
-app.use('/api', v1Router); // Backward compatible - defaults to v1
 
 // 404 handler
 app.use((req, res) => {
@@ -218,7 +250,7 @@ app.use((err: Error, req: express.Request, res: express.Response, _next: express
 });
 
 // Start server
-app.listen(PORT, async () => {
+const server = app.listen(PORT, async () => {
   logger.info('Etudesk API started', { port: PORT, version: CURRENT_API_VERSION });
 
   // Verify email service connection
@@ -279,6 +311,11 @@ app.listen(PORT, async () => {
   };
   setInterval(runNotificationCleanupCron, 7 * 24 * 60 * 60 * 1000);
 
+  // Pre-compute skill embeddings (non-blocking — server is already accepting requests)
+  precomputeSkillEmbeddings().catch(err =>
+    logger.warn('Skill embedding pre-computation failed (static fallback active):', err)
+  );
+
   logger.info('API ready', {
     endpoints: {
       auth: '/api/v1/auth',
@@ -289,3 +326,20 @@ app.listen(PORT, async () => {
     },
   });
 });
+
+// Graceful shutdown
+async function shutdown(signal: string) {
+  logger.info(`Received ${signal}, shutting down gracefully`);
+  try {
+    server.close(() => logger.info('HTTP server closed'));
+    await pool.end();
+    logger.info('Database pool closed');
+    process.exit(0);
+  } catch (err) {
+    logger.error('Error during shutdown', err);
+    process.exit(1);
+  }
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

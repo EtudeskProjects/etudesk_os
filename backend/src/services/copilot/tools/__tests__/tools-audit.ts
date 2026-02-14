@@ -334,27 +334,27 @@ async function runTest(
   const skillsTool = createManageSkillsTool(TALENT_ID);
 
   await runTest('manage_skills', 'Ajouter compétence Rust',
-    { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'BEGINNER', origin: 'AI_INFERRED' },
+    { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'BEGINNER', origin: 'inferred' },
     skillsTool,
-    { toolName: 'manage_skills', args: { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'BEGINNER', origin: 'AI_INFERRED', is_visible: true } }
+    { toolName: 'manage_skills', args: { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'BEGINNER', origin: 'inferred', is_visible: true } }
   );
 
   await runTest('manage_skills', 'Update compétence Rust -> INTERMEDIATE',
-    { action: 'update', skillName: 'Rust_Audit_Test', proficiencyLevel: 'INTERMEDIATE', origin: 'AI_INFERRED' },
+    { action: 'update', skillName: 'Rust_Audit_Test', proficiencyLevel: 'INTERMEDIATE', origin: 'inferred' },
     skillsTool,
-    { toolName: 'manage_skills', args: { action: 'update', skillName: 'Rust_Audit_Test', proficiencyLevel: 'INTERMEDIATE', origin: 'AI_INFERRED', is_visible: true } }
+    { toolName: 'manage_skills', args: { action: 'update', skillName: 'Rust_Audit_Test', proficiencyLevel: 'INTERMEDIATE', origin: 'inferred', is_visible: true } }
   );
 
   await runTest('manage_skills', 'Ajouter doublon (edge)',
-    { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'EXPERT', origin: 'SELF_DECLARED' },
+    { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'EXPERT', origin: 'declared' },
     skillsTool,
-    { toolName: 'manage_skills', args: { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'EXPERT', origin: 'SELF_DECLARED', is_visible: true } }
+    { toolName: 'manage_skills', args: { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'EXPERT', origin: 'declared', is_visible: true } }
   );
 
   await runTest('manage_skills', 'Update inexistant (edge)',
-    { action: 'update', skillName: 'CompetenceQuiExistePas_9999', proficiencyLevel: 'EXPERT', origin: 'SELF_DECLARED' },
+    { action: 'update', skillName: 'CompetenceQuiExistePas_9999', proficiencyLevel: 'EXPERT', origin: 'declared' },
     skillsTool,
-    { toolName: 'manage_skills', args: { action: 'update', skillName: 'CompetenceQuiExistePas_9999', proficiencyLevel: 'EXPERT', origin: 'SELF_DECLARED', is_visible: true } }
+    { toolName: 'manage_skills', args: { action: 'update', skillName: 'CompetenceQuiExistePas_9999', proficiencyLevel: 'EXPERT', origin: 'declared', is_visible: true } }
   );
 
   // Cleanup

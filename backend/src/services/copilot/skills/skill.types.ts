@@ -16,6 +16,10 @@ export interface SkillDefinition {
   tools: string[];
   /** User intent triggers (keywords/phrases the agent should match) */
   triggers: string[];
+  /** Priority for conflict resolution when multiple skills match (higher = preferred, default 0) */
+  priority?: number;
+  /** Pre-computed embedding vector for semantic matching (set at startup) */
+  embedding?: number[];
   /** Full instructions body (loaded on demand) */
   instructions: string;
 }

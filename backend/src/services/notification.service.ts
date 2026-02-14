@@ -509,43 +509,6 @@ export async function updatePreferences(
 }
 
 // ============================================================================
-// BACKWARD COMPAT — used by document.service.ts
-// ============================================================================
-
-export interface NotificationData {
-  talentId: string;
-  type: NotificationType;
-  title: string;
-  body: string;
-  referenceType?: string;
-  referenceId?: string;
-  data?: Record<string, any>;
-}
-
-/** @deprecated Use `create()` instead. Kept for backward compatibility with document.service.ts */
-export async function createNotification(data: NotificationData): Promise<string> {
-  return create({
-    talentId: data.talentId,
-    type: data.type,
-    title: data.title,
-    body: data.body,
-    referenceType: data.referenceType,
-    referenceId: data.referenceId,
-    data: data.data,
-  });
-}
-
-/** @deprecated Use `sendPush()` instead. Kept for backward compatibility with community-notification.service.ts */
-export async function sendPushNotification(
-  talentId: string,
-  title: string,
-  body: string,
-  data?: Record<string, any>
-): Promise<{ success: boolean; error?: string }> {
-  return sendPush(talentId, title, body, data);
-}
-
-// ============================================================================
 // SCHEDULING HELPERS — Reminders
 // ============================================================================
 

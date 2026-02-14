@@ -180,6 +180,57 @@ router.post('/bookings/:id/messages', authMiddleware, async (req: AuthRequest, r
 });
 
 /**
+ * PUT /api/spaces/booking-messages/:messageId/read - Mark single message as read
+ */
+router.put('/booking-messages/:messageId/read', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { messageId } = req.params;
+    const talentId = req.talentId;
+
+    const msgCheck = await pool.query(
+      `SELECT bm.id, bm.booking_id, bm.sender_type, sb.talent_id as booking_talent_id, sb.organization_id
+       FROM space_booking_messages bm
+       JOIN space_bookings sb ON bm.booking_id = sb.id
+       WHERE bm.id = $1`,
+      [messageId]
+    );
+
+    if (msgCheck.rows.length === 0) {
+      throw createNotFoundError('Message');
+    }
+
+    const msg = msgCheck.rows[0];
+    const isOrgMember = await pool.query(
+      `SELECT 1 FROM organization_members WHERE organization_id = $1 AND talent_id = $2`,
+      [msg.organization_id, talentId]
+    );
+
+    const canRead = msg.booking_talent_id === talentId || isOrgMember.rows.length > 0;
+    if (!canRead) {
+      throw createForbiddenError('Access denied');
+    }
+
+    const senderTypeToMark = msg.booking_talent_id === talentId ? 'ORGANIZATION' : 'TALENT';
+    if (msg.sender_type !== senderTypeToMark) {
+      return res.json({ data: { message: 'Nothing to mark' } });
+    }
+
+    const result = await pool.query(
+      `UPDATE space_booking_messages SET is_read = true, read_at = NOW() WHERE id = $1 AND is_read = false RETURNING *`,
+      [messageId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({ data: result.rows[0] || {} });
+    }
+
+    res.json({ data: result.rows[0] });
+  } catch (error) {
+    handleRouteError(res, error, 'Error marking message as read');
+  }
+});
+
+/**
  * PUT /api/spaces/bookings/:id/messages/read-all - Mark all messages as read
  */
 router.put('/bookings/:id/messages/read-all', authMiddleware, async (req: AuthRequest, res: Response) => {

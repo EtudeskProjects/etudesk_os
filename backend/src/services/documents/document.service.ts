@@ -12,7 +12,7 @@ import {
 } from './extraction.service';
 import { extractAndSaveSkills } from './skill-extraction.service';
 import { mergeExtractedSkills } from '../skills/skill-merge.service';
-import { createNotification } from '../notification.service';
+import { create } from '../notification.service';
 import { logger } from '../../utils';
 import {
   DocumentType,
@@ -325,7 +325,7 @@ export async function processDocumentExtraction(
             ? `${skillsInDocument} compétence${skillsInDocument > 1 ? 's' : ''} extraite${skillsInDocument > 1 ? 's' : ''} de "${docTitle}"`
             : `"${docTitle}" a été analysé avec succès`;
 
-        await createNotification({
+        await create({
           talentId,
           type: 'SYSTEM',
           title: nameSkipped ? 'Document analysé — compétences ignorées' : 'Document analysé',
@@ -351,7 +351,7 @@ export async function processDocumentExtraction(
       const failedDocRow = await pool.query(`SELECT talent_id, title, original_filename FROM talent_documents WHERE id = $1`, [documentId]);
       const failedTalentId = failedDocRow.rows[0]?.talent_id;
       if (failedTalentId) {
-        await createNotification({
+        await create({
           talentId: failedTalentId,
           type: 'SYSTEM',
           title: "Échec d'analyse",
@@ -382,7 +382,7 @@ export async function processDocumentExtraction(
       const errorDocRow = await pool.query(`SELECT talent_id FROM talent_documents WHERE id = $1`, [documentId]);
       const errorTalentId = errorDocRow.rows[0]?.talent_id;
       if (errorTalentId) {
-        await createNotification({
+        await create({
           talentId: errorTalentId,
           type: 'SYSTEM',
           title: "Échec d'analyse",

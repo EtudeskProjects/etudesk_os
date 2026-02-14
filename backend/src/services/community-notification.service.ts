@@ -173,13 +173,14 @@ export class CommunityNotificationService {
   /**
    * Get unread notification count by community (from unified table)
    */
-  async getUnreadCounts(talentId: string): Promise<Array<{ community_id: string; count: number }>> {
+  async getUnreadCounts(talentId: string): Promise<Array<{ community_id: string; count: number; community_name?: string }>> {
     const result = await pool.query(`
-      SELECT community_id, COUNT(*) as count
-      FROM notifications
-      WHERE talent_id = $1 AND community_id IS NOT NULL AND read_at IS NULL
-        AND (scheduled_for IS NULL OR sent_at IS NOT NULL)
-      GROUP BY community_id
+      SELECT n.community_id, COUNT(*)::int as count, c.name as community_name
+      FROM notifications n
+      LEFT JOIN communities c ON n.community_id = c.id
+      WHERE n.talent_id = $1 AND n.community_id IS NOT NULL AND n.read_at IS NULL
+        AND (n.scheduled_for IS NULL OR n.sent_at IS NOT NULL)
+      GROUP BY n.community_id, c.name
     `, [talentId]);
 
     return result.rows;

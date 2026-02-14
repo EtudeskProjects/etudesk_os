@@ -65,8 +65,11 @@ export { summarizeHistoryIfNeeded } from './session-summarizer';
 export { getOntology, reloadOntology } from './ontology.cache';
 
 // Skills Library
-export { loadAllSkillMetadata, getSkillsForMode, getSkillBody, reloadSkills } from './skills/skill.loader';
+export { loadAllSkillMetadata, getSkillsForMode, getSkillBody, detectSkillFromMessage, reloadSkills } from './skills/skill.loader';
 export type { SkillDefinition, SkillMetadata } from './skills/skill.types';
+
+// UEMOA Knowledge
+export { getUEMOAKnowledgeBlock, isUEMOACountry, shouldInjectUEMOA } from './uemoa-knowledge';
 
 // Types
 export type {

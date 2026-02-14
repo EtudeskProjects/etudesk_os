@@ -1,5 +1,5 @@
 /**
- * Centralized error handling utilities
+ * Centralized error handling & response utilities
  */
 
 import { Response } from 'express';
@@ -10,6 +10,42 @@ export interface ErrorResponse {
   error: string;
   code?: string;
   details?: unknown;
+}
+
+/**
+ * Standard API success response
+ */
+export function apiResponse(
+  res: Response,
+  options: {
+    data?: unknown;
+    meta?: Record<string, unknown>;
+    status?: number;
+    message?: string;
+  }
+): void {
+  const { data, meta, status = 200, message } = options;
+  const body: Record<string, unknown> = { success: true };
+  if (data !== undefined) body.data = data;
+  if (meta) body.meta = meta;
+  if (message) body.message = message;
+  res.status(status).json(body);
+}
+
+/**
+ * Standard API error response
+ */
+export function apiError(
+  res: Response,
+  status: number,
+  error: string,
+  code?: string,
+  details?: unknown
+): void {
+  const body: ErrorResponse = { error };
+  if (code) body.code = code;
+  if (details) body.details = details;
+  res.status(status).json({ success: false, ...body });
 }
 
 /**
@@ -47,16 +83,6 @@ export function handleRouteError(
 }
 
 /**
- * Create a typed error for database operations
- */
-export function createDbError(message: string, originalError?: unknown): AppError {
-  if (originalError instanceof Error) {
-    logger.error('Database error details:', originalError);
-  }
-  return new AppError('DATABASE_ERROR', message, 500);
-}
-
-/**
  * Create a not found error
  */
 export function createNotFoundError(resource: string): AppError {
@@ -64,22 +90,8 @@ export function createNotFoundError(resource: string): AppError {
 }
 
 /**
- * Create an unauthorized error
- */
-export function createUnauthorizedError(message = 'Unauthorized'): AppError {
-  return new AppError('UNAUTHORIZED', message, 401);
-}
-
-/**
  * Create a forbidden error
  */
 export function createForbiddenError(message = 'Access denied'): AppError {
   return new AppError('FORBIDDEN', message, 403);
-}
-
-/**
- * Create a validation error
- */
-export function createValidationError(message: string): AppError {
-  return new AppError('VALIDATION_ERROR', message, 400);
 }

@@ -22,6 +22,16 @@ export interface TableMapping {
     goals?: string;
 }
 
+/**
+ * Result of a parameterized SQL fragment builder.
+ * sql: the SQL expression (with $N placeholders)
+ * params: the parameter values to bind
+ */
+export interface SqlFragment {
+    sql: string;
+    params: unknown[];
+}
+
 const TABLE_MAPPINGS: Record<string, TableMapping> = {
     't': { // talents
         city: 'city',
@@ -51,7 +61,6 @@ const TABLE_MAPPINGS: Record<string, TableMapping> = {
         bio: 'description'
     },
     'o': { // opportunities (legacy alias, now 'opp')
-        // This entry is kept for backward compatibility if 'o' is still used for opportunities
         sectors: 'sectors',
         sectorsType: 'text[]',
         bio: 'summary'
@@ -81,49 +90,58 @@ export class MatchingUtils {
      * Internal helper to get mapping for an alias
      */
     private static getMapping(tableAlias: string): TableMapping {
-        // Try to guess if not explicitly in the map
         if (TABLE_MAPPINGS[tableAlias]) return TABLE_MAPPINGS[tableAlias];
-
-        // Fallback or guess by alias if possible, but default to empty
         return {};
     }
 
     /**
-     * Generates a SQL ORDER BY clause fragment for location-based ranking.
+     * Generates a parameterized SQL ORDER BY clause fragment for location-based ranking.
+     * Returns both the SQL fragment and the parameter values.
+     * @param startIndex - the starting $N index for parameters
      */
-    static buildLocationRanking(tableAlias: string, criteria: MatchCriteria): string {
+    static buildLocationRanking(tableAlias: string, criteria: MatchCriteria, startIndex: number = 1): SqlFragment {
         const parts: string[] = [];
+        const params: unknown[] = [];
         const mapping = this.getMapping(tableAlias);
         const isJson = mapping.locationType === 'json';
+        let idx = startIndex;
 
         // 1. Exact City Match
         if (criteria.city && mapping.city) {
             if (isJson) {
-                // Check if any object in the JSONB array has this city
-                const safeCity = criteria.city.replace(/'/g, "''");
-                parts.push(`CASE WHEN ${tableAlias}.${mapping.city} @> '[{"city": "${safeCity}"}]'::jsonb THEN 4 ELSE 0 END`);
+                parts.push(`CASE WHEN ${tableAlias}.${mapping.city} @> jsonb_build_array(jsonb_build_object('city', $${idx})) THEN 4 ELSE 0 END`);
+                params.push(criteria.city);
+                idx++;
             } else {
-                parts.push(`CASE WHEN LOWER(${tableAlias}.${mapping.city}) = LOWER('${criteria.city.replace(/'/g, "''")}') THEN 4 ELSE 0 END`);
+                parts.push(`CASE WHEN LOWER(${tableAlias}.${mapping.city}) = LOWER($${idx}) THEN 4 ELSE 0 END`);
+                params.push(criteria.city);
+                idx++;
             }
         }
 
         // 2. Exact Region Match
         if (criteria.region && mapping.region) {
             if (isJson) {
-                const safeRegion = criteria.region.replace(/'/g, "''");
-                parts.push(`CASE WHEN ${tableAlias}.${mapping.region} @> '[{"region": "${safeRegion}"}]'::jsonb THEN 3 ELSE 0 END`);
+                parts.push(`CASE WHEN ${tableAlias}.${mapping.region} @> jsonb_build_array(jsonb_build_object('region', $${idx})) THEN 3 ELSE 0 END`);
+                params.push(criteria.region);
+                idx++;
             } else {
-                parts.push(`CASE WHEN LOWER(${tableAlias}.${mapping.region}) = LOWER('${criteria.region.replace(/'/g, "''")}') THEN 3 ELSE 0 END`);
+                parts.push(`CASE WHEN LOWER(${tableAlias}.${mapping.region}) = LOWER($${idx}) THEN 3 ELSE 0 END`);
+                params.push(criteria.region);
+                idx++;
             }
         }
 
         // 3. Exact Country Match
         if (criteria.country && mapping.country) {
             if (isJson) {
-                const safeCountry = criteria.country.replace(/'/g, "''");
-                parts.push(`CASE WHEN ${tableAlias}.${mapping.country} @> '[{"country": "${safeCountry}"}]'::jsonb THEN 2 ELSE 0 END`);
+                parts.push(`CASE WHEN ${tableAlias}.${mapping.country} @> jsonb_build_array(jsonb_build_object('country', $${idx})) THEN 2 ELSE 0 END`);
+                params.push(criteria.country);
+                idx++;
             } else {
-                parts.push(`CASE WHEN LOWER(${tableAlias}.${mapping.country}) = LOWER('${criteria.country.replace(/'/g, "''")}') THEN 2 ELSE 0 END`);
+                parts.push(`CASE WHEN LOWER(${tableAlias}.${mapping.country}) = LOWER($${idx}) THEN 2 ELSE 0 END`);
+                params.push(criteria.country);
+                idx++;
             }
         }
 
@@ -137,62 +155,95 @@ export class MatchingUtils {
             parts.push(`CASE WHEN ${tableAlias}.${mapping.willingToRelocate} = TRUE THEN 1 ELSE 0 END`);
         }
 
-        return parts.length > 0 ? `(${parts.join(' + ')})` : '0';
+        return {
+            sql: parts.length > 0 ? `(${parts.join(' + ')})` : '0',
+            params
+        };
     }
 
     /**
-     * Generates a SQL ORDER BY clause fragment for sector matching.
+     * Generates a parameterized SQL ORDER BY clause fragment for sector matching.
+     * @param startIndex - the starting $N index for parameters
      */
-    static buildSectorRanking(tableAlias: string, sectors?: string[]): string {
-        if (!sectors || sectors.length === 0) return '0';
+    static buildSectorRanking(tableAlias: string, sectors: string[] | undefined, startIndex: number = 1): SqlFragment {
+        if (!sectors || sectors.length === 0) return { sql: '0', params: [] };
         const mapping = this.getMapping(tableAlias);
-        if (!mapping.sectors) return '0';
+        if (!mapping.sectors) return { sql: '0', params: [] };
 
-        const formattedSectors = sectors.map(s => `'${s.replace(/'/g, "''")}'`).join(',');
+        const params: unknown[] = [];
+        const placeholders: string[] = [];
+        let idx = startIndex;
 
-        if (mapping.sectorsType === 'jsonb') {
-            // Updated overlap check for JSONB
-            return `CASE WHEN ${tableAlias}.${mapping.sectors} ?| ARRAY[${formattedSectors}]::text[] THEN 2 ELSE 0 END`;
+        for (const sector of sectors) {
+            placeholders.push(`$${idx}`);
+            params.push(sector);
+            idx++;
         }
 
-        return `CASE WHEN ${tableAlias}.${mapping.sectors} && ARRAY[${formattedSectors}]::text[] THEN 2 ELSE 0 END`;
+        if (mapping.sectorsType === 'jsonb') {
+            return {
+                sql: `CASE WHEN ${tableAlias}.${mapping.sectors} ?| ARRAY[${placeholders.join(',')}]::text[] THEN 2 ELSE 0 END`,
+                params
+            };
+        }
+
+        return {
+            sql: `CASE WHEN ${tableAlias}.${mapping.sectors} && ARRAY[${placeholders.join(',')}]::text[] THEN 2 ELSE 0 END`,
+            params
+        };
     }
 
     /**
-   * Generates a SQL ORDER BY clause fragment for profile/objective matching.
-   */
-    static buildProfileRanking(tableAlias: string, query?: string): string {
-        if (!query) return '0';
+     * Generates a parameterized SQL ORDER BY clause fragment for profile/objective matching.
+     * @param startIndex - the starting $N index for parameters
+     */
+    static buildProfileRanking(tableAlias: string, query: string | undefined, startIndex: number = 1): SqlFragment {
+        if (!query) return { sql: '0', params: [] };
         const mapping = this.getMapping(tableAlias);
-        const safeQuery = query.replace(/'/g, "''");
-
+        const params: unknown[] = [];
         const parts: string[] = [];
+        let idx = startIndex;
+
+        const likePattern = `%${query}%`;
 
         if (mapping.bio) {
-            parts.push(`CASE WHEN ${tableAlias}.${mapping.bio} ILIKE '%${safeQuery}%' THEN 1 ELSE 0 END`);
+            parts.push(`CASE WHEN ${tableAlias}.${mapping.bio} ILIKE $${idx} THEN 1 ELSE 0 END`);
+            params.push(likePattern);
+            idx++;
         }
 
         if (mapping.goals) {
-            // Check if goals is text[] or jsonb
-            if (mapping.sectorsType === 'jsonb') { // Reusing sector type logic or could have goalsType
-                parts.push(`CASE WHEN EXISTS (SELECT 1 FROM jsonb_array_elements_text(${tableAlias}.${mapping.goals}) g WHERE g ILIKE '%${safeQuery}%') THEN 1 ELSE 0 END`);
+            if (mapping.sectorsType === 'jsonb') {
+                parts.push(`CASE WHEN EXISTS (SELECT 1 FROM jsonb_array_elements_text(${tableAlias}.${mapping.goals}) g WHERE g ILIKE $${idx}) THEN 1 ELSE 0 END`);
             } else {
-                // Assuming text[]
-                parts.push(`CASE WHEN EXISTS (SELECT 1 FROM unnest(${tableAlias}.${mapping.goals}) g WHERE g ILIKE '%${safeQuery}%') THEN 1 ELSE 0 END`);
+                parts.push(`CASE WHEN EXISTS (SELECT 1 FROM unnest(${tableAlias}.${mapping.goals}) g WHERE g ILIKE $${idx}) THEN 1 ELSE 0 END`);
             }
+            params.push(likePattern);
+            idx++;
         }
 
-        return parts.length > 0 ? `(${parts.join(' + ')})` : '0';
+        return {
+            sql: parts.length > 0 ? `(${parts.join(' + ')})` : '0',
+            params
+        };
     }
 
     /**
-     * Combines all rankings into a single score expression.
+     * Combines all rankings into a single parameterized score expression.
+     * @param startIndex - the starting $N index for parameters
      */
-    static buildMatchScore(tableAlias: string, criteria: MatchCriteria): string {
-        const locationScore = this.buildLocationRanking(tableAlias, criteria);
-        const sectorScore = this.buildSectorRanking(tableAlias, criteria.sectors);
-        const profileScore = this.buildProfileRanking(tableAlias, criteria.query);
+    static buildMatchScore(tableAlias: string, criteria: MatchCriteria, startIndex: number = 1): SqlFragment {
+        const location = this.buildLocationRanking(tableAlias, criteria, startIndex);
+        const nextIdx1 = startIndex + location.params.length;
 
-        return `(${locationScore} * 10) + (${sectorScore} * 5) + (${profileScore} * 1)`;
+        const sector = this.buildSectorRanking(tableAlias, criteria.sectors, nextIdx1);
+        const nextIdx2 = nextIdx1 + sector.params.length;
+
+        const profile = this.buildProfileRanking(tableAlias, criteria.query, nextIdx2);
+
+        return {
+            sql: `(${location.sql} * 10) + (${sector.sql} * 5) + (${profile.sql} * 1)`,
+            params: [...location.params, ...sector.params, ...profile.params]
+        };
     }
 }

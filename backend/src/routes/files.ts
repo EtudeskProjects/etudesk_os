@@ -32,7 +32,7 @@ const upload = multer({
     if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Type de fichier non supporté. Types acceptés: PDF, DOC, DOCX'));
+      cb(new Error('UNSUPPORTED_FILE_TYPE'));
     }
   },
 });
@@ -64,7 +64,13 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
     const fileId = uuidv4();
     const filename = `${fileId}.${extension}`;
     const relativePath = `${ATTACHMENTS_DIR}/${category}/${filename}`;
-    const absolutePath = path.join(UPLOAD_BASE_DIR, relativePath);
+    const absolutePath = path.resolve(UPLOAD_BASE_DIR, relativePath);
+
+    // Path traversal protection: ensure resolved path stays within UPLOAD_BASE_DIR
+    const resolvedBase = path.resolve(UPLOAD_BASE_DIR);
+    if (!absolutePath.startsWith(resolvedBase + path.sep) && absolutePath !== resolvedBase) {
+      return res.status(400).json({ error: 'Invalid file path' });
+    }
 
     await fs.promises.writeFile(absolutePath, req.file.buffer);
 

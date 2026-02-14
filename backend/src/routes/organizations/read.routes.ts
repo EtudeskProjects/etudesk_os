@@ -52,7 +52,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
       query: (search as string) || undefined
     };
 
-    const matchScore = MatchingUtils.buildMatchScore('org', criteria);
+    const matchFragment = MatchingUtils.buildMatchScore('org', criteria);
 
     // Filter invisible organizations unless searching specifically or direct access?
     // User requirement: "si c'est false, le copilote ne peut que voir les talents et organsations is visible a true"
@@ -61,14 +61,14 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
     let query = `
       SELECT org.*,
         (SELECT COUNT(*) FROM organization_members WHERE organization_id = org.id) as member_count,
-        ${matchScore} as match_score
+        ${matchFragment.sql} as match_score
       FROM organizations org
       WHERE org.deleted_at IS NULL
       AND org.is_visible = TRUE
     `;
 
-    const params: QueryParam[] = [];
-    let paramIndex = 1;
+    const params: QueryParam[] = [...matchFragment.params as QueryParam[]];
+    let paramIndex = matchFragment.params.length + 1;
 
     if (type) {
       query += ` AND $${paramIndex++} = ANY(org.types)`;

@@ -3,7 +3,7 @@ name: Interview Preparation
 description: Prepare for a job interview with company research, CV analysis, and a structured prep guide
 modes: explore
 tools: sql_query, file_reader, web_search, generate_document
-triggers: entretien, interview, préparer mon entretien, interview prep, préparation entretien
+triggers: entretien, interview, préparer mon entretien, interview prep, préparation entretien, entretien embauche, passer un entretien, entretien Orange, entretien Wave, entretien stage, entretien MTN, entretien Jumia, entretien Abidjan, entretien Dakar
 ---
 
 # Interview Preparation Workflow
@@ -15,10 +15,11 @@ You are now in Interview Preparation mode. Follow these steps precisely:
 2. Call `sql_query` with intent `my_applications` to find the relevant application and opportunity details.
 
 ## Step 2: Research the Company
-3. Call `web_search` with the company name to find:
+3. Call `web_search` with the company name + user's country/region to find:
    - Company culture, values, and recent news
    - Common interview questions for this type of role
    - Industry trends relevant to the position
+   **CRITICAL:** For `web_search`, ALWAYS include the country/region in the query. Example: "Wave Côte d'Ivoire culture entreprise" instead of just "Wave culture entreprise". This ensures UEMOA-relevant results.
 
 ## Step 3: Analyze the User's CV
 4. Call `sql_query` with intent `my_documents` to find the user's CV.
@@ -34,7 +35,7 @@ You are now in Interview Preparation mode. Follow these steps precisely:
    - Red flags to prepare for (gaps, career changes)
 
 ## Step 5: Present Result
-8. Render the document card and provide a concise summary with top 3 tips.
+8. Render the document card. **Format (exact):** `entity:document {"id":"uuid"}` — use the document id returned by generate_document. Provide a concise summary with top 3 tips.
 
 ## Rules
 - Tailor advice to the French-speaking African job market when relevant

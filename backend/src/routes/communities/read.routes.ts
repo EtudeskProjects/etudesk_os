@@ -12,6 +12,7 @@ import {
   handleRouteError,
   createQueryBuilder,
   addCondition,
+  addSearchCondition,
   addPagination,
   addOrderBy,
   finalizeQuery,
@@ -55,15 +56,9 @@ router.get('/', async (req: Request, res: Response) => {
       query: (search as string) || undefined
     };
 
-    // We need to inject the CASE WHEN clause into the select parts.
-    // Since createQueryBuilder doesn't easily support arbitrary complex select expressions added later, 
-    // it's safer to reconstruct the query or inject the variable if we were using a raw query builder. 
-    // However, the current implementation uses a custom builder.
-    // The MatchingUtils returns a string expression. We can add it to the select list.
+    const matchFragment = MatchingUtils.buildMatchScore('c', criteria);
 
-    const matchScoreExpr = MatchingUtils.buildMatchScore('c', criteria);
-
-    // Build query
+    // Build query — pass match params as initialParams so $N indices are correct
     let builder = createQueryBuilder(`
       SELECT c.*,
         (SELECT COUNT(*) FROM community_members WHERE community_id = c.id AND (status IS NULL OR status = 'ACTIVE')) as members_count,
@@ -74,11 +69,11 @@ router.get('/', async (req: Request, res: Response) => {
           'logo_url', o.logo_url,
           'verification_status', o.verification_status
         ) as organization,
-        ${matchScoreExpr} as match_score
+        ${matchFragment.sql} as match_score
       FROM communities c
       LEFT JOIN organizations o ON c.organization_id = o.id
       WHERE c.deleted_at IS NULL
-    `);
+    `, matchFragment.params as import('../../utils/query-builder').QueryParam[]);
 
     // Filter visibility
     if (include_private !== 'true') {
@@ -93,15 +88,8 @@ router.get('/', async (req: Request, res: Response) => {
     }
 
     if (search) {
-      builder = addCondition(builder, "(c.name ILIKE ? OR c.description ILIKE ?)", [`%${search}%`, `%${search}%`]);
+      builder = addSearchCondition(builder, ['c.name', 'c.description'], search as string);
     }
-
-    // builder = addOrderBy(builder, 'match_score', 'DESC'); // The utility might not support generated column alias in ORDER BY directly if it is strictly parsing fields
-    // Assuming addOrderBy supports alias if SQL allows it (Postgres does allow alias in ORDER BY)
-
-    // We manually append sorting to prioritize match_score
-    // The custom builder utilities might enforce specific patterns. 
-    // Let's rely on adding the order by manually if needed or standard way.
 
     builder = addOrderBy(builder, 'match_score', 'DESC');
     builder = addOrderBy(builder, 'c.created_at', 'DESC');

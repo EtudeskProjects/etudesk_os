@@ -3,7 +3,8 @@ name: CV Generation
 description: Generate or update a professional CV using profile data, existing documents, and bookmarked opportunities
 modes: explore
 tools: sql_query, file_reader, generate_document
-triggers: CV, curriculum vitae, resume, generer mon CV, creer un CV, mettre a jour mon CV
+triggers: CV, curriculum vitae, resume, generer mon CV, creer un CV, mettre a jour mon CV, mon CV en PDF, telecharger mon CV, exporter mon CV, refaire mon CV, CV Abidjan, CV Dakar, CV FCFA
+priority: 8
 ---
 
 # CV Generation Workflow
@@ -11,13 +12,13 @@ triggers: CV, curriculum vitae, resume, generer mon CV, creer un CV, mettre a jo
 You are now in CV Generation mode. Follow these steps precisely to produce an elegant, professionally designed PDF CV.
 
 ## Step 1: Gather Context
-1. The user's profile data is already in context (name, email, phone, city, country, bio, skills, goals). Use it directly.
-2. Call `sql_query` with intent `my_bookmarks` to understand the user's target market and preferred roles.
-3. Call `sql_query` with intent `my_documents` to find any existing CV documents.
+1. Use profile data from `<user_profile>` context (name, email, phone, city, country, bio, skills, goals) and documents from `<user_data>` — these are already loaded. DO NOT call sql_query(my_profile) or sql_query(my_documents) — they are redundant.
+2. If `<user_data>` shows a CV is available, call `file_reader` with its documentId to read existing CV content for merging.
+3. Optionally call `sql_query` with intent `my_bookmarks` if the user wants role-targeted CV customization.
 
 ## Step 2: Read Existing CV (if any)
-4. If an existing CV was found, call `file_reader` with its documentId to read the content.
-5. Extract experiences, education, certifications, and languages from the existing CV to include in the new one.
+4. If `file_reader` returned CV content, extract experiences, education, certifications, and languages to include in the new one.
+5. If no existing CV, rely on profile data only — suggest the user provides more details if the profile is sparse.
 
 ## Step 3: Generate the CV (PDF by default)
 
@@ -82,9 +83,10 @@ The contentJson MUST be a JSON string with this exact structure:
 - `certifications` — from existing CV content or user documents
 
 **The user's avatar photo is automatically included — you do not need to add avatarUrl.**
+**If the user explicitly asks to NOT include their photo**, add `"includePhoto": false` in the CV JSON. This will display their initials in a styled circle instead of the photo. By default (when the field is omitted or `true`), the avatar is included.
 
 ## Step 4: Present Result
-7. Render the document card: ```entity:document {"id":"uuid"}```
+7. Render the document card. **Format (exact):** `entity:document {"id":"uuid"}` — use the document id returned by generate_document.
 8. Provide a brief summary of what was included and any suggestions for improvement.
 
 ## Rules

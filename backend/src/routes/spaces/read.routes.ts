@@ -90,7 +90,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
       sectors: userProfile?.sectors || [],
     };
 
-    const matchScore = MatchingUtils.buildMatchScore('s', criteria);
+    const matchFragment = MatchingUtils.buildMatchScore('s', criteria);
 
     // Base query: only PUBLIC spaces OR those where user is invited
     let query = `
@@ -100,7 +100,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
         (SELECT COUNT(*) FROM space_bookings sb
          WHERE sb.space_id = s.id AND sb.status = 'CONFIRMED'
          AND sb.end_datetime > NOW()) as active_bookings_count,
-        ${matchScore} as match_score
+        ${matchFragment.sql} as match_score
       FROM spaces s
       LEFT JOIN organizations o ON s.organization_id = o.id
       WHERE s.deleted_at IS NULL AND s.status = 'ACTIVE'
@@ -110,8 +110,8 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
         : `TRUE`}
     `;
 
-    const params: QueryParam[] = [];
-    let paramIndex = 1;
+    const params: QueryParam[] = [...matchFragment.params as QueryParam[]];
+    let paramIndex = matchFragment.params.length + 1;
 
     // If user is authenticated, also show spaces they're invited to or own
     if (talentId) {

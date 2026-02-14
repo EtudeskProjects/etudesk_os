@@ -6,6 +6,7 @@
 export * from './pagination.helper';
 export * from './error-handler';
 export * from './query-builder';
+export * from './cache';
 
 /**
  * Safely parse JSON string, returns fallback on error
@@ -216,44 +217,3 @@ export const logger = {
     }
   },
 };
-
-// --- Utility Functions ---
-
-/**
- * Generate a request ID for tracing
- */
-export function generateRequestId(): string {
-  return `req_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 9)}`;
-}
-
-/**
- * Sleep for a given number of milliseconds
- */
-export function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Retry a function with exponential backoff
- */
-export async function retry<T>(
-  fn: () => Promise<T>,
-  options: { maxRetries?: number; baseDelayMs?: number; maxDelayMs?: number } = {}
-): Promise<T> {
-  const { maxRetries = 3, baseDelayMs = 1000, maxDelayMs = 10000 } = options;
-
-  let lastError: Error | undefined;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      if (attempt < maxRetries) {
-        const delay = Math.min(baseDelayMs * Math.pow(2, attempt), maxDelayMs);
-        logger.warn(`Retry attempt ${attempt + 1}/${maxRetries}`, { delay, error: lastError.message });
-        await sleep(delay);
-      }
-    }
-  }
-  throw lastError;
-}

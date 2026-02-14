@@ -1,6 +1,6 @@
 /**
  * Copilot — Shared Types
- * OpenAI Agents SDK + GPT-5 (MODEL_T1) + SSE Streaming
+ * OpenAI Agents SDK + Claude (MODEL_AGENT) + SSE Streaming
  */
 
 // --- Context Types ---
@@ -13,6 +13,10 @@ export interface TalentContext extends BaseTalentContext {
   vectorStoreId?: string;
   /** User's preferred language for copilot responses */
   language?: 'fr' | 'en';
+  /** Dynamically injected skill instructions when a skill trigger matches the user message */
+  activeSkillInstructions?: string;
+  /** Whether to inject UEMOA knowledge block (conditional on message relevance) */
+  injectUEMOA?: boolean;
 }
 
 export interface OrgContext {
@@ -24,6 +28,15 @@ export interface OrgContext {
   role: string;
   /** User's preferred language for copilot responses */
   language?: 'fr' | 'en';
+  /** Pre-loaded org enrichment (avoids org_stats call) */
+  orgSectors?: string[];
+  memberCount?: number;
+  /** Admin's country — used for UEMOA knowledge injection */
+  country?: string;
+  /** Dynamically injected skill instructions when a skill trigger matches the user message */
+  activeSkillInstructions?: string;
+  /** Whether to inject UEMOA knowledge block (conditional on message relevance) */
+  injectUEMOA?: boolean;
 }
 
 // --- Message Segments Ordered Text/Tool Blocks For Inline Rendering ---

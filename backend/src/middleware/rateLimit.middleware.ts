@@ -3,17 +3,32 @@ import rateLimit from 'express-rate-limit';
 /**
  * Rate Limiting Middleware
  * Protects against brute force attacks and abuse
- *
- * NOTE: All limits are currently set to generous dev-friendly values.
- * TODO: Tighten before public launch.
  */
 
-const isDev = process.env.NODE_ENV !== 'production';
+const isProd = process.env.NODE_ENV === 'production';
+
+const getApiMax = () => {
+  const v = process.env.RATE_LIMIT_API_MAX;
+  if (v) return parseInt(v, 10);
+  return isProd ? 500 : 5000;
+};
+
+const getAuthMax = () => {
+  const v = process.env.RATE_LIMIT_AUTH_MAX;
+  if (v) return parseInt(v, 10);
+  return isProd ? 20 : 100;
+};
+
+const getOtpMax = () => {
+  const v = process.env.RATE_LIMIT_OTP_MAX;
+  if (v) return parseInt(v, 10);
+  return isProd ? 10 : 30;
+};
 
 // Generic API rate limiter
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5000, // Very generous for dev/testing
+  max: getApiMax(),
   message: {
     error: 'Trop de requêtes. Veuillez réessayer dans quelques minutes.',
     retry_after: 15 * 60
@@ -25,7 +40,7 @@ export const apiLimiter = rateLimit({
 // Strict limiter for authentication routes
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  max: getAuthMax(),
   message: {
     error: 'Trop de tentatives de connexion. Veuillez réessayer dans 15 minutes.',
     retry_after: 15 * 60
@@ -38,7 +53,7 @@ export const authLimiter = rateLimit({
 // OTP rate limiter
 export const otpLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 30,
+  max: getOtpMax(),
   message: {
     error: 'Limite d\'envoi de code atteinte. Veuillez réessayer dans 1 heure.',
     retry_after: 60 * 60
@@ -114,6 +129,30 @@ export const waitlistLimiter = rateLimit({
   message: {
     error: 'Trop de demandes. Veuillez réessayer dans 1 heure.',
     retry_after: 60 * 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Paystack webhook limiter
+export const paystackWebhookLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100,
+  message: {
+    error: 'Trop de requêtes webhook.',
+    retry_after: 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// WhatsApp webhook limiter (external provider callbacks)
+export const whatsappWebhookLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100,
+  message: {
+    error: 'Trop de requêtes webhook. Veuillez réessayer.',
+    retry_after: 60
   },
   standardHeaders: true,
   legacyHeaders: false,

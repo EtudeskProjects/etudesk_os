@@ -279,7 +279,7 @@ async function seedTalents(count: number): Promise<string[]> {
           `INSERT INTO talent_skills (talent_id, canonical_name, type, proficiency_level, origin)
            VALUES ($1, $2, $3, $4, $5)
            ON CONFLICT (talent_id, canonical_name) DO NOTHING`,
-          [id, skill, 'TECHNICAL', randomPick(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT']), 'declared']
+          [id, skill, 'TECHNICAL', randomPick(['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER']), 'declared']
         );
       }
       for (const skill of softSkills) {

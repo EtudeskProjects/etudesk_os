@@ -11,7 +11,9 @@
     "db:reset": "psql $DATABASE_URL -f src/database/schema.sql && npm run seed",
     "db:migrate": "tsx src/database/run-migrations.ts",
     "db:migrate:community": "for f in src/database/migrations/01[4-8]*.sql; do psql $DATABASE_URL -f $f; done",
-    "seed:pinecone": "tsx src/scripts/seed-pinecone.ts"
+    "seed:pinecone": "tsx src/scripts/seed-pinecone.ts",
+    "validate:skills": "tsx scripts/validate-skills.ts",
+    "test:skills": "tsx src/services/copilot/skills/__tests__/skill-loader.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",
@@ -27,6 +29,7 @@
     "expo-server-sdk": "^4.0.0",
     "express": "^4.18.0",
     "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
     "i18next": "^25.8.4",
     "i18next-fs-backend": "^2.6.1",
     "i18next-http-middleware": "^3.9.2",

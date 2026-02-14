@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
+import { paystackWebhookLimiter } from '../middleware/rateLimit.middleware';
 import { pool } from '../services/database';
 import {
   BillingScope,
@@ -233,7 +234,7 @@ router.post('/checkout/verify', authMiddleware, async (req: AuthRequest, res: Re
   }
 });
 
-router.post('/webhooks/paystack', async (req: AuthRequest, res: Response) => {
+router.post('/webhooks/paystack', paystackWebhookLimiter, async (req: AuthRequest, res: Response) => {
   try {
     const signature = req.headers['x-paystack-signature'];
     const signatureHash = Array.isArray(signature) ? signature[0] : signature;

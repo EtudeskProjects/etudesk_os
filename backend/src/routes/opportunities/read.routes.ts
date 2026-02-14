@@ -56,12 +56,12 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
       query: (search as string) || undefined
     };
 
-    const matchScore = MatchingUtils.buildMatchScore('opp', criteria);
+    const matchFragment = MatchingUtils.buildMatchScore('opp', criteria);
 
     // Base query: only PUBLIC opportunities OR those where user is invited
     let query = `
       SELECT opp.*,
-        ${matchScore} as match_score,
+        ${matchFragment.sql} as match_score,
         COALESCE(
           (SELECT json_agg(json_build_object(
             'id', org.id,
@@ -84,8 +84,8 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
         COALESCE(opp.visibility, 'PUBLIC') = 'PUBLIC'
     `;
 
-    const params: QueryParam[] = [];
-    let paramIndex = 1;
+    const params: QueryParam[] = [...matchFragment.params as QueryParam[]];
+    let paramIndex = matchFragment.params.length + 1;
 
     // If user is authenticated, also show opportunities they're invited to or own
     if (talentId && userEmail) {

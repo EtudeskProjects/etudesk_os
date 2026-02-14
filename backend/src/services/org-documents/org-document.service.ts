@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import OpenAI from 'openai';
 import { pool } from '../database';
 import { uploadFile, deleteFile, getFileBuffer } from '../storage.service';
-import { createNotification } from '../notification.service';
+import { create } from '../notification.service';
 import { logger } from '../../utils';
 import { MODEL_SEARCH } from '../ai/models';
 import { getOpenAIClient } from '../ai/provider';
@@ -327,7 +327,7 @@ export async function processOrgDocumentExtraction(
     );
     const uploadedBy = docRow.rows[0]?.uploaded_by;
     if (uploadedBy) {
-      await createNotification({
+      await create({
         talentId: uploadedBy,
         type: 'SYSTEM',
         title: 'Document organisation analysé',
@@ -359,7 +359,7 @@ export async function processOrgDocumentExtraction(
       );
       const errorTalentId = errorDocRow.rows[0]?.uploaded_by;
       if (errorTalentId) {
-        await createNotification({
+        await create({
           talentId: errorTalentId,
           type: 'SYSTEM',
           title: "Échec d'analyse",

@@ -2,8 +2,8 @@
 name: Community Creation
 description: Create a community for the organization directly on the platform
 modes: org
-tools: sql_query
-triggers: creer une communaute, nouvelle communaute, create community, lancer une communaute
+tools: execute_action
+triggers: creer une communaute, nouvelle communaute, create community, lancer une communaute, communaute tech, groupe professionnel, reseau, forum, hub communautaire
 ---
 
 # Community Creation Workflow

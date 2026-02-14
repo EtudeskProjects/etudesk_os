@@ -109,7 +109,3 @@ export function getImageClient(): OpenAI { return openaiClient; }
 
 /** Embeddings — always OpenAI (Pinecone 1536d compat) */
 export function getEmbeddingClient(): OpenAI { return openaiClient; }
-
-// Legacy: getAIClient() → maps to getGeminiClient for backward compat with suggestion services
-// This will be removed once all callers are migrated
-export function getAIClient(): OpenAI { return getGeminiClient(); }

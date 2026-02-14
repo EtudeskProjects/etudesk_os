@@ -16,6 +16,7 @@ import { pool } from '../../database';
 import { processDocumentExtraction } from '../../documents/document.service';
 import { logger } from '../../../utils';
 import { generateCVPDF, CVData } from './cv-pdf-generator';
+import { generateOrgDocumentPDF, isOrgDocumentContent, OrgDocumentData } from './org-document-pdf-generator';
 
 // Content JSON structure types
 interface SectionContent {
@@ -293,7 +294,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string)
       contentJson: z
         .string()
         .describe(
-          'Content as JSON string. Three formats supported: (1) CV format (PREFERRED for CV/resume): {"firstName":"John","lastName":"Doe","email":"john@example.com","phone":"+221...","city":"Dakar","country":"Senegal","bio":"Profile summary...","skills":[{"name":"Python","type":"hard","level":"expert"}],"languages":[{"language":"Francais","level":"native"}],"interests":["AI","Fintech"],"goals":["Lead developer"],"experiences":[{"title":"Dev Senior","company":"Wave","location":"Dakar","period":"2022 - Present","description":"Led team of 5..."}],"education":[{"degree":"Master Informatique","institution":"ESP Dakar","location":"Dakar","period":"2018 - 2020","description":"Specialisation IA"}],"certifications":[{"name":"AWS Solutions Architect","issuer":"Amazon","date":"2023"}]} (2) Sections: {"sections":[{"heading":"Title","body":"Content"}]} — for letters, reports. (3) Table: {"headers":[...],"rows":[...]} — for data exports.'
+          'Content as JSON string. Four formats supported: (1) CV format (PREFERRED for CV/resume): {"firstName":"John","lastName":"Doe","email":"john@example.com","phone":"+221...","city":"Dakar","country":"Senegal","bio":"Profile summary...","skills":[{"name":"Python","type":"hard","level":"expert"}],"languages":[{"language":"Francais","level":"native"}],"interests":["AI","Fintech"],"goals":["Lead developer"],"experiences":[{"title":"Dev Senior","company":"Wave","location":"Dakar","period":"2022 - Present","description":"Led team of 5..."}],"education":[{"degree":"Master Informatique","institution":"ESP Dakar","location":"Dakar","period":"2018 - 2020","description":"Specialisation IA"}],"certifications":[{"name":"AWS Solutions Architect","issuer":"Amazon","date":"2023"}]} (2) Org document format (PREFERRED for org-branded PDFs — fiche de poste, rapports): {"organizationName":"Acme Corp","organizationCity":"Abidjan","organizationCountry":"Côte d\'Ivoire","logoUrl":"https://...","documentDate":"2026-02-14","sections":[{"heading":"Section Title","body":"Content with\\n- bullet points"}]} (3) Sections: {"sections":[{"heading":"Title","body":"Content"}]} — for letters, reports. (4) Table: {"headers":[...],"rows":[...]} — for data exports.'
         ),
       instructions: z.string().describe('Generation instructions describing the purpose and style of the document'),
     }),
@@ -318,11 +319,14 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string)
             // Route CV-structured content to the specialized elegant generator
             if (isCVContent(data)) {
               isCV = true;
-              // Inject user's avatar if available and not already provided
-              if (avatarUrl && !data.avatarUrl) {
+              // Inject user's avatar if available, not already provided, and not explicitly excluded
+              if (avatarUrl && !data.avatarUrl && data.includePhoto !== false) {
                 data.avatarUrl = avatarUrl;
               }
               buffer = await generateCVPDF(data);
+            } else if (isOrgDocumentContent(data)) {
+              // Route org-branded documents (fiche de poste, rapport) to org generator
+              buffer = await generateOrgDocumentPDF(title, data);
             } else {
               buffer = await generatePDF(title, data);
             }

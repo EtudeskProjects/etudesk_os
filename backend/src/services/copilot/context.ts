@@ -38,7 +38,7 @@ export const TalentProfileSchema = z.object({
   skills: z.array(
     z.object({
       name: z.string(),
-      level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']).optional(),
+      level: z.enum(['beginner', 'intermediate', 'expert', 'master']).optional(),
     })
   ).optional(),
 
@@ -52,6 +52,12 @@ export const TalentProfileSchema = z.object({
 
   // Sectors of interest
   sectorsOfInterest: z.array(z.string()).optional(),
+
+  // Computed fields (enriched context — no extra tool call needed)
+  profileCompleteness: z.number().optional(), // 0-100%
+  topSectors: z.array(z.string()).optional(), // Inferred from skills
+  daysSinceLastActivity: z.number().optional(), // Days since updatedAt
+  daysSinceLastSkillUpdate: z.number().optional(), // Days since last skill add/update
 
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -545,6 +551,12 @@ export async function loadTalentContext(
   // Wait for all loaders
   await Promise.all(loaders);
 
+  // Adjust profileCompleteness based on CV availability (replace placeholder 20)
+  if (context.profile) {
+    const hasCV = context.documents?.hasCV ?? false;
+    context.profile.profileCompleteness = (context.profile.profileCompleteness || 0) - 20 + (hasCV ? 20 : 0);
+  }
+
   return context as TalentContext;
 }
 
@@ -573,16 +585,20 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
 
   const row = result.rows[0];
 
-  // Load skills
-  const skillsResult = await pool.query(
-    `
-    SELECT canonical_name as name, proficiency_level
-    FROM talent_skills
-    WHERE talent_id = $1
-    LIMIT 50
-    `,
-    [talentId]
-  );
+  // Load skills + freshness
+  const [skillsResult, skillFreshnessResult] = await Promise.all([
+    pool.query(
+      `SELECT canonical_name as name, proficiency_level
+       FROM talent_skills
+       WHERE talent_id = $1
+       LIMIT 50`,
+      [talentId]
+    ),
+    pool.query(
+      `SELECT MAX(updated_at) as last_update FROM talent_skills WHERE talent_id = $1`,
+      [talentId]
+    ),
+  ]);
 
   const skills = skillsResult.rows.map((s) => ({
     name: s.name,
@@ -604,6 +620,30 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
     level: mapLanguageLevel(l.proficiency_level),
   }));
 
+  // --- Compute profileCompleteness (0-100%) ---
+  let completeness = 0;
+  if (row.avatar_url) completeness += 15;
+  if (row.bio && row.bio.length > 10) completeness += 15;
+  if (skills.length > 0) completeness += 20;
+  if (row.city) completeness += 15;
+  if (languages.length > 0) completeness += 15;
+  // CV check deferred — will be enriched after documents load
+  completeness += 20; // Placeholder for CV — adjusted in loadTalentContext
+
+  // --- Infer topSectors from skills ---
+  const topSectors = inferSectorsFromSkills(skills.map((s) => s.name));
+
+  // --- Compute daysSinceLastActivity ---
+  const daysSinceLastActivity = row.updated_at
+    ? Math.floor((Date.now() - new Date(row.updated_at).getTime()) / (1000 * 60 * 60 * 24))
+    : undefined;
+
+  // --- Compute daysSinceLastSkillUpdate ---
+  const lastSkillUpdate = skillFreshnessResult.rows[0]?.last_update;
+  const daysSinceLastSkillUpdate = lastSkillUpdate
+    ? Math.floor((Date.now() - new Date(lastSkillUpdate).getTime()) / (1000 * 60 * 60 * 24))
+    : undefined;
+
   return {
     id: row.id,
     firstName: row.first_name,
@@ -619,6 +659,10 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
     learningPreferences: row.learning_preferences || undefined,
     skills,
     languages,
+    profileCompleteness: completeness,
+    topSectors: topSectors.length > 0 ? topSectors : undefined,
+    daysSinceLastActivity,
+    daysSinceLastSkillUpdate,
     createdAt: row.created_at?.toISOString(),
     updatedAt: row.updated_at?.toISOString(),
   };
@@ -991,15 +1035,63 @@ async function loadOrganizations(talentId: string): Promise<OrganizationsContext
 }
 
 
+// --- Sector Inference from Skills ---
+
+const SKILL_TO_SECTOR: Record<string, string> = {
+  // Tech
+  react: 'Tech', 'node.js': 'Tech', javascript: 'Tech', typescript: 'Tech', python: 'Tech',
+  java: 'Tech', 'c++': 'Tech', rust: 'Tech', go: 'Tech', swift: 'Tech', kotlin: 'Tech',
+  flutter: 'Tech', docker: 'Tech', kubernetes: 'Tech', aws: 'Tech', azure: 'Tech',
+  devops: 'Tech', sql: 'Tech', mongodb: 'Tech', postgresql: 'Tech', git: 'Tech',
+  html: 'Tech', css: 'Tech', vue: 'Tech', angular: 'Tech', django: 'Tech', flask: 'Tech',
+  'machine learning': 'Tech', 'deep learning': 'Tech', 'artificial intelligence': 'Tech',
+  // Data
+  'data analysis': 'Data', 'data science': 'Data', 'data engineering': 'Data',
+  'power bi': 'Data', tableau: 'Data', excel: 'Data', statistics: 'Data', r: 'Data',
+  // Commerce & Marketing
+  marketing: 'Commerce', 'marketing digital': 'Commerce', seo: 'Commerce', sem: 'Commerce',
+  'community management': 'Commerce', 'social media': 'Commerce', vente: 'Commerce',
+  'e-commerce': 'Commerce', crm: 'Commerce', copywriting: 'Commerce',
+  // Finance
+  comptabilite: 'Finance', finance: 'Finance', audit: 'Finance', fiscalite: 'Finance',
+  'analyse financiere': 'Finance', banque: 'Finance', microfinance: 'Finance',
+  // Design
+  figma: 'Design', 'ui design': 'Design', 'ux design': 'Design', photoshop: 'Design',
+  illustrator: 'Design', 'graphic design': 'Design', 'design thinking': 'Design',
+  // Management & RH
+  'gestion de projet': 'Management', leadership: 'Management', agile: 'Management',
+  scrum: 'Management', management: 'Management', rh: 'RH', recrutement: 'RH',
+  // Education
+  pedagogie: 'Education', formation: 'Education', enseignement: 'Education',
+  // Droit
+  droit: 'Droit', juridique: 'Droit', compliance: 'Droit',
+};
+
+function inferSectorsFromSkills(skillNames: string[]): string[] {
+  const sectorCounts: Record<string, number> = {};
+  for (const name of skillNames) {
+    const key = name.toLowerCase().trim();
+    const sector = SKILL_TO_SECTOR[key];
+    if (sector) {
+      sectorCounts[sector] = (sectorCounts[sector] || 0) + 1;
+    }
+  }
+  // Return top 3 sectors sorted by count
+  return Object.entries(sectorCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([sector]) => sector);
+}
+
 // --- Helper Functions ---
 
-function mapProficiencyLevel(level: string | null): 'beginner' | 'intermediate' | 'advanced' | 'expert' | undefined {
+function mapProficiencyLevel(level: string | null): 'beginner' | 'intermediate' | 'expert' | 'master' | undefined {
   if (!level) return undefined;
-  const mapping: Record<string, 'beginner' | 'intermediate' | 'advanced' | 'expert'> = {
+  const mapping: Record<string, 'beginner' | 'intermediate' | 'expert' | 'master'> = {
     BEGINNER: 'beginner',
     INTERMEDIATE: 'intermediate',
-    ADVANCED: 'advanced',
     EXPERT: 'expert',
+    MASTER: 'master',
   };
   return mapping[level.toUpperCase()];
 }

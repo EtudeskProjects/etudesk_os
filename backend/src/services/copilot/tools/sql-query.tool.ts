@@ -36,6 +36,14 @@ const SQL_INTENTS = [
   'org_talent_profile',
   'org_community_feed',
   'org_community_members',
+  // Org analytics
+  'org_skills_analytics',
+  'org_application_funnel',
+  'org_talent_cohorts',
+  'org_geo_distribution',
+  'org_community_engagement',
+  'org_revenue_analytics',
+  'org_opportunity_performance',
   // Talent community
   'my_community_feed',
   'my_community_members',
@@ -246,7 +254,7 @@ export function createSqlQueryTool(
              ORDER BY om.created_at DESC LIMIT 20`,
               [orgId]
             );
-            return { members: res.rows };
+            return { members: res.rows, chart_hint: 'table' };
           }
 
           case 'org_applications': {
@@ -255,7 +263,9 @@ export function createSqlQueryTool(
             const res = await pool.query(
               `SELECT a.id, a.status, a.applied_at,
                     COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name, t.bio,
-                    o.title as opportunity_title
+                    t.id as talent_id,
+                    o.title as opportunity_title, o.id as opportunity_id,
+                    o.summary as opportunity_summary, o.type as opportunity_type
              FROM opportunity_applications a
              JOIN opportunities o ON a.opportunity_id = o.id
              JOIN opportunity_posters op ON o.id = op.opportunity_id
@@ -264,7 +274,7 @@ export function createSqlQueryTool(
              ORDER BY a.applied_at DESC LIMIT 20`,
               [orgId]
             );
-            return { applications: res.rows };
+            return { applications: res.rows, chart_hint: 'table' };
           }
 
           case 'org_stats': {
@@ -275,7 +285,10 @@ export function createSqlQueryTool(
               (SELECT COUNT(*) FROM organization_members WHERE organization_id = $1 AND status = 'ACTIVE') as member_count,
               (SELECT COUNT(*) FROM opportunities o JOIN opportunity_posters op ON o.id = op.opportunity_id WHERE op.poster_organization_id = $1 AND o.status = 'OPEN' AND o.deleted_at IS NULL) as open_opportunities,
               (SELECT COUNT(*) FROM communities WHERE organization_id = $1 AND status = 'ACTIVE' AND deleted_at IS NULL) as community_count,
-              (SELECT COUNT(*) FROM spaces WHERE organization_id = $1 AND status = 'ACTIVE' AND deleted_at IS NULL) as space_count`,
+              (SELECT COUNT(*) FROM spaces WHERE organization_id = $1 AND status = 'ACTIVE' AND deleted_at IS NULL) as space_count,
+              (SELECT logo_url FROM organizations WHERE id = $1) as logo_url,
+              (SELECT headquarters_city FROM organizations WHERE id = $1) as city,
+              (SELECT headquarters_country FROM organizations WHERE id = $1) as country`,
               [orgId]
             );
             return res.rows[0];
@@ -466,14 +479,23 @@ export function createSqlQueryTool(
                FROM talents t WHERE t.id = $1`,
               [targetTalentId]
             );
-            const skillsRes = await pool.query(
-              `SELECT canonical_name as name, type, proficiency_level
-               FROM talent_skills WHERE talent_id = $1 ORDER BY canonical_name`,
-              [targetTalentId]
-            );
+            const [skillsRes, docsRes] = await Promise.all([
+              pool.query(
+                `SELECT canonical_name as name, type, proficiency_level
+                 FROM talent_skills WHERE talent_id = $1 ORDER BY canonical_name`,
+                [targetTalentId]
+              ),
+              pool.query(
+                `SELECT id, title, original_filename, document_type, mime_type
+                 FROM talent_documents WHERE talent_id = $1 AND deleted_at IS NULL
+                 ORDER BY created_at DESC LIMIT 10`,
+                [targetTalentId]
+              ),
+            ]);
             return {
               profile: profileRes.rows[0] || { error: 'Profil non trouvé' },
               skills: skillsRes.rows,
+              documents: docsRes.rows,
             };
           }
 
@@ -536,6 +558,192 @@ export function createSqlQueryTool(
             queryParams.push(limit);
             const res = await pool.query(query, queryParams);
             return { members: res.rows };
+          }
+
+          // --- Org Analytics ---
+          case 'org_skills_analytics': {
+            const orgId = params?.organizationId as string;
+            if (!orgId) return { error: 'organizationId requis' };
+            const limit = (params?.limit as number) || 20;
+            const skillType = params?.type as string;
+            let query = `
+            WITH org_talent_ids AS (
+              SELECT DISTINCT oa.talent_id FROM opportunity_applications oa
+              JOIN opportunities o ON o.id = oa.opportunity_id WHERE o.organization_id = $1 AND oa.deleted_at IS NULL AND o.deleted_at IS NULL
+              UNION SELECT DISTINCT cm.talent_id FROM community_members cm
+              JOIN communities c ON c.id = cm.community_id WHERE c.organization_id = $1 AND cm.deleted_at IS NULL AND c.deleted_at IS NULL AND cm.status = 'ACTIVE'
+              UNION SELECT DISTINCT sb.talent_id FROM space_bookings sb
+              JOIN spaces s ON s.id = sb.space_id WHERE s.organization_id = $1 AND s.deleted_at IS NULL
+              UNION SELECT DISTINCT om.talent_id FROM organization_members om WHERE om.organization_id = $1
+            )
+            SELECT ts.canonical_name as skill_name, ts.proficiency_level, COUNT(*) as talent_count
+            FROM talent_skills ts
+            JOIN org_talent_ids oti ON ts.talent_id = oti.talent_id`;
+            const queryParams: any[] = [orgId];
+            let idx = 2;
+            if (skillType) { query += ` WHERE ts.type = $${idx}`; queryParams.push(skillType); idx++; }
+            query += ` GROUP BY ts.canonical_name, ts.proficiency_level ORDER BY talent_count DESC LIMIT $${idx}`;
+            queryParams.push(limit);
+            const res = await pool.query(query, queryParams);
+            return { skills: res.rows, chart_hint: 'bar' };
+          }
+
+          case 'org_application_funnel': {
+            const orgId = params?.organizationId as string;
+            if (!orgId) return { error: 'organizationId requis' };
+            const opportunityId = params?.opportunityId as string;
+            let query = `
+            SELECT o.title as opportunity_title,
+                   COUNT(*) as total,
+                   COUNT(*) FILTER (WHERE a.status = 'SUBMITTED') as submitted,
+                   COUNT(*) FILTER (WHERE a.status = 'IN_REVIEW') as in_review,
+                   COUNT(*) FILTER (WHERE a.status = 'ACCEPTED') as accepted,
+                   COUNT(*) FILTER (WHERE a.status = 'REJECTED') as rejected,
+                   ROUND(COUNT(*) FILTER (WHERE a.status = 'ACCEPTED')::numeric / NULLIF(COUNT(*), 0) * 100, 1) as acceptance_rate
+            FROM opportunity_applications a
+            JOIN opportunities o ON a.opportunity_id = o.id
+            JOIN opportunity_posters op ON o.id = op.opportunity_id
+            WHERE op.poster_organization_id = $1 AND a.deleted_at IS NULL AND o.deleted_at IS NULL`;
+            const queryParams: any[] = [orgId];
+            let idx = 2;
+            if (opportunityId) { query += ` AND o.id = $${idx}`; queryParams.push(opportunityId); idx++; }
+            query += ` GROUP BY o.id, o.title ORDER BY total DESC LIMIT 10`;
+            const res = await pool.query(query, queryParams);
+            return { funnel: res.rows, chart_hint: 'stacked_bar' };
+          }
+
+          case 'org_talent_cohorts': {
+            const orgId = params?.organizationId as string;
+            if (!orgId) return { error: 'organizationId requis' };
+            const months = (params?.months as number) || 12;
+            const res = await pool.query(
+              `WITH org_talent_ids AS (
+                SELECT DISTINCT oa.talent_id, MIN(oa.applied_at) as first_seen FROM opportunity_applications oa
+                JOIN opportunities o ON o.id = oa.opportunity_id WHERE o.organization_id = $1 AND oa.deleted_at IS NULL AND o.deleted_at IS NULL GROUP BY oa.talent_id
+                UNION ALL
+                SELECT DISTINCT cm.talent_id, MIN(cm.created_at) as first_seen FROM community_members cm
+                JOIN communities c ON c.id = cm.community_id WHERE c.organization_id = $1 AND cm.deleted_at IS NULL AND c.deleted_at IS NULL AND cm.status = 'ACTIVE' GROUP BY cm.talent_id
+                UNION ALL
+                SELECT DISTINCT sb.talent_id, MIN(sb.created_at) as first_seen FROM space_bookings sb
+                JOIN spaces s ON s.id = sb.space_id WHERE s.organization_id = $1 AND s.deleted_at IS NULL GROUP BY sb.talent_id
+                UNION ALL
+                SELECT DISTINCT om.talent_id, MIN(om.created_at) as first_seen FROM organization_members om WHERE om.organization_id = $1 GROUP BY om.talent_id
+              ),
+              first_seen AS (
+                SELECT talent_id, MIN(first_seen) as first_interaction FROM org_talent_ids GROUP BY talent_id
+              ),
+              monthly AS (
+                SELECT DATE_TRUNC('month', first_interaction) as month,
+                       COUNT(*) as new_talents
+                FROM first_seen
+                WHERE first_interaction >= NOW() - ($2 || ' months')::interval
+                GROUP BY DATE_TRUNC('month', first_interaction)
+              )
+              SELECT TO_CHAR(month, 'YYYY-MM') as month, new_talents
+              FROM monthly ORDER BY month`,
+              [orgId, months]
+            );
+            return { cohorts: res.rows, chart_hint: 'bar' };
+          }
+
+          case 'org_geo_distribution': {
+            const orgId = params?.organizationId as string;
+            if (!orgId) return { error: 'organizationId requis' };
+            const column = (params?.groupBy as string) === 'city' ? 'city' : 'country';
+            const res = await pool.query(
+              `WITH org_talent_ids AS (
+                SELECT DISTINCT oa.talent_id FROM opportunity_applications oa
+                JOIN opportunities o ON o.id = oa.opportunity_id WHERE o.organization_id = $1 AND oa.deleted_at IS NULL AND o.deleted_at IS NULL
+                UNION SELECT DISTINCT cm.talent_id FROM community_members cm
+                JOIN communities c ON c.id = cm.community_id WHERE c.organization_id = $1 AND cm.deleted_at IS NULL AND c.deleted_at IS NULL AND cm.status = 'ACTIVE'
+                UNION SELECT DISTINCT sb.talent_id FROM space_bookings sb
+                JOIN spaces s ON s.id = sb.space_id WHERE s.organization_id = $1 AND s.deleted_at IS NULL
+                UNION SELECT DISTINCT om.talent_id FROM organization_members om WHERE om.organization_id = $1
+              )
+              SELECT COALESCE(t.${column}, 'Non renseigné') as label, COUNT(*) as value
+              FROM org_talent_ids oti
+              JOIN talents t ON oti.talent_id = t.id
+              GROUP BY t.${column}
+              ORDER BY value DESC LIMIT 15`,
+              [orgId]
+            );
+            return { distribution: res.rows, chart_hint: 'donut' };
+          }
+
+          case 'org_community_engagement': {
+            const orgId = params?.organizationId as string;
+            if (!orgId) return { error: 'organizationId requis' };
+            const communityId = params?.communityId as string;
+            let query = `
+            SELECT c.id, c.name,
+                   (SELECT COUNT(*) FROM community_members cm WHERE cm.community_id = c.id AND cm.status = 'ACTIVE' AND cm.deleted_at IS NULL) as total_members,
+                   (SELECT COUNT(*) FROM community_members cm WHERE cm.community_id = c.id AND cm.status = 'ACTIVE' AND cm.deleted_at IS NULL AND cm.created_at >= NOW() - INTERVAL '30 days') as active_30d,
+                   (SELECT COUNT(*) FROM community_activities ca WHERE ca.community_id = c.id AND ca.status = 'PUBLISHED' AND ca.deleted_at IS NULL) as posts,
+                   (SELECT COALESCE(SUM(ca.reactions_count), 0) FROM community_activities ca WHERE ca.community_id = c.id AND ca.status = 'PUBLISHED' AND ca.deleted_at IS NULL) as reactions,
+                   (SELECT COALESCE(SUM(ca.comments_count), 0) FROM community_activities ca WHERE ca.community_id = c.id AND ca.status = 'PUBLISHED' AND ca.deleted_at IS NULL) as comments
+            FROM communities c
+            WHERE c.organization_id = $1 AND c.deleted_at IS NULL`;
+            const queryParams: any[] = [orgId];
+            if (communityId) { query += ` AND c.id = $2`; queryParams.push(communityId); }
+            query += ` ORDER BY total_members DESC`;
+            const res = await pool.query(query, queryParams);
+            return { engagement: res.rows, chart_hint: 'table' };
+          }
+
+          case 'org_revenue_analytics': {
+            const orgId = params?.organizationId as string;
+            if (!orgId) return { error: 'organizationId requis' };
+            const groupBy = (params?.groupBy as string) === 'space' ? 'space' : 'month';
+            if (groupBy === 'space') {
+              const res = await pool.query(
+                `SELECT s.name as label,
+                        COALESCE(SUM(r.total_amount), 0) as revenue,
+                        COUNT(*) as bookings,
+                        COUNT(*) FILTER (WHERE r.status = 'CONFIRMED') as confirmed,
+                        ROUND(COUNT(*) FILTER (WHERE r.status = 'CONFIRMED')::numeric / NULLIF(COUNT(*), 0) * 100, 1) as completion_rate
+                 FROM space_bookings r
+                 JOIN spaces s ON r.space_id = s.id
+                 WHERE s.organization_id = $1
+                 GROUP BY s.id, s.name ORDER BY revenue DESC`,
+                [orgId]
+              );
+              return { revenue: res.rows, groupBy: 'space', chart_hint: 'donut' };
+            }
+            const res = await pool.query(
+              `SELECT TO_CHAR(DATE_TRUNC('month', r.created_at), 'YYYY-MM') as month,
+                      COALESCE(SUM(r.total_amount), 0) as revenue,
+                      COUNT(*) as bookings,
+                      COUNT(*) FILTER (WHERE r.status = 'CONFIRMED') as confirmed,
+                      ROUND(COUNT(*) FILTER (WHERE r.status = 'CONFIRMED')::numeric / NULLIF(COUNT(*), 0) * 100, 1) as completion_rate
+               FROM space_bookings r
+               JOIN spaces s ON r.space_id = s.id
+               WHERE s.organization_id = $1
+               GROUP BY DATE_TRUNC('month', r.created_at)
+               ORDER BY month DESC LIMIT 12`,
+              [orgId]
+            );
+            return { revenue: res.rows, groupBy: 'month', chart_hint: 'bar' };
+          }
+
+          case 'org_opportunity_performance': {
+            const orgId = params?.organizationId as string;
+            if (!orgId) return { error: 'organizationId requis' };
+            const limit = (params?.limit as number) || 10;
+            const res = await pool.query(
+              `SELECT o.title,
+                      COUNT(a.id) as total_applications,
+                      COUNT(a.id) FILTER (WHERE a.status = 'ACCEPTED') as accepted,
+                      ROUND(COUNT(a.id) FILTER (WHERE a.status = 'ACCEPTED')::numeric / NULLIF(COUNT(a.id), 0) * 100, 1) as acceptance_rate,
+                      ROUND(EXTRACT(EPOCH FROM MIN(a.applied_at) - o.posted_at) / 3600, 1) as hours_to_first_application
+               FROM opportunities o
+               JOIN opportunity_posters op ON o.id = op.opportunity_id
+               LEFT JOIN opportunity_applications a ON a.opportunity_id = o.id AND a.deleted_at IS NULL
+               WHERE op.poster_organization_id = $1 AND o.deleted_at IS NULL
+               GROUP BY o.id, o.title, o.posted_at
+               ORDER BY total_applications DESC LIMIT $2`,
+              [orgId, limit]
+            );
+            return { performance: res.rows, chart_hint: 'table' };
           }
 
           // --- Talent community ---
@@ -603,7 +811,8 @@ export function createSqlQueryTool(
             const { query: q, type, contractType, location, limit: lim } = params || {};
             let sql = `
             SELECT o.id, o.title, o.summary, o.type, o.contract_type, o.location_type,
-                   o.slug, o.deadline, org.name as org_name
+                   o.slug, o.deadline, org.name as org_name,
+                   o.compensation_min, o.compensation_max, o.currency
             FROM opportunities o
             LEFT JOIN opportunity_posters op ON o.id = op.opportunity_id
             LEFT JOIN organizations org ON op.poster_organization_id = org.id

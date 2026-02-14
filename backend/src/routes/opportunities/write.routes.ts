@@ -7,7 +7,7 @@ import { Router, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { pool, generateSlug } from '../../services/database';
 import { authMiddleware, AuthRequest } from '../../middleware/auth.middleware';
-import { validate, createOpportunitySchema } from '../../middleware/validation.middleware';
+import { validate, createOpportunitySchema, updateOpportunitySchema, uuidParamSchema } from '../../middleware/validation.middleware';
 import {
   generateOpportunitySuggestion,
   canGenerate,
@@ -188,7 +188,7 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
 /**
  * PUT /api/opportunities/:id - Update opportunity
  */
-router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.put('/:id', authMiddleware, validate(updateOpportunitySchema), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const talentId = req.talentId;
@@ -296,7 +296,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 /**
  * DELETE /api/opportunities/:id - Soft delete opportunity
  */
-router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.delete('/:id', authMiddleware, validate(uuidParamSchema, 'params'), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const talentId = req.talentId;

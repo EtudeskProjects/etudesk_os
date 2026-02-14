@@ -6,6 +6,7 @@
 import { Router, Response } from 'express';
 import { pool, generateSlug } from '../../services/database';
 import { authMiddleware, AuthRequest } from '../../middleware/auth.middleware';
+import { validate, createCommunitySchema, updateCommunitySchema, uuidParamSchema } from '../../middleware/validation.middleware';
 import {
   generateCommunitySuggestion,
   canGenerate,
@@ -63,7 +64,7 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
 /**
  * POST /api/communities - Create a new community
  */
-router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/', authMiddleware, validate(createCommunitySchema), async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     const {
@@ -83,10 +84,6 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       cover_image_url,
       images,
     } = req.body;
-
-    if (!name || !organization_id) {
-      return res.status(400).json({ error: req.t('common:nameAndOrgIdRequired') });
-    }
 
     // Verify organization membership
     const memberCheck = await pool.query(
@@ -146,7 +143,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 /**
  * PUT /api/communities/:id - Update a community
  */
-router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.put('/:id', authMiddleware, validate(updateCommunitySchema), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const talentId = req.talentId;
@@ -209,7 +206,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 /**
  * DELETE /api/communities/:id - Soft delete a community
  */
-router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.delete('/:id', authMiddleware, validate(uuidParamSchema, 'params'), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const talentId = req.talentId;

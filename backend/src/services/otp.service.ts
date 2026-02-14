@@ -108,7 +108,7 @@ export async function createOTP(
     if (parseInt(failedAttempts.rows[0].count, 10) >= 3) {
       return {
         success: false,
-        error: 'Trop de tentatives échouées. Veuillez réessayer plus tard.',
+        error: 'TOO_MANY_FAILED_ATTEMPTS',
         rateLimited: true,
         retryAfter: OTP_CONFIG.cooldownMinutes * 60,
       };

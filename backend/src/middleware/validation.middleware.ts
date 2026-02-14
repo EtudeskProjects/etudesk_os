@@ -214,14 +214,15 @@ export const refreshTokenSchema = z.object({
 // --- Onboarding Schemas ---
 
 const VALID_PROFILE_TAGS = [
-  'STUDENT', 'YOUNG_GRADUATE', 'EXPERIENCED',
-  'ENTREPRENEUR', 'FREELANCE', 'IN_TRANSITION'
+  'STUDENT', 'PUPIL', 'JOB_SEEKER', 'SALARIED', 'ENTREPRENEUR',
+  'CIVIL_SERVANT', 'MANAGER', 'CONSULTANT', 'INVESTOR',
+  'CONTENT_CREATOR', 'COACH', 'RETIRED',
 ] as const;
 
 const VALID_GOALS = [
-  'FIND_JOB', 'FIND_INTERNSHIP', 'FIND_FREELANCE',
-  'BUILD_NETWORK', 'DEVELOP_SKILLS',
-  'CREATE_BUSINESS', 'FIND_PARTNERS', 'FIND_FUNDING'
+  'LEARN_NEW_SKILLS', 'PREPARE_EXAMS', 'FIND_JOB', 'ADVANCE_CAREER',
+  'RESEARCH_SUPPORT', 'IMPROVE_PRODUCTIVITY', 'COLLABORATIVE_LEARNING',
+  'TEACH_OR_MENTOR', 'BUILD_NETWORK_OR_VISIBILITY', 'CONTRIBUTE_OR_GIVE_BACK',
 ] as const;
 
 const VALID_SECTORS = [
@@ -236,15 +237,14 @@ export const onboardingSchema = z.object({
     .max(100, 'validation:onboarding.firstNameTooLong')
     .transform((v) => v.trim()),
   lastName: z.string()
-    .min(1, 'validation:onboarding.lastNameRequired')
     .max(100, 'validation:onboarding.lastNameTooLong')
-    .transform((v) => v.trim()),
+    .optional(),
   bio: z.string()
     .max(2000, 'validation:onboarding.bioTooLong')
     .optional(),
   phone: z.string()
-    .max(20, 'validation:onboarding.phoneTooLong')
-    .optional(),
+    .min(8, 'validation:onboarding.phoneMinLength')
+    .max(20, 'validation:onboarding.phoneTooLong'),
   city: z.string()
     .max(100, 'validation:onboarding.cityTooLong')
     .optional(),
@@ -263,6 +263,7 @@ export const onboardingSchema = z.object({
   sectors: z.array(z.enum(VALID_SECTORS))
     .max(5, 'validation:onboarding.maxSectors')
     .optional(),
+  gender: z.string().max(20).optional(),
   remoteReady: z.boolean().optional(),
   willingToRelocate: z.boolean().optional()
 });
@@ -287,14 +288,21 @@ export const createCommunitySchema = z.object({
     .optional(),
   type: z.enum(COMMUNITY_TYPES).optional(),
   access_type: z.enum(COMMUNITY_ACCESS_TYPES).optional(),
-  organization_id: z.string().uuid('validation:common.invalidOrgId').optional(),
+  visibility: z.enum(['PUBLIC', 'PRIVATE']).optional(),
+  organization_id: z.string().uuid('validation:common.invalidOrgId'),
   is_paid: z.boolean().optional(),
   monthly_price: z.number().min(0).optional(),
   currency: z.string().length(3, 'validation:common.currencyFormat').optional(),
   trial_days: z.number().int().min(0).max(90).optional(),
   sectors: z.array(z.string()).max(10).optional(),
   rules: z.string().max(10000).optional(),
-  tags: z.array(z.string()).max(10).optional()
+  tags: z.array(z.string()).max(10).optional(),
+  application_questions: z.unknown().optional(),
+  city: z.string().max(100).optional(),
+  region: z.string().max(100).optional(),
+  country: z.string().length(2, 'validation:common.countryCodeFormat').optional(),
+  cover_image_url: z.string().max(2000).optional(),
+  images: z.array(z.string().max(2000)).max(20).optional(),
 });
 
 export const updateCommunitySchema = createCommunitySchema.partial();
@@ -306,25 +314,38 @@ export const joinCommunitySchema = z.object({
 // --- Organization Schemas ---
 
 const ORGANIZATION_TYPES = [
-  'COMPANY', 'STARTUP', 'NGO', 'SCHOOL',
-  'GOVERNMENT', 'FREELANCE', 'OTHER'
+  'COMPANY', 'STARTUP', 'NGO', 'ASSOCIATION',
+  'EDUCATIONAL_INSTITUTION', 'PUBLIC_ADMINISTRATION',
+  'TRAINING_CENTER', 'CONSULTING_FIRM', 'RECRUITMENT_AGENCY',
+  'FINANCIAL_INSTITUTION', 'RESEARCH_CENTER',
+  'COOPERATIVE', 'SOCIAL_ENTERPRISE'
 ] as const;
+
+const MAX_ORG_TYPES = 3;
 
 export const createOrganizationSchema = z.object({
   name: z.string()
     .min(2, 'validation:organization.nameMinLength')
     .max(200, 'validation:organization.nameMaxLength'),
+  types: z.array(z.enum(ORGANIZATION_TYPES))
+    .max(MAX_ORG_TYPES, 'validation:organization.typesMaxItems')
+    .optional(),
   description: z.string()
     .max(5000, 'validation:organization.descriptionMaxLength')
     .optional(),
-  type: z.enum(ORGANIZATION_TYPES).optional(),
-  website: z.string().url('validation:common.invalidUrl').optional().or(z.literal('')),
-  city: z.string().max(100).optional(),
-  region: z.string().max(100).optional(),
-  country: z.string().length(2, 'validation:common.countryCodeFormat').optional(),
-  sectors: z.array(z.enum(VALID_SECTORS)).max(5).optional(),
-  employee_count: z.number().int().min(1).optional(),
-  founded_year: z.number().int().min(1800).max(new Date().getFullYear()).optional()
+  logo_url: z.string().max(2000).optional(),
+  website_url: z.string().max(2000).optional(),
+  contact_email: z.string().email('validation:auth.invalidEmail').optional().or(z.literal('')),
+  contact_phone: z.string().max(30).optional(),
+  headquarters_city: z.string().max(100).optional(),
+  headquarters_region: z.string().max(100).optional(),
+  headquarters_country: z.string().max(10).optional(),
+  headquarters_coordinates: z.object({
+    longitude: z.number(),
+    latitude: z.number(),
+  }).optional(),
+  sectors: z.array(z.string()).max(10).optional(),
+  goals: z.array(z.string()).max(10).optional(),
 });
 
 export const updateOrganizationSchema = createOrganizationSchema.partial();
@@ -349,15 +370,18 @@ export const updateTalentSchema = z.object({
   first_name: z.string().min(1).max(100).optional(),
   last_name: z.string().min(1).max(100).optional(),
   bio: z.string().max(2000).optional(),
+  avatar_url: z.string().max(2000).optional(),
   phone: z.string().max(20).optional(),
+  gender: z.string().max(20).optional(),
   city: z.string().max(100).optional(),
   region: z.string().max(100).optional(),
-  country: z.string().length(2).optional(),
+  country: z.string().max(10).optional(),
   profile_tags: z.array(z.enum(VALID_PROFILE_TAGS)).max(3).optional(),
   goals: z.array(z.enum(VALID_GOALS)).max(3).optional(),
   sectors: z.array(z.enum(VALID_SECTORS)).max(5).optional(),
   remote_ready: z.boolean().optional(),
-  willing_to_relocate: z.boolean().optional()
+  willing_to_relocate: z.boolean().optional(),
+  learning_preferences: z.record(z.string(), z.unknown()).optional(),
 });
 
 // --- Pagination Schemas ---

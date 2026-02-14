@@ -8,11 +8,44 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { SkillDefinition, SkillMetadata } from './skill.types';
 import { logger } from '../../../utils';
+import { generateEmbedding, cosineSimilarity } from '../../embedding.service';
 
 const SKILLS_DIR = path.join(__dirname, 'definitions');
 
+/** Tools available per mode — used for validation */
+const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = {
+  explore: [
+    'vector_query',
+    'sql_query',
+    'generate_document',
+    'file_reader',
+    'web_search',
+    'execute_action',
+  ],
+  study: [
+    'sql_query',
+    'youtube_search',
+    'generate_image',
+    'generate_diagram',
+    'file_reader',
+    'web_search',
+    'manage_skills',
+  ],
+  org: [
+    'vector_query',
+    'sql_query',
+    'generate_document',
+    'file_reader',
+    'web_search',
+    'execute_action',
+  ],
+};
+
 // In-memory cache
 let cachedSkills: SkillDefinition[] | null = null;
+
+/** Cosine similarity threshold — below this, no skill matches */
+const SKILL_MATCH_THRESHOLD = 0.45;
 
 /**
  * Parse a .skill.md file into a SkillDefinition.
@@ -23,6 +56,7 @@ let cachedSkills: SkillDefinition[] | null = null;
  *   modes: explore, study
  *   tools: sql_query, file_reader
  *   triggers: keyword1, keyword2
+ *   priority: 5  (optional, higher = preferred when multiple skills match)
  *   ---
  *   # Instructions body (markdown)
  */
@@ -51,13 +85,36 @@ function parseSkillFile(filePath: string): SkillDefinition | null {
       return value ? value.split(',').map((s) => s.trim()).filter(Boolean) : [];
     };
 
+    const getNumber = (key: string): number | undefined => {
+      const val = getValue(key);
+      if (!val) return undefined;
+      const n = parseInt(val, 10);
+      return isNaN(n) ? undefined : n;
+    };
+
+    const modes = getList('modes') as Array<'explore' | 'study' | 'org'>;
+    const tools = getList('tools');
+
+    // Validate tools are available for each mode
+    for (const mode of modes) {
+      const allowed = AVAILABLE_TOOLS[mode];
+      for (const t of tools) {
+        if (!allowed.includes(t)) {
+          logger.warn(
+            `[skill.loader] Skill ${id}: tool "${t}" is not available in mode "${mode}". Allowed: ${allowed.join(', ')}`
+          );
+        }
+      }
+    }
+
     return {
       id,
       name: getValue('name') || id,
       description: getValue('description') || '',
-      modes: getList('modes') as Array<'explore' | 'study' | 'org'>,
-      tools: getList('tools'),
+      modes,
+      tools,
       triggers: getList('triggers'),
+      priority: getNumber('priority'),
       instructions,
     };
   } catch (error: any) {
@@ -118,6 +175,128 @@ export function getSkillsForMode(mode: 'explore' | 'study' | 'org'): SkillMetada
 export function getSkillBody(skillId: string): string | null {
   const skill = loadAllSkills().find((s) => s.id === skillId);
   return skill?.instructions || null;
+}
+
+/**
+ * Static (substring) skill detection — original logic, used as fallback.
+ * Checks if any trigger keyword appears in the normalized message.
+ * If multiple skills match: (1) pick the one with the most trigger hits, (2) on tie, pick the one with highest priority.
+ */
+export function detectSkillFromMessageStatic(
+  message: string,
+  mode: 'explore' | 'study' | 'org'
+): { skillId: string; skillName: string; instructions: string } | null {
+  const skills = loadAllSkills().filter((s) => s.modes.includes(mode));
+  const normalizedMsg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  let bestMatch: SkillDefinition | null = null;
+  let bestHits = 0;
+  let bestPriority = -1;
+
+  for (const skill of skills) {
+    let hits = 0;
+    for (const trigger of skill.triggers) {
+      const normalizedTrigger = trigger.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      // Skip very short triggers (< 3 chars) to avoid false positives on common words
+      if (normalizedTrigger.length < 3) continue;
+      if (normalizedMsg.includes(normalizedTrigger)) {
+        hits++;
+      }
+    }
+    if (hits === 0) continue;
+
+    const priority = skill.priority ?? 0;
+    const isBetter = hits > bestHits || (hits === bestHits && priority > bestPriority);
+    if (isBetter) {
+      bestHits = hits;
+      bestPriority = priority;
+      bestMatch = skill;
+    }
+  }
+
+  if (!bestMatch || bestHits === 0) return null;
+
+  return {
+    skillId: bestMatch.id,
+    skillName: bestMatch.name,
+    instructions: bestMatch.instructions,
+  };
+}
+
+/**
+ * Pre-compute embeddings for all skills at startup.
+ * Uses generateEmbedding() which has a 24h cache — only calls API on first run.
+ * Non-blocking: server starts immediately, embeddings compute in background.
+ */
+export async function precomputeSkillEmbeddings(): Promise<void> {
+  const skills = loadAllSkills();
+  let computed = 0;
+
+  const results = await Promise.allSettled(
+    skills.map(async (skill) => {
+      const text = `${skill.description}. ${skill.triggers.join(', ')}`;
+      const embedding = await generateEmbedding(text);
+      skill.embedding = embedding;
+      computed++;
+    })
+  );
+
+  const failures = results.filter((r) => r.status === 'rejected').length;
+  if (failures > 0) {
+    logger.warn(`[skill.loader] Pre-computed embeddings for ${computed}/${skills.length} skills (${failures} failed)`);
+  } else {
+    logger.info(`[skill.loader] Pre-computed embeddings for ${computed}/${skills.length} skills`);
+  }
+}
+
+/**
+ * Detect which skill (if any) matches the user's message for a given mode.
+ * Uses semantic embedding similarity when available, falls back to static substring matching.
+ * Returns the full instructions body of the best-matching skill, or null.
+ */
+export async function detectSkillFromMessage(
+  message: string,
+  mode: 'explore' | 'study' | 'org'
+): Promise<{ skillId: string; skillName: string; instructions: string } | null> {
+  const skills = loadAllSkills().filter((s) => s.modes.includes(mode));
+
+  // If no skill has an embedding yet (startup not done or failed), use static fallback
+  const hasEmbeddings = skills.some((s) => s.embedding);
+  if (!hasEmbeddings) {
+    return detectSkillFromMessageStatic(message, mode);
+  }
+
+  try {
+    const messageEmbedding = await generateEmbedding(message);
+
+    let bestMatch: SkillDefinition | null = null;
+    let bestScore = -1;
+
+    for (const skill of skills) {
+      if (!skill.embedding) continue;
+
+      const similarity = cosineSimilarity(messageEmbedding, skill.embedding);
+      // Small priority boost for tie-breaking (priority 8 → +0.04)
+      const score = similarity + (skill.priority ?? 0) * 0.005;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = skill;
+      }
+    }
+
+    if (!bestMatch || bestScore < SKILL_MATCH_THRESHOLD) return null;
+
+    return {
+      skillId: bestMatch.id,
+      skillName: bestMatch.name,
+      instructions: bestMatch.instructions,
+    };
+  } catch (error) {
+    // Embedding API down → graceful fallback to static matching
+    logger.warn(`[skill.loader] Embedding-based detection failed, using static fallback: ${error}`);
+    return detectSkillFromMessageStatic(message, mode);
+  }
 }
 
 /**

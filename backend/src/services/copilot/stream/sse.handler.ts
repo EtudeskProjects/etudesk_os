@@ -17,6 +17,15 @@ import { logger } from '../../../utils';
 
 const MAX_TOOL_CALLS = 20;
 const MAX_TURN_DURATION_MS = 120_000; // 2 minutes
+const HEARTBEAT_INTERVAL_MS = 30_000; // 30s — avoid proxy timeouts
+
+/**
+ * Send SSE comment (heartbeat) — keeps connection alive, no client-side event
+ */
+function sendHeartbeat(res: Response): void {
+  res.write(': keepalive\n\n');
+}
+
 /**
  * Initialize SSE headers on the response
  */
@@ -57,6 +66,8 @@ export async function runAgentWithSSE(
   let toolCallCounter = 0;
   const turnStart = Date.now();
   let limitReached = false;
+
+  const heartbeatId = setInterval(() => sendHeartbeat(res), HEARTBEAT_INTERVAL_MS);
 
   try {
     // Build input with history + attachment context
@@ -262,6 +273,8 @@ export async function runAgentWithSSE(
       logger.error('SSE stream error:', error);
       sendSSE(res, { type: 'error', error: error.message || 'Erreur interne' });
     }
+  } finally {
+    clearInterval(heartbeatId);
   }
 
   // Post-process: sanitize Mermaid code in diagram blocks

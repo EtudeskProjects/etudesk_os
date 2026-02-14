@@ -2,8 +2,8 @@
 name: Space Creation
 description: Create a workspace or venue for the organization directly on the platform
 modes: org
-tools: sql_query
-triggers: creer un espace, nouvel espace, create space, ajouter un espace, enregistrer un espace
+tools: execute_action
+triggers: creer un espace, nouvel espace, create space, ajouter un espace, enregistrer un espace, coworking, salle de reunion, espace de travail, bureau partage, coworking Abidjan, espace Dakar, salle Cotonou
 ---
 
 # Space Creation Workflow

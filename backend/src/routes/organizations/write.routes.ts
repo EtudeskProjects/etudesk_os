@@ -6,7 +6,8 @@
 import { Router, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { pool, generateSlug } from '../../services/database';
-import { authMiddleware, AuthRequest } from '../../middleware/auth.middleware';
+import { authMiddleware, isAdmin, AuthRequest } from '../../middleware/auth.middleware';
+import { validate, createOrganizationSchema, updateOrganizationSchema, uuidParamSchema } from '../../middleware/validation.middleware';
 import { autoModerationService } from '../../services/auto-moderation.service';
 import { normalizeCountryCode } from '../../constants/countries';
 import { creditWallet } from '../../services/billing/credit.service';
@@ -21,21 +22,10 @@ const router = Router();
 
 type QueryParam = string | number | boolean | null | Date;
 
-// Valid organization types
-const VALID_ORG_TYPES = [
-  'COMPANY', 'STARTUP', 'NGO', 'ASSOCIATION',
-  'EDUCATIONAL_INSTITUTION', 'PUBLIC_ADMINISTRATION',
-  'TRAINING_CENTER', 'CONSULTING_FIRM', 'RECRUITMENT_AGENCY',
-  'FINANCIAL_INSTITUTION', 'RESEARCH_CENTER',
-  'COOPERATIVE', 'SOCIAL_ENTERPRISE'
-];
-
-const MAX_ORG_TYPES = 3;
-
 /**
  * POST /api/organizations - Create a new organization
  */
-router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/', authMiddleware, validate(createOrganizationSchema), async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
       throw createForbiddenError('You must complete your profile to create an organization');
@@ -48,11 +38,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       LIMIT 1
     `, [req.talentId]);
 
-    // Admin email check (move to a utility if reused)
-    const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'admin@etudesk.com').split(',').map(e => e.trim().toLowerCase());
-    const isAdmin = req.userEmail && ADMIN_EMAILS.includes(req.userEmail.toLowerCase());
-
-    if (!isAdmin && identityCheck.rows.length === 0) {
+    if (!isAdmin(req.userEmail) && identityCheck.rows.length === 0) {
       return res.status(403).json({
         error: req.t('organizations:verifiedIdentityRequired'),
         code: 'IDENTITY_REQUIRED',
@@ -66,20 +52,6 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       headquarters_city, headquarters_region, headquarters_country, headquarters_coordinates,
       sectors, goals,
     } = req.body;
-
-    // Validation
-    if (!name || typeof name !== 'string' || name.trim().length < 2) {
-      return res.status(400).json({ error: req.t('organizations:nameMinLength') });
-    }
-
-    if (types) {
-      if (!Array.isArray(types) || types.length > MAX_ORG_TYPES) {
-        return res.status(400).json({ error: req.t('organizations:typesMaxItems', { max: MAX_ORG_TYPES }), validTypes: VALID_ORG_TYPES });
-      }
-      if (types.some((t: string) => !VALID_ORG_TYPES.includes(t))) {
-        return res.status(400).json({ error: req.t('organizations:invalidType'), validTypes: VALID_ORG_TYPES });
-      }
-    }
 
     // Normalize country code
     const normalizedCountry = headquarters_country ? normalizeCountryCode(headquarters_country) : null;
@@ -184,7 +156,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 /**
  * PUT /api/organizations/:id - Update an organization
  */
-router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.put('/:id', authMiddleware, validate(updateOrganizationSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -220,16 +192,6 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       sectors, goals,
     } = req.body;
 
-    // Validation
-    if (types !== undefined) {
-      if (types !== null && (!Array.isArray(types) || types.length > MAX_ORG_TYPES)) {
-        return res.status(400).json({ error: req.t('organizations:typesMaxItems', { max: MAX_ORG_TYPES }) });
-      }
-      if (types && types.some((t: string) => !VALID_ORG_TYPES.includes(t))) {
-        return res.status(400).json({ error: req.t('organizations:invalidType'), validTypes: VALID_ORG_TYPES });
-      }
-    }
-
     // Normalize country code
     const normalizedCountry = headquarters_country ? normalizeCountryCode(headquarters_country) : undefined;
     if (headquarters_country && !normalizedCountry) {
@@ -257,9 +219,6 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     let paramIndex = 1;
 
     if (name !== undefined) {
-      if (typeof name !== 'string' || name.trim().length < 2) {
-        return res.status(400).json({ error: req.t('organizations:nameMinLength') });
-      }
       updates.push(`name = $${paramIndex++}`);
       params.push(name.trim());
     }
@@ -354,7 +313,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
 /**
  * DELETE /api/organizations/:id - Soft delete an organization
  */
-router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.delete('/:id', authMiddleware, validate(uuidParamSchema, 'params'), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 

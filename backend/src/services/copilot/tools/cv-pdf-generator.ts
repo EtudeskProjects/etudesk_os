@@ -65,6 +65,7 @@ export interface CVData {
   country?: string;
   bio?: string;
   avatarUrl?: string;
+  includePhoto?: boolean; // default true — set to false to show initials only
 
   skills: Array<{ name: string; type?: string; level?: string }>;
   languages?: Array<{ language: string; level: string }>;
@@ -204,7 +205,8 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
       const avatarY = 30;
 
       let avatarLoaded = false;
-      if (cvData.avatarUrl) {
+      const showPhoto = cvData.includePhoto !== false; // default true
+      if (showPhoto && cvData.avatarUrl) {
         try {
           const avatarBuffer = await getFileBuffer(cvData.avatarUrl);
           if (avatarBuffer && avatarBuffer.length > 0) {
@@ -254,7 +256,7 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
         .lineWidth(0.5).strokeColor(C.border).stroke();
 
       // SIDEBAR CONTENT (below avatar)
-      let sideY = avatarLoaded || !cvData.avatarUrl ? avatarY + avatarSize + 24 : avatarY + avatarSize + 24;
+      let sideY = avatarY + avatarSize + 24;
 
       // --- CONTACT DETAILS in sidebar ---
       sideY = sidebarSectionTitle(doc, 'Contact', sideY);

@@ -8,6 +8,7 @@ import { Router, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { pool, generateSlug } from '../services/database';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
+import { validate, onboardingSchema } from '../middleware/validation.middleware';
 import { generateTokens } from '../services/auth.service';
 import { sendWelcomeEmail } from '../services/email.service';
 import { onTalentProfileUpdate } from '../services/embedding.service';
@@ -17,123 +18,28 @@ import { creditWallet } from '../services/billing/credit.service';
 import { logger } from '../utils';
 const router = Router();
 
-// Valid profile tags
+// Valid profile tags (used by GET /options)
 const VALID_PROFILE_TAGS = [
   'STUDENT', 'PUPIL', 'JOB_SEEKER', 'SALARIED', 'ENTREPRENEUR',
   'CIVIL_SERVANT', 'MANAGER', 'CONSULTANT', 'INVESTOR',
   'CONTENT_CREATOR', 'COACH', 'RETIRED',
 ];
 
-// Valid goals
+// Valid goals (used by GET /options)
 const VALID_GOALS = [
   'LEARN_NEW_SKILLS', 'PREPARE_EXAMS', 'FIND_JOB', 'ADVANCE_CAREER',
   'RESEARCH_SUPPORT', 'IMPROVE_PRODUCTIVITY', 'COLLABORATIVE_LEARNING',
   'TEACH_OR_MENTOR', 'BUILD_NETWORK_OR_VISIBILITY', 'CONTRIBUTE_OR_GIVE_BACK',
 ];
 
-interface OnboardingData {
-  firstName?: string;
-  lastName?: string;
-  bio?: string;
-  city?: string;
-  region?: string;
-  country?: string;
-  profileTags?: string[];
-  goals?: string[];
-  sectors?: string[];
-  remoteReady?: boolean;
-  willingToRelocate?: boolean;
-  phone: string;
-  gender?: string;
-}
-
 /**
  * POST /onboarding/complete
  *
  * Create talent profile and link to user
  */
-router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.post('/complete', authMiddleware, validate(onboardingSchema), async (req: AuthRequest, res: Response) => {
   try {
-    const data: OnboardingData = req.body;
-
-    // Validate required fields - firstName is now required
-    if (!data.firstName || typeof data.firstName !== 'string' || data.firstName.trim().length < 1) {
-      return res.status(400).json({
-        success: false,
-        error: req.t('validation:talent.firstNameRequired'),
-        field: 'firstName',
-      });
-    }
-
-    // Validate profile tags
-    if (data.profileTags) {
-      if (!Array.isArray(data.profileTags)) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('onboarding:profileTagsMustBeArray'),
-          field: 'profileTags',
-        });
-      }
-
-      for (const tag of data.profileTags) {
-        if (!VALID_PROFILE_TAGS.includes(tag)) {
-          return res.status(400).json({
-            success: false,
-            error: req.t('onboarding:invalidTag', { tag }),
-            field: 'profileTags',
-            validTags: VALID_PROFILE_TAGS,
-          });
-        }
-      }
-    }
-
-    // Validate goals (max 3)
-    if (data.goals) {
-      if (!Array.isArray(data.goals)) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('onboarding:goalsMustBeArray'),
-          field: 'goals',
-        });
-      }
-
-      if (data.goals.length > 3) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('onboarding:goalsMaximum'),
-          field: 'goals',
-        });
-      }
-
-      for (const goal of data.goals) {
-        if (!VALID_GOALS.includes(goal)) {
-          return res.status(400).json({
-            success: false,
-            error: req.t('onboarding:invalidGoal', { goal }),
-            field: 'goals',
-            validGoals: VALID_GOALS,
-          });
-        }
-      }
-    }
-
-    // Validate phone (required, min 8 chars)
-    if (!data.phone || data.phone.trim().length < 8) {
-      return res.status(400).json({
-        success: false,
-        error: req.t('onboarding:phoneMinLength'),
-        field: 'phone',
-      });
-    }
-
-    // Validate country code
-    if (data.country && data.country.length !== 2) {
-      return res.status(400).json({
-        success: false,
-        error: req.t('onboarding:countryCodeInvalid'),
-        field: 'country',
-      });
-    }
+    const data = req.body;
 
     // Content moderation for user-generated text fields
     try {

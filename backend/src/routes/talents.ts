@@ -6,6 +6,7 @@
 import { Router, Response } from 'express';
 import { pool } from '../services/database';
 import { authMiddleware, optionalAuthMiddleware, AuthRequest } from '../middleware/auth.middleware';
+import { validate, updateTalentSchema } from '../middleware/validation.middleware';
 import { onTalentProfileUpdate } from '../services/embedding.service';
 import { autoModerationService } from '../services/auto-moderation.service';
 import { MODEL_SUGGESTION } from '../services/ai/models';
@@ -79,7 +80,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
  * PUT /api/talents/me
  * Update current user's talent profile
  */
-router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.put('/me', authMiddleware, validate(updateTalentSchema), async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
       return res.status(404).json({ error: req.t('talents:profileNotFound') });
@@ -186,36 +187,21 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     }
 
     if (profile_tags !== undefined) {
-      if (!Array.isArray(profile_tags)) {
-        return res.status(400).json({ error: req.t('common:profileTagsMustBeArray') });
-      }
       updates.push(`profile_tags = $${paramIndex++}`);
       params.push(profile_tags);
     }
 
     if (sectors !== undefined) {
-      if (!Array.isArray(sectors)) {
-        return res.status(400).json({ error: req.t('common:sectorsMustBeArray') });
-      }
       updates.push(`sectors = $${paramIndex++}`);
       params.push(sectors);
     }
 
     if (goals !== undefined) {
-      if (!Array.isArray(goals)) {
-        return res.status(400).json({ error: req.t('common:goalsMustBeArray') });
-      }
-      if (goals.length > 3) {
-        return res.status(400).json({ error: req.t('common:maxGoalsAllowed') });
-      }
       updates.push(`goals = $${paramIndex++}`);
       params.push(goals);
     }
 
     if (learning_preferences !== undefined) {
-      if (typeof learning_preferences !== 'object' || learning_preferences === null) {
-        return res.status(400).json({ error: req.t('common:learningPreferencesMustBeObject') });
-      }
       updates.push(`learning_preferences = $${paramIndex++}::jsonb`);
       params.push(JSON.stringify(learning_preferences));
     }

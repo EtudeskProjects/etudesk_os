@@ -40,6 +40,8 @@ import {
   STUDY_CONTEXT_OPTIONS,
   ORG_CONTEXT_OPTIONS,
 } from '../services/copilot/context-options';
+import { detectSkillFromMessage } from '../services/copilot/skills/skill.loader';
+import { shouldInjectUEMOA } from '../services/copilot/uemoa-knowledge';
 import { summarizeHistoryIfNeeded } from '../services/copilot/session-summarizer';
 import { handleConfirmation } from '../services/copilot/actions/action.handler';
 import { copilotChatLimiter, copilotGeneralLimiter } from '../middleware/rateLimit.middleware';
@@ -206,6 +208,16 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     ]);
     const sessionId = session.id;
 
+    // Detect active skill from user message triggers (CPU only, instant)
+    const skillMode = isOrg ? 'org' : validMode;
+    const detectedSkill = await detectSkillFromMessage(message.trim(), skillMode as 'explore' | 'study' | 'org');
+    const activeSkillInstructions = detectedSkill
+      ? `\n<active_skill_instructions skill="${detectedSkill.skillId}" name="${detectedSkill.skillName}">\n${detectedSkill.instructions}\n</active_skill_instructions>\n`
+      : undefined;
+
+    // Conditional UEMOA knowledge injection (~2500 tokens saved when not relevant)
+    const injectUEMOA = shouldInjectUEMOA(message.trim(), detectedSkill?.skillId);
+
     // Build agent context (CPU only, instant)
     let agent: any;
 
@@ -220,6 +232,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         organizationName: orgInfo?.organizationName || 'Organisation',
         role: orgInfo?.role || 'MEMBER',
         language: userLanguage,
+        country: talentContext.profile.country,
+        activeSkillInstructions,
+        injectUEMOA,
       };
       agent = createOrgAgent(orgCtx);
     } else {
@@ -228,6 +243,8 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         talentId,
         talentName: `${talentContext.profile.firstName || ''} ${talentContext.profile.lastName || ''}`.trim() || talentContext.profile.email,
         language: userLanguage,
+        activeSkillInstructions,
+        injectUEMOA,
         session: {
           currentMode: session.mode,
           conversationTopic: session.title,

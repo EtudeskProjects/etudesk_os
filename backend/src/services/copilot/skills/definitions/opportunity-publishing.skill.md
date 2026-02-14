@@ -2,13 +2,16 @@
 name: Opportunity Publishing
 description: Create and publish a job opportunity directly on the platform from a conversation
 modes: org
-tools: sql_query, vector_query, web_search
-triggers: publier une offre, creer une offre, poster un emploi, publish opportunity, creer un poste, publier un poste, recruter
+tools: sql_query
+triggers: publier une offre, creer une offre, poster un emploi, publish opportunity, creer un poste, publier un poste, recruter, CDI, CDD, stage, alternance, offre emploi, poste Abidjan, poste Dakar, recruter un dev, recruter un stagiaire, recruter CI, recruter SN, offre UEMOA, salaire FCFA
+priority: 8
 ---
 
 # Opportunity Publishing Workflow
 
 You are now in Opportunity Publishing mode. Your goal: generate a COMPLETE preview + confirmation block on the FIRST response.
+
+**Skill separation (CRITICAL):** This skill PUBLISHES opportunities on the platform (confirmation block). If the user wants only a PDF document ("generer une fiche de poste", "rediger une offre PDF"), use the job-description-generation skill instead. Triggers: "publier", "creer une offre", "poster" = this skill. Triggers: "fiche de poste PDF", "generer une fiche" = job-description-generation.
 
 ## Step 1: Extract and Infer
 

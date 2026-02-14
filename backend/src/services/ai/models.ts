@@ -37,14 +37,3 @@ export const MODEL_STT = 'whisper-1';
 
 /** Text embeddings (always OpenAI for Pinecone 1536d compat) */
 export const MODEL_EMBEDDING = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small';
-
-// --- Backward compatibility aliases ---
-
-/** @deprecated Use MODEL_AGENT */
-export const MODEL_T1 = MODEL_AGENT;
-
-/** @deprecated Use MODEL_FAST */
-export const MODEL_T2 = MODEL_FAST;
-
-/** @deprecated Use MODEL_SUGGESTION */
-export const MODEL_T3 = MODEL_SUGGESTION;

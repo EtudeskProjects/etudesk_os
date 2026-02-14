@@ -17,11 +17,11 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
       action: z.enum(['add', 'update']).describe('The action to perform on the skill (add or update level)'),
       skillName: z.string().describe('The canonical name of the skill (e.g., "React", "Python", "Data Analysis")'),
       proficiencyLevel: z
-        .enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'])
-        .describe('Proficiency level for the skill'),
+        .enum(['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'])
+        .describe('Proficiency level for the skill. BEGINNER → knows basics. INTERMEDIATE → can apply independently. EXPERT → deep mastery. MASTER → can teach and innovate.'),
       origin: z
-        .enum(['SELF_DECLARED', 'AI_INFERRED', 'DOCUMENT_EXTRACTED', 'QUIZ_VALIDATED'])
-        .describe('How the skill was identified. Use SELF_DECLARED if the user claims it, AI_INFERRED if you detected it from conversation, DOCUMENT_EXTRACTED from CV/certificates, QUIZ_VALIDATED after passing quizzes.'),
+        .enum(['declared', 'inferred', 'extracted'])
+        .describe('How the skill was identified. "declared" if the user claims it, "inferred" if you detected it from conversation or quiz performance, "extracted" from CV/certificates/documents.'),
       type: z
         .enum(['HARD_SKILL', 'SOFT_SKILL', 'KNOWLEDGE'])
         .describe('The skill category. HARD_SKILL for technical/domain skills (Python, Data Analysis, Marketing), SOFT_SKILL for interpersonal skills (Leadership, Communication), KNOWLEDGE for theoretical knowledge (Machine Learning Theory, Business Strategy).'),
