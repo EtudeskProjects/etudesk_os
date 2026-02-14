@@ -89,18 +89,18 @@ export async function runAgentWithSSE(
       }
     }
 
-    // Separate image attachments (vision) from document attachments (FileReaderAgent)
+    // Separate image attachments (vision) from document attachments (file_reader tool)
     const imageAttachments = attachments?.filter((a) => a.type.startsWith('image/')) || [];
     const docAttachments = attachments?.filter((a) => !a.type.startsWith('image/')) || [];
 
     let userMessage = message;
 
-    // For documents (PDFs, etc.) → FileReaderAgent with documentId
+    // For documents (PDFs, etc.) → file_reader tool with documentId
     if (docAttachments.length > 0) {
       const docList = docAttachments
         .map((a) => `- ${a.name} (${a.type}) [documentId: ${a.id}]`)
         .join('\n');
-      userMessage += `\n\n[Pièces jointes — Documents]\n${docList}\nIMPORTANT: Hand off to FileReaderAgent with the documentId above to read and analyze each attached document.`;
+      userMessage += `\n\n[Pièces jointes — Documents]\n${docList}\nCall file_reader with each documentId above to read the attached document(s).`;
     }
 
     // For images → include as vision content parts (GPT-5 multimodal)

@@ -1,8 +1,8 @@
 /**
- * File Read Tool — Agent Handoff pattern with document access
- * Factory function creates a FileReaderAgent with a read_document tool
- * that can access the talent's documents from storage (with IDOR protection)
- * Model: gpt-5-mini (cost-efficient for document analysis)
+ * File Read Tool — Direct tool pattern with document access
+ * Factory function creates a file_reader tool that reads documents directly
+ * from storage (with IDOR protection). No sub-agent — the main agent
+ * receives raw content and analyzes it itself.
  */
 
 import { Agent, tool } from '@openai/agents';
@@ -15,180 +15,107 @@ import { getFileBuffer } from '../../storage.service';
 import { logger } from '../../../utils';
 
 /**
- * Creates a read_document tool scoped to a specific talent
- * SECURITY: talentId is injected, never from LLM parameters
+ * Shared document reading logic — used by both talent and org tools
  */
-function createReadDocumentTool(talentId: string) {
+async function readDocumentFromDB(
+  documentId: string,
+  query: string,
+  params: any[]
+): Promise<{ success: boolean; document?: any; content?: string; error?: string }> {
+  // Validate UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const cleanId = documentId.trim();
+  if (!uuidRegex.test(cleanId)) {
+    return {
+      success: false,
+      error: `Invalid documentId "${documentId.slice(0, 50)}". Pass exactly ONE UUID (e.g. "d6f62a32-db50-43bf-985f-e4a5708a2124"). Do NOT pass multiple IDs separated by commas.`,
+    };
+  }
+
+  const result = await pool.query(query, params);
+
+  if (result.rows.length === 0) {
+    return { success: false, error: 'Document not found or access denied.' };
+  }
+
+  const doc = result.rows[0];
+  const mimeType: string = doc.mime_type;
+  const buffer = await getFileBuffer(doc.file_url);
+
+  // Text-based files
+  if (
+    mimeType.startsWith('text/') ||
+    mimeType === 'application/json' ||
+    mimeType === 'application/xml'
+  ) {
+    return {
+      success: true,
+      document: { id: doc.id, title: doc.title || doc.original_filename, type: doc.document_type, mimeType },
+      content: buffer.toString('utf-8'),
+    };
+  }
+
+  // PDFs
+  if (mimeType === 'application/pdf') {
+    const pdfData = await pdfParse(buffer);
+    return {
+      success: true,
+      document: { id: doc.id, title: doc.title || doc.original_filename, type: doc.document_type, mimeType, pageCount: pdfData.numpages },
+      content: pdfData.text || '[PDF vide — aucun texte extrait]',
+    };
+  }
+
+  // Images — metadata only
+  if (mimeType.startsWith('image/')) {
+    return {
+      success: true,
+      document: { id: doc.id, title: doc.title || doc.original_filename, type: doc.document_type, mimeType },
+      content: `[Image: ${doc.original_filename}] — Description: ${doc.description || 'No description available.'}`,
+    };
+  }
+
+  // Other binary formats
+  return {
+    success: true,
+    document: { id: doc.id, title: doc.title || doc.original_filename, type: doc.document_type, mimeType },
+    content: `[Unreadable format: ${mimeType}]. Description: ${doc.description || 'No description available.'}`,
+  };
+}
+
+/**
+ * Creates a DIRECT file_reader tool for talents (no sub-agent).
+ * The main agent receives raw document content and analyzes it itself.
+ * SECURITY: talentId is injected via factory, not from LLM.
+ */
+export function createFileReaderTool(talentId: string) {
   return tool({
-    name: 'read_document',
+    name: 'file_reader',
     description:
-      'Read the content of a document belonging to the authenticated talent. Returns extracted text or raw file content. Use the documentId from the [Pièces jointes] section in the user message, or from sql_query results (my_documents intent).',
+      'Read a talent document (CV, diploma, certificate, PDF). Pass ONE documentId (UUID). Returns the raw text content of the document. Use documentId from the DOCUMENTS section in context or from [Pièces jointes].',
     parameters: z.object({
-      documentId: z.string().describe('ONE single UUID of the document to read (e.g. "d6f62a32-db50-43bf-985f-e4a5708a2124"). Pass exactly ONE UUID — NOT multiple IDs separated by commas.'),
+      documentId: z.string().describe('ONE single UUID of the document to read.'),
     }),
     execute: async ({ documentId }) => {
       try {
-        // Validate UUID format — reject comma-separated or malformed IDs
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        const cleanId = documentId.trim();
-        if (!uuidRegex.test(cleanId)) {
-          return {
-            success: false,
-            error: `Invalid documentId "${documentId.slice(0, 50)}". Pass exactly ONE UUID (e.g. "d6f62a32-db50-43bf-985f-e4a5708a2124"). Do NOT pass multiple IDs separated by commas.`,
-          };
-        }
-
-        // Verify document belongs to this talent (IDOR protection)
-        const result = await pool.query(
+        logger.info(`[file_reader] Reading document ${documentId} for talent ${talentId}`);
+        const result = await readDocumentFromDB(
+          documentId,
           `SELECT id, title, original_filename, mime_type, file_url, document_type, description
            FROM talent_documents
            WHERE id = $1 AND talent_id = $2 AND deleted_at IS NULL`,
-          [documentId, talentId]
+          [documentId.trim(), talentId]
         );
-
-        if (result.rows.length === 0) {
-          return {
-            success: false,
-            error: 'Document not found or access denied.',
-          };
+        if (!result.success) {
+          logger.warn(`[file_reader] Failed: ${result.error}`);
+        } else {
+          logger.info(`[file_reader] Success: ${result.document?.title} (${result.content?.length || 0} chars)`);
         }
-
-        const doc = result.rows[0];
-        const mimeType: string = doc.mime_type;
-
-        // Read file content from storage
-        const buffer = await getFileBuffer(doc.file_url);
-
-        // For text-based files, return content directly
-        if (
-          mimeType.startsWith('text/') ||
-          mimeType === 'application/json' ||
-          mimeType === 'application/xml'
-        ) {
-          return {
-            success: true,
-            document: {
-              id: doc.id,
-              title: doc.title || doc.original_filename,
-              type: doc.document_type,
-              mimeType,
-            },
-            content: buffer.toString('utf-8'),
-          };
-        }
-
-        // For PDFs, extract text with pdf-parse
-        if (mimeType === 'application/pdf') {
-          try {
-            const pdfData = await pdfParse(buffer);
-            return {
-              success: true,
-              document: {
-                id: doc.id,
-                title: doc.title || doc.original_filename,
-                type: doc.document_type,
-                mimeType,
-                pageCount: pdfData.numpages,
-              },
-              content: pdfData.text || '[PDF vide — aucun texte extrait]',
-            };
-          } catch (pdfErr: any) {
-            logger.error(`[read_document] PDF parse error for ${documentId}: ${pdfErr.message}`);
-            return {
-              success: false,
-              error: `Failed to extract text from PDF: ${pdfErr.message}`,
-            };
-          }
-        }
-
-        // For images, return metadata only (images are handled via vision in the main agent)
-        if (mimeType.startsWith('image/')) {
-          return {
-            success: true,
-            document: {
-              id: doc.id,
-              title: doc.title || doc.original_filename,
-              type: doc.document_type,
-              mimeType,
-              description: doc.description,
-            },
-            content: `[Image: ${doc.original_filename}] — Images are analyzed via vision in the main conversation. Description: ${doc.description || 'No description available.'}`,
-          };
-        }
-
-        // For other binary formats, return metadata only
-        return {
-          success: true,
-          document: {
-            id: doc.id,
-            title: doc.title || doc.original_filename,
-            type: doc.document_type,
-            mimeType,
-            description: doc.description,
-          },
-          content: `[Unreadable format: ${mimeType}]. Description: ${doc.description || 'No description available.'}`,
-        };
+        return result;
       } catch (error: any) {
-        logger.error(`[read_document] Error reading document ${documentId}: ${error.message}`);
-        return {
-          success: false,
-          error: `Error reading document: ${error.message}`,
-        };
+        logger.error(`[file_reader] Error reading document ${documentId}: ${error.message}`);
+        return { success: false, error: `Error reading document: ${error.message}` };
       }
     },
-  });
-}
-
-/**
- * Creates a FileReaderAgent scoped to a specific talent
- * SECURITY: talentId is injected via factory, not from LLM
- */
-export function createFileReaderAgent(talentId: string): Agent {
-  return new Agent({
-    name: 'FileReaderAgent',
-    model: MODEL_FAST,
-    instructions: `# Role and Objective
-
-You are a document analysis specialist. Use the read_document tool to read the talent's uploaded documents and provide structured analysis in French.
-
-# Instructions
-
-- The documentId is provided in the message. Extract the UUID (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) and call read_document with that SINGLE UUID.
-- CRITICAL: Pass ONE UUID per read_document call. NEVER pass comma-separated IDs.
-- If the message contains multiple UUIDs, call read_document separately for each one.
-- Analyze the content and return a structured summary in French.
-- Be factual and concise in your analysis.
-
-## Document-Specific Analysis
-
-- **CVs/Resumes**: Extract full profile — name, current position, skills (technical + soft), work experience (company, role, dates), education, certifications, languages.
-- **Diplomas/Certificates**: Identify institution, date, specialty/field, grade if visible.
-- **Reports/Documents**: Summarize key points, conclusions, and actionable insights.
-- **Images**: Describe visual elements and extract any text content.
-
-# Output Format
-
-Return analysis in French with clear sections using markdown headings. For CVs, use this structure:
-- **Identité**: name, location, contact
-- **Compétences**: list of skills by category
-- **Expériences**: chronological list
-- **Formation**: education history
-- **Certifications**: if any`,
-    tools: [createReadDocumentTool(talentId)],
-  });
-}
-
-/**
- * Creates a file_reader tool using asTool() pattern
- * The main agent keeps control and can synthesize results from this sub-agent.
- * SECURITY: talentId is injected via factory, not from LLM
- */
-export function createFileReaderTool(talentId: string) {
-  return createFileReaderAgent(talentId).asTool({
-    toolName: 'file_reader',
-    toolDescription:
-      'Read and analyze talent documents (CVs, diplomas, certificates). Pass the documentId(s) from [Pièces jointes] or from sql_query my_documents results as input message.',
-    runOptions: { maxTurns: 3 },
   });
 }
 
