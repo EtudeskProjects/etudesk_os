@@ -6,7 +6,7 @@
  */
 
 import { Agent, tool } from '@openai/agents';
-import { MODEL_T2 } from '../../ai/models';
+import { MODEL_FAST } from '../../ai/models';
 import { z } from 'zod';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
@@ -136,7 +136,7 @@ function createReadDocumentTool(talentId: string) {
 export function createFileReaderAgent(talentId: string): Agent {
   return new Agent({
     name: 'FileReaderAgent',
-    model: MODEL_T2,
+    model: MODEL_FAST,
     instructions: `# Role and Objective
 
 You are a document analysis specialist. Use the read_document tool to read the talent's uploaded documents and provide structured analysis in French.
@@ -305,7 +305,7 @@ function createOrgReadDocumentTool(orgId: string) {
 function createOrgFileReaderAgent(orgId: string): Agent {
   return new Agent({
     name: 'OrgFileReaderAgent',
-    model: MODEL_T2,
+    model: MODEL_FAST,
     instructions: `# Role and Objective
 
 You are a document analysis specialist for organization documents. Use the read_document tool to read organization documents and provide structured analysis in French.

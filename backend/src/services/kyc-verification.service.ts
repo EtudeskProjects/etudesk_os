@@ -6,7 +6,8 @@
 import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
-import { MODEL_T2 } from './ai/models';
+import { MODEL_SEARCH } from './ai/models';
+import { getOpenAIClient } from './ai/provider';
 import { buildKYCVerificationPrompt, buildQuickCheckPrompt, KYC_SYSTEM_PROMPT } from './ai/prompts/kyc.prompt';
 import { buildTalentObject } from './ai/talent-object';
 
@@ -266,7 +267,7 @@ export async function verifyKYCDocument(
     );
   }
 
-  const talentObj = await buildTalentObject(talentId);
+  const talentObj = await buildTalentObject(talentId, true);
   if (!talentObj) {
     return errorResult(
       ['Profil non trouvé'],
@@ -332,9 +333,9 @@ export async function verifyKYCDocument(
   try {
     logger.info(`Calling gpt-5-mini API for document analysis...`);
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
-      model: MODEL_T2,
+      model: MODEL_SEARCH,
       messages: [
         { role: 'system', content: KYC_SYSTEM_PROMPT },
         { role: 'user', content: imageContent },
@@ -519,9 +520,9 @@ export async function quickDocumentCheck(
       return { valid: false, document_type: 'UNKNOWN', message: 'Image non accessible' };
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
-      model: MODEL_T2,
+      model: MODEL_SEARCH,
       messages: [
         { role: 'system', content: KYC_SYSTEM_PROMPT },
         {

@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && cp -r src/i18n/locales dist/i18n/locales",
     "start": "node dist/index.js",
     "seed": "tsx src/database/seed.ts",
     "db:reset": "psql $DATABASE_URL -f src/database/schema.sql && npm run seed",
@@ -14,6 +14,7 @@
     "seed:pinecone": "tsx src/scripts/seed-pinecone.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.74.0",
     "@openai/agents": "^0.4.4",
     "@pinecone-database/pinecone": "^3.0.3",
     "@types/multer": "^2.0.0",

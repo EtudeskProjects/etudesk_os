@@ -3,10 +3,11 @@
  * Uses Agents SDK with GPT-4.1-nano for cost-effective inference
  */
 
-import { run } from '@openai/agents';
+import { Runner } from '@openai/agents';
 import { pool } from './database';
 import { createRecommendationAgent } from './ai/agent-factory';
 import { buildRecommendationPrompt } from './ai/prompts/recommendation.prompt';
+import { openaiProvider } from './ai/provider';
 
 import { logger } from '../utils';
 // --- In-Memory Cache For Recommendations ---
@@ -90,7 +91,8 @@ export async function generateRecommendation(
 
   try {
     const agent = createRecommendationAgent();
-    const result = await run(agent, prompt);
+    const openaiRunner = new Runner({ modelProvider: openaiProvider });
+    const result = await openaiRunner.run(agent, prompt);
 
     let text = result.finalOutput?.trim() || '';
 

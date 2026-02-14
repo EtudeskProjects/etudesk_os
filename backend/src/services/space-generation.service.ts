@@ -3,8 +3,8 @@
  * Uses Agents SDK with GPT-4.1-nano for AI-powered space form generation
  */
 
-import OpenAI from 'openai';
-import { MODEL_T3 } from './ai/models';
+import { MODEL_SUGGESTION } from './ai/models';
+import { getGeminiClient } from './ai/provider';
 import { pool } from './database';
 import {
   Sector,
@@ -118,9 +118,9 @@ export async function generateSpaceSuggestion(
     logger.info('[SpaceGeneration] Starting generation', { name: input.name });
     const startTime = Date.now();
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getGeminiClient();
     const completion = await openai.chat.completions.create({
-      model: MODEL_T3,
+      model: MODEL_SUGGESTION,
       messages: [
         { role: 'system', content: SPACE_GEN_SYSTEM_PROMPT },
         { role: 'user', content: prompt },

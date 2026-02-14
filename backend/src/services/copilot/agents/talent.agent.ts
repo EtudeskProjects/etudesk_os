@@ -4,7 +4,7 @@
  */
 
 import { Agent } from '@openai/agents';
-import { MODEL_T1 } from '../../ai/models';
+import { MODEL_AGENT } from '../../ai/models';
 import { TalentContext } from '../types';
 import { vectorQueryTool } from '../tools/vector-query.tool';
 import { createSqlQueryTool } from '../tools/sql-query.tool';
@@ -71,7 +71,7 @@ export function createTalentAgent(
 
   return new Agent({
     name: `Talent Agent (${mode})`,
-    model: MODEL_T1,
+    model: MODEL_AGENT,
     instructions,
     tools,
     inputGuardrails: [inputSafetyGuardrail],

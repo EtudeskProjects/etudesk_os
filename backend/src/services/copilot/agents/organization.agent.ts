@@ -4,7 +4,7 @@
  */
 
 import { Agent } from '@openai/agents';
-import { MODEL_T1 } from '../../ai/models';
+import { MODEL_AGENT } from '../../ai/models';
 import { OrgContext } from '../types';
 import { vectorQueryTool } from '../tools/vector-query.tool';
 import { createSqlQueryTool } from '../tools/sql-query.tool';
@@ -47,7 +47,7 @@ export function createOrgAgent(context: OrgContext): Agent {
 
   return new Agent({
     name: 'Organization Explorer',
-    model: MODEL_T1,
+    model: MODEL_AGENT,
     instructions: buildOrgExplorerPrompt(context),
     tools: [
       vectorQueryTool,

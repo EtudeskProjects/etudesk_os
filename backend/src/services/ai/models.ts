@@ -1,23 +1,50 @@
 /**
- * Centralized LLM model configuration
- * Single source of truth — all model references import from here
- * Upgraded to GPT-5 family (Feb 2026) — drop-in replacements for GPT-4.1
+ * Centralized LLM model configuration — Multi-provider by usage
+ * Single source of truth — all model references import from here.
+ *
+ * Each constant targets the best provider for its use case:
+ * - Google Gemini: form suggestions (cheapest, fastest)
+ * - Anthropic Claude: agents + guardrails/summaries (best reasoning)
+ * - OpenAI: images, web search, embeddings, STT, matching, vision
  */
 
-/** Complex reasoning with tool orchestration (copilot main agents) */
-export const MODEL_T1 = 'gpt-5';
+// --- Google Gemini (form suggestions — cheapest, fastest) ---
 
-/** Vision, document analysis, search synthesis (sub-agents) */
-export const MODEL_T2 = 'gpt-5-mini';
+/** Form generation: spaces, communities, opportunities, bios, daily objectives, WhatsApp */
+export const MODEL_SUGGESTION = 'gemini-2.5-flash-lite';
 
-/** Simple text generation, classification, summarization */
-export const MODEL_T3 = 'gpt-5-nano';
+// --- Anthropic Claude (agents — best reasoning + tool use) ---
 
-/** Image generation */
+/** Main copilot agents: talent explorer, org explorer, study mode */
+export const MODEL_AGENT = 'claude-sonnet-4-5-20250514';
+
+/** Fast tasks: summaries, titles, guardrails, intent suggestions */
+export const MODEL_FAST = 'claude-haiku-4-5-20251001';
+
+// --- OpenAI (specialized capabilities) ---
+
+/** Image generation (DALL-E / gpt-image) */
 export const MODEL_IMAGE = 'gpt-image-1';
 
-/** Speech-to-text */
+/** Web search synthesis + document vision/extraction */
+export const MODEL_SEARCH = 'gpt-4.1-mini';
+
+/** Recommendations matching (cost-effective) */
+export const MODEL_MATCH = 'gpt-4.1-nano';
+
+/** Speech-to-text (Whisper — always OpenAI) */
 export const MODEL_STT = 'whisper-1';
 
-/** Text embeddings */
+/** Text embeddings (always OpenAI for Pinecone 1536d compat) */
 export const MODEL_EMBEDDING = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small';
+
+// --- Backward compatibility aliases ---
+
+/** @deprecated Use MODEL_AGENT */
+export const MODEL_T1 = MODEL_AGENT;
+
+/** @deprecated Use MODEL_FAST */
+export const MODEL_T2 = MODEL_FAST;
+
+/** @deprecated Use MODEL_SUGGESTION */
+export const MODEL_T3 = MODEL_SUGGESTION;

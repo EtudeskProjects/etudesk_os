@@ -4,11 +4,12 @@
  */
 
 import { Response } from 'express';
-import { run, InputGuardrailTripwireTriggered } from '@openai/agents';
+import { run, Runner, InputGuardrailTripwireTriggered } from '@openai/agents';
 import type { Agent, AgentInputItem } from '@openai/agents';
 import { SSEEvent, MessageSegment } from '../types';
 import { createTitleAgent, createSuggestionsAgent } from '../../ai/agent-factory';
 import { buildSuggestionsSystemPrompt } from '../../ai/prompts/session-utils.prompt';
+import { geminiProvider } from '../../ai/provider';
 import { generateToolSummary } from './tool-summary';
 import { getFileBuffer } from '../../storage.service';
 
@@ -356,7 +357,8 @@ export async function generateSuggestions(
   try {
     const systemPrompt = buildSuggestionsSystemPrompt(mode, contextSummary);
     const agent = createSuggestionsAgent(systemPrompt);
-    const result = await run(agent, 'Génère les suggestions.');
+    const geminiRunner = new Runner({ modelProvider: geminiProvider });
+    const result = await geminiRunner.run(agent, 'Génère les suggestions.');
     const text = result.finalOutput?.trim() || '[]';
     return JSON.parse(text);
   } catch {

@@ -5,6 +5,7 @@
  */
 
 import { Router, Response } from 'express';
+import crypto from 'crypto';
 import multer from 'multer';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import {
@@ -42,19 +43,53 @@ import {
 import { summarizeHistoryIfNeeded } from '../services/copilot/session-summarizer';
 import { handleConfirmation } from '../services/copilot/actions/action.handler';
 import { copilotChatLimiter, copilotGeneralLimiter } from '../middleware/rateLimit.middleware';
+import { debitWalletForAction } from '../services/billing/credit.service';
 
 const router = Router();
 
 /** Sanitize strings before PostgreSQL insertion — removes null bytes and fixes broken Unicode escapes */
 function sanitizeForPg(value: string | null | undefined): string | null {
   if (!value) return value as null;
-  // Remove \u0000 null bytes (PostgreSQL rejects them)
-  return value.replace(/\u0000/g, '').replace(/\\u0000/g, '');
+  return value
+    // Remove actual null bytes
+    .replace(/\u0000/g, '')
+    // Remove escaped null bytes
+    .replace(/\\u0000/g, '')
+    // Remove invalid Unicode escape sequences (e.g. \uD800-\uDFFF surrogates, \uXXXX invalid)
+    .replace(/\\u[dD][89abAB][0-9a-fA-F]{2}/g, '')
+    // Remove lone surrogates in the actual string
+    .replace(/[\uD800-\uDFFF]/g, '');
 }
 function sanitizeJsonForPg(value: any): string | null {
   if (!value) return null;
   const str = typeof value === 'string' ? value : JSON.stringify(value);
   return sanitizeForPg(str);
+}
+
+async function getOrganizationBillingOwner(organizationId: string, talentId: string): Promise<string | null> {
+  const result = await pool.query(
+    `SELECT role, status
+     FROM organization_members
+     WHERE organization_id = $1 AND talent_id = $2
+     LIMIT 1`,
+    [organizationId, talentId]
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  const { role, status } = result.rows[0];
+  if (status !== 'ACTIVE') {
+    return null;
+  }
+
+  const allowedRoles = new Set(['OWNER', 'ADMIN', 'MANAGER', 'SUB_ADMIN']);
+  if (!allowedRoles.has(String(role || '').toUpperCase())) {
+    return null;
+  }
+
+  return organizationId;
 }
 
 // --- Chat Endpoint — Sse Streaming ---
@@ -86,6 +121,60 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     const validMode: CopilotMode = Object.values(COPILOT_MODES).includes(mode as CopilotMode)
       ? (mode as CopilotMode)
       : COPILOT_MODES.EXPLORE;
+
+    const requestIdempotencyKeyHeader = req.headers['x-idempotency-key'];
+    const requestIdempotencyKey = Array.isArray(requestIdempotencyKeyHeader)
+      ? requestIdempotencyKeyHeader[0]
+      : requestIdempotencyKeyHeader;
+
+    const debitKey = requestIdempotencyKey
+      ? `copilot_chat_${requestIdempotencyKey}`
+      : `copilot_chat_${crypto.randomUUID()}`;
+
+    try {
+      if (organizationId) {
+        const orgOwner = await getOrganizationBillingOwner(organizationId, talentId);
+        if (!orgOwner) {
+          return res.status(403).json({ error: req.t('organizations:notMember') });
+        }
+
+        await debitWalletForAction({
+          scope: 'ORGANIZATION',
+          ownerId: orgOwner,
+          actionCode: 'ORG_ASSISTANT_MANAGER_QUERY',
+          idempotencyKey: debitKey,
+          metadata: {
+            mode: validMode,
+            sessionId: inputSessionId ?? null,
+          },
+          createdBy: talentId,
+        });
+      } else {
+        const actionCode = validMode === COPILOT_MODES.STUDY
+          ? 'TALENT_ASSISTANT_STUDY_QUERY'
+          : 'TALENT_ASSISTANT_EXPLORER_QUERY';
+
+        await debitWalletForAction({
+          scope: 'TALENT',
+          ownerId: talentId,
+          actionCode,
+          idempotencyKey: debitKey,
+          metadata: {
+            mode: validMode,
+            sessionId: inputSessionId ?? null,
+          },
+          createdBy: talentId,
+        });
+      }
+    } catch (debitError: any) {
+      if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
+        return res.status(402).json({
+          error: 'Solde crédits insuffisant. Rechargez votre wallet pour continuer.',
+          code: 'INSUFFICIENT_CREDITS',
+        });
+      }
+      throw debitError;
+    }
 
     // Initialize SSE
     initSSE(res);
@@ -289,17 +378,19 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
       sectors: profileRow.sectors,
     } : undefined;
 
-    // 3. Generate suggestions with gpt-5-nano
-    const { run } = await import('@openai/agents');
+    // 3. Generate suggestions with Gemini
+    const { Runner } = await import('@openai/agents');
     const { createIntentSuggestionsAgent } = await import('../services/ai/agent-factory');
     const { buildIntentSuggestionsPrompt } = await import('../services/ai/prompts/session-utils.prompt');
+    const { geminiProvider } = await import('../services/ai/provider');
 
     const systemPrompt = buildIntentSuggestionsPrompt(mode, historyRows, talentContext);
     const agent = createIntentSuggestionsAgent(systemPrompt);
+    const geminiRunner = new Runner({ modelProvider: geminiProvider });
 
     let suggestions: string[] = [];
     try {
-      const result = await run(agent, 'Génère les 4 suggestions.');
+      const result = await geminiRunner.run(agent, 'Génère les 4 suggestions.');
       const text = result.finalOutput?.trim() || '[]';
       suggestions = JSON.parse(text);
 
@@ -415,9 +506,9 @@ router.post(
         return res.status(400).json({ error: req.t('copilot:noAudioFile') });
       }
 
-      // Import OpenAI client
-      const OpenAI = (await import('openai')).default;
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      // STT always uses OpenAI (Whisper)
+      const { getOpenAIClient } = await import('../services/ai/provider');
+      const openai = getOpenAIClient();
 
       // Create a File-like object from buffer for the API
       const audioFile = new File([file.buffer], file.originalname, {
@@ -520,8 +611,13 @@ router.post(
       }
 
       const uploadedDocuments = [];
+      const fileIdempotencyHeader = req.headers['x-idempotency-key'];
+      const fileIdempotencyValue = Array.isArray(fileIdempotencyHeader)
+        ? fileIdempotencyHeader[0]
+        : fileIdempotencyHeader;
 
-      for (const file of files) {
+      for (let index = 0; index < files.length; index += 1) {
+        const file = files[index];
         const validation = validateFile({
           buffer: file.buffer,
           originalname: file.originalname,
@@ -531,6 +627,32 @@ router.post(
 
         if (!validation.valid) {
           return res.status(400).json({ error: `${file.originalname}: ${validation.error}` });
+        }
+
+        const fileDebitKey = fileIdempotencyValue
+          ? `copilot_upload_${fileIdempotencyValue}_${index}`
+          : `copilot_upload_${crypto.randomUUID()}`;
+
+        try {
+          await debitWalletForAction({
+            scope: 'TALENT',
+            ownerId: talentId,
+            actionCode: 'TALENT_DOCUMENT_UPLOAD',
+            idempotencyKey: fileDebitKey,
+            metadata: {
+              fileName: file.originalname,
+              channel: 'copilot',
+            },
+            createdBy: talentId,
+          });
+        } catch (debitError: any) {
+          if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
+            return res.status(402).json({
+              error: 'Solde crédits insuffisant. Rechargez votre wallet pour continuer.',
+              code: 'INSUFFICIENT_CREDITS',
+            });
+          }
+          throw debitError;
         }
 
         // Upload as document — auto-extraction will classify and extract skills.

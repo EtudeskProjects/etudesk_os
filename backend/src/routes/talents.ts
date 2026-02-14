@@ -5,11 +5,11 @@
 
 import { Router, Response } from 'express';
 import { pool } from '../services/database';
-import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
+import { authMiddleware, optionalAuthMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { onTalentProfileUpdate } from '../services/embedding.service';
 import { autoModerationService } from '../services/auto-moderation.service';
-import OpenAI from 'openai';
-import { MODEL_T3 } from '../services/ai/models';
+import { MODEL_SUGGESTION } from '../services/ai/models';
+import { getGeminiClient } from '../services/ai/provider';
 import { BIO_GEN_SYSTEM_PROMPT } from '../services/ai/prompts/bio-gen.prompt';
 import { buildTalentObject, talentObjectToText } from '../services/ai/talent-object';
 import { normalizeCountryCode } from '../constants/countries';
@@ -29,7 +29,8 @@ router.get('/me/talent-object', authMiddleware, async (req: AuthRequest, res: Re
     if (!req.talentId) {
       return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
-    const obj = await buildTalentObject(req.talentId);
+    const includeHidden = req.query.include_hidden !== 'false';
+    const obj = await buildTalentObject(req.talentId, includeHidden);
     if (!obj) {
       return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
@@ -260,7 +261,7 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
 
     // If talent exists, use TalentObject
     if (req.talentId) {
-      const talentObj = await buildTalentObject(req.talentId);
+      const talentObj = await buildTalentObject(req.talentId, true);
       if (talentObj) contextText = talentObjectToText(talentObj);
     }
 
@@ -280,9 +281,9 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
       return res.status(400).json({ error: req.t('common:notEnoughInfoForBio') });
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getGeminiClient();
     const completion = await openai.chat.completions.create({
-      model: MODEL_T3,
+      model: MODEL_SUGGESTION,
       messages: [
         { role: 'system', content: BIO_GEN_SYSTEM_PROMPT },
         { role: 'user', content: `Génère une bio pour ce profil :\n${contextText}` },
@@ -307,9 +308,12 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
  * GET /api/talents/:id
  * Get a specific talent profile (public view)
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuthMiddleware, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
+    const isOwnProfile = req.talentId && (req.talentId === id);
+
+    const skillFilter = isOwnProfile ? '' : 'AND ts.is_visible = true';
 
     const result = await pool.query(`
       SELECT
@@ -320,9 +324,9 @@ router.get('/:id', async (req, res) => {
         t.remote_ready, t.willing_to_relocate,
         t.sectors, t.profile_tags, t.goals, t.created_at,
         COALESCE(
-          (SELECT json_agg(json_build_object('name', ts.canonical_name, 'type', ts.type))
+          (SELECT json_agg(json_build_object('name', ts.canonical_name, 'type', ts.type, 'proficiency_level', ts.proficiency_level) ORDER BY ts.proficiency_level DESC, ts.canonical_name ASC)
            FROM talent_skills ts
-           WHERE ts.talent_id = t.id), '[]'::json
+           WHERE ts.talent_id = t.id ${skillFilter}), '[]'::json
         ) as skills,
         COALESCE(
           (SELECT json_agg(json_build_object('language', tl.language, 'proficiency_level', tl.proficiency_level))

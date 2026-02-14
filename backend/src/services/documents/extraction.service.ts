@@ -4,7 +4,8 @@
  */
 
 import OpenAI from 'openai';
-import { MODEL_T2 } from '../ai/models';
+import { MODEL_SEARCH } from '../ai/models';
+import { getOpenAIClient } from '../ai/provider';
 import {
   DocumentType,
   DOCUMENT_TYPES,
@@ -94,12 +95,12 @@ export async function extractDocumentMetadata(
     // Build talent context if available
     let talentContext: string | undefined;
     if (talentId) {
-      const talentObj = await buildTalentObject(talentId);
+      const talentObj = await buildTalentObject(talentId, true);
       if (talentObj) talentContext = talentObjectToText(talentObj);
     }
 
     const prompt = buildExtractionPrompt(mimeType, talentContext);
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const openai = getOpenAIClient();
 
     // Build content parts
     const contentParts: OpenAI.ChatCompletionContentPart[] = [
@@ -132,7 +133,7 @@ export async function extractDocumentMetadata(
     }
 
     const completion = await openai.chat.completions.create({
-      model: MODEL_T2,
+      model: MODEL_SEARCH,
       messages: [
         { role: 'system', content: EXTRACTION_SYSTEM_PROMPT },
         { role: 'user', content: contentParts },

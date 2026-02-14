@@ -4,12 +4,12 @@
  * Cached for 24h per user/organization for cost efficiency
  */
 
-import OpenAI from 'openai';
-import { MODEL_T3 } from './ai/models';
+import { MODEL_SUGGESTION } from './ai/models';
+import { getGeminiClient } from './ai/provider';
 import { pool } from './database';
 import { logger } from '../utils';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getGeminiClient();
 
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 const MAX_OBJECTIVE_LENGTH = 500;
@@ -226,10 +226,9 @@ Génère l'objectif (500 caractères max):`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: MODEL_T3,
+      model: MODEL_SUGGESTION,
       messages: [{ role: 'user', content: prompt }],
       max_completion_tokens: 200,
-      temperature: 0.7,
     });
 
     let objective = response.choices[0]?.message?.content?.trim() || '';
@@ -505,10 +504,9 @@ Génère l'objectif (500 caractères max):`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: MODEL_T3,
+      model: MODEL_SUGGESTION,
       messages: [{ role: 'user', content: prompt }],
       max_completion_tokens: 200,
-      temperature: 0.7,
     });
 
     let objective = response.choices[0]?.message?.content?.trim() || '';

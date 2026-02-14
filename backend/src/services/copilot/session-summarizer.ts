@@ -5,7 +5,7 @@
  */
 
 import { Agent, run } from '@openai/agents';
-import { MODEL_T3 } from '../ai/models';
+import { MODEL_FAST } from '../ai/models';
 import { logger } from '../../utils';
 
 const SUMMARY_THRESHOLD = 10; // Summarize when history exceeds this count
@@ -13,7 +13,7 @@ const KEEP_RECENT = 4; // Keep last N messages verbatim
 
 const summarizerAgent = new Agent({
   name: 'Session Summarizer',
-  model: MODEL_T3,
+  model: MODEL_FAST,
   instructions: `You are a conversation summarizer for a talent/employment platform.
 
 Summarize the conversation in French. Focus on:
