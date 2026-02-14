@@ -1,14 +1,16 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, ActivityIndicator, Text, StyleSheet, TouchableOpacity, Alert, FlatList, ScrollView } from 'react-native';
+import { View, ActivityIndicator, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { CommunityActivity, ActivityType } from '../../types/activity';
 import { communityActivityService } from '../../services';
 import { ActivityCard } from './ActivityCard';
-import { SPACING, TYPOGRAPHY, BORDER } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, COMPONENT } from '../../constants/theme';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../contexts/I18nContext';
 import { MessageSquare } from 'lucide-react-native';
+import { alertsGlobal } from '../../contexts/AlertContext';
+import { showToastGlobal } from '../ui';
 
 interface ActivityFeedProps {
     communityId: string;
@@ -136,7 +138,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             // Optimistic update is already handled in ActivityCard
         } catch (error) {
             console.error('Vote failed:', error);
-            Alert.alert(t('common.error'), t('community.feed.voteError'));
+            showToastGlobal({ type: 'error', title: t('common.error'), message: t('community.feed.voteError') });
         }
     }, []);
 
@@ -146,26 +148,26 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             refreshFeed();
         } catch (error) {
             console.error('Toggle pin failed:', error);
-            Alert.alert(t('common.error'), t('community.feed.pinError'));
+            showToastGlobal({ type: 'error', title: t('common.error'), message: t('community.feed.pinError') });
         }
     }, [refreshFeed]);
 
     const handleDelete = useCallback((activityId: string) => {
-        Alert.alert(
-            t('community.feed.deleteTitle'),
-            t('community.feed.deleteMessage'),
-            [
+        void alertsGlobal.showAlert({
+            title: t('community.feed.deleteTitle'),
+            message: t('community.feed.deleteMessage'),
+            buttons: [
                 { text: t('common.cancel'), style: 'cancel' },
                 { text: t('common.delete'), style: 'destructive', onPress: async () => {
                     try {
                         await communityActivityService.deleteActivity(activityId);
                         refreshFeed();
                     } catch (e) {
-                        Alert.alert(t('common.error'), t('community.feed.deleteError'));
+                        showToastGlobal({ type: 'error', title: t('common.error'), message: t('community.feed.deleteError') });
                     }
                 }}
             ]
-        );
+        });
     }, [refreshFeed, t]);
 
     const handleActivityPress = useCallback((activity: CommunityActivity) => {
@@ -324,14 +326,14 @@ const styles = StyleSheet.create({
         gap: SPACING.sm,
     },
     filterChip: {
-        paddingVertical: SPACING.xs,
-        paddingHorizontal: SPACING.md,
+        paddingVertical: COMPONENT.pill.paddingVertical,
+        paddingHorizontal: COMPONENT.pill.paddingHorizontal,
         borderWidth: BORDER.width.thin,
-        borderRadius: BORDER.radius.full,
+        borderRadius: COMPONENT.pill.borderRadius,
     },
     filterChipText: {
-        fontSize: TYPOGRAPHY.fontSize.sm,
-        fontWeight: TYPOGRAPHY.fontWeight.medium,
+        fontSize: COMPONENT.pill.fontSize,
+        fontWeight: COMPONENT.pill.fontWeight,
     },
     listContent: {
         paddingHorizontal: 0,

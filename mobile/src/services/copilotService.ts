@@ -111,8 +111,14 @@ class CopilotService {
   /**
    * List user's copilot sessions
    */
-  async listSessions(limit: number = 20): Promise<ApiResponse<{ sessions: SessionSummary[] }>> {
-    return api.get('/api/copilot/sessions', { limit });
+  async listSessions(
+    limit: number = 20,
+    organizationId?: string
+  ): Promise<ApiResponse<{ sessions: SessionSummary[] }>> {
+    return api.get('/api/copilot/sessions', {
+      limit,
+      ...(organizationId ? { organizationId } : {}),
+    });
   }
 
   /**
@@ -126,9 +132,12 @@ class CopilotService {
    * Get session details with messages
    */
   async getSession(
-    sessionId: string
+    sessionId: string,
+    organizationId?: string
   ): Promise<ApiResponse<{ session: CopilotSession; messages: CopilotMessage[] }>> {
-    return api.get(`/api/copilot/sessions/${sessionId}`);
+    return api.get(`/api/copilot/sessions/${sessionId}`, {
+      ...(organizationId ? { organizationId } : {}),
+    });
   }
 
   /**

@@ -4,7 +4,6 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
-    Alert,
     ActivityIndicator,
     Image,
     Pressable,
@@ -35,6 +34,7 @@ import { communityActivityService } from '../../../../src/services';
 import { CommunityActivity, ActivityComment, PollOption } from '../../../../src/types/activity';
 import { useAuth } from '../../../../src/contexts/AuthContext';
 import { getFullImageUrl } from '../../../../src/utils/image';
+import { useAlert } from '../../../../src/contexts/AlertContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -71,6 +71,7 @@ export default function ActivityDetailScreen() {
     const bookmarkScaleAnim = useRef(new Animated.Value(1)).current;
 
     const scrollViewRef = useRef<ScrollView>(null);
+    const alerts = useAlert();
 
     useEffect(() => {
         loadDetails();
@@ -108,7 +109,7 @@ export default function ActivityDetailScreen() {
             }
         } catch (error) {
             console.error(error);
-            Alert.alert('Erreur', 'Impossible de charger l\'activité');
+            void alerts.alert('Erreur', 'Impossible de charger l\'activité');
         } finally {
             setIsLoading(false);
         }
@@ -187,7 +188,7 @@ export default function ActivityDetailScreen() {
                 is_voted_by_user: false
             })));
             console.error('Vote failed:', error);
-            Alert.alert('Erreur', 'Impossible de voter');
+            void alerts.alert('Erreur', 'Impossible de voter');
         }
     }, [userVotedOptionId, id]);
 
@@ -228,26 +229,22 @@ export default function ActivityDetailScreen() {
             loadDetails();
         } catch (error) {
             console.error('Toggle pin failed:', error);
-            Alert.alert('Erreur', 'Impossible de modifier l\'épingle');
+            void alerts.alert('Erreur', 'Impossible de modifier l\'épingle');
         }
     };
 
     const handleDelete = () => {
-        Alert.alert(
-            'Supprimer',
-            'Êtes-vous sûr de vouloir supprimer cette activité ?',
-            [
+        void alerts.showAlert({ title: 'Supprimer', message: 'Êtes-vous sûr de vouloir supprimer cette activité ?', buttons: [
                 { text: 'Annuler', style: 'cancel' },
                 { text: 'Supprimer', style: 'destructive', onPress: async () => {
                     try {
                         await communityActivityService.deleteActivity(id!);
                         router.back();
                     } catch (e) {
-                        Alert.alert('Erreur', 'Impossible de supprimer');
+                        void alerts.alert('Erreur', 'Impossible de supprimer');
                     }
                 }}
-            ]
-        );
+            ] });
     };
 
     const handleMore = () => {
@@ -284,7 +281,7 @@ export default function ActivityDetailScreen() {
         // Cancel option - always shown
         options.push({ text: 'Annuler', style: 'cancel' });
 
-        Alert.alert('Options', undefined, options);
+        void alerts.showAlert({ title: 'Options', message: undefined, buttons: options as any });
     };
 
     const handleCommentAdded = useCallback(() => {

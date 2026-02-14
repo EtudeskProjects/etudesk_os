@@ -7,9 +7,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  TextInput,
   Image,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -36,7 +34,7 @@ import {
   ClipboardList,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../../src/constants/theme';
-import { Input, Button, Toggle } from '../../../../src/components/ui';
+import { Input, Button, Toggle, Chip, IconButton, useToast } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
 import {
@@ -59,6 +57,8 @@ import {
 } from '../../../../src/types/models';
 import { communityService, UpdateCommunityData, CreateCommunityData, imageService } from '../../../../src/services';
 import { getFullImageUrl } from '../../../../src/utils/image';
+import { useAlert } from '../../../../src/contexts/AlertContext';
+import { FormTextArea } from '../../../../src/components/forms/FormTextArea';
 
 // Constants for limits
 const MAX_IMAGES = 5;
@@ -92,6 +92,8 @@ export default function EditCommunityScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const alerts = useAlert();
+  const { showToast } = useToast();
 
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<Step>('info');
@@ -186,8 +188,12 @@ export default function EditCommunityScreen() {
       }
       
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de charger la communauté.');
-      router.back();
+      await alerts.showAlert({
+        type: 'error',
+        title: 'Erreur',
+        message: error.error || 'Impossible de charger la communauté.',
+        buttons: [{ text: 'OK', onPress: () => router.back() }],
+      });
     } finally {
       setIsLoading(false);
     }
@@ -195,7 +201,7 @@ export default function EditCommunityScreen() {
 
   const pickImage = async () => {
     if (images.length >= MAX_IMAGES) {
-      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_IMAGES} images.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_IMAGES} images.` });
       return;
     }
 
@@ -209,7 +215,7 @@ export default function EditCommunityScreen() {
         setImages([...images, newImage]);
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la sélection de l\'image.');
+      showToast({ type: 'error', title: 'Erreur', message: 'Une erreur est survenue lors de la sélection de l\'image.' });
     }
   };
 
@@ -224,7 +230,7 @@ export default function EditCommunityScreen() {
     } else if (selectedTags.length < MAX_COMMUNITY_TAGS) {
       setSelectedTags([...selectedTags, tagId]);
     } else {
-      Alert.alert('Limite atteinte', `Vous pouvez sélectionner au maximum ${MAX_COMMUNITY_TAGS} tags.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez sélectionner au maximum ${MAX_COMMUNITY_TAGS} tags.` });
     }
   };
 
@@ -234,7 +240,7 @@ export default function EditCommunityScreen() {
     } else if (selectedSectors.length < MAX_SECTORS) {
       setSelectedSectors([...selectedSectors, sectorId]);
     } else {
-      Alert.alert('Limite atteinte', `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.` });
     }
   };
 
@@ -301,7 +307,7 @@ export default function EditCommunityScreen() {
       }
     } catch (error: any) {
       console.error('Error generating community:', error);
-      Alert.alert('Erreur de génération', error?.error || 'Une erreur est survenue lors de la génération.');
+      showToast({ type: 'error', title: 'Erreur de génération', message: error?.error || 'Une erreur est survenue lors de la génération.' });
     } finally {
       setIsGenerating(false);
     }
@@ -310,7 +316,7 @@ export default function EditCommunityScreen() {
   // Question handlers
   const addQuestion = () => {
     if (applicationQuestions.length >= MAX_QUESTIONS) {
-      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.` });
       return;
     }
     const newQuestion: ApplicationQuestion = {
@@ -362,7 +368,7 @@ export default function EditCommunityScreen() {
         uploadedImageUrls.push(uploaded.url);
       } catch (error) {
         console.error('Error uploading image:', error);
-        Alert.alert('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
+        await alerts.error('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
         return null;
       }
     }
@@ -398,37 +404,40 @@ export default function EditCommunityScreen() {
         status,
       };
       await communityService.update(id!, data);
-      Alert.alert('Modifications enregistrées', 'La communauté a été mise à jour.', [{ text: 'OK', onPress: () => router.back() }]);
+      await alerts.showAlert({
+        type: 'success',
+        title: 'Modifications enregistrées',
+        message: 'La communauté a été mise à jour.',
+        buttons: [{ text: 'OK', onPress: () => router.back() }],
+      });
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de la mise à jour.');
+      await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de la mise à jour.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = () => {
-    Alert.alert(
+  const handleDelete = async () => {
+    const confirmed = await alerts.confirm(
       'Supprimer la communauté',
-      `Êtes-vous sûr de vouloir supprimer "${name}" ? Cette action est irréversible.`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            setIsSubmitting(true);
-            try {
-              await communityService.delete(id!);
-              Alert.alert('Supprimé', 'La communauté a été supprimée.', [{ text: 'OK', onPress: () => router.back() }]);
-            } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de la suppression.');
-            } finally {
-              setIsSubmitting(false);
-            }
-          },
-        },
-      ]
+      `Êtes-vous sûr de vouloir supprimer "${name}" ? Cette action est irréversible.`
     );
+    if (!confirmed) return;
+
+    setIsSubmitting(true);
+    try {
+      await communityService.delete(id!);
+      await alerts.showAlert({
+        type: 'success',
+        title: 'Supprimé',
+        message: 'La communauté a été supprimée.',
+        buttons: [{ text: 'OK', onPress: () => router.back() }],
+      });
+    } catch (error: any) {
+      await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de la suppression.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const canProceed = () => {
@@ -520,27 +529,15 @@ export default function EditCommunityScreen() {
             {COMMUNITY_TAG_DATA.map((tag) => {
               const isSelected = selectedTags.includes(tag.id);
               return (
-                <TouchableOpacity
+                <Chip
                   key={tag.id}
-                  style={[
-                    styles.selectableTag,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
+                  label={tag.label}
+                  selected={isSelected}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   onPress={() => toggleTag(tag.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {tag.label}
-                  </Text>
-                </TouchableOpacity>
+                  style={styles.selectableTag}
+                  textStyle={styles.selectableTagText}
+                />
               );
             })}
           </View>
@@ -549,25 +546,15 @@ export default function EditCommunityScreen() {
         {/* Bouton Générer */}
         {canGenerate && (
           <View style={styles.generateButtonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.generateButton,
-                { backgroundColor: colors.primary },
-                isGenerating && { opacity: 0.7 },
-              ]}
+            <Button
+              title={isGenerating ? 'Suggestion...' : 'Suggérer'}
               onPress={handleGenerate}
+              loading={isGenerating}
               disabled={isGenerating}
-              activeOpacity={0.8}
-            >
-              {isGenerating ? (
-                <ActivityIndicator size="small" color={colors.textOnPrimary} />
-              ) : (
-                <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              )}
-              <Text style={[styles.generateButtonText, { color: colors.textOnPrimary }]}>
-                {isGenerating ? 'Suggestion...' : 'Suggérer'}
-              </Text>
-            </TouchableOpacity>
+              icon={!isGenerating ? <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
+              fullWidth
+              style={styles.generateButton}
+            />
           </View>
         )}
 
@@ -580,49 +567,29 @@ export default function EditCommunityScreen() {
             {SECTOR_DATA.slice(0, 15).map((sector) => {
               const isSelected = selectedSectors.includes(sector.id);
               return (
-                <TouchableOpacity
+                <Chip
                   key={sector.id}
-                  style={[
-                    styles.selectableTag,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
+                  label={sector.label}
+                  selected={isSelected}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   onPress={() => toggleSector(sector.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {sector.label}
-                  </Text>
-                </TouchableOpacity>
+                  style={styles.selectableTag}
+                  textStyle={styles.selectableTagText}
+                />
               );
             })}
           </View>
         </View>
 
         {/* Description */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Description du poste</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary }]}
-              placeholder="Décrivez votre communauté, ses objectifs et sa mission..."
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={4}
-              maxLength={1000}
-              placeholderTextColor={colors.gray500}
-            />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{description.length}/1000</Text>
-        </View>
+        <FormTextArea
+          label="Description"
+          placeholder="Décrivez votre communauté, ses objectifs et sa mission..."
+          value={description}
+          onChangeText={setDescription}
+          rows={4}
+          maxLength={1000}
+        />
       </View>
     </View>
   );
@@ -866,22 +833,14 @@ export default function EditCommunityScreen() {
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
 
         {/* Règles */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Règles de la communauté</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary }]}
-              placeholder="Ex: 1. Respectez les autres membres&#10;2. Pas de spam&#10;3. Restez courtois..."
-              value={rules}
-              onChangeText={setRules}
-              multiline
-              numberOfLines={5}
-              maxLength={1000}
-              placeholderTextColor={colors.gray500}
-            />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{rules.length}/1000</Text>
-        </View>
+        <FormTextArea
+          label="Règles de la communauté"
+          placeholder={'Ex: 1. Respectez les autres membres\n2. Pas de spam\n3. Restez courtois...'}
+          value={rules}
+          onChangeText={setRules}
+          rows={5}
+          maxLength={1000}
+        />
 
         {/* Questions complémentaires */}
         <View style={styles.fieldContainer}>
@@ -902,27 +861,26 @@ export default function EditCommunityScreen() {
                 <Text style={[styles.questionNumber, { color: colors.primary }]}>
                   Question {index + 1}
                 </Text>
-                <TouchableOpacity onPress={() => removeQuestion(question.id)}>
-                  <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
+                <IconButton
+                  onPress={() => removeQuestion(question.id)}
+                  icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+                  accessibilityLabel="Supprimer la question"
+                  size="sm"
+                  variant="ghost"
+                />
               </View>
 
-              <TextInput
-                style={[styles.questionInput, { backgroundColor: colors.gray50, color: colors.textPrimary, borderColor: colors.gray200 }]}
+              <FormTextArea
                 placeholder="Écrivez votre question..."
-                placeholderTextColor={colors.gray400}
                 value={question.question}
                 onChangeText={(text) => updateQuestion(question.id, { question: text })}
                 maxLength={MAX_QUESTION_LENGTH}
-                multiline
-                numberOfLines={2}
+                rows={2}
+                showCounter
+                containerStyle={{ marginTop: 0 }}
               />
 
               <View style={styles.questionFooter}>
-                <Text style={[styles.charCount, { color: colors.gray500 }]}>
-                  {question.question.length}/{MAX_QUESTION_LENGTH}
-                </Text>
-
                 <View style={styles.requiredToggle}>
                   <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>Obligatoire</Text>
                   <Toggle
@@ -937,15 +895,14 @@ export default function EditCommunityScreen() {
 
           {/* Add Question Button */}
           {applicationQuestions.length < MAX_QUESTIONS && (
-            <TouchableOpacity
-              style={[styles.addQuestionButton, { borderColor: colors.primary }]}
+            <Button
+              title="Ajouter une question"
               onPress={addQuestion}
-            >
-              <Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.addQuestionText, { color: colors.primary }]}>
-                Ajouter une question
-              </Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+              fullWidth
+              style={styles.addQuestionButton}
+            />
           )}
         </View>
       </View>

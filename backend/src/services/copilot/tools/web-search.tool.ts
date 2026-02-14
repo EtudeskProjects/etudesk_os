@@ -1,22 +1,14 @@
 /**
- * Web Search Tool — Agent Handoff pattern
- * Uses OpenAI Agents SDK webSearchTool() via a sub-agent handoff
- * Model: gpt-5-mini (cost-efficient for search synthesis)
+ * Web Search Tool — Agent asTool() pattern
+ * Uses OpenAI Agents SDK webSearchTool() via a sub-agent.
+ * Always runs on OpenAI Responses API (even when AI_PROVIDER=google|anthropic)
+ * because webSearchTool() is a HostedTool that requires OpenAI Responses API.
  */
 
 import { Agent, webSearchTool } from '@openai/agents';
-import { MODEL_T2 } from '../../ai/models';
+import { openaiResponsesProvider } from '../../ai/provider';
 
-/**
- * WebSearchAgent — A sub-agent that performs web searches
- * to find up-to-date information (companies, trends, salaries, etc.)
- *
- * Used as a handoff target from the main agent.
- */
-export const webSearchAgent = new Agent({
-  name: 'WebSearchAgent',
-  model: MODEL_T2,
-  instructions: `# Role and Objective
+const SEARCH_INSTRUCTIONS = `# Role and Objective
 
 You are a web search specialist for the Etudesk platform. Use the web_search tool to find current, reliable information and return structured results in French.
 
@@ -47,17 +39,29 @@ Return results as a structured list in French:
 1. **[Source Title](URL)** — date
    Summary of key information.
 
-Always cite your sources.`,
+Always cite your sources.`;
+
+/**
+ * WebSearchAgent — Toujours sur OpenAI Responses API.
+ * Utilise gpt-4.1-mini (hardcode, pas MODEL_T2) car ce sub-agent
+ * tourne TOUJOURS sur OpenAI, independamment du provider global.
+ */
+export const webSearchAgent = new Agent({
+  name: 'WebSearchAgent',
+  model: 'gpt-4.1-mini',
+  instructions: SEARCH_INSTRUCTIONS,
   tools: [webSearchTool()],
 });
 
 /**
- * Web search as a tool using asTool() pattern
- * The main agent keeps control and can synthesize web search results.
+ * Web search as a tool using asTool() pattern.
+ * runConfig.modelProvider force l'execution sur OpenAI Responses API
+ * meme quand le provider global est Google/Anthropic.
  */
 export const webSearchAsTool = webSearchAgent.asTool({
   toolName: 'web_search',
   toolDescription:
     'Search the web for current information (salary benchmarks, company info, market trends, training resources). Pass the search query as input message. Use ONLY when internal data is insufficient.',
   runOptions: { maxTurns: 5 },
+  runConfig: { modelProvider: openaiResponsesProvider },
 });

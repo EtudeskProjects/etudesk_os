@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Image,
   RefreshControl,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,6 +30,7 @@ import {
   canManageMembers as canManageMembersCheck,
 } from '../../../src/types/models';
 import { organizationService } from '../../../src/services';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 type TabType = 'members' | 'invitations';
 
@@ -62,6 +62,7 @@ export default function MembersScreen() {
 
   const [activeTab, setActiveTab] = useState<TabType>('members');
   const [refreshing, setRefreshing] = useState(false);
+  const alerts = useAlert();
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -82,19 +83,13 @@ export default function MembersScreen() {
 
   const handleDeleteOrganization = () => {
     if (!selectedOrg) return;
-    Alert.alert(
-      'Supprimer l\'organisation',
-      `Êtes-vous sûr de vouloir supprimer "${selectedOrg.name}" ?`,
-      [
+    void alerts.showAlert({ title: 'Supprimer l\'organisation', message: `Êtes-vous sûr de vouloir supprimer "${selectedOrg.name}" ?`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
           style: 'destructive',
           onPress: () => {
-            Alert.alert(
-              'Confirmer la suppression',
-              'Cette action est irréversible. Tous les membres et données seront supprimés.',
-              [
+            void alerts.showAlert({ title: 'Confirmer la suppression', message: 'Cette action est irréversible. Tous les membres et données seront supprimés.', buttons: [
                 { text: 'Annuler', style: 'cancel' },
                 {
                   text: 'Supprimer définitivement',
@@ -106,16 +101,14 @@ export default function MembersScreen() {
                       setSpace('talent');
                       router.replace('/(tabs)/settings');
                     } catch (error: any) {
-                      Alert.alert('Erreur', error?.error || 'Impossible de supprimer l\'organisation.');
+                      await alerts.error('Erreur', error?.error || 'Impossible de supprimer l\'organisation.');
                     }
                   },
                 },
-              ],
-            );
+              ] });
           },
         },
-      ],
-    );
+      ] });
   };
 
   const formatDate = (dateString: string) => {

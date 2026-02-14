@@ -6,8 +6,10 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 import { logger } from '../utils';
+import { debitWalletForAction } from '../services/billing/credit.service';
 const router = express.Router();
 
 // File upload configuration
@@ -66,6 +68,7 @@ router.post('/:communityId/activities', authMiddleware, upload.array('attachment
         const { communityId } = req.params;
         const userId = req.talentId || req.userId;
         const { type, content, metadata, scheduled_at, is_draft } = req.body;
+        const isDraft = is_draft === true || is_draft === 'true';
 
         logger.info(`[Activities] Creating activity - community: ${communityId}, author: ${userId}, type: ${type}, is_draft: ${is_draft}`);
 
@@ -88,6 +91,49 @@ router.post('/:communityId/activities', authMiddleware, upload.array('attachment
             }
         }
 
+        // Credit rule: if user schedules a publication (scheduled_at), charge TALENT_SCHEDULED_TASK.
+        // If wallet has insufficient credits, DO NOT create the activity.
+        if (scheduled_at && !isDraft) {
+            const idempotencyHeader = req.headers['x-idempotency-key'];
+            const idempotencyValue = Array.isArray(idempotencyHeader)
+                ? idempotencyHeader[0]
+                : idempotencyHeader;
+
+            const contentHash = crypto
+                .createHash('sha1')
+                .update(String(content || ''))
+                .digest('hex')
+                .slice(0, 12);
+
+            const debitKey = idempotencyValue
+                ? `scheduled_activity_${idempotencyValue}`
+                : `scheduled_activity_${userId}_${communityId}_${scheduled_at}_${type}_${contentHash}`;
+
+            try {
+                await debitWalletForAction({
+                    scope: 'TALENT',
+                    ownerId: userId,
+                    actionCode: 'TALENT_SCHEDULED_TASK',
+                    idempotencyKey: debitKey,
+                    metadata: {
+                        channel: 'community_activity',
+                        communityId,
+                        type,
+                        scheduled_at,
+                    },
+                    createdBy: userId,
+                });
+            } catch (debitError: any) {
+                if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
+                    return res.status(402).json({
+                        error: 'Solde crédits insuffisant. Rechargez votre wallet pour programmer une publication.',
+                        code: 'INSUFFICIENT_CREDITS',
+                    });
+                }
+                throw debitError;
+            }
+        }
+
         const activity = await communityActivityService.createActivity({
             community_id: communityId,
             author_id: userId,
@@ -96,7 +142,7 @@ router.post('/:communityId/activities', authMiddleware, upload.array('attachment
             metadata: parsedMetadata,
             attachments: attachmentUrls,
             scheduled_at: scheduled_at || null,
-            is_draft: is_draft === true || is_draft === 'true'
+            is_draft: isDraft
         });
 
         logger.info(`[Activities] Created activity: ${activity.id}, moderation_status: ${activity.moderation_status}, is_draft: ${activity.is_draft}`);

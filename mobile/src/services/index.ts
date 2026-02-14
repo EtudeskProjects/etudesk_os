@@ -98,6 +98,18 @@ export type {
   AddPaymentMethodData
 } from './paymentService';
 
+export { billingService } from './billingService';
+export type {
+  BillingScope,
+  BillingCatalogItem,
+  BillingBalance,
+  BillingInvoice,
+  BillingInvoiceItem,
+  CheckoutInitPayload,
+  CheckoutInitResult,
+  CheckoutVerifyResult,
+} from './billingService';
+
 export { notificationService } from './notificationService';
 export type {
   NotificationType,
@@ -181,3 +193,33 @@ export {
 
 export { dailyObjectiveService } from './dailyObjectiveService';
 export type { DailyObjective } from './dailyObjectiveService';
+
+export { orgTalentService } from './orgTalentService';
+export type {
+  OrgTalent,
+  OrgTalentTag,
+  OrgTalentFilters,
+  OrgTalentListResponse,
+  OrgTagDefinition,
+} from './orgTalentService';
+export { SOURCE_LABELS } from './orgTalentService';
+
+export { orgDocumentService } from './orgDocumentService';
+export type {
+  OrgDocumentType,
+  OrgDocumentCategory,
+  OrgDocumentStatus,
+  OrgDocument,
+  OrgDocumentStats,
+  UploadOrgDocumentParams,
+  UpdateOrgDocumentParams,
+  ListOrgDocumentsParams,
+} from './orgDocumentService';
+export {
+  ORG_DOCUMENT_TYPE_LABELS,
+  ORG_DOCUMENT_CATEGORY_LABELS,
+  ORG_DOCUMENT_STATUS_LABELS,
+  formatFileSize as formatOrgFileSize,
+  getOrgDocStatusColor,
+  getOrgDocCategoryIcon,
+} from './orgDocumentService';

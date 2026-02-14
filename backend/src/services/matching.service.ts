@@ -175,11 +175,11 @@ async function calculateSkillsScore(
       return maxScore * 0.7;
     }
 
-    // Get talent skills with proficiency
+    // Get talent skills with proficiency (only visible skills for matching)
     const talentSkillsResult = await pool.query(`
       SELECT canonical_name, proficiency_level
       FROM talent_skills
-      WHERE talent_id = $1
+      WHERE talent_id = $1 AND is_visible = true
     `, [talentId]);
 
     if (talentSkillsResult.rows.length === 0) {
@@ -505,7 +505,7 @@ export async function rankApplications(
         'region', t.region,
         'country', t.country,
         'bio', t.bio,
-        'skills', (SELECT ARRAY_AGG(canonical_name) FROM talent_skills WHERE talent_id = t.id),
+        'skills', (SELECT ARRAY_AGG(canonical_name) FROM talent_skills WHERE talent_id = t.id AND is_visible = true),
         'sectors', t.sectors,
         'remote_ready', t.remote_ready,
         'profile_tags', t.profile_tags,

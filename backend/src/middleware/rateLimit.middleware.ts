@@ -3,17 +3,20 @@ import rateLimit from 'express-rate-limit';
 /**
  * Rate Limiting Middleware
  * Protects against brute force attacks and abuse
+ *
+ * NOTE: All limits are currently set to generous dev-friendly values.
+ * TODO: Tighten before public launch.
  */
 
-// Generic API rate limiter
-// Higher limit for development to avoid blocking during hot reload
 const isDev = process.env.NODE_ENV !== 'production';
+
+// Generic API rate limiter
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDev ? 1000 : 300, // 1000 in dev, 300 in production per window per IP
+  max: 5000, // Very generous for dev/testing
   message: {
     error: 'Trop de requêtes. Veuillez réessayer dans quelques minutes.',
-    retry_after: 15 * 60 // seconds
+    retry_after: 15 * 60
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -22,20 +25,20 @@ export const apiLimiter = rateLimit({
 // Strict limiter for authentication routes
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // 20 attempts per window per IP
+  max: 100,
   message: {
     error: 'Trop de tentatives de connexion. Veuillez réessayer dans 15 minutes.',
     retry_after: 15 * 60
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: true, // Don't count successful requests
+  skipSuccessfulRequests: true,
 });
 
-// OTP rate limiter (very strict)
+// OTP rate limiter
 export const otpLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // 5 OTP requests per hour per IP
+  max: 30,
   message: {
     error: 'Limite d\'envoi de code atteinte. Veuillez réessayer dans 1 heure.',
     retry_after: 60 * 60
@@ -47,7 +50,7 @@ export const otpLimiter = rateLimit({
 // Application submission limiter
 export const applicationLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 40, // 40 applications per hour per IP
+  max: 200,
   message: {
     error: 'Vous avez soumis trop de candidatures. Veuillez réessayer plus tard.',
     retry_after: 60 * 60
@@ -56,10 +59,10 @@ export const applicationLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Write operations limiter (create, update, delete)
+// Write operations limiter
 export const writeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 150, // 150 write operations per window per IP
+  max: 1000,
   message: {
     error: 'Trop d\'opérations. Veuillez réessayer dans quelques minutes.',
     retry_after: 15 * 60
@@ -71,7 +74,7 @@ export const writeLimiter = rateLimit({
 // Search/heavy query limiter
 export const searchLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 60, // 60 searches per minute per IP
+  max: 300,
   message: {
     error: 'Trop de recherches. Veuillez patienter.',
     retry_after: 60
@@ -83,7 +86,7 @@ export const searchLimiter = rateLimit({
 // Copilot chat limiter (expensive AI calls)
 export const copilotChatLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: isDev ? 60 : 20, // 20 messages per minute per IP in production
+  max: 60,
   message: {
     error: 'Trop de messages envoyés. Veuillez patienter quelques instants.',
     retry_after: 60
@@ -92,10 +95,10 @@ export const copilotChatLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Copilot general limiter (suggestions, sessions, etc.)
+// Copilot general limiter
 export const copilotGeneralLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: isDev ? 200 : 60, // 60 requests per minute per IP in production
+  max: 200,
   message: {
     error: 'Trop de requêtes copilot. Veuillez patienter.',
     retry_after: 60
@@ -107,7 +110,7 @@ export const copilotGeneralLimiter = rateLimit({
 // Waitlist limiter (public endpoint)
 export const waitlistLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // 5 requests per hour per IP
+  max: 30,
   message: {
     error: 'Trop de demandes. Veuillez réessayer dans 1 heure.',
     retry_after: 60 * 60
@@ -116,10 +119,10 @@ export const waitlistLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Export endpoint limiter (PDFs, etc.)
+// Export endpoint limiter
 export const exportLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 30, // 30 exports per hour per IP
+  max: 100,
   message: {
     error: 'Limite d\'exportation atteinte. Veuillez réessayer plus tard.',
     retry_after: 60 * 60

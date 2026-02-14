@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
+dotenv.config();
+import './services/ai/provider'; // AI provider init — MUST be before route imports
 import opportunitiesRouter from './routes/opportunities';
 import applicationsRouter from './routes/applications';
 import communitiesRouter from './routes/communities';
@@ -17,6 +19,7 @@ import notificationsRouter from './routes/notifications';
 import imagesRouter from './routes/images';
 import filesRouter from './routes/files';
 import paymentMethodsRouter from './routes/payment-methods';
+import billingRouter from './routes/billing';
 import communityActivitiesRouter from './routes/community-activities.routes';
 
 import communityInvitationsRouter from './routes/community-invitations.routes';
@@ -25,9 +28,12 @@ import spaceInvitationsRouter from './routes/space-invitations.routes';
 import calendarRouter from './routes/calendar.routes';
 import copilotRouter from './routes/copilot';
 import documentsRouter from './routes/documents';
+import orgDocumentsRouter from './routes/org-documents';
+import orgTalentsRouter from './routes/org-talents';
 import skillsRouter from './routes/skills';
 import dailyObjectiveRouter from './routes/daily-objective';
 import waitlistRouter from './routes/waitlist';
+import whatsappRouter from './routes/whatsapp';
 import { verifyEmailConnection } from './services/email.service';
 import { cleanupExpiredOTPs } from './services/otp.service';
 import { apiLimiter, authLimiter, otpLimiter } from './middleware/rateLimit.middleware';
@@ -38,8 +44,6 @@ import { AppError, isAppError, RateLimitError } from './errors';
 import { createVersionedRouter, CURRENT_API_VERSION } from './middleware/api-version.middleware';
 import { logger } from './utils';
 import { i18nMiddleware } from './i18n';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -86,7 +90,15 @@ app.use(cors({
   origin: getCorsOrigin(),
   credentials: true,
 }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, _res, buf) => {
+    const originalUrl = (req as any).originalUrl as string | undefined;
+    if (originalUrl?.includes('/billing/webhooks/paystack')) {
+      (req as any).rawBody = buf.toString('utf8');
+    }
+  },
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(i18nMiddleware);
 
@@ -104,6 +116,10 @@ app.get('/health', async (req, res) => {
   });
 });
 
+// WhatsApp webhook (non-versioned for provider compatibility)
+app.use('/api/whatsapp', whatsappRouter);
+app.use('/whatsapp', whatsappRouter);
+
 // --- API v1 Router (Versioned) ---
 const v1Router = createVersionedRouter('v1');
 
@@ -113,6 +129,8 @@ v1Router.use(apiLimiter);
 // Auth Routes with stricter rate limiting
 v1Router.use('/auth/request-otp', otpLimiter);
 v1Router.use('/auth/verify-otp', authLimiter);
+v1Router.use('/auth/request-whatsapp-otp', otpLimiter);
+v1Router.use('/auth/verify-whatsapp-otp', authLimiter);
 v1Router.use('/auth', authRouter);
 v1Router.use('/onboarding', onboardingRouter);
 
@@ -140,9 +158,12 @@ v1Router.use('/notifications', notificationsRouter);
 v1Router.use('/images', imagesRouter);
 v1Router.use('/files', filesRouter);
 v1Router.use('/payment-methods', paymentMethodsRouter);
+v1Router.use('/billing', billingRouter);
 v1Router.use('/calendar', calendarRouter);
 v1Router.use('/copilot', copilotRouter);
 v1Router.use('/documents', documentsRouter);
+v1Router.use('/organizations/:orgId/documents', orgDocumentsRouter);
+v1Router.use('/organizations/:orgId/talents', orgTalentsRouter);
 v1Router.use('/skills', skillsRouter);
 v1Router.use('/daily-objective', dailyObjectiveRouter);
 v1Router.use('/waitlist', waitlistRouter);

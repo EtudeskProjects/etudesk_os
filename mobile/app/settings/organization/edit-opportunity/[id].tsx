@@ -9,7 +9,6 @@ import {
   Platform,
   TextInput,
   Image,
-  Alert,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
@@ -41,7 +40,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../../src/constants/theme';
-import { Input, Button, Toggle } from '../../../../src/components/ui';
+import { Input, Button, Toggle, Chip } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
 import { SECTOR_DATA } from '../../../../src/constants/talent';
@@ -71,6 +70,9 @@ import {
   Visibility,
 } from '../../../../src/types/models';
 import { opportunityService, UpdateOpportunityData, imageService } from '../../../../src/services';
+import { useAlert } from '../../../../src/contexts/AlertContext';
+import { useToast } from '../../../../src/components/ui';
+import { FormTextArea } from '../../../../src/components/forms/FormTextArea';
 import { uploadFile } from '../../../../src/services/fileService';
 import { getFullImageUrl } from '../../../../src/utils/image';
 
@@ -121,6 +123,8 @@ export default function EditOpportunityScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const alerts = useAlert();
+  const { showToast } = useToast();
 
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<Step>('info');
@@ -264,7 +268,7 @@ export default function EditOpportunityScreen() {
         })));
       }
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de charger l\'opportunite.');
+      await alerts.error('Erreur', error.error || 'Impossible de charger l\'opportunité.');
       router.back();
     } finally {
       setIsLoading(false);
@@ -273,7 +277,7 @@ export default function EditOpportunityScreen() {
 
   const pickImage = async () => {
     if (images.length >= MAX_IMAGES) {
-      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_IMAGES} images.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_IMAGES} images.` });
       return;
     }
 
@@ -288,7 +292,7 @@ export default function EditOpportunityScreen() {
         setImages([...images, newImage]);
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la selection de l\'image.');
+      showToast({ type: 'error', title: 'Erreur', message: 'Une erreur est survenue lors de la sélection de l\'image.' });
     }
   };
 
@@ -299,7 +303,7 @@ export default function EditOpportunityScreen() {
   // Question handlers
   const addQuestion = () => {
     if (applicationQuestions.length >= MAX_QUESTIONS) {
-      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.` });
       return;
     }
     const newQuestion: ApplicationQuestion = {
@@ -323,7 +327,7 @@ export default function EditOpportunityScreen() {
 
   const pickDocument = async () => {
     if (attachments.length >= MAX_ATTACHMENTS) {
-      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_ATTACHMENTS} pieces jointes.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_ATTACHMENTS} pièces jointes.` });
       return;
     }
 
@@ -338,7 +342,7 @@ export default function EditOpportunityScreen() {
         const fileSize = doc.size || 0;
 
         if (fileSize > MAX_ATTACHMENT_SIZE_BYTES) {
-          Alert.alert('Fichier trop volumineux', `Le fichier ne doit pas depasser ${MAX_ATTACHMENT_SIZE_MB} MB.`);
+          showToast({ type: 'warning', title: 'Fichier trop volumineux', message: `Le fichier ne doit pas dépasser ${MAX_ATTACHMENT_SIZE_MB} MB.` });
           return;
         }
 
@@ -352,7 +356,7 @@ export default function EditOpportunityScreen() {
         setAttachments([...attachments, newAttachment]);
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la selection du document.');
+      showToast({ type: 'error', title: 'Erreur', message: 'Une erreur est survenue lors de la sélection du document.' });
     }
   };
 
@@ -367,7 +371,7 @@ export default function EditOpportunityScreen() {
     } else if (selectedSectors.length < MAX_SECTORS) {
       setSelectedSectors([...selectedSectors, sectorId]);
     } else {
-      Alert.alert('Limite atteinte', `Vous pouvez selectionner au maximum ${MAX_SECTORS} secteurs.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.` });
     }
   };
 
@@ -418,10 +422,11 @@ export default function EditOpportunityScreen() {
       }
     } catch (error: any) {
       console.error('Error generating opportunity:', error);
-      Alert.alert(
-        'Erreur de génération',
-        error?.error || 'Une erreur est survenue lors de la génération. Veuillez réessayer.',
-      );
+      showToast({
+        type: 'error',
+        title: 'Erreur de génération',
+        message: error?.error || 'Une erreur est survenue lors de la génération. Veuillez réessayer.',
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -462,7 +467,7 @@ export default function EditOpportunityScreen() {
           uploadedImageUrls.push(uploaded.url);
         } catch (uploadError) {
           console.error('Error uploading image:', uploadError);
-          Alert.alert('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
+          await alerts.error('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
           setIsSubmitting(false);
           return;
         }
@@ -487,7 +492,7 @@ export default function EditOpportunityScreen() {
           uploadedAttachments.push({ ...attachment, uri: uploaded.url });
         } catch (uploadError) {
           console.error('Error uploading attachment:', uploadError);
-          Alert.alert('Erreur', 'Impossible d\'uploader une pièce jointe. Veuillez réessayer.');
+          await alerts.error('Erreur', 'Impossible d\'uploader une pièce jointe. Veuillez réessayer.');
           setIsSubmitting(false);
           return;
         }
@@ -533,37 +538,41 @@ export default function EditOpportunityScreen() {
         visibility,
       };
       await opportunityService.update(id!, data);
-      Alert.alert('Modifications enregistrees', 'L\'opportunite a ete mise a jour.', [{ text: 'OK', onPress: () => router.back() }]);
+      await alerts.showAlert({
+        type: 'success',
+        title: 'Modifications enregistrées',
+        message: 'L\'opportunité a été mise à jour.',
+        buttons: [{ text: 'OK', onPress: () => router.back() }],
+      });
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de la mise a jour.');
+      await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de la mise à jour.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Supprimer l\'opportunite',
-      `Etes-vous sur de vouloir supprimer "${title}" ? Cette action est irreversible.`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            setIsSubmitting(true);
-            try {
-              await opportunityService.delete(id!);
-              Alert.alert('Supprime', 'L\'opportunite a ete supprimee.', [{ text: 'OK', onPress: () => router.back() }]);
-            } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de la suppression.');
-            } finally {
-              setIsSubmitting(false);
-            }
-          },
-        },
-      ]
-    );
+    (async () => {
+      const confirmed = await alerts.confirm(
+        'Supprimer l\'opportunité',
+        `Êtes-vous sûr de vouloir supprimer "${title}" ? Cette action est irréversible.`
+      );
+      if (!confirmed) return;
+      setIsSubmitting(true);
+      try {
+        await opportunityService.delete(id!);
+        await alerts.showAlert({
+          type: 'success',
+          title: 'Supprimée',
+          message: 'L\'opportunité a été supprimée.',
+          buttons: [{ text: 'OK', onPress: () => router.back() }],
+        });
+      } catch (error: any) {
+        await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de la suppression.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    })();
   };
 
   const canProceed = () => {
@@ -653,14 +662,15 @@ export default function EditOpportunityScreen() {
             {OPPORTUNITY_TYPE_DATA.map((type) => {
               const isSelected = opportunityType === type.id;
               return (
-                <TouchableOpacity
+                <Chip
                   key={type.id}
-                  style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]}
+                  label={type.label}
+                  selected={isSelected}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   onPress={() => setOpportunityType(type.id)}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text style={[styles.selectableTagText, { color: colors.gray600 }, isSelected && { color: colors.primary }]}>{type.label}</Text>
-                </TouchableOpacity>
+                  style={styles.selectableTag}
+                  textStyle={styles.selectableTagText}
+                />
               );
             })}
           </View>
@@ -669,25 +679,15 @@ export default function EditOpportunityScreen() {
         {/* Bouton Suggérer - Visible quand title >= 3 chars et type sélectionné */}
         {canGenerate && (
           <View style={styles.generateButtonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.generateButton,
-                { backgroundColor: colors.primary },
-                isGenerating && { opacity: 0.7 },
-              ]}
+            <Button
+              title={isGenerating ? 'Suggestion...' : 'Suggérer'}
               onPress={handleGenerate}
+              loading={isGenerating}
               disabled={isGenerating}
-              activeOpacity={0.8}
-            >
-              {isGenerating ? (
-                <ActivityIndicator size="small" color={colors.textOnPrimary} />
-              ) : (
-                <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              )}
-              <Text style={[styles.generateButtonText, { color: colors.textOnPrimary }]}>
-                {isGenerating ? 'Suggestion...' : 'Suggérer'}
-              </Text>
-            </TouchableOpacity>
+              icon={!isGenerating ? <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
+              fullWidth
+              style={styles.generateButton}
+            />
           </View>
         )}
 
@@ -700,45 +700,46 @@ export default function EditOpportunityScreen() {
             {SECTOR_DATA.slice(0, 15).map((sector) => {
               const isSelected = selectedSectors.includes(sector.id);
               return (
-                <TouchableOpacity
+                <Chip
                   key={sector.id}
-                  style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]}
+                  label={sector.label}
+                  selected={isSelected}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   onPress={() => toggleSector(sector.id)}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text style={[styles.selectableTagText, { color: colors.gray600 }, isSelected && { color: colors.primary }]}>{sector.label}</Text>
-                </TouchableOpacity>
+                  style={styles.selectableTag}
+                  textStyle={styles.selectableTagText}
+                />
               );
             })}
           </View>
         </View>
 
-        {/* Description */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Description du poste</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput style={[styles.textArea, { color: colors.textPrimary }]} placeholder="Decrivez les missions..." value={summary} onChangeText={setSummary} multiline maxLength={1000} placeholderTextColor={colors.gray500} />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{summary.length}/1000</Text>
-        </View>
+        <FormTextArea
+          label="Description du poste"
+          placeholder="Décrivez les missions..."
+          value={summary}
+          onChangeText={setSummary}
+          rows={4}
+          maxLength={1000}
+        />
 
-        {/* Prérequis */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Prérequis</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput style={[styles.textArea, { color: colors.textPrimary }]} placeholder="Competences requises..." value={requirements} onChangeText={setRequirements} multiline maxLength={500} placeholderTextColor={colors.gray500} />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{requirements.length}/500</Text>
-        </View>
+        <FormTextArea
+          label="Prérequis"
+          placeholder="Compétences requises..."
+          value={requirements}
+          onChangeText={setRequirements}
+          rows={3}
+          maxLength={500}
+        />
 
-        {/* Atouts appréciés */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Atouts appréciés</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput style={[styles.textArea, { color: colors.textPrimary }]} placeholder="Competences bonus..." value={niceToHave} onChangeText={setNiceToHave} multiline maxLength={300} placeholderTextColor={colors.gray500} />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{niceToHave.length}/300</Text>
-        </View>
+        <FormTextArea
+          label="Atouts appréciés"
+          placeholder="Compétences bonus..."
+          value={niceToHave}
+          onChangeText={setNiceToHave}
+          rows={2}
+          maxLength={300}
+        />
       </View>
     </View>
   );
@@ -844,10 +845,15 @@ export default function EditOpportunityScreen() {
             {CONTRACT_TYPE_DATA.map((type) => {
               const isSelected = contractType === type.id;
               return (
-                <TouchableOpacity key={type.id} style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]} onPress={() => setContractType(type.id)}>
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text style={[styles.selectableTagText, { color: colors.gray600 }, isSelected && { color: colors.primary }]}>{type.label}</Text>
-                </TouchableOpacity>
+                <Chip
+                  key={type.id}
+                  label={type.label}
+                  selected={isSelected}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
+                  onPress={() => setContractType(type.id)}
+                  style={styles.selectableTag}
+                  textStyle={styles.selectableTagText}
+                />
               );
             })}
           </View>
@@ -860,10 +866,15 @@ export default function EditOpportunityScreen() {
             {WORK_RHYTHM_DATA.map((rhythm) => {
               const isSelected = workRhythm === rhythm.id;
               return (
-                <TouchableOpacity key={rhythm.id} style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]} onPress={() => setWorkRhythm(isSelected ? null : rhythm.id)}>
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text style={[styles.selectableTagText, { color: colors.gray600 }, isSelected && { color: colors.primary }]}>{rhythm.label}</Text>
-                </TouchableOpacity>
+                <Chip
+                  key={rhythm.id}
+                  label={rhythm.label}
+                  selected={isSelected}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
+                  onPress={() => setWorkRhythm(isSelected ? null : rhythm.id)}
+                  style={styles.selectableTag}
+                  textStyle={styles.selectableTagText}
+                />
               );
             })}
           </View>
@@ -892,20 +903,14 @@ export default function EditOpportunityScreen() {
           </View>
         </View>
 
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Devise (ex: XOF, EUR)</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary, minHeight: 44 }]}
-              value={currency}
-              onChangeText={setCurrency}
-              placeholder="XOF"
-              placeholderTextColor={colors.gray400}
-              maxLength={10}
-              autoCapitalize="characters"
-            />
-          </View>
-        </View>
+        <Input
+          label="Devise (ex: XOF, EUR)"
+          placeholder="XOF"
+          value={currency}
+          onChangeText={setCurrency}
+          maxLength={10}
+          autoCapitalize="characters"
+        />
 
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Frequence</Text>
@@ -913,10 +918,15 @@ export default function EditOpportunityScreen() {
             {COMPENSATION_FREQUENCY_DATA.map((freq) => {
               const isSelected = compensationFrequency === freq.id;
               return (
-                <TouchableOpacity key={freq.id} style={[styles.selectableTag, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]} onPress={() => setCompensationFrequency(freq.id)}>
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text style={[styles.selectableTagText, { color: colors.gray600 }, isSelected && { color: colors.primary }]}>{freq.label}</Text>
-                </TouchableOpacity>
+                <Chip
+                  key={freq.id}
+                  label={freq.label}
+                  selected={isSelected}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
+                  onPress={() => setCompensationFrequency(freq.id)}
+                  style={styles.selectableTag}
+                  textStyle={styles.selectableTagText}
+                />
               );
             })}
           </View>
@@ -997,7 +1007,7 @@ export default function EditOpportunityScreen() {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 if (selectedDate <= today) {
-                  Alert.alert('Date invalide', 'La date limite doit etre superieure a aujourd\'hui.');
+                  showToast({ type: 'warning', title: 'Date invalide', message: 'La date limite doit être supérieure à aujourd\'hui.' });
                   return;
                 }
                 setDeadline(selectedDate);
@@ -1019,7 +1029,7 @@ export default function EditOpportunityScreen() {
               setShowStartDatePicker(Platform.OS === 'ios');
               if (selectedDate) {
                 if (deadline && selectedDate <= deadline) {
-                  Alert.alert('Date invalide', 'La date de debut doit etre superieure a la date limite.');
+                  showToast({ type: 'warning', title: 'Date invalide', message: 'La date de début doit être supérieure à la date limite.' });
                   return;
                 }
                 setStartDate(selectedDate);
@@ -1076,22 +1086,17 @@ export default function EditOpportunityScreen() {
                 </TouchableOpacity>
               </View>
 
-              <TextInput
-                style={[styles.questionInput, { backgroundColor: colors.gray50, color: colors.textPrimary, borderColor: colors.gray200 }]}
+              <FormTextArea
                 placeholder="Écrivez votre question..."
-                placeholderTextColor={colors.gray400}
                 value={question.question}
                 onChangeText={(text) => updateQuestion(question.id, { question: text })}
                 maxLength={MAX_QUESTION_LENGTH}
-                multiline
-                numberOfLines={2}
+                rows={2}
+                showCounter
+                containerStyle={{ marginTop: SPACING.sm }}
               />
 
               <View style={styles.questionFooter}>
-                <Text style={[styles.charCount, { color: colors.gray500 }]}>
-                  {question.question.length}/{MAX_QUESTION_LENGTH}
-                </Text>
-
                 <View style={styles.requiredToggle}>
                   <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>Obligatoire</Text>
                   <Toggle
@@ -1548,9 +1553,10 @@ const styles = StyleSheet.create({
   tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
   selectableTag: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md, borderWidth: 1.5, borderRadius: BORDER.radius.full },
   selectableTagText: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
-  textAreaContainer: { borderWidth: BORDER.width.thin, borderRadius: BORDER.radius.sm, padding: SPACING.md },
-  textArea: { fontSize: TYPOGRAPHY.fontSize.md, minHeight: 80, textAlignVertical: 'top' },
-  charCount: { fontSize: TYPOGRAPHY.fontSize.xs, textAlign: 'right', marginTop: SPACING.xs },
+  // Text areas are handled by <FormTextArea />
+  textAreaContainer: {},
+  textArea: {},
+  charCount: {},
   optionCards: { gap: SPACING.sm },
   optionCardSmall: { padding: SPACING.sm, borderWidth: 1.5, borderRadius: BORDER.radius.md },
   optionCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

@@ -5,8 +5,9 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { createOTP, verifyOTP } from '../services/otp.service';
+import { createOTP, createWhatsAppOTP, verifyOTP, verifyOTPByChannel } from '../services/otp.service';
 import { sendOTPEmail } from '../services/email.service';
+import { sendWhatsAppOtp } from '../services/whatsapp.service';
 import {
   generateTokens,
   createSession,
@@ -22,7 +23,9 @@ import { logger } from '../utils';
 import {
   validate,
   requestOtpSchema,
+  requestWhatsAppOtpSchema,
   verifyOtpSchema,
+  verifyWhatsAppOtpSchema,
   refreshTokenSchema,
 } from '../middleware/validation.middleware';
 
@@ -84,6 +87,50 @@ router.post('/request-otp', validate(requestOtpSchema), async (req: Request, res
 });
 
 /**
+ * POST /auth/request-whatsapp-otp
+ *
+ * Request an OTP code to be sent on WhatsApp
+ */
+router.post('/request-whatsapp-otp', validate(requestWhatsAppOtpSchema), async (req: Request, res: Response) => {
+  try {
+    const { phone } = req.body;
+    const ipAddress = req.ip || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+
+    const otpResult = await createWhatsAppOTP(phone, undefined, ipAddress, userAgent);
+
+    if (!otpResult.success) {
+      const status = otpResult.rateLimited ? 429 : 400;
+      return res.status(status).json({
+        success: false,
+        error: otpResult.error,
+        retryAfter: otpResult.retryAfter,
+      });
+    }
+
+    const waResult = await sendWhatsAppOtp(phone, otpResult.code!);
+    if (!waResult.success) {
+      return res.status(500).json({
+        success: false,
+        error: req.t('auth:otpWhatsAppFailed'),
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: req.t('auth:otpWhatsAppSent'),
+      expiresAt: otpResult.expiresAt,
+    });
+  } catch (error) {
+    logger.error('❌ Request WhatsApp OTP error:', error);
+    return res.status(500).json({
+      success: false,
+      error: req.t('common:serverError'),
+    });
+  }
+});
+
+/**
  * POST /auth/verify-otp
  *
  * Verify OTP and create session
@@ -136,6 +183,60 @@ router.post('/verify-otp', validate(verifyOtpSchema), async (req: Request, res: 
     });
   } catch (error) {
     logger.error('❌ Verify OTP error:', error);
+    return res.status(500).json({
+      success: false,
+      error: req.t('common:serverError'),
+    });
+  }
+});
+
+/**
+ * POST /auth/verify-whatsapp-otp
+ *
+ * Verify WhatsApp OTP and create session
+ */
+router.post('/verify-whatsapp-otp', validate(verifyWhatsAppOtpSchema), async (req: Request, res: Response) => {
+  try {
+    const { phone, code } = req.body;
+
+    const verifyResult = await verifyOTPByChannel(phone, code, 'whatsapp');
+
+    if (!verifyResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: verifyResult.error,
+        attemptsRemaining: verifyResult.attemptsRemaining,
+      });
+    }
+
+    const tokens = generateTokens(verifyResult.userId!, verifyResult.email!);
+
+    const ipAddress = req.ip || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+
+    await createSession(verifyResult.userId!, tokens.refreshToken, {
+      ipAddress,
+      userAgent,
+      deviceType: detectDeviceType(userAgent),
+    });
+
+    const needsOnboard = verifyResult.isNewUser || await needsOnboarding(verifyResult.userId!);
+    const profile = await getUserProfile(verifyResult.userId!);
+
+    return res.json({
+      success: true,
+      message: verifyResult.isNewUser ? req.t('auth:accountCreated') : req.t('auth:loginSuccess'),
+      tokens: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresIn: tokens.expiresIn,
+      },
+      user: profile,
+      isNewUser: verifyResult.isNewUser,
+      needsOnboarding: needsOnboard,
+    });
+  } catch (error) {
+    logger.error('❌ Verify WhatsApp OTP error:', error);
     return res.status(500).json({
       success: false,
       error: req.t('common:serverError'),

@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
-import { Alert, Linking, Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../constants/location';
 import { useTranslation } from '../contexts/I18nContext';
+import { alertsGlobal } from '../contexts/AlertContext';
 
 interface GeolocationResult {
   country: string;
@@ -115,14 +116,14 @@ export function useGeolocation(): UseGeolocationReturn {
       // Check if location services are enabled
       const serviceEnabled = await Location.hasServicesEnabledAsync();
       if (!serviceEnabled) {
-        Alert.alert(
-          t('geolocation.servicesDisabled'),
-          t('geolocation.enableServices'),
-          [
+        void alertsGlobal.showAlert({
+          title: t('geolocation.servicesDisabled'),
+          message: t('geolocation.enableServices'),
+          buttons: [
             { text: t('common.cancel'), style: 'cancel' },
             { text: t('geolocation.settings'), onPress: openSettings },
-          ]
-        );
+          ],
+        });
         setIsLoading(false);
         return null;
       }
@@ -131,14 +132,14 @@ export function useGeolocation(): UseGeolocationReturn {
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== 'granted') {
-        Alert.alert(
-          t('geolocation.permissionDenied'),
-          t('geolocation.permissionMessage'),
-          [
+        void alertsGlobal.showAlert({
+          title: t('geolocation.permissionDenied'),
+          message: t('geolocation.permissionMessage'),
+          buttons: [
             { text: t('common.cancel'), style: 'cancel' },
             { text: t('geolocation.settings'), onPress: openSettings },
-          ]
-        );
+          ],
+        });
         setIsLoading(false);
         return null;
       }
@@ -168,7 +169,7 @@ export function useGeolocation(): UseGeolocationReturn {
       // Check if we support this country
       const supportedCountry = COUNTRIES.find(c => c.id === countryCode);
       if (!supportedCountry) {
-        Alert.alert(
+        void alertsGlobal.alert(
           t('geolocation.unsupportedCountry'),
           t('geolocation.unsupportedCountryMessage', { country: countryName })
         );
@@ -200,10 +201,7 @@ export function useGeolocation(): UseGeolocationReturn {
         setError(t('geolocation.genericError'));
       }
 
-      Alert.alert(
-        t('geolocation.errorTitle'),
-        t('geolocation.errorMessage')
-      );
+      void alertsGlobal.alert(t('geolocation.errorTitle'), t('geolocation.errorMessage'));
 
       setIsLoading(false);
       return null;

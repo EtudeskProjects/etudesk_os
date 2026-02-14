@@ -10,7 +10,6 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -272,6 +271,7 @@ export default function BookSpaceScreen() {
     () => generateCalendarDays(calendarYear, calendarMonth),
     [calendarYear, calendarMonth]
   );
+  const alerts = useAlert();
 
   // Check if a date is available (has availability for that day of week)
   const isDateAvailable = (date: Date): boolean => {
@@ -311,26 +311,18 @@ export default function BookSpaceScreen() {
       try {
         const kycRes = await kycService.getStatus();
         if (!kycRes?.data || kycRes.data.status !== 'VERIFIED') {
-          Alert.alert(
-            'Vérification requise',
-            'Tu dois vérifier ton identité avant de réserver un espace.',
-            [
+          void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant de réserver un espace.', buttons: [
               { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
               { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
-            ]
-          );
+            ] });
           setIsLoading(false);
           return;
         }
       } catch {
-        Alert.alert(
-          'Vérification requise',
-          'Tu dois vérifier ton identité avant de réserver un espace.',
-          [
+        void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant de réserver un espace.', buttons: [
             { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
             { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
-          ]
-        );
+          ] });
         setIsLoading(false);
         return;
       }
@@ -362,16 +354,12 @@ export default function BookSpaceScreen() {
 
       // Try to load user profile (requires auth)
       try {
-        const profileResponse = await talentService.getMyTalentObject();
+        const profileResponse = await talentService.getMyTalentObject({ includeHidden: false });
         setProfile(profileResponse.data);
       } catch (profileError: any) {
         // If session expired (401), redirect to login
         if (profileError?.status === 401) {
-          Alert.alert(
-            'Session expiree',
-            'Votre session a expire. Veuillez vous reconnecter.',
-            [{ text: 'OK', onPress: () => router.replace('/auth/login') }]
-          );
+          void alerts.showAlert({ title: 'Session expiree', message: 'Votre session a expire. Veuillez vous reconnecter.', buttons: [{ text: 'OK', onPress: () => router.replace('/auth/login') }] });
           return;
         }
         // For other errors, use user data from AuthContext as fallback
@@ -403,14 +391,10 @@ export default function BookSpaceScreen() {
     } catch (error: any) {
       // Handle session expiration for space loading
       if (error?.status === 401) {
-        Alert.alert(
-          'Session expiree',
-          'Votre session a expire. Veuillez vous reconnecter.',
-          [{ text: 'OK', onPress: () => router.replace('/auth/login') }]
-        );
+        void alerts.showAlert({ title: 'Session expiree', message: 'Votre session a expire. Veuillez vous reconnecter.', buttons: [{ text: 'OK', onPress: () => router.replace('/auth/login') }] });
         return;
       }
-      Alert.alert('Erreur', 'Impossible de charger les donnees de l\'espace.');
+      void alerts.alert('Erreur', 'Impossible de charger les donnees de l\'espace.');
       router.back();
     } finally {
       setIsLoading(false);
@@ -435,10 +419,7 @@ export default function BookSpaceScreen() {
 
       // Backend returns 'is_available', not 'available'
       if (!response.data?.is_available) {
-        Alert.alert(
-          'Creneau non disponible',
-          'Ce creneau est deja reserve. Veuillez choisir un autre horaire.'
-        );
+        void alerts.alert('Creneau non disponible', 'Ce creneau est deja reserve. Veuillez choisir un autre horaire.');
         return false;
       }
 
@@ -657,7 +638,7 @@ export default function BookSpaceScreen() {
           </View>
 
           {profile?.skills && profile.skills.length > 0 && (
-            <View style={styles.profileTagsSection}>
+            <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
               <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Compétences</Text>
               <View style={styles.profileTagsRow}>
                 {profile.skills.slice(0, 8).map((skill, i) => (
@@ -673,7 +654,7 @@ export default function BookSpaceScreen() {
           )}
 
           {profile?.sectors && profile.sectors.length > 0 && (
-            <View style={styles.profileTagsSection}>
+            <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
               <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Secteurs</Text>
               <View style={styles.profileTagsRow}>
                 {profile.sectors.map((s, i) => (
@@ -686,7 +667,7 @@ export default function BookSpaceScreen() {
           )}
 
           {profile?.documents_metadata && profile.documents_metadata.length > 0 && (
-            <View style={styles.profileTagsSection}>
+            <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
               <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Documents ({profile.documents_metadata.length})</Text>
               {profile.documents_metadata.slice(0, 3).map((doc) => (
                 <View key={doc.id} style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: SPACING.xs }}>
@@ -1697,7 +1678,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     paddingTop: SPACING.md,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: 'transparent',
   },
   profileTagsLabel: {
     fontSize: TYPOGRAPHY.fontSize.xs,

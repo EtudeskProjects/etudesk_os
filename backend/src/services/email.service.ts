@@ -11,7 +11,7 @@
 import nodemailer from 'nodemailer';
 import type Mail from 'nodemailer/lib/mailer';
 import { Resend } from 'resend';
-import i18next from 'i18next';
+import { i18next } from '../i18n';
 
 import { logger } from '../utils';
 
@@ -32,6 +32,8 @@ export interface SendEmailOptions {
 // Determine which provider to use
 const EMAIL_PROVIDER: EmailProvider = (process.env.EMAIL_PROVIDER as EmailProvider) || 'smtp';
 const DEFAULT_FROM = process.env.EMAIL_FROM || 'Etudesk <noreply@etudesk.com>';
+const APP_URL = process.env.APP_URL || 'https://etudesk.com';
+const EMAIL_LOGO_URL = process.env.EMAIL_LOGO_URL || `${APP_URL}/images/etudesk_logo_black.png`;
 
 // SMTP configuration (Mailhog for local dev)
 const SMTP_CONFIG = {
@@ -75,7 +77,7 @@ const BRAND_BG_LIGHT = '#FAF9F7';
 const BRAND_BG_SECONDARY = '#F5F3F0';
 
 // Logo URL (web assets)
-const LOGO_URL = 'https://etudesk.org/images/etudesk_logo_black.png';
+const LOGO_URL = EMAIL_LOGO_URL;
 
 // Helper to get translation function for a specific language
 function getT(language: EmailLanguage = 'fr') {
@@ -275,7 +277,7 @@ ${t('emails:otp.neverShare')}.
 
               <!-- CTA Button -->
               <div style="text-align: center; margin-bottom: 30px;">
-                <a href="https://etudesk.org/explore" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                <a href="${APP_URL}/explore" style="display: inline-block; background-color: ${BRAND_PRIMARY}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
                   ${t('emails:welcome.exploreButton')}
                 </a>
               </div>
@@ -308,7 +310,7 @@ ${t('emails:welcome.congratulations')}
 - ${t('emails:welcome.feature3')}
 - ${t('emails:welcome.feature4')}
 
-${t('emails:welcome.exploreButton')}: https://etudesk.com/explore
+${t('emails:welcome.exploreButton')}: ${APP_URL}/explore
 
 ${t('emails:welcome.copyright', { year })}
       `.trim(),
@@ -354,8 +356,7 @@ export async function sendOrganizationInviteEmail(
   const t = getT(language);
   const lang = language === 'en' ? 'en' : 'fr';
   const roleLabel = t(`emails:orgInvite.roles.${role}`) || role;
-  const appUrl = process.env.APP_URL || 'https://etudesk.com';
-  const inviteLink = `${appUrl}/invitation/${token}`;
+  const inviteLink = `${APP_URL}/invitation/${token}`;
   const year = new Date().getFullYear();
 
   const template = {
@@ -469,10 +470,9 @@ export async function sendCommunityInviteEmail(
   const t = getT(language);
   const lang = language === 'en' ? 'en' : 'fr';
   const roleLabel = t(`emails:communityInvite.roles.${role}`) || role;
-  const appUrl = process.env.APP_URL || 'https://etudesk.com';
   const inviteLink = invitationToken
-    ? `${appUrl}/community-invitation/${invitationToken}`
-    : `${appUrl}/invitations`;
+    ? `${APP_URL}/community-invitation/${invitationToken}`
+    : `${APP_URL}/invitations`;
   const year = new Date().getFullYear();
 
   const displayName = inviteeName || email.split('@')[0];
@@ -600,8 +600,7 @@ export async function sendSpaceInviteEmail(
 ): Promise<{ success: boolean; error?: string }> {
   const t = getT(language);
   const lang = language === 'en' ? 'en' : 'fr';
-  const appUrl = process.env.APP_URL || 'https://etudesk.com';
-  const inviteLink = `${appUrl}/space-invitation/${invitationToken}`;
+  const inviteLink = `${APP_URL}/space-invitation/${invitationToken}`;
   const displayName = inviteeName || email.split('@')[0];
 
   const template = {
@@ -663,8 +662,7 @@ export async function sendOpportunityInviteEmail(
 ): Promise<{ success: boolean; error?: string }> {
   const t = getT(language);
   const lang = language === 'en' ? 'en' : 'fr';
-  const appUrl = process.env.APP_URL || 'https://etudesk.com';
-  const inviteLink = `${appUrl}/opportunity-invitation/${invitationToken}`;
+  const inviteLink = `${APP_URL}/opportunity-invitation/${invitationToken}`;
   const displayName = inviteeName || email.split('@')[0];
 
   const template = {

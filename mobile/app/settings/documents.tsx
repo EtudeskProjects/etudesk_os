@@ -9,7 +9,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   Modal,
   Image,
   Dimensions,
@@ -43,6 +42,7 @@ import documentService, {
   getStatusColor,
 } from '../../src/services/documentService';
 import { kycService } from '../../src/services/kycService';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -71,7 +71,7 @@ export default function DocumentsScreen() {
       return docsResponse.documents;
     } catch (error) {
       console.error('Error loading documents:', error);
-      Alert.alert('Erreur', 'Impossible de charger les documents');
+      void alerts.alert('Erreur', 'Impossible de charger les documents');
       return [];
     }
   }, []);
@@ -99,6 +99,7 @@ export default function DocumentsScreen() {
       pollingRef.current = null;
     }
   }, []);
+  const alerts = useAlert();
 
   useEffect(() => {
     const load = async () => {
@@ -127,25 +128,17 @@ export default function DocumentsScreen() {
         const kycRes = await kycService.getStatus();
         const kycData = kycRes?.data;
         if (!kycData || kycData.status !== 'VERIFIED') {
-          Alert.alert(
-            'Vérification requise',
-            'Tu dois vérifier ton identité avant d\'ajouter des documents.',
-            [
+          void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant d\'ajouter des documents.', buttons: [
               { text: 'Plus tard', style: 'cancel' },
               { text: 'Vérifier', onPress: () => router.push('/settings/kyc') },
-            ]
-          );
+            ] });
           return;
         }
       } catch {
-        Alert.alert(
-          'Vérification requise',
-          'Tu dois vérifier ton identité avant d\'ajouter des documents.',
-          [
+        void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant d\'ajouter des documents.', buttons: [
             { text: 'Plus tard', style: 'cancel' },
             { text: 'Vérifier', onPress: () => router.push('/settings/kyc') },
-          ]
-        );
+          ] });
         return;
       }
 
@@ -163,7 +156,7 @@ export default function DocumentsScreen() {
 
       for (const file of assets) {
         if (file.size && file.size > UPLOAD_LIMITS.MAX_FILE_SIZE_BYTES) {
-          Alert.alert('Fichier trop volumineux', `"${file.name}" dépasse la taille maximale de ${UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB`);
+          void alerts.alert('Fichier trop volumineux', `"${file.name}" dépasse la taille maximale de ${UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB`);
           return;
         }
       }
@@ -192,7 +185,7 @@ export default function DocumentsScreen() {
       const msg = assets.length === 1
         ? 'Document uploadé avec succès. Le traitement est en cours.'
         : `${assets.length} documents uploadés avec succès. Le traitement est en cours.`;
-      Alert.alert('Succès', msg);
+      void alerts.alert('Succès', msg);
       await loadDocuments();
       startPolling();
     } catch (error: any) {
@@ -200,31 +193,24 @@ export default function DocumentsScreen() {
 
       // KYC gate: redirect to identity verification
       if (error?.code === 'IDENTITY_REQUIRED') {
-        Alert.alert(
-          'Vérification requise',
-          'Tu dois vérifier ton identité avant d\'ajouter des documents.',
-          [
+        void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant d\'ajouter des documents.', buttons: [
             { text: 'Plus tard', style: 'cancel' },
             {
               text: 'Vérifier',
               onPress: () => router.push('/settings/kyc'),
             },
-          ]
-        );
+          ] });
         return;
       }
 
-      Alert.alert('Erreur', error?.message || "Erreur lors de l'upload");
+      void alerts.alert('Erreur', error?.message || "Erreur lors de l'upload");
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleDelete = (doc: TalentDocument) => {
-    Alert.alert(
-      'Supprimer le document',
-      `Veux-tu vraiment supprimer "${doc.title || doc.original_filename}" ?`,
-      [
+    void alerts.showAlert({ title: 'Supprimer le document', message: `Veux-tu vraiment supprimer "${doc.title || doc.original_filename}" ?`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
@@ -234,22 +220,21 @@ export default function DocumentsScreen() {
               await documentService.deleteDocument(doc.id);
               await loadDocuments();
             } catch (error) {
-              Alert.alert('Erreur', 'Impossible de supprimer le document');
+              void alerts.alert('Erreur', 'Impossible de supprimer le document');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const handleRetry = async (doc: TalentDocument) => {
     try {
       await documentService.retryExtraction(doc.id);
-      Alert.alert('Succès', "Nouvelle tentative d'extraction lancée");
+      void alerts.alert('Succès', "Nouvelle tentative d'extraction lancée");
       await loadDocuments();
       startPolling();
     } catch (error) {
-      Alert.alert('Erreur', "Impossible de relancer l'extraction");
+      void alerts.alert('Erreur', "Impossible de relancer l'extraction");
     }
   };
 

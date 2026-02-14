@@ -129,7 +129,17 @@
       "verifyError": "Verification error. Please retry.",
       "codeSent": "New code sent!",
       "verified": "Email verified!",
-      "redirecting": "Signing in..."
+      "redirecting": "Signing in...",
+      "titleWhatsApp": "Check your WhatsApp",
+      "subtitleWhatsApp": "Enter the code sent to the number"
+    },
+    "whatsappLogin": {
+      "title": "Sign in with WhatsApp",
+      "subtitle": "Enter your phone number to receive a WhatsApp code",
+      "phoneLabel": "WhatsApp number",
+      "sendCode": "Get code",
+      "infoText": "You will receive a 6-digit code on WhatsApp",
+      "sendError": "Unable to send WhatsApp code. Check your number."
     }
   },
   "tabs": {

@@ -284,7 +284,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         t.remote_ready as talent_remote_ready,
         t.sectors as talent_sectors,
         t.profile_tags as talent_profile_tags,
-        (SELECT ARRAY_AGG(canonical_name) FROM talent_skills WHERE talent_id = t.id) as talent_skills,
+        (SELECT ARRAY_AGG(canonical_name) FROM talent_skills WHERE talent_id = t.id AND is_visible = true) as talent_skills,
         o.contract_type,
         o.work_rhythm,
         o.cover_image_url as opportunity_cover_image,

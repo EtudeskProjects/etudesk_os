@@ -12,6 +12,7 @@ export interface TalentSkill {
   origin: 'declared' | 'inferred' | 'extracted';
   canonical_name: string;
   type: 'KNOWLEDGE' | 'SOFT_SKILL' | 'HARD_SKILL';
+  is_visible: boolean;
   created_at: string | null;
 }
 
@@ -58,6 +59,10 @@ const skillService = {
 
   async deleteSkill(id: string): Promise<void> {
     await api.delete('/api/skills/my/' + id);
+  },
+
+  async toggleVisibility(skillId: string, isVisible: boolean): Promise<void> {
+    await api.patch('/api/skills/my/' + skillId + '/visibility', { is_visible: isVisible });
   },
 
   async mergeSkills(): Promise<MergeReport> {

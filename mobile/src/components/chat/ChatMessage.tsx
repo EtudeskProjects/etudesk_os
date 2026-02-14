@@ -13,7 +13,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Linking,
-  Alert,
   Platform,
 } from 'react-native';
 import {
@@ -29,6 +28,7 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from 
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../contexts/I18nContext';
 import { formatRelativeTime, formatDate, formatTime } from '../../utils/date';
+import { showToastGlobal } from '../ui';
 
 interface Attachment {
   name: string;
@@ -135,7 +135,7 @@ export function ChatMessage({
       const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
 
       if (status !== 'granted') {
-        Alert.alert(t('auth.createProfile.permissionRequired'), t('chat.calendarPermission'));
+        showToastGlobal({ type: 'warning', title: t('auth.createProfile.permissionRequired'), message: t('chat.calendarPermission') });
         return;
       }
 
@@ -146,7 +146,7 @@ export function ChatMessage({
       ) || calendars.find((cal) => cal.allowsModifications);
 
       if (!defaultCalendar) {
-        Alert.alert(t('common.error'), t('chat.noCalendar'));
+        showToastGlobal({ type: 'error', title: t('common.error'), message: t('chat.noCalendar') });
         return;
       }
 
@@ -162,10 +162,10 @@ export function ChatMessage({
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
 
-      Alert.alert(t('common.success'), t('chat.eventAdded'));
+      showToastGlobal({ type: 'success', title: t('common.success'), message: t('chat.eventAdded') });
     } catch (error) {
       console.error('Error adding to calendar:', error);
-      Alert.alert(t('common.error'), t('chat.eventAddError'));
+      showToastGlobal({ type: 'error', title: t('common.error'), message: t('chat.eventAddError') });
     }
   };
 

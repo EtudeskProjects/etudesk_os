@@ -4,6 +4,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import crypto from 'crypto';
 import multer from 'multer';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { pool } from '../services/database';
@@ -28,6 +29,7 @@ import {
   DocumentCategory,
   DocumentStatus,
 } from '../constants/documents';
+import { debitWalletForAction } from '../services/billing/credit.service';
 
 const router = Router();
 
@@ -235,8 +237,13 @@ router.post(
       }
 
       const uploadedDocuments = [];
+      const idempotencyHeader = req.headers['x-idempotency-key'];
+      const idempotencyPrefix = Array.isArray(idempotencyHeader)
+        ? idempotencyHeader[0]
+        : idempotencyHeader;
 
-      for (const file of files) {
+      for (let index = 0; index < files.length; index += 1) {
+        const file = files[index];
         // Validate each file
         const validation = validateFile({
           buffer: file.buffer,
@@ -247,6 +254,32 @@ router.post(
 
         if (!validation.valid) {
           return res.status(400).json({ error: `${file.originalname}: ${validation.error}` });
+        }
+
+        const fileDebitKey = idempotencyPrefix
+          ? `documents_upload_${idempotencyPrefix}_${index}`
+          : `documents_upload_${crypto.randomUUID()}`;
+
+        try {
+          await debitWalletForAction({
+            scope: 'TALENT',
+            ownerId: talentId,
+            actionCode: 'TALENT_DOCUMENT_UPLOAD',
+            idempotencyKey: fileDebitKey,
+            metadata: {
+              channel: 'documents',
+              fileName: file.originalname,
+            },
+            createdBy: talentId,
+          });
+        } catch (debitError: any) {
+          if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
+            return res.status(402).json({
+              error: 'Solde crédits insuffisant. Rechargez votre wallet pour continuer.',
+              code: 'INSUFFICIENT_CREDITS',
+            });
+          }
+          throw debitError;
         }
 
         // Upload document

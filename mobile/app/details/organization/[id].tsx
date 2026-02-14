@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,6 +35,7 @@ import { communityService } from '../../../src/services/communityService';
 import { spaceService } from '../../../src/services/spaceService';
 import type { Community } from '../../../src/types/models';
 import type { Space } from '../../../src/services/spaceService';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 // Sector labels for display
 const SECTOR_LABELS: Record<string, string> = {
@@ -77,6 +78,7 @@ export default function OrganizationDetailScreen() {
   const [isLoadingOpportunities, setIsLoadingOpportunities] = useState(true);
   const [isLoadingCommunities, setIsLoadingCommunities] = useState(true);
   const [isLoadingSpaces, setIsLoadingSpaces] = useState(true);
+  const alerts = useAlert();
 
   const isValidId = !!id && id !== 'null' && id !== 'undefined';
 
@@ -98,7 +100,7 @@ export default function OrganizationDetailScreen() {
       }
     } catch (error: any) {
       console.error('Error loading organization:', error);
-      Alert.alert(t('common.error'), t('organizationDetail.loadError'));
+      void alerts.alert(t('common.error'), t('organizationDetail.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -572,7 +574,6 @@ export default function OrganizationDetailScreen() {
             />
           </View>
         )}
-        <FooterNav activeTab="explore" />
       </View>
     </SafeAreaView>
   );

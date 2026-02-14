@@ -16,6 +16,8 @@ interface FormTextAreaProps extends Omit<TextInputProps, 'multiline'> {
   hint?: string;
   maxLength?: number;
   rows?: number;
+  /** When label is omitted, set this to true to show the character counter row. */
+  showCounter?: boolean;
   containerStyle?: ViewStyle;
 }
 
@@ -25,27 +27,39 @@ export function FormTextArea({
   hint,
   maxLength,
   rows = 4,
+  showCounter,
   containerStyle,
   value,
+  onFocus: onFocusProp,
+  onBlur: onBlurProp,
   ...props
 }: FormTextAreaProps) {
   const { colors } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
 
   const minHeight = rows * 24;
+  const currentLen = (value?.toString() || '').length;
+  const shouldShowCounter = !!maxLength && (showCounter ?? !!label);
+  const shouldShowHeader = !!label || shouldShowCounter;
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && (
+      {shouldShowHeader ? (
         <View style={styles.labelRow}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
-          {maxLength && (
-            <Text style={[styles.charCount, { color: colors.gray500 }]}>
-              {(value?.toString() || '').length}/{maxLength}
+          {label ? (
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              {label}
             </Text>
+          ) : (
+            <View style={{ flex: 1 }} />
           )}
+          {shouldShowCounter ? (
+            <Text style={[styles.charCount, { color: colors.gray500 }]}>
+              {currentLen}/{maxLength}
+            </Text>
+          ) : null}
         </View>
-      )}
+      ) : null}
 
       <View
         style={[
@@ -65,8 +79,14 @@ export function FormTextArea({
         <TextInput
           style={[styles.input, { color: colors.textPrimary, minHeight: minHeight - 24 }]}
           placeholderTextColor={colors.gray500}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={(e) => {
+            setIsFocused(true);
+            onFocusProp?.(e);
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            onBlurProp?.(e);
+          }}
           multiline
           textAlignVertical="top"
           maxLength={maxLength}
@@ -96,6 +116,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
+    flex: 1,
   },
 
   charCount: {

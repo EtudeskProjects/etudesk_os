@@ -45,7 +45,8 @@ export interface DocumentMeta {
  * Build a complete TalentObject from the database.
  * Returns null if talent not found.
  */
-export async function buildTalentObject(talentId: string): Promise<TalentObject | null> {
+export async function buildTalentObject(talentId: string, includeHidden: boolean = false): Promise<TalentObject | null> {
+  const skillVisibilityFilter = includeHidden ? '' : 'AND is_visible = true';
   const result = await pool.query(
     `SELECT
        t.id,
@@ -69,7 +70,7 @@ export async function buildTalentObject(talentId: string): Promise<TalentObject 
          ARRAY(
            SELECT canonical_name
            FROM talent_skills
-           WHERE talent_id = t.id
+           WHERE talent_id = t.id ${skillVisibilityFilter}
            ORDER BY canonical_name ASC
            LIMIT 20
          ),

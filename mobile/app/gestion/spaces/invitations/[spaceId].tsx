@@ -4,7 +4,7 @@
  * Lists only pending invitations (accepted/declined are deleted)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,11 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   RefreshControl,
   ActivityIndicator,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,6 +36,7 @@ import {
   spaceInvitationService,
   SpaceInvitation,
 } from '../../../../src/services/spaceInvitationService';
+import { useAlert } from '../../../../src/contexts/AlertContext';
 
 export default function SpaceInvitationsScreen() {
   const { spaceId } = useLocalSearchParams<{ spaceId: string }>();
@@ -52,6 +54,7 @@ export default function SpaceInvitationsScreen() {
   const [inviteName, setInviteName] = useState('');
   const [inviteMessage, setInviteMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const modalScrollRef = useRef<ScrollView>(null);
 
   const fetchInvitations = useCallback(async () => {
     if (!spaceId) return;
@@ -76,6 +79,7 @@ export default function SpaceInvitationsScreen() {
       setIsRefreshing(false);
     }
   }, [spaceId]);
+  const alerts = useAlert();
 
   useEffect(() => {
     fetchInvitations();
@@ -94,7 +98,7 @@ export default function SpaceInvitationsScreen() {
 
   const handleSendInvitation = async () => {
     if (!inviteEmail || !inviteEmail.includes('@')) {
-      Alert.alert('Erreur', 'Veuillez entrer une adresse email valide');
+      void alerts.alert('Erreur', 'Veuillez entrer une adresse email valide');
       return;
     }
 
@@ -110,16 +114,16 @@ export default function SpaceInvitationsScreen() {
 
       if (response.data) {
         if (response.data.sent > 0) {
-          Alert.alert('Succes', `Invitation envoyee a ${inviteEmail}`);
+          void alerts.alert('Succes', `Invitation envoyee a ${inviteEmail}`);
           setShowInviteModal(false);
           resetInviteForm();
           fetchInvitations();
         } else if (response.data.errors && response.data.errors.length > 0) {
-          Alert.alert('Erreur', response.data.errors[0].error);
+          void alerts.alert('Erreur', response.data.errors[0].error);
         }
       }
     } catch (error: any) {
-      Alert.alert('Erreur', error.message || 'Impossible d\'envoyer l\'invitation');
+      void alerts.alert('Erreur', error.message || 'Impossible d\'envoyer l\'invitation');
     } finally {
       setIsSending(false);
     }
@@ -129,20 +133,17 @@ export default function SpaceInvitationsScreen() {
     setProcessingId(invitation.id);
     try {
       await spaceInvitationService.resendInvitation(spaceId!, invitation.id);
-      Alert.alert('Succes', 'Invitation renvoyee');
+      void alerts.alert('Succes', 'Invitation renvoyee');
       fetchInvitations();
     } catch (error: any) {
-      Alert.alert('Erreur', error.message || 'Impossible de renvoyer l\'invitation');
+      void alerts.alert('Erreur', error.message || 'Impossible de renvoyer l\'invitation');
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleCancel = async (invitation: SpaceInvitation) => {
-    Alert.alert(
-      'Annuler l\'invitation',
-      `Voulez-vous vraiment annuler l'invitation a ${invitation.invitee_email}?`,
-      [
+    void alerts.showAlert({ title: 'Annuler l\'invitation', message: `Voulez-vous vraiment annuler l'invitation a ${invitation.invitee_email}?`, buttons: [
         { text: 'Non', style: 'cancel' },
         {
           text: 'Oui, annuler',
@@ -153,14 +154,13 @@ export default function SpaceInvitationsScreen() {
               await spaceInvitationService.cancelInvitation(spaceId!, invitation.id);
               setInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
             } catch (error: any) {
-              Alert.alert('Erreur', error.message || 'Impossible d\'annuler l\'invitation');
+              void alerts.alert('Erreur', error.message || 'Impossible d\'annuler l\'invitation');
             } finally {
               setProcessingId(null);
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const formatDate = (dateString: string) => {
@@ -181,6 +181,13 @@ export default function SpaceInvitationsScreen() {
     if (diffDays === 1) return 'Expire demain';
     return `Expire dans ${diffDays} jours`;
   };
+
+  const scrollModalTo = useCallback((y: number) => {
+    if (Platform.OS !== 'android') return;
+    setTimeout(() => {
+      modalScrollRef.current?.scrollTo({ y, animated: true });
+    }, 120);
+  }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -300,7 +307,11 @@ export default function SpaceInvitationsScreen() {
 
       {/* Invite Modal */}
       <Modal visible={showInviteModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.borderColor }]}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
@@ -311,7 +322,12 @@ export default function SpaceInvitationsScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalBody}>
+            <ScrollView
+              ref={modalScrollRef}
+              style={styles.modalBody}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
               {/* Email */}
               <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>
                 Email <Text style={{ color: colors.error }}>*</Text>
@@ -322,6 +338,7 @@ export default function SpaceInvitationsScreen() {
                 placeholderTextColor={colors.textDisabled}
                 value={inviteEmail}
                 onChangeText={setInviteEmail}
+                onFocus={() => scrollModalTo(0)}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -334,6 +351,7 @@ export default function SpaceInvitationsScreen() {
                 placeholderTextColor={colors.textDisabled}
                 value={inviteName}
                 onChangeText={setInviteName}
+                onFocus={() => scrollModalTo(110)}
               />
 
               {/* Message */}
@@ -344,6 +362,7 @@ export default function SpaceInvitationsScreen() {
                 placeholderTextColor={colors.textDisabled}
                 value={inviteMessage}
                 onChangeText={setInviteMessage}
+                onFocus={() => scrollModalTo(230)}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
@@ -369,7 +388,7 @@ export default function SpaceInvitationsScreen() {
               />
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <FooterNav />

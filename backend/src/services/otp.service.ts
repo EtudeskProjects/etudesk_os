@@ -7,6 +7,7 @@
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { pool } from './database';
+import { formatPhoneToE164 } from './whatsapp.service';
 
 import { logger } from '../utils';
 // OTP Configuration
@@ -55,6 +56,8 @@ export interface CreateOTPResult {
   rateLimited?: boolean;
   retryAfter?: number; // seconds
 }
+
+type OTPChannel = 'email' | 'whatsapp';
 
 /**
  * Create a new OTP for email
@@ -162,6 +165,41 @@ export async function createOTP(
   }
 }
 
+/**
+ * Create a new OTP for WhatsApp phone login
+ */
+export async function createWhatsAppOTP(
+  phone: string,
+  userId?: string,
+  ipAddress?: string,
+  userAgent?: string
+): Promise<CreateOTPResult> {
+  const formattedPhone = formatPhoneToE164(phone);
+
+  if (!formattedPhone) {
+    return {
+      success: false,
+      error: 'Numéro de téléphone invalide',
+    };
+  }
+
+  // If the phone is already linked to an existing talent/user, attach that userId to the OTP.
+  // This prevents accidental creation of a new user on verification.
+  if (!userId) {
+    const client = await pool.connect();
+    try {
+      const existing = await findExistingUserByWhatsAppPhone(client, formattedPhone);
+      userId = existing?.userId;
+    } catch (err) {
+      logger.warn('Failed to pre-resolve userId for WhatsApp OTP (continuing)', { err });
+    } finally {
+      client.release();
+    }
+  }
+
+  return createOTP(formattedPhone, userId, ipAddress, userAgent);
+}
+
 export interface VerifyOTPResult {
   success: boolean;
   userId?: string;
@@ -171,14 +209,157 @@ export interface VerifyOTPResult {
   attemptsRemaining?: number;
 }
 
+function normalizeIdentifier(identifier: string, channel: OTPChannel): string | null {
+  if (channel === 'email') {
+    return identifier.toLowerCase().trim();
+  }
+
+  return formatPhoneToE164(identifier);
+}
+
+function buildPlaceholderEmailForPhone(phone: string): string {
+  const digits = phone.replace(/[^\d]/g, '');
+  return `wa_${digits}@etudesk.local`;
+}
+
+function getPhoneDigitsCandidates(phoneE164: string): string[] {
+  const digits = phoneE164.replace(/[^\d]/g, '');
+  const set = new Set<string>();
+  if (digits) set.add(digits);
+
+  // Also match national format in DB if it was stored without country code.
+  // UEMOA country codes (can be extended later).
+  const countryCodes = ['221', '223', '225', '226', '227', '228', '229', '245'];
+  for (const cc of countryCodes) {
+    if (digits.startsWith(cc) && digits.length > cc.length) {
+      set.add(digits.slice(cc.length));
+    }
+  }
+
+  return Array.from(set);
+}
+
+async function findExistingTalentByPhoneDigits(client: any, phoneE164: string): Promise<{ talentId: string; talentEmail: string } | null> {
+  const candidates = getPhoneDigitsCandidates(phoneE164);
+  const res = await client.query(
+    `SELECT id, email
+     FROM talents
+     WHERE deleted_at IS NULL
+       AND phone IS NOT NULL
+       AND regexp_replace(phone, '[^0-9]', '', 'g') = ANY($1::text[])
+     ORDER BY updated_at DESC
+     LIMIT 1`,
+    [candidates]
+  );
+
+  if (!res.rows.length) return null;
+  return { talentId: res.rows[0].id, talentEmail: res.rows[0].email };
+}
+
+async function findExistingUserByWhatsAppPhone(client: any, phoneE164: string): Promise<{ userId: string; email: string } | null> {
+  const candidates = getPhoneDigitsCandidates(phoneE164);
+  const placeholderEmail = buildPlaceholderEmailForPhone(phoneE164);
+
+  const res = await client.query(
+    `SELECT u.id, u.email
+     FROM users u
+     LEFT JOIN talents t ON t.id = u.talent_id
+     WHERE u.deleted_at IS NULL
+       AND (
+         (t.deleted_at IS NULL AND t.phone IS NOT NULL AND regexp_replace(t.phone, '[^0-9]', '', 'g') = ANY($1::text[]))
+         OR u.email = $2
+       )
+     ORDER BY (u.talent_id IS NOT NULL) DESC, u.created_at DESC
+     LIMIT 1`,
+    [candidates, placeholderEmail]
+  );
+
+  if (!res.rows.length) return null;
+  return { userId: res.rows[0].id, email: res.rows[0].email };
+}
+
+async function resolveOrCreateUserForWhatsAppPhone(
+  client: any,
+  phoneE164: string
+): Promise<{ userId: string; email: string; isNewUser: boolean }> {
+  // 1) Existing user found by linked talent phone or placeholder email
+  const existingUser = await findExistingUserByWhatsAppPhone(client, phoneE164);
+  if (existingUser) {
+    return { userId: existingUser.userId, email: existingUser.email, isNewUser: false };
+  }
+
+  // 2) Talent exists for this phone -> ensure a user exists and is linked to that talent
+  const talent = await findExistingTalentByPhoneDigits(client, phoneE164);
+  if (talent) {
+    const byTalentId = await client.query(
+      `SELECT id, email FROM users WHERE talent_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`,
+      [talent.talentId]
+    );
+    if (byTalentId.rows.length) {
+      return { userId: byTalentId.rows[0].id, email: byTalentId.rows[0].email, isNewUser: false };
+    }
+
+    const byTalentEmail = await client.query(
+      `SELECT id, email, talent_id FROM users WHERE email = $1 AND deleted_at IS NULL LIMIT 1`,
+      [talent.talentEmail]
+    );
+    if (byTalentEmail.rows.length) {
+      const u = byTalentEmail.rows[0];
+      if (!u.talent_id) {
+        await client.query(`UPDATE users SET talent_id = $1 WHERE id = $2`, [talent.talentId, u.id]);
+      }
+      return { userId: u.id, email: u.email, isNewUser: false };
+    }
+
+    // Create user using the talent email and link to the existing talent.
+    const created = await client.query(
+      `INSERT INTO users (email, email_verified, email_verified_at, talent_id)
+       VALUES ($1, TRUE, NOW(), $2)
+       RETURNING id, email`,
+      [talent.talentEmail, talent.talentId]
+    );
+    return { userId: created.rows[0].id, email: created.rows[0].email, isNewUser: false };
+  }
+
+  // 3) No talent exists -> create a minimal user (onboarding will create talent later).
+  const placeholderEmail = buildPlaceholderEmailForPhone(phoneE164);
+  const created = await client.query(
+    `INSERT INTO users (email, email_verified, email_verified_at)
+     VALUES ($1, TRUE, NOW())
+     RETURNING id, email`,
+    [placeholderEmail]
+  );
+  return { userId: created.rows[0].id, email: created.rows[0].email, isNewUser: true };
+}
+
 /**
  * Verify an OTP code
  */
 export async function verifyOTP(email: string, code: string): Promise<VerifyOTPResult> {
+  return verifyOTPByChannel(email, code, 'email');
+}
+
+/**
+ * Verify an OTP code for email or WhatsApp identifier.
+ */
+export async function verifyOTPByChannel(
+  identifier: string,
+  code: string,
+  channel: OTPChannel
+): Promise<VerifyOTPResult> {
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
+    const normalizedIdentifier = normalizeIdentifier(identifier, channel);
+
+    if (!normalizedIdentifier) {
+      await client.query('COMMIT');
+      return {
+        success: false,
+        error: 'Identifiant invalide',
+      };
+    }
 
     // Find valid OTP for this email
     const otpResult = await client.query(
@@ -191,7 +372,7 @@ export async function verifyOTP(email: string, code: string): Promise<VerifyOTPR
        ORDER BY created_at DESC
        LIMIT 1
        FOR UPDATE`,
-      [email.toLowerCase()]
+      [normalizedIdentifier]
     );
 
     if (otpResult.rows.length === 0) {
@@ -235,26 +416,36 @@ export async function verifyOTP(email: string, code: string): Promise<VerifyOTPR
     // Check if user exists
     let userId = otp.user_id;
     let isNewUser = false;
+    let userEmail = channel === 'email'
+      ? normalizedIdentifier
+      : buildPlaceholderEmailForPhone(normalizedIdentifier);
 
     if (!userId) {
-      // Check if user already exists with this email
-      const existingUser = await client.query(
-        `SELECT id FROM users WHERE email = $1 AND deleted_at IS NULL`,
-        [email.toLowerCase()]
-      );
-
-      if (existingUser.rows.length > 0) {
-        userId = existingUser.rows[0].id;
-      } else {
-        // Create new user
-        const newUserResult = await client.query(
-          `INSERT INTO users (email, email_verified, email_verified_at)
-           VALUES ($1, TRUE, NOW())
-           RETURNING id`,
-          [email.toLowerCase()]
+      if (channel === 'email') {
+        const existingUser = await client.query(
+          `SELECT id, email FROM users WHERE email = $1 AND deleted_at IS NULL`,
+          [normalizedIdentifier]
         );
-        userId = newUserResult.rows[0].id;
-        isNewUser = true;
+
+        if (existingUser.rows.length > 0) {
+          userId = existingUser.rows[0].id;
+          userEmail = existingUser.rows[0].email;
+        } else {
+          const newUserResult = await client.query(
+            `INSERT INTO users (email, email_verified, email_verified_at)
+             VALUES ($1, TRUE, NOW())
+             RETURNING id`,
+            [normalizedIdentifier]
+          );
+          userId = newUserResult.rows[0].id;
+          userEmail = normalizedIdentifier;
+          isNewUser = true;
+        }
+      } else {
+        const resolved = await resolveOrCreateUserForWhatsAppPhone(client, normalizedIdentifier);
+        userId = resolved.userId;
+        userEmail = resolved.email;
+        isNewUser = resolved.isNewUser;
       }
     }
 
@@ -271,12 +462,12 @@ export async function verifyOTP(email: string, code: string): Promise<VerifyOTPR
 
     await client.query('COMMIT');
 
-    logger.info(`✅ OTP verified for ${email} (userId: ${userId}, isNewUser: ${isNewUser})`);
+    logger.info(`✅ OTP verified for ${normalizedIdentifier} (userId: ${userId}, isNewUser: ${isNewUser}, channel: ${channel})`);
 
     return {
       success: true,
       userId,
-      email: email.toLowerCase(),
+      email: userEmail,
       isNewUser,
     };
   } catch (error) {

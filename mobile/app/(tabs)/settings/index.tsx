@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -32,6 +31,8 @@ import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { Header, FooterNav } from '../../../src/components/ui';
+import { getFullImageUrl } from '../../../src/utils/image';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -42,6 +43,7 @@ export default function AccountScreen() {
   const { t, language } = useI18n();
   const { currentSpace, selectedOrgId, selectedOrg, userOrganizations, setSpace } = useSpace();
   const { signOut, user } = useAuth();
+  const alerts = useAlert();
 
   const fetchKYCStatus = async () => {
     try {
@@ -97,10 +99,7 @@ export default function AccountScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      t('settings.logout'),
-      t('settings.logoutConfirm'),
-      [
+    void alerts.showAlert({ title: t('settings.logout'), message: t('settings.logoutConfirm'), buttons: [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('settings.logout'),
@@ -112,8 +111,7 @@ export default function AccountScreen() {
             await signOut();
           },
         },
-      ]
-    );
+      ] });
   };
 
   const handleDeleteAccount = () => {
@@ -127,36 +125,28 @@ export default function AccountScreen() {
       : 'Are you really sure you want to delete your account?';
     const confirmDelete = language === 'fr' ? 'Confirmer la suppression' : 'Confirm deletion';
 
-    Alert.alert(
-      deleteTitle,
-      deleteMessage,
-      [
+    void alerts.showAlert({ title: deleteTitle, message: deleteMessage, buttons: [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
-            Alert.alert(
-              confirmTitle,
-              confirmMessage,
-              [
+            void alerts.showAlert({ title: confirmTitle, message: confirmMessage, buttons: [
                 { text: t('common.cancel'), style: 'cancel' },
                 {
                   text: confirmDelete,
                   style: 'destructive',
                   onPress: () => {
-                    Alert.alert(
+                    void alerts.alert(
                       'Fonctionnalité en cours',
                       'La suppression de compte nécessite une confirmation par email. Cette fonctionnalité sera disponible prochainement.'
                     );
                   },
                 },
-              ]
-            );
+              ] });
           },
         },
-      ]
-    );
+      ] });
   };
 
   const isOrganizationSpace = currentSpace === 'organization';
@@ -192,6 +182,13 @@ export default function AccountScreen() {
       icon: Wallet,
       description: t('settings.menu.paymentDesc'),
       onPress: () => router.push('/settings/payment-methods'),
+    },
+    {
+      id: 'credits-billing',
+      label: 'Crédits & facturation',
+      icon: Wallet,
+      description: 'Recharger, suivre le solde et vérifier les paiements',
+      onPress: () => router.push('/settings/credits' as any),
     },
     {
       id: 'preferences',
@@ -236,8 +233,8 @@ export default function AccountScreen() {
         >
           {currentSpace === 'talent' ? (
             <>
-              {user?.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
+              {getFullImageUrl(user?.avatarUrl) ? (
+                <Image source={{ uri: getFullImageUrl(user?.avatarUrl) }} style={styles.avatarImage} />
               ) : (
                 <View style={[styles.avatarContainer, { backgroundColor: colors.primary }]}>
                   <Text style={[styles.avatarText, { color: colors.textOnPrimary }]}>{getUserInitials()}</Text>
@@ -288,8 +285,8 @@ export default function AccountScreen() {
               onPress={() => handleSelectSpace('talent')}
               activeOpacity={0.8}
             >
-              {user?.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} style={styles.spaceChipImage} />
+              {getFullImageUrl(user?.avatarUrl) ? (
+                <Image source={{ uri: getFullImageUrl(user?.avatarUrl)! }} style={styles.spaceChipImage} />
               ) : (
                 <View style={[
                   styles.spaceChipIcon,
@@ -356,17 +353,13 @@ export default function AccountScreen() {
                     ? 'Votre vérificaton d\'identité est en cours de traitement. Vous pourrez créer une organisation dès qu\'elle sera validée.'
                     : 'Vous devez vérifier votre identité (KYC) avant de créer une organisation.';
 
-                  Alert.alert(
-                    alertTitle,
-                    alertMessage,
-                    [
+                  void alerts.showAlert({ title: alertTitle, message: alertMessage, buttons: [
                       { text: 'Annuler', style: 'cancel' },
                       {
                         text: kycStatus === 'PENDING' ? 'Voir le statut' : 'Vérifier mon identité',
                         onPress: () => router.push('/settings/kyc')
                       },
-                    ]
-                  );
+                    ] });
                   return;
                 }
                 router.push('/settings/create-organization');

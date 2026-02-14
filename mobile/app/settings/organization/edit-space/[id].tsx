@@ -9,7 +9,6 @@ import {
   Platform,
   TextInput,
   Image,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -55,6 +54,9 @@ import {
 import { Visibility, ApplicationQuestion } from '../../../../src/types/models';
 import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../../../src/constants/talent';
 import { useSpace } from '../../../../src/contexts/SpaceContext';
+import { useAlert } from '../../../../src/contexts/AlertContext';
+import { useToast } from '../../../../src/components/ui';
+import { FormTextArea } from '../../../../src/components/forms/FormTextArea';
 import { spaceService, UpdateSpaceData, Space, imageService } from '../../../../src/services';
 import { getFullImageUrl } from '../../../../src/utils/image';
 
@@ -108,6 +110,8 @@ export default function EditSpaceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
   const { selectedOrgId } = useSpace();
+  const alerts = useAlert();
+  const { showToast } = useToast();
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -251,7 +255,7 @@ export default function EditSpaceScreen() {
         }
       } catch (error) {
         console.error('Error loading space:', error);
-        Alert.alert('Erreur', 'Impossible de charger l\'espace.');
+        await alerts.error('Erreur', 'Impossible de charger l\'espace.');
         router.back();
       } finally {
         setIsLoading(false);
@@ -361,7 +365,11 @@ export default function EditSpaceScreen() {
     } catch (error: any) {
       const duration = Date.now() - startTime;
       console.error(`[EditSpace] AI Generation - Failed after ${duration}ms:`, error);
-      Alert.alert('Erreur de génération', error?.error || 'Une erreur est survenue lors de la génération.');
+      showToast({
+        type: 'error',
+        title: 'Erreur de génération',
+        message: error?.error || 'Une erreur est survenue lors de la génération.',
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -369,7 +377,7 @@ export default function EditSpaceScreen() {
 
   const pickImage = async () => {
     if (images.length >= MAX_IMAGES) {
-      Alert.alert('Limite atteinte', `Maximum ${MAX_IMAGES} images.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Maximum ${MAX_IMAGES} images.` });
       return;
     }
     try {
@@ -378,7 +386,7 @@ export default function EditSpaceScreen() {
         setImages([...images, { id: Date.now().toString(), uri: image.uri }]);
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de selectionner l\'image.');
+      showToast({ type: 'error', title: 'Erreur', message: 'Impossible de sélectionner l\'image.' });
     }
   };
 
@@ -416,7 +424,7 @@ export default function EditSpaceScreen() {
     } else if (selectedSectors.length < MAX_SECTORS) {
       setSelectedSectors([...selectedSectors, sectorId]);
     } else {
-      Alert.alert('Limite atteinte', `Vous pouvez selectionner au maximum ${MAX_SECTORS} secteurs.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.` });
     }
   };
 
@@ -437,7 +445,7 @@ export default function EditSpaceScreen() {
 
   const addQuestion = () => {
     if (questions.length >= MAX_QUESTIONS) {
-      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.` });
       return;
     }
     const newQuestion: ApplicationQuestion = {
@@ -533,7 +541,7 @@ export default function EditSpaceScreen() {
         );
         uploadedUrls.push(uploaded.url);
       } catch (error) {
-        Alert.alert('Erreur', 'Impossible d\'uploader une image.');
+        await alerts.error('Erreur', 'Impossible d\'uploader une image.');
         return null;
       }
     }
@@ -611,11 +619,14 @@ export default function EditSpaceScreen() {
       const availabilities = buildAvailabilities();
       await spaceService.setAvailabilities(id, availabilities);
 
-      Alert.alert('Espace modifie', `"${name}" a ete mis a jour !`, [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      await alerts.showAlert({
+        type: 'success',
+        title: 'Espace modifié',
+        message: `"${name}" a été mis à jour !`,
+        buttons: [{ text: 'OK', onPress: () => router.back() }],
+      });
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Une erreur est survenue.');
+      await alerts.error('Erreur', error.error || 'Une erreur est survenue.');
     } finally {
       setIsSubmitting(false);
     }
@@ -770,22 +781,14 @@ export default function EditSpaceScreen() {
           </View>
         </View>
 
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Description</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary }]}
-              placeholder="Decrivez l'espace, ses caracteristiques..."
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={4}
-              maxLength={500}
-              placeholderTextColor={colors.gray500}
-            />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{description.length}/500</Text>
-        </View>
+        <FormTextArea
+          label="Description"
+          placeholder="Décrivez l'espace, ses caractéristiques..."
+          value={description}
+          onChangeText={setDescription}
+          rows={4}
+          maxLength={500}
+        />
       </View>
     </View>
   );
@@ -917,7 +920,7 @@ export default function EditSpaceScreen() {
         {/* Position sur la carte - Carte inline */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Position sur la carte</Text>
-          <View style={styles.inlineMapContainer}>
+          <View style={[styles.inlineMapContainer, { borderColor: colors.borderColor }]}>
             <MapLocationPicker
               initialCoordinates={
                 coordinates
@@ -1255,22 +1258,14 @@ export default function EditSpaceScreen() {
 
         {/* Rules */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Règlements intérieurs</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary }]}
-              placeholder="Ex: • Respecter les horaires de reservation&#10;• Maintenir l'espace propre apres utilisation&#10;• Ne pas fumer dans les locaux..."
-              value={rules}
-              onChangeText={setRules}
-              multiline
-              numberOfLines={5}
-              maxLength={1000}
-              placeholderTextColor={colors.gray500}
-            />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{rules.length}/1000</Text>
-        </View>
+        <FormTextArea
+          label="Règlement intérieur"
+          placeholder="Ex:\n• Respecter les horaires de réservation\n• Maintenir l'espace propre après utilisation\n• Ne pas fumer dans les locaux..."
+          value={rules}
+          onChangeText={setRules}
+          rows={5}
+          maxLength={1000}
+        />
 
         {/* Questions */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
@@ -1297,22 +1292,17 @@ export default function EditSpaceScreen() {
                 </TouchableOpacity>
               </View>
 
-              <TextInput
-                style={[styles.questionInput, { backgroundColor: colors.gray50, color: colors.textPrimary, borderColor: colors.gray200 }]}
+              <FormTextArea
                 placeholder="Écrivez votre question..."
-                placeholderTextColor={colors.gray400}
                 value={question.question}
                 onChangeText={(text) => updateQuestion(question.id, { question: text })}
                 maxLength={MAX_QUESTION_LENGTH}
-                multiline
-                numberOfLines={2}
+                rows={2}
+                showCounter
+                containerStyle={{ marginTop: SPACING.sm }}
               />
 
               <View style={styles.questionFooter}>
-                <Text style={[styles.charCount, { color: colors.gray500 }]}>
-                  {question.question.length}/{MAX_QUESTION_LENGTH}
-                </Text>
-
                 <View style={styles.requiredToggle}>
                   <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>Obligatoire</Text>
                   <Toggle
@@ -1758,9 +1748,10 @@ const styles = StyleSheet.create({
 
   selectableTag: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md, borderWidth: 1.5, borderRadius: BORDER.radius.full },
   selectableTagText: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.medium },
-  textAreaContainer: { borderWidth: BORDER.width.thin, borderRadius: BORDER.radius.sm, padding: SPACING.md },
-  textArea: { fontSize: TYPOGRAPHY.fontSize.md, minHeight: 80, textAlignVertical: 'top' },
-  charCount: { fontSize: TYPOGRAPHY.fontSize.xs, textAlign: 'right', marginTop: SPACING.xs },
+  // Text areas are handled by <FormTextArea />
+  textAreaContainer: {},
+  textArea: {},
+  charCount: {},
   toggleContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: SPACING.md, borderWidth: BORDER.width.thin, borderRadius: BORDER.radius.md },
   toggleInfo: { flex: 1 },
   toggleLabel: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.medium },
@@ -1775,7 +1766,7 @@ const styles = StyleSheet.create({
   generateButtonText: { fontSize: TYPOGRAPHY.fontSize.sm, fontWeight: TYPOGRAPHY.fontWeight.semibold },
 
   // Map inline
-  inlineMapContainer: { borderRadius: BORDER.radius.md, overflow: 'hidden', borderWidth: 1, borderColor: '#E5E7EB' },
+  inlineMapContainer: { borderRadius: BORDER.radius.md, overflow: 'hidden', borderWidth: 1, borderColor: 'transparent' },
   selectedAddressText: { fontSize: TYPOGRAPHY.fontSize.sm, marginTop: SPACING.xs, paddingHorizontal: SPACING.xs },
 
   // Availability
@@ -1806,14 +1797,7 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
-  questionInput: {
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
-    padding: SPACING.sm,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    minHeight: 60,
-    textAlignVertical: 'top',
-  },
+  questionInput: {},
   questionFooter: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -25,6 +24,7 @@ import { Button } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { kycService, KYCDocumentType, imageService } from '../../src/services';
 import { getFullImageUrl } from '../../src/utils/image';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 type VerificationStatus = 'none' | 'verified' | 'rejected';
 type DocumentType = 'id_card' | 'passport' | 'driver_license' | 'student_card';
@@ -52,6 +52,7 @@ export default function KYCScreen() {
   const [submittedFrontImage, setSubmittedFrontImage] = useState<string | null>(null);
   const [submittedBackImage, setSubmittedBackImage] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const alerts = useAlert();
 
   useEffect(() => {
     loadKYCStatus();
@@ -121,20 +122,16 @@ export default function KYCScreen() {
   };
 
   const showImageOptions = (side: 'front' | 'back') => {
-    Alert.alert(
-      'Ajouter une photo',
-      'Comment voulez-vous ajouter la photo ?',
-      [
+    void alerts.showAlert({ title: 'Ajouter une photo', message: 'Comment voulez-vous ajouter la photo ?', buttons: [
         { text: 'Annuler', style: 'cancel' },
         { text: 'Prendre une photo', onPress: () => takePhoto(side) },
         { text: 'Galerie', onPress: () => pickImage(side) },
-      ]
-    );
+      ] });
   };
 
   const handleSubmit = async () => {
     if (!selectedDocType || !frontImage) {
-      Alert.alert('Erreur', 'Sélectionne un type de document et ajoute le recto.');
+      void alerts.alert('Erreur', 'Sélectionne un type de document et ajoute le recto.');
       return;
     }
 
@@ -161,17 +158,13 @@ export default function KYCScreen() {
       await loadKYCStatus();
 
       if (result.data?.status === 'VERIFIED') {
-        Alert.alert('Vérifié', 'Ton identité a été vérifiée avec succès.');
+        void alerts.alert('Vérifié', 'Ton identité a été vérifiée avec succès.');
       } else {
-        Alert.alert(
-          'Non vérifié',
-          result.data?.rejection_reason || 'Le document n\'a pas pu être vérifié. Réessaie avec une meilleure photo.',
-          [{ text: 'OK' }]
-        );
+        void alerts.showAlert({ title: 'Non vérifié', message: result.data?.rejection_reason || 'Le document n\'a pas pu être vérifié. Réessaie avec une meilleure photo.', buttons: [{ text: 'OK' }] });
       }
     } catch (error: any) {
       console.error('Error submitting KYC:', error);
-      Alert.alert('Erreur', error?.error || 'Erreur lors de la soumission.');
+      void alerts.alert('Erreur', error?.error || 'Erreur lors de la soumission.');
     } finally {
       setIsSubmitting(false);
     }

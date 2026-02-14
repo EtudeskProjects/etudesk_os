@@ -5,7 +5,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { LucideIcon } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, COMPONENT } from '../../../constants/theme';
 
 export interface CardBadgeProps {
   label: string;
@@ -73,10 +73,10 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xxs,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
+    gap: COMPONENT.pill.gap,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
   badgeText: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,

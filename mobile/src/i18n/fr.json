@@ -129,7 +129,17 @@
       "verifyError": "Erreur de vérification. Réessaie.",
       "codeSent": "Nouveau code envoyé !",
       "verified": "Email vérifié !",
-      "redirecting": "Connexion en cours..."
+      "redirecting": "Connexion en cours...",
+      "titleWhatsApp": "Vérifie ton WhatsApp",
+      "subtitleWhatsApp": "Entre le code envoyé au numéro"
+    },
+    "whatsappLogin": {
+      "title": "Connexion par WhatsApp",
+      "subtitle": "Entre ton numéro pour recevoir un code sur WhatsApp",
+      "phoneLabel": "Numéro WhatsApp",
+      "sendCode": "Recevoir le code",
+      "infoText": "Tu recevras un code à 6 chiffres sur WhatsApp",
+      "sendError": "Impossible d'envoyer le code WhatsApp. Vérifie ton numéro."
     }
   },
   "tabs": {

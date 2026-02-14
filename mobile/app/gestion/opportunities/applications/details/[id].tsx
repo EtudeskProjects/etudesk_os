@@ -8,7 +8,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   Image,
   Keyboard,
@@ -52,6 +51,7 @@ import { applicationService, applicationMessageService } from '../../../../../sr
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import type { Application, ApplicationMessage, ApplicationStatus } from '../../../../../src/types/models';
 import { APPLICATION_STATUS_LABELS } from '../../../../../src/types/models';
+import { useAlert } from '../../../../../src/contexts/AlertContext';
 
 // Status configuration - colors are set dynamically using theme colors
 const getStatusConfig = (colors: any): Record<ApplicationStatus, { color: string; icon: typeof Clock }> => ({
@@ -138,6 +138,7 @@ export default function ApplicationOrgDetailsScreen() {
 
   // Status picker
   const [showStatusPicker, setShowStatusPicker] = useState(false);
+  const alerts = useAlert();
 
   // Handle keyboard events
   useEffect(() => {
@@ -209,7 +210,7 @@ export default function ApplicationOrgDetailsScreen() {
         loadRecommendation(id);
       }
     } catch (error) {
-      Alert.alert(t('common.error'), t('applicationDetail.loadError'));
+      void alerts.alert(t('common.error'), t('applicationDetail.loadError'));
       router.back();
     } finally {
       setIsLoading(false);
@@ -252,17 +253,14 @@ export default function ApplicationOrgDetailsScreen() {
       await applicationService.updateStatus(application.id, newStatus);
       setApplication((prev) => prev ? { ...prev, status: newStatus } : null);
       setShowStatusPicker(false);
-      Alert.alert(t('common.success'), t('applicationDetail.statusUpdated', { status: APPLICATION_STATUS_LABELS[newStatus] }));
+      void alerts.alert(t('common.success'), t('applicationDetail.statusUpdated', { status: APPLICATION_STATUS_LABELS[newStatus] }));
     } catch (error: any) {
-      Alert.alert(t('common.error'), error.error || t('applicationDetail.statusUpdateError'));
+      void alerts.alert(t('common.error'), error.error || t('applicationDetail.statusUpdateError'));
     }
   };
 
   const handleDeleteApplication = () => {
-    Alert.alert(
-      t('applicationDetail.deleteTitle'),
-      t('applicationDetail.deleteConfirm'),
-      [
+    void alerts.showAlert({ title: t('applicationDetail.deleteTitle'), message: t('applicationDetail.deleteConfirm'), buttons: [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('common.delete'),
@@ -271,15 +269,14 @@ export default function ApplicationOrgDetailsScreen() {
             try {
               // For now, we'll reject the application as there's no delete endpoint
               await applicationService.updateStatus(application!.id, 'REJECTED');
-              Alert.alert(t('common.success'), t('applicationDetail.deleteSuccess'));
+              void alerts.alert(t('common.success'), t('applicationDetail.deleteSuccess'));
               router.back();
             } catch (error: any) {
-              Alert.alert(t('common.error'), error.error || t('applicationDetail.deleteError'));
+              void alerts.alert(t('common.error'), error.error || t('applicationDetail.deleteError'));
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const handleSaveNotes = async () => {
@@ -288,9 +285,9 @@ export default function ApplicationOrgDetailsScreen() {
     try {
       await applicationService.updateNotes(application.id, internalNotes);
       setIsEditingNotes(false);
-      Alert.alert(t('common.success'), t('applicationDetail.notesSaved'));
+      void alerts.alert(t('common.success'), t('applicationDetail.notesSaved'));
     } catch (error: any) {
-      Alert.alert(t('common.error'), error.error || t('applicationDetail.notesSaveError'));
+      void alerts.alert(t('common.error'), error.error || t('applicationDetail.notesSaveError'));
     }
   };
 
@@ -301,7 +298,7 @@ export default function ApplicationOrgDetailsScreen() {
       await applicationService.updateRating(application.id, newRating);
       setRating(newRating);
     } catch (error: any) {
-      Alert.alert(t('common.error'), error.error || t('applicationDetail.ratingUpdateError'));
+      void alerts.alert(t('common.error'), error.error || t('applicationDetail.ratingUpdateError'));
     }
   };
 
@@ -333,7 +330,7 @@ export default function ApplicationOrgDetailsScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error: any) {
-      Alert.alert(t('common.error'), error.error || t('applicationDetail.sendMessageError'));
+      void alerts.alert(t('common.error'), error.error || t('applicationDetail.sendMessageError'));
       throw error;
     } finally {
       setIsSending(false);
@@ -377,17 +374,17 @@ export default function ApplicationOrgDetailsScreen() {
               dialogTitle: t('applicationDetail.cvDialogTitle'),
             });
           } else {
-            Alert.alert(t('applicationDetail.cvFileNotFound'), t('applicationDetail.cvFileNotFoundDesc'));
+            void alerts.alert(t('applicationDetail.cvFileNotFound'), t('applicationDetail.cvFileNotFoundDesc'));
           }
         } else {
-          Alert.alert(t('applicationDetail.sharingUnavailable'), t('applicationDetail.sharingUnavailableDesc'));
+          void alerts.alert(t('applicationDetail.sharingUnavailable'), t('applicationDetail.sharingUnavailableDesc'));
         }
       } else {
         await Linking.openURL(openUrl);
       }
     } catch (error) {
       console.error('Error opening CV:', error);
-      Alert.alert(t('common.error'), t('applicationDetail.cvOpenError'));
+      void alerts.alert(t('common.error'), t('applicationDetail.cvOpenError'));
     }
   };
 
@@ -474,7 +471,7 @@ export default function ApplicationOrgDetailsScreen() {
 
           {/* Bio */}
           {talent?.bio && (
-            <View style={[styles.bioContainer, { marginTop: SPACING.sm }]}>
+            <View style={[styles.bioContainer, { marginTop: SPACING.sm, borderTopColor: colors.borderColor }]}>
               <Text style={[styles.bioText, { color: colors.textSecondary }]}>
                 {talent.bio}
               </Text>
@@ -855,7 +852,7 @@ export default function ApplicationOrgDetailsScreen() {
       {/* Content */}
       <KeyboardAvoidingView
         style={styles.contentContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {activeTab === 'profile' && renderProfileTab()}
@@ -1514,7 +1511,7 @@ const styles = StyleSheet.create({
   bioContainer: {
     paddingTop: SPACING.sm,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: 'transparent',
   },
 
   bioText: {

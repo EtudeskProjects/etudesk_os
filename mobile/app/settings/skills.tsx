@@ -14,6 +14,7 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import {
   Plus,
   Trash2,
@@ -23,9 +24,14 @@ import {
   Gem,
   Users,
   ChevronDown,
+  Eye,
+  EyeOff,
+  Radar,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors } from '../../src/constants/theme';
-import { Button, PageLayout, EmptyState, Input } from '../../src/components/ui';
+import { RefreshControl, ActivityIndicator } from 'react-native';
+import { ArrowLeft } from 'lucide-react-native';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors, COMPONENT, LAYOUT } from '../../src/constants/theme';
+import { Button, EmptyState, Input, FooterNav } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import skillService, {
   TalentSkill,
@@ -33,6 +39,7 @@ import skillService, {
   SKILL_TYPE_LABELS,
   PROFICIENCY_LEVELS,
 } from '../../src/services/skillService';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 // Proficiency colors - Luxe Africain design system
 const getProficiencyColors = (colors: ThemeColors): Record<string, string> => ({
@@ -83,6 +90,7 @@ function getTypeIcon(type: string) {
 }
 
 export default function SkillsScreen() {
+  const router = useRouter();
   const { colors } = useTheme();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -104,9 +112,10 @@ export default function SkillsScreen() {
       setSkills(data);
     } catch (error) {
       console.error('Error loading skills:', error);
-      Alert.alert('Erreur', 'Impossible de charger les compétences');
+      void alerts.alert('Erreur', 'Impossible de charger les compétences');
     }
   }, []);
+  const alerts = useAlert();
 
   useEffect(() => {
     const load = async () => {
@@ -126,7 +135,7 @@ export default function SkillsScreen() {
   const handleAddSkill = async () => {
     if (!skillName.trim()) return;
     if (!selectedType) {
-      Alert.alert('Type requis', 'Sélectionne un type de compétence.');
+      void alerts.alert('Type requis', 'Sélectionne un type de compétence.');
       return;
     }
     try {
@@ -139,7 +148,7 @@ export default function SkillsScreen() {
       closeModal();
       await loadSkills();
     } catch (error: any) {
-      Alert.alert('Erreur', error?.message || "Erreur lors de l'ajout");
+      void alerts.alert('Erreur', error?.message || "Erreur lors de l'ajout");
     }
   };
 
@@ -152,10 +161,7 @@ export default function SkillsScreen() {
   };
 
   const handleDelete = (skill: TalentSkill) => {
-    Alert.alert(
-      'Supprimer la compétence',
-      `Veux-tu vraiment supprimer "${skill.canonical_name}" ?`,
-      [
+    void alerts.showAlert({ title: 'Supprimer la compétence', message: `Veux-tu vraiment supprimer "${skill.canonical_name}" ?`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
@@ -165,34 +171,55 @@ export default function SkillsScreen() {
               await skillService.deleteSkill(skill.id);
               await loadSkills();
             } catch {
-              Alert.alert('Erreur', 'Impossible de supprimer la compétence');
+              void alerts.alert('Erreur', 'Impossible de supprimer la compétence');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const proficiencyColors = getProficiencyColors(colors);
+
+  const handleToggleVisibility = async (skill: TalentSkill) => {
+    try {
+      await skillService.toggleVisibility(skill.id, !skill.is_visible);
+      await loadSkills();
+    } catch {
+      void alerts.alert('Erreur', 'Impossible de modifier la visibilité');
+    }
+  };
 
   const renderSkill = (skill: TalentSkill) => {
     const profColor = proficiencyColors[skill.proficiency_level] || colors.textSecondary;
     const originLabel = ORIGIN_LABELS[skill.origin] || skill.origin;
     const contextText = skill.context;
     const relativeDate = formatRelativeDate(skill.created_at);
+    const VisibilityIcon = skill.is_visible ? Eye : EyeOff;
 
     return (
       <View
         key={skill.id}
-        style={[styles.skillCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+        style={[
+          styles.skillCard,
+          { backgroundColor: colors.surface, borderColor: colors.borderColor },
+          !skill.is_visible && { opacity: 0.5 },
+        ]}
       >
-        {/* Delete button */}
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => handleDelete(skill)}
-        >
-          <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        {/* Action buttons */}
+        <View style={styles.cardActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleToggleVisibility(skill)}
+          >
+            <VisibilityIcon size={18} color={skill.is_visible ? colors.textSecondary : colors.warning} strokeWidth={ICON.strokeWidth} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleDelete(skill)}
+          >
+            <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
+          </TouchableOpacity>
+        </View>
 
         {/* Skill name */}
         <Text style={[styles.skillName, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -238,65 +265,109 @@ export default function SkillsScreen() {
     SOFT_SKILL: skills.filter((s) => s.type === 'SOFT_SKILL').sort(sortByRecent),
   };
 
-  return (
-    <>
-      <PageLayout
-        title="Mes compétences"
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
-        isLoading={isLoading}
-      >
-        {skills.length === 0 ? (
-          <EmptyState
-            icon={Gem}
-            title="Aucune compétence"
-            subtitle="Ajoute tes compétences pour améliorer ton profil et être mieux recommandé."
-            actionLabel="Ajouter une compétence"
-            onAction={() => setShowAddModal(true)}
-          />
-        ) : (
-          <>
-            {/* Add Button */}
-            <View style={styles.addSection}>
-              <Button
-                title="Ajouter une compétence"
-                onPress={() => setShowAddModal(true)}
-                fullWidth
-                icon={<Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-                iconPosition="left"
-              />
-            </View>
+  const handleAutoDiagnostic = () => {
+    router.push({
+      pathname: '/(tabs)/assistant',
+      params: {
+        mode: 'study',
+        prompt: 'Fais un auto-diagnostic complet de mes compétences. Analyse mes forces, identifie mes lacunes et axes d\'amélioration, et suggère un plan de développement adapté à mon profil.',
+        focusInput: 'true',
+      },
+    });
+  };
 
-            {/* Skills grouped by type */}
-            {Object.entries(groupedSkills).map(([type, typeSkills]) => {
-              if (typeSkills.length === 0) return null;
-              const TypeIcon = getTypeIcon(type);
-              const isCollapsed = collapsedSections[type] ?? false;
-              return (
-                <View key={type} style={styles.section}>
-                  <TouchableOpacity
-                    style={styles.sectionHeader}
-                    onPress={() => setCollapsedSections((prev) => ({ ...prev, [type]: !prev[type] }))}
-                    activeOpacity={0.7}
-                  >
-                    <TypeIcon size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary, flex: 1 }]}>
-                      {SKILL_TYPE_LABELS[type] || type} ({typeSkills.length})
-                    </Text>
-                    <ChevronDown
-                      size={16}
-                      color={colors.textSecondary}
-                      strokeWidth={ICON.strokeWidth}
-                      style={{ transform: [{ rotate: isCollapsed ? '-90deg' : '0deg' }] }}
-                    />
-                  </TouchableOpacity>
-                  {!isCollapsed && typeSkills.map(renderSkill)}
-                </View>
-              );
-            })}
-          </>
-        )}
-      </PageLayout>
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Mes compétences</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+          }
+        >
+          {skills.length === 0 ? (
+            <EmptyState
+              icon={Gem}
+              title="Aucune compétence"
+              subtitle="Ajoute tes compétences pour améliorer ton profil et être mieux recommandé."
+              actionLabel="Ajouter une compétence"
+              onAction={() => setShowAddModal(true)}
+            />
+          ) : (
+            <>
+              {/* Add Button */}
+              <View style={styles.addSection}>
+                <Button
+                  title="Ajouter une compétence"
+                  onPress={() => setShowAddModal(true)}
+                  fullWidth
+                  icon={<Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+                  iconPosition="left"
+                />
+              </View>
+
+              {/* Skills grouped by type */}
+              {Object.entries(groupedSkills).map(([type, typeSkills]) => {
+                if (typeSkills.length === 0) return null;
+                const TypeIcon = getTypeIcon(type);
+                const isCollapsed = collapsedSections[type] ?? false;
+                return (
+                  <View key={type} style={styles.section}>
+                    <TouchableOpacity
+                      style={styles.sectionHeader}
+                      onPress={() => setCollapsedSections((prev) => ({ ...prev, [type]: !prev[type] }))}
+                      activeOpacity={0.7}
+                    >
+                      <TypeIcon size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+                      <Text style={[styles.sectionTitle, { color: colors.textSecondary, flex: 1 }]}>
+                        {SKILL_TYPE_LABELS[type] || type} ({typeSkills.length})
+                      </Text>
+                      <ChevronDown
+                        size={16}
+                        color={colors.textSecondary}
+                        strokeWidth={ICON.strokeWidth}
+                        style={{ transform: [{ rotate: isCollapsed ? '-90deg' : '0deg' }] }}
+                      />
+                    </TouchableOpacity>
+                    {!isCollapsed && typeSkills.map(renderSkill)}
+                  </View>
+                );
+              })}
+            </>
+          )}
+        </ScrollView>
+      )}
+
+      {/* Auto-diagnostic Button */}
+      <View style={[styles.diagnosticContainer, { backgroundColor: colors.background }]}>
+        <TouchableOpacity
+          style={[styles.diagnosticButton, { backgroundColor: colors.primary }]}
+          onPress={handleAutoDiagnostic}
+          activeOpacity={0.8}
+        >
+          <Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+          <Text style={[styles.diagnosticButtonText, { color: colors.textOnPrimary }]}>
+            Auto-diagnostic
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <FooterNav activeTab="home" />
 
       {/* Add Skill Modal */}
       <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
@@ -408,11 +479,25 @@ export default function SkillsScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
-    </>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+  },
+  backButton: { width: LAYOUT.inputHeightSm, height: LAYOUT.inputHeightSm, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontSize: TYPOGRAPHY.fontSize.lg, fontWeight: TYPOGRAPHY.fontWeight.semibold },
+  headerSpacer: { width: LAYOUT.inputHeightSm },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  scrollContent: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.lg },
+
   addSection: { marginBottom: SPACING.lg },
 
   section: { marginBottom: SPACING.lg },
@@ -447,9 +532,9 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   tag: {
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.full,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
     borderWidth: BORDER.width.thin,
   },
   tagText: {
@@ -467,15 +552,19 @@ const styles = StyleSheet.create({
     marginLeft: 'auto' as any,
   },
 
-  deleteButton: {
+  cardActions: {
     position: 'absolute',
     top: SPACING.xs,
     right: SPACING.xs,
-    width: 44,
-    height: 44,
+    flexDirection: 'row',
+    gap: 0,
+    zIndex: 1,
+  },
+  actionButton: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1,
   },
 
   // Chips (modal)
@@ -485,9 +574,9 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   chip: {
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: BORDER.radius.full,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
     borderWidth: BORDER.width.thin,
   },
   chipText: {
@@ -517,5 +606,24 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
     marginBottom: SPACING.xs,
+  },
+
+  // Auto-diagnostic (fixed bottom)
+  diagnosticContainer: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.xs,
+    paddingBottom: SPACING.xs,
+  },
+  diagnosticButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER.radius.md,
+  },
+  diagnosticButtonText: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 });

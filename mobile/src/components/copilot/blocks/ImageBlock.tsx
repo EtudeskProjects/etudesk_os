@@ -4,11 +4,12 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
 import { Image as ImageIcon, ExternalLink } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { useTranslation } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../constants/theme';
+import { showToastGlobal } from '../../ui';
 
 interface ImageBlockProps {
   data: {
@@ -47,10 +48,10 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
       if (supported) {
         await Linking.openURL(data.source);
       } else {
-        Alert.alert(t('common.error'), t('copilotImage.openLinkError'));
+        showToastGlobal({ type: 'error', title: t('common.error'), message: t('copilotImage.openLinkError') });
       }
     } catch (err) {
-      Alert.alert(t('common.error'), t('copilotImage.openLinkErrorMessage'));
+      showToastGlobal({ type: 'error', title: t('common.error'), message: t('copilotImage.openLinkErrorMessage') });
     }
   };
 

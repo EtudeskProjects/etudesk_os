@@ -21,7 +21,7 @@ import {
     Star,
     Plus,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { CommunityCard } from '../../../src/components/cards';
@@ -88,7 +88,7 @@ export default function CommunitiesScreen() {
                 ]}
                 onPress={() => setActiveCategory(item.id)}
             >
-                <Icon size={16} color={isActive ? colors.textOnPrimary : colors.textSecondary} />
+                <Icon size={COMPONENT.pill.iconSize} color={isActive ? colors.textOnPrimary : colors.textSecondary} />
                 <Text style={[styles.categoryLabel, { color: isActive ? colors.textOnPrimary : colors.textSecondary }]}>
                     {item.label}
                 </Text>
@@ -178,6 +178,8 @@ export default function CommunitiesScreen() {
                     renderItem={renderCommunityItem}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                     refreshControl={
                         <RefreshControl
                             refreshing={isRefreshing}
@@ -230,14 +232,14 @@ const styles = StyleSheet.create({
     categoryChip: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: SPACING.xs,
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: BORDER.radius.full,
+        gap: COMPONENT.pill.gap,
+        paddingVertical: COMPONENT.pill.paddingVertical,
+        paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+        borderRadius: COMPONENT.pill.borderRadius,
     },
     categoryLabel: {
-        fontSize: TYPOGRAPHY.fontSize.sm,
-        fontWeight: TYPOGRAPHY.fontWeight.medium,
+        fontSize: COMPONENT.pill.fontSize,
+        fontWeight: COMPONENT.pill.fontWeight,
     },
     listContent: {
         paddingHorizontal: SPACING.lg,

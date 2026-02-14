@@ -9,7 +9,6 @@ import {
   Platform,
   TextInput,
   Image,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -33,6 +32,7 @@ import { organizationService, talentService, imageService } from '../../src/serv
 import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../src/constants/talent';
 import MapLocationPicker from '../../src/components/MapLocationPicker';
 import { useForm } from '../../src/hooks/useForm';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 type Step = 'info' | 'location';
 
@@ -99,16 +99,13 @@ export default function CreateOrganizationScreen() {
 
       await refreshOrganizations();
 
-      Alert.alert(
-        'Organisation créée',
-        `${values.name} a été créée avec succès !`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      void alerts.showAlert({ title: 'Organisation créée', message: `${values.name} a été créée avec succès !`, buttons: [{ text: 'OK', onPress: () => router.back() }] });
     },
   });
 
   // Refs for auto-scroll to selected country
   const countryScrollRef = useRef<ScrollView>(null);
+  const alerts = useAlert();
   const COUNTRY_CHIP_WIDTH = 80;
 
   // Get form values for convenience
@@ -237,11 +234,7 @@ export default function CreateOrganizationScreen() {
         await form.handleSubmit();
       } catch (error: any) {
         console.error('Error creating organization:', error);
-        Alert.alert(
-          'Erreur',
-          error?.message || 'Une erreur est survenue lors de la création de l\'organisation.',
-          [{ text: 'OK' }]
-        );
+        void alerts.showAlert({ title: 'Erreur', message: error?.message || 'Une erreur est survenue lors de la création de l\'organisation.', buttons: [{ text: 'OK' }] });
       }
     }
   };

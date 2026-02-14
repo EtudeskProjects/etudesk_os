@@ -58,12 +58,12 @@ export const vectorQueryTool = tool({
     topK: z.number().min(1).max(30).default(10).describe('Number of results to return. Default 10. Use higher values (15-20) when the user needs comprehensive results.'),
     filtersJson: z
       .string()
-      .nullable()
-      .describe('Optional Pinecone metadata filters as JSON string. ONLY simple scalar values: \'{"contract_type":"CDI"}\' or \'{"type":"EMPLOYMENT"}\'. Do NOT use nested objects or arrays of objects. Use null for no filter (recommended — put criteria in the query text instead).'),
+      .default('')
+      .describe('Pinecone metadata filters as JSON string. ONLY simple scalar values: \'{"contract_type":"CDI"}\' or \'{"type":"EMPLOYMENT"}\'. Do NOT use nested objects or arrays of objects. Use empty string for no filter (recommended — put criteria in the query text instead).'),
   }),
   execute: async ({ query, namespace, topK, filtersJson }) => {
     try {
-      const rawFilters = filtersJson ? JSON.parse(filtersJson) : {};
+      const rawFilters = filtersJson && filtersJson.trim() ? JSON.parse(filtersJson) : {};
       const filters = sanitizeFilters(rawFilters);
       const embedding = await generateEmbedding(query);
       const index = pinecone.index(PINECONE_INDEX);

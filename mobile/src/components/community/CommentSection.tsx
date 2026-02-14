@@ -7,7 +7,6 @@ import {
     TouchableOpacity,
     Pressable,
     ActivityIndicator,
-    Alert,
     Keyboard,
     Platform,
     Modal,
@@ -23,6 +22,9 @@ import { SPACING, TYPOGRAPHY, BORDER, withOpacity, OPACITY } from '../../constan
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../contexts/I18nContext';
 import { Send, X, ChevronDown } from 'lucide-react-native';
+import { alertsGlobal } from '../../contexts/AlertContext';
+import { showToastGlobal } from '../ui';
+import { Input } from '../ui';
 
 // Extended comment type for optimistic updates
 interface OptimisticComment extends ActivityComment {
@@ -304,7 +306,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             setIsInputFocused(true);
 
             const message = error?.response?.data?.error || error?.message || t('community.comments.publishError');
-            Alert.alert(t('common.error'), message);
+            showToastGlobal({ type: 'error', title: t('common.error'), message });
         } finally {
             setSubmitting(false);
             isSubmittingRef.current = false;
@@ -352,7 +354,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             console.error('[CommentSection] Failed to delete comment:', error);
             // Reload comments on error
             loadComments();
-            Alert.alert(t('common.error'), t('community.comments.deleteError'));
+            showToastGlobal({ type: 'error', title: t('common.error'), message: t('community.comments.deleteError') });
         }
     };
 
@@ -374,49 +376,49 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                 },
                 (buttonIndex) => {
                     if (isAuthor && buttonIndex === 0) {
-                        Alert.alert(
-                            t('community.comments.deleteTitle'),
-                            t('community.comments.deleteMessage'),
-                            [
+                        void alertsGlobal.showAlert({
+                            title: t('community.comments.deleteTitle'),
+                            message: t('community.comments.deleteMessage'),
+                            buttons: [
                                 { text: t('common.cancel'), style: 'cancel' },
                                 {
                                     text: t('common.delete'),
                                     style: 'destructive',
                                     onPress: () => handleDeleteComment(comment)
                                 },
-                            ]
-                        );
+                            ],
+                        });
                     }
                 }
             );
         } else {
             // Android - use Alert
             if (isAuthor) {
-                Alert.alert(
-                    t('community.comments.options'),
-                    '',
-                    [
+                void alertsGlobal.showAlert({
+                    title: t('community.comments.options'),
+                    message: '',
+                    buttons: [
                         { text: t('common.cancel'), style: 'cancel' },
                         {
                             text: t('common.delete'),
                             style: 'destructive',
                             onPress: () => {
-                                Alert.alert(
-                                    t('community.comments.deleteTitle'),
-                                    t('community.comments.deleteMessage'),
-                                    [
+                                void alertsGlobal.showAlert({
+                                    title: t('community.comments.deleteTitle'),
+                                    message: t('community.comments.deleteMessage'),
+                                    buttons: [
                                         { text: t('common.cancel'), style: 'cancel' },
                                         {
                                             text: t('common.delete'),
                                             style: 'destructive',
                                             onPress: () => handleDeleteComment(comment)
                                         },
-                                    ]
-                                );
+                                    ],
+                                });
                             }
                         },
                     ]
-                );
+                });
             }
         }
     };
@@ -587,17 +589,18 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                             styles.modalInputPill,
                             { backgroundColor: colors.gray100 }
                         ]}>
-                            <TextInput
-                                ref={inputRef}
-                                style={[styles.modalInput, { color: colors.textPrimary }]}
-                                placeholder={replyingTo ? t('community.comments.replyPlaceholder') : t('community.comments.addPlaceholder')}
-                                placeholderTextColor={colors.gray400}
+                            <Input
+                                ref={inputRef as any}
                                 value={commentText}
                                 onChangeText={setCommentText}
+                                placeholder={replyingTo ? t('community.comments.replyPlaceholder') : t('community.comments.addPlaceholder')}
                                 multiline
                                 maxLength={1000}
                                 autoFocus
                                 blurOnSubmit={false}
+                                containerStyle={{ flex: 1 }}
+                                inputContainerStyle={{ backgroundColor: 'transparent', borderColor: 'transparent', height: undefined, minHeight: 44, alignItems: 'flex-start' }}
+                                inputStyle={[styles.modalInput, { color: colors.textPrimary }]}
                             />
                             {/* Send button inside input */}
                             <View

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { TYPOGRAPHY, SPACING, BORDER, ICON, OPACITY, ThemeColors } from '../../constants/theme';
+import { TYPOGRAPHY, SPACING, BORDER, ICON, OPACITY, COMPONENT, ThemeColors } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { Clock, CheckCircle2, XCircle, Archive, AlertCircle } from 'lucide-react-native';
 
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: SPACING.xs,
-        borderRadius: BORDER.radius.sm,
+        borderRadius: COMPONENT.pill.borderRadius,
         alignSelf: 'flex-start',
     },
     label: {

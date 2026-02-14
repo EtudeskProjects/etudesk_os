@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,6 +35,7 @@ import {
   PERMISSION_LABELS,
   DEFAULT_ROLE_PERMISSIONS,
 } from '../../../src/types/models';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 const getRoleIcon = (role: OrganizationRole) => {
   switch (role) {
@@ -83,6 +83,7 @@ export default function MemberDetailScreen() {
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const alerts = useAlert();
 
   const isOwner = member?.role === ORGANIZATION_ROLES.OWNER;
   const canEdit = canEditRoles && !isOwner;
@@ -146,17 +147,14 @@ export default function MemberDetailScreen() {
       await updateMemberRole(member.id, selectedRole, permissions);
       router.back();
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de mettre à jour les permissions');
+      void alerts.alert('Erreur', 'Impossible de mettre à jour les permissions');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleRemove = () => {
-    Alert.alert(
-      'Retirer le membre',
-      `Voulez-vous vraiment retirer ${member.display_name} de l'organisation ?`,
-      [
+    void alerts.showAlert({ title: 'Retirer le membre', message: `Voulez-vous vraiment retirer ${member.display_name} de l'organisation ?`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Retirer',
@@ -166,8 +164,7 @@ export default function MemberDetailScreen() {
             router.back();
           },
         },
-      ]
-    );
+      ] });
   };
 
   const formatDate = (dateString?: string) => {

@@ -28,7 +28,7 @@ router.get('/my', async (req: AuthRequest, res: Response) => {
 
     const result = await pool.query(
       `SELECT id, canonical_name, type, proficiency_level,
-              context, origin, created_at
+              context, origin, is_visible, created_at
        FROM talent_skills
        WHERE talent_id = $1
        ORDER BY proficiency_level DESC, canonical_name ASC`,
@@ -53,7 +53,7 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: req.t('common:talentProfileRequired') });
     }
 
-    const { skillName, proficiencyLevel, type, context } = req.body;
+    const { skillName, proficiencyLevel, type, context, is_visible } = req.body;
 
     if (!proficiencyLevel || !isValidProficiencyLevel(proficiencyLevel)) {
       return res.status(400).json({ error: req.t('skills:invalidProficiencyLevel') });
@@ -84,10 +84,16 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
       return res.json({ data: { id: existing.rows[0].id, updated: true } });
     }
 
+    const columns = ['talent_id', 'canonical_name', 'type', 'proficiency_level'];
+    const values: any[] = [talentId, canonicalName, type, proficiencyLevel];
+    if (context) { columns.push('context'); values.push(context); }
+    if (is_visible === false) { columns.push('is_visible'); values.push(false); }
+    const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
+
     const result = await pool.query(
-      `INSERT INTO talent_skills (talent_id, canonical_name, type, proficiency_level${context ? ', context' : ''})
-       VALUES ($1, $2, $3, $4${context ? ', $5' : ''}) RETURNING id`,
-      context ? [talentId, canonicalName, type, proficiencyLevel, context] : [talentId, canonicalName, type, proficiencyLevel]
+      `INSERT INTO talent_skills (${columns.join(', ')})
+       VALUES (${placeholders}) RETURNING id`,
+      values
     );
 
     return res.status(201).json({ data: { id: result.rows[0].id } });
@@ -155,6 +161,40 @@ router.delete('/my/:id', async (req: AuthRequest, res: Response) => {
   } catch (error) {
     logger.error('Error deleting skill:', error);
     return res.status(500).json({ error: req.t('skills:deleteError') });
+  }
+});
+
+/**
+ * PATCH /api/skills/my/:id/visibility
+ * Toggle skill visibility
+ */
+router.patch('/my/:id/visibility', async (req: AuthRequest, res: Response) => {
+  try {
+    const talentId = req.talentId;
+    if (!talentId) {
+      return res.status(400).json({ error: req.t('common:talentProfileRequired') });
+    }
+
+    const { is_visible } = req.body;
+    if (typeof is_visible !== 'boolean') {
+      return res.status(400).json({ error: 'is_visible must be a boolean' });
+    }
+
+    const result = await pool.query(
+      `UPDATE talent_skills SET is_visible = $1
+       WHERE id = $2 AND talent_id = $3
+       RETURNING id, is_visible`,
+      [is_visible, req.params.id, talentId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: req.t('skills:notFound') });
+    }
+
+    return res.json({ data: result.rows[0] });
+  } catch (error) {
+    logger.error('Error toggling skill visibility:', error);
+    return res.status(500).json({ error: req.t('skills:updateError') });
   }
 });
 

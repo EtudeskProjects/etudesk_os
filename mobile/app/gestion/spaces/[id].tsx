@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -19,13 +18,14 @@ import {
   Calendar,
   UserPlus,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
 import { PageLayout, EmptyState } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { spaceService, Space, SpaceBooking } from '../../../src/services';
 import { formatRelativeTime } from '../../../src/utils/date';
 import { formatPrice } from '../../../src/constants/space';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 // Booking status types
 type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
@@ -51,6 +51,7 @@ export default function SpaceBookingsManagementScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const alerts = useAlert();
 
   useEffect(() => {
     loadData();
@@ -77,7 +78,7 @@ export default function SpaceBookingsManagementScreen() {
       setStatusCounts(counts);
     } catch (error) {
       console.error('Error loading data:', error);
-      Alert.alert(t('common.error'), t('gestion.bookings.loadError'));
+      void alerts.alert(t('common.error'), t('gestion.bookings.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -112,37 +113,29 @@ export default function SpaceBookingsManagementScreen() {
       );
       handleRefresh();
     } catch (error: any) {
-      Alert.alert(t('common.error'), error.error || t('gestion.bookings.statusUpdateError'));
+      void alerts.alert(t('common.error'), error.error || t('gestion.bookings.statusUpdateError'));
     }
   };
 
   const handleConfirmBooking = (bookingId: string) => {
-    Alert.alert(
-      t('gestion.bookings.confirmTitle'),
-      t('gestion.bookings.confirmMessage'),
-      [
+    void alerts.showAlert({ title: t('gestion.bookings.confirmTitle'), message: t('gestion.bookings.confirmMessage'), buttons: [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('common.confirm'),
           onPress: () => handleUpdateStatus(bookingId, 'CONFIRMED'),
         },
-      ]
-    );
+      ] });
   };
 
   const handleCancelBooking = (bookingId: string) => {
-    Alert.alert(
-      t('gestion.bookings.cancelTitle'),
-      t('gestion.bookings.cancelMessage'),
-      [
+    void alerts.showAlert({ title: t('gestion.bookings.cancelTitle'), message: t('gestion.bookings.cancelMessage'), buttons: [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('gestion.bookings.cancelYes'),
           style: 'destructive',
           onPress: () => handleUpdateStatus(bookingId, 'CANCELLED'),
         },
-      ]
-    );
+      ] });
   };
 
   const filteredBookings = bookings.filter((b) => {
@@ -213,7 +206,7 @@ export default function SpaceBookingsManagementScreen() {
 
         <View style={styles.cardFooter}>
           <View style={[styles.statusBadge, { backgroundColor: statusConfig.bgColor }]}>
-            <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
+            <StatusIcon size={COMPONENT.pill.iconSize} color={statusConfig.color} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
               {statusConfig.label}
             </Text>
@@ -232,7 +225,7 @@ export default function SpaceBookingsManagementScreen() {
         </View>
 
         {item.status === 'PENDING' && (
-          <View style={styles.quickActions}>
+          <View style={[styles.quickActions, { borderTopColor: colors.borderColor }]}>
             <TouchableOpacity
               style={[styles.quickAction, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}
               onPress={() => handleConfirmBooking(item.id)}
@@ -362,15 +355,15 @@ const styles = StyleSheet.create({
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.md,
+    gap: COMPONENT.pill.gap,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
     borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.full,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
   filterChipText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
   headerActions: {
     flexDirection: 'row',
@@ -449,15 +442,15 @@ const styles = StyleSheet.create({
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.full,
+    gap: COMPONENT.pill.gap,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
 
   statusText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
 
   cardMeta: {
@@ -481,7 +474,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     paddingTop: SPACING.md,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: 'transparent',
   },
 
   quickAction: {

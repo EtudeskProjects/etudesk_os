@@ -138,7 +138,7 @@ export const UPLOAD_LIMITS = {
   MAX_FILES_PER_REQUEST: 5,
   MAX_FILE_SIZE_BYTES: 20 * 1024 * 1024,
   MAX_FILE_SIZE_MB: 20,
-  MAX_DOCUMENTS_PER_TALENT: 100,
+  MAX_DOCUMENTS_PER_TALENT: 20,
 } as const;
 
 export interface UpdateDocumentParams {

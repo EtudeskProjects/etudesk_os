@@ -10,12 +10,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Platform,
   Keyboard,
-  Alert,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -31,6 +29,8 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from 
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../contexts/I18nContext';
 import { formatDate, formatTime } from '../../utils/date';
+import { showToastGlobal } from '../ui';
+import { Input } from '../ui';
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 
@@ -71,7 +71,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const { colors, isDark } = useTheme();
   const { t } = useTranslation();
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<any>(null);
 
   const [messageText, setMessageText] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -98,16 +98,17 @@ export function ChatInput({
 
         // Check file size
         if (file.size && file.size > MAX_FILE_SIZE) {
-          Alert.alert(
-            t('chat.fileTooLarge'),
-            t('chat.fileSizeLimit', { size: formatFileSize(MAX_FILE_SIZE) })
-          );
+          showToastGlobal({
+            type: 'warning',
+            title: t('chat.fileTooLarge'),
+            message: t('chat.fileSizeLimit', { size: formatFileSize(MAX_FILE_SIZE) }),
+          });
           return;
         }
 
         // Check max attachments
         if (attachments.length >= 3) {
-          Alert.alert(t('chat.limitReached'), t('chat.maxFiles'));
+          showToastGlobal({ type: 'warning', title: t('chat.limitReached'), message: t('chat.maxFiles') });
           return;
         }
 
@@ -123,7 +124,7 @@ export function ChatInput({
       }
     } catch (error) {
       console.error('Error picking file:', error);
-      Alert.alert(t('common.error'), t('chat.fileSelectError'));
+      showToastGlobal({ type: 'error', title: t('common.error'), message: t('chat.fileSelectError') });
     }
   };
 
@@ -296,17 +297,21 @@ export function ChatInput({
         )}
 
         {/* Text input */}
-        <TextInput
+        <Input
           ref={inputRef}
-          style={[styles.textInput, { backgroundColor: colors.gray100, color: colors.textPrimary }]}
-          placeholder={placeholder || t('chat.writeMessage')}
-          placeholderTextColor={colors.gray500}
           value={messageText}
           onChangeText={setMessageText}
           onFocus={handleTextInputFocus}
+          placeholder={placeholder || t('chat.writeMessage')}
           multiline
           maxLength={2000}
           editable={!disabled}
+          containerStyle={styles.textInputWrap}
+          inputContainerStyle={[
+            styles.textInputContainer,
+            { backgroundColor: colors.gray100, borderColor: 'transparent' },
+          ]}
+          inputStyle={[styles.textInput, { color: colors.textPrimary }]}
         />
 
         {/* Send button */}
@@ -412,13 +417,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  textInput: {
+  textInputWrap: {
     flex: 1,
+  },
+
+  textInputContainer: {
+    height: undefined,
     minHeight: 40,
-    maxHeight: 100,
+    maxHeight: 120,
+    borderRadius: BORDER.radius.md,
+  },
+
+  textInput: {
+    height: undefined,
+    minHeight: 40,
+    maxHeight: 120,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: BORDER.radius.md,
     fontSize: TYPOGRAPHY.fontSize.md,
   },
 

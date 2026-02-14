@@ -8,7 +8,6 @@ import {
     Animated,
     Image,
     Dimensions,
-    Alert,
 } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -16,6 +15,7 @@ import { CommunityActivity, ActivityComment, PollOption } from '../../types/acti
 import { SPACING, TYPOGRAPHY, BORDER, ICON, withOpacity, OPACITY } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../contexts/I18nContext';
+import { alertsGlobal } from '../../contexts/AlertContext';
 import {
     Heart,
     MessageCircle,
@@ -241,7 +241,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
         // Cancel option - always shown
         options.push({ text: t('common.cancel'), style: 'cancel' });
 
-        Alert.alert('Options', undefined, options);
+        void alertsGlobal.showAlert({ title: 'Options', message: undefined, buttons: options as any });
     }, [isAuthor, isAdmin, isPinned, onEdit, onPin, onDelete, activity]);
 
     return (

@@ -8,7 +8,6 @@ import {
   FlatList,
   ImageBackground,
   Image,
-  TextInput,
   Modal,
   ActivityIndicator,
   RefreshControl,
@@ -30,10 +29,10 @@ import {
   SignalHigh,
   Tag,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, withOpacity, OPACITY } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, withOpacity, OPACITY, COMPONENT } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
-import { Header, FooterNav } from '../../../src/components/ui';
+import { Header, FooterNav, IconButton, Input } from '../../../src/components/ui';
 import { formatRelativeTime, formatDeadline } from '../../../src/utils/date';
 import { formatCompactNumber } from '../../../src/utils/number';
 import type {
@@ -576,6 +575,8 @@ export default function ExploreScreen() {
             renderItem={renderOpportunityItem}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListFooterComponent={renderFooter}
@@ -591,6 +592,8 @@ export default function ExploreScreen() {
             renderItem={renderSpaceItem}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListFooterComponent={renderFooter}
@@ -606,6 +609,8 @@ export default function ExploreScreen() {
             renderItem={renderCommunityItem}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListFooterComponent={renderFooter}
@@ -627,36 +632,33 @@ export default function ExploreScreen() {
       <Header
         title={t('explore.title')}
         rightContent={
-          <TouchableOpacity
-            style={styles.headerButton}
-            activeOpacity={0.8}
+          <IconButton
             onPress={() => router.push('/settings/bookmarks' as any)}
-          >
-            <Bookmark size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
+            icon={<Bookmark size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel={t('bookmarks.title')}
+          />
         }
       />
 
       {/* Search Bar + Filter Button */}
       <View style={styles.searchContainer}>
-        <View style={[styles.searchBar, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}>
-          <Search size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.textPrimary }]}
-            placeholder={t('common.search')}
-            placeholderTextColor={colors.textDisabled}
-            value={searchQuery}
-            onChangeText={handleSearchChange}
-            returnKeyType="search"
-            autoCorrect={false}
-            autoCapitalize="none"
-          />
-          {searchQuery.length > 0 && (
+        <Input
+          placeholder={t('common.search')}
+          value={searchQuery}
+          onChangeText={handleSearchChange}
+          returnKeyType="search"
+          autoCorrect={false}
+          autoCapitalize="none"
+          containerStyle={{ flex: 1 }}
+          inputContainerStyle={[styles.searchBar, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
+          inputStyle={[styles.searchInput, { color: colors.textPrimary, paddingHorizontal: 0 }]}
+          leftIcon={<Search size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+          rightIcon={searchQuery.length > 0 ? (
             <TouchableOpacity onPress={() => handleSearchChange('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <X size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
             </TouchableOpacity>
-          )}
-        </View>
+          ) : undefined}
+        />
         <TouchableOpacity
           style={[
             styles.filterButton,
@@ -710,11 +712,7 @@ const styles = StyleSheet.create({
   },
 
   headerButton: {
-    width: LAYOUT.inputHeightSm,
-    height: LAYOUT.inputHeightSm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: BORDER.radius.sm,
+    // replaced by unified <IconButton />
   },
 
   // Search
@@ -957,13 +955,13 @@ const styles = StyleSheet.create({
   },
 
   tagSmall: {
-    paddingVertical: 3,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
 
   tagSmallText: {
-    fontSize: TYPOGRAPHY.fontSize.xxs,
+    fontSize: COMPONENT.pill.fontSize,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
 
@@ -982,14 +980,14 @@ const styles = StyleSheet.create({
   },
 
   verifiedBadge: {
-    paddingVertical: 2,
-    paddingHorizontal: SPACING.xs,
-    borderRadius: BORDER.radius.xs,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
 
   verifiedBadgeText: {
-    fontSize: TYPOGRAPHY.fontSize.xxs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
 
   // Empty State

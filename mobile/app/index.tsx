@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SPACING, TYPOGRAPHY, BORDER } from '../src/constants/theme';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useTheme } from '../src/hooks/useTheme';
+import { Button } from '../src/components/ui';
 
 const { height, width } = Dimensions.get('window');
 
@@ -35,6 +37,7 @@ export default function SplashScreen() {
   const router = useRouter();
   const { status, isLoading, needsOnboarding } = useAuth();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
@@ -130,9 +133,15 @@ export default function SplashScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.content}>
+      <View
+        style={[
+          styles.content,
+          // Android gesture/3-button bars often report 0 inset; keep a generous bottom gutter.
+          { paddingBottom: Math.max(SPACING.xxl, insets.bottom + SPACING.xl) },
+        ]}
+      >
         <View style={styles.slideContent}>
-          <View style={[styles.imageContainer, { shadowColor: colors.gray900 }]}>
+          <View style={styles.imageContainer}>
             <Image
               source={slide.image}
               style={styles.image}
@@ -157,15 +166,13 @@ export default function SplashScreen() {
           ))}
         </View>
 
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.primary }]}
+        <Button
+          title={isLastSlide ? 'Continuer' : 'Suivant'}
           onPress={handleNext}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>
-            {isLastSlide ? 'Continuer' : 'Suivant'}
-          </Text>
-        </TouchableOpacity>
+          size="lg"
+          fullWidth
+          style={styles.button}
+        />
       </View>
     </View>
   );
@@ -207,13 +214,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
     borderRadius: BORDER.radius.xl,
     overflow: 'hidden',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
   },
 
   image: {
@@ -254,15 +254,6 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: BORDER.radius.sm,
-  },
-
-  buttonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    marginTop: SPACING.sm,
   },
 });

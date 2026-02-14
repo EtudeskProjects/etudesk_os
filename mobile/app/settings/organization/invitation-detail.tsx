@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,6 +29,7 @@ import {
   ORGANIZATION_ROLE_LABELS,
   PERMISSION_LABELS,
 } from '../../../src/types/models';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 const getRoleIcon = (role: OrganizationRole) => {
   switch (role) {
@@ -66,6 +66,7 @@ export default function InvitationDetailScreen() {
   const invitation = invitations.find(i => i.id === id);
   const [isResending, setIsResending] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const alerts = useAlert();
 
   if (!invitation) {
     return (
@@ -102,19 +103,16 @@ export default function InvitationDetailScreen() {
     setIsResending(true);
     try {
       await resendInvitation(invitation.id);
-      Alert.alert('Succès', 'L\'invitation a été renvoyée avec une nouvelle date d\'expiration');
+      void alerts.alert('Succès', 'L\'invitation a été renvoyée avec une nouvelle date d\'expiration');
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de renvoyer l\'invitation');
+      void alerts.alert('Erreur', 'Impossible de renvoyer l\'invitation');
     } finally {
       setIsResending(false);
     }
   };
 
   const handleCancel = () => {
-    Alert.alert(
-      'Annuler l\'invitation',
-      `Voulez-vous vraiment annuler l'invitation envoyée à ${invitation.email} ?`,
-      [
+    void alerts.showAlert({ title: 'Annuler l\'invitation', message: `Voulez-vous vraiment annuler l'invitation envoyée à ${invitation.email} ?`, buttons: [
         { text: 'Non', style: 'cancel' },
         {
           text: 'Oui, annuler',
@@ -125,14 +123,13 @@ export default function InvitationDetailScreen() {
               await cancelInvitation(invitation.id);
               router.back();
             } catch (error) {
-              Alert.alert('Erreur', 'Impossible d\'annuler l\'invitation');
+              void alerts.alert('Erreur', 'Impossible d\'annuler l\'invitation');
             } finally {
               setIsCancelling(false);
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const RoleIcon = getRoleIcon(invitation.role);

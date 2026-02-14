@@ -1,8 +1,9 @@
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { api } from './api';
 import i18n from '../i18n';
+import { alertsGlobal } from '../contexts/AlertContext';
 
 export type ImageType =
   | 'avatar'           // Profile photos (512x512, 1:1, 80% quality)
@@ -82,11 +83,7 @@ export interface PickImageOptions {
 export async function requestImagePermissions(): Promise<boolean> {
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (status !== 'granted') {
-    Alert.alert(
-      i18n.t('imageService.permissionRequired'),
-      i18n.t('imageService.photoPermission'),
-      [{ text: 'OK' }]
-    );
+    void alertsGlobal.alert(i18n.t('imageService.permissionRequired'), i18n.t('imageService.photoPermission'));
     return false;
   }
   return true;
@@ -95,11 +92,7 @@ export async function requestImagePermissions(): Promise<boolean> {
 export async function requestCameraPermissions(): Promise<boolean> {
   const { status } = await ImagePicker.requestCameraPermissionsAsync();
   if (status !== 'granted') {
-    Alert.alert(
-      i18n.t('imageService.permissionRequired'),
-      i18n.t('imageService.cameraPermission'),
-      [{ text: 'OK' }]
-    );
+    void alertsGlobal.alert(i18n.t('imageService.permissionRequired'), i18n.t('imageService.cameraPermission'));
     return false;
   }
   return true;
@@ -208,11 +201,7 @@ export async function pickImage(options: PickImageOptions): Promise<OptimizedIma
     return await optimizeImage(asset.uri, type, includeBase64);
   } catch (error) {
     console.error('[ImageService] Error picking image:', error);
-    Alert.alert(
-      i18n.t('common.error'),
-      i18n.t('imageService.pickError'),
-      [{ text: 'OK' }]
-    );
+    void alertsGlobal.error(i18n.t('common.error'), i18n.t('imageService.pickError'));
     return null;
   }
 }
@@ -241,21 +230,17 @@ export async function takePhoto(options: PickImageOptions): Promise<OptimizedIma
     return await optimizeImage(asset.uri, type, includeBase64);
   } catch (error) {
     console.error('[ImageService] Error taking photo:', error);
-    Alert.alert(
-      i18n.t('common.error'),
-      i18n.t('imageService.captureError'),
-      [{ text: 'OK' }]
-    );
+    void alertsGlobal.error(i18n.t('common.error'), i18n.t('imageService.captureError'));
     return null;
   }
 }
 
 export async function pickOrTakeImage(options: PickImageOptions): Promise<OptimizedImage | null> {
   return new Promise((resolve) => {
-    Alert.alert(
-      i18n.t('imageService.chooseImage'),
-      i18n.t('imageService.chooseImageMessage'),
-      [
+    void alertsGlobal.showAlert({
+      title: i18n.t('imageService.chooseImage'),
+      message: i18n.t('imageService.chooseImageMessage'),
+      buttons: [
         {
           text: i18n.t('imageService.takePhoto'),
           onPress: async () => {
@@ -275,8 +260,8 @@ export async function pickOrTakeImage(options: PickImageOptions): Promise<Optimi
           style: 'cancel',
           onPress: () => resolve(null),
         },
-      ]
-    );
+      ],
+    });
   });
 }
 

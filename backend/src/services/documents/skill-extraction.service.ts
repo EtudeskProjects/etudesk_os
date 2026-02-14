@@ -32,7 +32,7 @@ export async function extractAndSaveSkills(
     for (const skill of extractedSkills) {
       if (!skill.name || !skill.type || !isValidSkillType(skill.type)) continue;
 
-      const canonicalName = toTitleCase(skill.name.trim());
+      const canonicalName = normalizeSkillName(skill.name);
 
       // Check if talent already has this skill
       const existing = await client.query(
@@ -88,13 +88,60 @@ export async function extractAndSaveSkills(
   return result;
 }
 
+const SMALL_WORDS = new Set([
+  'de', 'du', 'des', 'le', 'la', 'les', 'et', 'ou', 'en', 'à', 'au', 'aux', 'pour', 'par', 'sur', 'avec',
+  'd', 'l',
+]);
+
+const KNOWN_ACRONYMS = new Set([
+  'IA', 'AI', 'BI', 'ML', 'DL', 'NLP', 'SQL', 'ETL', 'API', 'REST', 'CRM', 'ERP', 'SAP',
+  'AWS', 'GCP', 'AZURE', 'UI', 'UX', 'SEO', 'SEM', 'KPI', 'OKR', 'R&D',
+  'C', 'C#', 'C++', 'R',
+]);
+
 /**
- * Convert a string to Title Case (e.g. "gestion de projet" → "Gestion De Projet")
+ * Normalize skill casing for display/search:
+ * - avoid forced Title Case
+ * - keep natural French casing
+ * - preserve acronyms (IA, R&D, SQL, API...)
  */
-function toTitleCase(str: string): string {
-  return str.replace(/\w\S*/g, (word) =>
-    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-  );
+function normalizeSkillName(input: string): string {
+  const text = input.replace(/\s+/g, ' ').trim();
+  if (!text) return text;
+
+  const words = text.split(' ');
+  return words
+    .map((word, index) => normalizeWord(word, index))
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeWord(word: string, index: number): string {
+  const match = word.match(/^([^A-Za-zÀ-ÖØ-öø-ÿ0-9]*)([A-Za-zÀ-ÖØ-öø-ÿ0-9][A-Za-zÀ-ÖØ-öø-ÿ0-9&+.#/-]*)([^A-Za-zÀ-ÖØ-öø-ÿ0-9]*)$/);
+  if (!match) return word;
+
+  const [, prefix, core, suffix] = match;
+  const upperCore = core.toUpperCase();
+  const lowerCore = core.toLowerCase();
+
+  if (KNOWN_ACRONYMS.has(upperCore)) {
+    return `${prefix}${upperCore}${suffix}`;
+  }
+
+  if (/^[A-Z0-9&+.#/-]{2,}$/.test(core) && /[A-Z]/.test(core)) {
+    return `${prefix}${core}${suffix}`;
+  }
+
+  if (index > 0 && SMALL_WORDS.has(lowerCore)) {
+    return `${prefix}${lowerCore}${suffix}`;
+  }
+
+  if (index === 0) {
+    return `${prefix}${lowerCore.charAt(0).toUpperCase()}${lowerCore.slice(1)}${suffix}`;
+  }
+
+  return `${prefix}${lowerCore}${suffix}`;
 }
 
 function mapProficiencyHint(hint?: string): string {

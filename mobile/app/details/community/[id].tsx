@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -20,7 +20,7 @@ import {
   Shield,
   Settings,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -33,6 +33,7 @@ import {
   ORGANIZATION_TYPE_LABELS,
 } from '../../../src/types/models';
 import { communityService, bookmarkService, MembershipStatus } from '../../../src/services';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 const getInitials = (name: string): string => {
   return name
@@ -59,6 +60,7 @@ export default function CommunityDetailScreen() {
   const [membersPreview, setMembersPreview] = useState<CommunityMemberPreview[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const alerts = useAlert();
 
   // Only show manage button if owner AND connected as organization
   const canManageCommunity = isOwner && currentSpace === 'organization';
@@ -97,7 +99,7 @@ export default function CommunityDetailScreen() {
       }
     } catch (error: any) {
       console.error('Error loading community:', error);
-      Alert.alert(t('common.error'), t('community.loadError'));
+      void alerts.alert(t('common.error'), t('community.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -156,13 +158,10 @@ export default function CommunityDetailScreen() {
   const handleJoin = () => {
     if (membershipStatus?.is_member) {
       // Already a member - could navigate to community feed/chat
-      Alert.alert(t('common.information'), t('community.alreadyMember'));
+      void alerts.alert(t('common.information'), t('community.alreadyMember'));
     } else if (membershipStatus?.has_pending_request) {
       // Cancel pending request
-      Alert.alert(
-        t('community.cancelRequestTitle'),
-        t('community.cancelRequestConfirm'),
-        [
+      void alerts.showAlert({ title: t('community.cancelRequestTitle'), message: t('community.cancelRequestConfirm'), buttons: [
           { text: t('common.no'), style: 'cancel' },
           {
             text: t('community.cancelRequestYes'),
@@ -171,14 +170,13 @@ export default function CommunityDetailScreen() {
               try {
                 await communityService.cancelRequest(id as string);
                 setMembershipStatus(prev => prev ? { ...prev, has_pending_request: false } : null);
-                Alert.alert(t('common.success'), t('community.requestCancelled'));
+                void alerts.alert(t('common.success'), t('community.requestCancelled'));
               } catch (error) {
-                Alert.alert(t('common.error'), t('community.cancelRequestError'));
+                void alerts.alert(t('common.error'), t('community.cancelRequestError'));
               }
             },
           },
-        ]
-      );
+        ] });
     } else {
       // Navigate to join flow
       router.push(`/details/community/join/${id}`);
@@ -326,11 +324,11 @@ export default function CommunityDetailScreen() {
             {community.type && (
               <View style={[styles.tag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 {community.type === 'ONLINE' ? (
-                  <Monitor size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  <Monitor size={COMPONENT.pill.iconSize} color={colors.primary} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
                 ) : community.type === 'HYBRID' ? (
-                  <MapPin size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  <MapPin size={COMPONENT.pill.iconSize} color={colors.primary} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
                 ) : (
-                  <Globe size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  <Globe size={COMPONENT.pill.iconSize} color={colors.primary} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
                 )}
                 <Text style={[styles.tagText, { color: colors.primary, marginLeft: 4 }]}>
                   {community.type === 'ONLINE' ? t('community.types.online') : community.type === 'HYBRID' ? t('community.types.hybrid') : t('community.types.offline')}
@@ -555,7 +553,7 @@ export default function CommunityDetailScreen() {
                           </Text>
                           {member.role === 'ADMIN' && (
                             <View style={[styles.adminBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-                              <Shield size={10} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                              <Shield size={COMPONENT.pill.iconSize} color={colors.primary} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
                               <Text style={[styles.adminBadgeText, { color: colors.primary }]}>Admin</Text>
                             </View>
                           )}
@@ -834,13 +832,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   orgTag: {
-    paddingVertical: 2,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
   orgTagText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
   orgLocation: {
     fontSize: TYPOGRAPHY.fontSize.sm,
@@ -861,13 +859,13 @@ const styles = StyleSheet.create({
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
   tagText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
   // Meta Card
   metaCard: {
@@ -910,13 +908,13 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   categoryTag: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: BORDER.radius.xs,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
   categoryTagText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
   // Sections
   section: {
@@ -1087,14 +1085,14 @@ const styles = StyleSheet.create({
   adminBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: BORDER.radius.full,
+    gap: COMPONENT.pill.gap,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
   adminBadgeText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
   memberItemLocation: {
     flexDirection: 'row',

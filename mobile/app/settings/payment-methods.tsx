@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
@@ -22,6 +21,7 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../s
 import { Button, Input } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { paymentService, PaymentMethod, PaymentProvider, PAYMENT_PROVIDERS } from '../../src/services/paymentService';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 export default function PaymentMethodsScreen() {
   const router = useRouter();
@@ -52,6 +52,7 @@ export default function PaymentMethodsScreen() {
       setIsRefreshing(false);
     }
   }, []);
+  const alerts = useAlert();
 
   useEffect(() => {
     fetchPaymentMethods();
@@ -151,15 +152,12 @@ export default function PaymentMethodsScreen() {
         setPaymentMethods(response.data);
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue.');
+      void alerts.alert('Erreur', 'Une erreur est survenue.');
     }
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert(
-      'Supprimer',
-      'Voulez-vous vraiment supprimer cette méthode de paiement ?',
-      [
+    void alerts.showAlert({ title: 'Supprimer', message: 'Voulez-vous vraiment supprimer cette méthode de paiement ?', buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
@@ -171,12 +169,11 @@ export default function PaymentMethodsScreen() {
                 setPaymentMethods(response.data);
               }
             } catch (error) {
-              Alert.alert('Erreur', 'Une erreur est survenue.');
+              void alerts.alert('Erreur', 'Une erreur est survenue.');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const getProviderInfo = (providerId: PaymentProvider) => {

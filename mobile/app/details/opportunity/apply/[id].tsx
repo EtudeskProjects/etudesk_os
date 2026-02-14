@@ -10,7 +10,6 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -140,6 +139,7 @@ export default function ApplyOpportunityScreen() {
       setCurrentStep('success');
     },
   });
+  const alerts = useAlert();
 
   // Convenience getters
   const answers = form.getValue('answers');
@@ -163,38 +163,30 @@ export default function ApplyOpportunityScreen() {
       try {
         const kycRes = await kycService.getStatus();
         if (!kycRes?.data || kycRes.data.status !== 'VERIFIED') {
-          Alert.alert(
-            'Vérification requise',
-            'Tu dois vérifier ton identité avant de postuler.',
-            [
+          void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant de postuler.', buttons: [
               { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
               { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
-            ]
-          );
+            ] });
           setIsLoading(false);
           return;
         }
       } catch {
-        Alert.alert(
-          'Vérification requise',
-          'Tu dois vérifier ton identité avant de postuler.',
-          [
+        void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant de postuler.', buttons: [
             { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
             { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
-          ]
-        );
+          ] });
         setIsLoading(false);
         return;
       }
 
       const [oppResponse, profileResponse, cvsResponse] = await Promise.all([
         opportunityService.getById(id),
-        talentService.getMyTalentObject().catch(() => null),
+        talentService.getMyTalentObject({ includeHidden: false }).catch(() => null),
         documentService.listDocuments({ type: 'CV' }).catch(() => null),
       ]);
 
       if (!oppResponse?.data) {
-        Alert.alert('Erreur', 'Impossible de charger cette opportunité.');
+        void alerts.alert('Erreur', 'Impossible de charger cette opportunité.');
         router.back();
         return;
       }
@@ -223,7 +215,7 @@ export default function ApplyOpportunityScreen() {
       }
     } catch (error) {
       console.error('Error loading apply data:', error);
-      Alert.alert('Erreur', 'Impossible de charger les données.');
+      void alerts.alert('Erreur', 'Impossible de charger les données.');
       router.back();
     } finally {
       setIsLoading(false);
@@ -242,7 +234,7 @@ export default function ApplyOpportunityScreen() {
         const maxSize = 20 * 1024 * 1024; // 20MB max
 
         if (doc.size && doc.size > maxSize) {
-          Alert.alert('Fichier trop volumineux', 'Le CV ne doit pas dépasser 20 MB.');
+          void alerts.alert('Fichier trop volumineux', 'Le CV ne doit pas dépasser 20 MB.');
           return;
         }
 
@@ -257,7 +249,7 @@ export default function ApplyOpportunityScreen() {
         form.setValue('selectedExistingCV', null);
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la sélection du fichier.');
+      void alerts.alert('Erreur', 'Une erreur est survenue lors de la sélection du fichier.');
     }
   };
 
@@ -453,7 +445,7 @@ export default function ApplyOpportunityScreen() {
 
           {/* Skills */}
           {profile?.skills && profile.skills.length > 0 && (
-            <View style={styles.profileTagsSection}>
+            <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
               <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Compétences</Text>
               <View style={styles.profileTagsRow}>
                 {profile.skills.slice(0, 8).map((skill, i) => (
@@ -470,7 +462,7 @@ export default function ApplyOpportunityScreen() {
 
           {/* Sectors */}
           {profile?.sectors && profile.sectors.length > 0 && (
-            <View style={styles.profileTagsSection}>
+            <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
               <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Secteurs</Text>
               <View style={styles.profileTagsRow}>
                 {profile.sectors.map((s, i) => (
@@ -484,7 +476,7 @@ export default function ApplyOpportunityScreen() {
 
           {/* Documents */}
           {profile?.documents_metadata && profile.documents_metadata.length > 0 && (
-            <View style={styles.profileTagsSection}>
+            <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
               <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Documents ({profile.documents_metadata.length})</Text>
               {profile.documents_metadata.slice(0, 3).map((doc) => (
                 <View key={doc.id} style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: SPACING.xs }}>
@@ -1124,7 +1116,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     paddingTop: SPACING.md,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: 'transparent',
   },
   profileTagsLabel: {
     fontSize: TYPOGRAPHY.fontSize.xs,

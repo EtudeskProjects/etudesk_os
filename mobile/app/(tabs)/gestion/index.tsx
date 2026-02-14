@@ -33,19 +33,30 @@ import {
   TrendingUp,
   FileText,
   Search,
+  Heart,
+  FolderOpen,
+  Coins,
+  Gem,
+  User,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, ThemeColors } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
-import { Header, FooterNav } from '../../../src/components/ui';
+import { Header, FooterNav, Button, IconButton } from '../../../src/components/ui';
 import { CreateOfferModal } from '../../../src/components/CreateOfferModal';
 import { formatCompactNumber } from '../../../src/utils/number';
 import {
   opportunityService,
   communityService,
   spaceService,
+  orgTalentService,
+  orgDocumentService,
+  billingService,
+  dailyObjectiveService,
+  type DailyObjective,
 } from '../../../src/services';
+import { notificationService, type Notification as EcoNotification } from '../../../src/services/notificationService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -67,6 +78,8 @@ interface QuickStats {
   spaces: number;
   applications: number;
   members: number;
+  talents: number;
+  documents: number;
 }
 
 interface Activity {
@@ -81,6 +94,13 @@ export default function GestionScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const PASTEL_COLORS = getPastelColors(colors);
+  const CARD_THEMES = {
+    talent: { bg: colors.cardTalent, icon: colors.cardTalentAccent, text: colors.cardTalentText },
+    org: { bg: colors.cardOrg, icon: colors.cardOrgAccent, text: colors.cardOrgText },
+    opportunity: { bg: colors.cardOpportunity, icon: colors.cardOpportunityAccent, text: colors.cardOpportunityText },
+    community: { bg: colors.cardCommunity, icon: colors.cardCommunityAccent, text: colors.cardCommunityText },
+    space: { bg: colors.cardSpace, icon: colors.cardSpaceAccent, text: colors.cardSpaceText },
+  };
   const { t } = useI18n();
   const { selectedOrg, isOrganizationSpace } = useSpace();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -96,9 +116,14 @@ export default function GestionScreen() {
     spaces: 0,
     applications: 0,
     members: 0,
+    talents: 0,
+    documents: 0,
   });
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
-  const [dailyInsight, setDailyInsight] = useState<string>('');
+  const [dailyObjective, setDailyObjective] = useState<DailyObjective | null>(null);
+  const [isObjectiveExpanded, setIsObjectiveExpanded] = useState(false);
+  const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const [notifications, setNotifications] = useState<EcoNotification[]>([]);
 
   // Get greeting based on time of day
   const getGreeting = (): { text: string; icon: typeof Sun } => {
@@ -131,11 +156,19 @@ export default function GestionScreen() {
     }
 
     try {
-      const [opportunitiesRes, communitiesRes, spacesRes] = await Promise.allSettled([
+      const [opportunitiesRes, communitiesRes, spacesRes, talentCountRes, docStatsRes, balanceRes] = await Promise.allSettled([
         opportunityService.getByOrganization(selectedOrg.id, { limit: 100 }),
         communityService.getByOrganization(selectedOrg.id, { limit: 100 }),
         spaceService.getByOrganization(selectedOrg.id, { limit: 100 }),
+        orgTalentService.getTalentCount(selectedOrg.id),
+        orgDocumentService.getDocumentStats(selectedOrg.id),
+        billingService.getBalance('ORGANIZATION', selectedOrg.id),
       ]);
+
+      if (balanceRes.status === 'fulfilled') {
+        const bal = balanceRes.value?.data?.balance_credits ?? null;
+        setCreditBalance(typeof bal === 'number' ? bal : null);
+      }
 
       const opportunities = opportunitiesRes.status === 'fulfilled' && opportunitiesRes.value.data
         ? opportunitiesRes.value.data : [];
@@ -147,12 +180,17 @@ export default function GestionScreen() {
       const totalApplications = opportunities.reduce((sum, o) => sum + (o.applications_count || 0), 0);
       const totalMembers = communities.reduce((sum, c) => sum + (c.members_count || 0), 0);
 
+      const talentCount = talentCountRes.status === 'fulfilled' ? talentCountRes.value : 0;
+      const docTotal = docStatsRes.status === 'fulfilled' ? docStatsRes.value.total : 0;
+
       setStats({
         opportunities: opportunities.length,
         communities: communities.length,
         spaces: spaces.length,
         applications: totalApplications,
         members: totalMembers,
+        talents: talentCount,
+        documents: docTotal,
       });
 
       // Build recent activities
@@ -181,16 +219,6 @@ export default function GestionScreen() {
       });
 
       setRecentActivities(activities.slice(0, 5));
-
-      // Objectif du jour (message pertinent pour les organisations)
-      const activeOpps = opportunities.filter(o => o.status === 'OPEN').length;
-      if (totalApplications > 0) {
-        setDailyInsight(`Priorisez l'examen des ${totalApplications} candidature(s) en attente pour ne pas faire attendre les talents.`);
-      } else if (activeOpps > 0) {
-        setDailyInsight(`Vous avez ${activeOpps} opportunité(s) ouverte(s). Pensez à les promouvoir auprès de vos communautés pour maximiser les candidatures.`);
-      } else {
-        setDailyInsight('Publiez votre première opportunité, créez une communauté ou ajoutez un espace pour commencer à attirer des talents.');
-      }
     } catch (error) {
       console.error('[Gestion] Error loading data:', error);
     } finally {
@@ -199,20 +227,118 @@ export default function GestionScreen() {
     }
   }, [selectedOrg?.id]);
 
+  const loadNotifications = useCallback(async () => {
+    try {
+      const response: any = await notificationService.getNotifications({ limit: 5 });
+      const notifs = response?.data ?? [];
+      if (Array.isArray(notifs)) {
+        setNotifications(notifs);
+      }
+    } catch (error) {
+      console.error('[Gestion] Failed to load notifications:', error);
+    }
+  }, []);
+
+  const loadDailyObjective = useCallback(async () => {
+    if (!selectedOrg?.id) return;
+    try {
+      const response = await dailyObjectiveService.getOrganizationObjective(selectedOrg.id);
+      if (response.data) {
+        setDailyObjective(response.data);
+        setIsObjectiveExpanded(false);
+      }
+    } catch (error) {
+      console.error('[Gestion] Failed to load daily objective:', error);
+    }
+  }, [selectedOrg?.id]);
+
+  const formatRelativeTime = (dateStr: string): string => {
+    const now = Date.now();
+    const diff = now - new Date(dateStr).getTime();
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return "À l'instant";
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `${h}h`;
+    const d = Math.floor(h / 24);
+    if (d < 7) return `${d}j`;
+    return `${Math.floor(d / 7)} sem.`;
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'APPLICATION': return CheckCircle;
+      case 'OPPORTUNITY': return Briefcase;
+      case 'COMMUNITY': return Users;
+      case 'SYSTEM': return AlertCircle;
+      case 'SPACE': return MapPin;
+      default: return Bell;
+    }
+  };
+
+  const getNotificationColor = (type: string) => {
+    switch (type) {
+      case 'APPLICATION': return { bg: CARD_THEMES.talent.bg, icon: CARD_THEMES.talent.icon };
+      case 'OPPORTUNITY': return { bg: CARD_THEMES.opportunity.bg, icon: CARD_THEMES.opportunity.icon };
+      case 'COMMUNITY': return { bg: CARD_THEMES.community.bg, icon: CARD_THEMES.community.icon };
+      case 'SYSTEM': return { bg: CARD_THEMES.space.bg, icon: CARD_THEMES.space.icon };
+      case 'SPACE': return { bg: CARD_THEMES.space.bg, icon: CARD_THEMES.space.icon };
+      default: return { bg: colors.gray100, icon: colors.textSecondary };
+    }
+  };
+
+  // Truncate objective to 200 characters for "Voir plus"
+  const OBJECTIVE_TRUNCATE_LENGTH = 200;
+  const getDisplayedObjective = (): string => {
+    if (!dailyObjective?.objective) {
+      return 'Publiez une opportunité, créez une communauté ou ajoutez un espace pour commencer à attirer des talents.';
+    }
+    if (isObjectiveExpanded || dailyObjective.objective.length <= OBJECTIVE_TRUNCATE_LENGTH) {
+      return dailyObjective.objective;
+    }
+    return dailyObjective.objective.slice(0, OBJECTIVE_TRUNCATE_LENGTH) + '...';
+  };
+
+  const shouldShowSeeMore = dailyObjective?.objective && dailyObjective.objective.length > OBJECTIVE_TRUNCATE_LENGTH;
+
   useEffect(() => {
     loadOrganizationData();
-  }, [loadOrganizationData]);
+    loadNotifications();
+    loadDailyObjective();
+  }, [loadOrganizationData, loadNotifications, loadDailyObjective]);
+
+  // Auto-refresh objective when it expires
+  useEffect(() => {
+    if (!dailyObjective?.expiresAt) return;
+
+    const expiresAt = new Date(dailyObjective.expiresAt).getTime();
+    const now = Date.now();
+    const timeUntilExpiry = expiresAt - now;
+
+    if (timeUntilExpiry <= 5000) {
+      loadDailyObjective();
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      loadDailyObjective();
+    }, timeUntilExpiry);
+
+    return () => clearTimeout(timeoutId);
+  }, [dailyObjective?.expiresAt, loadDailyObjective]);
 
   useFocusEffect(
     useCallback(() => {
       loadOrganizationData();
-    }, [loadOrganizationData])
+      loadNotifications();
+      loadDailyObjective();
+    }, [loadOrganizationData, loadNotifications, loadDailyObjective])
   );
 
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
-    loadOrganizationData();
-  }, [loadOrganizationData]);
+    Promise.all([loadOrganizationData(), loadNotifications(), loadDailyObjective()]);
+  }, [loadOrganizationData, loadNotifications, loadDailyObjective]);
 
   const greeting = getGreeting();
   const GreetingIcon = greeting.icon;
@@ -220,44 +346,52 @@ export default function GestionScreen() {
   // Quick action blocks configuration for organizations
   const quickActions = [
     {
-      id: 'opportunities',
-      label: 'Opportunités',
-      icon: Briefcase,
-      color: PASTEL_COLORS.green,
-      count: stats.opportunities,
-      route: '/gestion/opportunities',
+      id: 'talents',
+      label: 'Talents',
+      icon: Gem,
+      route: '/gestion/talents',
+      count: stats.talents,
+      theme: CARD_THEMES.talent,
+    },
+    {
+      id: 'documents',
+      label: 'Documents',
+      icon: FolderOpen,
+      route: '/gestion/documents',
+      count: stats.documents,
+      theme: CARD_THEMES.opportunity,
     },
     {
       id: 'communities',
       label: 'Communautés',
       icon: Users,
-      color: PASTEL_COLORS.blue,
-      count: stats.communities,
       route: '/gestion/communities',
+      count: stats.communities,
+      theme: CARD_THEMES.community,
     },
     {
       id: 'spaces',
       label: 'Espaces',
       icon: MapPin,
-      color: PASTEL_COLORS.orange,
-      count: stats.spaces,
       route: '/gestion/spaces',
+      count: stats.spaces,
+      theme: CARD_THEMES.space,
     },
     {
-      id: 'applications',
-      label: 'Candidatures',
-      icon: FileText,
-      color: PASTEL_COLORS.purple,
-      count: stats.applications,
+      id: 'opportunities',
+      label: 'Opportunités',
+      icon: Briefcase,
       route: '/gestion/opportunities',
+      count: stats.opportunities,
+      theme: CARD_THEMES.opportunity,
     },
     {
-      id: 'members',
-      label: 'Membres',
-      icon: Users,
-      color: PASTEL_COLORS.indigo,
-      count: stats.members,
-      route: '/gestion/communities',
+      id: 'organization',
+      label: 'Mon organisation',
+      icon: Building2,
+      route: `/details/organization/${selectedOrg?.id}`,
+      count: undefined,
+      theme: CARD_THEMES.org,
     },
   ];
 
@@ -295,12 +429,10 @@ export default function GestionScreen() {
           <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
             {t('management.selectOrganization')}
           </Text>
-          <TouchableOpacity
-            style={[styles.emptyButton, { backgroundColor: colors.primary }]}
+          <Button
+            title={t('management.goToSettings')}
             onPress={() => router.push('/(tabs)/settings')}
-          >
-            <Text style={[styles.emptyButtonText, { color: colors.textOnPrimary }]}>{t('management.goToSettings')}</Text>
-          </TouchableOpacity>
+          />
         </View>
       </SafeAreaView>
     );
@@ -311,21 +443,22 @@ export default function GestionScreen() {
       <Header
         title={t('ecosystem.title')}
         rightContent={
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
-              activeOpacity={0.8}
-            >
-              <Bell size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.headerButton, { backgroundColor: colors.primary }]}
-              onPress={() => setShowCreateModal(true)}
-              activeOpacity={0.8}
-            >
-              <Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
-          </View>
+          <IconButton
+            variant="filled"
+            onPress={() => router.push('/settings/notifications')}
+            icon={<Bell size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel={t('notifications.title')}
+            style={{ backgroundColor: colors.gray100 }}
+          >
+            {(() => {
+              const unread = notifications.filter(n => !n.read_at).length;
+              return unread > 0 ? (
+                <View style={[styles.notificationBadge, { backgroundColor: colors.error }]}>
+                  <Text style={[styles.notificationBadgeText, { color: colors.textOnPrimary }]}>{unread}</Text>
+                </View>
+              ) : null;
+            })()}
+          </IconButton>
         }
       />
 
@@ -362,26 +495,48 @@ export default function GestionScreen() {
               </Text>
             </View>
 
-            {/* Objectif du jour (organisations) */}
-            <View style={[styles.insightContainer, { backgroundColor: PASTEL_COLORS.indigo.bg }]}>
+            {/* Credit Balance Banner */}
+            {creditBalance !== null && (
+              <TouchableOpacity
+                style={[styles.creditBanner, { backgroundColor: colors.surface }]}
+                onPress={() => router.push('/settings/credits' as any)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.creditBannerLeft}>
+                  <Coins size={16} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.creditBannerText, { color: colors.textPrimary }]}>
+                    {creditBalance} crédits
+                  </Text>
+                </View>
+                <Text style={[styles.creditBannerLink, { color: colors.primary }]}>
+                  Recharger
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Objectif du jour */}
+            <View style={[styles.insightContainer, { backgroundColor: CARD_THEMES.space.bg }]}>
               <View style={styles.insightHeader}>
-                <Target size={16} color={PASTEL_COLORS.indigo.icon} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.insightLabel, { color: PASTEL_COLORS.indigo.text }]}>Objectif du jour</Text>
+                <Target size={16} color={CARD_THEMES.space.icon} strokeWidth={ICON.strokeWidth} />
+                <Text style={[styles.insightLabel, { color: CARD_THEMES.space.text }]}>Objectif du jour</Text>
               </View>
               <Text style={[styles.insightText, { color: colors.textPrimary }]}>
-                {dailyInsight}
+                {getDisplayedObjective()}
+                {shouldShowSeeMore && !isObjectiveExpanded && (
+                  <Text
+                    style={[styles.seeMoreLink, { color: colors.primary }]}
+                    onPress={() => setIsObjectiveExpanded(true)}
+                  >
+                    {' '}Voir plus
+                  </Text>
+                )}
               </Text>
             </View>
 
             {/* Quick Actions Grid */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <View style={styles.sectionTitleRow}>
-                  <View style={[styles.sectionIconContainer, { backgroundColor: PASTEL_COLORS.indigo.bg }]}>
-                    <Search size={14} color={PASTEL_COLORS.indigo.icon} strokeWidth={ICON.strokeWidth} />
-                  </View>
-                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tableau de bord</Text>
-                </View>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Accès rapide</Text>
               </View>
               <View style={styles.quickActionsGrid}>
                 {quickActions.map((action) => {
@@ -389,88 +544,87 @@ export default function GestionScreen() {
                   return (
                     <TouchableOpacity
                       key={action.id}
-                      style={[styles.quickActionCard, { backgroundColor: action.color.bg }]}
+                      style={[styles.quickActionCard, { backgroundColor: action.theme.bg }]}
                       onPress={() => router.push(action.route as any)}
                       activeOpacity={0.8}
                     >
                       <View style={[styles.quickActionIconContainer, { backgroundColor: colors.surface }]}>
-                        <IconComponent size={22} color={action.color.icon} strokeWidth={ICON.strokeWidth} />
+                        <IconComponent size={22} color={action.theme.icon} strokeWidth={ICON.strokeWidth} />
                       </View>
-                      <Text style={[styles.quickActionLabel, { color: action.color.text }]} numberOfLines={2}>
+                      <Text style={[styles.quickActionLabel, { color: action.theme.text }]} numberOfLines={2}>
                         {action.label}
                       </Text>
-                      <View style={[styles.quickActionBadge, { backgroundColor: action.color.icon }]}>
-                        <Text style={[styles.quickActionBadgeText, { color: colors.textOnPrimary }]}>{formatCompactNumber(action.count)}</Text>
-                      </View>
+                      {action.count !== undefined && (
+                        <View style={[styles.quickActionBadge, { backgroundColor: action.theme.icon }]}>
+                          <Text style={[styles.quickActionBadgeText, { color: colors.textOnPrimary }]}>{formatCompactNumber(action.count)}</Text>
+                        </View>
+                      )}
                     </TouchableOpacity>
                   );
                 })}
               </View>
             </View>
 
-            {/* Create Button */}
+            {/* Action Button */}
             <TouchableOpacity
-              style={[styles.createButton, { backgroundColor: colors.primary }]}
+              style={[styles.actionButton, { backgroundColor: colors.primary }]}
               onPress={() => setShowCreateModal(true)}
               activeOpacity={0.8}
             >
               <Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.createButtonText, { color: colors.textOnPrimary }]}>Créer une offre</Text>
+              <Text style={[styles.actionButtonText, { color: colors.textOnPrimary }]}>Créer une offre</Text>
             </TouchableOpacity>
 
-            {/* Recent Activity Section */}
+            {/* Notifications Section */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <View style={styles.sectionTitleRow}>
-                  <View style={[styles.sectionIconContainer, { backgroundColor: PASTEL_COLORS.orange.bg }]}>
-                    <Bell size={14} color={PASTEL_COLORS.orange.icon} strokeWidth={ICON.strokeWidth} />
-                  </View>
-                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Activité récente</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Notifications</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/settings/notifications')}>
                   <Text style={[styles.seeMore, { color: colors.primary }]}>Voir tout</Text>
                 </TouchableOpacity>
               </View>
 
-              <View style={[styles.activitiesContainer, { backgroundColor: colors.surface }]}>
-                {recentActivities.length === 0 ? (
+              <View style={[styles.listContainer, { backgroundColor: colors.surface }]}>
+                {notifications.length === 0 ? (
                   <View style={styles.emptyStateSmall}>
                     <Bell size={40} color={colors.gray300} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
-                      Aucune activité récente
+                      Aucune notification
                     </Text>
                     <Text style={[styles.emptyStateSubtext, { color: colors.gray400 }]}>
-                      Créez des offres pour voir l'activité
+                      Vous êtes à jour !
                     </Text>
                   </View>
                 ) : (
-                  recentActivities.map((activity, index) => {
-                    const ActivityIcon = getActivityIcon(activity.type);
-                    const activityColor = getActivityColor(activity.type);
-                    const isLast = index === recentActivities.length - 1;
+                  notifications.map((notification, index) => {
+                    const NotifIcon = getNotificationIcon(notification.type);
+                    const notifColor = getNotificationColor(notification.type);
+                    const isLast = index === notifications.length - 1;
                     return (
                       <TouchableOpacity
-                        key={activity.id}
+                        key={notification.id}
                         style={[
-                          styles.activityItem,
+                          styles.listItem,
                           { borderBottomColor: colors.gray100 },
-                          isLast && styles.activityItemLast,
+                          isLast && styles.listItemLast,
                         ]}
                         activeOpacity={0.8}
                       >
-                        <View style={[styles.activityIconBox, { backgroundColor: activityColor.bg }]}>
-                          <ActivityIcon size={18} color={activityColor.icon} strokeWidth={ICON.strokeWidth} />
+                        <View style={[styles.listItemIconBox, { backgroundColor: notifColor.bg }]}>
+                          <NotifIcon size={18} color={notifColor.icon} strokeWidth={ICON.strokeWidth} />
                         </View>
-                        <View style={styles.activityContent}>
-                          <Text style={[styles.activityTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                            {activity.title}
+                        <View style={styles.listItemContent}>
+                          <Text style={[styles.listItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                            {notification.title}
                           </Text>
-                          <Text style={[styles.activityMessage, { color: colors.textSecondary }]} numberOfLines={1}>
-                            {activity.message}
+                          <Text style={[styles.listItemSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                            {notification.body}
                           </Text>
                         </View>
-                        <Text style={[styles.activityTime, { color: colors.gray400 }]}>
-                          {activity.time}
+                        <Text style={[styles.listItemTime, { color: colors.gray400 }]}>
+                          {formatRelativeTime(notification.created_at)}
                         </Text>
                       </TouchableOpacity>
                     );
@@ -489,7 +643,7 @@ export default function GestionScreen() {
         isVisible={showCreateModal}
         onClose={() => setShowCreateModal(false)}
       />
-      <FooterNav />
+      <FooterNav activeTab="gestion" />
     </SafeAreaView>
   );
 }
@@ -545,6 +699,72 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
 
+  // Organization Profile Card
+  orgCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: BORDER.radius.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+
+  orgCardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: BORDER.radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  orgCardContent: {
+    flex: 1,
+    marginLeft: SPACING.sm,
+    marginRight: SPACING.xs,
+  },
+
+  orgCardName: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+  },
+
+  orgCardType: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    marginTop: 2,
+  },
+
+  orgCardDescription: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    marginTop: SPACING.xs,
+    lineHeight: TYPOGRAPHY.fontSize.xs * 1.4,
+  },
+
+  // Credit Balance Banner
+  creditBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: BORDER.radius.md,
+    padding: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+
+  creditBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+
+  creditBannerText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+  },
+
+  creditBannerLink: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+
   // Insight Container
   insightContainer: {
     borderRadius: BORDER.radius.md,
@@ -567,6 +787,11 @@ const styles = StyleSheet.create({
   insightText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     lineHeight: TYPOGRAPHY.fontSize.sm * 1.5,
+  },
+
+  seeMoreLink: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
   // Section
@@ -640,54 +865,54 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: SPACING.sm,
     right: SPACING.sm,
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
+    minWidth: SPACING.xl,
+    height: SPACING.xl,
+    borderRadius: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: SPACING.xs,
   },
 
   quickActionBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: TYPOGRAPHY.fontSize.xxs,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
-  // Create Button
-  createButton: {
+  // Action Button
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
-    paddingVertical: SPACING.lg,
+    paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.xl,
     borderRadius: BORDER.radius.md,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.sm,
   },
 
-  createButtonText: {
+  actionButtonText: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
-  // Activities
-  activitiesContainer: {
+  // List Container
+  listContainer: {
     borderRadius: BORDER.radius.md,
     overflow: 'hidden',
   },
 
-  activityItem: {
+  listItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: SPACING.md,
     borderBottomWidth: 1,
   },
 
-  activityItemLast: {
+  listItemLast: {
     borderBottomWidth: 0,
   },
 
-  activityIconBox: {
+  listItemIconBox: {
     width: 40,
     height: 40,
     borderRadius: BORDER.radius.sm,
@@ -695,22 +920,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  activityContent: {
+  listItemContent: {
     flex: 1,
     marginLeft: SPACING.sm,
   },
 
-  activityTitle: {
+  listItemTitle: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
     marginBottom: 2,
   },
 
-  activityMessage: {
+  listItemSubtitle: {
     fontSize: TYPOGRAPHY.fontSize.xs,
   },
 
-  activityTime: {
+  listItemTime: {
     fontSize: TYPOGRAPHY.fontSize.xxs,
     marginLeft: SPACING.sm,
   },
@@ -746,16 +971,8 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
 
-  emptyButton: {
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
-    borderRadius: BORDER.radius.sm,
-  },
-
-  emptyButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
+  emptyButton: {},
+  emptyButtonText: {},
 
   emptyStateSmall: {
     alignItems: 'center',
@@ -778,5 +995,22 @@ const styles = StyleSheet.create({
   // Bottom Spacer
   bottomSpacer: {
     height: SPACING.xxl,
+  },
+
+  // Notification Badge
+  notificationBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  notificationBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
   },
 });

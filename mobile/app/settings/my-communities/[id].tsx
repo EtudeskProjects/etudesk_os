@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   Keyboard,
 } from 'react-native';
@@ -35,6 +34,7 @@ import { formatRelativeTime } from '../../../src/utils/date';
 import type { Community } from '../../../src/types/models';
 import type { MemberStatus } from '../../../src/services/communityService';
 import type { MembershipMessage } from '../../../src/services/communityMembershipMessageService';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 // Status configuration - returns config based on theme colors
 const getStatusConfig = (colors: any): Record<MemberStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
@@ -74,6 +74,7 @@ export default function MyCommunityDetailsScreen() {
   const [isSending, setIsSending] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>(tab === 'messages' ? 'messages' : 'details');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const alerts = useAlert();
 
   // Handle keyboard events for proper input positioning
   useEffect(() => {
@@ -114,11 +115,11 @@ export default function MyCommunityDetailsScreen() {
       if (found) {
         setMembership(found);
       } else {
-        Alert.alert('Erreur', 'Adhésion non trouvée.');
+        void alerts.alert('Erreur', 'Adhésion non trouvée.');
         router.back();
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de charger les détails de l\'adhésion.');
+      void alerts.alert('Erreur', 'Impossible de charger les détails de l\'adhésion.');
       router.back();
     } finally {
       setIsLoading(false);
@@ -176,7 +177,7 @@ export default function MyCommunityDetailsScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      void alerts.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
       throw error;
     } finally {
       setIsSending(false);
@@ -186,10 +187,7 @@ export default function MyCommunityDetailsScreen() {
   const handleLeaveCommunity = () => {
     if (!membership?.community) return;
 
-    Alert.alert(
-      'Quitter la communauté',
-      `Êtes-vous sûr de vouloir quitter "${membership.community.name}" ?`,
-      [
+    void alerts.showAlert({ title: 'Quitter la communauté', message: `Êtes-vous sûr de vouloir quitter "${membership.community.name}" ?`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Quitter',
@@ -197,16 +195,15 @@ export default function MyCommunityDetailsScreen() {
           onPress: async () => {
             try {
               await communityService.leave(membership.community_id!);
-              Alert.alert('Succès', 'Vous avez quitté la communauté.', [
+              void alerts.showAlert({ title: 'Succès', message: 'Vous avez quitté la communauté.', buttons: [
                 { text: 'OK', onPress: () => router.back() },
-              ]);
+              ] });
             } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Impossible de quitter la communauté.');
+              void alerts.alert('Erreur', error.error || 'Impossible de quitter la communauté.');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const renderTab = (tab: Tab, label: string, icon: typeof Users) => {
@@ -485,7 +482,7 @@ export default function MyCommunityDetailsScreen() {
       {/* Content */}
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {activeTab === 'details' ? renderDetailsTab() : renderMessagesTab()}

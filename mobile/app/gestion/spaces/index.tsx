@@ -17,7 +17,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { SpaceCard } from '../../../src/components/cards';
-import { FooterNav } from '../../../src/components/ui';
+import { Button, FooterNav, IconButton } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useAlert } from '../../../src/contexts/AlertContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -116,12 +116,13 @@ export default function SpacesListScreen() {
           <MapPin size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Espaces</Text>
         </View>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: colors.primary }]}
+        <IconButton
+          variant="filled"
           onPress={() => router.push('/settings/organization/create-space' as any)}
-        >
-          <Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+          icon={<Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Créer un espace"
+          style={{ backgroundColor: colors.primary }}
+        />
       </View>
 
       {/* List */}
@@ -155,19 +156,16 @@ export default function SpacesListScreen() {
             <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
               Creez votre premier espace reservable.
             </Text>
-            <TouchableOpacity
-              style={[styles.emptyButton, { backgroundColor: colors.primary }]}
+            <Button
+              title="Créer un espace"
               onPress={() => router.push('/settings/organization/create-space' as any)}
-            >
-              <Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.emptyButtonText, { color: colors.textOnPrimary }]}>Creer un espace</Text>
-            </TouchableOpacity>
+              icon={<Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+            />
           </View>
         }
       />
       )}
 
-      <FooterNav />
     </SafeAreaView>
   );
 }
@@ -204,11 +202,7 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
   addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: BORDER.radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
+    // replaced by unified <IconButton />
   },
   listContent: {
     padding: SPACING.lg,
@@ -237,15 +231,9 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   emptyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER.radius.sm,
+    // replaced by unified <Button />
   },
   emptyButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    // replaced by unified <Button />
   },
 });

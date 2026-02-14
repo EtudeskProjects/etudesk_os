@@ -9,7 +9,6 @@ import {
   Platform,
   TextInput,
   Image,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -37,7 +36,9 @@ import { COUNTRIES, GENDERS, getRegionsByCountry, getCommunesByRegion } from '..
 import { useTheme } from '../../src/hooks/useTheme';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { talentService, imageService } from '../../src/services';
+import { getFullImageUrl } from '../../src/utils/image';
 import { useForm } from '../../src/hooks/useForm';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 interface ProfileFormValues {
   firstName: string;
@@ -113,11 +114,12 @@ export default function EditProfileScreen() {
         goals: values.selectedGoals,
       });
       await refreshUser();
-      Alert.alert('Succes', 'Ton profil a ete mis a jour.', [
+      void alerts.showAlert({ title: 'Succes', message: 'Ton profil a ete mis a jour.', buttons: [
         { text: 'OK', onPress: () => router.back() }
-      ]);
+      ] });
     },
   });
+  const alerts = useAlert();
 
   // Convenience getters for form values
   const firstName = form.getValue('firstName');
@@ -194,9 +196,9 @@ export default function EditProfileScreen() {
 
   const pickImage = async () => {
     try {
-      const image = await imageService.pickImage({ type: 'avatar' });
-      if (image) {
-        form.setValue('avatarUri', image.uri);
+      const uploaded = await imageService.pickAndUploadImage('avatar');
+      if (uploaded) {
+        form.setValue('avatarUri', uploaded.url);
       }
     } catch (error) {
       console.error('Erreur lors de la selection de l\'image:', error);
@@ -239,7 +241,7 @@ export default function EditProfileScreen() {
         form.setValue('bio', response.data.bio);
       }
     } catch (error: any) {
-      Alert.alert('Erreur', error?.error || 'Impossible de generer la bio.');
+      void alerts.alert('Erreur', error?.error || 'Impossible de generer la bio.');
     } finally {
       setIsGeneratingBio(false);
     }
@@ -291,7 +293,7 @@ export default function EditProfileScreen() {
             onPress={pickImage}
           >
             {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.photoImage} resizeMode="cover" />
+              <Image source={{ uri: getFullImageUrl(avatarUri) || avatarUri }} style={styles.photoImage} resizeMode="cover" />
             ) : (
               <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
                 <Text style={[styles.avatarText, { color: colors.textOnPrimary }]}>{getInitials()}</Text>

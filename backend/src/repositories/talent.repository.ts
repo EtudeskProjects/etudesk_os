@@ -100,7 +100,7 @@ class TalentRepository extends BaseRepository<Talent> {
   async findByIdWithStats(id: string): Promise<TalentWithStats | null> {
     const result = await this.query<TalentWithStats>(
       `SELECT t.*,
-        (SELECT COUNT(*) FROM talent_skills WHERE talent_id = t.id) as skill_count,
+        (SELECT COUNT(*) FROM talent_skills WHERE talent_id = t.id AND is_visible = true) as skill_count,
         (SELECT status FROM kyc_verifications WHERE talent_id = t.id ORDER BY created_at DESC LIMIT 1) as kyc_status,
         CASE
           WHEN EXISTS (SELECT 1 FROM kyc_verifications WHERE talent_id = t.id AND status = 'VERIFIED')

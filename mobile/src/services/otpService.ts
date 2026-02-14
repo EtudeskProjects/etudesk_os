@@ -54,6 +54,33 @@ async function sendOTP(email: string): Promise<void> {
 }
 
 /**
+ * Send OTP code to phone number via WhatsApp
+ */
+async function sendWhatsAppOTP(phone: string): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/request-whatsapp-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ phone }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      logger.apiError(LOG_SOURCE, response.status, data.error || 'Failed to send WhatsApp OTP', '/api/auth/request-whatsapp-otp');
+      throw new Error(data.error || i18n.t('otpService.sendError'));
+    }
+
+    logger.info(LOG_SOURCE, 'WhatsApp OTP sent', { phone });
+  } catch (error) {
+    logger.error(LOG_SOURCE, 'Failed to send WhatsApp OTP', error, { phone });
+    throw error;
+  }
+}
+
+/**
  * Result of OTP verification
  */
 interface VerifyOTPResult {
@@ -87,43 +114,9 @@ async function verifyOTP(email: string, code: string): Promise<VerifyOTPResult> 
     }
 
     if (data.success && data.tokens) {
-      // Validate tokens before storing
-      if (!data.tokens.accessToken || !data.tokens.refreshToken) {
-        logger.error(LOG_SOURCE, 'Invalid tokens received from server', {
-          hasAccessToken: !!data.tokens.accessToken,
-          hasRefreshToken: !!data.tokens.refreshToken,
-        });
+      const stored = await storeAuthSession(data);
+      if (!stored) {
         return { success: false, needsOnboarding: false };
-      }
-
-      // Clear any existing tokens first to ensure clean state
-      await AsyncStorage.multiRemove([
-        STORAGE_KEYS.ACCESS_TOKEN,
-        STORAGE_KEYS.REFRESH_TOKEN,
-        STORAGE_KEYS.USER,
-      ]);
-
-      // Store new tokens
-      await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.tokens.accessToken);
-      await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.tokens.refreshToken);
-
-      // Verify tokens were stored correctly
-      const storedRefresh = await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-      if (!storedRefresh) {
-        logger.error(LOG_SOURCE, 'Failed to store refresh token');
-        return { success: false, needsOnboarding: false };
-      }
-      logger.debug(LOG_SOURCE, 'Tokens stored successfully');
-
-      // Store user info with needsOnboarding flag
-      if (data.user) {
-        const userWithOnboarding = {
-          ...data.user,
-          needsOnboarding: data.needsOnboarding ?? false,
-          hasTalentProfile: !data.needsOnboarding,
-          onboardingComplete: !data.needsOnboarding,
-        };
-        await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userWithOnboarding));
       }
 
       logger.info(LOG_SOURCE, 'Authentication successful', {
@@ -144,6 +137,89 @@ async function verifyOTP(email: string, code: string): Promise<VerifyOTPResult> 
     logger.error(LOG_SOURCE, 'OTP verification error', error, { email });
     return { success: false, needsOnboarding: false };
   }
+}
+
+/**
+ * Verify WhatsApp OTP code
+ */
+async function verifyWhatsAppOTP(phone: string, code: string): Promise<VerifyOTPResult> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/verify-whatsapp-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ phone, code }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      logger.apiError(LOG_SOURCE, response.status, data.error || 'WhatsApp OTP verification failed', '/api/auth/verify-whatsapp-otp');
+      return { success: false, needsOnboarding: false };
+    }
+
+    if (data.success && data.tokens) {
+      const stored = await storeAuthSession(data);
+      if (!stored) {
+        return { success: false, needsOnboarding: false };
+      }
+
+      logger.info(LOG_SOURCE, 'WhatsApp authentication successful', {
+        phone,
+        needsOnboarding: data.needsOnboarding,
+      });
+
+      return {
+        success: true,
+        needsOnboarding: data.needsOnboarding ?? false,
+        user: data.user
+      };
+    }
+
+    return { success: false, needsOnboarding: false };
+  } catch (error) {
+    logger.error(LOG_SOURCE, 'WhatsApp OTP verification error', error, { phone });
+    return { success: false, needsOnboarding: false };
+  }
+}
+
+async function storeAuthSession(data: any): Promise<boolean> {
+  if (!data.tokens.accessToken || !data.tokens.refreshToken) {
+    logger.error(LOG_SOURCE, 'Invalid tokens received from server', {
+      hasAccessToken: !!data.tokens.accessToken,
+      hasRefreshToken: !!data.tokens.refreshToken,
+    });
+    return false;
+  }
+
+  await AsyncStorage.multiRemove([
+    STORAGE_KEYS.ACCESS_TOKEN,
+    STORAGE_KEYS.REFRESH_TOKEN,
+    STORAGE_KEYS.USER,
+  ]);
+
+  await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.tokens.accessToken);
+  await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.tokens.refreshToken);
+
+  const storedRefresh = await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+  if (!storedRefresh) {
+    logger.error(LOG_SOURCE, 'Failed to store refresh token');
+    return false;
+  }
+  logger.debug(LOG_SOURCE, 'Tokens stored successfully');
+
+  if (data.user) {
+    const userWithOnboarding = {
+      ...data.user,
+      needsOnboarding: data.needsOnboarding ?? false,
+      hasTalentProfile: !data.needsOnboarding,
+      onboardingComplete: !data.needsOnboarding,
+    };
+    await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userWithOnboarding));
+  }
+
+  return true;
 }
 
 /**
@@ -278,7 +354,9 @@ async function getCurrentUser(): Promise<any | null> {
 
 export const otpService = {
   sendOTP,
+  sendWhatsAppOTP,
   verifyOTP,
+  verifyWhatsAppOTP,
   getAccessToken,
   getUser,
   getCurrentUser,

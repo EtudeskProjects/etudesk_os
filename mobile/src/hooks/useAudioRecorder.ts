@@ -6,8 +6,9 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Audio } from 'expo-av';
-import { Platform, Alert } from 'react-native';
+import { Platform } from 'react-native';
 import { useTranslation } from '../contexts/I18nContext';
+import { alertsGlobal } from '../contexts/AlertContext';
 
 // Recording limit in seconds
 const MAX_RECORDING_DURATION_SECONDS = 30;
@@ -64,10 +65,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         try {
             const { status } = await Audio.requestPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert(
+                void alertsGlobal.alert(
                     t('audioRecorder.permissionRequired'),
-                    t('audioRecorder.micPermissionMessage'),
-                    [{ text: 'OK' }]
+                    t('audioRecorder.micPermissionMessage')
                 );
                 return false;
             }

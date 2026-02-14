@@ -9,7 +9,6 @@ import {
   Platform,
   TextInput,
   Image,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -38,7 +37,9 @@ import { COUNTRIES, GENDERS, getRegionsByCountry, getCommunesByRegion } from '..
 import { otpService } from '../../src/services/otpService';
 import { onboardingService } from '../../src/services/onboardingService';
 import { imageService } from '../../src/services';
+import { getFullImageUrl } from '../../src/utils/image';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 type Step = 'info' | 'sectors' | 'goals';
 
@@ -138,6 +139,7 @@ export default function CreateProfileScreen() {
   const countryChipPositions = useRef<{ [key: string]: { x: number; width: number } }>({});
   const regionChipPositions = useRef<{ [key: string]: { x: number; width: number } }>({});
   const communeChipPositions = useRef<{ [key: string]: { x: number; width: number } }>({});
+  const alerts = useAlert();
 
   // Pre-fill email/phone from authentication and check if user needs onboarding
   useEffect(() => {
@@ -210,17 +212,13 @@ export default function CreateProfileScreen() {
   // Pick profile photo
   const pickImage = async () => {
     try {
-      const image = await imageService.pickImage({ type: 'avatar' });
-      if (image) {
-        form.setValue('avatarUri', image.uri);
+      const uploaded = await imageService.pickAndUploadImage('avatar');
+      if (uploaded) {
+        form.setValue('avatarUri', uploaded.url);
       }
     } catch (error) {
       console.error('Error selecting image:', error);
-      Alert.alert(
-        t('common.error'),
-        t('auth.createProfile.photoError'),
-        [{ text: 'OK' }]
-      );
+      void alerts.showAlert({ title: t('common.error'), message: t('auth.createProfile.photoError'), buttons: [{ text: 'OK' }] });
     }
   };
 
@@ -270,19 +268,19 @@ export default function CreateProfileScreen() {
     const trimmedLastName = lastName.trim();
 
     if (!trimmedFirstName || trimmedFirstName.length < 2) {
-      Alert.alert(t('common.error'), 'Le prénom est requis (minimum 2 caractères)');
+      void alerts.alert(t('common.error'), 'Le prénom est requis (minimum 2 caractères)');
       return;
     }
 
     if (!trimmedLastName || trimmedLastName.length < 2) {
-      Alert.alert(t('common.error'), 'Le nom est requis (minimum 2 caractères)');
+      void alerts.alert(t('common.error'), 'Le nom est requis (minimum 2 caractères)');
       return;
     }
 
     const displayName = `${trimmedFirstName} ${trimmedLastName}`.trim();
 
     if (!displayName || displayName.length < 3) {
-      Alert.alert(t('common.error'), 'Le nom d\'affichage est requis');
+      void alerts.alert(t('common.error'), 'Le nom d\'affichage est requis');
       return;
     }
 
@@ -315,11 +313,7 @@ export default function CreateProfileScreen() {
         errorMessage = error.message;
       }
 
-      Alert.alert(
-        t('common.error'),
-        errorMessage,
-        [{ text: 'OK' }]
-      );
+      void alerts.showAlert({ title: t('common.error'), message: errorMessage, buttons: [{ text: 'OK' }] });
     }
   };
 
@@ -376,7 +370,7 @@ export default function CreateProfileScreen() {
             onPress={pickImage}
           >
             {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.photoImage} resizeMode="cover" />
+              <Image source={{ uri: getFullImageUrl(avatarUri) || avatarUri }} style={styles.photoImage} resizeMode="cover" />
             ) : (
               <Camera size={ICON.size.lg} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
             )}

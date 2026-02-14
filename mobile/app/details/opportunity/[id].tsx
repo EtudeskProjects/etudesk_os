@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Platform, ActivityIndicator, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Platform, ActivityIndicator, Modal } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -24,7 +24,7 @@ import {
   X,
   Settings,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -45,6 +45,7 @@ import { getCurrencySymbol } from '../../../src/constants/opportunity';
 import { opportunityService, bookmarkService } from '../../../src/services';
 import { applicationService } from '../../../src/services/applicationService';
 import { BookmarkCheck } from 'lucide-react-native';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 // Mock data - in real app, fetch from API based on id
 
@@ -124,6 +125,7 @@ export default function OpportunityDetailScreen() {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [selectedAttachment, setSelectedAttachment] = useState<OpportunityAttachment | null>(null);
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
+  const alerts = useAlert();
 
   // Only show manage button if owner AND connected as organization
   const canManageOpportunity = isOwner && currentSpace === 'organization';
@@ -172,7 +174,7 @@ export default function OpportunityDetailScreen() {
       }
     } catch (error: any) {
       console.error('Error loading opportunity:', error);
-      Alert.alert(t('common.error'), t('opportunity.loadError'));
+      void alerts.alert(t('common.error'), t('opportunity.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -208,11 +210,11 @@ export default function OpportunityDetailScreen() {
       if (canOpen) {
         await Linking.openURL(fullUrl);
       } else {
-        Alert.alert(t('common.error'), t('opportunity.openError'));
+        void alerts.alert(t('common.error'), t('opportunity.openError'));
       }
     } catch (error) {
       console.error('Error opening attachment:', error);
-      Alert.alert(t('common.error'), t('opportunity.openError'));
+      void alerts.alert(t('common.error'), t('opportunity.openError'));
     }
   };
 
@@ -351,7 +353,7 @@ export default function OpportunityDetailScreen() {
               onPress={async () => {
                 const url = `https://etudesk.com/public/opportunities/${opportunity.slug}`;
                 await Clipboard.setStringAsync(url);
-                Alert.alert(t('common.copied'), t('opportunity.linkCopied'));
+                void alerts.alert(t('common.copied'), t('opportunity.linkCopied'));
               }}
             >
               <Link size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
@@ -892,14 +894,14 @@ const styles = StyleSheet.create({
   },
 
   orgTag: {
-    paddingVertical: 2,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
 
   orgTagText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
 
   orgLocation: {
@@ -934,14 +936,14 @@ const styles = StyleSheet.create({
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
 
   tagText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
 
   metaCard: {

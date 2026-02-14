@@ -7,7 +7,6 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Share as RNShare,
   Linking,
 } from 'react-native';
@@ -80,6 +79,7 @@ import {
   WEEKDAYS,
 } from '../../../src/constants/space';
 import { ORGANIZATION_TYPE_LABELS } from '../../../src/types/models';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 // Fallback image for spaces without images
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80';
@@ -153,6 +153,7 @@ export default function SpaceDetailScreen() {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const alerts = useAlert();
 
   // Only show manage button if owner AND connected as organization
   const canManageSpace = isOwner && currentSpace === 'organization';
@@ -187,7 +188,7 @@ export default function SpaceDetailScreen() {
       }
     } catch (error) {
       console.error('Error loading space:', error);
-      Alert.alert(t('common.error'), t('space.loadError'));
+      void alerts.alert(t('common.error'), t('space.loadError'));
     } finally {
       setIsLoading(false);
     }

@@ -9,6 +9,7 @@ import { pool, generateSlug } from '../../services/database';
 import { authMiddleware, AuthRequest } from '../../middleware/auth.middleware';
 import { autoModerationService } from '../../services/auto-moderation.service';
 import { normalizeCountryCode } from '../../constants/countries';
+import { creditWallet } from '../../services/billing/credit.service';
 import {
   handleRouteError,
   createNotFoundError,
@@ -155,6 +156,16 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         uuidv4(), id, req.talentId,
         ['organization:*', 'members:*', 'opportunities:*', 'billing:*']
       ]);
+
+      // Grant 20 welcome credits
+      await creditWallet({
+        scope: 'ORGANIZATION',
+        ownerId: id,
+        credits: 20,
+        sourceType: 'ADJUSTMENT',
+        idempotencyKey: `welcome_bonus_org_${id}`,
+        metadata: { reason: 'welcome_bonus' },
+      }, client);
 
       await client.query('COMMIT');
 

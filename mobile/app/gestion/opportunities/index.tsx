@@ -17,7 +17,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { OpportunityCard } from '../../../src/components/cards';
-import { FooterNav } from '../../../src/components/ui';
+import { Button, FooterNav, IconButton } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useAlert } from '../../../src/contexts/AlertContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -126,12 +126,13 @@ export default function OpportunitiesListScreen() {
           <Briefcase size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Opportunités</Text>
         </View>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: colors.primary }]}
+        <IconButton
+          variant="filled"
           onPress={() => router.push('/settings/organization/create-opportunity' as any)}
-        >
-          <Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+          icon={<Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Créer une opportunité"
+          style={{ backgroundColor: colors.primary }}
+        />
       </View>
 
       {/* List */}
@@ -165,19 +166,16 @@ export default function OpportunitiesListScreen() {
             <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
               Créez votre première opportunité pour attirer des talents.
             </Text>
-            <TouchableOpacity
-              style={[styles.emptyButton, { backgroundColor: colors.primary }]}
+            <Button
+              title="Créer une opportunité"
               onPress={() => router.push('/settings/organization/create-opportunity' as any)}
-            >
-              <Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.emptyButtonText, { color: colors.textOnPrimary }]}>Créer une opportunité</Text>
-            </TouchableOpacity>
+              icon={<Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+            />
           </View>
         }
       />
       )}
 
-      <FooterNav activeTab="home" />
     </SafeAreaView>
   );
 }
@@ -263,11 +261,6 @@ const styles = StyleSheet.create({
     borderWidth: BORDER.width.thin,
     borderRadius: BORDER.radius.sm,
     zIndex: 10,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   dropdownItem: {
     flexDirection: 'row',
@@ -342,15 +335,10 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   emptyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER.radius.sm,
+    // replaced by unified <Button />
+    // keep as no-op to avoid touching layout elsewhere if referenced
   },
   emptyButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    // replaced by unified <Button />
   },
 });

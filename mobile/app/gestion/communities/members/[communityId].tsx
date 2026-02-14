@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -20,13 +19,14 @@ import {
   Send,
   MessageCircle,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../../src/constants/theme';
 import { PageLayout, EmptyState } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { communityService } from '../../../../src/services';
 import { formatRelativeTime } from '../../../../src/utils/date';
 import type { Community } from '../../../../src/types/models';
 import type { MemberStatus, CommunityMember } from '../../../../src/services/communityService';
+import { useAlert } from '../../../../src/contexts/AlertContext';
 
 // Status configuration - colors are set dynamically in component using theme colors
 const getStatusConfig = (colors: any): Record<MemberStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
@@ -49,6 +49,7 @@ export default function CommunityMembersScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filter, setFilter] = useState<FilterStatus>('PENDING');
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const alerts = useAlert();
 
   useEffect(() => {
     loadData();
@@ -69,7 +70,7 @@ export default function CommunityMembersScreen() {
       setStatusCounts(membersResponse.data?.statusCounts || {});
     } catch (error) {
       console.error('Error loading data:', error);
-      Alert.alert('Erreur', 'Impossible de charger les membres.');
+      void alerts.alert('Erreur', 'Impossible de charger les membres.');
     } finally {
       setIsLoading(false);
     }
@@ -98,15 +99,12 @@ export default function CommunityMembersScreen() {
       );
       handleRefresh();
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
+      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
     }
   };
 
   const handleDeleteMember = (membershipId: string, memberName: string) => {
-    Alert.alert(
-      'Supprimer le membre',
-      `Êtes-vous sûr de vouloir supprimer ${memberName} ? Cette action permettra au membre de postuler à nouveau.`,
-      [
+    void alerts.showAlert({ title: 'Supprimer le membre', message: `Êtes-vous sûr de vouloir supprimer ${memberName} ? Cette action permettra au membre de postuler à nouveau.`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
@@ -115,14 +113,13 @@ export default function CommunityMembersScreen() {
             try {
               await communityService.deleteMember(membershipId);
               setMembers((prev) => prev.filter((m) => m.id !== membershipId));
-              Alert.alert('Succès', 'Membre supprimé.');
+              void alerts.alert('Succès', 'Membre supprimé.');
             } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Impossible de supprimer le membre.');
+              void alerts.alert('Erreur', error.error || 'Impossible de supprimer le membre.');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const filteredMembers = members.filter((m) => {
@@ -181,7 +178,7 @@ export default function CommunityMembersScreen() {
 
         <View style={styles.cardFooter}>
           <View style={[styles.statusBadge, { backgroundColor: statusConfig.bgColor }]}>
-            <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
+            <StatusIcon size={COMPONENT.pill.iconSize} color={statusConfig.color} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
               {statusConfig.label}
             </Text>
@@ -211,7 +208,7 @@ export default function CommunityMembersScreen() {
         </View>
 
         {item.status === 'PENDING' && (
-          <View style={styles.quickActions}>
+          <View style={[styles.quickActions, { borderTopColor: colors.borderColor }]}>
             <TouchableOpacity
               style={[styles.quickAction, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}
               onPress={() => handleUpdateStatus(item.id, 'ACTIVE')}
@@ -342,15 +339,15 @@ const styles = StyleSheet.create({
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.md,
+    gap: COMPONENT.pill.gap,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
     borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.full,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
   filterChipText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
   headerActions: {
     flexDirection: 'row',
@@ -423,15 +420,15 @@ const styles = StyleSheet.create({
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.full,
+    gap: COMPONENT.pill.gap,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
 
   statusText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
 
   cardMeta: {
@@ -475,7 +472,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     paddingTop: SPACING.md,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: 'transparent',
   },
 
   quickAction: {

@@ -7,18 +7,16 @@
  * - PostgreSQL as fallback/cache
  */
 
-import OpenAI from 'openai';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { MODEL_EMBEDDING } from './ai/models';
+import { getEmbeddingClient } from './ai/provider';
 import { pool } from './database';
 import { buildTalentObject } from './ai/talent-object';
 
 import { logger } from '../utils';
 // --- Client Initialization ---
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = getEmbeddingClient();
 
 const pinecone = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY || '',

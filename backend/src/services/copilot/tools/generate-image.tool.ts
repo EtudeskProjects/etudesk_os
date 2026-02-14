@@ -6,12 +6,12 @@
 
 import { tool } from '@openai/agents';
 import { MODEL_IMAGE } from '../../ai/models';
+import { getImageClient } from '../../ai/provider';
 import { z } from 'zod';
-import OpenAI from 'openai';
 import { uploadFile } from '../../storage.service';
 import { logger } from '../../../utils';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = getImageClient();
 
 export const generateImageTool = tool({
   name: 'generate_image',

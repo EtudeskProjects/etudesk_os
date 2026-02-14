@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Home,
+  LayoutGrid,
   MessageCircle,
   Compass,
   Settings,
@@ -18,8 +19,9 @@ import {
 import { SPACING, ICON, BORDER, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { Platform } from 'react-native';
+import { useSpace } from '../../contexts/SpaceContext';
 
-type TabName = 'home' | 'assistant' | 'explore' | 'settings';
+type TabName = 'home' | 'gestion' | 'assistant' | 'explore' | 'settings';
 
 interface FooterNavProps {
   activeTab?: TabName;
@@ -28,6 +30,7 @@ interface FooterNavProps {
 // Accessibility labels for each tab
 const TAB_ACCESSIBILITY: Record<TabName, { label: string; hint: string }> = {
   home: { label: 'Accueil', hint: 'Aller à la page d\'accueil' },
+  gestion: { label: 'Gestion', hint: 'Aller à votre espace organisation' },
   assistant: { label: 'Assistant', hint: 'Ouvrir l\'assistant IA' },
   explore: { label: 'Explorer', hint: 'Parcourir les opportunités et communautés' },
   settings: { label: 'Paramètres', hint: 'Accéder aux paramètres' },
@@ -37,9 +40,17 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isOrganizationSpace } = useSpace();
+
+  // Backward compatibility: many screens hardcode activeTab="home".
+  // In organization space, the first tab is "gestion" (not "home").
+  const normalizedActiveTab: TabName | undefined =
+    isOrganizationSpace && activeTab === 'home' ? 'gestion' : activeTab;
 
   const tabs: { name: TabName; icon: typeof Home; route: string }[] = [
-    { name: 'home', icon: Home, route: '/(tabs)/home' },
+    isOrganizationSpace
+      ? { name: 'gestion', icon: LayoutGrid, route: '/(tabs)/gestion' }
+      : { name: 'home', icon: Home, route: '/(tabs)/home' },
     { name: 'assistant', icon: MessageCircle, route: '/(tabs)/assistant' },
     { name: 'explore', icon: Compass, route: '/(tabs)/explore' },
     { name: 'settings', icon: Settings, route: '/(tabs)/settings' },
@@ -49,7 +60,7 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
     <View style={[styles.container, { backgroundColor: colors.background, borderTopColor: colors.borderColor, paddingBottom: Math.max(insets.bottom, SPACING.sm) }]}>
       {tabs.map((tab) => {
         const Icon = tab.icon;
-        const isActive = activeTab === tab.name;
+        const isActive = normalizedActiveTab === tab.name;
 
         // Match the tabs layout styling:
         // Active: white icon on primary squared background

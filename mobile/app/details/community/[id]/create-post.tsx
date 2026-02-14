@@ -7,7 +7,6 @@ import {
     Image,
     TouchableOpacity,
     ScrollView,
-    Alert,
     Platform,
     KeyboardAvoidingView,
     Keyboard,
@@ -28,6 +27,7 @@ import { useTheme } from '../../../../src/hooks/useTheme';
 import { useForm } from '../../../../src/hooks/useForm';
 import { Button } from '../../../../src/components/ui';
 import { communityActivityService, communityService } from '../../../../src/services';
+import { useAlert } from '../../../../src/contexts/AlertContext';
 
 interface Attachment {
     uri: string;
@@ -99,13 +99,13 @@ export default function CreatePostScreen() {
         },
         onSubmit: async (values) => {
             if (!values.content.trim() && values.attachments.length === 0) {
-                Alert.alert('Erreur', 'Veuillez ajouter du texte ou un fichier.');
+                void alerts.alert('Erreur', 'Veuillez ajouter du texte ou un fichier.');
                 return;
             }
 
             // Validate scheduled date is in the future (only for new posts)
             if (!isEditMode && values.isScheduled && values.scheduledDate <= new Date()) {
-                Alert.alert('Erreur', 'La date de publication programmée doit être dans le futur.');
+                void alerts.alert('Erreur', 'La date de publication programmée doit être dans le futur.');
                 return;
             }
 
@@ -156,9 +156,9 @@ export default function CreatePostScreen() {
                     ? `Publication programmée pour le ${values.scheduledDate.toLocaleDateString('fr-FR')} à ${values.scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`
                     : 'Votre publication a été créée !';
 
-            Alert.alert('Succès', message, [
+            void alerts.showAlert({ title: 'Succès', message: message, buttons: [
                 { text: 'OK', onPress: () => router.back() }
-            ]);
+            ] });
         },
     });
 
@@ -175,19 +175,16 @@ export default function CreatePostScreen() {
     // Handle back button with confirmation
     const handleBack = useCallback(() => {
         if (hasUnsavedChanges && !isSubmitting) {
-            Alert.alert(
-                'Modifications non sauvegardées',
-                'Voulez-vous quitter sans sauvegarder ?',
-                [
+            void alerts.showAlert({ title: 'Modifications non sauvegardées', message: 'Voulez-vous quitter sans sauvegarder ?', buttons: [
                     { text: 'Continuer', style: 'cancel' },
                     { text: 'Quitter', style: 'destructive', onPress: () => router.back() },
-                ]
-            );
+                ] });
             return true;
         }
         router.back();
         return true;
     }, [hasUnsavedChanges, isSubmitting, router]);
+    const alerts = useAlert();
 
     // Android back button handler
     useEffect(() => {
@@ -337,7 +334,7 @@ export default function CreatePostScreen() {
     // Show file picker options
     const showFilePicker = () => {
         if (attachments.length >= MAX_FILES) {
-            Alert.alert('Limite atteinte', `Maximum ${MAX_FILES} fichiers autorisés.`);
+            void alerts.alert('Limite atteinte', `Maximum ${MAX_FILES} fichiers autorisés.`);
             return;
         }
 
@@ -353,15 +350,11 @@ export default function CreatePostScreen() {
                 }
             );
         } else {
-            Alert.alert(
-                'Ajouter un fichier',
-                'Choisissez le type de fichier',
-                [
+            void alerts.showAlert({ title: 'Ajouter un fichier', message: 'Choisissez le type de fichier', buttons: [
                     { text: 'Photos & Vidéos', onPress: pickMedia },
                     { text: 'Document PDF', onPress: pickDocuments },
                     { text: 'Annuler', style: 'cancel' },
-                ]
-            );
+                ] });
         }
     };
 
@@ -389,7 +382,7 @@ export default function CreatePostScreen() {
                 form.setValue('attachments', [...attachments, ...newAttachments]);
             }
         } catch (error) {
-            Alert.alert('Erreur', 'Impossible de sélectionner les médias');
+            void alerts.alert('Erreur', 'Impossible de sélectionner les médias');
         }
     };
 
@@ -412,7 +405,7 @@ export default function CreatePostScreen() {
                 form.setValue('attachments', [...attachments, ...newAttachments]);
             }
         } catch (error) {
-            Alert.alert('Erreur', 'Impossible de sélectionner le document');
+            void alerts.alert('Erreur', 'Impossible de sélectionner le document');
         }
     };
 
@@ -462,7 +455,7 @@ export default function CreatePostScreen() {
 
     const handleSaveAsDraft = async () => {
         if (!content.trim() && attachments.length === 0) {
-            Alert.alert('Erreur', 'Veuillez ajouter du texte ou un fichier pour sauvegarder.');
+            void alerts.alert('Erreur', 'Veuillez ajouter du texte ou un fichier pour sauvegarder.');
             return;
         }
 
@@ -499,15 +492,15 @@ export default function CreatePostScreen() {
             }
 
             if (completeProgress) completeProgress();
-            Alert.alert('Succès', 'Brouillon sauvegardé !', [
+            void alerts.showAlert({ title: 'Succès', message: 'Brouillon sauvegardé !', buttons: [
                 { text: 'OK', onPress: () => router.back() }
-            ]);
+            ] });
         } catch (error: any) {
             setIsUploading(false);
             setUploadProgress(0);
             progressAnim.setValue(0);
             const message = error?.response?.data?.error || error?.message || 'Impossible de sauvegarder le brouillon.';
-            Alert.alert('Erreur', message);
+            void alerts.alert('Erreur', message);
         } finally {
             setIsSavingDraft(false);
         }
@@ -877,7 +870,7 @@ export default function CreatePostScreen() {
                                     const futureDate = new Date();
                                     futureDate.setMinutes(futureDate.getMinutes() + 5);
                                     form.setValue('scheduledDate', futureDate);
-                                    Alert.alert('Heure ajustée', 'L\'heure a été ajustée car elle était dans le passé.');
+                                    void alerts.alert('Heure ajustée', 'L\'heure a été ajustée car elle était dans le passé.');
                                 } else {
                                     form.setValue('scheduledDate', selectedDate);
                                 }
@@ -907,7 +900,7 @@ export default function CreatePostScreen() {
                                 const futureDate = new Date();
                                 futureDate.setMinutes(futureDate.getMinutes() + 5);
                                 form.setValue('scheduledDate', futureDate);
-                                Alert.alert('Heure ajustée', 'L\'heure a été ajustée car elle était dans le passé.');
+                                void alerts.alert('Heure ajustée', 'L\'heure a été ajustée car elle était dans le passé.');
                             }
                         }}
                     >

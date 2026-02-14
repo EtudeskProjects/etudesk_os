@@ -10,7 +10,6 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -72,6 +71,7 @@ export default function JoinCommunityScreen() {
   // Form state
   const [acceptedRules, setAcceptedRules] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const alerts = useAlert();
 
   // Determine which steps are active based on community config
   const getActiveSteps = (): JoinStep[] => {
@@ -129,26 +129,18 @@ export default function JoinCommunityScreen() {
       try {
         const kycRes = await kycService.getStatus();
         if (!kycRes?.data || kycRes.data.status !== 'VERIFIED') {
-          Alert.alert(
-            'Vérification requise',
-            'Tu dois vérifier ton identité avant de rejoindre une communauté.',
-            [
+          void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant de rejoindre une communauté.', buttons: [
               { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
               { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
-            ]
-          );
+            ] });
           setIsLoading(false);
           return;
         }
       } catch {
-        Alert.alert(
-          'Vérification requise',
-          'Tu dois vérifier ton identité avant de rejoindre une communauté.',
-          [
+        void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant de rejoindre une communauté.', buttons: [
             { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
             { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
-          ]
-        );
+          ] });
         setIsLoading(false);
         return;
       }
@@ -156,21 +148,21 @@ export default function JoinCommunityScreen() {
       // Check if already member
       const membershipResponse = await communityService.checkMembership(id);
       if (membershipResponse.data?.is_member) {
-        Alert.alert('Information', 'Vous êtes déjà membre de cette communauté.', [
+        void alerts.showAlert({ title: 'Information', message: 'Vous êtes déjà membre de cette communauté.', buttons: [
           { text: 'OK', onPress: () => router.back() }
-        ]);
+        ] });
         return;
       }
       if (membershipResponse.data?.has_pending_request) {
-        Alert.alert('Demande en attente', 'Votre demande d\'adhésion est en cours de traitement.', [
+        void alerts.showAlert({ title: 'Demande en attente', message: 'Votre demande d\'adhésion est en cours de traitement.', buttons: [
           { text: 'OK', onPress: () => router.back() }
-        ]);
+        ] });
         return;
       }
 
       const [communityResponse, profileResponse] = await Promise.all([
         communityService.getById(id),
-        talentService.getMyTalentObject().catch(() => talentService.getMyProfile().then(r => {
+        talentService.getMyTalentObject({ includeHidden: false }).catch(() => talentService.getMyProfile().then(r => {
           const p = r.data as any;
           return { data: { ...p, avatar_url: p.avatar_url || p.profile_picture_url || null, display_name: `${p.first_name || ''} ${p.last_name || ''}`.trim(), skills: p.skills || [], sectors: p.sectors || [], goals: p.goals || [], profile_tags: p.profile_tags || [], documents_metadata: [], remote_ready: false, willing_to_relocate: false } as any };
         }).catch(() => null)),
@@ -191,7 +183,7 @@ export default function JoinCommunityScreen() {
         setAnswers(initialAnswers);
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de charger les données.');
+      void alerts.alert('Erreur', 'Impossible de charger les données.');
       router.back();
     } finally {
       setIsLoading(false);
@@ -373,7 +365,7 @@ export default function JoinCommunityScreen() {
           </View>
 
           {profile?.skills && profile.skills.length > 0 && (
-            <View style={styles.profileTagsSection}>
+            <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
               <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Compétences</Text>
               <View style={styles.profileTagsRow}>
                 {profile.skills.slice(0, 8).map((skill, i) => (
@@ -389,7 +381,7 @@ export default function JoinCommunityScreen() {
           )}
 
           {profile?.sectors && profile.sectors.length > 0 && (
-            <View style={styles.profileTagsSection}>
+            <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
               <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Secteurs</Text>
               <View style={styles.profileTagsRow}>
                 {profile.sectors.map((s, i) => (
@@ -402,7 +394,7 @@ export default function JoinCommunityScreen() {
           )}
 
           {profile?.documents_metadata && profile.documents_metadata.length > 0 && (
-            <View style={styles.profileTagsSection}>
+            <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
               <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Documents ({profile.documents_metadata.length})</Text>
               {profile.documents_metadata.slice(0, 3).map((doc) => (
                 <View key={doc.id} style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: SPACING.xs }}>
@@ -910,7 +902,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     paddingTop: SPACING.md,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: 'transparent',
   },
   profileTagsLabel: {
     fontSize: TYPOGRAPHY.fontSize.xs,

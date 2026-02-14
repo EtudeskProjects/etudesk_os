@@ -8,7 +8,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   Image,
   Keyboard,
@@ -39,6 +38,7 @@ import { communityService, communityMembershipMessageService } from '../../../..
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import type { MemberStatus, CommunityMemberDetails } from '../../../../../src/services/communityService';
 import type { MembershipMessage } from '../../../../../src/services/communityMembershipMessageService';
+import { useAlert } from '../../../../../src/contexts/AlertContext';
 
 // Status configuration - colors are set dynamically using theme colors
 const getStatusConfig = (colors: any): Record<MemberStatus, { color: string; icon: typeof Clock }> => ({
@@ -102,6 +102,7 @@ export default function MemberDetailsScreen() {
 
   // Status picker
   const [showStatusPicker, setShowStatusPicker] = useState(false);
+  const alerts = useAlert();
 
   // Handle keyboard events
   useEffect(() => {
@@ -140,7 +141,7 @@ export default function MemberDetailsScreen() {
       setInternalNotes(response.data?.internal_notes || '');
       setRating(response.data?.rating || 0);
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de charger les détails du membre.');
+      void alerts.alert('Erreur', 'Impossible de charger les détails du membre.');
       router.back();
     } finally {
       setIsLoading(false);
@@ -190,7 +191,7 @@ export default function MemberDetailsScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      void alerts.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
       throw error;
     } finally {
       setIsSending(false);
@@ -204,9 +205,9 @@ export default function MemberDetailsScreen() {
       await communityService.updateMembershipStatus(membership.id, newStatus);
       setMembership((prev) => prev ? { ...prev, status: newStatus } : null);
       setShowStatusPicker(false);
-      Alert.alert('Succès', `Statut mis à jour: ${STATUS_FLOW[newStatus].label}`);
+      void alerts.alert('Succès', `Statut mis à jour: ${STATUS_FLOW[newStatus].label}`);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
+      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
     }
   };
 
@@ -217,10 +218,7 @@ export default function MemberDetailsScreen() {
       ? `${membership.talent.first_name} ${membership.talent.last_name}`
       : membership.talent?.display_name || 'ce membre';
 
-    Alert.alert(
-      'Supprimer le membre',
-      `Êtes-vous sûr de vouloir supprimer ${memberName} ? Cette action est irréversible et permettra au membre de postuler à nouveau.`,
-      [
+    void alerts.showAlert({ title: 'Supprimer le membre', message: `Êtes-vous sûr de vouloir supprimer ${memberName} ? Cette action est irréversible et permettra au membre de postuler à nouveau.`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
@@ -228,15 +226,14 @@ export default function MemberDetailsScreen() {
           onPress: async () => {
             try {
               await communityService.deleteMember(membership.id);
-              Alert.alert('Succès', 'Membre supprimé.');
+              void alerts.alert('Succès', 'Membre supprimé.');
               router.back();
             } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Impossible de supprimer le membre.');
+              void alerts.alert('Erreur', error.error || 'Impossible de supprimer le membre.');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const handleSaveNotes = async () => {
@@ -245,9 +242,9 @@ export default function MemberDetailsScreen() {
     try {
       await communityService.updateMemberNotes(membership.id, internalNotes);
       setIsEditingNotes(false);
-      Alert.alert('Succès', 'Notes enregistrées.');
+      void alerts.alert('Succès', 'Notes enregistrées.');
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de sauvegarder les notes.');
+      void alerts.alert('Erreur', error.error || 'Impossible de sauvegarder les notes.');
     }
   };
 
@@ -258,7 +255,7 @@ export default function MemberDetailsScreen() {
       await communityService.updateMemberRating(membership.id, newRating);
       setRating(newRating);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre à jour la note.');
+      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour la note.');
     }
   };
 
@@ -347,7 +344,7 @@ export default function MemberDetailsScreen() {
           )}
 
           {talent?.bio && (
-            <View style={[styles.bioContainer, { marginTop: SPACING.sm }]}>
+            <View style={[styles.bioContainer, { marginTop: SPACING.sm, borderTopColor: colors.borderColor }]}>
               <Text style={[styles.bioText, { color: colors.textSecondary }]}>
                 {talent.bio}
               </Text>
@@ -615,7 +612,7 @@ export default function MemberDetailsScreen() {
       {/* Content */}
       <KeyboardAvoidingView
         style={styles.contentContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {activeTab === 'profile' && renderProfileTab()}
@@ -780,7 +777,7 @@ const styles = StyleSheet.create({
   bioContainer: {
     paddingTop: SPACING.sm,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: 'transparent',
   },
 
   bioText: {

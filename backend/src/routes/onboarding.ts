@@ -12,6 +12,7 @@ import { generateTokens } from '../services/auth.service';
 import { sendWelcomeEmail } from '../services/email.service';
 import { onTalentProfileUpdate } from '../services/embedding.service';
 import { autoModerationService } from '../services/auto-moderation.service';
+import { creditWallet } from '../services/billing/credit.service';
 
 import { logger } from '../utils';
 const router = Router();
@@ -287,6 +288,16 @@ router.post('/complete', authMiddleware, async (req: AuthRequest, res: Response)
         `UPDATE users SET talent_id = $1, updated_at = NOW() WHERE id = $2`,
         [talentId, req.userId]
       );
+
+      // Grant 20 welcome credits
+      await creditWallet({
+        scope: 'TALENT',
+        ownerId: talentId,
+        credits: 20,
+        sourceType: 'ADJUSTMENT',
+        idempotencyKey: `welcome_bonus_talent_${talentId}`,
+        metadata: { reason: 'welcome_bonus' },
+      }, client);
 
       await client.query('COMMIT');
 

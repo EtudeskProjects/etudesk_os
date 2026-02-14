@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, Alert, TouchableOpacity, BackHandler, Platform, KeyboardAvoidingView, Modal } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, BackHandler, Platform, KeyboardAvoidingView, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Calendar, MapPin, Clock, Save, SquarePen, X } from 'lucide-react-native';
@@ -8,6 +8,7 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../.
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { Button, Input, Toggle } from '../../../../src/components/ui';
 import { communityActivityService } from '../../../../src/services';
+import { useAlert } from '../../../../src/contexts/AlertContext';
 
 export default function CreateEventScreen() {
     const { id, activityId } = useLocalSearchParams<{ id: string; activityId?: string }>();
@@ -40,6 +41,8 @@ export default function CreateEventScreen() {
     const [existingDraftId, setExistingDraftId] = useState<string | null>(null);
     const [hasDraft, setHasDraft] = useState(false);
     const [initialTitle, setInitialTitle] = useState('');
+    const formScrollRef = useRef<ScrollView>(null);
+    const alerts = useAlert();
 
     // Track unsaved changes
     useEffect(() => {
@@ -104,14 +107,10 @@ export default function CreateEventScreen() {
     // Handle back button with confirmation
     const handleBack = useCallback(() => {
         if (hasUnsavedChanges && !isSubmitting) {
-            Alert.alert(
-                'Modifications non sauvegardées',
-                'Voulez-vous quitter sans sauvegarder ?',
-                [
+            void alerts.showAlert({ title: 'Modifications non sauvegardées', message: 'Voulez-vous quitter sans sauvegarder ?', buttons: [
                     { text: 'Continuer', style: 'cancel' },
                     { text: 'Quitter', style: 'destructive', onPress: () => router.back() },
-                ]
-            );
+                ] });
             return true;
         }
         router.back();
@@ -154,7 +153,7 @@ export default function CreateEventScreen() {
             }
         } else {
             if (selectedDate < startDate) {
-                Alert.alert("Erreur", "La date de fin ne peut pas être avant la date de début");
+                void alerts.alert("Erreur", "La date de fin ne peut pas être avant la date de début");
                 return;
             }
             setEndDate(selectedDate);
@@ -169,9 +168,16 @@ export default function CreateEventScreen() {
         setShowPicker(true);
     };
 
+    const scrollToInput = useCallback((y: number) => {
+        if (Platform.OS !== 'android') return;
+        setTimeout(() => {
+            formScrollRef.current?.scrollTo({ y, animated: true });
+        }, 120);
+    }, []);
+
     const handleSaveAsDraft = async () => {
         if (!title.trim()) {
-            Alert.alert('Erreur', 'Veuillez ajouter un titre pour sauvegarder.');
+            void alerts.alert('Erreur', 'Veuillez ajouter un titre pour sauvegarder.');
             return;
         }
 
@@ -201,12 +207,12 @@ export default function CreateEventScreen() {
             }
 
             setHasUnsavedChanges(false);
-            Alert.alert('Succès', 'Brouillon sauvegardé !', [
+            void alerts.showAlert({ title: 'Succès', message: 'Brouillon sauvegardé !', buttons: [
                 { text: 'OK', onPress: () => router.back() }
-            ]);
+            ] });
         } catch (error: any) {
             const message = error?.response?.data?.error || error?.message || 'Impossible de sauvegarder le brouillon.';
-            Alert.alert('Erreur', message);
+            void alerts.alert('Erreur', message);
         } finally {
             setIsSubmitting(false);
         }
@@ -214,7 +220,7 @@ export default function CreateEventScreen() {
 
     const handleSubmit = async () => {
         if (!title.trim() || (!isOnline && !location.trim())) {
-            Alert.alert('Erreur', 'Veuillez remplir tous les champs obligatoires.');
+            void alerts.alert('Erreur', 'Veuillez remplir tous les champs obligatoires.');
             return;
         }
 
@@ -250,13 +256,13 @@ export default function CreateEventScreen() {
             }
 
             setHasUnsavedChanges(false);
-            Alert.alert('Succès', isEditMode ? 'Votre événement a été modifié !' : 'Votre événement a été créé !', [
+            void alerts.showAlert({ title: 'Succès', message: isEditMode ? 'Votre événement a été modifié !' : 'Votre événement a été créé !', buttons: [
                 { text: 'OK', onPress: () => router.back() }
-            ]);
+            ] });
         } catch (error: any) {
             console.error('Failed to save event:', error);
             const message = error?.response?.data?.error || error?.message || 'Impossible de sauvegarder l\'événement.';
-            Alert.alert('Erreur', message);
+            void alerts.alert('Erreur', message);
         } finally {
             setIsSubmitting(false);
         }
@@ -308,7 +314,18 @@ export default function CreateEventScreen() {
                 </View>
             )}
 
-            <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+            <KeyboardAvoidingView
+                style={styles.keyboardContent}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={0}
+            >
+            <ScrollView
+                ref={formScrollRef}
+                style={styles.content}
+                contentContainerStyle={styles.contentContainer}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+            >
                 <Input
                     label="Titre de l'événement"
                     placeholder="Ex: Conférence sur l'IA"
@@ -371,6 +388,7 @@ export default function CreateEventScreen() {
                         placeholderTextColor={colors.gray500}
                         value={description}
                         onChangeText={setDescription}
+                        onFocus={() => scrollToInput(360)}
                         textAlignVertical="top"
                     />
                 </View>
@@ -396,6 +414,7 @@ export default function CreateEventScreen() {
                     />
                 </View>
             </View>
+            </KeyboardAvoidingView>
 
             {/* Date/Time Picker Modal */}
             {showPicker && Platform.OS === 'ios' && (
@@ -479,6 +498,9 @@ const styles = StyleSheet.create({
         fontWeight: TYPOGRAPHY.fontWeight.semibold,
     },
     content: {
+        flex: 1,
+    },
+    keyboardContent: {
         flex: 1,
     },
     contentContainer: {

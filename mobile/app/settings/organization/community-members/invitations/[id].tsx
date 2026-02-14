@@ -10,7 +10,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Modal,
   TextInput,
   KeyboardAvoidingView,
@@ -31,6 +30,7 @@ import { useTheme } from '../../../../../src/hooks/useTheme';
 import { communityService, communityInvitationService, CommunityInvitation } from '../../../../../src/services';
 import { formatRelativeTime } from '../../../../../src/utils/date';
 import type { Community } from '../../../../../src/types/models';
+import { useAlert } from '../../../../../src/contexts/AlertContext';
 
 // Status config - colors will be resolved dynamically in the component
 const STATUS_CONFIG = {
@@ -52,6 +52,7 @@ export default function CommunityInvitationsScreen() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteMessage, setInviteMessage] = useState('');
   const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const alerts = useAlert();
 
   useEffect(() => {
     loadData();
@@ -78,7 +79,7 @@ export default function CommunityInvitationsScreen() {
       setInvitations(pendingInvitations);
     } catch (error) {
       console.error('Error loading data:', error);
-      Alert.alert('Erreur', 'Impossible de charger les invitations.');
+      void alerts.alert('Erreur', 'Impossible de charger les invitations.');
     } finally {
       setIsLoading(false);
     }
@@ -90,10 +91,7 @@ export default function CommunityInvitationsScreen() {
   }, [communityId]);
 
   const handleCancelInvitation = (invitation: CommunityInvitation) => {
-    Alert.alert(
-      'Annuler l\'invitation',
-      `Voulez-vous annuler l'invitation envoyée à ${invitation.invitee_email} ?`,
-      [
+    void alerts.showAlert({ title: 'Annuler l\'invitation', message: `Voulez-vous annuler l'invitation envoyée à ${invitation.invitee_email} ?`, buttons: [
         { text: 'Non', style: 'cancel' },
         {
           text: 'Oui, annuler',
@@ -102,22 +100,21 @@ export default function CommunityInvitationsScreen() {
             try {
               await communityInvitationService.cancelInvitation(communityId!, invitation.id);
               handleRefresh();
-              Alert.alert('Succès', 'Invitation annulée.');
+              void alerts.alert('Succès', 'Invitation annulée.');
             } catch (error: any) {
-              Alert.alert('Erreur', error?.error || 'Impossible d\'annuler l\'invitation.');
+              void alerts.alert('Erreur', error?.error || 'Impossible d\'annuler l\'invitation.');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const handleResendInvitation = async (invitation: CommunityInvitation) => {
     try {
       await communityInvitationService.resendInvitation(communityId!, invitation.id);
-      Alert.alert('Succès', `Invitation renvoyée à ${invitation.invitee_email}.`);
+      void alerts.alert('Succès', `Invitation renvoyée à ${invitation.invitee_email}.`);
     } catch (error: any) {
-      Alert.alert('Erreur', error?.error || 'Impossible de renvoyer l\'invitation.');
+      void alerts.alert('Erreur', error?.error || 'Impossible de renvoyer l\'invitation.');
     }
   };
 
@@ -126,7 +123,7 @@ export default function CommunityInvitationsScreen() {
 
     const email = inviteEmail.trim().toLowerCase();
     if (!email || !email.includes('@')) {
-      Alert.alert('Erreur', 'Veuillez entrer une adresse email valide.');
+      void alerts.alert('Erreur', 'Veuillez entrer une adresse email valide.');
       return;
     }
 
@@ -141,12 +138,12 @@ export default function CommunityInvitationsScreen() {
         setInviteEmail('');
         setInviteMessage('');
         handleRefresh();
-        Alert.alert('Invitation envoyée', `Une invitation a été envoyée à ${email}.`);
+        void alerts.alert('Invitation envoyée', `Une invitation a été envoyée à ${email}.`);
       } else if (response.data?.errors?.length > 0) {
-        Alert.alert('Erreur', response.data.errors[0]?.error || 'Impossible d\'envoyer l\'invitation.');
+        void alerts.alert('Erreur', response.data.errors[0]?.error || 'Impossible d\'envoyer l\'invitation.');
       }
     } catch (error: any) {
-      Alert.alert('Erreur', error?.error || 'Impossible d\'envoyer l\'invitation.');
+      void alerts.alert('Erreur', error?.error || 'Impossible d\'envoyer l\'invitation.');
     } finally {
       setIsSendingInvite(false);
     }

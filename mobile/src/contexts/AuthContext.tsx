@@ -26,6 +26,7 @@ export interface AuthState {
 interface AuthContextType extends AuthState {
   // Actions
   signIn: (email: string, code: string) => Promise<boolean>;
+  signInWhatsApp: (phone: string, code: string) => Promise<boolean>;
   signOut: (allDevices?: boolean) => Promise<void>;
   refreshUser: () => Promise<void>;
   completeOnboarding: () => void;
@@ -218,6 +219,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  const signInWhatsApp = useCallback(async (phone: string, code: string): Promise<boolean> => {
+    try {
+      logger.debug(LOG_SOURCE, 'Attempting WhatsApp sign in', { phone });
+      const result = await otpService.verifyWhatsAppOTP(phone, code);
+
+      if (result.success) {
+        logger.info(LOG_SOURCE, 'WhatsApp sign in successful', { phone, needsOnboarding: result.needsOnboarding });
+        await checkAuthState();
+        return true;
+      }
+
+      logger.warn(LOG_SOURCE, 'WhatsApp sign in failed - invalid OTP', { phone });
+      return false;
+    } catch (error) {
+      logger.error(LOG_SOURCE, 'WhatsApp sign in error', error, { phone });
+      return false;
+    }
+  }, []);
+
   // SIGN OUT
   const signOut = useCallback(async (allDevices: boolean = false) => {
     try {
@@ -275,6 +295,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const contextValue: AuthContextType = {
     ...state,
     signIn,
+    signInWhatsApp,
     signOut,
     refreshUser,
     completeOnboarding,

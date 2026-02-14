@@ -1,10 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mail, MessageCircle, AtSign } from 'lucide-react-native';
+import { AtSign } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -12,13 +13,10 @@ export default function LoginScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const alerts = useAlert();
 
   const showComingSoonAlert = (provider: string) => {
-    Alert.alert(
-      'Bientôt disponible',
-      `La connexion via ${provider} sera disponible prochainement. En attendant, utilisez la connexion par email.`,
-      [{ text: 'OK' }]
-    );
+    void alerts.showAlert({ title: 'Bientôt disponible', message: `La connexion via ${provider} sera disponible prochainement. En attendant, utilisez la connexion par email.`, buttons: [{ text: 'OK' }] });
   };
 
   const handleGoogleLogin = () => {
@@ -26,7 +24,7 @@ export default function LoginScreen() {
   };
 
   const handleWhatsAppLogin = () => {
-    showComingSoonAlert('WhatsApp');
+    router.push('/auth/whatsapp-login');
   };
 
   const handleEmailLogin = () => {

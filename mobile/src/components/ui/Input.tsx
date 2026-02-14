@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import {
   View,
   TextInput,
   Text,
   StyleSheet,
   ViewStyle,
+  TextStyle,
   TextInputProps,
   TouchableOpacity,
 } from 'react-native';
@@ -20,25 +21,31 @@ interface InputProps extends TextInputProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   containerStyle?: ViewStyle;
+  inputContainerStyle?: ViewStyle;
+  inputStyle?: TextStyle;
   /** Accessibility label - defaults to label if not provided */
   accessibilityLabel?: string;
   /** Accessibility hint */
   accessibilityHint?: string;
 }
 
-export function Input({
+export const Input = forwardRef<TextInput, InputProps>(function Input({
   label,
   error,
   hint,
   leftIcon,
   rightIcon,
   containerStyle,
+  inputContainerStyle,
+  inputStyle,
   secureTextEntry,
   multiline,
   accessibilityLabel,
   accessibilityHint,
+  onFocus: onFocusProp,
+  onBlur: onBlurProp,
   ...props
-}: InputProps) {
+}: InputProps, ref) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -63,22 +70,31 @@ export function Input({
             backgroundColor: colors.surface,
           },
           error && { borderColor: colors.error },
+          inputContainerStyle,
         ]}
       >
         {leftIcon && <View style={styles.iconLeft}>{leftIcon}</View>}
 
         <TextInput
+          ref={ref}
           style={[
             styles.input,
             { color: colors.textPrimary },
             !!leftIcon && styles.inputWithLeftIcon,
             !!(rightIcon || isPassword) && styles.inputWithRightIcon,
             multiline && { height: undefined, paddingTop: SPACING.md, paddingBottom: SPACING.md, textAlignVertical: 'top' as const },
+            inputStyle,
           ]}
           multiline={multiline}
           placeholderTextColor={colors.gray500}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={(e) => {
+            setIsFocused(true);
+            onFocusProp?.(e);
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            onBlurProp?.(e);
+          }}
           secureTextEntry={isPassword && !isPasswordVisible}
           accessible={true}
           accessibilityLabel={accessibilityLabel || label}
@@ -124,7 +140,7 @@ export function Input({
       {hint && !error && <Text style={[styles.hint, { color: colors.gray500 }]}>{hint}</Text>}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

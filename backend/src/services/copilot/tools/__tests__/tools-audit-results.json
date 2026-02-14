@@ -1,0 +1,1807 @@
+{
+  "auditDate": "2026-02-09T16:41:35.496Z",
+  "summary": {
+    "total": 67,
+    "passed": 65,
+    "failed": 0,
+    "skipped": 2
+  },
+  "results": [
+    {
+      "tool": "vector_query",
+      "test": "Recherche opportunités dev React Abidjan",
+      "input": {
+        "query": "développeur React Node.js Abidjan",
+        "namespace": "opportunities",
+        "topK": 5,
+        "filtersJson": null
+      },
+      "output": {
+        "results": [
+          {
+            "id": "54b2990b-f5a2-49c1-8cfd-83c3ccb2e678",
+            "title": "Développeur Frontend React",
+            "summary": "Opportunité CDI pour un(e) Développeur Frontend React passionné(e). Stack: Docker, Azure, Figma. Poste basé à Ziguinchor, SN.",
+            "type": "EMPLOYMENT",
+            "contractType": "CDI",
+            "locationType": "REMOTE",
+            "location": "Ziguinchor",
+            "organization": "Digital Solutions CI",
+            "slug": "developpeur-frontend-react-ziguinchor-54b2990b",
+            "matchScore": 67
+          },
+          {
+            "id": "9cb7c06b-75e5-404e-a513-ef13786adb33",
+            "title": "Développeur Full Stack CDI",
+            "summary": "Etudesk recherche un Développeur Full Stack pour renforcer ses solutions digitales dédiées à l’éducation et au secteur public, basé à Abidjan (Cocody). Travail d’équipe, stack moderne, intégration rap",
+            "type": "EMPLOYMENT",
+            "contractType": "CDI",
+            "locationType": "ON_SITE",
+            "location": "cocody",
+            "organization": "Etudesk",
+            "slug": "developpeur-full-stack-cdi-9cb7c06b",
+            "matchScore": 69
+          },
+          {
+            "id": "c0000002-0001-4000-c000-000000000001",
+            "title": "Stage Développement Mobile (React Native)",
+            "summary": "Stage de 6 mois pour participer au développement de notre application mobile fintech. Encadrement par des développeurs seniors.",
+            "type": "INTERNSHIP",
+            "contractType": "INTERNSHIP",
+            "locationType": "ON_SITE",
+            "location": "Abidjan",
+            "organization": null,
+            "slug": "stage-dev-mobile-afritech",
+            "matchScore": 70
+          }
+        ],
+        "totalFound": 3
+      },
+      "summary": "3 résultats · opportunités",
+      "duration": 4423,
+      "status": "PASS"
+    },
+    {
+      "tool": "vector_query",
+      "test": "Recherche talents fullstack",
+      "input": {
+        "query": "développeur fullstack Python Django",
+        "namespace": "talents",
+        "topK": 5,
+        "filtersJson": null
+      },
+      "output": {
+        "results": [
+          {
+            "id": "ab20a1ac-2c2e-4389-9d1d-dea650142dd5",
+            "name": "Oumar Sow",
+            "bio": "Développeur passionné avec 8 ans d'expérience en Django, Machine Learning, CI/CD. Basé à Sokodé, TG.",
+            "location": "Sokodé, TG",
+            "matchScore": 59
+          }
+        ],
+        "totalFound": 1
+      },
+      "summary": "1 résultat · talents",
+      "duration": 1008,
+      "status": "PASS"
+    },
+    {
+      "tool": "vector_query",
+      "test": "Recherche communautés tech",
+      "input": {
+        "query": "communauté startup tech innovation",
+        "namespace": "communities",
+        "topK": 5,
+        "filtersJson": null
+      },
+      "output": {
+        "results": [
+          {
+            "id": "e0000001-0005-4000-e000-000000000005",
+            "name": "Dakar Startup Community",
+            "description": "L'écosystème startup de Dakar au complet. Fondateurs, investisseurs, mentors et talents se retrouvent pour pitcher, réseauter et co-construire les futures licornes africaines. Événements hebdomadaires",
+            "type": "HYBRID",
+            "memberCount": 3,
+            "organization": "Dakar Digital Hub",
+            "slug": "dakar-startup-community",
+            "matchScore": 61
+          },
+          {
+            "id": "d7f4d162-c523-408c-b35a-1ca8a6eb32f2",
+            "name": "Startup Weekend Bamako",
+            "description": "Startup Weekend Bamako est une communauté de professionnels passionnés par la technologie et l'innovation. Rejoignez-nous pour networker, apprendre et grandir ensemble.",
+            "type": "IN_PERSON",
+            "memberCount": 13,
+            "organization": null,
+            "slug": "startup-weekend-bamako",
+            "matchScore": 55
+          },
+          {
+            "id": "e0000001-0001-4000-e000-000000000001",
+            "name": "Tech Abidjan",
+            "description": "La plus grande communauté tech d'Abidjan. Échangez sur le développement web, mobile, data science, IA et cloud. Événements mensuels, partage d'offres d'emploi, entraide technique et networking entre d",
+            "type": "ONLINE",
+            "memberCount": 3,
+            "organization": "AfriTech Solutions",
+            "slug": "tech-abidjan",
+            "matchScore": 54
+          }
+        ],
+        "totalFound": 3
+      },
+      "summary": "3 résultats · communautés",
+      "duration": 958,
+      "status": "PASS"
+    },
+    {
+      "tool": "vector_query",
+      "test": "Recherche espaces coworking",
+      "input": {
+        "query": "espace coworking salle réunion",
+        "namespace": "spaces",
+        "topK": 5,
+        "filtersJson": null
+      },
+      "output": {
+        "results": [
+          {
+            "id": "f0000001-0006-4000-f000-000000000006",
+            "name": "Salle de Réunion Mermoz",
+            "description": "Salle de réunion premium au quartier Mermoz-Sacré-Cœur, Dakar. 8 à 12 personnes. Mobilier design, écran 65 pouces, visioconférence HD, tableau blanc magnétique. Service café et restauration rapide. Pa",
+            "type": "MEETING_ROOM",
+            "capacity": 12,
+            "hourlyRate": "10000.00",
+            "city": "Dakar",
+            "organization": "Dakar Digital Hub",
+            "slug": "salle-reunion-mermoz-dakar",
+            "matchScore": 59
+          },
+          {
+            "id": "8221f78d-c35e-431e-a29f-dd5a94734065",
+            "name": "Salle Polyvalente",
+            "description": "Louez Salle Polyvalente pour vos besoins professionnels à Dakar. Espace climatisé, moderne et accessible.",
+            "type": "COWORKING",
+            "capacity": 23,
+            "hourlyRate": "16589.00",
+            "city": "Dakar",
+            "organization": "Moov Africa",
+            "slug": "salle-polyvalente-dakar-8221f78d",
+            "matchScore": 62
+          }
+        ],
+        "totalFound": 2
+      },
+      "summary": "2 résultats · espaces",
+      "duration": 567,
+      "status": "PASS"
+    },
+    {
+      "tool": "vector_query",
+      "test": "Recherche organisations fintech",
+      "input": {
+        "query": "fintech paiement mobile Afrique",
+        "namespace": "organizations",
+        "topK": 5,
+        "filtersJson": null
+      },
+      "output": {
+        "results": [],
+        "message": "Aucun résultat trouvé pour cette recherche."
+      },
+      "summary": "Aucun résultat · organisations",
+      "duration": 1081,
+      "status": "PASS"
+    },
+    {
+      "tool": "vector_query",
+      "test": "Avec filtre contract_type CDI",
+      "input": {
+        "query": "emploi marketing digital",
+        "namespace": "opportunities",
+        "topK": 5,
+        "filtersJson": "{\"contract_type\":\"CDI\"}"
+      },
+      "output": {
+        "results": [],
+        "message": "Aucun résultat trouvé pour cette recherche."
+      },
+      "summary": "Aucun résultat · opportunités",
+      "duration": 602,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "my_profile",
+      "input": {
+        "intent": "my_profile",
+        "paramsJson": "{}"
+      },
+      "output": {
+        "id": "689f7929-7c13-4103-b119-09a806836347",
+        "first_name": "Lamine",
+        "last_name": "Barro",
+        "display_name": "Lamine Barro",
+        "bio": "Étudiant et entrepreneur, je me spécialise dans le digital, l'éducation, le tourisme et le transport. Je suis déterminé à acquérir de nouvelles compétences et à construire un réseau solide pour apporter des solutions innovantes dans ces secteurs.",
+        "city": "abobo",
+        "country": "CI",
+        "email": "succes1@gmail.com",
+        "phone": "+2250574631148",
+        "slug": "lamine-barro",
+        "remote_ready": true,
+        "willing_to_relocate": true,
+        "sectors": [
+          "DIGITAL",
+          "EDUCATION",
+          "TOURISM",
+          "TRANSPORT"
+        ],
+        "goals": [
+          "LEARN_NEW_SKILLS",
+          "BUILD_NETWORK_OR_VISIBILITY",
+          "RESEARCH_SUPPORT"
+        ],
+        "profile_tags": [
+          "STUDENT",
+          "ENTREPRENEUR",
+          "CONSULTANT"
+        ]
+      },
+      "summary": "4 éléments · Mon profil",
+      "duration": 2,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "my_applications",
+      "input": {
+        "intent": "my_applications",
+        "paramsJson": "{}"
+      },
+      "output": {
+        "applications": [
+          {
+            "id": "b1c98c64-71b0-48ee-b1fe-3deacbabdbb6",
+            "status": "SUBMITTED",
+            "applied_at": "2026-02-07T01:30:15.499Z",
+            "updated_at": "2026-02-07T01:30:15.499Z",
+            "opportunity_title": "Responsable Marketing Digital",
+            "type": "EMPLOYMENT",
+            "opportunity_slug": "resp-marketing-digital-afritech",
+            "organization_name": null
+          }
+        ],
+        "totalCount": 1
+      },
+      "summary": "1 élément · Mes candidatures",
+      "duration": 7,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "my_communities",
+      "input": {
+        "intent": "my_communities",
+        "paramsJson": "{}"
+      },
+      "output": {
+        "communities": [
+          {
+            "role": "MEMBER",
+            "joined_at": "2026-02-09T16:39:30.502Z",
+            "id": "e0000001-0002-4000-e000-000000000002",
+            "name": "BTP & Construction Côte d'Ivoire",
+            "slug": "btp-construction-ci",
+            "type": "HYBRID",
+            "description": "Communauté des professionnels du BTP et de la construction en Côte d'Ivoire. Ingénieurs, architectes, conducteurs de travaux, géomètres : partagez vos expériences terrain, discutez normes et réglementations, et trouvez des collaborateurs pour vos projets.",
+            "organization_name": "BTP Côte d'Ivoire"
+          }
+        ]
+      },
+      "summary": "1 élément · Mes communautés",
+      "duration": 2,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "my_skills",
+      "input": {
+        "intent": "my_skills",
+        "paramsJson": "{}"
+      },
+      "output": {
+        "skills": [
+          {
+            "name": "Analyse De Données Biologiques",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Analyse De Données Commerciales",
+            "type": "KNOWLEDGE",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Bio-informatique",
+            "type": "HARD_SKILL",
+            "proficiency_level": "INTERMEDIATE",
+            "origin": "extracted"
+          },
+          {
+            "name": "Communication",
+            "type": "SOFT_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Communication En Français",
+            "type": "SOFT_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Communication Scientifique",
+            "type": "SOFT_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Consulting",
+            "type": "SOFT_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Développement De Comptes Clés",
+            "type": "HARD_SKILL",
+            "proficiency_level": "MASTER",
+            "origin": "extracted"
+          },
+          {
+            "name": "Développement De Solutions Numériques",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Entrepreneuriat",
+            "type": "HARD_SKILL",
+            "proficiency_level": "MASTER",
+            "origin": "extracted"
+          },
+          {
+            "name": "Forecasting Des Ventes",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Gestion De Crm",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Gestion De Projet",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Gestion De Projet Biomédical",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Go-to-market",
+            "type": "KNOWLEDGE",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Innovation",
+            "type": "KNOWLEDGE",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Intelligence Artificielle",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Leadership",
+            "type": "SOFT_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Management D'équipe",
+            "type": "SOFT_SKILL",
+            "proficiency_level": "MASTER",
+            "origin": "extracted"
+          },
+          {
+            "name": "Mobilisation De Fonds",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Négociation Grands Comptes",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Pilotage Du Pipeline",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Pricing",
+            "type": "HARD_SKILL",
+            "proficiency_level": "MASTER",
+            "origin": "extracted"
+          },
+          {
+            "name": "Réseautage",
+            "type": "SOFT_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Stratégie Commerciale",
+            "type": "KNOWLEDGE",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Stratégie Des Politiques Publiques",
+            "type": "KNOWLEDGE",
+            "proficiency_level": "MASTER",
+            "origin": "extracted"
+          },
+          {
+            "name": "Stratégie Go-to-market",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Stratégie Numérique",
+            "type": "KNOWLEDGE",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Suivi Des Kpi",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          },
+          {
+            "name": "Vente Complexe",
+            "type": "HARD_SKILL",
+            "proficiency_level": "EXPERT",
+            "origin": "extracted"
+          }
+        ]
+      },
+      "summary": "30 éléments · Mes compétences",
+      "duration": 2,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "my_documents",
+      "input": {
+        "intent": "my_documents",
+        "paramsJson": "{}"
+      },
+      "output": {
+        "documents": [
+          {
+            "id": "edf06878-1f43-42be-9270-1dd385e896b7",
+            "document_type": "CV",
+            "category": "PROFESSIONAL",
+            "title": "CV Lamine Barro",
+            "original_filename": "CV_Lamine_Barro.pdf",
+            "status": "PROCESSING",
+            "description": "Document generated by copilot: CV professionnel",
+            "created_at": "2026-02-09T16:39:30.486Z"
+          },
+          {
+            "id": "d8df0d76-ff27-4002-a81f-1a9e5f20cd37",
+            "document_type": "OTHER",
+            "category": "PROFESSIONAL",
+            "title": "Notes reunion",
+            "original_filename": "Notes_reunion.txt",
+            "status": "PROCESSED",
+            "description": "Document generated by copilot: Notes de reunion",
+            "created_at": "2026-02-09T16:39:30.467Z"
+          },
+          {
+            "id": "a6b41947-cb95-4b31-af01-44a1eb87baa5",
+            "document_type": "OTHER",
+            "category": "PROFESSIONAL",
+            "title": "Stats Opportunites",
+            "original_filename": "Stats_Opportunites.xlsx",
+            "status": "PROCESSED",
+            "description": "Document generated by copilot: Statistiques par type de contrat",
+            "created_at": "2026-02-09T16:39:30.465Z"
+          },
+          {
+            "id": "455918d3-5c96-4a55-9ae5-ebaab0514549",
+            "document_type": "OTHER",
+            "category": "PROFESSIONAL",
+            "title": "Export CSV",
+            "original_filename": "Export_CSV.csv",
+            "status": "PROCESSED",
+            "description": "Document generated by copilot: Export CSV simple",
+            "created_at": "2026-02-09T16:39:30.429Z"
+          },
+          {
+            "id": "0bf45ae6-498f-4966-8dd7-8f283a2825b9",
+            "document_type": "OTHER",
+            "category": "PROFESSIONAL",
+            "title": "Export Talents",
+            "original_filename": "Export_Talents.docx",
+            "status": "FAILED",
+            "description": "Document generated by copilot: Export tableau des talents",
+            "created_at": "2026-02-09T16:39:30.423Z"
+          },
+          {
+            "id": "3d265f5b-0dd2-47c1-9bd5-b3268fe05673",
+            "document_type": "OTHER",
+            "category": "PROFESSIONAL",
+            "title": "Lettre de Motivation",
+            "original_filename": "Lettre_de_Motivation.pdf",
+            "status": "PROCESSING",
+            "description": "Document generated by copilot: Lettre de motivation formelle",
+            "created_at": "2026-02-09T16:39:30.354Z"
+          },
+          {
+            "id": "04bcd6cb-70bc-4c85-90df-c31ff0a55cfb",
+            "document_type": "CV",
+            "category": "PROFESSIONAL",
+            "title": "Curriculum Vitae — Mohamed Lamine Barro",
+            "original_filename": "Curriculum_Vitae___Lamine_Barro.pdf",
+            "status": "PROCESSED",
+            "description": "Document generated by copilot: Générer un CV élégant, moderne, 2 colonnes, en français, optimisé ATS. Mettre en avant entrepreneuriat, stratégie, IA, éducation et impact public. Inclure coordonnées complètes, compétences structurée",
+            "created_at": "2026-02-07T02:36:08.989Z"
+          },
+          {
+            "id": "125e70c4-ec17-45b0-b5a7-725e669c23dc",
+            "document_type": "OTHER",
+            "category": "OTHER",
+            "title": "Offre — Directeur Commercial (CDI) — Abidjan",
+            "original_filename": "Offre___Directeur_Commercial__CDI____Abidjan.pdf",
+            "status": "PROCESSED",
+            "description": "Document generated by copilot: Rédiger une fiche d’opportunité claire, professionnelle et prête à publier sur Etudesk (français). Style concis, orienté impact, avec KPIs mesurables et mots-clés commerciaux optimisés pour la recherc",
+            "created_at": "2026-02-07T01:22:06.288Z"
+          },
+          {
+            "id": "ebb89c86-4144-4751-9bb4-f440cc136df1",
+            "document_type": "CV",
+            "category": "PROFESSIONAL",
+            "title": "Curriculum Vitae — Mohamed Lamine Barro",
+            "original_filename": "Curriculum_Vitae___Lamine_Barro.pdf",
+            "status": "PROCESSED",
+            "description": "Document generated by copilot: Générer un CV élégant, moderne, en français, optimisé pour postes direction/innovation/IA/éducation. Mettre en valeur leadership, stratégie, IA et impact public. Disposition deux colonnes avec photo, ",
+            "created_at": "2026-02-07T01:22:04.493Z"
+          },
+          {
+            "id": "8c7be046-0833-4a99-97de-c0ebb0c3c40c",
+            "document_type": "OTHER",
+            "category": "OTHER",
+            "title": "Offre d'emploi — Directeur Commercial (CDI) — Abidjan",
+            "original_filename": "Offre_d_emploi___Directeur_Commercial__CDI____Abid.pdf",
+            "status": "PROCESSED",
+            "description": "Document generated by copilot: Générer une fiche d’offre d’emploi élégante, structurée et inclusive, en français, prête à être publiée. Ton professionnel, orienté résultats, avec listes claires et informations essentielles (CDI, Ab",
+            "created_at": "2026-02-07T01:20:18.324Z"
+          },
+          {
+            "id": "483bdc16-fba3-4a10-aa4e-79b716595fcc",
+            "document_type": "CV",
+            "category": "PROFESSIONAL",
+            "title": "Curriculum Vitae de Lamine Barro",
+            "original_filename": "Resume%20-%20Lamine%20BARRO%20(FR)%202026.pdf",
+            "status": "PROCESSED",
+            "description": "Étudiant et entrepreneur avec une expertise en digital, éducation, et systèmes d'IA.",
+            "created_at": "2026-02-06T18:29:12.602Z"
+          }
+        ]
+      },
+      "summary": "11 éléments · Mes documents",
+      "duration": 2,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "my_bookmarks",
+      "input": {
+        "intent": "my_bookmarks",
+        "paramsJson": "{}"
+      },
+      "output": {
+        "bookmarks": []
+      },
+      "summary": "Aucun résultat · Mes favoris",
+      "duration": 1,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "my_reservations",
+      "input": {
+        "intent": "my_reservations",
+        "paramsJson": "{}"
+      },
+      "output": {
+        "reservations": []
+      },
+      "summary": "Aucun résultat · Mes réservations",
+      "duration": 3,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "my_invitations",
+      "input": {
+        "intent": "my_invitations",
+        "paramsJson": "{}"
+      },
+      "output": {
+        "invitations": [],
+        "pendingCount": 0
+      },
+      "summary": "Aucun résultat · Mes invitations",
+      "duration": 6,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "org_stats",
+      "input": {
+        "intent": "org_stats",
+        "paramsJson": "{\"organizationId\":\"6a80d332-9d56-489c-8314-b65746b4cd78\"}"
+      },
+      "output": {
+        "member_count": "1",
+        "open_opportunities": "0",
+        "community_count": "0",
+        "space_count": "0"
+      },
+      "summary": "Données chargées · Statistiques",
+      "duration": 3,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "org_members",
+      "input": {
+        "intent": "org_members",
+        "paramsJson": "{\"organizationId\":\"6a80d332-9d56-489c-8314-b65746b4cd78\"}"
+      },
+      "output": {
+        "members": [
+          {
+            "role": "OWNER",
+            "created_at": "2026-02-06T10:56:17.963Z",
+            "display_name": "Lamine Barro",
+            "bio": "Étudiant et entrepreneur, je me spécialise dans le digital, l'éducation, le tourisme et le transport. Je suis déterminé à acquérir de nouvelles compétences et à construire un réseau solide pour apporter des solutions innovantes dans ces secteurs.",
+            "avatar_url": "file:///var/mobile/Containers/Data/Application/A24012EB-C420-44CB-8BBE-3C31D29F8916/Library/Caches/ExponentExperienceData/@anonymous/etudesk-6f207d24-87d8-4d9e-b671-e3882aba1c43/ImageManipulator/1022013A-057F-4E1C-843D-215449ACEF05.jpg"
+          }
+        ]
+      },
+      "summary": "1 élément · Membres",
+      "duration": 2,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "org_opportunities",
+      "input": {
+        "intent": "org_opportunities",
+        "paramsJson": "{\"organizationId\":\"6a80d332-9d56-489c-8314-b65746b4cd78\"}"
+      },
+      "output": {
+        "opportunities": []
+      },
+      "summary": "Aucun résultat · Opportunités",
+      "duration": 1,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "org_communities",
+      "input": {
+        "intent": "org_communities",
+        "paramsJson": "{\"organizationId\":\"6a80d332-9d56-489c-8314-b65746b4cd78\"}"
+      },
+      "output": {
+        "communities": []
+      },
+      "summary": "Aucun résultat · Communautés",
+      "duration": 1,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "org_spaces",
+      "input": {
+        "intent": "org_spaces",
+        "paramsJson": "{\"organizationId\":\"6a80d332-9d56-489c-8314-b65746b4cd78\"}"
+      },
+      "output": {
+        "spaces": []
+      },
+      "summary": "Aucun résultat · Espaces",
+      "duration": 1,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "org_revenue",
+      "input": {
+        "intent": "org_revenue",
+        "paramsJson": "{\"organizationId\":\"6a80d332-9d56-489c-8314-b65746b4cd78\"}"
+      },
+      "output": {
+        "total_revenue": "0",
+        "total_bookings": "0",
+        "confirmed_bookings": "0"
+      },
+      "summary": "Données chargées · Revenus",
+      "duration": 1,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "org_invitations",
+      "input": {
+        "intent": "org_invitations",
+        "paramsJson": "{\"organizationId\":\"6a80d332-9d56-489c-8314-b65746b4cd78\"}"
+      },
+      "output": {
+        "invitations": []
+      },
+      "summary": "Aucun résultat · Invitations",
+      "duration": 1,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "org_applications",
+      "input": {
+        "intent": "org_applications",
+        "paramsJson": "{\"organizationId\":\"6a80d332-9d56-489c-8314-b65746b4cd78\"}"
+      },
+      "output": {
+        "applications": []
+      },
+      "summary": "Aucun résultat · Candidatures reçues",
+      "duration": 2,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "search_opportunities (React)",
+      "input": {
+        "intent": "search_opportunities",
+        "paramsJson": "{\"query\":\"React\",\"limit\":5}"
+      },
+      "output": {
+        "opportunities": [
+          {
+            "id": "b69d62f7-cab1-4e52-9e0e-4d13f8a25dd7",
+            "title": "Ingénieur Intégration",
+            "summary": "Rejoignez une équipe dynamique en tant que Ingénieur Intégration. Nous offrons un environnement de travail stimulant avec des technologies modernes (Machine Learning, React Native, Kotlin).",
+            "type": "FREELANCE",
+            "contract_type": "STAGE",
+            "location_type": "ON_SITE",
+            "slug": "ingenieur-integration-ouagadougou-b69d62f7",
+            "deadline": "2026-02-21T13:48:08.140Z",
+            "org_name": "UBA Innovation"
+          },
+          {
+            "id": "52a4c7f9-9bad-42ac-a057-cb7eacf76456",
+            "title": "Architecte Logiciel",
+            "summary": "Rejoignez une équipe dynamique en tant que Architecte Logiciel. Nous offrons un environnement de travail stimulant avec des technologies modernes (DevOps, MongoDB, React).",
+            "type": "INTERNSHIP",
+            "contract_type": "STAGE",
+            "location_type": "HYBRID",
+            "slug": "architecte-logiciel-sokodé-52a4c7f9",
+            "deadline": "2026-02-11T19:24:16.328Z",
+            "org_name": "NSIA Tech"
+          },
+          {
+            "id": "a1ae1cd2-633b-4124-b506-f560d7ef62e6",
+            "title": "Data Scientist",
+            "summary": "Nous recherchons un(e) Data Scientist pour rejoindre notre équipe à Niamey. Vous travaillerez sur des projets innovants utilisant Azure, React Native, GraphQL.",
+            "type": "EMPLOYMENT",
+            "contract_type": "ALTERNANCE",
+            "location_type": "REMOTE",
+            "slug": "data-scientist-niamey-a1ae1cd2",
+            "deadline": "2026-03-07T18:16:03.732Z",
+            "org_name": "Jumia Tech"
+          },
+          {
+            "id": "3e0da6a4-467c-416a-9b70-5646d8baf02c",
+            "title": "Développeur Mobile React Native",
+            "summary": "Nous recherchons un(e) Développeur Mobile React Native pour rejoindre notre équipe à Ségou. Vous travaillerez sur des projets innovants utilisant Node.js, Django, Machine Learning.",
+            "type": "EMPLOYMENT",
+            "contract_type": "CDD",
+            "location_type": "HYBRID",
+            "slug": "developpeur-mobile-react-native-ségou-3e0da6a4",
+            "deadline": "2026-02-27T13:58:01.603Z",
+            "org_name": "Atlantique Assurance"
+          },
+          {
+            "id": "225c8c17-6f2d-44a4-a3a7-5b743c7b4a0c",
+            "title": "Développeur Backend Node.js",
+            "summary": "Nous recherchons un(e) Développeur Backend Node.js pour rejoindre notre équipe à Niamey. Vous travaillerez sur des projets innovants utilisant Django, React, REST API.",
+            "type": "FREELANCE",
+            "contract_type": "STAGE",
+            "location_type": "REMOTE",
+            "slug": "developpeur-backend-node-js-niamey-225c8c17",
+            "deadline": "2026-02-20T01:53:22.849Z",
+            "org_name": "Total Energies CI"
+          }
+        ]
+      },
+      "summary": "5 éléments · Recherche opportunités",
+      "duration": 1,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "search_communities (tech)",
+      "input": {
+        "intent": "search_communities",
+        "paramsJson": "{\"query\":\"tech\",\"limit\":5}"
+      },
+      "output": {
+        "communities": [
+          {
+            "id": "433541e9-dd2a-4320-b77d-40f9c66ea920",
+            "name": "Python CI",
+            "description": "Python CI est une communauté de professionnels passionnés par la technologie et l'innovation. Rejoignez-nous pour networker, apprendre et grandir ensemble.",
+            "type": "ONLINE",
+            "slug": "python-ci",
+            "member_count": "21"
+          },
+          {
+            "id": "2eeb7a1c-dad2-43fa-bebc-396a59581433",
+            "name": "UX Design Afrique",
+            "description": "UX Design Afrique est une communauté de professionnels passionnés par la technologie et l'innovation. Rejoignez-nous pour networker, apprendre et grandir ensemble.",
+            "type": "ONLINE",
+            "slug": "ux-design-afrique",
+            "member_count": "20"
+          },
+          {
+            "id": "1681daf5-9f74-4261-9234-d8096305ecef",
+            "name": "Mobile Developers Togo",
+            "description": "Mobile Developers Togo rassemble les talents tech de Bissau et au-delà. Partagez vos connaissances, trouvez des opportunités et construisons l'avenir ensemble.",
+            "type": "ONLINE",
+            "slug": "mobile-developers-togo",
+            "member_count": "20"
+          },
+          {
+            "id": "15df926d-07b8-409d-ba93-35eb53fe414c",
+            "name": "Femmes Entrepreneures de Côte d'Ivoire",
+            "description": "Femmes Entrepreneures de Côte d'Ivoire est une communauté de professionnels passionnés par la technologie et l'innovation. Rejoignez-nous pour networker, apprendre et grandir ensemble.",
+            "type": "IN_PERSON",
+            "slug": "femmes-entrepreneures-de-cote-d-ivoire",
+            "member_count": "17"
+          },
+          {
+            "id": "aeb64c9f-dffc-456c-91fe-677e5bfbee5a",
+            "name": "Ouaga Tech Hub",
+            "description": "Bienvenue dans Ouaga Tech Hub ! Nous sommes une communauté active de développeurs, designers et entrepreneurs basés en NE. Événements réguliers, mentoring et entraide.",
+            "type": "ONLINE",
+            "slug": "ouaga-tech-hub",
+            "member_count": "17"
+          }
+        ]
+      },
+      "summary": "5 éléments · Recherche communautés",
+      "duration": 2,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "search_spaces (coworking)",
+      "input": {
+        "intent": "search_spaces",
+        "paramsJson": "{\"query\":\"coworking\",\"limit\":5}"
+      },
+      "output": {
+        "spaces": [
+          {
+            "id": "4f9cd356-44cc-4f05-a60a-5b1c3a37c784",
+            "name": "Coworking Flex",
+            "description": "Louez Coworking Flex pour vos besoins professionnels à Bissau. Espace climatisé, moderne et accessible.",
+            "type": "TRAINING_ROOM",
+            "slug": "coworking-flex-bissau-4f9cd356",
+            "capacity": 17,
+            "hourly_rate": "14143.00",
+            "city": "Bissau"
+          },
+          {
+            "id": "96593b42-f694-4dc8-8f02-c5c41d2fe561",
+            "name": "Espace Coworking Central",
+            "description": "Espace de studio à Bobo-Dioulasso. Équipements: WiFi haut débit, vidéoprojecteur, climatisation. Capacité: 25 personnes.",
+            "type": "STUDIO",
+            "slug": "espace-coworking-central-bobo-dioulasso-96593b42",
+            "capacity": 25,
+            "hourly_rate": "21321.00",
+            "city": "Bobo-Dioulasso"
+          },
+          {
+            "id": "f0000001-0001-4000-f000-000000000001",
+            "name": "AfriTech Coworking Cocody",
+            "description": "Espace de coworking moderne au cœur de Cocody, Riviera Bonoumin. Fibre optique 100 Mbps, bureaux flexibles, salles de réunion vitrées, espace détente avec café. Idéal pour développeurs, designers et entrepreneurs tech. Accès 7j/7, communauté dynamique de 80+ membres.",
+            "type": "COWORKING",
+            "slug": "afritech-coworking-cocody",
+            "capacity": 40,
+            "hourly_rate": "3000.00",
+            "city": "Abidjan"
+          },
+          {
+            "id": "f0000001-0005-4000-f000-000000000005",
+            "name": "Dakar Digital Hub - Coworking Almadies",
+            "description": "Le plus grand espace de coworking de Dakar, situé aux Almadies face à l'océan. 500m² sur 2 niveaux, 60 postes de travail, 4 salles de réunion, 1 studio podcast, 1 espace événementiel. Communauté de 120+ startups et freelances. Fibre 200 Mbps, générateur de secours, accès 24/7.",
+            "type": "COWORKING",
+            "slug": "dakar-digital-hub-almadies",
+            "capacity": 60,
+            "hourly_rate": "2500.00",
+            "city": "Dakar"
+          }
+        ]
+      },
+      "summary": "4 éléments · Recherche espaces",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "search_organizations (tech)",
+      "input": {
+        "intent": "search_organizations",
+        "paramsJson": "{\"query\":\"tech\",\"limit\":5}"
+      },
+      "output": {
+        "organizations": [
+          {
+            "id": "f2026cea-e2af-4e55-a86e-fbd21a26e959",
+            "name": "AfriFintech",
+            "description": "Fondée à San-Pédro, AfriFintech développe des solutions innovantes dans le domaine Assurance. Notre mission : accélérer le développement numérique en Afrique de l'Ouest.",
+            "sectors": [
+              "Assurance",
+              "Commerce"
+            ],
+            "slug": "afrifintech",
+            "city": "San-Pédro",
+            "country": "CI"
+          },
+          {
+            "id": "b1b2c3d4-1111-4000-b000-000000000001",
+            "name": "AfriTech Solutions",
+            "description": "AfriTech Solutions est une startup ivoirienne spécialisée dans le développement de solutions fintech et d'applications mobiles pour l'Afrique de l'Ouest. Nous accompagnons les entreprises dans leur transformation digitale.",
+            "sectors": [
+              "DIGITAL",
+              "FINANCE"
+            ],
+            "slug": "afritech-solutions",
+            "city": "Abidjan",
+            "country": "CI"
+          },
+          {
+            "id": "b1b2c3d4-3333-4000-b000-000000000003",
+            "name": "Dakar Digital Hub",
+            "description": "Dakar Digital Hub est un incubateur et accélérateur tech au cœur de Dakar. Nous accompagnons les startups sénégalaises et ouest-africaines dans leur croissance grâce au mentorat, au financement et à un réseau d'experts.",
+            "sectors": [
+              "DIGITAL",
+              "TELECOM"
+            ],
+            "slug": "dakar-digital-hub",
+            "city": "Dakar",
+            "country": "SN"
+          },
+          {
+            "id": "81fa2241-3012-4b0c-b4b2-c7fc4f4bd2b4",
+            "name": "Jumia Tech",
+            "description": "Jumia Tech est un acteur majeur du Logistique dans la zone UEMOA. Nous recrutons les meilleurs talents pour construire l'avenir de l'Afrique.",
+            "sectors": [
+              "Logistique",
+              "RH",
+              "Marketing"
+            ],
+            "slug": "jumia-tech",
+            "city": "Niamey",
+            "country": "NE"
+          },
+          {
+            "id": "0c31e3d7-d7e3-46ea-9d22-faa9c377b668",
+            "name": "NSIA Tech",
+            "description": "NSIA Tech est un acteur majeur du Agroalimentaire dans la zone UEMOA. Nous recrutons les meilleurs talents pour construire l'avenir de l'Afrique.",
+            "sectors": [
+              "Agroalimentaire",
+              "Santé",
+              "Banque"
+            ],
+            "slug": "nsia-tech",
+            "city": "Zinder",
+            "country": "NE"
+          }
+        ]
+      },
+      "summary": "5 éléments · Recherche organisations",
+      "duration": 1,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "search_talents (développeur)",
+      "input": {
+        "intent": "search_talents",
+        "paramsJson": "{\"query\":\"développeur\",\"limit\":5}"
+      },
+      "output": {
+        "talents": [
+          {
+            "id": "b18b6cfa-32e5-4dda-8c22-174f38970931",
+            "display_name": "Alassane Traoré",
+            "bio": "Développeur passionné avec 2 ans d'expérience en Azure, MongoDB, NoSQL. Basé à Niamey, NE.",
+            "city": "Niamey",
+            "country": "NE"
+          },
+          {
+            "id": "2e06c21a-b13e-44c4-9005-e4e5dd4e7769",
+            "display_name": "Cheick Diop",
+            "bio": "Développeur passionné avec 6 ans d'expérience en Docker, Vue.js, Git. Basé à Ziguinchor, SN.",
+            "city": "Ziguinchor",
+            "country": "SN"
+          },
+          {
+            "id": "fa2b8ed7-e156-4db8-bef6-32ebaac11509",
+            "display_name": "Cheick Gnassingbé",
+            "bio": "Développeur passionné avec 6 ans d'expérience en Java, NoSQL, Data Science. Basé à Saint-Louis, SN.",
+            "city": "Saint-Louis",
+            "country": "SN"
+          },
+          {
+            "id": "e453a92c-ce45-4eef-a17b-1b7b90231aa5",
+            "display_name": "Christine Gnassingbé",
+            "bio": "Développeur passionné avec 4 ans d'expérience en NoSQL, TypeScript, SQL. Basé à Porto-Novo, BJ.",
+            "city": "Porto-Novo",
+            "country": "BJ"
+          },
+          {
+            "id": "39f769da-f53c-4621-835f-96ea611ff7bd",
+            "display_name": "Ibrahim Gueye",
+            "bio": "Développeur passionné avec 9 ans d'expérience en Flutter, JavaScript, Power BI. Basé à Zinder, NE.",
+            "city": "Zinder",
+            "country": "NE"
+          }
+        ]
+      },
+      "summary": "5 éléments · Recherche talents",
+      "duration": 1,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "org_stats sans organizationId (edge)",
+      "input": {
+        "intent": "org_stats",
+        "paramsJson": "{}"
+      },
+      "output": {
+        "error": "organizationId requis pour les requêtes organisation"
+      },
+      "summary": "Données chargées · Statistiques",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "sql_query",
+      "test": "Intent bloqué en mode study (edge)",
+      "input": {
+        "intent": "my_applications",
+        "paramsJson": "{}"
+      },
+      "output": {
+        "error": "L'intent 'my_applications' n'est pas disponible dans ce mode. Intents autorisés : my_profile, my_skills, my_documents"
+      },
+      "summary": "Données chargées · Mes candidatures",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "youtube_search",
+      "test": "Tutoriel React français",
+      "input": {
+        "query": "React hooks tutoriel français",
+        "maxResults": 1
+      },
+      "output": {
+        "videos": [
+          {
+            "videoId": "I9Tmm43qrAM",
+            "title": "Hooks React JS : Pourquoi les utiliser &amp; comment débuter ?",
+            "description": "Vous voulez apprendre à coder sous React, avec Typescript ? Dans cette video en français nous explorons ce que sont les Hooks ...",
+            "channelName": "Kodaps - apprendre à coder",
+            "thumbnailUrl": "https://i.ytimg.com/vi/I9Tmm43qrAM/mqdefault.jpg"
+          }
+        ]
+      },
+      "summary": "1 vidéo trouvée",
+      "duration": 1131,
+      "status": "PASS"
+    },
+    {
+      "tool": "youtube_search",
+      "test": "Entrepreneuriat Afrique",
+      "input": {
+        "query": "entrepreneuriat startup Afrique francophone",
+        "maxResults": 2
+      },
+      "output": {
+        "videos": [
+          {
+            "videoId": "BdFyMWSsojc",
+            "title": "Les conseils de l&#39;homme le plus riche d&#39;Afrique aux jeunes entrepreneurs.",
+            "description": "Aliko Dangote, né le 10 avril 1957 à Kano, Nord du Nigeria, est un homme d'affaires, multimilliardaire nigérian d'origine haoussa, ...",
+            "channelName": "MC BUSINESS TV",
+            "thumbnailUrl": "https://i.ytimg.com/vi/BdFyMWSsojc/mqdefault.jpg"
+          },
+          {
+            "videoId": "_QCMpgfjxmo",
+            "title": "Comment devenir un entrepreneur à succès: 3 principes - Franck Nicolas",
+            "description": "Abonnez-vous à ma newsletter business : https://i.glob.cc/newsletter-business ▸▸ Découvrez mon livre best-seller L'Effet 110 ...",
+            "channelName": "Franck Nicolas",
+            "thumbnailUrl": "https://i.ytimg.com/vi/_QCMpgfjxmo/mqdefault.jpg"
+          }
+        ]
+      },
+      "summary": "2 vidéos trouvées",
+      "duration": 711,
+      "status": "PASS"
+    },
+    {
+      "tool": "youtube_search",
+      "test": "Sujet niche UEMOA",
+      "input": {
+        "query": "mobile money API integration UEMOA",
+        "maxResults": 1
+      },
+      "output": {
+        "videos": [
+          {
+            "videoId": "pA0bFvvUEd8",
+            "title": "ALERTE : La BCEAO révolutionne le CFA avec le PI-SPI 🚀",
+            "description": "UEMOA & BCEAO lancent les paiements instantanés (PI-SPI) Une véritable révolution monétaire arrive le 30 septembre 2025 !",
+            "channelName": "J.E.S CRYPTOS INVESTMENT",
+            "thumbnailUrl": "https://i.ytimg.com/vi/pA0bFvvUEd8/mqdefault.jpg"
+          }
+        ]
+      },
+      "summary": "1 vidéo trouvée",
+      "duration": 562,
+      "status": "PASS"
+    },
+    {
+      "tool": "generate_document",
+      "test": "PDF Sections (lettre motivation)",
+      "input": {
+        "format": "PDF",
+        "title": "Lettre de Motivation",
+        "contentJson": "{\"sections\":[{\"heading\":\"Objet\",\"body\":\"Candidature au poste de développeur fullstack.\"},{\"heading\":\"Compétences\",\"body\":\"5 ans en React, Node.js et PostgreSQL.\"}]}",
+        "instructions": "Lettre de motivation formelle"
+      },
+      "output": {
+        "success": true,
+        "id": "3cce1212-ad56-4f4b-a859-be767aea0c54",
+        "documentType": "PDF",
+        "downloadUrl": "/uploads/documents/689f7929-7c13-4103-b119-09a806836347/3cce1212-ad56-4f4b-a859-be767aea0c54.pdf",
+        "filename": "Lettre_de_Motivation.pdf",
+        "metadata": {
+          "generatedAt": "2026-02-09T16:41:35.368Z",
+          "sizeBytes": 1566,
+          "title": "Lettre de Motivation"
+        }
+      },
+      "summary": "Document généré · Lettre de Motivation (sauvegardé)",
+      "duration": 30,
+      "status": "PASS"
+    },
+    {
+      "tool": "generate_document",
+      "test": "DOCX Table (export données)",
+      "input": {
+        "format": "DOCX",
+        "title": "Export Talents",
+        "contentJson": "{\"headers\":[\"Nom\",\"Ville\",\"Compétence\"],\"rows\":[[\"Lamine Barro\",\"Abidjan\",\"React\"],[\"Estelle Traoré\",\"Abidjan\",\"Python\"]]}",
+        "instructions": "Export tableau des talents"
+      },
+      "output": {
+        "success": true,
+        "id": "cdeb31b0-87fe-4ae1-9afb-821ae79d5df9",
+        "documentType": "DOCX",
+        "downloadUrl": "/uploads/documents/689f7929-7c13-4103-b119-09a806836347/cdeb31b0-87fe-4ae1-9afb-821ae79d5df9.docx",
+        "filename": "Export_Talents.docx",
+        "metadata": {
+          "generatedAt": "2026-02-09T16:41:35.402Z",
+          "sizeBytes": 7888,
+          "title": "Export Talents"
+        }
+      },
+      "summary": "Document généré · Export Talents (sauvegardé)",
+      "duration": 34,
+      "status": "PASS"
+    },
+    {
+      "tool": "generate_document",
+      "test": "CSV (export données)",
+      "input": {
+        "format": "CSV",
+        "title": "Export CSV",
+        "contentJson": "{\"headers\":[\"Nom\",\"Email\"],\"rows\":[[\"Lamine\",\"lamine@etudesk.com\"],[\"Estelle\",\"estelle@test.com\"]]}",
+        "instructions": "Export CSV simple"
+      },
+      "output": {
+        "success": true,
+        "id": "2ea3d84c-1bec-4906-b995-6d452186313a",
+        "documentType": "CSV",
+        "downloadUrl": "/uploads/documents/689f7929-7c13-4103-b119-09a806836347/2ea3d84c-1bec-4906-b995-6d452186313a.csv",
+        "filename": "Export_CSV.csv",
+        "metadata": {
+          "generatedAt": "2026-02-09T16:41:35.418Z",
+          "sizeBytes": 61,
+          "title": "Export CSV"
+        }
+      },
+      "summary": "Document généré · Export CSV (sauvegardé)",
+      "duration": 16,
+      "status": "PASS"
+    },
+    {
+      "tool": "generate_document",
+      "test": "XLS (spreadsheet)",
+      "input": {
+        "format": "XLS",
+        "title": "Stats Opportunites",
+        "contentJson": "{\"headers\":[\"Type\",\"Count\"],\"rows\":[[\"CDI\",\"15\"],[\"CDD\",\"8\"],[\"Stage\",\"5\"]]}",
+        "instructions": "Statistiques par type de contrat"
+      },
+      "output": {
+        "success": true,
+        "id": "9dcfa201-8bf1-4135-a4b9-2f6b7301095b",
+        "documentType": "XLS",
+        "downloadUrl": "/uploads/documents/689f7929-7c13-4103-b119-09a806836347/9dcfa201-8bf1-4135-a4b9-2f6b7301095b.xlsx",
+        "filename": "Stats_Opportunites.xlsx",
+        "metadata": {
+          "generatedAt": "2026-02-09T16:41:35.443Z",
+          "sizeBytes": 6578,
+          "title": "Stats Opportunites"
+        }
+      },
+      "summary": "Document généré · Stats Opportunites (sauvegardé)",
+      "duration": 25,
+      "status": "PASS"
+    },
+    {
+      "tool": "generate_document",
+      "test": "TXT (plain text)",
+      "input": {
+        "format": "TXT",
+        "title": "Notes reunion",
+        "contentJson": "{\"sections\":[{\"heading\":\"Ordre du jour\",\"body\":\"Discussion sur la roadmap Q1 2026.\"}]}",
+        "instructions": "Notes de reunion"
+      },
+      "output": {
+        "success": true,
+        "id": "dfce637c-858b-4637-9c29-247d272a30ef",
+        "documentType": "TXT",
+        "downloadUrl": "/uploads/documents/689f7929-7c13-4103-b119-09a806836347/dfce637c-858b-4637-9c29-247d272a30ef.txt",
+        "filename": "Notes_reunion.txt",
+        "metadata": {
+          "generatedAt": "2026-02-09T16:41:35.445Z",
+          "sizeBytes": 92,
+          "title": "Notes reunion"
+        }
+      },
+      "summary": "Document généré · Notes reunion (sauvegardé)",
+      "duration": 2,
+      "status": "PASS"
+    },
+    {
+      "tool": "generate_document",
+      "test": "PDF CV (format structuré)",
+      "input": {
+        "format": "PDF",
+        "title": "CV Lamine Barro",
+        "contentJson": "{\"firstName\":\"Lamine\",\"lastName\":\"Barro\",\"email\":\"lamine@etudesk.com\",\"phone\":\"+225 07 00 00 00\",\"city\":\"Abidjan\",\"country\":\"Cote d'Ivoire\",\"bio\":\"Fondateur & CEO Etudesk.\",\"skills\":[{\"name\":\"React\",\"type\":\"hard\",\"level\":\"expert\"},{\"name\":\"Node.js\",\"type\":\"hard\",\"level\":\"advanced\"}],\"languages\":[{\"language\":\"Francais\",\"level\":\"native\"}],\"experiences\":[{\"title\":\"CEO\",\"company\":\"Etudesk\",\"location\":\"Abidjan\",\"period\":\"2020 - Present\",\"description\":\"Direction plateforme.\"}],\"education\":[{\"degree\":\"Master Informatique\",\"institution\":\"ESATIC\",\"location\":\"Abidjan\",\"period\":\"2016 - 2018\"}]}",
+        "instructions": "CV professionnel"
+      },
+      "output": {
+        "success": true,
+        "id": "ac6ef350-00ad-4618-acef-1d7d550c6998",
+        "documentType": "PDF",
+        "downloadUrl": "/uploads/documents/689f7929-7c13-4103-b119-09a806836347/ac6ef350-00ad-4618-acef-1d7d550c6998.pdf",
+        "filename": "CV_Lamine_Barro.pdf",
+        "metadata": {
+          "generatedAt": "2026-02-09T16:41:35.459Z",
+          "sizeBytes": 3181,
+          "title": "CV Lamine Barro"
+        }
+      },
+      "summary": "Document généré · CV Lamine Barro (sauvegardé)",
+      "duration": 14,
+      "status": "PASS"
+    },
+    {
+      "tool": "generate_image",
+      "test": "SKIPPED (API cost)",
+      "input": {
+        "prompt": "test",
+        "size": "1024x1024",
+        "quality": "low"
+      },
+      "output": {
+        "note": "SKIPPED"
+      },
+      "summary": "Skipped",
+      "duration": 0,
+      "status": "SKIP"
+    },
+    {
+      "tool": "generate_diagram",
+      "test": "Flowchart recrutement",
+      "input": {
+        "title": "Processus de Recrutement",
+        "diagramType": "flowchart",
+        "mermaidCode": "flowchart TD\n    A[Offre publiee] --> B{Candidatures?}\n    B -->|Oui| C[Tri des CV]\n    B -->|Non| D[Relancer]\n    C --> E[Entretiens]\n    E --> F{Retenu?}\n    F -->|Oui| G[Embauche]\n    F -->|Non| H[Feedback]"
+      },
+      "output": {
+        "success": true,
+        "title": "Processus de Recrutement",
+        "diagramType": "flowchart",
+        "mermaidCode": "flowchart TD\n    A[Offre publiee] --> B{Candidatures?}\n    B -->|Oui| C[Tri des CV]\n    B -->|Non| D[Relancer]\n    C --> E[Entretiens]\n    E --> F{Retenu?}\n    F -->|Oui| G[Embauche]\n    F -->|Non| H[Feedback]",
+        "renderHint": "client-side"
+      },
+      "summary": "Diagramme généré",
+      "duration": 1,
+      "status": "PASS"
+    },
+    {
+      "tool": "generate_diagram",
+      "test": "Mindmap compétences",
+      "input": {
+        "title": "Competences Tech",
+        "diagramType": "mindmap",
+        "mermaidCode": "mindmap\n  root((Tech Skills))\n    Frontend\n      React\n      TypeScript\n    Backend\n      Node.js\n      PostgreSQL"
+      },
+      "output": {
+        "success": true,
+        "title": "Competences Tech",
+        "diagramType": "mindmap",
+        "mermaidCode": "mindmap\n  root((Tech Skills))\n    Frontend\n      React\n      TypeScript\n    Backend\n      Node.js\n      PostgreSQL",
+        "renderHint": "client-side"
+      },
+      "summary": "Diagramme généré",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "generate_diagram",
+      "test": "Pie chart distribution",
+      "input": {
+        "title": "Repartition Contrats",
+        "diagramType": "pie",
+        "mermaidCode": "pie title Repartition des contrats\n    \"CDI\" : 45\n    \"CDD\" : 25\n    \"Stage\" : 20\n    \"Freelance\" : 10"
+      },
+      "output": {
+        "success": true,
+        "title": "Repartition Contrats",
+        "diagramType": "pie",
+        "mermaidCode": "pie title Repartition des contrats\n    \"CDI\" : 45\n    \"CDD\" : 25\n    \"Stage\" : 20\n    \"Freelance\" : 10",
+        "renderHint": "client-side"
+      },
+      "summary": "Diagramme généré",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "generate_diagram",
+      "test": "Code Mermaid invalide (edge)",
+      "input": {
+        "title": "Test invalide",
+        "diagramType": "flowchart",
+        "mermaidCode": "sequenceDiagram\n    A -> B"
+      },
+      "output": {
+        "success": false,
+        "error": "Le code Mermaid doit commencer par \"flowchart\" ou \"graph\" pour un diagramme de type flowchart"
+      },
+      "summary": "Diagramme généré",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "generate_diagram",
+      "test": "Sanitize <br/> tags (edge)",
+      "input": {
+        "title": "Test sanitize",
+        "diagramType": "flowchart",
+        "mermaidCode": "flowchart TD\n    A[Etape 1<br/>details] --> B[Etape 2]"
+      },
+      "output": {
+        "success": true,
+        "title": "Test sanitize",
+        "diagramType": "flowchart",
+        "mermaidCode": "flowchart TD\n    A[Etape 1\\ndetails] --> B[Etape 2]",
+        "renderHint": "client-side"
+      },
+      "summary": "Diagramme généré",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "manage_skills",
+      "test": "Ajouter compétence Rust",
+      "input": {
+        "action": "add",
+        "skillName": "Rust_Audit_Test",
+        "proficiencyLevel": "BEGINNER",
+        "origin": "AI_INFERRED"
+      },
+      "output": {
+        "success": true,
+        "message": "Compétence \"Rust_Audit_Test\" ajoutée avec le niveau BEGINNER.",
+        "skill": {
+          "name": "Rust_Audit_Test",
+          "level": "BEGINNER",
+          "origin": "AI_INFERRED"
+        }
+      },
+      "summary": "Ajoutée · Rust_Audit_Test",
+      "duration": 4,
+      "status": "PASS"
+    },
+    {
+      "tool": "manage_skills",
+      "test": "Update compétence Rust -> INTERMEDIATE",
+      "input": {
+        "action": "update",
+        "skillName": "Rust_Audit_Test",
+        "proficiencyLevel": "INTERMEDIATE",
+        "origin": "AI_INFERRED"
+      },
+      "output": {
+        "success": true,
+        "message": "Compétence \"Rust_Audit_Test\" mise à jour au niveau INTERMEDIATE.",
+        "skill": {
+          "id": "4be50a35-48fe-479c-8182-093943ac540b",
+          "canonical_name": "Rust_Audit_Test",
+          "proficiency_level": "INTERMEDIATE"
+        }
+      },
+      "summary": "Mise à jour · Rust_Audit_Test",
+      "duration": 1,
+      "status": "PASS"
+    },
+    {
+      "tool": "manage_skills",
+      "test": "Ajouter doublon (edge)",
+      "input": {
+        "action": "add",
+        "skillName": "Rust_Audit_Test",
+        "proficiencyLevel": "EXPERT",
+        "origin": "SELF_DECLARED"
+      },
+      "output": {
+        "success": false,
+        "error": "La compétence \"Rust_Audit_Test\" existe déjà (niveau: INTERMEDIATE). Utilise l'action \"update\" pour changer le niveau."
+      },
+      "summary": "Ajoutée · Rust_Audit_Test",
+      "duration": 1,
+      "status": "PASS"
+    },
+    {
+      "tool": "manage_skills",
+      "test": "Update inexistant (edge)",
+      "input": {
+        "action": "update",
+        "skillName": "CompetenceQuiExistePas_9999",
+        "proficiencyLevel": "EXPERT",
+        "origin": "SELF_DECLARED"
+      },
+      "output": {
+        "success": false,
+        "error": "La compétence \"CompetenceQuiExistePas_9999\" n'existe pas. Utilise l'action \"add\" pour l'ajouter."
+      },
+      "summary": "Mise à jour · CompetenceQuiExistePas_9999",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "execute_action",
+      "test": "apply_opportunity",
+      "input": {
+        "action": "apply_opportunity",
+        "entityId": "c0000001-0002-4000-c000-000000000002",
+        "dataJson": ""
+      },
+      "output": {
+        "success": false,
+        "error": "Tu as déjà postulé à cette opportunité."
+      },
+      "summary": "Candidature soumise",
+      "duration": 4,
+      "status": "PASS"
+    },
+    {
+      "tool": "execute_action",
+      "test": "join_community",
+      "input": {
+        "action": "join_community",
+        "entityId": "e0000001-0002-4000-e000-000000000002",
+        "dataJson": ""
+      },
+      "output": {
+        "success": false,
+        "error": "Tu es déjà membre de cette communauté."
+      },
+      "summary": "Communauté rejointe",
+      "duration": 4,
+      "status": "PASS"
+    },
+    {
+      "tool": "execute_action",
+      "test": "book_space sans dates (edge)",
+      "input": {
+        "action": "book_space",
+        "entityId": "f0000001-0002-4000-f000-000000000002",
+        "dataJson": ""
+      },
+      "output": {
+        "success": false,
+        "error": "Les dates de début et de fin sont requises (startDatetime, endDatetime)."
+      },
+      "summary": "Espace réservé",
+      "duration": 2,
+      "status": "PASS"
+    },
+    {
+      "tool": "execute_action",
+      "test": "book_space avec dates",
+      "input": {
+        "action": "book_space",
+        "entityId": "f0000001-0002-4000-f000-000000000002",
+        "dataJson": "{\"startDatetime\":\"2026-03-01T09:00:00Z\",\"endDatetime\":\"2026-03-01T12:00:00Z\"}"
+      },
+      "output": {
+        "success": true,
+        "message": "Réservation de \"Salle de Conférence Le Plateau\" soumise (3h — 75000 FCFA).",
+        "bookingId": "8b2185f8-9f77-4655-8b35-3c1b7caf6a71"
+      },
+      "summary": "Espace réservé",
+      "duration": 12,
+      "status": "PASS"
+    },
+    {
+      "tool": "execute_action",
+      "test": "accept_invitation inexistante (edge)",
+      "input": {
+        "action": "accept_invitation",
+        "entityId": "00000000-0000-4000-0000-000000000000",
+        "dataJson": ""
+      },
+      "output": {
+        "success": false,
+        "error": "Invitation non trouvée ou déjà traitée."
+      },
+      "summary": "Invitation acceptée",
+      "duration": 3,
+      "status": "PASS"
+    },
+    {
+      "tool": "file_reader",
+      "test": "Document accessible",
+      "input": {
+        "documentId": "483bdc16-fba3-4a10-aa4e-79b716595fcc"
+      },
+      "output": {
+        "exists": true,
+        "title": "Curriculum Vitae de Lamine Barro",
+        "mimeType": "application/pdf"
+      },
+      "summary": "Lu · Curriculum Vitae de Lamine Barro",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "web_search",
+      "test": "Sub-agent config",
+      "input": {},
+      "output": {
+        "agentName": "WebSearchAgent",
+        "model": "gpt-5-mini",
+        "maxTurns": 5
+      },
+      "summary": "Recherche web terminée",
+      "duration": 0,
+      "status": "SKIP"
+    },
+    {
+      "tool": "tool_summary",
+      "test": "vector_query(opportunities) summary",
+      "input": {
+        "namespace": "opportunities"
+      },
+      "output": {
+        "summary": "3 résultats · opportunités",
+        "expected": "3 résultats · opportunités"
+      },
+      "summary": "3 résultats · opportunités",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "tool_summary",
+      "test": "vector_query(talents) summary",
+      "input": {
+        "namespace": "talents"
+      },
+      "output": {
+        "summary": "Aucun résultat · talents",
+        "expected": "Aucun résultat · talents"
+      },
+      "summary": "Aucun résultat · talents",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "tool_summary",
+      "test": "sql_query(my_applications) summary",
+      "input": {
+        "intent": "my_applications"
+      },
+      "output": {
+        "summary": "2 éléments · Mes candidatures",
+        "expected": "Mes candidatures"
+      },
+      "summary": "2 éléments · Mes candidatures",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "tool_summary",
+      "test": "sql_query(my_skills) summary",
+      "input": {
+        "intent": "my_skills"
+      },
+      "output": {
+        "summary": "3 éléments · Mes compétences",
+        "expected": "Mes compétences"
+      },
+      "summary": "3 éléments · Mes compétences",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "tool_summary",
+      "test": "youtube_search() summary",
+      "input": {},
+      "output": {
+        "summary": "1 vidéo trouvée",
+        "expected": "1 vidéo trouvée"
+      },
+      "summary": "1 vidéo trouvée",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "tool_summary",
+      "test": "generate_document() summary",
+      "input": {},
+      "output": {
+        "summary": "Document généré · Mon CV (sauvegardé)",
+        "expected": "Document généré"
+      },
+      "summary": "Document généré · Mon CV (sauvegardé)",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "tool_summary",
+      "test": "generate_image() summary",
+      "input": {},
+      "output": {
+        "summary": "Image générée",
+        "expected": "Image générée"
+      },
+      "summary": "Image générée",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "tool_summary",
+      "test": "generate_diagram() summary",
+      "input": {},
+      "output": {
+        "summary": "Diagramme généré",
+        "expected": "Diagramme généré"
+      },
+      "summary": "Diagramme généré",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "tool_summary",
+      "test": "manage_skills(add) summary",
+      "input": {
+        "action": "add",
+        "skillName": "Python"
+      },
+      "output": {
+        "summary": "Ajoutée · Python",
+        "expected": "Ajoutée · Python"
+      },
+      "summary": "Ajoutée · Python",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "tool_summary",
+      "test": "execute_action(apply_opportunity) summary",
+      "input": {
+        "action": "apply_opportunity"
+      },
+      "output": {
+        "summary": "Candidature soumise",
+        "expected": "Candidature soumise"
+      },
+      "summary": "Candidature soumise",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "tool_summary",
+      "test": "execute_action(join_community) summary",
+      "input": {
+        "action": "join_community"
+      },
+      "output": {
+        "summary": "Communauté rejointe",
+        "expected": "Communauté rejointe"
+      },
+      "summary": "Communauté rejointe",
+      "duration": 0,
+      "status": "PASS"
+    },
+    {
+      "tool": "tool_summary",
+      "test": "execute_action(book_space) summary",
+      "input": {
+        "action": "book_space"
+      },
+      "output": {
+        "summary": "Espace réservé",
+        "expected": "Espace réservé"
+      },
+      "summary": "Espace réservé",
+      "duration": 0,
+      "status": "PASS"
+    }
+  ]
+}

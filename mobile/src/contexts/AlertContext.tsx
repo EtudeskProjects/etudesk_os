@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { Alert, AlertType, AlertButton } from '../components/ui/Alert';
+import { PromptModal, PromptModalOptions } from '../components/ui/PromptModal';
 
 interface AlertOptions {
   type?: AlertType;
@@ -20,6 +21,9 @@ interface AlertContextType {
   // Confirm with boolean return
   confirm: (title: string, message?: string) => Promise<boolean>;
 
+  // Prompt with text return
+  prompt: (title: string, message?: string, options?: PromptModalOptions) => Promise<string | null>;
+
   // Custom alert with full options
   showAlert: (options: AlertOptions) => Promise<void>;
 
@@ -28,6 +32,43 @@ interface AlertContextType {
 }
 
 const AlertContext = createContext<AlertContextType | undefined>(undefined);
+
+let globalAlerts: AlertContextType | null = null;
+
+export const alertsGlobal = {
+  alert: (title: string, message?: string) => {
+    if (!globalAlerts) throw new Error('alertsGlobal.alert called before AlertProvider is mounted');
+    return globalAlerts.alert(title, message);
+  },
+  success: (title: string, message?: string) => {
+    if (!globalAlerts) throw new Error('alertsGlobal.success called before AlertProvider is mounted');
+    return globalAlerts.success(title, message);
+  },
+  error: (title: string, message?: string) => {
+    if (!globalAlerts) throw new Error('alertsGlobal.error called before AlertProvider is mounted');
+    return globalAlerts.error(title, message);
+  },
+  warning: (title: string, message?: string) => {
+    if (!globalAlerts) throw new Error('alertsGlobal.warning called before AlertProvider is mounted');
+    return globalAlerts.warning(title, message);
+  },
+  info: (title: string, message?: string) => {
+    if (!globalAlerts) throw new Error('alertsGlobal.info called before AlertProvider is mounted');
+    return globalAlerts.info(title, message);
+  },
+  confirm: (title: string, message?: string) => {
+    if (!globalAlerts) throw new Error('alertsGlobal.confirm called before AlertProvider is mounted');
+    return globalAlerts.confirm(title, message);
+  },
+  prompt: (title: string, message?: string, options?: PromptModalOptions) => {
+    if (!globalAlerts) throw new Error('alertsGlobal.prompt called before AlertProvider is mounted');
+    return globalAlerts.prompt(title, message, options);
+  },
+  showAlert: (options: AlertOptions) => {
+    if (!globalAlerts) throw new Error('alertsGlobal.showAlert called before AlertProvider is mounted');
+    return globalAlerts.showAlert(options);
+  },
+};
 
 interface AlertProviderProps {
   children: ReactNode;
@@ -38,8 +79,19 @@ interface AlertState extends AlertOptions {
   resolve?: (value: any) => void;
 }
 
+interface PromptState extends PromptModalOptions {
+  visible: boolean;
+  title: string;
+  message?: string;
+  resolve?: (value: string | null) => void;
+}
+
 export function AlertProvider({ children }: AlertProviderProps) {
   const [alertState, setAlertState] = useState<AlertState>({
+    visible: false,
+    title: '',
+  });
+  const [promptState, setPromptState] = useState<PromptState>({
     visible: false,
     title: '',
   });
@@ -126,10 +178,49 @@ export function AlertProvider({ children }: AlertProviderProps) {
     });
   }, []);
 
+  const prompt = useCallback((title: string, message?: string, options?: PromptModalOptions): Promise<string | null> => {
+    return new Promise((resolve) => {
+      setPromptState({
+        visible: true,
+        title,
+        message,
+        ...(options || {}),
+        resolve,
+      });
+    });
+  }, []);
+
   const handleClose = useCallback(() => {
     alertState.resolve?.(undefined);
     hideAlert();
   }, [alertState.resolve, hideAlert]);
+
+  const handlePromptCancel = useCallback(() => {
+    promptState.resolve?.(null);
+    setPromptState((prev) => ({ ...prev, visible: false }));
+  }, [promptState.resolve]);
+
+  const handlePromptConfirm = useCallback((value: string) => {
+    promptState.resolve?.(value);
+    setPromptState((prev) => ({ ...prev, visible: false }));
+  }, [promptState.resolve]);
+
+  useEffect(() => {
+    globalAlerts = {
+      alert,
+      success,
+      error,
+      warning,
+      info,
+      confirm,
+      prompt,
+      showAlert,
+      hideAlert,
+    };
+    return () => {
+      globalAlerts = null;
+    };
+  }, [alert, success, error, warning, info, confirm, prompt, showAlert, hideAlert]);
 
   return (
     <AlertContext.Provider
@@ -140,6 +231,7 @@ export function AlertProvider({ children }: AlertProviderProps) {
         warning,
         info,
         confirm,
+        prompt,
         showAlert,
         hideAlert,
       }}
@@ -153,6 +245,19 @@ export function AlertProvider({ children }: AlertProviderProps) {
         buttons={alertState.buttons}
         dismissable={alertState.dismissable}
         onClose={handleClose}
+      />
+      <PromptModal
+        visible={promptState.visible}
+        title={promptState.title}
+        message={promptState.message}
+        placeholder={promptState.placeholder}
+        defaultValue={promptState.defaultValue}
+        confirmText={promptState.confirmText}
+        cancelText={promptState.cancelText}
+        multiline={promptState.multiline}
+        keyboardType={promptState.keyboardType}
+        onCancel={handlePromptCancel}
+        onConfirm={handlePromptConfirm}
       />
     </AlertContext.Provider>
   );

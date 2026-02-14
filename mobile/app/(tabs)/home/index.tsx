@@ -10,7 +10,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { Redirect, useRouter, useFocusEffect } from 'expo-router';
 import {
   Briefcase,
   Users,
@@ -33,23 +33,23 @@ import {
   FolderOpen,
   Mail,
   User,
+  Coins,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
-import { Header, FooterNav } from '../../../src/components/ui';
+import { Header, FooterNav, IconButton } from '../../../src/components/ui';
 import { CreateOfferModal } from '../../../src/components/CreateOfferModal';
 import { formatCompactNumber } from '../../../src/utils/number';
 import {
   applicationService,
   communityService,
-  spaceService,
   spaceBookingService,
-  opportunityService,
   documentService,
   dailyObjectiveService,
+  billingService,
   type DailyObjective,
 } from '../../../src/services';
 import skillService from '../../../src/services/skillService';
@@ -65,7 +65,13 @@ export default function EcosystemScreen() {
   const { colors } = useTheme();
   const { t } = useI18n();
   const { user } = useAuth();
-  const { selectedOrg, isOrganizationSpace } = useSpace();
+  const { isOrganizationSpace } = useSpace();
+
+  // There is a dedicated organization dashboard at `/(tabs)/gestion`.
+  // Prevent duplicate "org home" screens: redirect org space away from this Talent home.
+  if (isOrganizationSpace) {
+    return <Redirect href="/(tabs)/gestion" />;
+  }
 
   // State
   const [isLoading, setIsLoading] = useState(true);
@@ -73,7 +79,6 @@ export default function EcosystemScreen() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [dailyObjective, setDailyObjective] = useState<DailyObjective | null>(null);
   const [isObjectiveExpanded, setIsObjectiveExpanded] = useState(false);
-  const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<EcoNotification[]>([]);
   const [quickActionCounts, setQuickActionCounts] = useState({
     talent: {
@@ -84,13 +89,8 @@ export default function EcosystemScreen() {
       applications: 0,
       invitations: 0,
     },
-    org: {
-      communities: 0,
-      spaces: 0,
-      opportunities: 0,
-      revenues: 0,
-    },
   });
+  const [creditBalance, setCreditBalance] = useState<number | null>(null);
 
   // Get greeting based on time of day
   const getGreeting = (): { text: string; icon: typeof Sun } => {
@@ -104,9 +104,7 @@ export default function EcosystemScreen() {
 
   // Get first name, truncated to 10 characters
   const getDisplayName = () => {
-    const raw = isOrganizationSpace && selectedOrg
-      ? selectedOrg.name
-      : user?.firstName || user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Utilisateur';
+    const raw = user?.firstName || user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Utilisateur';
     return raw.length > 10 ? raw.slice(0, 10) + '...' : raw;
   };
 
@@ -118,42 +116,6 @@ export default function EcosystemScreen() {
     community: { bg: colors.cardCommunity, icon: colors.cardCommunityAccent, text: colors.cardCommunityText },
     space: { bg: colors.cardSpace, icon: colors.cardSpaceAccent, text: colors.cardSpaceText },
   };
-
-  // Quick actions for organization
-  const orgQuickActions = [
-    {
-      id: 'communities',
-      label: 'Mes communautés',
-      icon: Users,
-      route: '/gestion/communities',
-      count: quickActionCounts.org.communities,
-      theme: CARD_THEMES.community,
-    },
-    {
-      id: 'spaces',
-      label: 'Mes espaces',
-      icon: MapPin,
-      route: '/gestion/spaces',
-      count: quickActionCounts.org.spaces,
-      theme: CARD_THEMES.space,
-    },
-    {
-      id: 'opportunities',
-      label: 'Mes opportunités',
-      icon: Briefcase,
-      route: '/gestion/opportunities',
-      count: quickActionCounts.org.opportunities,
-      theme: CARD_THEMES.opportunity,
-    },
-    {
-      id: 'revenues',
-      label: 'Mes revenus',
-      icon: Banknote,
-      route: '/settings/payment-methods',
-      count: quickActionCounts.org.revenues,
-      theme: CARD_THEMES.org,
-    },
-  ];
 
   // Quick actions for talent
   const talentQuickActions = [
@@ -207,7 +169,7 @@ export default function EcosystemScreen() {
     },
   ];
 
-  const quickActions = isOrganizationSpace ? orgQuickActions : talentQuickActions;
+  const quickActions = talentQuickActions;
 
   // Helper functions
   const getActivityIcon = (type: string) => {
@@ -269,9 +231,7 @@ export default function EcosystemScreen() {
   const OBJECTIVE_TRUNCATE_LENGTH = 200;
   const getDisplayedObjective = (): string => {
     if (!dailyObjective?.objective) {
-      return isOrganizationSpace
-        ? 'Pilotez vos offres, communautés et espaces pour maximiser votre impact.'
-        : 'Explorez les opportunités qui vous correspondent et renforcez votre profil.';
+      return 'Explorez les opportunités qui vous correspondent et renforcez votre profil.';
     }
     if (isObjectiveExpanded || dailyObjective.objective.length <= OBJECTIVE_TRUNCATE_LENGTH) {
       return dailyObjective.objective;
@@ -295,9 +255,7 @@ export default function EcosystemScreen() {
 
   const loadDailyObjective = useCallback(async () => {
     try {
-      const response = isOrganizationSpace && selectedOrg?.id
-        ? await dailyObjectiveService.getOrganizationObjective(selectedOrg.id)
-        : await dailyObjectiveService.getTalentObjective();
+      const response = await dailyObjectiveService.getTalentObjective();
 
       console.log('[Home] Daily objective response:', JSON.stringify(response, null, 2));
 
@@ -311,7 +269,7 @@ export default function EcosystemScreen() {
     } catch (error) {
       console.error('[Home] Failed to load daily objective:', error);
     }
-  }, [isOrganizationSpace, selectedOrg?.id]);
+  }, []);
 
   // Auto-refresh objective when it expires
   useEffect(() => {
@@ -338,46 +296,11 @@ export default function EcosystemScreen() {
 
   const loadQuickActionCounts = useCallback(async () => {
     try {
-      if (isOrganizationSpace) {
-        if (!selectedOrg?.id) {
-          setQuickActionCounts((prev) => ({
-            ...prev,
-            org: { communities: 0, spaces: 0, opportunities: 0, revenues: 0 },
-          }));
-          return;
-        }
-
-        const [opportunitiesResult, communitiesResult, spacesResult] = await Promise.allSettled([
-          opportunityService.getByOrganization(selectedOrg.id, { limit: 1, offset: 0 }),
-          communityService.getByOrganization(selectedOrg.id, { limit: 1, offset: 0 }),
-          spaceService.getByOrganization(selectedOrg.id, { limit: 1, offset: 0 }),
-        ]);
-
-        // Extract results safely, defaulting to 0 if failed
-        const opportunitiesRes = opportunitiesResult.status === 'fulfilled' ? opportunitiesResult.value : null;
-        const communitiesRes = communitiesResult.status === 'fulfilled' ? communitiesResult.value : null;
-        const spacesRes = spacesResult.status === 'fulfilled' ? spacesResult.value : null;
-
-        const opportunitiesCount = opportunitiesRes?.count ?? opportunitiesRes?.data?.length ?? 0;
-        const communitiesCount = communitiesRes?.count ?? communitiesRes?.data?.length ?? 0;
-        const spacesCount = spacesRes?.count ?? spacesRes?.data?.length ?? 0;
-
-        setQuickActionCounts((prev) => ({
-          ...prev,
-          org: {
-            communities: communitiesCount,
-            spaces: spacesCount,
-            opportunities: opportunitiesCount,
-            revenues: prev.org.revenues,
-          },
-        }));
-        return;
-      }
-
       const [
         communitiesResult, bookingsResult, applicationsResult,
         skillsResult, documentsResult,
         communityInvResult, spaceInvResult, opportunityInvResult,
+        talentBalanceResult,
       ] = await Promise.allSettled([
         communityService.getMyMemberships({ limit: 1, offset: 0 }),
         spaceBookingService.getMyBookings({ limit: 1, offset: 0 }),
@@ -387,6 +310,7 @@ export default function EcosystemScreen() {
         communityInvitationService.getMyInvitations({ status: 'PENDING', limit: 1 }),
         spaceInvitationService.getMyInvitations({ limit: 1 }),
         opportunityInvitationService.getMyInvitations({ limit: 1 }),
+        billingService.getBalance('TALENT'),
       ]);
 
       // Extract results safely, defaulting to 0 if failed
@@ -405,6 +329,11 @@ export default function EcosystemScreen() {
       const opportunityInvCount = opportunityInvResult.status === 'fulfilled' ? (opportunityInvResult.value.data?.count ?? opportunityInvResult.value.data?.data?.length ?? 0) : 0;
       const invitationsCount = communityInvCount + spaceInvCount + opportunityInvCount;
 
+      if (talentBalanceResult.status === 'fulfilled') {
+        const bal = talentBalanceResult.value?.data?.balance_credits ?? null;
+        setCreditBalance(typeof bal === 'number' ? bal : null);
+      }
+
       setQuickActionCounts((prev) => ({
         ...prev,
         talent: {
@@ -419,7 +348,7 @@ export default function EcosystemScreen() {
     } catch (error) {
       console.error('[Ecosystem] Failed to load quick action counts:', error);
     }
-  }, [isOrganizationSpace, selectedOrg?.id]);
+  }, []);
 
   // Refresh handler
   const handleRefresh = useCallback(async () => {
@@ -445,144 +374,6 @@ export default function EcosystemScreen() {
     };
   }, [loadQuickActionCounts, loadNotifications, loadDailyObjective]);
 
-// Render Organization Content
-const renderOrganizationContent = () => (
-  <>
-    {/* Greeting */}
-    <View style={styles.greetingSection}>
-      <Text style={[styles.greetingText, { color: colors.textPrimary }]}>
-        Bonjour {getDisplayName()} 👋
-      </Text>
-      <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-        {new Date().toLocaleDateString('fr-FR', {
-          weekday: 'long',
-          day: 'numeric',
-          month: 'long'
-        })}
-      </Text>
-    </View>
-
-    {/* Objectif du jour (organisations) */}
-    <View style={[styles.insightContainer, { backgroundColor: CARD_THEMES.space.bg }]}>
-      <View style={styles.insightHeader}>
-        <Target size={16} color={CARD_THEMES.space.icon} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.insightLabel, { color: CARD_THEMES.space.text }]}>Objectif du jour</Text>
-      </View>
-      <Text style={[styles.insightText, { color: colors.textPrimary }]}>
-        {getDisplayedObjective()}
-        {shouldShowSeeMore && !isObjectiveExpanded && (
-          <Text
-            style={[styles.seeMoreLink, { color: colors.primary }]}
-            onPress={() => setIsObjectiveExpanded(true)}
-          >
-            {' '}Voir plus
-          </Text>
-        )}
-      </Text>
-    </View>
-
-    {/* Quick Actions Grid */}
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Accès rapide</Text>
-      </View>
-      <View style={styles.quickActionsGrid}>
-        {quickActions.map((action) => {
-          const IconComponent = action.icon;
-          return (
-            <TouchableOpacity
-              key={action.id}
-              style={[styles.quickActionCard, { backgroundColor: action.theme.bg }]}
-              onPress={() => router.push(action.route as any)}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.quickActionIconContainer, { backgroundColor: colors.surface }]}>
-                <IconComponent size={22} color={action.theme.icon} strokeWidth={ICON.strokeWidth} />
-              </View>
-              <Text style={[styles.quickActionLabel, { color: action.theme.text }]} numberOfLines={2}>
-                {action.label}
-              </Text>
-              {action.count !== undefined && (
-                <View style={[styles.quickActionBadge, { backgroundColor: action.theme.icon }]}>
-                  <Text style={[styles.quickActionBadgeText, { color: colors.textOnPrimary }]}>
-                    {formatCompactNumber(action.count)}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-
-    {/* Create Button */}
-    <TouchableOpacity
-      style={[styles.actionButton, { backgroundColor: colors.primary }]}
-      onPress={() => setShowCreateModal(true)}
-      activeOpacity={0.8}
-    >
-      <Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-      <Text style={[styles.actionButtonText, { color: colors.textOnPrimary }]}>Créer une offre</Text>
-    </TouchableOpacity>
-
-    {/* Recent Activity Section */}
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Activité récente</Text>
-        <TouchableOpacity>
-          <Text style={[styles.seeMore, { color: colors.primary }]}>Voir tout</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={[styles.listContainer, { backgroundColor: colors.surface }]}>
-        {recentActivities.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Bell size={40} color={colors.gray300} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
-              Aucune activité récente
-            </Text>
-            <Text style={[styles.emptyStateSubtext, { color: colors.gray400 }]}>
-              Créez des offres pour voir l'activité
-            </Text>
-          </View>
-        ) : (
-          recentActivities.map((activity, index) => {
-            const ActivityIcon = getActivityIcon(activity.type);
-            const activityColor = getActivityColor(activity.type);
-            const isLast = index === recentActivities.length - 1;
-            return (
-              <TouchableOpacity
-                key={activity.id}
-                style={[
-                  styles.listItem,
-                  { borderBottomColor: colors.gray100 },
-                  isLast && styles.listItemLast,
-                ]}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.listItemIconBox, { backgroundColor: activityColor.bg }]}>
-                  <ActivityIcon size={18} color={activityColor.icon} strokeWidth={ICON.strokeWidth} />
-                </View>
-                <View style={styles.listItemContent}>
-                  <Text style={[styles.listItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {activity.title}
-                  </Text>
-                  <Text style={[styles.listItemSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {activity.message}
-                  </Text>
-                </View>
-                <Text style={[styles.listItemTime, { color: colors.gray400 }]}>
-                  {activity.time}
-                </Text>
-              </TouchableOpacity>
-            );
-          })
-        )}
-      </View>
-    </View>
-  </>
-);
-
 // Render Talent Content
 const renderTalentContent = () => (
   <>
@@ -599,6 +390,25 @@ const renderTalentContent = () => (
         })}
       </Text>
     </View>
+
+    {/* Credit Balance Banner */}
+    {creditBalance !== null && (
+      <TouchableOpacity
+        style={[styles.creditBanner, { backgroundColor: colors.surface }]}
+        onPress={() => router.push('/settings/credits' as any)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.creditBannerLeft}>
+          <Coins size={16} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+          <Text style={[styles.creditBannerText, { color: colors.textPrimary }]}>
+            {creditBalance} crédits
+          </Text>
+        </View>
+        <Text style={[styles.creditBannerLink, { color: colors.primary }]}>
+          Recharger
+        </Text>
+      </TouchableOpacity>
+    )}
 
     {/* Objectif du jour (talents) */}
     <View style={[styles.insightContainer, { backgroundColor: CARD_THEMES.space.bg }]}>
@@ -732,12 +542,13 @@ return (
       title={t('ecosystem.title')}
       rightContent={
         <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
+          <IconButton
+            variant="filled"
             onPress={() => router.push('/settings/notifications')}
-            activeOpacity={0.8}
+            icon={<Bell size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel={t('notifications.title')}
+            style={{ backgroundColor: colors.gray100 }}
           >
-            <Bell size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
             {(() => {
               const unread = notifications.filter(n => !n.read_at).length;
               return unread > 0 ? (
@@ -746,16 +557,7 @@ return (
                 </View>
               ) : null;
             })()}
-          </TouchableOpacity>
-          {isOrganizationSpace && (
-            <TouchableOpacity
-              style={[styles.headerButton, { backgroundColor: colors.primary }]}
-              onPress={() => setShowCreateModal(true)}
-              activeOpacity={0.8}
-            >
-              <Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
-          )}
+          </IconButton>
         </View>
       }
     />
@@ -779,18 +581,16 @@ return (
         </View>
       ) : (
         <>
-          {isOrganizationSpace ? renderOrganizationContent() : renderTalentContent()}
+          {renderTalentContent()}
           <View style={styles.bottomSpacer} />
         </>
       )}
     </ScrollView>
 
-    {isOrganizationSpace && (
-      <CreateOfferModal
-        isVisible={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-      />
-    )}
+    <CreateOfferModal
+      isVisible={showCreateModal}
+      onClose={() => setShowCreateModal(false)}
+    />
     <FooterNav activeTab="home" />
   </SafeAreaView>
   );
@@ -815,11 +615,7 @@ const styles = StyleSheet.create({
   },
 
   headerButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: BORDER.radius.sm,
+    // replaced by unified <IconButton />
     position: 'relative',
   },
 
@@ -1068,6 +864,33 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.xs,
     marginTop: SPACING.xs,
     textAlign: 'center',
+  },
+
+  // Credit Banner
+  creditBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: BORDER.radius.md,
+    padding: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+
+  creditBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+
+  creditBannerText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+  },
+
+  creditBannerLink: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
   // Bottom Spacer

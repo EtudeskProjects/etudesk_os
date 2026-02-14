@@ -374,38 +374,28 @@ Le dégroupage crée des services isolés. La vraie valeur vient du **re-bundlin
 
 ---
 
-## 5. Pricing & Plans d'abonnement
+## 5. Pricing & Crédits (modèle V2)
 
-### Grille tarifaire
+La référence active est `Etudesk_SAS/produit/etudesk_os/docs/ECONOMIC_MODEL_2026.md`.
 
-| | Discover | Talent | Pro | Corporate |
-|---|---|---|---|---|
-| **Prix** | Gratuit | 5 000 FCFA/mois | 25 000 FCFA/mois | 500 000 FCFA/mois + onboarding (potentiel 1M FCFA) |
-| **Objectif volume** | 1M | 100K | 10K | 500 |
-| **Crédits copilote/jour** | 5 | 30 | 100 | 500 |
-| **Compétences max** | 50 | 50 | 100 | Illimité |
-| **Documents max** | 1 | 20 | 100 | Illimité |
-| **Candidatures** | Illimitées | Illimitées | Illimitées | Illimitées |
-| **Organisations** | 0 | 0 | 1 | 10 |
-| **Agents IA** | Explorer, Etudier | Explorer, Etudier | Explorer, Etudier, Recherche de talents | Explorer, Recherche intelligente de talents, Benchmark |
-| **Business Intelligence** | - | - | - | Avancé |
-| **Intégration personnalisée** | - | - | - | Oui |
-| **Contact** | Self-service | Self-service | Self-service | Contacter nous (privé) |
+Résumé opérationnel:
 
-### Programme d'affiliation
+- Modèle à l'usage (crédits par action), plus de plans d'abonnement comme mécanique principale.
+- Deux wallets/facturations:
+  - **Talent**: facture personnelle, minimum **2 000 FCFA**
+  - **Organisation**: facture entreprise, minimum **10 000 FCFA**, crédits mutualisés pour les sous-admins/membres autorisés
+- Paiement **in-app via Paystack** (init transaction, paiement, webhook, crédit wallet, facture).
 
-Tous les plans bénéficient du programme d'affiliation talent payant :
-- **Bonus :** +10 crédits/jour pendant 1 mois pour chaque talent parrainé qui souscrit un plan payant
-- **Plafond :** Maximum 100 crédits/jour (cumul affiliations + plan)
-- **Corporate exclusif :** 15% de revenus sur les talents parrainés (en plus des crédits)
+Barème crédits (extrait):
 
-### Système de paiement
-
-- **Fournisseur :** Paystack (paiements en FCFA)
-- **Mécanisme :** Génération d'un lien de paiement → le membre paie hors plateforme → retour sur la plateforme
-- **Paywall :** Affiché sur l'écran Home à la fin du mois pour inciter au renouvellement
-- **Notifications :** Le membre continue de recevoir les notifications même après expiration
-- **Factures :** Consultables et téléchargeables depuis l'application
+| Scope | Action | Crédits |
+|---|---|---:|
+| Talent | Assistant Explorer (requête) | 1 |
+| Talent | Assistant Study (requête) | 0,25 |
+| Talent | Génération de document / image / upload document | 1 |
+| Organisation | Assistant Manager (requête) | 1 |
+| Organisation | Analyse et scoring d'application | 0,5 |
+| Tous | Recherche web / Instruction vocale | 0 |
 
 ---
 

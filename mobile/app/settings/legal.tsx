@@ -283,7 +283,7 @@ export default function LegalScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
                 </TouchableOpacity>
@@ -292,7 +292,7 @@ export default function LegalScreen() {
             </View>
 
             {/* Tabs */}
-            <View style={[styles.tabsContainer, { borderBottomColor: colors.gray200 }]}>
+            <View style={[styles.tabsContainer, { borderBottomColor: colors.borderColor }]}>
                 {TABS.map((tab) => (
                     <TouchableOpacity
                         key={tab.id}
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.lg,
         paddingVertical: SPACING.md,
         borderBottomWidth: BORDER.width.thin,
-        borderBottomColor: '#E5E7EB',
+        borderBottomColor: 'transparent',
     },
 
     backButton: {
@@ -364,6 +364,7 @@ const styles = StyleSheet.create({
     tabsContainer: {
         flexDirection: 'row',
         borderBottomWidth: BORDER.width.thin,
+        borderBottomColor: 'transparent',
     },
 
     tab: {

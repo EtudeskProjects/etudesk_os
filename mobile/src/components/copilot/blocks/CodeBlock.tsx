@@ -4,11 +4,17 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Code, Copy, Check } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
+
+const MONO_FONT_FAMILY = Platform.select({
+  ios: 'Menlo',
+  android: 'monospace',
+  default: 'monospace',
+});
 
 interface CodeBlockProps {
   language: string;
@@ -167,7 +173,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.xs,
   },
   languageText: {
-    fontFamily: 'Courier',
+    fontFamily: MONO_FONT_FAMILY,
     fontSize: TYPOGRAPHY.fontSize.xxs,
     textTransform: 'uppercase',
     letterSpacing: TYPOGRAPHY.letterSpacing.wider,
@@ -198,14 +204,14 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   lineNumber: {
-    fontFamily: 'Courier',
+    fontFamily: MONO_FONT_FAMILY,
     fontSize: TYPOGRAPHY.fontSize.sm,
     lineHeight: TYPOGRAPHY.fontSize.sm * 1.6,
     width: 24,
     textAlign: 'right',
   },
   codeText: {
-    fontFamily: 'Courier',
+    fontFamily: MONO_FONT_FAMILY,
     fontSize: TYPOGRAPHY.fontSize.sm,
     lineHeight: TYPOGRAPHY.fontSize.sm * 1.6,
   },

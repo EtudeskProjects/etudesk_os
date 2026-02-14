@@ -61,9 +61,11 @@ async function generateBio(context?: {
 
 /**
  * Get current user's TalentObject (rich profile with skills & documents)
+ * @param includeHidden - If false, hidden skills are excluded (for public previews)
  */
-async function getMyTalentObject(): Promise<ApiResponse<TalentObjectData>> {
-  return api.get<TalentObjectData>('/api/talents/me/talent-object');
+async function getMyTalentObject(options?: { includeHidden?: boolean }): Promise<ApiResponse<TalentObjectData>> {
+  const params = options?.includeHidden === false ? '?include_hidden=false' : '';
+  return api.get<TalentObjectData>(`/api/talents/me/talent-object${params}`);
 }
 
 /**

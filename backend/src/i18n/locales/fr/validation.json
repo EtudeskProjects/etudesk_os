@@ -1,7 +1,6 @@
 {
   "validationFailed": "Validation échouée",
   "internalError": "Erreur de validation interne",
-
   "required": "{{field}} est requis",
   "minLength": "{{field}} doit contenir au moins {{min}} caractères",
   "maxLength": "{{field}} ne doit pas dépasser {{max}} caractères",
@@ -13,7 +12,6 @@
   "numberMax": "{{field}} ne doit pas dépasser {{max}}",
   "arrayMinItems": "{{field}} doit contenir au moins {{min}} éléments",
   "arrayMaxItems": "{{field}} ne doit pas contenir plus de {{max}} éléments",
-
   "common": {
     "invalidId": "ID invalide",
     "invalidOrgId": "ID d'organisation invalide",
@@ -22,15 +20,14 @@
     "countryCodeFormat": "Le code pays doit être au format ISO 3166-1 alpha-2",
     "currencyFormat": "La devise doit être au format ISO 4217"
   },
-
   "auth": {
     "invalidEmail": "Email invalide",
     "emailTooLong": "Email trop long",
     "codeLength": "Le code doit contenir 6 chiffres",
     "codeDigits": "Le code doit être composé de 6 chiffres",
-    "refreshTokenRequired": "Token de rafraîchissement requis"
+    "refreshTokenRequired": "Token de rafraîchissement requis",
+    "invalidPhone": "Numéro de téléphone invalide"
   },
-
   "opportunity": {
     "titleMinLength": "Le titre doit contenir au moins 3 caractères",
     "titleMaxLength": "Le titre ne doit pas dépasser 200 caractères",
@@ -53,7 +50,6 @@
     "maxSkills": "Maximum 20 compétences autorisées",
     "invalidApplicationDeadline": "La date limite de candidature doit être une date future valide"
   },
-
   "application": {
     "questionIdRequired": "ID de question requis",
     "answerMaxLength": "La réponse ne doit pas dépasser 2000 caractères",
@@ -69,7 +65,6 @@
     "maxBulk": "Maximum 100 candidatures à la fois",
     "invalidRating": "La note doit être entre 1 et 5"
   },
-
   "onboarding": {
     "firstNameRequired": "Prénom requis",
     "firstNameTooLong": "Prénom trop long",
@@ -83,7 +78,6 @@
     "maxGoals": "Maximum 3 objectifs",
     "maxSectors": "Maximum 5 secteurs"
   },
-
   "community": {
     "nameMinLength": "Le nom doit contenir au moins 3 caractères",
     "nameMaxLength": "Le nom ne doit pas dépasser 100 caractères",
@@ -94,13 +88,11 @@
     "priceInvalid": "Le prix mensuel doit être un nombre positif",
     "trialDaysInvalid": "Les jours d'essai doivent être entre 0 et 90"
   },
-
   "organization": {
     "nameMinLength": "Le nom doit contenir au moins 2 caractères",
     "nameMaxLength": "Le nom ne doit pas dépasser 200 caractères",
     "descriptionMaxLength": "La description ne doit pas dépasser 5000 caractères"
   },
-
   "space": {
     "invalidSpaceId": "ID d'espace invalide",
     "invalidTimeFormat": "Format heure invalide (HH:MM)",
@@ -109,16 +101,13 @@
     "descriptionMaxLength": "La description ne doit pas dépasser 5000 caractères",
     "invalidVisibility": "La visibilité doit être PUBLIC ou PRIVATE"
   },
-
   "kyc": {
     "invalidDocumentType": "Type de document invalide",
     "frontImageRequired": "Image recto requise"
   },
-
   "invitation": {
     "emailOrTalentRequired": "Email ou ID du talent requis"
   },
-
   "activity": {
     "titleMinLength": "Le titre doit contenir au moins 2 caractères",
     "titleMaxLength": "Le titre ne doit pas dépasser 200 caractères",
@@ -131,20 +120,17 @@
     "pollOptionMinLength": "Chaque option doit contenir au moins 1 caractère",
     "pollExpiresRequired": "La date d'expiration du sondage est requise"
   },
-
   "talent": {
     "firstNameRequired": "Le prénom est requis",
     "lastNameRequired": "Le nom est requis",
     "bioMaxLength": "La bio ne doit pas dépasser 500 caractères",
     "invalidExperienceLevel": "Niveau d'expérience invalide"
   },
-
   "document": {
     "titleMinLength": "Le titre doit contenir au moins 2 caractères",
     "titleMaxLength": "Le titre ne doit pas dépasser 200 caractères",
     "invalidType": "Type de document invalide"
   },
-
   "email": {
     "subjectRequired": "Le sujet de l'email est requis",
     "bodyRequired": "Le contenu de l'email est requis"

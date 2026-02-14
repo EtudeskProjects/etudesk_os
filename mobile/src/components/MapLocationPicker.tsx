@@ -11,7 +11,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
@@ -19,6 +18,7 @@ import { MapPin, Navigation, X } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, BORDER } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../contexts/I18nContext';
+import { alertsGlobal } from '../contexts/AlertContext';
 
 interface Coordinates {
   latitude: number;
@@ -263,10 +263,7 @@ export function MapLocationPicker({
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== 'granted') {
-        Alert.alert(
-          t('map.permissionDenied'),
-          t('map.permissionMessage')
-        );
+        void alertsGlobal.alert(t('map.permissionDenied'), t('map.permissionMessage'));
         return;
       }
 
@@ -287,10 +284,7 @@ export function MapLocationPicker({
         `);
       }
     } catch (error) {
-      Alert.alert(
-        t('map.locationError'),
-        t('map.locationErrorMessage')
-      );
+      void alertsGlobal.alert(t('map.locationError'), t('map.locationErrorMessage'));
     } finally {
       setIsLocating(false);
     }

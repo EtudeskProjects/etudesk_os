@@ -1,12 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -25,12 +23,14 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useOrganizationMembers } from '../../../src/contexts/OrganizationMemberContext';
+import { Input } from '../../../src/components/ui';
 import {
   OrganizationRole,
   ORGANIZATION_ROLES,
   ORGANIZATION_ROLE_LABELS,
   ORGANIZATION_ROLE_DESCRIPTIONS,
 } from '../../../src/types/models';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 const getRoleIcon = (role: OrganizationRole) => {
   switch (role) {
@@ -66,6 +66,7 @@ export default function InviteMemberScreen() {
   const [email, setEmail] = useState('');
   const [selectedRole, setSelectedRole] = useState<OrganizationRole>(ORGANIZATION_ROLES.MEMBER);
   const [isSending, setIsSending] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const isValidEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -73,24 +74,28 @@ export default function InviteMemberScreen() {
 
   const handleSend = async () => {
     if (!isValidEmail(email)) {
-      Alert.alert('Erreur', 'Veuillez entrer une adresse email valide');
+      void alerts.alert('Erreur', 'Veuillez entrer une adresse email valide');
       return;
     }
 
     setIsSending(true);
     try {
       await inviteMember(email, selectedRole);
-      Alert.alert(
-        'Invitation envoyée',
-        `Une invitation a été envoyée à ${email}`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      void alerts.showAlert({ title: 'Invitation envoyée', message: `Une invitation a été envoyée à ${email}`, buttons: [{ text: 'OK', onPress: () => router.back() }] });
     } catch (error: any) {
-      Alert.alert('Erreur', error?.message || 'Impossible d\'envoyer l\'invitation');
+      void alerts.alert('Erreur', error?.message || 'Impossible d\'envoyer l\'invitation');
     } finally {
       setIsSending(false);
     }
   };
+
+  const handleEmailFocus = useCallback(() => {
+    if (Platform.OS !== 'android') return;
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: 30, animated: true });
+    }, 120);
+  }, []);
+  const alerts = useAlert();
 
   // Available roles for invitation (exclude OWNER)
   const availableRoles: OrganizationRole[] = [
@@ -115,26 +120,28 @@ export default function InviteMemberScreen() {
         style={styles.keyboardView}
       >
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {/* Email Input */}
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Adresse email</Text>
-          <View style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-            <Mail size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-            <TextInput
-              style={[styles.input, { color: colors.textPrimary }]}
-              placeholder="email@exemple.com"
-              placeholderTextColor={colors.gray400}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoFocus
-            />
-          </View>
+          <Input
+            placeholder="email@exemple.com"
+            value={email}
+            onChangeText={setEmail}
+            onFocus={handleEmailFocus}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoFocus
+            inputContainerStyle={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+            inputStyle={[styles.input, { color: colors.textPrimary, paddingHorizontal: 0 }]}
+            leftIcon={<Mail size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+          />
 
           {/* Role Selection */}
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Rôle</Text>

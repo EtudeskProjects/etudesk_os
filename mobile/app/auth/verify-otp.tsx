@@ -4,30 +4,33 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
+  type TextInput as RNTextInput,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Mail, CheckCircle } from 'lucide-react-native';
+import { ArrowLeft, Mail, MessageCircle, CheckCircle } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { otpService } from '../../src/services/otpService';
+import { useAlert } from '../../src/contexts/AlertContext';
+import { Input } from '../../src/components/ui';
 
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN = 60;
 
 export default function VerifyOTPScreen() {
   const router = useRouter();
-  const { email } = useLocalSearchParams<{ email: string }>();
+  const { email, phone, channel } = useLocalSearchParams<{ email?: string; phone?: string; channel?: string }>();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const { signIn } = useAuth();
+  const { signIn, signInWhatsApp } = useAuth();
+  const isWhatsAppFlow = channel === 'whatsapp';
+  const identifier = isWhatsAppFlow ? (phone || '') : (email || '');
 
   const [otp, setOtp] = useState<string[]>(new Array(OTP_LENGTH).fill(''));
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +38,8 @@ export default function VerifyOTPScreen() {
   const [resendCooldown, setResendCooldown] = useState(RESEND_COOLDOWN);
   const [error, setError] = useState('');
 
-  const inputRefs = useRef<(TextInput | null)[]>([]);
+  const inputRefs = useRef<(RNTextInput | null)[]>([]);
+  const alerts = useAlert();
 
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -95,7 +99,9 @@ export default function VerifyOTPScreen() {
     try {
       // Use AuthContext signIn which properly updates auth state
       // Navigation will be handled automatically by AuthContext's navigation guard
-      const success = await signIn(email || '', otpCode);
+      const success = isWhatsAppFlow
+        ? await signInWhatsApp(phone || '', otpCode)
+        : await signIn(email || '', otpCode);
 
       if (success) {
         setIsVerified(true);
@@ -107,11 +113,7 @@ export default function VerifyOTPScreen() {
         inputRefs.current[0]?.focus();
       }
     } catch (err) {
-      Alert.alert(
-        t('common.error'),
-        t('auth.verifyOtp.verifyError'),
-        [{ text: t('common.close') }]
-      );
+      void alerts.showAlert({ title: t('common.error'), message: t('auth.verifyOtp.verifyError'), buttons: [{ text: t('common.close') }] });
     } finally {
       setIsLoading(false);
     }
@@ -122,21 +124,17 @@ export default function VerifyOTPScreen() {
 
     setIsLoading(true);
     try {
-      await otpService.sendOTP(email || '');
+      if (isWhatsAppFlow) {
+        await otpService.sendWhatsAppOTP(phone || '');
+      } else {
+        await otpService.sendOTP(email || '');
+      }
       setResendCooldown(RESEND_COOLDOWN);
       setOtp(new Array(OTP_LENGTH).fill(''));
       setError('');
-      Alert.alert(
-        t('common.success'),
-        t('auth.verifyOtp.codeSent'),
-        [{ text: t('common.close') }]
-      );
+      void alerts.showAlert({ title: t('common.success'), message: t('auth.verifyOtp.codeSent'), buttons: [{ text: t('common.close') }] });
     } catch (err) {
-      Alert.alert(
-        t('common.error'),
-        t('auth.emailLogin.sendError'),
-        [{ text: t('common.close') }]
-      );
+      void alerts.showAlert({ title: t('common.error'), message: isWhatsAppFlow ? t('auth.whatsappLogin.sendError') : t('auth.emailLogin.sendError'), buttons: [{ text: t('common.close') }] });
     } finally {
       setIsLoading(false);
     }
@@ -180,40 +178,53 @@ export default function VerifyOTPScreen() {
 
         <View style={styles.content}>
           <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-            <Mail size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+            {isWhatsAppFlow ? (
+              <MessageCircle size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+            ) : (
+              <Mail size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+            )}
           </View>
 
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {t('auth.verifyOtp.title')}
+            {isWhatsAppFlow ? t('auth.verifyOtp.titleWhatsApp') : t('auth.verifyOtp.title')}
           </Text>
 
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            {t('auth.verifyOtp.subtitle')}
+            {isWhatsAppFlow ? t('auth.verifyOtp.subtitleWhatsApp') : t('auth.verifyOtp.subtitle')}
           </Text>
 
           <Text style={[styles.emailText, { color: colors.primary }]}>
-            {email}
+            {identifier}
           </Text>
 
           <View style={styles.otpContainer}>
             {otp.map((digit, index) => (
-              <TextInput
+              <Input
                 key={index}
                 ref={(ref) => { inputRefs.current[index] = ref; }}
-                style={[
-                  styles.otpInput,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: error ? colors.error : digit ? colors.primary : colors.borderColor,
-                    color: colors.textPrimary,
-                  },
-                ]}
                 value={digit}
                 onChangeText={(value) => handleOtpChange(value, index)}
                 onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
                 keyboardType="number-pad"
                 selectTextOnFocus
                 editable={!isLoading}
+                inputContainerStyle={[
+                  {
+                    width: 48,
+                    height: 56,
+                    borderWidth: BORDER.width.medium,
+                    borderRadius: BORDER.radius.sm,
+                    backgroundColor: colors.surface,
+                    borderColor: error ? colors.error : digit ? colors.primary : colors.borderColor,
+                  },
+                ]}
+                inputStyle={{
+                  color: colors.textPrimary,
+                  fontSize: TYPOGRAPHY.fontSize.xl,
+                  fontWeight: TYPOGRAPHY.fontWeight.bold,
+                  textAlign: 'center',
+                  paddingHorizontal: 0,
+                }}
               />
             ))}
           </View>
@@ -327,16 +338,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.sm,
     marginBottom: SPACING.md,
-  },
-
-  otpInput: {
-    width: 48,
-    height: 56,
-    borderWidth: BORDER.width.medium,
-    borderRadius: BORDER.radius.sm,
-    fontSize: TYPOGRAPHY.fontSize.xl,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    textAlign: 'center',
   },
 
   errorText: {

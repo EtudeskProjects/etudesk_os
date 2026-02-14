@@ -1,14 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -19,11 +15,16 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useForm, validators } from '../../src/hooks/useForm';
 import { otpService } from '../../src/services/otpService';
+import { Button, IconButton, Input } from '../../src/components/ui';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 export default function EmailLoginScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const emailContainerY = useRef(0);
+  const alerts = useAlert();
 
   const form = useForm({
     fields: {
@@ -50,35 +51,48 @@ export default function EmailLoginScreen() {
     try {
       await form.handleSubmit();
     } catch (err) {
-      Alert.alert(
-        t('common.error'),
-        t('auth.emailLogin.sendError'),
-        [{ text: t('common.retry'), onPress: handleSendOTP }, { text: t('common.cancel') }]
-      );
+      await alerts.showAlert({
+        type: 'error',
+        title: t('common.error'),
+        message: t('auth.emailLogin.sendError'),
+        buttons: [
+          { text: t('common.retry'), onPress: handleSendOTP },
+          { text: t('common.cancel'), style: 'cancel' },
+        ],
+      });
     }
-  }, [form, t]);
+  }, [alerts, form, t]);
+
+  const handleEmailFocus = useCallback(() => {
+    if (Platform.OS !== 'android') return;
+    setTimeout(() => {
+      const y = Math.max(0, emailContainerY.current - 80);
+      scrollViewRef.current?.scrollTo({ y, animated: true });
+    }, 120);
+  }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
       >
         <View style={styles.header}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.surface }]}
+          <IconButton
             onPress={() => router.back()}
-            activeOpacity={0.8}
-          >
-            <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
+            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel={t('common.back')}
+            variant="filled"
+          />
         </View>
 
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
@@ -94,58 +108,43 @@ export default function EmailLoginScreen() {
               {t('auth.emailLogin.subtitle')}
             </Text>
 
-            <View style={styles.inputContainer}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>
-                {t('auth.emailLogin.emailLabel')}
-              </Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  { backgroundColor: colors.surface, borderColor: form.getError('email') ? colors.error : colors.borderColor },
-                ]}
-              >
-                <AtSign size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                <TextInput
-                  style={[styles.input, { color: colors.textPrimary }]}
-                  placeholder={t('auth.login.emailPlaceholder')}
-                  placeholderTextColor={colors.gray400}
-                  value={form.getValue('email')}
-                  onChangeText={(text) => form.setValue('email', text)}
-                  onBlur={() => form.setTouched('email')}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="email"
-                  autoFocus={true}
-                  editable={!form.state.isSubmitting}
-                />
-              </View>
-              {form.getError('email') ? (
-                <Text style={[styles.errorText, { color: colors.error }]}>{form.getError('email')}</Text>
-              ) : null}
+            <View
+              style={styles.inputContainer}
+              onLayout={(e) => {
+                emailContainerY.current = e.nativeEvent.layout.y;
+              }}
+            >
+              <Input
+                label={t('auth.emailLogin.emailLabel')}
+                placeholder={t('auth.login.emailPlaceholder')}
+                value={form.getValue('email')}
+                onChangeText={(text) => form.setValue('email', text)}
+                onBlur={() => form.setTouched('email')}
+                onFocus={handleEmailFocus}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                autoFocus={true}
+                editable={!form.state.isSubmitting}
+                leftIcon={<AtSign size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+                error={form.getError('email') || undefined}
+              />
             </View>
           </View>
 
           <View style={styles.footer}>
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                { backgroundColor: colors.primary },
-                (!form.getValue('email').trim() || form.state.isSubmitting) && styles.submitButtonDisabled,
-              ]}
+            <Button
+              title={t('auth.emailLogin.sendCode')}
               onPress={handleSendOTP}
-              activeOpacity={0.8}
+              loading={form.state.isSubmitting}
               disabled={!form.getValue('email').trim() || form.state.isSubmitting}
-            >
-              {form.state.isSubmitting ? (
-                <ActivityIndicator color={colors.textOnPrimary} />
-              ) : (
-                <>
-                  <Text style={[styles.submitButtonText, { color: colors.textOnPrimary }]}>{t('auth.emailLogin.sendCode')}</Text>
-                  <ArrowRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                </>
-              )}
-            </TouchableOpacity>
+              icon={<ArrowRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+              iconPosition="right"
+              size="lg"
+              fullWidth
+              style={styles.submitButton}
+            />
 
             <Text style={[styles.infoText, { color: colors.textSecondary }]}>
               {t('auth.emailLogin.infoText')}
@@ -171,14 +170,6 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
   },
 
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: BORDER.radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
   scrollView: {
     flex: 1,
   },
@@ -186,6 +177,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'space-between',
+    paddingBottom: SPACING.xxl,
   },
 
   content: {
@@ -223,53 +215,13 @@ const styles = StyleSheet.create({
     marginTop: SPACING.lg,
   },
 
-  label: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-    marginBottom: SPACING.sm,
-  },
-
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: LAYOUT.buttonHeight,
-    paddingHorizontal: SPACING.md,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
-    gap: SPACING.sm,
-  },
-
-  input: {
-    flex: 1,
-    fontSize: TYPOGRAPHY.fontSize.md,
-  },
-
-  errorText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    marginTop: SPACING.xs,
-  },
-
   footer: {
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.xl,
   },
 
   submitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: LAYOUT.buttonHeight,
-    borderRadius: BORDER.radius.sm,
-    gap: SPACING.sm,
-  },
-
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-
-  submitButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    marginTop: SPACING.md,
   },
 
   infoText: {

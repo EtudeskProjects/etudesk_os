@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -19,11 +18,12 @@ import {
   AlertCircle,
   DollarSign,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../../src/constants/theme';
 import { PageLayout, EmptyState } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { spaceService, spaceBookingService, Space, SpaceBookingDetails, BookingStatus } from '../../../../src/services';
 import { formatRelativeTime } from '../../../../src/utils/date';
+import { useAlert } from '../../../../src/contexts/AlertContext';
 
 // Status configuration
 const getStatusConfig = (colors: any): Record<BookingStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
@@ -47,6 +47,7 @@ export default function SpaceBookingsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filter, setFilter] = useState<FilterStatus>('PENDING');
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const alerts = useAlert();
 
   const STATUS_CONFIG = getStatusConfig(colors);
 
@@ -75,7 +76,7 @@ export default function SpaceBookingsScreen() {
       setStatusCounts(counts);
     } catch (error) {
       console.error('Error loading data:', error);
-      Alert.alert('Erreur', 'Impossible de charger les réservations.');
+      void alerts.alert('Erreur', 'Impossible de charger les réservations.');
     } finally {
       setIsLoading(false);
     }
@@ -110,15 +111,12 @@ export default function SpaceBookingsScreen() {
       );
       handleRefresh();
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de confirmer la réservation.');
+      void alerts.alert('Erreur', error.error || 'Impossible de confirmer la réservation.');
     }
   };
 
   const handleCancelBooking = async (bookingId: string) => {
-    Alert.alert(
-      'Annuler la réservation',
-      'Êtes-vous sûr de vouloir annuler cette réservation ?',
-      [
+    void alerts.showAlert({ title: 'Annuler la réservation', message: 'Êtes-vous sûr de vouloir annuler cette réservation ?', buttons: [
         { text: 'Non', style: 'cancel' },
         {
           text: 'Oui, annuler',
@@ -131,12 +129,11 @@ export default function SpaceBookingsScreen() {
               );
               handleRefresh();
             } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Impossible d\'annuler la réservation.');
+              void alerts.alert('Erreur', error.error || 'Impossible d\'annuler la réservation.');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const filteredBookings = bookings.filter((b) => {
@@ -234,7 +231,7 @@ export default function SpaceBookingsScreen() {
 
         <View style={styles.cardFooter}>
           <View style={[styles.statusBadge, { backgroundColor: statusConfig.bgColor }]}>
-            <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
+            <StatusIcon size={COMPONENT.pill.iconSize} color={statusConfig.color} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
               {statusConfig.label}
             </Text>
@@ -246,7 +243,7 @@ export default function SpaceBookingsScreen() {
         </View>
 
         {item.status === 'PENDING' && (
-          <View style={styles.quickActions}>
+          <View style={[styles.quickActions, { borderTopColor: colors.borderColor }]}>
             <TouchableOpacity
               style={[styles.quickAction, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}
               onPress={() => handleConfirmBooking(item.id)}
@@ -277,7 +274,7 @@ export default function SpaceBookingsScreen() {
   ];
 
   const headerContent = (
-    <View style={[styles.filtersContainer, { borderBottomColor: colors.gray200 }]}>
+    <View style={[styles.filtersContainer, { borderBottomColor: colors.borderColor }]}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -352,15 +349,15 @@ const styles = StyleSheet.create({
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.md,
+    gap: COMPONENT.pill.gap,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
     borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.full,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
   filterChipText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
   cardWrapper: {
     marginBottom: SPACING.md,
@@ -447,15 +444,15 @@ const styles = StyleSheet.create({
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.full,
+    gap: COMPONENT.pill.gap,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
 
   statusText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
 
   appliedDate: {
@@ -468,7 +465,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     paddingTop: SPACING.md,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: 'transparent',
   },
 
   quickAction: {

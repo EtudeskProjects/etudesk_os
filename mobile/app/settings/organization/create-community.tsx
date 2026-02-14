@@ -7,10 +7,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  TextInput,
   Image,
-  Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,7 +37,7 @@ import {
   BarChart2,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
-import { Input, Button, Toggle, StepIndicator } from '../../../src/components/ui';
+import { Input, Button, Toggle, StepIndicator, Chip, IconButton, useToast } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
@@ -60,6 +57,8 @@ import {
 } from '../../../src/types/models';
 import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../../src/constants/talent';
 import { useSpace } from '../../../src/contexts/SpaceContext';
+import { useAlert } from '../../../src/contexts/AlertContext';
+import { FormTextArea } from '../../../src/components/forms/FormTextArea';
 import { communityService, CreateCommunityData, imageService, organizationService, MemberPermissions, DEFAULT_MEMBER_PERMISSIONS } from '../../../src/services';
 
 type Step = 'info' | 'lieu' | 'conditions' | 'media' | 'preview';
@@ -115,6 +114,8 @@ export default function CreateCommunityScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { selectedOrgId, selectedOrg } = useSpace();
+  const alerts = useAlert();
+  const { showToast } = useToast();
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -208,7 +209,7 @@ export default function CreateCommunityScreen() {
 
   const pickImage = async () => {
     if (images.length >= MAX_IMAGES) {
-      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_IMAGES} images.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_IMAGES} images.` });
       return;
     }
 
@@ -222,7 +223,7 @@ export default function CreateCommunityScreen() {
         form.setValue('images', [...images, newImage]);
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la sélection de l\'image.');
+      showToast({ type: 'error', title: 'Erreur', message: 'Une erreur est survenue lors de la sélection de l\'image.' });
     }
   };
 
@@ -237,7 +238,7 @@ export default function CreateCommunityScreen() {
     } else if (selectedTags.length < MAX_COMMUNITY_TAGS) {
       form.setValue('selectedTags', [...selectedTags, tagId]);
     } else {
-      Alert.alert('Limite atteinte', `Vous pouvez sélectionner au maximum ${MAX_COMMUNITY_TAGS} tags.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez sélectionner au maximum ${MAX_COMMUNITY_TAGS} tags.` });
     }
   };
 
@@ -247,7 +248,7 @@ export default function CreateCommunityScreen() {
     } else if (selectedSectors.length < MAX_SECTORS) {
       form.setValue('selectedSectors', [...selectedSectors, sectorId]);
     } else {
-      Alert.alert('Limite atteinte', `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.` });
     }
   };
 
@@ -324,7 +325,7 @@ export default function CreateCommunityScreen() {
     } catch (error: any) {
       const duration = Date.now() - startTime;
       console.error(`[CreateCommunity] AI Generation - Failed after ${duration}ms:`, error);
-      Alert.alert('Erreur de génération', error?.error || 'Une erreur est survenue lors de la génération.');
+      showToast({ type: 'error', title: 'Erreur de génération', message: error?.error || 'Une erreur est survenue lors de la génération.' });
     } finally {
       setIsGenerating(false);
     }
@@ -333,7 +334,7 @@ export default function CreateCommunityScreen() {
   // Question handlers
   const addQuestion = () => {
     if (applicationQuestions.length >= MAX_QUESTIONS) {
-      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.` });
       return;
     }
     const newQuestion: ApplicationQuestion = {
@@ -388,7 +389,7 @@ export default function CreateCommunityScreen() {
         uploadedImageUrls.push(uploaded.url);
       } catch (error) {
         console.error('[CreateCommunity] Error uploading image:', error);
-        Alert.alert('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
+        await alerts.error('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
         return null;
       }
     }
@@ -429,13 +430,14 @@ export default function CreateCommunityScreen() {
       }
       const data = await buildCommunityData(imageUrls);
       await communityService.saveDraft(data);
-      Alert.alert(
-        'Brouillon enregistré',
-        'La communauté a été enregistrée comme brouillon.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      await alerts.showAlert({
+        type: 'success',
+        title: 'Brouillon enregistré',
+        message: 'La communauté a été enregistrée comme brouillon.',
+        buttons: [{ text: 'OK', onPress: () => router.back() }],
+      });
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de l\'enregistrement.');
+      await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de l\'enregistrement.');
     } finally {
       setIsSubmitting(false);
     }
@@ -455,14 +457,15 @@ export default function CreateCommunityScreen() {
       const data = { ...(await buildCommunityData(imageUrls.length > 0 ? imageUrls : undefined)), status: 'ACTIVE' as const };
 
       await communityService.create(data);
-      Alert.alert(
-        'Communauté créée',
-        `"${name}" a été créée avec succès !`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      await alerts.showAlert({
+        type: 'success',
+        title: 'Communauté créée',
+        message: `"${name}" a été créée avec succès !`,
+        buttons: [{ text: 'OK', onPress: () => router.back() }],
+      });
     } catch (error: any) {
       console.error('[CreateCommunity] handlePublish - Error:', error);
-      Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de la création.');
+      await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de la création.');
     } finally {
       setIsSubmitting(false);
     }
@@ -530,27 +533,15 @@ export default function CreateCommunityScreen() {
             {COMMUNITY_TAG_DATA.map((tag) => {
               const isSelected = selectedTags.includes(tag.id);
               return (
-                <TouchableOpacity
+                <Chip
                   key={tag.id}
-                  style={[
-                    styles.selectableTag,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
+                  label={tag.label}
+                  selected={isSelected}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   onPress={() => toggleTag(tag.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {tag.label}
-                  </Text>
-                </TouchableOpacity>
+                  style={styles.selectableTag}
+                  textStyle={styles.selectableTagText}
+                />
               );
             })}
           </View>
@@ -559,25 +550,15 @@ export default function CreateCommunityScreen() {
         {/* Bouton Générer - Visible quand name >= 3 chars et type sélectionné */}
         {canGenerate && (
           <View style={styles.generateButtonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.generateButton,
-                { backgroundColor: colors.primary },
-                isGenerating && { opacity: 0.7 },
-              ]}
+            <Button
+              title={isGenerating ? 'Suggestion...' : 'Suggérer'}
               onPress={handleGenerate}
+              loading={isGenerating}
               disabled={isGenerating}
-              activeOpacity={0.8}
-            >
-              {isGenerating ? (
-                <ActivityIndicator size="small" color={colors.textOnPrimary} />
-              ) : (
-                <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              )}
-              <Text style={[styles.generateButtonText, { color: colors.textOnPrimary }]}>
-                {isGenerating ? 'Suggestion...' : 'Suggérer'}
-              </Text>
-            </TouchableOpacity>
+              icon={!isGenerating ? <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
+              fullWidth
+              style={styles.generateButton}
+            />
           </View>
         )}
 
@@ -590,49 +571,29 @@ export default function CreateCommunityScreen() {
             {SECTOR_DATA.slice(0, 15).map((sector) => {
               const isSelected = selectedSectors.includes(sector.id);
               return (
-                <TouchableOpacity
+                <Chip
                   key={sector.id}
-                  style={[
-                    styles.selectableTag,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
+                  label={sector.label}
+                  selected={isSelected}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   onPress={() => toggleSector(sector.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {sector.label}
-                  </Text>
-                </TouchableOpacity>
+                  style={styles.selectableTag}
+                  textStyle={styles.selectableTagText}
+                />
               );
             })}
           </View>
         </View>
 
         {/* Description */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Description du poste</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary }]}
-              placeholder="Décrivez votre communauté, ses objectifs et sa mission..."
-              value={description}
-              onChangeText={(value) => form.setValue('description', value)}
-              multiline
-              numberOfLines={4}
-              maxLength={1000}
-              placeholderTextColor={colors.gray500}
-            />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{description.length}/1000</Text>
-        </View>
+        <FormTextArea
+          label="Description"
+          placeholder="Décrivez votre communauté, ses objectifs et sa mission..."
+          value={description}
+          onChangeText={(value) => form.setValue('description', value)}
+          rows={4}
+          maxLength={1000}
+        />
       </View>
     </View>
   );
@@ -880,22 +841,14 @@ export default function CreateCommunityScreen() {
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
 
         {/* Règles */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Règles de la communauté</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary }]}
-              placeholder="Ex: 1. Respectez les autres membres&#10;2. Pas de spam&#10;3. Restez courtois..."
-              value={rules}
-              onChangeText={(value) => form.setValue('rules', value)}
-              multiline
-              numberOfLines={5}
-              maxLength={1000}
-              placeholderTextColor={colors.gray500}
-            />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{rules.length}/1000</Text>
-        </View>
+        <FormTextArea
+          label="Règles de la communauté"
+          placeholder={'Ex: 1. Respectez les autres membres\n2. Pas de spam\n3. Restez courtois...'}
+          value={rules}
+          onChangeText={(value) => form.setValue('rules', value)}
+          rows={5}
+          maxLength={1000}
+        />
 
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
 
@@ -1001,27 +954,26 @@ export default function CreateCommunityScreen() {
                 <Text style={[styles.questionNumber, { color: colors.primary }]}>
                   Question {index + 1}
                 </Text>
-                <TouchableOpacity onPress={() => removeQuestion(question.id)}>
-                  <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
+                <IconButton
+                  onPress={() => removeQuestion(question.id)}
+                  icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+                  accessibilityLabel="Supprimer la question"
+                  size="sm"
+                  variant="ghost"
+                />
               </View>
 
-              <TextInput
-                style={[styles.questionInput, { backgroundColor: colors.gray50, color: colors.textPrimary, borderColor: colors.gray200 }]}
+              <FormTextArea
                 placeholder="Écrivez votre question..."
-                placeholderTextColor={colors.gray400}
                 value={question.question}
                 onChangeText={(text) => updateQuestion(question.id, { question: text })}
                 maxLength={MAX_QUESTION_LENGTH}
-                multiline
-                numberOfLines={2}
+                rows={2}
+                showCounter
+                containerStyle={{ marginTop: 0 }}
               />
 
               <View style={styles.questionFooter}>
-                <Text style={[styles.charCount, { color: colors.gray500 }]}>
-                  {question.question.length}/{MAX_QUESTION_LENGTH}
-                </Text>
-
                 <View style={styles.requiredToggle}>
                   <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>Obligatoire</Text>
                   <Toggle
@@ -1036,15 +988,14 @@ export default function CreateCommunityScreen() {
 
           {/* Add Question Button */}
           {applicationQuestions.length < MAX_QUESTIONS && (
-            <TouchableOpacity
-              style={[styles.addQuestionButton, { borderColor: colors.primary }]}
+            <Button
+              title="Ajouter une question"
               onPress={addQuestion}
-            >
-              <Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.addQuestionText, { color: colors.primary }]}>
-                Ajouter une question
-              </Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+              fullWidth
+              style={styles.addQuestionButton}
+            />
           )}
         </View>
       </View>

@@ -9,8 +9,6 @@ import {
   Platform,
   TextInput,
   Image,
-  Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -41,7 +39,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
-import { Input, Button, Toggle, StepIndicator } from '../../../src/components/ui';
+import { Input, Button, Toggle, StepIndicator, Chip } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
@@ -71,6 +69,9 @@ import {
   Visibility,
 } from '../../../src/types/models';
 import { useSpace } from '../../../src/contexts/SpaceContext';
+import { useAlert } from '../../../src/contexts/AlertContext';
+import { useToast } from '../../../src/components/ui';
+import { FormTextArea } from '../../../src/components/forms/FormTextArea';
 import { opportunityService, CreateOpportunityData, imageService } from '../../../src/services';
 import { organizationService } from '../../../src/services';
 import { uploadFile } from '../../../src/services/fileService';
@@ -153,6 +154,8 @@ export default function CreateOpportunityScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { selectedOrgId, selectedOrg } = useSpace();
+  const alerts = useAlert();
+  const { showToast } = useToast();
 
   // UI state (not form data)
   const [currentStep, setCurrentStep] = useState<Step>('info');
@@ -276,7 +279,7 @@ export default function CreateOpportunityScreen() {
 
   const pickImage = async () => {
     if (images.length >= MAX_IMAGES) {
-      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_IMAGES} images.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_IMAGES} images.` });
       return;
     }
 
@@ -291,7 +294,7 @@ export default function CreateOpportunityScreen() {
         form.setValue('images', [...images, newImage]);
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la sélection de l\'image.');
+      showToast({ type: 'error', title: 'Erreur', message: 'Une erreur est survenue lors de la sélection de l\'image.' });
     }
   };
 
@@ -301,7 +304,7 @@ export default function CreateOpportunityScreen() {
 
   const pickDocument = async () => {
     if (attachments.length >= MAX_ATTACHMENTS) {
-      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_ATTACHMENTS} pièces jointes.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_ATTACHMENTS} pièces jointes.` });
       return;
     }
 
@@ -316,7 +319,7 @@ export default function CreateOpportunityScreen() {
         const fileSize = doc.size || 0;
 
         if (fileSize > MAX_ATTACHMENT_SIZE_BYTES) {
-          Alert.alert('Fichier trop volumineux', `Le fichier ne doit pas dépasser ${MAX_ATTACHMENT_SIZE_MB} MB.`);
+          showToast({ type: 'warning', title: 'Fichier trop volumineux', message: `Le fichier ne doit pas dépasser ${MAX_ATTACHMENT_SIZE_MB} MB.` });
           return;
         }
 
@@ -330,7 +333,7 @@ export default function CreateOpportunityScreen() {
         form.setValue('attachments', [...attachments, newAttachment]);
       }
     } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la sélection du document.');
+      showToast({ type: 'error', title: 'Erreur', message: 'Une erreur est survenue lors de la sélection du document.' });
     }
   };
 
@@ -357,7 +360,7 @@ export default function CreateOpportunityScreen() {
         uploadedImageUrls.push(uploaded.url);
       } catch (error) {
         console.error('Error uploading image:', error);
-        Alert.alert('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
+        await alerts.error('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
         return null;
       }
     }
@@ -382,7 +385,7 @@ export default function CreateOpportunityScreen() {
         uploadedAttachments.push({ ...attachment, uri: uploaded.url });
       } catch (error) {
         console.error('Error uploading attachment:', error);
-        Alert.alert('Erreur', 'Impossible d\'uploader une pièce jointe. Veuillez réessayer.');
+        await alerts.error('Erreur', 'Impossible d\'uploader une pièce jointe. Veuillez réessayer.');
         return null;
       }
     }
@@ -399,7 +402,7 @@ export default function CreateOpportunityScreen() {
   // Question handlers
   const addQuestion = () => {
     if (applicationQuestions.length >= MAX_QUESTIONS) {
-      Alert.alert('Limite atteinte', `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.` });
       return;
     }
     const newQuestion: ApplicationQuestion = {
@@ -428,7 +431,7 @@ export default function CreateOpportunityScreen() {
     } else if (selectedSectors.length < MAX_SECTORS) {
       form.setValue('selectedSectors', [...selectedSectors, sectorId]);
     } else {
-      Alert.alert('Limite atteinte', `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.`);
+      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.` });
     }
   };
 
@@ -489,10 +492,11 @@ export default function CreateOpportunityScreen() {
       }
     } catch (error: any) {
       console.error('Error generating opportunity:', error);
-      Alert.alert(
-        'Erreur de génération',
-        error?.error || 'Une erreur est survenue lors de la génération. Veuillez réessayer.',
-      );
+      showToast({
+        type: 'error',
+        title: 'Erreur de génération',
+        message: error?.error || 'Une erreur est survenue lors de la génération. Veuillez réessayer.',
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -568,13 +572,14 @@ export default function CreateOpportunityScreen() {
       }
       const data = buildOpportunityData(imageUrls, attachmentPayload);
       await opportunityService.saveDraft(data);
-      Alert.alert(
-        'Brouillon enregistré',
-        'L\'opportunité a été enregistrée comme brouillon.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      await alerts.showAlert({
+        type: 'success',
+        title: 'Brouillon enregistré',
+        message: 'L\'opportunité a été enregistrée comme brouillon.',
+        buttons: [{ text: 'OK', onPress: () => router.back() }],
+      });
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de l\'enregistrement.');
+      await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de l\'enregistrement.');
     } finally {
       setIsSubmitting(false);
     }
@@ -596,13 +601,14 @@ export default function CreateOpportunityScreen() {
       }
       const data = { ...buildOpportunityData(imageUrls, attachmentPayload), status: 'OPEN' as const };
       await opportunityService.create(data);
-      Alert.alert(
-        'Opportunité publiée',
-        `"${title}" a été publiée avec succès !`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      await alerts.showAlert({
+        type: 'success',
+        title: 'Opportunité publiée',
+        message: `"${title}" a été publiée avec succès !`,
+        buttons: [{ text: 'OK', onPress: () => router.back() }],
+      });
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de la publication.');
+      await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de la publication.');
     } finally {
       setIsSubmitting(false);
     }
@@ -678,27 +684,15 @@ export default function CreateOpportunityScreen() {
             {OPPORTUNITY_TYPE_DATA.map((type) => {
               const isSelected = opportunityType === type.id;
               return (
-                <TouchableOpacity
+                <Chip
                   key={type.id}
-                  style={[
-                    styles.selectableTag,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
+                  label={type.label}
+                  selected={isSelected}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   onPress={() => form.setValue('opportunityType', type.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {type.label}
-                  </Text>
-                </TouchableOpacity>
+                  style={styles.selectableTag}
+                  textStyle={styles.selectableTagText}
+                />
               );
             })}
           </View>
@@ -707,25 +701,15 @@ export default function CreateOpportunityScreen() {
         {/* Bouton Générer - Visible quand title >= 3 chars et type sélectionné */}
         {canGenerate && (
           <View style={styles.generateButtonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.generateButton,
-                { backgroundColor: colors.primary },
-                isGenerating && { opacity: 0.7 },
-              ]}
+            <Button
+              title={isGenerating ? 'Suggestion...' : 'Suggérer'}
               onPress={handleGenerate}
+              loading={isGenerating}
               disabled={isGenerating}
-              activeOpacity={0.8}
-            >
-              {isGenerating ? (
-                <ActivityIndicator size="small" color={colors.textOnPrimary} />
-              ) : (
-                <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              )}
-              <Text style={[styles.generateButtonText, { color: colors.textOnPrimary }]}>
-                {isGenerating ? 'Suggestion...' : 'Suggérer'}
-              </Text>
-            </TouchableOpacity>
+              icon={!isGenerating ? <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
+              fullWidth
+              style={styles.generateButton}
+            />
           </View>
         )}
 
@@ -738,85 +722,46 @@ export default function CreateOpportunityScreen() {
             {SECTOR_DATA.slice(0, 15).map((sector) => {
               const isSelected = selectedSectors.includes(sector.id);
               return (
-                <TouchableOpacity
+                <Chip
                   key={sector.id}
-                  style={[
-                    styles.selectableTag,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
+                  label={sector.label}
+                  selected={isSelected}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   onPress={() => toggleSector(sector.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {sector.label}
-                  </Text>
-                </TouchableOpacity>
+                  style={styles.selectableTag}
+                  textStyle={styles.selectableTagText}
+                />
               );
             })}
           </View>
         </View>
 
-        {/* Description */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Description du poste</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary }]}
-              placeholder="Décrivez les missions et responsabilités..."
-              value={summary}
-              onChangeText={(value) => form.setValue('summary', value)}
-              multiline
-              numberOfLines={4}
-              maxLength={1000}
-              placeholderTextColor={colors.gray500}
-            />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{summary.length}/1000</Text>
-        </View>
+        <FormTextArea
+          label="Description du poste"
+          placeholder="Décrivez les missions et responsabilités..."
+          value={summary}
+          onChangeText={(value) => form.setValue('summary', value)}
+          rows={4}
+          maxLength={1000}
+        />
 
-        {/* Prérequis */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Prérequis *</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary }]}
-              placeholder="Compétences et qualifications requises..."
-              value={requirements}
-              onChangeText={(value) => form.setValue('requirements', value)}
-              multiline
-              numberOfLines={3}
-              maxLength={500}
-              placeholderTextColor={colors.gray500}
-            />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{requirements.length}/500</Text>
-        </View>
+        <FormTextArea
+          label="Prérequis"
+          placeholder="Compétences et qualifications requises..."
+          value={requirements}
+          onChangeText={(value) => form.setValue('requirements', value)}
+          rows={3}
+          maxLength={500}
+        />
 
-        {/* Nice to have */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Atouts appréciés</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary }]}
-              placeholder="Compétences bonus appréciées..."
-              value={niceToHave}
-              onChangeText={(value) => form.setValue('niceToHave', value)}
-              multiline
-              numberOfLines={2}
-              maxLength={300}
-              placeholderTextColor={colors.gray500}
-            />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{niceToHave.length}/300</Text>
-        </View>
+        <FormTextArea
+          label="Atouts appréciés"
+          placeholder="Compétences bonus appréciées..."
+          value={niceToHave}
+          onChangeText={(value) => form.setValue('niceToHave', value)}
+          rows={2}
+          maxLength={300}
+        />
       </View>
     </View>
   );
@@ -1119,21 +1064,14 @@ export default function CreateOpportunityScreen() {
           </View>
         </View>
 
-        {/* Devise */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Devise (ex: XOF, EUR)</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary, minHeight: 44 }]}
-              value={currency}
-              onChangeText={(v) => form.setValue('currency', v || 'XOF')}
-              placeholder="XOF"
-              placeholderTextColor={colors.gray500}
-              maxLength={10}
-              autoCapitalize="characters"
-            />
-          </View>
-        </View>
+        <Input
+          label="Devise (ex: XOF, EUR)"
+          placeholder="XOF"
+          value={currency}
+          onChangeText={(v) => form.setValue('currency', v || 'XOF')}
+          maxLength={10}
+          autoCapitalize="characters"
+        />
 
         {/* Fréquence */}
         <View style={styles.fieldContainer}>
@@ -1259,7 +1197,7 @@ export default function CreateOpportunityScreen() {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 if (selectedDate <= today) {
-                  Alert.alert('Date invalide', 'La date limite doit être supérieure à aujourd\'hui.');
+                  showToast({ type: 'warning', title: 'Date invalide', message: 'La date limite doit être supérieure à aujourd\'hui.' });
                   return;
                 }
                 form.setValue('deadline', selectedDate);
@@ -1283,7 +1221,7 @@ export default function CreateOpportunityScreen() {
               if (selectedDate) {
                 // Date de début doit être > date limite
                 if (deadline && selectedDate <= deadline) {
-                  Alert.alert('Date invalide', 'La date de début doit être supérieure à la date limite.');
+                  showToast({ type: 'warning', title: 'Date invalide', message: 'La date de début doit être supérieure à la date limite.' });
                   return;
                 }
                 form.setValue('startDate', selectedDate);
@@ -1340,22 +1278,17 @@ export default function CreateOpportunityScreen() {
                 </TouchableOpacity>
               </View>
 
-              <TextInput
-                style={[styles.questionInput, { backgroundColor: colors.gray50, color: colors.textPrimary, borderColor: colors.gray200 }]}
+              <FormTextArea
                 placeholder="Écrivez votre question..."
-                placeholderTextColor={colors.gray400}
                 value={question.question}
                 onChangeText={(text) => updateQuestion(question.id, { question: text })}
                 maxLength={MAX_QUESTION_LENGTH}
-                multiline
-                numberOfLines={2}
+                rows={2}
+                showCounter
+                containerStyle={{ marginTop: SPACING.sm }}
               />
 
               <View style={styles.questionFooter}>
-                <Text style={[styles.charCount, { color: colors.gray500 }]}>
-                  {question.question.length}/{MAX_QUESTION_LENGTH}
-                </Text>
-
                 <View style={styles.requiredToggle}>
                   <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>Obligatoire</Text>
                   <Toggle
@@ -2014,23 +1947,10 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
-  textAreaContainer: {
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
-    padding: SPACING.md,
-  },
-
-  textArea: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-
-  charCount: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    textAlign: 'right',
-    marginTop: SPACING.xs,
-  },
+  // Text areas are handled by <FormTextArea />
+  textAreaContainer: {},
+  textArea: {},
+  charCount: {},
 
   optionCards: {
     gap: SPACING.sm,
@@ -2520,14 +2440,7 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
-  questionInput: {
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
-    padding: SPACING.sm,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    minHeight: 60,
-    textAlignVertical: 'top',
-  },
+  questionInput: {},
 
   questionFooter: {
     flexDirection: 'row',

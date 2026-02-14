@@ -13,7 +13,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -48,6 +47,7 @@ import {
 } from '../../src/services/spaceInvitationService';
 import { ORGANIZATION_ROLE_LABELS } from '../../src/types/models';
 import { getFullImageUrl } from '../../src/utils/image';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 type TabType = 'organizations' | 'offers';
 
@@ -109,6 +109,7 @@ export default function InvitationsScreen() {
       setOffersLoading(false);
     }
   }, []);
+  const alerts = useAlert();
 
   useEffect(() => {
     fetchOrgInvitations();
@@ -133,25 +134,18 @@ export default function InvitationsScreen() {
     try {
       const response = await invitationService.acceptInvitation(invitation.id);
       if (response.success) {
-        Alert.alert(
-          'Invitation acceptee',
-          `Vous etes maintenant membre de ${invitation.organization_name}`,
-          [{ text: 'OK' }]
-        );
+        void alerts.showAlert({ title: 'Invitation acceptee', message: `Vous etes maintenant membre de ${invitation.organization_name}`, buttons: [{ text: 'OK' }] });
         setOrgInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
       }
     } catch (error: any) {
-      Alert.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
+      void alerts.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleDeclineOrg = async (invitation: ReceivedInvitation) => {
-    Alert.alert(
-      'Refuser l\'invitation',
-      `Voulez-vous vraiment refuser l'invitation de ${invitation.organization_name}?`,
-      [
+    void alerts.showAlert({ title: 'Refuser l\'invitation', message: `Voulez-vous vraiment refuser l'invitation de ${invitation.organization_name}?`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Refuser',
@@ -162,14 +156,13 @@ export default function InvitationsScreen() {
               await invitationService.declineInvitation(invitation.id);
               setOrgInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
             } catch (error: any) {
-              Alert.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
+              void alerts.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
             } finally {
               setProcessingId(null);
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   // Community invitation handlers
@@ -178,31 +171,24 @@ export default function InvitationsScreen() {
     try {
       const response = await communityInvitationService.acceptInvitation(invitation.id);
       if (response.data?.success) {
-        Alert.alert(
-          'Bienvenue !',
-          response.data.message || `Vous avez rejoint la communaute !`,
-          [
+        void alerts.showAlert({ title: 'Bienvenue !', message: response.data.message || `Vous avez rejoint la communaute !`, buttons: [
             {
               text: 'Voir la communaute',
               onPress: () => router.push(`/details/community/${response.data?.community_id}` as any),
             },
             { text: 'OK' },
-          ]
-        );
+          ] });
         setCommunityInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
       }
     } catch (error: any) {
-      Alert.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
+      void alerts.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleDeclineCommunity = async (invitation: CommunityInvitation) => {
-    Alert.alert(
-      'Refuser l\'invitation',
-      `Voulez-vous vraiment refuser l'invitation a rejoindre "${invitation.community_name}"?`,
-      [
+    void alerts.showAlert({ title: 'Refuser l\'invitation', message: `Voulez-vous vraiment refuser l'invitation a rejoindre "${invitation.community_name}"?`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Refuser',
@@ -213,14 +199,13 @@ export default function InvitationsScreen() {
               await communityInvitationService.declineInvitation(invitation.id);
               setCommunityInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
             } catch (error: any) {
-              Alert.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
+              void alerts.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
             } finally {
               setProcessingId(null);
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   // Opportunity invitation handlers
@@ -229,31 +214,24 @@ export default function InvitationsScreen() {
     try {
       const response = await opportunityInvitationService.acceptInvitation(invitation.id);
       if (response.data?.success) {
-        Alert.alert(
-          'Invitation acceptee',
-          response.data.message || `Vous pouvez maintenant voir cette opportunite !`,
-          [
+        void alerts.showAlert({ title: 'Invitation acceptee', message: response.data.message || `Vous pouvez maintenant voir cette opportunite !`, buttons: [
             {
               text: 'Voir l\'opportunite',
               onPress: () => router.push(`/details/opportunity/${response.data?.opportunity_id}` as any),
             },
             { text: 'OK' },
-          ]
-        );
+          ] });
         setOpportunityInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
       }
     } catch (error: any) {
-      Alert.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
+      void alerts.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleDeclineOpportunity = async (invitation: OpportunityInvitation) => {
-    Alert.alert(
-      'Refuser l\'invitation',
-      `Voulez-vous vraiment refuser l'invitation pour "${invitation.opportunity_title}"?`,
-      [
+    void alerts.showAlert({ title: 'Refuser l\'invitation', message: `Voulez-vous vraiment refuser l'invitation pour "${invitation.opportunity_title}"?`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Refuser',
@@ -264,14 +242,13 @@ export default function InvitationsScreen() {
               await opportunityInvitationService.declineInvitation(invitation.id);
               setOpportunityInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
             } catch (error: any) {
-              Alert.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
+              void alerts.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
             } finally {
               setProcessingId(null);
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   // Space invitation handlers
@@ -280,31 +257,24 @@ export default function InvitationsScreen() {
     try {
       const response = await spaceInvitationService.acceptInvitation(invitation.id);
       if (response.data?.success) {
-        Alert.alert(
-          'Invitation acceptee',
-          response.data.message || `Vous pouvez maintenant reserver cet espace !`,
-          [
+        void alerts.showAlert({ title: 'Invitation acceptee', message: response.data.message || `Vous pouvez maintenant reserver cet espace !`, buttons: [
             {
               text: 'Voir l\'espace',
               onPress: () => router.push(`/details/space/${response.data?.space_id}` as any),
             },
             { text: 'OK' },
-          ]
-        );
+          ] });
         setSpaceInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
       }
     } catch (error: any) {
-      Alert.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
+      void alerts.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleDeclineSpace = async (invitation: SpaceInvitation) => {
-    Alert.alert(
-      'Refuser l\'invitation',
-      `Voulez-vous vraiment refuser l'invitation pour "${invitation.space_name}"?`,
-      [
+    void alerts.showAlert({ title: 'Refuser l\'invitation', message: `Voulez-vous vraiment refuser l'invitation pour "${invitation.space_name}"?`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Refuser',
@@ -315,14 +285,13 @@ export default function InvitationsScreen() {
               await spaceInvitationService.declineInvitation(invitation.id);
               setSpaceInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
             } catch (error: any) {
-              Alert.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
+              void alerts.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
             } finally {
               setProcessingId(null);
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const formatDate = (dateString: string) => {

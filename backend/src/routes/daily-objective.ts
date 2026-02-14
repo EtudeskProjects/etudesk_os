@@ -6,6 +6,8 @@
 import { Router, Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { dailyObjectiveService } from '../services/daily-objective.service';
+import { debitWalletForAction } from '../services/billing/credit.service';
+import { pool } from '../services/database';
 import { handleRouteError } from '../utils';
 
 const router = Router();
@@ -19,6 +21,26 @@ router.get('/talent', authMiddleware, async (req: AuthRequest, res: Response) =>
     const talentId = req.talentId;
     if (!talentId) {
       return res.status(401).json({ error: req.t('auth:unauthorized') });
+    }
+
+    const day = new Date().toISOString().slice(0, 10);
+    try {
+      await debitWalletForAction({
+        scope: 'TALENT',
+        ownerId: talentId,
+        actionCode: 'TALENT_DAILY_OBJECTIVE',
+        idempotencyKey: `daily_objective_${talentId}_${day}`,
+        metadata: { day },
+        createdBy: talentId,
+      });
+    } catch (debitError: any) {
+      if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
+        return res.status(402).json({
+          error: 'Solde crédits insuffisant. Rechargez votre wallet pour actualiser l’objectif.',
+          code: 'INSUFFICIENT_CREDITS',
+        });
+      }
+      throw debitError;
     }
 
     const objective = await dailyObjectiveService.getTalentDailyObjective(talentId);
@@ -41,8 +63,44 @@ router.get('/organization/:orgId', authMiddleware, async (req: AuthRequest, res:
       return res.status(401).json({ error: req.t('auth:unauthorized') });
     }
 
-    // Note: We could add a membership check here, but for now we allow any authenticated user
-    // to get the objective if they have the org ID (they would need to be in org context)
+    // Billing guard: prevent any authenticated user from spending org credits.
+    const member = await pool.query(
+      `SELECT role, status
+       FROM organization_members
+       WHERE organization_id = $1 AND talent_id = $2
+       LIMIT 1`,
+      [orgId, talentId]
+    );
+
+    if (!member.rows.length || member.rows[0].status !== 'ACTIVE') {
+      return res.status(403).json({ error: 'Accès refusé à cette organisation' });
+    }
+
+    const role = String(member.rows[0].role || '').toUpperCase();
+    const allowedRoles = new Set(['OWNER', 'ADMIN', 'MANAGER', 'SUB_ADMIN']);
+    if (!allowedRoles.has(role)) {
+      return res.status(403).json({ error: 'Rôle insuffisant pour consommer les crédits organisation' });
+    }
+
+    const day = new Date().toISOString().slice(0, 10);
+    try {
+      await debitWalletForAction({
+        scope: 'ORGANIZATION',
+        ownerId: orgId,
+        actionCode: 'ORG_DAILY_OBJECTIVE',
+        idempotencyKey: `org_daily_objective_${orgId}_${day}`,
+        metadata: { day },
+        createdBy: talentId,
+      });
+    } catch (debitError: any) {
+      if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
+        return res.status(402).json({
+          error: 'Solde crédits organisation insuffisant. Rechargez le wallet pour actualiser l’objectif.',
+          code: 'INSUFFICIENT_CREDITS',
+        });
+      }
+      throw debitError;
+    }
 
     const objective = await dailyObjectiveService.getOrganizationDailyObjective(orgId);
     res.json({ data: objective });

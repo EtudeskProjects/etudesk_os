@@ -67,8 +67,23 @@ export async function getSignedUrl(fileUrl: string, expiresIn = 3600): Promise<s
 
 /**
  * Get file content as buffer
+ * Supports local /uploads/ paths and remote http(s) URLs.
+ * Rejects file: URIs (mobile local paths that don't exist on the server).
  */
 export async function getFileBuffer(fileUrl: string): Promise<Buffer> {
+  // Reject mobile file: URIs — they reference device-local paths, not server files
+  if (fileUrl.startsWith('file:')) {
+    throw new Error(`Cannot read mobile-local URI on server: ${fileUrl.slice(0, 80)}`);
+  }
+
+  // Remote URLs: fetch over HTTP
+  if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+    const response = await fetch(fileUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status} fetching ${fileUrl}`);
+    return Buffer.from(await response.arrayBuffer());
+  }
+
+  // Local uploads path
   const storagePath = fileUrl.replace('/uploads/', '');
   const fullPath = path.join(LOCAL_STORAGE_PATH, storagePath);
   return fs.promises.readFile(fullPath);

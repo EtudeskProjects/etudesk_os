@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   Keyboard,
 } from 'react-native';
@@ -36,6 +35,7 @@ import { applicationService, applicationMessageService } from '../../../src/serv
 import { formatRelativeTime } from '../../../src/utils/date';
 import type { Application, ApplicationMessage, ApplicationStatus } from '../../../src/types/models';
 import { APPLICATION_STATUS_LABELS, LOCATION_TYPE_LABELS } from '../../../src/types/models';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 // Status configuration - Simplified to 4 statuses
 // Colors will be resolved dynamically using theme colors
@@ -70,6 +70,7 @@ export default function ApplicationDetailsScreen() {
   const [isSending, setIsSending] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>(tab === 'messages' ? 'messages' : 'details');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const alerts = useAlert();
 
   // Handle keyboard events for proper input positioning
   useEffect(() => {
@@ -106,7 +107,7 @@ export default function ApplicationDetailsScreen() {
       const response = await applicationService.getApplication(id);
       setApplication(response.data);
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de charger les détails de la candidature.');
+      void alerts.alert('Erreur', 'Impossible de charger les détails de la candidature.');
       router.back();
     } finally {
       setIsLoading(false);
@@ -159,7 +160,7 @@ export default function ApplicationDetailsScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      void alerts.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
       throw error;
     } finally {
       setIsSending(false);
@@ -167,10 +168,7 @@ export default function ApplicationDetailsScreen() {
   };
 
   const handleWithdraw = () => {
-    Alert.alert(
-      'Retirer ma candidature',
-      'Êtes-vous sûr de vouloir retirer votre candidature ? Cette action est irréversible.',
-      [
+    void alerts.showAlert({ title: 'Retirer ma candidature', message: 'Êtes-vous sûr de vouloir retirer votre candidature ? Cette action est irréversible.', buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Retirer',
@@ -178,16 +176,15 @@ export default function ApplicationDetailsScreen() {
           onPress: async () => {
             try {
               await applicationService.withdraw(application!.id);
-              Alert.alert('Candidature retirée', 'Votre candidature a été retirée avec succès.', [
+              void alerts.showAlert({ title: 'Candidature retirée', message: 'Votre candidature a été retirée avec succès.', buttons: [
                 { text: 'OK', onPress: () => router.back() },
-              ]);
+              ] });
             } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Impossible de retirer la candidature.');
+              void alerts.alert('Erreur', error.error || 'Impossible de retirer la candidature.');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const renderTab = (tab: Tab, label: string, icon: typeof Briefcase) => {
@@ -449,7 +446,7 @@ export default function ApplicationDetailsScreen() {
       {/* Content */}
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {activeTab === 'details' ? renderDetailsTab() : renderMessagesTab()}

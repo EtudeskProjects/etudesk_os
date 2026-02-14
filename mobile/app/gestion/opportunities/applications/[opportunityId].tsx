@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -25,7 +24,7 @@ import {
 } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS, ThemeColors } from '../../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS, ThemeColors, COMPONENT } from '../../../../src/constants/theme';
 import { PageLayout, EmptyState } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useI18n } from '../../../../src/contexts/I18nContext';
@@ -34,6 +33,7 @@ import { RankedApplication } from '../../../../src/services/applicationService';
 import { formatRelativeTime } from '../../../../src/utils/date';
 import type { ApplicationStatus, Opportunity } from '../../../../src/types/models';
 import { APPLICATION_STATUS_LABELS } from '../../../../src/types/models';
+import { useAlert } from '../../../../src/contexts/AlertContext';
 
 // Status configuration - Luxe Africain design system
 const getStatusConfig = (colors: ThemeColors): Record<ApplicationStatus, { color: string; icon: typeof Clock; bgColor: string }> => ({
@@ -65,6 +65,7 @@ export default function OpportunityApplicationsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filter, setFilter] = useState<FilterStatus>('SUBMITTED');
   const [recommendations, setRecommendations] = useState<Record<string, string>>({});
+  const alerts = useAlert();
 
   useEffect(() => {
     loadData();
@@ -92,7 +93,7 @@ export default function OpportunityApplicationsScreen() {
       setRecommendations(recos);
     } catch (error) {
       console.error('Error loading data:', error);
-      Alert.alert('Erreur', 'Impossible de charger les candidatures.');
+      void alerts.alert('Erreur', 'Impossible de charger les candidatures.');
     } finally {
       setIsLoading(false);
     }
@@ -143,7 +144,7 @@ export default function OpportunityApplicationsScreen() {
         prev.map((app) => (app.id === applicationId ? { ...app, status: newStatus } : app))
       );
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
+      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
     }
   };
 
@@ -177,11 +178,11 @@ export default function OpportunityApplicationsScreen() {
           UTI: 'public.comma-separated-values-text',
         });
       } else {
-        Alert.alert('Succès', 'Le fichier CSV a été téléchargé.');
+        void alerts.alert('Succès', 'Le fichier CSV a été téléchargé.');
       }
     } catch (error: any) {
       console.error('Error exporting CSV:', error);
-      Alert.alert('Erreur', error.message || 'Impossible d\'exporter en CSV.');
+      void alerts.alert('Erreur', error.message || 'Impossible d\'exporter en CSV.');
     }
   };
 
@@ -193,10 +194,7 @@ export default function OpportunityApplicationsScreen() {
   const handleDelete = () => {
     if (!opportunity || !opportunityId) return;
 
-    Alert.alert(
-      'Supprimer l\'opportunité',
-      `Êtes-vous sûr de vouloir supprimer "${opportunity.title}" ? Cette action est irréversible et supprimera toutes les candidatures associées.`,
-      [
+    void alerts.showAlert({ title: 'Supprimer l\'opportunité', message: `Êtes-vous sûr de vouloir supprimer "${opportunity.title}" ? Cette action est irréversible et supprimera toutes les candidatures associées.`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
@@ -204,16 +202,15 @@ export default function OpportunityApplicationsScreen() {
           onPress: async () => {
             try {
               await opportunityService.delete(opportunityId);
-              Alert.alert('Supprimé', 'L\'opportunité a été supprimée.', [
+              void alerts.showAlert({ title: 'Supprimé', message: 'L\'opportunité a été supprimée.', buttons: [
                 { text: 'OK', onPress: () => router.back() },
-              ]);
+              ] });
             } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Une erreur est survenue lors de la suppression.');
+              void alerts.alert('Erreur', error.error || 'Une erreur est survenue lors de la suppression.');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const filteredApplications = applications.filter((app) => {
@@ -277,7 +274,7 @@ export default function OpportunityApplicationsScreen() {
               </Text>
               {matchConfig && (
                 <View style={[styles.matchBadge, { backgroundColor: matchConfig.bgColor }]}>
-                  <TrendingUp size={10} color={matchConfig.color} strokeWidth={ICON.strokeWidth} />
+                  <TrendingUp size={COMPONENT.pill.iconSize} color={matchConfig.color} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
                   <Text style={[styles.matchBadgeText, { color: matchConfig.color }]}>
                     {matchConfig.label}
                   </Text>
@@ -302,7 +299,7 @@ export default function OpportunityApplicationsScreen() {
 
         <View style={styles.cardFooter}>
           <View style={[styles.statusBadge, { backgroundColor: statusConfig.bgColor }]}>
-            <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
+            <StatusIcon size={COMPONENT.pill.iconSize} color={statusConfig.color} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
               {APPLICATION_STATUS_LABELS[item.status]}
             </Text>
@@ -329,7 +326,7 @@ export default function OpportunityApplicationsScreen() {
         </View>
 
         {item.status === 'SUBMITTED' && (
-          <View style={styles.quickActions}>
+          <View style={[styles.quickActions, { borderTopColor: colors.borderColor }]}>
             <TouchableOpacity
               style={[styles.quickAction, { backgroundColor: withOpacity(colors.info, OPACITY[15]) }]}
               onPress={() => handleUpdateStatus(item.id, 'IN_REVIEW')}
@@ -448,15 +445,15 @@ const styles = StyleSheet.create({
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.md,
+    gap: COMPONENT.pill.gap,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
     borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.full,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
   filterChipText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
   headerActions: {
     flexDirection: 'row',
@@ -526,15 +523,15 @@ const styles = StyleSheet.create({
   matchBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    paddingVertical: 2,
-    paddingHorizontal: SPACING.xs,
-    borderRadius: BORDER.radius.sm,
+    gap: COMPONENT.pill.gap,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
 
   matchBadgeText: {
-    fontSize: TYPOGRAPHY.fontSize.xs - 1,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
 
   talentTitle: {
@@ -563,15 +560,15 @@ const styles = StyleSheet.create({
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.full,
+    gap: COMPONENT.pill.gap,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
 
   statusText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
 
   cardMeta: {
@@ -601,7 +598,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     paddingTop: SPACING.md,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: 'transparent',
   },
 
   quickAction: {

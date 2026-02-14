@@ -9,7 +9,6 @@ import {
   Platform,
   TextInput,
   Image,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -34,6 +33,7 @@ import { organizationService, talentService, imageService } from '../../src/serv
 import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../src/constants/talent';
 import MapLocationPicker from '../../src/components/MapLocationPicker';
 import { useForm } from '../../src/hooks/useForm';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 type Step = 'info' | 'location';
 
@@ -87,7 +87,7 @@ export default function EditOrganizationScreen() {
     },
     onSubmit: async (values) => {
       if (!organizationId) {
-        Alert.alert('Erreur', 'Aucune organisation à modifier.');
+        void alerts.alert('Erreur', 'Aucune organisation à modifier.');
         return;
       }
       await organizationService.update(organizationId, {
@@ -105,8 +105,7 @@ export default function EditOrganizationScreen() {
         contact_phone: values.contactPhone.trim() || undefined,
       });
       await refreshOrganizations();
-      Alert.alert('Succès', 'Les informations de l\'organisation ont été mises à jour.',
-        [{ text: 'OK', onPress: () => router.back() }]);
+      void alerts.showAlert({ title: 'Succès', message: 'Les informations de l\'organisation ont été mises à jour.', buttons: [{ text: 'OK', onPress: () => router.back() }] });
     },
   });
 
@@ -126,6 +125,7 @@ export default function EditOrganizationScreen() {
 
   // Refs for auto-scroll to selected country
   const countryScrollRef = useRef<ScrollView>(null);
+  const alerts = useAlert();
   const COUNTRY_CHIP_WIDTH = 80;
 
   // Auto-scroll to selected country
@@ -182,9 +182,9 @@ export default function EditOrganizationScreen() {
       console.error('Error loading organization:', error);
       // Try to load user profile for default location
       await loadUserProfileDefaults();
-      Alert.alert('Erreur', 'Impossible de charger l\'organisation.', [
+      void alerts.showAlert({ title: 'Erreur', message: 'Impossible de charger l\'organisation.', buttons: [
         { text: 'OK', onPress: () => router.back() }
-      ]);
+      ] });
     } finally {
       setIsLoading(false);
     }
@@ -320,11 +320,7 @@ export default function EditOrganizationScreen() {
         await form.handleSubmit();
       } catch (error: any) {
         console.error('Error saving organization:', error);
-        Alert.alert(
-          'Erreur',
-          error?.error || 'Une erreur est survenue lors de la mise à jour.',
-          [{ text: 'OK' }]
-        );
+        void alerts.showAlert({ title: 'Erreur', message: error?.error || 'Une erreur est survenue lors de la mise à jour.', buttons: [{ text: 'OK' }] });
       }
     }
   };

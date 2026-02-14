@@ -532,6 +532,18 @@ export const COMPONENT = {
     fontSize: 11,
   },
 
+  // Pill/Tag/Chip/Badge — single source of truth
+  pill: {
+    paddingVertical: SPACING.xs,              // 4px
+    paddingHorizontal: 10,                    // 10px
+    borderRadius: BORDER.radius.full,         // 9999 (pill shape)
+    gap: SPACING.xs,                          // 4px (icon-to-text)
+    fontSize: TYPOGRAPHY.fontSize.xs,         // 12px
+    fontWeight: TYPOGRAPHY.fontWeight.medium,  // '500'
+    iconSize: ICON.size.xxs,                  // 12px
+    iconStrokeWidth: 2,                       // slightly thicker for 12px
+  },
+
   // Toggle configurations
   toggle: {
     normal: {

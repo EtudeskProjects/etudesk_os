@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
@@ -43,6 +42,7 @@ import { useTheme } from '../../../../../src/hooks/useTheme';
 import { communityService, CommunityMemberDetails, MemberStatus, communityMembershipMessageService, MembershipMessage, MemberPermissions, DEFAULT_MEMBER_PERMISSIONS } from '../../../../../src/services';
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import { getFullImageUrl } from '../../../../../src/utils/image';
+import { useAlert } from '../../../../../src/contexts/AlertContext';
 
 // Status configuration - colors resolved dynamically via colorKey
 const STATUS_CONFIG: Record<MemberStatus, { colorKey: 'warning' | 'success' | 'error' | 'gray500'; icon: typeof Clock; label: string }> = {
@@ -93,6 +93,7 @@ export default function CommunityMemberDetailsScreen() {
   const [memberRole, setMemberRole] = useState<'ADMIN' | 'MEMBER'>('MEMBER');
   const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
+  const alerts = useAlert();
 
   // Handle keyboard events
   useEffect(() => {
@@ -133,7 +134,7 @@ export default function CommunityMemberDetailsScreen() {
       // Load permissions after member is loaded
       loadPermissions();
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de charger les détails du membre.');
+      void alerts.alert('Erreur', 'Impossible de charger les détails du membre.');
       router.back();
     } finally {
       setIsLoading(false);
@@ -167,7 +168,7 @@ export default function CommunityMemberDetailsScreen() {
 
   const handleTogglePermission = async (key: keyof MemberPermissions) => {
     if (memberRole === 'ADMIN') {
-      Alert.alert('Info', 'Les administrateurs ont toujours toutes les permissions.');
+      void alerts.alert('Info', 'Les administrateurs ont toujours toutes les permissions.');
       return;
     }
 
@@ -182,10 +183,10 @@ export default function CommunityMemberDetailsScreen() {
       if (response.data) {
         setPermissions(response.data.permissions);
         setIsCustomPermissions(response.data.isCustom);
-        Alert.alert('Succès', response.data.message || 'Permissions mises à jour.');
+        void alerts.alert('Succès', response.data.message || 'Permissions mises à jour.');
       }
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre à jour les permissions.');
+      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour les permissions.');
     } finally {
       setIsSavingPermissions(false);
     }
@@ -193,14 +194,11 @@ export default function CommunityMemberDetailsScreen() {
 
   const handleResetToDefaults = () => {
     if (memberRole === 'ADMIN') {
-      Alert.alert('Info', 'Les administrateurs ont toujours toutes les permissions.');
+      void alerts.alert('Info', 'Les administrateurs ont toujours toutes les permissions.');
       return;
     }
 
-    Alert.alert(
-      'Réinitialiser les permissions',
-      'Voulez-vous réinitialiser les permissions de ce membre aux valeurs par défaut de la communauté ?',
-      [
+    void alerts.showAlert({ title: 'Réinitialiser les permissions', message: 'Voulez-vous réinitialiser les permissions de ce membre aux valeurs par défaut de la communauté ?', buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Réinitialiser',
@@ -211,17 +209,16 @@ export default function CommunityMemberDetailsScreen() {
               if (response.data) {
                 setPermissions(communityDefaults);
                 setIsCustomPermissions(false);
-                Alert.alert('Succès', 'Permissions réinitialisées aux valeurs par défaut.');
+                void alerts.alert('Succès', 'Permissions réinitialisées aux valeurs par défaut.');
               }
             } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Impossible de réinitialiser les permissions.');
+              void alerts.alert('Erreur', error.error || 'Impossible de réinitialiser les permissions.');
             } finally {
               setIsSavingPermissions(false);
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const loadMessages = async () => {
@@ -267,7 +264,7 @@ export default function CommunityMemberDetailsScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      void alerts.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
       throw error;
     } finally {
       setIsSending(false);
@@ -281,19 +278,16 @@ export default function CommunityMemberDetailsScreen() {
       await communityService.updateMembershipStatus(member.id, newStatus, rejectionReason);
       setMember((prev) => prev ? { ...prev, status: newStatus } : null);
       setShowStatusPicker(false);
-      Alert.alert('Succès', `Statut mis à jour: ${STATUS_FLOW[newStatus].label}`);
+      void alerts.alert('Succès', `Statut mis à jour: ${STATUS_FLOW[newStatus].label}`);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
+      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
     }
   };
 
   const handleDeleteMember = () => {
     if (!member) return;
 
-    Alert.alert(
-      'Supprimer le membre',
-      'Êtes-vous sûr de vouloir supprimer ce membre ? Cette action permettra à la personne de postuler à nouveau.',
-      [
+    void alerts.showAlert({ title: 'Supprimer le membre', message: 'Êtes-vous sûr de vouloir supprimer ce membre ? Cette action permettra à la personne de postuler à nouveau.', buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
@@ -301,15 +295,14 @@ export default function CommunityMemberDetailsScreen() {
           onPress: async () => {
             try {
               await communityService.deleteMember(member.id);
-              Alert.alert('Succès', 'Membre supprimé.');
+              void alerts.alert('Succès', 'Membre supprimé.');
               router.back();
             } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Impossible de supprimer le membre.');
+              void alerts.alert('Erreur', error.error || 'Impossible de supprimer le membre.');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const handleSaveNotes = async () => {
@@ -318,9 +311,9 @@ export default function CommunityMemberDetailsScreen() {
     try {
       await communityService.updateMemberNotes(member.id, internalNotes);
       setIsEditingNotes(false);
-      Alert.alert('Succès', 'Notes enregistrées.');
+      void alerts.alert('Succès', 'Notes enregistrées.');
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de sauvegarder les notes.');
+      void alerts.alert('Erreur', error.error || 'Impossible de sauvegarder les notes.');
     }
   };
 
@@ -331,7 +324,7 @@ export default function CommunityMemberDetailsScreen() {
       await communityService.updateMemberRating(member.id, newRating);
       setRating(newRating);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre à jour la note.');
+      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour la note.');
     }
   };
 
@@ -645,19 +638,15 @@ export default function CommunityMemberDetailsScreen() {
                         style={[styles.statusOption, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}
                         onPress={() => {
                           if (status === 'REJECTED') {
-                            Alert.prompt(
-                              'Refuser le membre',
-                              'Indiquez une raison (optionnel) :',
-                              [
-                                { text: 'Annuler', style: 'cancel' },
-                                {
-                                  text: 'Refuser',
-                                  style: 'destructive',
-                                  onPress: (reason?: string) => handleUpdateStatus(status, reason),
-                                },
-                              ],
-                              'plain-text'
-                            );
+                            void (async () => {
+                              const reason = await alerts.prompt(
+                                'Refuser le membre',
+                                'Indiquez une raison (optionnel) :',
+                                { placeholder: 'Raison (optionnel)', confirmText: 'Refuser', cancelText: 'Annuler' }
+                              );
+                              if (reason === null) return;
+                              await handleUpdateStatus(status, reason || undefined);
+                            })();
                           } else {
                             handleUpdateStatus(status);
                           }
@@ -916,7 +905,7 @@ export default function CommunityMemberDetailsScreen() {
       {/* Content */}
       <KeyboardAvoidingView
         style={styles.contentContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {activeTab === 'profile' && renderProfileTab()}

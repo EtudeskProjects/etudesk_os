@@ -48,6 +48,15 @@ interface ToastContextType {
 // Create context
 const ToastContext = createContext<ToastContextType | null>(null);
 
+let globalShowToast: ToastContextType['showToast'] | null = null;
+
+export function showToastGlobal(config: Omit<ToastConfig, 'id'>) {
+  if (!globalShowToast) {
+    throw new Error('showToastGlobal called before ToastProvider is mounted');
+  }
+  globalShowToast(config);
+}
+
 // Toast item component
 const ToastItem: React.FC<{
   toast: ToastConfig;
@@ -244,6 +253,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const hideAll = useCallback(() => {
     setToasts([]);
   }, []);
+
+  useEffect(() => {
+    globalShowToast = showToast;
+    return () => {
+      globalShowToast = null;
+    };
+  }, [showToast]);
 
   return (
     <ToastContext.Provider value={{ showToast, hideToast, hideAll }}>

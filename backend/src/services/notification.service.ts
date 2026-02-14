@@ -425,10 +425,10 @@ export async function registerPushToken(
 
   try {
     await pool.query(
-      `INSERT INTO push_tokens (talent_id, token, platform, device_name, is_active)
+      `INSERT INTO push_tokens (talent_id, token, device_type, device_name, is_active)
        VALUES ($1, $2, $3, $4, true)
-       ON CONFLICT (talent_id, token)
-       DO UPDATE SET is_active = true, device_name = $4, updated_at = NOW()`,
+       ON CONFLICT (token)
+       DO UPDATE SET is_active = true, talent_id = $1, device_name = $4, device_type = $3, updated_at = NOW()`,
       [talentId, token, platform, deviceName]
     );
     return { success: true };

@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   Keyboard,
 } from 'react-native';
@@ -37,6 +36,7 @@ import { spaceBookingService, spaceBookingMessageService } from '../../../src/se
 import type { SpaceBookingDetails } from '../../../src/services/spaceBookingService';
 import type { BookingMessage } from '../../../src/services/spaceBookingMessageService';
 import { formatDate, formatTime } from '../../../src/utils/date';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 // Booking status types
 type BookingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
@@ -66,6 +66,7 @@ export default function ReservationDetailsScreen() {
   const [isSending, setIsSending] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>(tab === 'messages' ? 'messages' : 'details');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const alerts = useAlert();
 
   // Handle keyboard events for proper input positioning
   useEffect(() => {
@@ -102,7 +103,7 @@ export default function ReservationDetailsScreen() {
       const response = await spaceBookingService.getBookingDetails(id);
       setBooking(response.data);
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de charger les details de la reservation.');
+      void alerts.alert('Erreur', 'Impossible de charger les details de la reservation.');
       router.back();
     } finally {
       setIsLoading(false);
@@ -155,7 +156,7 @@ export default function ReservationDetailsScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      void alerts.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
       throw error;
     } finally {
       setIsSending(false);
@@ -167,14 +168,11 @@ export default function ReservationDetailsScreen() {
 
     // Can only cancel pending or confirmed bookings
     if (!['PENDING', 'CONFIRMED'].includes(booking.status)) {
-      Alert.alert('Impossible', 'Cette reservation ne peut plus etre annulee.');
+      void alerts.alert('Impossible', 'Cette reservation ne peut plus etre annulee.');
       return;
     }
 
-    Alert.alert(
-      'Annuler la reservation',
-      'Etes-vous sur de vouloir annuler cette reservation ? Cette action est irreversible.',
-      [
+    void alerts.showAlert({ title: 'Annuler la reservation', message: 'Etes-vous sur de vouloir annuler cette reservation ? Cette action est irreversible.', buttons: [
         { text: 'Non', style: 'cancel' },
         {
           text: 'Oui, annuler',
@@ -182,16 +180,15 @@ export default function ReservationDetailsScreen() {
           onPress: async () => {
             try {
               await spaceBookingService.updateBookingStatus(booking.id, 'CANCELLED');
-              Alert.alert('Reservation annulee', 'Votre reservation a ete annulee avec succes.', [
+              void alerts.showAlert({ title: 'Reservation annulee', message: 'Votre reservation a ete annulee avec succes.', buttons: [
                 { text: 'OK', onPress: () => router.back() },
-              ]);
+              ] });
             } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Impossible d\'annuler la reservation.');
+              void alerts.alert('Erreur', error.error || 'Impossible d\'annuler la reservation.');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const renderTab = (tab: Tab, label: string, icon: typeof CalendarDays) => {
@@ -482,7 +479,7 @@ export default function ReservationDetailsScreen() {
       {/* Content */}
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {activeTab === 'details' ? renderDetailsTab() : renderMessagesTab()}

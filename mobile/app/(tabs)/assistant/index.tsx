@@ -5,10 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as DocumentPicker from 'expo-document-picker';
@@ -39,7 +37,7 @@ import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAuth } from '../../../src/contexts/AuthContext';
-import { Header, FooterNav } from '../../../src/components/ui';
+import { Header, FooterNav, Input } from '../../../src/components/ui';
 import {
   MarkdownRenderer,
   CopyButton,
@@ -57,6 +55,7 @@ import {
   MessageSegment,
 } from '../../../src/services/copilotService';
 import { formatRelativeTime } from '../../../src/utils/date';
+import { useAlert } from '../../../src/contexts/AlertContext';
 
 type Mode = 'explore' | 'study';
 
@@ -117,9 +116,10 @@ export default function AssistantScreen() {
   const { isOrganizationSpace, selectedOrg } = useSpace();
   const { user } = useAuth();
   const router = useRouter();
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<any>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const alerts = useAlert();
 
   // Build modes with translated labels
   const ALL_MODES = [
@@ -131,13 +131,24 @@ export default function AssistantScreen() {
   // Set initial mode from URL parameter
   useEffect(() => {
     if (mode === 'explore' || mode === 'study') {
+      if (isOrganizationSpace && mode === 'study') {
+        setActiveMode('explore');
+        return;
+      }
       setActiveMode(mode);
     }
-  }, [mode]);
+  }, [mode, isOrganizationSpace]);
 
-  // Reset to explore mode if organization space is activated
+  // Organization space does not support "study": force explore and reset session state to avoid cross-space leakage.
   useEffect(() => {
     if (isOrganizationSpace) {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+      setIsSending(false);
+      setShowHistory(false);
+      setError(null);
+      setSessionId(null);
+      setMessages([]);
       setActiveMode('explore');
     }
   }, [isOrganizationSpace]);
@@ -176,14 +187,15 @@ export default function AssistantScreen() {
     setError(null);
 
     try {
-      const response = await copilotService.getSession(id);
+      const response = await copilotService.getSession(id, isOrganizationSpace ? selectedOrg?.id : undefined);
       if (response.error || !response.data) {
         throw new Error(response.error || 'Session non trouvée');
       }
 
       const { session, messages: sessionMessages } = response.data;
       setSessionId(session.id);
-      setActiveMode(session.mode as Mode);
+      const sessionMode = (session.mode === 'explore' || session.mode === 'study') ? (session.mode as Mode) : 'explore';
+      setActiveMode(isOrganizationSpace && sessionMode === 'study' ? 'explore' : sessionMode);
 
       // Convert to StreamingMessage format with segments
       const converted: StreamingMessage[] = (sessionMessages || [])
@@ -243,7 +255,7 @@ export default function AssistantScreen() {
   // Load sessions list
   const loadSessions = async () => {
     try {
-      const response = await copilotService.listSessions(20);
+      const response = await copilotService.listSessions(20, isOrganizationSpace ? selectedOrg?.id : undefined);
       if (response.data?.sessions) {
         setSessions(response.data.sessions);
       }
@@ -266,13 +278,13 @@ export default function AssistantScreen() {
 
         // Check file size
         if (file.size && file.size > MAX_FILE_SIZE) {
-          Alert.alert('Fichier trop volumineux', 'La taille maximale est de 20 Mo.');
+          void alerts.alert('Fichier trop volumineux', 'La taille maximale est de 20 Mo.');
           return;
         }
 
         // Check max attachments
         if (attachments.length >= 3) {
-          Alert.alert('Limite atteinte', 'Vous pouvez ajouter jusqu\'à 3 pièces jointes.');
+          void alerts.alert('Limite atteinte', 'Vous pouvez ajouter jusqu\'à 3 pièces jointes.');
           return;
         }
 
@@ -288,7 +300,7 @@ export default function AssistantScreen() {
       }
     } catch (error) {
       console.error('Error picking file:', error);
-      Alert.alert('Erreur', 'Impossible de sélectionner le fichier.');
+      void alerts.alert('Erreur', 'Impossible de sélectionner le fichier.');
     }
   };
 
@@ -299,6 +311,9 @@ export default function AssistantScreen() {
   const startStream = useCallback(async (userContent: string, attachmentFiles: any[] = []) => {
     setIsSending(true);
     setError(null);
+
+    const effectiveMode: Mode = isOrganizationSpace ? 'explore' : activeMode;
+    const organizationId = isOrganizationSpace ? selectedOrg?.id : undefined;
 
     const userMsg: StreamingMessage = {
       id: `user-${Date.now()}`,
@@ -340,7 +355,7 @@ export default function AssistantScreen() {
 
       abortControllerRef.current = copilotService.sendMessageStream(
         userContent,
-        activeMode,
+        effectiveMode,
         sessionId || undefined,
         {
           onTextDelta: (delta) => {
@@ -448,7 +463,7 @@ export default function AssistantScreen() {
             );
           },
         },
-        undefined, // organizationId
+        organizationId,
         attachmentIds.length > 0 ? attachmentIds : undefined
       );
     } catch (err: any) {
@@ -461,7 +476,7 @@ export default function AssistantScreen() {
         )
       );
     }
-  }, [activeMode, sessionId]);
+  }, [activeMode, sessionId, isOrganizationSpace, selectedOrg?.id]);
 
   // Audio recording handlers
   const handleMicPress = useCallback(async () => {
@@ -477,10 +492,10 @@ export default function AssistantScreen() {
             setInputText(prev => prev.trim() ? `${prev} ${result.data!.text}` : result.data!.text);
             inputRef.current?.focus();
           } else {
-            Alert.alert('Erreur', result.error || 'Impossible de transcrire l\'audio');
+            void alerts.alert('Erreur', result.error || 'Impossible de transcrire l\'audio');
           }
         } catch (err: any) {
-          Alert.alert('Erreur', err.message || 'Erreur de transcription');
+          void alerts.alert('Erreur', err.message || 'Erreur de transcription');
         } finally {
           setIsTranscribing(false);
         }
@@ -567,10 +582,7 @@ export default function AssistantScreen() {
     const isLastUserMessage = userMessages.length > 0 && userMessages[userMessages.length - 1].id === messageId;
 
     if (isLastUserMessage) {
-      Alert.alert(
-        'Message',
-        undefined,
-        [
+      void alerts.showAlert({ title: 'Message', message: undefined, buttons: [
           { text: 'Annuler', style: 'cancel' },
           {
             text: 'Copier',
@@ -587,20 +599,15 @@ export default function AssistantScreen() {
               setTimeout(() => inputRef.current?.focus(), 100);
             },
           },
-        ]
-      );
+        ] });
     } else {
-      Alert.alert(
-        'Message',
-        undefined,
-        [
+      void alerts.showAlert({ title: 'Message', message: undefined, buttons: [
           { text: 'Annuler', style: 'cancel' },
           {
             text: 'Copier',
             onPress: () => Clipboard.setStringAsync(content),
           },
-        ]
-      );
+        ] });
     }
   }, [messages, isSending]);
 
@@ -644,6 +651,28 @@ export default function AssistantScreen() {
     if (diff < 86_400_000) return `Il y a ${Math.floor(diff / 3_600_000)}h`;
     const d = new Date(ts);
     return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatAssistantError = (err: string): string => {
+    const msg = (err || '').toString().trim();
+    const lower = msg.toLowerCase();
+
+    // Avoid leaking internal tool/schema/server errors in the UI.
+    const isInternal =
+      lower.includes('invalid schema') ||
+      (lower.includes('schema') && lower.includes('function')) ||
+      lower.includes('zod') ||
+      lower.includes('openai') ||
+      lower.includes('bad request') ||
+      lower.startsWith('400 ');
+
+    if (isInternal) {
+      return 'Je rencontre un souci temporaire. Réessaie dans quelques instants.';
+    }
+
+    // Trim very long errors that would break the layout.
+    if (msg.length > 180) return `${msg.slice(0, 177)}...`;
+    return msg;
   };
 
   const renderEmptyState = () => (
@@ -738,7 +767,7 @@ export default function AssistantScreen() {
                 <View style={[styles.messageError, { backgroundColor: withOpacity(colors.error, OPACITY[5]) }]}>
                   <AlertCircle size={14} color={colors.error} />
                   <Text style={[styles.messageErrorText, { color: colors.error }]}>
-                    {message.error}
+                    {formatAssistantError(message.error)}
                   </Text>
                   {message.lastUserMessage && (
                     <TouchableOpacity
@@ -970,16 +999,17 @@ export default function AssistantScreen() {
 
               {/* Row 1: TextInput + Mic + Send */}
               <View style={styles.inputRow}>
-                <TextInput
+                <Input
                   ref={inputRef}
-                  style={[styles.input, { color: colors.textPrimary }]}
                   placeholder={audioRecorder.state.isRecording ? 'Enregistrement en cours...' : t('assistant.inputPlaceholder')}
-                  placeholderTextColor={colors.gray500}
                   value={inputText}
                   onChangeText={setInputText}
                   multiline
                   maxLength={500}
                   editable={!isSending && !audioRecorder.state.isRecording && !isTranscribing}
+                  containerStyle={{ flex: 1 }}
+                  inputContainerStyle={{ backgroundColor: 'transparent', borderColor: 'transparent', height: undefined, minHeight: 44, maxHeight: 100, alignItems: 'flex-start' }}
+                  inputStyle={[styles.input, { color: colors.textPrimary, paddingHorizontal: 0 }]}
                 />
 
                 <TouchableOpacity
@@ -1080,7 +1110,7 @@ export default function AssistantScreen() {
               setInputText(suggestion);
               setIsSuggestionsVisible(false);
             }}
-            mode={activeMode}
+            mode={isOrganizationSpace ? 'explore' : activeMode}
             sessionId={sessionId}
           />
 

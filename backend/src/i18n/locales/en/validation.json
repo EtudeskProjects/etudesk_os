@@ -1,7 +1,6 @@
 {
   "validationFailed": "Validation failed",
   "internalError": "Internal validation error",
-
   "required": "{{field}} is required",
   "minLength": "{{field}} must contain at least {{min}} characters",
   "maxLength": "{{field}} must not exceed {{max}} characters",
@@ -13,7 +12,6 @@
   "numberMax": "{{field}} must not exceed {{max}}",
   "arrayMinItems": "{{field}} must contain at least {{min}} items",
   "arrayMaxItems": "{{field}} must not contain more than {{max}} items",
-
   "common": {
     "invalidId": "Invalid ID",
     "invalidOrgId": "Invalid organization ID",
@@ -22,15 +20,14 @@
     "countryCodeFormat": "Country code must be in ISO 3166-1 alpha-2 format",
     "currencyFormat": "Currency must be in ISO 4217 format"
   },
-
   "auth": {
     "invalidEmail": "Invalid email",
     "emailTooLong": "Email is too long",
     "codeLength": "Code must be 6 digits",
     "codeDigits": "Code must consist of 6 digits",
-    "refreshTokenRequired": "Refresh token is required"
+    "refreshTokenRequired": "Refresh token is required",
+    "invalidPhone": "Invalid phone number"
   },
-
   "opportunity": {
     "titleMinLength": "Title must contain at least 3 characters",
     "titleMaxLength": "Title must not exceed 200 characters",
@@ -53,7 +50,6 @@
     "maxSkills": "Maximum 20 skills allowed",
     "invalidApplicationDeadline": "Application deadline must be a valid future date"
   },
-
   "application": {
     "questionIdRequired": "Question ID is required",
     "answerMaxLength": "Answer must not exceed 2000 characters",
@@ -69,7 +65,6 @@
     "maxBulk": "Maximum 100 applications at once",
     "invalidRating": "Rating must be between 1 and 5"
   },
-
   "onboarding": {
     "firstNameRequired": "First name is required",
     "firstNameTooLong": "First name is too long",
@@ -83,7 +78,6 @@
     "maxGoals": "Maximum 3 goals",
     "maxSectors": "Maximum 5 sectors"
   },
-
   "community": {
     "nameMinLength": "Community name must contain at least 3 characters",
     "nameMaxLength": "Community name must not exceed 100 characters",
@@ -94,13 +88,11 @@
     "priceInvalid": "Monthly price must be a positive number",
     "trialDaysInvalid": "Trial days must be between 0 and 90"
   },
-
   "organization": {
     "nameMinLength": "Organization name must contain at least 2 characters",
     "nameMaxLength": "Organization name must not exceed 200 characters",
     "descriptionMaxLength": "Description must not exceed 5000 characters"
   },
-
   "space": {
     "invalidSpaceId": "Invalid space ID",
     "invalidTimeFormat": "Invalid time format (HH:MM)",
@@ -109,16 +101,13 @@
     "descriptionMaxLength": "Description must not exceed 5000 characters",
     "invalidVisibility": "Visibility must be PUBLIC or PRIVATE"
   },
-
   "kyc": {
     "invalidDocumentType": "Invalid document type",
     "frontImageRequired": "Front image is required"
   },
-
   "invitation": {
     "emailOrTalentRequired": "Email or talent ID is required"
   },
-
   "activity": {
     "titleMinLength": "Title must contain at least 2 characters",
     "titleMaxLength": "Title must not exceed 200 characters",
@@ -131,20 +120,17 @@
     "pollOptionMinLength": "Each option must contain at least 1 character",
     "pollExpiresRequired": "Poll expiration date is required"
   },
-
   "talent": {
     "firstNameRequired": "First name is required",
     "lastNameRequired": "Last name is required",
     "bioMaxLength": "Bio must not exceed 500 characters",
     "invalidExperienceLevel": "Invalid experience level"
   },
-
   "document": {
     "titleMinLength": "Title must contain at least 2 characters",
     "titleMaxLength": "Title must not exceed 200 characters",
     "invalidType": "Invalid document type"
   },
-
   "email": {
     "subjectRequired": "Email subject is required",
     "bodyRequired": "Email body is required"

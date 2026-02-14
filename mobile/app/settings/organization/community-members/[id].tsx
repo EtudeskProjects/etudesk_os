@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -28,6 +27,7 @@ import { communityService, CommunityMember, MemberStatus } from '../../../../src
 import { formatRelativeTime } from '../../../../src/utils/date';
 import { getFullImageUrl } from '../../../../src/utils/image';
 import type { Community } from '../../../../src/types/models';
+import { useAlert } from '../../../../src/contexts/AlertContext';
 
 // Status configuration - colors will be resolved dynamically using theme
 const STATUS_CONFIG: Record<MemberStatus, { colorKey: 'warning' | 'success' | 'error' | 'gray500'; icon: typeof Clock; label: string }> = {
@@ -50,6 +50,7 @@ export default function CommunityMembersScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const alerts = useAlert();
 
   useEffect(() => {
     loadData();
@@ -71,7 +72,7 @@ export default function CommunityMembersScreen() {
       setStatusCounts(membersResponse.data?.statusCounts || {});
     } catch (error: any) {
       console.error('Error loading data:', error);
-      Alert.alert('Erreur', error?.error || 'Impossible de charger les membres.');
+      void alerts.alert('Erreur', error?.error || 'Impossible de charger les membres.');
     } finally {
       setIsLoading(false);
     }
@@ -101,45 +102,34 @@ export default function CommunityMembersScreen() {
       // Update counts
       handleRefresh();
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
+      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
     }
   };
 
   const handleAccept = (membershipId: string) => {
-    Alert.alert(
-      'Accepter la demande',
-      'Voulez-vous accepter cette demande d\'adhésion ?',
-      [
+    void alerts.showAlert({ title: 'Accepter la demande', message: 'Voulez-vous accepter cette demande d\'adhésion ?', buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Accepter',
           onPress: () => handleUpdateStatus(membershipId, 'ACTIVE'),
         },
-      ]
-    );
+      ] });
   };
 
   const handleReject = (membershipId: string) => {
-    Alert.prompt(
-      'Refuser la demande',
-      'Indiquez une raison (optionnel) :',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Refuser',
-          style: 'destructive',
-          onPress: (reason?: string) => handleUpdateStatus(membershipId, 'REJECTED', reason),
-        },
-      ],
-      'plain-text'
-    );
+    void (async () => {
+      const reason = await alerts.prompt(
+        'Refuser la demande',
+        'Indiquez une raison (optionnel) :',
+        { placeholder: 'Raison (optionnel)', confirmText: 'Refuser', cancelText: 'Annuler' }
+      );
+      if (reason === null) return;
+      await handleUpdateStatus(membershipId, 'REJECTED', reason || undefined);
+    })();
   };
 
   const handleDelete = (member: CommunityMember) => {
-    Alert.alert(
-      'Supprimer le membre',
-      `Êtes-vous sûr de vouloir supprimer ${member.talent?.display_name || 'ce membre'} ? Cette action permettra à la personne de postuler à nouveau.`,
-      [
+    void alerts.showAlert({ title: 'Supprimer le membre', message: `Êtes-vous sûr de vouloir supprimer ${member.talent?.display_name || 'ce membre'} ? Cette action permettra à la personne de postuler à nouveau.`, buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
@@ -150,12 +140,11 @@ export default function CommunityMembersScreen() {
               setMembers((prev) => prev.filter((m) => m.id !== member.id));
               handleRefresh();
             } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Impossible de supprimer le membre.');
+              void alerts.alert('Erreur', error.error || 'Impossible de supprimer le membre.');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const handleEdit = () => {

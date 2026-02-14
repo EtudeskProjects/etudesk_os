@@ -6,7 +6,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Linking, TouchableOpacity, Platform } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
 import { ShimmerPlaceholder } from '../ui/ShimmerPlaceholder';
@@ -19,6 +19,12 @@ import { ImageBlock } from './blocks/ImageBlock';
 import { ChartBlock } from './blocks/ChartBlock';
 import { CodeBlock } from './blocks/CodeBlock';
 import { ConfirmationBlock } from './blocks/ConfirmationBlock';
+
+const MONO_FONT_FAMILY = Platform.select({
+  ios: 'Menlo',
+  android: 'monospace',
+  default: 'monospace',
+});
 
 interface MarkdownRendererProps {
   content: string;
@@ -209,7 +215,7 @@ function renderInlineMarkdown(text: string, colors: any): React.ReactNode[] {
         <Text
           key={key++}
           style={{
-            fontFamily: 'Courier',
+            fontFamily: MONO_FONT_FAMILY,
             backgroundColor: colors.surface,
             color: colors.primary,
             paddingHorizontal: 4,

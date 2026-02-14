@@ -3,7 +3,7 @@
  * For organization admins to manage sent invitations
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,11 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   RefreshControl,
   ActivityIndicator,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,6 +41,7 @@ import {
   InvitationStatus,
   InvitationRole,
 } from '../../../../src/services/communityInvitationService';
+import { useAlert } from '../../../../src/contexts/AlertContext';
 
 const STATUS_TABS: { key: InvitationStatus | 'ALL'; label: string }[] = [
   { key: 'ALL', label: 'Toutes' },
@@ -73,6 +75,7 @@ export default function CommunityInvitationsScreen() {
   const [inviteMessage, setInviteMessage] = useState('');
   const [inviteRole, setInviteRole] = useState<InvitationRole>('MEMBER');
   const [isSending, setIsSending] = useState(false);
+  const modalScrollRef = useRef<ScrollView>(null);
 
   const fetchInvitations = useCallback(async () => {
     try {
@@ -91,6 +94,7 @@ export default function CommunityInvitationsScreen() {
       setIsRefreshing(false);
     }
   }, [communityId, activeStatus]);
+  const alerts = useAlert();
 
   useEffect(() => {
     fetchInvitations();
@@ -103,7 +107,7 @@ export default function CommunityInvitationsScreen() {
 
   const handleSendInvitation = async () => {
     if (!inviteEmail || !inviteEmail.includes('@')) {
-      Alert.alert('Erreur', 'Veuillez entrer une adresse email valide');
+      void alerts.alert('Erreur', 'Veuillez entrer une adresse email valide');
       return;
     }
 
@@ -120,16 +124,16 @@ export default function CommunityInvitationsScreen() {
 
       if (response.data) {
         if (response.data.sent > 0) {
-          Alert.alert('Succès', `Invitation envoyée à ${inviteEmail}`);
+          void alerts.alert('Succès', `Invitation envoyée à ${inviteEmail}`);
           setShowInviteModal(false);
           resetInviteForm();
           fetchInvitations();
         } else if (response.data.errors.length > 0) {
-          Alert.alert('Erreur', response.data.errors[0].error);
+          void alerts.alert('Erreur', response.data.errors[0].error);
         }
       }
     } catch (error: any) {
-      Alert.alert('Erreur', error.message || 'Impossible d\'envoyer l\'invitation');
+      void alerts.alert('Erreur', error.message || 'Impossible d\'envoyer l\'invitation');
     } finally {
       setIsSending(false);
     }
@@ -146,20 +150,17 @@ export default function CommunityInvitationsScreen() {
     setProcessingId(invitation.id);
     try {
       await communityInvitationService.resendInvitation(communityId!, invitation.id);
-      Alert.alert('Succès', 'Invitation renvoyée');
+      void alerts.alert('Succès', 'Invitation renvoyée');
       fetchInvitations();
     } catch (error: any) {
-      Alert.alert('Erreur', error.message || 'Impossible de renvoyer l\'invitation');
+      void alerts.alert('Erreur', error.message || 'Impossible de renvoyer l\'invitation');
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleCancel = async (invitation: CommunityInvitation) => {
-    Alert.alert(
-      'Annuler l\'invitation',
-      `Voulez-vous vraiment annuler l'invitation à ${invitation.invitee_email}?`,
-      [
+    void alerts.showAlert({ title: 'Annuler l\'invitation', message: `Voulez-vous vraiment annuler l'invitation à ${invitation.invitee_email}?`, buttons: [
         { text: 'Non', style: 'cancel' },
         {
           text: 'Oui, annuler',
@@ -170,14 +171,13 @@ export default function CommunityInvitationsScreen() {
               await communityInvitationService.cancelInvitation(communityId!, invitation.id);
               setInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
             } catch (error: any) {
-              Alert.alert('Erreur', error.message || 'Impossible d\'annuler l\'invitation');
+              void alerts.alert('Erreur', error.message || 'Impossible d\'annuler l\'invitation');
             } finally {
               setProcessingId(null);
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const formatDate = (dateString: string) => {
@@ -234,6 +234,13 @@ export default function CommunityInvitationsScreen() {
         return role;
     }
   };
+
+  const scrollModalTo = useCallback((y: number) => {
+    if (Platform.OS !== 'android') return;
+    setTimeout(() => {
+      modalScrollRef.current?.scrollTo({ y, animated: true });
+    }, 120);
+  }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -381,7 +388,7 @@ export default function CommunityInvitationsScreen() {
                 </View>
 
                 {invitation.status === 'PENDING' && (
-                  <View style={styles.cardActions}>
+                  <View style={[styles.cardActions, { borderTopColor: colors.borderColor }]}>
                     <TouchableOpacity
                       style={[styles.actionButton, { borderColor: colors.borderColor }]}
                       onPress={() => handleResend(invitation)}
@@ -415,9 +422,13 @@ export default function CommunityInvitationsScreen() {
 
       {/* Invite Modal */}
       <Modal visible={showInviteModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-            <View style={styles.modalHeader}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.borderColor }]}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
                 Inviter un membre
               </Text>
@@ -426,7 +437,12 @@ export default function CommunityInvitationsScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalBody}>
+            <ScrollView
+              ref={modalScrollRef}
+              style={styles.modalBody}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
               {/* Email */}
               <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>
                 Email <Text style={{ color: colors.error }}>*</Text>
@@ -437,6 +453,7 @@ export default function CommunityInvitationsScreen() {
                 placeholderTextColor={colors.textDisabled}
                 value={inviteEmail}
                 onChangeText={setInviteEmail}
+                onFocus={() => scrollModalTo(0)}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -449,6 +466,7 @@ export default function CommunityInvitationsScreen() {
                 placeholderTextColor={colors.textDisabled}
                 value={inviteName}
                 onChangeText={setInviteName}
+                onFocus={() => scrollModalTo(110)}
               />
 
               {/* Role */}
@@ -486,13 +504,14 @@ export default function CommunityInvitationsScreen() {
                 placeholderTextColor={colors.textDisabled}
                 value={inviteMessage}
                 onChangeText={setInviteMessage}
+                onFocus={() => scrollModalTo(320)}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
               />
             </ScrollView>
 
-            <View style={styles.modalFooter}>
+            <View style={[styles.modalFooter, { borderTopColor: colors.borderColor }]}>
               <Button
                 title="Annuler"
                 onPress={() => {
@@ -513,7 +532,7 @@ export default function CommunityInvitationsScreen() {
               />
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -686,7 +705,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     gap: SPACING.md,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: 'transparent',
   },
 
   actionButton: {
@@ -724,7 +743,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: SPACING.lg,
     borderBottomWidth: BORDER.width.thin,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: 'transparent',
   },
 
   modalTitle: {
@@ -781,6 +800,6 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     padding: SPACING.lg,
     borderTopWidth: BORDER.width.thin,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: 'transparent',
   },
 });

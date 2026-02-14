@@ -7,7 +7,6 @@ import {
     ScrollView,
     TouchableOpacity,
     ActivityIndicator,
-    Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,6 +48,7 @@ import {
 import { LearningPreference } from '../../src/types/models';
 
 import type { ThemePreference } from '../../src/contexts/ThemeContext';
+import { useAlert } from '../../src/contexts/AlertContext';
 
 const DEFAULT_LEARNING_PREFS: LearningPreference = {
     style: 'TEXT_BASED',
@@ -136,6 +136,7 @@ export default function PreferencesScreen() {
             setIsLoading(false);
         }
     }, [fetchPreferences]);
+    const alerts = useAlert();
 
     useEffect(() => {
         loadPreferences();
@@ -188,7 +189,7 @@ export default function PreferencesScreen() {
         } catch (error) {
             console.error('Error saving learning preference:', error);
             setLearningPrefs(previousPrefs);
-            Alert.alert(t('common.error'), t('preferences.learningSaveError'), [{ text: t('common.confirm') }]);
+            void alerts.showAlert({ title: t('common.error'), message: t('preferences.learningSaveError'), buttons: [{ text: t('common.confirm') }] });
         } finally {
             setIsSaving(false);
         }

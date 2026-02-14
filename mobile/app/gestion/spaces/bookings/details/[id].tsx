@@ -8,7 +8,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   Image,
   Keyboard,
@@ -40,6 +39,7 @@ import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
 import { spaceBookingService, spaceBookingMessageService, SpaceBookingDetails, BookingStatus, BookingMessage } from '../../../../../src/services';
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
+import { useAlert } from '../../../../../src/contexts/AlertContext';
 
 // Status configuration
 const getStatusConfig = (colors: any): Record<BookingStatus, { color: string; icon: typeof Clock }> => ({
@@ -108,6 +108,7 @@ export default function BookingDetailsScreen() {
 
   // Status picker
   const [showStatusPicker, setShowStatusPicker] = useState(false);
+  const alerts = useAlert();
 
   // Handle keyboard events
   useEffect(() => {
@@ -145,7 +146,7 @@ export default function BookingDetailsScreen() {
       setBooking(response.data);
       setInternalNotes(response.data?.internal_notes || '');
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de charger les details de la reservation.');
+      void alerts.alert('Erreur', 'Impossible de charger les details de la reservation.');
       router.back();
     } finally {
       setIsLoading(false);
@@ -174,19 +175,16 @@ export default function BookingDetailsScreen() {
       await spaceBookingService.updateBookingStatus(booking.id, newStatus);
       setBooking((prev) => prev ? { ...prev, status: newStatus } : null);
       setShowStatusPicker(false);
-      Alert.alert('Succes', `Statut mis a jour: ${STATUS_FLOW[newStatus].label}`);
+      void alerts.alert('Succes', `Statut mis a jour: ${STATUS_FLOW[newStatus].label}`);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de mettre a jour le statut.');
+      void alerts.alert('Erreur', error.error || 'Impossible de mettre a jour le statut.');
     }
   };
 
   const handleDeleteBooking = () => {
     if (!booking) return;
 
-    Alert.alert(
-      'Supprimer la reservation',
-      'Etes-vous sur de vouloir supprimer cette reservation ? Cette action est irreversible.',
-      [
+    void alerts.showAlert({ title: 'Supprimer la reservation', message: 'Etes-vous sur de vouloir supprimer cette reservation ? Cette action est irreversible.', buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
@@ -194,15 +192,14 @@ export default function BookingDetailsScreen() {
           onPress: async () => {
             try {
               await spaceBookingService.deleteBooking(booking.id);
-              Alert.alert('Succes', 'Reservation supprimee.');
+              void alerts.alert('Succes', 'Reservation supprimee.');
               router.back();
             } catch (error: any) {
-              Alert.alert('Erreur', error.error || 'Impossible de supprimer la reservation.');
+              void alerts.alert('Erreur', error.error || 'Impossible de supprimer la reservation.');
             }
           },
         },
-      ]
-    );
+      ] });
   };
 
   const handleSaveNotes = async () => {
@@ -211,9 +208,9 @@ export default function BookingDetailsScreen() {
     try {
       await spaceBookingService.updateInternalNotes(booking.id, internalNotes);
       setIsEditingNotes(false);
-      Alert.alert('Succes', 'Notes enregistrees.');
+      void alerts.alert('Succes', 'Notes enregistrees.');
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible de sauvegarder les notes.');
+      void alerts.alert('Erreur', error.error || 'Impossible de sauvegarder les notes.');
     }
   };
 
@@ -245,7 +242,7 @@ export default function BookingDetailsScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error: any) {
-      Alert.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      void alerts.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
       throw error;
     } finally {
       setIsSending(false);
@@ -692,7 +689,7 @@ export default function BookingDetailsScreen() {
       {/* Content */}
       <KeyboardAvoidingView
         style={styles.contentContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {activeTab === 'profile' && renderProfileTab()}

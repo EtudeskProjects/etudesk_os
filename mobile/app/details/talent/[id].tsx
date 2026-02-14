@@ -9,6 +9,7 @@ import {
   Modal,
   FlatList,
   ActivityIndicator,
+  Pressable,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,8 +24,17 @@ import {
   Send,
   Edit3,
   X,
+  Heart,
+  Tag,
+  Users,
+  Check,
+  Briefcase,
+  ChevronDown,
+  ChevronUp,
+  Code,
+  BookOpen,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAuth } from '../../../src/contexts/AuthContext';
@@ -33,8 +43,13 @@ import { formatRelativeTime } from '../../../src/utils/date';
 import { talentService } from '../../../src/services/talentService';
 import { opportunityService } from '../../../src/services/opportunityService';
 import { opportunityInvitationService } from '../../../src/services/opportunityInvitationService';
+import { communityInvitationService } from '../../../src/services/communityInvitationService';
+import { spaceInvitationService } from '../../../src/services/spaceInvitationService';
+import { communityService } from '../../../src/services/communityService';
+import { spaceService } from '../../../src/services/spaceService';
+import { orgTalentService, type OrgTagDefinition, applicationService, spaceBookingService } from '../../../src/services';
 import { SECTOR_DATA, PROFILE_TAG_DATA, GOAL_DATA } from '../../../src/constants/talent';
-import type { Talent, Opportunity } from '../../../src/types/models';
+import type { Talent, Opportunity, Application } from '../../../src/types/models';
 
 const getInitials = (name: string): string => {
   return name
@@ -48,6 +63,23 @@ const getInitials = (name: string): string => {
 const getLabelFromData = (id: string, data: Array<{ id: string; label: string }>): string => {
   return data.find((item) => item.id === id)?.label || id;
 };
+
+// Skill type → base color + icon component
+const SKILL_TYPE_CONFIG: Record<string, { color: string; icon: typeof Code }> = {
+  HARD_SKILL: { color: '#6B5E52', icon: Code },       // Warm taupe — Savoir-faire
+  SOFT_SKILL: { color: '#4A6741', icon: Users },       // Forest green — Savoir-être
+  KNOWLEDGE:  { color: '#A67C52', icon: BookOpen },    // Warm amber — Savoir
+};
+
+// Proficiency → opacity multiplier for background gradient (darker = stronger)
+const PROFICIENCY_BG_OPACITY: Record<string, number> = {
+  BEGINNER: 0.08,
+  INTERMEDIATE: 0.15,
+  EXPERT: 0.25,
+  MASTER: 0.38,
+};
+
+const SKILLS_PREVIEW_COUNT = 10;
 
 const INVITE_ROLES = ['OWNER', 'ADMIN', 'MANAGER'];
 
@@ -69,6 +101,24 @@ export default function TalentDetailScreen() {
   const [loadingOpportunities, setLoadingOpportunities] = useState(false);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+
+  // Org talent features
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [orgTags, setOrgTags] = useState<OrgTagDefinition[]>([]);
+  const [talentTagIds, setTalentTagIds] = useState<string[]>([]);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [inviteType, setInviteType] = useState<'opportunity' | 'community' | 'space' | null>(null);
+  const [communities, setCommunities] = useState<any[]>([]);
+  const [spaces, setSpaces] = useState<any[]>([]);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [loadingItems, setLoadingItems] = useState(false);
+
+  // Interactions
+  const [talentApplications, setTalentApplications] = useState<Application[]>([]);
+  const [talentCommunities, setTalentCommunities] = useState<any[]>([]);
+  const [talentBookings, setTalentBookings] = useState<any[]>([]);
+  const [loadingInteractions, setLoadingInteractions] = useState(false);
+  const [showAllSkills, setShowAllSkills] = useState(false);
 
   // Alert
   const [alertVisible, setAlertVisible] = useState(false);
@@ -104,6 +154,162 @@ export default function TalentDetailScreen() {
       }
     })();
   }, [id]);
+
+  // Load org talent data (favorites, tags)
+  useEffect(() => {
+    if (!id || !isOrganizationSpace || !selectedOrgId) return;
+    (async () => {
+      try {
+        const [favIds, tags] = await Promise.all([
+          orgTalentService.getFavoriteIds(selectedOrgId),
+          orgTalentService.getTags(selectedOrgId),
+        ]);
+        setIsFavorite(favIds.includes(id));
+        setOrgTags(tags);
+        // Fetch talent's assigned tags
+        const talentRes = await orgTalentService.getTalents(selectedOrgId, { search: talent?.email, limit: 1 });
+        const match = talentRes.talents.find((t: any) => t.talent_id === id);
+        if (match) {
+          setTalentTagIds(match.tags.map((t: any) => t.id));
+        }
+      } catch {
+        // silently fail
+      }
+    })();
+  }, [id, isOrganizationSpace, selectedOrgId, talent?.email]);
+
+  // Load talent interactions with this org
+  useEffect(() => {
+    if (!id || !isOrganizationSpace || !selectedOrgId) return;
+    (async () => {
+      setLoadingInteractions(true);
+      try {
+        const [appsRes, bookingsRes, commsRes] = await Promise.allSettled([
+          applicationService.getOrganizationApplications(selectedOrgId, { limit: 100 }),
+          spaceBookingService.getOrganizationBookings(selectedOrgId, { talent_id: id, limit: 20 } as any),
+          communityService.getByOrganization(selectedOrgId, { limit: 50, offset: 0 }),
+        ]);
+
+        // Applications: filter by talent_id
+        if (appsRes.status === 'fulfilled') {
+          const allApps = appsRes.value.data || [];
+          setTalentApplications(allApps.filter((a: Application) => a.talent_id === id));
+        }
+
+        // Bookings: already filtered by talent_id
+        if (bookingsRes.status === 'fulfilled') {
+          setTalentBookings(bookingsRes.value.data || []);
+        }
+
+        // Communities: check each for talent membership
+        if (commsRes.status === 'fulfilled') {
+          const orgComms = commsRes.value.data || [];
+          const memberChecks = await Promise.allSettled(
+            orgComms.map((c: any) => communityService.getCommunityMembers(c.id, { limit: 200 }))
+          );
+          const matched = orgComms.filter((_: any, i: number) => {
+            if (memberChecks[i].status !== 'fulfilled') return false;
+            const res = (memberChecks[i] as PromiseFulfilledResult<any>).value;
+            const members = res.data?.data || [];
+            return members.some((m: any) => m.talent_id === id);
+          });
+          setTalentCommunities(matched);
+        }
+      } catch {
+        // silently fail
+      } finally {
+        setLoadingInteractions(false);
+      }
+    })();
+  }, [id, isOrganizationSpace, selectedOrgId]);
+
+  const handleToggleFavorite = useCallback(async () => {
+    if (!id || !selectedOrgId) return;
+    try {
+      if (isFavorite) {
+        await orgTalentService.unfavoriteTalent(selectedOrgId, id);
+      } else {
+        await orgTalentService.favoriteTalent(selectedOrgId, id);
+      }
+      setIsFavorite(!isFavorite);
+    } catch {
+      // silently fail
+    }
+  }, [id, selectedOrgId, isFavorite]);
+
+  const handleToggleTag = useCallback(async (tagId: string) => {
+    if (!id || !selectedOrgId) return;
+    const hasTag = talentTagIds.includes(tagId);
+    try {
+      if (hasTag) {
+        await orgTalentService.unassignTag(selectedOrgId, id, tagId);
+        setTalentTagIds(prev => prev.filter(t => t !== tagId));
+      } else {
+        await orgTalentService.assignTag(selectedOrgId, id, tagId);
+        setTalentTagIds(prev => [...prev, tagId]);
+      }
+    } catch {
+      // silently fail
+    }
+  }, [id, selectedOrgId, talentTagIds]);
+
+  const openInviteTypeModal = useCallback(async (type: 'opportunity' | 'community' | 'space') => {
+    if (!selectedOrgId) return;
+    setInviteType(type);
+    setSelectedItemId(null);
+    setLoadingItems(true);
+    try {
+      if (type === 'opportunity') {
+        const res = await opportunityService.getByOrganization(selectedOrgId, { status: 'OPEN' });
+        setOpportunities(res.data || []);
+      } else if (type === 'community') {
+        const res = await communityService.getByOrganization(selectedOrgId, { limit: 50, offset: 0 });
+        setCommunities(res.data || []);
+      } else if (type === 'space') {
+        const res = await spaceService.getByOrganization(selectedOrgId, { limit: 50, offset: 0 });
+        setSpaces(res.data || []);
+      }
+    } catch {
+      setOpportunities([]);
+      setCommunities([]);
+      setSpaces([]);
+    } finally {
+      setLoadingItems(false);
+    }
+  }, [selectedOrgId]);
+
+  const handleSendTypedInvitation = useCallback(async () => {
+    if (!selectedItemId || !talent || !inviteType) return;
+    setSending(true);
+    try {
+      const payload = [{ email: talent.email, name: talent.display_name }];
+      let success = false;
+      if (inviteType === 'opportunity') {
+        const res = await opportunityInvitationService.sendInvitations(selectedItemId, payload);
+        success = !!(res.data && res.data.sent > 0);
+      } else if (inviteType === 'community') {
+        const res = await communityInvitationService.sendInvitations(selectedItemId, payload);
+        success = !!(res.data && res.data.sent > 0);
+      } else if (inviteType === 'space') {
+        const res = await spaceInvitationService.sendInvitations(selectedItemId, payload);
+        success = !!(res.data && res.data.sent > 0);
+      }
+      setInviteType(null);
+      const typeLabel = inviteType === 'opportunity' ? 'l\'opportunité' : inviteType === 'community' ? 'la communauté' : 'l\'espace';
+      if (success) {
+        setAlertConfig({ type: 'success', title: 'Invitation envoyée', message: `${talent.display_name} a été invité(e) à rejoindre ${typeLabel}.` });
+      } else {
+        setAlertConfig({ type: 'error', title: 'Échec', message: 'L\'invitation n\'a pas pu être envoyée.' });
+      }
+      setAlertVisible(true);
+    } catch {
+      setInviteType(null);
+      setAlertConfig({ type: 'error', title: 'Erreur', message: 'Impossible d\'envoyer l\'invitation.' });
+      setAlertVisible(true);
+    } finally {
+      setSending(false);
+    }
+  }, [selectedItemId, talent, inviteType]);
 
   // Load org opportunities when modal opens
   const openInviteModal = useCallback(async () => {
@@ -198,7 +404,7 @@ export default function TalentDetailScreen() {
   }
 
   const createdAt = talent.created_at ? formatRelativeTime(talent.created_at) : null;
-  const skills: Array<{ name: string; type?: string }> =
+  const skills: Array<{ name: string; type?: string; proficiency_level?: string }> =
     Array.isArray(talent.skills)
       ? talent.skills.map((s: any) => typeof s === 'string' ? { name: s } : s)
       : [];
@@ -316,16 +522,46 @@ export default function TalentDetailScreen() {
           {/* Skills */}
           {skills.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Compétences</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                Compétences ({skills.length})
+              </Text>
               <View style={styles.tagsContainer}>
-                {skills.map((skill, index) => (
-                  <View key={index} style={[styles.tag, { backgroundColor: colors.gray100 }]}>
-                    <Text style={[styles.tagText, { color: colors.textSecondary }]}>
-                      {typeof skill === 'string' ? skill : skill.name}
-                    </Text>
-                  </View>
-                ))}
+                {(showAllSkills ? skills : skills.slice(0, SKILLS_PREVIEW_COUNT)).map((skill, index) => {
+                  const config = skill.type ? SKILL_TYPE_CONFIG[skill.type] : null;
+                  const baseColor = config?.color || colors.gray500;
+                  const SkillIcon = config?.icon || BookOpen;
+                  const bgOpacity = skill.proficiency_level
+                    ? (PROFICIENCY_BG_OPACITY[skill.proficiency_level] || 0.10)
+                    : 0.10;
+                  return (
+                    <View
+                      key={index}
+                      style={[styles.skillPill, { backgroundColor: baseColor + Math.round(bgOpacity * 255).toString(16).padStart(2, '0') }]}
+                    >
+                      <SkillIcon size={COMPONENT.pill.iconSize} color={baseColor} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
+                      <Text style={[styles.skillPillText, { color: baseColor }]}>
+                        {skill.name}
+                      </Text>
+                    </View>
+                  );
+                })}
               </View>
+              {skills.length > SKILLS_PREVIEW_COUNT && (
+                <TouchableOpacity
+                  style={styles.showMoreButton}
+                  onPress={() => setShowAllSkills(!showAllSkills)}
+                  activeOpacity={0.7}
+                >
+                  {showAllSkills ? (
+                    <ChevronUp size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  ) : (
+                    <ChevronDown size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  )}
+                  <Text style={[styles.showMoreText, { color: colors.primary }]}>
+                    {showAllSkills ? 'Voir moins' : `Voir plus (+${skills.length - SKILLS_PREVIEW_COUNT})`}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -377,6 +613,95 @@ export default function TalentDetailScreen() {
               </View>
             </View>
           )}
+
+          {/* Interactions with organization */}
+          {isOrganizationSpace && !loadingInteractions && (talentApplications.length > 0 || talentCommunities.length > 0 || talentBookings.length > 0) && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Interactions</Text>
+
+              {talentApplications.length > 0 && (
+                <View style={styles.interactionGroup}>
+                  <View style={styles.interactionHeader}>
+                    <Briefcase size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                    <Text style={[styles.interactionGroupTitle, { color: colors.textPrimary }]}>
+                      Candidatures ({talentApplications.length})
+                    </Text>
+                  </View>
+                  {talentApplications.map((app) => (
+                    <View key={app.id} style={[styles.interactionItem, { backgroundColor: colors.gray100 }]}>
+                      <Text style={[styles.interactionItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                        {app.opportunity?.title || 'Opportunité'}
+                      </Text>
+                      <View style={[styles.interactionBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
+                        <Text style={[styles.interactionBadgeText, { color: colors.primary }]}>
+                          {app.status}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {talentCommunities.length > 0 && (
+                <View style={styles.interactionGroup}>
+                  <View style={styles.interactionHeader}>
+                    <Users size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                    <Text style={[styles.interactionGroupTitle, { color: colors.textPrimary }]}>
+                      Communautés ({talentCommunities.length})
+                    </Text>
+                  </View>
+                  {talentCommunities.map((comm: any) => (
+                    <View key={comm.id} style={[styles.interactionItem, { backgroundColor: colors.gray100 }]}>
+                      <Text style={[styles.interactionItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                        {comm.name || comm.title}
+                      </Text>
+                      <View style={[styles.interactionBadge, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
+                        <Text style={[styles.interactionBadgeText, { color: colors.success }]}>
+                          Membre
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {talentBookings.length > 0 && (
+                <View style={styles.interactionGroup}>
+                  <View style={styles.interactionHeader}>
+                    <MapPin size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                    <Text style={[styles.interactionGroupTitle, { color: colors.textPrimary }]}>
+                      Réservations ({talentBookings.length})
+                    </Text>
+                  </View>
+                  {talentBookings.map((booking: any) => (
+                    <View key={booking.id} style={[styles.interactionItem, { backgroundColor: colors.gray100 }]}>
+                      <Text style={[styles.interactionItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                        {booking.space?.name || booking.space?.title || 'Espace'}
+                      </Text>
+                      <View style={[styles.interactionBadge, {
+                        backgroundColor: withOpacity(
+                          booking.status === 'CONFIRMED' ? colors.success : colors.warning,
+                          OPACITY[15]
+                        ),
+                      }]}>
+                        <Text style={[styles.interactionBadgeText, {
+                          color: booking.status === 'CONFIRMED' ? colors.success : colors.warning,
+                        }]}>
+                          {booking.status}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {isOrganizationSpace && loadingInteractions && (
+            <View style={[styles.section, { alignItems: 'center' }]}>
+              <ActivityIndicator size="small" color={colors.primary} />
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -393,105 +718,197 @@ export default function TalentDetailScreen() {
           </View>
         )}
         {canInvite && (
-          <View style={styles.ctaContainer}>
-            <Button
-              title="Inviter à une opportunité"
-              onPress={openInviteModal}
-              icon={<Send size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-              fullWidth
-            />
+          <View style={styles.actionBar}>
+            <TouchableOpacity
+              style={[styles.actionBarButton, { backgroundColor: isFavorite ? withOpacity(colors.error, OPACITY[15]) : colors.gray100 }]}
+              onPress={handleToggleFavorite}
+              activeOpacity={0.7}
+            >
+              <Heart
+                size={20}
+                color={isFavorite ? colors.error : colors.textSecondary}
+                fill={isFavorite ? colors.error : 'transparent'}
+                strokeWidth={ICON.strokeWidth}
+              />
+              <Text style={[styles.actionBarLabel, { color: isFavorite ? colors.error : colors.textSecondary }]}>
+                Favoris
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionBarButton, { backgroundColor: colors.gray100 }]}
+              onPress={() => setShowTagModal(true)}
+              activeOpacity={0.7}
+            >
+              <Tag size={20} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.actionBarLabel, { color: colors.textSecondary }]}>
+                Catégories
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionBarButton, { backgroundColor: colors.gray100 }]}
+              onPress={() => openInviteTypeModal('opportunity')}
+              activeOpacity={0.7}
+            >
+              <Send size={20} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.actionBarLabel, { color: colors.textSecondary }]}>
+                Inviter
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
         <FooterNav activeTab="explore" />
       </View>
 
-      {/* Invite Modal */}
-      <Modal
-        visible={inviteModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setInviteModalVisible(false)}
-      >
+      {/* Tag Assignment Modal */}
+      <Modal visible={showTagModal} transparent animationType="slide" onRequestClose={() => setShowTagModal(false)}>
         <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setShowTagModal(false)} />
           <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
-            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Catégories</Text>
+              <TouchableOpacity onPress={() => setShowTagModal(false)}>
+                <X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+              </TouchableOpacity>
+            </View>
+            {orgTags.length === 0 ? (
+              <View style={styles.modalCentered}>
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                  Aucune catégorie créée
+                </Text>
+                <Text style={[styles.emptyText, { color: colors.gray400, marginTop: SPACING.xs }]}>
+                  Créez des tags depuis l'écran Mes Talents
+                </Text>
+              </View>
+            ) : (
+              orgTags.map(tag => {
+                const isAssigned = talentTagIds.includes(tag.id);
+                return (
+                  <TouchableOpacity
+                    key={tag.id}
+                    style={[styles.tagAssignRow, { borderBottomColor: colors.gray100 }]}
+                    onPress={() => handleToggleTag(tag.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.tagDot, { backgroundColor: tag.color }]} />
+                    <Text style={[styles.tagAssignName, { color: colors.textPrimary }]}>{tag.name}</Text>
+                    <View style={[
+                      styles.tagCheckbox,
+                      { backgroundColor: isAssigned ? tag.color : 'transparent', borderColor: isAssigned ? tag.color : colors.gray300 },
+                    ]}>
+                      {isAssigned && <Check size={14} color="#fff" strokeWidth={ICON.strokeWidth} />}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Invite Modal (opportunity / community / space) */}
+      <Modal visible={!!inviteType} transparent animationType="slide" onRequestClose={() => setInviteType(null)}>
+        <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setInviteType(null)} />
+          <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                Inviter à une opportunité
+                Inviter {talent.display_name}
               </Text>
-              <TouchableOpacity
-                onPress={() => setInviteModalVisible(false)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
+              <TouchableOpacity onPress={() => setInviteType(null)}>
                 <X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
               </TouchableOpacity>
             </View>
 
-            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-              Sélectionnez une opportunité pour inviter {talent.display_name}
-            </Text>
+            {/* Type selector tabs */}
+            <View style={styles.inviteTypeTabs}>
+              {([
+                { key: 'opportunity' as const, label: 'Opportunités', icon: Briefcase },
+                { key: 'community' as const, label: 'Communautés', icon: Users },
+                { key: 'space' as const, label: 'Espaces', icon: MapPin },
+              ]).map(tab => {
+                const isActive = inviteType === tab.key;
+                const TabIcon = tab.icon;
+                return (
+                  <TouchableOpacity
+                    key={tab.key}
+                    style={[
+                      styles.inviteTypeTab,
+                      { backgroundColor: isActive ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 },
+                    ]}
+                    onPress={() => { setInviteType(tab.key); setSelectedItemId(null); openInviteTypeModal(tab.key); }}
+                    activeOpacity={0.7}
+                  >
+                    <TabIcon size={16} color={isActive ? colors.primary : colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+                    <Text style={[
+                      styles.inviteTypeTabText,
+                      { color: isActive ? colors.primary : colors.textSecondary },
+                    ]}>
+                      {tab.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
-            {/* Opportunity List */}
-            {loadingOpportunities ? (
+            {loadingItems ? (
               <View style={styles.modalCentered}>
                 <ActivityIndicator size="small" color={colors.primary} />
               </View>
-            ) : opportunities.length === 0 ? (
-              <View style={styles.modalCentered}>
-                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                  Aucune opportunité ouverte
-                </Text>
-              </View>
-            ) : (
-              <FlatList
-                data={opportunities}
-                keyExtractor={(item) => item.id}
-                style={styles.opportunityList}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item }) => {
-                  const isSelected = selectedOpportunityId === item.id;
-                  return (
-                    <TouchableOpacity
-                      style={[
-                        styles.opportunityItem,
-                        {
-                          borderColor: isSelected ? colors.primary : colors.borderColor,
-                          backgroundColor: isSelected
-                            ? withOpacity(colors.primary, OPACITY[8])
-                            : colors.surface,
-                        },
-                      ]}
-                      onPress={() => setSelectedOpportunityId(item.id)}
-                      activeOpacity={0.7}
-                    >
-                      <Text
+            ) : (() => {
+              const items = inviteType === 'opportunity' ? opportunities : inviteType === 'community' ? communities : spaces;
+              return items.length === 0 ? (
+                <View style={styles.modalCentered}>
+                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                    {inviteType === 'opportunity' ? 'Aucune opportunité ouverte' : inviteType === 'community' ? 'Aucune communauté' : 'Aucun espace'}
+                  </Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={items}
+                  keyExtractor={(item) => item.id}
+                  style={styles.opportunityList}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item }) => {
+                    const isSelected = selectedItemId === item.id;
+                    return (
+                      <TouchableOpacity
                         style={[
-                          styles.opportunityTitle,
-                          { color: isSelected ? colors.primary : colors.textPrimary },
+                          styles.opportunityItem,
+                          {
+                            borderColor: isSelected ? colors.primary : colors.borderColor,
+                            backgroundColor: isSelected ? withOpacity(colors.primary, OPACITY[8]) : colors.surface,
+                          },
                         ]}
-                        numberOfLines={2}
+                        onPress={() => setSelectedItemId(item.id)}
+                        activeOpacity={0.7}
                       >
-                        {item.title}
-                      </Text>
-                      {item.type && (
-                        <View style={[styles.opportunityBadge, { backgroundColor: colors.gray100 }]}>
-                          <Text style={[styles.opportunityBadgeText, { color: colors.textSecondary }]}>
-                            {item.type}
-                          </Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                }}
-              />
-            )}
+                        <Text
+                          style={[styles.opportunityTitle, { color: isSelected ? colors.primary : colors.textPrimary }]}
+                          numberOfLines={2}
+                        >
+                          {item.title || item.name}
+                        </Text>
+                        {item.type && (
+                          <View style={[styles.opportunityBadge, { backgroundColor: colors.gray100 }]}>
+                            <Text style={[styles.opportunityBadgeText, { color: colors.textSecondary }]}>
+                              {item.type}
+                            </Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  }}
+                />
+              );
+            })()}
 
-            {/* Confirm Button */}
             <View style={styles.modalFooter}>
               <Button
                 title="Confirmer l'invitation"
-                onPress={handleSendInvitation}
-                disabled={!selectedOpportunityId || sending}
+                onPress={handleSendTypedInvitation}
+                disabled={!selectedItemId || sending}
                 loading={sending}
                 fullWidth
               />
@@ -590,13 +1007,13 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   profileTag: {
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
   profileTagText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
   },
 
   // Preferences
@@ -657,14 +1074,37 @@ const styles = StyleSheet.create({
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.xs,
+    gap: 4,
   },
   tag: {
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
   },
   tagText: {
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
+  },
+  skillPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: COMPONENT.pill.gap,
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
+  },
+  skillPillText: {
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
+  },
+  showMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.sm,
+    paddingVertical: SPACING.xs,
+  },
+  showMoreText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
@@ -677,10 +1117,117 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xs,
   },
 
+  // Interactions
+  interactionGroup: {
+    marginBottom: SPACING.md,
+  },
+  interactionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginBottom: SPACING.sm,
+  },
+  interactionGroupTitle: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+  },
+  interactionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER.radius.sm,
+    marginBottom: SPACING.xs,
+  },
+  interactionItemTitle: {
+    flex: 1,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    marginRight: SPACING.sm,
+  },
+  interactionBadge: {
+    paddingVertical: COMPONENT.pill.paddingVertical,
+    paddingHorizontal: COMPONENT.pill.paddingHorizontal,
+    borderRadius: COMPONENT.pill.borderRadius,
+  },
+  interactionBadgeText: {
+    fontSize: COMPONENT.pill.fontSize,
+    fontWeight: COMPONENT.pill.fontWeight,
+  },
+
+  // Action bar
+  actionBar: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    gap: SPACING.xs,
+  },
+  actionBarButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER.radius.sm,
+    gap: 4,
+  },
+  actionBarLabel: {
+    fontSize: 10,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    textAlign: 'center',
+  },
+  // Tag assignment
+  tagAssignRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    gap: SPACING.sm,
+  },
+  tagDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  tagAssignName: {
+    flex: 1,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+  },
+  tagCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: BORDER.radius.xs,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Invite type tabs
+  inviteTypeTabs: {
+    flexDirection: 'row',
+    gap: SPACING.xs,
+    marginBottom: SPACING.md,
+  },
+  inviteTypeTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER.radius.sm,
+  },
+  inviteTypeTabText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+
   // Modal
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    flex: 1,
   },
   modalContainer: {
     maxHeight: '70%',
