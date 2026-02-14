@@ -5,7 +5,7 @@
 
 import { api, ApiResponse } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_CONFIG, STORAGE_KEYS } from '../constants/config';
+import { API_CONFIG, STORAGE_KEYS, getApiUrl } from '../constants/config';
 import i18n from '../i18n';
 
 
@@ -184,7 +184,7 @@ class CopilotService {
     (async () => {
       try {
         const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-        const url = `${API_CONFIG.BASE_URL}/api/copilot/chat`;
+        const url = getApiUrl('/copilot/chat');
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', url);
@@ -270,7 +270,7 @@ class CopilotService {
                   callbacks.onError(i18n.t('common:invalidToken'));
                   return;
                 }
-                const refreshRes = await fetch(`${API_CONFIG.BASE_URL}/api/auth/refresh`, {
+                const refreshRes = await fetch(getApiUrl('/auth/refresh'), {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ refreshToken }),
@@ -386,7 +386,7 @@ class CopilotService {
         name: `recording.${extension}`,
       } as any);
 
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/copilot/transcribe`, {
+      const response = await fetch(getApiUrl('/copilot/transcribe'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -405,9 +405,19 @@ class CopilotService {
         };
       }
 
+      // Strip known STT hallucination artifacts (Whisper ghost phrases)
+      let text = (data.data?.text || '').trim();
+      const STT_ARTIFACTS = [
+        /sous-titres?\s+r[eé]alis[eé]s?\s+par\s*a?\s+la\s+communaut[eé]\s+d['']?amara\.?org/gi,
+        /amara\.org/gi,
+      ];
+      for (const re of STT_ARTIFACTS) {
+        text = text.replace(re, '').trim();
+      }
+
       return {
         success: true,
-        data: { text: data.data?.text || '' },
+        data: { text },
       };
     } catch (error: any) {
       console.error('Transcription error:', error);
@@ -449,7 +459,7 @@ class CopilotService {
         } as any);
       });
 
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/copilot/attachments`, {
+      const response = await fetch(getApiUrl('/copilot/attachments'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

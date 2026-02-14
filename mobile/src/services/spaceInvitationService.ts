@@ -77,7 +77,7 @@ class SpaceInvitationService {
     spaceId: string,
     invitations: SendSpaceInvitationData[]
   ): Promise<ApiResponse<SendSpaceInvitationsResult>> {
-    return api.post(`/api/spaces/${spaceId}/invitations`, { invitations });
+    return api.post(`/api/space-invitations/${spaceId}/invitations`, { invitations });
   }
 
   /**
@@ -90,7 +90,7 @@ class SpaceInvitationService {
     data: SpaceInvitation[];
     count: number;
   }>> {
-    return api.get(`/api/spaces/${spaceId}/invitations`, filters);
+    return api.get(`/api/space-invitations/${spaceId}/invitations`, filters);
   }
 
   /**
@@ -100,7 +100,7 @@ class SpaceInvitationService {
     spaceId: string,
     invitationId: string
   ): Promise<ApiResponse<{ success: boolean; message: string }>> {
-    return api.delete(`/api/spaces/${spaceId}/invitations/${invitationId}`);
+    return api.delete(`/api/space-invitations/${spaceId}/invitations/${invitationId}`);
   }
 
   /**
@@ -110,7 +110,7 @@ class SpaceInvitationService {
     spaceId: string,
     invitationId: string
   ): Promise<ApiResponse<{ success: boolean; message: string }>> {
-    return api.post(`/api/spaces/${spaceId}/invitations/${invitationId}/resend`, {});
+    return api.post(`/api/space-invitations/${spaceId}/invitations/${invitationId}/resend`, {});
   }
 
   // User methods (for invitees)

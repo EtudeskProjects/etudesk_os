@@ -1,14 +1,9 @@
 import React from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-  ActivityIndicator,
-} from 'react-native';
+import { Text, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { SPACING, TYPOGRAPHY, LAYOUT, BORDER, OPACITY } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { Tap } from './Tap';
+import { ShimmerPlaceholder } from './ShimmerPlaceholder';
 
 interface ButtonProps {
   title: string;
@@ -20,8 +15,8 @@ interface ButtonProps {
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
   fullWidth?: boolean;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
   /** Accessibility label - defaults to title if not provided */
   accessibilityLabel?: string;
   /** Accessibility hint - describes what happens when button is pressed */
@@ -89,7 +84,7 @@ export function Button({
     return variant === 'outline' ? colors.borderColorStrong : 'transparent';
   };
 
-  const buttonStyles: ViewStyle[] = [
+  const buttonStyles: StyleProp<ViewStyle> = [
     styles.base,
     styles[`size_${size}`],
     {
@@ -99,19 +94,19 @@ export function Button({
     },
     fullWidth && styles.fullWidth,
     disabled && styles.disabled,
-    style as ViewStyle,
-  ].filter(Boolean) as ViewStyle[];
+    style,
+  ];
 
-  const textStyles: TextStyle[] = [
+  const textStyles: StyleProp<TextStyle> = [
     styles.text,
     styles[`textSize_${size}`],
     { color: getTextColor() },
     disabled && styles.textDisabled,
-    textStyle as TextStyle,
-  ].filter(Boolean) as TextStyle[];
+    textStyle,
+  ];
 
   return (
-    <TouchableOpacity
+    <Tap
       style={buttonStyles}
       onPress={onPress}
       disabled={disabled || loading}
@@ -127,10 +122,7 @@ export function Button({
       testID={testID}
     >
       {loading ? (
-        <ActivityIndicator
-          color={variant === 'primary' || variant === 'destructive' ? colors.textOnPrimary : colors.primary}
-          size="small"
-        />
+        <ShimmerPlaceholder width={24} height={14} variant="bar" />
       ) : (
         <>
           {icon && iconPosition === 'left' && icon}
@@ -138,7 +130,7 @@ export function Button({
           {icon && iconPosition === 'right' && icon}
         </>
       )}
-    </TouchableOpacity>
+    </Tap>
   );
 }
 

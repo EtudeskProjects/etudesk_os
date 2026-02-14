@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,6 +29,8 @@ import {
   PERMISSION_LABELS,
 } from '../../../src/types/models';
 import { useAlert } from '../../../src/contexts/AlertContext';
+import { Button, IconButton, Tap } from '../../../src/components/ui';
+
 
 const getRoleIcon = (role: OrganizationRole) => {
   switch (role) {
@@ -72,9 +73,11 @@ export default function InvitationDetailScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
+          <IconButton
+            onPress={() => router.back()}
+            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel="Retour"
+          />
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Invitation</Text>
           <View style={styles.backButton} />
         </View>
@@ -139,9 +142,11 @@ export default function InvitationDetailScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Invitation</Text>
         <View style={styles.backButton} />
       </View>
@@ -233,27 +238,26 @@ export default function InvitationDetailScreen() {
 
         {/* Actions */}
         <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: colors.primary }]}
+          <Button
+            title={isResending ? 'Envoi...' : "Renvoyer l'invitation"}
             onPress={handleResend}
             disabled={isResending}
-          >
-            <RefreshCw size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.actionButtonText, { color: colors.textOnPrimary }]}>
-              {isResending ? 'Envoi...' : 'Renvoyer l\'invitation'}
-            </Text>
-          </TouchableOpacity>
+            fullWidth
+            icon={<RefreshCw size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.actionButton, { backgroundColor: colors.primary }]}
+            textStyle={[styles.actionButtonText, { color: colors.textOnPrimary }]}
+          />
 
-          <TouchableOpacity
-            style={[styles.actionButton, styles.cancelButton, { borderColor: colors.error }]}
+          <Button
+            title={isCancelling ? 'Annulation...' : "Annuler l'invitation"}
             onPress={handleCancel}
             disabled={isCancelling}
-          >
-            <X size={ICON.size.md} color={colors.error} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.actionButtonText, styles.cancelButtonText, { color: colors.error }]}>
-              {isCancelling ? 'Annulation...' : 'Annuler l\'invitation'}
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            icon={<X size={ICON.size.md} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.actionButton, styles.cancelButton, { borderColor: colors.error }]}
+            textStyle={[styles.actionButtonText, styles.cancelButtonText, { color: colors.error }]}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

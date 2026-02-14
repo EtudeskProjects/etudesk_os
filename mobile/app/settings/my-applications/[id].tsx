@@ -4,10 +4,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Keyboard,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -28,7 +26,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
-import { FooterNav } from '../../../src/components/ui';
+import { Button, FooterNav, IconButton, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../src/components/chat';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { applicationService, applicationMessageService } from '../../../src/services';
@@ -192,12 +190,15 @@ export default function ApplicationDetailsScreen() {
     const Icon = icon;
 
     return (
-      <TouchableOpacity
+      <SelectCard
         style={[
           styles.tab,
           { borderBottomColor: isActive ? colors.primary : 'transparent' },
+          { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
         ]}
         onPress={() => setActiveTab(tab)}
+        selected={false}
+        accessibilityLabel={label}
       >
         <Icon
           size={18}
@@ -213,7 +214,7 @@ export default function ApplicationDetailsScreen() {
         >
           {label}
         </Text>
-      </TouchableOpacity>
+      </SelectCard>
     );
   };
 
@@ -273,14 +274,14 @@ export default function ApplicationDetailsScreen() {
             )}
           </View>
 
-          <TouchableOpacity
-            style={[styles.viewOpportunityButton, { borderColor: colors.primary }]}
+          <Button
+            title="Voir l'opportunité"
             onPress={() => router.push(`/details/opportunity/${opportunity?.id}`)}
-          >
-            <Text style={[styles.viewOpportunityText, { color: colors.primary }]}>
-              Voir l'opportunité
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            style={[styles.viewOpportunityButton, { borderColor: colors.primary }]}
+            textStyle={[styles.viewOpportunityText, { color: colors.primary }]}
+          />
         </View>
 
         {/* Your Answers */}
@@ -318,15 +319,15 @@ export default function ApplicationDetailsScreen() {
 
         {/* Actions */}
         {application.status === 'SUBMITTED' && (
-          <TouchableOpacity
-            style={[styles.withdrawButton, { borderColor: colors.error }]}
+          <Button
+            title="Retirer ma candidature"
             onPress={handleWithdraw}
-          >
-            <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.withdrawText, { color: colors.error }]}>
-              Retirer ma candidature
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.withdrawButton, { borderColor: colors.error }]}
+            textStyle={[styles.withdrawText, { color: colors.error }]}
+          />
         )}
 
         <View style={styles.bottomSpacer} />
@@ -338,7 +339,7 @@ export default function ApplicationDetailsScreen() {
     if (isLoadingMessages) {
       return (
         <View style={styles.loadingMessages}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       );
     }
@@ -409,7 +410,7 @@ export default function ApplicationDetailsScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingShimmer variant="fullPage" />
       </SafeAreaView>
     );
   }
@@ -428,9 +429,11 @@ export default function ApplicationDetailsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           {application.opportunity?.title || 'Candidature'}
         </Text>

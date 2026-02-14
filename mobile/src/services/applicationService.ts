@@ -4,6 +4,7 @@
  */
 
 import { api, ApiResponse } from './api';
+import { getApiUrl } from '../constants/config';
 import {
   Application,
   ApplicationStatus,
@@ -169,8 +170,7 @@ class ApplicationService {
    * Returns the URL to download the CSV file
    */
   getExportCsvUrl(opportunityId: string, options?: { status?: ApplicationStatus; matchCategory?: string }): string {
-    const baseUrl = api.getBaseUrl();
-    let url = `${baseUrl}/api/applications/opportunity/${opportunityId}/export-csv`;
+    let url = getApiUrl(`/applications/opportunity/${opportunityId}/export-csv`);
     const params = new URLSearchParams();
     if (options?.status) params.append('status', options.status);
     if (options?.matchCategory) params.append('matchCategory', options.matchCategory);

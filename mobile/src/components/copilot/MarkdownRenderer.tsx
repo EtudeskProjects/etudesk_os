@@ -6,7 +6,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Linking, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, Linking, Platform } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
 import { ShimmerPlaceholder } from '../ui/ShimmerPlaceholder';

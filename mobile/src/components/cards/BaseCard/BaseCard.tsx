@@ -9,13 +9,14 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Image,
 } from 'react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity, COMPONENT } from '../../../constants/theme';
 import { useTheme } from '../../../hooks/useTheme';
 import { getFullImageUrl } from '../../../utils/image';
 import type { BaseCardProps } from './types';
+import { IconButton, Tap } from '../../ui';
+
 
 export const BaseCard: React.FC<BaseCardProps> = React.memo(({
   onPress,
@@ -35,7 +36,7 @@ export const BaseCard: React.FC<BaseCardProps> = React.memo(({
   const cardColor = primaryColor || colors.primary;
 
   return (
-    <TouchableOpacity
+    <Tap
       style={[
         styles.container,
         {
@@ -120,19 +121,20 @@ export const BaseCard: React.FC<BaseCardProps> = React.memo(({
           {actions.length > 0 && (
             <View style={styles.actionsRow}>
               {actions.map((action, index) => (
-                <TouchableOpacity
+                <IconButton
                   key={index}
-                  style={styles.actionButton}
                   onPress={action.onPress}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <action.Icon
-                    size={ICON.size.md}
-                    color={action.color || colors.gray400}
-                    strokeWidth={ICON.strokeWidth}
-                    fill={action.fill || 'none'}
-                  />
-                </TouchableOpacity>
+                  size="sm"
+                  icon={
+                    <action.Icon
+                      size={ICON.size.md}
+                      color={action.color || colors.gray400}
+                      strokeWidth={ICON.strokeWidth}
+                      fill={action.fill || 'none'}
+                    />
+                  }
+                  accessibilityLabel={action.accessibilityLabel || 'Action'}
+                />
               ))}
             </View>
           )}
@@ -163,7 +165,7 @@ export const BaseCard: React.FC<BaseCardProps> = React.memo(({
           </View>
         )}
       </View>
-    </TouchableOpacity>
+    </Tap>
   );
 });
 
@@ -245,9 +247,6 @@ const styles = StyleSheet.create({
   actionsRow: {
     flexDirection: 'row',
     gap: SPACING.xs,
-  },
-  actionButton: {
-    padding: SPACING.xs,
   },
   title: {
     fontSize: TYPOGRAPHY.fontSize.md,

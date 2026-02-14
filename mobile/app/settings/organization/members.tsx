@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Image,
   RefreshControl,
 } from 'react-native';
@@ -31,6 +30,8 @@ import {
 } from '../../../src/types/models';
 import { organizationService } from '../../../src/services';
 import { useAlert } from '../../../src/contexts/AlertContext';
+import { Button, Chip, IconButton, SelectCard } from '../../../src/components/ui';
+
 
 type TabType = 'members' | 'invitations';
 
@@ -124,14 +125,18 @@ export default function MembersScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Gestion de l'organisation</Text>
         {canInviteMembers ? (
-          <TouchableOpacity onPress={handleInvite} style={styles.addButton}>
-            <Plus size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
+          <IconButton
+            onPress={handleInvite}
+            icon={<Plus size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel="Inviter un membre"
+          />
         ) : (
           <View style={styles.backButton} />
         )}
@@ -139,47 +144,53 @@ export default function MembersScreen() {
 
       {/* Tabs */}
       <View style={[styles.tabsContainer, { backgroundColor: colors.gray100 }]}>
-        <TouchableOpacity
+        <Chip
+          label={`Membres (${members.length})`}
+          selected={activeTab === 'members'}
+          onPress={() => setActiveTab('members')}
+          leftIcon={
+            <Users
+              size={ICON.size.sm}
+              color={activeTab === 'members' ? colors.primary : colors.gray500}
+              strokeWidth={ICON.strokeWidth}
+            />
+          }
           style={[
             styles.tab,
-            activeTab === 'members' && { backgroundColor: colors.surface },
+            {
+              borderWidth: 0,
+              backgroundColor: activeTab === 'members' ? colors.surface : colors.gray100,
+            },
           ]}
-          onPress={() => setActiveTab('members')}
-          activeOpacity={0.8}
-        >
-          <Users
-            size={ICON.size.sm}
-            color={activeTab === 'members' ? colors.primary : colors.gray500}
-            strokeWidth={ICON.strokeWidth}
-          />
-          <Text style={[
+          textStyle={[
             styles.tabText,
             { color: activeTab === 'members' ? colors.primary : colors.gray500 },
-          ]}>
-            Membres ({members.length})
-          </Text>
-        </TouchableOpacity>
+          ]}
+        />
 
-        <TouchableOpacity
+        <Chip
+          label={`Invitations (${invitations.length})`}
+          selected={activeTab === 'invitations'}
+          onPress={() => setActiveTab('invitations')}
+          leftIcon={
+            <Mail
+              size={ICON.size.sm}
+              color={activeTab === 'invitations' ? colors.primary : colors.gray500}
+              strokeWidth={ICON.strokeWidth}
+            />
+          }
           style={[
             styles.tab,
-            activeTab === 'invitations' && { backgroundColor: colors.surface },
+            {
+              borderWidth: 0,
+              backgroundColor: activeTab === 'invitations' ? colors.surface : colors.gray100,
+            },
           ]}
-          onPress={() => setActiveTab('invitations')}
-          activeOpacity={0.8}
-        >
-          <Mail
-            size={ICON.size.sm}
-            color={activeTab === 'invitations' ? colors.primary : colors.gray500}
-            strokeWidth={ICON.strokeWidth}
-          />
-          <Text style={[
+          textStyle={[
             styles.tabText,
             { color: activeTab === 'invitations' ? colors.primary : colors.gray500 },
-          ]}>
-            Invitations ({invitations.length})
-          </Text>
-        </TouchableOpacity>
+          ]}
+        />
       </View>
 
       <ScrollView
@@ -203,15 +214,17 @@ export default function MembersScreen() {
                 const roleColor = getRoleColor(member.role, colors);
 
                 return (
-                  <TouchableOpacity
+                  <SelectCard
                     key={member.id}
                     style={[
                       styles.memberItem,
                       { borderBottomColor: colors.gray100 },
                       isLast && styles.memberItemLast,
+                      { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
                     ]}
                     onPress={() => handleMemberPress(member.id)}
-                    activeOpacity={0.7}
+                    selected={false}
+                    accessibilityLabel={`Ouvrir ${member.display_name}`}
                   >
                     {/* Avatar */}
                     {member.avatar_url ? (
@@ -247,7 +260,7 @@ export default function MembersScreen() {
                     {canManageMembers && member.role !== ORGANIZATION_ROLES.OWNER && (
                       <ChevronRight size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
                     )}
-                  </TouchableOpacity>
+                  </SelectCard>
                 );
               })}
             </View>
@@ -267,13 +280,14 @@ export default function MembersScreen() {
                   Invitez des membres pour collaborer dans votre organisation.
                 </Text>
                 {canInviteMembers && (
-                  <TouchableOpacity
-                    style={[styles.emptyButton, { backgroundColor: colors.primary }]}
+                  <Button
+                    title="Inviter un membre"
                     onPress={handleInvite}
-                  >
-                    <Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                    <Text style={[styles.emptyButtonText, { color: colors.textOnPrimary }]}>Inviter un membre</Text>
-                  </TouchableOpacity>
+                    fullWidth
+                    icon={<Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+                    style={[styles.emptyButton, { backgroundColor: colors.primary }]}
+                    textStyle={[styles.emptyButtonText, { color: colors.textOnPrimary }]}
+                  />
                 )}
               </View>
             ) : (
@@ -283,18 +297,20 @@ export default function MembersScreen() {
                   const roleColor = getRoleColor(invitation.role, colors);
 
                   return (
-                    <TouchableOpacity
+                    <SelectCard
                       key={invitation.id}
                       style={[
                         styles.memberItem,
                         { borderBottomColor: colors.gray100 },
                         isLast && styles.memberItemLast,
+                        { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
                       ]}
                       onPress={() => router.push({
                         pathname: '/settings/organization/invitation-detail',
                         params: { id: invitation.id },
                       })}
-                      activeOpacity={0.7}
+                      selected={false}
+                      accessibilityLabel={`Ouvrir invitation ${invitation.email}`}
                     >
                       {/* Avatar Placeholder */}
                       <View style={[styles.avatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
@@ -323,7 +339,7 @@ export default function MembersScreen() {
 
                       {/* Arrow */}
                       <ChevronRight size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                    </TouchableOpacity>
+                    </SelectCard>
                   );
                 })}
               </View>
@@ -333,16 +349,15 @@ export default function MembersScreen() {
 
         {/* Delete Organization Button - Owner only */}
         {selectedOrg?.role === 'OWNER' && (
-          <TouchableOpacity
-            style={[styles.deleteButton, { borderColor: colors.error }]}
+          <Button
+            title="Supprimer l'organisation"
             onPress={handleDeleteOrganization}
-            activeOpacity={0.7}
-          >
-            <Trash2 size={ICON.size.sm} color={colors.error} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.deleteButtonText, { color: colors.error }]}>
-              Supprimer l'organisation
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            icon={<Trash2 size={ICON.size.sm} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.deleteButton, { borderColor: colors.error }]}
+            textStyle={[styles.deleteButtonText, { color: colors.error }]}
+          />
         )}
       </ScrollView>
     </SafeAreaView>

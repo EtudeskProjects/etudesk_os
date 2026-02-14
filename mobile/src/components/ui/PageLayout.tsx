@@ -1,18 +1,23 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
   RefreshControl,
+  StyleProp,
+  ViewStyle,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { ScrollToInputContext } from '../../contexts/ScrollToInputContext';
 import { IconButton } from './IconButton';
+import { LoadingShimmer } from './LoadingShimmer';
 
 interface PageLayoutProps {
   title: string;
@@ -23,6 +28,15 @@ interface PageLayoutProps {
   scrollEnabled?: boolean;
   headerContent?: React.ReactNode;
   isLoading?: boolean;
+  /**
+   * By default PageLayout wraps content in a ScrollView.
+   * For large lists, set false and render your own FlatList/SectionList as children.
+   */
+  useScrollView?: boolean;
+  /** Style for the body wrapper when useScrollView is false */
+  bodyStyle?: StyleProp<ViewStyle>;
+  /** Extra style applied to ScrollView content container (when useScrollView is true) */
+  scrollContentStyle?: StyleProp<ViewStyle>;
 }
 
 export function PageLayout({
@@ -34,9 +48,24 @@ export function PageLayout({
   scrollEnabled = true,
   headerContent,
   isLoading = false,
+  useScrollView = true,
+  bodyStyle,
+  scrollContentStyle,
 }: PageLayoutProps) {
   const router = useRouter();
   const { colors } = useTheme();
+  const scrollRef = useRef<ScrollView>(null);
+
+  const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 96) => {
+    const sv = scrollRef.current;
+    if (!sv) return;
+
+    const delay = Platform.OS === 'android' ? 120 : 0;
+    setTimeout(() => {
+      // RN ScrollView responder helper; not in public TS types.
+      sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+    }, delay);
+  }, []);
 
   if (isLoading) {
     return (
@@ -51,7 +80,7 @@ export function PageLayout({
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       </SafeAreaView>
     );
@@ -71,24 +100,41 @@ export function PageLayout({
 
       {headerContent}
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        scrollEnabled={scrollEnabled}
-        refreshControl={
-          onRefresh ? (
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.primary}
-              colors={[colors.primary]}
-            />
-          ) : undefined
-        }
-      >
-        {children}
-      </ScrollView>
+      {useScrollView ? (
+        <KeyboardAvoidingView
+          style={styles.body}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
+          <ScrollToInputContext.Provider value={scrollToInput}>
+            <ScrollView
+              ref={scrollRef}
+              style={styles.scrollView}
+              contentContainerStyle={[styles.scrollContent, scrollContentStyle]}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={scrollEnabled}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+              refreshControl={
+                onRefresh ? (
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={onRefresh}
+                    tintColor={colors.primary}
+                    colors={[colors.primary]}
+                  />
+                ) : undefined
+              }
+            >
+              {children}
+            </ScrollView>
+          </ScrollToInputContext.Provider>
+        </KeyboardAvoidingView>
+      ) : (
+        <View style={[styles.body, bodyStyle]}>
+          {children}
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -107,4 +153,5 @@ const styles = StyleSheet.create({
   headerSpacer: { width: LAYOUT.inputHeightSm },
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.xxl },
+  body: { flex: 1 },
 });

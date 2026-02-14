@@ -1,6 +1,7 @@
 # OpenAI Agents SDK for TypeScript — Documentation
 
 > Documentation compilée en Février 2026 pour le projet Etudesk
+> Mise à jour: 14 Février 2026 — Ajout patterns multi-provider (Anthropic + Gemini + OpenAI)
 
 ## Installation
 
@@ -336,24 +337,86 @@ try {
 
 ## Patterns pour Etudesk Copilot
 
-### 1. Architecture Multi-Agent Actuelle
+### 1. Architecture Multi-Provider (Anthropic + Gemini + OpenAI)
+
+Etudesk utilise 3 providers AI simultanément via le SDK OpenAI Agents :
+
+| Provider | Modèles | Usage |
+|----------|---------|-------|
+| **Anthropic** (claude-sonnet-4-5, claude-haiku-4-5) | Agents principaux, guardrails, titres, summaries, file_reader | Via `AnthropicProvider` custom adapter |
+| **Google** (gemini-2.5-flash-lite) | Suggestions, objectifs quotidiens, bio | Via `OpenAIProvider` wrappant endpoint OpenAI-compatible Gemini |
+| **OpenAI** (gpt-4.1-mini, gpt-4.1-nano, gpt-image-1, whisper-1, omni-moderation-latest) | Web search, vision/extraction, images, STT, embeddings, moderation | Via `OpenAIProvider` natif (moderation: direct `new OpenAI()`) |
+
+**Routing par défaut :** `setDefaultModelProvider(anthropicProvider)` — les agents principaux utilisent Anthropic.
+
+**Override par provider :**
+```typescript
+// Suggestions → Gemini
+const geminiRunner = new Runner({ modelProvider: geminiProvider });
+await geminiRunner.run(suggestionsAgent, 'Génère les suggestions.');
+
+// Recommendations → OpenAI
+const openaiRunner = new Runner({ modelProvider: openaiProvider });
+await openaiRunner.run(recommendationAgent, prompt);
+
+// Web search → toujours OpenAI (Responses API requis)
+// Le WebSearchAgent utilise openaiResponsesProvider hardcodé
+```
+
+### 2. Architecture Multi-Agent Actuelle
 
 ```
-TalentAgent (explore) ── tools: vector_query, sql_query, generate_document,
-                                file_reader (asTool), web_search (asTool), execute_action
+TalentAgent (explore) ── model: claude-sonnet-4-5 (Anthropic)
+                         tools: vector_query, sql_query, generate_document,
+                                file_reader (asTool, claude-haiku-4-5),
+                                web_search (asTool, gpt-4.1-mini), execute_action
 
-TalentAgent (study)   ── tools: sql_query (restreint), youtube_search, generate_image,
-                                generate_diagram, file_reader (asTool), web_search (asTool),
-                                manage_skills
+TalentAgent (study)   ── model: claude-sonnet-4-5 (Anthropic)
+                         tools: sql_query (restreint), youtube_search, generate_image,
+                                generate_diagram, file_reader (asTool, claude-haiku-4-5),
+                                web_search (asTool, gpt-4.1-mini), manage_skills
 
-OrgAgent              ── tools: vector_query, sql_query (org_* + search_*),
-                                generate_document, web_search (asTool), execute_action
+OrgAgent              ── model: claude-sonnet-4-5 (Anthropic)
+                         tools: vector_query, sql_query (org_* + search_*),
+                                generate_document, file_reader (asTool, claude-haiku-4-5),
+                                web_search (asTool, gpt-4.1-mini), execute_action
 ```
 
 > **Note:** Etudesk utilise `asTool()` (sub-agent encapsulé comme tool), PAS `handoff()`.
-> FileReaderAgent et WebSearchAgent sont des agents gpt-5-mini wrappés via `agent.asTool()`.
+> FileReaderAgent est un agent claude-haiku-4-5 wrappé via `agent.asTool()`.
+> WebSearchAgent est un agent gpt-4.1-mini wrappé via `agent.asTool()` (toujours OpenAI — Responses API).
 
-### 2. Memory Pattern Recommandé
+**Services hors-copilot utilisant les providers :**
+
+```
+Suggestions formulaires ── model: gemini-2.5-flash-lite (Google)
+                           via getGeminiClient().chat.completions.create()
+                           services: space-gen, community-gen, opportunity-gen,
+                                     daily-objective, bio, whatsapp-assistant
+
+Vision/Extraction     ── model: gpt-4.1-mini (OpenAI)
+                         via getOpenAIClient().chat.completions.create(vision)
+                         services: extraction CV, KYC, org-documents
+
+Recommendations       ── model: gpt-4.1-nano (OpenAI)
+                         via Runner({ modelProvider: openaiProvider })
+                         service: recommendation.service.ts
+
+Transcription audio   ── model: whisper-1 (OpenAI)
+                         via getOpenAIClient().audio.transcriptions.create()
+                         route: copilot.ts (POST /chat avec audio)
+
+Embeddings            ── model: text-embedding-3-small (OpenAI)
+                         via getEmbeddingClient().embeddings.create()
+                         service: embedding.service.ts → Pinecone
+
+Auto-moderation       ── model: omni-moderation-latest (OpenAI)
+                         via direct new OpenAI() (timeout 5s)
+                         service: auto-moderation.service.ts
+                         Note: seule exception — n'utilise PAS provider.ts
+```
+
+### 3. Memory Pattern Recommandé
 
 ```typescript
 // Contexte talent injecté à chaque run
@@ -371,13 +434,13 @@ const result = await run(talentAgent, message, {
 });
 ```
 
-### 3. Tool Sequencing (Best Practice)
+### 4. Tool Sequencing (Best Practice)
 
 1. **vector_query** FIRST — Discovery dans Pinecone
 2. **sql_query** — Données structurées/personnelles
 3. **web_search** — SEULEMENT si données internes insuffisantes
 
-### 4. Streaming SSE (Pattern Actuel)
+### 5. Streaming SSE (Pattern Actuel)
 
 ```typescript
 const stream = await run(agent, message, { stream: true });
@@ -409,7 +472,53 @@ for await (const event of stream) {
 | Human-in-the-loop | ✓ |
 | Realtime voice agents | ✓ |
 | MCP server support | ✓ |
-| Non-OpenAI models (Vercel AI SDK) | ✓ |
+| Non-OpenAI models (custom ModelProvider) | ✓ (Etudesk: AnthropicProvider, GeminiProvider) |
+
+---
+
+## Custom ModelProvider (Pattern Etudesk)
+
+Le SDK OpenAI Agents supporte des providers non-OpenAI via l'interface `ModelProvider` :
+
+```typescript
+import { ModelProvider, Model } from '@openai/agents-core';
+import Anthropic from '@anthropic-ai/sdk';
+
+// AnthropicModel implémente l'interface Model du SDK
+class AnthropicModel implements Model {
+  async getResponse(request: ModelRequest): Promise<ModelResponse> {
+    // Traduit ModelRequest → Anthropic messages.create()
+    // Mappe tools[].parameters → Anthropic input_schema
+    // Mappe AgentInputItem[] → Anthropic messages[]
+  }
+
+  async getStreamedResponse(request: ModelRequest): Promise<AsyncIterable<StreamEvent>> {
+    // Traduit en stream Anthropic → AsyncIterable<StreamEvent>
+    // Mappe content_block_delta → SDK StreamEvent
+    // Mappe tool_use → SDK tool call output items
+  }
+}
+
+// AnthropicProvider implémente ModelProvider
+class AnthropicProvider implements ModelProvider {
+  getModel(modelName: string): Model {
+    return new AnthropicModel(this.client, modelName);
+  }
+}
+
+// Usage avec le SDK
+import { setDefaultModelProvider, Runner } from '@openai/agents';
+
+setDefaultModelProvider(anthropicProvider);  // run() utilise Anthropic par défaut
+
+// Override pour un runner spécifique
+const geminiRunner = new Runner({ modelProvider: geminiProvider });
+const openaiRunner = new Runner({ modelProvider: openaiProvider });
+```
+
+**Fichiers Etudesk :**
+- `src/services/ai/anthropic-provider.ts` — AnthropicModel + AnthropicProvider
+- `src/services/ai/provider.ts` — Configuration des 3 providers + exports
 
 ---
 

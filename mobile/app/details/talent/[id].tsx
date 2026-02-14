@@ -5,10 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   Image,
-  TouchableOpacity,
   Modal,
   FlatList,
-  ActivityIndicator,
   Pressable,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -34,11 +32,11 @@ import {
   Code,
   BookOpen,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
-import { useTheme } from '../../../src/hooks/useTheme';
-import { useSpace } from '../../../src/contexts/SpaceContext';
-import { useAuth } from '../../../src/contexts/AuthContext';
-import { Button, FooterNav, Alert } from '../../../src/components/ui';
+	import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
+	import { useTheme } from '../../../src/hooks/useTheme';
+	import { useSpace } from '../../../src/contexts/SpaceContext';
+	import { useAuth } from '../../../src/contexts/AuthContext';
+	import { Button, FooterNav, Alert, IconButton, IconTile, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { formatRelativeTime } from '../../../src/utils/date';
 import { talentService } from '../../../src/services/talentService';
 import { opportunityService } from '../../../src/services/opportunityService';
@@ -64,12 +62,12 @@ const getLabelFromData = (id: string, data: Array<{ id: string; label: string }>
   return data.find((item) => item.id === id)?.label || id;
 };
 
-// Skill type → base color + icon component
-const SKILL_TYPE_CONFIG: Record<string, { color: string; icon: typeof Code }> = {
-  HARD_SKILL: { color: '#6B5E52', icon: Code },       // Warm taupe — Savoir-faire
-  SOFT_SKILL: { color: '#4A6741', icon: Users },       // Forest green — Savoir-être
-  KNOWLEDGE:  { color: '#A67C52', icon: BookOpen },    // Warm amber — Savoir
-};
+// Skill type → base color + icon component (derive from current theme)
+const getSkillTypeConfig = (colors: any): Record<string, { color: string; icon: typeof Code }> => ({
+  HARD_SKILL: { color: colors.info, icon: Code },        // Savoir-faire
+  SOFT_SKILL: { color: colors.success, icon: Users },    // Savoir-etre
+  KNOWLEDGE: { color: colors.warning, icon: BookOpen },  // Savoir
+});
 
 // Proficiency → opacity multiplier for background gradient (darker = stronger)
 const PROFICIENCY_BG_OPACITY: Record<string, number> = {
@@ -89,6 +87,7 @@ export default function TalentDetailScreen() {
   const { colors } = useTheme();
   const { isOrganizationSpace, selectedOrgId, selectedOrg } = useSpace();
   const { user } = useAuth();
+  const SKILL_TYPE_CONFIG = getSkillTypeConfig(colors);
 
   // Talent data
   const [talent, setTalent] = useState<Talent | null>(null);
@@ -367,16 +366,17 @@ export default function TalentDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
-            onPress={() => router.back()}
-          >
-            <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-        </View>
+	        <View style={styles.header}>
+	          <IconButton
+	            onPress={() => router.back()}
+	            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	            accessibilityLabel="Retour"
+	            variant="filled"
+	            style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
+	          />
+	        </View>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       </SafeAreaView>
     );
@@ -386,14 +386,15 @@ export default function TalentDetailScreen() {
   if (error || !talent) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
-            onPress={() => router.back()}
-          >
-            <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-        </View>
+	        <View style={styles.header}>
+	          <IconButton
+	            onPress={() => router.back()}
+	            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	            accessibilityLabel="Retour"
+	            variant="filled"
+	            style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
+	          />
+	        </View>
         <View style={styles.centered}>
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>
             {error || 'Talent introuvable'}
@@ -413,15 +414,21 @@ export default function TalentDetailScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
+        <IconButton
           onPress={() => router.back()}
-        >
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.headerButton, { backgroundColor: colors.gray100 }]}>
-          <Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+          variant="filled"
+          style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
+        />
+        <IconButton
+          onPress={() => {}}
+          icon={<Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Partager"
+          variant="filled"
+          disabled
+          style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
+        />
       </View>
 
       <ScrollView
@@ -546,22 +553,21 @@ export default function TalentDetailScreen() {
                   );
                 })}
               </View>
-              {skills.length > SKILLS_PREVIEW_COUNT && (
-                <TouchableOpacity
-                  style={styles.showMoreButton}
-                  onPress={() => setShowAllSkills(!showAllSkills)}
-                  activeOpacity={0.7}
-                >
-                  {showAllSkills ? (
-                    <ChevronUp size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                  ) : (
-                    <ChevronDown size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                  )}
-                  <Text style={[styles.showMoreText, { color: colors.primary }]}>
-                    {showAllSkills ? 'Voir moins' : `Voir plus (+${skills.length - SKILLS_PREVIEW_COUNT})`}
-                  </Text>
-                </TouchableOpacity>
-              )}
+	              {skills.length > SKILLS_PREVIEW_COUNT && (
+	                <Button
+	                  title={showAllSkills ? 'Voir moins' : `Voir plus (+${skills.length - SKILLS_PREVIEW_COUNT})`}
+	                  onPress={() => setShowAllSkills(!showAllSkills)}
+	                  variant="ghost"
+	                  size="sm"
+	                  icon={
+	                    showAllSkills
+	                      ? <ChevronUp size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+	                      : <ChevronDown size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+	                  }
+	                  style={[styles.showMoreButton, { backgroundColor: 'transparent', paddingHorizontal: 0 }]}
+	                  textStyle={[styles.showMoreText, { color: colors.primary }]}
+	                />
+	              )}
             </View>
           )}
 
@@ -699,7 +705,7 @@ export default function TalentDetailScreen() {
 
           {isOrganizationSpace && loadingInteractions && (
             <View style={[styles.section, { alignItems: 'center' }]}>
-              <ActivityIndicator size="small" color={colors.primary} />
+              <LoadingShimmer variant="inline" />
             </View>
           )}
         </View>
@@ -717,47 +723,42 @@ export default function TalentDetailScreen() {
             />
           </View>
         )}
-        {canInvite && (
-          <View style={styles.actionBar}>
-            <TouchableOpacity
-              style={[styles.actionBarButton, { backgroundColor: isFavorite ? withOpacity(colors.error, OPACITY[15]) : colors.gray100 }]}
-              onPress={handleToggleFavorite}
-              activeOpacity={0.7}
-            >
-              <Heart
-                size={20}
-                color={isFavorite ? colors.error : colors.textSecondary}
-                fill={isFavorite ? colors.error : 'transparent'}
-                strokeWidth={ICON.strokeWidth}
-              />
-              <Text style={[styles.actionBarLabel, { color: isFavorite ? colors.error : colors.textSecondary }]}>
-                Favoris
-              </Text>
-            </TouchableOpacity>
+	        {canInvite && (
+	          <View style={styles.actionBar}>
+	            <IconTile
+	              onPress={handleToggleFavorite}
+	              selected={isFavorite}
+	              selectedColor={colors.error}
+	              icon={
+	                <Heart
+	                  size={20}
+	                  color={isFavorite ? colors.error : colors.textSecondary}
+	                  fill={isFavorite ? colors.error : 'transparent'}
+	                  strokeWidth={ICON.strokeWidth}
+	                />
+	              }
+	              label="Favoris"
+	              style={styles.actionBarButton}
+	              labelStyle={[styles.actionBarLabel, { color: isFavorite ? colors.error : colors.textSecondary }]}
+	            />
 
-            <TouchableOpacity
-              style={[styles.actionBarButton, { backgroundColor: colors.gray100 }]}
-              onPress={() => setShowTagModal(true)}
-              activeOpacity={0.7}
-            >
-              <Tag size={20} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.actionBarLabel, { color: colors.textSecondary }]}>
-                Catégories
-              </Text>
-            </TouchableOpacity>
+	            <IconTile
+	              onPress={() => setShowTagModal(true)}
+	              icon={<Tag size={20} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+	              label="Catégories"
+	              style={styles.actionBarButton}
+	              labelStyle={[styles.actionBarLabel, { color: colors.textSecondary }]}
+	            />
 
-            <TouchableOpacity
-              style={[styles.actionBarButton, { backgroundColor: colors.gray100 }]}
-              onPress={() => openInviteTypeModal('opportunity')}
-              activeOpacity={0.7}
-            >
-              <Send size={20} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.actionBarLabel, { color: colors.textSecondary }]}>
-                Inviter
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+	            <IconTile
+	              onPress={() => openInviteTypeModal('opportunity')}
+	              icon={<Send size={20} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+	              label="Inviter"
+	              style={styles.actionBarButton}
+	              labelStyle={[styles.actionBarLabel, { color: colors.textSecondary }]}
+	            />
+	          </View>
+	        )}
         <FooterNav activeTab="explore" />
       </View>
 
@@ -765,13 +766,15 @@ export default function TalentDetailScreen() {
       <Modal visible={showTagModal} transparent animationType="slide" onRequestClose={() => setShowTagModal(false)}>
         <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
           <Pressable style={styles.modalBackdrop} onPress={() => setShowTagModal(false)} />
-          <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Catégories</Text>
-              <TouchableOpacity onPress={() => setShowTagModal(false)}>
-                <X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
-            </View>
+	          <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
+	            <View style={styles.modalHeader}>
+	              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Catégories</Text>
+	              <IconButton
+	                onPress={() => setShowTagModal(false)}
+	                icon={<X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+	                accessibilityLabel="Fermer"
+	              />
+	            </View>
             {orgTags.length === 0 ? (
               <View style={styles.modalCentered}>
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
@@ -785,11 +788,12 @@ export default function TalentDetailScreen() {
               orgTags.map(tag => {
                 const isAssigned = talentTagIds.includes(tag.id);
                 return (
-                  <TouchableOpacity
+                  <SelectCard
                     key={tag.id}
                     style={[styles.tagAssignRow, { borderBottomColor: colors.gray100 }]}
                     onPress={() => handleToggleTag(tag.id)}
-                    activeOpacity={0.7}
+                    selected={false}
+                    accessibilityLabel={`Basculer catégorie ${tag.name}`}
                   >
                     <View style={[styles.tagDot, { backgroundColor: tag.color }]} />
                     <Text style={[styles.tagAssignName, { color: colors.textPrimary }]}>{tag.name}</Text>
@@ -797,9 +801,9 @@ export default function TalentDetailScreen() {
                       styles.tagCheckbox,
                       { backgroundColor: isAssigned ? tag.color : 'transparent', borderColor: isAssigned ? tag.color : colors.gray300 },
                     ]}>
-                      {isAssigned && <Check size={14} color="#fff" strokeWidth={ICON.strokeWidth} />}
+                      {isAssigned && <Check size={14} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
                     </View>
-                  </TouchableOpacity>
+                  </SelectCard>
                 );
               })
             )}
@@ -811,15 +815,17 @@ export default function TalentDetailScreen() {
       <Modal visible={!!inviteType} transparent animationType="slide" onRequestClose={() => setInviteType(null)}>
         <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
           <Pressable style={styles.modalBackdrop} onPress={() => setInviteType(null)} />
-          <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                Inviter {talent.display_name}
-              </Text>
-              <TouchableOpacity onPress={() => setInviteType(null)}>
-                <X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
-            </View>
+	          <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
+	            <View style={styles.modalHeader}>
+	              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+	                Inviter {talent.display_name}
+	              </Text>
+	              <IconButton
+	                onPress={() => setInviteType(null)}
+	                icon={<X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+	                accessibilityLabel="Fermer"
+	              />
+	            </View>
 
             {/* Type selector tabs */}
             <View style={styles.inviteTypeTabs}>
@@ -831,14 +837,16 @@ export default function TalentDetailScreen() {
                 const isActive = inviteType === tab.key;
                 const TabIcon = tab.icon;
                 return (
-                  <TouchableOpacity
+                  <SelectCard
                     key={tab.key}
                     style={[
                       styles.inviteTypeTab,
                       { backgroundColor: isActive ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 },
+                      { borderWidth: 0, borderColor: 'transparent' },
                     ]}
                     onPress={() => { setInviteType(tab.key); setSelectedItemId(null); openInviteTypeModal(tab.key); }}
-                    activeOpacity={0.7}
+                    selected={false}
+                    accessibilityLabel={tab.label}
                   >
                     <TabIcon size={16} color={isActive ? colors.primary : colors.textSecondary} strokeWidth={ICON.strokeWidth} />
                     <Text style={[
@@ -847,14 +855,14 @@ export default function TalentDetailScreen() {
                     ]}>
                       {tab.label}
                     </Text>
-                  </TouchableOpacity>
+                  </SelectCard>
                 );
               })}
             </View>
 
             {loadingItems ? (
               <View style={styles.modalCentered}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <LoadingShimmer variant="inline" />
               </View>
             ) : (() => {
               const items = inviteType === 'opportunity' ? opportunities : inviteType === 'community' ? communities : spaces;
@@ -873,7 +881,7 @@ export default function TalentDetailScreen() {
                   renderItem={({ item }) => {
                     const isSelected = selectedItemId === item.id;
                     return (
-                      <TouchableOpacity
+                      <SelectCard
                         style={[
                           styles.opportunityItem,
                           {
@@ -882,7 +890,8 @@ export default function TalentDetailScreen() {
                           },
                         ]}
                         onPress={() => setSelectedItemId(item.id)}
-                        activeOpacity={0.7}
+                        selected={false}
+                        accessibilityLabel={item.title || item.name}
                       >
                         <Text
                           style={[styles.opportunityTitle, { color: isSelected ? colors.primary : colors.textPrimary }]}
@@ -897,7 +906,7 @@ export default function TalentDetailScreen() {
                             </Text>
                           </View>
                         )}
-                      </TouchableOpacity>
+                      </SelectCard>
                     );
                   }}
                 />

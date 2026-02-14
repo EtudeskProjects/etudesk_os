@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  FlatList,
   Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -19,7 +19,7 @@ import {
   DollarSign,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../../src/constants/theme';
-import { PageLayout, EmptyState } from '../../../../src/components/ui';
+import { Button, Chip, PageLayout, EmptyState, SelectCard } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { spaceService, spaceBookingService, Space, SpaceBookingDetails, BookingStatus } from '../../../../src/services';
 import { formatRelativeTime } from '../../../../src/utils/date';
@@ -183,10 +183,11 @@ export default function SpaceBookingsScreen() {
         : 'Client');
 
     return (
-      <TouchableOpacity
+      <SelectCard
         style={[styles.bookingCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
         onPress={() => router.push(`/gestion/spaces/bookings/details/${item.id}`)}
-        activeOpacity={0.7}
+        selected={false}
+        accessibilityLabel={`Ouvrir la réservation de ${talentName}`}
       >
         <View style={styles.cardHeader}>
           {talent?.avatar_url || talent?.profile_picture_url ? (
@@ -244,23 +245,27 @@ export default function SpaceBookingsScreen() {
 
         {item.status === 'PENDING' && (
           <View style={[styles.quickActions, { borderTopColor: colors.borderColor }]}>
-            <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}
+            <Button
+              title="Confirmer"
+              size="sm"
+              variant="secondary"
               onPress={() => handleConfirmBooking(item.id)}
-            >
-              <CheckCircle2 size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.quickActionText, { color: colors.success }]}>Confirmer</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}
+              style={{ flex: 1, backgroundColor: withOpacity(colors.success, OPACITY[15]) }}
+              textStyle={{ color: colors.success }}
+              icon={<CheckCircle2 size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />}
+            />
+            <Button
+              title="Refuser"
+              size="sm"
+              variant="secondary"
               onPress={() => handleCancelBooking(item.id)}
-            >
-              <XCircle size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.quickActionText, { color: colors.error }]}>Refuser</Text>
-            </TouchableOpacity>
+              style={{ flex: 1, backgroundColor: withOpacity(colors.error, OPACITY[15]) }}
+              textStyle={{ color: colors.error }}
+              icon={<XCircle size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            />
           </View>
         )}
-      </TouchableOpacity>
+      </SelectCard>
     );
   };
 
@@ -283,25 +288,14 @@ export default function SpaceBookingsScreen() {
         {filterChips.map((chip) => {
           const isActive = filter === chip.key;
           return (
-            <TouchableOpacity
+            <Chip
               key={chip.key}
-              style={[
-                styles.filterChip,
-                { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
-              ]}
               onPress={() => setFilter(chip.key)}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  { color: colors.gray700 },
-                  isActive && { color: colors.textOnPrimary },
-                ]}
-              >
-                {chip.label} ({chip.count})
-              </Text>
-            </TouchableOpacity>
+              selected={isActive}
+              label={`${chip.label} (${chip.count})`}
+              style={[styles.filterChip, { backgroundColor: isActive ? colors.primary : colors.gray100, borderColor: isActive ? colors.primary : colors.gray200 }]}
+              textStyle={[styles.filterChipText, { color: isActive ? colors.textOnPrimary : colors.gray700 }]}
+            />
           );
         })}
       </ScrollView>
@@ -319,20 +313,26 @@ export default function SpaceBookingsScreen() {
       isRefreshing={isRefreshing}
       isLoading={isLoading}
       headerContent={headerContent}
+      useScrollView={false}
     >
-      {filteredBookings.length === 0 ? (
-        <EmptyState
-          icon={Inbox}
-          title={filter === 'all' ? 'Aucune réservation' : 'Aucun résultat'}
-          subtitle={emptySubtitle}
-        />
-      ) : (
-        filteredBookings.map((item) => (
-          <View key={item.id} style={styles.cardWrapper}>
+      <FlatList
+        data={filteredBookings}
+        keyExtractor={(b) => b.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => (
+          <View style={styles.cardWrapper}>
             {renderBookingItem({ item })}
           </View>
-        ))
-      )}
+        )}
+        ListEmptyComponent={
+          <EmptyState
+            icon={Inbox}
+            title={filter === 'all' ? 'Aucune réservation' : 'Aucun résultat'}
+            subtitle={emptySubtitle}
+          />
+        }
+      />
     </PageLayout>
   );
 }
@@ -361,6 +361,11 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     marginBottom: SPACING.md,
+  },
+  listContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xxl,
   },
 
   bookingCard: {
@@ -466,20 +471,5 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
     borderTopWidth: BORDER.width.thin,
     borderTopColor: 'transparent',
-  },
-
-  quickAction: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER.radius.sm,
-  },
-
-  quickActionText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 });

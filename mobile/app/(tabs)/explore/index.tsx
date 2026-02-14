@@ -4,13 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   FlatList,
   ImageBackground,
   Image,
   Modal,
-  ActivityIndicator,
   RefreshControl,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -29,10 +28,11 @@ import {
   SignalHigh,
   Tag,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, withOpacity, OPACITY, COMPONENT } from '../../../src/constants/theme';
-import { useTheme } from '../../../src/hooks/useTheme';
-import { useI18n } from '../../../src/contexts/I18nContext';
-import { Header, FooterNav, IconButton, Input } from '../../../src/components/ui';
+	import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, withOpacity, OPACITY, COMPONENT } from '../../../src/constants/theme';
+	import { useTheme } from '../../../src/hooks/useTheme';
+	import { useI18n } from '../../../src/contexts/I18nContext';
+	import { Button, Header, FooterNav, IconButton, Input, RadioRow, LoadingShimmer } from '../../../src/components/ui';
+	import { ShimmerPlaceholder } from '../../../src/components/ui/ShimmerPlaceholder';
 import { formatRelativeTime, formatDeadline } from '../../../src/utils/date';
 import { formatCompactNumber } from '../../../src/utils/number';
 import type {
@@ -360,75 +360,71 @@ export default function ExploreScreen() {
     resetPagination();
   };
 
-  const renderFilterModal = () => (
-    <Modal
-      visible={showFilterModal}
-      transparent
-      animationType="fade"
-      onRequestClose={() => setShowFilterModal(false)}
-    >
-      <TouchableOpacity
-        style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
-        activeOpacity={1}
-        onPress={() => setShowFilterModal(false)}
-      >
-        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-          <View style={[styles.modalHeader, { borderBottomColor: withOpacity(colors.black, OPACITY[10]) }]}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              {t('explore.sortBy')}
-            </Text>
-            <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-              <X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
-          </View>
-
-          {SORT_OPTIONS.map((option) => {
-            const IconComponent = option.icon;
-            const isSelected = sortOption === option.id;
-            return (
-              <TouchableOpacity
-                key={option.id}
-                style={[
-                  styles.filterOption,
-                  { borderBottomColor: colors.borderColor },
-                  isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]) },
-                ]}
-                onPress={() => handleSortSelect(option.id)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.filterOptionLeft}>
-                  <View style={[
-                    styles.filterIconContainer,
-                    { backgroundColor: isSelected ? withOpacity(colors.primary, OPACITY[20]) : colors.gray100 }
-                  ]}>
-                    <IconComponent
-                      size={ICON.size.md}
-                      color={isSelected ? colors.primary : colors.textSecondary}
-                      strokeWidth={ICON.strokeWidth}
-                    />
-                  </View>
-                  <View style={styles.filterTextContainer}>
-                    <Text style={[
-                      styles.filterOptionTitle,
-                      { color: isSelected ? colors.primary : colors.textPrimary }
-                    ]}>
-                      {t(`explore.sortOptions.${option.id}`)}
-                    </Text>
-                    <Text style={[styles.filterOptionDesc, { color: colors.textSecondary }]}>
-                      {t(`explore.sortOptions.${option.id}Desc`)}
-                    </Text>
-                  </View>
-                </View>
-                {isSelected && (
-                  <Check size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </TouchableOpacity>
-    </Modal>
-  );
+	  const renderFilterModal = () => (
+	    <Modal
+	      visible={showFilterModal}
+	      transparent
+	      animationType="fade"
+	      onRequestClose={() => setShowFilterModal(false)}
+	    >
+	      <Pressable
+	        style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
+	        onPress={() => setShowFilterModal(false)}
+	      >
+	        <Pressable style={[styles.modalContent, { backgroundColor: colors.surface }]} onPress={() => {}}>
+	          <View style={[styles.modalHeader, { borderBottomColor: withOpacity(colors.black, OPACITY[10]) }]}>
+	            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+	              {t('explore.sortBy')}
+	            </Text>
+	            <IconButton
+	              onPress={() => setShowFilterModal(false)}
+	              icon={<X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+	              accessibilityLabel="Fermer"
+	              size="sm"
+	              variant="ghost"
+	            />
+	          </View>
+	
+	          {SORT_OPTIONS.map((option) => {
+	            const IconComponent = option.icon;
+	            const isSelected = sortOption === option.id;
+	            return (
+	              <RadioRow
+	                key={option.id}
+	                onPress={() => handleSortSelect(option.id)}
+	                selected={isSelected}
+	                title={t(`explore.sortOptions.${option.id}`)}
+	                description={t(`explore.sortOptions.${option.id}Desc`)}
+	                icon={
+	                  <View
+	                    style={[
+	                      styles.filterIconContainer,
+	                      { backgroundColor: isSelected ? withOpacity(colors.primary, OPACITY[20]) : colors.gray100 },
+	                    ]}
+	                  >
+	                    <IconComponent
+	                      size={ICON.size.md}
+	                      color={isSelected ? colors.primary : colors.textSecondary}
+	                      strokeWidth={ICON.strokeWidth}
+	                    />
+	                  </View>
+	                }
+	                style={[
+	                  styles.filterOption,
+	                  { borderBottomColor: colors.borderColor },
+	                  isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]) },
+	                ]}
+	                titleStyle={[styles.filterOptionTitle, { color: isSelected ? colors.primary : colors.textPrimary }]}
+	                descriptionStyle={[styles.filterOptionDesc, { color: colors.textSecondary }]}
+	                iconContainerStyle={{ width: undefined, height: undefined, borderRadius: 0 }}
+	                radioStyle={{ marginLeft: SPACING.sm }}
+	              />
+	            );
+	          })}
+	        </Pressable>
+	      </Pressable>
+	    </Modal>
+	  );
 
   const renderCategoryTabs = () => (
     <View style={styles.categoriesContainer}>
@@ -436,11 +432,10 @@ export default function ExploreScreen() {
         const IconComponent = category.icon;
         const isActive = activeCategory === category.id;
         return (
-          <TouchableOpacity
+          <Pressable
             key={category.id}
             style={styles.categoryTab}
             onPress={() => setActiveCategory(category.id)}
-            activeOpacity={0.8}
           >
             <ImageBackground
               source={{ uri: category.image }}
@@ -462,7 +457,7 @@ export default function ExploreScreen() {
                 </Text>
               </View>
             </ImageBackground>
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </View>
@@ -526,32 +521,42 @@ export default function ExploreScreen() {
   };
 
   // Footer component for load more
-  const renderFooter = () => {
-    if (!hasMore[activeCategory]) return null;
-    return (
-      <View style={styles.loadMoreContainer}>
-        {isLoadingMore ? (
-          <ActivityIndicator size="small" color={colors.primary} />
-        ) : (
-          <TouchableOpacity
-            style={[styles.loadMoreButton, { borderColor: colors.borderColor }]}
-            onPress={loadMore}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.loadMoreText, { color: colors.primary }]}>
-              {t('common.seeMore')}
-            </Text>
-          </TouchableOpacity>
-        )}
+	  const renderFooter = () => {
+	    if (!hasMore[activeCategory]) return null;
+	    return (
+	      <View style={styles.loadMoreContainer}>
+	        {isLoadingMore ? (
+	          <LoadingShimmer variant="inline" />
+	        ) : (
+	          <Button
+	            title={t('common.seeMore')}
+	            onPress={loadMore}
+	            variant="outline"
+	            size="sm"
+	            style={[styles.loadMoreButton, { borderColor: colors.borderColor }]}
+	            textStyle={[styles.loadMoreText, { color: colors.primary }]}
+	          />
+	        )}
+	      </View>
+	    );
+	  };
+
+  const renderCardSkeleton = (key: number) => (
+    <View key={key} style={[styles.skeletonCard, { borderBottomColor: colors.borderColor }]}>
+      <ShimmerPlaceholder width={48} height={48} borderRadius={BORDER.radius.sm} />
+      <View style={styles.skeletonContent}>
+        <ShimmerPlaceholder width="65%" height={14} />
+        <ShimmerPlaceholder width="45%" height={11} style={{ marginTop: 6 }} />
+        <ShimmerPlaceholder width="30%" height={10} style={{ marginTop: 8 }} />
       </View>
-    );
-  };
+    </View>
+  );
 
   const renderContent = () => {
     if (isLoading) {
       return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+        <View style={styles.skeletonList}>
+          {[0, 1, 2, 3, 4].map(renderCardSkeleton)}
         </View>
       );
     }
@@ -651,29 +656,37 @@ export default function ExploreScreen() {
           autoCapitalize="none"
           containerStyle={{ flex: 1 }}
           inputContainerStyle={[styles.searchBar, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
-          inputStyle={[styles.searchInput, { color: colors.textPrimary, paddingHorizontal: 0 }]}
-          leftIcon={<Search size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-          rightIcon={searchQuery.length > 0 ? (
-            <TouchableOpacity onPress={() => handleSearchChange('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <X size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
-          ) : undefined}
-        />
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            { backgroundColor: sortOption !== 'relevance' ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 }
-          ]}
-          onPress={() => setShowFilterModal(true)}
-          activeOpacity={0.8}
-        >
-          <CurrentSortIcon
-            size={ICON.size.md}
-            color={sortOption !== 'relevance' ? colors.primary : colors.textSecondary}
-            strokeWidth={ICON.strokeWidth}
-          />
-        </TouchableOpacity>
-      </View>
+	          inputStyle={[styles.searchInput, { color: colors.textPrimary, paddingHorizontal: 0 }]}
+	          leftIcon={<Search size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+	          rightIcon={searchQuery.length > 0 ? (
+	            <IconButton
+	              onPress={() => handleSearchChange('')}
+	              icon={<X size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+	              accessibilityLabel="Effacer"
+	              size="sm"
+	              variant="ghost"
+	              style={{ width: 28, height: 28 }}
+	            />
+	          ) : undefined}
+	        />
+	        <IconButton
+	          onPress={() => setShowFilterModal(true)}
+	          icon={
+	            <CurrentSortIcon
+	              size={ICON.size.md}
+	              color={sortOption !== 'relevance' ? colors.primary : colors.textSecondary}
+	              strokeWidth={ICON.strokeWidth}
+	            />
+	          }
+	          accessibilityLabel={t('explore.sortBy')}
+	          size="sm"
+	          variant="ghost"
+	          style={[
+	            styles.filterButton,
+	            { backgroundColor: sortOption !== 'relevance' ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 },
+	          ]}
+	        />
+	      </View>
 
       {/* Category Tabs */}
       {renderCategoryTabs()}
@@ -696,10 +709,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  skeletonList: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
+  },
+
+  skeletonCard: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: SPACING.md,
+    borderBottomWidth: BORDER.width.thin,
+    gap: SPACING.md,
+  },
+
+  skeletonContent: {
+    flex: 1,
   },
 
   // Header

@@ -13,19 +13,20 @@
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │                    MAIN AGENTS (gpt-5)                  │   │
+│  │             MAIN AGENTS (claude-sonnet-4-5)              │   │
 │  │  TalentAgent (explore) │ TalentAgent (study) │ OrgAgent │   │
 │  └───────────────────────────┬─────────────────────────────┘   │
 │                              │                                  │
 │         ┌────────────────────┴────────────────────┐            │
 │         │                                          │            │
 │  ┌──────┴──────────┐                      ┌───────┴───────┐   │
-│  │    9 TOOLS      │                      │  2 HANDOFFS   │   │
+│  │    9 TOOLS      │                      │ 2 SUB-AGENTS  │   │
 │  ├─────────────────┤                      ├───────────────┤   │
 │  │ vector_query    │ ← Pinecone semantic  │ file_reader   │   │
-│  │ sql_query       │ ← PostgreSQL (IDOR)  │ web_search    │   │
-│  │ youtube_search  │ ← YouTube Data API   │ (gpt-5-mini)  │   │
-│  │ generate_document│ ← PDF/DOCX/CSV/XLS  └───────────────┘   │
+│  │ sql_query       │ ← PostgreSQL (IDOR)  │ (haiku-4-5)   │   │
+│  │ youtube_search  │ ← YouTube Data API   │ web_search    │   │
+│  │                 │                      └───────────────┘   │
+│  │ generate_document│ ← PDF/DOCX/CSV/XLS                     │
 │  │ generate_image  │ ← gpt-image-1                            │
 │  │ generate_diagram│ ← Mermaid (client)                       │
 │  │ manage_skills   │ ← PostgreSQL CRUD                        │
@@ -834,11 +835,11 @@ Le tool sanitize automatiquement: `<br/>` → `\n`, `(` dans `[]` → `&#40;`
 
 ---
 
-## 9. file_reader (FileReaderAgent Handoff)
+## 9. file_reader (FileReaderAgent via asTool)
 
 **Fichier:** `services/copilot/tools/file-read.tool.ts`
 **Pattern:** Factory → sub-agent asTool. `createFileReaderTool(talentId)`
-**Modele sub-agent:** gpt-5-mini
+**Modele sub-agent:** claude-haiku-4-5 (Anthropic, MODEL_FAST)
 **Securite:** Le read_document interne verifie que le document appartient au talent (IDOR).
 
 ### Parametres (asTool — message libre)
@@ -889,11 +890,11 @@ Le file_reader en mode org fonctionne de la meme maniere que pour les talents, m
 
 ---
 
-## 10. web_search (WebSearchAgent Handoff)
+## 10. web_search (WebSearchAgent via asTool)
 
 **Fichier:** `services/copilot/tools/web-search.tool.ts`
 **Pattern:** Sub-agent asTool. `webSearchAgent.asTool({...})`
-**Modele sub-agent:** gpt-5-mini
+**Modele sub-agent:** gpt-4.1-mini (OpenAI, MODEL_SEARCH — toujours OpenAI pour Responses API)
 **Outil interne:** `webSearchTool()` (SDK OpenAI Agents)
 
 ### Parametres (asTool — message libre)
@@ -1006,23 +1007,26 @@ Le client recoit des events SSE pendant l'execution:
 | generate_diagram | `services/copilot/tools/generate-diagram.tool.ts` | Static export |
 | manage_skills | `services/copilot/tools/manage-skills.tool.ts` | Factory (talentId) |
 | execute_action | `services/copilot/tools/execute-action.tool.ts` | Factory (talentId) |
-| file_reader | `services/copilot/tools/file-read.tool.ts` | Factory → asTool (talentId) |
-| web_search | `services/copilot/tools/web-search.tool.ts` | Agent asTool |
+| file_reader | `services/copilot/tools/file-read.tool.ts` | Factory → asTool (talentId, claude-haiku-4-5) |
+| web_search | `services/copilot/tools/web-search.tool.ts` | Agent asTool (gpt-4.1-mini, OpenAI) |
 | cv_pdf_generator | `services/copilot/tools/cv-pdf-generator.ts` | Internal (called by generate_document) |
 | tool_summary | `services/copilot/stream/tool-summary.ts` | Static function |
 
 ---
 
-## Modeles LLM
+## Modeles LLM (architecture multi-provider)
 
-| Tier | Modele | Utilisation |
-|------|--------|-------------|
-| T1 | gpt-5 | Agents principaux (talent, org) |
-| T2 | gpt-5-mini | Sub-agents (file_reader, web_search) |
-| T3 | gpt-4.1-nano | Titre session, suggestions |
-| Image | gpt-image-1 | Generation d'images |
-| STT | whisper-1 | Speech-to-text |
-| Embedding | text-embedding-3-small | Embeddings pour Pinecone |
+| Constante | Modele | Provider | Utilisation |
+|-----------|--------|----------|-------------|
+| MODEL_AGENT | claude-sonnet-4-5 | Anthropic | Agents principaux (talent, org) |
+| MODEL_FAST | claude-haiku-4-5 | Anthropic | Guardrails, titres, summaries, file_reader |
+| MODEL_SUGGESTION | gemini-2.5-flash-lite | Google | Suggestions, objectifs, bio |
+| MODEL_SEARCH | gpt-4.1-mini | OpenAI | web_search (Responses API), vision/extraction |
+| MODEL_MATCH | gpt-4.1-nano | OpenAI | Recommendations candidats |
+| MODEL_IMAGE | gpt-image-1 | OpenAI | Generation d'images |
+| MODEL_STT | whisper-1 | OpenAI | Speech-to-text |
+| MODEL_EMBEDDING | text-embedding-3-small | OpenAI | Embeddings pour Pinecone |
+| — | omni-moderation-latest | OpenAI | Auto-moderation contenu (direct `new OpenAI()`, timeout 5s) |
 
 ---
 

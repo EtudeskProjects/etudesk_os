@@ -4,13 +4,11 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Pressable,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,12 +19,13 @@ import {
   XCircle,
   Star,
   Mail,
-  MapPin,
-  Phone,
-  SquarePen,
-  Save,
-  Trash2,
-  ChevronDown,
+	  MapPin,
+	  Phone,
+	  User,
+	  SquarePen,
+	  Save,
+	  Trash2,
+	  ChevronDown,
   UserX,
   MessageCircle,
   FileText,
@@ -36,7 +35,7 @@ import {
   RefreshCw,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../../src/constants/theme';
-import { FooterNav, Toggle } from '../../../../../src/components/ui';
+	import { Button, FooterNav, IconButton, Input, TabBar, Toggle, LoadingShimmer, ShimmerPlaceholder } from '../../../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
 import { communityService, CommunityMemberDetails, MemberStatus, communityMembershipMessageService, MembershipMessage, MemberPermissions, DEFAULT_MEMBER_PERMISSIONS } from '../../../../../src/services';
@@ -337,26 +336,11 @@ export default function CommunityMemberDetailsScreen() {
     return (f + l).toUpperCase() || '?';
   };
 
-  const renderTab = (tab: Tab, label: string) => {
-    const isActive = activeTab === tab;
-
-    return (
-      <TouchableOpacity
-        style={[styles.tab, isActive && { borderBottomColor: colors.primary }]}
-        onPress={() => setActiveTab(tab)}
-      >
-        <Text
-          style={[
-            styles.tabText,
-            { color: isActive ? colors.primary : colors.gray500 },
-            isActive && { fontWeight: TYPOGRAPHY.fontWeight.semibold },
-          ]}
-        >
-          {label}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
+  const tabs = [
+    { key: 'profile', label: 'Profil', icon: User },
+    { key: 'messages', label: 'Messages', icon: MessageCircle },
+    { key: 'notes', label: 'Notes', icon: SquarePen },
+  ] as const;
 
   const renderProfileTab = () => {
     const talent = member?.talent;
@@ -433,20 +417,27 @@ export default function CommunityMemberDetailsScreen() {
 
         {/* Rating */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Évaluation du membre</Text>
-          <View style={styles.ratingContainer}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => handleUpdateRating(star)}>
-                <Star
-                  size={32}
-                  color={star <= rating ? colors.warning : colors.gray300}
-                  fill={star <= rating ? colors.warning : 'transparent'}
-                  strokeWidth={ICON.strokeWidth}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+	          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Évaluation du membre</Text>
+	          <View style={styles.ratingContainer}>
+	            {[1, 2, 3, 4, 5].map((star) => (
+	              <IconButton
+	                key={star}
+	                onPress={() => handleUpdateRating(star)}
+	                icon={
+	                  <Star
+	                    size={32}
+	                    color={star <= rating ? colors.warning : colors.gray300}
+	                    fill={star <= rating ? colors.warning : 'transparent'}
+	                    strokeWidth={ICON.strokeWidth}
+	                  />
+	                }
+	                accessibilityLabel={`Noter ${star} sur 5`}
+	                variant="ghost"
+	                style={{ width: 44, height: 44, borderRadius: 22 }}
+	              />
+	            ))}
+	          </View>
+	        </View>
 
         {/* Permissions Section */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
@@ -465,7 +456,7 @@ export default function CommunityMemberDetailsScreen() {
           </View>
 
           {isLoadingPermissions ? (
-            <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: SPACING.md }} />
+            <LoadingShimmer variant="inline" />
           ) : memberRole === 'ADMIN' ? (
             <View style={[styles.permissionInfo, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
               <Text style={[styles.permissionInfoText, { color: colors.primary }]}>
@@ -543,25 +534,33 @@ export default function CommunityMemberDetailsScreen() {
                 </View>
               </View>
 
-              {/* Custom permissions indicator and reset button */}
-              {isCustomPermissions && (
-                <TouchableOpacity
-                  style={[styles.resetPermissionsButton, { borderColor: colors.gray300 }]}
-                  onPress={handleResetToDefaults}
-                  disabled={isSavingPermissions}
-                >
-                  <RefreshCw size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                  <Text style={[styles.resetPermissionsText, { color: colors.gray600 }]}>
-                    Permissions personnalisées • Réinitialiser aux valeurs par défaut
-                  </Text>
-                </TouchableOpacity>
-              )}
+	              {/* Custom permissions indicator and reset button */}
+	              {isCustomPermissions && (
+	                <Button
+	                  title="Permissions personnalisées • Réinitialiser aux valeurs par défaut"
+	                  onPress={handleResetToDefaults}
+	                  disabled={isSavingPermissions}
+	                  variant="outline"
+	                  icon={<RefreshCw size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+	                  style={[
+	                    styles.resetPermissionsButton,
+	                    {
+	                      borderColor: colors.gray300,
+	                      backgroundColor: 'transparent',
+	                      justifyContent: 'center',
+	                      borderStyle: 'dashed',
+	                    },
+	                  ]}
+	                  textStyle={[styles.resetPermissionsText, { color: colors.gray600 }]}
+	                  fullWidth
+	                />
+	              )}
 
-              {isSavingPermissions && (
-                <View style={styles.savingOverlay}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                </View>
-              )}
+	              {isSavingPermissions && (
+	                <View style={[styles.savingOverlay, { backgroundColor: withOpacity(colors.background, OPACITY[70]) }]}>
+	                  <ShimmerPlaceholder width={24} height={14} variant="bar" />
+	                </View>
+	              )}
             </>
           )}
         </View>
@@ -607,20 +606,23 @@ export default function CommunityMemberDetailsScreen() {
             </View>
 
             {/* Status picker */}
-            <TouchableOpacity
-              style={[styles.statusPickerButton, { borderColor: colors.gray300, backgroundColor: colors.gray100 }]}
+            <Button
+              title="Changer le statut"
               onPress={() => setShowStatusPicker(!showStatusPicker)}
-            >
-              <Text style={[styles.statusPickerButtonText, { color: colors.textPrimary }]}>
-                Changer le statut
-              </Text>
-              <ChevronDown
-                size={20}
-                color={colors.gray500}
-                strokeWidth={ICON.strokeWidth}
-                style={{ transform: [{ rotate: showStatusPicker ? '180deg' : '0deg' }] }}
-              />
-            </TouchableOpacity>
+              variant="outline"
+              icon={
+                <ChevronDown
+                  size={20}
+                  color={colors.gray500}
+                  strokeWidth={ICON.strokeWidth}
+                  style={{ transform: [{ rotate: showStatusPicker ? '180deg' : '0deg' }] }}
+                />
+              }
+              iconPosition="right"
+              style={[styles.statusPickerButton, { borderColor: colors.gray300, backgroundColor: colors.gray100 }]}
+              textStyle={[styles.statusPickerButtonText, { color: colors.textPrimary }]}
+              fullWidth
+            />
 
             {/* Status options */}
             {showStatusPicker && (
@@ -633,10 +635,10 @@ export default function CommunityMemberDetailsScreen() {
                     const Icon = config.icon;
 
                     return (
-                      <TouchableOpacity
-                        key={status}
-                        style={[styles.statusOption, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}
-                        onPress={() => {
+	                      <Pressable
+	                        key={status}
+	                        style={[styles.statusOption, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}
+	                        onPress={() => {
                           if (status === 'REJECTED') {
                             void (async () => {
                               const reason = await alerts.prompt(
@@ -649,9 +651,11 @@ export default function CommunityMemberDetailsScreen() {
                             })();
                           } else {
                             handleUpdateStatus(status);
-                          }
-                        }}
-                      >
+	                          }
+	                        }}
+	                        accessibilityRole="button"
+	                        accessibilityLabel={flow.label}
+	                      >
                         <View style={[styles.statusOptionIcon, { backgroundColor: withOpacity(colors[config.colorKey], OPACITY[15]) }]}>
                           <Icon size={16} color={colors[config.colorKey]} strokeWidth={ICON.strokeWidth} />
                         </View>
@@ -663,9 +667,9 @@ export default function CommunityMemberDetailsScreen() {
                             {flow.description}
                           </Text>
                         </View>
-                      </TouchableOpacity>
-                    );
-                  })}
+	                      </Pressable>
+	                    );
+	                  })}
               </View>
             )}
           </View>
@@ -707,15 +711,15 @@ export default function CommunityMemberDetailsScreen() {
         </View>
 
         {/* Delete member */}
-        <TouchableOpacity
-          style={[styles.deleteButton, { borderColor: colors.error }]}
+        <Button
+          title="Supprimer ce membre"
           onPress={handleDeleteMember}
-        >
-          <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.deleteButtonText, { color: colors.error }]}>
-            Supprimer ce membre
-          </Text>
-        </TouchableOpacity>
+          variant="outline"
+          fullWidth
+          icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+          style={[styles.deleteButton, { borderColor: colors.error }]}
+          textStyle={[styles.deleteButtonText, { color: colors.error }]}
+        />
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -766,7 +770,7 @@ export default function CommunityMemberDetailsScreen() {
     if (isLoadingMessages) {
       return (
         <View style={styles.loadingMessages}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       );
     }
@@ -827,26 +831,40 @@ export default function CommunityMemberDetailsScreen() {
 
   const renderNotesTab = () => (
     <View style={styles.tabContent}>
-      <View style={[styles.notesCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-        <View style={styles.notesHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Notes internes</Text>
-          <TouchableOpacity onPress={() => isEditingNotes ? handleSaveNotes() : setIsEditingNotes(true)}>
-            {isEditingNotes ? (
-              <Save size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-            ) : (
-              <SquarePen size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-            )}
-          </TouchableOpacity>
-        </View>
-        <TextInput
-          style={[styles.notesInput, { backgroundColor: colors.gray50, color: colors.textPrimary }]}
-          placeholder="Ajoutez des notes internes sur ce membre..."
-          placeholderTextColor={colors.gray400}
+        <View style={[styles.notesCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
+          <View style={styles.notesHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Notes internes</Text>
+            <IconButton
+              onPress={() => isEditingNotes ? handleSaveNotes() : setIsEditingNotes(true)}
+              size="sm"
+              icon={
+                isEditingNotes
+                  ? <Save size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  : <SquarePen size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+              }
+              accessibilityLabel={isEditingNotes ? 'Enregistrer' : 'Modifier'}
+            />
+          </View>
+          <Input
+            placeholder="Ajoutez des notes internes sur ce membre..."
+            placeholderTextColor={colors.gray400}
           value={internalNotes}
           onChangeText={setInternalNotes}
           multiline
           numberOfLines={8}
           editable={isEditingNotes}
+          inputContainerStyle={{
+            backgroundColor: colors.gray50,
+            borderWidth: 0,
+            minHeight: 150,
+            borderRadius: BORDER.radius.sm,
+          }}
+          inputStyle={{
+            color: colors.textPrimary,
+            padding: SPACING.md,
+            fontSize: TYPOGRAPHY.fontSize.md,
+            textAlignVertical: 'top',
+          }}
         />
         <Text style={[styles.notesHint, { color: colors.gray400 }]}>
           Ces notes sont visibles uniquement par votre équipe.
@@ -858,7 +876,7 @@ export default function CommunityMemberDetailsScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingShimmer variant="fullPage" />
       </SafeAreaView>
     );
   }
@@ -881,9 +899,11 @@ export default function CommunityMemberDetailsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <View style={styles.headerContent}>
           <View style={[styles.statusBadge, { backgroundColor: withOpacity(statusColor, OPACITY[15]) }]}>
             <StatusIcon size={14} color={statusColor} strokeWidth={ICON.strokeWidth} />
@@ -896,11 +916,11 @@ export default function CommunityMemberDetailsScreen() {
       </View>
 
       {/* Tabs */}
-      <View style={[styles.tabsContainer, { borderBottomColor: colors.gray200 }]}>
-        {renderTab('profile', 'Profil')}
-        {renderTab('messages', 'Messages')}
-        {renderTab('notes', 'Notes')}
-      </View>
+      <TabBar
+        tabs={tabs as any}
+        activeTab={activeTab}
+        onTabChange={(key) => setActiveTab(key as Tab)}
+      />
 
       {/* Content */}
       <KeyboardAvoidingView
@@ -1391,14 +1411,13 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.xs,
   },
 
-  savingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+	  savingOverlay: {
+	    position: 'absolute',
+	    top: 0,
+	    left: 0,
+	    right: 0,
+	    bottom: 0,
+	    justifyContent: 'center',
+	    alignItems: 'center',
+	  },
 });

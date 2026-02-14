@@ -3,14 +3,16 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Modal,
   FlatList,
   ViewStyle,
+  Pressable,
 } from 'react-native';
 import { ChevronDown, Check, X } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { IconButton } from '../ui';
+
 
 interface SelectOption {
   value: string;
@@ -45,7 +47,7 @@ export function FormSelect({
     <View style={[styles.container, containerStyle]}>
       {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
 
-      <TouchableOpacity
+      <Pressable
         style={[
           styles.selectButton,
           {
@@ -54,7 +56,8 @@ export function FormSelect({
           },
         ]}
         onPress={() => setIsOpen(true)}
-        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={label || placeholder}
       >
         <Text
           style={[
@@ -65,7 +68,7 @@ export function FormSelect({
           {selectedOption?.label || placeholder}
         </Text>
         <ChevronDown size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-      </TouchableOpacity>
+      </Pressable>
 
       {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
 
@@ -76,16 +79,19 @@ export function FormSelect({
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
                 {label || 'Sélectionner'}
               </Text>
-              <TouchableOpacity onPress={() => setIsOpen(false)}>
-                <X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
+              <IconButton
+                onPress={() => setIsOpen(false)}
+                icon={<X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+                accessibilityLabel="Fermer"
+                style={{ backgroundColor: 'transparent' }}
+              />
             </View>
 
             <FlatList
               data={options}
               keyExtractor={(item) => item.value}
               renderItem={({ item }) => (
-                <TouchableOpacity
+                <Pressable
                   style={[
                     styles.optionItem,
                     { borderBottomColor: colors.gray100 },
@@ -95,7 +101,8 @@ export function FormSelect({
                     onChange(item.value);
                     setIsOpen(false);
                   }}
-                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={item.label}
                 >
                   <Text
                     style={[
@@ -109,7 +116,7 @@ export function FormSelect({
                   {item.value === value && (
                     <Check size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                   )}
-                </TouchableOpacity>
+                </Pressable>
               )}
             />
           </View>

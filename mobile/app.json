@@ -58,7 +58,8 @@
           "locationWhenInUsePermission": "Etudesk a besoin d'accéder à votre localisation pour remplir automatiquement votre adresse."
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true

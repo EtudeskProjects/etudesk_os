@@ -4,13 +4,15 @@ import {
     Text,
     StyleSheet,
     ScrollView,
-    TouchableOpacity,
+    Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
+import { IconButton } from '../../src/components/ui';
+
 
 type Tab = 'terms' | 'privacy' | 'legal';
 
@@ -281,40 +283,43 @@ export default function LegalScreen() {
     );
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-            {/* Header */}
-            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+                {/* Header */}
+                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+                <IconButton
+                    onPress={() => router.back()}
+                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+                    accessibilityLabel="Retour"
+                />
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Informations légales</Text>
                 <View style={styles.headerSpacer} />
-            </View>
+                </View>
 
             {/* Tabs */}
-            <View style={[styles.tabsContainer, { borderBottomColor: colors.borderColor }]}>
-                {TABS.map((tab) => (
-                    <TouchableOpacity
-                        key={tab.id}
-                        style={[
-                            styles.tab,
-                            activeTab === tab.id && [styles.activeTab, { borderBottomColor: colors.primary }],
-                        ]}
-                        onPress={() => setActiveTab(tab.id)}
-                        activeOpacity={0.7}
-                    >
-                        <Text
-                            style={[
-                                styles.tabText,
-                                { color: colors.gray600 },
-                                activeTab === tab.id && [styles.activeTabText, { color: colors.primary }],
-                            ]}
-                        >
-                            {tab.label}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
+                <View style={[styles.tabsContainer, { borderBottomColor: colors.borderColor }]}>
+                    {TABS.map((tab) => (
+	                    <Pressable
+	                        key={tab.id}
+	                        style={[
+	                            styles.tab,
+	                            activeTab === tab.id && [styles.activeTab, { borderBottomColor: colors.primary }],
+	                        ]}
+	                        onPress={() => setActiveTab(tab.id)}
+	                        accessibilityRole="button"
+	                        accessibilityLabel={tab.label}
+	                    >
+	                        <Text
+	                            style={[
+	                                styles.tabText,
+	                                { color: colors.gray600 },
+	                                activeTab === tab.id && [styles.activeTabText, { color: colors.primary }],
+	                            ]}
+	                        >
+	                            {tab.label}
+	                        </Text>
+	                    </Pressable>
+                    ))}
+                </View>
 
             {/* Content */}
             <ScrollView

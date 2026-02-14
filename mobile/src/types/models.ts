@@ -1,6 +1,8 @@
 // Types synchronisés avec le backend
 // Dernière mise à jour: 19 janvier 2026
 
+import { BRAND_COLORS, LIGHT_COLORS } from '../constants/theme';
+
 export type UUID = string;
 export type ISODate = string;
 export type ISOTimestamp = string;
@@ -418,13 +420,13 @@ export const PAYMENT_PROVIDER_LABELS: Record<PaymentProvider, string> = {
 };
 
 export const PAYMENT_PROVIDER_COLORS: Record<PaymentProvider, string> = {
-  ORANGE_MONEY: '#FF6600',
-  MTN_MONEY: '#FFCC00',
-  MOOV_MONEY: '#0066CC',
-  WAVE: '#1DC7EA',
-  PUSH: '#22C55E',
-  DJAMO: '#6B4EFF',
-  CARD: '#1A1A1A',
+  ORANGE_MONEY: BRAND_COLORS.orangeMoney,
+  MTN_MONEY: BRAND_COLORS.mtnMoney,
+  MOOV_MONEY: BRAND_COLORS.moovMoney,
+  WAVE: BRAND_COLORS.wave,
+  PUSH: BRAND_COLORS.push,
+  DJAMO: BRAND_COLORS.djamo,
+  CARD: LIGHT_COLORS.black,
 };
 
 // --- Interfaces - Location ---

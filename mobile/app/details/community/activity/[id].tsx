@@ -3,8 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
-    ActivityIndicator,
     Image,
     Pressable,
     Animated,
@@ -34,7 +32,9 @@ import { communityActivityService } from '../../../../src/services';
 import { CommunityActivity, ActivityComment, PollOption } from '../../../../src/types/activity';
 import { useAuth } from '../../../../src/contexts/AuthContext';
 import { getFullImageUrl } from '../../../../src/utils/image';
-import { useAlert } from '../../../../src/contexts/AlertContext';
+	import { useAlert } from '../../../../src/contexts/AlertContext';
+	import { IconButton, LoadingShimmer, SelectCard } from '../../../../src/components/ui';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -293,7 +293,7 @@ export default function ActivityDetailScreen() {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={colors.primary} />
+                    <LoadingShimmer variant="fullPage" />
                 </View>
             </SafeAreaView>
         );
@@ -329,18 +329,20 @@ export default function ActivityDetailScreen() {
     const avatarUrl = activity.author?.avatar_url ? getFullImageUrl(activity.author.avatar_url) : null;
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-            {/* Header */}
-            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    style={[styles.backButton, { backgroundColor: colors.gray100 }]}
-                >
-                    <ArrowLeft size={20} color={colors.textPrimary} />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Publication</Text>
-                <View style={{ width: 40 }} />
-            </View>
+	            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+	            {/* Header */}
+	            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+	                <IconButton
+	                    onPress={() => router.back()}
+	                    icon={<ArrowLeft size={20} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                    accessibilityLabel="Retour"
+	                    size="sm"
+	                    variant="filled"
+	                    style={[styles.backButton, { backgroundColor: colors.gray100 }]}
+	                />
+	                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Publication</Text>
+	                <View style={{ width: 40 }} />
+	            </View>
 
             <ScrollView
                 ref={scrollViewRef}
@@ -378,14 +380,15 @@ export default function ActivityDetailScreen() {
                             </View>
                         </View>
 
-                        <TouchableOpacity
-                            onPress={handleMore}
-                            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                            style={styles.moreButton}
-                        >
-                            <MoreHorizontal size={20} color={colors.gray400} />
-                        </TouchableOpacity>
-                    </View>
+	                        <IconButton
+	                            onPress={handleMore}
+	                            icon={<MoreHorizontal size={20} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+	                            accessibilityLabel="Options"
+	                            size="sm"
+	                            variant="ghost"
+	                            style={styles.moreButton}
+	                        />
+	                    </View>
 
                     {/* Content */}
                     <View style={styles.contentSection}>
@@ -414,19 +417,19 @@ export default function ActivityDetailScreen() {
                                 const hasVoted = userVotedOptionId !== null;
 
                                 return (
-                                    <TouchableOpacity
-                                        key={option.id}
-                                        style={[
-                                            styles.pollOption,
-                                            {
-                                                backgroundColor: colors.background,
-                                                borderColor: isVoted ? colors.primary : colors.borderColor
-                                            }
-                                        ]}
-                                        onPress={() => handleVote(option.id)}
-                                        disabled={hasVoted}
-                                        activeOpacity={hasVoted ? 1 : 0.7}
-                                    >
+	                                    <SelectCard
+	                                        key={option.id}
+	                                        style={[
+	                                            styles.pollOption,
+	                                            {
+	                                                backgroundColor: colors.background,
+	                                                borderColor: isVoted ? colors.primary : colors.borderColor
+	                                            }
+	                                        ]}
+	                                        onPress={() => handleVote(option.id)}
+	                                        selected={false}
+	                                        accessibilityLabel={option.text}
+	                                    >
                                         {/* Progress bar background */}
                                         {hasVoted && (
                                             <View
@@ -463,9 +466,9 @@ export default function ActivityDetailScreen() {
                                                 </Text>
                                             )}
                                         </View>
-                                    </TouchableOpacity>
-                                );
-                            })}
+	                                    </SelectCard>
+	                                );
+	                            })}
                             <Text style={[styles.pollVotesCount, { color: colors.textSecondary }]}>
                                 {totalVotes} vote{totalVotes > 1 ? 's' : ''}
                             </Text>
@@ -559,17 +562,18 @@ export default function ActivityDetailScreen() {
                         );
                     })()}
 
-                    {/* Engagement Bar */}
-                    <View style={[styles.engagementBar, { borderTopColor: colors.borderColor }]}>
-                        {/* Likes */}
-                        <TouchableOpacity
-                            style={styles.engagementItem}
-                            onPress={handleLike}
-                            activeOpacity={0.7}
-                        >
-                            <Animated.View style={{ transform: [{ scale: likeScaleAnim }] }}>
-                                <Heart
-                                    size={18}
+	                    {/* Engagement Bar */}
+	                    <View style={[styles.engagementBar, { borderTopColor: colors.borderColor }]}>
+	                        {/* Likes */}
+	                        <SelectCard
+	                            selected={false}
+	                            onPress={handleLike}
+	                            style={[styles.engagementItem, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
+	                            accessibilityLabel="J’aime"
+	                        >
+	                            <Animated.View style={{ transform: [{ scale: likeScaleAnim }] }}>
+	                                <Heart
+	                                    size={18}
                                     color={liked ? colors.error : colors.gray500}
                                     fill={liked ? colors.error : 'transparent'}
                                     strokeWidth={ICON.strokeWidth}
@@ -579,9 +583,9 @@ export default function ActivityDetailScreen() {
                                 styles.engagementText,
                                 { color: liked ? colors.error : colors.textSecondary }
                             ]}>
-                                {formatCount(likesCount)} J'aime{likesCount > 1 ? 's' : ''}
-                            </Text>
-                        </TouchableOpacity>
+	                                {formatCount(likesCount)} J'aime{likesCount > 1 ? 's' : ''}
+	                            </Text>
+	                        </SelectCard>
 
                         {/* Comments */}
                         <View style={styles.engagementItem}>
@@ -595,14 +599,15 @@ export default function ActivityDetailScreen() {
                             </Text>
                         </View>
 
-                        {/* Bookmarks */}
-                        <TouchableOpacity
-                            style={styles.engagementItem}
-                            onPress={handleBookmark}
-                            activeOpacity={0.7}
-                        >
-                            <Animated.View style={{ transform: [{ scale: bookmarkScaleAnim }] }}>
-                                <Bookmark
+	                        {/* Bookmarks */}
+	                        <SelectCard
+	                            selected={false}
+	                            onPress={handleBookmark}
+	                            style={[styles.engagementItem, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
+	                            accessibilityLabel="Bookmark"
+	                        >
+	                            <Animated.View style={{ transform: [{ scale: bookmarkScaleAnim }] }}>
+	                                <Bookmark
                                     size={18}
                                     color={isBookmarked ? colors.primary : colors.gray500}
                                     fill={isBookmarked ? colors.primary : 'transparent'}
@@ -613,10 +618,10 @@ export default function ActivityDetailScreen() {
                                 styles.engagementText,
                                 { color: isBookmarked ? colors.primary : colors.textSecondary }
                             ]}>
-                                {formatCount(bookmarksCount)} Bookmark{bookmarksCount > 1 ? 's' : ''}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
+	                                {formatCount(bookmarksCount)} Bookmark{bookmarksCount > 1 ? 's' : ''}
+	                            </Text>
+	                        </SelectCard>
+	                    </View>
 
                     {/* Comments Section - Inside the same card */}
                     <View style={[styles.commentsSection, { borderTopColor: colors.borderColor }]}>

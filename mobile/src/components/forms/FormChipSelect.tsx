@@ -3,13 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   ViewStyle,
 } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { Chip } from '../ui';
+
 
 interface ChipOption {
   value: string;
@@ -71,8 +72,12 @@ export function FormChipSelect({
         {options.map((option) => {
           const isSelected = value.includes(option.value);
           return (
-            <TouchableOpacity
+            <Chip
               key={option.value}
+              label={option.label}
+              selected={isSelected}
+              onPress={() => handleToggle(option.value)}
+              leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2} /> : undefined}
               style={[
                 styles.chip,
                 {
@@ -80,21 +85,11 @@ export function FormChipSelect({
                   borderColor: isSelected ? colors.primary : colors.borderColor,
                 },
               ]}
-              onPress={() => handleToggle(option.value)}
-              activeOpacity={0.8}
-            >
-              {isSelected && (
-                <Check size={14} color={colors.primary} strokeWidth={2} />
-              )}
-              <Text
-                style={[
-                  styles.chipText,
-                  { color: isSelected ? colors.primary : colors.textPrimary },
-                ]}
-              >
-                {option.label}
-              </Text>
-            </TouchableOpacity>
+              textStyle={[
+                styles.chipText,
+                { color: isSelected ? colors.primary : colors.textPrimary },
+              ]}
+            />
           );
         })}
       </ScrollView>

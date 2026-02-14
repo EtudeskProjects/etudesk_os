@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  FlatList,
   Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -20,7 +20,7 @@ import {
   MessageCircle,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../../src/constants/theme';
-import { PageLayout, EmptyState } from '../../../../src/components/ui';
+import { Button, Chip, IconButton, PageLayout, EmptyState, SelectCard } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { communityService } from '../../../../src/services';
 import { formatRelativeTime } from '../../../../src/utils/date';
@@ -148,10 +148,10 @@ export default function CommunityMembersScreen() {
       : talent?.display_name || 'Membre';
 
     return (
-      <TouchableOpacity
+      <SelectCard
+        accessibilityLabel="Voir le membre"
         style={[styles.memberCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
         onPress={() => router.push(`/gestion/communities/members/details/${item.id}`)}
-        activeOpacity={0.7}
       >
         <View style={styles.cardHeader}>
           {talent?.avatar_url || talent?.profile_picture_url ? (
@@ -209,23 +209,27 @@ export default function CommunityMembersScreen() {
 
         {item.status === 'PENDING' && (
           <View style={[styles.quickActions, { borderTopColor: colors.borderColor }]}>
-            <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}
+            <Button
+              title="Accepter"
+              size="sm"
+              variant="secondary"
               onPress={() => handleUpdateStatus(item.id, 'ACTIVE')}
-            >
-              <CheckCircle2 size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.quickActionText, { color: colors.success }]}>Accepter</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}
+              style={{ flex: 1, backgroundColor: withOpacity(colors.success, OPACITY[15]) }}
+              textStyle={{ color: colors.success }}
+              icon={<CheckCircle2 size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />}
+            />
+            <Button
+              title="Refuser"
+              size="sm"
+              variant="secondary"
               onPress={() => handleUpdateStatus(item.id, 'REJECTED')}
-            >
-              <XCircle size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.quickActionText, { color: colors.error }]}>Refuser</Text>
-            </TouchableOpacity>
+              style={{ flex: 1, backgroundColor: withOpacity(colors.error, OPACITY[15]) }}
+              textStyle={{ color: colors.error }}
+              icon={<XCircle size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            />
           </View>
         )}
-      </TouchableOpacity>
+      </SelectCard>
     );
   };
 
@@ -255,25 +259,21 @@ export default function CommunityMembersScreen() {
         {filterChips.map((chip) => {
           const isActive = filter === chip.key;
           return (
-            <TouchableOpacity
+            <Chip
               key={chip.key}
+              label={`${chip.label} (${chip.count})`}
+              selected={isActive}
+              onPress={() => setFilter(chip.key)}
               style={[
                 styles.filterChip,
                 { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                 isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
               ]}
-              onPress={() => setFilter(chip.key)}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  { color: colors.gray700 },
-                  isActive && { color: colors.textOnPrimary },
-                ]}
-              >
-                {chip.label} ({chip.count})
-              </Text>
-            </TouchableOpacity>
+              textStyle={[
+                styles.filterChipText,
+                { color: isActive ? colors.textOnPrimary : colors.gray700 },
+              ]}
+            />
           );
         })}
       </ScrollView>
@@ -282,18 +282,16 @@ export default function CommunityMembersScreen() {
 
   const rightAction = (
     <View style={styles.headerActions}>
-      <TouchableOpacity
+      <IconButton
         onPress={() => router.push(`/gestion/communities/invitations/${communityId}` as any)}
-        style={styles.headerActionButton}
-      >
-        <Send size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-      </TouchableOpacity>
-      <TouchableOpacity
+        icon={<Send size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+        accessibilityLabel="Invitations"
+      />
+      <IconButton
         onPress={() => router.push(`/settings/organization/edit-community/${communityId}` as any)}
-        style={styles.headerActionButton}
-      >
-        <Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-      </TouchableOpacity>
+        icon={<Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+        accessibilityLabel="Modifier"
+      />
     </View>
   );
 
@@ -309,20 +307,26 @@ export default function CommunityMembersScreen() {
       isLoading={isLoading}
       headerContent={headerContent}
       rightAction={rightAction}
+      useScrollView={false}
     >
-      {filteredMembers.length === 0 ? (
-        <EmptyState
-          icon={Inbox}
-          title={filter === 'all' ? 'Aucun membre' : 'Aucun résultat'}
-          subtitle={emptySubtitle}
-        />
-      ) : (
-        filteredMembers.map((item) => (
-          <View key={item.id} style={styles.cardWrapper}>
+      <FlatList
+        data={filteredMembers}
+        keyExtractor={(m) => m.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => (
+          <View style={styles.cardWrapper}>
             {renderMemberItem({ item })}
           </View>
-        ))
-      )}
+        )}
+        ListEmptyComponent={
+          <EmptyState
+            icon={Inbox}
+            title={filter === 'all' ? 'Aucun membre' : 'Aucun résultat'}
+            subtitle={emptySubtitle}
+          />
+        }
+      />
     </PageLayout>
   );
 }
@@ -354,14 +358,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.xs,
   },
-  headerActionButton: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   cardWrapper: {
     marginBottom: SPACING.md,
+  },
+  listContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xxl,
   },
 
   memberCard: {
@@ -473,20 +476,5 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
     borderTopWidth: BORDER.width.thin,
     borderTopColor: 'transparent',
-  },
-
-  quickAction: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER.radius.sm,
-  },
-
-  quickActionText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, ActivityIndicator, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ScrollView } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { CommunityActivity, ActivityType } from '../../types/activity';
 import { communityActivityService } from '../../services';
@@ -10,7 +10,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../contexts/I18nContext';
 import { MessageSquare } from 'lucide-react-native';
 import { alertsGlobal } from '../../contexts/AlertContext';
-import { showToastGlobal } from '../ui';
+import { showToastGlobal, Button, Chip, LoadingShimmer } from '../ui';
 
 interface ActivityFeedProps {
     communityId: string;
@@ -216,7 +216,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     if (loading && !refreshing && (activities?.length ?? 0) === 0) {
         return (
             <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color={colors.primary} />
+                <LoadingShimmer variant="fullPage" />
             </View>
         );
     }
@@ -228,20 +228,20 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         if (loadingMore) {
             return (
                 <View style={styles.loaderFooter}>
-                    <ActivityIndicator size="small" color={colors.primary} />
+                    <LoadingShimmer variant="inline" />
                 </View>
             );
         }
         
         return (
-            <TouchableOpacity 
-                style={[styles.loadMoreButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]} 
+            <Button
+                title={t('community.feed.loadMore')}
                 onPress={() => loadFeed(false)}
-            >
-                <Text style={[styles.loadMoreText, { color: colors.primary }]}>
-                    {t('community.feed.loadMore')}
-                </Text>
-            </TouchableOpacity>
+                variant="outline"
+                size="sm"
+                style={[styles.loadMoreButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+                textStyle={[styles.loadMoreText, { color: colors.primary }]}
+            />
         );
     };
 
@@ -269,25 +269,22 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 const isActive = activeFilter === chip.key;
                 const count = chip.key === 'ALL' ? activities.length : activities.filter(a => a.type === chip.key).length;
                 return (
-                    <TouchableOpacity
+                    <Chip
                         key={chip.key}
+                        label={`${chip.label} (${count})`}
+                        selected={isActive}
                         style={[
                             styles.filterChip,
                             { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                             isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
                         ]}
+                        textStyle={[
+                            styles.filterChipText,
+                            { color: colors.gray700 },
+                            isActive && { color: colors.textOnPrimary },
+                        ]}
                         onPress={() => setActiveFilter(chip.key)}
-                    >
-                        <Text
-                            style={[
-                                styles.filterChipText,
-                                { color: colors.gray700 },
-                                isActive && { color: colors.textOnPrimary },
-                            ]}
-                        >
-                            {chip.label} ({count})
-                        </Text>
-                    </TouchableOpacity>
+                    />
                 );
             })}
         </ScrollView>

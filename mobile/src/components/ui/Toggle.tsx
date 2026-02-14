@@ -1,12 +1,12 @@
 import { useRef, useEffect } from 'react';
 import {
   View,
-  TouchableOpacity,
   Animated,
   StyleSheet,
 } from 'react-native';
 import { BORDER, LAYOUT, OPACITY, COMPONENT, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { Tap } from './Tap';
 
 interface ToggleProps {
   value: boolean;
@@ -52,7 +52,7 @@ export function Toggle({
   };
 
   return (
-    <TouchableOpacity
+    <Tap
       activeOpacity={0.8}
       onPress={handlePress}
       disabled={disabled}
@@ -94,7 +94,7 @@ export function Toggle({
           },
         ]}
       />
-    </TouchableOpacity>
+    </Tap>
   );
 }
 

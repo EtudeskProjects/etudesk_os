@@ -1,19 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  KeyboardAvoidingView,
   Platform,
-  TextInput,
   Image,
-  ActivityIndicator,
   Dimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronRight,
   ChevronLeft,
@@ -40,7 +36,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../../src/constants/theme';
-import { Input, Button, Toggle, Chip } from '../../../../src/components/ui';
+import { Input, Button, IconButton, Toggle, Chip, KeyboardAwareScrollView, SelectCard, useToast, LoadingShimmer } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
 import { SECTOR_DATA } from '../../../../src/constants/talent';
@@ -71,7 +67,6 @@ import {
 } from '../../../../src/types/models';
 import { opportunityService, UpdateOpportunityData, imageService } from '../../../../src/services';
 import { useAlert } from '../../../../src/contexts/AlertContext';
-import { useToast } from '../../../../src/components/ui';
 import { FormTextArea } from '../../../../src/components/forms/FormTextArea';
 import { uploadFile } from '../../../../src/services/fileService';
 import { getFullImageUrl } from '../../../../src/utils/image';
@@ -123,6 +118,7 @@ export default function EditOpportunityScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const alerts = useAlert();
   const { showToast } = useToast();
 
@@ -622,8 +618,7 @@ export default function EditOpportunityScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement...</Text>
+          <LoadingShimmer variant="fullPage" />
         </View>
       </SafeAreaView>
     );
@@ -684,8 +679,8 @@ export default function EditOpportunityScreen() {
               onPress={handleGenerate}
               loading={isGenerating}
               disabled={isGenerating}
+              size="sm"
               icon={!isGenerating ? <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
-              fullWidth
               style={styles.generateButton}
             />
           </View>
@@ -759,19 +754,16 @@ export default function EditOpportunityScreen() {
               const isSelected = locationType === type.id;
               const IconComponent = LOCATION_TYPE_ICONS[type.id];
               return (
-                <TouchableOpacity
+                <SelectCard
                   key={type.id}
-                  style={[styles.locationTypeCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }, isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]}
+                  selected={isSelected}
                   onPress={() => setLocationType(type.id)}
+                  style={styles.locationTypeCard}
+                  accessibilityLabel={type.label}
                 >
                   <IconComponent size={24} color={isSelected ? colors.primary : colors.gray500} strokeWidth={ICON.strokeWidth} />
                   <Text style={[styles.locationTypeLabel, { color: colors.textPrimary }, isSelected && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold }]}>{type.label}</Text>
-                  {isSelected && (
-                    <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
-                    </View>
-                  )}
-                </TouchableOpacity>
+                </SelectCard>
               );
             })}
           </View>
@@ -782,49 +774,76 @@ export default function EditOpportunityScreen() {
           <>
             <View style={styles.fieldContainer}>
               <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Pays *</Text>
-              <ScrollView ref={countryScrollRef} horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
-                {COUNTRIES.map((c) => {
-                  const isSelected = country === c.id;
-                  return (
-                    <TouchableOpacity key={c.id} style={[styles.optionChip, { backgroundColor: colors.gray100, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => { setCountry(c.id); setRegion(''); setCity(''); }}>
-                      <Text style={[styles.optionChipText, { color: colors.gray700 }, isSelected && { color: colors.textOnPrimary }]}>{c.label}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
+	              <ScrollView ref={countryScrollRef} horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
+	                {COUNTRIES.map((c) => {
+	                  const isSelected = country === c.id;
+	                  return (
+	                    <Chip
+	                      key={c.id}
+	                      label={c.label}
+	                      selected={isSelected}
+	                      onPress={() => { setCountry(c.id); setRegion(''); setCity(''); }}
+	                      style={[
+	                        styles.optionChip,
+	                        { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                        isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                      ]}
+	                      textStyle={[styles.optionChipText, { color: isSelected ? colors.textOnPrimary : colors.gray700 }]}
+	                    />
+	                  );
+	                })}
+	              </ScrollView>
+	            </View>
 
             {availableRegions.length > 0 && (
               <View style={styles.fieldContainer}>
                 <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Region</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
-                  {availableRegions.map((r) => {
-                    const isSelected = region === r.id;
-                    return (
-                      <TouchableOpacity key={r.id} style={[styles.optionChip, { backgroundColor: colors.gray100, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => { setRegion(r.id); setCity(''); }}>
-                        <Text style={[styles.optionChipText, { color: colors.gray700 }, isSelected && { color: colors.textOnPrimary }]}>{r.label}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            )}
+	                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
+	                  {availableRegions.map((r) => {
+	                    const isSelected = region === r.id;
+	                    return (
+	                      <Chip
+	                        key={r.id}
+	                        label={r.label}
+	                        selected={isSelected}
+	                        onPress={() => { setRegion(r.id); setCity(''); }}
+	                        style={[
+	                          styles.optionChip,
+	                          { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                          isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                        ]}
+	                        textStyle={[styles.optionChipText, { color: isSelected ? colors.textOnPrimary : colors.gray700 }]}
+	                      />
+	                    );
+	                  })}
+	                </ScrollView>
+	              </View>
+	            )}
 
             {availableCities.length > 0 && (
               <View style={styles.fieldContainer}>
                 <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Ville</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
-                  {availableCities.map((c) => {
-                    const isSelected = city === c.id;
-                    return (
-                      <TouchableOpacity key={c.id} style={[styles.optionChip, { backgroundColor: colors.gray100, borderColor: colors.gray200 }, isSelected && { backgroundColor: colors.primary, borderColor: colors.primary }]} onPress={() => setCity(c.id)}>
-                        <Text style={[styles.optionChipText, { color: colors.gray700 }, isSelected && { color: colors.textOnPrimary }]}>{c.label}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            )}
+	                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
+	                  {availableCities.map((c) => {
+	                    const isSelected = city === c.id;
+	                    return (
+	                      <Chip
+	                        key={c.id}
+	                        label={c.label}
+	                        selected={isSelected}
+	                        onPress={() => setCity(c.id)}
+	                        style={[
+	                          styles.optionChip,
+	                          { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                          isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                        ]}
+	                        textStyle={[styles.optionChipText, { color: isSelected ? colors.textOnPrimary : colors.gray700 }]}
+	                      />
+	                    );
+	                  })}
+	                </ScrollView>
+	              </View>
+	            )}
           </>
         )}
       </View>
@@ -941,15 +960,12 @@ export default function EditOpportunityScreen() {
               const isSelected = visibility === type.id;
               const IconComponent = type.id === 'PUBLIC' ? Eye : type.id === 'PRIVATE' ? Lock : Eye;
               return (
-                <TouchableOpacity
+                <SelectCard
                   key={type.id}
-                  style={[
-                    styles.locationTypeCard,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
+                  selected={isSelected}
                   onPress={() => setVisibility(type.id)}
-                  activeOpacity={0.7}
+                  style={styles.locationTypeCard}
+                  accessibilityLabel={type.label}
                 >
                   <IconComponent
                     size={24}
@@ -965,12 +981,7 @@ export default function EditOpportunityScreen() {
                   >
                     {type.label}
                   </Text>
-                  {isSelected && (
-                    <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
-                    </View>
-                  )}
-                </TouchableOpacity>
+                </SelectCard>
               );
             })}
           </View>
@@ -982,17 +993,31 @@ export default function EditOpportunityScreen() {
         <View style={styles.rowFields}>
           <View style={styles.halfField}>
             <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Date limite</Text>
-            <TouchableOpacity style={[styles.dateButton, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]} onPress={() => setShowDeadlinePicker(true)}>
-              <Calendar size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.dateButtonText, { color: deadline ? colors.textPrimary : colors.gray500 }]} numberOfLines={1}>{deadline ? formatDate(deadline) : 'Selectionner'}</Text>
-            </TouchableOpacity>
+            <Button
+              title={deadline ? formatDate(deadline) : 'Selectionner'}
+              onPress={() => setShowDeadlinePicker(true)}
+              variant="outline"
+              icon={<Calendar size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+              style={[
+                styles.dateButton,
+                { backgroundColor: colors.gray50, borderColor: colors.gray200, justifyContent: 'flex-start' },
+              ]}
+              textStyle={[styles.dateButtonText, { color: deadline ? colors.textPrimary : colors.gray500 }]}
+            />
           </View>
           <View style={styles.halfField}>
             <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Date de début</Text>
-            <TouchableOpacity style={[styles.dateButton, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]} onPress={() => setShowStartDatePicker(true)}>
-              <Calendar size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.dateButtonText, { color: startDate ? colors.textPrimary : colors.gray500 }]} numberOfLines={1}>{startDate ? formatDate(startDate) : 'Selectionner'}</Text>
-            </TouchableOpacity>
+            <Button
+              title={startDate ? formatDate(startDate) : 'Selectionner'}
+              onPress={() => setShowStartDatePicker(true)}
+              variant="outline"
+              icon={<Calendar size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+              style={[
+                styles.dateButton,
+                { backgroundColor: colors.gray50, borderColor: colors.gray200, justifyContent: 'flex-start' },
+              ]}
+              textStyle={[styles.dateButtonText, { color: startDate ? colors.textPrimary : colors.gray500 }]}
+            />
           </View>
         </View>
 
@@ -1081,9 +1106,13 @@ export default function EditOpportunityScreen() {
                 <Text style={[styles.questionNumber, { color: colors.primary }]}>
                   Question {index + 1}
                 </Text>
-                <TouchableOpacity onPress={() => removeQuestion(question.id)}>
-                  <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
+                <IconButton
+                  onPress={() => removeQuestion(question.id)}
+                  icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+                  accessibilityLabel="Supprimer la question"
+                  size="sm"
+                  variant="ghost"
+                />
               </View>
 
               <FormTextArea
@@ -1111,15 +1140,14 @@ export default function EditOpportunityScreen() {
 
           {/* Add Question Button */}
           {applicationQuestions.length < MAX_QUESTIONS && (
-            <TouchableOpacity
-              style={[styles.addQuestionButton, { borderColor: colors.primary }]}
+            <Button
+              title="Ajouter une question"
               onPress={addQuestion}
-            >
-              <Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.addQuestionText, { color: colors.primary }]}>
-                Ajouter une question
-              </Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.addQuestionButton, { borderColor: colors.primary }]}
+              textStyle={[styles.addQuestionText, { color: colors.primary }]}
+            />
           )}
         </View>
       </View>
@@ -1146,15 +1174,15 @@ export default function EditOpportunityScreen() {
           <View style={styles.imageUploadContainer}>
             {/* Bouton ajouter image si pas encore 5 */}
             {images.length < MAX_IMAGES && (
-              <TouchableOpacity
-                style={[styles.addImageButtonFullWidth, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+              <Button
+                title="Ajouter une image"
                 onPress={pickImage}
-              >
-                <Upload size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.addImageTextLarge, { color: colors.gray500 }]}>
-                  Ajouter une image
-                </Text>
-              </TouchableOpacity>
+                variant="outline"
+                icon={<Upload size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+                style={[styles.addImageButtonFullWidth, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+                textStyle={[styles.addImageTextLarge, { color: colors.gray500 }]}
+                fullWidth
+              />
             )}
 
             {/* Grille d'images uploadées */}
@@ -1163,12 +1191,14 @@ export default function EditOpportunityScreen() {
                 {images.map((image) => (
                   <View key={image.id} style={styles.imageItemContainer}>
                     <Image source={{ uri: getFullImageUrl(image.uri) || image.uri }} style={styles.imageItem} />
-                    <TouchableOpacity
-                      style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
+                    <IconButton
                       onPress={() => removeImage(image.id)}
-                    >
-                      <X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />
-                    </TouchableOpacity>
+                      icon={<X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />}
+                      accessibilityLabel="Retirer l'image"
+                      size="sm"
+                      variant="filled"
+                      style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
+                    />
                   </View>
                 ))}
               </View>
@@ -1192,17 +1222,25 @@ export default function EditOpportunityScreen() {
                 <Text style={[styles.attachmentName, { color: colors.textPrimary }]} numberOfLines={1}>{attachment.name}</Text>
                 {attachment.size && <Text style={[styles.attachmentSize, { color: colors.gray500 }]}>{(attachment.size / (1024 * 1024)).toFixed(1)} MB</Text>}
               </View>
-              <TouchableOpacity onPress={() => removeAttachment(attachment.id)}>
-                <X size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
+              <IconButton
+                onPress={() => removeAttachment(attachment.id)}
+                icon={<X size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+                accessibilityLabel="Retirer la pièce jointe"
+                size="sm"
+                variant="ghost"
+              />
             </View>
           ))}
 
           {attachments.length < MAX_ATTACHMENTS && (
-            <TouchableOpacity style={[styles.addAttachmentButton, { borderColor: colors.gray300 }]} onPress={pickDocument}>
-              <Plus size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.addAttachmentText, { color: colors.gray600 }]}>Ajouter un document</Text>
-            </TouchableOpacity>
+            <Button
+              title="Ajouter un document"
+              onPress={pickDocument}
+              variant="outline"
+              icon={<Plus size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.addAttachmentButton, { borderColor: colors.gray300 }]}
+              textStyle={[styles.addAttachmentText, { color: colors.gray600 }]}
+            />
           )}
         </View>
       </View>
@@ -1467,15 +1505,25 @@ export default function EditOpportunityScreen() {
 
     if (currentStep === 'preview') {
       return (
-        <View style={[styles.footer, { backgroundColor: colors.background }]}>
+        <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
           <View style={styles.footerButtons}>
-            <TouchableOpacity style={[styles.backStepButton, { borderColor: colors.gray300 }]} onPress={handleBack} disabled={isSubmitting}>
-              <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.backStepButtonText, { color: colors.gray700 }]}>Retour</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.deleteButton, { borderColor: colors.error }]} onPress={handleDelete} disabled={isSubmitting}>
-              <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
+            <Button
+              title="Retour"
+              onPress={handleBack}
+              disabled={isSubmitting}
+              variant="outline"
+              icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+              textStyle={[styles.backStepButtonText, { color: colors.gray700 }]}
+            />
+            <IconButton
+              onPress={handleDelete}
+              disabled={isSubmitting}
+              icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+              accessibilityLabel="Supprimer l'opportunite"
+              variant="outline"
+              style={[styles.deleteButton, { borderColor: colors.error }]}
+            />
             <View style={styles.saveButtonContainer}>
               <Button title="Enregistrer" onPress={handleSave} disabled={isSubmitting} fullWidth />
             </View>
@@ -1485,13 +1533,17 @@ export default function EditOpportunityScreen() {
     }
 
     return (
-      <View style={[styles.footer, { backgroundColor: colors.background }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
         <View style={styles.footerButtons}>
           {!isFirstStep && (
-            <TouchableOpacity style={[styles.backStepButton, { borderColor: colors.gray300 }]} onPress={handleBack}>
-              <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.backStepButtonText, { color: colors.gray700 }]}>Retour</Text>
-            </TouchableOpacity>
+            <Button
+              title="Retour"
+              onPress={handleBack}
+              variant="outline"
+              icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+              textStyle={[styles.backStepButtonText, { color: colors.gray700 }]}
+            />
           )}
           <View style={[styles.continueButton, !isFirstStep && { flex: 1 }]}>
             <Button title="Continuer" onPress={handleNext} disabled={!canProceed()} fullWidth icon={<ChevronRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />} iconPosition="right" />
@@ -1502,23 +1554,30 @@ export default function EditOpportunityScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}><ArrowLeft size={ICON.size.md} color={colors.textPrimary} /></TouchableOpacity>
+        <IconButton
+          onPress={handleBack}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+          style={styles.backButton}
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Modifier l'opportunite</Text>
         <View style={styles.headerSpacer} />
       </View>
-      <KeyboardAvoidingView style={styles.keyboardView} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          {renderStepIndicator()}
-          {currentStep === 'info' && renderInfoStep()}
-          {currentStep === 'lieu' && renderLieuStep()}
-          {currentStep === 'conditions' && renderConditionsStep()}
-          {currentStep === 'media' && renderMediaStep()}
-          {currentStep === 'preview' && renderPreviewStep()}
-        </ScrollView>
-        {renderFooter()}
-      </KeyboardAvoidingView>
+      <KeyboardAwareScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        afterScrollChildren={renderFooter()}
+      >
+        {renderStepIndicator()}
+        {currentStep === 'info' && renderInfoStep()}
+        {currentStep === 'lieu' && renderLieuStep()}
+        {currentStep === 'conditions' && renderConditionsStep()}
+        {currentStep === 'media' && renderMediaStep()}
+        {currentStep === 'preview' && renderPreviewStep()}
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
@@ -1531,7 +1590,6 @@ const styles = StyleSheet.create({
   backButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: TYPOGRAPHY.fontSize.lg, fontWeight: TYPOGRAPHY.fontWeight.semibold },
   headerSpacer: { width: 40 },
-  keyboardView: { flex: 1 },
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.xl },
   stepIndicator: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xl },

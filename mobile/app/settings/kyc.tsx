@@ -4,9 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Image,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,7 +18,7 @@ import {
   Shield,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
-import { Button } from '../../src/components/ui';
+import { Button, IconButton, LoadingShimmer, SelectCard } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { kycService, KYCDocumentType, imageService } from '../../src/services';
 import { getFullImageUrl } from '../../src/utils/image';
@@ -245,7 +243,7 @@ export default function KYCScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       </SafeAreaView>
     );
@@ -255,9 +253,11 @@ export default function KYCScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Vérification d'identité</Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -290,14 +290,17 @@ export default function KYCScreen() {
               <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Type de document</Text>
               <View style={[styles.optionsList, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
                 {DOCUMENT_TYPES.map((docType, index) => (
-                  <TouchableOpacity
+                  <SelectCard
                     key={docType.id}
                     style={[
                       styles.optionItem,
                       { borderBottomColor: colors.gray100 },
                       index === DOCUMENT_TYPES.length - 1 && styles.optionItemLast,
+                      { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
                     ]}
                     onPress={() => setSelectedDocType(docType.id)}
+                    selected={false}
+                    accessibilityLabel={docType.label}
                   >
                     <View style={[styles.optionIcon, { backgroundColor: colors.gray100 }]}>
                       <CreditCard size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
@@ -312,7 +315,7 @@ export default function KYCScreen() {
                         <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
                       )}
                     </View>
-                  </TouchableOpacity>
+                  </SelectCard>
                 ))}
               </View>
             </View>
@@ -323,9 +326,11 @@ export default function KYCScreen() {
                 <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Photos du document</Text>
 
                 {/* Front */}
-                <TouchableOpacity
+                <SelectCard
                   style={[styles.uploadCard, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}
                   onPress={() => showImageOptions('front')}
+                  selected={false}
+                  accessibilityLabel="Ajouter la photo recto"
                 >
                   {frontImage ? (
                     <>
@@ -340,12 +345,14 @@ export default function KYCScreen() {
                       <Text style={[styles.uploadLabel, { color: colors.textPrimary }]}>Recto</Text>
                     </View>
                   )}
-                </TouchableOpacity>
+                </SelectCard>
 
                 {/* Back */}
-                <TouchableOpacity
+                <SelectCard
                   style={[styles.uploadCard, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}
                   onPress={() => showImageOptions('back')}
+                  selected={false}
+                  accessibilityLabel="Ajouter la photo verso"
                 >
                   {backImage ? (
                     <>
@@ -360,7 +367,7 @@ export default function KYCScreen() {
                       <Text style={[styles.uploadLabel, { color: colors.textPrimary }]}>Verso (optionnel)</Text>
                     </View>
                   )}
-                </TouchableOpacity>
+                </SelectCard>
               </View>
             )}
           </>

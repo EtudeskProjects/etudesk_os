@@ -1,11 +1,13 @@
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AtSign } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER, BRAND_COLORS, LIGHT_COLORS } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useAlert } from '../../src/contexts/AlertContext';
+import { SelectCard } from '../../src/components/ui';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -50,35 +52,38 @@ export default function LoginScreen() {
             {t('auth.login.continueWith')}
           </Text>
 
-          <TouchableOpacity
+          <SelectCard
             style={[styles.authButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
             onPress={handleGoogleLogin}
-            activeOpacity={0.8}
+            selected={false}
+            accessibilityLabel="Continuer avec Google"
           >
             <Image
               source={require('../../assets/google_icon.png')}
               style={styles.socialIcon}
             />
             <Text style={[styles.authButtonText, { color: colors.textPrimary }]}>Google</Text>
-          </TouchableOpacity>
+          </SelectCard>
 
-          <TouchableOpacity
+          <SelectCard
             style={[styles.authButton, styles.authButtonWhatsApp]}
             onPress={handleWhatsAppLogin}
-            activeOpacity={0.8}
+            selected={false}
+            accessibilityLabel="Continuer avec WhatsApp"
           >
             <Image
               source={require('../../assets/whatsapp_icon.png')}
               style={styles.socialIcon}
             />
             {/* WhatsApp button always has white bg, so text must always be dark */}
-            <Text style={[styles.authButtonText, { color: '#1A1A1A' }]}>WhatsApp</Text>
-          </TouchableOpacity>
+            <Text style={[styles.authButtonText, { color: LIGHT_COLORS.black }]}>WhatsApp</Text>
+          </SelectCard>
 
-          <TouchableOpacity
+          <SelectCard
             style={[styles.authButton, styles.authButtonEmail, { backgroundColor: colors.primary, borderColor: colors.primary }]}
             onPress={handleEmailLogin}
-            activeOpacity={0.8}
+            selected={false}
+            accessibilityLabel="Continuer avec Email"
           >
             <AtSign
               size={ICON.size.lg}
@@ -86,7 +91,7 @@ export default function LoginScreen() {
               strokeWidth={ICON.strokeWidth}
             />
             <Text style={[styles.authButtonText, { color: colors.textOnPrimary }]}>Email</Text>
-          </TouchableOpacity>
+          </SelectCard>
         </View>
 
         <View style={styles.footer}>
@@ -155,9 +160,9 @@ const styles = StyleSheet.create({
   },
 
   authButtonWhatsApp: {
-    // WhatsApp brand colors - intentionally hardcoded for brand compliance
-    backgroundColor: '#FFFFFF',
-    borderColor: '#25D366',
+    // WhatsApp brand colors
+    backgroundColor: LIGHT_COLORS.white,
+    borderColor: BRAND_COLORS.whatsapp,
   },
 
   socialIcon: {

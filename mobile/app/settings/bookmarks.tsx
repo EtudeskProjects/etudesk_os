@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -12,7 +11,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
-import { PageLayout, EmptyState } from '../../src/components/ui';
+import { PageLayout, EmptyState, Chip } from '../../src/components/ui';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { OpportunityCard, CommunityCard, SpaceCard } from '../../src/components/cards';
 import { bookmarkService, Space } from '../../src/services';
@@ -128,33 +127,30 @@ export default function BookmarksScreen() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filtersContent}
       >
-        {chips.map((chip) => {
-          const isActive = activeCategory === chip.key;
-          return (
-            <TouchableOpacity
-              key={chip.key}
-              style={[
-                styles.filterChip,
-                { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
-              ]}
-              onPress={() => setActiveCategory(chip.key)}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  { color: colors.gray700 },
-                  isActive && { color: colors.textOnPrimary },
-                ]}
-              >
-                {chip.label} ({chip.count})
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
+	        {chips.map((chip) => {
+	          const isActive = activeCategory === chip.key;
+	          return (
+	            <Chip
+	              key={chip.key}
+	              label={`${chip.label} (${chip.count})`}
+	              selected={isActive}
+	              style={[
+	                styles.filterChip,
+	                { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
+	              ]}
+	              textStyle={[
+	                styles.filterChipText,
+	                { color: colors.gray700 },
+	                isActive && { color: colors.textOnPrimary },
+	              ]}
+	              onPress={() => setActiveCategory(chip.key)}
+	            />
+	          );
+	        })}
+	      </ScrollView>
+	    </View>
+	  );
 
   return (
     <PageLayout

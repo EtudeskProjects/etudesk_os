@@ -1,63 +1,47 @@
 /**
- * ThinkingIndicator — Brain icon + shimmer animation
- * Replaces all ActivityIndicator instances in the copilot
+ * ThinkingIndicator — Shimmer effect + "Réfléchit…"
+ * Replaces ActivityIndicator in copilot/assistant contexts
+ * Visible in light and dark mode with biological rhythm
  */
 
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
-import { Brain } from 'lucide-react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, ICON } from '../../constants/theme';
+import { ShimmerPlaceholder } from '../ui/ShimmerPlaceholder';
+import { SPACING, TYPOGRAPHY } from '../../constants/theme';
 
 interface ThinkingIndicatorProps {
+  /** Default: "Réfléchit…" */
   label?: string;
 }
 
 export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({
-  label = 'Réflexion en cours...',
+  label = 'Réfléchit…',
 }) => {
   const { colors } = useTheme();
-  const opacity = useRef(new Animated.Value(0.15)).current;
-  const scale = useRef(new Animated.Value(0.9)).current;
-
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.parallel([
-        Animated.sequence([
-          Animated.timing(opacity, { toValue: 1, duration: 700, useNativeDriver: true }),
-          Animated.timing(opacity, { toValue: 0.15, duration: 700, useNativeDriver: true }),
-        ]),
-        Animated.sequence([
-          Animated.timing(scale, { toValue: 1.15, duration: 700, useNativeDriver: true }),
-          Animated.timing(scale, { toValue: 0.9, duration: 700, useNativeDriver: true }),
-        ]),
-      ])
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [opacity, scale]);
 
   return (
     <View style={styles.container}>
-      <Animated.View style={{ opacity, transform: [{ scale }] }}>
-        <Brain size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-      </Animated.View>
-      <Animated.Text
-        style={[styles.label, { color: colors.textSecondary, opacity }]}
-      >
-        {label}
-      </Animated.Text>
+      <View style={styles.bars}>
+        <ShimmerPlaceholder width="80%" height={12} variant="bar" />
+        <ShimmerPlaceholder width="60%" height={12} variant="bar" style={styles.bar2} />
+        <ShimmerPlaceholder width="70%" height={12} variant="bar" style={styles.bar3} />
+      </View>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
     paddingVertical: SPACING.sm,
+    gap: SPACING.sm,
   },
+  bars: {
+    gap: SPACING.xs,
+  },
+  bar2: { marginLeft: SPACING.sm },
+  bar3: { marginLeft: SPACING.xs },
   label: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontFamily: TYPOGRAPHY.fontFamily.regular,

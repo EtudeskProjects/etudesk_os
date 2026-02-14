@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, Linking, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   Briefcase,
@@ -20,6 +20,8 @@ import { useTheme } from '../../hooks/useTheme';
 import { useI18n } from '../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
 import { api } from '../../services/api';
+import { ShimmerPlaceholder } from '../ui';
+
 
 interface EntityCardProps {
   type: string;
@@ -263,7 +265,7 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
           <View style={[styles.skeletonLine, { backgroundColor: withOpacity(colors.textSecondary, OPACITY[15]) }]} />
           <View style={[styles.skeletonLineShort, { backgroundColor: withOpacity(colors.textSecondary, OPACITY[10]) }]} />
         </View>
-        <ActivityIndicator size="small" color={typeConfig.color} />
+        <ShimmerPlaceholder width={24} height={14} variant="bar" />
       </View>
     );
   }
@@ -271,10 +273,11 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
   // Error state — still tappable to navigate to detail
   if (error && !title) {
     return (
-      <TouchableOpacity
+      <Pressable
         style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
         onPress={handlePress}
-        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={t('copilot.entity.viewDetails')}
       >
         <View
           style={[
@@ -292,15 +295,16 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
           </Text>
         </View>
         <ChevronRight size={16} color={colors.textSecondary} style={styles.chevron} />
-      </TouchableOpacity>
+      </Pressable>
     );
   }
 
   return (
-    <TouchableOpacity
+    <Pressable
       style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
       onPress={handlePress}
-      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={title}
     >
       {/* Left: Image or placeholder */}
       <View
@@ -362,7 +366,7 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
 
       {/* Chevron */}
       <ChevronRight size={16} color={colors.textSecondary} style={styles.chevron} />
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 

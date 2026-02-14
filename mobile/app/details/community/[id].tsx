@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -20,11 +20,11 @@ import {
   Shield,
   Settings,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
-import { useTheme } from '../../../src/hooks/useTheme';
-import { useI18n } from '../../../src/contexts/I18nContext';
-import { useSpace } from '../../../src/contexts/SpaceContext';
-import { Button, ImageSlider, FooterNav, FloatingActionMenu, ActionItem } from '../../../src/components/ui';
+	import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
+	import { useTheme } from '../../../src/hooks/useTheme';
+	import { useI18n } from '../../../src/contexts/I18nContext';
+	import { useSpace } from '../../../src/contexts/SpaceContext';
+	import { Button, IconButton, ImageSlider, FooterNav, FloatingActionMenu, ActionItem, TabBar, SelectCard, LoadingShimmer } from '../../../src/components/ui';
 import { ActivityFeed } from '../../../src/components/community/ActivityFeed';
 import { formatRelativeTime, formatDate } from '../../../src/utils/date';
 import { getFullImageUrl } from '../../../src/utils/image';
@@ -204,7 +204,7 @@ export default function CommunityDetailScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       </SafeAreaView>
     );
@@ -224,30 +224,42 @@ export default function CommunityDetailScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-        <TouchableOpacity
-          style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={[styles.headerButton, { backgroundColor: colors.gray100 }]}>
-            <Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: isBookmarked ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 }]}
-            onPress={toggleBookmark}
-          >
-            {isBookmarked ? (
-              <BookmarkCheck size={ICON.size.md} color={colors.primary} fill={colors.primary} strokeWidth={ICON.strokeWidth} />
-            ) : (
-              <Bookmark size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
+	      {/* Header */}
+	      <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+	        <IconButton
+	          onPress={() => router.back()}
+	          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	          accessibilityLabel="Retour"
+	          variant="filled"
+	          style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
+	        />
+	        <View style={styles.headerActions}>
+	          <IconButton
+	            onPress={() => {}}
+	            icon={<Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	            accessibilityLabel="Partager"
+	            variant="filled"
+	            disabled
+	            style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
+	          />
+		          <IconButton
+		            onPress={toggleBookmark}
+		            icon={
+		              isBookmarked ? (
+		                <BookmarkCheck size={ICON.size.md} color={colors.primary} fill={colors.primary} strokeWidth={ICON.strokeWidth} />
+		              ) : (
+		                <Bookmark size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
+		              )
+		            }
+		            accessibilityLabel={isBookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+		            variant="filled"
+		            style={[
+		              styles.headerButton,
+	              { backgroundColor: isBookmarked ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100, width: 44, height: 44 },
+	            ]}
+	          />
+	        </View>
+	      </View>
 
       {(activeTab as string) !== 'activities' && (
       <ScrollView
@@ -270,13 +282,14 @@ export default function CommunityDetailScreen() {
           />
         </View>
 
-        <View style={styles.contentPadded}>
+	        <View style={styles.contentPadded}>
           {/* Organization Card */}
-          {community.organization?.id && (
-            <TouchableOpacity
-              style={[styles.orgCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-              onPress={() => router.push(`/details/organization/${community.organization!.id}`)}
-            >
+	          {community.organization?.id && (
+	            <SelectCard
+	              accessibilityLabel="Voir l'organisation"
+	              style={[styles.orgCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+	              onPress={() => router.push(`/details/organization/${community.organization!.id}`)}
+	            >
               {community.organization.logo_url ? (
                 <Image source={{ uri: getFullImageUrl(community.organization.logo_url) || '' }} style={styles.orgLogo} />
               ) : (
@@ -311,8 +324,8 @@ export default function CommunityDetailScreen() {
                 </View>
               </View>
               <ChevronRight size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
-          )}
+	            </SelectCard>
+	          )}
 
           {/* Title */}
           <Text style={[styles.title, { color: colors.textPrimary }]}>
@@ -337,72 +350,19 @@ export default function CommunityDetailScreen() {
             )}
           </View>
 
-          {/* Tab Navigation - Only visible for members */}
-          {membershipStatus?.is_member && (
-            <View style={[styles.tabContainer, { borderBottomColor: colors.borderColor }]}>
-              <TouchableOpacity
-                style={[styles.tab, activeTab === 'presentation' && styles.tabActive]}
-                onPress={() => setActiveTab('presentation')}
-              >
-                <Text style={[
-                  styles.tabText,
-                  { color: activeTab === 'presentation' ? colors.primary : colors.textSecondary }
-                ]}>
-                  {t('community.presentation')}
-                </Text>
-                {activeTab === 'presentation' && (
-                  <View style={[styles.tabIndicator, { backgroundColor: colors.primary }]} />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tab, activeTab === 'activities' && styles.tabActive]}
-                onPress={() => setActiveTab('activities')}
-              >
-                <View style={styles.tabContentWithBadge}>
-                  <Text style={[
-                    styles.tabText,
-                    { color: activeTab === 'activities' ? colors.primary : colors.textSecondary }
-                  ]}>
-                    {t('community.activities')}
-                  </Text>
-                  {community.activities_count !== undefined && community.activities_count > 0 && (
-                    <View style={[styles.tabBadge, { backgroundColor: activeTab === 'activities' ? colors.primary : colors.textSecondary }]}>
-                      <Text style={[styles.tabBadgeText, { color: colors.textOnPrimary }]}>
-                        {community.activities_count > 99 ? '99+' : community.activities_count}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-                {activeTab === 'activities' && (
-                  <View style={[styles.tabIndicator, { backgroundColor: colors.primary }]} />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tab, activeTab === 'members' && styles.tabActive]}
-                onPress={() => setActiveTab('members')}
-              >
-                <View style={styles.tabContentWithBadge}>
-                  <Text style={[
-                    styles.tabText,
-                    { color: activeTab === 'members' ? colors.primary : colors.textSecondary }
-                  ]}>
-                    {t('community.members')}
-                  </Text>
-                  {community.members_count !== undefined && community.members_count > 0 && (
-                    <View style={[styles.tabBadge, { backgroundColor: activeTab === 'members' ? colors.primary : colors.textSecondary }]}>
-                      <Text style={[styles.tabBadgeText, { color: colors.textOnPrimary }]}>
-                        {community.members_count > 99 ? '99+' : community.members_count}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-                {activeTab === 'members' && (
-                  <View style={[styles.tabIndicator, { backgroundColor: colors.primary }]} />
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
+	          {/* Tab Navigation - Only visible for members */}
+	          {membershipStatus?.is_member && (
+	            <TabBar
+	              tabs={[
+	                { key: 'presentation', label: t('community.presentation'), icon: PenSquare },
+	                { key: 'activities', label: t('community.activities'), icon: BarChart2, count: community.activities_count || 0 },
+	                { key: 'members', label: t('community.members'), icon: Users, count: community.members_count || 0 },
+	              ]}
+	              activeTab={activeTab}
+	              onTabChange={(key) => setActiveTab(key as any)}
+	            />
+	          )}
+	        </View>
 
         {/* Content based on active tab */}
         {activeTab === 'presentation' && (
@@ -472,14 +432,19 @@ export default function CommunityDetailScreen() {
             )}
 
             {/* Members Preview */}
-            {membersPreview.length > 0 && (
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('community.members')}</Text>
-                  <TouchableOpacity onPress={() => setActiveTab('members')}>
-                    <Text style={[styles.seeAllText, { color: colors.primary }]}>{t('common.seeAll')}</Text>
-                  </TouchableOpacity>
-                </View>
+	            {membersPreview.length > 0 && (
+	              <View style={styles.section}>
+	                <View style={styles.sectionHeader}>
+	                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('community.members')}</Text>
+	                  <Button
+	                    title={t('common.seeAll')}
+	                    onPress={() => setActiveTab('members')}
+	                    variant="ghost"
+	                    size="sm"
+	                    style={{ paddingHorizontal: 0, backgroundColor: 'transparent' } as any}
+	                    textStyle={[styles.seeAllText, { color: colors.primary }]}
+	                  />
+	                </View>
                 <View style={styles.membersList}>
                   {membersPreview.slice(0, 5).map((member) => (
                     <View key={member.id} style={styles.memberAvatarContainer}>
@@ -517,23 +482,22 @@ export default function CommunityDetailScreen() {
               {/* Members List */}
               {membersLoading ? (
                 <View style={[styles.membersListContainer, styles.loadingContainer, { backgroundColor: colors.surface, minHeight: 120 }]}>
-                  <ActivityIndicator size="large" color={colors.primary} />
+                  <LoadingShimmer variant="inline" />
                 </View>
               ) : membersPreview.length > 0 ? (
                 <View style={[styles.membersListContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-                  {membersPreview.map((member, index) => (
-                    <TouchableOpacity
-                      key={member.id}
-                      style={[
-                        styles.memberItem,
+	                  {membersPreview.map((member, index) => (
+	                    <View
+	                      key={member.id}
+	                      style={[
+	                        styles.memberItem,
                         {
                           borderBottomColor: colors.borderColor,
                           backgroundColor: colors.surface,
                           borderBottomWidth: index < membersPreview.length - 1 ? BORDER.width.thin : 0
                         }
-                      ]}
-                      activeOpacity={0.7}
-                    >
+	                      ]}
+	                    >
                       {member.avatar_url ? (
                         <Image
                           source={{ uri: getFullImageUrl(member.avatar_url) || '' }}
@@ -580,9 +544,9 @@ export default function CommunityDetailScreen() {
                           </Text>
                         )}
                       </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+	                    </View>
+	                  ))}
+	                </View>
               ) : (
                 <View style={[styles.emptyMembersContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
                   <Users size={ICON.size.xl} color={colors.textDisabled} strokeWidth={ICON.strokeWidth} />
@@ -601,53 +565,24 @@ export default function CommunityDetailScreen() {
       )}
 
       {/* Activities Tab - Rendered outside ScrollView to avoid FlatList nesting issue */}
-      {(activeTab as string) === 'activities' && (
-        <View style={styles.activitiesContainer}>
+	      {(activeTab as string) === 'activities' && (
+	        <View style={styles.activitiesContainer}>
           {/* Compact Header for Activities Tab */}
           <View style={styles.activitiesHeader}>
             <Text style={[styles.activitiesHeaderTitle, { color: colors.textPrimary }]} numberOfLines={1}>
               {community.name}
             </Text>
             {/* Tab Navigation */}
-            <View style={[styles.tabContainer, { borderBottomColor: colors.borderColor }]}>
-              <TouchableOpacity
-                style={[styles.tab, activeTab === 'presentation' && styles.tabActive]}
-                onPress={() => setActiveTab('presentation')}
-              >
-                <Text style={[
-                  styles.tabText,
-                  { color: activeTab === 'presentation' ? colors.primary : colors.textSecondary }
-                ]}>
-                  {t('community.presentation')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tab, activeTab === 'activities' && styles.tabActive]}
-                onPress={() => setActiveTab('activities')}
-              >
-                <Text style={[
-                  styles.tabText,
-                  { color: activeTab === 'activities' ? colors.primary : colors.textSecondary }
-                ]}>
-                  {t('community.activities')}
-                </Text>
-                {activeTab === 'activities' && (
-                  <View style={[styles.tabIndicator, { backgroundColor: colors.primary }]} />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tab, activeTab === 'members' && styles.tabActive]}
-                onPress={() => setActiveTab('members')}
-              >
-                <Text style={[
-                  styles.tabText,
-                  { color: activeTab === 'members' ? colors.primary : colors.textSecondary }
-                ]}>
-                  {t('community.members')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+	            <TabBar
+	              tabs={[
+	                { key: 'presentation', label: t('community.presentation'), icon: PenSquare },
+	                { key: 'activities', label: t('community.activities'), icon: BarChart2, count: community.activities_count || 0 },
+	                { key: 'members', label: t('community.members'), icon: Users, count: community.members_count || 0 },
+	              ]}
+	              activeTab={activeTab}
+	              onTabChange={(key) => setActiveTab(key as any)}
+	            />
+	          </View>
           <ActivityFeed
             communityId={id!}
             userRole={membershipStatus?.role}

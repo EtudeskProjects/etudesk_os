@@ -10,10 +10,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  TextInput,
   RefreshControl,
-  ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
   Platform,
@@ -31,12 +28,14 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
-import { Button, FooterNav } from '../../../../src/components/ui';
+import { Button, FooterNav, IconButton, Input, LoadingShimmer, ShimmerPlaceholder } from '../../../../src/components/ui';
+import { FormTextArea } from '../../../../src/components/forms/FormTextArea';
 import {
   spaceInvitationService,
   SpaceInvitation,
 } from '../../../../src/services/spaceInvitationService';
 import { useAlert } from '../../../../src/contexts/AlertContext';
+import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
 
 export default function SpaceInvitationsScreen() {
   const { spaceId } = useLocalSearchParams<{ spaceId: string }>();
@@ -182,32 +181,37 @@ export default function SpaceInvitationsScreen() {
     return `Expire dans ${diffDays} jours`;
   };
 
-  const scrollModalTo = useCallback((y: number) => {
-    if (Platform.OS !== 'android') return;
+  const scrollModalToInput = useCallback((targetNodeHandle: number, extraOffset = 120) => {
+    const sv = modalScrollRef.current;
+    if (!sv) return;
+    const delay = Platform.OS === 'android' ? 120 : 0;
     setTimeout(() => {
-      modalScrollRef.current?.scrollTo({ y, animated: true });
-    }, 120);
+      sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+    }, delay);
   }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Invitations</Text>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: colors.primary }]}
+        <IconButton
+          variant="filled"
           onPress={() => setShowInviteModal(true)}
-        >
-          <Plus size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+          icon={<Plus size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Envoyer une invitation"
+          style={{ backgroundColor: colors.primary }}
+        />
       </View>
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       ) : invitations.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -275,29 +279,26 @@ export default function SpaceInvitationsScreen() {
                 </View>
 
                 <View style={[styles.cardActions, { borderTopColor: colors.borderColor }]}>
-                  <TouchableOpacity
-                    style={[styles.actionButton, { borderColor: colors.borderColor }]}
+                  <Button
+                    title="Renvoyer"
                     onPress={() => handleResend(invitation)}
                     disabled={isProcessing}
-                  >
-                    {isProcessing ? (
-                      <ActivityIndicator size="small" color={colors.primary} />
-                    ) : (
-                      <>
-                        <RefreshCw size={16} color={colors.primary} />
-                        <Text style={[styles.actionText, { color: colors.primary }]}>Renvoyer</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
+                    loading={isProcessing}
+                    variant="outline"
+                    icon={!isProcessing ? <RefreshCw size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} /> : undefined}
+                    style={[styles.actionButton, { borderColor: colors.borderColor, backgroundColor: 'transparent' }]}
+                    textStyle={[styles.actionText, { color: colors.primary }]}
+                  />
 
-                  <TouchableOpacity
-                    style={[styles.actionButton, { borderColor: colors.error }]}
+                  <Button
+                    title="Annuler"
                     onPress={() => handleCancel(invitation)}
                     disabled={isProcessing}
-                  >
-                    <Trash2 size={16} color={colors.error} />
-                    <Text style={[styles.actionText, { color: colors.error }]}>Annuler</Text>
-                  </TouchableOpacity>
+                    variant="outline"
+                    icon={<Trash2 size={16} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+                    style={[styles.actionButton, { borderColor: colors.error, backgroundColor: 'transparent' }]}
+                    textStyle={[styles.actionText, { color: colors.error }]}
+                  />
                 </View>
               </View>
             );
@@ -308,7 +309,7 @@ export default function SpaceInvitationsScreen() {
       {/* Invite Modal */}
       <Modal visible={showInviteModal} animationType="slide" transparent>
         <KeyboardAvoidingView
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={0}
         >
@@ -317,57 +318,58 @@ export default function SpaceInvitationsScreen() {
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
                 Inviter une personne
               </Text>
-              <TouchableOpacity onPress={() => setShowInviteModal(false)}>
-                <X size={24} color={colors.textSecondary} />
-              </TouchableOpacity>
+              <IconButton
+                onPress={() => setShowInviteModal(false)}
+                icon={<X size={24} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+                accessibilityLabel="Fermer"
+                size="sm"
+                variant="ghost"
+              />
             </View>
 
+            <ScrollToInputContext.Provider value={scrollModalToInput}>
             <ScrollView
               ref={modalScrollRef}
               style={styles.modalBody}
               keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="on-drag"
+              keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
             >
               {/* Email */}
               <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>
                 Email <Text style={{ color: colors.error }}>*</Text>
               </Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.gray100, color: colors.textPrimary }]}
+              <Input
                 placeholder="email@exemple.com"
-                placeholderTextColor={colors.textDisabled}
                 value={inviteEmail}
                 onChangeText={setInviteEmail}
-                onFocus={() => scrollModalTo(0)}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoCorrect={false}
+                inputContainerStyle={[{ backgroundColor: colors.gray100, borderColor: 'transparent', borderWidth: 0 }, styles.input]}
+                inputStyle={{ color: colors.textPrimary }}
               />
 
               {/* Name */}
               <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Nom (optionnel)</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.gray100, color: colors.textPrimary }]}
+              <Input
                 placeholder="Prenom Nom"
-                placeholderTextColor={colors.textDisabled}
                 value={inviteName}
                 onChangeText={setInviteName}
-                onFocus={() => scrollModalTo(110)}
+                inputContainerStyle={[{ backgroundColor: colors.gray100, borderColor: 'transparent', borderWidth: 0 }, styles.input]}
+                inputStyle={{ color: colors.textPrimary }}
               />
 
               {/* Message */}
               <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Message personnel (optionnel)</Text>
-              <TextInput
-                style={[styles.textArea, { backgroundColor: colors.gray100, color: colors.textPrimary }]}
+              <FormTextArea
                 placeholder="Ajoutez un message personnalise..."
-                placeholderTextColor={colors.textDisabled}
                 value={inviteMessage}
                 onChangeText={setInviteMessage}
-                onFocus={() => scrollModalTo(230)}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
+                rows={3}
+                containerStyle={{ marginTop: 0 }}
               />
             </ScrollView>
+            </ScrollToInputContext.Provider>
 
             <View style={[styles.modalFooter, { borderTopColor: colors.borderColor }]}>
               <Button
@@ -548,7 +550,6 @@ const styles = StyleSheet.create({
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
 

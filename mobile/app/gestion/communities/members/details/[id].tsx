@@ -4,11 +4,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Image,
   Keyboard,
 } from 'react-native';
@@ -31,7 +28,7 @@ import {
   ChevronDown,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../../src/constants/theme';
-import { Button, FooterNav } from '../../../../../src/components/ui';
+import { Button, FooterNav, IconButton, Input, LoadingShimmer, SelectCard } from '../../../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
 import { communityService, communityMembershipMessageService } from '../../../../../src/services';
@@ -269,9 +266,11 @@ export default function MemberDetailsScreen() {
     const isActive = activeTab === tab;
 
     return (
-      <TouchableOpacity
-        style={[styles.tab, isActive && { borderBottomColor: colors.primary }]}
+      <SelectCard
+        style={[styles.tab, isActive && { borderBottomColor: colors.primary }, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 }]}
         onPress={() => setActiveTab(tab)}
+        selected={false}
+        accessibilityLabel={label}
       >
         <Text
           style={[
@@ -282,7 +281,7 @@ export default function MemberDetailsScreen() {
         >
           {label}
         </Text>
-      </TouchableOpacity>
+      </SelectCard>
     );
   };
 
@@ -357,14 +356,22 @@ export default function MemberDetailsScreen() {
           <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Évaluation du membre</Text>
           <View style={styles.ratingContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => handleUpdateRating(star)}>
-                <Star
-                  size={32}
-                  color={star <= rating ? colors.warning : colors.gray300}
-                  fill={star <= rating ? colors.warning : 'transparent'}
-                  strokeWidth={ICON.strokeWidth}
-                />
-              </TouchableOpacity>
+              <IconButton
+                key={star}
+                onPress={() => handleUpdateRating(star)}
+                icon={
+                  <Star
+                    size={28}
+                    color={star <= rating ? colors.warning : colors.gray300}
+                    fill={star <= rating ? colors.warning : 'transparent'}
+                    strokeWidth={ICON.strokeWidth}
+                  />
+                }
+                accessibilityLabel={`Noter ${star} étoile${star > 1 ? 's' : ''}`}
+                size="sm"
+                variant="ghost"
+                style={styles.ratingStarButton}
+              />
             ))}
           </View>
         </View>
@@ -385,20 +392,19 @@ export default function MemberDetailsScreen() {
               </Text>
             </View>
 
-            <TouchableOpacity
-              style={[styles.statusPickerButton, { borderColor: colors.gray300, backgroundColor: colors.gray100 }]}
+            <Button
+              title="Changer le statut"
               onPress={() => setShowStatusPicker(!showStatusPicker)}
-            >
-              <Text style={[styles.statusPickerButtonText, { color: colors.textPrimary }]}>
-                Changer le statut
-              </Text>
-              <ChevronDown
-                size={20}
-                color={colors.gray500}
-                strokeWidth={ICON.strokeWidth}
-                style={{ transform: [{ rotate: showStatusPicker ? '180deg' : '0deg' }] }}
-              />
-            </TouchableOpacity>
+              variant="secondary"
+              iconPosition="right"
+              icon={
+                <View style={{ transform: [{ rotate: showStatusPicker ? '180deg' : '0deg' }] }}>
+                  <ChevronDown size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+                </View>
+              }
+              style={[styles.statusPickerButton, { borderColor: colors.gray300, backgroundColor: colors.gray100 }]}
+              textStyle={[styles.statusPickerButtonText, { color: colors.textPrimary }]}
+            />
 
             {showStatusPicker && (
               <View style={[styles.statusOptions, { borderColor: colors.gray200, backgroundColor: colors.surface }]}>
@@ -410,10 +416,12 @@ export default function MemberDetailsScreen() {
                     const Icon = config.icon;
 
                     return (
-                      <TouchableOpacity
+                      <SelectCard
                         key={status}
                         style={[styles.statusOption, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}
                         onPress={() => handleUpdateStatus(status)}
+                        selected={false}
+                        accessibilityLabel={`Définir statut ${flow.label}`}
                       >
                         <View style={[styles.statusOptionIcon, { backgroundColor: withOpacity(config.color, OPACITY[15]) }]}>
                           <Icon size={16} color={config.color} strokeWidth={ICON.strokeWidth} />
@@ -426,7 +434,7 @@ export default function MemberDetailsScreen() {
                             {flow.description}
                           </Text>
                         </View>
-                      </TouchableOpacity>
+                      </SelectCard>
                     );
                   })}
               </View>
@@ -452,15 +460,15 @@ export default function MemberDetailsScreen() {
         )}
 
         {/* Delete button */}
-        <TouchableOpacity
-          style={[styles.deleteButton, { borderColor: colors.error }]}
+        <Button
+          title="Supprimer ce membre"
           onPress={handleDeleteMember}
-        >
-          <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.deleteButtonText, { color: colors.error }]}>
-            Supprimer ce membre
-          </Text>
-        </TouchableOpacity>
+          variant="outline"
+          fullWidth
+          icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+          style={[styles.deleteButton, { borderColor: colors.error }]}
+          textStyle={[styles.deleteButtonText, { color: colors.error }]}
+        />
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -471,7 +479,7 @@ export default function MemberDetailsScreen() {
     if (isLoadingMessages) {
       return (
         <View style={styles.loadingMessages}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       );
     }
@@ -535,26 +543,40 @@ export default function MemberDetailsScreen() {
 
   const renderNotesTab = () => (
     <View style={styles.tabContent}>
-      <View style={[styles.notesCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-        <View style={styles.notesHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Notes internes</Text>
-          <TouchableOpacity onPress={() => isEditingNotes ? handleSaveNotes() : setIsEditingNotes(true)}>
-            {isEditingNotes ? (
-              <Save size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-            ) : (
-              <SquarePen size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-            )}
-          </TouchableOpacity>
-        </View>
-        <TextInput
-          style={[styles.notesInput, { backgroundColor: colors.gray50, color: colors.textPrimary }]}
-          placeholder="Ajoutez des notes internes sur ce membre..."
-          placeholderTextColor={colors.gray400}
+        <View style={[styles.notesCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
+          <View style={styles.notesHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Notes internes</Text>
+            <IconButton
+              onPress={() => isEditingNotes ? handleSaveNotes() : setIsEditingNotes(true)}
+              size="sm"
+              icon={
+                isEditingNotes
+                  ? <Save size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  : <SquarePen size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+              }
+              accessibilityLabel={isEditingNotes ? 'Enregistrer' : 'Modifier'}
+            />
+          </View>
+          <Input
+            placeholder="Ajoutez des notes internes sur ce membre..."
+            placeholderTextColor={colors.gray400}
           value={internalNotes}
           onChangeText={setInternalNotes}
           multiline
           numberOfLines={8}
           editable={isEditingNotes}
+          inputContainerStyle={{
+            backgroundColor: colors.gray50,
+            borderWidth: 0,
+            minHeight: 150,
+            borderRadius: BORDER.radius.sm,
+          }}
+          inputStyle={{
+            color: colors.textPrimary,
+            padding: SPACING.md,
+            fontSize: TYPOGRAPHY.fontSize.md,
+            textAlignVertical: 'top',
+          }}
         />
         <Text style={[styles.notesHint, { color: colors.gray400 }]}>
           Ces notes sont visibles uniquement par votre équipe.
@@ -566,7 +588,7 @@ export default function MemberDetailsScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingShimmer variant="fullPage" />
       </SafeAreaView>
     );
   }
@@ -588,9 +610,11 @@ export default function MemberDetailsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <View style={styles.headerContent}>
           <View style={[styles.statusBadge, { backgroundColor: withOpacity(statusConfig.color, OPACITY[15]) }]}>
             <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
@@ -789,6 +813,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.sm,
     justifyContent: 'center',
+  },
+  ratingStarButton: {
+    // Keep hit area consistent without altering layout.
+    borderRadius: BORDER.radius.full,
   },
 
   currentStatusDisplay: {

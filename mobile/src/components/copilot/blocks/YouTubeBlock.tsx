@@ -4,11 +4,12 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions, Linking } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, Linking, Pressable } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Play, Youtube } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, STATIC_COLORS } from '../../../constants/theme';
+
 
 interface YouTubeBlockProps {
   data: {
@@ -19,12 +20,12 @@ interface YouTubeBlockProps {
   };
 }
 
-const buildPlayerHTML = (videoId: string) => `
+const buildPlayerHTML = (videoId: string, bgColor: string) => `
 <!DOCTYPE html>
 <html>
 <head>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-  <style>*{margin:0;padding:0;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:0}</style>
+  <style>*{margin:0;padding:0;overflow:hidden;background:${bgColor}}iframe{width:100%;height:100%;border:0}</style>
 </head>
 <body>
   <iframe
@@ -44,11 +45,11 @@ export const YouTubeBlock: React.FC<YouTubeBlockProps> = ({ data }) => {
 
   if (isPlaying) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-        <View style={[styles.playerContainer, { height: playerHeight }]}>
-          <WebView
-            source={{ html: buildPlayerHTML(data.videoId), baseUrl: 'https://etudesk.com' }}
-            style={[styles.webview, { backgroundColor: '#000' }]}
+        <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+          <View style={[styles.playerContainer, { height: playerHeight }]}>
+            <WebView
+            source={{ html: buildPlayerHTML(data.videoId, STATIC_COLORS.black), baseUrl: 'https://etudesk.com' }}
+            style={[styles.webview, { backgroundColor: STATIC_COLORS.black }]}
             allowsFullscreenVideo
             allowsInlineMediaPlayback
             mediaPlaybackRequiresUserAction={false}
@@ -78,10 +79,11 @@ export const YouTubeBlock: React.FC<YouTubeBlockProps> = ({ data }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-      <TouchableOpacity
+      <Pressable
         style={styles.thumbnailContainer}
         onPress={() => setIsPlaying(true)}
-        activeOpacity={0.9}
+        accessibilityRole="button"
+        accessibilityLabel={`Lire: ${data.title}`}
       >
         <Image
           source={{ uri: thumbnailUrl }}
@@ -98,7 +100,7 @@ export const YouTubeBlock: React.FC<YouTubeBlockProps> = ({ data }) => {
             />
           </View>
         </View>
-      </TouchableOpacity>
+      </Pressable>
 
       <View style={styles.content}>
         <View style={styles.header}>

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
   MapPin,
+  Briefcase,
   Globe,
   Share,
   CheckCircle,
@@ -20,7 +21,7 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../.
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
-import { Button, FooterNav } from '../../../src/components/ui';
+import { Button, FooterNav, IconButton, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { formatRelativeTime } from '../../../src/utils/date';
 import { getFullImageUrl } from '../../../src/utils/image';
 import type { Organization, Opportunity } from '../../../src/types/models';
@@ -187,7 +188,7 @@ export default function OrganizationDetailScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       </SafeAreaView>
     );
@@ -197,14 +198,15 @@ export default function OrganizationDetailScreen() {
   if (!organization) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
-            onPress={() => router.back()}
-          >
-            <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-        </View>
+	        <View style={styles.header}>
+	          <IconButton
+	            onPress={() => router.back()}
+	            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	            accessibilityLabel={t('common.back')}
+	            variant="filled"
+	            style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
+	          />
+	        </View>
         <View style={styles.loadingContainer}>
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>
             {t('organizationDetail.notFound')}
@@ -229,17 +231,23 @@ export default function OrganizationDetailScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.headerButton, { backgroundColor: colors.gray100 }]}>
-          <Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-      </View>
+	      <View style={styles.header}>
+	        <IconButton
+	          onPress={() => router.back()}
+	          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	          accessibilityLabel={t('common.back')}
+	          variant="filled"
+	          style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
+	        />
+	        <IconButton
+	          onPress={() => {}}
+	          icon={<Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	          accessibilityLabel={t('common.share') || 'Partager'}
+	          variant="filled"
+	          disabled
+	          style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
+	        />
+	      </View>
 
       <ScrollView
         style={styles.scrollView}
@@ -337,49 +345,64 @@ export default function OrganizationDetailScreen() {
             </View>
           )}
 
-          {/* Info Card */}
-          <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-            {organization.website_url && (
-              <TouchableOpacity style={styles.infoCardRow} onPress={handleOpenWebsite}>
-                <Globe size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                <View style={styles.infoCardContent}>
-                  <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>
-                    {t('organizationDetail.website')}
-                  </Text>
-                  <Text style={[styles.infoCardValue, { color: colors.primary }]} numberOfLines={1}>
-                    {organization.website_url.replace(/^https?:\/\//, '')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
-
-            {contactEmail && (
-              <TouchableOpacity style={styles.infoCardRow} onPress={() => handleContact('email')}>
-                <Mail size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                <View style={styles.infoCardContent}>
-                  <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>
-                    {t('organizationDetail.email')}
-                  </Text>
-                  <Text style={[styles.infoCardValue, { color: colors.primary }]} numberOfLines={1}>
-                    {contactEmail}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
-
-            {contactPhone && (
-              <TouchableOpacity style={styles.infoCardRow} onPress={() => handleContact('phone')}>
-                <Phone size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                <View style={styles.infoCardContent}>
-                  <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>
-                    {t('organizationDetail.phone')}
-                  </Text>
-                  <Text style={[styles.infoCardValue, { color: colors.primary }]}>
-                    {contactPhone}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
+	          {/* Info Card */}
+		          <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+		            {organization.website_url && (
+		              <SelectCard
+		                selected={false}
+		                onPress={handleOpenWebsite}
+		                style={styles.infoCardRow}
+		                accessibilityLabel={t('organizationDetail.website')}
+		              >
+		                <Globe size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+		                <View style={styles.infoCardContent}>
+		                  <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>
+		                    {t('organizationDetail.website')}
+		                  </Text>
+		                  <Text style={[styles.infoCardValue, { color: colors.primary }]} numberOfLines={1}>
+		                    {organization.website_url.replace(/^https?:\/\//, '')}
+		                  </Text>
+		                </View>
+		              </SelectCard>
+		            )}
+		
+		            {contactEmail && (
+		              <SelectCard
+		                selected={false}
+		                onPress={() => handleContact('email')}
+		                style={styles.infoCardRow}
+		                accessibilityLabel={t('organizationDetail.email')}
+		              >
+		                <Mail size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+		                <View style={styles.infoCardContent}>
+		                  <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>
+		                    {t('organizationDetail.email')}
+		                  </Text>
+		                  <Text style={[styles.infoCardValue, { color: colors.primary }]} numberOfLines={1}>
+		                    {contactEmail}
+		                  </Text>
+		                </View>
+		              </SelectCard>
+		            )}
+		
+		            {contactPhone && (
+		              <SelectCard
+		                selected={false}
+		                onPress={() => handleContact('phone')}
+		                style={styles.infoCardRow}
+		                accessibilityLabel={t('organizationDetail.phone')}
+		              >
+		                <Phone size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+		                <View style={styles.infoCardContent}>
+		                  <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>
+		                    {t('organizationDetail.phone')}
+		                  </Text>
+		                  <Text style={[styles.infoCardValue, { color: colors.primary }]}>
+		                    {contactPhone}
+		                  </Text>
+		                </View>
+		              </SelectCard>
+		            )}
 
             {createdAt && (
               <View style={styles.infoCardRow}>
@@ -416,7 +439,7 @@ export default function OrganizationDetailScreen() {
 
             {isLoadingCommunities ? (
               <View style={styles.loadingOpportunities}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <LoadingShimmer variant="inline" />
               </View>
             ) : communities.length === 0 ? (
               <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
@@ -424,35 +447,37 @@ export default function OrganizationDetailScreen() {
                   {t('organizationDetail.noCommunities')}
                 </Text>
               </View>
-            ) : (
-              communities.slice(0, 3).map((community) => (
-                <TouchableOpacity
-                  key={community.id}
-                  style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-                  onPress={() => router.push(`/details/community/${community.id}`)}
-                >
-                  {(community.logo_url || community.cover_image_url) ? (
-                    <Image source={{ uri: getFullImageUrl((community.logo_url || community.cover_image_url)!) }} style={styles.itemLogo} />
-                  ) : (
-                    <View style={[styles.itemLogoPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-                      <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                    </View>
-                  )}
-                  <View style={styles.itemContent}>
-                    <Text style={[styles.itemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                      {community.name}
-                    </Text>
-                    {community.members_count !== undefined && (
-                      <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
-                        {community.members_count} {t('explore.members')}
-                      </Text>
-                    )}
-                  </View>
-                  <ChevronRight size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-              ))
-            )}
-          </View>
+	            ) : (
+	              communities.slice(0, 3).map((community) => (
+	                <SelectCard
+	                  key={community.id}
+	                  onPress={() => router.push(`/details/community/${community.id}`)}
+	                  selected={false}
+	                  style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+	                  accessibilityLabel={community.name}
+	                >
+	                  {(community.logo_url || community.cover_image_url) ? (
+	                    <Image source={{ uri: getFullImageUrl((community.logo_url || community.cover_image_url)!) }} style={styles.itemLogo} />
+	                  ) : (
+	                    <View style={[styles.itemLogoPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
+	                      <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+	                    </View>
+	                  )}
+	                  <View style={styles.itemContent}>
+	                    <Text style={[styles.itemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+	                      {community.name}
+	                    </Text>
+	                    {community.members_count !== undefined && (
+	                      <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
+	                        {community.members_count} {t('explore.members')}
+	                      </Text>
+	                    )}
+	                  </View>
+	                  <ChevronRight size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+	                </SelectCard>
+	              ))
+	            )}
+	          </View>
 
           {/* Spaces */}
           <View style={styles.section}>
@@ -464,7 +489,7 @@ export default function OrganizationDetailScreen() {
 
             {isLoadingSpaces ? (
               <View style={styles.loadingOpportunities}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <LoadingShimmer variant="inline" />
               </View>
             ) : spaces.length === 0 ? (
               <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
@@ -472,35 +497,37 @@ export default function OrganizationDetailScreen() {
                   {t('organizationDetail.noSpaces')}
                 </Text>
               </View>
-            ) : (
-              spaces.slice(0, 3).map((space) => (
-                <TouchableOpacity
-                  key={space.id}
-                  style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-                  onPress={() => router.push(`/details/space/${space.id}`)}
-                >
-                  {space.cover_image_url ? (
-                    <Image source={{ uri: getFullImageUrl(space.cover_image_url) }} style={styles.itemLogo} />
-                  ) : (
-                    <View style={[styles.itemLogoPlaceholder, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
-                      <BookOpen size={ICON.size.md} color={colors.success} strokeWidth={ICON.strokeWidth} />
-                    </View>
-                  )}
-                  <View style={styles.itemContent}>
-                    <Text style={[styles.itemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                      {space.name}
-                    </Text>
-                    {space.capacity !== undefined && (
-                      <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
-                        {space.capacity} {t('common.places')}
-                      </Text>
-                    )}
-                  </View>
-                  <ChevronRight size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-              ))
-            )}
-          </View>
+	            ) : (
+	              spaces.slice(0, 3).map((space) => (
+	                <SelectCard
+	                  key={space.id}
+	                  onPress={() => router.push(`/details/space/${space.id}`)}
+	                  selected={false}
+	                  style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+	                  accessibilityLabel={space.name}
+	                >
+	                  {space.cover_image_url ? (
+	                    <Image source={{ uri: getFullImageUrl(space.cover_image_url) }} style={styles.itemLogo} />
+	                  ) : (
+	                    <View style={[styles.itemLogoPlaceholder, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
+	                      <BookOpen size={ICON.size.md} color={colors.success} strokeWidth={ICON.strokeWidth} />
+	                    </View>
+	                  )}
+	                  <View style={styles.itemContent}>
+	                    <Text style={[styles.itemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+	                      {space.name}
+	                    </Text>
+	                    {space.capacity !== undefined && (
+	                      <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
+	                        {space.capacity} {t('common.places')}
+	                      </Text>
+	                    )}
+	                  </View>
+	                  <ChevronRight size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+	                </SelectCard>
+	              ))
+	            )}
+	          </View>
 
           {/* Open Opportunities */}
           <View style={styles.section}>
@@ -508,18 +535,21 @@ export default function OrganizationDetailScreen() {
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
                 {t('organizationDetail.openOpportunities')}
               </Text>
-              {opportunities.length > 3 && (
-                <TouchableOpacity onPress={() => router.push(`/search?organization=${id}` as any)}>
-                  <Text style={[styles.seeAllText, { color: colors.primary }]}>
-                    {t('common.seeAll')}
-                  </Text>
-                </TouchableOpacity>
-              )}
+	              {opportunities.length > 3 && (
+	                <Button
+	                  title={t('common.seeAll')}
+	                  onPress={() => router.push(`/search?organization=${id}` as any)}
+	                  variant="ghost"
+	                  size="sm"
+	                  style={{ paddingHorizontal: 0, backgroundColor: 'transparent' } as any}
+	                  textStyle={[styles.seeAllText, { color: colors.primary }]}
+	                />
+	              )}
             </View>
 
             {isLoadingOpportunities ? (
               <View style={styles.loadingOpportunities}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <LoadingShimmer variant="inline" />
               </View>
             ) : opportunities.length === 0 ? (
               <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
@@ -527,39 +557,42 @@ export default function OrganizationDetailScreen() {
                   {t('organizationDetail.noOpportunities')}
                 </Text>
               </View>
-            ) : (
-              opportunities.slice(0, 5).map((opportunity) => (
-                <TouchableOpacity
-                  key={opportunity.id}
-                  style={[styles.opportunityCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-                  onPress={() => router.push(`/details/opportunity/${opportunity.id}`)}
-                >
-                  <View style={styles.opportunityContent}>
-                    <Text style={[styles.opportunityTitle, { color: colors.textPrimary }]} numberOfLines={2}>
-                      {opportunity.title}
-                    </Text>
-                    <View style={styles.opportunityMeta}>
-                      {opportunity.work_rhythm && (
-                        <View style={[styles.opportunityBadge, { backgroundColor: colors.gray100 }]}>
-                          <Text style={[styles.opportunityBadgeText, { color: colors.textSecondary }]}>
-                            {WORK_RHYTHM_LABELS[opportunity.work_rhythm] || opportunity.work_rhythm}
-                          </Text>
-                        </View>
-                      )}
-                      {opportunity.location_type && (
-                        <View style={[styles.opportunityBadge, { backgroundColor: colors.gray100 }]}>
-                          <Text style={[styles.opportunityBadgeText, { color: colors.textSecondary }]}>
-                            {LOCATION_TYPE_LABELS[opportunity.location_type] || opportunity.location_type}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                  <ChevronRight size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-              ))
-            )}
-          </View>
+	            ) : (
+	              opportunities.slice(0, 5).map((opportunity) => (
+	                <SelectCard
+	                  key={opportunity.id}
+	                  onPress={() => router.push(`/details/opportunity/${opportunity.id}`)}
+	                  selected={false}
+	                  style={[styles.opportunityCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+	                  accessibilityLabel={opportunity.title}
+	                >
+	                  <Briefcase size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+	                  <View style={styles.opportunityContent}>
+	                    <Text style={[styles.opportunityTitle, { color: colors.textPrimary }]} numberOfLines={2}>
+	                      {opportunity.title}
+	                    </Text>
+	                    <View style={styles.opportunityMeta}>
+	                      {opportunity.work_rhythm && (
+	                        <View style={[styles.opportunityBadge, { backgroundColor: colors.gray100 }]}>
+	                          <Text style={[styles.opportunityBadgeText, { color: colors.textSecondary }]}>
+	                            {WORK_RHYTHM_LABELS[opportunity.work_rhythm] || opportunity.work_rhythm}
+	                          </Text>
+	                        </View>
+	                      )}
+	                      {opportunity.location_type && (
+	                        <View style={[styles.opportunityBadge, { backgroundColor: colors.gray100 }]}>
+	                          <Text style={[styles.opportunityBadgeText, { color: colors.textSecondary }]}>
+	                            {LOCATION_TYPE_LABELS[opportunity.location_type] || opportunity.location_type}
+	                          </Text>
+	                        </View>
+	                      )}
+	                    </View>
+	                  </View>
+	                  <ChevronRight size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+	                </SelectCard>
+	              ))
+	            )}
+	          </View>
         </View>
       </ScrollView>
 

@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, BackHandler, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, BackHandler, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Plus, Trash2, Calendar, Clock, Save, SquarePen } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
-import { Button, Toggle } from '../../../../src/components/ui';
+import { Button, IconButton, Input, SelectCard, Toggle } from '../../../../src/components/ui';
 import { communityActivityService } from '../../../../src/services';
 import { useAlert } from '../../../../src/contexts/AlertContext';
+import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
 
 export default function CreatePollScreen() {
     const { id, activityId } = useLocalSearchParams<{ id: string; activityId?: string }>();
@@ -150,11 +151,13 @@ export default function CreatePollScreen() {
         setOptions(newOptions);
     };
 
-    const scrollToInput = useCallback((y: number) => {
-        if (Platform.OS !== 'android') return;
+    const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 120) => {
+        const sv = formScrollRef.current;
+        if (!sv) return;
+        const delay = Platform.OS === 'android' ? 120 : 0;
         setTimeout(() => {
-            formScrollRef.current?.scrollTo({ y, animated: true });
-        }, 120);
+            sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+        }, delay);
     }, []);
 
     const handleSaveAsDraft = async () => {
@@ -261,34 +264,40 @@ export default function CreatePollScreen() {
         }
     };
 
-    if (isLoadingDraft) {
-        return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-                    <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-                        <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                    </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Sondage</Text>
-                    <View style={{ width: 44 }} />
-                </View>
-                <View style={styles.loadingContainer}>
-                    <Text style={{ color: colors.textSecondary }}>Chargement...</Text>
+	    if (isLoadingDraft) {
+	        return (
+	            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+	                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+	                    <IconButton
+	                        onPress={() => router.back()}
+	                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                        accessibilityLabel="Retour"
+	                        style={styles.headerButton}
+	                    />
+	                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Sondage</Text>
+	                    <View style={{ width: 44 }} />
+	                </View>
+	                <View style={styles.loadingContainer}>
+	                    <Text style={{ color: colors.textSecondary }}>Chargement...</Text>
                 </View>
             </SafeAreaView>
         );
     }
 
-    return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-                <TouchableOpacity style={styles.headerButton} onPress={handleBack}>
-                    <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-                    {isEditMode ? 'Modifier le sondage' : hasDraft ? 'Brouillon' : 'Nouveau sondage'}
-                </Text>
-                <View style={{ width: 44 }} />
-            </View>
+	    return (
+	        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+	            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+	                <IconButton
+	                    onPress={handleBack}
+	                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                    accessibilityLabel="Retour"
+	                    style={styles.headerButton}
+	                />
+	                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+	                    {isEditMode ? 'Modifier le sondage' : hasDraft ? 'Brouillon' : 'Nouveau sondage'}
+	                </Text>
+	                <View style={{ width: 44 }} />
+	            </View>
 
             {!isEditMode && hasDraft && (
                 <View style={[styles.draftBanner, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
@@ -299,62 +308,82 @@ export default function CreatePollScreen() {
                 </View>
             )}
 
-            <KeyboardAvoidingView
-                style={styles.keyboardContent}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={0}
-            >
-            <ScrollView
-                ref={formScrollRef}
-                style={styles.content}
-                contentContainerStyle={styles.contentContainer}
-                keyboardShouldPersistTaps="handled"
-                keyboardDismissMode="on-drag"
-            >
-                <View style={styles.section}>
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>Question</Text>
-                    <TextInput
-                        style={[styles.questionInput, { color: colors.textPrimary, borderColor: colors.borderColor, backgroundColor: colors.gray100 }]}
-                        multiline
-                        placeholder="Posez votre question ici..."
-                        placeholderTextColor={colors.gray500}
-                        value={question}
-                        onChangeText={setQuestion}
-                        onFocus={() => scrollToInput(90)}
-                        textAlignVertical="top"
-                    />
-                </View>
+	            <KeyboardAvoidingView
+	                style={styles.keyboardContent}
+	                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+	                keyboardVerticalOffset={0}
+	            >
+	            <ScrollToInputContext.Provider value={scrollToInput}>
+	            <ScrollView
+	                ref={formScrollRef}
+	                style={styles.content}
+	                contentContainerStyle={styles.contentContainer}
+	                keyboardShouldPersistTaps="handled"
+	                keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+	            >
+	                <View style={styles.section}>
+	                    <Text style={[styles.label, { color: colors.textSecondary }]}>Question</Text>
+		                    <Input
+		                        multiline
+		                        placeholder="Posez votre question ici..."
+		                        placeholderTextColor={colors.gray500}
+		                        value={question}
+		                        onChangeText={setQuestion}
+		                        textAlignVertical="top"
+		                        inputContainerStyle={{ minHeight: 80 }}
+		                        inputStyle={{
+		                            fontSize: TYPOGRAPHY.fontSize.lg,
+	                            fontWeight: TYPOGRAPHY.fontWeight.medium,
+	                        }}
+	                    />
+	                </View>
 
                 <View style={styles.section}>
                     <Text style={[styles.label, { color: colors.textSecondary }]}>Options</Text>
-                    {options.map((option, index) => (
-                        <View key={index} style={styles.optionRow}>
-                            <View style={[styles.optionInputContainer, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}>
-                                <Text style={[styles.optionIndex, { color: colors.textSecondary }]}>{index + 1}.</Text>
-                                <TextInput
-                                    style={[styles.optionInput, { color: colors.textPrimary }]}
-                                    placeholder={`Option ${index + 1}`}
-                                    placeholderTextColor={colors.gray400}
-                                    value={option}
-                                    onChangeText={(text) => handleOptionChange(text, index)}
-                                    onFocus={() => scrollToInput(200 + index * 64)}
-                                />
-                            </View>
-                            {options.length > 2 && (
-                                <TouchableOpacity onPress={() => removeOption(index)} style={styles.removeButton}>
-                                    <Trash2 size={20} color={colors.error} />
-                                </TouchableOpacity>
+	                    {options.map((option, index) => (
+	                        <View key={index} style={styles.optionRow}>
+	                            <View style={[styles.optionInputContainer, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}>
+	                                <Text style={[styles.optionIndex, { color: colors.textSecondary }]}>{index + 1}.</Text>
+		                                <Input
+		                                    placeholder={`Option ${index + 1}`}
+		                                    placeholderTextColor={colors.gray400}
+		                                    value={option}
+		                                    onChangeText={(text) => handleOptionChange(text, index)}
+		                                    inputContainerStyle={{
+		                                        borderWidth: 0,
+		                                        backgroundColor: 'transparent',
+		                                        height: '100%',
+	                                    }}
+	                                    inputStyle={{
+	                                        color: colors.textPrimary,
+	                                        paddingHorizontal: 0,
+	                                        paddingTop: 0,
+	                                        paddingBottom: 0,
+	                                        fontSize: TYPOGRAPHY.fontSize.md,
+	                                    }}
+	                                />
+	                            </View>
+	                            {options.length > 2 && (
+	                                <IconButton
+	                                    onPress={() => removeOption(index)}
+	                                    icon={<Trash2 size={20} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+	                                    accessibilityLabel="Supprimer l’option"
+	                                    variant="ghost"
+	                                    size="md"
+	                                    style={styles.removeButton}
+	                                />
                             )}
                         </View>
                     ))}
 
-                    <TouchableOpacity
-                        style={[styles.addOptionButton, { borderColor: colors.primary }]}
+                    <Button
+                        title="Ajouter une option"
                         onPress={addOption}
-                    >
-                        <Plus size={20} color={colors.primary} />
-                        <Text style={[styles.addOptionText, { color: colors.primary }]}>Ajouter une option</Text>
-                    </TouchableOpacity>
+                        variant="outline"
+                        icon={<Plus size={20} color={colors.primary} />}
+                        style={[styles.addOptionButton, { borderColor: colors.primary }]}
+                        textStyle={[styles.addOptionText, { color: colors.primary }]}
+                    />
                 </View>
 
                 <View style={styles.settingsSection}>
@@ -386,24 +415,28 @@ export default function CreatePollScreen() {
                         <View style={styles.dateSection}>
                             <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>Se termine le</Text>
                             <View style={styles.dateRow}>
-                                <TouchableOpacity
-                                    style={[styles.dateButton, { borderColor: colors.borderColor }]}
+                                <SelectCard
+                                    style={[styles.dateButton, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}
                                     onPress={() => setShowDatePicker(true)}
+                                    selected={false}
+                                    accessibilityLabel="Choisir la date de fin"
                                 >
                                     <Calendar size={18} color={colors.primary} />
                                     <Text style={{ color: colors.textPrimary }}>
                                         {pollEndDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.dateButton, { borderColor: colors.borderColor }]}
+                                </SelectCard>
+                                <SelectCard
+                                    style={[styles.dateButton, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}
                                     onPress={() => setShowTimePicker(true)}
+                                    selected={false}
+                                    accessibilityLabel="Choisir l’heure de fin"
                                 >
                                     <Clock size={18} color={colors.primary} />
                                     <Text style={{ color: colors.textPrimary }}>
                                         {pollEndDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                                     </Text>
-                                </TouchableOpacity>
+                                </SelectCard>
                             </View>
                         </View>
                     )}
@@ -413,13 +446,15 @@ export default function CreatePollScreen() {
 
             <View style={[styles.footer, { borderTopColor: colors.borderColor }]}>
                 {!isEditMode && (
-                    <TouchableOpacity
-                        style={[styles.draftBtn, { borderColor: colors.borderColor }]}
+                    <IconButton
                         onPress={handleSaveAsDraft}
                         disabled={!question.trim() || isSubmitting}
-                    >
-                        <Save size={18} color={colors.gray500} />
-                    </TouchableOpacity>
+                        icon={<Save size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+                        accessibilityLabel="Sauvegarder en brouillon"
+                        variant="outline"
+                        size="md"
+                        style={[styles.draftBtn, { borderColor: colors.borderColor }]}
+                    />
                 )}
                 <View style={styles.submitBtnContainer}>
                     <Button
@@ -429,8 +464,9 @@ export default function CreatePollScreen() {
                         fullWidth
                     />
                 </View>
-            </View>
-            </KeyboardAvoidingView>
+	            </View>
+	            </ScrollToInputContext.Provider>
+	            </KeyboardAvoidingView>
 
             {showDatePicker && (
                 <DateTimePicker

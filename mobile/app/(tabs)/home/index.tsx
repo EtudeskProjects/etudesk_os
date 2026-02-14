@@ -4,9 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Dimensions,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,7 +38,7 @@ import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
-import { Header, FooterNav, IconButton } from '../../../src/components/ui';
+import { Header, FooterNav, IconButton, SelectCard, Button, LoadingShimmer } from '../../../src/components/ui';
 import { CreateOfferModal } from '../../../src/components/CreateOfferModal';
 import { formatCompactNumber } from '../../../src/utils/number';
 import {
@@ -393,10 +391,11 @@ const renderTalentContent = () => (
 
     {/* Credit Balance Banner */}
     {creditBalance !== null && (
-      <TouchableOpacity
-        style={[styles.creditBanner, { backgroundColor: colors.surface }]}
+      <SelectCard
+        style={[styles.creditBanner, { backgroundColor: colors.surface, borderWidth: 0, borderColor: 'transparent' }]}
         onPress={() => router.push('/settings/credits' as any)}
-        activeOpacity={0.8}
+        selected={false}
+        accessibilityLabel="Ouvrir crédits et facturation"
       >
         <View style={styles.creditBannerLeft}>
           <Coins size={16} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
@@ -407,7 +406,7 @@ const renderTalentContent = () => (
         <Text style={[styles.creditBannerLink, { color: colors.primary }]}>
           Recharger
         </Text>
-      </TouchableOpacity>
+      </SelectCard>
     )}
 
     {/* Objectif du jour (talents) */}
@@ -438,11 +437,12 @@ const renderTalentContent = () => (
         {quickActions.map((action) => {
           const IconComponent = action.icon;
           return (
-            <TouchableOpacity
+            <SelectCard
               key={action.id}
-              style={[styles.quickActionCard, { backgroundColor: action.theme.bg }]}
+              style={[styles.quickActionCard, { backgroundColor: action.theme.bg, borderWidth: 0, borderColor: 'transparent' }]}
               onPress={() => router.push(action.route as any)}
-              activeOpacity={0.8}
+              selected={false}
+              accessibilityLabel={action.label}
             >
               <View style={[styles.quickActionIconContainer, { backgroundColor: colors.surface }]}>
                 <IconComponent size={22} color={action.theme.icon} strokeWidth={ICON.strokeWidth} />
@@ -457,24 +457,22 @@ const renderTalentContent = () => (
                   </Text>
                 </View>
               )}
-            </TouchableOpacity>
+            </SelectCard>
           );
         })}
       </View>
     </View>
 
     {/* Train Button */}
-    <TouchableOpacity
-      style={[styles.actionButton, { backgroundColor: colors.primary }]}
-      onPress={() => router.push({
-        pathname: '/(tabs)/assistant',
-        params: { mode: 'study', focusInput: 'true' },
-      })}
-      activeOpacity={0.8}
-    >
-      <BookOpen size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-      <Text style={[styles.actionButtonText, { color: colors.textOnPrimary }]}>Se former</Text>
-    </TouchableOpacity>
+    <Button
+      title="Se former"
+      onPress={() => router.push({ pathname: '/(tabs)/assistant', params: { mode: 'study', focusInput: 'true' } })}
+      variant="primary"
+      fullWidth
+      icon={<BookOpen size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+      style={styles.actionButton}
+      textStyle={styles.actionButtonText}
+    />
 
     {/* Notifications Section */}
     <View style={styles.section}>
@@ -482,9 +480,14 @@ const renderTalentContent = () => (
         <View style={styles.sectionTitleRow}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Notifications</Text>
         </View>
-        <TouchableOpacity onPress={() => router.push('/settings/notifications')}>
-          <Text style={[styles.seeMore, { color: colors.primary }]}>Voir tout</Text>
-        </TouchableOpacity>
+        <Button
+          title="Voir tout"
+          onPress={() => router.push('/settings/notifications')}
+          variant="ghost"
+          size="sm"
+          style={styles.seeMoreButton}
+          textStyle={styles.seeMore}
+        />
       </View>
 
       <View style={[styles.listContainer, { backgroundColor: colors.surface }]}>
@@ -504,14 +507,17 @@ const renderTalentContent = () => (
             const notifColor = getNotificationColor(notification.type);
             const isLast = index === notifications.length - 1;
             return (
-              <TouchableOpacity
+              <SelectCard
                 key={notification.id}
                 style={[
                   styles.listItem,
                   { borderBottomColor: colors.gray100 },
                   isLast && styles.listItemLast,
+                  { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
                 ]}
-                activeOpacity={0.8}
+                onPress={() => {}}
+                selected={false}
+                accessibilityLabel={notification.title}
               >
                 <View style={[styles.listItemIconBox, { backgroundColor: notifColor.bg }]}>
                   <NotifIcon size={18} color={notifColor.icon} strokeWidth={ICON.strokeWidth} />
@@ -527,7 +533,7 @@ const renderTalentContent = () => (
                 <Text style={[styles.listItemTime, { color: colors.gray400 }]}>
                   {formatRelativeTime(notification.created_at)}
                 </Text>
-              </TouchableOpacity>
+              </SelectCard>
             );
           })
         )}
@@ -577,7 +583,7 @@ return (
     >
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       ) : (
         <>
@@ -724,6 +730,10 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
+  seeMoreButton: {
+    paddingHorizontal: 0,
+    backgroundColor: 'transparent',
+  },
 
   countBadge: {
     paddingHorizontal: SPACING.xs,
@@ -787,14 +797,8 @@ const styles = StyleSheet.create({
 
   // Action Button
   actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.xl,
     borderRadius: BORDER.radius.md,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
   },
 
   actionButtonText: {
@@ -893,8 +897,7 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
-  // Bottom Spacer
   bottomSpacer: {
-    height: SPACING.xxl,
+    height: SPACING.xl,
   },
 });

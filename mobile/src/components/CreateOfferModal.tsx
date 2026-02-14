@@ -3,7 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
     Modal,
     Animated,
     TouchableWithoutFeedback,
@@ -20,6 +19,8 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
+import { IconButton, SelectCard } from './ui';
+
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -110,7 +111,7 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, o
         >
             <View style={styles.modalContainer}>
                 <TouchableWithoutFeedback onPress={handleClose}>
-                    <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]} />
+                    <Animated.View style={[styles.modalOverlay, { backgroundColor: colors.overlay, opacity: fadeAnim }]} />
                 </TouchableWithoutFeedback>
                 <Animated.View
                     style={[
@@ -129,9 +130,12 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, o
                                 Choisissez le type d'offre à publier
                             </Text>
                         </View>
-                        <TouchableOpacity onPress={handleClose} style={[styles.closeButton, { backgroundColor: colors.gray100 }]}>
-                            <X size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-                        </TouchableOpacity>
+                        <IconButton
+                            onPress={handleClose}
+                            icon={<X size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+                            accessibilityLabel="Fermer"
+                            style={[styles.closeButton, { backgroundColor: colors.gray100 }]}
+                        />
                     </View>
                     <ScrollView 
                         style={styles.modalOptionsContainer}
@@ -141,7 +145,7 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, o
                         {CREATE_OPTIONS.map((option) => {
                             const IconComponent = option.icon;
                             return (
-                                <TouchableOpacity
+                                <SelectCard
                                     key={option.id}
                                     style={[styles.modalOptionCard, { backgroundColor: colors.background, borderColor: colors.borderColor }]}
                                     onPress={() => {
@@ -149,7 +153,7 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, o
                                         // Small delay to allow modal to close before navigating
                                         setTimeout(() => router.push(option.route), 250);
                                     }}
-                                    activeOpacity={0.7}
+                                    accessibilityLabel={option.label}
                                 >
                                     <View style={[styles.modalOptionIconLarge, { backgroundColor: withOpacity(option.color, OPACITY[15]) }]}>
                                         <IconComponent size={28} color={option.color} strokeWidth={ICON.strokeWidth} />
@@ -161,7 +165,7 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, o
                                     <View style={[styles.modalOptionArrow, { backgroundColor: withOpacity(option.color, OPACITY[10]) }]}>
                                         <ChevronRight size={ICON.size.sm} color={option.color} strokeWidth={ICON.strokeWidth} />
                                     </View>
-                                </TouchableOpacity>
+                                </SelectCard>
                             );
                         })}
                     </ScrollView>
@@ -179,7 +183,6 @@ const styles = StyleSheet.create({
 
     modalOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
 
     modalContent: {

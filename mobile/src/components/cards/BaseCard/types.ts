@@ -28,6 +28,7 @@ export interface CardAction {
   color?: string;
   onPress: () => void;
   fill?: string;
+  accessibilityLabel?: string;
 }
 
 export interface BaseCardProps {

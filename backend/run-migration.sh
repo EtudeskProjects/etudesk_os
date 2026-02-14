@@ -5,7 +5,7 @@
 
 if [ -z "$1" ]; then
   echo "Usage: ./run-migration.sh <migration-file>"
-  echo "Example: ./run-migration.sh src/database/migrations/013_add_tags_sectors_to_communities.sql"
+  echo "Example: ./run-migration.sh src/database/migrations/001_baseline_schema.sql"
   exit 1
 fi
 

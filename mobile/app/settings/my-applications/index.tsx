@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -16,7 +15,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
-import { PageLayout, EmptyState } from '../../../src/components/ui';
+import { PageLayout, EmptyState, Chip } from '../../../src/components/ui';
 import { OpportunityCard } from '../../../src/components/cards';
 import { applicationService } from '../../../src/services';
 import type { Application, ApplicationStatus, Opportunity } from '../../../src/types/models';
@@ -81,25 +80,22 @@ export default function MyApplicationsScreen() {
     const count = statusCounts[status] || 0;
 
     return (
-      <TouchableOpacity
+      <Chip
         key={status}
+        label={`${label} (${count})`}
+        selected={isActive}
         style={[
           styles.filterChip,
           { backgroundColor: colors.gray100, borderColor: colors.gray200 },
           isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
         ]}
+        textStyle={[
+          styles.filterChipText,
+          { color: colors.gray700 },
+          isActive && { color: colors.textOnPrimary },
+        ]}
         onPress={() => setFilter(status)}
-      >
-        <Text
-          style={[
-            styles.filterChipText,
-            { color: colors.gray700 },
-            isActive && { color: colors.textOnPrimary },
-          ]}
-        >
-          {label} ({count})
-        </Text>
-      </TouchableOpacity>
+      />
     );
   };
 
@@ -150,24 +146,30 @@ export default function MyApplicationsScreen() {
       isRefreshing={isRefreshing}
       isLoading={isLoading}
       headerContent={headerContent}
+      useScrollView={false}
     >
-      {filteredApplications.length === 0 ? (
-        <EmptyState
-          icon={Inbox}
-          title={filter === 'all' ? 'Aucune candidature' : 'Aucun résultat'}
-          subtitle={
-            filter === 'all'
-              ? "Vous n'avez pas encore postulé à des opportunités. Explorez les offres disponibles."
-              : 'Aucune candidature avec ce statut.'
-          }
-          {...(filter === 'all' ? {
-            actionLabel: 'Explorer',
-            onAction: () => router.push('/(tabs)/explore?category=opportunities'),
-          } : {})}
-        />
-      ) : (
-        filteredApplications.map((item) => renderApplicationItem(item))
-      )}
+      <FlatList
+        data={filteredApplications}
+        keyExtractor={(a) => a.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => renderApplicationItem(item)}
+        ListEmptyComponent={
+          <EmptyState
+            icon={Inbox}
+            title={filter === 'all' ? 'Aucune candidature' : 'Aucun résultat'}
+            subtitle={
+              filter === 'all'
+                ? "Vous n'avez pas encore postulé à des opportunités. Explorez les offres disponibles."
+                : 'Aucune candidature avec ce statut.'
+            }
+            {...(filter === 'all' ? {
+              actionLabel: 'Explorer',
+              onAction: () => router.push('/(tabs)/explore?category=opportunities'),
+            } : {})}
+          />
+        }
+      />
     </PageLayout>
   );
 }
@@ -194,6 +196,11 @@ const styles = StyleSheet.create({
   filterChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+  listContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xxl,
   },
 
 });

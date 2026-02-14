@@ -4,12 +4,14 @@
  */
 
 import React, { useState } from 'react';
-import { TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Copy, Check } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { ICON } from '../../constants/theme';
 import { api } from '../../services/api';
+import { ShimmerPlaceholder } from '../ui';
+
 
 interface CopyButtonProps {
   content: string;
@@ -189,20 +191,21 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ content, size = ICON.siz
   };
 
   return (
-    <TouchableOpacity
-      style={styles.button}
+    <Pressable
+      style={[styles.button, loading && { opacity: 0.6 }]}
       onPress={handleCopy}
-      activeOpacity={0.7}
       disabled={loading}
+      accessibilityRole="button"
+      accessibilityLabel="Copier"
     >
       {loading ? (
-        <ActivityIndicator size={size} color={colors.textSecondary} />
+        <ShimmerPlaceholder width={(size || 18) + 4} height={12} variant="bar" />
       ) : copied ? (
         <Check size={size} color={colors.success} strokeWidth={ICON.strokeWidth} />
       ) : (
         <Copy size={size} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 

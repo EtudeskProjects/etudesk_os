@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Image,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -17,10 +16,7 @@ import {
   User,
   Mail,
   Calendar,
-  Trash2,
-  Check,
-  ChevronDown,
-  ChevronUp,
+	Trash2,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
@@ -36,6 +32,8 @@ import {
   DEFAULT_ROLE_PERMISSIONS,
 } from '../../../src/types/models';
 import { useAlert } from '../../../src/contexts/AlertContext';
+import { AccordionRow, Button, CheckboxRow, IconButton, RadioRow } from '../../../src/components/ui';
+
 
 const getRoleIcon = (role: OrganizationRole) => {
   switch (role) {
@@ -107,9 +105,11 @@ export default function MemberDetailScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
+          <IconButton
+            onPress={() => router.back()}
+            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel="Retour"
+          />
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Membre</Text>
           <View style={styles.backButton} />
         </View>
@@ -186,9 +186,11 @@ export default function MemberDetailScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Détails</Text>
         <View style={styles.backButton} />
       </View>
@@ -246,40 +248,31 @@ export default function MemberDetailScreen() {
                 const rColor = getRoleColor(role, colors);
                 const isSelected = selectedRole === role;
 
+                const desc =
+                  role === ORGANIZATION_ROLES.ADMIN
+                    ? 'Accès complet sauf suppression'
+                    : role === ORGANIZATION_ROLES.MANAGER
+                      ? 'Gestion des contenus'
+                      : 'Accès en lecture seule';
+
                 return (
-                  <TouchableOpacity
+                  <RadioRow
                     key={role}
+                    title={ORGANIZATION_ROLE_LABELS[role]}
+                    description={desc}
+                    selected={isSelected}
+                    onPress={() => handleRoleChange(role)}
+                    icon={<RIcon size={ICON.size.sm} color={rColor} strokeWidth={ICON.strokeWidth} />}
                     style={[
                       styles.roleOption,
                       { borderBottomColor: colors.gray100 },
                       isLast && styles.roleOptionLast,
                     ]}
-                    onPress={() => handleRoleChange(role)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.roleOptionIcon, { backgroundColor: withOpacity(rColor, OPACITY[15]) }]}>
-                      <RIcon size={ICON.size.sm} color={rColor} strokeWidth={ICON.strokeWidth} />
-                    </View>
-                    <View style={styles.roleOptionInfo}>
-                      <Text style={[styles.roleOptionTitle, { color: colors.textPrimary }]}>
-                        {ORGANIZATION_ROLE_LABELS[role]}
-                      </Text>
-                      <Text style={[styles.roleOptionDescription, { color: colors.textSecondary }]}>
-                        {role === ORGANIZATION_ROLES.ADMIN
-                          ? 'Accès complet sauf suppression'
-                          : role === ORGANIZATION_ROLES.MANAGER
-                            ? 'Gestion des contenus'
-                            : 'Accès en lecture seule'}
-                      </Text>
-                    </View>
-                    <View style={[
-                      styles.radioButton,
-                      { borderColor: isSelected ? colors.primary : colors.gray300 },
-                      isSelected && { backgroundColor: colors.primary },
-                    ]}>
-                      {isSelected && <Check size={14} color={colors.textOnPrimary} strokeWidth={3} />}
-                    </View>
-                  </TouchableOpacity>
+                    iconContainerStyle={[styles.roleOptionIcon, { backgroundColor: withOpacity(rColor, OPACITY[15]) }]}
+                    titleStyle={styles.roleOptionTitle}
+                    descriptionStyle={styles.roleOptionDescription}
+                    radioStyle={styles.radioButton}
+                  />
                 );
               })}
             </View>
@@ -295,56 +288,43 @@ export default function MemberDetailScreen() {
 
                 return (
                   <View key={key}>
-                    <TouchableOpacity
+                    <AccordionRow
+                      title={group.label}
+                      subtitle={`${activeCount}/${groupPermissions.length} activées`}
+                      expanded={isExpanded}
+                      onPress={() => toggleGroup(key)}
                       style={[
                         styles.permissionGroupHeader,
                         { borderBottomColor: colors.gray100 },
                         isLastGroup && !isExpanded && styles.permissionGroupHeaderLast,
                       ]}
-                      onPress={() => toggleGroup(key)}
-                      activeOpacity={0.7}
-                    >
-                      <View>
-                        <Text style={[styles.permissionGroupTitle, { color: colors.textPrimary }]}>
-                          {group.label}
-                        </Text>
-                        <Text style={[styles.permissionGroupCount, { color: colors.textSecondary }]}>
-                          {activeCount}/{groupPermissions.length} activées
-                        </Text>
-                      </View>
-                      {isExpanded ? (
-                        <ChevronUp size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                      ) : (
-                        <ChevronDown size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                      )}
-                    </TouchableOpacity>
+                      titleStyle={styles.permissionGroupTitle}
+                      subtitleStyle={styles.permissionGroupCount}
+                    />
 
                     {isExpanded && groupPermissions.map((permission, permIndex) => {
                       const isLastPerm = permIndex === groupPermissions.length - 1;
                       const isEnabled = permissions.includes(permission);
 
                       return (
-                        <TouchableOpacity
+                        <CheckboxRow
                           key={permission}
+                          label={PERMISSION_LABELS[permission]}
+                          checked={isEnabled}
+                          onPress={() => togglePermission(permission)}
+                          checkboxPosition="right"
                           style={[
                             styles.permissionItem,
                             { borderBottomColor: colors.gray100 },
                             isLastPerm && isLastGroup && styles.permissionItemLast,
                           ]}
-                          onPress={() => togglePermission(permission)}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={[styles.permissionLabel, { color: colors.textPrimary }]}>
-                            {PERMISSION_LABELS[permission]}
-                          </Text>
-                          <View style={[
+                          labelStyle={[styles.permissionLabel, { color: colors.textPrimary }]}
+                          checkboxStyle={[
                             styles.checkbox,
                             { borderColor: isEnabled ? colors.primary : colors.gray300 },
                             isEnabled && { backgroundColor: colors.primary },
-                          ]}>
-                            {isEnabled && <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />}
-                          </View>
-                        </TouchableOpacity>
+                          ]}
+                        />
                       );
                     })}
                   </View>
@@ -356,30 +336,29 @@ export default function MemberDetailScreen() {
 
         {/* Remove Member Button */}
         {canRemoveMembers && !isOwner && (
-          <TouchableOpacity
-            style={[styles.removeButton, { borderColor: colors.error }]}
+          <Button
+            title="Retirer de l'organisation"
             onPress={handleRemove}
-          >
-            <Trash2 size={ICON.size.md} color={colors.error} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.removeButtonText, { color: colors.error }]}>
-              Retirer de l'organisation
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            icon={<Trash2 size={ICON.size.md} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.removeButton, { borderColor: colors.error }]}
+            textStyle={[styles.removeButtonText, { color: colors.error }]}
+          />
         )}
       </ScrollView>
 
       {/* Save Button */}
       {canEdit && hasChanges && (
         <View style={[styles.footer, { backgroundColor: colors.background }]}>
-          <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: colors.primary }]}
+          <Button
+            title={isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
             onPress={handleSave}
             disabled={isSaving}
-          >
-            <Text style={[styles.saveButtonText, { color: colors.textOnPrimary }]}>
-              {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
-            </Text>
-          </TouchableOpacity>
+            fullWidth
+            style={[styles.saveButton, { backgroundColor: colors.primary }]}
+            textStyle={[styles.saveButtonText, { color: colors.textOnPrimary }]}
+          />
         </View>
       )}
     </SafeAreaView>

@@ -5,20 +5,16 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { MapPin, Navigation, X } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, BORDER } from '../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, STATIC_COLORS } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../contexts/I18nContext';
 import { alertsGlobal } from '../contexts/AlertContext';
+import { IconButton, LoadingShimmer, ShimmerPlaceholder } from './ui';
+
 
 interface Coordinates {
   latitude: number;
@@ -109,13 +105,13 @@ const getMapHTML = (lat: number, lng: number, hasMarker: boolean, primaryColor: 
       border-radius: 50% 50% 50% 0;
       transform: rotate(-45deg);
       position: relative;
-      border: 2px solid #FFFFFF;
+      border: 2px solid ${STATIC_COLORS.white};
     }
     .marker-pin::after {
       content: '';
       width: 12px;
       height: 12px;
-      background: #FFFFFF;
+      background: ${STATIC_COLORS.white};
       border-radius: 50%;
       position: absolute;
       top: 8px;
@@ -354,33 +350,32 @@ export function MapLocationPicker({
 
         {isLoading && (
           <View style={[styles.loadingOverlay, { backgroundColor: colors.surface }]}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-              {t('map.loadingMap')}
-            </Text>
+            <LoadingShimmer variant="fullPage" label={t('map.loadingMap')} />
           </View>
         )}
 
         {onClose && (
-          <TouchableOpacity
-            style={[styles.closeButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+          <IconButton
             onPress={onClose}
-          >
-            <X size={18} color={colors.textPrimary} strokeWidth={1.5} />
-          </TouchableOpacity>
+            icon={<X size={18} color={colors.textPrimary} strokeWidth={1.5} />}
+            accessibilityLabel="Fermer"
+            variant="outline"
+            style={[styles.closeButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+          />
         )}
 
-        <TouchableOpacity
-          style={[styles.myLocationButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+        <IconButton
           onPress={getCurrentLocation}
           disabled={isLocating}
-        >
-          {isLocating ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <Navigation size={18} color={colors.primary} strokeWidth={1.5} />
-          )}
-        </TouchableOpacity>
+          icon={
+            isLocating
+              ? <ShimmerPlaceholder width={20} height={14} variant="bar" />
+              : <Navigation size={18} color={colors.primary} strokeWidth={1.5} />
+          }
+          accessibilityLabel="Ma position"
+          variant="outline"
+          style={[styles.myLocationButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+        />
       </View>
 
       {/* Affichage de l'adresse sélectionnée */}

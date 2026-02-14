@@ -1,14 +1,8 @@
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +13,7 @@ import { useI18n } from '../../src/contexts/I18nContext';
 import { useForm } from '../../src/hooks/useForm';
 import { otpService } from '../../src/services/otpService';
 import { useAlert } from '../../src/contexts/AlertContext';
+import { Button, IconButton, Input, KeyboardAwareScrollView } from '../../src/components/ui';
 
 function isPhoneInvalid(value: string): boolean {
   const cleaned = value.replace(/[^\d+]/g, '');
@@ -29,7 +24,7 @@ export default function WhatsAppLoginScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const scrollViewRef = useRef<ScrollView>(null);
+  const alerts = useAlert();
 
   const form = useForm({
     fields: {
@@ -59,121 +54,90 @@ export default function WhatsAppLoginScreen() {
     } catch {
       void alerts.showAlert({ title: t('common.error'), message: t('auth.whatsappLogin.sendError'), buttons: [{ text: t('common.retry'), onPress: handleSendOTP }, { text: t('common.cancel') }] });
     }
-  }, [form, t]);
-
-  const handlePhoneFocus = useCallback(() => {
-    if (Platform.OS !== 'android') return;
-    setTimeout(() => {
-      scrollViewRef.current?.scrollTo({ y: 220, animated: true });
-    }, 120);
-  }, []);
-  const alerts = useAlert();
+  }, [alerts, form, t]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
+      <View style={styles.header}>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+          size="sm"
+          variant="filled"
+          style={[styles.backButton, { backgroundColor: colors.surface }]}
+        />
+      </View>
+
+      <KeyboardAwareScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.surface }]}
-            onPress={() => router.back()}
-            activeOpacity={0.8}
-          >
-            <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
+        <View style={styles.content}>
+          <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
+            <MessageCircle size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+          </View>
+
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {t('auth.whatsappLogin.title')}
+          </Text>
+
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            {t('auth.whatsappLogin.subtitle')}
+          </Text>
+
+          <View style={styles.inputContainer}>
+            <Input
+              label={t('auth.whatsappLogin.phoneLabel')}
+              placeholder="+2250700000000"
+              value={form.getValue('phone')}
+              onChangeText={(text) => form.setValue('phone', text)}
+              onBlur={() => form.setTouched('phone')}
+              keyboardType="phone-pad"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus={true}
+              editable={!form.state.isSubmitting}
+              leftIcon={<MessageCircle size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+              error={form.getError('phone') || undefined}
+              inputContainerStyle={[
+                styles.inputWrapper,
+                { backgroundColor: colors.surface, borderColor: form.getError('phone') ? colors.error : colors.borderColor },
+              ]}
+              inputStyle={[styles.input, { color: colors.textPrimary, paddingHorizontal: 0 }]}
+            />
+          </View>
         </View>
 
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.content}>
-            <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-              <MessageCircle size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-            </View>
+        <View style={styles.footer}>
+          <Button
+            title={t('auth.whatsappLogin.sendCode')}
+            onPress={handleSendOTP}
+            disabled={!form.getValue('phone').trim() || form.state.isSubmitting}
+            loading={form.state.isSubmitting}
+            fullWidth
+            icon={<ArrowRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+            iconPosition="right"
+            style={[
+              styles.submitButton,
+              { backgroundColor: colors.primary },
+              (!form.getValue('phone').trim() || form.state.isSubmitting) && styles.submitButtonDisabled,
+            ]}
+            textStyle={[styles.submitButtonText, { color: colors.textOnPrimary }]}
+          />
 
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
-              {t('auth.whatsappLogin.title')}
-            </Text>
-
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              {t('auth.whatsappLogin.subtitle')}
-            </Text>
-
-            <View style={styles.inputContainer}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>
-                {t('auth.whatsappLogin.phoneLabel')}
-              </Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  { backgroundColor: colors.surface, borderColor: form.getError('phone') ? colors.error : colors.borderColor },
-                ]}
-              >
-                <MessageCircle size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                <TextInput
-                  style={[styles.input, { color: colors.textPrimary }]}
-                  placeholder="+2250700000000"
-                  placeholderTextColor={colors.gray400}
-                  value={form.getValue('phone')}
-                  onChangeText={(text) => form.setValue('phone', text)}
-                  onBlur={() => form.setTouched('phone')}
-                  onFocus={handlePhoneFocus}
-                  keyboardType="phone-pad"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoFocus={true}
-                  editable={!form.state.isSubmitting}
-                />
-              </View>
-              {form.getError('phone') ? (
-                <Text style={[styles.errorText, { color: colors.error }]}>{form.getError('phone')}</Text>
-              ) : null}
-            </View>
-          </View>
-
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                { backgroundColor: colors.primary },
-                (!form.getValue('phone').trim() || form.state.isSubmitting) && styles.submitButtonDisabled,
-              ]}
-              onPress={handleSendOTP}
-              activeOpacity={0.8}
-              disabled={!form.getValue('phone').trim() || form.state.isSubmitting}
-            >
-              {form.state.isSubmitting ? (
-                <ActivityIndicator color={colors.textOnPrimary} />
-              ) : (
-                <>
-                  <Text style={[styles.submitButtonText, { color: colors.textOnPrimary }]}>{t('auth.whatsappLogin.sendCode')}</Text>
-                  <ArrowRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                </>
-              )}
-            </TouchableOpacity>
-
-            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-              {t('auth.whatsappLogin.infoText')}
-            </Text>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
+            {t('auth.whatsappLogin.infoText')}
+          </Text>
+        </View>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  keyboardView: {
     flex: 1,
   },
   header: {

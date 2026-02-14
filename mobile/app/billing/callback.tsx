@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { useTheme } from '../../src/hooks/useTheme';
+import { LoadingShimmer } from '../../src/components/ui';
 import { SPACING, TYPOGRAPHY } from '../../src/constants/theme';
 
 export default function BillingCallbackScreen() {
@@ -28,8 +29,7 @@ export default function BillingCallbackScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.text, { color: colors.textPrimary }]}>Validation du paiement...</Text>
+        <LoadingShimmer variant="fullPage" label="Validation du paiement..." />
       </View>
     </SafeAreaView>
   );

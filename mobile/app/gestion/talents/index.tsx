@@ -4,8 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
   Modal,
   KeyboardAvoidingView,
@@ -25,8 +23,8 @@ import {
   User,
   Radar,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, COMPONENT } from '../../../src/constants/theme';
-import { FooterNav, Input } from '../../../src/components/ui';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, COMPONENT, TAG_COLOR_PALETTE } from '../../../src/constants/theme';
+import { Button, Chip, FooterNav, IconButton, Input, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import {
@@ -53,10 +51,10 @@ export default function TalentsScreen() {
   const [tags, setTags] = useState<OrgTagDefinition[]>([]);
   const [showTagModal, setShowTagModal] = useState(false);
   const [newTagName, setNewTagName] = useState('');
-  const [newTagColor, setNewTagColor] = useState('#6B5E52');
+  const [newTagColor, setNewTagColor] = useState<(typeof TAG_COLOR_PALETTE)[number]>(TAG_COLOR_PALETTE[0]);
   const [activeTagFilter, setActiveTagFilter] = useState<string | undefined>(undefined);
 
-  const TAG_COLORS = ['#6B5E52', '#4A6741', '#8B4A3C', '#A67C52', '#5E6B52', '#6B525E', '#52656B'];
+  const TAG_COLORS = TAG_COLOR_PALETTE;
 
   const loadTalents = useCallback(async () => {
     if (!selectedOrg?.id) {
@@ -187,10 +185,11 @@ export default function TalentsScreen() {
   ];
 
   const renderTalent = ({ item }: { item: OrgTalent }) => (
-    <TouchableOpacity
-      style={[styles.talentCard, { backgroundColor: colors.surface }]}
-      activeOpacity={0.7}
+    <SelectCard
+      style={[styles.talentCard, { backgroundColor: colors.surface, borderWidth: 0, borderColor: 'transparent' }]}
       onPress={() => router.push(`/details/talent/${item.talent_id}` as any)}
+      selected={false}
+      accessibilityLabel={`Ouvrir ${item.first_name} ${item.last_name}`}
     >
       <View style={[styles.avatar, { backgroundColor: colors.gray100 }]}>
         {item.avatar_url ? (
@@ -241,33 +240,41 @@ export default function TalentsScreen() {
         )}
       </View>
 
-      <TouchableOpacity
+      <IconButton
         onPress={() => handleToggleFavorite(item)}
-        style={styles.favoriteButton}
-      >
-        <Heart
-          size={20}
-          color={item.is_favorite ? colors.error : colors.gray300}
-          fill={item.is_favorite ? colors.error : 'transparent'}
-          strokeWidth={ICON.strokeWidth}
-        />
-      </TouchableOpacity>
-    </TouchableOpacity>
+        icon={
+          <Heart
+            size={20}
+            color={item.is_favorite ? colors.error : colors.gray300}
+            fill={item.is_favorite ? colors.error : 'transparent'}
+            strokeWidth={ICON.strokeWidth}
+          />
+        }
+        accessibilityLabel={item.is_favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+        size="sm"
+        variant="ghost"
+      />
+    </SelectCard>
   );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.gray100 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+          style={styles.backButton}
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
           Mes Talents ({total})
         </Text>
-        <TouchableOpacity onPress={() => setShowTagModal(true)} style={styles.tagButton}>
-          <Tag size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => setShowTagModal(true)}
+          icon={<Tag size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Gérer les tags"
+        />
       </View>
 
       {/* Search */}
@@ -282,9 +289,14 @@ export default function TalentsScreen() {
         inputStyle={[styles.searchInput, { color: colors.textPrimary, paddingHorizontal: 0 }]}
         leftIcon={<Search size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
         rightIcon={search.length > 0 ? (
-          <TouchableOpacity onPress={() => { setSearch(''); }}>
-            <X size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
+          <IconButton
+            onPress={() => setSearch('')}
+            icon={<X size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel="Effacer la recherche"
+            size="sm"
+            variant="ghost"
+            style={{ backgroundColor: 'transparent' }}
+          />
         ) : undefined}
       />
 
@@ -298,25 +310,22 @@ export default function TalentsScreen() {
         {filters.map(f => {
           const isActive = activeFilter === f.key;
           return (
-            <TouchableOpacity
+            <Chip
               key={f.key || 'all'}
+              label={f.label}
+              selected={isActive}
+              onPress={() => setActiveFilter(f.key)}
               style={[
                 styles.filterChip,
                 { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                 isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
               ]}
-              onPress={() => setActiveFilter(f.key)}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  { color: colors.gray700 },
-                  isActive && { color: colors.textOnPrimary },
-                ]}
-              >
-                {f.label}
-              </Text>
-            </TouchableOpacity>
+              textStyle={[
+                styles.filterChipText,
+                { color: colors.gray700 },
+                isActive && { color: colors.textOnPrimary },
+              ]}
+            />
           );
         })}
       </ScrollView>
@@ -330,7 +339,10 @@ export default function TalentsScreen() {
           contentContainerStyle={styles.tagFiltersRow}
         >
           <Tag size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-          <TouchableOpacity
+          <Chip
+            label="Tous"
+            selected={!activeTagFilter}
+            onPress={() => setActiveTagFilter(undefined)}
             style={[
               styles.tagFilterChip,
               {
@@ -338,18 +350,25 @@ export default function TalentsScreen() {
                 borderColor: !activeTagFilter ? colors.primary : colors.gray200,
               },
             ]}
-            onPress={() => setActiveTagFilter(undefined)}
-          >
-            <Text style={[
+            textStyle={[
               styles.tagFilterChipText,
               { color: !activeTagFilter ? colors.textOnPrimary : colors.textSecondary },
-            ]}>
-              Tous
-            </Text>
-          </TouchableOpacity>
+            ]}
+          />
           {tags.map(tag => (
-            <TouchableOpacity
+            <Chip
               key={tag.id}
+              label={tag.name}
+              selected={activeTagFilter === tag.id}
+              onPress={() => setActiveTagFilter(activeTagFilter === tag.id ? undefined : tag.id)}
+              leftIcon={
+                <View
+                  style={[
+                    styles.tagFilterDot,
+                    { backgroundColor: activeTagFilter === tag.id ? colors.textOnPrimary : tag.color },
+                  ]}
+                />
+              }
               style={[
                 styles.tagFilterChip,
                 {
@@ -357,16 +376,11 @@ export default function TalentsScreen() {
                   borderColor: activeTagFilter === tag.id ? tag.color : tag.color + '60',
                 },
               ]}
-              onPress={() => setActiveTagFilter(activeTagFilter === tag.id ? undefined : tag.id)}
-            >
-              <View style={[styles.tagFilterDot, { backgroundColor: activeTagFilter === tag.id ? colors.textOnPrimary : tag.color }]} />
-              <Text style={[
+              textStyle={[
                 styles.tagFilterChipText,
                 { color: activeTagFilter === tag.id ? colors.textOnPrimary : tag.color },
-              ]}>
-                {tag.name}
-              </Text>
-            </TouchableOpacity>
+              ]}
+            />
           ))}
         </ScrollView>
       )}
@@ -374,7 +388,7 @@ export default function TalentsScreen() {
       {/* List */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       ) : (
         <FlatList
@@ -407,16 +421,20 @@ export default function TalentsScreen() {
       {/* Tag Management Modal */}
       <Modal visible={showTagModal} animationType="slide" transparent>
         <KeyboardAvoidingView
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <Pressable style={styles.modalBackdrop} onPress={() => setShowTagModal(false)} />
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Gérer les tags</Text>
-              <TouchableOpacity onPress={() => setShowTagModal(false)}>
-                <X size={24} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
+              <IconButton
+                onPress={() => setShowTagModal(false)}
+                icon={<X size={24} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+                accessibilityLabel="Fermer"
+                size="sm"
+                variant="ghost"
+              />
             </View>
 
             {/* Create tag */}
@@ -429,18 +447,20 @@ export default function TalentsScreen() {
                 inputContainerStyle={[styles.tagInput, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
                 inputStyle={{ color: colors.textPrimary, paddingHorizontal: 0 }}
               />
-              <TouchableOpacity
-                style={[styles.createTagButton, { backgroundColor: colors.primary }]}
+              <IconButton
                 onPress={handleCreateTag}
-              >
-                <Plus size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
+                icon={<Plus size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+                accessibilityLabel="Créer le tag"
+                variant="filled"
+                size="md"
+                style={[styles.createTagButton, { backgroundColor: colors.primary }]}
+              />
             </View>
 
             {/* Color picker */}
             <View style={styles.colorRow}>
               {TAG_COLORS.map(c => (
-                <TouchableOpacity
+                <SelectCard
                   key={c}
                   style={[
                     styles.colorDot,
@@ -448,7 +468,11 @@ export default function TalentsScreen() {
                     newTagColor === c && [styles.colorDotSelected, { borderColor: colors.textOnPrimary }],
                   ]}
                   onPress={() => setNewTagColor(c)}
-                />
+                  selected={false}
+                  accessibilityLabel={`Couleur ${c}`}
+                >
+                  <View />
+                </SelectCard>
               ))}
             </View>
 
@@ -458,9 +482,13 @@ export default function TalentsScreen() {
                 <View key={tag.id} style={[styles.tagItem, { borderBottomColor: colors.gray100 }]}>
                   <View style={[styles.tagDot, { backgroundColor: tag.color }]} />
                   <Text style={[styles.tagItemName, { color: colors.textPrimary }]}>{tag.name}</Text>
-                  <TouchableOpacity onPress={() => handleDeleteTag(tag.id)}>
-                    <X size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                  </TouchableOpacity>
+                  <IconButton
+                    onPress={() => handleDeleteTag(tag.id)}
+                    icon={<X size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+                    accessibilityLabel={`Supprimer le tag ${tag.name}`}
+                    size="sm"
+                    variant="ghost"
+                  />
                 </View>
               ))}
               {tags.length === 0 && (
@@ -475,16 +503,14 @@ export default function TalentsScreen() {
 
       {/* Cohort Analysis Button */}
       <View style={[styles.cohortButtonContainer, { backgroundColor: colors.background }]}>
-        <TouchableOpacity
-          style={[styles.cohortButton, { backgroundColor: colors.primary }]}
+        <Button
+          title="Analyse de cohorte"
           onPress={handleCohortAnalysis}
-          activeOpacity={0.8}
-        >
-          <Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.cohortButtonText, { color: colors.textOnPrimary }]}>
-            Analyse de cohorte
-          </Text>
-        </TouchableOpacity>
+          fullWidth
+          icon={<Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+          style={[styles.cohortButton, { backgroundColor: colors.primary }]}
+          textStyle={[styles.cohortButtonText, { color: colors.textOnPrimary }]}
+        />
       </View>
 
       <FooterNav activeTab="gestion" />
@@ -632,7 +658,6 @@ const styles = StyleSheet.create({
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   modalBackdrop: {
@@ -745,11 +770,6 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
   },
   cohortButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
     borderRadius: BORDER.radius.md,
   },
   cohortButtonText: {

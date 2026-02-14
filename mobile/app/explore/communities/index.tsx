@@ -3,11 +3,9 @@ import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
-    TextInput,
     FlatList,
-    ActivityIndicator,
     RefreshControl,
+    Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -23,6 +21,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
+import { Chip, IconButton, Input, LoadingShimmer } from '../../../src/components/ui';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { CommunityCard } from '../../../src/components/cards';
 import { communityService } from '../../../src/services';
@@ -81,18 +80,28 @@ export default function CommunitiesScreen() {
         const isActive = activeCategory === item.id;
         const Icon = item.icon;
         return (
-            <TouchableOpacity
+            <Chip
+                label={item.label}
+                selected={isActive}
+                onPress={() => setActiveCategory(item.id)}
+                leftIcon={
+                    <Icon
+                        size={COMPONENT.pill.iconSize}
+                        color={isActive ? colors.textOnPrimary : colors.textSecondary}
+                    />
+                }
                 style={[
                     styles.categoryChip,
-                    { backgroundColor: isActive ? colors.primary : colors.gray100 }
+                    {
+                        backgroundColor: isActive ? colors.primary : colors.gray100,
+                        borderColor: isActive ? colors.primary : 'transparent',
+                    },
                 ]}
-                onPress={() => setActiveCategory(item.id)}
-            >
-                <Icon size={COMPONENT.pill.iconSize} color={isActive ? colors.textOnPrimary : colors.textSecondary} />
-                <Text style={[styles.categoryLabel, { color: isActive ? colors.textOnPrimary : colors.textSecondary }]}>
-                    {item.label}
-                </Text>
-            </TouchableOpacity>
+                textStyle={[
+                    styles.categoryLabel,
+                    { color: isActive ? colors.textOnPrimary : colors.textSecondary },
+                ]}
+            />
         );
     };
 
@@ -121,41 +130,49 @@ export default function CommunitiesScreen() {
 
     const renderLoading = () => (
         <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                Chargement des communautés...
-            </Text>
+            <LoadingShimmer variant="fullPage" label="Réfléchit…" />
         </View>
     );
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <View style={[styles.customHeader, { borderBottomColor: colors.borderColor }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-                    <ArrowLeft size={ICON.size.md} color={colors.textPrimary} />
-                </TouchableOpacity>
+                <IconButton
+                    onPress={() => router.back()}
+                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} />}
+                    accessibilityLabel="Retour"
+                    style={styles.headerButton}
+                />
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Communautés</Text>
-                <TouchableOpacity style={[styles.headerButton, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
-                    <Plus size={ICON.size.md} color={colors.primary} />
-                </TouchableOpacity>
+                <IconButton
+                    onPress={() => { }}
+                    icon={<Plus size={ICON.size.md} color={colors.primary} />}
+                    accessibilityLabel="Créer une communauté (indisponible)"
+                    style={[styles.headerButton, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}
+                    disabled
+                />
             </View>
 
             <View style={styles.searchSection}>
-                <View style={[styles.searchBar, { backgroundColor: colors.gray100 }]}>
-                    <Search size={18} color={colors.textSecondary} />
-                    <TextInput
-                        placeholder="Trouver une communauté..."
-                        placeholderTextColor={colors.textDisabled}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        style={[styles.searchInput, { color: colors.textPrimary }]}
-                    />
-                    {searchQuery.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Input
+                    placeholder="Trouver une communauté..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    containerStyle={{ width: '100%' }}
+                    inputContainerStyle={[styles.searchBar, { backgroundColor: colors.gray100, borderColor: 'transparent', borderWidth: 0 }]}
+                    inputStyle={[styles.searchInput, { color: colors.textPrimary, paddingHorizontal: 0 }]}
+                    leftIcon={<Search size={18} color={colors.textSecondary} />}
+                    rightIcon={searchQuery.length > 0 ? (
+                        <Pressable
+                            onPress={() => setSearchQuery('')}
+                            accessibilityRole="button"
+                            accessibilityLabel="Effacer la recherche"
+                            hitSlop={10}
+                        >
                             <X size={18} color={colors.textSecondary} />
-                        </TouchableOpacity>
-                    )}
-                </View>
+                        </Pressable>
+                    ) : undefined}
+                />
             </View>
 
             <View style={styles.categoriesContainer}>

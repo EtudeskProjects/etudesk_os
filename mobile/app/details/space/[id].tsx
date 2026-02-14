@@ -5,8 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   Image,
-  TouchableOpacity,
-  ActivityIndicator,
   Share as RNShare,
   Linking,
 } from 'react-native';
@@ -66,7 +64,7 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../.
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
-import { Button, ImageSlider, FooterNav } from '../../../src/components/ui';
+import { Button, IconButton, ImageSlider, FooterNav, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { spaceService, Space, bookmarkService } from '../../../src/services';
 import { getFullImageUrl } from '../../../src/utils/image';
 import {
@@ -309,10 +307,7 @@ export default function SpaceDetailScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            {t('space.loading')}
-          </Text>
+          <LoadingShimmer variant="fullPage" />
         </View>
       </SafeAreaView>
     );
@@ -329,12 +324,13 @@ export default function SpaceDetailScreen() {
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>
             {t('space.notFoundDesc')}
           </Text>
-          <TouchableOpacity
-            style={[styles.errorButton, { backgroundColor: colors.primary }]}
+          <Button
+            title="Retour"
             onPress={() => router.back()}
-          >
-            <Text style={[styles.errorButtonText, { color: colors.textOnPrimary }]}>Retour</Text>
-          </TouchableOpacity>
+            variant="primary"
+            style={[styles.errorButton, { backgroundColor: colors.primary }]}
+            textStyle={[styles.errorButtonText, { color: colors.textOnPrimary }]}
+          />
         </View>
       </SafeAreaView>
     );
@@ -354,29 +350,37 @@ export default function SpaceDetailScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-        <TouchableOpacity
-          style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
+        <IconButton
           onPress={() => router.back()}
-        >
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+          variant="filled"
+          style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
+        />
         <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
+          <IconButton
             onPress={handleShare}
-          >
-            <Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: isBookmarked ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 }]}
+            icon={<Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel="Partager"
+            variant="filled"
+            style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
+          />
+          <IconButton
             onPress={handleBookmarkToggle}
-          >
-            {isBookmarked ? (
-              <BookmarkCheck size={ICON.size.md} color={colors.primary} fill={colors.primary} strokeWidth={ICON.strokeWidth} />
-            ) : (
-              <Bookmark size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-            )}
-          </TouchableOpacity>
+            icon={
+              isBookmarked ? (
+                <BookmarkCheck size={ICON.size.md} color={colors.primary} fill={colors.primary} strokeWidth={ICON.strokeWidth} />
+              ) : (
+                <Bookmark size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
+              )
+            }
+            accessibilityLabel={isBookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            variant="filled"
+            style={[
+              styles.headerButton,
+              { backgroundColor: isBookmarked ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100, width: 44, height: 44 },
+            ]}
+          />
         </View>
       </View>
 
@@ -393,9 +397,11 @@ export default function SpaceDetailScreen() {
         <View style={styles.contentPadded}>
           {/* Organization Card */}
           {space.organization?.id && (
-            <TouchableOpacity
-              style={[styles.orgCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+            <SelectCard
+              selected={false}
+              style={[styles.orgCard, { backgroundColor: colors.surface, borderColor: colors.borderColor, borderWidth: 0 }]}
               onPress={() => router.push(`/details/organization/${space.organization!.id}`)}
+              accessibilityLabel={space.organization.name}
             >
               {space.organization.logo_url ? (
                 <Image
@@ -434,7 +440,7 @@ export default function SpaceDetailScreen() {
                 </View>
               </View>
               <ChevronRight size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
+            </SelectCard>
           )}
 
           {/* Title */}
@@ -582,19 +588,22 @@ export default function SpaceDetailScreen() {
                   : space.description}
               </Text>
               {shouldTruncateDescription && (
-                <TouchableOpacity
-                  style={styles.expandButton}
+                <Button
+                  title={isDescriptionExpanded ? 'Voir moins' : 'Voir plus'}
                   onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                >
-                  <Text style={[styles.expandButtonText, { color: colors.primary }]}>
-                    {isDescriptionExpanded ? 'Voir moins' : 'Voir plus'}
-                  </Text>
-                  {isDescriptionExpanded ? (
-                    <ChevronUp size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                  ) : (
-                    <ChevronDown size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                  )}
-                </TouchableOpacity>
+                  variant="ghost"
+                  size="sm"
+                  icon={
+                    isDescriptionExpanded ? (
+                      <ChevronUp size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                    ) : (
+                      <ChevronDown size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                    )
+                  }
+                  iconPosition="right"
+                  style={styles.expandButton}
+                  textStyle={[styles.expandButtonText, { color: colors.primary }]}
+                />
               )}
             </View>
           )}
@@ -736,28 +745,43 @@ export default function SpaceDetailScreen() {
                   </View>
                 )}
                 {space.contact_phone && (
-                  <TouchableOpacity style={styles.contactRow} onPress={handleCallPhone}>
+                  <SelectCard
+                    selected={false}
+                    onPress={handleCallPhone}
+                    style={[styles.contactRow, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
+                    accessibilityLabel="Appeler"
+                  >
                     <Phone size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.contactText, styles.contactLink, { color: colors.primary }]}>
                       {space.contact_phone}
                     </Text>
-                  </TouchableOpacity>
+                  </SelectCard>
                 )}
                 {space.contact_email && (
-                  <TouchableOpacity style={styles.contactRow} onPress={handleSendEmail}>
+                  <SelectCard
+                    selected={false}
+                    onPress={handleSendEmail}
+                    style={[styles.contactRow, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
+                    accessibilityLabel="Envoyer un email"
+                  >
                     <Mail size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.contactText, styles.contactLink, { color: colors.primary }]}>
                       {space.contact_email}
                     </Text>
-                  </TouchableOpacity>
+                  </SelectCard>
                 )}
                 {(space.address || space.coordinates) && (
-                  <TouchableOpacity style={styles.contactRow} onPress={handleOpenMaps}>
+                  <SelectCard
+                    selected={false}
+                    onPress={handleOpenMaps}
+                    style={[styles.contactRow, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
+                    accessibilityLabel="Voir sur la carte"
+                  >
                     <Navigation size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.contactText, styles.contactLink, { color: colors.primary }]}>
                       Voir sur la carte
                     </Text>
-                  </TouchableOpacity>
+                  </SelectCard>
                 )}
               </View>
             </View>

@@ -8,28 +8,26 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Modal,
   Image,
   Dimensions,
-  ActivityIndicator,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { WebView } from 'react-native-webview';
 import { useRouter } from 'expo-router';
-import {
-  Upload,
-  FileText,
-  Trash2,
+	import {
+	  Upload,
+	  FileText,
+	  Trash2,
   RotateCcw,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
-  X,
-} from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
-import { Button, PageLayout, EmptyState } from '../../src/components/ui';
+	  X,
+	} from 'lucide-react-native';
+	import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
+	import { Button, Chip, IconButton, PageLayout, EmptyState, SelectCard, ShimmerPlaceholder } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { API_CONFIG } from '../../src/constants/config';
 import documentService, {
@@ -292,35 +290,41 @@ export default function DocumentsScreen() {
         ]}
       >
         {/* Delete button */}
-        <TouchableOpacity
-          style={styles.deleteButton}
+        <IconButton
           onPress={() => handleDelete(doc)}
-        >
-          <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+          icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Supprimer"
+          style={styles.deleteButton}
+        />
 
         <View style={styles.cardContent}>
           {/* Thumbnail */}
-          <TouchableOpacity
-            style={[styles.thumbnail, { backgroundColor: colors.gray100 }]}
+          <SelectCard
+            style={[styles.thumbnail, { backgroundColor: colors.gray100, borderWidth: 0, borderColor: 'transparent' }]}
             onPress={() => setPreviewDoc(doc)}
-            activeOpacity={0.7}
+            selected={false}
+            accessibilityLabel="Prévisualiser"
           >
             {isImage ? (
               <Image source={{ uri: fileUrl }} style={styles.thumbnailImage} resizeMode="cover" />
             ) : (
               <FileText size={24} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
             )}
-          </TouchableOpacity>
+          </SelectCard>
 
           {/* Info */}
           <View style={styles.cardInfo}>
             {/* Title */}
-            <TouchableOpacity onPress={() => setPreviewDoc(doc)} activeOpacity={0.7}>
+            <SelectCard
+              onPress={() => setPreviewDoc(doc)}
+              selected={false}
+              accessibilityLabel="Prévisualiser"
+              style={{ borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }}
+            >
               <Text style={[styles.documentTitle, { color: colors.textPrimary }]} numberOfLines={1}>
                 {doc.title || doc.original_filename}
               </Text>
-            </TouchableOpacity>
+            </SelectCard>
 
             {/* Type · Size */}
             <Text style={[styles.documentMeta, { color: colors.textSecondary }]}>
@@ -331,7 +335,7 @@ export default function DocumentsScreen() {
             <View style={styles.tagsRow}>
               <View style={[styles.tag, { backgroundColor: withOpacity(statusColor, OPACITY[20]), borderColor: statusColor }]}>
                 {(doc.status === 'PENDING' || doc.status === 'PROCESSING') ? (
-                  <ActivityIndicator size="small" color={statusColor} style={{ transform: [{ scale: 0.55 }] }} />
+                  <ShimmerPlaceholder width={14} height={10} variant="bar" />
                 ) : (
                   <StatusIcon size={12} color={statusColor} strokeWidth={ICON.strokeWidth} />
                 )}
@@ -339,15 +343,15 @@ export default function DocumentsScreen() {
                   {DOCUMENT_STATUS_LABELS[doc.status]}
                 </Text>
               </View>
-              {doc.status === 'FAILED' && (
-                <TouchableOpacity
-                  style={[styles.tag, { backgroundColor: withOpacity(colors.primary, OPACITY[20]), borderColor: colors.primary }]}
-                  onPress={() => handleRetry(doc)}
-                >
-                  <RotateCcw size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                  <Text style={[styles.tagText, { color: colors.primary }]}>Réessayer</Text>
-                </TouchableOpacity>
-              )}
+	              {doc.status === 'FAILED' && (
+	                <Chip
+	                  label="Réessayer"
+	                  onPress={() => handleRetry(doc)}
+	                  leftIcon={<RotateCcw size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+	                  style={[styles.tag, { backgroundColor: withOpacity(colors.primary, OPACITY[20]), borderColor: colors.primary }]}
+	                  textStyle={[styles.tagText, { color: colors.primary }]}
+	                />
+	              )}
               {relativeDate && (
                 <Text style={[styles.dateText, { color: colors.textDisabled }]}>
                   {relativeDate}
@@ -366,9 +370,11 @@ export default function DocumentsScreen() {
 
         {/* Summary / Description */}
         {summaryText && (
-          <TouchableOpacity
-            activeOpacity={0.7}
+          <SelectCard
             onPress={() => setExpandedDocs((prev) => ({ ...prev, [doc.id]: !prev[doc.id] }))}
+            selected={false}
+            accessibilityLabel={isExpanded ? 'Réduire le résumé' : 'Déployer le résumé'}
+            style={{ borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }}
           >
             <Text
               style={[styles.summaryText, { color: colors.textSecondary }]}
@@ -387,7 +393,7 @@ export default function DocumentsScreen() {
                 {isExpanded ? 'Voir moins' : 'Voir plus'}
               </Text>
             )}
-          </TouchableOpacity>
+          </SelectCard>
         )}
       </View>
     );
@@ -432,16 +438,20 @@ export default function DocumentsScreen() {
 
       {/* Preview Modal */}
       <Modal visible={!!previewDoc} animationType="fade" transparent>
-        <View style={styles.previewOverlay}>
+        <View style={[styles.previewOverlay, { backgroundColor: colors.overlay }]}>
           <View style={[styles.previewContainer, { backgroundColor: colors.background }]}>
-            <View style={styles.previewHeader}>
-              <Text style={[styles.previewTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                {previewDoc?.title || previewDoc?.original_filename}
-              </Text>
-              <TouchableOpacity onPress={() => setPreviewDoc(null)}>
-                <X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
-            </View>
+	            <View style={styles.previewHeader}>
+	              <Text style={[styles.previewTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+	                {previewDoc?.title || previewDoc?.original_filename}
+	              </Text>
+	              <IconButton
+	                onPress={() => setPreviewDoc(null)}
+	                icon={<X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                accessibilityLabel="Fermer"
+	                size="sm"
+	                variant="ghost"
+	              />
+	            </View>
             {previewDoc && (
               <View style={styles.previewContent}>
                 {previewDoc.mime_type.startsWith('image/') ? (
@@ -576,7 +586,6 @@ const styles = StyleSheet.create({
   // Preview Modal
   previewOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.8)',
     justifyContent: 'center',
     alignItems: 'center',
   },

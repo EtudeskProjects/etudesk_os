@@ -4,12 +4,12 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, Linking, Pressable } from 'react-native';
 import { Image as ImageIcon, ExternalLink } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { useTranslation } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../constants/theme';
-import { showToastGlobal } from '../../ui';
+import { showToastGlobal, LoadingShimmer } from '../../ui';
 
 interface ImageBlockProps {
   data: {
@@ -61,7 +61,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
       <View style={[styles.imageContainer, { backgroundColor: colors.gray100 }]}>
         {loading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
+            <LoadingShimmer variant="inline" />
           </View>
         )}
 
@@ -98,10 +98,11 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
           )}
 
           {data.source && (
-            <TouchableOpacity
+            <Pressable
               style={styles.sourceButton}
               onPress={handleSourcePress}
-              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Ouvrir la source"
             >
               <ExternalLink
                 size={ICON.size.xs}
@@ -111,7 +112,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
               <Text style={[styles.sourceText, { color: colors.primary }]} numberOfLines={1}>
                 {data.source}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           )}
         </View>
       )}

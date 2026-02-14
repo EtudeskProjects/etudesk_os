@@ -1,18 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  TextInput,
-  ActivityIndicator,
   Image,
+  Pressable,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
   ChevronRight,
@@ -36,15 +34,16 @@ import {
   Home,
   Minus,
   Plus,
-  CalendarDays,
-  Info,
-  FileText,
+	CalendarDays,
+	Info,
+	FileText,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../../src/constants/theme';
-import { Button, StepIndicator } from '../../../../src/components/ui';
+	import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../../src/constants/theme';
+	import { Button, CheckboxRow, Chip, IconButton, Input, StepIndicator, LoadingShimmer } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useAuth } from '../../../../src/contexts/AuthContext';
 import { useAlert } from '../../../../src/contexts/AlertContext';
+import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
 import {
   spaceService,
   Space,
@@ -170,8 +169,19 @@ export default function BookSpaceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { error: showError, success: showSuccess } = useAlert();
+  const mainScrollRef = useRef<ScrollView>(null);
+
+  const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 96) => {
+    const sv = mainScrollRef.current;
+    if (!sv) return;
+    const delay = Platform.OS === 'android' ? 120 : 0;
+    setTimeout(() => {
+      sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+    }, delay);
+  }, []);
 
   // Loading & data states
   const [currentStep, setCurrentStep] = useState<BookingStep>('profile');
@@ -822,15 +832,25 @@ export default function BookSpaceScreen() {
         <View style={[styles.calendarContainer, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
           {/* Calendar Header */}
           <View style={styles.calendarHeader}>
-            <TouchableOpacity onPress={handlePrevMonth} style={styles.calendarNavButton}>
-              <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
+            <IconButton
+              onPress={handlePrevMonth}
+              icon={<ChevronLeft size={24} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+              accessibilityLabel="Mois précédent"
+              size="sm"
+              variant="ghost"
+              style={styles.calendarNavButton}
+            />
             <Text style={[styles.calendarTitle, { color: colors.textPrimary }]}>
               {monthNames[calendarMonth]} {calendarYear}
             </Text>
-            <TouchableOpacity onPress={handleNextMonth} style={styles.calendarNavButton}>
-              <ChevronRight size={24} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
+            <IconButton
+              onPress={handleNextMonth}
+              icon={<ChevronRight size={24} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+              accessibilityLabel="Mois suivant"
+              size="sm"
+              variant="ghost"
+              style={styles.calendarNavButton}
+            />
           </View>
 
           {/* Weekday Headers */}
@@ -854,16 +874,17 @@ export default function BookSpaceScreen() {
               const isToday = date.toDateString() === new Date().toDateString();
 
               return (
-                <TouchableOpacity
+                <Pressable
                   key={date.toISOString()}
-                  style={[
+                  onPress={() => handleDateSelect(date)}
+                  disabled={!isAvailable}
+                  style={({ pressed }) => [
                     styles.calendarDay,
                     !isAvailable && styles.calendarDayDisabled,
                     isSelected && { backgroundColor: colors.primary },
                     isToday && !isSelected && { borderColor: colors.primary, borderWidth: 1 },
+                    pressed && isAvailable && { opacity: 0.7 },
                   ]}
-                  onPress={() => handleDateSelect(date)}
-                  disabled={!isAvailable}
                 >
                   <Text
                     style={[
@@ -874,7 +895,7 @@ export default function BookSpaceScreen() {
                   >
                     {date.getDate()}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </View>
@@ -901,32 +922,29 @@ export default function BookSpaceScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.timeSlotsContainer}
             >
-              {availableTimeSlots.map((time) => {
-                const isSelected = selectedStartTime === time;
-                return (
-                  <TouchableOpacity
-                    key={time}
-                    style={[
-                      styles.timeSlot,
-                      { borderColor: isSelected ? colors.primary : colors.gray200 },
-                      isSelected && { backgroundColor: colors.primary },
-                    ]}
-                    onPress={() => {
-                      setSelectedStartTime(time);
-                      setAvailabilityResult(null);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.timeSlotText,
-                        { color: isSelected ? colors.textOnPrimary : colors.textPrimary },
-                      ]}
-                    >
-                      {time}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+	              {availableTimeSlots.map((time) => {
+	                const isSelected = selectedStartTime === time;
+	                return (
+	                  <Chip
+	                    key={time}
+	                    label={time}
+	                    selected={isSelected}
+	                    onPress={() => {
+	                      setSelectedStartTime(time);
+	                      setAvailabilityResult(null);
+	                    }}
+	                    style={[
+	                      styles.timeSlot,
+	                      { borderColor: isSelected ? colors.primary : colors.gray200 },
+	                      isSelected && { backgroundColor: colors.primary },
+	                    ]}
+	                    textStyle={[
+	                      styles.timeSlotText,
+	                      { color: isSelected ? colors.textOnPrimary : colors.textPrimary },
+	                    ]}
+	                  />
+	                );
+	              })}
             </ScrollView>
           </View>
         )}
@@ -947,27 +965,41 @@ export default function BookSpaceScreen() {
             <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
               Duree (heures)
             </Text>
-            <View style={[styles.counterContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-              <TouchableOpacity
-                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
-                onPress={() => handleDurationChange(-1)}
-                disabled={durationHours <= (space?.min_booking_hours || 1)}
-              >
-                <Minus size={20} color={durationHours <= (space?.min_booking_hours || 1) ? colors.gray300 : colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
-              <View style={styles.counterValue}>
-                <Text style={[styles.counterValueText, { color: colors.textPrimary }]}>
-                  {durationHours}h
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
-                onPress={() => handleDurationChange(1)}
-                disabled={durationHours >= (space?.max_booking_hours || 24)}
-              >
-                <Plus size={20} color={durationHours >= (space?.max_booking_hours || 24) ? colors.gray300 : colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
-            </View>
+	            <View style={[styles.counterContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
+	              <IconButton
+	                onPress={() => handleDurationChange(-1)}
+	                disabled={durationHours <= (space?.min_booking_hours || 1)}
+	                icon={
+	                  <Minus
+	                    size={20}
+	                    color={durationHours <= (space?.min_booking_hours || 1) ? colors.gray300 : colors.textPrimary}
+	                    strokeWidth={ICON.strokeWidth}
+	                  />
+	                }
+	                accessibilityLabel="Réduire la durée"
+	                variant="filled"
+	                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
+	              />
+	              <View style={styles.counterValue}>
+	                <Text style={[styles.counterValueText, { color: colors.textPrimary }]}>
+	                  {durationHours}h
+	                </Text>
+	              </View>
+	              <IconButton
+	                onPress={() => handleDurationChange(1)}
+	                disabled={durationHours >= (space?.max_booking_hours || 24)}
+	                icon={
+	                  <Plus
+	                    size={20}
+	                    color={durationHours >= (space?.max_booking_hours || 24) ? colors.gray300 : colors.textPrimary}
+	                    strokeWidth={ICON.strokeWidth}
+	                  />
+	                }
+	                accessibilityLabel="Augmenter la durée"
+	                variant="filled"
+	                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
+	              />
+	            </View>
             <Text style={[styles.hintText, { color: colors.gray500 }]}>
               Min: {space?.min_booking_hours || 1}h - Max: {space?.max_booking_hours || 24}h
             </Text>
@@ -980,28 +1012,42 @@ export default function BookSpaceScreen() {
             <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
               Nombre de participants
             </Text>
-            <View style={[styles.counterContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-              <TouchableOpacity
-                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
-                onPress={() => handleAttendeesChange(-1)}
-                disabled={attendeesCount <= 1}
-              >
-                <Minus size={20} color={attendeesCount <= 1 ? colors.gray300 : colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
-              <View style={styles.counterValue}>
-                <Users size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.counterValueText, { color: colors.textPrimary }]}>
-                  {attendeesCount}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
-                onPress={() => handleAttendeesChange(1)}
-                disabled={attendeesCount >= (space?.capacity || 100)}
-              >
-                <Plus size={20} color={attendeesCount >= (space?.capacity || 100) ? colors.gray300 : colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
-            </View>
+	            <View style={[styles.counterContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
+	              <IconButton
+	                onPress={() => handleAttendeesChange(-1)}
+	                disabled={attendeesCount <= 1}
+	                icon={
+	                  <Minus
+	                    size={20}
+	                    color={attendeesCount <= 1 ? colors.gray300 : colors.textPrimary}
+	                    strokeWidth={ICON.strokeWidth}
+	                  />
+	                }
+	                accessibilityLabel="Réduire le nombre de participants"
+	                variant="filled"
+	                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
+	              />
+	              <View style={styles.counterValue}>
+	                <Users size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+	                <Text style={[styles.counterValueText, { color: colors.textPrimary }]}>
+	                  {attendeesCount}
+	                </Text>
+	              </View>
+	              <IconButton
+	                onPress={() => handleAttendeesChange(1)}
+	                disabled={attendeesCount >= (space?.capacity || 100)}
+	                icon={
+	                  <Plus
+	                    size={20}
+	                    color={attendeesCount >= (space?.capacity || 100) ? colors.gray300 : colors.textPrimary}
+	                    strokeWidth={ICON.strokeWidth}
+	                  />
+	                }
+	                accessibilityLabel="Augmenter le nombre de participants"
+	                variant="filled"
+	                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
+	              />
+	            </View>
             <Text style={[styles.hintText, { color: colors.gray500 }]}>
               Capacite maximale: {space?.capacity || 0} personnes
             </Text>
@@ -1042,7 +1088,7 @@ export default function BookSpaceScreen() {
         {/* Checking availability indicator */}
         {isCheckingAvailability && (
           <View style={styles.checkingContainer}>
-            <ActivityIndicator size="small" color={colors.primary} />
+            <LoadingShimmer variant="inline" />
             <Text style={[styles.checkingText, { color: colors.textSecondary }]}>
               Verification de la disponibilite...
             </Text>
@@ -1075,24 +1121,18 @@ export default function BookSpaceScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={[styles.checkboxContainer, { borderColor: acceptedRules ? colors.primary : colors.gray300 }]}
-          onPress={() => setAcceptedRules(!acceptedRules)}
-          activeOpacity={0.7}
-        >
-          <View
-            style={[
-              styles.checkbox,
-              { borderColor: acceptedRules ? colors.primary : colors.gray400 },
-              acceptedRules && { backgroundColor: colors.primary },
-            ]}
-          >
-            {acceptedRules && <Check size={14} color={colors.textOnPrimary} strokeWidth={3} />}
-          </View>
-          <Text style={[styles.checkboxLabel, { color: colors.textPrimary }]}>
-            J'accepte les conditions d'utilisation de l'espace
-          </Text>
-        </TouchableOpacity>
+	        <CheckboxRow
+	          label="J'accepte les conditions d'utilisation de l'espace"
+	          checked={acceptedRules}
+	          onPress={() => setAcceptedRules(!acceptedRules)}
+	          style={[styles.checkboxContainer, { borderColor: acceptedRules ? colors.primary : colors.gray300 }]}
+	          labelStyle={[styles.checkboxLabel, { color: colors.textPrimary }]}
+	          checkboxStyle={[
+	            styles.checkbox,
+	            { borderColor: acceptedRules ? colors.primary : colors.gray400 },
+	            acceptedRules && { backgroundColor: colors.primary },
+	          ]}
+	        />
       </View>
     );
   };
@@ -1120,19 +1160,33 @@ export default function BookSpaceScreen() {
               <Text style={[styles.questionLabel, { color: colors.textPrimary }]}>
                 {question.question}
                 {question.required && <Text style={{ color: colors.error }}> *</Text>}
-              </Text>
-              <View style={[styles.answerInputContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-                <TextInput
-                  style={[styles.answerInput, { color: colors.textPrimary }]}
-                  placeholder="Votre reponse..."
-                  placeholderTextColor={colors.gray400}
-                  value={answers[question.id] || ''}
-                  onChangeText={(text) => updateAnswer(question.id, text)}
-                  maxLength={500}
-                  multiline
-                  numberOfLines={3}
-                />
-              </View>
+	              </Text>
+	              <View style={[styles.answerInputContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
+	                <Input
+	                  placeholder="Votre reponse..."
+	                  placeholderTextColor={colors.gray400}
+	                  value={answers[question.id] || ''}
+	                  onChangeText={(text) => updateAnswer(question.id, text)}
+	                  maxLength={500}
+	                  multiline
+	                  numberOfLines={3}
+	                  inputContainerStyle={{
+	                    borderWidth: 0,
+	                    backgroundColor: 'transparent',
+	                    height: undefined,
+	                    minHeight: undefined,
+	                  }}
+	                  inputStyle={{
+	                    color: colors.textPrimary,
+	                    paddingHorizontal: 0,
+	                    paddingTop: 0,
+	                    paddingBottom: 0,
+	                    fontSize: TYPOGRAPHY.fontSize.md,
+	                    minHeight: 80,
+	                    textAlignVertical: 'top',
+	                  }}
+	                />
+	              </View>
               <Text style={[styles.charCount, { color: colors.gray500 }]}>
                 {(answers[question.id] || '').length}/500
               </Text>
@@ -1275,20 +1329,34 @@ export default function BookSpaceScreen() {
           <View style={styles.previewSection}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
               Demandes speciales (optionnel)
-            </Text>
-            <View style={[styles.specialRequestsInput, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-              <TextInput
-                style={[styles.answerInput, { color: colors.textPrimary }]}
-                placeholder="Configuration particuliere, besoins specifiques..."
-                placeholderTextColor={colors.gray400}
-                value={specialRequests}
-                onChangeText={setSpecialRequests}
-                maxLength={500}
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-          </View>
+	            </Text>
+	            <View style={[styles.specialRequestsInput, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
+	              <Input
+	                placeholder="Configuration particuliere, besoins specifiques..."
+	                placeholderTextColor={colors.gray400}
+	                value={specialRequests}
+	                onChangeText={setSpecialRequests}
+	                maxLength={500}
+	                multiline
+	                numberOfLines={3}
+	                inputContainerStyle={{
+	                  borderWidth: 0,
+	                  backgroundColor: 'transparent',
+	                  height: undefined,
+	                  minHeight: undefined,
+	                }}
+	                inputStyle={{
+	                  color: colors.textPrimary,
+	                  paddingHorizontal: 0,
+	                  paddingTop: 0,
+	                  paddingBottom: 0,
+	                  fontSize: TYPOGRAPHY.fontSize.md,
+	                  minHeight: 80,
+	                  textAlignVertical: 'top',
+	                }}
+	              />
+	            </View>
+	          </View>
 
           {/* Price Breakdown */}
           {estimatedPrice && (
@@ -1374,14 +1442,14 @@ export default function BookSpaceScreen() {
             onPress={() => router.replace('/settings/my-reservations')}
             fullWidth
           />
-          <TouchableOpacity
-            style={styles.backToSpaceButton}
+          <Button
+            title="Retour a l'espace"
             onPress={() => router.replace(`/details/space/${id}`)}
-          >
-            <Text style={[styles.backToSpaceText, { color: colors.primary }]}>
-              Retour a l'espace
-            </Text>
-          </TouchableOpacity>
+            variant="ghost"
+            fullWidth
+            style={styles.backToSpaceButton}
+            textStyle={[styles.backToSpaceText, { color: colors.primary }]}
+          />
         </View>
       </View>
     );
@@ -1400,16 +1468,17 @@ export default function BookSpaceScreen() {
 
     if (isPreview) {
       return (
-        <View style={[styles.footer, { backgroundColor: colors.background }]}>
+        <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
           <View style={styles.footerButtons}>
-            <TouchableOpacity
-              style={[styles.backButton, { borderColor: colors.gray300 }]}
+            <Button
+              title="Retour"
               onPress={handleBack}
               disabled={isSubmitting}
-            >
-              <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.backButtonText, { color: colors.gray700 }]}>Retour</Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.backButton, { borderColor: colors.gray300 }]}
+              textStyle={[styles.backButtonText, { color: colors.gray700 }]}
+            />
             <View style={styles.submitButton}>
               <Button
                 title={
@@ -1430,18 +1499,17 @@ export default function BookSpaceScreen() {
     }
 
     return (
-      <View style={[styles.footer, { backgroundColor: colors.background }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
         <View style={styles.footerButtons}>
-          <TouchableOpacity
-            style={[styles.backButton, { borderColor: colors.gray300 }]}
+          <Button
+            title={isFirstStep ? 'Annuler' : 'Retour'}
             onPress={handleBack}
             disabled={isCheckingAvailability}
-          >
-            <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.backButtonText, { color: colors.gray700 }]}>
-              {isFirstStep ? 'Annuler' : 'Retour'}
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.backButton, { borderColor: colors.gray300 }]}
+            textStyle={[styles.backButtonText, { color: colors.gray700 }]}
+          />
           <View style={styles.continueButton}>
             <Button
               title={isCheckingAvailability ? 'Verification...' : 'Continuer'}
@@ -1468,10 +1536,7 @@ export default function BookSpaceScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-          Chargement...
-        </Text>
+        <LoadingShimmer variant="fullPage" />
       </SafeAreaView>
     );
   }
@@ -1506,9 +1571,14 @@ export default function BookSpaceScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.headerBackButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={handleBack}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+          size="sm"
+          variant="ghost"
+          style={styles.headerBackButton}
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           Reserver {space.name}
         </Text>
@@ -1519,23 +1589,27 @@ export default function BookSpaceScreen() {
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {currentStep !== 'success' && renderStepIndicator()}
+        <ScrollToInputContext.Provider value={scrollToInput}>
+          <ScrollView
+            ref={mainScrollRef}
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          >
+            {currentStep !== 'success' && renderStepIndicator()}
 
-          {currentStep === 'profile' && renderProfileStep()}
-          {currentStep === 'datetime' && renderDateTimeStep()}
-          {currentStep === 'rules' && renderRulesStep()}
-          {currentStep === 'questions' && renderQuestionsStep()}
-          {currentStep === 'preview' && renderPreviewStep()}
-          {currentStep === 'success' && renderSuccessStep()}
-        </ScrollView>
+            {currentStep === 'profile' && renderProfileStep()}
+            {currentStep === 'datetime' && renderDateTimeStep()}
+            {currentStep === 'rules' && renderRulesStep()}
+            {currentStep === 'questions' && renderQuestionsStep()}
+            {currentStep === 'preview' && renderPreviewStep()}
+            {currentStep === 'success' && renderSuccessStep()}
+          </ScrollView>
 
-        {renderFooter()}
+          {renderFooter()}
+        </ScrollToInputContext.Provider>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

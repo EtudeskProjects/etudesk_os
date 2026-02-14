@@ -10,11 +10,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   Platform,
   Keyboard,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -28,9 +28,9 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../contexts/I18nContext';
-import { formatDate, formatTime } from '../../utils/date';
-import { showToastGlobal } from '../ui';
-import { Input } from '../ui';
+	import { formatDate, formatTime } from '../../utils/date';
+	import { showToastGlobal } from '../ui';
+	import { Button, IconButton, Input } from '../ui';
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 
@@ -71,6 +71,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const { colors, isDark } = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const inputRef = useRef<any>(null);
 
   const [messageText, setMessageText] = useState('');
@@ -181,19 +182,34 @@ export function ChatInput({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface, borderTopColor: colors.gray200 }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.gray200,
+          // Prevent the 3-button/gesture bar from overlapping the input when keyboard is hidden.
+          paddingBottom: Math.max(SPACING.sm, insets.bottom),
+        },
+      ]}
+    >
       {/* Datetime indicator */}
-      {proposedDatetime && (
-        <View style={[styles.datetimeIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
-          <Calendar size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.datetimeIndicatorText, { color: colors.primary }]}>
-            {t('chat.proposal', { date: formatDate(proposedDatetime.toISOString()), time: formatTime(proposedDatetime.toISOString()) })}
-          </Text>
-          <TouchableOpacity onPress={handleRemoveDatetime} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <X size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-        </View>
-      )}
+	      {proposedDatetime && (
+	        <View style={[styles.datetimeIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
+	          <Calendar size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+	          <Text style={[styles.datetimeIndicatorText, { color: colors.primary }]}>
+	            {t('chat.proposal', { date: formatDate(proposedDatetime.toISOString()), time: formatTime(proposedDatetime.toISOString()) })}
+	          </Text>
+	          <IconButton
+	            onPress={handleRemoveDatetime}
+	            icon={<X size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+	            accessibilityLabel={t('common.remove')}
+	            size="sm"
+	            variant="ghost"
+	            style={{ width: 28, height: 28 }}
+	          />
+	        </View>
+	      )}
 
       {/* Attachments preview */}
       {attachments.length > 0 && (
@@ -206,39 +222,46 @@ export function ChatInput({
                 style={[styles.attachmentPreviewItem, { backgroundColor: colors.gray100 }]}
               >
                 <FileIcon size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                <View style={styles.attachmentPreviewInfo}>
-                  <Text style={[styles.attachmentPreviewName, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {attachment.name}
-                  </Text>
-                  {attachment.size && (
-                    <Text style={[styles.attachmentPreviewSize, { color: colors.gray500 }]}>
-                      {formatFileSize(attachment.size)}
-                    </Text>
-                  )}
-                </View>
-                <TouchableOpacity
-                  onPress={() => handleRemoveAttachment(index)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <X size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-              </View>
-            );
-          })}
-        </View>
-      )}
+	                <View style={styles.attachmentPreviewInfo}>
+	                  <Text style={[styles.attachmentPreviewName, { color: colors.textPrimary }]} numberOfLines={1}>
+	                    {attachment.name}
+	                  </Text>
+	                  {attachment.size && (
+	                    <Text style={[styles.attachmentPreviewSize, { color: colors.gray500 }]}>
+	                      {formatFileSize(attachment.size)}
+	                    </Text>
+	                  )}
+	                </View>
+	                <IconButton
+	                  onPress={() => handleRemoveAttachment(index)}
+	                  icon={<X size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+	                  accessibilityLabel={t('common.remove')}
+	                  size="sm"
+	                  variant="ghost"
+	                  style={{ width: 28, height: 28 }}
+	                />
+	              </View>
+	            );
+	          })}
+	        </View>
+	      )}
 
       {/* Date picker (iOS spinner) - background + textColor for visibility */}
       {showDatePicker && Platform.OS === 'ios' && (
         <View style={[styles.datePickerContainer, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}>
-          <View style={styles.datePickerHeader}>
-            <Text style={[styles.datePickerTitle, { color: colors.textPrimary }]}>
-              {t('chat.proposeDate')}
-            </Text>
-            <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-              <Text style={[styles.datePickerDone, { color: colors.primary }]}>{t('alert.ok')}</Text>
-            </TouchableOpacity>
-          </View>
+	          <View style={styles.datePickerHeader}>
+	            <Text style={[styles.datePickerTitle, { color: colors.textPrimary }]}>
+	              {t('chat.proposeDate')}
+	            </Text>
+	            <Button
+	              title={t('alert.ok')}
+	              onPress={() => setShowDatePicker(false)}
+	              variant="ghost"
+	              size="sm"
+	              style={{ paddingHorizontal: 0 }}
+	              textStyle={[styles.datePickerDone, { color: colors.primary }]}
+	            />
+	          </View>
           <DateTimePicker
             value={proposedDatetime || new Date()}
             mode="datetime"
@@ -264,37 +287,45 @@ export function ChatInput({
       )}
 
       {/* Input row */}
-      <View style={styles.inputRow}>
-        {/* Attachment button */}
-        <TouchableOpacity
-          style={[styles.iconButton, { backgroundColor: colors.gray100 }]}
-          onPress={handlePickFile}
-          disabled={disabled || attachments.length >= 3}
-        >
-          <Paperclip
-            size={20}
-            color={attachments.length >= 3 ? colors.gray400 : colors.gray600}
-            strokeWidth={ICON.strokeWidth}
-          />
-        </TouchableOpacity>
-
-        {/* Datetime button */}
-        {showDatetimeOption && (
-          <TouchableOpacity
-            style={[
-              styles.iconButton,
-              { backgroundColor: showDatePicker || proposedDatetime ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 },
-            ]}
-            onPress={handleToggleDatePicker}
-            disabled={disabled}
-          >
-            <Calendar
-              size={20}
-              color={showDatePicker || proposedDatetime ? colors.primary : colors.gray600}
-              strokeWidth={ICON.strokeWidth}
-            />
-          </TouchableOpacity>
-        )}
+	      <View style={styles.inputRow}>
+	        {/* Attachment button */}
+	        <IconButton
+	          onPress={handlePickFile}
+	          disabled={disabled || attachments.length >= 3}
+	          icon={
+	            <Paperclip
+	              size={20}
+	              color={attachments.length >= 3 ? colors.gray400 : colors.gray600}
+	              strokeWidth={ICON.strokeWidth}
+	            />
+	          }
+	          accessibilityLabel={t('chat.addAttachment')}
+	          size="sm"
+	          variant="ghost"
+	          style={[styles.iconButton, { backgroundColor: colors.gray100 }]}
+	        />
+	
+	        {/* Datetime button */}
+	        {showDatetimeOption && (
+	          <IconButton
+	            onPress={handleToggleDatePicker}
+	            disabled={disabled}
+	            icon={
+	              <Calendar
+	                size={20}
+	                color={showDatePicker || proposedDatetime ? colors.primary : colors.gray600}
+	                strokeWidth={ICON.strokeWidth}
+	              />
+	            }
+	            accessibilityLabel={t('chat.proposeDate')}
+	            size="sm"
+	            variant="ghost"
+	            style={[
+	              styles.iconButton,
+	              { backgroundColor: showDatePicker || proposedDatetime ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 },
+	            ]}
+	          />
+	        )}
 
         {/* Text input */}
         <Input
@@ -314,18 +345,20 @@ export function ChatInput({
           inputStyle={[styles.textInput, { color: colors.textPrimary }]}
         />
 
-        {/* Send button */}
-        <TouchableOpacity
-          style={[styles.sendButton, { backgroundColor: canSend ? colors.primary : colors.gray300 }]}
-          onPress={handleSend}
-          disabled={!canSend}
-        >
-          <SendHorizontal size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
+	        {/* Send button */}
+	        <IconButton
+	          onPress={handleSend}
+	          disabled={!canSend}
+	          icon={<SendHorizontal size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+	          accessibilityLabel={t('chat.send')}
+	          size="sm"
+	          variant="ghost"
+	          style={[styles.sendButton, { backgroundColor: canSend ? colors.primary : colors.gray300 }]}
+	        />
+	      </View>
+	    </View>
+	  );
+	}
 
 const styles = StyleSheet.create({
   container: {

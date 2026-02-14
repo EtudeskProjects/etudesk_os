@@ -3,16 +3,19 @@
  */
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, ICON } from '../../../constants/theme';
+import { IconButton } from '../../ui';
+
 
 export interface CardAction {
   Icon: LucideIcon;
   color?: string;
   onPress: () => void;
   fill?: string;
+  accessibilityLabel?: string;
 }
 
 export interface CardHeaderProps {
@@ -57,19 +60,20 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
       {actions && actions.length > 0 && (
         <View style={styles.actionsRow}>
           {actions.map((action, index) => (
-            <TouchableOpacity
+            <IconButton
               key={index}
-              style={styles.actionButton}
               onPress={action.onPress}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <action.Icon
-                size={ICON.size.md}
-                color={action.color || colors.gray400}
-                strokeWidth={ICON.strokeWidth}
-                fill={action.fill || 'none'}
-              />
-            </TouchableOpacity>
+              size="sm"
+              icon={
+                <action.Icon
+                  size={ICON.size.md}
+                  color={action.color || colors.gray400}
+                  strokeWidth={ICON.strokeWidth}
+                  fill={action.fill || 'none'}
+                />
+              }
+              accessibilityLabel={action.accessibilityLabel || 'Action'}
+            />
           ))}
         </View>
       )}
@@ -97,8 +101,5 @@ const styles = StyleSheet.create({
   actionsRow: {
     flexDirection: 'row',
     gap: SPACING.xs,
-  },
-  actionButton: {
-    padding: SPACING.xs,
   },
 });

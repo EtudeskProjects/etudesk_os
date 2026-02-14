@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Modal,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   Animated,
   Dimensions,
@@ -20,6 +19,7 @@ import {
 import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { Button } from './Button';
+import { IconButton } from './IconButton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -161,17 +161,12 @@ export function Alert({
             >
               {/* Close button */}
               {dismissable && (
-                <TouchableOpacity
-                  style={styles.closeButton}
+                <IconButton
                   onPress={onClose}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <X
-                    size={ICON.size.md}
-                    color={colors.textSecondary}
-                    strokeWidth={ICON.strokeWidth}
-                  />
-                </TouchableOpacity>
+                  icon={<X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+                  accessibilityLabel="Fermer"
+                  style={styles.closeButton}
+                />
               )}
 
               {/* Icon */}

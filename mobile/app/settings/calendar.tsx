@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -19,7 +19,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
-import { PageLayout, EmptyState } from '../../src/components/ui';
+import { PageLayout, EmptyState, IconButton } from '../../src/components/ui';
 import { api } from '../../src/services/api';
 
 type EventType = 'event' | 'scheduled_post' | 'opportunity' | 'reservation';
@@ -197,18 +197,28 @@ export default function CalendarScreen() {
     <>
       {/* Month Selector */}
       <View style={[styles.monthSelector, { backgroundColor: colors.surface }]}>
-        <TouchableOpacity onPress={handlePrevMonth} style={styles.monthButton}>
-          <ChevronLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={handlePrevMonth}
+          icon={<ChevronLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Mois précédent"
+          size="sm"
+          variant="ghost"
+          style={styles.monthButton}
+        />
         <View style={styles.monthDisplay}>
           <Calendar size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.monthText, { color: colors.textPrimary }]}>
             {MONTHS[currentMonth]} {currentYear}
           </Text>
         </View>
-        <TouchableOpacity onPress={handleNextMonth} style={styles.monthButton}>
-          <ChevronRight size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={handleNextMonth}
+          icon={<ChevronRight size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Mois suivant"
+          size="sm"
+          variant="ghost"
+          style={styles.monthButton}
+        />
       </View>
 
       {/* Legend */}
@@ -258,16 +268,17 @@ export default function CalendarScreen() {
                 const isLast = index === dateEvents.length - 1;
 
                 return (
-                  <TouchableOpacity
-                    key={event.id}
-                    style={[
-                      styles.eventItem,
-                      { borderBottomColor: colors.gray100 },
-                      isLast && styles.eventItemLast,
-                    ]}
-                    onPress={() => handleEventPress(event)}
-                    activeOpacity={0.8}
-                  >
+	                  <Pressable
+	                    key={event.id}
+	                    style={[
+	                      styles.eventItem,
+	                      { borderBottomColor: colors.gray100 },
+	                      isLast && styles.eventItemLast,
+	                    ]}
+	                    onPress={() => handleEventPress(event)}
+	                    accessibilityRole="button"
+	                    accessibilityLabel={`Voir: ${event.title}`}
+	                  >
                     <View style={[styles.eventIndicator, { backgroundColor: eventColor }]} />
                     <View style={[styles.eventIcon, { backgroundColor: withOpacity(eventColor, OPACITY[15]) }]}>
                       <EventIcon size={ICON.size.sm} color={eventColor} strokeWidth={ICON.strokeWidth} />
@@ -301,10 +312,10 @@ export default function CalendarScreen() {
                       </View>
                     </View>
                     <ChevronRight size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+	                  </Pressable>
+	                );
+	              })}
+	            </View>
           </View>
         );
       })}

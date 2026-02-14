@@ -3,15 +3,16 @@ import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
     Image,
     Linking,
     Dimensions,
+    Pressable,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Play, ExternalLink } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity, LIGHT_COLORS } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity, LIGHT_COLORS, STATIC_COLORS } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+
 
 interface RichTextContentProps {
     content: string;
@@ -95,7 +96,7 @@ const YouTubeEmbed: React.FC<{ videoId: string; onPress?: () => void }> = ({ vid
         Linking.openURL(`https://www.youtube.com/watch?v=${videoId}`);
     };
 
-    const playerHTML = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><style>*{margin:0;padding:0;overflow:hidden;background:#000}iframe{width:100%;height:100%;border:0}</style></head><body><iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&origin=https://etudesk.com" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe></body></html>`;
+    const playerHTML = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><style>*{margin:0;padding:0;overflow:hidden;background:${STATIC_COLORS.black}}iframe{width:100%;height:100%;border:0}</style></head><body><iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&origin=https://etudesk.com" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe></body></html>`;
 
     if (isPlaying) {
         return (
@@ -122,15 +123,15 @@ const YouTubeEmbed: React.FC<{ videoId: string; onPress?: () => void }> = ({ vid
                 onError={() => setThumbnailError(true)}
             />
             <View style={styles.youtubeOverlay}>
-                <TouchableOpacity style={styles.playButton} onPress={handlePlay}>
+                <Pressable style={styles.playButton} onPress={handlePlay}>
                     <View style={styles.playButtonInner}>
                         <Play size={ICON.size.xxl} color={colors.white} fill={colors.white} />
                     </View>
-                </TouchableOpacity>
+                </Pressable>
             </View>
-            <TouchableOpacity style={styles.openExternalButton} onPress={openInYouTube}>
+            <Pressable style={styles.openExternalButton} onPress={openInYouTube}>
                 <ExternalLink size={ICON.size.sm} color={colors.white} />
-            </TouchableOpacity>
+            </Pressable>
             <View style={styles.youtubeBadge}>
                 <Text style={[styles.youtubeBadgeText, { color: colors.textInverse }]}>YouTube</Text>
             </View>
@@ -157,7 +158,7 @@ const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
     }, [url]);
 
     return (
-        <TouchableOpacity
+        <Pressable
             style={[styles.linkPreview, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
             onPress={handlePress}
         >
@@ -168,7 +169,7 @@ const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
             <Text style={[styles.linkUrl, { color: colors.textSecondary }]} numberOfLines={1}>
                 {url}
             </Text>
-        </TouchableOpacity>
+        </Pressable>
     );
 };
 

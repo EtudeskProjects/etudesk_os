@@ -4,10 +4,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Keyboard,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -26,7 +24,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
-import { FooterNav } from '../../../src/components/ui';
+import { Button, FooterNav, IconButton, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../src/components/chat';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { communityService, communityMembershipMessageService } from '../../../src/services';
@@ -211,12 +209,15 @@ export default function MyCommunityDetailsScreen() {
     const Icon = icon;
 
     return (
-      <TouchableOpacity
+      <SelectCard
         style={[
           styles.tab,
           { borderBottomColor: isActive ? colors.primary : 'transparent' },
+          { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
         ]}
         onPress={() => setActiveTab(tab)}
+        selected={false}
+        accessibilityLabel={label}
       >
         <Icon
           size={18}
@@ -232,7 +233,7 @@ export default function MyCommunityDetailsScreen() {
         >
           {label}
         </Text>
-      </TouchableOpacity>
+      </SelectCard>
     );
   };
 
@@ -303,14 +304,14 @@ export default function MyCommunityDetailsScreen() {
             )}
           </View>
 
-          <TouchableOpacity
-            style={[styles.viewCommunityButton, { borderColor: colors.primary }]}
+          <Button
+            title="Voir la communauté"
             onPress={() => router.push(`/details/community/${community?.id}`)}
-          >
-            <Text style={[styles.viewCommunityText, { color: colors.primary }]}>
-              Voir la communauté
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            style={[styles.viewCommunityButton, { borderColor: colors.primary, backgroundColor: 'transparent' }]}
+            textStyle={[styles.viewCommunityText, { color: colors.primary }]}
+          />
         </View>
 
         {/* Rejection reason if rejected */}
@@ -342,27 +343,27 @@ export default function MyCommunityDetailsScreen() {
 
         {/* Actions */}
         {membership.status === 'ACTIVE' && (
-          <TouchableOpacity
-            style={[styles.leaveButton, { borderColor: colors.error }]}
+          <Button
+            title="Quitter la communauté"
             onPress={handleLeaveCommunity}
-          >
-            <LogOut size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.leaveText, { color: colors.error }]}>
-              Quitter la communauté
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            icon={<LogOut size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.leaveButton, { borderColor: colors.error }]}
+            textStyle={[styles.leaveText, { color: colors.error }]}
+          />
         )}
 
         {membership.status === 'PENDING' && (
-          <TouchableOpacity
-            style={[styles.leaveButton, { borderColor: colors.error }]}
+          <Button
+            title="Annuler ma demande"
             onPress={handleLeaveCommunity}
-          >
-            <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.leaveText, { color: colors.error }]}>
-              Annuler ma demande
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.leaveButton, { borderColor: colors.error }]}
+            textStyle={[styles.leaveText, { color: colors.error }]}
+          />
         )}
 
         <View style={styles.bottomSpacer} />
@@ -374,7 +375,7 @@ export default function MyCommunityDetailsScreen() {
     if (isLoadingMessages) {
       return (
         <View style={styles.loadingMessages}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       );
     }
@@ -445,7 +446,7 @@ export default function MyCommunityDetailsScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingShimmer variant="fullPage" />
       </SafeAreaView>
     );
   }
@@ -464,9 +465,11 @@ export default function MyCommunityDetailsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           {membership.community?.name || 'Communauté'}
         </Text>

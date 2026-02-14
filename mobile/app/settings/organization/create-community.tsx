@@ -1,16 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronRight,
   ChevronLeft,
@@ -37,7 +36,7 @@ import {
   BarChart2,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
-import { Input, Button, Toggle, StepIndicator, Chip, IconButton, useToast } from '../../../src/components/ui';
+import { Input, Button, Toggle, StepIndicator, Chip, IconButton, SelectCard, useToast } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
@@ -58,6 +57,7 @@ import {
 import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../../src/constants/talent';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAlert } from '../../../src/contexts/AlertContext';
+import { ScrollToInputContext } from '../../../src/contexts/ScrollToInputContext';
 import { FormTextArea } from '../../../src/components/forms/FormTextArea';
 import { communityService, CreateCommunityData, imageService, organizationService, MemberPermissions, DEFAULT_MEMBER_PERMISSIONS } from '../../../src/services';
 
@@ -113,6 +113,7 @@ const LOCATION_TYPE_ICONS: Record<CommunityType, React.ComponentType<any>> = {
 export default function CreateCommunityScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { selectedOrgId, selectedOrg } = useSpace();
   const alerts = useAlert();
   const { showToast } = useToast();
@@ -121,7 +122,17 @@ export default function CreateCommunityScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orgLocationLoaded, setOrgLocationLoaded] = useState(false);
   const countryScrollRef = useRef<ScrollView>(null);
+  const mainScrollRef = useRef<ScrollView>(null);
   const COUNTRY_CHIP_WIDTH = 80;
+
+  const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 96) => {
+    const sv = mainScrollRef.current;
+    if (!sv) return;
+    const delay = Platform.OS === 'android' ? 120 : 0;
+    setTimeout(() => {
+      sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+    }, delay);
+  }, []);
 
   // Form management with useForm hook
   const form = useForm<CommunityFormValues>({
@@ -555,8 +566,8 @@ export default function CreateCommunityScreen() {
               onPress={handleGenerate}
               loading={isGenerating}
               disabled={isGenerating}
+              size="sm"
               icon={!isGenerating ? <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
-              fullWidth
               style={styles.generateButton}
             />
           </View>
@@ -617,15 +628,12 @@ export default function CreateCommunityScreen() {
               const isSelected = communityType === type.id;
               const IconComponent = LOCATION_TYPE_ICONS[type.id];
               return (
-                <TouchableOpacity
+                <SelectCard
                   key={type.id}
-                  style={[
-                    styles.locationTypeCard,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
+                  selected={isSelected}
                   onPress={() => form.setValue('communityType', type.id)}
-                  activeOpacity={0.7}
+                  style={styles.locationTypeCard}
+                  accessibilityLabel={type.label}
                 >
                   <IconComponent
                     size={24}
@@ -641,12 +649,7 @@ export default function CreateCommunityScreen() {
                   >
                     {type.label}
                   </Text>
-                  {isSelected && (
-                    <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
-                    </View>
-                  )}
-                </TouchableOpacity>
+                </SelectCard>
               );
             })}
           </View>
@@ -668,13 +671,10 @@ export default function CreateCommunityScreen() {
                 {COUNTRIES.map((c) => {
                   const isSelected = country === c.id;
                   return (
-                    <TouchableOpacity
+                    <Chip
                       key={c.id}
-                      style={[
-                        styles.optionChip,
-                        { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                        isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
-                      ]}
+                      label={c.label}
+                      selected={isSelected}
                       onPress={() => {
                         form.setValues({
                           country: c.id,
@@ -682,17 +682,17 @@ export default function CreateCommunityScreen() {
                           city: '',
                         });
                       }}
-                    >
-                      <Text
-                        style={[
-                          styles.optionChipText,
-                          { color: colors.gray700 },
-                          isSelected && { color: colors.textOnPrimary },
-                        ]}
-                      >
-                        {c.label}
-                      </Text>
-                    </TouchableOpacity>
+                      style={[
+                        styles.optionChip,
+                        { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                        isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+                      ]}
+                      textStyle={[
+                        styles.optionChipText,
+                        { color: colors.gray700 },
+                        isSelected && { color: colors.textOnPrimary },
+                      ]}
+                    />
                   );
                 })}
               </ScrollView>
@@ -711,30 +711,27 @@ export default function CreateCommunityScreen() {
                   {availableRegions.map((r) => {
                     const isSelected = region === r.id;
                     return (
-                      <TouchableOpacity
+                      <Chip
                         key={r.id}
-                        style={[
-                          styles.optionChip,
-                          { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                          isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
-                        ]}
+                        label={r.label}
+                        selected={isSelected}
                         onPress={() => {
                           form.setValues({
                             region: r.id,
                             city: '',
                           });
                         }}
-                      >
-                        <Text
-                          style={[
-                            styles.optionChipText,
-                            { color: colors.gray700 },
-                            isSelected && { color: colors.textOnPrimary },
-                          ]}
-                        >
-                          {r.label}
-                        </Text>
-                      </TouchableOpacity>
+                        style={[
+                          styles.optionChip,
+                          { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                          isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+                        ]}
+                        textStyle={[
+                          styles.optionChipText,
+                          { color: colors.gray700 },
+                          isSelected && { color: colors.textOnPrimary },
+                        ]}
+                      />
                     );
                   })}
                 </ScrollView>
@@ -754,25 +751,22 @@ export default function CreateCommunityScreen() {
                   {availableCities.map((c) => {
                     const isSelected = city === c.id;
                     return (
-                      <TouchableOpacity
+                      <Chip
                         key={c.id}
+                        label={c.label}
+                        selected={isSelected}
+                        onPress={() => form.setValue('city', c.id)}
                         style={[
                           styles.optionChip,
                           { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                           isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                         ]}
-                        onPress={() => form.setValue('city', c.id)}
-                      >
-                        <Text
-                          style={[
-                            styles.optionChipText,
-                            { color: colors.gray700 },
-                            isSelected && { color: colors.textOnPrimary },
-                          ]}
-                        >
-                          {c.label}
-                        </Text>
-                      </TouchableOpacity>
+                        textStyle={[
+                          styles.optionChipText,
+                          { color: colors.gray700 },
+                          isSelected && { color: colors.textOnPrimary },
+                        ]}
+                      />
                     );
                   })}
                 </ScrollView>
@@ -803,15 +797,12 @@ export default function CreateCommunityScreen() {
               const isSelected = visibility === type.id;
               const IconComponent = type.id === 'PUBLIC' ? Eye : Lock;
               return (
-                <TouchableOpacity
+                <SelectCard
                   key={type.id}
-                  style={[
-                    styles.locationTypeCard,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
+                  selected={isSelected}
                   onPress={() => form.setValue('visibility', type.id)}
-                  activeOpacity={0.7}
+                  style={styles.locationTypeCard}
+                  accessibilityLabel={type.label}
                 >
                   <IconComponent
                     size={24}
@@ -827,12 +818,7 @@ export default function CreateCommunityScreen() {
                   >
                     {type.label}
                   </Text>
-                  {isSelected && (
-                    <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
-                    </View>
-                  )}
-                </TouchableOpacity>
+                </SelectCard>
               );
             })}
           </View>
@@ -1026,15 +1012,15 @@ export default function CreateCommunityScreen() {
           <View style={styles.imageUploadContainer}>
             {/* Bouton ajouter image si pas encore 5 */}
             {images.length < MAX_IMAGES && (
-              <TouchableOpacity
-                style={[styles.addImageButtonFullWidth, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+              <Button
+                title="Ajouter une image"
                 onPress={pickImage}
-              >
-                <Upload size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.addImageTextLarge, { color: colors.gray500 }]}>
-                  Ajouter une image
-                </Text>
-              </TouchableOpacity>
+                variant="outline"
+                icon={<Upload size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+                style={[styles.addImageButtonFullWidth, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+                textStyle={[styles.addImageTextLarge, { color: colors.gray500 }]}
+                fullWidth
+              />
             )}
 
             {/* Grille d'images uploadées */}
@@ -1043,12 +1029,14 @@ export default function CreateCommunityScreen() {
                 {images.map((image) => (
                   <View key={image.id} style={styles.imageItemContainer}>
                     <Image source={{ uri: image.uri }} style={styles.imageItem} />
-                    <TouchableOpacity
-                      style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
+                    <IconButton
                       onPress={() => removeImage(image.id)}
-                    >
-                      <X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />
-                    </TouchableOpacity>
+                      icon={<X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />}
+                      accessibilityLabel="Retirer l'image"
+                      size="sm"
+                      variant="filled"
+                      style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
+                    />
                   </View>
                 ))}
               </View>
@@ -1230,25 +1218,27 @@ export default function CreateCommunityScreen() {
 
     if (currentStep === 'preview') {
       return (
-        <View style={[styles.footer, { backgroundColor: colors.background }]}>
+        <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
           <View style={styles.footerButtons}>
             {/* Bouton Retour */}
-            <TouchableOpacity
-              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+            <Button
+              title="Retour"
               onPress={handleBack}
               disabled={form.state.isSubmitting}
-            >
-              <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.backStepButtonText, { color: colors.gray700 }]}>Retour</Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+              textStyle={[styles.backStepButtonText, { color: colors.gray700 }]}
+            />
             {/* Bouton Brouillon */}
-            <TouchableOpacity
-              style={[styles.draftButton, { borderColor: colors.gray300 }]}
+            <IconButton
               onPress={handleSaveDraft}
               disabled={form.state.isSubmitting}
-            >
-              <Save size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
+              icon={<Save size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+              accessibilityLabel="Enregistrer le brouillon"
+              variant="outline"
+              style={[styles.draftButton, { borderColor: colors.gray300 }]}
+            />
             {/* Bouton Publier */}
             <View style={styles.publishButton}>
               <Button
@@ -1264,17 +1254,18 @@ export default function CreateCommunityScreen() {
     }
 
     return (
-      <View style={[styles.footer, { backgroundColor: colors.background }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
         <View style={styles.footerButtons}>
           {/* Bouton Retour (sauf sur le premier step) */}
           {!isFirstStep && (
-            <TouchableOpacity
-              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+            <Button
+              title="Retour"
               onPress={handleBack}
-            >
-              <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.backStepButtonText, { color: colors.gray700 }]}>Retour</Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+              textStyle={[styles.backStepButtonText, { color: colors.gray700 }]}
+            />
           )}
           {/* Bouton Continuer */}
           <View style={[styles.continueButton, !isFirstStep && { flex: 1 }]}>
@@ -1296,9 +1287,12 @@ export default function CreateCommunityScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={handleBack}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+          style={styles.backButton}
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Nouvelle communauté</Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -1307,22 +1301,26 @@ export default function CreateCommunityScreen() {
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {renderStepIndicator()}
+        <ScrollToInputContext.Provider value={scrollToInput}>
+          <ScrollView
+            ref={mainScrollRef}
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          >
+            {renderStepIndicator()}
 
-          {currentStep === 'info' && renderInfoStep()}
-          {currentStep === 'lieu' && renderLieuStep()}
-          {currentStep === 'conditions' && renderConditionsStep()}
-          {currentStep === 'media' && renderMediaStep()}
-          {currentStep === 'preview' && renderPreviewStep()}
-        </ScrollView>
+            {currentStep === 'info' && renderInfoStep()}
+            {currentStep === 'lieu' && renderLieuStep()}
+            {currentStep === 'conditions' && renderConditionsStep()}
+            {currentStep === 'media' && renderMediaStep()}
+            {currentStep === 'preview' && renderPreviewStep()}
+          </ScrollView>
 
-        {renderFooter()}
+          {renderFooter()}
+        </ScrollToInputContext.Provider>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

@@ -125,6 +125,35 @@ export const LIGHT_COLORS = {
   statusArchived: '#918A7E',    // Muted gray
 } as const;
 
+// Brand / partner colors (used for third-party identity, payments, etc.)
+// Keep these centralized to avoid hardcoding values across the app.
+export const BRAND_COLORS = {
+  whatsapp: '#25D366',
+  orangeMoney: '#FF6600',
+  mtnMoney: '#FFCC00',
+  moovMoney: '#0066CC',
+  wave: '#1DC7EA',
+  push: '#22C55E',
+  djamo: '#6B4EFF',
+} as const;
+
+// UI palettes that should remain stable (not derived from theme mode).
+export const TAG_COLOR_PALETTE = [
+  '#6B5E52', // taupe
+  '#4A6741', // forest green
+  '#8B4A3C', // terracotta
+  '#A67C52', // warm amber
+  '#5E6B52', // olive
+  '#6B525E', // mauve-brown
+  '#52656B', // blue-gray
+] as const;
+
+// "Pure" colors for embedded WebViews / external content where theme inversion isn't desired.
+export const STATIC_COLORS = {
+  black: '#000000',
+  white: '#ffffff',
+} as const;
+
 // DARK THEME
 // Optimized for contrast and visibility
 export const DARK_COLORS = {
@@ -226,7 +255,10 @@ export const DARK_COLORS = {
 export const COLORS = LIGHT_COLORS;
 
 // Type definitions
-export type ThemeColors = typeof LIGHT_COLORS;
+// Structural theme colors type (string values), so LIGHT/DARK palettes are compatible.
+// Avoid using the literal `as const` value types here, otherwise DARK_COLORS won't be assignable.
+type LightColorsShape = typeof LIGHT_COLORS;
+export type ThemeColors = { readonly [K in keyof LightColorsShape]: string };
 export type ThemeMode = 'light' | 'dark';
 
 // SPACING SYSTEM
@@ -616,4 +648,3 @@ export const MATCH_COLORS = {
     bgColor: LIGHT_COLORS.errorLight,      // #F5EBE8
   },
 } as const;
-

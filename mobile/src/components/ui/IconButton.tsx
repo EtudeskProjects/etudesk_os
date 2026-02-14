@@ -1,7 +1,8 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { SPACING, BORDER, ICON, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { Tap } from './Tap';
 
 type IconButtonSize = 'sm' | 'md' | 'lg';
 type IconButtonVariant = 'ghost' | 'filled' | 'outline';
@@ -13,7 +14,7 @@ interface IconButtonProps {
   size?: IconButtonSize;
   variant?: IconButtonVariant;
   disabled?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   accessibilityLabel: string;
   accessibilityHint?: string;
   testID?: string;
@@ -41,7 +42,7 @@ export function IconButton({
   const borderColor = variant === 'outline' ? colors.borderColorStrong : 'transparent';
 
   return (
-    <TouchableOpacity
+    <Tap
       style={[
         styles.base,
         sizeStyle,
@@ -62,7 +63,7 @@ export function IconButton({
     >
       {icon}
       {children}
-    </TouchableOpacity>
+    </Tap>
   );
 }
 

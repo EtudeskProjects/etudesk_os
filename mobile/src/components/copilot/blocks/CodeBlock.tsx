@@ -4,11 +4,12 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Code, Copy, Check } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
+
 
 const MONO_FONT_FAMILY = Platform.select({
   ios: 'Menlo',
@@ -87,10 +88,11 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
         </View>
 
         {/* Copy Button */}
-        <TouchableOpacity
+        <Pressable
           style={styles.copyButton}
           onPress={handleCopy}
-          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Copier le code"
         >
           {copied ? (
             <>
@@ -115,7 +117,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
               </Text>
             </>
           )}
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Code Content */}

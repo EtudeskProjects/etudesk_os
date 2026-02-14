@@ -3,14 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   type TextInput as RNTextInput,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Mail, MessageCircle, CheckCircle } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
@@ -18,7 +16,7 @@ import { useI18n } from '../../src/contexts/I18nContext';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { otpService } from '../../src/services/otpService';
 import { useAlert } from '../../src/contexts/AlertContext';
-import { Input } from '../../src/components/ui';
+import { Button, IconButton, Input, SelectCard } from '../../src/components/ui';
 
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN = 60;
@@ -27,6 +25,7 @@ export default function VerifyOTPScreen() {
   const router = useRouter();
   const { email, phone, channel } = useLocalSearchParams<{ email?: string; phone?: string; channel?: string }>();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { t } = useI18n();
   const { signIn, signInWhatsApp } = useAuth();
   const isWhatsAppFlow = channel === 'whatsapp';
@@ -167,13 +166,14 @@ export default function VerifyOTPScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.header}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.surface }]}
+          <IconButton
             onPress={() => router.back()}
-            activeOpacity={0.8}
-          >
-            <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
+            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel="Retour"
+            size="sm"
+            variant="filled"
+            style={[styles.backButton, { backgroundColor: colors.surface }]}
+          />
         </View>
 
         <View style={styles.content}>
@@ -233,11 +233,14 @@ export default function VerifyOTPScreen() {
             <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
           ) : null}
 
-          <TouchableOpacity
-            style={styles.resendButton}
-            onPress={handleResendOTP}
-            disabled={resendCooldown > 0 || isLoading}
-            activeOpacity={0.8}
+          <SelectCard
+            style={[styles.resendButton, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
+            onPress={() => {
+              if (resendCooldown > 0 || isLoading) return;
+              void handleResendOTP();
+            }}
+            selected={false}
+            accessibilityLabel="Renvoyer le code"
           >
             <Text
               style={[
@@ -249,26 +252,23 @@ export default function VerifyOTPScreen() {
                 ? t('auth.verifyOtp.resendIn', { seconds: resendCooldown })
                 : t('auth.verifyOtp.resendCode')}
             </Text>
-          </TouchableOpacity>
+          </SelectCard>
         </View>
 
-        <View style={styles.footer}>
-          <TouchableOpacity
+        <View style={[styles.footer, { paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
+          <Button
+            title={t('auth.verifyOtp.verify')}
+            onPress={handleVerifyOTP}
+            disabled={!isOtpComplete || isLoading}
+            loading={isLoading}
+            fullWidth
             style={[
               styles.verifyButton,
               { backgroundColor: colors.primary },
               (!isOtpComplete || isLoading) && styles.verifyButtonDisabled,
             ]}
-            onPress={handleVerifyOTP}
-            activeOpacity={0.8}
-            disabled={!isOtpComplete || isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color={colors.textOnPrimary} />
-            ) : (
-              <Text style={[styles.verifyButtonText, { color: colors.textOnPrimary }]}>{t('auth.verifyOtp.verify')}</Text>
-            )}
-          </TouchableOpacity>
+            textStyle={[styles.verifyButtonText, { color: colors.textOnPrimary }]}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

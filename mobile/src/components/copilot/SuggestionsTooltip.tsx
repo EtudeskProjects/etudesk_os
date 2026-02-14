@@ -8,17 +8,19 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
     View,
     Text,
-    TouchableOpacity,
     StyleSheet,
     Modal,
     Dimensions,
     Animated,
+    Pressable,
 } from 'react-native';
 import { RefreshCw, X, Lightbulb } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../contexts/AuthContext';
 import { copilotService, CopilotMode } from '../../services/copilotService';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../constants/theme';
+import { IconButton, LoadingShimmer, SelectCard } from '../ui';
+
 
 interface SuggestionsTooltipProps {
     visible: boolean;
@@ -110,12 +112,11 @@ export function SuggestionsTooltip({
             transparent
             animationType="none"
             onRequestClose={onClose}
-        >
-            <TouchableOpacity
-                style={styles.overlay}
-                activeOpacity={1}
-                onPress={onClose}
-            >
+	        >
+	            <Pressable
+	                style={[styles.overlay, { backgroundColor: colors.overlayLight }]}
+	                onPress={onClose}
+	            >
                 <Animated.View
                     style={[
                         styles.tooltip,
@@ -148,30 +149,29 @@ export function SuggestionsTooltip({
                         </View>
                         <View style={styles.headerActions}>
                             {/* Refresh button */}
-                            <TouchableOpacity
-                                style={[
-                                    styles.refreshButton,
-                                    { borderColor: colors.borderColor },
-                                ]}
+                            <IconButton
                                 onPress={handleRefresh}
                                 disabled={isLoading}
-                                activeOpacity={0.7}
-                            >
-                                <RefreshCw
-                                    size={14}
-                                    color={colors.primary}
-                                    strokeWidth={ICON.strokeWidth}
-                                    style={isLoading ? { opacity: 0.5 } : undefined}
-                                />
-                            </TouchableOpacity>
+                                icon={
+                                    <RefreshCw
+                                        size={14}
+                                        color={colors.primary}
+                                        strokeWidth={ICON.strokeWidth}
+                                        style={isLoading ? { opacity: 0.5 } : undefined}
+                                    />
+                                }
+                                accessibilityLabel="Rafraîchir"
+                                size="sm"
+                                variant="outline"
+                                style={[styles.refreshButton, { borderColor: colors.borderColor }]}
+                            />
                             {/* Close button */}
-                            <TouchableOpacity
-                                style={styles.closeButton}
+                            <IconButton
                                 onPress={onClose}
-                                activeOpacity={0.7}
-                            >
-                                <X size={18} color={colors.textSecondary} />
-                            </TouchableOpacity>
+                                icon={<X size={18} color={colors.textSecondary} />}
+                                accessibilityLabel="Fermer"
+                                style={styles.closeButton}
+                            />
                         </View>
                     </View>
 
@@ -181,13 +181,11 @@ export function SuggestionsTooltip({
                     <View style={styles.suggestionsContainer}>
                         {isLoading ? (
                             <View style={styles.loadingContainer}>
-                                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                                    Chargement...
-                                </Text>
+                                <LoadingShimmer variant="inline" />
                             </View>
                         ) : (
                             suggestions.map((suggestion, index) => (
-                                <TouchableOpacity
+                                <SelectCard
                                     key={index}
                                     style={[
                                         styles.suggestionItem,
@@ -199,7 +197,8 @@ export function SuggestionsTooltip({
                                         index < suggestions.length - 1 && { marginBottom: SPACING.xs },
                                     ]}
                                     onPress={() => handleSelectSuggestion(suggestion)}
-                                    activeOpacity={0.7}
+                                    selected={false}
+                                    accessibilityLabel={suggestion}
                                 >
                                     <View style={[styles.suggestionIcon, { backgroundColor: withOpacity(colors.primary, 0.12) }]}>
                                         <Lightbulb size={12} color={colors.primary} />
@@ -210,23 +209,22 @@ export function SuggestionsTooltip({
                                     >
                                         {suggestion}
                                     </Text>
-                                </TouchableOpacity>
+                                </SelectCard>
                             ))
                         )}
                     </View>
                 </Animated.View>
-            </TouchableOpacity>
+            </Pressable>
         </Modal>
     );
 }
 
-const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
-        justifyContent: 'flex-end',
-    },
-    tooltip: {
+	const styles = StyleSheet.create({
+	    overlay: {
+	        flex: 1,
+	        justifyContent: 'flex-end',
+	    },
+	    tooltip: {
         position: 'absolute',
         borderRadius: BORDER.radius.xl,
         borderWidth: 1.5,
@@ -271,11 +269,6 @@ const styles = StyleSheet.create({
     loadingContainer: {
         paddingVertical: SPACING.lg,
         alignItems: 'center',
-    },
-    loadingText: {
-        fontSize: TYPOGRAPHY.fontSize.sm,
-        fontFamily: TYPOGRAPHY.fontFamily.medium,
-        fontStyle: 'italic',
     },
     suggestionItem: {
         flexDirection: 'row',

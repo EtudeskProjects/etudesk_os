@@ -75,7 +75,7 @@ class OpportunityInvitationService {
     opportunityId: string,
     invitations: SendOpportunityInvitationData[]
   ): Promise<ApiResponse<SendOpportunityInvitationsResult>> {
-    return api.post(`/api/opportunities/${opportunityId}/invitations`, { invitations });
+    return api.post(`/api/opportunity-invitations/${opportunityId}/invitations`, { invitations });
   }
 
   /**
@@ -88,7 +88,7 @@ class OpportunityInvitationService {
     data: OpportunityInvitation[];
     count: number;
   }>> {
-    return api.get(`/api/opportunities/${opportunityId}/invitations`, filters);
+    return api.get(`/api/opportunity-invitations/${opportunityId}/invitations`, filters);
   }
 
   /**
@@ -98,7 +98,7 @@ class OpportunityInvitationService {
     opportunityId: string,
     invitationId: string
   ): Promise<ApiResponse<{ success: boolean; message: string }>> {
-    return api.delete(`/api/opportunities/${opportunityId}/invitations/${invitationId}`);
+    return api.delete(`/api/opportunity-invitations/${opportunityId}/invitations/${invitationId}`);
   }
 
   /**
@@ -108,7 +108,7 @@ class OpportunityInvitationService {
     opportunityId: string,
     invitationId: string
   ): Promise<ApiResponse<{ success: boolean; message: string }>> {
-    return api.post(`/api/opportunities/${opportunityId}/invitations/${invitationId}/resend`, {});
+    return api.post(`/api/opportunity-invitations/${opportunityId}/invitations/${invitationId}/resend`, {});
   }
 
   // User methods (for invitees)

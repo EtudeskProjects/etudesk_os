@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -20,6 +20,7 @@ import { SPACING, ICON, BORDER, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { Platform } from 'react-native';
 import { useSpace } from '../../contexts/SpaceContext';
+import { Tap } from './Tap';
 
 type TabName = 'home' | 'gestion' | 'assistant' | 'explore' | 'settings';
 
@@ -68,7 +69,7 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
         const iconColor = isActive ? colors.textOnPrimary : colors.textSecondary;
 
         return (
-          <TouchableOpacity
+          <Tap
             key={tab.name}
             style={styles.tab}
             onPress={() => router.push(tab.route as any)}
@@ -91,7 +92,7 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
                 strokeWidth={isActive ? ICON.strokeWidthThick : ICON.strokeWidth}
               />
             </View>
-          </TouchableOpacity>
+          </Tap>
         );
       })}
     </View>

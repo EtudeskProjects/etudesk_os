@@ -1,6 +1,6 @@
 # Copilot Agent Architecture — Documentation Technique Complète
 
-> Version: 1.0.0 | Dernière mise à jour: Février 2026
+> Version: 2.0.0 | Dernière mise à jour: 14 Février 2026 — Architecture multi-provider (Anthropic + Gemini + OpenAI)
 
 ---
 
@@ -31,7 +31,7 @@
 │  ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐       │
 │  │   TalentAgent     │  │   TalentAgent     │  │     OrgAgent      │       │
 │  │    (explore)      │  │     (study)       │  │   (organization)  │       │
-│  │    gpt-5          │  │     gpt-5         │  │     gpt-5         │       │
+│  │  claude-sonnet-4-5│  │  claude-sonnet-4-5│  │  claude-sonnet-4-5│       │
 │  │    6 tools        │  │     7 tools       │  │     6 tools       │       │
 │  └─────────┬─────────┘  └─────────┬─────────┘  └─────────┬─────────┘       │
 │            │                      │                      │                  │
@@ -54,12 +54,12 @@
 │         ┌─────────────────────┴─────────────────────────┐                  │
 │         │          2 SUB-AGENTS (via asTool)             │                  │
 │         ├───────────────────────────────────────────────┤                  │
-│         │ • file_reader  ← gpt-5-mini (documents)       │                  │
-│         │ • web_search   ← gpt-5-mini (recherche web)   │                  │
+│         │ • file_reader  ← claude-haiku-4-5 (documents)   │                  │
+│         │ • web_search   ← gpt-4.1-mini (recherche web) │                  │
 │         └───────────────────────────────────────────────┘                  │
 │                                                                             │
 │         ┌───────────────────────────────────────────────┐                  │
-│         │             GUARDRAILS (gpt-4.1-nano)          │                  │
+│         │          GUARDRAILS (claude-haiku-4-5)          │                  │
 │         ├───────────────────────────────────────────────┤                  │
 │         │ • inputSafetyGuardrail  (parallèle, fail-fast) │                  │
 │         │ • outputFormatGuardrail (log-only, no block)   │                  │
@@ -73,10 +73,15 @@
 | Composant | Technologie |
 |-----------|-------------|
 | Framework Agent | OpenAI Agents SDK (`@openai/agents`) |
-| Modèle Principal (T1) | GPT-5 (400K tokens context) |
-| Modèle Sub-agents (T2) | GPT-5-mini (400K tokens context) |
-| Modèle Guardrails (T3) | GPT-4.1-nano (1M tokens context) |
-| Génération Images | gpt-image-1 |
+| Provider Agents | Anthropic Claude (via AnthropicProvider custom) |
+| Provider Suggestions | Google Gemini (via OpenAI-compat endpoint) |
+| Provider Images/STT/Vision | OpenAI |
+| Modèle Agents (MODEL_AGENT) | claude-sonnet-4-5 (Anthropic) |
+| Modèle Fast (MODEL_FAST) | claude-haiku-4-5 (Anthropic) — guardrails, titres, summaries, file_reader |
+| Modèle Suggestions (MODEL_SUGGESTION) | gemini-2.5-flash-lite (Google) — suggestions, objectifs, bio |
+| Modèle Search/Vision (MODEL_SEARCH) | gpt-4.1-mini (OpenAI) — web_search, extraction, vision |
+| Modèle Match (MODEL_MATCH) | gpt-4.1-nano (OpenAI) — recommendations candidats |
+| Génération Images | gpt-image-1 (OpenAI) |
 | Vector Search | Pinecone |
 | Base de Données | PostgreSQL |
 | Streaming | Server-Sent Events (SSE) |
@@ -93,7 +98,7 @@
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `Talent Agent (explore)` |
-| **Modèle** | `MODEL_T1` (gpt-5) |
+| **Modèle** | `MODEL_AGENT` (claude-sonnet-4-5, Anthropic) |
 | **Guardrails** | inputSafetyGuardrail, outputFormatGuardrail |
 | **Description** | Agent principal pour l'exploration de la plateforme : recherche d'opportunités, communautés, espaces, talents |
 
@@ -103,15 +108,15 @@
 | `vector_query` | Static | Recherche sémantique Pinecone |
 | `sql_query` | Factory (IDOR) | Requêtes PostgreSQL intent-based (tous intents my_* + search_*) |
 | `generate_document` | Factory (IDOR) | Génération de documents PDF/DOCX/XLS/CSV/TXT |
-| `file_reader` | asTool (gpt-5-mini) | Lecture et analyse des documents du talent |
-| `web_search` | asTool (gpt-5-mini) | Recherche web externe |
+| `file_reader` | asTool (claude-haiku-4-5) | Lecture et analyse des documents du talent |
+| `web_search` | asTool (gpt-4.1-mini) | Recherche web externe (toujours OpenAI — Responses API) |
 | `execute_action` | Factory (IDOR) | Actions confirmées (apply, join, book, accept/decline) |
 
 ```typescript
 // Création de l'agent (simplifié)
 return new Agent({
   name: `Talent Agent (explore)`,
-  model: MODEL_T1,
+  model: MODEL_AGENT,  // claude-sonnet-4-5
   instructions: buildTalentExplorerPrompt(context),
   tools: [
     vectorQueryTool,
@@ -135,7 +140,7 @@ return new Agent({
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `Talent Agent (study)` |
-| **Modèle** | `MODEL_T1` (gpt-5) |
+| **Modèle** | `MODEL_AGENT` (claude-sonnet-4-5, Anthropic) |
 | **Guardrails** | inputSafetyGuardrail, outputFormatGuardrail |
 | **Description** | Agent pédagogique pour l'apprentissage : recherche YouTube, génération de visuels, évaluation de compétences |
 
@@ -146,8 +151,8 @@ return new Agent({
 | `youtube_search` | Static | Recherche de vidéos éducatives YouTube |
 | `generate_image` | Static | Génération d'images pédagogiques (gpt-image-1) |
 | `generate_diagram` | Static | Génération de diagrammes Mermaid (client-side) |
-| `file_reader` | asTool (gpt-5-mini) | Lecture des documents du talent |
-| `web_search` | asTool (gpt-5-mini) | Recherche web externe |
+| `file_reader` | asTool (claude-haiku-4-5) | Lecture des documents du talent |
+| `web_search` | asTool (gpt-4.1-mini) | Recherche web externe (toujours OpenAI) |
 | `manage_skills` | Factory (IDOR) | Ajout/mise à jour des compétences talent |
 
 **Restrictions Mode Study:**
@@ -166,7 +171,7 @@ return new Agent({
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `Organization Explorer` |
-| **Modèle** | `MODEL_T1` (gpt-5) |
+| **Modèle** | `MODEL_AGENT` (claude-sonnet-4-5, Anthropic) |
 | **Guardrails** | inputSafetyGuardrail, outputFormatGuardrail |
 | **Description** | Agent de gestion d'organisation : gestion des membres, candidatures, analytics, création de ressources |
 
@@ -176,8 +181,8 @@ return new Agent({
 | `vector_query` | Static | Recherche de talents/compétences |
 | `sql_query` | Factory (IDOR, org scope) | Données organisation (org_* + search_* uniquement) |
 | `generate_document` | Factory (IDOR) | Génération de rapports/fiches de poste |
-| `file_reader` | asTool (gpt-5-mini) | Lecture et analyse des documents organisation |
-| `web_search` | asTool (gpt-5-mini) | Recherche web (données marché) |
+| `file_reader` | asTool (claude-haiku-4-5) | Lecture et analyse des documents organisation |
+| `web_search` | asTool (gpt-4.1-mini) | Recherche web (données marché, toujours OpenAI) |
 | `execute_action` | Factory (IDOR) | Actions confirmées (publish_opportunity, create_community, create_space via confirmation UI) |
 
 **SQL Intents autorisés (18):**
@@ -200,7 +205,7 @@ import { createOrgFileReaderTool } from '../tools/file-read.tool';
 // Création de l'agent (simplifié)
 return new Agent({
   name: 'Organization Explorer',
-  model: MODEL_T1,
+  model: MODEL_AGENT,  // claude-sonnet-4-5
   instructions: buildOrgExplorerPrompt(context),
   tools: [
     vectorQueryTool,
@@ -224,7 +229,7 @@ return new Agent({
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `FileReaderAgent` |
-| **Modèle** | `MODEL_T2` (gpt-5-mini) |
+| **Modèle** | `MODEL_FAST` (claude-haiku-4-5, Anthropic) |
 | **Max Tokens** | Non spécifié (défaut SDK) |
 | **Temperature** | Non spécifié (défaut SDK) |
 | **Description** | Sub-agent pour la lecture et l'analyse des documents du talent (CV, diplômes, etc.) |
@@ -256,7 +261,7 @@ Respond in the same language as the user's question.
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `WebSearchAgent` |
-| **Modèle** | `MODEL_T2` (gpt-5-mini) |
+| **Modèle** | `MODEL_SEARCH` (gpt-4.1-mini, OpenAI — toujours OpenAI pour Responses API) |
 | **Max Tokens** | Non spécifié (défaut SDK) |
 | **Temperature** | Non spécifié (défaut SDK) |
 | **Description** | Sub-agent pour la recherche d'informations sur le web |
@@ -285,9 +290,9 @@ Respond in the same language as the user's question.
 
 ## 3. Prompts Système
 
-### 3.1 Structure des Prompts (GPT-4.1 Optimized)
+### 3.1 Structure des Prompts
 
-Tous les prompts suivent la structure optimisée pour GPT-4.1 :
+Tous les prompts suivent la structure optimisée :
 
 ```
 1. ROLE            → Définition claire du rôle
@@ -863,7 +868,7 @@ export const EXPLORER_CONTEXT_OPTIONS = {
 
 | Paramètre | Valeur | Description |
 |-----------|--------|-------------|
-| `MAX_TOOL_CALLS` | 12 | Nombre maximum d'appels tools par turn |
+| `MAX_TOOL_CALLS` | 20 | Nombre maximum d'appels tools par turn |
 | `MAX_TURN_DURATION_MS` | 120,000 | Timeout de 2 minutes par turn |
 
 ### 7.2 Types d'événements SSE
@@ -982,14 +987,20 @@ export const COPILOT_MODES = {
 
 | Mode | Max Tool Calls | Timeout | Tools | Vector Query | SQL Query | File Reader |
 |------|----------------|---------|-------|--------------|-----------|-------------|
-| Explore | 12 | 2 min | 6 | ✅ | ✅ (full) | ✅ (asTool) |
-| Study | 12 | 2 min | 7 | ❌ | ✅ (3 intents) | ✅ (asTool) |
-| Organization | 12 | 2 min | 6 | ✅ | ✅ (org scope) | ✅ (org docs) |
+| Explore | 20 | 2 min | 6 | ✅ | ✅ (full) | ✅ (asTool) |
+| Study | 20 | 2 min | 7 | ❌ | ✅ (3 intents) | ✅ (asTool) |
+| Organization | 20 | 2 min | 6 | ✅ | ✅ (org scope) | ✅ (org docs) |
 
 ### 8.3 Variables d'environnement
 
 ```env
-# OpenAI
+# Anthropic Claude (agents principaux, guardrails, summaries, file_reader)
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Google Gemini (suggestions formulaires, objectifs, bio)
+GOOGLE_API_KEY=AIza...
+
+# OpenAI (images, STT, moderation, embeddings, web search, vision/extraction, recommendations)
 OPENAI_API_KEY=sk-...
 
 # Pinecone
@@ -1084,14 +1095,14 @@ sequenceDiagram
     end
 
     alt Needs document
-        TalentAgent->>SubAgents: handoff → FileReaderAgent
+        TalentAgent->>SubAgents: asTool → FileReaderAgent (claude-haiku-4-5)
         SubAgents->>Tools: read_document(id)
         Tools-->>SubAgents: {content}
         SubAgents-->>TalentAgent: {summary}
     end
 
     alt Needs web data
-        TalentAgent->>SubAgents: handoff → WebSearchAgent
+        TalentAgent->>SubAgents: asTool → WebSearchAgent (gpt-4.1-mini)
         SubAgents->>Tools: webSearchTool(query)
         Tools-->>SubAgents: [results]
         SubAgents-->>TalentAgent: {findings}
@@ -1174,8 +1185,8 @@ flowchart TD
 | `src/services/copilot/tools/manage-skills.tool.ts` | Tool manage_skills (factory) |
 | `src/services/copilot/tools/execute-action.tool.ts` | Tool execute_action (factory) |
 | `src/services/copilot/tools/cv-pdf-generator.ts` | Utilitaire PDF CV (interne) |
-| `src/services/copilot/tools/file-read.tool.ts` | FileReaderAgent (asTool, gpt-5-mini) |
-| `src/services/copilot/tools/web-search.tool.ts` | WebSearchAgent (asTool, gpt-5-mini) |
+| `src/services/copilot/tools/file-read.tool.ts` | FileReaderAgent (asTool, claude-haiku-4-5) |
+| `src/services/copilot/tools/web-search.tool.ts` | WebSearchAgent (asTool, gpt-4.1-mini) |
 | `src/services/copilot/prompts/talent-explorer.prompt.ts` | Prompt mode Explore |
 | `src/services/copilot/prompts/talent-study.prompt.ts` | Prompt mode Study |
 | `src/services/copilot/prompts/org-explorer.prompt.ts` | Prompt Organization |
@@ -1185,22 +1196,48 @@ flowchart TD
 | `src/services/copilot/stream/sse.handler.ts` | SSE streaming |
 | `src/services/copilot/stream/tool-summary.ts` | Résumés français des tool calls |
 | `src/services/copilot/session.service.ts` | Session management |
-| `src/services/copilot/session-summarizer.ts` | Summarization historique (gpt-4.1-nano) |
+| `src/services/copilot/session-summarizer.ts` | Summarization historique (claude-haiku-4-5) |
 | `src/services/copilot/ontology.cache.ts` | Ontology caching |
 | `src/services/copilot/skills/skill.loader.ts` | Chargement des skills par mode |
-| `src/services/copilot/guardrails/input.guardrail.ts` | Input safety (gpt-4.1-nano) |
+| `src/services/copilot/guardrails/input.guardrail.ts` | Input safety (claude-haiku-4-5) |
 | `src/services/copilot/guardrails/output.guardrail.ts` | Output format validation |
 | `src/services/copilot/actions/action.handler.ts` | Confirmation actions (8 actions) |
 | `src/services/copilot/actions/action.validators.ts` | Validateurs pre-action |
-| `src/services/ai/models.ts` | MODEL_T1/T2/T3 constants |
-| `src/routes/copilot.ts` | Route handler |
+| `src/services/ai/models.ts` | MODEL_AGENT/FAST/SUGGESTION/MATCH/SEARCH constants |
+| `src/services/ai/provider.ts` | Multi-provider config (Anthropic, Gemini, OpenAI) |
+| `src/services/ai/anthropic-provider.ts` | AnthropicProvider adapter pour @openai/agents |
+| `src/services/auto-moderation.service.ts` | Content moderation (omni-moderation-latest, direct OpenAI) |
+| `src/routes/copilot.ts` | Route handler (STT whisper-1 + suggestions gemini) |
 
-### B. Références
+### B. Architecture Multi-Provider — Cartographie Complete
+
+Chaque composant du copilot utilise un provider et modele specifique :
+
+| Composant | Provider | Modele | Constante | Pattern |
+|-----------|----------|--------|-----------|---------|
+| TalentAgent (explore/study) | Anthropic | claude-sonnet-4-5 | MODEL_AGENT | `run()` default |
+| OrgAgent | Anthropic | claude-sonnet-4-5 | MODEL_AGENT | `run()` default |
+| FileReaderAgent (sub-agent) | Anthropic | claude-haiku-4-5 | MODEL_FAST | `agent.asTool()` |
+| Input guardrail | Anthropic | claude-haiku-4-5 | MODEL_FAST | `run()` default |
+| Session summarizer | Anthropic | claude-haiku-4-5 | MODEL_FAST | `run()` default |
+| Session title | Anthropic | claude-haiku-4-5 | MODEL_FAST | `run()` default |
+| WebSearchAgent (sub-agent) | OpenAI | gpt-4.1-mini | MODEL_SEARCH | `agent.asTool()` + Responses API |
+| Suggestions prompt | Google | gemini-2.5-flash-lite | MODEL_SUGGESTION | `Runner({ modelProvider: geminiProvider })` |
+| Intent suggestions | Google | gemini-2.5-flash-lite | MODEL_SUGGESTION | `Runner({ modelProvider: geminiProvider })` |
+| Transcription audio (STT) | OpenAI | whisper-1 | MODEL_STT | `getOpenAIClient().audio.transcriptions` |
+| Generation images | OpenAI | gpt-image-1 | MODEL_IMAGE | `getImageClient().images.generate` |
+| Auto-moderation contenu | OpenAI | omni-moderation-latest | — | Direct `new OpenAI()` (timeout 5s) |
+
+**Note:** L'auto-moderation est le seul composant qui n'utilise PAS `provider.ts`. Elle cree son propre client OpenAI avec un timeout custom de 5 secondes pour garantir une latence previsible.
+
+### C. Références
 
 - [OpenAI Agents SDK Documentation](https://platform.openai.com/docs/agents)
-- [GPT-5 Prompting Guide](https://platform.openai.com/docs/guides/gpt-5)
+- [Anthropic Claude Documentation](https://docs.anthropic.com/)
+- [Google Gemini Documentation](https://ai.google.dev/docs)
 - [gpt-image-1 Documentation](https://platform.openai.com/docs/guides/images)
 - [Pinecone Documentation](https://docs.pinecone.io/)
+- `docs/AI_MODELS_DOCUMENTATION.md` — Architecture multi-provider détaillée
 - `docs/COPILOT_TOOLS_DOCUMENTATION.md` — Documentation audit des 11 tools
 - `docs/COPILOT_AGENT_PERIMETER.md` — Périmètre exact de chaque agent
 - `docs/ontology.md` — Ontologie OWL de la plateforme
@@ -1208,4 +1245,4 @@ flowchart TD
 ---
 
 > **Maintenu par:** Équipe Etudesk
-> **Dernière révision:** 9 février 2026 — aligné avec code GPT-5 + asTool pattern
+> **Dernière révision:** 14 février 2026 — Architecture multi-provider (Anthropic Claude + Google Gemini + OpenAI)

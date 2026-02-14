@@ -1,18 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  TextInput,
   Image,
-  ActivityIndicator,
+  Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
   Camera,
@@ -23,7 +21,8 @@ import {
   Wand2,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
-import { Input, Button, Toggle, StepIndicator } from '../../src/components/ui';
+import { Chip, IconButton, Input, Button, Toggle, StepIndicator, LoadingShimmer } from '../../src/components/ui';
+import { FormTextArea } from '../../src/components/forms/FormTextArea';
 import {
   SECTOR_DATA,
   PROFILE_TAG_DATA,
@@ -39,6 +38,7 @@ import { talentService, imageService } from '../../src/services';
 import { getFullImageUrl } from '../../src/utils/image';
 import { useForm } from '../../src/hooks/useForm';
 import { useAlert } from '../../src/contexts/AlertContext';
+import { ScrollToInputContext } from '../../src/contexts/ScrollToInputContext';
 
 interface ProfileFormValues {
   firstName: string;
@@ -64,6 +64,7 @@ export default function EditProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { refreshUser } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const [currentStep, setCurrentStep] = useState<Step>('info');
 
@@ -73,6 +74,7 @@ export default function EditProfileScreen() {
 
   // Refs for auto-scroll to selected country
   const countryScrollRef = useRef<ScrollView>(null);
+  const mainScrollRef = useRef<ScrollView>(null);
   const COUNTRY_CHIP_WIDTH = 80;
 
   // Form hook
@@ -120,6 +122,15 @@ export default function EditProfileScreen() {
     },
   });
   const alerts = useAlert();
+
+  const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 96) => {
+    const sv = mainScrollRef.current;
+    if (!sv) return;
+    const delay = Platform.OS === 'android' ? 120 : 0;
+    setTimeout(() => {
+      sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+    }, delay);
+  }, []);
 
   // Convenience getters for form values
   const firstName = form.getValue('firstName');
@@ -287,23 +298,25 @@ export default function EditProfileScreen() {
 
       <View style={styles.formFields}>
         {/* Photo de profil */}
-        <View style={styles.photoSection}>
-          <TouchableOpacity
-            style={[styles.photoContainer, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
-            onPress={pickImage}
-          >
-            {avatarUri ? (
-              <Image source={{ uri: getFullImageUrl(avatarUri) || avatarUri }} style={styles.photoImage} resizeMode="cover" />
-            ) : (
-              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
+	        <View style={styles.photoSection}>
+	          <Pressable
+	            style={[styles.photoContainer, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
+	            onPress={pickImage}
+	            accessibilityRole="button"
+	            accessibilityLabel="Changer la photo de profil"
+	          >
+	            {avatarUri ? (
+	              <Image source={{ uri: getFullImageUrl(avatarUri) || avatarUri }} style={styles.photoImage} resizeMode="cover" />
+	            ) : (
+	              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
                 <Text style={[styles.avatarText, { color: colors.textOnPrimary }]}>{getInitials()}</Text>
               </View>
-            )}
-          </TouchableOpacity>
-          <Text style={[styles.photoHint, { color: colors.textSecondary }]}>
-            Appuie pour changer ta photo
-          </Text>
-        </View>
+	            )}
+	          </Pressable>
+	          <Text style={[styles.photoHint, { color: colors.textSecondary }]}>
+	            Appuie pour changer ta photo
+	          </Text>
+	        </View>
 
         {/* Prenom & Nom */}
         <View style={styles.rowFields}>
@@ -328,107 +341,87 @@ export default function EditProfileScreen() {
         </View>
 
         {/* Genre */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Genre</Text>
-          <View style={styles.optionsRow}>
-            {GENDERS.map((g) => (
-              <TouchableOpacity
-                key={g.id}
-                style={[
-                  styles.optionButton,
-                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                  gender === g.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                ]}
-                onPress={() => form.setValue('gender', g.id)}
-              >
-                <Text
-                  style={[
-                    styles.optionButtonText,
-                    { color: colors.gray700 },
-                    gender === g.id && { color: colors.textOnPrimary },
-                  ]}
-                >
-                  {g.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+	        <View style={styles.fieldContainer}>
+	          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Genre</Text>
+	          <View style={styles.optionsRow}>
+	            {GENDERS.map((g) => (
+	              <Chip
+	                key={g.id}
+	                label={g.label}
+	                selected={gender === g.id}
+	                onPress={() => form.setValue('gender', g.id)}
+	                style={[
+	                  styles.optionButton,
+	                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                  gender === g.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                ]}
+	                textStyle={[
+	                  styles.optionButtonText,
+	                  { color: colors.gray700 },
+	                  gender === g.id && { color: colors.textOnPrimary },
+	                ]}
+	              />
+	            ))}
+	          </View>
+	        </View>
 
         {/* Profil Tags */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
             Ton profil ({selectedTags.length}/{MAX_PROFILE_TAGS})
           </Text>
-          <View style={styles.tagsContainer}>
-            {PROFILE_TAG_DATA.map((tag) => {
-              const isSelected = selectedTags.includes(tag.id);
-              return (
-                <TouchableOpacity
-                  key={tag.id}
-                  style={[
-                    styles.selectableTag,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
-                  onPress={() => toggleTag(tag.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && (
-                    <Check size={14} color={colors.primary} strokeWidth={2.5} />
-                  )}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {tag.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
+	          <View style={styles.tagsContainer}>
+	            {PROFILE_TAG_DATA.map((tag) => {
+	              const isSelected = selectedTags.includes(tag.id);
+	              return (
+	                <Chip
+	                  key={tag.id}
+	                  label={tag.label}
+	                  selected={isSelected}
+	                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
+	                  onPress={() => toggleTag(tag.id)}
+	                  style={[
+	                    styles.selectableTag,
+	                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
+	                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
+	                  ]}
+	                  textStyle={[
+	                    styles.selectableTagText,
+	                    { color: colors.gray600 },
+	                    isSelected && { color: colors.primary },
+	                  ]}
+	                />
+	              );
+	            })}
+	          </View>
+	        </View>
 
         {/* Bio */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Bio</Text>
-          <View style={[styles.textAreaContainer, { borderColor: colors.gray200, backgroundColor: colors.surface }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary }]}
-              placeholder="Décris-toi en quelques mots..."
-              placeholderTextColor={colors.gray400}
-              value={bio}
-              onChangeText={(text) => form.setValue('bio', text.slice(0, 300))}
-              multiline
-              maxLength={300}
-            />
-            <Text style={[styles.charCount, { color: colors.gray400 }]}>{bio.length}/300</Text>
-          </View>
-          <View style={styles.generateButtonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.generateButton,
-                { backgroundColor: colors.primary },
-                isGeneratingBio && { opacity: 0.7 },
-              ]}
-              onPress={handleGenerateBio}
-              disabled={isGeneratingBio}
-              activeOpacity={0.8}
-            >
-              {isGeneratingBio ? (
-                <ActivityIndicator size="small" color={colors.textOnPrimary} />
-              ) : (
-                <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              )}
-              <Text style={[styles.generateButtonText, { color: colors.textOnPrimary }]}>
-                {isGeneratingBio ? 'Suggestion...' : 'Suggérer'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          <FormTextArea
+            label="Bio"
+            placeholder="Décris-toi en quelques mots..."
+            value={bio}
+            onChangeText={(text) => form.setValue('bio', text.slice(0, 300))}
+            rows={4}
+            maxLength={300}
+	          />
+	          <View style={styles.generateButtonContainer}>
+	            <Button
+	              title={isGeneratingBio ? 'Suggestion...' : 'Suggérer'}
+	              onPress={handleGenerateBio}
+	              loading={isGeneratingBio}
+	              disabled={isGeneratingBio}
+	              size="sm"
+	              icon={<Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+	              style={[
+	                styles.generateButton,
+	                { backgroundColor: colors.primary },
+	              ]}
+	              textStyle={[styles.generateButtonText, { color: colors.textOnPrimary }]}
+	            />
+	          </View>
+	        </View>
 
         {/* Separator */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
@@ -442,34 +435,31 @@ export default function EditProfileScreen() {
             showsHorizontalScrollIndicator={false}
             style={styles.horizontalScroll}
             contentContainerStyle={styles.horizontalScrollContent}
-          >
-            {COUNTRIES.map((c) => (
-              <TouchableOpacity
-                key={c.id}
-                style={[
-                  styles.optionChip,
-                  { borderColor: colors.gray200, backgroundColor: colors.gray100 },
-                  country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                ]}
-                onPress={() => {
-                  form.setValue('country', c.id);
-                  form.setValue('region', '');
-                  form.setValue('commune', '');
-                }}
-              >
-                <Text
-                  style={[
-                    styles.optionChipText,
-                    { color: colors.gray700 },
-                    country === c.id && { color: colors.textOnPrimary },
-                  ]}
-                >
-                  {c.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+	          >
+	            {COUNTRIES.map((c) => (
+	              <Chip
+	                key={c.id}
+	                label={c.label}
+	                selected={country === c.id}
+	                onPress={() => {
+	                  form.setValue('country', c.id);
+	                  form.setValue('region', '');
+	                  form.setValue('commune', '');
+	                }}
+	                style={[
+	                  styles.optionChip,
+	                  { borderColor: colors.gray200, backgroundColor: colors.gray100 },
+	                  country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                ]}
+	                textStyle={[
+	                  styles.optionChipText,
+	                  { color: colors.gray700 },
+	                  country === c.id && { color: colors.textOnPrimary },
+	                ]}
+	              />
+	            ))}
+	          </ScrollView>
+	        </View>
 
         {/* Région */}
         {availableRegions.length > 0 && (
@@ -481,33 +471,30 @@ export default function EditProfileScreen() {
               style={styles.horizontalScroll}
               contentContainerStyle={styles.horizontalScrollContent}
             >
-              {availableRegions.map((r) => (
-                <TouchableOpacity
-                  key={r.id}
-                  style={[
-                    styles.optionChip,
-                    { borderColor: colors.gray200, backgroundColor: colors.gray100 },
-                    region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                  ]}
-                  onPress={() => {
-                    form.setValue('region', r.id);
-                    form.setValue('commune', '');
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.optionChipText,
-                      { color: colors.gray700 },
-                      region === r.id && { color: colors.textOnPrimary },
-                    ]}
-                  >
-                    {r.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+	              {availableRegions.map((r) => (
+	                <Chip
+	                  key={r.id}
+	                  label={r.label}
+	                  selected={region === r.id}
+	                  onPress={() => {
+	                    form.setValue('region', r.id);
+	                    form.setValue('commune', '');
+	                  }}
+	                  style={[
+	                    styles.optionChip,
+	                    { borderColor: colors.gray200, backgroundColor: colors.gray100 },
+	                    region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                  ]}
+	                  textStyle={[
+	                    styles.optionChipText,
+	                    { color: colors.gray700 },
+	                    region === r.id && { color: colors.textOnPrimary },
+	                  ]}
+	                />
+	              ))}
+	            </ScrollView>
+	          </View>
+	        )}
 
         {/* Commune */}
         {availableCommunes.length > 0 && (
@@ -519,30 +506,27 @@ export default function EditProfileScreen() {
               style={styles.horizontalScroll}
               contentContainerStyle={styles.horizontalScrollContent}
             >
-              {availableCommunes.map((c) => (
-                <TouchableOpacity
-                  key={c.id}
-                  style={[
-                    styles.optionChip,
-                    { borderColor: colors.gray200, backgroundColor: colors.gray100 },
-                    commune === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                  ]}
-                  onPress={() => form.setValue('commune', c.id)}
-                >
-                  <Text
-                    style={[
-                      styles.optionChipText,
-                      { color: colors.gray700 },
-                      commune === c.id && { color: colors.textOnPrimary },
-                    ]}
-                  >
-                    {c.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+	              {availableCommunes.map((c) => (
+	                <Chip
+	                  key={c.id}
+	                  label={c.label}
+	                  selected={commune === c.id}
+	                  onPress={() => form.setValue('commune', c.id)}
+	                  style={[
+	                    styles.optionChip,
+	                    { borderColor: colors.gray200, backgroundColor: colors.gray100 },
+	                    commune === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                  ]}
+	                  textStyle={[
+	                    styles.optionChipText,
+	                    { color: colors.gray700 },
+	                    commune === c.id && { color: colors.textOnPrimary },
+	                  ]}
+	                />
+	              ))}
+	            </ScrollView>
+	          </View>
+	        )}
 
         {/* Separator */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
@@ -617,29 +601,23 @@ export default function EditProfileScreen() {
         {SECTOR_DATA.map((sector) => {
           const isSelected = selectedSectors.includes(sector.id);
           return (
-            <TouchableOpacity
+            <Chip
               key={sector.id}
+              label={sector.label}
+              selected={isSelected}
+              leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
+              onPress={() => toggleSector(sector.id)}
               style={[
                 styles.selectableTag,
                 { backgroundColor: colors.surface, borderColor: colors.gray200 },
                 isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
               ]}
-              onPress={() => toggleSector(sector.id)}
-              activeOpacity={0.7}
-            >
-              {isSelected && (
-                <Check size={14} color={colors.primary} strokeWidth={2.5} />
-              )}
-              <Text
-                style={[
-                  styles.selectableTagText,
-                  { color: colors.gray600 },
-                  isSelected && { color: colors.primary },
-                ]}
-              >
-                {sector.label}
-              </Text>
-            </TouchableOpacity>
+              textStyle={[
+                styles.selectableTagText,
+                { color: colors.gray600 },
+                isSelected && { color: colors.primary },
+              ]}
+            />
           );
         })}
       </View>
@@ -663,29 +641,23 @@ export default function EditProfileScreen() {
         {GOAL_DATA.map((goal) => {
           const isSelected = selectedGoals.includes(goal.id);
           return (
-            <TouchableOpacity
+            <Chip
               key={goal.id}
+              label={goal.label}
+              selected={isSelected}
+              leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
+              onPress={() => toggleGoal(goal.id)}
               style={[
                 styles.selectableTag,
                 { backgroundColor: colors.surface, borderColor: colors.gray200 },
                 isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
               ]}
-              onPress={() => toggleGoal(goal.id)}
-              activeOpacity={0.7}
-            >
-              {isSelected && (
-                <Check size={14} color={colors.primary} strokeWidth={2.5} />
-              )}
-              <Text
-                style={[
-                  styles.selectableTagText,
-                  { color: colors.gray600 },
-                  isSelected && { color: colors.primary },
-                ]}
-              >
-                {goal.label}
-              </Text>
-            </TouchableOpacity>
+              textStyle={[
+                styles.selectableTagText,
+                { color: colors.gray600 },
+                isSelected && { color: colors.primary },
+              ]}
+            />
           );
         })}
       </View>
@@ -700,7 +672,7 @@ export default function EditProfileScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       </SafeAreaView>
     );
@@ -710,9 +682,11 @@ export default function EditProfileScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.gray200 }]}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={handleBack}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Modifier le profil</Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -721,53 +695,57 @@ export default function EditProfileScreen() {
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <StepIndicator steps={STEPS_DATA} currentStepId={currentStep} />
+        <ScrollToInputContext.Provider value={scrollToInput}>
+          <ScrollView
+            ref={mainScrollRef}
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          >
+            <StepIndicator steps={STEPS_DATA} currentStepId={currentStep} />
 
-          {currentStep === 'info' && renderInfoStep()}
-          {currentStep === 'sectors' && renderSectorsStep()}
-          {currentStep === 'goals' && renderGoalsStep()}
-        </ScrollView>
+            {currentStep === 'info' && renderInfoStep()}
+            {currentStep === 'sectors' && renderSectorsStep()}
+            {currentStep === 'goals' && renderGoalsStep()}
+          </ScrollView>
 
-        <View style={[styles.footer, { backgroundColor: colors.background }]}>
-          <View style={styles.footerButtons}>
-            {currentStep !== 'info' && (
+          <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
+            <View style={styles.footerButtons}>
+              {currentStep !== 'info' && (
+                <Button
+                  title="Précédent"
+                  onPress={handleBack}
+                  variant="outline"
+                  icon={<ArrowLeft size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+                  iconPosition="left"
+                  style={styles.footerBackButton}
+                />
+              )}
               <Button
-                title="Précédent"
-                onPress={handleBack}
-                variant="outline"
-                icon={<ArrowLeft size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-                iconPosition="left"
-                style={styles.footerBackButton}
+                title={
+                  form.state.isSubmitting
+                    ? 'Enregistrement...'
+                    : currentStep === 'goals'
+                      ? 'Enregistrer'
+                      : 'Suivant'
+                }
+                onPress={handleNext}
+                disabled={form.state.isSubmitting}
+                style={{ flex: 1 }}
+                icon={
+                  form.state.isSubmitting ? undefined : (
+                    currentStep === 'goals'
+                      ? <Check size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                      : <ChevronRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                  )
+                }
+                iconPosition="right"
               />
-            )}
-            <Button
-              title={
-                form.state.isSubmitting
-                  ? 'Enregistrement...'
-                  : currentStep === 'goals'
-                    ? 'Enregistrer'
-                    : 'Suivant'
-              }
-              onPress={handleNext}
-              disabled={form.state.isSubmitting}
-              style={{ flex: 1 }}
-              icon={
-                form.state.isSubmitting ? undefined : (
-                  currentStep === 'goals'
-                    ? <Check size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                    : <ChevronRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                )
-              }
-              iconPosition="right"
-            />
+            </View>
           </View>
-        </View>
+        </ScrollToInputContext.Provider>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

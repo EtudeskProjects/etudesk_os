@@ -3,10 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
-  TouchableOpacity,
+  FlatList,
   RefreshControl,
-  ActivityIndicator,
+  Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,6 +25,8 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useNotifications, NotificationData } from '../../src/hooks/useNotifications';
+import { IconButton, LoadingShimmer } from '../../src/components/ui';
+
 
 const formatRelativeTime = (dateString: string): string => {
   try {
@@ -149,9 +150,11 @@ export default function NotificationsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Notifications</Text>
         <View style={styles.backButton} />
       </View>
@@ -159,14 +162,16 @@ export default function NotificationsScreen() {
       {/* Loading */}
       {isLoading && notifications.length === 0 && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       )}
 
-      <ScrollView
+      <FlatList
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        data={notifications}
+        keyExtractor={(n) => n.id}
         refreshControl={
           <RefreshControl
             refreshing={isLoading && notifications.length > 0}
@@ -175,70 +180,76 @@ export default function NotificationsScreen() {
             tintColor={colors.primary}
           />
         }
-      >
-        {notifications.length > 0 && (
-          <View style={[styles.notificationsList, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-            {notifications.map((notification, index) => {
-              const NotifIcon = getNotificationIcon(notification.type);
-              const notifColor = getNotificationColor(notification.type, colors);
-              const isLast = index === notifications.length - 1;
+        renderItem={({ item: notification, index }) => {
+          const NotifIcon = getNotificationIcon(notification.type);
+          const notifColor = getNotificationColor(notification.type, colors);
+          const isFirst = index === 0;
+          const isLast = index === notifications.length - 1;
 
-              return (
-                <TouchableOpacity
-                  key={notification.id}
-                  style={[
-                    styles.notificationItem,
-                    { borderBottomColor: colors.gray100 },
-                    isLast && styles.notificationItemLast,
-                  ]}
-                  onPress={() => handleNotificationPress(notification)}
-                  activeOpacity={0.8}
-                >
-                  <View style={[styles.notificationIcon, { backgroundColor: withOpacity(notifColor, OPACITY[15]) }]}>
-                    <NotifIcon size={ICON.size.md} color={notifColor} strokeWidth={ICON.strokeWidth} />
-                  </View>
-                  <View style={styles.notificationContent}>
-                    <Text style={[styles.notificationTitle, { color: colors.textPrimary }]}>
-                      {notification.title}
-                    </Text>
-                    <Text style={[styles.notificationMessage, { color: colors.textSecondary }]} numberOfLines={2}>
-                      {notification.body}
-                    </Text>
-                    <View style={styles.notificationMeta}>
-                      <Clock size={12} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                      <Text style={[styles.notificationTime, { color: colors.gray400 }]}>
-                        {formatRelativeTime(notification.created_at)}
-                      </Text>
-                    </View>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => deleteNotification(notification.id)}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Trash2 size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
-        {/* Empty State */}
-        {!isLoading && notifications.length === 0 && (
-          <View style={styles.emptyState}>
-            <View style={[styles.emptyIcon, { backgroundColor: colors.gray100 }]}>
-              <Bell size={ICON.size.xl} color={colors.gray300} strokeWidth={ICON.strokeWidth} />
+          return (
+            <Pressable
+              style={[
+                styles.notificationItem,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.borderColor,
+                  borderLeftWidth: BORDER.width.thin,
+                  borderRightWidth: BORDER.width.thin,
+                  borderTopWidth: isFirst ? BORDER.width.thin : 0,
+                  borderBottomWidth: isLast ? 0 : BORDER.width.thin,
+                  borderBottomColor: colors.gray100,
+                  borderTopLeftRadius: isFirst ? BORDER.radius.md : 0,
+                  borderTopRightRadius: isFirst ? BORDER.radius.md : 0,
+                  borderBottomLeftRadius: isLast ? BORDER.radius.md : 0,
+                  borderBottomRightRadius: isLast ? BORDER.radius.md : 0,
+                },
+              ]}
+              onPress={() => handleNotificationPress(notification)}
+              accessibilityRole="button"
+              accessibilityLabel={notification.title}
+            >
+              <View style={[styles.notificationIcon, { backgroundColor: withOpacity(notifColor, OPACITY[15]) }]}>
+                <NotifIcon size={ICON.size.md} color={notifColor} strokeWidth={ICON.strokeWidth} />
+              </View>
+              <View style={styles.notificationContent}>
+                <Text style={[styles.notificationTitle, { color: colors.textPrimary }]}>
+                  {notification.title}
+                </Text>
+                <Text style={[styles.notificationMessage, { color: colors.textSecondary }]} numberOfLines={2}>
+                  {notification.body}
+                </Text>
+                <View style={styles.notificationMeta}>
+                  <Clock size={12} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.notificationTime, { color: colors.gray400 }]}>
+                    {formatRelativeTime(notification.created_at)}
+                  </Text>
+                </View>
+              </View>
+              <IconButton
+                onPress={() => deleteNotification(notification.id)}
+                icon={<Trash2 size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+                accessibilityLabel="Supprimer la notification"
+                style={styles.deleteButton}
+              />
+            </Pressable>
+          );
+        }}
+        ListEmptyComponent={
+          !isLoading ? (
+            <View style={styles.emptyState}>
+              <View style={[styles.emptyIcon, { backgroundColor: colors.gray100 }]}>
+                <Bell size={ICON.size.xl} color={colors.gray300} strokeWidth={ICON.strokeWidth} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                Aucune notification
+              </Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+                Tu recevras des notifications sur les opportunités, candidatures et messages
+              </Text>
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-              Aucune notification
-            </Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-              Tu recevras des notifications sur les opportunités, candidatures et messages
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+          ) : null
+        }
+      />
     </SafeAreaView>
   );
 }
@@ -257,18 +268,12 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxl },
-  notificationsList: {
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.md,
-    overflow: 'hidden',
-  },
   notificationItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     padding: SPACING.md,
     borderBottomWidth: BORDER.width.thin,
   },
-  notificationItemLast: { borderBottomWidth: 0 },
   notificationIcon: {
     width: 44,
     height: 44,

@@ -3,9 +3,7 @@ import {
     View,
     Text,
     StyleSheet,
-    TextInput,
     Image,
-    TouchableOpacity,
     ScrollView,
     Platform,
     KeyboardAvoidingView,
@@ -15,19 +13,22 @@ import {
     NativeSyntheticEvent,
     TextInputSelectionChangeEventData,
     Animated,
+    Pressable,
 } from 'react-native';
+import type { TextInput as RNTextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, X, FileText, Plus, Calendar, Save, SquarePen, Clock } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
-import { useTheme } from '../../../../src/hooks/useTheme';
-import { useForm } from '../../../../src/hooks/useForm';
-import { Button } from '../../../../src/components/ui';
+	import DateTimePicker from '@react-native-community/datetimepicker';
+	import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
+	import { useTheme } from '../../../../src/hooks/useTheme';
+	import { useForm } from '../../../../src/hooks/useForm';
+	import { Button, Chip, IconButton, Input } from '../../../../src/components/ui';
 import { communityActivityService, communityService } from '../../../../src/services';
 import { useAlert } from '../../../../src/contexts/AlertContext';
+import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
 
 interface Attachment {
     uri: string;
@@ -62,7 +63,17 @@ export default function CreatePostScreen() {
     const { id, activityId } = useLocalSearchParams<{ id: string; activityId?: string }>();
     const router = useRouter();
     const { colors } = useTheme();
-    const inputRef = useRef<TextInput>(null);
+    const inputRef = useRef<RNTextInput>(null);
+    const scrollRef = useRef<ScrollView>(null);
+
+    const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 120) => {
+        const sv = scrollRef.current;
+        if (!sv) return;
+        const delay = Platform.OS === 'android' ? 120 : 0;
+        setTimeout(() => {
+            sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+        }, delay);
+    }, []);
 
     // Edit mode - when activityId is provided, we're editing an existing activity
     const isEditMode = !!activityId;
@@ -542,14 +553,17 @@ export default function CreatePostScreen() {
 
     if (isLoadingDraft) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-                    <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-                        <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                    </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Publication</Text>
-                    <View style={{ width: 44 }} />
-                </View>
+	            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+	                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+	                    <IconButton
+	                        onPress={() => router.back()}
+	                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                        accessibilityLabel="Retour"
+	                        style={styles.headerButton}
+	                    />
+	                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Publication</Text>
+	                    <View style={{ width: 44 }} />
+	                </View>
                 <View style={styles.loadingContainer}>
                     <Text style={{ color: colors.textSecondary }}>Chargement...</Text>
                 </View>
@@ -559,16 +573,19 @@ export default function CreatePostScreen() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-            {/* Header */}
-            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-                <TouchableOpacity style={styles.headerButton} onPress={handleBack}>
-                    <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-                    {isEditMode ? 'Modifier' : hasDraft ? 'Brouillon' : 'Publication'}
-                </Text>
-                <View style={{ width: 44 }} />
-            </View>
+	            {/* Header */}
+	            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+	                <IconButton
+	                    onPress={handleBack}
+	                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                    accessibilityLabel="Retour"
+	                    style={styles.headerButton}
+	                />
+	                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+	                    {isEditMode ? 'Modifier' : hasDraft ? 'Brouillon' : 'Publication'}
+	                </Text>
+	                <View style={{ width: 44 }} />
+	            </View>
 
             {/* Draft Banner - only show for drafts, not for edit mode */}
             {!isEditMode && hasDraft && (
@@ -585,56 +602,76 @@ export default function CreatePostScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             >
-                <ScrollView
-                    style={styles.content}
-                    contentContainerStyle={styles.contentContainer}
-                    keyboardShouldPersistTaps="handled"
-                >
+                <ScrollToInputContext.Provider value={scrollToInput}>
+                    <ScrollView
+                        ref={scrollRef}
+                        style={styles.content}
+                        contentContainerStyle={styles.contentContainer}
+                        keyboardShouldPersistTaps="handled"
+                        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+                    >
                     {/* Text Input */}
-                    <TextInput
+                    <Input
                         ref={inputRef}
-                        style={[styles.input, { color: colors.textPrimary }]}
                         multiline
                         placeholder="Écrivez quelque chose..."
                         placeholderTextColor={colors.gray400}
                         value={content}
                         onChangeText={handleTextChange}
                         onSelectionChange={handleSelectionChange}
-                        textAlignVertical="top"
                         autoFocus
+                        textAlignVertical="top"
+                        // Editor look: no "input box" chrome; keep unified Input under the hood.
+                        inputContainerStyle={{
+                            backgroundColor: 'transparent',
+                            borderWidth: 0,
+                            height: undefined,
+                            minHeight: 150,
+                        }}
+                        inputStyle={StyleSheet.flatten([
+                            styles.input,
+                            {
+                                color: colors.textPrimary,
+                                paddingHorizontal: 0,
+                                paddingTop: 0,
+                                paddingBottom: 0,
+                            },
+                        ])}
                     />
 
                     {/* Mention suggestions */}
                     {showMentions && filteredMembers.length > 0 && (
                         <View style={[styles.mentionContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-                            {filteredMembers.map((member) => {
-                                const name = member.talent?.display_name ||
-                                    `${member.talent?.first_name || ''} ${member.talent?.last_name || ''}`.trim();
-                                const avatar = member.talent?.profile_picture_url || member.talent?.avatar_url;
-
-                                return (
-                                    <TouchableOpacity
-                                        key={member.id}
-                                        style={styles.mentionItem}
-                                        onPress={() => insertMention(member)}
-                                    >
-                                        {avatar ? (
-                                            <Image source={{ uri: avatar }} style={styles.mentionAvatar} />
-                                        ) : (
-                                            <View style={[styles.mentionAvatarPlaceholder, { backgroundColor: colors.primary }]}>
+	                            {filteredMembers.map((member) => {
+	                                const name = member.talent?.display_name ||
+	                                    `${member.talent?.first_name || ''} ${member.talent?.last_name || ''}`.trim();
+	                                const avatar = member.talent?.profile_picture_url || member.talent?.avatar_url;
+	
+	                                return (
+	                                    <Pressable
+	                                        key={member.id}
+	                                        style={styles.mentionItem}
+	                                        onPress={() => insertMention(member)}
+	                                        accessibilityRole="button"
+	                                        accessibilityLabel={`Mentionner ${name || 'membre'}`}
+	                                    >
+	                                        {avatar ? (
+	                                            <Image source={{ uri: avatar }} style={styles.mentionAvatar} />
+	                                        ) : (
+	                                            <View style={[styles.mentionAvatarPlaceholder, { backgroundColor: colors.primary }]}>
                                                 <Text style={[styles.mentionAvatarText, { color: colors.textOnPrimary }]}>
                                                     {name.charAt(0).toUpperCase()}
                                                 </Text>
                                             </View>
                                         )}
-                                        <Text style={[styles.mentionName, { color: colors.textPrimary }]}>
-                                            {name}
-                                        </Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
-                    )}
+	                                        <Text style={[styles.mentionName, { color: colors.textPrimary }]}>
+	                                            {name}
+	                                        </Text>
+	                                    </Pressable>
+	                                );
+	                            })}
+	                        </View>
+	                    )}
 
                     {/* Upload Progress */}
                     {isUploading && (
@@ -683,91 +720,93 @@ export default function CreatePostScreen() {
                                             </Text>
                                         </View>
                                     )}
-                                    <TouchableOpacity
-                                        style={styles.removeButton}
-                                        onPress={() => removeAttachment(index)}
-                                        disabled={isUploading}
-                                    >
-                                        <X size={12} color={colors.textOnPrimary} />
-                                    </TouchableOpacity>
-                                </View>
-                            ))}
-                        </View>
-                    )}
+		                                    <IconButton
+		                                        onPress={() => removeAttachment(index)}
+		                                        disabled={isUploading}
+		                                        icon={<X size={12} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+		                                        accessibilityLabel="Retirer le fichier"
+		                                        size="sm"
+		                                        variant="filled"
+		                                        style={[styles.removeButton, { backgroundColor: withOpacity(colors.black, OPACITY[80]) }]}
+		                                    />
+	                                </View>
+	                            ))}
+	                        </View>
+	                    )}
 
-                </ScrollView>
+                    </ScrollView>
 
                 {/* Schedule indicator - above toolbar (not shown in edit mode) */}
                 {!isEditMode && isScheduled && (
                     <View style={[styles.scheduleIndicator, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-                        <TouchableOpacity
-                            style={[styles.scheduleIconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}
-                            onPress={openDatePicker}
-                        >
-                            <Calendar size={16} color={colors.primary} />
-                        </TouchableOpacity>
-                        <View style={styles.scheduleContent}>
-                            <Text style={[styles.scheduleLabel, { color: colors.textSecondary }]}>
-                                Publication programmée
-                            </Text>
-                            <View style={styles.scheduleDateTimeRow}>
-                                <TouchableOpacity
-                                    style={[styles.scheduleDateBtn, { backgroundColor: colors.gray100 }]}
-                                    onPress={openDatePicker}
-                                >
-                                    <Calendar size={14} color={colors.primary} />
-                                    <Text style={[styles.scheduleDateText, { color: colors.textPrimary }]}>
-                                        {scheduledDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
-                                    </Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.scheduleDateBtn, { backgroundColor: colors.gray100 }]}
-                                    onPress={openTimePicker}
-                                >
-                                    <Clock size={14} color={colors.primary} />
-                                    <Text style={[styles.scheduleDateText, { color: colors.textPrimary }]}>
-                                        {scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                        <TouchableOpacity
-                            onPress={() => form.setValue('isScheduled', false)}
-                            style={[styles.scheduleRemoveBtn, { backgroundColor: colors.gray100 }]}
-                        >
-                            <X size={16} color={colors.gray500} />
-                        </TouchableOpacity>
-                    </View>
-                )}
+	                        <IconButton
+	                            onPress={openDatePicker}
+	                            icon={<Calendar size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+	                            accessibilityLabel="Modifier la date de publication"
+	                            variant="filled"
+	                            size="sm"
+	                            style={[styles.scheduleIconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}
+	                        />
+	                        <View style={styles.scheduleContent}>
+	                            <Text style={[styles.scheduleLabel, { color: colors.textSecondary }]}>
+	                                Publication programmée
+	                            </Text>
+	                            <View style={styles.scheduleDateTimeRow}>
+	                                <Chip
+	                                    label={scheduledDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+	                                    onPress={openDatePicker}
+	                                    leftIcon={<Calendar size={14} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+	                                    style={[styles.scheduleDateBtn, { backgroundColor: colors.gray100, borderWidth: 0 }]}
+	                                    textStyle={[styles.scheduleDateText, { color: colors.textPrimary }]}
+	                                />
+	                                <Chip
+	                                    label={scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+	                                    onPress={openTimePicker}
+	                                    leftIcon={<Clock size={14} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+	                                    style={[styles.scheduleDateBtn, { backgroundColor: colors.gray100, borderWidth: 0 }]}
+	                                    textStyle={[styles.scheduleDateText, { color: colors.textPrimary }]}
+	                                />
+	                            </View>
+	                        </View>
+	                        <IconButton
+	                            onPress={() => form.setValue('isScheduled', false)}
+	                            icon={<X size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+	                            accessibilityLabel="Annuler la programmation"
+	                            variant="filled"
+	                            size="sm"
+	                            style={[styles.scheduleRemoveBtn, { backgroundColor: colors.gray100 }]}
+	                        />
+	                    </View>
+	                )}
 
                 {/* Toolbar - moves above keyboard */}
                 <View style={[styles.toolbar, { borderTopColor: colors.borderColor, backgroundColor: colors.background }]}>
                     <View style={styles.toolbarLeft}>
                         {/* Add file button */}
-                        <TouchableOpacity
+                        <IconButton
+                            onPress={showFilePicker}
+                            disabled={!canAddMore}
+                            icon={<Plus size={20} color={colors.textOnPrimary} strokeWidth={2.5} />}
+                            accessibilityLabel="Ajouter un fichier"
+                            variant="filled"
                             style={[
                                 styles.iconButton,
                                 { backgroundColor: colors.primary, opacity: canAddMore ? 1 : 0.4 }
                             ]}
-                            onPress={showFilePicker}
-                            disabled={!canAddMore}
-                        >
-                            <Plus size={20} color={colors.textOnPrimary} strokeWidth={2.5} />
-                        </TouchableOpacity>
+                        />
 
                         {/* Schedule button - hide in edit mode */}
                         {!isEditMode && (
-                            <TouchableOpacity
+                            <IconButton
+                                onPress={toggleSchedule}
+                                icon={<Calendar size={18} color={isScheduled ? colors.textOnPrimary : colors.gray600} strokeWidth={2} />}
+                                accessibilityLabel="Programmer la publication"
+                                variant="filled"
                                 style={[
                                     styles.iconButton,
-                                    {
-                                        backgroundColor: isScheduled ? colors.primary : colors.gray200,
-                                    }
+                                    { backgroundColor: isScheduled ? colors.primary : colors.gray200 }
                                 ]}
-                                onPress={toggleSchedule}
-                            >
-                                <Calendar size={18} color={isScheduled ? colors.textOnPrimary : colors.gray600} strokeWidth={2} />
-                            </TouchableOpacity>
+                            />
                         )}
 
                         {/* File count indicator */}
@@ -782,21 +821,22 @@ export default function CreatePostScreen() {
 
                     <View style={styles.toolbarRight}>
                         {/* Draft button - hide in edit mode */}
-                        {!isEditMode && (
-                            <TouchableOpacity
-                                style={[
-                                    styles.draftBtn,
-                                    {
-                                        borderColor: colors.borderColor,
-                                        opacity: (!content.trim() && attachments.length === 0) || isSubmitting || isSavingDraft ? 0.5 : 1
-                                    }
-                                ]}
-                                onPress={handleSaveAsDraft}
-                                disabled={(!content.trim() && attachments.length === 0) || isSubmitting || isSavingDraft}
-                            >
-                                <Save size={18} color={colors.gray500} />
-                            </TouchableOpacity>
-                        )}
+	                        {!isEditMode && (
+	                            <IconButton
+	                                onPress={handleSaveAsDraft}
+	                                disabled={(!content.trim() && attachments.length === 0) || isSubmitting || isSavingDraft}
+	                                icon={<Save size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+	                                accessibilityLabel="Enregistrer en brouillon"
+	                                variant="outline"
+	                                style={[
+	                                    styles.draftBtn,
+	                                    {
+	                                        borderColor: colors.borderColor,
+	                                        opacity: (!content.trim() && attachments.length === 0) || isSubmitting || isSavingDraft ? 0.5 : 1
+	                                    }
+	                                ]}
+	                            />
+	                        )}
 
                         {/* Publish/Update button */}
                         <Button
@@ -808,6 +848,7 @@ export default function CreatePostScreen() {
                         />
                     </View>
                 </View>
+                </ScrollToInputContext.Provider>
             </KeyboardAvoidingView>
 
             {showDatePicker && (
@@ -834,26 +875,28 @@ export default function CreatePostScreen() {
                 />
             )}
 
-            {/* iOS Date Picker Confirm Button */}
-            {Platform.OS === 'ios' && showDatePicker && (
-                <View style={[styles.pickerConfirmContainer, { backgroundColor: colors.surface, borderTopColor: colors.borderColor }]}>
-                    <TouchableOpacity
-                        style={styles.pickerCancelBtn}
-                        onPress={() => setShowDatePicker(false)}
-                    >
-                        <Text style={[styles.pickerCancelText, { color: colors.gray500 }]}>Annuler</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.pickerConfirmBtn, { backgroundColor: colors.primary }]}
-                        onPress={() => {
-                            setShowDatePicker(false);
-                            setShowTimePicker(true);
-                        }}
-                    >
-                        <Text style={[styles.pickerConfirmText, { color: colors.textOnPrimary }]}>Suivant</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
+	            {/* iOS Date Picker Confirm Button */}
+	            {Platform.OS === 'ios' && showDatePicker && (
+	                <View style={[styles.pickerConfirmContainer, { backgroundColor: colors.surface, borderTopColor: colors.borderColor }]}>
+	                    <Button
+	                        title="Annuler"
+	                        onPress={() => setShowDatePicker(false)}
+	                        variant="outline"
+	                        style={[styles.pickerCancelBtn, { borderColor: colors.borderColor }]}
+	                        textStyle={[styles.pickerCancelText, { color: colors.gray500 }]}
+	                    />
+	                    <Button
+	                        title="Suivant"
+	                        onPress={() => {
+	                            setShowDatePicker(false);
+	                            setShowTimePicker(true);
+	                        }}
+	                        variant="primary"
+	                        style={[styles.pickerConfirmBtn, { backgroundColor: colors.primary }]}
+	                        textStyle={[styles.pickerConfirmText, { color: colors.textOnPrimary }]}
+	                    />
+	                </View>
+	            )}
 
             {showTimePicker && (
                 <DateTimePicker
@@ -882,32 +925,34 @@ export default function CreatePostScreen() {
                 />
             )}
 
-            {/* iOS Time Picker Confirm Button */}
-            {Platform.OS === 'ios' && showTimePicker && (
-                <View style={[styles.pickerConfirmContainer, { backgroundColor: colors.surface, borderTopColor: colors.borderColor }]}>
-                    <TouchableOpacity
-                        style={styles.pickerCancelBtn}
-                        onPress={() => setShowTimePicker(false)}
-                    >
-                        <Text style={[styles.pickerCancelText, { color: colors.gray500 }]}>Annuler</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.pickerConfirmBtn, { backgroundColor: colors.primary }]}
-                        onPress={() => {
-                            setShowTimePicker(false);
-                            // Validate time
-                            if (scheduledDate <= new Date()) {
-                                const futureDate = new Date();
-                                futureDate.setMinutes(futureDate.getMinutes() + 5);
-                                form.setValue('scheduledDate', futureDate);
-                                void alerts.alert('Heure ajustée', 'L\'heure a été ajustée car elle était dans le passé.');
-                            }
-                        }}
-                    >
-                        <Text style={[styles.pickerConfirmText, { color: colors.textOnPrimary }]}>Confirmer</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
+	            {/* iOS Time Picker Confirm Button */}
+	            {Platform.OS === 'ios' && showTimePicker && (
+	                <View style={[styles.pickerConfirmContainer, { backgroundColor: colors.surface, borderTopColor: colors.borderColor }]}>
+	                    <Button
+	                        title="Annuler"
+	                        onPress={() => setShowTimePicker(false)}
+	                        variant="outline"
+	                        style={[styles.pickerCancelBtn, { borderColor: colors.borderColor }]}
+	                        textStyle={[styles.pickerCancelText, { color: colors.gray500 }]}
+	                    />
+	                    <Button
+	                        title="Confirmer"
+	                        onPress={() => {
+	                            setShowTimePicker(false);
+	                            // Validate time
+	                            if (scheduledDate <= new Date()) {
+	                                const futureDate = new Date();
+	                                futureDate.setMinutes(futureDate.getMinutes() + 5);
+	                                form.setValue('scheduledDate', futureDate);
+	                                void alerts.alert('Heure ajustée', 'L\'heure a été ajustée car elle était dans le passé.');
+	                            }
+	                        }}
+	                        variant="primary"
+	                        style={[styles.pickerConfirmBtn, { backgroundColor: colors.primary }]}
+	                        textStyle={[styles.pickerConfirmText, { color: colors.textOnPrimary }]}
+	                    />
+	                </View>
+	            )}
         </SafeAreaView>
     );
 }
@@ -1023,15 +1068,14 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 2,
     },
-    removeButton: {
-        position: 'absolute',
-        top: 4,
-        right: 4,
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        alignItems: 'center',
+	    removeButton: {
+	        position: 'absolute',
+	        top: 4,
+	        right: 4,
+	        width: 20,
+	        height: 20,
+	        borderRadius: 10,
+	        alignItems: 'center',
         justifyContent: 'center',
     },
     scheduleIndicator: {

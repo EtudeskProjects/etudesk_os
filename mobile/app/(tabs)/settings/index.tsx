@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,7 +29,7 @@ import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAuth } from '../../../src/contexts/AuthContext';
-import { Header, FooterNav } from '../../../src/components/ui';
+import { Button, Header, FooterNav, SelectCard } from '../../../src/components/ui';
 import { getFullImageUrl } from '../../../src/utils/image';
 import { useAlert } from '../../../src/contexts/AlertContext';
 
@@ -226,10 +225,11 @@ export default function AccountScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Profile Card - Dynamic based on active space */}
-        <TouchableOpacity
+        <SelectCard
           style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
           onPress={handleProfilePress}
-          activeOpacity={0.8}
+          selected={false}
+          accessibilityLabel={currentSpace === 'talent' ? 'Ouvrir mon profil' : 'Ouvrir le profil organisation'}
         >
           {currentSpace === 'talent' ? (
             <>
@@ -265,7 +265,7 @@ export default function AccountScreen() {
             color={colors.gray400}
             strokeWidth={ICON.strokeWidth}
           />
-        </TouchableOpacity>
+        </SelectCard>
 
         {/* Space Switcher - Compact */}
         <View style={styles.section}>
@@ -276,14 +276,15 @@ export default function AccountScreen() {
             contentContainerStyle={styles.spaceChipsContainer}
           >
             {/* Talent Chip */}
-            <TouchableOpacity
+            <SelectCard
               style={[
                 styles.spaceChip,
                 { backgroundColor: colors.surface, borderColor: colors.borderColor },
                 currentSpace === 'talent' && { borderColor: colors.primary, backgroundColor: withOpacity(colors.primary, OPACITY[10]) },
               ]}
               onPress={() => handleSelectSpace('talent')}
-              activeOpacity={0.8}
+              selected={false}
+              accessibilityLabel="Basculer sur l’espace talent"
             >
               {getFullImageUrl(user?.avatarUrl) ? (
                 <Image source={{ uri: getFullImageUrl(user?.avatarUrl)! }} style={styles.spaceChipImage} />
@@ -301,13 +302,13 @@ export default function AccountScreen() {
               ]}>
                 Talent
               </Text>
-            </TouchableOpacity>
+            </SelectCard>
 
             {/* Organization Chips */}
             {userOrganizations.map((org) => {
               const isActive = currentSpace === 'organization' && selectedOrgId === org.id;
               return (
-                <TouchableOpacity
+                <SelectCard
                   key={org.id}
                   style={[
                     styles.spaceChip,
@@ -315,7 +316,8 @@ export default function AccountScreen() {
                     isActive && { borderColor: colors.primary, backgroundColor: withOpacity(colors.primary, OPACITY[10]) },
                   ]}
                   onPress={() => handleSelectSpace('organization', org.id)}
-                  activeOpacity={0.8}
+                  selected={false}
+                  accessibilityLabel={`Basculer sur l’espace organisation ${org.name}`}
                 >
                   {org.logoUrl ? (
                     <Image source={{ uri: org.logoUrl }} style={styles.spaceChipImage} />
@@ -333,12 +335,12 @@ export default function AccountScreen() {
                   ]} numberOfLines={1}>
                     {org.name}
                   </Text>
-                </TouchableOpacity>
+                </SelectCard>
               );
             })}
 
             {/* Create Organization Chip */}
-            <TouchableOpacity
+            <SelectCard
               style={[
                 styles.spaceChip,
                 { backgroundColor: colors.surface, borderColor: colors.gray300, borderStyle: 'dashed' },
@@ -364,7 +366,8 @@ export default function AccountScreen() {
                 }
                 router.push('/settings/create-organization');
               }}
-              activeOpacity={0.8}
+              selected={false}
+              accessibilityLabel="Créer une organisation"
             >
               <View style={[styles.spaceChipIcon, { backgroundColor: colors.gray200 }]}>
                 <Plus size={14} color={colors.gray600} strokeWidth={2} />
@@ -372,7 +375,7 @@ export default function AccountScreen() {
               <Text style={[styles.spaceChipText, { color: colors.gray600 }]}>
                 Créer une organisation
               </Text>
-            </TouchableOpacity>
+            </SelectCard>
           </ScrollView>
         </View>
 
@@ -384,15 +387,17 @@ export default function AccountScreen() {
             {MENU_ITEMS.map((item, index) => {
               const IconComponent = item.icon;
               return (
-                <TouchableOpacity
+                <SelectCard
                   key={item.id}
                   style={[
                     styles.menuItem,
                     { borderBottomColor: colors.gray100 },
                     index === MENU_ITEMS.length - 1 && styles.menuItemLast,
+                    { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
                   ]}
                   onPress={item.onPress}
-                  activeOpacity={0.8}
+                  selected={false}
+                  accessibilityLabel={item.label}
                 >
                   <View style={[styles.menuItemIcon, { backgroundColor: colors.gray100 }]}>
                     <IconComponent
@@ -415,41 +420,35 @@ export default function AccountScreen() {
                     color={colors.gray400}
                     strokeWidth={ICON.strokeWidth}
                   />
-                </TouchableOpacity>
+                </SelectCard>
               );
             })}
           </View>
         </View>
 
         {/* Danger Zone */}
-        <View style={styles.section}>
+        <View style={[styles.section, styles.accountSection]}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Compte</Text>
 
-          <TouchableOpacity
-            style={[styles.logoutButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+          <Button
+            title="Se déconnecter"
             onPress={handleLogout}
-            activeOpacity={0.8}
-          >
-            <LogOut
-              size={ICON.size.md}
-              color={colors.error}
-              strokeWidth={ICON.strokeWidth}
-            />
-            <Text style={[styles.logoutText, { color: colors.error }]}>Se déconnecter</Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            icon={<LogOut size={ICON.size.md} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.logoutButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+            textStyle={[styles.logoutText, { color: colors.error }]}
+          />
 
-          <TouchableOpacity
-            style={[styles.deleteButton, { borderColor: colors.error }]}
+          <Button
+            title="Supprimer mon compte"
             onPress={handleDeleteAccount}
-            activeOpacity={0.8}
-          >
-            <Trash2
-              size={ICON.size.md}
-              color={colors.error}
-              strokeWidth={ICON.strokeWidth}
-            />
-            <Text style={[styles.deleteText, { color: colors.error }]}>Supprimer mon compte</Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            icon={<Trash2 size={ICON.size.md} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.deleteButton, { borderColor: colors.error, backgroundColor: 'transparent' }]}
+            textStyle={[styles.deleteText, { color: colors.error }]}
+          />
         </View>
 
         {/* Version */}
@@ -663,16 +662,12 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
+  accountSection: {
+    paddingHorizontal: SPACING.lg,
+  },
+
   // Logout
   logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    marginHorizontal: SPACING.lg,
-    padding: SPACING.md,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
   },
 
   logoutText: {
@@ -682,16 +677,7 @@ const styles = StyleSheet.create({
   },
 
   deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    marginHorizontal: SPACING.lg,
     marginTop: SPACING.sm,
-    padding: SPACING.md,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
-    backgroundColor: 'transparent',
   },
 
   deleteText: {

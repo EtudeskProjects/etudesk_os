@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -16,7 +15,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
-import { PageLayout, EmptyState } from '../../../src/components/ui';
+import { PageLayout, EmptyState, Chip } from '../../../src/components/ui';
 import { SpaceCard } from '../../../src/components/cards';
 import { spaceBookingService } from '../../../src/services';
 import type { SpaceBookingDetails } from '../../../src/services/spaceBookingService';
@@ -86,25 +85,22 @@ export default function MyReservationsScreen() {
     const count = statusCounts[status] || 0;
 
     return (
-      <TouchableOpacity
+      <Chip
         key={status}
+        label={`${label} (${count})`}
+        selected={isActive}
         style={[
           styles.filterChip,
           { backgroundColor: colors.gray100, borderColor: colors.gray200 },
           isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
         ]}
+        textStyle={[
+          styles.filterChipText,
+          { color: colors.gray700 },
+          isActive && { color: colors.textOnPrimary },
+        ]}
         onPress={() => setFilter(status)}
-      >
-        <Text
-          style={[
-            styles.filterChipText,
-            { color: colors.gray700 },
-            isActive && { color: colors.textOnPrimary },
-          ]}
-        >
-          {label} ({count})
-        </Text>
-      </TouchableOpacity>
+      />
     );
   };
 
@@ -156,24 +152,30 @@ export default function MyReservationsScreen() {
       isRefreshing={isRefreshing}
       isLoading={isLoading}
       headerContent={headerContent}
+      useScrollView={false}
     >
-      {filteredBookings.length === 0 ? (
-        <EmptyState
-          icon={CalendarDays}
-          title={filter === 'all' ? 'Aucune réservation' : 'Aucun résultat'}
-          subtitle={
-            filter === 'all'
-              ? "Vous n'avez pas encore de réservations. Explorez les espaces disponibles."
-              : 'Aucune réservation avec ce statut.'
-          }
-          {...(filter === 'all' ? {
-            actionLabel: 'Explorer',
-            onAction: () => router.push('/(tabs)/explore?category=spaces'),
-          } : {})}
-        />
-      ) : (
-        filteredBookings.map((item) => renderBookingItem(item))
-      )}
+      <FlatList
+        data={filteredBookings}
+        keyExtractor={(b) => b.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => renderBookingItem(item)}
+        ListEmptyComponent={
+          <EmptyState
+            icon={CalendarDays}
+            title={filter === 'all' ? 'Aucune réservation' : 'Aucun résultat'}
+            subtitle={
+              filter === 'all'
+                ? "Vous n'avez pas encore de réservations. Explorez les espaces disponibles."
+                : 'Aucune réservation avec ce statut.'
+            }
+            {...(filter === 'all' ? {
+              actionLabel: 'Explorer',
+              onAction: () => router.push('/(tabs)/explore?category=spaces'),
+            } : {})}
+          />
+        }
+      />
     </PageLayout>
   );
 }
@@ -200,6 +202,11 @@ const styles = StyleSheet.create({
   filterChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+  listContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xxl,
   },
 
 });

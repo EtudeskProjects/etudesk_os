@@ -11,9 +11,9 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Linking,
   Platform,
+  Pressable,
 } from 'react-native';
 import {
   Calendar as CalendarIcon,
@@ -219,13 +219,15 @@ export function ChatMessage({
           {attachments.map((attachment, index) => {
             const FileIcon = getFileIcon(attachment.type);
             return (
-              <TouchableOpacity
+              <Pressable
                 key={index}
                 style={[
                   styles.attachmentItem,
                   { backgroundColor: isMe ? withOpacity(colors.white, OPACITY[20]) : colors.gray200 },
                 ]}
                 onPress={() => handleAttachmentPress(attachment)}
+                accessibilityRole="button"
+                accessibilityLabel={attachment.name}
               >
                 <FileIcon
                   size={16}
@@ -244,7 +246,7 @@ export function ChatMessage({
                     {formatFileSize(attachment.size)}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </View>
@@ -252,13 +254,14 @@ export function ChatMessage({
 
       {/* Datetime proposal */}
       {proposedDatetime && (
-        <TouchableOpacity
+        <Pressable
           style={[
             styles.datetimeProposal,
             { backgroundColor: isMe ? withOpacity(colors.white, OPACITY[20]) : withOpacity(colors.primary, OPACITY[15]) },
           ]}
           onPress={handleAddToCalendar}
-          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t('chat.addToCalendar')}
         >
           <CalendarIcon
             size={16}
@@ -280,7 +283,7 @@ export function ChatMessage({
             color={isMe ? colors.textOnPrimary : colors.primary}
             strokeWidth={ICON.strokeWidth}
           />
-        </TouchableOpacity>
+        </Pressable>
       )}
 
       {/* Timestamp */}

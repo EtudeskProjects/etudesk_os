@@ -10,6 +10,17 @@ import i18n from '../i18n';
 
 const API_BASE_URL = API_CONFIG.BASE_URL;
 const API_TIMEOUT = API_CONFIG.TIMEOUT;
+const API_PREFIX = API_CONFIG.API_PREFIX;
+
+/** Build full API URL — source unique /api/v1 */
+function buildApiUrl(endpoint: string): string {
+  const path = endpoint.startsWith('/api/') && !endpoint.startsWith('/api/v1/')
+    ? API_PREFIX + '/' + endpoint.slice(5) // /api/xxx -> /api/v1/xxx
+    : endpoint.startsWith('/')
+      ? API_PREFIX + endpoint
+      : endpoint;
+  return `${API_BASE_URL}${path}`;
+}
 const LOG_SOURCE = 'API';
 
 // Enable request logging in development
@@ -139,7 +150,7 @@ class ApiService {
 
       logger.info(LOG_SOURCE, 'Refreshing access token...');
 
-      const response = await fetch(`${this.baseUrl}/api/auth/refresh`, {
+      const response = await fetch(buildApiUrl('/auth/refresh'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),
@@ -224,7 +235,7 @@ class ApiService {
         }
       }
 
-      const response = await fetch(`${this.baseUrl}${endpoint}`, config);
+      const response = await fetch(buildApiUrl(endpoint), config);
       clearTimeout(timeoutId);
 
       const duration = Date.now() - startTime;

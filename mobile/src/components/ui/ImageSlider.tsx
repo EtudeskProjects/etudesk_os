@@ -7,11 +7,11 @@ import {
   StyleSheet,
   NativeSyntheticEvent,
   NativeScrollEvent,
-  TouchableOpacity,
 } from 'react-native';
 import { Briefcase } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { ICON, SPACING, BORDER, LAYOUT, OPACITY, COMPONENT, withOpacity } from '../../constants/theme';
+import { Tap } from './Tap';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -60,16 +60,17 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
 
   if (images.length === 1) {
     return (
-      <TouchableOpacity
+      <Tap
         activeOpacity={onImagePress ? 0.9 : 1}
         onPress={() => onImagePress?.(0)}
+        disabled={!onImagePress}
       >
         <Image
           source={{ uri: images[0] }}
           style={[styles.image, { height, borderRadius }]}
           resizeMode="cover"
         />
-      </TouchableOpacity>
+      </Tap>
     );
   }
 
@@ -85,17 +86,18 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
         decelerationRate="fast"
       >
         {images.map((image, index) => (
-          <TouchableOpacity
+          <Tap
             key={index}
             activeOpacity={onImagePress ? 0.9 : 1}
             onPress={() => onImagePress?.(index)}
+            disabled={!onImagePress}
           >
             <Image
               source={{ uri: image }}
               style={[styles.image, { height, width: SCREEN_WIDTH }]}
               resizeMode="cover"
             />
-          </TouchableOpacity>
+          </Tap>
         ))}
       </ScrollView>
 
@@ -103,10 +105,11 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
         <View style={styles.paginationContainer}>
           <View style={[styles.paginationWrapper, { backgroundColor: withOpacity(colors.black, OPACITY[30]) }]}>
             {images.map((_, index) => (
-              <TouchableOpacity
+              <Tap
                 key={index}
                 onPress={() => handleDotPress(index)}
                 hitSlop={{ top: 10, bottom: 10, left: 5, right: 5 }}
+                activeOpacity={0.8}
               >
                 <View
                   style={[
@@ -119,7 +122,7 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
                     },
                   ]}
                 />
-              </TouchableOpacity>
+              </Tap>
             ))}
           </View>
         </View>

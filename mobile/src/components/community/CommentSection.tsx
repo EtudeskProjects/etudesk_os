@@ -3,28 +3,27 @@ import {
     View,
     Text,
     StyleSheet,
-    TextInput,
-    TouchableOpacity,
     Pressable,
-    ActivityIndicator,
     Keyboard,
     Platform,
     Modal,
     Dimensions,
     KeyboardAvoidingView,
     ActionSheetIOS,
+    type TextInput as RNTextInput,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActivityComment } from '../../types/activity';
 import { communityActivityService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import { CommentItem } from './CommentItem';
 import { SPACING, TYPOGRAPHY, BORDER, withOpacity, OPACITY } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
-import { useTranslation } from '../../contexts/I18nContext';
-import { Send, X, ChevronDown } from 'lucide-react-native';
-import { alertsGlobal } from '../../contexts/AlertContext';
-import { showToastGlobal } from '../ui';
-import { Input } from '../ui';
+	import { useTranslation } from '../../contexts/I18nContext';
+	import { Send, X, ChevronDown } from 'lucide-react-native';
+	import { alertsGlobal } from '../../contexts/AlertContext';
+	import { showToastGlobal } from '../ui';
+	import { IconButton, Input, LoadingShimmer, ShimmerPlaceholder } from '../ui';
 
 // Extended comment type for optimistic updates
 interface OptimisticComment extends ActivityComment {
@@ -40,7 +39,7 @@ interface CommentSectionProps {
     totalCommentsCount?: number;
     onCommentAdded?: (comment: ActivityComment) => void;
     onViewAllComments?: () => void;
-    inputRef?: React.RefObject<TextInput>;
+    inputRef?: React.RefObject<RNTextInput>;
     autoFocus?: boolean; // Auto-open the input modal when mounted
 }
 
@@ -55,6 +54,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 }) => {
     const { colors } = useTheme();
     const { t } = useTranslation();
+    const insets = useSafeAreaInsets();
     const { user } = useAuth();
     const [comments, setComments] = useState<OptimisticComment[]>(initialComments || []);
     const [loading, setLoading] = useState(!initialComments);
@@ -62,7 +62,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     const [submitting, setSubmitting] = useState(false);
     const [replyingTo, setReplyingTo] = useState<ActivityComment | null>(null);
     const [showAllComments, setShowAllComments] = useState(false);
-    const localInputRef = useRef<TextInput>(null);
+    const localInputRef = useRef<RNTextInput>(null);
     const inputRef = externalInputRef || localInputRef;
 
     // Counter for generating unique temp IDs
@@ -428,7 +428,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <LoadingShimmer variant="inline" />
             </View>
         );
     }
@@ -468,7 +468,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
                     {/* Show more comments */}
                     {hasMoreComments && (
-                        <TouchableOpacity
+                        <Pressable
                             style={styles.showMoreContainer}
                             onPress={() => {
                                 if (onViewAllComments) {
@@ -485,7 +485,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                                 </Text>
                                 <ChevronDown size={14} color={colors.primary} />
                             </View>
-                        </TouchableOpacity>
+                        </Pressable>
                     )}
                 </View>
             ) : (
@@ -500,33 +500,34 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             {!isInputFocused && (
                 <View style={styles.inputSection}>
                     {/* Reply indicator with message preview */}
-                    {replyingTo && (
-                        <View style={[styles.replyIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
-                            <View style={styles.replyContent}>
-                                <Text style={[styles.replyIndicatorText, { color: colors.primary }]} numberOfLines={1}>
-                                    {t('community.comments.replyTo', { name: replyingTo.author?.display_name || '' })}
-                                </Text>
+	                    {replyingTo && (
+	                        <View style={[styles.replyIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
+	                            <View style={styles.replyContent}>
+	                                <Text style={[styles.replyIndicatorText, { color: colors.primary }]} numberOfLines={1}>
+	                                    {t('community.comments.replyTo', { name: replyingTo.author?.display_name || '' })}
+	                                </Text>
                                 <Text style={[styles.replyMessagePreview, { color: colors.textSecondary }]} numberOfLines={1}>
-                                    {replyingTo.content}
-                                </Text>
-                            </View>
-                            <TouchableOpacity
-                                onPress={cancelReply}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            >
-                                <X size={16} color={colors.primary} />
-                            </TouchableOpacity>
-                        </View>
-                    )}
+	                                    {replyingTo.content}
+	                                </Text>
+	                            </View>
+	                            <IconButton
+	                                onPress={cancelReply}
+	                                icon={<X size={16} color={colors.primary} />}
+	                                accessibilityLabel={t('common.cancel')}
+	                                size="sm"
+	                                variant="ghost"
+	                                style={{ width: 28, height: 28 }}
+	                            />
+	                        </View>
+	                    )}
 
                     {/* Input pill - tap to open modal */}
-                    <TouchableOpacity
+                    <Pressable
                         style={[styles.inlineInputPill, { backgroundColor: colors.gray100 }]}
                         onPress={() => {
                             setIsInputFocused(true);
                             setTimeout(() => inputRef.current?.focus(), 100);
                         }}
-                        activeOpacity={0.7}
                     >
                         <Text style={[styles.inputPlaceholder, { color: colors.gray400 }]}>
                             {replyingTo ? t('community.comments.replyPlaceholder') : t('community.comments.addPlaceholder')}
@@ -534,7 +535,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                         <View style={[styles.inlineSendButton, { backgroundColor: colors.gray300 }]}>
                             <Send size={16} color={colors.textOnPrimary} />
                         </View>
-                    </TouchableOpacity>
+                    </Pressable>
                 </View>
             )}
 
@@ -553,9 +554,8 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                     style={styles.modalContainer}
                 >
                     {/* Backdrop */}
-                    <TouchableOpacity
-                        style={[styles.modalBackdrop, { backgroundColor: 'rgba(0, 0, 0, 0.3)' }]}
-                        activeOpacity={1}
+                    <Pressable
+                        style={[styles.modalBackdrop, { backgroundColor: colors.overlayLight }]}
                         onPress={() => {
                             Keyboard.dismiss();
                             setIsInputFocused(false);
@@ -563,26 +563,37 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                     />
 
                     {/* Input area at bottom */}
-                    <View style={[styles.modalInputContainer, { backgroundColor: colors.surface, borderTopColor: withOpacity(colors.textPrimary, OPACITY[8]) }]}>
+                    <View
+                        style={[
+                            styles.modalInputContainer,
+                            {
+                                backgroundColor: colors.surface,
+                                borderTopColor: withOpacity(colors.textPrimary, OPACITY[8]),
+                                paddingBottom: Math.max(SPACING.sm, insets.bottom),
+                            },
+                        ]}
+                    >
                         {/* Reply indicator with message preview */}
-                        {replyingTo && (
-                            <View style={[styles.replyIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
-                                <View style={styles.replyContent}>
+	                        {replyingTo && (
+	                            <View style={[styles.replyIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
+	                                <View style={styles.replyContent}>
                                     <Text style={[styles.replyIndicatorText, { color: colors.primary }]} numberOfLines={1}>
                                         {t('community.comments.replyTo', { name: replyingTo.author?.display_name || '' })}
                                     </Text>
                                     <Text style={[styles.replyMessagePreview, { color: colors.textSecondary }]} numberOfLines={1}>
-                                        {replyingTo.content}
-                                    </Text>
-                                </View>
-                                <TouchableOpacity
-                                    onPress={cancelReply}
-                                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                >
-                                    <X size={16} color={colors.primary} />
-                                </TouchableOpacity>
-                            </View>
-                        )}
+	                                    {replyingTo.content}
+	                                </Text>
+	                            </View>
+	                                <IconButton
+	                                    onPress={cancelReply}
+	                                    icon={<X size={16} color={colors.primary} />}
+	                                    accessibilityLabel={t('common.cancel')}
+	                                    size="sm"
+	                                    variant="ghost"
+	                                    style={{ width: 28, height: 28 }}
+	                                />
+	                            </View>
+	                        )}
 
                         {/* Input with button inside */}
                         <View style={[
@@ -601,35 +612,38 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                                 containerStyle={{ flex: 1 }}
                                 inputContainerStyle={{ backgroundColor: 'transparent', borderColor: 'transparent', height: undefined, minHeight: 44, alignItems: 'flex-start' }}
                                 inputStyle={[styles.modalInput, { color: colors.textPrimary }]}
-                            />
-                            {/* Send button inside input */}
-                            <View
-                                style={[
-                                    styles.modalSendButton,
-                                    {
-                                        backgroundColor: commentText.trim() && !submitting
-                                            ? colors.primary
-                                            : colors.gray300,
-                                    }
-                                ]}
-                                onTouchEnd={(e) => {
-                                    e.stopPropagation();
-                                    if (commentText.trim() && !submitting) {
-                                        isSubmittingRef.current = true;
-                                        handleSubmit();
-                                    }
-                                }}
-                            >
-                                {submitting ? (
-                                    <ActivityIndicator size="small" color={colors.textOnPrimary} />
-                                ) : (
-                                    <Send size={16} color={colors.textOnPrimary} />
-                                )}
-                            </View>
-                        </View>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
+	                            />
+	                            {/* Send button inside input */}
+	                            <IconButton
+	                                onPress={() => {
+	                                    if (!commentText.trim() || submitting) return;
+	                                    isSubmittingRef.current = true;
+	                                    handleSubmit();
+	                                }}
+	                                disabled={!commentText.trim() || submitting}
+	                                icon={
+	                                    submitting ? (
+	                                        <ShimmerPlaceholder width={20} height={14} variant="bar" />
+	                                    ) : (
+	                                        <Send size={16} color={colors.textOnPrimary} />
+	                                    )
+	                                }
+	                                accessibilityLabel={t('chat.send')}
+	                                size="sm"
+	                                variant="ghost"
+	                                style={[
+	                                    styles.modalSendButton,
+	                                    {
+	                                        backgroundColor: commentText.trim() && !submitting
+	                                            ? colors.primary
+	                                            : colors.gray300,
+	                                    },
+	                                ]}
+	                            />
+	                        </View>
+	                    </View>
+	                </KeyboardAvoidingView>
+	            </Modal>
         </View>
     );
 };

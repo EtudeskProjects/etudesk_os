@@ -1,29 +1,29 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  TextInput,
   Image,
+  Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronRight,
   Check,
   ArrowLeft,
   Camera,
   MapPin,
-} from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
-import { Input, Button, StepIndicator } from '../../src/components/ui';
-import { useTheme } from '../../src/hooks/useTheme';
-import { useSpace } from '../../src/contexts/SpaceContext';
-import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
+	} from 'lucide-react-native';
+	import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
+	import { Chip, IconButton, Input, Button, StepIndicator } from '../../src/components/ui';
+	import { FormTextArea } from '../../src/components/forms/FormTextArea';
+	import { useTheme } from '../../src/hooks/useTheme';
+	import { useSpace } from '../../src/contexts/SpaceContext';
+	import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
 import {
   ORGANIZATION_TYPE_LABELS,
   OrganizationType,
@@ -33,6 +33,7 @@ import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../src/constants/talent';
 import MapLocationPicker from '../../src/components/MapLocationPicker';
 import { useForm } from '../../src/hooks/useForm';
 import { useAlert } from '../../src/contexts/AlertContext';
+import { ScrollToInputContext } from '../../src/contexts/ScrollToInputContext';
 
 type Step = 'info' | 'location';
 
@@ -63,6 +64,7 @@ export default function CreateOrganizationScreen() {
   const router = useRouter();
   const { refreshOrganizations } = useSpace();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState<Step>('info');
 
   // Form management with useForm hook
@@ -106,7 +108,17 @@ export default function CreateOrganizationScreen() {
   // Refs for auto-scroll to selected country
   const countryScrollRef = useRef<ScrollView>(null);
   const alerts = useAlert();
+  const mainScrollRef = useRef<ScrollView>(null);
   const COUNTRY_CHIP_WIDTH = 80;
+
+  const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 96) => {
+    const sv = mainScrollRef.current;
+    if (!sv) return;
+    const delay = Platform.OS === 'android' ? 120 : 0;
+    setTimeout(() => {
+      sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+    }, delay);
+  }, []);
 
   // Get form values for convenience
   const country = form.getValue('country');
@@ -270,22 +282,24 @@ export default function CreateOrganizationScreen() {
       </View>
 
       <View style={styles.formFields}>
-        {/* Logo */}
-        <View style={styles.logoSection}>
-          <TouchableOpacity
-            style={[styles.logoContainer, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
-            onPress={pickLogo}
-          >
-            {logoUri ? (
-              <Image source={{ uri: logoUri }} style={styles.logoImage} resizeMode="cover" />
-            ) : (
-              <Camera size={ICON.size.lg} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-            )}
-          </TouchableOpacity>
-          <Text style={[styles.logoHint, { color: colors.textSecondary }]}>
-            Ajouter un logo
-          </Text>
-        </View>
+	        {/* Logo */}
+	        <View style={styles.logoSection}>
+	          <Pressable
+	            style={[styles.logoContainer, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
+	            onPress={pickLogo}
+	            accessibilityRole="button"
+	            accessibilityLabel="Ajouter un logo"
+	          >
+	            {logoUri ? (
+	              <Image source={{ uri: logoUri }} style={styles.logoImage} resizeMode="cover" />
+	            ) : (
+	              <Camera size={ICON.size.lg} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+	            )}
+	          </Pressable>
+	          <Text style={[styles.logoHint, { color: colors.textSecondary }]}>
+	            Ajouter un logo
+	          </Text>
+	        </View>
 
         {/* Nom */}
         <Input
@@ -302,36 +316,30 @@ export default function CreateOrganizationScreen() {
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
             Type d'organisation * (max {MAX_ORG_TYPES})
           </Text>
-          <View style={styles.tagsContainer}>
-            {ORGANIZATION_TYPE_OPTIONS.map((type) => {
-              const isSelected = orgTypes.includes(type.id);
-              return (
-                <TouchableOpacity
-                  key={type.id}
-                  style={[
-                    styles.selectableTag,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
-                  onPress={() => toggleOrgType(type.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && (
-                    <Check size={14} color={colors.primary} strokeWidth={2.5} />
-                  )}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {type.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+	          <View style={styles.tagsContainer}>
+	            {ORGANIZATION_TYPE_OPTIONS.map((type) => {
+	              const isSelected = orgTypes.includes(type.id);
+	              return (
+	                <Chip
+	                  key={type.id}
+	                  onPress={() => toggleOrgType(type.id)}
+	                  label={type.label}
+	                  selected={isSelected}
+	                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
+	                  style={[
+	                    styles.selectableTag,
+	                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
+	                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
+	                  ]}
+	                  textStyle={[
+	                    styles.selectableTagText,
+	                    { color: colors.gray600 },
+	                    isSelected && { color: colors.primary },
+	                  ]}
+	                />
+	              );
+	            })}
+	          </View>
           <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
             {orgTypes.length}/{MAX_ORG_TYPES} sélectionnés
           </Text>
@@ -342,58 +350,44 @@ export default function CreateOrganizationScreen() {
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
             Secteurs d'activité (max {MAX_SECTORS})
           </Text>
-          <View style={styles.tagsContainer}>
-            {SECTOR_DATA.map((sector) => {
-              const isSelected = sectors.includes(sector.id);
-              return (
-                <TouchableOpacity
-                  key={sector.id}
-                  style={[
-                    styles.selectableTag,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
-                  onPress={() => toggleSector(sector.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && (
-                    <Check size={14} color={colors.primary} strokeWidth={2.5} />
-                  )}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {sector.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+	          <View style={styles.tagsContainer}>
+	            {SECTOR_DATA.map((sector) => {
+	              const isSelected = sectors.includes(sector.id);
+	              return (
+	                <Chip
+	                  key={sector.id}
+	                  onPress={() => toggleSector(sector.id)}
+	                  label={sector.label}
+	                  selected={isSelected}
+	                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
+	                  style={[
+	                    styles.selectableTag,
+	                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
+	                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
+	                  ]}
+	                  textStyle={[
+	                    styles.selectableTagText,
+	                    { color: colors.gray600 },
+	                    isSelected && { color: colors.primary },
+	                  ]}
+	                />
+	              );
+	            })}
+	          </View>
           <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
             {sectors.length}/{MAX_SECTORS} sélectionnés
           </Text>
         </View>
 
         {/* Description */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Description</Text>
-          <View style={[styles.textAreaContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary }]}
-              placeholder="Décrivez votre organisation en quelques mots..."
-              value={description}
-              onChangeText={(value) => form.setValue('description', value)}
-              multiline
-              numberOfLines={4}
-              maxLength={500}
-              placeholderTextColor={colors.gray500}
-            />
-          </View>
-          <Text style={[styles.charCount, { color: colors.gray500 }]}>{description.length}/500</Text>
-        </View>
+        <FormTextArea
+          label="Description"
+          placeholder="Décrivez votre organisation en quelques mots..."
+          value={description}
+          onChangeText={(value) => form.setValue('description', value)}
+          rows={4}
+          maxLength={500}
+        />
 
         {/* Contact - Site web */}
         <Input
@@ -457,31 +451,28 @@ export default function CreateOrganizationScreen() {
             style={styles.horizontalScroll}
             contentContainerStyle={styles.horizontalScrollContent}
           >
-            {COUNTRIES.map((c) => (
-              <TouchableOpacity
-                key={c.id}
-                style={[
-                  styles.optionChip,
-                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                  country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                ]}
-                onPress={() => {
-                  form.setValues({ country: c.id, region: '', city: '' });
-                }}
-              >
-                <Text
-                  style={[
-                    styles.optionChipText,
-                    { color: colors.gray700 },
-                    country === c.id && { color: colors.textOnPrimary },
-                  ]}
-                >
-                  {c.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+	            {COUNTRIES.map((c) => (
+	              <Chip
+	                key={c.id}
+	                onPress={() => {
+	                  form.setValues({ country: c.id, region: '', city: '' });
+	                }}
+	                label={c.label}
+	                selected={country === c.id}
+	                style={[
+	                  styles.optionChip,
+	                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                  country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                ]}
+	                textStyle={[
+	                  styles.optionChipText,
+	                  { color: colors.gray700 },
+	                  country === c.id && { color: colors.textOnPrimary },
+	                ]}
+	              />
+	            ))}
+	          </ScrollView>
+	        </View>
 
         {/* Région */}
         {availableRegions.length > 0 && (
@@ -493,32 +484,29 @@ export default function CreateOrganizationScreen() {
               style={styles.horizontalScroll}
               contentContainerStyle={styles.horizontalScrollContent}
             >
-              {availableRegions.map((r) => (
-                <TouchableOpacity
-                  key={r.id}
-                  style={[
-                    styles.optionChip,
-                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                    region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                  ]}
-                  onPress={() => {
-                    form.setValues({ region: r.id, city: '' });
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.optionChipText,
-                      { color: colors.gray700 },
-                      region === r.id && { color: colors.textOnPrimary },
-                    ]}
-                  >
-                    {r.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+	              {availableRegions.map((r) => (
+	                <Chip
+	                  key={r.id}
+	                  onPress={() => {
+	                    form.setValues({ region: r.id, city: '' });
+	                  }}
+	                  label={r.label}
+	                  selected={region === r.id}
+	                  style={[
+	                    styles.optionChip,
+	                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                    region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                  ]}
+	                  textStyle={[
+	                    styles.optionChipText,
+	                    { color: colors.gray700 },
+	                    region === r.id && { color: colors.textOnPrimary },
+	                  ]}
+	                />
+	              ))}
+	            </ScrollView>
+	          </View>
+	        )}
 
         {/* Ville */}
         {availableCities.length > 0 && (
@@ -530,78 +518,82 @@ export default function CreateOrganizationScreen() {
               style={styles.horizontalScroll}
               contentContainerStyle={styles.horizontalScrollContent}
             >
-              {availableCities.map((c) => (
-                <TouchableOpacity
-                  key={c.id}
-                  style={[
-                    styles.optionChip,
-                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                    city === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                  ]}
-                  onPress={() => form.setValue('city', c.id)}
-                >
-                  <Text
-                    style={[
-                      styles.optionChipText,
-                      { color: colors.gray700 },
-                      city === c.id && { color: colors.textOnPrimary },
-                    ]}
-                  >
-                    {c.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+	              {availableCities.map((c) => (
+	                <Chip
+	                  key={c.id}
+	                  onPress={() => form.setValue('city', c.id)}
+	                  label={c.label}
+	                  selected={city === c.id}
+	                  style={[
+	                    styles.optionChip,
+	                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                    city === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                  ]}
+	                  textStyle={[
+	                    styles.optionChipText,
+	                    { color: colors.gray700 },
+	                    city === c.id && { color: colors.textOnPrimary },
+	                  ]}
+	                />
+	              ))}
+	            </ScrollView>
+	          </View>
+	        )}
       </View>
     </View>
   );
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Nouvelle organisation</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+	  return (
+	    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+	      {/* Header */}
+	      <View style={styles.header}>
+	        <IconButton
+	          onPress={handleBack}
+	          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	          accessibilityLabel="Retour"
+	          style={styles.backButton}
+	        />
+	        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Nouvelle organisation</Text>
+	        <View style={styles.headerSpacer} />
+	      </View>
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {renderStepIndicator()}
+        <ScrollToInputContext.Provider value={scrollToInput}>
+          <ScrollView
+            ref={mainScrollRef}
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          >
+            {renderStepIndicator()}
 
-          {currentStep === 'info' && renderInfoStep()}
-          {currentStep === 'location' && renderLocationStep()}
-        </ScrollView>
+            {currentStep === 'info' && renderInfoStep()}
+            {currentStep === 'location' && renderLocationStep()}
+          </ScrollView>
 
-        <View style={[styles.footer, { backgroundColor: colors.background }]}>
-          <Button
-            title={currentStep === 'location' ? (form.state.isSubmitting ? 'Création...' : 'Créer l\'organisation') : 'Continuer'}
-            onPress={handleNext}
-            disabled={!canProceed() || form.state.isSubmitting}
-            fullWidth
-            icon={
-              form.state.isSubmitting ? undefined :
-                <ChevronRight
-                  size={ICON.size.md}
-                  color={colors.textOnPrimary}
-                  strokeWidth={ICON.strokeWidth}
-                />
-            }
-            iconPosition="right"
-          />
-        </View>
+          <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
+            <Button
+              title={currentStep === 'location' ? (form.state.isSubmitting ? 'Création...' : 'Créer l\'organisation') : 'Continuer'}
+              onPress={handleNext}
+              disabled={!canProceed() || form.state.isSubmitting}
+              fullWidth
+              icon={
+                form.state.isSubmitting ? undefined :
+                  <ChevronRight
+                    size={ICON.size.md}
+                    color={colors.textOnPrimary}
+                    strokeWidth={ICON.strokeWidth}
+                  />
+              }
+              iconPosition="right"
+            />
+          </View>
+        </ScrollToInputContext.Provider>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

@@ -1,19 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  TextInput,
   Image,
-  ActivityIndicator,
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronRight,
   ChevronLeft,
@@ -35,7 +32,7 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
-import { Input, Button, Toggle, StepIndicator } from '../../../src/components/ui';
+import { Input, Button, CheckboxRow, Chip, IconButton, SelectCard, Toggle, StepIndicator, useToast, Tap } from '../../../src/components/ui';
 import MapLocationPicker from '../../../src/components/MapLocationPicker';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useForm } from '../../../src/hooks/useForm';
@@ -58,7 +55,7 @@ import { Visibility, ApplicationQuestion } from '../../../src/types/models';
 import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../../src/constants/talent';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAlert } from '../../../src/contexts/AlertContext';
-import { useToast } from '../../../src/components/ui';
+import { ScrollToInputContext } from '../../../src/contexts/ScrollToInputContext';
 import { FormTextArea } from '../../../src/components/forms/FormTextArea';
 import { spaceService, CreateSpaceData, imageService, organizationService } from '../../../src/services';
 
@@ -157,6 +154,7 @@ const DEFAULT_AVAILABILITY: Record<number, DayAvailability> = {
 export default function CreateSpaceScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { selectedOrgId, selectedOrg } = useSpace();
   const alerts = useAlert();
   const { showToast } = useToast();
@@ -167,6 +165,16 @@ export default function CreateSpaceScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orgLocationLoaded, setOrgLocationLoaded] = useState(false);
   const countryScrollRef = useRef<ScrollView>(null);
+  const mainScrollRef = useRef<ScrollView>(null);
+
+  const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 96) => {
+    const sv = mainScrollRef.current;
+    if (!sv) return;
+    const delay = Platform.OS === 'android' ? 120 : 0;
+    setTimeout(() => {
+      sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+    }, delay);
+  }, []);
 
   // Helper functions for building payloads
   const isRemoteUrl = (uri: string): boolean => {
@@ -706,27 +714,23 @@ export default function CreateSpaceScreen() {
             {SPACE_TYPE_DATA.map((type) => {
               const isSelected = spaceType === type.id;
               return (
-                <TouchableOpacity
+                <Chip
                   key={type.id}
+                  label={type.label}
+                  selected={isSelected}
+                  onPress={() => form.setValue('spaceType', type.id)}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
                     isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => form.setValue('spaceType', type.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {type.label}
-                  </Text>
-                </TouchableOpacity>
+                  textStyle={[
+                    styles.selectableTagText,
+                    { color: colors.gray600 },
+                    isSelected && { color: colors.primary },
+                  ]}
+                />
               );
             })}
           </View>
@@ -735,25 +739,20 @@ export default function CreateSpaceScreen() {
         {/* AI Suggestion Button */}
         {canGenerate && (
           <View style={styles.generateButtonContainer}>
-            <TouchableOpacity
+            <Button
+              title="Suggérer"
+              onPress={handleGenerate}
+              disabled={isGenerating}
+              loading={isGenerating}
+              size="sm"
+              icon={<Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
               style={[
                 styles.generateButton,
                 { backgroundColor: colors.primary },
                 isGenerating && { opacity: 0.7 },
               ]}
-              onPress={handleGenerate}
-              disabled={isGenerating}
-              activeOpacity={0.8}
-            >
-              {isGenerating ? (
-                <ActivityIndicator size="small" color={colors.textOnPrimary} />
-              ) : (
-                <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-              )}
-              <Text style={[styles.generateButtonText, { color: colors.textOnPrimary }]}>
-                Suggérer
-              </Text>
-            </TouchableOpacity>
+              textStyle={[styles.generateButtonText, { color: colors.textOnPrimary }]}
+            />
           </View>
         )}
 
@@ -766,27 +765,23 @@ export default function CreateSpaceScreen() {
             {SECTOR_DATA.map((sector) => {
               const isSelected = selectedSectors.includes(sector.id);
               return (
-                <TouchableOpacity
+                <Chip
                   key={sector.id}
+                  label={sector.label}
+                  selected={isSelected}
+                  onPress={() => toggleSector(sector.id)}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
                     isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => toggleSector(sector.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {sector.label}
-                  </Text>
-                </TouchableOpacity>
+                  textStyle={[
+                    styles.selectableTagText,
+                    { color: colors.gray600 },
+                    isSelected && { color: colors.primary },
+                  ]}
+                />
               );
             })}
           </View>
@@ -833,29 +828,26 @@ export default function CreateSpaceScreen() {
             {COUNTRIES.map((c) => {
               const isSelected = country === c.id;
               return (
-                <TouchableOpacity
+                <Chip
                   key={c.id}
-                  style={[
-                    styles.optionChip,
-                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
-                  ]}
+                  label={c.label}
+                  selected={isSelected}
                   onPress={() => {
                     form.setValue('country', c.id);
                     form.setValue('region', '');
                     form.setValue('city', '');
                   }}
-                >
-                  <Text
-                    style={[
-                      styles.optionChipText,
-                      { color: colors.gray700 },
-                      isSelected && { color: colors.textOnPrimary },
-                    ]}
-                  >
-                    {c.label}
-                  </Text>
-                </TouchableOpacity>
+                  style={[
+                    styles.optionChip,
+                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                    isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+                  ]}
+                  textStyle={[
+                    styles.optionChipText,
+                    { color: colors.gray700 },
+                    isSelected && { color: colors.textOnPrimary },
+                  ]}
+                />
               );
             })}
           </ScrollView>
@@ -868,28 +860,25 @@ export default function CreateSpaceScreen() {
               {availableRegions.map((r) => {
                 const isSelected = region === r.id;
                 return (
-                  <TouchableOpacity
+                  <Chip
                     key={r.id}
+                    label={r.label}
+                    selected={isSelected}
+                    onPress={() => {
+                      form.setValue('region', r.id);
+                      form.setValue('city', '');
+                    }}
                     style={[
                       styles.optionChip,
                       { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                       isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                     ]}
-                    onPress={() => {
-                      form.setValue('region', r.id);
-                      form.setValue('city', '');
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.optionChipText,
-                        { color: colors.gray700 },
-                        isSelected && { color: colors.textOnPrimary },
-                      ]}
-                    >
-                      {r.label}
-                    </Text>
-                  </TouchableOpacity>
+                    textStyle={[
+                      styles.optionChipText,
+                      { color: colors.gray700 },
+                      isSelected && { color: colors.textOnPrimary },
+                    ]}
+                  />
                 );
               })}
             </ScrollView>
@@ -903,25 +892,22 @@ export default function CreateSpaceScreen() {
               {availableCities.map((c) => {
                 const isSelected = city === c.id;
                 return (
-                  <TouchableOpacity
+                  <Chip
                     key={c.id}
+                    label={c.label}
+                    selected={isSelected}
+                    onPress={() => form.setValue('city', c.id)}
                     style={[
                       styles.optionChip,
                       { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                       isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                     ]}
-                    onPress={() => form.setValue('city', c.id)}
-                  >
-                    <Text
-                      style={[
-                        styles.optionChipText,
-                        { color: colors.gray700 },
-                        isSelected && { color: colors.textOnPrimary },
-                      ]}
-                    >
-                      {c.label}
-                    </Text>
-                  </TouchableOpacity>
+                    textStyle={[
+                      styles.optionChipText,
+                      { color: colors.gray700 },
+                      isSelected && { color: colors.textOnPrimary },
+                    ]}
+                  />
                 );
               })}
             </ScrollView>
@@ -1002,26 +988,23 @@ export default function CreateSpaceScreen() {
             {SPACE_EQUIPMENT_DATA.map((item) => {
               const isSelected = selectedEquipment.includes(item.id);
               return (
-                <TouchableOpacity
+                <Chip
                   key={item.id}
+                  label={item.label}
+                  selected={isSelected}
+                  onPress={() => toggleEquipment(item.id)}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
                     isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => toggleEquipment(item.id)}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
+                  textStyle={[
+                    styles.selectableTagText,
+                    { color: colors.gray600 },
+                    isSelected && { color: colors.primary },
+                  ]}
+                />
               );
             })}
           </View>
@@ -1033,26 +1016,23 @@ export default function CreateSpaceScreen() {
             {SPACE_AMENITY_DATA.map((item) => {
               const isSelected = selectedAmenities.includes(item.id);
               return (
-                <TouchableOpacity
+                <Chip
                   key={item.id}
+                  label={item.label}
+                  selected={isSelected}
+                  onPress={() => toggleAmenity(item.id)}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
                     isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => toggleAmenity(item.id)}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
+                  textStyle={[
+                    styles.selectableTagText,
+                    { color: colors.gray600 },
+                    isSelected && { color: colors.primary },
+                  ]}
+                />
               );
             })}
           </View>
@@ -1075,26 +1055,23 @@ export default function CreateSpaceScreen() {
               {ACCESSIBILITY_DATA.map((item) => {
                 const isSelected = selectedAccessibility.includes(item.id);
                 return (
-                  <TouchableOpacity
+                  <Chip
                     key={item.id}
+                    label={item.label}
+                    selected={isSelected}
+                    onPress={() => toggleAccessibility(item.id)}
+                    leftIcon={isSelected ? <Check size={14} color={colors.info} strokeWidth={2.5} /> : undefined}
                     style={[
                       styles.selectableTag,
                       { backgroundColor: colors.surface, borderColor: colors.gray200 },
                       isSelected && { backgroundColor: withOpacity(colors.info, OPACITY[10]), borderColor: colors.info },
                     ]}
-                    onPress={() => toggleAccessibility(item.id)}
-                  >
-                    {isSelected && <Check size={14} color={colors.info} strokeWidth={2.5} />}
-                    <Text
-                      style={[
-                        styles.selectableTagText,
-                        { color: colors.gray600 },
-                        isSelected && { color: colors.info },
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
+                    textStyle={[
+                      styles.selectableTagText,
+                      { color: colors.gray600 },
+                      isSelected && { color: colors.info },
+                    ]}
+                  />
                 );
               })}
             </View>
@@ -1178,15 +1155,12 @@ export default function CreateSpaceScreen() {
               const isSelected = visibility === type.id;
               const IconComponent = type.id === 'PUBLIC' ? Eye : type.id === 'PRIVATE' ? Lock : Eye;
               return (
-                <TouchableOpacity
+                <SelectCard
                   key={type.id}
-                  style={[
-                    styles.locationTypeCard,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
+                  selected={isSelected}
                   onPress={() => form.setValue('visibility', type.id)}
-                  activeOpacity={0.7}
+                  style={styles.locationTypeCard}
+                  accessibilityLabel={type.label}
                 >
                   <IconComponent
                     size={24}
@@ -1202,12 +1176,7 @@ export default function CreateSpaceScreen() {
                   >
                     {type.label}
                   </Text>
-                  {isSelected && (
-                    <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
-                    </View>
-                  )}
-                </TouchableOpacity>
+                </SelectCard>
               );
             })}
           </View>
@@ -1222,41 +1191,43 @@ export default function CreateSpaceScreen() {
             const dayAvail = availability[day.id];
             return (
               <View key={day.id} style={[styles.dayRow, { borderBottomColor: colors.gray100 }]}>
-                <TouchableOpacity
-                  style={styles.dayToggle}
+                <CheckboxRow
+                  label={day.label}
+                  checked={dayAvail.isOpen}
                   onPress={() => toggleDayAvailability(day.id)}
-                >
-                  <View style={[
+                  style={styles.dayToggle}
+                  checkboxStyle={[
                     styles.dayCheckbox,
                     { borderColor: colors.gray300 },
                     dayAvail.isOpen && { backgroundColor: colors.primary, borderColor: colors.primary },
-                  ]}>
-                    {dayAvail.isOpen && <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />}
-                  </View>
-                  <Text style={[
-                    styles.dayLabel,
-                    { color: dayAvail.isOpen ? colors.textPrimary : colors.gray400 },
-                  ]}>
-                    {day.label}
-                  </Text>
-                </TouchableOpacity>
+                  ]}
+                  labelStyle={[styles.dayLabel, { color: dayAvail.isOpen ? colors.textPrimary : colors.gray400 }]}
+                />
 
                 {dayAvail.isOpen ? (
                   <View style={styles.timeInputs}>
-                    <TextInput
-                      style={[styles.timeInput, { backgroundColor: colors.gray50, borderColor: colors.gray200, color: colors.textPrimary }]}
+                    <Input
                       value={dayAvail.startTime}
                       onChangeText={(val) => updateDayTime(day.id, 'startTime', val)}
                       placeholder="08:00"
-                      placeholderTextColor={colors.gray400}
+                      keyboardType="numeric"
+                      maxLength={5}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      inputContainerStyle={[styles.timeInput, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+                      inputStyle={{ color: colors.textPrimary, paddingHorizontal: 0 }}
                     />
                     <Text style={[styles.timeSeparator, { color: colors.gray500 }]}>-</Text>
-                    <TextInput
-                      style={[styles.timeInput, { backgroundColor: colors.gray50, borderColor: colors.gray200, color: colors.textPrimary }]}
+                    <Input
                       value={dayAvail.endTime}
                       onChangeText={(val) => updateDayTime(day.id, 'endTime', val)}
                       placeholder="18:00"
-                      placeholderTextColor={colors.gray400}
+                      keyboardType="numeric"
+                      maxLength={5}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      inputContainerStyle={[styles.timeInput, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+                      inputStyle={{ color: colors.textPrimary, paddingHorizontal: 0 }}
                     />
                   </View>
                 ) : (
@@ -1298,9 +1269,13 @@ export default function CreateSpaceScreen() {
                 <Text style={[styles.questionNumber, { color: colors.primary }]}>
                   Question {index + 1}
                 </Text>
-                <TouchableOpacity onPress={() => removeQuestion(question.id)}>
-                  <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
+                <IconButton
+                  onPress={() => removeQuestion(question.id)}
+                  icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+                  accessibilityLabel="Supprimer la question"
+                  size="sm"
+                  variant="ghost"
+                />
               </View>
 
               <FormTextArea
@@ -1328,15 +1303,14 @@ export default function CreateSpaceScreen() {
 
           {/* Add Question Button */}
           {questions.length < MAX_QUESTIONS && (
-            <TouchableOpacity
-              style={[styles.addQuestionButton, { borderColor: colors.primary }]}
+            <Button
+              title="Ajouter une question"
               onPress={addQuestion}
-            >
-              <Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.addQuestionText, { color: colors.primary }]}>
-                Ajouter une question
-              </Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.addQuestionButton, { borderColor: colors.primary }]}
+              textStyle={[styles.addQuestionText, { color: colors.primary }]}
+            />
           )}
         </View>
       </View>
@@ -1361,13 +1335,15 @@ export default function CreateSpaceScreen() {
 
           <View style={styles.imageUploadContainer}>
             {images.length < MAX_IMAGES && (
-              <TouchableOpacity
-                style={[styles.addImageButton, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+              <Button
+                title="Ajouter une image"
                 onPress={pickImage}
-              >
-                <Upload size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.addImageText, { color: colors.gray500 }]}>Ajouter une image</Text>
-              </TouchableOpacity>
+                variant="outline"
+                icon={<Upload size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+                style={[styles.addImageButton, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+                textStyle={[styles.addImageText, { color: colors.gray500 }]}
+                fullWidth
+              />
             )}
 
             {images.length > 0 && (
@@ -1375,12 +1351,14 @@ export default function CreateSpaceScreen() {
                 {images.map((image) => (
                   <View key={image.id} style={styles.imageItemContainer}>
                     <Image source={{ uri: image.uri }} style={styles.imageItem} />
-                    <TouchableOpacity
-                      style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
+                    <IconButton
                       onPress={() => removeImage(image.id)}
-                    >
-                      <X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />
-                    </TouchableOpacity>
+                      icon={<X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />}
+                      accessibilityLabel="Retirer l'image"
+                      size="sm"
+                      variant="filled"
+                      style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
+                    />
                   </View>
                 ))}
               </View>
@@ -1639,16 +1617,17 @@ export default function CreateSpaceScreen() {
 
     if (currentStep === 'preview') {
       return (
-        <View style={[styles.footer, { backgroundColor: colors.background }]}>
+        <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
           <View style={styles.footerButtons}>
-            <TouchableOpacity
-              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+            <Button
+              title="Retour"
               onPress={handleBack}
               disabled={isSubmitting}
-            >
-              <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.backStepButtonText, { color: colors.gray700 }]}>Retour</Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+              textStyle={[styles.backStepButtonText, { color: colors.gray700 }]}
+            />
             <View style={styles.publishButton}>
               <Button
                 title={isSubmitting ? 'Publication...' : 'Publier'}
@@ -1663,16 +1642,17 @@ export default function CreateSpaceScreen() {
     }
 
     return (
-      <View style={[styles.footer, { backgroundColor: colors.background }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
         <View style={styles.footerButtons}>
           {!isFirstStep && (
-            <TouchableOpacity
-              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+            <Button
+              title="Retour"
               onPress={handleBack}
-            >
-              <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.backStepButtonText, { color: colors.gray700 }]}>Retour</Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+              textStyle={[styles.backStepButtonText, { color: colors.gray700 }]}
+            />
           )}
           <View style={[styles.continueButton, !isFirstStep && { flex: 1 }]}>
             <Button
@@ -1689,37 +1669,43 @@ export default function CreateSpaceScreen() {
     );
   };
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Nouvel espace</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+	  return (
+	    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+	      <View style={styles.header}>
+	        <IconButton
+	          onPress={() => router.back()}
+	          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	          accessibilityLabel="Retour"
+	        />
+	        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Nouvel espace</Text>
+	        <View style={styles.headerSpacer} />
+	      </View>
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {renderStepIndicator()}
+        <ScrollToInputContext.Provider value={scrollToInput}>
+          <ScrollView
+            ref={mainScrollRef}
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          >
+            {renderStepIndicator()}
 
-          {currentStep === 'info' && renderInfoStep()}
-          {currentStep === 'location' && renderLocationStep()}
-          {currentStep === 'capacity' && renderCapacityStep()}
-          {currentStep === 'conditions' && renderConditionsStep()}
-          {currentStep === 'media' && renderMediaStep()}
-          {currentStep === 'preview' && renderPreviewStep()}
-        </ScrollView>
+            {currentStep === 'info' && renderInfoStep()}
+            {currentStep === 'location' && renderLocationStep()}
+            {currentStep === 'capacity' && renderCapacityStep()}
+            {currentStep === 'conditions' && renderConditionsStep()}
+            {currentStep === 'media' && renderMediaStep()}
+            {currentStep === 'preview' && renderPreviewStep()}
+          </ScrollView>
 
-        {renderFooter()}
+          {renderFooter()}
+        </ScrollToInputContext.Provider>
       </KeyboardAvoidingView>
 
     </SafeAreaView>

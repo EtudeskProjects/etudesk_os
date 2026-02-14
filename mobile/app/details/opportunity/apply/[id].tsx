@@ -1,18 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  TextInput,
-  ActivityIndicator,
   Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import {
   ArrowLeft,
@@ -34,11 +31,12 @@ import {
   Plus,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
-import { Button, StepIndicator } from '../../../../src/components/ui';
+import { Button, IconButton, Input, SelectCard, StepIndicator, LoadingShimmer } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useForm } from '../../../../src/hooks/useForm';
 import { useAuth } from '../../../../src/contexts/AuthContext';
 import { useAlert } from '../../../../src/contexts/AlertContext';
+import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
 import { opportunityService, applicationService, talentService, documentService, kycService } from '../../../../src/services';
 import type { Opportunity, ApplicationQuestion, ApplicationAnswer, TalentObjectData } from '../../../../src/types/models';
 import type { TalentDocument } from '../../../../src/services/documentService';
@@ -79,8 +77,19 @@ export default function ApplyOpportunityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { error: showError } = useAlert();
+  const mainScrollRef = useRef<ScrollView>(null);
+
+  const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 96) => {
+    const sv = mainScrollRef.current;
+    if (!sv) return;
+    const delay = Platform.OS === 'android' ? 120 : 0;
+    setTimeout(() => {
+      sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+    }, delay);
+  }, []);
 
   const [currentStep, setCurrentStep] = useState<ApplyStep>('profile');
   const [isLoading, setIsLoading] = useState(true);
@@ -538,9 +547,14 @@ export default function ApplyOpportunityScreen() {
                 {selectedCV.isFromDocuments ? 'Depuis mes documents' : 'Fichier uploadé'}
               </Text>
             </View>
-            <TouchableOpacity onPress={removeCV} style={styles.removeCvButton}>
-              <X size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
+            <IconButton
+              onPress={removeCV}
+              icon={<X size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+              accessibilityLabel="Retirer le CV"
+              size="sm"
+              variant="ghost"
+              style={styles.removeCvButton}
+            />
           </View>
         ) : (
           <View style={styles.cvOptionsContainer}>
@@ -552,7 +566,7 @@ export default function ApplyOpportunityScreen() {
                 </Text>
                 <View style={styles.existingCvsList}>
                   {existingCVs.map((cv) => (
-                    <TouchableOpacity
+                    <SelectCard
                       key={cv.id}
                       style={[
                         styles.existingCvItem,
@@ -563,6 +577,8 @@ export default function ApplyOpportunityScreen() {
                         },
                       ]}
                       onPress={() => selectExistingCV(cv)}
+                      selected={false}
+                      accessibilityLabel={cv.title || cv.original_filename || 'CV'}
                     >
                       <View style={[styles.existingCvIcon, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                         <FolderOpen size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
@@ -582,7 +598,7 @@ export default function ApplyOpportunityScreen() {
                       {selectedExistingCV?.id === cv.id && (
                         <Check size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                       )}
-                    </TouchableOpacity>
+                    </SelectCard>
                   ))}
                 </View>
 
@@ -595,15 +611,15 @@ export default function ApplyOpportunityScreen() {
             )}
 
             {/* Upload New CV */}
-            <TouchableOpacity
-              style={[styles.uploadButton, { borderColor: colors.primary }]}
+            <Button
+              title={hasExistingCV ? 'Télécharger un autre CV' : 'Télécharger votre CV'}
               onPress={pickCV}
-            >
-              <Plus size={24} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.uploadText, { color: colors.primary }]}>
-                {hasExistingCV ? 'Télécharger un autre CV' : 'Télécharger votre CV'}
-              </Text>
-            </TouchableOpacity>
+              variant="outline"
+              fullWidth
+              icon={<Plus size={24} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.uploadButton, { borderColor: colors.primary, backgroundColor: 'transparent' }]}
+              textStyle={[styles.uploadText, { color: colors.primary }]}
+            />
             <Text style={[styles.fieldHint, { color: colors.gray500 }]}>
               Format PDF, maximum 5 MB
             </Text>
@@ -652,8 +668,7 @@ export default function ApplyOpportunityScreen() {
                     {question.required && <Text style={{ color: colors.error }}> *</Text>}
                   </Text>
                   <View style={[styles.answerInputContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-                    <TextInput
-                      style={[styles.answerInput, { color: colors.textPrimary }]}
+                    <Input
                       placeholder="Votre réponse..."
                       placeholderTextColor={colors.gray400}
                       value={answers[question.id] || ''}
@@ -661,6 +676,21 @@ export default function ApplyOpportunityScreen() {
                       maxLength={question.max_length || MAX_ANSWER_LENGTH}
                       multiline
                       numberOfLines={3}
+                      inputContainerStyle={{
+                        borderWidth: 0,
+                        backgroundColor: 'transparent',
+                        height: undefined,
+                        minHeight: undefined,
+                      }}
+                      inputStyle={{
+                        color: colors.textPrimary,
+                        paddingHorizontal: 0,
+                        paddingTop: 0,
+                        paddingBottom: 0,
+                        fontSize: TYPOGRAPHY.fontSize.md,
+                        minHeight: 80,
+                        textAlignVertical: 'top',
+                      }}
                     />
                   </View>
                   <Text style={[styles.charCount, { color: colors.gray500 }]}>
@@ -803,14 +833,14 @@ export default function ApplyOpportunityScreen() {
           onPress={() => router.replace('/settings/my-applications')}
           fullWidth
         />
-        <TouchableOpacity
-          style={styles.backToExploreButton}
+        <Button
+          title="Continuer à explorer"
           onPress={() => router.replace('/(tabs)/explore')}
-        >
-          <Text style={[styles.backToExploreText, { color: colors.primary }]}>
-            Continuer à explorer
-          </Text>
-        </TouchableOpacity>
+          variant="ghost"
+          fullWidth
+          style={styles.backToExploreButton}
+          textStyle={[styles.backToExploreText, { color: colors.primary }]}
+        />
       </View>
     </View>
   );
@@ -822,16 +852,17 @@ export default function ApplyOpportunityScreen() {
 
     if (currentStep === 'preview') {
       return (
-        <View style={[styles.footer, { backgroundColor: colors.background }]}>
+        <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
           <View style={styles.footerButtons}>
-            <TouchableOpacity
-              style={[styles.backButton, { borderColor: colors.gray300 }]}
+            <Button
+              title="Retour"
               onPress={handleBack}
               disabled={isSubmitting}
-            >
-              <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.backButtonText, { color: colors.gray700 }]}>Retour</Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.backButton, { borderColor: colors.gray300 }]}
+              textStyle={[styles.backButtonText, { color: colors.gray700 }]}
+            />
             <View style={styles.submitButton}>
               <Button
                 title={isSubmitting ? 'Envoi...' : 'Envoyer ma candidature'}
@@ -846,17 +877,16 @@ export default function ApplyOpportunityScreen() {
     }
 
     return (
-      <View style={[styles.footer, { backgroundColor: colors.background }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
         <View style={styles.footerButtons}>
-          <TouchableOpacity
-            style={[styles.backButton, { borderColor: colors.gray300 }]}
+          <Button
+            title={isFirstStep ? 'Annuler' : 'Retour'}
             onPress={handleBack}
-          >
-            <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.backButtonText, { color: colors.gray700 }]}>
-              {isFirstStep ? 'Annuler' : 'Retour'}
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.backButton, { borderColor: colors.gray300 }]}
+            textStyle={[styles.backButtonText, { color: colors.gray700 }]}
+          />
           <View style={styles.continueButton}>
             <Button
               title="Continuer"
@@ -875,10 +905,7 @@ export default function ApplyOpportunityScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-          Chargement...
-        </Text>
+        <LoadingShimmer variant="fullPage" />
       </SafeAreaView>
     );
   }
@@ -898,9 +925,12 @@ export default function ApplyOpportunityScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.headerBackButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={handleBack}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+          style={styles.headerBackButton}
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           {opportunity.title}
         </Text>
@@ -911,21 +941,25 @@ export default function ApplyOpportunityScreen() {
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {currentStep !== 'success' && renderStepIndicator()}
+        <ScrollToInputContext.Provider value={scrollToInput}>
+          <ScrollView
+            ref={mainScrollRef}
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          >
+            {currentStep !== 'success' && renderStepIndicator()}
 
-          {currentStep === 'profile' && renderProfileStep()}
-          {currentStep === 'questions' && renderQuestionsStep()}
-          {currentStep === 'preview' && renderPreviewStep()}
-          {currentStep === 'success' && renderSuccessStep()}
-        </ScrollView>
+            {currentStep === 'profile' && renderProfileStep()}
+            {currentStep === 'questions' && renderQuestionsStep()}
+            {currentStep === 'preview' && renderPreviewStep()}
+            {currentStep === 'success' && renderSuccessStep()}
+          </ScrollView>
 
-        {renderFooter()}
+          {renderFooter()}
+        </ScrollToInputContext.Provider>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

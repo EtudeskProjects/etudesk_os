@@ -12,31 +12,19 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   Share,
   Alert,
+  Pressable,
 } from 'react-native';
 import { AlertTriangle, RefreshCw, Bug, Share2, ChevronDown, ChevronUp } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, LIGHT_COLORS, OPACITY, withOpacity } from '../constants/theme';
 import { logger } from '../services/logService';
 import i18n from '../i18n';
 
-// Hardcoded Luxe Africain colors for error boundary
-// Must work without theme context (which may be unavailable during errors)
-const ERROR_COLORS = {
-  background: '#FFFFFF',     // LIGHT_COLORS.background
-  surface: '#FFFFFF',        // LIGHT_COLORS.surface
-  primary: '#3B2416',        // LIGHT_COLORS.primary
-  error: '#8B4A3C',          // LIGHT_COLORS.error
-  warning: '#A67C52',        // LIGHT_COLORS.warning
-  white: '#FFFFFF',          // LIGHT_COLORS.white
-  gray100: '#F5F3F0',        // LIGHT_COLORS.gray100
-  gray200: '#EBE8E4',        // LIGHT_COLORS.gray200
-  gray600: '#6E675C',        // LIGHT_COLORS.gray600
-  gray700: '#4D4840',        // LIGHT_COLORS.gray700
-  gray900: '#1F1C18',        // LIGHT_COLORS.gray900
-};
+
+// ErrorBoundary must not depend on theme context. Use static light palette tokens.
+const ERROR_COLORS = LIGHT_COLORS;
 
 interface Props {
   children: ReactNode;
@@ -147,23 +135,27 @@ Time: ${new Date().toISOString()}
 
             {/* Actions */}
             <View style={styles.actions}>
-              <TouchableOpacity
-                style={[styles.button, styles.primaryButton]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.button,
+                  styles.primaryButton,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={this.handleRetry}
-                activeOpacity={0.8}
+                accessibilityRole="button"
               >
                 <RefreshCw size={ICON.size.sm} color={ERROR_COLORS.white} strokeWidth={ICON.strokeWidth} />
                 <Text style={styles.primaryButtonText}>{i18n.t('common.retry')}</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             {/* Developer details (only in dev mode) */}
             {showDetails && (
               <View style={styles.devSection}>
-                <TouchableOpacity
-                  style={styles.devToggle}
+                <Pressable
+                  style={({ pressed }) => [styles.devToggle, pressed && { opacity: 0.85 }]}
                   onPress={this.toggleFullError}
-                  activeOpacity={0.7}
+                  accessibilityRole="button"
                 >
                   <Bug size={ICON.size.sm} color={ERROR_COLORS.gray600} strokeWidth={ICON.strokeWidth} />
                   <Text style={styles.devToggleText}>{i18n.t('errorBoundary.technicalDetails')}</Text>
@@ -172,7 +164,7 @@ Time: ${new Date().toISOString()}
                   ) : (
                     <ChevronDown size={ICON.size.sm} color={ERROR_COLORS.gray600} strokeWidth={ICON.strokeWidth} />
                   )}
-                </TouchableOpacity>
+                </Pressable>
 
                 {showFullError && (
                   <View style={styles.devDetails}>
@@ -188,14 +180,14 @@ Time: ${new Date().toISOString()}
                       )}
                     </ScrollView>
 
-                    <TouchableOpacity
-                      style={styles.copyButton}
+                    <Pressable
+                      style={({ pressed }) => [styles.copyButton, pressed && { opacity: 0.85 }]}
                       onPress={this.handleShareError}
-                      activeOpacity={0.7}
+                      accessibilityRole="button"
                     >
                       <Share2 size={ICON.size.sm} color={ERROR_COLORS.primary} strokeWidth={ICON.strokeWidth} />
                       <Text style={styles.copyButtonText}>{i18n.t('errorBoundary.shareError')}</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 )}
               </View>
@@ -254,20 +246,26 @@ export class ScreenErrorBoundary extends Component<
             {i18n.t('errorBoundary.pageLoadError')}
           </Text>
           <View style={styles.screenErrorActions}>
-            <TouchableOpacity
-              style={styles.screenErrorButton}
+            <Pressable
+              style={({ pressed }) => [styles.screenErrorButton, pressed && { opacity: 0.85 }]}
               onPress={this.handleRetry}
+              accessibilityRole="button"
             >
               <RefreshCw size={16} color={ERROR_COLORS.primary} strokeWidth={2} />
               <Text style={styles.screenErrorButtonText}>{i18n.t('common.retry')}</Text>
-            </TouchableOpacity>
+            </Pressable>
             {this.props.onGoBack && (
-              <TouchableOpacity
-                style={[styles.screenErrorButton, styles.screenErrorButtonSecondary]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.screenErrorButton,
+                  styles.screenErrorButtonSecondary,
+                  pressed && { opacity: 0.85 },
+                ]}
                 onPress={this.props.onGoBack}
+                accessibilityRole="button"
               >
                 <Text style={styles.screenErrorButtonTextSecondary}>{i18n.t('common.back')}</Text>
-              </TouchableOpacity>
+              </Pressable>
             )}
           </View>
         </View>
@@ -314,7 +312,7 @@ const styles = StyleSheet.create({
   },
 
   errorBox: {
-    backgroundColor: 'rgba(139, 74, 60, 0.1)', // error at 10% opacity
+    backgroundColor: withOpacity(ERROR_COLORS.error, OPACITY[10]),
     borderRadius: BORDER.radius.md,
     padding: SPACING.md,
     marginBottom: SPACING.lg,
@@ -454,7 +452,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderRadius: BORDER.radius.sm,
-    backgroundColor: 'rgba(59, 36, 22, 0.1)', // primary at 10% opacity
+    backgroundColor: withOpacity(ERROR_COLORS.primary, OPACITY[10]),
   },
 
   screenErrorButtonSecondary: {

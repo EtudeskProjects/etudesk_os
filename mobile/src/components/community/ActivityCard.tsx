@@ -3,7 +3,6 @@ import {
     View,
     Text,
     StyleSheet,
-    TouchableOpacity,
     Pressable,
     Animated,
     Image,
@@ -27,10 +26,12 @@ import {
     Video,
     Check,
 } from 'lucide-react-native';
-import { CommentSection } from './CommentSection';
-import { RichTextContent } from './RichTextContent';
-import { Avatar, Timestamp } from './shared';
-import { getFullImageUrl } from '../../utils/image';
+	import { CommentSection } from './CommentSection';
+	import { RichTextContent } from './RichTextContent';
+	import { Avatar, Timestamp } from './shared';
+	import { getFullImageUrl } from '../../utils/image';
+	import { IconButton, SelectCard } from '../ui';
+
 
 interface ActivityCardProps {
     activity: CommunityActivity;
@@ -249,14 +250,14 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
             style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
             onPress={() => onPress?.(activity)}
         >
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity style={styles.authorSection} activeOpacity={0.7}>
-                    <Avatar uri={avatarUrl} name={authorName} size="lg" />
-                    <View style={styles.authorInfo}>
-                        <View style={styles.authorNameRow}>
-                            <Text style={[styles.authorName, { color: colors.textPrimary }]}>
-                                {authorName}
+	            {/* Header */}
+	            <View style={styles.header}>
+	                <View style={styles.authorSection}>
+	                    <Avatar uri={avatarUrl} name={authorName} size="lg" />
+	                    <View style={styles.authorInfo}>
+	                        <View style={styles.authorNameRow}>
+	                            <Text style={[styles.authorName, { color: colors.textPrimary }]}>
+	                                {authorName}
                             </Text>
                             {isScheduled && (
                                 <View style={[styles.scheduledBadge, { backgroundColor: colors.warningLight }]}>
@@ -271,20 +272,21 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                             <Text style={[styles.scheduledTime, { color: colors.warning }]}>
                                 {scheduledDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à {scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                             </Text>
-                        ) : (
-                            <Timestamp date={activity.created_at} />
-                        )}
-                    </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    onPress={handleMorePress}
-                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                    style={styles.moreButton}
-                >
-                    <MoreHorizontal size={20} color={colors.gray400} />
-                </TouchableOpacity>
-            </View>
+	                        ) : (
+	                            <Timestamp date={activity.created_at} />
+	                        )}
+	                    </View>
+	                </View>
+	
+	                <IconButton
+	                    onPress={handleMorePress}
+	                    icon={<MoreHorizontal size={20} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+	                    accessibilityLabel={t('common.more')}
+	                    size="sm"
+	                    variant="ghost"
+	                    style={styles.moreButton}
+	                />
+	            </View>
 
             {/* Content - Double tap to like */}
             <Pressable style={styles.content} onPress={handleDoubleTap}>
@@ -313,7 +315,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                         const hasVoted = userVotedOptionId !== null;
 
                         return (
-                            <TouchableOpacity
+                            <SelectCard
                                 key={option.id}
                                 style={[
                                     styles.pollOption,
@@ -322,9 +324,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                                         borderColor: isVoted ? colors.primary : colors.borderColor
                                     }
                                 ]}
-                                onPress={() => handleVote(option.id)}
-                                disabled={hasVoted}
-                                activeOpacity={hasVoted ? 1 : 0.7}
+                                onPress={hasVoted ? () => {} : () => handleVote(option.id)}
+                                selected={false}
+                                accessibilityLabel={option.text}
                             >
                                 {/* Progress bar background */}
                                 {hasVoted && (
@@ -362,7 +364,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                                         </Text>
                                     )}
                                 </View>
-                            </TouchableOpacity>
+                            </SelectCard>
                         );
                     })}
                     <Text style={[styles.pollVotesCount, { color: colors.textSecondary }]}>
@@ -462,10 +464,11 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
             {/* Engagement Bar - Stats with clickable icons */}
             <View style={[styles.engagementBar, { borderTopColor: colors.borderColor }]}>
                 {/* Likes */}
-                <TouchableOpacity
-                    style={styles.engagementItem}
+                <SelectCard
+                    selected={false}
                     onPress={handleLike}
-                    activeOpacity={0.7}
+                    style={[styles.engagementItem, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
+                    accessibilityLabel="J’aime"
                 >
                     <Animated.View style={{ transform: [{ scale: likeScaleAnim }] }}>
                         <Heart
@@ -481,13 +484,14 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                     ]}>
                         {t('community.activity.likes', { count: formatCount(likesCount) })}
                     </Text>
-                </TouchableOpacity>
+                </SelectCard>
 
                 {/* Comments */}
-                <TouchableOpacity
-                    style={styles.engagementItem}
+                <SelectCard
+                    selected={false}
                     onPress={handleCommentClick}
-                    activeOpacity={0.7}
+                    style={[styles.engagementItem, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
+                    accessibilityLabel="Commentaires"
                 >
                     <MessageCircle
                         size={18}
@@ -500,13 +504,14 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                     ]}>
                         {t('community.activity.comments', { count: formatCount(commentsCount) })}
                     </Text>
-                </TouchableOpacity>
+                </SelectCard>
 
                 {/* Bookmarks */}
-                <TouchableOpacity
-                    style={styles.engagementItem}
+                <SelectCard
+                    selected={false}
                     onPress={handleBookmark}
-                    activeOpacity={0.7}
+                    style={[styles.engagementItem, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
+                    accessibilityLabel="Bookmarks"
                 >
                     <Animated.View style={{ transform: [{ scale: bookmarkScaleAnim }] }}>
                         <Bookmark
@@ -522,7 +527,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                     ]}>
                         {t('community.activity.bookmarks', { count: formatCount(bookmarksCount) })}
                     </Text>
-                </TouchableOpacity>
+                </SelectCard>
             </View>
 
             {/* Comments Section */}

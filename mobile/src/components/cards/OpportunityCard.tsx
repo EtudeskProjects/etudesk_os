@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, Pressable } from 'react-native';
 import { getFullImageUrl } from '../../utils/image';
 import {
   MapPin,
@@ -110,7 +110,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
   // Build actions
   const actions: CardAction[] = [];
   if (onEdit) {
-    actions.push({ Icon: Edit, color: colors.primary, onPress: onEdit });
+    actions.push({ Icon: Edit, color: colors.primary, onPress: onEdit, accessibilityLabel: 'Modifier' });
   }
   if (showBookmark && onBookmarkToggle && !showMoreAction) {
     actions.push({
@@ -118,10 +118,11 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
       color: isBookmarked ? colors.primary : colors.gray400,
       fill: isBookmarked ? colors.primary : undefined,
       onPress: onBookmarkToggle,
+      accessibilityLabel: isBookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris',
     });
   }
   if (showMoreAction && onDelete) {
-    actions.push({ Icon: Trash2, color: colors.error, onPress: onDelete });
+    actions.push({ Icon: Trash2, color: colors.error, onPress: onDelete, accessibilityLabel: 'Supprimer' });
   }
 
   // Organization subtitle component
@@ -193,16 +194,18 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
         <View style={styles.detailsRow}>
           {showStats ? (
             <>
-              <TouchableOpacity
-                style={[styles.detailItem, onViewCandidates && styles.candidatesButton]}
+              <Pressable
+                style={[styles.detailItem, onViewCandidates && styles.candidatesButton, !onViewCandidates && { opacity: 0.6 }]}
                 onPress={onViewCandidates}
                 disabled={!onViewCandidates}
+                accessibilityRole="button"
+                accessibilityLabel="Voir les candidatures"
               >
                 <Users size={14} color={onViewCandidates ? colors.primary : colors.textSecondary} strokeWidth={ICON.strokeWidth} />
                 <Text style={[styles.detailText, { color: onViewCandidates ? colors.primary : colors.textSecondary }]}>
                   {formatCompactNumber(opportunity.applications_count || 0)} {(opportunity.applications_count || 0) <= 1 ? 'candidature' : 'candidatures'}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
               <View style={styles.detailItem}>
                 <MapPin size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
                 <Text style={[styles.detailText, { color: colors.textSecondary }]}>

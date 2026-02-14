@@ -4,10 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { RotateCw } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
+
 
 interface FlashcardBlockProps {
   data: {
@@ -73,7 +74,7 @@ export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
       </View>
 
       {/* Card */}
-      <TouchableOpacity
+      <Pressable
         style={[
           styles.card,
           {
@@ -82,7 +83,8 @@ export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
           },
         ]}
         onPress={handleFlip}
-        activeOpacity={0.9}
+        accessibilityRole="button"
+        accessibilityLabel="Retourner la carte"
       >
         <View style={styles.cardContent}>
           <Text style={[styles.cardLabel, { color: colors.textTertiary }]}>
@@ -104,7 +106,7 @@ export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
             Toucher pour {isFlipped ? 'revenir' : 'révéler'}
           </Text>
         </View>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 };

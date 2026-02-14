@@ -4,9 +4,10 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  FlatList,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as DocumentPicker from 'expo-document-picker';
@@ -29,15 +30,15 @@ import {
   RefreshCw,
   Pencil,
   Copy,
-  Loader2,
 } from 'lucide-react-native';
 import { useAudioRecorder } from '../../../src/hooks/useAudioRecorder';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
-import { useI18n } from '../../../src/contexts/I18nContext';
-import { useSpace } from '../../../src/contexts/SpaceContext';
-import { useAuth } from '../../../src/contexts/AuthContext';
-import { Header, FooterNav, Input } from '../../../src/components/ui';
+	import { useI18n } from '../../../src/contexts/I18nContext';
+	import { useSpace } from '../../../src/contexts/SpaceContext';
+	import { useAuth } from '../../../src/contexts/AuthContext';
+	import { Button, Header, FooterNav, IconButton, Input, SelectCard } from '../../../src/components/ui';
+	import { ShimmerPlaceholder } from '../../../src/components/ui/ShimmerPlaceholder';
 import {
   MarkdownRenderer,
   CopyButton,
@@ -117,7 +118,7 @@ export default function AssistantScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const inputRef = useRef<any>(null);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const messagesListRef = useRef<FlatList<StreamingMessage>>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const alerts = useAlert();
 
@@ -176,7 +177,7 @@ export default function AssistantScreen() {
   useEffect(() => {
     if (messages.length > 0) {
       setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
+        messagesListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
   }, [messages]);
@@ -697,23 +698,30 @@ export default function AssistantScreen() {
   );
 
   const renderMessages = () => (
-    <ScrollView
-      ref={scrollViewRef}
+    <FlatList
+      ref={messagesListRef}
       style={styles.messagesContainer}
       contentContainerStyle={styles.messagesContent}
+      data={messages}
+      keyExtractor={(m) => m.id}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="interactive"
-    >
-      {messages.map((message, msgIdx) => (
-        <View key={message.id} style={styles.messageWrapper}>
+      initialNumToRender={12}
+      windowSize={11}
+      removeClippedSubviews={Platform.OS === 'android'}
+      renderItem={({ item: message, index: msgIdx }) => (
+        <View style={styles.messageWrapper}>
           {message.role === 'user' ? (
             /* User message: bubble style (right-aligned), long-press for actions */
             <View style={styles.userMessageContainer}>
-              <TouchableOpacity
-                style={[styles.userMessage, { backgroundColor: colors.primary }]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.userMessage,
+                  { backgroundColor: colors.primary },
+                  pressed && { opacity: 0.9 },
+                ]}
                 onLongPress={() => handleUserMessageLongPress(message.id, message.content)}
-                activeOpacity={0.8}
                 delayLongPress={400}
               >
                 {message.content ? (
@@ -733,7 +741,7 @@ export default function AssistantScreen() {
                     ))}
                   </View>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ) : (
             /* Assistant message: transparent, full-width */
@@ -763,24 +771,25 @@ export default function AssistantScreen() {
               ) : message.error ? null : null}
 
               {/* Error state with retry */}
-              {message.error && (
-                <View style={[styles.messageError, { backgroundColor: withOpacity(colors.error, OPACITY[5]) }]}>
-                  <AlertCircle size={14} color={colors.error} />
-                  <Text style={[styles.messageErrorText, { color: colors.error }]}>
-                    {formatAssistantError(message.error)}
-                  </Text>
-                  {message.lastUserMessage && (
-                    <TouchableOpacity
-                      style={[styles.retryButton, { borderColor: colors.error }]}
-                      onPress={() => handleRetry(message.id)}
-                      activeOpacity={0.7}
-                    >
-                      <RefreshCw size={12} color={colors.error} />
-                      <Text style={[styles.retryText, { color: colors.error }]}>Réessayer</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )}
+	              {message.error && (
+	                <View style={[styles.messageError, { backgroundColor: withOpacity(colors.error, OPACITY[5]) }]}>
+	                  <AlertCircle size={14} color={colors.error} />
+	                  <Text style={[styles.messageErrorText, { color: colors.error }]}>
+	                    {formatAssistantError(message.error)}
+	                  </Text>
+	                  {message.lastUserMessage && (
+	                    <Button
+	                      title="Réessayer"
+	                      onPress={() => handleRetry(message.id)}
+	                      variant="outline"
+	                      size="sm"
+	                      icon={<RefreshCw size={12} color={colors.error} />}
+	                      style={[styles.retryButton, { borderColor: colors.error }]}
+	                      textStyle={[styles.retryText, { color: colors.error }]}
+	                    />
+	                  )}
+	                </View>
+	              )}
 
               {/* Streaming cursor */}
               {message.isStreaming && message.content && (
@@ -801,69 +810,81 @@ export default function AssistantScreen() {
             </View>
           )}
         </View>
-      ))}
-    </ScrollView>
+      )}
+    />
   );
 
-  const renderHistoryPanel = () => (
-    <View style={[styles.historyPanel, { backgroundColor: colors.background }]}>
-      <View style={[styles.historyHeader, { borderBottomColor: colors.borderColor }]}>
-        <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>Archives des sessions</Text>
-        <TouchableOpacity onPress={() => setShowHistory(false)}>
-          <X size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+	  const renderHistoryPanel = () => (
+	    <View style={[styles.historyPanel, { backgroundColor: colors.background }]}>
+	      <View style={[styles.historyHeader, { borderBottomColor: colors.borderColor }]}>
+	        <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>Archives des sessions</Text>
+	        <IconButton
+	          onPress={() => setShowHistory(false)}
+	          icon={<X size={20} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+	          accessibilityLabel="Fermer"
+	          size="sm"
+	          variant="ghost"
+	        />
+	      </View>
 
-      <ScrollView style={styles.historyList}>
-        {sessions.length === 0 ? (
+      <FlatList
+        style={styles.historyList}
+        data={sessions}
+        keyExtractor={(s) => s.id}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
           <Text style={[styles.historyEmpty, { color: colors.textSecondary }]}>
             Aucune conversation
           </Text>
-        ) : (
-          sessions.map((session) => (
-            <TouchableOpacity
-              key={session.id}
-              style={[
-                styles.historyItem,
-                { borderBottomColor: colors.borderColor },
-                session.id === sessionId && { backgroundColor: withOpacity(colors.primary, OPACITY[10]) },
-              ]}
-              onPress={() => handleSelectSession(session)}
-            >
-              <View style={styles.historyItemContent}>
-                {(() => {
-                  const sessionMode = (session.mode as Mode) || 'explore';
-                  const SessionModeIcon = MODE_ICONS[sessionMode] || Compass;
-                  return (
-                    <View
-                      style={[
-                        styles.historyModeBadge,
-                        { backgroundColor: modeColors[sessionMode]?.bg || colors.surface },
-                      ]}
-                    >
-                      <SessionModeIcon size={14} color={modeColors[sessionMode]?.text || colors.textSecondary} />
-                    </View>
-                  );
-                })()}
-                <View style={styles.historyItemText}>
-                  <Text style={[styles.historyItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {session.title || 'Session sans titre'}
-                  </Text>
-                  <Text style={[styles.historyItemMeta, { color: colors.textSecondary }]}>
-                    {session.messageCount} messages · {formatRelativeTime(session.lastMessageAt || session.createdAt)}
-                  </Text>
-                </View>
+        }
+        renderItem={({ item: session }) => (
+          <SelectCard
+            style={[
+              styles.historyItem,
+              { borderBottomColor: colors.borderColor },
+              session.id === sessionId && { backgroundColor: withOpacity(colors.primary, OPACITY[10]) },
+              { borderWidth: 0, borderColor: 'transparent', borderRadius: 0 },
+            ]}
+            onPress={() => handleSelectSession(session)}
+            selected={false}
+            accessibilityLabel={session.title || 'Session'}
+          >
+            <View style={styles.historyItemContent}>
+              {(() => {
+                const sessionMode = (session.mode as Mode) || 'explore';
+                const SessionModeIcon = MODE_ICONS[sessionMode] || Compass;
+                return (
+                  <View
+                    style={[
+                      styles.historyModeBadge,
+                      { backgroundColor: modeColors[sessionMode]?.bg || colors.surface },
+                    ]}
+                  >
+                    <SessionModeIcon size={14} color={modeColors[sessionMode]?.text || colors.textSecondary} />
+                  </View>
+                );
+              })()}
+              <View style={styles.historyItemText}>
+                <Text style={[styles.historyItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {session.title || 'Session sans titre'}
+                </Text>
+                <Text style={[styles.historyItemMeta, { color: colors.textSecondary }]}>
+                  {session.messageCount} messages · {formatRelativeTime(session.lastMessageAt || session.createdAt)}
+                </Text>
               </View>
-              <TouchableOpacity
-                style={styles.historyItemDelete}
-                onPress={() => handleDeleteSession(session.id)}
-              >
-                <Trash2 size={16} color={colors.textDisabled} />
-              </TouchableOpacity>
-            </TouchableOpacity>
-          ))
+            </View>
+            <IconButton
+              onPress={() => handleDeleteSession(session.id)}
+              icon={<Trash2 size={16} color={colors.textDisabled} />}
+              accessibilityLabel="Supprimer la conversation"
+              size="sm"
+              variant="ghost"
+              style={styles.historyItemDelete}
+            />
+          </SelectCard>
         )}
-      </ScrollView>
+      />
     </View>
   );
 
@@ -879,20 +900,18 @@ export default function AssistantScreen() {
             title={t('assistant.title')}
             rightContent={
               <View style={styles.headerActions}>
-                <TouchableOpacity
-                  style={styles.headerButton}
-                  activeOpacity={0.8}
+                <IconButton
                   onPress={handleOpenHistory}
-                >
-                  <History size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-                <TouchableOpacity
+                  icon={<History size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+                  accessibilityLabel="Historique"
                   style={styles.headerButton}
-                  activeOpacity={0.8}
+                />
+                <IconButton
                   onPress={handleNewConversation}
-                >
-                  <Plus size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
+                  icon={<Plus size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+                  accessibilityLabel="Nouvelle conversation"
+                  style={styles.headerButton}
+                />
               </View>
             }
           />
@@ -902,16 +921,20 @@ export default function AssistantScreen() {
             <View style={[styles.errorBanner, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}>
               <AlertCircle size={16} color={colors.error} />
               <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-              <TouchableOpacity onPress={() => setError(null)}>
-                <X size={16} color={colors.error} />
-              </TouchableOpacity>
+              <IconButton
+                onPress={() => setError(null)}
+                icon={<X size={16} color={colors.error} />}
+                accessibilityLabel="Fermer l'erreur"
+                size="sm"
+                variant="ghost"
+              />
             </View>
           )}
 
           {/* Loading state */}
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <ThinkingIndicator label="Chargement..." />
+              <ThinkingIndicator />
             </View>
           ) : (
             <View style={styles.content}>
@@ -930,12 +953,8 @@ export default function AssistantScreen() {
                   <View style={styles.recordingContent}>
                     {isTranscribing ? (
                       <>
-                        <View style={[styles.transcribingIcon, { backgroundColor: colors.primary }]}>
-                          <Loader2 size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                        </View>
-                        <Text style={[styles.recordingText, { color: colors.textPrimary }]}>
-                          Transcription en cours...
-                        </Text>
+                        <ShimmerPlaceholder width={28} height={28} borderRadius={14} />
+                        <ShimmerPlaceholder width={140} height={14} />
                       </>
                     ) : audioRecorder.state.isPreparing ? (
                       <>
@@ -950,7 +969,7 @@ export default function AssistantScreen() {
                         <Text style={[styles.recordingText, { color: colors.textPrimary }]}>
                           {formatDuration(audioRecorder.state.duration)} / 0:30
                         </Text>
-                        <View style={styles.recordingProgress}>
+                        <View style={[styles.recordingProgress, { backgroundColor: withOpacity(colors.black, OPACITY[10]) }]}>
                           <View
                             style={[
                               styles.recordingProgressBar,
@@ -972,11 +991,11 @@ export default function AssistantScreen() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.attachmentPreviewContainer}
                 >
-                  {attachments.map((file, index) => (
-                    <View
-                      key={index}
-                      style={[styles.attachmentPreview, { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]}
-                    >
+	                  {attachments.map((file, index) => (
+	                    <View
+	                      key={index}
+	                      style={[styles.attachmentPreview, { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]}
+	                    >
                       <View style={styles.attachmentPreviewContent}>
                         <Text
                           style={[styles.attachmentPreviewText, { color: colors.primary }]}
@@ -985,17 +1004,19 @@ export default function AssistantScreen() {
                         >
                           {file.name}
                         </Text>
-                      </View>
-                      <TouchableOpacity
-                        style={[styles.removeAttachmentButton, { backgroundColor: colors.primary }]}
-                        onPress={() => removeAttachment(index)}
-                      >
-                        <X size={10} color={colors.textOnPrimary} />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </ScrollView>
-              )}
+	                      </View>
+	                      <IconButton
+	                        onPress={() => removeAttachment(index)}
+	                        icon={<X size={10} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+	                        accessibilityLabel="Supprimer la pièce jointe"
+	                        size="sm"
+	                        variant="ghost"
+	                        style={[styles.removeAttachmentButton, { backgroundColor: colors.primary }]}
+	                      />
+	                    </View>
+	                  ))}
+	                </ScrollView>
+	              )}
 
               {/* Row 1: TextInput + Mic + Send */}
               <View style={styles.inputRow}>
@@ -1008,100 +1029,101 @@ export default function AssistantScreen() {
                   maxLength={500}
                   editable={!isSending && !audioRecorder.state.isRecording && !isTranscribing}
                   containerStyle={{ flex: 1 }}
-                  inputContainerStyle={{ backgroundColor: 'transparent', borderColor: 'transparent', height: undefined, minHeight: 44, maxHeight: 100, alignItems: 'flex-start' }}
+                  inputContainerStyle={{ backgroundColor: 'transparent', borderColor: 'transparent', height: undefined, minHeight: 36, maxHeight: 100, alignItems: 'flex-start' }}
                   inputStyle={[styles.input, { color: colors.textPrimary, paddingHorizontal: 0 }]}
                 />
 
-                <TouchableOpacity
-                  style={[
-                    styles.inputAction,
-                    audioRecorder.state.isRecording && styles.micButtonRecording,
-                    audioRecorder.state.isRecording && { backgroundColor: withOpacity(colors.error, OPACITY[20]) },
-                  ]}
-                  onPress={handleMicPress}
-                  disabled={isSending || audioRecorder.state.isPreparing || isTranscribing}
-                  activeOpacity={0.8}
-                >
-                  {audioRecorder.state.isRecording ? (
-                    <MicOff size={ICON.size.md} color={colors.error} strokeWidth={ICON.strokeWidth} />
-                  ) : (
-                    <Mic
-                      size={ICON.size.md}
-                      color={isSending || isTranscribing ? colors.gray300 : colors.gray500}
-                      strokeWidth={ICON.strokeWidth}
-                    />
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.sendButton,
-                    isSending
-                      ? { backgroundColor: colors.textPrimary }
-                      : { backgroundColor: colors.primary },
-                    !isSending && ((!inputText.trim() && attachments.length === 0) || audioRecorder.state.isRecording) && { backgroundColor: colors.gray200 },
-                  ]}
-                  onPress={isSending ? handleStop : handleSend}
-                  disabled={!isSending && ((!inputText.trim() && attachments.length === 0) || audioRecorder.state.isRecording)}
-                  activeOpacity={0.8}
-                >
-                  {isSending ? (
-                    <Square size={ICON.size.sm} color={colors.textOnPrimary} fill={colors.textOnPrimary} strokeWidth={0} />
-                  ) : (
-                    <SendHorizontal
-                      size={ICON.size.md}
-                      color={(inputText.trim() || attachments.length > 0) && !audioRecorder.state.isRecording ? colors.textOnPrimary : colors.gray400}
-                      strokeWidth={ICON.strokeWidth}
-                    />
-                  )}
-                </TouchableOpacity>
-              </View>
+	                <IconButton
+	                  onPress={handleMicPress}
+	                  disabled={isSending || audioRecorder.state.isPreparing || isTranscribing}
+	                  icon={
+	                    audioRecorder.state.isRecording ? (
+	                      <MicOff size={ICON.size.md} color={colors.error} strokeWidth={ICON.strokeWidth} />
+	                    ) : (
+	                      <Mic
+	                        size={ICON.size.md}
+	                        color={isSending || isTranscribing ? colors.gray300 : colors.gray500}
+	                        strokeWidth={ICON.strokeWidth}
+	                      />
+	                    )
+	                  }
+	                  accessibilityLabel={audioRecorder.state.isRecording ? 'Arrêter l’enregistrement' : 'Démarrer un enregistrement'}
+	                  size="sm"
+	                  variant="ghost"
+	                  style={[
+	                    styles.inputAction,
+	                    audioRecorder.state.isRecording && styles.micButtonRecording,
+	                    audioRecorder.state.isRecording && { backgroundColor: withOpacity(colors.error, OPACITY[20]) },
+	                  ]}
+	                />
+	
+	                <IconButton
+	                  onPress={isSending ? handleStop : handleSend}
+	                  disabled={!isSending && ((!inputText.trim() && attachments.length === 0) || audioRecorder.state.isRecording)}
+	                  icon={
+	                    isSending ? (
+	                      <Square size={ICON.size.sm} color={colors.textOnPrimary} fill={colors.textOnPrimary} strokeWidth={0} />
+	                    ) : (
+	                      <SendHorizontal
+	                        size={ICON.size.md}
+	                        color={(inputText.trim() || attachments.length > 0) && !audioRecorder.state.isRecording ? colors.textOnPrimary : colors.gray400}
+	                        strokeWidth={ICON.strokeWidth}
+	                      />
+	                    )
+	                  }
+	                  accessibilityLabel={isSending ? 'Arrêter la génération' : 'Envoyer'}
+	                  size="sm"
+	                  variant="ghost"
+	                  style={[
+	                    styles.sendButton,
+	                    isSending
+	                      ? { backgroundColor: colors.textPrimary }
+	                      : { backgroundColor: colors.primary },
+	                    !isSending && ((!inputText.trim() && attachments.length === 0) || audioRecorder.state.isRecording) && { backgroundColor: colors.gray200 },
+	                  ]}
+	                />
+	              </View>
 
               {/* Row 2: Actions */}
               <View style={styles.actionsRow}>
-                <TouchableOpacity
-                  style={styles.inputAction}
-                  activeOpacity={0.8}
+                <IconButton
                   onPress={handlePickFile}
                   disabled={isSending || audioRecorder.state.isRecording || isTranscribing}
-                >
-                  <Plus
-                    size={ICON.size.md}
-                    color={(isSending || audioRecorder.state.isRecording || isTranscribing) ? colors.gray300 : colors.gray500}
-                    strokeWidth={ICON.strokeWidth}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.inputAction}
-                  activeOpacity={0.8}
-                  onPress={() => setIsSuggestionsVisible(true)}
-                >
-                  <Lightbulb size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.modeToggle, { backgroundColor: modeColors[activeMode].bg }]}
-                  onPress={
-                    MODES.length > 1
-                      ? () => setActiveMode(activeMode === 'explore' ? 'study' : 'explore')
-                      : undefined
+                  icon={
+                    <Plus
+                      size={ICON.size.md}
+                      color={(isSending || audioRecorder.state.isRecording || isTranscribing) ? colors.gray300 : colors.gray500}
+                      strokeWidth={ICON.strokeWidth}
+                    />
                   }
-                  activeOpacity={MODES.length > 1 ? 0.8 : 1}
-                  disabled={MODES.length === 1}
-                >
-                  <ModeIcon
-                    size={ICON.size.sm}
-                    color={modeColors[activeMode].text}
-                    strokeWidth={ICON.strokeWidth}
-                  />
-                  <Text style={[styles.modeToggleText, { color: modeColors[activeMode].text }]}>
-                    {currentMode?.label}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
+                  accessibilityLabel="Ajouter une pièce jointe"
+                  size="sm"
+                  variant="ghost"
+                  style={styles.inputAction}
+                />
+
+                <IconButton
+                  onPress={() => setIsSuggestionsVisible(true)}
+                  icon={<Lightbulb size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+                  accessibilityLabel="Suggestions"
+                  size="sm"
+                  variant="ghost"
+                  style={styles.inputAction}
+                />
+
+	                <Button
+	                  title={currentMode?.label || ''}
+	                  onPress={() => setActiveMode(activeMode === 'explore' ? 'study' : 'explore')}
+	                  disabled={MODES.length === 1}
+	                  variant="secondary"
+	                  size="sm"
+	                  icon={<ModeIcon size={ICON.size.sm} color={modeColors[activeMode].text} strokeWidth={ICON.strokeWidth} />}
+	                  style={[styles.modeToggle, { backgroundColor: modeColors[activeMode].bg }]}
+	                  textStyle={[styles.modeToggleText, { color: modeColors[activeMode].text }]}
+	                />
+	              </View>
+	            </View>
+	          </View>
 
           <SuggestionsTooltip
             visible={isSuggestionsVisible}
@@ -1332,7 +1354,7 @@ const styles = StyleSheet.create({
   // Input Area
   inputArea: {
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.sm,
+    paddingTop: SPACING.xxs,
     paddingBottom: SPACING.xs,
   },
 
@@ -1340,14 +1362,15 @@ const styles = StyleSheet.create({
     borderWidth: BORDER.width.thin,
     borderRadius: BORDER.radius.md,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.sm,
-    gap: SPACING.xs,
+    paddingTop: SPACING.xxs,
+    paddingBottom: SPACING.xs,
+    gap: SPACING.xxs,
   },
 
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: SPACING.sm,
+    gap: SPACING.xs,
   },
 
   actionsRow: {
@@ -1512,7 +1535,6 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(0,0,0,0.1)',
     overflow: 'hidden',
   },
 

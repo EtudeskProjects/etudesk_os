@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SPACING, TYPOGRAPHY, BORDER } from '../src/constants/theme';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useTheme } from '../src/hooks/useTheme';
-import { Button } from '../src/components/ui';
+import { Button, LoadingShimmer } from '../src/components/ui';
 
 const { height, width } = Dimensions.get('window');
 
@@ -103,8 +103,7 @@ export default function SplashScreen() {
   if (isLoading || checkingOnboarding) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.gray600 }]}>Chargement...</Text>
+        <LoadingShimmer variant="fullPage" />
       </View>
     );
   }
@@ -113,7 +112,7 @@ export default function SplashScreen() {
   if (status === 'authenticated') {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingShimmer variant="fullPage" />
       </View>
     );
   }
@@ -122,7 +121,7 @@ export default function SplashScreen() {
   if (hasSeenOnboarding) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingShimmer variant="fullPage" />
       </View>
     );
   }
@@ -137,7 +136,7 @@ export default function SplashScreen() {
         style={[
           styles.content,
           // Android gesture/3-button bars often report 0 inset; keep a generous bottom gutter.
-          { paddingBottom: Math.max(SPACING.xxl, insets.bottom + SPACING.xl) },
+          { paddingBottom: Math.max(SPACING.xxxl, insets.bottom + SPACING.xl) },
         ]}
       >
         <View style={styles.slideContent}>

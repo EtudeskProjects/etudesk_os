@@ -1,17 +1,16 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  TextInput,
   Image,
+  Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronRight,
   ArrowLeft,
@@ -19,9 +18,10 @@ import {
   Laptop,
   Plane,
   Camera,
-} from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
-import { Input, Button, Toggle, StepIndicator } from '../../src/components/ui';
+	} from 'lucide-react-native';
+	import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
+	import { Chip, IconButton, Input, Button, Toggle, StepIndicator } from '../../src/components/ui';
+import { FormTextArea } from '../../src/components/forms/FormTextArea';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useForm } from '../../src/hooks/useForm';
@@ -40,6 +40,7 @@ import { imageService } from '../../src/services';
 import { getFullImageUrl } from '../../src/utils/image';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useAlert } from '../../src/contexts/AlertContext';
+import { ScrollToInputContext } from '../../src/contexts/ScrollToInputContext';
 
 type Step = 'info' | 'sectors' | 'goals';
 
@@ -66,6 +67,7 @@ export default function CreateProfileScreen() {
   const { colors } = useTheme();
   const { t } = useI18n();
   const { completeOnboarding } = useAuth();
+  const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState<Step>('info');
 
   // Form management with useForm hook
@@ -132,6 +134,9 @@ export default function CreateProfileScreen() {
   const selectedSectors = form.getValue('selectedSectors');
   const selectedGoals = form.getValue('selectedGoals');
 
+  // Main vertical scroll (used for keyboard-aware scrolling on focus)
+  const mainScrollRef = useRef<ScrollView>(null);
+
   // Refs for horizontal scrolls
   const countryScrollRef = useRef<ScrollView>(null);
   const regionScrollRef = useRef<ScrollView>(null);
@@ -140,6 +145,15 @@ export default function CreateProfileScreen() {
   const regionChipPositions = useRef<{ [key: string]: { x: number; width: number } }>({});
   const communeChipPositions = useRef<{ [key: string]: { x: number; width: number } }>({});
   const alerts = useAlert();
+
+  const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 96) => {
+    const sv = mainScrollRef.current;
+    if (!sv) return;
+    const delay = Platform.OS === 'android' ? 120 : 0;
+    setTimeout(() => {
+      sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+    }, delay);
+  }, []);
 
   // Pre-fill email/phone from authentication and check if user needs onboarding
   useEffect(() => {
@@ -363,22 +377,24 @@ export default function CreateProfileScreen() {
       </View>
 
       <View style={styles.formFields}>
-        {/* Photo de profil */}
-        <View style={styles.photoSection}>
-          <TouchableOpacity
-            style={[styles.photoContainer, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
-            onPress={pickImage}
-          >
-            {avatarUri ? (
-              <Image source={{ uri: getFullImageUrl(avatarUri) || avatarUri }} style={styles.photoImage} resizeMode="cover" />
-            ) : (
-              <Camera size={ICON.size.lg} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-            )}
-          </TouchableOpacity>
-          <Text style={[styles.photoHint, { color: colors.textSecondary }]}>
-            {t('auth.createProfile.addPhoto')}
-          </Text>
-        </View>
+	        {/* Photo de profil */}
+	        <View style={styles.photoSection}>
+	          <Pressable
+	            style={[styles.photoContainer, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
+	            onPress={pickImage}
+	            accessibilityRole="button"
+	            accessibilityLabel={t('auth.createProfile.addPhoto')}
+	          >
+	            {avatarUri ? (
+	              <Image source={{ uri: getFullImageUrl(avatarUri) || avatarUri }} style={styles.photoImage} resizeMode="cover" />
+	            ) : (
+	              <Camera size={ICON.size.lg} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+	            )}
+	          </Pressable>
+	          <Text style={[styles.photoHint, { color: colors.textSecondary }]}>
+	            {t('auth.createProfile.addPhoto')}
+	          </Text>
+	        </View>
 
         {/* Prénom & Nom */}
         <View style={styles.rowFields}>
@@ -404,85 +420,71 @@ export default function CreateProfileScreen() {
         </View>
 
         {/* Genre */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.gender')}</Text>
-          <View style={styles.optionsRow}>
-            {GENDERS.map((g) => (
-              <TouchableOpacity
-                key={g.id}
-                style={[
-                  styles.optionButton,
-                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                  gender === g.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                ]}
-                onPress={() => form.setValue('gender', g.id)}
-              >
-                <Text
-                  style={[
-                    styles.optionButtonText,
-                    { color: colors.gray700 },
-                    gender === g.id && { color: colors.textOnPrimary },
-                  ]}
-                >
-                  {g.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+	        <View style={styles.fieldContainer}>
+	          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.gender')}</Text>
+	          <View style={styles.optionsRow}>
+	            {GENDERS.map((g) => (
+	              <Chip
+	                key={g.id}
+	                label={g.label}
+	                selected={gender === g.id}
+	                onPress={() => form.setValue('gender', g.id)}
+	                style={[
+	                  styles.optionButton,
+	                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                  gender === g.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                ]}
+	                textStyle={[
+	                  styles.optionButtonText,
+	                  { color: colors.gray700 },
+	                  gender === g.id && { color: colors.textOnPrimary },
+	                ]}
+	              />
+	            ))}
+	          </View>
+	        </View>
 
         {/* Profil Tags */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
             {t('auth.createProfile.yourProfile')} ({selectedTags.length}/{MAX_PROFILE_TAGS})
           </Text>
-          <View style={styles.tagsContainer}>
-            {PROFILE_TAG_DATA.map((tag) => {
-              const isSelected = selectedTags.includes(tag.id);
-              return (
-                <TouchableOpacity
-                  key={tag.id}
-                  style={[
-                    styles.selectableTag,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
-                  onPress={() => toggleTag(tag.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && (
-                    <Check size={14} color={colors.primary} strokeWidth={2.5} />
-                  )}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {tag.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
+	          <View style={styles.tagsContainer}>
+	            {PROFILE_TAG_DATA.map((tag) => {
+	              const isSelected = selectedTags.includes(tag.id);
+	              return (
+	                <Chip
+	                  key={tag.id}
+	                  label={tag.label}
+	                  selected={isSelected}
+	                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
+	                  onPress={() => toggleTag(tag.id)}
+	                  style={[
+	                    styles.selectableTag,
+	                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
+	                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
+	                  ]}
+	                  textStyle={[
+	                    styles.selectableTagText,
+	                    { color: colors.gray600 },
+	                    isSelected && { color: colors.primary },
+	                  ]}
+	                />
+	              );
+	            })}
+	          </View>
+	        </View>
 
         {/* Bio */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Bio</Text>
-          <View style={[styles.textAreaContainer, { borderColor: colors.gray200, backgroundColor: colors.surface }]}>
-            <TextInput
-              style={[styles.textArea, { color: colors.textPrimary }]}
-              placeholder="Décris-toi en quelques mots..."
-              placeholderTextColor={colors.gray400}
-              value={bio}
-              onChangeText={(text) => form.setValue('bio', text.slice(0, 300))}
-              multiline
-              maxLength={300}
-            />
-            <Text style={[styles.charCount, { color: colors.gray400 }]}>{bio.length}/300</Text>
-          </View>
+          <FormTextArea
+            label="Bio"
+            placeholder="Décris-toi en quelques mots..."
+            value={bio}
+            onChangeText={(text) => form.setValue('bio', text.slice(0, 300))}
+            rows={4}
+            maxLength={300}
+          />
         </View>
 
         {/* Separator - Localisation */}
@@ -498,38 +500,35 @@ export default function CreateProfileScreen() {
             style={styles.horizontalScroll}
             contentContainerStyle={styles.horizontalScrollContent}
           >
-            {COUNTRIES.map((c) => (
-              <TouchableOpacity
-                key={c.id}
-                style={[
-                  styles.optionChip,
-                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                  country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                ]}
-                onLayout={(event) => {
-                  const { x, width } = event.nativeEvent.layout;
-                  handleChipLayout(countryChipPositions, c.id, x, width);
-                }}
-                onPress={() => {
-                  form.setValue('country', c.id);
-                  form.setValue('region', '');
-                  form.setValue('commune', '');
-                  setTimeout(() => scrollToChip(countryScrollRef, countryChipPositions, c.id, true), 50);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.optionChipText,
-                    { color: colors.gray700 },
-                    country === c.id && { color: colors.textOnPrimary },
-                  ]}
-                >
-                  {c.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+	            {COUNTRIES.map((c) => (
+	              <Chip
+	                key={c.id}
+	                label={c.label}
+	                selected={country === c.id}
+	                onLayout={(event) => {
+	                  const { x, width } = event.nativeEvent.layout;
+	                  handleChipLayout(countryChipPositions, c.id, x, width);
+	                }}
+	                onPress={() => {
+	                  form.setValue('country', c.id);
+	                  form.setValue('region', '');
+	                  form.setValue('commune', '');
+	                  setTimeout(() => scrollToChip(countryScrollRef, countryChipPositions, c.id, true), 50);
+	                }}
+	                style={[
+	                  styles.optionChip,
+	                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                  country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                ]}
+	                textStyle={[
+	                  styles.optionChipText,
+	                  { color: colors.gray700 },
+	                  country === c.id && { color: colors.textOnPrimary },
+	                ]}
+	              />
+	            ))}
+	          </ScrollView>
+	        </View>
 
         {/* Région */}
         {availableRegions.length > 0 && (
@@ -542,38 +541,35 @@ export default function CreateProfileScreen() {
               style={styles.horizontalScroll}
               contentContainerStyle={styles.horizontalScrollContent}
             >
-              {availableRegions.map((r) => (
-                <TouchableOpacity
-                  key={r.id}
-                  style={[
-                    styles.optionChip,
-                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                    region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                  ]}
-                  onLayout={(event) => {
-                    const { x, width } = event.nativeEvent.layout;
-                    handleChipLayout(regionChipPositions, r.id, x, width);
-                  }}
-                  onPress={() => {
-                    form.setValue('region', r.id);
-                    form.setValue('commune', '');
-                    setTimeout(() => scrollToChip(regionScrollRef, regionChipPositions, r.id, true), 50);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.optionChipText,
-                      { color: colors.gray700 },
-                      region === r.id && { color: colors.textOnPrimary },
-                    ]}
-                  >
-                    {r.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+	              {availableRegions.map((r) => (
+	                <Chip
+	                  key={r.id}
+	                  label={r.label}
+	                  selected={region === r.id}
+	                  onLayout={(event) => {
+	                    const { x, width } = event.nativeEvent.layout;
+	                    handleChipLayout(regionChipPositions, r.id, x, width);
+	                  }}
+	                  onPress={() => {
+	                    form.setValue('region', r.id);
+	                    form.setValue('commune', '');
+	                    setTimeout(() => scrollToChip(regionScrollRef, regionChipPositions, r.id, true), 50);
+	                  }}
+	                  style={[
+	                    styles.optionChip,
+	                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                    region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                  ]}
+	                  textStyle={[
+	                    styles.optionChipText,
+	                    { color: colors.gray700 },
+	                    region === r.id && { color: colors.textOnPrimary },
+	                  ]}
+	                />
+	              ))}
+	            </ScrollView>
+	          </View>
+	        )}
 
         {/* Commune / Ville */}
         {availableCommunes.length > 0 && (
@@ -586,37 +582,34 @@ export default function CreateProfileScreen() {
               style={styles.horizontalScroll}
               contentContainerStyle={styles.horizontalScrollContent}
             >
-              {availableCommunes.map((c) => (
-                <TouchableOpacity
-                  key={c.id}
-                  style={[
-                    styles.optionChip,
-                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                    commune === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-                  ]}
-                  onLayout={(event) => {
-                    const { x, width } = event.nativeEvent.layout;
-                    handleChipLayout(communeChipPositions, c.id, x, width);
-                  }}
-                  onPress={() => {
-                    form.setValue('commune', c.id);
-                    setTimeout(() => scrollToChip(communeScrollRef, communeChipPositions, c.id, true), 50);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.optionChipText,
-                      { color: colors.gray700 },
-                      commune === c.id && { color: colors.textOnPrimary },
-                    ]}
-                  >
-                    {c.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+	              {availableCommunes.map((c) => (
+	                <Chip
+	                  key={c.id}
+	                  label={c.label}
+	                  selected={commune === c.id}
+	                  onLayout={(event) => {
+	                    const { x, width } = event.nativeEvent.layout;
+	                    handleChipLayout(communeChipPositions, c.id, x, width);
+	                  }}
+	                  onPress={() => {
+	                    form.setValue('commune', c.id);
+	                    setTimeout(() => scrollToChip(communeScrollRef, communeChipPositions, c.id, true), 50);
+	                  }}
+	                  style={[
+	                    styles.optionChip,
+	                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                    commune === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                  ]}
+	                  textStyle={[
+	                    styles.optionChipText,
+	                    { color: colors.gray700 },
+	                    commune === c.id && { color: colors.textOnPrimary },
+	                  ]}
+	                />
+	              ))}
+	            </ScrollView>
+	          </View>
+	        )}
 
         {/* Separator - Contact */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
@@ -686,36 +679,30 @@ export default function CreateProfileScreen() {
         </Text>
       </View>
 
-      <View style={styles.tagsContainer}>
-        {SECTOR_DATA.map((sector) => {
-          const isSelected = selectedSectors.includes(sector.id);
-          return (
-            <TouchableOpacity
-              key={sector.id}
-              style={[
-                styles.selectableTag,
-                { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-              ]}
-              onPress={() => toggleSector(sector.id)}
-              activeOpacity={0.7}
-            >
-              {isSelected && (
-                <Check size={14} color={colors.primary} strokeWidth={2.5} />
-              )}
-              <Text
-                style={[
-                  styles.selectableTagText,
-                  { color: colors.gray600 },
-                  isSelected && { color: colors.primary },
-                ]}
-              >
-                {sector.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+	    <View style={styles.tagsContainer}>
+	      {SECTOR_DATA.map((sector) => {
+	        const isSelected = selectedSectors.includes(sector.id);
+	        return (
+	          <Chip
+	            key={sector.id}
+	            label={sector.label}
+	            selected={isSelected}
+	            leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
+	            onPress={() => toggleSector(sector.id)}
+	            style={[
+	              styles.selectableTag,
+	              { backgroundColor: colors.surface, borderColor: colors.gray200 },
+	              isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
+	            ]}
+	            textStyle={[
+	              styles.selectableTagText,
+	              { color: colors.gray600 },
+	              isSelected && { color: colors.primary },
+	            ]}
+	          />
+	        );
+	      })}
+	    </View>
 
       <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
         {t('auth.createProfile.selected', { count: selectedSectors.length, max: MAX_SECTORS })}
@@ -732,36 +719,30 @@ export default function CreateProfileScreen() {
         </Text>
       </View>
 
-      <View style={styles.tagsContainer}>
-        {GOAL_DATA.map((goal) => {
-          const isSelected = selectedGoals.includes(goal.id);
-          return (
-            <TouchableOpacity
-              key={goal.id}
-              style={[
-                styles.selectableTag,
-                { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-              ]}
-              onPress={() => toggleGoal(goal.id)}
-              activeOpacity={0.7}
-            >
-              {isSelected && (
-                <Check size={14} color={colors.primary} strokeWidth={2.5} />
-              )}
-              <Text
-                style={[
-                  styles.selectableTagText,
-                  { color: colors.gray600 },
-                  isSelected && { color: colors.primary },
-                ]}
-              >
-                {goal.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+	    <View style={styles.tagsContainer}>
+	      {GOAL_DATA.map((goal) => {
+	        const isSelected = selectedGoals.includes(goal.id);
+	        return (
+	          <Chip
+	            key={goal.id}
+	            label={goal.label}
+	            selected={isSelected}
+	            leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
+	            onPress={() => toggleGoal(goal.id)}
+	            style={[
+	              styles.selectableTag,
+	              { backgroundColor: colors.surface, borderColor: colors.gray200 },
+	              isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
+	            ]}
+	            textStyle={[
+	              styles.selectableTagText,
+	              { color: colors.gray600 },
+	              isSelected && { color: colors.primary },
+	            ]}
+	          />
+	        );
+	      })}
+	    </View>
 
       <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
         {t('auth.createProfile.selected', { count: selectedGoals.length, max: MAX_GOALS })}
@@ -772,59 +753,66 @@ export default function CreateProfileScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header with back button */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBack}
-          activeOpacity={0.7}
-        >
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('auth.createProfile.title')}</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+	      <View style={styles.header}>
+	        <IconButton
+	          onPress={handleBack}
+	          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	          accessibilityLabel="Retour"
+	        />
+	        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('auth.createProfile.title')}</Text>
+	        <View style={styles.headerSpacer} />
+	      </View>
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {renderStepIndicator()}
+        <ScrollToInputContext.Provider value={scrollToInput}>
+          <ScrollView
+            ref={mainScrollRef}
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          >
+            {renderStepIndicator()}
 
-          {currentStep === 'info' && renderInfoStep()}
-          {currentStep === 'sectors' && renderSectorsStep()}
-          {currentStep === 'goals' && renderGoalsStep()}
-        </ScrollView>
+            {currentStep === 'info' && renderInfoStep()}
+            {currentStep === 'sectors' && renderSectorsStep()}
+            {currentStep === 'goals' && renderGoalsStep()}
+          </ScrollView>
 
-        <View style={[styles.footer, { backgroundColor: colors.background }]}>
-          <Button
-            title={
-              form.state.isSubmitting
-                ? 'Création...'
-                : currentStep === 'goals'
-                  ? t('auth.createProfile.complete')
-                  : t('auth.createProfile.continue')
-            }
-            onPress={handleNext}
-            disabled={!canProceed() || form.state.isSubmitting}
-            fullWidth
-            icon={
-              form.state.isSubmitting ? undefined : (
-                <ChevronRight
-                  size={ICON.size.md}
-                  color={colors.textOnPrimary}
-                  strokeWidth={ICON.strokeWidth}
-                />
-              )
-            }
-            iconPosition="right"
-          />
-        </View>
+          <View
+            style={[
+              styles.footer,
+              { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) },
+            ]}
+          >
+            <Button
+              title={
+                form.state.isSubmitting
+                  ? 'Création...'
+                  : currentStep === 'goals'
+                    ? t('auth.createProfile.complete')
+                    : t('auth.createProfile.continue')
+              }
+              onPress={handleNext}
+              disabled={!canProceed() || form.state.isSubmitting}
+              fullWidth
+              icon={
+                form.state.isSubmitting ? undefined : (
+                  <ChevronRight
+                    size={ICON.size.md}
+                    color={colors.textOnPrimary}
+                    strokeWidth={ICON.strokeWidth}
+                  />
+                )
+              }
+              iconPosition="right"
+            />
+          </View>
+        </ScrollToInputContext.Provider>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -1015,52 +1003,6 @@ const styles = StyleSheet.create({
 
   optionChipTextSelected: {
     // color applied inline with colors.textOnPrimary
-  },
-
-  datePickerButton: {
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    height: LAYOUT.inputHeight,
-    justifyContent: 'center',
-  },
-
-  datePickerText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-  },
-
-  datePickerPlaceholder: {
-  },
-
-  datePickerModalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  },
-
-  datePickerModalContent: {
-    borderTopLeftRadius: BORDER.radius.lg,
-    borderTopRightRadius: BORDER.radius.lg,
-    paddingBottom: SPACING.xl,
-  },
-
-  datePickerModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderBottomWidth: BORDER.width.thin,
-  },
-
-  datePickerDoneButton: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  iosDatePicker: {
-    height: 200,
   },
 
   textAreaContainer: {

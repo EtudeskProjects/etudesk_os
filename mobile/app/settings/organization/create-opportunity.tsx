@@ -1,17 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  KeyboardAvoidingView,
   Platform,
-  TextInput,
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronRight,
   ChevronLeft,
@@ -39,7 +36,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../src/constants/theme';
-import { Input, Button, Toggle, StepIndicator, Chip } from '../../../src/components/ui';
+import { Input, Button, Toggle, StepIndicator, Chip, KeyboardAwareScrollView, IconButton, SelectCard, useToast } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
@@ -70,7 +67,6 @@ import {
 } from '../../../src/types/models';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAlert } from '../../../src/contexts/AlertContext';
-import { useToast } from '../../../src/components/ui';
 import { FormTextArea } from '../../../src/components/forms/FormTextArea';
 import { opportunityService, CreateOpportunityData, imageService } from '../../../src/services';
 import { organizationService } from '../../../src/services';
@@ -153,6 +149,7 @@ const LOCATION_TYPE_ICONS: Record<LocationType, React.ComponentType<any>> = {
 export default function CreateOpportunityScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { selectedOrgId, selectedOrg } = useSpace();
   const alerts = useAlert();
   const { showToast } = useToast();
@@ -706,8 +703,8 @@ export default function CreateOpportunityScreen() {
               onPress={handleGenerate}
               loading={isGenerating}
               disabled={isGenerating}
+              size="sm"
               icon={!isGenerating ? <Wand2 size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} /> : undefined}
-              fullWidth
               style={styles.generateButton}
             />
           </View>
@@ -785,15 +782,12 @@ export default function CreateOpportunityScreen() {
               const isSelected = locationType === type.id;
               const IconComponent = LOCATION_TYPE_ICONS[type.id];
               return (
-                <TouchableOpacity
+                <SelectCard
                   key={type.id}
-                  style={[
-                    styles.locationTypeCard,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
+                  selected={isSelected}
                   onPress={() => form.setValue('locationType', type.id)}
-                  activeOpacity={0.7}
+                  style={styles.locationTypeCard}
+                  accessibilityLabel={type.label}
                 >
                   <IconComponent
                     size={24}
@@ -809,12 +803,7 @@ export default function CreateOpportunityScreen() {
                   >
                     {type.label}
                   </Text>
-                  {isSelected && (
-                    <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
-                    </View>
-                  )}
-                </TouchableOpacity>
+                </SelectCard>
               );
             })}
           </View>
@@ -836,13 +825,10 @@ export default function CreateOpportunityScreen() {
                 {COUNTRIES.map((c) => {
                   const isSelected = country === c.id;
                   return (
-                    <TouchableOpacity
+                    <Chip
                       key={c.id}
-                      style={[
-                        styles.optionChip,
-                        { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                        isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
-                      ]}
+                      label={c.label}
+                      selected={isSelected}
                       onPress={() => {
                         form.setValues({
                           country: c.id,
@@ -850,17 +836,17 @@ export default function CreateOpportunityScreen() {
                           city: '',
                         });
                       }}
-                    >
-                      <Text
-                        style={[
-                          styles.optionChipText,
-                          { color: colors.gray700 },
-                          isSelected && { color: colors.textOnPrimary },
-                        ]}
-                      >
-                        {c.label}
-                      </Text>
-                    </TouchableOpacity>
+                      style={[
+                        styles.optionChip,
+                        { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                        isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+                      ]}
+                      textStyle={[
+                        styles.optionChipText,
+                        { color: colors.gray700 },
+                        isSelected && { color: colors.textOnPrimary },
+                      ]}
+                    />
                   );
                 })}
               </ScrollView>
@@ -879,30 +865,27 @@ export default function CreateOpportunityScreen() {
                   {availableRegions.map((r) => {
                     const isSelected = region === r.id;
                     return (
-                      <TouchableOpacity
+                      <Chip
                         key={r.id}
-                        style={[
-                          styles.optionChip,
-                          { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                          isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
-                        ]}
+                        label={r.label}
+                        selected={isSelected}
                         onPress={() => {
                           form.setValues({
                             region: r.id,
                             city: '',
                           });
                         }}
-                      >
-                        <Text
-                          style={[
-                            styles.optionChipText,
-                            { color: colors.gray700 },
-                            isSelected && { color: colors.textOnPrimary },
-                          ]}
-                        >
-                          {r.label}
-                        </Text>
-                      </TouchableOpacity>
+                        style={[
+                          styles.optionChip,
+                          { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+                          isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+                        ]}
+                        textStyle={[
+                          styles.optionChipText,
+                          { color: colors.gray700 },
+                          isSelected && { color: colors.textOnPrimary },
+                        ]}
+                      />
                     );
                   })}
                 </ScrollView>
@@ -922,25 +905,22 @@ export default function CreateOpportunityScreen() {
                   {availableCities.map((c) => {
                     const isSelected = city === c.id;
                     return (
-                      <TouchableOpacity
+                      <Chip
                         key={c.id}
+                        label={c.label}
+                        selected={isSelected}
+                        onPress={() => form.setValue('city', c.id)}
                         style={[
                           styles.optionChip,
                           { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                           isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                         ]}
-                        onPress={() => form.setValue('city', c.id)}
-                      >
-                        <Text
-                          style={[
-                            styles.optionChipText,
-                            { color: colors.gray700 },
-                            isSelected && { color: colors.textOnPrimary },
-                          ]}
-                        >
-                          {c.label}
-                        </Text>
-                      </TouchableOpacity>
+                        textStyle={[
+                          styles.optionChipText,
+                          { color: colors.gray700 },
+                          isSelected && { color: colors.textOnPrimary },
+                        ]}
+                      />
                     );
                   })}
                 </ScrollView>
@@ -970,27 +950,23 @@ export default function CreateOpportunityScreen() {
             {CONTRACT_TYPE_DATA.map((type) => {
               const isSelected = contractType === type.id;
               return (
-                <TouchableOpacity
+                <Chip
                   key={type.id}
+                  label={type.label}
+                  selected={isSelected}
+                  onPress={() => form.setValue('contractType', type.id)}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
                     isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => form.setValue('contractType', type.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {type.label}
-                  </Text>
-                </TouchableOpacity>
+                  textStyle={[
+                    styles.selectableTagText,
+                    { color: colors.gray600 },
+                    isSelected && { color: colors.primary },
+                  ]}
+                />
               );
             })}
           </View>
@@ -1003,27 +979,23 @@ export default function CreateOpportunityScreen() {
             {WORK_RHYTHM_DATA.map((rhythm) => {
               const isSelected = workRhythm === rhythm.id;
               return (
-                <TouchableOpacity
+                <Chip
                   key={rhythm.id}
+                  label={rhythm.label}
+                  selected={isSelected}
+                  onPress={() => form.setValue('workRhythm', isSelected ? null : rhythm.id)}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
                     isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => form.setValue('workRhythm', isSelected ? null : rhythm.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {rhythm.label}
-                  </Text>
-                </TouchableOpacity>
+                  textStyle={[
+                    styles.selectableTagText,
+                    { color: colors.gray600 },
+                    isSelected && { color: colors.primary },
+                  ]}
+                />
               );
             })}
           </View>
@@ -1080,27 +1052,23 @@ export default function CreateOpportunityScreen() {
             {COMPENSATION_FREQUENCY_DATA.map((freq) => {
               const isSelected = compensationFrequency === freq.id;
               return (
-                <TouchableOpacity
+                <Chip
                   key={freq.id}
+                  label={freq.label}
+                  selected={isSelected}
+                  onPress={() => form.setValue('compensationFrequency', freq.id)}
+                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   style={[
                     styles.selectableTag,
                     { backgroundColor: colors.surface, borderColor: colors.gray200 },
                     isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
                   ]}
-                  onPress={() => form.setValue('compensationFrequency', freq.id)}
-                  activeOpacity={0.7}
-                >
-                  {isSelected && <Check size={14} color={colors.primary} strokeWidth={2.5} />}
-                  <Text
-                    style={[
-                      styles.selectableTagText,
-                      { color: colors.gray600 },
-                      isSelected && { color: colors.primary },
-                    ]}
-                  >
-                    {freq.label}
-                  </Text>
-                </TouchableOpacity>
+                  textStyle={[
+                    styles.selectableTagText,
+                    { color: colors.gray600 },
+                    isSelected && { color: colors.primary },
+                  ]}
+                />
               );
             })}
           </View>
@@ -1115,15 +1083,12 @@ export default function CreateOpportunityScreen() {
               const isSelected = visibility === type.id;
               const IconComponent = type.id === 'PUBLIC' ? Eye : type.id === 'PRIVATE' ? Lock : Eye;
               return (
-                <TouchableOpacity
+                <SelectCard
                   key={type.id}
-                  style={[
-                    styles.locationTypeCard,
-                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-                  ]}
+                  selected={isSelected}
                   onPress={() => form.setValue('visibility', type.id)}
-                  activeOpacity={0.7}
+                  style={styles.locationTypeCard}
+                  accessibilityLabel={type.label}
                 >
                   <IconComponent
                     size={24}
@@ -1139,12 +1104,7 @@ export default function CreateOpportunityScreen() {
                   >
                     {type.label}
                   </Text>
-                  {isSelected && (
-                    <View style={[styles.locationTypeCheck, { backgroundColor: colors.primary }]}>
-                      <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
-                    </View>
-                  )}
-                </TouchableOpacity>
+                </SelectCard>
               );
             })}
           </View>
@@ -1158,30 +1118,35 @@ export default function CreateOpportunityScreen() {
             <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
               Date limite <Text style={{ color: colors.error }}>*</Text>
             </Text>
-            <TouchableOpacity
+            <Button
+              title={deadline ? formatDate(deadline) : 'Sélectionner'}
+              onPress={() => setShowDeadlinePicker(true)}
+              variant="outline"
+              icon={<Calendar size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
               style={[
                 styles.dateButton,
-                { backgroundColor: colors.gray50, borderColor: deadline ? colors.gray200 : colors.error },
+                {
+                  backgroundColor: colors.gray50,
+                  borderColor: deadline ? colors.gray200 : colors.error,
+                  justifyContent: 'flex-start',
+                },
               ]}
-              onPress={() => setShowDeadlinePicker(true)}
-            >
-              <Calendar size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.dateButtonText, { color: deadline ? colors.textPrimary : colors.gray500 }]} numberOfLines={1}>
-                {deadline ? formatDate(deadline) : 'Sélectionner'}
-              </Text>
-            </TouchableOpacity>
+              textStyle={[styles.dateButtonText, { color: deadline ? colors.textPrimary : colors.gray500 }]}
+            />
           </View>
           <View style={styles.halfField}>
             <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Date de début</Text>
-            <TouchableOpacity
-              style={[styles.dateButton, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+            <Button
+              title={startDate ? formatDate(startDate) : 'Sélectionner'}
               onPress={() => setShowStartDatePicker(true)}
-            >
-              <Calendar size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.dateButtonText, { color: startDate ? colors.textPrimary : colors.gray500 }]} numberOfLines={1}>
-                {startDate ? formatDate(startDate) : 'Sélectionner'}
-              </Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<Calendar size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+              style={[
+                styles.dateButton,
+                { backgroundColor: colors.gray50, borderColor: colors.gray200, justifyContent: 'flex-start' },
+              ]}
+              textStyle={[styles.dateButtonText, { color: startDate ? colors.textPrimary : colors.gray500 }]}
+            />
           </View>
         </View>
 
@@ -1273,9 +1238,13 @@ export default function CreateOpportunityScreen() {
                 <Text style={[styles.questionNumber, { color: colors.primary }]}>
                   Question {index + 1}
                 </Text>
-                <TouchableOpacity onPress={() => removeQuestion(question.id)}>
-                  <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
+                <IconButton
+                  onPress={() => removeQuestion(question.id)}
+                  icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+                  accessibilityLabel="Supprimer la question"
+                  size="sm"
+                  variant="ghost"
+                />
               </View>
 
               <FormTextArea
@@ -1303,15 +1272,14 @@ export default function CreateOpportunityScreen() {
 
           {/* Add Question Button */}
           {applicationQuestions.length < MAX_QUESTIONS && (
-            <TouchableOpacity
-              style={[styles.addQuestionButton, { borderColor: colors.primary }]}
+            <Button
+              title="Ajouter une question"
               onPress={addQuestion}
-            >
-              <Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.addQuestionText, { color: colors.primary }]}>
-                Ajouter une question
-              </Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.addQuestionButton, { borderColor: colors.primary }]}
+              textStyle={[styles.addQuestionText, { color: colors.primary }]}
+            />
           )}
         </View>
       </View>
@@ -1342,15 +1310,15 @@ export default function CreateOpportunityScreen() {
           <View style={styles.imageUploadContainer}>
             {/* Bouton ajouter image si pas encore 5 */}
             {images.length < MAX_IMAGES && (
-              <TouchableOpacity
-                style={[styles.addImageButtonFullWidth, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+              <Button
+                title="Ajouter une image"
                 onPress={pickImage}
-              >
-                <Upload size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.addImageTextLarge, { color: colors.gray500 }]}>
-                  Ajouter une image
-                </Text>
-              </TouchableOpacity>
+                variant="outline"
+                icon={<Upload size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+                style={[styles.addImageButtonFullWidth, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}
+                textStyle={[styles.addImageTextLarge, { color: colors.gray500 }]}
+                fullWidth
+              />
             )}
 
             {/* Grille d'images uploadées */}
@@ -1359,12 +1327,14 @@ export default function CreateOpportunityScreen() {
                 {images.map((image) => (
                   <View key={image.id} style={styles.imageItemContainer}>
                     <Image source={{ uri: image.uri }} style={styles.imageItem} />
-                    <TouchableOpacity
-                      style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
+                    <IconButton
                       onPress={() => removeImage(image.id)}
-                    >
-                      <X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />
-                    </TouchableOpacity>
+                      icon={<X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />}
+                      accessibilityLabel="Retirer l'image"
+                      size="sm"
+                      variant="filled"
+                      style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
+                    />
                   </View>
                 ))}
               </View>
@@ -1398,23 +1368,26 @@ export default function CreateOpportunityScreen() {
                   </Text>
                 )}
               </View>
-              <TouchableOpacity onPress={() => removeAttachment(attachment.id)}>
-                <X size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
+              <IconButton
+                onPress={() => removeAttachment(attachment.id)}
+                icon={<X size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+                accessibilityLabel="Retirer la pièce jointe"
+                size="sm"
+                variant="ghost"
+              />
             </View>
           ))}
 
           {/* Bouton ajouter si pas encore 3 */}
           {attachments.length < MAX_ATTACHMENTS && (
-            <TouchableOpacity
-              style={[styles.addAttachmentButton, { borderColor: colors.gray300 }]}
+            <Button
+              title="Ajouter un document"
               onPress={pickDocument}
-            >
-              <Plus size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.addAttachmentText, { color: colors.gray600 }]}>
-                Ajouter un document
-              </Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<Plus size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.addAttachmentButton, { borderColor: colors.gray300 }]}
+              textStyle={[styles.addAttachmentText, { color: colors.gray600 }]}
+            />
           )}
         </View>
       </View>
@@ -1675,25 +1648,27 @@ export default function CreateOpportunityScreen() {
 
     if (currentStep === 'preview') {
       return (
-        <View style={[styles.footer, { backgroundColor: colors.background }]}>
+        <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
           <View style={styles.footerButtons}>
             {/* Bouton Retour */}
-            <TouchableOpacity
-              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+            <Button
+              title="Retour"
               onPress={handleBack}
               disabled={form.state.isSubmitting}
-            >
-              <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.backStepButtonText, { color: colors.gray700 }]}>Retour</Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+              textStyle={[styles.backStepButtonText, { color: colors.gray700 }]}
+            />
             {/* Bouton Brouillon */}
-            <TouchableOpacity
-              style={[styles.draftButton, { borderColor: colors.gray300 }]}
+            <IconButton
               onPress={handleSaveDraft}
               disabled={form.state.isSubmitting}
-            >
-              <Save size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
+              icon={<Save size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+              accessibilityLabel="Enregistrer le brouillon"
+              variant="outline"
+              style={[styles.draftButton, { borderColor: colors.gray300 }]}
+            />
             {/* Bouton Publier */}
             <View style={styles.publishButton}>
               <Button
@@ -1710,17 +1685,18 @@ export default function CreateOpportunityScreen() {
     }
 
     return (
-      <View style={[styles.footer, { backgroundColor: colors.background }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
         <View style={styles.footerButtons}>
           {/* Bouton Retour (sauf sur le premier step) */}
           {!isFirstStep && (
-            <TouchableOpacity
-              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+            <Button
+              title="Retour"
               onPress={handleBack}
-            >
-              <ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.backStepButtonText, { color: colors.gray700 }]}>Retour</Text>
-            </TouchableOpacity>
+              variant="outline"
+              icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.backStepButton, { borderColor: colors.gray300 }]}
+              textStyle={[styles.backStepButtonText, { color: colors.gray700 }]}
+            />
           )}
           {/* Bouton Continuer */}
           <View style={[styles.continueButton, !isFirstStep && { flex: 1 }]}>
@@ -1742,34 +1718,30 @@ export default function CreateOpportunityScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={handleBack}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+          style={styles.backButton}
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Nouvelle opportunité</Text>
         <View style={styles.headerSpacer} />
       </View>
 
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <KeyboardAwareScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        afterScrollChildren={renderFooter()}
       >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {renderStepIndicator()}
+        {renderStepIndicator()}
 
-          {currentStep === 'info' && renderInfoStep()}
-          {currentStep === 'lieu' && renderLieuStep()}
-          {currentStep === 'conditions' && renderConditionsStep()}
-          {currentStep === 'media' && renderMediaStep()}
-          {currentStep === 'preview' && renderPreviewStep()}
-        </ScrollView>
-
-        {renderFooter()}
-      </KeyboardAvoidingView>
+        {currentStep === 'info' && renderInfoStep()}
+        {currentStep === 'lieu' && renderLieuStep()}
+        {currentStep === 'conditions' && renderConditionsStep()}
+        {currentStep === 'media' && renderMediaStep()}
+        {currentStep === 'preview' && renderPreviewStep()}
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
@@ -1801,10 +1773,6 @@ const styles = StyleSheet.create({
 
   headerSpacer: {
     width: 40,
-  },
-
-  keyboardView: {
-    flex: 1,
   },
 
   scrollView: {

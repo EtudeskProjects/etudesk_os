@@ -4,8 +4,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Image,
+  FlatList,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
-import { PageLayout, EmptyState } from '../../../src/components/ui';
+import { Chip, PageLayout, EmptyState, SelectCard } from '../../../src/components/ui';
 import { CommunityCard } from '../../../src/components/cards';
 import { communityService, communityActivityService } from '../../../src/services';
 import { formatRelativeTime } from '../../../src/utils/date';
@@ -169,136 +169,103 @@ export default function MyCommunitiesScreen() {
     { key: 'SUSPENDED', label: 'Suspendues' },
   ];
 
-  const renderMemberships = () => (
-    <>
-      {filteredMemberships.length === 0 ? (
-        <EmptyState
-          icon={Users}
-          title={memberFilter === 'all' ? 'Aucune communauté' : 'Aucun résultat'}
-          subtitle={
-            memberFilter === 'all'
-              ? 'Rejoignez des communautés pour les voir ici'
-              : 'Aucune adhésion avec ce statut.'
-          }
-          {...(memberFilter === 'all' ? {
-            actionLabel: 'Explorer',
-            onAction: () => router.push('/(tabs)/explore?category=communities'),
-          } : {})}
-        />
-      ) : (
-        filteredMemberships.map((membership) => {
-          const community: Community = {
-            id: membership.community_id,
-            name: membership.community.name,
-            slug: membership.community.slug,
-            cover_image_url: membership.community.cover_image_url,
-            images: membership.community.images,
-            members_count: membership.community.members_count,
-            type: membership.community.type as any,
-          } as Community;
+  const renderMembershipItem = (membership: Membership) => {
+    const community: Community = {
+      id: membership.community_id,
+      name: membership.community.name,
+      slug: membership.community.slug,
+      cover_image_url: membership.community.cover_image_url,
+      images: membership.community.images,
+      members_count: membership.community.members_count,
+      type: membership.community.type as any,
+    } as Community;
 
-          const statusConfig = getMemberStatusConfig(colors)[membership.status] || getMemberStatusConfig(colors).PENDING;
-          const StatusIcon = statusConfig.icon;
+    const statusConfig = getMemberStatusConfig(colors)[membership.status] || getMemberStatusConfig(colors).PENDING;
+    const StatusIcon = statusConfig.icon;
 
-          return (
-            <CommunityCard
-              key={membership.id}
-              community={community}
-              onPress={() => router.push(`/settings/my-communities/${membership.id}`)}
-              statusOverlay={{
-                label: statusConfig.label,
-                color: statusConfig.color,
-                bgColor: statusConfig.bgColor,
-                icon: <StatusIcon size={12} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />,
-              }}
-            />
-          );
-        })
-      )}
-    </>
-  );
+    return (
+      <CommunityCard
+        community={community}
+        onPress={() => router.push(`/settings/my-communities/${membership.id}`)}
+        statusOverlay={{
+          label: statusConfig.label,
+          color: statusConfig.color,
+          bgColor: statusConfig.bgColor,
+          icon: <StatusIcon size={12} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />,
+        }}
+      />
+    );
+  };
 
-  const renderBookmarks = () => (
-    <>
-      {bookmarkedActivities.length === 0 ? (
-        <EmptyState
-          icon={Bookmark}
-          title="Aucune sauvegarde"
-          subtitle="Sauvegardez des publications, événements ou sondages pour les retrouver ici"
-        />
-      ) : (
-        bookmarkedActivities.map((activity) => {
-          const ActivityIcon = getActivityIcon(activity.type);
-          const authorAvatarUrl = activity.author?.avatar_url ? getFullImageUrl(activity.author.avatar_url) : null;
-          const authorInitials = activity.author?.display_name
-            ?.split(' ')
-            .map(n => n[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 2) || '?';
+  const renderBookmarkItem = (activity: BookmarkedActivity) => {
+    const ActivityIcon = getActivityIcon(activity.type);
+    const authorAvatarUrl = activity.author?.avatar_url ? getFullImageUrl(activity.author.avatar_url) : null;
+    const authorInitials = activity.author?.display_name
+      ?.split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || '?';
 
-          return (
-            <TouchableOpacity
-              key={activity.id}
-              style={[styles.bookmarkCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-              onPress={() => router.push(`/details/community/activity/${activity.id}`)}
-              activeOpacity={0.7}
-            >
-              {authorAvatarUrl ? (
-                <Image
-                  source={{ uri: authorAvatarUrl }}
-                  style={styles.authorAvatar}
-                />
-              ) : (
-                <View style={[styles.authorAvatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
-                  <Text style={[styles.authorInitials, { color: colors.primary }]}>
-                    {authorInitials}
-                  </Text>
-                </View>
-              )}
+    return (
+      <SelectCard
+        style={[styles.bookmarkCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+        onPress={() => router.push(`/details/community/activity/${activity.id}`)}
+        selected={false}
+        accessibilityLabel={activity.title || 'Ouvrir la publication'}
+      >
+        {authorAvatarUrl ? (
+          <Image
+            source={{ uri: authorAvatarUrl }}
+            style={styles.authorAvatar}
+          />
+        ) : (
+          <View style={[styles.authorAvatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
+            <Text style={[styles.authorInitials, { color: colors.primary }]}>
+              {authorInitials}
+            </Text>
+          </View>
+        )}
 
-              <View style={styles.bookmarkContent}>
-                <View style={styles.bookmarkHeader}>
-                  <View style={[styles.activityTypeBadge, { backgroundColor: colors.gray100 }]}>
-                    <ActivityIcon size={10} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-                    <Text style={[styles.activityTypeText, { color: colors.textSecondary }]}>
-                      {getActivityLabel(activity.type)}
-                    </Text>
-                  </View>
-                  {activity.community && (
-                    <Text style={[styles.communityLabel, { color: colors.gray400 }]} numberOfLines={1}>
-                      {activity.community.name}
-                    </Text>
-                  )}
-                </View>
+        <View style={styles.bookmarkContent}>
+          <View style={styles.bookmarkHeader}>
+            <View style={[styles.activityTypeBadge, { backgroundColor: colors.gray100 }]}>
+              <ActivityIcon size={10} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+              <Text style={[styles.activityTypeText, { color: colors.textSecondary }]}>
+                {getActivityLabel(activity.type)}
+              </Text>
+            </View>
+            {activity.community && (
+              <Text style={[styles.communityLabel, { color: colors.gray400 }]} numberOfLines={1}>
+                {activity.community.name}
+              </Text>
+            )}
+          </View>
 
-                {activity.title && (
-                  <Text style={[styles.activityTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {activity.title}
-                  </Text>
-                )}
+          {activity.title && (
+            <Text style={[styles.activityTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+              {activity.title}
+            </Text>
+          )}
 
-                <Text style={[styles.activityContent, { color: colors.textSecondary }]} numberOfLines={2}>
-                  {activity.content}
-                </Text>
+          <Text style={[styles.activityContent, { color: colors.textSecondary }]} numberOfLines={2}>
+            {activity.content}
+          </Text>
 
-                <View style={styles.bookmarkFooter}>
-                  {activity.author && (
-                    <Text style={[styles.authorName, { color: colors.gray500 }]}>
-                      {activity.author.display_name}
-                    </Text>
-                  )}
-                  <Text style={[styles.activityDate, { color: colors.gray400 }]}>
-                    {formatRelativeTime(activity.created_at)}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          );
-        })
-      )}
-    </>
-  );
+          <View style={styles.bookmarkFooter}>
+            {activity.author && (
+              <Text style={[styles.authorName, { color: colors.gray500 }]}>
+                {activity.author.display_name}
+              </Text>
+            )}
+            <Text style={[styles.activityDate, { color: colors.gray400 }]}>
+              {formatRelativeTime(activity.created_at)}
+            </Text>
+          </View>
+        </View>
+      </SelectCard>
+    );
+  };
 
   const headerContent = (
     <View>
@@ -308,31 +275,20 @@ export default function MyCommunitiesScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filtersContent}
         >
-          {chips.map((chip) => {
-            const isActive = activeTab === chip.key;
-            return (
-              <TouchableOpacity
-                key={chip.key}
-                style={[
-                  styles.filterChip,
-                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                  isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
-                ]}
-                onPress={() => setActiveTab(chip.key)}
-              >
-                <Text
-                  style={[
-                    styles.filterChipText,
-                    { color: colors.gray700 },
-                    isActive && { color: colors.textOnPrimary },
-                  ]}
-                >
-                  {chip.label} ({chip.count})
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+            {chips.map((chip) => {
+              const isActive = activeTab === chip.key;
+              return (
+                <Chip
+                  key={chip.key}
+                  onPress={() => setActiveTab(chip.key)}
+                  selected={isActive}
+                  style={[styles.filterChip, { backgroundColor: isActive ? colors.primary : colors.gray100, borderColor: isActive ? colors.primary : colors.gray200 }]}
+                  textStyle={[styles.filterChipText, { color: isActive ? colors.textOnPrimary : colors.gray700 }]}
+                  label={`${chip.label} (${chip.count})`}
+                />
+              );
+            })}
+          </ScrollView>
       </View>
       {activeTab === 'memberships' && (
         <View style={styles.memberFiltersRow}>
@@ -345,25 +301,14 @@ export default function MyCommunitiesScreen() {
               const isActive = memberFilter === chip.key;
               const count = memberStatusCounts[chip.key] || 0;
               return (
-                <TouchableOpacity
+                <Chip
                   key={chip.key}
-                  style={[
-                    styles.filterChip,
-                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                    isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
-                  ]}
                   onPress={() => setMemberFilter(chip.key)}
-                >
-                  <Text
-                    style={[
-                      styles.filterChipText,
-                      { color: colors.gray700 },
-                      isActive && { color: colors.textOnPrimary },
-                    ]}
-                  >
-                    {chip.label} ({count})
-                  </Text>
-                </TouchableOpacity>
+                  selected={isActive}
+                  style={[styles.filterChip, { backgroundColor: isActive ? colors.primary : colors.gray100, borderColor: isActive ? colors.primary : colors.gray200 }]}
+                  textStyle={[styles.filterChipText, { color: isActive ? colors.textOnPrimary : colors.gray700 }]}
+                  label={`${chip.label} (${count})`}
+                />
               );
             })}
           </ScrollView>
@@ -379,9 +324,47 @@ export default function MyCommunitiesScreen() {
       isRefreshing={isRefreshing}
       isLoading={isLoading}
       headerContent={headerContent}
+      useScrollView={false}
     >
-      {activeTab === 'memberships' && renderMemberships()}
-      {activeTab === 'bookmarks' && renderBookmarks()}
+      {activeTab === 'memberships' ? (
+        <FlatList
+          data={filteredMemberships}
+          keyExtractor={(m) => m.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => renderMembershipItem(item)}
+          ListEmptyComponent={
+            <EmptyState
+              icon={Users}
+              title={memberFilter === 'all' ? 'Aucune communauté' : 'Aucun résultat'}
+              subtitle={
+                memberFilter === 'all'
+                  ? 'Rejoignez des communautés pour les voir ici'
+                  : 'Aucune adhésion avec ce statut.'
+              }
+              {...(memberFilter === 'all' ? {
+                actionLabel: 'Explorer',
+                onAction: () => router.push('/(tabs)/explore?category=communities'),
+              } : {})}
+            />
+          }
+        />
+      ) : (
+        <FlatList
+          data={bookmarkedActivities}
+          keyExtractor={(a) => a.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => renderBookmarkItem(item)}
+          ListEmptyComponent={
+            <EmptyState
+              icon={Bookmark}
+              title="Aucune sauvegarde"
+              subtitle="Sauvegardez des publications, événements ou sondages pour les retrouver ici"
+            />
+          }
+        />
+      )}
     </PageLayout>
   );
 }
@@ -410,6 +393,11 @@ const styles = StyleSheet.create({
   },
   memberFiltersRow: {
     paddingVertical: SPACING.sm,
+  },
+  listContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xxl,
   },
   // Bookmark Card
   bookmarkCard: {

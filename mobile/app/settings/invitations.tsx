@@ -11,9 +11,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Image,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -29,9 +27,9 @@ import {
   Briefcase,
   MapPin,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
-import { useTheme } from '../../src/hooks/useTheme';
-import { PageLayout, EmptyState } from '../../src/components/ui';
+	import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
+	import { useTheme } from '../../src/hooks/useTheme';
+	import { Button, Chip, EmptyState, PageLayout, Tap, ShimmerPlaceholder } from '../../src/components/ui';
 import { invitationService, ReceivedInvitation } from '../../src/services/invitationService';
 import {
   communityInvitationService,
@@ -380,34 +378,31 @@ export default function InvitationsScreen() {
           </View>
         </View>
 
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.declineButton, { borderColor: colors.error }]}
-            onPress={() => handleDeclineOrg(invitation)}
-            disabled={isProcessing}
-          >
-            <X size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.declineText, { color: colors.error }]}>Refuser</Text>
-          </TouchableOpacity>
+	        <View style={styles.actions}>
+	          <Button
+	            title="Refuser"
+	            onPress={() => handleDeclineOrg(invitation)}
+	            disabled={isProcessing}
+	            variant="outline"
+	            icon={<X size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+	            style={[styles.declineButton, { borderColor: colors.error }]}
+	            textStyle={[styles.declineText, { color: colors.error }]}
+	          />
 
-          <TouchableOpacity
-            style={[styles.acceptButton, { backgroundColor: colors.primary }]}
-            onPress={() => handleAcceptOrg(invitation)}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <ActivityIndicator size="small" color={colors.textOnPrimary} />
-            ) : (
-              <>
-                <Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>Accepter</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
+	          <Button
+	            title="Accepter"
+	            onPress={() => handleAcceptOrg(invitation)}
+	            disabled={isProcessing}
+	            loading={isProcessing}
+	            variant="primary"
+	            icon={<Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+	            style={[styles.acceptButton, { backgroundColor: colors.primary }]}
+	            textStyle={[styles.acceptText, { color: colors.textOnPrimary }]}
+	          />
+	        </View>
+	      </View>
+	    );
+	  };
 
   const renderOfferInvitationCard = (invitation: OfferInvitation) => {
     const isProcessing = processingId === invitation.id;
@@ -497,33 +492,28 @@ export default function InvitationsScreen() {
             </View>
           </View>
 
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.declineButton, { borderColor: colors.error }]}
-              onPress={() => handleDeclineCommunity(inv)}
-              disabled={isProcessing}
-            >
-              <X size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.declineText, { color: colors.error }]}>Refuser</Text>
-            </TouchableOpacity>
+	          <View style={styles.actions}>
+	            <Button
+	              title="Refuser"
+	              onPress={() => handleDeclineCommunity(inv)}
+	              disabled={isProcessing}
+	              variant="outline"
+	              icon={<X size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+	              style={[styles.declineButton, { borderColor: colors.error }]}
+	              textStyle={[styles.declineText, { color: colors.error }]}
+	            />
 
-            <TouchableOpacity
-              style={[styles.acceptButton, { backgroundColor: colors.primary }]}
-              onPress={() => handleAcceptCommunity(inv)}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <ActivityIndicator size="small" color={colors.textOnPrimary} />
-              ) : (
-                <>
-                  <Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                  <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>
-                    Accepter
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+	            <Button
+	              title="Accepter"
+	              onPress={() => handleAcceptCommunity(inv)}
+	              disabled={isProcessing}
+	              loading={isProcessing}
+	              variant="primary"
+	              icon={<Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+	              style={[styles.acceptButton, { backgroundColor: colors.primary }]}
+	              textStyle={[styles.acceptText, { color: colors.textOnPrimary }]}
+	            />
+	          </View>
         </View>
       );
     }
@@ -609,31 +599,28 @@ export default function InvitationsScreen() {
             </View>
           </View>
 
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.declineButton, { borderColor: colors.error }]}
-              onPress={() => handleDeclineOpportunity(inv)}
-              disabled={isProcessing}
-            >
-              <X size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.declineText, { color: colors.error }]}>Refuser</Text>
-            </TouchableOpacity>
+	          <View style={styles.actions}>
+	            <Button
+	              title="Refuser"
+	              onPress={() => handleDeclineOpportunity(inv)}
+	              disabled={isProcessing}
+	              variant="outline"
+	              icon={<X size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+	              style={[styles.declineButton, { borderColor: colors.error }]}
+	              textStyle={[styles.declineText, { color: colors.error }]}
+	            />
 
-            <TouchableOpacity
-              style={[styles.acceptButton, { backgroundColor: colors.primary }]}
-              onPress={() => handleAcceptOpportunity(inv)}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <ActivityIndicator size="small" color={colors.textOnPrimary} />
-              ) : (
-                <>
-                  <Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                  <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>Accepter</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+	            <Button
+	              title="Accepter"
+	              onPress={() => handleAcceptOpportunity(inv)}
+	              disabled={isProcessing}
+	              loading={isProcessing}
+	              variant="primary"
+	              icon={<Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+	              style={[styles.acceptButton, { backgroundColor: colors.primary }]}
+	              textStyle={[styles.acceptText, { color: colors.textOnPrimary }]}
+	            />
+	          </View>
         </View>
       );
     }
@@ -728,31 +715,28 @@ export default function InvitationsScreen() {
             </View>
           </View>
 
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.declineButton, { borderColor: colors.error }]}
-              onPress={() => handleDeclineSpace(inv)}
-              disabled={isProcessing}
-            >
-              <X size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.declineText, { color: colors.error }]}>Refuser</Text>
-            </TouchableOpacity>
+	          <View style={styles.actions}>
+	            <Button
+	              title="Refuser"
+	              onPress={() => handleDeclineSpace(inv)}
+	              disabled={isProcessing}
+	              variant="outline"
+	              icon={<X size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+	              style={[styles.declineButton, { borderColor: colors.error }]}
+	              textStyle={[styles.declineText, { color: colors.error }]}
+	            />
 
-            <TouchableOpacity
-              style={[styles.acceptButton, { backgroundColor: colors.primary }]}
-              onPress={() => handleAcceptSpace(inv)}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <ActivityIndicator size="small" color={colors.textOnPrimary} />
-              ) : (
-                <>
-                  <Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                  <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>Accepter</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+	            <Button
+	              title="Accepter"
+	              onPress={() => handleAcceptSpace(inv)}
+	              disabled={isProcessing}
+	              loading={isProcessing}
+	              variant="primary"
+	              icon={<Check size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+	              style={[styles.acceptButton, { backgroundColor: colors.primary }]}
+	              textStyle={[styles.acceptText, { color: colors.textOnPrimary }]}
+	            />
+	          </View>
         </View>
       );
     }
@@ -769,30 +753,27 @@ export default function InvitationsScreen() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filtersContent}
       >
-        {chips.map((chip) => {
-          const isActive = activeTab === chip.key;
-          return (
-            <TouchableOpacity
-              key={chip.key}
-              style={[
-                styles.filterChip,
-                { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
-              ]}
-              onPress={() => setActiveTab(chip.key)}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  { color: colors.gray700 },
-                  isActive && { color: colors.textOnPrimary },
-                ]}
-              >
-                {chip.label} ({chip.count})
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+	        {chips.map((chip) => {
+	          const isActive = activeTab === chip.key;
+	          return (
+	            <Chip
+	              key={chip.key}
+	              label={`${chip.label} (${chip.count})`}
+	              selected={isActive}
+	              onPress={() => setActiveTab(chip.key)}
+	              style={[
+	                styles.filterChip,
+	                { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
+	              ]}
+	              textStyle={[
+	                styles.filterChipText,
+	                { color: colors.gray700 },
+	                isActive && { color: colors.textOnPrimary },
+	              ]}
+	            />
+	          );
+	        })}
       </ScrollView>
     </View>
   );

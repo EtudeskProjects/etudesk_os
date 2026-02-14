@@ -1,11 +1,8 @@
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,15 +12,13 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useForm, validators } from '../../src/hooks/useForm';
 import { otpService } from '../../src/services/otpService';
-import { Button, IconButton, Input } from '../../src/components/ui';
+import { Button, IconButton, Input, KeyboardAwareScrollView } from '../../src/components/ui';
 import { useAlert } from '../../src/contexts/AlertContext';
 
 export default function EmailLoginScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const scrollViewRef = useRef<ScrollView>(null);
-  const emailContainerY = useRef(0);
   const alerts = useAlert();
 
   const form = useForm({
@@ -63,105 +58,78 @@ export default function EmailLoginScreen() {
     }
   }, [alerts, form, t]);
 
-  const handleEmailFocus = useCallback(() => {
-    if (Platform.OS !== 'android') return;
-    setTimeout(() => {
-      const y = Math.max(0, emailContainerY.current - 80);
-      scrollViewRef.current?.scrollTo({ y, animated: true });
-    }, 120);
-  }, []);
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
+      <View style={styles.header}>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel={t('common.back')}
+          variant="filled"
+        />
+      </View>
+
+      <KeyboardAwareScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <IconButton
-            onPress={() => router.back()}
-            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel={t('common.back')}
-            variant="filled"
-          />
+        <View style={styles.content}>
+          <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
+            <AtSign size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+          </View>
+
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {t('auth.emailLogin.title')}
+          </Text>
+
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            {t('auth.emailLogin.subtitle')}
+          </Text>
+
+          <View style={styles.inputContainer}>
+            <Input
+              label={t('auth.emailLogin.emailLabel')}
+              placeholder={t('auth.login.emailPlaceholder')}
+              value={form.getValue('email')}
+              onChangeText={(text) => form.setValue('email', text)}
+              onBlur={() => form.setTouched('email')}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              autoFocus={true}
+              editable={!form.state.isSubmitting}
+              leftIcon={<AtSign size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+              error={form.getError('email') || undefined}
+            />
+          </View>
         </View>
 
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.content}>
-            <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-              <AtSign size={ICON.size.xxl} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-            </View>
+        <View style={styles.footer}>
+          <Button
+            title={t('auth.emailLogin.sendCode')}
+            onPress={handleSendOTP}
+            loading={form.state.isSubmitting}
+            disabled={!form.getValue('email').trim() || form.state.isSubmitting}
+            icon={<ArrowRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+            iconPosition="right"
+            size="lg"
+            fullWidth
+            style={styles.submitButton}
+          />
 
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
-              {t('auth.emailLogin.title')}
-            </Text>
-
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              {t('auth.emailLogin.subtitle')}
-            </Text>
-
-            <View
-              style={styles.inputContainer}
-              onLayout={(e) => {
-                emailContainerY.current = e.nativeEvent.layout.y;
-              }}
-            >
-              <Input
-                label={t('auth.emailLogin.emailLabel')}
-                placeholder={t('auth.login.emailPlaceholder')}
-                value={form.getValue('email')}
-                onChangeText={(text) => form.setValue('email', text)}
-                onBlur={() => form.setTouched('email')}
-                onFocus={handleEmailFocus}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="email"
-                autoFocus={true}
-                editable={!form.state.isSubmitting}
-                leftIcon={<AtSign size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
-                error={form.getError('email') || undefined}
-              />
-            </View>
-          </View>
-
-          <View style={styles.footer}>
-            <Button
-              title={t('auth.emailLogin.sendCode')}
-              onPress={handleSendOTP}
-              loading={form.state.isSubmitting}
-              disabled={!form.getValue('email').trim() || form.state.isSubmitting}
-              icon={<ArrowRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-              iconPosition="right"
-              size="lg"
-              fullWidth
-              style={styles.submitButton}
-            />
-
-            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-              {t('auth.emailLogin.infoText')}
-            </Text>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
+            {t('auth.emailLogin.infoText')}
+          </Text>
+        </View>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-
-  keyboardView: {
     flex: 1,
   },
 

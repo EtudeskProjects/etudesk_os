@@ -4,10 +4,11 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { BookOpen, CheckCircle2, XCircle } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
+
 
 interface QuizBlockProps {
   data: {
@@ -157,12 +158,13 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
           const isCorrect = answered && index === correctAnswer;
 
           return (
-            <TouchableOpacity
+            <Pressable
               key={index}
               style={[styles.option, optStyle]}
               onPress={() => handleOptionPress(option, index)}
               disabled={answered || !onAnswer}
-              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`Option ${OPTION_LETTERS[index]}: ${option}`}
             >
               <View style={[styles.optionLetter, { backgroundColor: letterStyle.bg }]}>
                 <Text style={[styles.optionLetterText, { color: letterStyle.text }]}>
@@ -186,7 +188,7 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
               {answered && hasCorrectAnswer && isSelected && !isCorrect && (
                 <XCircle size={ICON.size.sm} color={colors.error} strokeWidth={ICON.strokeWidth} />
               )}
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>

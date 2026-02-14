@@ -4,8 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -18,7 +16,7 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
-import { Button, Input } from '../../src/components/ui';
+import { Button, IconButton, Input, LoadingShimmer, SelectCard } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { paymentService, PaymentMethod, PaymentProvider, PAYMENT_PROVIDERS } from '../../src/services/paymentService';
 import { useAlert } from '../../src/contexts/AlertContext';
@@ -211,15 +209,20 @@ export default function PaymentMethodsScreen() {
       <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Opérateur</Text>
       <View style={styles.providersGrid}>
         {PAYMENT_PROVIDERS.map((provider) => (
-          <TouchableOpacity
+          <SelectCard
             key={provider.id}
             style={[
               styles.providerCard,
               { borderColor: colors.gray200, backgroundColor: colors.gray50 },
               selectedProvider === provider.id && { borderColor: provider.color, backgroundColor: withOpacity(provider.color, OPACITY[15]) },
+              { borderRadius: BORDER.radius.sm },
             ]}
-            onPress={() => handleSelectProvider(provider.id)}
-            disabled={isSubmitting}
+            onPress={() => {
+              if (isSubmitting) return;
+              handleSelectProvider(provider.id);
+            }}
+            selected={false}
+            accessibilityLabel={provider.label}
           >
             <View style={[styles.providerIcon, { backgroundColor: provider.color }]}>
               <Smartphone size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
@@ -232,7 +235,7 @@ export default function PaymentMethodsScreen() {
                 <Check size={12} color={colors.textOnPrimary} strokeWidth={3} />
               </View>
             )}
-          </TouchableOpacity>
+          </SelectCard>
         ))}
       </View>
 
@@ -249,13 +252,14 @@ export default function PaymentMethodsScreen() {
       </View>
 
       <View style={styles.formActions}>
-        <TouchableOpacity
-          style={[styles.cancelButton, { borderColor: colors.gray200 }]}
+        <Button
+          title="Annuler"
           onPress={handleCancelAdd}
           disabled={isSubmitting}
-        >
-          <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Annuler</Text>
-        </TouchableOpacity>
+          variant="outline"
+          style={[styles.cancelButton, { borderColor: colors.gray200 }]}
+          textStyle={[styles.cancelButtonText, { color: colors.textSecondary }]}
+        />
         <View style={styles.addButtonContainer}>
           <Button
             title={isSubmitting ? 'Ajout...' : 'Ajouter'}
@@ -272,14 +276,16 @@ export default function PaymentMethodsScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
+          <IconButton
+            onPress={() => router.back()}
+            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel="Retour"
+          />
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Moyens de paiement</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       </SafeAreaView>
     );
@@ -289,9 +295,11 @@ export default function PaymentMethodsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Moyens de paiement</Text>
         <View style={styles.headerSpacer} />
       </View>
@@ -325,14 +333,17 @@ export default function PaymentMethodsScreen() {
               {paymentMethods.map((method, index) => {
                 const providerInfo = getProviderInfo(method.provider);
                 return (
-                  <TouchableOpacity
+                  <SelectCard
                     key={method.id}
                     style={[
                       styles.methodItem,
                       { borderBottomColor: colors.gray100 },
                       index === paymentMethods.length - 1 && styles.methodItemLast,
+                      { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
                     ]}
                     onPress={() => handleSetDefault(method.id)}
+                    selected={false}
+                    accessibilityLabel={`Définir ${providerInfo?.label || ''} par défaut`}
                   >
                     <View style={[styles.methodIcon, { backgroundColor: providerInfo?.color }]}>
                       <Smartphone size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
@@ -350,13 +361,13 @@ export default function PaymentMethodsScreen() {
                         <Text style={[styles.defaultBadgeText, { color: colors.success }]}>Par défaut</Text>
                       </View>
                     )}
-                    <TouchableOpacity
+                    <IconButton
                       onPress={() => handleDelete(method.id)}
+                      icon={<Trash2 size={ICON.size.sm} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+                      accessibilityLabel="Supprimer"
                       style={styles.deleteButton}
-                    >
-                      <Trash2 size={ICON.size.sm} color={colors.error} strokeWidth={ICON.strokeWidth} />
-                    </TouchableOpacity>
-                  </TouchableOpacity>
+                    />
+                  </SelectCard>
                 );
               })}
             </View>
@@ -380,15 +391,15 @@ export default function PaymentMethodsScreen() {
         {isAdding ? (
           renderAddForm()
         ) : (
-          <TouchableOpacity
-            style={[styles.addButton, { borderColor: colors.primary }]}
+          <Button
+            title="Ajouter une méthode de paiement"
             onPress={() => setIsAdding(true)}
-          >
-            <Plus size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.addButtonText, { color: colors.primary }]}>
-              Ajouter une méthode de paiement
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            icon={<Plus size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.addButton, { borderColor: colors.primary }]}
+            textStyle={[styles.addButtonText, { color: colors.primary }]}
+          />
         )}
       </ScrollView>
     </SafeAreaView>

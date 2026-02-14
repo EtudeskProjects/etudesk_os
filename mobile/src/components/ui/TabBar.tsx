@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, COMPONENT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import type { LucideIcon } from 'lucide-react-native';
+import { Tap } from './Tap';
 
 interface Tab {
   key: string;
@@ -28,7 +29,7 @@ export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
         const TabIcon = tab.icon;
 
         return (
-          <TouchableOpacity
+          <Tap
             key={tab.key}
             style={styles.tab}
             onPress={() => onTabChange(tab.key)}
@@ -41,7 +42,7 @@ export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps) {
               </View>
             )}
             {isActive && <View style={[styles.indicator, { backgroundColor: colors.primary }]} />}
-          </TouchableOpacity>
+          </Tap>
         );
       })}
     </View>

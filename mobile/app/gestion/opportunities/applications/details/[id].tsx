@@ -4,11 +4,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Image,
   Keyboard,
   Modal,
@@ -20,11 +17,11 @@ import { WebView } from 'react-native-webview';
 import * as Linking from 'expo-linking';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
-import {
-  ArrowLeft,
-  Clock,
-  CheckCircle2,
-  XCircle,
+	import {
+	  ArrowLeft,
+	  Clock,
+	  CheckCircle2,
+	  XCircle,
   Eye,
   Star,
   User,
@@ -38,16 +35,16 @@ import {
   Save,
   X,
   Trash2,
-  ChevronDown,
-  TrendingUp,
-} from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS } from '../../../../../src/constants/theme';
-import { Button, FooterNav } from '../../../../../src/components/ui';
-import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
-import { useTheme } from '../../../../../src/hooks/useTheme';
-import { useI18n } from '../../../../../src/contexts/I18nContext';
-import { API_CONFIG } from '../../../../../src/constants/config';
-import { applicationService, applicationMessageService } from '../../../../../src/services';
+	  ChevronDown,
+	  TrendingUp,
+	} from 'lucide-react-native';
+	import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS } from '../../../../../src/constants/theme';
+	import { Button, FooterNav, IconButton, Input, LoadingShimmer, RadioRow, ShimmerPlaceholder, TabBar } from '../../../../../src/components/ui';
+	import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
+	import { useTheme } from '../../../../../src/hooks/useTheme';
+	import { useI18n } from '../../../../../src/contexts/I18nContext';
+	import { API_CONFIG } from '../../../../../src/constants/config';
+	import { applicationService, applicationMessageService } from '../../../../../src/services';
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import type { Application, ApplicationMessage, ApplicationStatus } from '../../../../../src/types/models';
 import { APPLICATION_STATUS_LABELS } from '../../../../../src/types/models';
@@ -388,29 +385,8 @@ export default function ApplicationOrgDetailsScreen() {
     }
   };
 
-  const renderTab = (tab: Tab, label: string) => {
-    const isActive = activeTab === tab;
-
-    return (
-      <TouchableOpacity
-        style={[styles.tab, isActive && { borderBottomColor: colors.primary }]}
-        onPress={() => setActiveTab(tab)}
-      >
-        <Text
-          style={[
-            styles.tabText,
-            { color: isActive ? colors.primary : colors.gray500 },
-            isActive && { fontWeight: TYPOGRAPHY.fontWeight.semibold },
-          ]}
-        >
-          {label}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderProfileTab = () => {
-    const talent = application?.talent;
+	  const renderProfileTab = () => {
+	    const talent = application?.talent;
 
     return (
       <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
@@ -479,22 +455,30 @@ export default function ApplicationOrgDetailsScreen() {
           )}
         </View>
 
-        {/* Rating - Évaluation du candidat */}
-        <View style={[styles.section, { borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('applicationDetail.candidateRating')}</Text>
-          <View style={styles.ratingContainer}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => handleUpdateRating(star)}>
-                <Star
-                  size={32}
-                  color={star <= rating ? colors.warning : colors.gray300}
-                  fill={star <= rating ? colors.warning : 'transparent'}
-                  strokeWidth={ICON.strokeWidth}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+	        {/* Rating - Évaluation du candidat */}
+	        <View style={[styles.section, { borderColor: colors.gray200 }]}>
+	          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('applicationDetail.candidateRating')}</Text>
+	          <View style={styles.ratingContainer}>
+	            {[1, 2, 3, 4, 5].map((star) => (
+	              <IconButton
+	                key={star}
+	                onPress={() => handleUpdateRating(star)}
+	                icon={
+	                  <Star
+	                    size={28}
+	                    color={star <= rating ? colors.warning : colors.gray300}
+	                    fill={star <= rating ? colors.warning : 'transparent'}
+	                    strokeWidth={ICON.strokeWidth}
+	                  />
+	                }
+	                accessibilityLabel={`Noter ${star} étoile${star > 1 ? 's' : ''}`}
+	                size="md"
+	                variant="ghost"
+	                style={{ width: 40, height: 40 }}
+	              />
+	            ))}
+	          </View>
+	        </View>
 
         {/* Recommendation */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
@@ -513,7 +497,7 @@ export default function ApplicationOrgDetailsScreen() {
           </View>
           {isLoadingRecommendation ? (
             <View style={styles.recommendationLoading}>
-              <ActivityIndicator size="small" color={colors.primary} />
+              <ShimmerPlaceholder width={24} height={14} variant="bar" />
               <Text style={[styles.recommendationLoadingText, { color: colors.gray500 }]}>
                 {t('applicationDetail.analyzing')}
               </Text>
@@ -549,20 +533,23 @@ export default function ApplicationOrgDetailsScreen() {
             </View>
 
             {/* Status picker */}
-            <TouchableOpacity
-              style={[styles.statusPickerButton, { borderColor: colors.gray300, backgroundColor: colors.gray100 }]}
-              onPress={() => setShowStatusPicker(!showStatusPicker)}
-            >
-              <Text style={[styles.statusPickerButtonText, { color: colors.textPrimary }]}>
-                {t('applicationDetail.changeStatus')}
-              </Text>
-              <ChevronDown
-                size={20}
-                color={colors.gray500}
-                strokeWidth={ICON.strokeWidth}
-                style={{ transform: [{ rotate: showStatusPicker ? '180deg' : '0deg' }] }}
-              />
-            </TouchableOpacity>
+	            <Button
+	              title={t('applicationDetail.changeStatus')}
+	              onPress={() => setShowStatusPicker(!showStatusPicker)}
+	              variant="secondary"
+	              fullWidth
+	              icon={
+	                <ChevronDown
+	                  size={20}
+	                  color={colors.gray500}
+	                  strokeWidth={ICON.strokeWidth}
+	                  style={{ transform: [{ rotate: showStatusPicker ? '180deg' : '0deg' }] }}
+	                />
+	              }
+	              iconPosition="right"
+	              style={[styles.statusPickerButton, { borderColor: colors.gray300, backgroundColor: colors.gray100 }]}
+	              textStyle={[styles.statusPickerButtonText, { color: colors.textPrimary }]}
+	            />
 
             {/* Status options */}
             {showStatusPicker && (
@@ -574,27 +561,27 @@ export default function ApplicationOrgDetailsScreen() {
                     const flow = STATUS_FLOW[status];
                     const Icon = config.icon;
 
-                    return (
-                      <TouchableOpacity
-                        key={status}
-                        style={[styles.statusOption, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}
-                        onPress={() => handleUpdateStatus(status)}
-                      >
-                        <View style={[styles.statusOptionIcon, { backgroundColor: withOpacity(config.color, OPACITY[15]) }]}>
-                          <Icon size={16} color={config.color} strokeWidth={ICON.strokeWidth} />
-                        </View>
-                        <View style={styles.statusOptionInfo}>
-                          <Text style={[styles.statusOptionLabel, { color: colors.textPrimary }]}>
-                            {flow.label}
-                          </Text>
-                          <Text style={[styles.statusOptionDesc, { color: colors.gray500 }]}>
-                            {flow.description}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
-              </View>
+	                    return (
+	                      <RadioRow
+	                        key={status}
+	                        onPress={() => handleUpdateStatus(status)}
+	                        selected={false}
+	                        title={flow.label}
+	                        description={flow.description}
+	                        icon={
+	                          <View style={[styles.statusOptionIcon, { backgroundColor: withOpacity(config.color, OPACITY[15]) }]}>
+	                            <Icon size={16} color={config.color} strokeWidth={ICON.strokeWidth} />
+	                          </View>
+	                        }
+	                        style={[styles.statusOption, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}
+	                        titleStyle={[styles.statusOptionLabel, { color: colors.textPrimary }]}
+	                        descriptionStyle={[styles.statusOptionDesc, { color: colors.gray500 }]}
+	                        iconContainerStyle={{ width: undefined, height: undefined, borderRadius: 0 }}
+	                        radioStyle={{ width: 0, height: 0, borderWidth: 0, opacity: 0 }}
+	                      />
+	                    );
+	                  })}
+	              </View>
             )}
           </View>
         )}
@@ -634,23 +621,22 @@ export default function ApplicationOrgDetailsScreen() {
                     />
                     {cvLoadState === 'loading' && (
                       <View style={[StyleSheet.absoluteFill, styles.cvLoading, { backgroundColor: colors.gray50 }]} pointerEvents="none">
-                        <ActivityIndicator size="large" color={colors.primary} />
-                        <Text style={[styles.cvLoadingText, { color: colors.gray500 }]}>
-                          {t('applicationDetail.loadingCV')}
-                        </Text>
+                        <LoadingShimmer variant="inline" label={t('applicationDetail.loadingCV')} />
                       </View>
                     )}
                   </>
                 )}
               </View>
 
-              <TouchableOpacity
-                style={[styles.cvDownloadButton, { borderColor: colors.primary }]}
-                onPress={handleOpenCV}
-              >
-                <FileText size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.cvDownloadButtonText, { color: colors.primary }]}>{t('applicationDetail.openCV')}</Text>
-              </TouchableOpacity>
+	              <Button
+	                title={t('applicationDetail.openCV')}
+	                onPress={handleOpenCV}
+	                variant="outline"
+	                icon={<FileText size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+	                iconPosition="left"
+	                style={[styles.cvDownloadButton, { borderColor: colors.primary }]}
+	                textStyle={[styles.cvDownloadButtonText, { color: colors.primary }]}
+	              />
             </>
           )}
 
@@ -695,15 +681,15 @@ export default function ApplicationOrgDetailsScreen() {
         )}
 
         {/* Delete application */}
-        <TouchableOpacity
-          style={[styles.deleteButton, { borderColor: colors.error }]}
+        <Button
+          title={t('applicationDetail.deleteApplication')}
           onPress={handleDeleteApplication}
-        >
-          <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.deleteButtonText, { color: colors.error }]}>
-            {t('applicationDetail.deleteApplication')}
-          </Text>
-        </TouchableOpacity>
+          variant="outline"
+          fullWidth
+          icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+          style={[styles.deleteButton, { borderColor: colors.error }]}
+          textStyle={[styles.deleteButtonText, { color: colors.error }]}
+        />
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -712,26 +698,40 @@ export default function ApplicationOrgDetailsScreen() {
 
   const renderNotesTab = () => (
     <View style={styles.tabContent}>
-      <View style={[styles.notesCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-        <View style={styles.notesHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('applicationDetail.internalNotes')}</Text>
-          <TouchableOpacity onPress={() => isEditingNotes ? handleSaveNotes() : setIsEditingNotes(true)}>
-            {isEditingNotes ? (
-              <Save size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-            ) : (
-              <SquarePen size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-            )}
-          </TouchableOpacity>
-        </View>
-        <TextInput
-          style={[styles.notesInput, { backgroundColor: colors.gray50, color: colors.textPrimary }]}
-          placeholder={t('applicationDetail.notesPlaceholder')}
-          placeholderTextColor={colors.gray400}
+        <View style={[styles.notesCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
+          <View style={styles.notesHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('applicationDetail.internalNotes')}</Text>
+            <IconButton
+              onPress={() => isEditingNotes ? handleSaveNotes() : setIsEditingNotes(true)}
+              size="sm"
+              icon={
+                isEditingNotes
+                  ? <Save size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  : <SquarePen size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+              }
+              accessibilityLabel={isEditingNotes ? 'Enregistrer' : 'Modifier'}
+            />
+          </View>
+          <Input
+            placeholder={t('applicationDetail.notesPlaceholder')}
+            placeholderTextColor={colors.gray400}
           value={internalNotes}
           onChangeText={setInternalNotes}
           multiline
           numberOfLines={8}
           editable={isEditingNotes}
+          inputContainerStyle={{
+            backgroundColor: colors.gray50,
+            borderWidth: 0,
+            minHeight: 150,
+            borderRadius: BORDER.radius.sm,
+          }}
+          inputStyle={{
+            color: colors.textPrimary,
+            padding: SPACING.md,
+            fontSize: TYPOGRAPHY.fontSize.md,
+            textAlignVertical: 'top',
+          }}
         />
         <Text style={[styles.notesHint, { color: colors.gray400 }]}>
           {t('applicationDetail.notesHint')}
@@ -744,7 +744,7 @@ export default function ApplicationOrgDetailsScreen() {
     if (isLoadingMessages) {
       return (
         <View style={styles.loadingMessages}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       );
     }
@@ -806,7 +806,7 @@ export default function ApplicationOrgDetailsScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingShimmer variant="fullPage" />
       </SafeAreaView>
     );
   }
@@ -828,9 +828,11 @@ export default function ApplicationOrgDetailsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <View style={styles.headerContent}>
           <View style={[styles.statusBadge, { backgroundColor: withOpacity(statusConfig.color, OPACITY[15]) }]}>
             <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
@@ -843,11 +845,15 @@ export default function ApplicationOrgDetailsScreen() {
       </View>
 
       {/* Tabs */}
-      <View style={[styles.tabsContainer, { borderBottomColor: colors.gray200 }]}>
-        {renderTab('profile', t('applicationDetail.tabProfile'))}
-        {renderTab('messages', t('applicationDetail.tabMessages'))}
-        {renderTab('notes', t('applicationDetail.tabNotes'))}
-      </View>
+	      <TabBar
+	        tabs={[
+	          { key: 'profile', label: t('applicationDetail.tabProfile'), icon: User },
+	          { key: 'messages', label: t('applicationDetail.tabMessages'), icon: MessageCircle },
+	          { key: 'notes', label: t('applicationDetail.tabNotes'), icon: SquarePen },
+	        ]}
+	        activeTab={activeTab}
+	        onTabChange={(key) => setActiveTab(key as Tab)}
+	      />
 
       {/* Content */}
       <KeyboardAvoidingView
@@ -869,31 +875,35 @@ export default function ApplicationOrgDetailsScreen() {
           presentationStyle="fullScreen"
           onRequestClose={() => setShowCVViewer(false)}
         >
-          <SafeAreaView style={[styles.cvModalContainer, { backgroundColor: colors.background }]}>
-            <View style={[styles.cvModalHeader, { borderBottomColor: colors.gray200 }]}>
-              <Text style={[styles.cvModalTitle, { color: colors.textPrimary }]}>CV du candidat</Text>
-              <View style={styles.cvModalHeaderActions}>
-                <TouchableOpacity
-                  onPress={handleOpenCV}
-                  style={[styles.cvModalOpenExternal, { backgroundColor: colors.gray100 }]}
-                >
-                  <Text style={[styles.cvModalOpenExternalText, { color: colors.primary }]}>Ouvrir externe</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setShowCVViewer(false)} style={styles.cvModalCloseButton}>
-                  <X size={24} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-              </View>
-            </View>
+	          <SafeAreaView style={[styles.cvModalContainer, { backgroundColor: colors.background }]}>
+	            <View style={[styles.cvModalHeader, { borderBottomColor: colors.gray200 }]}>
+	              <Text style={[styles.cvModalTitle, { color: colors.textPrimary }]}>CV du candidat</Text>
+	              <View style={styles.cvModalHeaderActions}>
+	                <Button
+	                  title="Ouvrir externe"
+	                  onPress={handleOpenCV}
+	                  variant="secondary"
+	                  size="sm"
+	                  style={[styles.cvModalOpenExternal, { backgroundColor: colors.gray100 }]}
+	                  textStyle={[styles.cvModalOpenExternalText, { color: colors.primary }]}
+	                />
+	                <IconButton
+	                  onPress={() => setShowCVViewer(false)}
+	                  icon={<X size={24} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                  accessibilityLabel="Fermer"
+	                  size="sm"
+	                  variant="ghost"
+	                  style={styles.cvModalCloseButton}
+	                />
+	              </View>
+	            </View>
             <WebView
               source={{ uri: getResumeOpenUrl(application.resume_url) }}
               style={styles.cvModalWebView}
               startInLoadingState={true}
               renderLoading={() => (
                 <View style={styles.cvModalLoading}>
-                  <ActivityIndicator size="large" color={colors.primary} />
-                  <Text style={[styles.cvLoadingText, { color: colors.gray500 }]}>
-                    Chargement du CV...
-                  </Text>
+                  <LoadingShimmer variant="inline" label={t('applicationDetail.loadingCV')} />
                 </View>
               )}
             />

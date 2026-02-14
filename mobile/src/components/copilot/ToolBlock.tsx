@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import {
   Search,
   Database,
@@ -27,6 +27,8 @@ import { useTheme } from '../../hooks/useTheme';
 import { useI18n } from '../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
 import type { ToolSegmentData } from '../../services/copilotService';
+import { Button } from '../ui';
+
 
 interface ToolBlockProps {
   tool: ToolSegmentData;
@@ -337,14 +339,15 @@ export const ToolBlock: React.FC<ToolBlockProps> = ({ tool, onRetry }) => {
 
       {/* Retry button */}
       {isError && onRetry ? (
-        <TouchableOpacity
-          style={[styles.retryButton, { borderColor: colors.error }]}
+        <Button
+          title={t('common.retry')}
           onPress={onRetry}
-          activeOpacity={0.7}
-        >
-          <RefreshCw size={11} color={colors.error} />
-          <Text style={[styles.retryText, { color: colors.error }]}>{t('common.retry')}</Text>
-        </TouchableOpacity>
+          variant="outline"
+          size="sm"
+          icon={<RefreshCw size={11} color={colors.error} />}
+          style={[styles.retryButton, { borderColor: colors.error }]}
+          textStyle={[styles.retryText, { color: colors.error }]}
+        />
       ) : null}
     </View>
   );

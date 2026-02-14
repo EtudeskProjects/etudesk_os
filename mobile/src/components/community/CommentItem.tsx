@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { ActivityComment } from '../../types/activity';
 import { SPACING, TYPOGRAPHY, BORDER, withOpacity, OPACITY } from '../../constants/theme';
-import { useTheme } from '../../hooks/useTheme';
-import { Heart, MoreHorizontal, ChevronDown } from 'lucide-react-native';
-import { Avatar, Timestamp } from './shared';
-import { RichTextContent } from './RichTextContent';
-import { getFullImageUrl } from '../../utils/image';
+	import { useTheme } from '../../hooks/useTheme';
+	import { Heart, MoreHorizontal, ChevronDown } from 'lucide-react-native';
+	import { Avatar, Timestamp } from './shared';
+	import { RichTextContent } from './RichTextContent';
+	import { getFullImageUrl } from '../../utils/image';
+	import { Button, IconButton, ShimmerPlaceholder } from '../ui';
+
 
 // Thread line constants - must match LAYOUT avatar sizes
 const AVATAR_SIZE = 40; // LAYOUT.avatarMd
@@ -125,7 +127,7 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
                             </Text>
                             {isOptimistic ? (
                                 <View style={styles.sendingIndicator}>
-                                    <ActivityIndicator size="small" color={colors.primary} style={styles.spinner} />
+                                    <ShimmerPlaceholder width={24} height={14} variant="bar" style={styles.spinner} />
                                     <Text style={[styles.sendingText, { color: colors.primary }]}>
                                         Envoi...
                                     </Text>
@@ -136,16 +138,18 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
                                     <Timestamp date={comment.created_at} />
                                 </>
                             )}
-                        </View>
-                        {!isOptimistic && (
-                            <TouchableOpacity
-                                onPress={() => onMore?.(comment)}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            >
-                                <MoreHorizontal size={16} color={colors.gray400} />
-                            </TouchableOpacity>
-                        )}
-                    </View>
+	                    </View>
+	                    {!isOptimistic && (
+	                            <IconButton
+	                                onPress={() => onMore?.(comment)}
+	                                icon={<MoreHorizontal size={16} color={colors.gray400} />}
+	                                accessibilityLabel="Options"
+	                                size="sm"
+	                                variant="ghost"
+	                                style={{ width: 28, height: 28 }}
+	                            />
+	                        )}
+	                    </View>
 
                     {/* Comment text */}
                     <View style={styles.textContainer}>
@@ -155,7 +159,7 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
                     {/* Actions: Like + Reply + Edit (hidden for optimistic comments) */}
                     {!isOptimistic && (
                         <View style={styles.actions}>
-                            <TouchableOpacity
+                            <Pressable
                                 style={styles.actionButton}
                                 onPress={handleLike}
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -173,12 +177,12 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
                                         {likeCount}
                                     </Text>
                                 )}
-                            </TouchableOpacity>
+                            </Pressable>
 
                             <Text style={[styles.actionDot, { color: colors.gray300 }]}>·</Text>
 
                             {depth < MAX_DEPTH && (
-                                <TouchableOpacity
+                                <Pressable
                                     style={styles.actionButton}
                                     onPress={() => onReply(comment)}
                                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -186,13 +190,13 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
                                     <Text style={[styles.replyText, { color: colors.gray500 }]}>
                                         Répondre
                                     </Text>
-                                </TouchableOpacity>
+                                </Pressable>
                             )}
 
                             {isAuthor && onEdit && (
                                 <>
                                     <Text style={[styles.actionDot, { color: colors.gray300 }]}>·</Text>
-                                    <TouchableOpacity
+                                    <Pressable
                                         style={styles.actionButton}
                                         onPress={() => onEdit(comment)}
                                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -200,7 +204,7 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
                                         <Text style={[styles.replyText, { color: colors.gray500 }]}>
                                             Modifier
                                         </Text>
-                                    </TouchableOpacity>
+                                    </Pressable>
                                 </>
                             )}
                         </View>
@@ -226,32 +230,35 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
                         />
                     ))}
 
-                    {/* Show more replies button */}
-                    {canShowMoreReplies && (
-                        <TouchableOpacity
-                            style={styles.showMoreButton}
-                            onPress={() => setShowAllReplies(true)}
-                        >
-                            {/* L-connector for show more */}
-                            <View
-                                style={[
-                                    styles.showMoreLConnector,
+	                    {/* Show more replies button */}
+	                    {canShowMoreReplies && (
+	                        <View style={styles.showMoreButton}>
+	                            {/* L-connector for show more */}
+	                            <View
+	                                style={[
+	                                    styles.showMoreLConnector,
                                     {
                                         borderLeftColor: colors.gray300,
                                         borderBottomColor: colors.gray300,
                                         left: -NESTED_INDENT + THREAD_LINE_LEFT - THREAD_LINE_WIDTH / 2,
-                                        width: NESTED_INDENT - THREAD_LINE_LEFT - SPACING.xs,
-                                    }
-                                ]}
-                            />
-                            <ChevronDown size={14} color={colors.primary} />
-                            <Text style={[styles.showMoreText, { color: colors.primary }]}>
-                                Voir {hiddenRepliesCount} autre{hiddenRepliesCount > 1 ? 's' : ''} réponse{hiddenRepliesCount > 1 ? 's' : ''}
-                            </Text>
-                        </TouchableOpacity>
-                    )}
-                </View>
-            )}
+	                                        width: NESTED_INDENT - THREAD_LINE_LEFT - SPACING.xs,
+	                                    }
+	                                ]}
+	                            />
+	                            <Button
+	                                title={`Voir ${hiddenRepliesCount} autre${hiddenRepliesCount > 1 ? 's' : ''} réponse${hiddenRepliesCount > 1 ? 's' : ''}`}
+	                                onPress={() => setShowAllReplies(true)}
+	                                variant="ghost"
+	                                size="sm"
+	                                icon={<ChevronDown size={14} color={colors.primary} />}
+	                                iconPosition="left"
+	                                style={{ paddingHorizontal: 0, height: undefined as any }}
+	                                textStyle={[styles.showMoreText, { color: colors.primary }]}
+	                            />
+	                        </View>
+	                    )}
+	                </View>
+	            )}
         </View>
     );
 });

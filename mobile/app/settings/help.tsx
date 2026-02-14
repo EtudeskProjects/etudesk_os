@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +17,8 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
+import { Button, IconButton, SelectCard } from '../../src/components/ui';
+
 
 type TabType = 'talent' | 'organization';
 
@@ -69,22 +70,26 @@ export default function HelpScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Aide</Text>
         <View style={styles.backButton} />
       </View>
 
       {/* Tabs */}
       <View style={[styles.tabsContainer, { backgroundColor: colors.gray100 }]}>
-        <TouchableOpacity
+        <SelectCard
           style={[
             styles.tab,
+            { borderWidth: 0, borderColor: 'transparent', backgroundColor: 'transparent' },
             activeTab === 'talent' && { backgroundColor: colors.surface },
           ]}
           onPress={() => setActiveTab('talent')}
-          activeOpacity={0.8}
+          selected={false}
+          accessibilityLabel="FAQ talents"
         >
           <User
             size={ICON.size.sm}
@@ -97,15 +102,17 @@ export default function HelpScreen() {
           ]}>
             Talent
           </Text>
-        </TouchableOpacity>
+        </SelectCard>
 
-        <TouchableOpacity
+        <SelectCard
           style={[
             styles.tab,
+            { borderWidth: 0, borderColor: 'transparent', backgroundColor: 'transparent' },
             activeTab === 'organization' && { backgroundColor: colors.surface },
           ]}
           onPress={() => setActiveTab('organization')}
-          activeOpacity={0.8}
+          selected={false}
+          accessibilityLabel="FAQ organisations"
         >
           <Building2
             size={ICON.size.sm}
@@ -118,7 +125,7 @@ export default function HelpScreen() {
           ]}>
             Organisation
           </Text>
-        </TouchableOpacity>
+        </SelectCard>
       </View>
 
       {/* Info Banner */}
@@ -140,15 +147,17 @@ export default function HelpScreen() {
             const isLast = index === faqs.length - 1;
 
             return (
-              <TouchableOpacity
+              <SelectCard
                 key={faq.id}
                 style={[
                   styles.faqItem,
                   { borderBottomColor: colors.gray100 },
                   isLast && styles.faqItemLast,
+                  { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
                 ]}
                 onPress={() => handleQuestionPress(faq.question)}
-                activeOpacity={0.7}
+                selected={false}
+                accessibilityLabel={faq.question}
               >
                 <View style={[styles.faqNumber, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                   <Text style={[styles.faqNumberText, { color: colors.primary }]}>{faq.id}</Text>
@@ -157,24 +166,24 @@ export default function HelpScreen() {
                   {faq.question}
                 </Text>
                 <ChevronRight size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-              </TouchableOpacity>
+              </SelectCard>
             );
           })}
         </View>
 
         {/* Contact Support */}
-        <TouchableOpacity
-          style={[styles.supportButton, { borderColor: colors.primary }]}
+        <Button
+          title="Ma question n'est pas dans la liste"
           onPress={() => router.push({
             pathname: '/(tabs)/assistant',
             params: { focusInput: 'true' },
           })}
-        >
-          <HelpCircle size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.supportButtonText, { color: colors.primary }]}>
-            Ma question n'est pas dans la liste
-          </Text>
-        </TouchableOpacity>
+          variant="outline"
+          fullWidth
+          icon={<HelpCircle size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+          style={[styles.supportButton, { borderColor: colors.primary }]}
+          textStyle={[styles.supportButtonText, { color: colors.primary }]}
+        />
       </ScrollView>
     </SafeAreaView>
   );

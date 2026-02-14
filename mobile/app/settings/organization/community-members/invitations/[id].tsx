@@ -8,11 +8,7 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
   Modal,
-  TextInput,
-  KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -25,7 +21,8 @@ import {
   Inbox,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../../src/constants/theme';
-import { PageLayout, EmptyState } from '../../../../../src/components/ui';
+import { Button, IconButton, PageLayout, EmptyState, Input, KeyboardAwareScrollView, Tap } from '../../../../../src/components/ui';
+import { FormTextArea } from '../../../../../src/components/forms/FormTextArea';
 import { useTheme } from '../../../../../src/hooks/useTheme';
 import { communityService, communityInvitationService, CommunityInvitation } from '../../../../../src/services';
 import { formatRelativeTime } from '../../../../../src/utils/date';
@@ -193,21 +190,27 @@ export default function CommunityInvitationsScreen() {
 
         {item.status === 'PENDING' && (
           <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}
+            <Button
+              title="Renvoyer"
               onPress={() => handleResendInvitation(item)}
-            >
-              <Send size={14} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.actionButtonText, { color: colors.primary }]}>Renvoyer</Text>
-            </TouchableOpacity>
+              size="sm"
+              variant="secondary"
+              icon={<Send size={14} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.actionButton, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}
+              textStyle={[styles.actionButtonText, { color: colors.primary }]}
+              fullWidth
+            />
 
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}
+            <Button
+              title="Annuler"
               onPress={() => handleCancelInvitation(item)}
-            >
-              <Trash2 size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.actionButtonText, { color: colors.error }]}>Annuler</Text>
-            </TouchableOpacity>
+              size="sm"
+              variant="secondary"
+              icon={<Trash2 size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+              style={[styles.actionButton, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}
+              textStyle={[styles.actionButtonText, { color: colors.error }]}
+              fullWidth
+            />
           </View>
         )}
       </View>
@@ -215,12 +218,14 @@ export default function CommunityInvitationsScreen() {
   };
 
   const rightAction = (
-    <TouchableOpacity
-      style={[styles.addButton, { backgroundColor: colors.primary }]}
+    <IconButton
       onPress={() => setShowInviteModal(true)}
-    >
-      <UserPlus size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-    </TouchableOpacity>
+      icon={<UserPlus size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+      accessibilityLabel="Inviter un membre"
+      variant="filled"
+      size="sm"
+      style={[styles.addButton, { backgroundColor: colors.primary }]}
+    />
   );
 
   return (
@@ -256,9 +261,10 @@ export default function CommunityInvitationsScreen() {
         animationType="fade"
         onRequestClose={() => setShowInviteModal(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
+        <KeyboardAwareScrollView
+          style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
+          contentContainerStyle={styles.modalOverlayContent}
+          showsVerticalScrollIndicator={false}
         >
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
@@ -266,74 +272,56 @@ export default function CommunityInvitationsScreen() {
             </Text>
 
             <Text style={[styles.inputLabel, { color: colors.gray600 }]}>Email *</Text>
-            <TextInput
-              style={[
-                styles.textInput,
-                {
-                  backgroundColor: colors.gray50,
-                  color: colors.textPrimary,
-                  borderColor: colors.gray300,
-                },
-              ]}
+            <Input
               placeholder="email@exemple.com"
-              placeholderTextColor={colors.gray400}
               value={inviteEmail}
               onChangeText={setInviteEmail}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
               autoFocus
+              inputContainerStyle={[
+                styles.textInput,
+                { backgroundColor: colors.gray50, borderColor: colors.gray300 },
+              ]}
+              inputStyle={{ color: colors.textPrimary }}
             />
 
             <Text style={[styles.inputLabel, { color: colors.gray600 }]}>
               Message personnalisé (optionnel)
             </Text>
-            <TextInput
-              style={[
-                styles.textInput,
-                styles.messageInput,
-                {
-                  backgroundColor: colors.gray50,
-                  color: colors.textPrimary,
-                  borderColor: colors.gray300,
-                },
-              ]}
+            <FormTextArea
               placeholder="Ajoutez un message personnel..."
-              placeholderTextColor={colors.gray400}
               value={inviteMessage}
               onChangeText={setInviteMessage}
-              multiline
-              numberOfLines={3}
+              rows={3}
+              containerStyle={styles.messageInput}
             />
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: colors.gray300 }]}
+              <Button
+                title="Annuler"
                 onPress={() => setShowInviteModal(false)}
                 disabled={isSendingInvite}
-              >
-                <Text style={[styles.cancelButtonText, { color: colors.textPrimary }]}>
-                  Annuler
-                </Text>
-              </TouchableOpacity>
+                variant="outline"
+                fullWidth
+                style={[styles.modalButton, styles.cancelButton, { borderColor: colors.gray300 }]}
+                textStyle={[styles.cancelButtonText, { color: colors.textPrimary }]}
+              />
 
-              <TouchableOpacity
-                style={[styles.modalButton, styles.inviteButton, { backgroundColor: colors.primary }]}
+              <Button
+                title="Envoyer"
                 onPress={handleSendInvite}
                 disabled={isSendingInvite}
-              >
-                {isSendingInvite ? (
-                  <ActivityIndicator size="small" color={colors.textOnPrimary} />
-                ) : (
-                  <>
-                    <Send size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                    <Text style={[styles.inviteButtonText, { color: colors.textOnPrimary }]}>Envoyer</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                loading={isSendingInvite}
+                fullWidth
+                icon={<Send size={16} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+                style={[styles.modalButton, styles.inviteButton, { backgroundColor: colors.primary }]}
+                textStyle={[styles.inviteButtonText, { color: colors.textOnPrimary }]}
+              />
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardAwareScrollView>
       </Modal>
     </>
   );
@@ -439,10 +427,12 @@ const styles = StyleSheet.create({
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: SPACING.lg,
+  },
+  modalOverlayContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: SPACING.lg,
   },
 
   modalContent: {

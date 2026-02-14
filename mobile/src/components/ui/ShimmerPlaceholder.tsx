@@ -1,19 +1,25 @@
 /**
  * ShimmerPlaceholder
- * Animated loading placeholder with shimmer effect
- * Design: Minimalist, harmonious with the warm earth tones theme
+ * Animated loading placeholder with shimmer effect and biological rhythm
+ * Design: Minimalist, visible in light and dark mode
+ * Rhythm: ~3.5s breathing cycle (organic, non-mechanical)
  */
 
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, ViewStyle, DimensionValue } from 'react-native';
+import { View, StyleSheet, Animated, ViewStyle, DimensionValue, Easing } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { BORDER } from '../../constants/theme';
+import { BORDER, SPACING } from '../../constants/theme';
+
+const BIOLOGICAL_CYCLE_MS = 3500; // ~3.5s breathing rhythm
+const BAR_COUNT = 4;
 
 interface ShimmerPlaceholderProps {
   width?: DimensionValue;
   height?: number;
   borderRadius?: number;
   style?: ViewStyle;
+  /** 'bar' = single bar, 'block' = multiple bars with wave effect */
+  variant?: 'bar' | 'block';
 }
 
 export const ShimmerPlaceholder: React.FC<ShimmerPlaceholderProps> = ({
@@ -21,53 +27,99 @@ export const ShimmerPlaceholder: React.FC<ShimmerPlaceholderProps> = ({
   height = 16,
   borderRadius = BORDER.radius.sm,
   style,
+  variant = 'bar',
 }) => {
   const { colors } = useTheme();
-  const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const anim = useRef(new Animated.Value(0)).current;
+
+  // Theme-aware colors: visible in both light and dark mode
+  const baseColor = colors.gray200;
 
   useEffect(() => {
-    const shimmer = Animated.loop(
+    const breathing = Animated.loop(
       Animated.sequence([
-        Animated.timing(shimmerAnim, {
+        Animated.timing(anim, {
           toValue: 1,
-          duration: 1000,
+          duration: BIOLOGICAL_CYCLE_MS / 2,
           useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease),
         }),
-        Animated.timing(shimmerAnim, {
+        Animated.timing(anim, {
           toValue: 0,
-          duration: 1000,
+          duration: BIOLOGICAL_CYCLE_MS / 2,
           useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease),
         }),
       ])
     );
-    shimmer.start();
-    return () => shimmer.stop();
-  }, [shimmerAnim]);
+    breathing.start();
+    return () => breathing.stop();
+  }, [anim]);
 
-  const opacity = shimmerAnim.interpolate({
+  const opacity = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.3, 0.7],
+    outputRange: [0.35, 0.85],
   });
 
-  return (
+  if (variant === 'bar') {
+    return (
+      <Animated.View
+        style={[
+          styles.shimmer,
+          {
+            width,
+            height,
+            borderRadius,
+            backgroundColor: baseColor,
+            opacity,
+          },
+          style,
+        ]}
+      />
+    );
+  }
+
+  // Block variant: multiple bars with staggered opacity for wave effect
+  const barOpacities = [
+    anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.35, 0.85, 0.35] }),
+    anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.45, 0.35, 0.75] }),
+    anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.55, 0.45, 0.65] }),
+    anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.65, 0.55, 0.55] }),
+  ];
+  const barWidths: DimensionValue[] = ['60%', '90%', '100%', '80%'];
+  const barHeight = Math.max(12, height * 0.7);
+
+  const bars = Array.from({ length: BAR_COUNT }, (_, i) => (
     <Animated.View
+      key={i}
       style={[
-        styles.shimmer,
+        styles.bar,
         {
-          width,
-          height,
+          width: barWidths[i],
+          height: barHeight,
           borderRadius,
-          backgroundColor: colors.gray200,
-          opacity,
+          backgroundColor: baseColor,
+          opacity: barOpacities[i],
         },
-        style,
       ]}
     />
+  ));
+
+  return (
+    <View style={[styles.blockContainer, { width }, style]}>
+      {bars}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   shimmer: {
+    overflow: 'hidden',
+  },
+  blockContainer: {
+    gap: SPACING.sm,
+  },
+  bar: {
     overflow: 'hidden',
   },
 });

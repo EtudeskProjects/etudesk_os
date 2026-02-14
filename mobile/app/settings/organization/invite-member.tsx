@@ -4,12 +4,11 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
   Mail,
@@ -17,13 +16,13 @@ import {
   Shield,
   Users,
   Eye,
-  Check,
   Send,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useOrganizationMembers } from '../../../src/contexts/OrganizationMemberContext';
-import { Input } from '../../../src/components/ui';
+import { Button, IconButton, Input, RadioRow } from '../../../src/components/ui';
+import { ScrollToInputContext } from '../../../src/contexts/ScrollToInputContext';
 import {
   OrganizationRole,
   ORGANIZATION_ROLES,
@@ -61,6 +60,7 @@ const getRoleColor = (role: OrganizationRole, colors: any) => {
 export default function InviteMemberScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { inviteMember } = useOrganizationMembers();
 
   const [email, setEmail] = useState('');
@@ -89,11 +89,13 @@ export default function InviteMemberScreen() {
     }
   };
 
-  const handleEmailFocus = useCallback(() => {
-    if (Platform.OS !== 'android') return;
+  const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 96) => {
+    const sv = scrollViewRef.current;
+    if (!sv) return;
+    const delay = Platform.OS === 'android' ? 120 : 0;
     setTimeout(() => {
-      scrollViewRef.current?.scrollTo({ y: 30, animated: true });
-    }, 120);
+      sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+    }, delay);
   }, []);
   const alerts = useAlert();
 
@@ -108,9 +110,11 @@ export default function InviteMemberScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Inviter un membre</Text>
         <View style={styles.backButton} />
       </View>
@@ -119,29 +123,29 @@ export default function InviteMemberScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-        >
-          {/* Email Input */}
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Adresse email</Text>
-          <Input
-            placeholder="email@exemple.com"
-            value={email}
-            onChangeText={setEmail}
-            onFocus={handleEmailFocus}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoFocus
-            inputContainerStyle={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-            inputStyle={[styles.input, { color: colors.textPrimary, paddingHorizontal: 0 }]}
-            leftIcon={<Mail size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
-          />
+        <ScrollToInputContext.Provider value={scrollToInput}>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          >
+            {/* Email Input */}
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Adresse email</Text>
+            <Input
+              placeholder="email@exemple.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus
+              inputContainerStyle={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+              inputStyle={[styles.input, { color: colors.textPrimary, paddingHorizontal: 0 }]}
+              leftIcon={<Mail size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+            />
 
           {/* Role Selection */}
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Rôle</Text>
@@ -153,56 +157,44 @@ export default function InviteMemberScreen() {
               const isSelected = selectedRole === role;
 
               return (
-                <TouchableOpacity
+                <RadioRow
                   key={role}
+                  title={ORGANIZATION_ROLE_LABELS[role]}
+                  description={ORGANIZATION_ROLE_DESCRIPTIONS[role]}
+                  selected={isSelected}
+                  onPress={() => setSelectedRole(role)}
+                  icon={<RIcon size={ICON.size.sm} color={rColor} strokeWidth={ICON.strokeWidth} />}
                   style={[
                     styles.roleOption,
                     { borderBottomColor: colors.gray100 },
                     isLast && styles.roleOptionLast,
                   ]}
-                  onPress={() => setSelectedRole(role)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.roleOptionIcon, { backgroundColor: withOpacity(rColor, OPACITY[15]) }]}>
-                    <RIcon size={ICON.size.sm} color={rColor} strokeWidth={ICON.strokeWidth} />
-                  </View>
-                  <View style={styles.roleOptionInfo}>
-                    <Text style={[styles.roleOptionTitle, { color: colors.textPrimary }]}>
-                      {ORGANIZATION_ROLE_LABELS[role]}
-                    </Text>
-                    <Text style={[styles.roleOptionDescription, { color: colors.textSecondary }]}>
-                      {ORGANIZATION_ROLE_DESCRIPTIONS[role]}
-                    </Text>
-                  </View>
-                  <View style={[
-                    styles.radioButton,
-                    { borderColor: isSelected ? colors.primary : colors.gray300 },
-                    isSelected && { backgroundColor: colors.primary },
-                  ]}>
-                    {isSelected && <Check size={14} color={colors.textOnPrimary} strokeWidth={3} />}
-                  </View>
-                </TouchableOpacity>
+                  iconContainerStyle={[styles.roleOptionIcon, { backgroundColor: withOpacity(rColor, OPACITY[15]) }]}
+                  titleStyle={styles.roleOptionTitle}
+                  descriptionStyle={styles.roleOptionDescription}
+                  radioStyle={styles.radioButton}
+                />
               );
             })}
           </View>
-        </ScrollView>
+          </ScrollView>
 
-        {/* Send Button */}
-        <View style={[styles.footer, { backgroundColor: colors.background }]}>
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              { backgroundColor: isValidEmail(email) ? colors.primary : colors.gray300 },
-            ]}
-            onPress={handleSend}
-            disabled={!isValidEmail(email) || isSending}
-          >
-            <Send size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.sendButtonText, { color: colors.textOnPrimary }]}>
-              {isSending ? 'Envoi...' : 'Envoyer l\'invitation'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+          {/* Send Button */}
+          <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
+            <Button
+              title={isSending ? 'Envoi...' : "Envoyer l'invitation"}
+              onPress={handleSend}
+              disabled={!isValidEmail(email) || isSending}
+              fullWidth
+              icon={<Send size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+              style={[
+                styles.sendButton,
+                { backgroundColor: isValidEmail(email) ? colors.primary : colors.gray300 },
+              ]}
+              textStyle={[styles.sendButtonText, { color: colors.textOnPrimary }]}
+            />
+          </View>
+        </ScrollToInputContext.Provider>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

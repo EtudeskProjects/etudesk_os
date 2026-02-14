@@ -85,7 +85,7 @@ class CommunityInvitationService {
     communityId: string,
     invitations: SendInvitationData[]
   ): Promise<ApiResponse<SendInvitationsResult>> {
-    return api.post(`/api/communities/${communityId}/invitations`, { invitations });
+    return api.post(`/api/community-invitations/${communityId}/invitations`, { invitations });
   }
 
   /**
@@ -99,7 +99,7 @@ class CommunityInvitationService {
     count: number;
     statusCounts: Record<string, number>;
   }>> {
-    return api.get(`/api/communities/${communityId}/invitations`, filters);
+    return api.get(`/api/community-invitations/${communityId}/invitations`, filters);
   }
 
   /**
@@ -109,7 +109,7 @@ class CommunityInvitationService {
     communityId: string,
     invitationId: string
   ): Promise<ApiResponse<{ success: boolean; message: string }>> {
-    return api.delete(`/api/communities/${communityId}/invitations/${invitationId}`);
+    return api.delete(`/api/community-invitations/${communityId}/invitations/${invitationId}`);
   }
 
   /**
@@ -119,7 +119,7 @@ class CommunityInvitationService {
     communityId: string,
     invitationId: string
   ): Promise<ApiResponse<{ success: boolean; message: string }>> {
-    return api.post(`/api/communities/${communityId}/invitations/${invitationId}/resend`, {});
+    return api.post(`/api/community-invitations/${communityId}/invitations/${invitationId}/resend`, {});
   }
 
   // USER METHODS (for invitees)

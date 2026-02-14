@@ -4,10 +4,8 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   Keyboard,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -29,7 +27,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
-import { FooterNav } from '../../../src/components/ui';
+import { Button, FooterNav, IconButton, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../src/components/chat';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { spaceBookingService, spaceBookingMessageService } from '../../../src/services';
@@ -196,12 +194,15 @@ export default function ReservationDetailsScreen() {
     const Icon = icon;
 
     return (
-      <TouchableOpacity
+      <SelectCard
         style={[
           styles.tab,
           { borderBottomColor: isActive ? colors.primary : 'transparent' },
+          { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
         ]}
         onPress={() => setActiveTab(tab)}
+        selected={false}
+        accessibilityLabel={label}
       >
         <Icon
           size={18}
@@ -217,7 +218,7 @@ export default function ReservationDetailsScreen() {
         >
           {label}
         </Text>
-      </TouchableOpacity>
+      </SelectCard>
     );
   };
 
@@ -271,14 +272,14 @@ export default function ReservationDetailsScreen() {
             )}
           </View>
 
-          <TouchableOpacity
-            style={[styles.viewButton, { borderColor: colors.primary }]}
+          <Button
+            title="Voir l'espace"
             onPress={() => router.push(`/details/space/${space?.id}`)}
-          >
-            <Text style={[styles.viewButtonText, { color: colors.primary }]}>
-              Voir l'espace
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            style={[styles.viewButton, { borderColor: colors.primary, backgroundColor: 'transparent' }]}
+            textStyle={[styles.viewButtonText, { color: colors.primary }]}
+          />
         </View>
 
         {/* Date & Time */}
@@ -351,15 +352,15 @@ export default function ReservationDetailsScreen() {
 
         {/* Actions */}
         {['PENDING', 'CONFIRMED'].includes(booking.status) && (
-          <TouchableOpacity
-            style={[styles.cancelButton, { borderColor: colors.error }]}
+          <Button
+            title="Annuler la reservation"
             onPress={handleCancelBooking}
-          >
-            <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.cancelText, { color: colors.error }]}>
-              Annuler la reservation
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            fullWidth
+            icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.cancelButton, { borderColor: colors.error }]}
+            textStyle={[styles.cancelText, { color: colors.error }]}
+          />
         )}
 
         <View style={styles.bottomSpacer} />
@@ -371,7 +372,7 @@ export default function ReservationDetailsScreen() {
     if (isLoadingMessages) {
       return (
         <View style={styles.loadingMessages}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       );
     }
@@ -442,7 +443,7 @@ export default function ReservationDetailsScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <LoadingShimmer variant="fullPage" />
       </SafeAreaView>
     );
   }
@@ -461,9 +462,11 @@ export default function ReservationDetailsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           {booking.space?.name || 'Reservation'}
         </Text>

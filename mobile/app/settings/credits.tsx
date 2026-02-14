@@ -1,19 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { ArrowLeft, Coins, CreditCard, RefreshCcw, Receipt } from 'lucide-react-native';
 
-import { Input, Button } from '../../src/components/ui';
+import { IconButton, Input, Button, LoadingShimmer } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useSpace } from '../../src/contexts/SpaceContext';
 import { billingService, BillingScope, BillingBalance, BillingInvoice } from '../../src/services/billingService';
@@ -157,15 +156,18 @@ export default function CreditsScreen() {
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-            <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Crédits & Facturation</Text>
-          <View style={styles.headerButton} />
-        </View>
+	        <View style={styles.header}>
+	          <IconButton
+	            onPress={() => router.back()}
+	            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	            accessibilityLabel="Retour"
+	            style={styles.headerButton}
+	          />
+	          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Crédits & Facturation</Text>
+	          <View style={styles.headerButton} />
+	        </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       </SafeAreaView>
     );
@@ -173,15 +175,21 @@ export default function CreditsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Crédits & Facturation</Text>
-        <TouchableOpacity onPress={handleRefresh} style={styles.headerButton}>
-          <RefreshCcw size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-      </View>
+	      <View style={styles.header}>
+	        <IconButton
+	          onPress={() => router.back()}
+	          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	          accessibilityLabel="Retour"
+	          style={styles.headerButton}
+	        />
+	        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Crédits & Facturation</Text>
+	        <IconButton
+	          onPress={handleRefresh}
+	          icon={<RefreshCcw size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	          accessibilityLabel="Rafraichir"
+	          style={styles.headerButton}
+	        />
+	      </View>
 
       <ScrollView
         style={styles.scrollView}
@@ -221,18 +229,24 @@ export default function CreditsScreen() {
             keyboardType="number-pad"
           />
 
-          <View style={styles.quickPackRow}>
-            {quickPacks.map((amount) => (
-              <TouchableOpacity
-                key={amount}
-                style={[styles.quickPack, { borderColor: colors.borderColor, backgroundColor: colors.gray100 }]}
-                onPress={() => setAmountInput(String(amount))}
-                disabled={submitting}
-              >
-                <Text style={[styles.quickPackText, { color: colors.textPrimary }]}>{formatFcfa(amount)} FCFA</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+	        <View style={styles.quickPackRow}>
+	          {quickPacks.map((amount) => (
+	              <Pressable
+	                key={amount}
+	                style={[
+	                  styles.quickPack,
+	                  { borderColor: colors.borderColor, backgroundColor: colors.gray100 },
+	                  submitting && { opacity: 0.6 },
+	                ]}
+	                onPress={() => setAmountInput(String(amount))}
+	                disabled={submitting}
+	                accessibilityRole="button"
+	                accessibilityLabel={`Choisir ${formatFcfa(amount)} FCFA`}
+	              >
+	                <Text style={[styles.quickPackText, { color: colors.textPrimary }]}>{formatFcfa(amount)} FCFA</Text>
+	              </Pressable>
+	            ))}
+	        </View>
 
           <Button
             title={submitting ? 'Initialisation...' : 'Payer maintenant'}

@@ -9,7 +9,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from './logService';
-import { API_CONFIG, STORAGE_KEYS } from '../constants/config';
+import { API_CONFIG, STORAGE_KEYS, getApiUrl } from '../constants/config';
 import i18n from '../i18n';
 
 const LOG_SOURCE = 'OTP';
@@ -18,15 +18,12 @@ const LOG_SOURCE = 'OTP';
 const OTP_EXPIRY_MINUTES = 10;
 const OTP_LENGTH = 6;
 
-// API base URL
-const API_BASE_URL = API_CONFIG.BASE_URL;
-
 /**
  * Send OTP code to email address via backend API
  */
 async function sendOTP(email: string): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/request-otp`, {
+    const response = await fetch(getApiUrl('/auth/request-otp'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -58,7 +55,7 @@ async function sendOTP(email: string): Promise<void> {
  */
 async function sendWhatsAppOTP(phone: string): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/request-whatsapp-otp`, {
+    const response = await fetch(getApiUrl('/auth/request-whatsapp-otp'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -95,7 +92,7 @@ interface VerifyOTPResult {
  */
 async function verifyOTP(email: string, code: string): Promise<VerifyOTPResult> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/verify-otp`, {
+    const response = await fetch(getApiUrl('/auth/verify-otp'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -144,7 +141,7 @@ async function verifyOTP(email: string, code: string): Promise<VerifyOTPResult> 
  */
 async function verifyWhatsAppOTP(phone: string, code: string): Promise<VerifyOTPResult> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/verify-whatsapp-otp`, {
+    const response = await fetch(getApiUrl('/auth/verify-whatsapp-otp'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -247,7 +244,7 @@ async function logout(allDevices: boolean = false): Promise<void> {
 
     if (accessToken) {
       // Call backend logout endpoint
-      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+      await fetch(getApiUrl('/auth/logout'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -288,7 +285,7 @@ async function getCurrentUser(): Promise<any | null> {
     const accessToken = await getAccessToken();
     if (!accessToken) return null;
 
-    let response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    let response = await fetch(getApiUrl('/auth/me'), {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -300,7 +297,7 @@ async function getCurrentUser(): Promise<any | null> {
       const refreshToken = await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
       if (refreshToken) {
         logger.info(LOG_SOURCE, 'Token expired, attempting refresh');
-        const refreshResponse = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+        const refreshResponse = await fetch(getApiUrl('/auth/refresh'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refreshToken }),
@@ -314,7 +311,7 @@ async function getCurrentUser(): Promise<any | null> {
             logger.info(LOG_SOURCE, 'Token refreshed in getCurrentUser');
 
             // Retry with new token
-            response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+            response = await fetch(getApiUrl('/auth/me'), {
               method: 'GET',
               headers: {
                 'Authorization': `Bearer ${refreshData.tokens.accessToken}`,

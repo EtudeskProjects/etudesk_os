@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Platform, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, Platform, Modal } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -28,7 +28,7 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity, COMPON
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
-import { Button, ImageSlider, FooterNav } from '../../../src/components/ui';
+	import { Button, IconButton, ImageSlider, FooterNav, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { formatRelativeTime, formatDeadline, formatDate } from '../../../src/utils/date';
 import { getFullImageUrl } from '../../../src/utils/image';
 import { getFileType, getFullFileUrl } from '../../../src/utils/file';
@@ -238,7 +238,7 @@ export default function OpportunityDetailScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       </SafeAreaView>
     );
@@ -259,30 +259,42 @@ export default function OpportunityDetailScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      {/* Header with floating CTA */}
-      <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-        <TouchableOpacity
-          style={[styles.headerButton, { backgroundColor: colors.gray100 }]}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={[styles.headerButton, { backgroundColor: colors.gray100 }]}>
-            <Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.headerButton, { backgroundColor: isBookmarked ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100 }]}
-            onPress={toggleBookmark}
-          >
-            {isBookmarked ? (
-              <BookmarkCheck size={ICON.size.md} color={colors.primary} fill={colors.primary} strokeWidth={ICON.strokeWidth} />
-            ) : (
-              <Bookmark size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
+	      {/* Header with floating CTA */}
+	      <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+	        <IconButton
+	          onPress={() => router.back()}
+	          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	          accessibilityLabel="Retour"
+	          variant="filled"
+	          style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
+	        />
+	        <View style={styles.headerActions}>
+	          <IconButton
+	            onPress={() => {}}
+	            icon={<Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	            accessibilityLabel="Partager"
+	            variant="filled"
+	            disabled
+	            style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
+	          />
+	          <IconButton
+	            onPress={toggleBookmark}
+	            icon={
+	              isBookmarked ? (
+	                <BookmarkCheck size={ICON.size.md} color={colors.primary} fill={colors.primary} strokeWidth={ICON.strokeWidth} />
+	              ) : (
+	                <Bookmark size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
+	              )
+	            }
+	            accessibilityLabel={isBookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+	            variant="filled"
+	            style={[
+	              styles.headerButton,
+	              { backgroundColor: isBookmarked ? withOpacity(colors.primary, OPACITY[15]) : colors.gray100, width: 44, height: 44 },
+	            ]}
+	          />
+	        </View>
+	      </View>
 
       <ScrollView
         style={styles.scrollView}
@@ -300,9 +312,11 @@ export default function OpportunityDetailScreen() {
         <View style={styles.contentPadded}>
           {/* Organization Card */}
           {opportunity.organization?.id && (
-            <TouchableOpacity
+            <SelectCard
               style={[styles.orgCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
               onPress={() => router.push(`/details/organization/${opportunity.organization!.id}`)}
+              selected={false}
+              accessibilityLabel={`Voir ${opportunity.organization.name}`}
             >
               {opportunity.organization.logo_url ? (
                 <Image source={{ uri: opportunity.organization.logo_url }} style={styles.orgLogo} />
@@ -338,7 +352,7 @@ export default function OpportunityDetailScreen() {
                 </View>
               </View>
               <ChevronRight size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
+            </SelectCard>
           )}
 
           {/* Title */}
@@ -348,19 +362,21 @@ export default function OpportunityDetailScreen() {
 
           {/* Slug - Click to copy */}
           {opportunity.slug && (
-            <TouchableOpacity
-              style={styles.slugContainer}
+            <SelectCard
+              style={[styles.slugContainer, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
               onPress={async () => {
                 const url = `https://etudesk.com/public/opportunities/${opportunity.slug}`;
                 await Clipboard.setStringAsync(url);
                 void alerts.alert(t('common.copied'), t('opportunity.linkCopied'));
               }}
+              selected={false}
+              accessibilityLabel="Copier le lien"
             >
               <Link size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.slugText, { color: colors.gray400 }]}>
                 {opportunity.slug}
               </Text>
-            </TouchableOpacity>
+            </SelectCard>
           )}
 
           {/* Tags */}
@@ -531,12 +547,14 @@ export default function OpportunityDetailScreen() {
                           )}
                         </View>
                       </View>
-                      <TouchableOpacity
-                        onPress={() => handleDownloadAttachment(attachment)}
-                        style={[styles.attachmentDownloadButton, { borderColor: colors.primary }]}
-                      >
-                        <Download size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                      </TouchableOpacity>
+	                      <IconButton
+	                        onPress={() => handleDownloadAttachment(attachment)}
+	                        icon={<Download size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+	                        accessibilityLabel="Télécharger"
+	                        variant="outline"
+	                        size="sm"
+	                        style={[styles.attachmentDownloadButton, { borderColor: colors.primary }]}
+	                      />
                     </View>
 
                     {/* Content based on file type */}
@@ -562,10 +580,7 @@ export default function OpportunityDetailScreen() {
                           startInLoadingState={true}
                           renderLoading={() => (
                             <View style={styles.attachmentLoading}>
-                              <ActivityIndicator size="large" color={colors.primary} />
-                              <Text style={[styles.attachmentLoadingText, { color: colors.textSecondary }]}>
-                                {t('opportunity.loadingPdf')}
-                              </Text>
+                              <LoadingShimmer variant="inline" label={t('opportunity.loadingPdf')} />
                             </View>
                           )}
                         />
@@ -612,10 +627,7 @@ export default function OpportunityDetailScreen() {
                           startInLoadingState={true}
                           renderLoading={() => (
                             <View style={styles.attachmentLoading}>
-                              <ActivityIndicator size="large" color={colors.primary} />
-                              <Text style={[styles.attachmentLoadingText, { color: colors.textSecondary }]}>
-                                {t('opportunity.loadingVideo')}
-                              </Text>
+                              <LoadingShimmer variant="inline" label={t('opportunity.loadingVideo')} />
                             </View>
                           )}
                         />
@@ -687,20 +699,21 @@ export default function OpportunityDetailScreen() {
               <Text style={[styles.attachmentModalTitle, { color: colors.textPrimary }]} numberOfLines={1}>
                 {selectedAttachment.name}
               </Text>
-              <View style={styles.attachmentModalHeaderActions}>
-                <TouchableOpacity
-                  onPress={() => handleDownloadAttachment(selectedAttachment)}
-                  style={[styles.attachmentModalDownloadButton, { backgroundColor: colors.gray100 }]}
-                >
-                  <Download size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setShowAttachmentModal(false)}
-                  style={styles.attachmentModalCloseButton}
-                >
-                  <X size={24} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-              </View>
+	              <View style={styles.attachmentModalHeaderActions}>
+	                <IconButton
+	                  onPress={() => handleDownloadAttachment(selectedAttachment)}
+	                  icon={<Download size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+	                  accessibilityLabel="Télécharger"
+	                  variant="filled"
+	                  style={[styles.attachmentModalDownloadButton, { backgroundColor: colors.gray100 }]}
+	                />
+	                <IconButton
+	                  onPress={() => setShowAttachmentModal(false)}
+	                  icon={<X size={24} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                  accessibilityLabel="Fermer"
+	                  style={styles.attachmentModalCloseButton}
+	                />
+	              </View>
             </View>
             {(() => {
               const fileType = getFileType(selectedAttachment.url, selectedAttachment.type);
@@ -718,10 +731,7 @@ export default function OpportunityDetailScreen() {
                     startInLoadingState={true}
                     renderLoading={() => (
                       <View style={styles.attachmentModalLoading}>
-                        <ActivityIndicator size="large" color={colors.primary} />
-                        <Text style={[styles.attachmentModalLoadingText, { color: colors.textSecondary }]}>
-                          {t('opportunity.loadingPdf')}
-                        </Text>
+                        <LoadingShimmer variant="inline" label={t('opportunity.loadingPdf')} />
                       </View>
                     )}
                   />
@@ -768,10 +778,7 @@ export default function OpportunityDetailScreen() {
                     startInLoadingState={true}
                     renderLoading={() => (
                       <View style={styles.attachmentModalLoading}>
-                        <ActivityIndicator size="large" color={colors.primary} />
-                        <Text style={[styles.attachmentModalLoadingText, { color: colors.textSecondary }]}>
-                          {t('opportunity.loadingVideo')}
-                        </Text>
+                        <LoadingShimmer variant="inline" label={t('opportunity.loadingVideo')} />
                       </View>
                     )}
                   />

@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  FlatList,
   Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -25,7 +25,7 @@ import {
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS, ThemeColors, COMPONENT } from '../../../../src/constants/theme';
-import { PageLayout, EmptyState } from '../../../../src/components/ui';
+import { Button, Chip, IconButton, PageLayout, EmptyState, SelectCard } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useI18n } from '../../../../src/contexts/I18nContext';
 import { applicationService, opportunityService } from '../../../../src/services';
@@ -251,10 +251,10 @@ export default function OpportunityApplicationsScreen() {
     }
 
     return (
-      <TouchableOpacity
+      <SelectCard
+        accessibilityLabel="Voir la candidature"
         style={[styles.applicationCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
         onPress={() => router.push(`/gestion/opportunities/applications/details/${item.id}`)}
-        activeOpacity={0.7}
       >
         <View style={styles.cardHeader}>
           {(talent?.profile_picture_url || talent?.avatar_url) ? (
@@ -327,23 +327,27 @@ export default function OpportunityApplicationsScreen() {
 
         {item.status === 'SUBMITTED' && (
           <View style={[styles.quickActions, { borderTopColor: colors.borderColor }]}>
-            <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: withOpacity(colors.info, OPACITY[15]) }]}
+            <Button
+              title="Examiner"
+              size="sm"
+              variant="secondary"
               onPress={() => handleUpdateStatus(item.id, 'IN_REVIEW')}
-            >
-              <Eye size={14} color={colors.info} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.quickActionText, { color: colors.info }]}>Examiner</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.quickAction, { backgroundColor: withOpacity(colors.error, OPACITY[15]) }]}
+              style={{ flex: 1, backgroundColor: withOpacity(colors.info, OPACITY[15]) }}
+              textStyle={{ color: colors.info }}
+              icon={<Eye size={14} color={colors.info} strokeWidth={ICON.strokeWidth} />}
+            />
+            <Button
+              title="Refuser"
+              size="sm"
+              variant="secondary"
               onPress={() => handleUpdateStatus(item.id, 'REJECTED')}
-            >
-              <XCircle size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.quickActionText, { color: colors.error }]}>Refuser</Text>
-            </TouchableOpacity>
+              style={{ flex: 1, backgroundColor: withOpacity(colors.error, OPACITY[15]) }}
+              textStyle={{ color: colors.error }}
+              icon={<XCircle size={14} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            />
           </View>
         )}
-      </TouchableOpacity>
+      </SelectCard>
     );
   };
 
@@ -365,24 +369,21 @@ export default function OpportunityApplicationsScreen() {
         {filterChips.map((chip) => {
           const isActive = filter === chip.key;
           return (
-            <TouchableOpacity
+            <Chip
               key={chip.key}
+              label={`${chip.label} (${chip.count})`}
+              selected={isActive}
+              onPress={() => setFilter(chip.key)}
               style={[
                 styles.filterChip,
                 { backgroundColor: colors.gray100, borderColor: colors.gray200 },
                 isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
               ]}
-              onPress={() => setFilter(chip.key)}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  { color: isActive ? colors.textOnPrimary : colors.textPrimary },
-                ]}
-              >
-                {chip.label} ({chip.count})
-              </Text>
-            </TouchableOpacity>
+              textStyle={[
+                styles.filterChipText,
+                { color: isActive ? colors.textOnPrimary : colors.textPrimary },
+              ]}
+            />
           );
         })}
       </ScrollView>
@@ -391,15 +392,21 @@ export default function OpportunityApplicationsScreen() {
 
   const rightAction = (
     <View style={styles.headerActions}>
-      <TouchableOpacity onPress={handleEdit} style={styles.headerActionButton}>
-        <Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={handleDelete} style={styles.headerActionButton}>
-        <Trash2 size={20} color={colors.error} strokeWidth={ICON.strokeWidth} />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={handleExportCsv} style={styles.headerActionButton}>
-        <Download size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-      </TouchableOpacity>
+      <IconButton
+        onPress={handleEdit}
+        icon={<Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+        accessibilityLabel="Modifier"
+      />
+      <IconButton
+        onPress={handleDelete}
+        icon={<Trash2 size={20} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+        accessibilityLabel="Supprimer"
+      />
+      <IconButton
+        onPress={handleExportCsv}
+        icon={<Download size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+        accessibilityLabel="Exporter CSV"
+      />
     </View>
   );
 
@@ -415,20 +422,26 @@ export default function OpportunityApplicationsScreen() {
       isLoading={isLoading}
       headerContent={headerContent}
       rightAction={rightAction}
+      useScrollView={false}
     >
-      {filteredApplications.length === 0 ? (
-        <EmptyState
-          icon={Inbox}
-          title={filter === 'all' ? 'Aucune candidature' : 'Aucun résultat'}
-          subtitle={emptySubtitle}
-        />
-      ) : (
-        filteredApplications.map((item) => (
-          <View key={item.id} style={styles.cardWrapper}>
+      <FlatList
+        data={filteredApplications}
+        keyExtractor={(a) => a.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => (
+          <View style={styles.cardWrapper}>
             {renderApplicationItem({ item })}
           </View>
-        ))
-      )}
+        )}
+        ListEmptyComponent={
+          <EmptyState
+            icon={Inbox}
+            title={filter === 'all' ? 'Aucune candidature' : 'Aucun résultat'}
+            subtitle={emptySubtitle}
+          />
+        }
+      />
     </PageLayout>
   );
 }
@@ -460,14 +473,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.xs,
   },
-  headerActionButton: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   cardWrapper: {
     marginBottom: SPACING.md,
+  },
+  listContent: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xxl,
   },
 
   applicationCard: {
@@ -599,20 +611,5 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
     borderTopWidth: BORDER.width.thin,
     borderTopColor: 'transparent',
-  },
-
-  quickAction: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER.radius.sm,
-  },
-
-  quickActionText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 });

@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { api, ApiResponse } from './api';
+import { LIGHT_COLORS } from '../constants/theme';
 
 export type NotificationType = 'OPPORTUNITY' | 'APPLICATION' | 'MESSAGE' | 'SYSTEM' | 'SPACE' | 'REMINDER';
 
@@ -81,7 +82,7 @@ class NotificationService {
           name: 'default',
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#3B2416', // Primary brand color
+          lightColor: LIGHT_COLORS.primary,
         });
       }
 

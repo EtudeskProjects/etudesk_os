@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Chargement...",
+    "thinking": "Réfléchit…",
     "error": "Erreur",
     "success": "Succès",
     "cancel": "Annuler",

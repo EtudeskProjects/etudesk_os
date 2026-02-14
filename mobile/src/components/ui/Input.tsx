@@ -1,18 +1,21 @@
-import React, { useState, forwardRef } from 'react';
+import React, { useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import {
   View,
   TextInput,
   Text,
   StyleSheet,
+  StyleProp,
   ViewStyle,
   TextStyle,
   TextInputProps,
-  TouchableOpacity,
+  findNodeHandle,
 } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, LAYOUT, BORDER, ICON } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../contexts/I18nContext';
+import { useScrollToInput } from '../../contexts/ScrollToInputContext';
+import { Tap } from './Tap';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -20,9 +23,9 @@ interface InputProps extends TextInputProps {
   hint?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  containerStyle?: ViewStyle;
-  inputContainerStyle?: ViewStyle;
-  inputStyle?: TextStyle;
+  containerStyle?: StyleProp<ViewStyle>;
+  inputContainerStyle?: StyleProp<ViewStyle>;
+  inputStyle?: StyleProp<TextStyle>;
   /** Accessibility label - defaults to label if not provided */
   accessibilityLabel?: string;
   /** Accessibility hint */
@@ -48,10 +51,20 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
 }: InputProps, ref) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const scrollToInput = useScrollToInput();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
   const isPassword = secureTextEntry !== undefined;
+  const innerRef = useRef<TextInput>(null);
+
+  useImperativeHandle(ref, () => innerRef.current as TextInput, []);
+
+  const accessibilityHintResolved = useMemo(() => {
+    if (accessibilityHint) return accessibilityHint;
+    if (error) return t('input.errorHint', { error: error || '' });
+    return hint;
+  }, [accessibilityHint, error, hint, t]);
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -76,7 +89,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
         {leftIcon && <View style={styles.iconLeft}>{leftIcon}</View>}
 
         <TextInput
-          ref={ref}
+          ref={innerRef}
           style={[
             styles.input,
             { color: colors.textPrimary },
@@ -89,6 +102,8 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
           placeholderTextColor={colors.gray500}
           onFocus={(e) => {
             setIsFocused(true);
+            const node = findNodeHandle(innerRef.current);
+            if (node && scrollToInput) scrollToInput(node);
             onFocusProp?.(e);
           }}
           onBlur={(e) => {
@@ -98,7 +113,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
           secureTextEntry={isPassword && !isPasswordVisible}
           accessible={true}
           accessibilityLabel={accessibilityLabel || label}
-          accessibilityHint={accessibilityHint || (error ? t('input.errorHint', { error: error || '' }) : hint)}
+          accessibilityHint={accessibilityHintResolved}
           accessibilityState={{
             disabled: props.editable === false ? true : undefined,
           }}
@@ -106,7 +121,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
         />
 
         {isPassword && (
-          <TouchableOpacity
+          <Tap
             style={styles.iconRight}
             onPress={() => setIsPasswordVisible(!isPasswordVisible)}
             accessible={true}
@@ -114,6 +129,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
             accessibilityLabel={isPasswordVisible ? t('input.hidePassword') : t('input.showPassword')}
             accessibilityHint={t('input.togglePasswordHint')}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.7}
           >
             {isPasswordVisible ? (
               <EyeOff
@@ -128,7 +144,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
                 strokeWidth={ICON.strokeWidth}
               />
             )}
-          </TouchableOpacity>
+          </Tap>
         )}
 
         {rightIcon && !isPassword && (

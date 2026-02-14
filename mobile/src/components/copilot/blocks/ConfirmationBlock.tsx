@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import {
   Zap,
   CheckCircle2,
@@ -23,6 +23,8 @@ import {
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 import { copilotService } from '../../../services/copilotService';
+import { Button, ShimmerPlaceholder } from '../../ui';
+
 
 export interface ConfirmationData {
   action: string;
@@ -330,26 +332,22 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
       {/* Idle: show buttons */}
       {state === 'idle' && interactive && (
         <View style={styles.buttonsRow}>
-          <TouchableOpacity
-            style={[styles.cancelButton, { borderColor: colors.borderColor }]}
+          <Button
+            title={cancelLabel}
             onPress={handleCancel}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.cancelText, { color: colors.textSecondary }]}>
-              {cancelLabel}
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+            style={[styles.cancelButton, { borderColor: colors.borderColor }]}
+            textStyle={[styles.cancelText, { color: colors.textSecondary }]}
+          />
 
-          <TouchableOpacity
-            style={[styles.confirmButton, { backgroundColor: colors.primary }]}
+          <Button
+            title={confirmLabel}
             onPress={handleConfirm}
-            activeOpacity={0.7}
-          >
-            <CheckCircle2 size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.confirmText, { color: colors.textOnPrimary }]}>
-              {confirmLabel}
-            </Text>
-          </TouchableOpacity>
+            variant="primary"
+            icon={<CheckCircle2 size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.confirmButton, { backgroundColor: colors.primary }]}
+            textStyle={[styles.confirmText, { color: colors.textOnPrimary }]}
+          />
         </View>
       )}
 
@@ -363,7 +361,7 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
       {/* Loading */}
       {state === 'loading' && (
         <View style={styles.statusRow}>
-          <ActivityIndicator size="small" color={colors.primary} />
+          <ShimmerPlaceholder width={24} height={14} variant="bar" />
           <Text style={[styles.statusText, { color: colors.textSecondary }]}>
             Traitement en cours...
           </Text>
@@ -389,14 +387,14 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
               {resultMessage}
             </Text>
           </View>
-          <TouchableOpacity
-            style={[styles.retryButton, { borderColor: colors.error }]}
+          <Button
+            title="Réessayer"
             onPress={handleRetry}
-            activeOpacity={0.7}
-          >
-            <RefreshCw size={12} color={colors.error} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.retryText, { color: colors.error }]}>Réessayer</Text>
-          </TouchableOpacity>
+            variant="outline"
+            icon={<RefreshCw size={12} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.retryButton, { borderColor: colors.error, backgroundColor: 'transparent' }]}
+            textStyle={[styles.retryText, { color: colors.error }]}
+          />
         </View>
       )}
     </View>

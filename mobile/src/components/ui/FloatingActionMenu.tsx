@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Pressable, Animated } from 'react-native';
+import { View, StyleSheet, Text, Pressable, Animated } from 'react-native';
 import { Plus, X } from 'lucide-react-native';
 import { SPACING, BORDER, TYPOGRAPHY, LAYOUT, ICON, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { Tap } from './Tap';
 
 export interface ActionItem {
     icon: React.ReactNode;
@@ -116,7 +117,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                 </View>
 
                 {/* Main FAB */}
-                <TouchableOpacity
+                <Tap
                     activeOpacity={0.9}
                     onPress={toggleMenu}
                     style={[
@@ -127,7 +128,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                     <Animated.View style={mainButtonAnimatedStyle}>
                         <Plus size={ICON.size.xl} color={colors.textOnPrimary} />
                     </Animated.View>
-                </TouchableOpacity>
+                </Tap>
             </View>
         </View>
     );
@@ -177,7 +178,7 @@ const ActionItemComponent = ({
             <View style={[styles.labelContainer, { backgroundColor: colors.surface }]}>
                 <Text style={[styles.labelText, { color: colors.textPrimary }]}>{action.label}</Text>
             </View>
-            <TouchableOpacity
+            <Tap
                 style={[
                     styles.actionButton,
                     { backgroundColor: action.color || colors.surface },
@@ -186,7 +187,7 @@ const ActionItemComponent = ({
                 activeOpacity={0.8}
             >
                 {action.icon}
-            </TouchableOpacity>
+            </Tap>
         </Animated.View>
     );
 };

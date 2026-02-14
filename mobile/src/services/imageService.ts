@@ -286,10 +286,10 @@ export async function uploadImage(
     formData.append('image_type', type);
 
     let token = await api.getToken();
-    const baseUrl = api.getBaseUrl();
+    const { getApiUrl } = await import('../constants/config');
 
     // Use fetch directly for multipart/form-data (Content-Type set automatically with boundary)
-    let response = await fetch(`${baseUrl}/api/images/upload`, {
+    let response = await fetch(getApiUrl('/images/upload'), {
       method: 'POST',
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -310,7 +310,7 @@ export async function uploadImage(
         retryFormData.append('category', category);
         retryFormData.append('image_type', type);
 
-        response = await fetch(`${baseUrl}/api/images/upload`, {
+        response = await fetch(getApiUrl('/images/upload'), {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,

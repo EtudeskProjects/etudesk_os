@@ -1,7 +1,7 @@
 # Copilot Agent Perimeter — Guide des Cas d'Usage
 
 > Definition exacte du perimetre de chaque mode avec exemples, processus de reflexion et reponses ideales.
-> Mis a jour : 13 Fevrier 2026 — aligne avec audit COPILOT_TOOLS_DOCUMENTATION.md
+> Mis a jour : 14 Fevrier 2026 — Architecture multi-provider (Anthropic + Gemini + OpenAI)
 
 ---
 
@@ -95,16 +95,19 @@
 | `web_search` | x | x | x |
 | `cv_pdf_generator` | (interne, via generate_document) | | (interne) |
 
-**Modeles LLM :**
+**Modeles LLM (architecture multi-provider) :**
 
-| Tier | Modele | Utilisation |
-|------|--------|-------------|
-| T1 | gpt-5 | Agents principaux (talent, org) |
-| T2 | gpt-5-mini | Sub-agents (file_reader, web_search) |
-| T3 | gpt-4.1-nano | Titre session, suggestions, guardrails |
-| Image | gpt-image-1 | Generation d'images |
-| STT | whisper-1 | Speech-to-text |
-| Embedding | text-embedding-3-small | Embeddings Pinecone |
+| Constante | Modele | Provider | Utilisation |
+|-----------|--------|----------|-------------|
+| MODEL_AGENT | claude-sonnet-4-5 | Anthropic | Agents principaux (talent, org) |
+| MODEL_FAST | claude-haiku-4-5 | Anthropic | Guardrails, titres, summaries, file_reader |
+| MODEL_SUGGESTION | gemini-2.5-flash-lite | Google | Suggestions, objectifs quotidiens, bio |
+| MODEL_SEARCH | gpt-4.1-mini | OpenAI | web_search (Responses API), vision/extraction |
+| MODEL_MATCH | gpt-4.1-nano | OpenAI | Recommendations candidats |
+| MODEL_IMAGE | gpt-image-1 | OpenAI | Generation d'images |
+| MODEL_STT | whisper-1 | OpenAI | Speech-to-text |
+| MODEL_EMBEDDING | text-embedding-3-small | OpenAI | Embeddings Pinecone |
+| — | omni-moderation-latest | OpenAI | Auto-moderation contenu (direct `new OpenAI()`) |
 
 ### Performances Audit (09 Fevrier 2026 — tests reels sur DB)
 
@@ -147,8 +150,8 @@
 | `vector_query` | Static export | vector-query.tool.ts | Recherche semantique Pinecone (5 namespaces : opportunities, communities, spaces, talents, organizations) |
 | `sql_query` | Factory (talentId, orgIds) | sql-query.tool.ts | 28 intents : 10 my_* + 13 org_* + 5 search_* — donnees personnelles et org |
 | `generate_document` | Factory (talentId, avatarUrl) | generate-document.tool.ts | Generation PDF/DOCX/CSV/XLS/TXT + CV elegant via cv_pdf_generator |
-| `file_reader` | Factory → asTool (gpt-5-mini) | file-read.tool.ts | Sub-agent lecture documents (PDF, texte, images metadata) |
-| `web_search` | Agent asTool (gpt-5-mini) | web-search.tool.ts | Sub-agent recherche web externe |
+| `file_reader` | Factory → asTool (claude-haiku-4-5, Anthropic) | file-read.tool.ts | Sub-agent lecture documents (PDF, texte, images metadata) |
+| `web_search` | Agent asTool (gpt-4.1-mini, OpenAI) | web-search.tool.ts | Sub-agent recherche web externe (Responses API) |
 | `execute_action` | Factory (talentId) | execute-action.tool.ts | 5 actions : apply_opportunity, join_community, book_space, accept/decline_invitation |
 
 ### Skills Disponibles (Explore)
@@ -396,8 +399,8 @@ Chaque talent a un profil pedagogique stocke en base (JSONB `learning_preference
 | `youtube_search` | Static export | youtube-search.tool.ts | YouTube Data API (maxResults 1-3, priorite francophone UEMOA) |
 | `generate_diagram` | Static export | generate-diagram.tool.ts | Mermaid : flowchart, sequence, class, mindmap, timeline, gantt, pie, ER |
 | `generate_image` | Static export | generate-image.tool.ts | gpt-image-1 (1024x1024, 1536x1024, 1024x1536) |
-| `file_reader` | Factory → asTool (gpt-5-mini) | file-read.tool.ts | Sub-agent lecture documents (PDF, texte) |
-| `web_search` | Agent asTool (gpt-5-mini) | web-search.tool.ts | Sub-agent recherche web externe |
+| `file_reader` | Factory → asTool (claude-haiku-4-5, Anthropic) | file-read.tool.ts | Sub-agent lecture documents (PDF, texte) |
+| `web_search` | Agent asTool (gpt-4.1-mini, OpenAI) | web-search.tool.ts | Sub-agent recherche web externe (Responses API) |
 
 **Tools NON disponibles en Study (4 bloques) :**
 - `vector_query` — pas de recherche d'entites
@@ -737,8 +740,8 @@ Je te propose un mini-cours sur les JOINs avec des exercices pratiques ?
 | `sql_query` (restreint org) | Factory (talentId, [orgId], allowedIntents) | sql-query.tool.ts | org_* (13 intents) + search_* (5 intents) = 18 intents |
 | `vector_query` | Static export | vector-query.tool.ts | Recherche talents, opportunites marche (namespace talents, opportunities) |
 | `generate_document` | Factory (talentId) | generate-document.tool.ts | Fiches de poste, rapports, exports PDF/DOCX/CSV/XLS/TXT |
-| `file_reader` | Factory → asTool (gpt-5-mini) | file-read.tool.ts | Sub-agent lecture documents organisation (PDF, contrats, policies) |
-| `web_search` | Agent asTool (gpt-5-mini) | web-search.tool.ts | Benchmark marche, tendances secteur |
+| `file_reader` | Factory → asTool (claude-haiku-4-5, Anthropic) | file-read.tool.ts | Sub-agent lecture documents organisation (PDF, contrats, policies) |
+| `web_search` | Agent asTool (gpt-4.1-mini, OpenAI) | web-search.tool.ts | Benchmark marche, tendances secteur (Responses API) |
 | `execute_action` | Factory (talentId) | execute-action.tool.ts | 5 actions talent (apply, join, book, accept/decline) |
 
 **Tools NON disponibles en Organization (5 bloques) :**
@@ -1146,7 +1149,7 @@ createOrgFileReaderTool(organizationId)  // sub-agent, verifie document ownershi
 
 ## Guardrails
 
-### Input Safety (gpt-4.1-nano)
+### Input Safety (claude-haiku-4-5, Anthropic)
 
 Classifie chaque message utilisateur :
 - `safe` -> traitement normal
@@ -1262,6 +1265,7 @@ Le client recoit des events SSE pendant l'execution des tools :
 
 | Anti-Pattern | Exemple Incorrect | Pourquoi |
 |--------------|-------------------|----------|
+| **Micro-analyses par carte** | Texte entre chaque entity card | Ecrire UNE synthese globale AVANT les cartes groupees |
 | **Generer des donnees** | `{"id":"...", "title":"Dev React"}` | Le frontend fetch les donnees |
 | **Inventer un ID** | `{"id":"generated-123"}` | ID doit venir des tools |
 | **Carte sans ID** | `{"title":"Stage Marketing"}` | Inutilisable pour le rendu |
@@ -1341,6 +1345,6 @@ Le client recoit des events SSE pendant l'execution des tools :
 
 ---
 
-> **Document mis a jour** : 13 Fevrier 2026
+> **Document mis a jour** : 14 Fevrier 2026 — Architecture multi-provider (Anthropic + Gemini + OpenAI)
 > **Regle critique** : IDs seulement, jamais de donnees generees
 > **Reference technique** : Voir COPILOT_TOOLS_DOCUMENTATION.md pour les parametres, retours reels et exemples d'output de chaque tool

@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, BackHandler, Platform, KeyboardAvoidingView, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, BackHandler, Platform, KeyboardAvoidingView, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Calendar, MapPin, Clock, Save, SquarePen, X } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
-import { Button, Input, Toggle } from '../../../../src/components/ui';
+import { Button, IconButton, Input, Toggle } from '../../../../src/components/ui';
 import { communityActivityService } from '../../../../src/services';
 import { useAlert } from '../../../../src/contexts/AlertContext';
+import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
 
 export default function CreateEventScreen() {
     const { id, activityId } = useLocalSearchParams<{ id: string; activityId?: string }>();
@@ -168,11 +169,13 @@ export default function CreateEventScreen() {
         setShowPicker(true);
     };
 
-    const scrollToInput = useCallback((y: number) => {
-        if (Platform.OS !== 'android') return;
+    const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 120) => {
+        const sv = formScrollRef.current;
+        if (!sv) return;
+        const delay = Platform.OS === 'android' ? 120 : 0;
         setTimeout(() => {
-            formScrollRef.current?.scrollTo({ y, animated: true });
-        }, 120);
+            sv.scrollResponderScrollNativeHandleToKeyboard(targetNodeHandle, extraOffset, true);
+        }, delay);
     }, []);
 
     const handleSaveAsDraft = async () => {
@@ -276,34 +279,40 @@ export default function CreateEventScreen() {
         return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     };
 
-    if (isLoadingDraft) {
-        return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-                    <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-                        <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                    </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Événement</Text>
-                    <View style={{ width: 44 }} />
-                </View>
-                <View style={styles.loadingContainer}>
+	    if (isLoadingDraft) {
+	        return (
+	            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+	                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+	                    <IconButton
+	                        onPress={() => router.back()}
+	                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                        accessibilityLabel="Retour"
+	                        style={styles.headerButton}
+	                    />
+	                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Événement</Text>
+	                    <View style={{ width: 44 }} />
+	                </View>
+	                <View style={styles.loadingContainer}>
                     <Text style={{ color: colors.textSecondary }}>Chargement...</Text>
                 </View>
             </SafeAreaView>
         );
     }
 
-    return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-                <TouchableOpacity style={styles.headerButton} onPress={handleBack}>
-                    <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-                    {isEditMode ? 'Modifier l\'événement' : hasDraft ? 'Brouillon' : 'Créer un événement'}
-                </Text>
-                <View style={{ width: 44 }} />
-            </View>
+	    return (
+	        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+	            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+	                <IconButton
+	                    onPress={handleBack}
+	                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                    accessibilityLabel="Retour"
+	                    style={styles.headerButton}
+	                />
+	                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+	                    {isEditMode ? 'Modifier l\'événement' : hasDraft ? 'Brouillon' : 'Créer un événement'}
+	                </Text>
+	                <View style={{ width: 44 }} />
+	            </View>
 
             {!isEditMode && hasDraft && (
                 <View style={[styles.draftBanner, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
@@ -319,12 +328,13 @@ export default function CreateEventScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={0}
             >
+            <ScrollToInputContext.Provider value={scrollToInput}>
             <ScrollView
                 ref={formScrollRef}
                 style={styles.content}
                 contentContainerStyle={styles.contentContainer}
                 keyboardShouldPersistTaps="handled"
-                keyboardDismissMode="on-drag"
+                keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
             >
                 <Input
                     label="Titre de l'événement"
@@ -352,68 +362,91 @@ export default function CreateEventScreen() {
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Date et heure</Text>
 
-                    <View style={styles.dateRow}>
-                        <View style={styles.dateCol}>
-                            <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>Début</Text>
-                            <TouchableOpacity onPress={() => openPicker('start', 'date')} style={[styles.dateButton, { borderColor: colors.borderColor }]}>
-                                <Calendar size={18} color={colors.primary} />
-                                <Text style={{ color: colors.textPrimary }}>{formatDate(startDate)}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => openPicker('start', 'time')} style={[styles.dateButton, { borderColor: colors.borderColor, marginTop: 8 }]}>
-                                <Clock size={18} color={colors.primary} />
-                                <Text style={{ color: colors.textPrimary }}>{formatTime(startDate)}</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.dateCol}>
-                            <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>Fin</Text>
-                            <TouchableOpacity onPress={() => openPicker('end', 'date')} style={[styles.dateButton, { borderColor: colors.borderColor }]}>
-                                <Calendar size={18} color={colors.primary} />
-                                <Text style={{ color: colors.textPrimary }}>{formatDate(endDate)}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => openPicker('end', 'time')} style={[styles.dateButton, { borderColor: colors.borderColor, marginTop: 8 }]}>
-                                <Clock size={18} color={colors.primary} />
-                                <Text style={{ color: colors.textPrimary }}>{formatTime(endDate)}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
+	                    <View style={styles.dateRow}>
+	                        <View style={styles.dateCol}>
+	                            <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>Début</Text>
+	                            <Button
+	                                title={formatDate(startDate)}
+	                                onPress={() => openPicker('start', 'date')}
+	                                variant="outline"
+	                                size="sm"
+	                                icon={<Calendar size={18} color={colors.primary} />}
+	                                style={[styles.dateButton, { borderColor: colors.borderColor, justifyContent: 'flex-start' }]}
+	                                textStyle={{ color: colors.textPrimary }}
+	                            />
+	                            <Button
+	                                title={formatTime(startDate)}
+	                                onPress={() => openPicker('start', 'time')}
+	                                variant="outline"
+	                                size="sm"
+	                                icon={<Clock size={18} color={colors.primary} />}
+	                                style={[styles.dateButton, { borderColor: colors.borderColor, marginTop: 8, justifyContent: 'flex-start' }]}
+	                                textStyle={{ color: colors.textPrimary }}
+	                            />
+	                        </View>
+	
+	                        <View style={styles.dateCol}>
+	                            <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>Fin</Text>
+	                            <Button
+	                                title={formatDate(endDate)}
+	                                onPress={() => openPicker('end', 'date')}
+	                                variant="outline"
+	                                size="sm"
+	                                icon={<Calendar size={18} color={colors.primary} />}
+	                                style={[styles.dateButton, { borderColor: colors.borderColor, justifyContent: 'flex-start' }]}
+	                                textStyle={{ color: colors.textPrimary }}
+	                            />
+	                            <Button
+	                                title={formatTime(endDate)}
+	                                onPress={() => openPicker('end', 'time')}
+	                                variant="outline"
+	                                size="sm"
+	                                icon={<Clock size={18} color={colors.primary} />}
+	                                style={[styles.dateButton, { borderColor: colors.borderColor, marginTop: 8, justifyContent: 'flex-start' }]}
+	                                textStyle={{ color: colors.textPrimary }}
+	                            />
+	                        </View>
+	                    </View>
+	                </View>
 
                 <View style={styles.inputContainer}>
                     <Text style={[styles.label, { color: colors.textSecondary }]}>Description</Text>
-                    <TextInput
-                        style={[styles.textArea, { color: colors.textPrimary, borderColor: colors.borderColor, backgroundColor: colors.gray100 }]}
+                    <Input
                         multiline
                         placeholder="Détails de l'événement..."
                         placeholderTextColor={colors.gray500}
                         value={description}
                         onChangeText={setDescription}
-                        onFocus={() => scrollToInput(360)}
                         textAlignVertical="top"
+                        inputContainerStyle={{ minHeight: 120 }}
+                        inputStyle={{ fontSize: TYPOGRAPHY.fontSize.md }}
                     />
                 </View>
 
             </ScrollView>
 
-            <View style={[styles.footer, { borderTopColor: colors.borderColor }]}>
-                {!isEditMode && (
-                    <TouchableOpacity
-                        style={[styles.draftBtn, { borderColor: colors.borderColor }]}
-                        onPress={handleSaveAsDraft}
-                        disabled={!title.trim() || isSubmitting}
-                    >
-                        <Save size={18} color={colors.gray500} />
-                    </TouchableOpacity>
-                )}
-                <View style={styles.submitBtnContainer}>
-                    <Button
-                        title={isEditMode ? "Modifier l'événement" : hasDraft ? "Publier l'événement" : "Créer l'événement"}
+	            <View style={[styles.footer, { borderTopColor: colors.borderColor }]}>
+	                {!isEditMode && (
+	                    <IconButton
+	                        onPress={handleSaveAsDraft}
+	                        icon={<Save size={18} color={colors.gray500} />}
+	                        accessibilityLabel="Enregistrer comme brouillon"
+	                        variant="outline"
+	                        size="lg"
+	                        disabled={!title.trim() || isSubmitting}
+	                        style={[styles.draftBtn, { borderColor: colors.borderColor }]}
+	                    />
+	                )}
+	                <View style={styles.submitBtnContainer}>
+	                    <Button
+	                        title={isEditMode ? "Modifier l'événement" : hasDraft ? "Publier l'événement" : "Créer l'événement"}
                         onPress={handleSubmit}
                         loading={isSubmitting}
                         fullWidth
                     />
                 </View>
             </View>
+            </ScrollToInputContext.Provider>
             </KeyboardAvoidingView>
 
             {/* Date/Time Picker Modal */}
@@ -423,42 +456,45 @@ export default function CreateEventScreen() {
                     animationType="fade"
                     visible={showPicker}
                     onRequestClose={() => setShowPicker(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
-                            <View style={[styles.modalHeader, { borderBottomColor: colors.borderColor }]}>
-                                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                                    {pickerMode === 'date' ? 'Sélectionner une date' : 'Sélectionner une heure'}
-                                </Text>
-                                <TouchableOpacity onPress={() => setShowPicker(false)}>
-                                    <X size={24} color={colors.textSecondary} />
-                                </TouchableOpacity>
-                            </View>
-                            <DateTimePicker
-                                value={tempDate}
-                                mode={pickerMode}
+	                >
+	                    <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
+	                        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+	                            <View style={[styles.modalHeader, { borderBottomColor: colors.borderColor }]}>
+	                                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+	                                    {pickerMode === 'date' ? 'Sélectionner une date' : 'Sélectionner une heure'}
+	                                </Text>
+	                                <IconButton
+	                                    onPress={() => setShowPicker(false)}
+	                                    icon={<X size={20} color={colors.textSecondary} />}
+	                                    accessibilityLabel="Fermer"
+	                                    size="sm"
+	                                />
+	                            </View>
+	                            <DateTimePicker
+	                                value={tempDate}
+	                                mode={pickerMode}
                                 is24Hour={true}
                                 display="spinner"
                                 onChange={handleDateChange}
                                 style={styles.picker}
-                            />
-                            <View style={styles.modalButtons}>
-                                <TouchableOpacity
-                                    style={[styles.modalButton, { backgroundColor: colors.gray100 }]}
-                                    onPress={() => setShowPicker(false)}
-                                >
-                                    <Text style={[styles.modalButtonText, { color: colors.textSecondary }]}>Annuler</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.modalButton, { backgroundColor: colors.primary }]}
-                                    onPress={() => confirmDateSelection()}
-                                >
-                                    <Text style={[styles.modalButtonText, { color: colors.textOnPrimary }]}>Confirmer</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                </Modal>
+	                            />
+	                            <View style={styles.modalButtons}>
+	                                <Button
+	                                    title="Annuler"
+	                                    onPress={() => setShowPicker(false)}
+	                                    variant="secondary"
+	                                    style={{ flex: 1 }}
+	                                />
+	                                <Button
+	                                    title="Confirmer"
+	                                    onPress={() => confirmDateSelection()}
+	                                    variant="primary"
+	                                    style={{ flex: 1 }}
+	                                />
+	                            </View>
+	                        </View>
+	                    </View>
+	                </Modal>
             )}
 
             {/* Android DateTimePicker (native dialog) */}
@@ -588,14 +624,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    // Modal styles
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: SPACING.lg,
-    },
+	    // Modal styles
+	    modalOverlay: {
+	        flex: 1,
+	        justifyContent: 'center',
+	        alignItems: 'center',
+	        padding: SPACING.lg,
+	    },
     modalContent: {
         width: '100%',
         maxWidth: 340,

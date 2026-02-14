@@ -4,6 +4,7 @@
  */
 
 import { api, ApiResponse } from './api';
+import { BRAND_COLORS } from '../constants/theme';
 
 export type PaymentProvider = 'orange_money' | 'mtn_money' | 'moov_money' | 'wave' | 'push' | 'djamo';
 
@@ -20,12 +21,12 @@ export interface AddPaymentMethodData {
 }
 
 export const PAYMENT_PROVIDERS: { id: PaymentProvider; label: string; color: string }[] = [
-  { id: 'orange_money', label: 'Orange Money', color: '#FF6600' },
-  { id: 'mtn_money', label: 'MTN Money', color: '#FFCC00' },
-  { id: 'moov_money', label: 'Moov Money', color: '#0066CC' },
-  { id: 'wave', label: 'Wave', color: '#1DC7EA' },
-  { id: 'push', label: 'Push', color: '#22C55E' },
-  { id: 'djamo', label: 'Djamo', color: '#6B4EFF' },
+  { id: 'orange_money', label: 'Orange Money', color: BRAND_COLORS.orangeMoney },
+  { id: 'mtn_money', label: 'MTN Money', color: BRAND_COLORS.mtnMoney },
+  { id: 'moov_money', label: 'Moov Money', color: BRAND_COLORS.moovMoney },
+  { id: 'wave', label: 'Wave', color: BRAND_COLORS.wave },
+  { id: 'push', label: 'Push', color: BRAND_COLORS.push },
+  { id: 'djamo', label: 'Djamo', color: BRAND_COLORS.djamo },
 ];
 
 /**

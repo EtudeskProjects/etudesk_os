@@ -5,8 +5,6 @@ import {
     Text,
     StyleSheet,
     ScrollView,
-    TouchableOpacity,
-    ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,7 +34,7 @@ import { STORAGE_KEYS } from '../../src/constants/config';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useNotifications, NotificationPreferences } from '../../src/hooks/useNotifications';
-import { Toggle } from '../../src/components/ui';
+    import { Button, IconButton, Toggle, LoadingShimmer, ShimmerPlaceholder } from '../../src/components/ui';
 import { Language } from '../../src/i18n';
 import { talentService } from '../../src/services/talentService';
 import {
@@ -241,59 +239,66 @@ export default function PreferencesScreen() {
 
     if (isLoading) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                    </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('preferences.title')}</Text>
-                    <View style={styles.headerSpacer} />
-                </View>
+	            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+	                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+	                    <IconButton
+	                        onPress={() => router.back()}
+	                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                        accessibilityLabel="Retour"
+	                    />
+	                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('preferences.title')}</Text>
+	                    <View style={styles.headerSpacer} />
+	                </View>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={colors.primary} />
+                    <LoadingShimmer variant="fullPage" />
                 </View>
             </SafeAreaView>
         );
     }
 
     if (loadError) {
-        return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                    </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('preferences.title')}</Text>
-                    <View style={styles.headerSpacer} />
-                </View>
-                <View style={styles.loadingContainer}>
-                    <Text style={[styles.errorText, { color: colors.textSecondary }]}>{t('preferences.loadError')}</Text>
-                    <TouchableOpacity
-                        style={[styles.retryButton, { backgroundColor: colors.primary }]}
+	        return (
+	            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+	                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+	                    <IconButton
+	                        onPress={() => router.back()}
+	                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                        accessibilityLabel="Retour"
+	                    />
+	                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('preferences.title')}</Text>
+	                    <View style={styles.headerSpacer} />
+	                </View>
+                    <View style={styles.loadingContainer}>
+                        <Text style={[styles.errorText, { color: colors.textSecondary }]}>{t('preferences.loadError')}</Text>
+                    <Button
+                        title={t('preferences.retry')}
                         onPress={() => loadPreferences()}
-                    >
-                        <Text style={[styles.retryButtonText, { color: colors.textOnPrimary }]}>{t('preferences.retry')}</Text>
-                    </TouchableOpacity>
-                </View>
+                        variant="primary"
+                        style={styles.retryButton}
+                        textStyle={styles.retryButtonText}
+                    />
+                    </View>
             </SafeAreaView>
         );
     }
 
-    return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-            {/* Header */}
-            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                </TouchableOpacity>
-                <View style={styles.headerCenter}>
-                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('preferences.title')}</Text>
-                    {isSaving && (
-                        <ActivityIndicator size="small" color={colors.primary} style={styles.savingIndicator} />
-                    )}
-                </View>
-                <View style={styles.headerSpacer} />
-            </View>
+	    return (
+	        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+	            {/* Header */}
+	            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+	                <IconButton
+	                    onPress={() => router.back()}
+	                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	                    accessibilityLabel="Retour"
+	                />
+	                <View style={styles.headerCenter}>
+	                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('preferences.title')}</Text>
+	                    {isSaving && (
+	                        <ShimmerPlaceholder width={20} height={14} variant="bar" style={styles.savingIndicator} />
+	                    )}
+	                </View>
+	                <View style={styles.headerSpacer} />
+	            </View>
 
             <ScrollView
                 style={styles.scrollView}
@@ -312,30 +317,24 @@ export default function PreferencesScreen() {
                                 const Icon = option.icon;
                                 const isSelected = themePreference === option.id;
                                 return (
-                                    <TouchableOpacity
+                                    <Button
                                         key={option.id}
+                                        onPress={() => handleThemeChange(option.id)}
+                                        title={t(option.labelKey)}
+                                        variant={isSelected ? 'primary' : 'secondary'}
+                                        size="sm"
+                                        icon={<Icon size={ICON.size.sm} color={isSelected ? colors.textOnPrimary : colors.gray600} strokeWidth={ICON.strokeWidth} />}
                                         style={[
                                             styles.optionButton,
                                             { backgroundColor: colors.gray100, borderColor: colors.borderColor },
                                             isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                                         ]}
-                                        onPress={() => handleThemeChange(option.id)}
-                                    >
-                                        <Icon
-                                            size={ICON.size.sm}
-                                            color={isSelected ? colors.textOnPrimary : colors.gray600}
-                                            strokeWidth={ICON.strokeWidth}
-                                        />
-                                        <Text
-                                            style={[
-                                                styles.optionButtonText,
-                                                { color: colors.textSecondary },
-                                                isSelected && { color: colors.textOnPrimary },
-                                            ]}
-                                        >
-                                            {t(option.labelKey)}
-                                        </Text>
-                                    </TouchableOpacity>
+                                        textStyle={[
+                                            styles.optionButtonText,
+                                            { color: colors.textSecondary },
+                                            isSelected && { color: colors.textOnPrimary },
+                                        ]}
+                                    />
                                 );
                             })}
                         </View>
@@ -356,26 +355,24 @@ export default function PreferencesScreen() {
                             {LANGUAGE_OPTIONS.map((option) => {
                                 const isSelected = language === option.id;
                                 return (
-                                    <TouchableOpacity
+                                    <Button
                                         key={option.id}
+                                        onPress={() => handleLanguageChange(option.id)}
+                                        title={option.label}
+                                        variant={isSelected ? 'primary' : 'secondary'}
+                                        size="sm"
+                                        icon={<Text style={styles.flagEmoji}>{option.flag}</Text>}
                                         style={[
                                             styles.optionButton,
                                             { backgroundColor: colors.gray100, borderColor: colors.borderColor },
                                             isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                                         ]}
-                                        onPress={() => handleLanguageChange(option.id)}
-                                    >
-                                        <Text style={styles.flagEmoji}>{option.flag}</Text>
-                                        <Text
-                                            style={[
-                                                styles.optionButtonText,
-                                                { color: colors.textSecondary },
-                                                isSelected && { color: colors.textOnPrimary },
-                                            ]}
-                                        >
-                                            {option.label}
-                                        </Text>
-                                    </TouchableOpacity>
+                                        textStyle={[
+                                            styles.optionButtonText,
+                                            { color: colors.textSecondary },
+                                            isSelected && { color: colors.textOnPrimary },
+                                        ]}
+                                    />
                                 );
                             })}
                         </View>
@@ -471,30 +468,24 @@ export default function PreferencesScreen() {
                                 }
                                 const isSelected = learningPrefs.style === option.id;
                                 return (
-                                    <TouchableOpacity
+                                    <Button
                                         key={option.id}
+                                        onPress={() => handleLearningPreferenceChange('style', option.id)}
+                                        title={language === 'fr' ? option.label : option.id}
+                                        variant={isSelected ? 'primary' : 'secondary'}
+                                        size="sm"
+                                        icon={<Icon size={ICON.size.sm} color={isSelected ? colors.textOnPrimary : colors.gray600} strokeWidth={ICON.strokeWidth} />}
                                         style={[
                                             styles.optionButton,
                                             { backgroundColor: colors.gray100, borderColor: colors.borderColor },
                                             isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                                         ]}
-                                        onPress={() => handleLearningPreferenceChange('style', option.id)}
-                                    >
-                                        <Icon
-                                            size={ICON.size.sm}
-                                            color={isSelected ? colors.textOnPrimary : colors.gray600}
-                                            strokeWidth={ICON.strokeWidth}
-                                        />
-                                        <Text
-                                            style={[
-                                                styles.optionButtonText,
-                                                { color: colors.textSecondary },
-                                                isSelected && { color: colors.textOnPrimary },
-                                            ]}
-                                        >
-                                            {language === 'fr' ? option.label : option.id}
-                                        </Text>
-                                    </TouchableOpacity>
+                                        textStyle={[
+                                            styles.optionButtonText,
+                                            { color: colors.textSecondary },
+                                            isSelected && { color: colors.textOnPrimary },
+                                        ]}
+                                    />
                                 );
                             })}
                         </View>
@@ -523,25 +514,23 @@ export default function PreferencesScreen() {
                             {LEARNING_INTERACTION_DATA.map((option) => {
                                 const isSelected = learningPrefs.interaction === option.id;
                                 return (
-                                    <TouchableOpacity
+                                    <Button
                                         key={option.id}
+                                        onPress={() => handleLearningPreferenceChange('interaction', option.id)}
+                                        title={language === 'fr' ? option.label : option.id}
+                                        variant={isSelected ? 'primary' : 'secondary'}
+                                        size="sm"
                                         style={[
                                             styles.optionButton,
                                             { backgroundColor: colors.gray100, borderColor: colors.borderColor },
                                             isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                                         ]}
-                                        onPress={() => handleLearningPreferenceChange('interaction', option.id)}
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.optionButtonText,
-                                                { color: colors.textSecondary },
-                                                isSelected && { color: colors.textOnPrimary },
-                                            ]}
-                                        >
-                                            {language === 'fr' ? option.label : option.id}
-                                        </Text>
-                                    </TouchableOpacity>
+                                        textStyle={[
+                                            styles.optionButtonText,
+                                            { color: colors.textSecondary },
+                                            isSelected && { color: colors.textOnPrimary },
+                                        ]}
+                                    />
                                 );
                             })}
                         </View>
@@ -561,25 +550,23 @@ export default function PreferencesScreen() {
                             {LEARNING_DEPTH_DATA.map((option) => {
                                 const isSelected = learningPrefs.depth === option.id;
                                 return (
-                                    <TouchableOpacity
+                                    <Button
                                         key={option.id}
+                                        onPress={() => handleLearningPreferenceChange('depth', option.id)}
+                                        title={language === 'fr' ? option.label : option.id}
+                                        variant={isSelected ? 'primary' : 'secondary'}
+                                        size="sm"
                                         style={[
                                             styles.optionButton,
                                             { backgroundColor: colors.gray100, borderColor: colors.borderColor },
                                             isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                                         ]}
-                                        onPress={() => handleLearningPreferenceChange('depth', option.id)}
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.optionButtonText,
-                                                { color: colors.textSecondary },
-                                                isSelected && { color: colors.textOnPrimary },
-                                            ]}
-                                        >
-                                            {language === 'fr' ? option.label : option.id}
-                                        </Text>
-                                    </TouchableOpacity>
+                                        textStyle={[
+                                            styles.optionButtonText,
+                                            { color: colors.textSecondary },
+                                            isSelected && { color: colors.textOnPrimary },
+                                        ]}
+                                    />
                                 );
                             })}
                         </View>
@@ -599,25 +586,23 @@ export default function PreferencesScreen() {
                             {LEARNING_DIFFICULTY_DATA.map((option) => {
                                 const isSelected = learningPrefs.difficulty === option.id;
                                 return (
-                                    <TouchableOpacity
+                                    <Button
                                         key={option.id}
+                                        onPress={() => handleLearningPreferenceChange('difficulty', option.id)}
+                                        title={language === 'fr' ? option.label : option.id}
+                                        variant={isSelected ? 'primary' : 'secondary'}
+                                        size="sm"
                                         style={[
                                             styles.optionButton,
                                             { backgroundColor: colors.gray100, borderColor: colors.borderColor },
                                             isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
                                         ]}
-                                        onPress={() => handleLearningPreferenceChange('difficulty', option.id)}
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.optionButtonText,
-                                                { color: colors.textSecondary },
-                                                isSelected && { color: colors.textOnPrimary },
-                                            ]}
-                                        >
-                                            {language === 'fr' ? option.label : option.id}
-                                        </Text>
-                                    </TouchableOpacity>
+                                        textStyle={[
+                                            styles.optionButtonText,
+                                            { color: colors.textSecondary },
+                                            isSelected && { color: colors.textOnPrimary },
+                                        ]}
+                                    />
                                 );
                             })}
                         </View>

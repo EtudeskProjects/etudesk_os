@@ -34,9 +34,10 @@ function sanitizeMermaidCode(code: string): string {
   return s;
 }
 
-const buildMermaidHTML = (code: string, isDark: boolean) => {
-  const bg = isDark ? '#1a1a1a' : '#ffffff';
-  const theme = isDark ? 'dark' : 'default';
+const buildMermaidHTML = (code: string, opts: { backgroundColor: string; isDark: boolean; errorColor: string }) => {
+  const bg = opts.backgroundColor;
+  const theme = opts.isDark ? 'dark' : 'default';
+  const errorColor = opts.errorColor;
   // Escape backticks and backslashes in the mermaid code for safe JS embedding
   const safeCode = code.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/<\/script/gi, '<\\/script');
 
@@ -49,9 +50,9 @@ const buildMermaidHTML = (code: string, isDark: boolean) => {
     body { background: ${bg}; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 12px; overflow: auto; }
     #diagram { width: 100%; display: flex; justify-content: center; }
     #diagram svg { max-width: 100%; height: auto; }
-    #error { color: #ef4444; font-family: system-ui; font-size: 13px; padding: 16px; text-align: center; display: none; }
-  </style>
-</head>
+	    #error { color: ${errorColor}; font-family: system-ui; font-size: 13px; padding: 16px; text-align: center; display: none; }
+	  </style>
+	</head>
 <body>
   <div id="diagram"></div>
   <div id="error"></div>
@@ -108,9 +109,12 @@ export const DiagramBlock: React.FC<DiagramBlockProps> = ({ data }) => {
       </View>
 
       {/* Mermaid Render */}
-      <View style={[styles.webviewContainer, { height: webViewHeight, backgroundColor: isDark ? '#1a1a1a' : '#ffffff' }]}>
+      <View style={[styles.webviewContainer, { height: webViewHeight, backgroundColor: colors.background }]}>
         <WebView
-          source={{ html: buildMermaidHTML(sanitizeMermaidCode(data.code), isDark), baseUrl: 'https://cdn.jsdelivr.net' }}
+          source={{
+            html: buildMermaidHTML(sanitizeMermaidCode(data.code), { backgroundColor: colors.background, isDark, errorColor: colors.error }),
+            baseUrl: 'https://cdn.jsdelivr.net'
+          }}
           style={styles.webview}
           scrollEnabled
           nestedScrollEnabled

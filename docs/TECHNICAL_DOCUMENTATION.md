@@ -1,6 +1,6 @@
 # Etudesk - Documentation Technique Complète
 
-> **Version:** 1.0.0 | **Date:** 7 Février 2026 | **Branche:** deploy/production
+> **Version:** 2.0.0 | **Date:** 14 Février 2026 | **Branche:** deploy/production
 
 ---
 
@@ -321,7 +321,7 @@ Le dégroupage crée des services isolés. La vraie valeur vient du **re-bundlin
 - Continuité éducative assurée pour 92 000+ étudiants via outils digitaux pendant les confinements
 - Adoption du smartphone en Afrique subsaharienne : quasi-doublement post-pandémie
 
-#### 3. Révolution IA (ère GPT-5)
+#### 3. Révolution IA (ère Claude + GPT + Gemini)
 - L'IA permet une éducation personnalisée et scalable à une fraction du coût traditionnel
 - [25 pays africains francophones et lusophones](https://www.gpekix.org/blog/commitment-action-advancing-use-ai-education-africa-through-regional-collaboration-and) ont participé au séminaire IA+Education de Dakar (octobre 2024)
 - Pilote Nigeria : étudiants avec tuteur IA surpassent significativement leurs pairs
@@ -428,7 +428,7 @@ Barème crédits (extrait):
 │  │                   COPILOT AI ENGINE                           │   │
 │  │  ┌────────────────┐  ┌──────────────┐  ┌─────────────────┐  │   │
 │  │  │  TalentAgent   │  │   OrgAgent   │  │   Sub-Agents    │  │   │
-│  │  │  (GPT-5)       │  │   (GPT-5)    │  │  (GPT-5-mini)   │  │   │
+│  │  │(claude-sonnet) │  │(claude-sonnet)│  │ (haiku/gpt-4.1) │  │   │
 │  │  │  Explorer/Study│  │  Org mode    │  │  File/WebSearch  │  │   │
 │  │  └────────┬───────┘  └──────┬───────┘  └────────┬────────┘  │   │
 │  │           │                 │                    │           │   │
@@ -439,7 +439,7 @@ Barème crédits (extrait):
 │  │  │ manage_skills | execute_action                         │  │   │
 │  │  └────────────────────────────────────────────────────────┘  │   │
 │  │  ┌────────────────────────────────────────────────────────┐  │   │
-│  │  │              GUARDRAILS (GPT-5-nano)                   │  │   │
+│  │  │           GUARDRAILS (claude-haiku-4-5)                │  │   │
 │  │  │  Input Safety (blocks INJECTION/HARMFUL)               │  │   │
 │  │  │  Output Format (validates entity cards, char limits)   │  │   │
 │  │  └────────────────────────────────────────────────────────┘  │   │
@@ -458,9 +458,13 @@ Barème crédits (extrait):
 ┌─────────┼─────────────────┼─────────────────┼───────────────────────┐
 │         ▼                 ▼                 ▼                       │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐           │
-│  │ Paystack │  │  Resend  │  │  OpenAI  │  │  Brave   │           │
-│  │ Payments │  │  Email   │  │  AI/LLM  │  │  Search  │           │
+│  │ Paystack │  │  Resend  │  │Anthropic │  │  Brave   │           │
+│  │ Payments │  │  Email   │  │  Claude  │  │  Search  │           │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘           │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐                        │
+│  │  Google  │  │  OpenAI  │  │ YouTube  │                        │
+│  │  Gemini  │  │ IMG/STT  │  │  API v3  │                        │
+│  └──────────┘  └──────────┘  └──────────┘                        │
 │                    SERVICES EXTERNES                                │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -486,17 +490,22 @@ Barème crédits (extrait):
 | **tsx** | 4.19 | Exécution TypeScript (dev) |
 | **PM2** | - | Process manager (production) |
 
-### IA & Machine Learning
+### IA & Machine Learning (Architecture multi-provider)
 
-| Technologie | Version | Rôle |
-|-------------|---------|------|
-| **OpenAI Agents SDK** | 0.4.4 | Framework multi-agents |
-| **GPT-5** | - | Agents principaux (TalentAgent, OrgAgent) |
-| **GPT-5-mini** | - | Sub-agents (FileReader, WebSearch) |
-| **GPT-5-nano** | - | Guardrails, résumés, titres, suggestions |
-| **gpt-image-1** | - | Génération d'images éducatives |
-| **text-embedding-3-small** | - | Embeddings vectoriels (1536 dims) |
-| **whisper-1** | - | Transcription audio (voice-to-text) |
+3 providers simultanés — chaque provider est utilisé pour ses forces :
+
+| Technologie | Provider | Rôle |
+|-------------|----------|------|
+| **OpenAI Agents SDK** | - | Framework multi-agents (orchestre les 3 providers) |
+| **claude-sonnet-4-5** (MODEL_AGENT) | Anthropic | Agents principaux (TalentAgent, OrgAgent) |
+| **claude-haiku-4-5** (MODEL_FAST) | Anthropic | Guardrails, titres, summaries, FileReaderAgent |
+| **gemini-2.5-flash-lite** (MODEL_SUGGESTION) | Google | Suggestions, objectifs quotidiens, bio |
+| **gpt-4.1-mini** (MODEL_SEARCH) | OpenAI | WebSearchAgent, vision/extraction documents |
+| **gpt-4.1-nano** (MODEL_MATCH) | OpenAI | Recommendations candidats |
+| **gpt-image-1** (MODEL_IMAGE) | OpenAI | Génération d'images éducatives |
+| **text-embedding-3-small** (MODEL_EMBEDDING) | OpenAI | Embeddings vectoriels (1536 dims) |
+| **whisper-1** (MODEL_STT) | OpenAI | Transcription audio (voice-to-text) |
+| **@anthropic-ai/sdk** | - | SDK natif Anthropic (AnthropicProvider adapter) |
 
 ### Mobile
 
@@ -524,6 +533,9 @@ Barème crédits (extrait):
 | **Paystack** | Paiements (FCFA) |
 | **Resend** | Email transactionnel (production) |
 | **Mailhog** | Email (développement) |
+| **Anthropic Claude** | Agents IA principaux (Sonnet, Haiku) |
+| **Google Gemini** | Suggestions formulaires (Flash Lite) |
+| **OpenAI** | Images, STT, embeddings, web search, vision |
 | **Brave Search** | Recherche web (copilote) |
 | **YouTube API** | Recherche de vidéos éducatives |
 | **Expo Push** | Notifications push (iOS/Android) |
@@ -582,9 +594,11 @@ backend/src/
 │   ├── embedding.service.ts    # Embeddings Pinecone
 │   ├── notification.service.ts # Push notifications (Expo SDK)
 │   ├── matching.service.ts     # Matching talents/opportunités
-│   ├── ai/                     # Services IA
-│   │   ├── models.ts           # Définitions modèles (T1/T2/T3)
-│   │   ├── agent-factory.ts    # Création agents OpenAI
+│   ├── ai/                     # Services IA (multi-provider)
+│   │   ├── models.ts           # Constantes modèles par usage (AGENT/FAST/SUGGESTION/MATCH/SEARCH)
+│   │   ├── provider.ts         # Config multi-provider (Anthropic, Gemini, OpenAI)
+│   │   ├── anthropic-provider.ts # AnthropicProvider adapter pour @openai/agents
+│   │   ├── agent-factory.ts    # Création agents (Anthropic pour copilot, Gemini pour suggestions)
 │   │   └── talent-object.ts    # Contexte talent enrichi
 │   └── copilot/                # Copilote IA complet
 │       ├── index.ts            # Orchestration principale
@@ -602,10 +616,10 @@ backend/src/
 │       ├── run-context.ts      # CopilotRunContext
 │       └── ontology.cache.ts   # Cache ontologie
 ├── database/
-│   ├── schema.sql              # Schéma complet (création tables)
-│   ├── seed.ts                 # Données initiales
+│   ├── schema_final.sql        # Schéma consolidé (état actuel)
 │   ├── run-migrations.ts       # Runner migrations
-│   └── migrations/             # 17 migrations SQL
+│   ├── recreate-db.ts          # Drop + create DB (optionnel)
+│   └── migrations/             # Migrations SQL (baseline)
 └── scripts/
     └── seed-pinecone.ts        # Initialisation Pinecone
 ```
@@ -942,12 +956,12 @@ Le copilote est un système multi-agents basé sur le **OpenAI Agents SDK** (`@o
 
 ### Agents
 
-| Agent | Modèle | Modes | Rôle |
-|-------|--------|-------|------|
-| **TalentAgent** | GPT-5 | Explorer, Study | Agent principal pour talents individuels |
-| **OrgAgent** | GPT-5 | Organisation | Agent pour administrateurs d'organisations |
-| **FileReaderAgent** | GPT-5-mini | Sub-agent | Lecture et analyse de documents (via `asTool()`) |
-| **WebSearchAgent** | GPT-5-mini | Sub-agent | Recherche web (via `asTool()`) |
+| Agent | Modèle | Provider | Modes | Rôle |
+|-------|--------|----------|-------|------|
+| **TalentAgent** | claude-sonnet-4-5 | Anthropic | Explorer, Study | Agent principal pour talents individuels |
+| **OrgAgent** | claude-sonnet-4-5 | Anthropic | Organisation | Agent pour administrateurs d'organisations |
+| **FileReaderAgent** | claude-haiku-4-5 | Anthropic | Sub-agent | Lecture et analyse de documents (via `asTool()`) |
+| **WebSearchAgent** | gpt-4.1-mini | OpenAI | Sub-agent | Recherche web (via `asTool()`, Responses API) |
 
 ### Modes de fonctionnement
 
@@ -990,9 +1004,9 @@ Le copilote est un système multi-agents basé sur le **OpenAI Agents SDK** (`@o
 ### Session & mémoire
 
 - **Historique :** Derniers 50 messages par session
-- **Résumé automatique :** GPT-5-nano résume les messages > 10 (garde les 4 derniers verbatim)
-- **Titre auto :** GPT-5-nano génère un titre après le 1er message
-- **Suggestions :** GPT-5-nano propose des amorces de conversation contextuelles
+- **Résumé automatique :** claude-haiku-4-5 (Anthropic) résume les messages > 10 (garde les 4 derniers verbatim)
+- **Titre auto :** claude-haiku-4-5 (Anthropic) génère un titre après le 1er message
+- **Suggestions :** gemini-2.5-flash-lite (Google) propose des amorces de conversation contextuelles
 
 ---
 
@@ -1059,7 +1073,7 @@ Le copilote est un système multi-agents basé sur le **OpenAI Agents SDK** (`@o
 
 | Propriété | Valeur |
 |-----------|--------|
-| **Pattern** | Sub-agent via `asTool()` (GPT-5-mini) |
+| **Pattern** | Sub-agent via `asTool()` (claude-haiku-4-5, Anthropic) |
 | **Formats** | PDF (pdf-parse), texte (UTF-8), images (métadonnées) |
 | **Sécurité** | Vérifie propriété du document avant lecture |
 | **Max turns** | 5 |
@@ -1068,7 +1082,7 @@ Le copilote est un système multi-agents basé sur le **OpenAI Agents SDK** (`@o
 
 | Propriété | Valeur |
 |-----------|--------|
-| **Pattern** | Sub-agent via `asTool()` (GPT-5-mini) |
+| **Pattern** | Sub-agent via `asTool()` (gpt-4.1-mini, OpenAI — Responses API) |
 | **API** | OpenAI Agents SDK webSearchTool() + Brave Search |
 | **Langues** | FR + EN, résultats en français |
 | **Citations** | Obligatoires (URL, date) |
@@ -1099,7 +1113,7 @@ Le copilote est un système multi-agents basé sur le **OpenAI Agents SDK** (`@o
 
 | Propriété | Valeur |
 |-----------|--------|
-| **Modèle** | GPT-5-nano |
+| **Modèle** | claude-haiku-4-5 (Anthropic) |
 | **Exécution** | Parallèle avec l'agent principal |
 | **Mode** | Fail-open (disponibilité > sécurité) |
 
@@ -1218,8 +1232,8 @@ X-Accel-Buffering: no
 
 ### Gestion des pièces jointes
 
-- **Documents :** Passés au FileReaderAgent avec documentId
-- **Images :** Embedées en vision content (base64 data:// URLs) pour GPT-5 multimodal
+- **Documents :** Passés au FileReaderAgent (claude-haiku-4-5) avec documentId
+- **Images :** Embedées en vision content (base64 data:// URLs) pour Claude Sonnet multimodal
 
 ---
 
@@ -1395,16 +1409,58 @@ mobile/app/
 
 ## 20. Intégrations externes
 
-### IA & Machine Learning
+### IA & Machine Learning (3 providers)
 
 | Service | Modèle | Usage | Coût estimé |
 |---------|--------|-------|-------------|
-| OpenAI | GPT-5 | Agents principaux | $1.25/$10.00 per 1M tokens |
-| OpenAI | GPT-5-mini | Sub-agents | $0.25/$2.00 per 1M tokens |
-| OpenAI | GPT-5-nano | Guardrails, titres, résumés | $0.05/$0.40 per 1M tokens |
-| OpenAI | text-embedding-3-small | Embeddings vectoriels | $0.02 per 1M tokens |
-| OpenAI | gpt-image-1 | Génération d'images | $0.02-$0.19 per image |
-| OpenAI | whisper-1 | Transcription audio | $0.006 per minute |
+| **Anthropic** | claude-sonnet-4-5 | Agents principaux (TalentAgent, OrgAgent) | $3/$15 per 1M tokens |
+| **Anthropic** | claude-haiku-4-5 | Guardrails, titres, summaries, file_reader | $0.80/$4 per 1M tokens |
+| **Google** | gemini-2.5-flash-lite | Suggestions, objectifs, bio | ~$0.02/$0.07 per 1M tokens |
+| **OpenAI** | gpt-4.1-mini | Web search, vision/extraction | $0.40/$1.60 per 1M tokens |
+| **OpenAI** | gpt-4.1-nano | Recommendations candidats | $0.10/$0.40 per 1M tokens |
+| **OpenAI** | text-embedding-3-small | Embeddings vectoriels | $0.02 per 1M tokens |
+| **OpenAI** | gpt-image-1 | Génération d'images | $0.02-$0.19 per image |
+| **OpenAI** | whisper-1 | Transcription audio | $0.006 per minute |
+| **OpenAI** | omni-moderation-latest | Moderation contenu (auto-moderation) | Gratuit |
+
+### Cartographie complete : Service → Provider → Modele
+
+| Service | Fichier | Provider | Modele | Pattern |
+|---------|---------|----------|--------|---------|
+| **Copilot — Agents principaux** | | | | |
+| TalentAgent (explore) | `copilot/agents/talent.agent.ts` | Anthropic | claude-sonnet-4-5 | `run()` default provider |
+| TalentAgent (study) | `copilot/agents/talent.agent.ts` | Anthropic | claude-sonnet-4-5 | `run()` default provider |
+| OrgAgent | `copilot/agents/organization.agent.ts` | Anthropic | claude-sonnet-4-5 | `run()` default provider |
+| **Copilot — Sub-agents** | | | | |
+| FileReaderAgent | `copilot/tools/file-read.tool.ts` | Anthropic | claude-haiku-4-5 | `agent.asTool()` |
+| WebSearchAgent | `copilot/tools/web-search.tool.ts` | OpenAI | gpt-4.1-mini | `agent.asTool()` + Responses API |
+| **Copilot — Utilitaires** | | | | |
+| Input guardrail | `copilot/guardrails/input.guardrail.ts` | Anthropic | claude-haiku-4-5 | `run()` default provider |
+| Session summarizer | `copilot/session-summarizer.ts` | Anthropic | claude-haiku-4-5 | `run()` default provider |
+| Session title | `copilot/stream/sse.handler.ts` | Anthropic | claude-haiku-4-5 | `run()` default provider |
+| Suggestions prompt | `copilot/stream/sse.handler.ts` | Google | gemini-2.5-flash-lite | `Runner({ modelProvider: geminiProvider })` |
+| Intent suggestions | `routes/copilot.ts` | Google | gemini-2.5-flash-lite | `Runner({ modelProvider: geminiProvider })` |
+| **Copilot — Voice** | | | | |
+| Transcription audio (STT) | `routes/copilot.ts` | OpenAI | whisper-1 | `getOpenAIClient().audio.transcriptions` |
+| **Copilot — Images** | | | | |
+| Generation images | `copilot/tools/generate-image.tool.ts` | OpenAI | gpt-image-1 | `getImageClient().images.generate` |
+| **Suggestions formulaires** | | | | |
+| Suggestions espaces | `space-generation.service.ts` | Google | gemini-2.5-flash-lite | `getGeminiClient().chat.completions` |
+| Suggestions communautes | `community-generation.service.ts` | Google | gemini-2.5-flash-lite | `getGeminiClient().chat.completions` |
+| Suggestions opportunites | `opportunity-generation.service.ts` | Google | gemini-2.5-flash-lite | `getGeminiClient().chat.completions` |
+| Objectifs quotidiens | `daily-objective.service.ts` | Google | gemini-2.5-flash-lite | `getGeminiClient().chat.completions` |
+| Generation bio | `routes/talents.ts` | Google | gemini-2.5-flash-lite | `getGeminiClient().chat.completions` |
+| Assistant WhatsApp | `whatsapp-assistant.service.ts` | Google | gemini-2.5-flash-lite | `getGeminiClient().chat.completions` |
+| **Vision & Extraction** | | | | |
+| Extraction CV/documents | `documents/extraction.service.ts` | OpenAI | gpt-4.1-mini | `getOpenAIClient().chat.completions` (vision) |
+| Verification KYC | `kyc-verification.service.ts` | OpenAI | gpt-4.1-mini | `getOpenAIClient().chat.completions` (vision) |
+| Analyse docs organisation | `org-documents/org-document.service.ts` | OpenAI | gpt-4.1-mini | `getOpenAIClient().chat.completions` (vision) |
+| **Matching & Recommendations** | | | | |
+| Recommendations candidats | `recommendation.service.ts` | OpenAI | gpt-4.1-nano | `Runner({ modelProvider: openaiProvider })` |
+| **Embeddings & Search** | | | | |
+| Embeddings vectoriels | `embedding.service.ts` | OpenAI | text-embedding-3-small | `getEmbeddingClient().embeddings.create` |
+| **Moderation** | | | | |
+| Auto-moderation contenu | `auto-moderation.service.ts` | OpenAI | omni-moderation-latest | Direct `new OpenAI()` (timeout 5s) |
 
 ### Base de données vectorielle
 
@@ -1465,10 +1521,14 @@ JWT_ACCESS_SECRET=<64+ chars hex>
 JWT_REFRESH_SECRET=<64+ chars hex>
 ADMIN_EMAILS=admin@etudesk.com
 
-# OpenAI
+# Anthropic Claude (agents principaux, guardrails, summaries, file_reader)
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Google Gemini (suggestions, objectifs, bio)
+GOOGLE_API_KEY=AIza...
+
+# OpenAI (images, STT, moderation, embeddings, web search, vision, recommendations)
 OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-5
-OPENAI_NANO_MODEL=gpt-5-mini
 
 # Pinecone
 PINECONE_API_KEY=...
@@ -1511,8 +1571,9 @@ services:
 npm run dev              # Serveur dev avec hot-reload (tsx watch)
 npm run build            # Compilation TypeScript
 npm run start            # Serveur production
-npm run seed             # Données initiales
-npm run db:reset         # Reset schema + seed
+npm run db:drop-schema   # Drop + recreate schema public
+npm run db:reset         # Reset complet (drop schema + migrate)
+npm run db:recreate      # Supprime et recrée la base (optionnel)
 npm run db:migrate       # Exécuter migrations
 npm run seed:pinecone    # Initialiser vecteurs Pinecone
 ```
@@ -1557,7 +1618,7 @@ Un utilisateur Talent (30 crédits/jour) parraine 3 amis qui souscrivent :
 | `docs/COPILOT_AGENT_ARCHITECTURE.md` | Architecture agents, tools, handoffs, SSE |
 | `docs/COPILOT_AGENT_PERIMETER.md` | 3 modes, 20+ exemples, 8 use cases |
 | `docs/COPILOT_TOOLS_DOCUMENTATION.md` | 8 outils avec cas de test réels |
-| `docs/AI_MODELS_DOCUMENTATION.md` | Familles GPT-5, GPT-5-mini, GPT-5-nano |
+| `docs/AI_MODELS_DOCUMENTATION.md` | Architecture multi-provider (Anthropic + Gemini + OpenAI) |
 | `docs/OPENAI_AGENTS_SDK_DOCUMENTATION.md` | SDK primitives, memory, streaming |
 | `docs/AI_AGENT_DESIGN_GUIDE.md` | Best practices design agents |
 | `docs/copilot-calibration-audit.md` | 14 tests calibration (100% pass) |
@@ -1581,16 +1642,19 @@ Un utilisateur Talent (30 crédits/jour) parraine 3 amis qui souscrivent :
 
 ### D. Modèles de coûts IA (estimation)
 
-| Usage | Modèle | Coût/requête (estimé) |
-|-------|--------|----------------------|
-| Message copilote (Explorer) | GPT-5 | ~$0.02-0.05 |
-| Message copilote (Study) | GPT-5 | ~$0.01-0.03 |
-| Sub-agent (file_reader) | GPT-5-mini | ~$0.005-0.01 |
-| Guardrail input | GPT-5-nano | ~$0.001 |
-| Titre session | GPT-5-nano | ~$0.0005 |
-| Embedding | text-embedding-3-small | ~$0.0001 |
-| Image | gpt-image-1 | $0.02-0.19 |
+| Usage | Modèle | Provider | Coût/requête (estimé) |
+|-------|--------|----------|----------------------|
+| Message copilote (Explorer) | claude-sonnet-4-5 | Anthropic | ~$0.03-0.08 |
+| Message copilote (Study) | claude-sonnet-4-5 | Anthropic | ~$0.02-0.05 |
+| Sub-agent (file_reader) | claude-haiku-4-5 | Anthropic | ~$0.005-0.01 |
+| Sub-agent (web_search) | gpt-4.1-mini | OpenAI | ~$0.005-0.01 |
+| Guardrail input | claude-haiku-4-5 | Anthropic | ~$0.002 |
+| Titre session | claude-haiku-4-5 | Anthropic | ~$0.001 |
+| Suggestions | gemini-2.5-flash-lite | Google | ~$0.0005 |
+| Recommendations | gpt-4.1-nano | OpenAI | ~$0.001 |
+| Embedding | text-embedding-3-small | OpenAI | ~$0.0001 |
+| Image | gpt-image-1 | OpenAI | $0.02-0.19 |
 
 ---
 
-> **Document généré le 7 Février 2026** par audit automatisé du codebase Etudesk VF.
+> **Document mis à jour le 14 Février 2026** — Architecture multi-provider AI (Anthropic + Gemini + OpenAI)

@@ -9,9 +9,9 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Alert,
   Modal,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -28,15 +28,15 @@ import {
   EyeOff,
   Radar,
 } from 'lucide-react-native';
-import { RefreshControl, ActivityIndicator } from 'react-native';
-import { ArrowLeft } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors, COMPONENT, LAYOUT } from '../../src/constants/theme';
-import { Button, EmptyState, Input, FooterNav } from '../../src/components/ui';
-import { useTheme } from '../../src/hooks/useTheme';
-import skillService, {
-  TalentSkill,
-  PROFICIENCY_LABELS,
-  SKILL_TYPE_LABELS,
+	import { RefreshControl } from 'react-native';
+	import { ArrowLeft } from 'lucide-react-native';
+	import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors, COMPONENT, LAYOUT } from '../../src/constants/theme';
+	import { Button, Chip, EmptyState, IconButton, Input, FooterNav, LoadingShimmer } from '../../src/components/ui';
+	import { useTheme } from '../../src/hooks/useTheme';
+	import skillService, {
+	  TalentSkill,
+	  PROFICIENCY_LABELS,
+	  SKILL_TYPE_LABELS,
   PROFICIENCY_LEVELS,
 } from '../../src/services/skillService';
 import { useAlert } from '../../src/contexts/AlertContext';
@@ -205,21 +205,25 @@ export default function SkillsScreen() {
           !skill.is_visible && { opacity: 0.5 },
         ]}
       >
-        {/* Action buttons */}
-        <View style={styles.cardActions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleToggleVisibility(skill)}
-          >
-            <VisibilityIcon size={18} color={skill.is_visible ? colors.textSecondary : colors.warning} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleDelete(skill)}
-          >
-            <Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />
-          </TouchableOpacity>
-        </View>
+	        {/* Action buttons */}
+	        <View style={styles.cardActions}>
+	          <IconButton
+	            onPress={() => handleToggleVisibility(skill)}
+	            icon={<VisibilityIcon size={18} color={skill.is_visible ? colors.textSecondary : colors.warning} strokeWidth={ICON.strokeWidth} />}
+	            accessibilityLabel={skill.is_visible ? 'Masquer la compétence' : 'Afficher la compétence'}
+	            size="sm"
+	            variant="ghost"
+	            style={styles.actionButton}
+	          />
+	          <IconButton
+	            onPress={() => handleDelete(skill)}
+	            icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+	            accessibilityLabel="Supprimer la compétence"
+	            size="sm"
+	            variant="ghost"
+	            style={styles.actionButton}
+	          />
+	        </View>
 
         {/* Skill name */}
         <Text style={[styles.skillName, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -280,16 +284,18 @@ export default function SkillsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Mes compétences</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       ) : (
         <ScrollView
@@ -324,62 +330,66 @@ export default function SkillsScreen() {
               {/* Skills grouped by type */}
               {Object.entries(groupedSkills).map(([type, typeSkills]) => {
                 if (typeSkills.length === 0) return null;
-                const TypeIcon = getTypeIcon(type);
-                const isCollapsed = collapsedSections[type] ?? false;
-                return (
-                  <View key={type} style={styles.section}>
-                    <TouchableOpacity
-                      style={styles.sectionHeader}
-                      onPress={() => setCollapsedSections((prev) => ({ ...prev, [type]: !prev[type] }))}
-                      activeOpacity={0.7}
-                    >
-                      <TypeIcon size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
-                      <Text style={[styles.sectionTitle, { color: colors.textSecondary, flex: 1 }]}>
-                        {SKILL_TYPE_LABELS[type] || type} ({typeSkills.length})
-                      </Text>
+	                const TypeIcon = getTypeIcon(type);
+	                const isCollapsed = collapsedSections[type] ?? false;
+	                return (
+	                  <View key={type} style={styles.section}>
+	                    <Pressable
+	                      style={styles.sectionHeader}
+	                      onPress={() => setCollapsedSections((prev) => ({ ...prev, [type]: !prev[type] }))}
+	                      accessibilityRole="button"
+	                      accessibilityLabel={`Basculer section ${SKILL_TYPE_LABELS[type] || type}`}
+	                    >
+	                      <TypeIcon size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+	                      <Text style={[styles.sectionTitle, { color: colors.textSecondary, flex: 1 }]}>
+	                        {SKILL_TYPE_LABELS[type] || type} ({typeSkills.length})
+	                      </Text>
                       <ChevronDown
                         size={16}
                         color={colors.textSecondary}
                         strokeWidth={ICON.strokeWidth}
-                        style={{ transform: [{ rotate: isCollapsed ? '-90deg' : '0deg' }] }}
-                      />
-                    </TouchableOpacity>
-                    {!isCollapsed && typeSkills.map(renderSkill)}
-                  </View>
-                );
-              })}
+	                        style={{ transform: [{ rotate: isCollapsed ? '-90deg' : '0deg' }] }}
+	                      />
+	                    </Pressable>
+	                    {!isCollapsed && typeSkills.map(renderSkill)}
+	                  </View>
+	                );
+	              })}
             </>
           )}
         </ScrollView>
       )}
 
-      {/* Auto-diagnostic Button */}
-      <View style={[styles.diagnosticContainer, { backgroundColor: colors.background }]}>
-        <TouchableOpacity
-          style={[styles.diagnosticButton, { backgroundColor: colors.primary }]}
-          onPress={handleAutoDiagnostic}
-          activeOpacity={0.8}
-        >
-          <Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.diagnosticButtonText, { color: colors.textOnPrimary }]}>
-            Auto-diagnostic
-          </Text>
-        </TouchableOpacity>
-      </View>
+	      {/* Auto-diagnostic Button */}
+	      <View style={[styles.diagnosticContainer, { backgroundColor: colors.background }]}>
+	        <Button
+	          title="Auto-diagnostic"
+	          onPress={handleAutoDiagnostic}
+	          fullWidth
+	          icon={<Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+	          iconPosition="left"
+	          style={[styles.diagnosticButton, { backgroundColor: colors.primary }]}
+	          textStyle={styles.diagnosticButtonText}
+	        />
+	      </View>
 
       <FooterNav activeTab="home" />
 
-      {/* Add Skill Modal */}
-      <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
-          {/* Modal Header */}
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={closeModal}>
-              <X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-            </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Ajouter une compétence</Text>
-            <View style={{ width: 24 }} />
-          </View>
+	      {/* Add Skill Modal */}
+	      <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
+	        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+	          {/* Modal Header */}
+	          <View style={styles.modalHeader}>
+	            <IconButton
+	              onPress={closeModal}
+	              icon={<X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	              accessibilityLabel="Fermer"
+	              size="sm"
+	              variant="ghost"
+	            />
+	            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Ajouter une compétence</Text>
+	            <View style={{ width: 24 }} />
+	          </View>
 
           <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
             {/* Skill Name */}
@@ -393,64 +403,60 @@ export default function SkillsScreen() {
               />
             </View>
 
-            {/* Type Selector */}
-            <View style={styles.modalSection}>
-              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Type de compétence *</Text>
-              <View style={styles.chipRow}>
-                {Object.entries(SKILL_TYPE_LABELS).map(([key, label]) => {
-                  const isActive = selectedType === key;
-                  const TypeIcon = getTypeIcon(key);
-                  return (
-                    <TouchableOpacity
-                      key={key}
-                      style={[
-                        styles.chip,
-                        {
-                          backgroundColor: isActive ? withOpacity(colors.primary, OPACITY[20]) : colors.gray100,
-                          borderColor: isActive ? colors.primary : 'transparent',
-                        },
-                      ]}
-                      onPress={() => setSelectedType(key)}
-                    >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <TypeIcon size={14} color={isActive ? colors.primary : colors.textDisabled} strokeWidth={ICON.strokeWidth} />
-                        <Text style={[styles.chipText, { color: isActive ? colors.primary : colors.textDisabled }]}>
-                          {label}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
+	            {/* Type Selector */}
+	            <View style={styles.modalSection}>
+	              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Type de compétence *</Text>
+	              <View style={styles.chipRow}>
+	                {Object.entries(SKILL_TYPE_LABELS).map(([key, label]) => {
+	                  const isActive = selectedType === key;
+	                  const TypeIcon = getTypeIcon(key);
+	                  return (
+	                    <Chip
+	                      key={key}
+	                      onPress={() => setSelectedType(key)}
+	                      label={label}
+	                      selected={isActive}
+	                      leftIcon={<TypeIcon size={14} color={isActive ? colors.primary : colors.textDisabled} strokeWidth={ICON.strokeWidth} />}
+	                      style={[
+	                        styles.chip,
+	                        {
+	                          backgroundColor: isActive ? withOpacity(colors.primary, OPACITY[20]) : colors.gray100,
+	                          borderColor: isActive ? colors.primary : 'transparent',
+	                        },
+	                      ]}
+	                      textStyle={[styles.chipText, { color: isActive ? colors.primary : colors.textDisabled }]}
+	                    />
+	                  );
+	                })}
+	              </View>
+	            </View>
 
             {/* Proficiency Selector */}
-            <View style={styles.modalSection}>
-              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Niveau</Text>
-              <View style={styles.chipRow}>
-                {PROFICIENCY_LEVELS.map((level) => {
-                  const isActive = selectedProficiency === level;
-                  const levelColor = proficiencyColors[level];
-                  return (
-                    <TouchableOpacity
-                      key={level}
-                      style={[
-                        styles.chip,
-                        {
-                          backgroundColor: isActive ? withOpacity(levelColor, OPACITY[20]) : colors.gray100,
-                          borderColor: isActive ? levelColor : 'transparent',
-                        },
-                      ]}
-                      onPress={() => setSelectedProficiency(level)}
-                    >
-                      <Text style={[styles.chipText, { color: isActive ? levelColor : colors.textDisabled }]}>
-                        {PROFICIENCY_LABELS[level]}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
+	            <View style={styles.modalSection}>
+	              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Niveau</Text>
+	              <View style={styles.chipRow}>
+	                {PROFICIENCY_LEVELS.map((level) => {
+	                  const isActive = selectedProficiency === level;
+	                  const levelColor = proficiencyColors[level];
+	                  return (
+	                    <Chip
+	                      key={level}
+	                      onPress={() => setSelectedProficiency(level)}
+	                      label={PROFICIENCY_LABELS[level]}
+	                      selected={isActive}
+	                      style={[
+	                        styles.chip,
+	                        {
+	                          backgroundColor: isActive ? withOpacity(levelColor, OPACITY[20]) : colors.gray100,
+	                          borderColor: isActive ? levelColor : 'transparent',
+	                        },
+	                      ]}
+	                      textStyle={[styles.chipText, { color: isActive ? levelColor : colors.textDisabled }]}
+	                    />
+	                  );
+	                })}
+	              </View>
+	            </View>
 
             {/* Context field */}
             <View style={styles.modalSection}>
@@ -615,11 +621,6 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xs,
   },
   diagnosticButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
     borderRadius: BORDER.radius.md,
   },
   diagnosticButtonText: {

@@ -17,7 +17,7 @@ const ROTATION_MS = 8000;    // Faster rotation
 
 export const PulsingOrb: React.FC<PulsingOrbProps> = ({ size = 90 }) => {
   const { colors, isDark } = useTheme();
-  const orbColor = isDark ? '#FFFFFF' : colors.primary;
+  const orbColor = isDark ? colors.textPrimary : colors.primary;
   const breath = useRef(new Animated.Value(0)).current;
   const spin = useRef(new Animated.Value(0)).current;
   const spinReverse = useRef(new Animated.Value(0)).current;

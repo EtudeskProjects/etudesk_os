@@ -4,8 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +16,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../../src/constants/theme';
 import { CommunityCard } from '../../../src/components/cards';
-import { Button, FooterNav, IconButton } from '../../../src/components/ui';
+import { Button, FooterNav, IconButton, Tap, LoadingShimmer } from '../../../src/components/ui';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useAlert } from '../../../src/contexts/AlertContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
@@ -114,9 +112,11 @@ export default function CommunitiesListScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-        </TouchableOpacity>
+        <IconButton
+          onPress={() => router.back()}
+          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+          accessibilityLabel="Retour"
+        />
         <View style={styles.headerCenter}>
           <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Communautés</Text>
@@ -133,7 +133,7 @@ export default function CommunitiesListScreen() {
       {/* List */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <LoadingShimmer variant="fullPage" />
         </View>
       ) : (
         <FlatList

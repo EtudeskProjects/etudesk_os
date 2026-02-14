@@ -4,9 +4,11 @@
  */
 
 import React from 'react';
-import { TouchableOpacity, StyleSheet, ViewStyle, StyleProp } from 'react-native';
+import { StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, BORDER, OPACITY, withOpacity } from '../../../constants/theme';
+import { Tap } from '../../ui';
+
 
 export interface CardContainerProps {
   children: React.ReactNode;
@@ -43,7 +45,7 @@ export const CardContainer: React.FC<CardContainerProps> = ({
       };
 
   return (
-    <TouchableOpacity
+    <Tap
       style={[
         styles.container,
         containerColors,
@@ -56,7 +58,7 @@ export const CardContainer: React.FC<CardContainerProps> = ({
       disabled={!onPress}
     >
       {children}
-    </TouchableOpacity>
+    </Tap>
   );
 };
 
