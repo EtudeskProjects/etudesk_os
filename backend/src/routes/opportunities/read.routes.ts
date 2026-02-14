@@ -109,15 +109,15 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
     query += `)`;
 
     if (status) {
-      query += ` AND opp.status = $${paramIndex++}`;
+      query += ` AND opp.status = $${paramIndex++}::text`;
       params.push(status as string);
     }
     if (type) {
-      query += ` AND opp.type = $${paramIndex++}`;
+      query += ` AND opp.type = $${paramIndex++}::text`;
       params.push(type as string);
     }
     if (location_type) {
-      query += ` AND opp.location_type = $${paramIndex++}`;
+      query += ` AND opp.location_type = $${paramIndex++}::text`;
       params.push(location_type as string);
     }
 
@@ -128,7 +128,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
     }
 
     // Sort by Universal Match Score, then Recency
-    query += ` ORDER BY match_score DESC, opp.posted_at DESC NULLS LAST, opp.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    query += ` ORDER BY match_score DESC, opp.posted_at DESC NULLS LAST, opp.created_at DESC LIMIT $${paramIndex++}::integer OFFSET $${paramIndex++}::integer`;
     params.push(pagination.limit, pagination.offset);
 
     const result = await pool.query(query, params);
@@ -167,7 +167,7 @@ router.get('/organization/:orgId', optionalAuthMiddleware, async (req: AuthReque
     let countParamIndex = 2;
 
     if (status) {
-      countQuery += ` AND o.status = $${countParamIndex++}`;
+      countQuery += ` AND o.status = $${countParamIndex++}::text`;
       countParams.push(status as string);
     }
 
@@ -190,11 +190,11 @@ router.get('/organization/:orgId', optionalAuthMiddleware, async (req: AuthReque
     let paramIndex = 2;
 
     if (status) {
-      query += ` AND o.status = $${paramIndex++}`;
+      query += ` AND o.status = $${paramIndex++}::text`;
       params.push(status as string);
     }
 
-    query += ` ORDER BY o.created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    query += ` ORDER BY o.created_at DESC LIMIT $${paramIndex++}::integer OFFSET $${paramIndex++}::integer`;
     params.push(pagination.limit, pagination.offset);
 
     const result = await pool.query(query, params);

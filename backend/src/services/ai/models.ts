@@ -16,7 +16,7 @@ export const MODEL_SUGGESTION = 'gemini-2.5-flash-lite';
 // --- Anthropic Claude (agents — best reasoning + tool use) ---
 
 /** Main copilot agents: talent explorer, org explorer, study mode */
-export const MODEL_AGENT = 'claude-sonnet-4-5-20250514';
+export const MODEL_AGENT = 'claude-sonnet-4-5-20250929';
 
 /** Fast tasks: summaries, titles, guardrails, intent suggestions */
 export const MODEL_FAST = 'claude-haiku-4-5-20251001';

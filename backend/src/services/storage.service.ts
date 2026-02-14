@@ -72,7 +72,8 @@ export async function getSignedUrl(fileUrl: string, expiresIn = 3600): Promise<s
  */
 export async function getFileBuffer(fileUrl: string): Promise<Buffer> {
   // Reject mobile file: URIs — they reference device-local paths, not server files
-  if (fileUrl.startsWith('file:')) {
+  // Also catches mangled paths like "uploads/file:/var/mobile/..." or "/uploads/file:/..."
+  if (fileUrl.startsWith('file:') || fileUrl.includes('/file:')) {
     throw new Error(`Cannot read mobile-local URI on server: ${fileUrl.slice(0, 80)}`);
   }
 

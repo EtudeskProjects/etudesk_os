@@ -25,11 +25,9 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
       type: z
         .enum(['HARD_SKILL', 'SOFT_SKILL', 'KNOWLEDGE'])
         .describe('The skill category. HARD_SKILL for technical/domain skills (Python, Data Analysis, Marketing), SOFT_SKILL for interpersonal skills (Leadership, Communication), KNOWLEDGE for theoretical knowledge (Machine Learning Theory, Business Strategy).'),
-      is_visible: z
-        .boolean()
-        .describe('Whether the skill is visible on the public profile. Set to false to hide the skill from public views.'),
     }),
-    execute: async ({ action, skillName, proficiencyLevel, origin, type, is_visible }) => {
+    execute: async ({ action, skillName, proficiencyLevel, origin, type }) => {
+      const is_visible = true; // Skills are visible by default; users toggle visibility from profile settings
       const talentId = authenticatedTalentId;
 
       try {
@@ -51,7 +49,7 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
             await pool.query(
               `INSERT INTO talent_skills (talent_id, canonical_name, proficiency_level, origin, type, is_visible)
                VALUES ($1, $2, $3, $4, $5, $6)`,
-              [talentId, skillName, proficiencyLevel, origin, type, is_visible !== false]
+              [talentId, skillName, proficiencyLevel, origin, type, is_visible]
             );
 
             logger.info(`[manage_skills] Added skill "${skillName}" (${proficiencyLevel}) for talent ${talentId}`);
@@ -63,12 +61,8 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
           }
 
           case 'update': {
-            const updates = ['proficiency_level = $3', 'updated_at = NOW()'];
-            const params: any[] = [talentId, skillName, proficiencyLevel];
-            if (is_visible !== undefined) {
-              params.push(is_visible);
-              updates.push(`is_visible = $${params.length}`);
-            }
+            const updates = ['proficiency_level = $3', 'is_visible = $4', 'updated_at = NOW()'];
+            const params: any[] = [talentId, skillName, proficiencyLevel, is_visible];
             const result = await pool.query(
               `UPDATE talent_skills SET ${updates.join(', ')}
                WHERE talent_id = $1 AND LOWER(canonical_name) = LOWER($2)
