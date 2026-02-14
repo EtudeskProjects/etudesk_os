@@ -24,10 +24,20 @@ function createReadDocumentTool(talentId: string) {
     description:
       'Read the content of a document belonging to the authenticated talent. Returns extracted text or raw file content. Use the documentId from the [Pièces jointes] section in the user message, or from sql_query results (my_documents intent).',
     parameters: z.object({
-      documentId: z.string().describe('The UUID of the document to read. Get this from the [documentId: ...] in the [Pièces jointes] section, or from sql_query my_documents intent.'),
+      documentId: z.string().describe('ONE single UUID of the document to read (e.g. "d6f62a32-db50-43bf-985f-e4a5708a2124"). Pass exactly ONE UUID — NOT multiple IDs separated by commas.'),
     }),
     execute: async ({ documentId }) => {
       try {
+        // Validate UUID format — reject comma-separated or malformed IDs
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const cleanId = documentId.trim();
+        if (!uuidRegex.test(cleanId)) {
+          return {
+            success: false,
+            error: `Invalid documentId "${documentId.slice(0, 50)}". Pass exactly ONE UUID (e.g. "d6f62a32-db50-43bf-985f-e4a5708a2124"). Do NOT pass multiple IDs separated by commas.`,
+          };
+        }
+
         // Verify document belongs to this talent (IDOR protection)
         const result = await pool.query(
           `SELECT id, title, original_filename, mime_type, file_url, document_type, description
@@ -143,8 +153,9 @@ You are a document analysis specialist. Use the read_document tool to read the t
 
 # Instructions
 
-- The documentId is provided in the message (from the [Pièces jointes] section). Use it directly with read_document — do NOT ask the user for it.
-- If multiple documentIds are provided, read each one sequentially.
+- The documentId is provided in the message. Extract the UUID (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) and call read_document with that SINGLE UUID.
+- CRITICAL: Pass ONE UUID per read_document call. NEVER pass comma-separated IDs.
+- If the message contains multiple UUIDs, call read_document separately for each one.
 - Analyze the content and return a structured summary in French.
 - Be factual and concise in your analysis.
 
