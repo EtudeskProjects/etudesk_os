@@ -77,15 +77,27 @@ export function createSqlQueryTool(
   authorizedOrgIds?: string[],
   allowedIntents?: readonly SqlIntent[]
 ) {
+  // Anti-loop: track recent calls to detect repeated identical queries
+  const recentCalls: string[] = [];
+  const MAX_IDENTICAL_CALLS = 2;
+
   return tool({
     name: 'sql_query',
     description:
-      'Query PostgreSQL for structured data. Use for personal data (my_profile, my_applications, my_communities, my_documents, my_skills, my_community_feed, my_community_members), org management (org_stats, org_applications, org_members, org_opportunities, org_revenue, org_documents, org_talents, org_talent_profile, org_community_feed, org_community_members), and structured search (search_opportunities, search_communities). Personal data is automatically filtered for the authenticated user — do NOT include talentId in params.',
+      'Query PostgreSQL for structured data. Use for personal data (my_profile, my_applications, my_communities, my_documents, my_skills, my_community_feed, my_community_members), org management (org_stats, org_applications, org_members, org_opportunities, org_revenue, org_documents, org_talents, org_talent_profile, org_community_feed, org_community_members), and structured search (search_opportunities, search_communities). Personal data is automatically filtered for the authenticated user — do NOT include talentId in params. IMPORTANT: Do NOT call the same intent twice — results are deterministic.',
     parameters: z.object({
       intent: z.enum(SQL_INTENTS).describe('The query intent. Use my_* for personal data, org_* for organization data (requires organizationId in params), search_* for text search.'),
       paramsJson: z.string().describe('Optional parameters as JSON string. Examples: \'{"status":"PENDING"}\' to filter, \'{"organizationId":"uuid"}\' for org intents. Do NOT include talentId — it is injected automatically.'),
     }),
     execute: async ({ intent, paramsJson }) => {
+      // Anti-loop detection: block repeated identical calls
+      const callKey = `${intent}:${paramsJson || '{}'}`;
+      const identicalCount = recentCalls.filter(c => c === callKey).length;
+      if (identicalCount >= MAX_IDENTICAL_CALLS) {
+        logger.warn(`[sql_query] Blocked repeated call: ${intent} (${identicalCount + 1}x)`);
+        return { error: `STOP: You already called sql_query("${intent}") ${identicalCount} times with the same params. The data has not changed. Use the results you already have.` };
+      }
+      recentCalls.push(callKey);
       // If allowedIntents is provided, reject disallowed intents
       if (allowedIntents && !allowedIntents.includes(intent)) {
         return { error: `L'intent '${intent}' n'est pas disponible dans ce mode. Intents autorisés : ${allowedIntents.join(', ')}` };
