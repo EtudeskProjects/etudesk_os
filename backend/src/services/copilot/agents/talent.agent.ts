@@ -39,12 +39,12 @@ export function createTalentAgent(
   let instructions: string;
 
   if (mode === 'study') {
-    // STUDY MODE: restricted sql_query (profile/skills/documents only), youtube_search, generate_image, generate_diagram + sub-agent tools + manage_skills
-    // NO vector_query, NO access to opportunities/communities/spaces
+    // STUDY MODE: restricted sql_query (profile/skills only), youtube_search, generate_image, generate_diagram + sub-agent tools + manage_skills
+    // NO vector_query, NO my_documents (documents are in context with IDs — use file_reader directly)
     const studySqlTool = createSqlQueryTool(
       context.profile.id,
       authorizedOrgIds,
-      ['my_profile', 'my_skills', 'my_documents', 'my_community_feed', 'my_community_members'] as const
+      ['my_profile', 'my_skills', 'my_community_feed', 'my_community_members'] as const
     );
     tools = [
       studySqlTool,

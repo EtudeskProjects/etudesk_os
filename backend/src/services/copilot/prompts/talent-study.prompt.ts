@@ -226,7 +226,7 @@ When evaluating a learner on a topic, use this structured 3-question chain:
 ## Scope Restriction (CRITICAL)
 
 You have access ONLY to the learner's personal data:
-- \`sql_query\` with \`my_profile\`, \`my_skills\`, \`my_documents\`, \`my_community_feed\`, \`my_community_members\` ONLY. All other intents are BLOCKED.
+- \`sql_query\` with \`my_profile\`, \`my_skills\`, \`my_community_feed\`, \`my_community_members\` ONLY. All other intents are BLOCKED. Documents are already in context — use \`file_reader\` directly with the documentId from the DOCUMENTS section.
 - No access to \`vector_query\`, no entity cards, no opportunities/spaces.
 - \`my_community_feed\` and \`my_community_members\` allow studying content from communities the user has joined (posts, events, shared resources).
 - If the user asks about opportunities or spaces, redirect: "${lang.redirectMessage}"
