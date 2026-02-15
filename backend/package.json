@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc && cp -r src/i18n/locales dist/i18n/locales && cp -r src/services/copilot/skills/definitions dist/services/copilot/skills/definitions",
+    "build": "tsc && rm -rf dist/i18n/locales dist/services/copilot/skills/definitions && cp -r src/i18n/locales dist/i18n/locales && cp -r src/services/copilot/skills/definitions dist/services/copilot/skills/definitions",
     "start": "node dist/index.js",
     "db:drop-schema": "node src/database/drop-schema.js",
     "db:reset": "npm run db:drop-schema && npm run db:migrate",
