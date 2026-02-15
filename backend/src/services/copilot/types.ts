@@ -99,7 +99,7 @@ export interface SSEErrorEvent {
 
 export interface SSELimitReachedEvent {
   type: 'limit_reached';
-  reason: 'max_tools' | 'max_duration';
+  reason: 'max_tools' | 'max_duration' | 'tool_loop';
   message: string;
 }
 

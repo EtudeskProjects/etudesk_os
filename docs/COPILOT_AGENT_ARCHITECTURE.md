@@ -31,7 +31,7 @@
 │  ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐       │
 │  │   TalentAgent     │  │   TalentAgent     │  │     OrgAgent      │       │
 │  │    (explore)      │  │     (study)       │  │   (organization)  │       │
-│  │  claude-sonnet-4-5│  │  claude-sonnet-4-5│  │  claude-sonnet-4-5│       │
+│  │  claude-opus-4-6│  │  claude-opus-4-6│  │  claude-opus-4-6│       │
 │  │    6 tools        │  │     7 tools       │  │     6 tools       │       │
 │  └─────────┬─────────┘  └─────────┬─────────┘  └─────────┬─────────┘       │
 │            │                      │                      │                  │
@@ -76,7 +76,7 @@
 | Provider Agents | Anthropic Claude (via AnthropicProvider custom) |
 | Provider Suggestions | Google Gemini (via OpenAI-compat endpoint) |
 | Provider Images/STT/Vision | OpenAI |
-| Modèle Agents (MODEL_AGENT) | claude-sonnet-4-5 (Anthropic) |
+| Modèle Agents (MODEL_AGENT) | claude-opus-4-6 (Anthropic) |
 | Modèle Fast (MODEL_FAST) | claude-haiku-4-5 (Anthropic) — guardrails, titres, summaries, file_reader |
 | Modèle Suggestions (MODEL_SUGGESTION) | gemini-2.5-flash-lite (Google) — suggestions, objectifs, bio |
 | Modèle Search/Vision (MODEL_SEARCH) | gpt-4.1-mini (OpenAI) — web_search, extraction, vision |
@@ -98,7 +98,7 @@
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `Talent Agent (explore)` |
-| **Modèle** | `MODEL_AGENT` (claude-sonnet-4-5, Anthropic) |
+| **Modèle** | `MODEL_AGENT` (claude-opus-4-6, Anthropic) |
 | **Guardrails** | inputSafetyGuardrail, outputFormatGuardrail |
 | **Description** | Agent principal pour l'exploration de la plateforme : recherche d'opportunités, communautés, espaces, talents |
 
@@ -116,7 +116,7 @@
 // Création de l'agent (simplifié)
 return new Agent({
   name: `Talent Agent (explore)`,
-  model: MODEL_AGENT,  // claude-sonnet-4-5
+  model: MODEL_AGENT,  // claude-opus-4-6
   instructions: buildTalentExplorerPrompt(context),
   tools: [
     vectorQueryTool,
@@ -140,7 +140,7 @@ return new Agent({
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `Talent Agent (study)` |
-| **Modèle** | `MODEL_AGENT` (claude-sonnet-4-5, Anthropic) |
+| **Modèle** | `MODEL_AGENT` (claude-opus-4-6, Anthropic) |
 | **Guardrails** | inputSafetyGuardrail, outputFormatGuardrail |
 | **Description** | Agent pédagogique pour l'apprentissage : recherche YouTube, génération de visuels, évaluation de compétences |
 
@@ -171,7 +171,7 @@ return new Agent({
 | Propriété | Valeur |
 |-----------|--------|
 | **Nom** | `Organization Explorer` |
-| **Modèle** | `MODEL_AGENT` (claude-sonnet-4-5, Anthropic) |
+| **Modèle** | `MODEL_AGENT` (claude-opus-4-6, Anthropic) |
 | **Guardrails** | inputSafetyGuardrail, outputFormatGuardrail |
 | **Description** | Agent de gestion d'organisation : gestion des membres, candidatures, analytics, création de ressources |
 
@@ -205,7 +205,7 @@ import { createOrgFileReaderTool } from '../tools/file-read.tool';
 // Création de l'agent (simplifié)
 return new Agent({
   name: 'Organization Explorer',
-  model: MODEL_AGENT,  // claude-sonnet-4-5
+  model: MODEL_AGENT,  // claude-opus-4-6
   instructions: buildOrgExplorerPrompt(context),
   tools: [
     vectorQueryTool,
@@ -1215,8 +1215,8 @@ Chaque composant du copilot utilise un provider et modele specifique :
 
 | Composant | Provider | Modele | Constante | Pattern |
 |-----------|----------|--------|-----------|---------|
-| TalentAgent (explore/study) | Anthropic | claude-sonnet-4-5 | MODEL_AGENT | `run()` default |
-| OrgAgent | Anthropic | claude-sonnet-4-5 | MODEL_AGENT | `run()` default |
+| TalentAgent (explore/study) | Anthropic | claude-opus-4-6 | MODEL_AGENT | `run()` default |
+| OrgAgent | Anthropic | claude-opus-4-6 | MODEL_AGENT | `run()` default |
 | FileReaderAgent (sub-agent) | Anthropic | claude-haiku-4-5 | MODEL_FAST | `agent.asTool()` |
 | Input guardrail | Anthropic | claude-haiku-4-5 | MODEL_FAST | `run()` default |
 | Session summarizer | Anthropic | claude-haiku-4-5 | MODEL_FAST | `run()` default |

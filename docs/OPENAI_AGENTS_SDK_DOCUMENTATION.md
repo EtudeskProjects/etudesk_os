@@ -343,7 +343,7 @@ Etudesk utilise 3 providers AI simultanément via le SDK OpenAI Agents :
 
 | Provider | Modèles | Usage |
 |----------|---------|-------|
-| **Anthropic** (claude-sonnet-4-5, claude-haiku-4-5) | Agents principaux, guardrails, titres, summaries, file_reader | Via `AnthropicProvider` custom adapter |
+| **Anthropic** (claude-opus-4-6, claude-haiku-4-5) | Agents principaux, guardrails, titres, summaries, file_reader | Via `AnthropicProvider` custom adapter |
 | **Google** (gemini-2.5-flash-lite) | Suggestions, objectifs quotidiens, bio | Via `OpenAIProvider` wrappant endpoint OpenAI-compatible Gemini |
 | **OpenAI** (gpt-4.1-mini, gpt-4.1-nano, gpt-image-1, whisper-1, omni-moderation-latest) | Web search, vision/extraction, images, STT, embeddings, moderation | Via `OpenAIProvider` natif (moderation: direct `new OpenAI()`) |
 
@@ -366,17 +366,17 @@ await openaiRunner.run(recommendationAgent, prompt);
 ### 2. Architecture Multi-Agent Actuelle
 
 ```
-TalentAgent (explore) ── model: claude-sonnet-4-5 (Anthropic)
+TalentAgent (explore) ── model: claude-opus-4-6 (Anthropic)
                          tools: vector_query, sql_query, generate_document,
                                 file_reader (asTool, claude-haiku-4-5),
                                 web_search (asTool, gpt-4.1-mini), execute_action
 
-TalentAgent (study)   ── model: claude-sonnet-4-5 (Anthropic)
+TalentAgent (study)   ── model: claude-opus-4-6 (Anthropic)
                          tools: sql_query (restreint), youtube_search, generate_image,
                                 generate_diagram, file_reader (asTool, claude-haiku-4-5),
                                 web_search (asTool, gpt-4.1-mini), manage_skills
 
-OrgAgent              ── model: claude-sonnet-4-5 (Anthropic)
+OrgAgent              ── model: claude-opus-4-6 (Anthropic)
                          tools: vector_query, sql_query (org_* + search_*),
                                 generate_document, file_reader (asTool, claude-haiku-4-5),
                                 web_search (asTool, gpt-4.1-mini), execute_action

@@ -4,7 +4,7 @@
  */
 
 import { Response } from 'express';
-import { run, Runner, InputGuardrailTripwireTriggered } from '@openai/agents';
+import { run, Runner, InputGuardrailTripwireTriggered, MaxTurnsExceededError } from '@openai/agents';
 import type { Agent, AgentInputItem } from '@openai/agents';
 import { SSEEvent, MessageSegment } from '../types';
 import { createTitleAgent, createSuggestionsAgent } from '../../ai/agent-factory';
@@ -16,6 +16,7 @@ import { getFileBuffer } from '../../storage.service';
 import { logger } from '../../../utils';
 
 const MAX_TOOL_CALLS = 20;
+const MAX_SAME_TOOL_CALLS = 3; // Prevent infinite loops (e.g., same sql_query repeated)
 const MAX_TURN_DURATION_MS = 120_000; // 2 minutes
 const HEARTBEAT_INTERVAL_MS = 30_000; // 30s — avoid proxy timeouts
 
@@ -66,8 +67,7 @@ export async function runAgentWithSSE(
   let toolCallCounter = 0;
   const turnStart = Date.now();
   let limitReached = false;
-  const toolCallCounts = new Map<string, number>(); // Track per-tool call count for loop detection
-  const TOOL_LOOP_THRESHOLD = 3; // Max times a single tool can be called before aborting
+  const sameToolCounts = new Map<string, number>(); // key = toolName:argsJson
 
   const heartbeatId = setInterval(() => sendHeartbeat(res), HEARTBEAT_INTERVAL_MS);
   logger.info(`[copilot] Start — "${message.slice(0, 100)}" (history: ${history.length} msgs)`);
@@ -138,6 +138,8 @@ export async function runAgentWithSSE(
     const input = inputItems;
     const result = await run(agent, input, { stream: true, maxTurns: 15 });
 
+    let currentTurnText = '';  // Track text generated in current turn (between tool calls)
+
     for await (const event of result as AsyncIterable<any>) {
       // Check duration limit
       if (!limitReached && Date.now() - turnStart > MAX_TURN_DURATION_MS) {
@@ -152,6 +154,7 @@ export async function runAgentWithSSE(
         if (data?.type === 'output_text_delta') {
           const delta = data.delta as string;
           finalOutput += delta;
+          currentTurnText += delta;
           sendSSE(res, { type: 'text_delta', delta });
 
           // Append to last text segment or create a new one
@@ -170,30 +173,37 @@ export async function runAgentWithSSE(
 
         if (event.name === 'tool_called') {
           toolCallCounter++;
-          const toolName = item?.rawItem?.name || item?.call?.name || item?.name || item?.type || 'unknown';
-          const toolArgs = item?.rawItem?.arguments || item?.call?.args || item?.arguments;
-          const callId = `${toolName}-${Date.now()}-${toolCallCounter}`;
+          const raw = item?.rawItem || {};
+          const toolName = raw?.name || item?.call?.name || item?.name || item?.type || 'unknown';
+          const toolArgs = raw?.arguments || item?.call?.args || item?.arguments;
+          const rawCallId = raw?.callId || raw?.id || item?.callId || item?.id;
+          const callId = rawCallId || `${toolName}-${Date.now()}-${toolCallCounter}`;
           toolStartTimes.set(callId, Date.now());
-          logger.info(`[copilot] Tool #${toolCallCounter}: ${toolName}`, { args: typeof toolArgs === 'string' ? toolArgs.slice(0, 200) : undefined });
 
-          // Loop detection: track per-tool call count
-          const toolCount = (toolCallCounts.get(toolName) || 0) + 1;
-          toolCallCounts.set(toolName, toolCount);
-          if (toolCount >= TOOL_LOOP_THRESHOLD) {
-            logger.error(`[copilot] LOOP DETECTED: ${toolName} called ${toolCount}x — aborting stream`);
-            const loopMsg = 'Désolé, une erreur est survenue. Reformule ta question ou essaie avec moins de détails.';
-            if (!finalOutput) {
-              sendSSE(res, { type: 'text_delta', delta: loopMsg });
-              finalOutput = loopMsg;
-              segments.push({ type: 'text', content: loopMsg });
-            }
-            sendSSE(res, { type: 'error', error: 'loop_detected' } as any);
-            clearInterval(heartbeatId);
-            return { finalOutput, toolTrace, segments };
+          // Log text generated before this tool call (agent's reasoning)
+          if (currentTurnText.trim()) {
+            logger.info(`[copilot] Agent text before tool #${toolCallCounter}: "${currentTurnText.trim().slice(0, 300)}"`);
+            currentTurnText = '';
           }
+          logger.info(`[copilot] Tool #${toolCallCounter}: ${toolName}`, { args: typeof toolArgs === 'string' ? toolArgs : JSON.stringify(toolArgs) });
 
-          // Store callId on the item for matching in tool_output
-          if (item) item._callId = callId;
+          // Loop breaker: if the agent repeats the exact same tool call too many times, abort.
+          const argsKey = typeof toolArgs === 'string' ? toolArgs : JSON.stringify(toolArgs ?? {});
+          const loopKey = `${toolName}:${argsKey}`;
+          const sameCount = (sameToolCounts.get(loopKey) || 0) + 1;
+          sameToolCounts.set(loopKey, sameCount);
+          if (!limitReached && sameCount > MAX_SAME_TOOL_CALLS) {
+            limitReached = true;
+            const limitMsg = `Boucle d'outils detectee (${toolName} appele ${sameCount} fois). Je stoppe ici pour eviter de gaspiller des credits. Reessaie en precisant ton besoin (ou change de mode).`;
+            logger.warn(`[copilot] Tool loop detected — ${loopKey} (#${sameCount}). Aborting run.`);
+            sendSSE(res, { type: 'limit_reached', reason: 'tool_loop', message: limitMsg });
+            // Stream a short message so the user sees something even if the agent never finalizes.
+            finalOutput += `\n\n${limitMsg}`;
+            sendSSE(res, { type: 'text_delta', delta: `\n\n${limitMsg}` });
+            // Abort the underlying run stream (prevents MaxTurnsExceededError spam).
+            try { await (result as any).toStream?.().cancel?.(); } catch {}
+            break;
+          }
 
           // Check tool count limit
           if (!limitReached && toolCallCounter > MAX_TOOL_CALLS) {
@@ -224,9 +234,10 @@ export async function runAgentWithSSE(
         }
 
         if (event.name === 'tool_output') {
-          const toolName = item?.rawItem?.name || item?.call?.name || item?.name || item?.type || 'unknown';
-          const toolArgs = item?.rawItem?.arguments || item?.call?.args || item?.arguments;
-          const callId = item?._callId || `${toolName}-unknown`;
+          const raw = item?.rawItem || {};
+          const toolName = raw?.name || item?.call?.name || item?.name || item?.type || 'unknown';
+          const toolArgs = raw?.arguments || item?.call?.args || item?.arguments;
+          const callId = raw?.callId || raw?.id || item?.callId || item?.id || `${toolName}-unknown`;
           const startTime = toolStartTimes.get(callId);
           const duration = startTime ? Date.now() - startTime : undefined;
           toolStartTimes.delete(callId);
@@ -235,6 +246,15 @@ export async function runAgentWithSSE(
           const isError = !!(output?.error || output?.isError);
           const parsedArgs = typeof toolArgs === 'string' ? safeParseArgs(toolArgs) : toolArgs;
           const summary = generateToolSummary(toolName, output, isError, parsedArgs);
+
+          // Log tool output details
+          const outputPreview = typeof output === 'string'
+            ? output.slice(0, 300)
+            : JSON.stringify(output)?.slice(0, 300);
+          logger.info(`[copilot] Tool #${toolCallCounter} result: ${toolName} → ${isError ? 'ERROR' : 'OK'} (${duration}ms)`, {
+            outputPreview,
+            cached: output?._cached || false,
+          });
 
           const traceEntry = {
             name: toolName,
@@ -281,6 +301,13 @@ export async function runAgentWithSSE(
         ? (result as any).finalOutput
         : JSON.stringify((result as any).finalOutput);
     }
+
+    // Log run summary
+    const elapsed = Date.now() - turnStart;
+    logger.info(`[copilot] Done — ${toolCallCounter} tools, ${elapsed}ms, output: ${finalOutput.length} chars`, {
+      toolNames: toolTrace.map(t => t.name).join(', '),
+      finalOutputPreview: finalOutput.slice(0, 200),
+    });
   } catch (error: any) {
     if (error instanceof InputGuardrailTripwireTriggered) {
       const classification = error.result?.output?.outputInfo?.classification || 'BLOCKED';
@@ -288,6 +315,12 @@ export async function runAgentWithSSE(
       const userMessage = classification === 'INJECTION'
         ? 'Je ne peux pas répondre à ce type de requête. Reformulez votre question en lien avec la plateforme.'
         : 'Cette requête ne peut pas être traitée. Je suis là pour vous accompagner sur la plateforme Etudesk.';
+      sendSSE(res, { type: 'error', error: userMessage });
+    } else if (error instanceof MaxTurnsExceededError || error?.name === 'MaxTurnsExceededError') {
+      // Common failure mode when an agent loops on tool calls.
+      const userMessage =
+        "Le copilote a boucle (trop de tours). Reessaie en etant plus specifique, ou change de mode. Si ca persiste, on corrige le prompt ou on bloque l'appel repetitif cote tool.";
+      logger.error('SSE stream error (MaxTurnsExceededError):', error);
       sendSSE(res, { type: 'error', error: userMessage });
     } else {
       logger.error('SSE stream error:', error);

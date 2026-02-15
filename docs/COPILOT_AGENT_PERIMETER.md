@@ -1,7 +1,7 @@
 # Copilot Agent Perimeter — Guide des Cas d'Usage
 
-> Definition exacte du perimetre de chaque mode avec exemples, processus de reflexion et reponses ideales.
-> Mis a jour : 14 Fevrier 2026 — Architecture multi-provider (Anthropic + Gemini + OpenAI)
+> Definition exacte du perimetre de chaque mode avec exemples, processus de decision (tool routing) et reponses ideales.
+> Mis a jour : 15 Fevrier 2026 — Architecture multi-provider (Anthropic + Gemini + OpenAI)
 
 ---
 
@@ -84,7 +84,7 @@
 | Tool | Explorer (talent) | Study (talent) | Org Explorer |
 |------|:-:|:-:|:-:|
 | `vector_query` | x | | x |
-| `sql_query` | x (28 intents) | x (my_profile, my_skills, my_documents) | x (org_* + search_* = 18 intents) |
+| `sql_query` | x (my_* + search_* + org_* scoped) | x (my_profile, my_skills, my_documents, my_community_feed, my_community_members) | x (org_* + org_analytics + search_*) |
 | `youtube_search` | | x | |
 | `generate_document` | x | | x |
 | `generate_image` | | x | |
@@ -99,7 +99,7 @@
 
 | Constante | Modele | Provider | Utilisation |
 |-----------|--------|----------|-------------|
-| MODEL_AGENT | claude-sonnet-4-5 | Anthropic | Agents principaux (talent, org) |
+| MODEL_AGENT | claude-opus-4-6 | Anthropic | Agents principaux (talent, org) |
 | MODEL_FAST | claude-haiku-4-5 | Anthropic | Guardrails, titres, summaries, file_reader |
 | MODEL_SUGGESTION | gemini-2.5-flash-lite | Google | Suggestions, objectifs quotidiens, bio |
 | MODEL_SEARCH | gpt-4.1-mini | OpenAI | web_search (Responses API), vision/extraction |
@@ -148,9 +148,9 @@
 | Tool | Pattern | Fichier source | Usage |
 |------|---------|---------------|-------|
 | `vector_query` | Static export | vector-query.tool.ts | Recherche semantique Pinecone (5 namespaces : opportunities, communities, spaces, talents, organizations) |
-| `sql_query` | Factory (talentId, orgIds) | sql-query.tool.ts | 28 intents : 10 my_* + 13 org_* + 5 search_* — donnees personnelles et org |
+| `sql_query` | Factory (talentId, orgIds) | sql-query.tool.ts | Intents lecture implementes (au 14 fevrier 2026) : 8 my_* + 2 my_community_* + 13 org_* + 7 org_analytics + 5 search_* — donnees personnelles et org (scope org limite aux orgs autorisees) |
 | `generate_document` | Factory (talentId, avatarUrl) | generate-document.tool.ts | Generation PDF/DOCX/CSV/XLS/TXT + CV elegant via cv_pdf_generator |
-| `file_reader` | Factory → asTool (claude-haiku-4-5, Anthropic) | file-read.tool.ts | Sub-agent lecture documents (PDF, texte, images metadata) |
+| `file_reader` | Factory → direct tool (talentId) | file-read.tool.ts | Lecture directe d'UN document (PDF/texte) et retour du contenu brut. Regle: lire chaque document une seule fois puis analyser (dedup/cache par session). |
 | `web_search` | Agent asTool (gpt-4.1-mini, OpenAI) | web-search.tool.ts | Sub-agent recherche web externe (Responses API) |
 | `execute_action` | Factory (talentId) | execute-action.tool.ts | 5 actions : apply_opportunity, join_community, book_space, accept/decline_invitation |
 
@@ -171,7 +171,7 @@
 | Element | Detail |
 |---------|--------|
 | **Question** | "Trouve-moi des stages en developpement web a Dakar" |
-| **Thinking** | Recherche semantique opportunites -> `vector_query` |
+| **Processus** | Recherche semantique opportunites -> `vector_query` |
 | **Tool call** | `vector_query(query: "stage developpement web Dakar", namespace: "opportunities", topK: 5)` |
 
 **Reponse ideale :**
@@ -196,7 +196,7 @@ Tu veux que je t'aide a preparer ta candidature ?
 | Element | Detail |
 |---------|--------|
 | **Question** | "Postule pour moi a l'offre Wave que j'ai en favoris" |
-| **Thinking** | 1. Trouver l'offre -> `sql_query` (bookmarks)<br>2. Verifier CV disponible -> `sql_query`<br>3. Confirmation -> bloc `confirmation` |
+| **Processus** | 1. Trouver l'offre -> `sql_query` (bookmarks)<br>2. Verifier CV disponible -> `sql_query`<br>3. Confirmation -> bloc `confirmation` |
 
 **Reponse ideale :**
 ```
@@ -222,7 +222,7 @@ J'ai trouve l'offre **Backend Developer** chez Wave dans tes favoris.
 | Element | Detail |
 |---------|--------|
 | **Question** | "Genere-moi un CV" |
-| **Thinking** | Skill CV Generation -> sql_query (bookmarks, documents) -> file_reader -> generate_document |
+| **Processus** | Skill CV Generation -> sql_query (bookmarks, documents) -> file_reader -> generate_document |
 
 **Reponse ideale :**
 ```
@@ -394,12 +394,12 @@ Chaque talent a un profil pedagogique stocke en base (JSONB `learning_preference
 
 | Tool | Pattern | Fichier source | Usage |
 |------|---------|---------------|-------|
-| `sql_query` (restreint) | Factory (talentId, orgIds, allowedIntents) | sql-query.tool.ts | 3 intents UNIQUEMENT : my_profile, my_skills, my_documents |
-| `manage_skills` | Factory (talentId) | manage-skills.tool.ts | Actions add/update competences (BEGINNER → EXPERT) |
+| `sql_query` (restreint) | Factory (talentId, orgIds, allowedIntents) | sql-query.tool.ts | 5 intents UNIQUEMENT : my_profile, my_skills, my_documents, my_community_feed, my_community_members |
+| `manage_skills` | Factory (talentId) | manage-skills.tool.ts | Actions add/update competences (BEGINNER → MASTER) |
 | `youtube_search` | Static export | youtube-search.tool.ts | YouTube Data API (maxResults 1-3, priorite francophone UEMOA) |
 | `generate_diagram` | Static export | generate-diagram.tool.ts | Mermaid : flowchart, sequence, class, mindmap, timeline, gantt, pie, ER |
 | `generate_image` | Static export | generate-image.tool.ts | gpt-image-1 (1024x1024, 1536x1024, 1024x1536) |
-| `file_reader` | Factory → asTool (claude-haiku-4-5, Anthropic) | file-read.tool.ts | Sub-agent lecture documents (PDF, texte) |
+| `file_reader` | Factory → direct tool (talentId) | file-read.tool.ts | Lecture directe d'UN document (PDF/texte) et retour du contenu brut. Regle: lire chaque document une seule fois puis analyser. |
 | `web_search` | Agent asTool (gpt-4.1-mini, OpenAI) | web-search.tool.ts | Sub-agent recherche web externe (Responses API) |
 
 **Tools NON disponibles en Study (4 bloques) :**
@@ -423,6 +423,7 @@ Chaque talent a un profil pedagogique stocke en base (JSONB `learning_preference
 | `quiz` | + youtube, + diagram, + flashcard |
 | `flashcard` | + youtube, + diagram, + quiz |
 | `image` | + youtube, + diagram, + quiz |
+| `chart` | + youtube, + diagram, + quiz, + flashcard |
 
 **Choisir UN SEUL composant par message.**
 
@@ -452,7 +453,7 @@ Q2 (Application) → Teste la capacite a appliquer
 Q3 (Analyse)     → Teste la comprehension profonde
    ↓ bilan
 
-Score 3/3 → manage_skills (add/upgrade) + ressource avancee
+Score 3/3 → proposer manage_skills (add/update, origin=inferred, type adapte) + ressource avancee
 Score 2/3 → flashcard sur le point faible + suggestion approfondissement
 Score 1/3 → cours fondamental (youtube/web_search)
 Score 0/3 → encouragement + demarrage session d'apprentissage
@@ -466,11 +467,14 @@ Score 0/3 → encouragement + demarrage session d'apprentissage
 |--------|-------------|------|
 | **Ajouter** | Assessment 3/3 ou 2/3 | `manage_skills` (add, BEGINNER ou INTERMEDIATE) |
 | **Monter niveau** | User montre maitrise au-dela du niveau actuel | `manage_skills` (update) |
-| **Inferer** | file_reader trouve skill dans CV/certificat | `manage_skills` (add, AI_INFERRED) |
-| **Valider** | User dit "je connais X" | Assessment 3 questions pour valider |
+| **Extraire** | file_reader trouve skill dans CV/certificat | `manage_skills` (add, origin=extracted) |
+| **Inferer** | Quiz/performance ou indices conversationnels solides | `manage_skills` (add/update, origin=inferred) |
+| **Declare** | User dit "je connais X" | `manage_skills` (add/update, origin=declared) |
 
-**Niveaux :** BEGINNER -> INTERMEDIATE -> ADVANCED -> EXPERT
-**Origins :** SELF_DECLARED, AI_INFERRED, DOCUMENT_EXTRACTED, QUIZ_VALIDATED
+**Niveaux (backend) :** BEGINNER -> INTERMEDIATE -> EXPERT -> MASTER
+**Origins (backend) :** declared | inferred | extracted
+**Types (backend) :** HARD_SKILL | SOFT_SKILL | KNOWLEDGE
+**Champs requis :** action, skillName, proficiencyLevel, origin, type (toujours demander confirmation avant l'appel).
 **INTERDIT :** Suppression de competence (pas d'action "remove" disponible)
 
 ### Entites en Mode Study
@@ -488,7 +492,7 @@ Score 0/3 → encouragement + demarrage session d'apprentissage
 | **Question** | "Explique-moi le pattern MVC" |
 | **Preferences** | style=VISUAL, interaction=DIRECT, depth=BALANCED, difficulty=STANDARD |
 | **Skills** | JavaScript (intermediate), aucune skill "architecture" |
-| **Thinking** | 1. Pas de skill architecture → niveau debutant<br>2. Style VISUAL → diagram, pas flashcard<br>3. DIRECT → explication concise, pas de questions guidees<br>4. Tool: `generate_diagram` |
+| **Processus** | 1. Pas de skill architecture → niveau debutant<br>2. Style VISUAL → diagram, pas flashcard<br>3. DIRECT → explication concise, pas de questions guidees<br>4. Tool: `generate_diagram` |
 
 **Reponse ideale :**
 ```
@@ -518,7 +522,7 @@ Tu veux un quiz pour verifier ta comprehension ?
 | **Question** | "Je veux comprendre les closures en JavaScript" |
 | **Preferences** | style=INTERACTIVE, interaction=SOCRATIC, depth=PRACTICAL, difficulty=STANDARD |
 | **Skills** | JavaScript (beginner) |
-| **Thinking** | 1. JS beginner → adapter la difficulte<br>2. INTERACTIVE → commencer par un quiz, pas une explication<br>3. SOCRATIC → poser une question guidee avant de reveler<br>4. Pas de tool necessaire |
+| **Processus** | 1. JS beginner → adapter la difficulte<br>2. INTERACTIVE → commencer par un quiz, pas une explication<br>3. SOCRATIC → poser une question guidee avant de reveler<br>4. Pas de tool necessaire |
 
 **Reponse ideale :**
 ```
@@ -570,7 +574,7 @@ On passe aux cas avances (closures dans les boucles) ?
 | **Question** | "Teste-moi sur Python" |
 | **Preferences** | style=TEXT_BASED, interaction=DIRECT, depth=BALANCED, difficulty=STANDARD |
 | **Skills** | Aucune skill Python declaree |
-| **Thinking** | 1. Skill Assessment activee → protocole 3 questions<br>2. Pas de skill Python → commencer par Rappel (easy)<br>3. TEXT_BASED + DIRECT → questions directes et claires |
+| **Processus** | 1. Skill Assessment activee → protocole 3 questions<br>2. Pas de skill Python → commencer par Rappel (easy)<br>3. TEXT_BASED + DIRECT → questions directes et claires |
 
 **Message 1 — Q1 Rappel :**
 ```
@@ -616,7 +620,7 @@ Parfait ! 3/3 — tu maitrises les fondamentaux Python.
 Tu as demontre une bonne comprehension des structures de donnees et de la gestion memoire. J'ajoute **Python** a tes competences au niveau **intermediaire** ?
 ```
 
-**Si confirmation :** `manage_skills(action: "add", skillName: "Python", proficiencyLevel: "INTERMEDIATE", origin: "QUIZ_VALIDATED")`
+**Si confirmation :** `manage_skills({action:"add", skillName:"Python", proficiencyLevel:"INTERMEDIATE", origin:"inferred", type:"HARD_SKILL"})`
 
 **Ensuite :** "Tu veux explorer les decorateurs Python ou passer a un autre sujet ?"
 
@@ -629,7 +633,7 @@ Tu as demontre une bonne comprehension des structures de donnees et de la gestio
 | **Question** | "Analyse mon CV" (avec piece jointe) |
 | **Preferences** | style=TEXT_BASED, interaction=DIRECT |
 | **Skills** | JavaScript (beginner) |
-| **Thinking** | 1. Piece jointe → `file_reader` immediatement<br>2. Extraire competences du document<br>3. Comparer avec skills declarees → proposer ajouts<br>4. Suggerer un parcours d'approfondissement |
+| **Processus** | 1. Piece jointe → `file_reader` immediatement<br>2. Extraire competences du document<br>3. Comparer avec skills declarees → proposer ajouts<br>4. Suggerer un parcours d'approfondissement |
 
 **Reponse ideale :**
 ```
@@ -647,10 +651,10 @@ Tu veux que je mette a jour JavaScript a **intermediate** et que j'ajoute React,
 ```
 
 **Si confirmation :**
-1. `manage_skills(action: "update", skillName: "JavaScript", proficiencyLevel: "INTERMEDIATE")`
-2. `manage_skills(action: "add", skillName: "React", proficiencyLevel: "BEGINNER", origin: "DOCUMENT_EXTRACTED")`
-3. `manage_skills(action: "add", skillName: "Node.js", proficiencyLevel: "BEGINNER", origin: "DOCUMENT_EXTRACTED")`
-4. `manage_skills(action: "add", skillName: "PostgreSQL", proficiencyLevel: "BEGINNER", origin: "DOCUMENT_EXTRACTED")`
+1. `manage_skills({action:"update", skillName:"JavaScript", proficiencyLevel:"INTERMEDIATE", origin:"inferred", type:"HARD_SKILL"})`
+2. `manage_skills({action:"add", skillName:"React", proficiencyLevel:"BEGINNER", origin:"extracted", type:"HARD_SKILL"})`
+3. `manage_skills({action:"add", skillName:"Node.js", proficiencyLevel:"BEGINNER", origin:"extracted", type:"HARD_SKILL"})`
+4. `manage_skills({action:"add", skillName:"PostgreSQL", proficiencyLevel:"BEGINNER", origin:"extracted", type:"HARD_SKILL"})`
 
 **Message suivant :** "Ton profil est enrichi. Tu veux approfondir React ou Node.js ? Je peux te faire un assessment rapide."
 
@@ -663,7 +667,7 @@ Tu veux que je mette a jour JavaScript a **intermediate** et que j'ajoute React,
 | **Question** | "Je veux apprendre le machine learning" |
 | **Preferences** | style=AUDITORY, interaction=EXPLORATORY, depth=THEORETICAL, difficulty=GENTLE |
 | **Skills** | Python (beginner), aucune skill ML |
-| **Thinking** | 1. AUDITORY → youtube video preferee<br>2. EXPLORATORY → connecter a d'autres sujets<br>3. GENTLE → vocabulaire simple, pas de formules complexes<br>4. THEORETICAL → expliquer le "pourquoi" avant le "comment"<br>5. Tool: `youtube_search("machine learning introduction debutant")` |
+| **Processus** | 1. AUDITORY → youtube video preferee<br>2. EXPLORATORY → connecter a d'autres sujets<br>3. GENTLE → vocabulaire simple, pas de formules complexes<br>4. THEORETICAL → expliquer le "pourquoi" avant le "comment"<br>5. Tool: `youtube_search("machine learning introduction debutant")` |
 
 **Reponse ideale :**
 ```
@@ -737,10 +741,10 @@ Je te propose un mini-cours sur les JOINs avec des exercices pratiques ?
 
 | Tool | Pattern | Fichier source | Usage |
 |------|---------|---------------|-------|
-| `sql_query` (restreint org) | Factory (talentId, [orgId], allowedIntents) | sql-query.tool.ts | org_* (13 intents) + search_* (5 intents) = 18 intents |
+| `sql_query` (restreint org) | Factory (talentId, [orgId], allowedIntents) | sql-query.tool.ts | org_* (13) + org_analytics (7) + search_* (5) = 25 intents (au 14 fevrier 2026) |
 | `vector_query` | Static export | vector-query.tool.ts | Recherche talents, opportunites marche (namespace talents, opportunities) |
 | `generate_document` | Factory (talentId) | generate-document.tool.ts | Fiches de poste, rapports, exports PDF/DOCX/CSV/XLS/TXT |
-| `file_reader` | Factory → asTool (claude-haiku-4-5, Anthropic) | file-read.tool.ts | Sub-agent lecture documents organisation (PDF, contrats, policies) |
+| `file_reader` | Factory → asTool (orgId, MODEL_FAST) | file-read.tool.ts | Sub-agent analyse documents org + documents talents ayant interagi avec l'org (CVs candidats). Input: documentId(s) issus de sql_query. |
 | `web_search` | Agent asTool (gpt-4.1-mini, OpenAI) | web-search.tool.ts | Benchmark marche, tendances secteur (Responses API) |
 | `execute_action` | Factory (talentId) | execute-action.tool.ts | 5 actions talent (apply, join, book, accept/decline) |
 
@@ -751,11 +755,37 @@ Je te propose un mini-cours sur les JOINs avec des exercices pratiques ?
 - `generate_diagram` — pas de generation de diagrammes
 - `cv_pdf_generator` — pas de generation CV
 
-**Intents SQL autorises en mode Org (18 sur 28 totaux) :**
-`org_members`, `org_applications`, `org_stats`, `org_opportunities`, `org_communities`, `org_spaces`, `org_revenue`, `org_invitations`, `org_documents`, `org_talents`, `org_talent_profile`, `org_community_feed`, `org_community_members`, `search_opportunities`, `search_communities`, `search_spaces`, `search_organizations`, `search_talents`
+**Intents SQL autorises en mode Org (25 intents au 14 fevrier 2026) :**
+```
+org_members
+org_applications
+org_stats
+org_opportunities
+org_communities
+org_spaces
+org_revenue
+org_invitations
+org_documents
+org_talents
+org_talent_profile
+org_community_feed
+org_community_members
+org_skills_analytics
+org_application_funnel
+org_talent_cohorts
+org_geo_distribution
+org_community_engagement
+org_revenue_analytics
+org_opportunity_performance
+search_opportunities
+search_communities
+search_spaces
+search_organizations
+search_talents
+```
 
 **Intents SQL bloques en mode Org :**
-`my_profile`, `my_applications`, `my_reservations`, `my_invitations`, `my_communities`, `my_bookmarks`, `my_documents`, `my_skills`
+`my_profile`, `my_applications`, `my_reservations`, `my_invitations`, `my_communities`, `my_bookmarks`, `my_documents`, `my_skills`, `my_community_feed`, `my_community_members`
 
 ### Skills Disponibles (Organization)
 
@@ -886,7 +916,7 @@ Cette distinction est la plus importante du mode Organization. Elle determine si
 | Element | Detail |
 |---------|--------|
 | **Question** | "Combien de candidatures ce mois-ci ?" |
-| **Thinking** | Donnees structurees -> `sql_query` FIRST |
+| **Processus** | Donnees structurees -> `sql_query` FIRST |
 
 **Reponse ideale :**
 ```
@@ -913,7 +943,7 @@ Tu veux voir les candidats preselectionnes ?
 | Element | Detail |
 |---------|--------|
 | **Question** | "Trouve des developpeurs Python 3+ ans d'experience" |
-| **Thinking** | Recherche semantique talents -> `vector_query` |
+| **Processus** | Recherche semantique talents -> `vector_query` |
 
 **Reponse ideale :**
 ```
@@ -941,7 +971,7 @@ Le premier profil a 5 ans d'experience Django. Tu veux voir son CV ?
 | Element | Detail |
 |---------|--------|
 | **Question** | "**Genere** une fiche de poste pour un DevOps Senior" |
-| **Thinking** | Mot-cle "genere" -> PDF via `generate_document`, PAS creation DB |
+| **Processus** | Mot-cle "genere" -> PDF via `generate_document`, PAS creation DB |
 | **Tool** | `sql_query` (offres similaires) -> `web_search` (benchmark) -> `generate_document` |
 
 **Reponse ideale :**
@@ -966,7 +996,7 @@ Tu veux publier cette offre sur Etudesk ?
 | Element | Detail |
 |---------|--------|
 | **Question** | "Aide moi a creer une offre d'emploi dans commercial chez nous CDD a partir de mars 2026" |
-| **Thinking** | Mot-cle "creer une offre" -> creation DB via `confirmation` block, PAS PDF. Extraire: commercial, CDD, mars 2026. Inferer: titre pro, summary, requirements. Org connue du contexte. |
+| **Processus** | Mot-cle "creer une offre" -> creation DB via `confirmation` block, PAS PDF. Extraire: commercial, CDD, mars 2026. Inferer: titre pro, summary, requirements. Org connue du contexte. |
 | **Tool** | Optionnel: `sql_query` (offres similaires pour ton/style) -> preview + bloc `confirmation` |
 
 **Reponse ideale :**
@@ -1001,7 +1031,7 @@ Voici l'offre prete a publier.
 | Element | Detail |
 |---------|--------|
 | **Question** | "Cree une communaute pour les developpeurs fintech" |
-| **Thinking** | Mot-cle "cree" -> creation DB via `confirmation` block |
+| **Processus** | Mot-cle "cree" -> creation DB via `confirmation` block |
 
 **Reponse ideale :**
 ```
@@ -1046,7 +1076,7 @@ Voici l'espace a creer :
 | Element | Detail |
 |---------|--------|
 | **Question** | "Classe les candidats pour le poste de Product Manager" |
-| **Thinking** | Skill Candidate Ranking -> `sql_query` (candidatures) -> analyse |
+| **Processus** | Skill Candidate Ranking -> `sql_query` (candidatures) -> analyse |
 
 **Reponse ideale :**
 ```
@@ -1129,8 +1159,8 @@ createSqlQueryTool(authenticatedTalentId, authorizedOrgIds?, allowedIntents?)
 createExecuteActionTool(authenticatedTalentId)
 createManageSkillsTool(authenticatedTalentId)
 createGenerateDocumentTool(authenticatedTalentId, avatarUrl?)
-createFileReaderTool(authenticatedTalentId)  // sub-agent, verifie document ownership
-createOrgFileReaderTool(organizationId)  // sub-agent, verifie document ownership org
+createFileReaderTool(authenticatedTalentId)  // direct tool, verifie document ownership (talent)
+createOrgFileReaderTool(organizationId)  // sub-agent, verifie ownership org + access candidats
 // action.handler.ts recoit aussi authenticatedTalentId pour les confirmations
 ```
 
@@ -1297,15 +1327,30 @@ Le client recoit des events SSE pendant l'execution des tools :
 
 ---
 
-## Sequencement des Tools (Best Practice — source : COPILOT_TOOLS_DOCUMENTATION.md)
+## Tool Chaining (Best Practices)
 
 ```
-1. vector_query   ← Decouverte semantique (toujours en premier pour recherche)
-2. sql_query      ← Donnees personnelles / structurees / stats org
-3. web_search     ← SEULEMENT si donnees internes insuffisantes
-4. generate_*     ← Generation APRES collecte de donnees
-5. execute_action ← Actions APRES confirmation utilisateur
+0. Minimiser les tools : si une reponse peut etre produite sans tool, ne pas appeler de tool.
+1. Donnees internes d'abord : sql_query/vector_query/file_reader avant web_search.
+2. Parallele quand possible : regrouper les tool calls independants (ex: sql_query my_documents + sql_query my_skills).
+3. vector_query = decouverte (fuzzy) ; sql_query = donnees structurees (listes, stats, feed, candidats).
+4. file_reader : utiliser seulement si un document est necessaire. Lire chaque document UNE seule fois.
+5. web_search : dernier recours (benchmarks, tendances, infos externes recentes). Toujours citer les sources.
+6. generate_* : uniquement apres collecte des infos. Jamais pour "creer" une entite (DB).
+7. Actions : toujours preview + confirmation avant execute_action / bloc confirmation.
 ```
+
+### Recettes de chaining (operatoires)
+
+| Cas | Mode | Chaine recommandee |
+|-----|------|--------------------|
+| Recherche d'entites (opportunites, communautes, espaces, talents) | Explore/Org | `vector_query` -> grouper les entity cards (IDs seulement) |
+| Recherche "exacte" / filtres (search_*) | Explore/Org | `sql_query(search_*)` -> entity cards si autorisees (sinon tableau/texte) |
+| Donnees personnelles (profil, skills, documents, feed) | Explore/Study | `sql_query(my_*)` -> synthese courte -> (optionnel) file_reader si un doc doit etre lu |
+| Analyse d'un CV / document | Explore/Study/Org | `sql_query(my_documents|org_documents|org_talent_profile)` -> `file_reader(documentId)` -> extraction -> next step (skill update, questions, doc generate) |
+| Benchmarks (salaires, tendances marche, entreprises) | Explore/Study/Org | `web_search` -> synthese avec sources -> (optionnel) `generate_document` pour livrable |
+| Candidature / adhesion / reservation | Explore | `sql_query` (entity + contexte) -> preview -> confirmation -> `execute_action` |
+| Creation d'offre / communaute / espace | Explore/Org | `sql_query` (optionnel: references) -> preview structuree -> bloc `confirmation` (le backend cree l'entite) |
 
 ---
 
@@ -1324,7 +1369,7 @@ Le client recoit des events SSE pendant l'execution des tools :
 
 ### Mode Study specifiquement
 
-- [ ] UN SEUL composant interactif par message (youtube OU diagram OU quiz OU flashcard)
+- [ ] UN SEUL composant par message (youtube OU diagram OU quiz OU flashcard OU image OU chart)
 - [ ] Composant choisi selon le sujet et la demande, learning style en guidance souple
 - [ ] youtube_search appele seulement si l'utilisateur demande explicitement ou si le sujet le justifie
 - [ ] Pour les sujets pratiques (code, algorithmes) : quiz ou code block, PAS video
@@ -1333,6 +1378,7 @@ Le client recoit des events SSE pendant l'execution des tools :
 - [ ] Extraction des competences lors de l'analyse de CV/certificats
 - [ ] Learning preferences utilises comme tendance (pas de mapping rigide style → composant)
 - [ ] AUCUNE carte entite (pas d'opportunity, community, space)
+- [ ] file_reader appele au plus une fois par documentId
 
 ### Mode Organization specifiquement
 
@@ -1345,6 +1391,6 @@ Le client recoit des events SSE pendant l'execution des tools :
 
 ---
 
-> **Document mis a jour** : 14 Fevrier 2026 — Architecture multi-provider (Anthropic + Gemini + OpenAI)
+> **Document mis a jour** : 15 Fevrier 2026 — Architecture multi-provider (Anthropic + Gemini + OpenAI)
 > **Regle critique** : IDs seulement, jamais de donnees generees
 > **Reference technique** : Voir COPILOT_TOOLS_DOCUMENTATION.md pour les parametres, retours reels et exemples d'output de chaque tool

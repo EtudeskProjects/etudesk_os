@@ -497,7 +497,7 @@ Barème crédits (extrait):
 | Technologie | Provider | Rôle |
 |-------------|----------|------|
 | **OpenAI Agents SDK** | - | Framework multi-agents (orchestre les 3 providers) |
-| **claude-sonnet-4-5** (MODEL_AGENT) | Anthropic | Agents principaux (TalentAgent, OrgAgent) |
+| **claude-opus-4-6** (MODEL_AGENT) | Anthropic | Agents principaux (TalentAgent, OrgAgent) |
 | **claude-haiku-4-5** (MODEL_FAST) | Anthropic | Guardrails, titres, summaries, FileReaderAgent |
 | **gemini-2.5-flash-lite** (MODEL_SUGGESTION) | Google | Suggestions, objectifs quotidiens, bio |
 | **gpt-4.1-mini** (MODEL_SEARCH) | OpenAI | WebSearchAgent, vision/extraction documents |
@@ -958,8 +958,8 @@ Le copilote est un système multi-agents basé sur le **OpenAI Agents SDK** (`@o
 
 | Agent | Modèle | Provider | Modes | Rôle |
 |-------|--------|----------|-------|------|
-| **TalentAgent** | claude-sonnet-4-5 | Anthropic | Explorer, Study | Agent principal pour talents individuels |
-| **OrgAgent** | claude-sonnet-4-5 | Anthropic | Organisation | Agent pour administrateurs d'organisations |
+| **TalentAgent** | claude-opus-4-6 | Anthropic | Explorer, Study | Agent principal pour talents individuels |
+| **OrgAgent** | claude-opus-4-6 | Anthropic | Organisation | Agent pour administrateurs d'organisations |
 | **FileReaderAgent** | claude-haiku-4-5 | Anthropic | Sub-agent | Lecture et analyse de documents (via `asTool()`) |
 | **WebSearchAgent** | gpt-4.1-mini | OpenAI | Sub-agent | Recherche web (via `asTool()`, Responses API) |
 
@@ -1413,7 +1413,7 @@ mobile/app/
 
 | Service | Modèle | Usage | Coût estimé |
 |---------|--------|-------|-------------|
-| **Anthropic** | claude-sonnet-4-5 | Agents principaux (TalentAgent, OrgAgent) | $3/$15 per 1M tokens |
+| **Anthropic** | claude-opus-4-6 | Agents principaux (TalentAgent, OrgAgent) | $3/$15 per 1M tokens |
 | **Anthropic** | claude-haiku-4-5 | Guardrails, titres, summaries, file_reader | $0.80/$4 per 1M tokens |
 | **Google** | gemini-2.5-flash-lite | Suggestions, objectifs, bio | ~$0.02/$0.07 per 1M tokens |
 | **OpenAI** | gpt-4.1-mini | Web search, vision/extraction | $0.40/$1.60 per 1M tokens |
@@ -1428,9 +1428,9 @@ mobile/app/
 | Service | Fichier | Provider | Modele | Pattern |
 |---------|---------|----------|--------|---------|
 | **Copilot — Agents principaux** | | | | |
-| TalentAgent (explore) | `copilot/agents/talent.agent.ts` | Anthropic | claude-sonnet-4-5 | `run()` default provider |
-| TalentAgent (study) | `copilot/agents/talent.agent.ts` | Anthropic | claude-sonnet-4-5 | `run()` default provider |
-| OrgAgent | `copilot/agents/organization.agent.ts` | Anthropic | claude-sonnet-4-5 | `run()` default provider |
+| TalentAgent (explore) | `copilot/agents/talent.agent.ts` | Anthropic | claude-opus-4-6 | `run()` default provider |
+| TalentAgent (study) | `copilot/agents/talent.agent.ts` | Anthropic | claude-opus-4-6 | `run()` default provider |
+| OrgAgent | `copilot/agents/organization.agent.ts` | Anthropic | claude-opus-4-6 | `run()` default provider |
 | **Copilot — Sub-agents** | | | | |
 | FileReaderAgent | `copilot/tools/file-read.tool.ts` | Anthropic | claude-haiku-4-5 | `agent.asTool()` |
 | WebSearchAgent | `copilot/tools/web-search.tool.ts` | OpenAI | gpt-4.1-mini | `agent.asTool()` + Responses API |
@@ -1644,8 +1644,8 @@ Un utilisateur Talent (30 crédits/jour) parraine 3 amis qui souscrivent :
 
 | Usage | Modèle | Provider | Coût/requête (estimé) |
 |-------|--------|----------|----------------------|
-| Message copilote (Explorer) | claude-sonnet-4-5 | Anthropic | ~$0.03-0.08 |
-| Message copilote (Study) | claude-sonnet-4-5 | Anthropic | ~$0.02-0.05 |
+| Message copilote (Explorer) | claude-opus-4-6 | Anthropic | ~$0.03-0.08 |
+| Message copilote (Study) | claude-opus-4-6 | Anthropic | ~$0.02-0.05 |
 | Sub-agent (file_reader) | claude-haiku-4-5 | Anthropic | ~$0.005-0.01 |
 | Sub-agent (web_search) | gpt-4.1-mini | OpenAI | ~$0.005-0.01 |
 | Guardrail input | claude-haiku-4-5 | Anthropic | ~$0.002 |

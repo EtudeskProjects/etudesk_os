@@ -36,7 +36,7 @@ Etudesk OS utilise **3 providers AI simultanement**, chacun pour ses forces :
 
 | Constante | Modele | Provider | Utilisation | Cout (1M tokens) |
 |-----------|--------|----------|-------------|-------------------|
-| `MODEL_AGENT` | claude-sonnet-4-5 | Anthropic | Agents Copilot principaux | $3.00 / $15.00 |
+| `MODEL_AGENT` | claude-opus-4-6 | Anthropic | Agents Copilot principaux | $3.00 / $15.00 |
 | `MODEL_FAST` | claude-haiku-4-5 | Anthropic | Guardrails, titres, summaries, file reader | $0.80 / $4.00 |
 | `MODEL_SUGGESTION` | gemini-2.5-flash-lite | Google | Suggestions, objectifs, bio | ~$0.075 / $0.30 |
 | `MODEL_MATCH` | gpt-4.1-nano | OpenAI | Recommendations candidats | $0.10 / $0.40 |
@@ -125,10 +125,10 @@ ANTHROPIC_API_KEY=sk-ant-...    # Agents copilot principaux
 
 ## Anthropic Claude (Agents Principaux)
 
-### Claude Sonnet 4.5
+### Claude Opus 4.6
 
 > **Role:** Agents Copilot principaux (TalentAgent, OrgAgent)
-> **Model ID:** `claude-sonnet-4-5-20250514`
+> **Model ID:** `claude-opus-4-6`
 > **Constante:** `MODEL_AGENT`
 
 | Caracteristique | Valeur |
@@ -363,8 +363,8 @@ ANTHROPIC_API_KEY=sk-ant-...    # Agents copilot principaux
 
 | Fichier | Modele | Provider |
 |---------|--------|----------|
-| `copilot/agents/talent.agent.ts` | **claude-sonnet-4-5** | Anthropic |
-| `copilot/agents/organization.agent.ts` | **claude-sonnet-4-5** | Anthropic |
+| `copilot/agents/talent.agent.ts` | **claude-opus-4-6** | Anthropic |
+| `copilot/agents/organization.agent.ts` | **claude-opus-4-6** | Anthropic |
 | `copilot/tools/file-read.tool.ts` | **claude-haiku-4-5** | Anthropic |
 | `copilot/guardrails/input.guardrail.ts` | **claude-haiku-4-5** | Anthropic |
 | `copilot/session-summarizer.ts` | **claude-haiku-4-5** | Anthropic |
@@ -403,7 +403,7 @@ ANTHROPIC_API_KEY=sk-ant-...    # Agents copilot principaux
 
 ```typescript
 // Anthropic (agents principaux + fast tasks)
-export const MODEL_AGENT = 'claude-sonnet-4-5-20250514';   // Agents copilot
+export const MODEL_AGENT = 'claude-opus-4-6';   // Agents copilot
 export const MODEL_FAST = 'claude-haiku-4-5-20251001';     // Guardrails, titles, summaries, file reader
 
 // Google Gemini (suggestions formulaires — le moins cher)
@@ -503,7 +503,7 @@ Fichier `src/services/ai/anthropic-provider.ts` implemente `Model` et `ModelProv
 
 | Composant | Avant | Apres | Justification |
 |-----------|-------|-------|---------------|
-| Agents principaux | GPT-5 (OpenAI) | claude-sonnet-4-5 (Anthropic) | Meilleur tool calling, francais |
+| Agents principaux | GPT-5 (OpenAI) | claude-opus-4-6 (Anthropic) | Meilleur tool calling, francais |
 | Guardrails/summaries | GPT-5-nano (OpenAI) | claude-haiku-4-5 (Anthropic) | Coherence avec agents principaux |
 | File reader | GPT-5-mini (OpenAI) | claude-haiku-4-5 (Anthropic) | Coherence provider |
 | Suggestions | GPT-5-nano (OpenAI) | gemini-2.5-flash-lite (Google) | 5x moins cher |
@@ -582,7 +582,7 @@ GPT-4.1 family suit les instructions de facon tres litterale :
 | Modele | Cout (1M tokens) | Contexte | Statut Etudesk |
 |--------|-------------------|----------|----------------|
 | Claude Opus 4 | $15.00 / $75.00 | 200K | Non utilise (trop cher) |
-| Claude Sonnet 4.5 | $3.00 / $15.00 | 200K | **EN PRODUCTION** (agents) |
+| Claude Opus 4.6 | $3.00 / $15.00 | 200K | **EN PRODUCTION** (agents) |
 | Claude Haiku 4.5 | $0.80 / $4.00 | 200K | **EN PRODUCTION** (fast tasks) |
 
 ---
@@ -592,7 +592,7 @@ GPT-4.1 family suit les instructions de facon tres litterale :
 ### Documentation Officielle
 
 **Anthropic Claude:**
-- [Claude Sonnet 4.5](https://docs.anthropic.com/en/docs/about-claude/models#claude-sonnet-4-5)
+- [Claude Opus 4.6](https://docs.anthropic.com/en/docs/about-claude/models#claude-opus-4-6)
 - [Claude Haiku 4.5](https://docs.anthropic.com/en/docs/about-claude/models#claude-haiku-4-5)
 - [Anthropic API Pricing](https://www.anthropic.com/pricing)
 - [Tool Use](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)

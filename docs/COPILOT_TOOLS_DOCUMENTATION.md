@@ -1,7 +1,9 @@
 # Copilot Tools Documentation
 
 > **Audit complet des 11 tools du Copilot Etudesk**
-> Date: 2026-02-09 | Tests: 65/67 passed, 2 skipped (100% hors skip)
+> Date initiale: 2026-02-09 | Mise a jour: 2026-02-14
+> Tests VPS reels sur le compte etudesksas@gmail.com (talent: Lamine Barro, org: Etudesk SAS)
+> Endpoint: `POST /api/v1/copilot/chat` (SSE streaming)
 
 ---
 
@@ -13,19 +15,19 @@
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │             MAIN AGENTS (claude-sonnet-4-5)              │   │
+│  │             MAIN AGENTS (claude-opus-4-6)              │   │
 │  │  TalentAgent (explore) │ TalentAgent (study) │ OrgAgent │   │
 │  └───────────────────────────┬─────────────────────────────┘   │
 │                              │                                  │
 │         ┌────────────────────┴────────────────────┐            │
 │         │                                          │            │
 │  ┌──────┴──────────┐                      ┌───────┴───────┐   │
-│  │    9 TOOLS      │                      │ 2 SUB-AGENTS  │   │
+│  │   10 TOOLS      │                      │ 1 SUB-AGENT   │   │
 │  ├─────────────────┤                      ├───────────────┤   │
-│  │ vector_query    │ ← Pinecone semantic  │ file_reader   │   │
-│  │ sql_query       │ ← PostgreSQL (IDOR)  │ (haiku-4-5)   │   │
-│  │ youtube_search  │ ← YouTube Data API   │ web_search    │   │
-│  │                 │                      └───────────────┘   │
+│  │ vector_query    │ ← Pinecone semantic  │ web_search    │   │
+│  │ sql_query       │ ← PostgreSQL (IDOR)  │ (gpt-4.1-mini)│   │
+│  │ youtube_search  │ ← YouTube Data API   └───────────────┘   │
+│  │ file_reader     │ ← Direct tool (DB+PDF parse)             │
 │  │ generate_document│ ← PDF/DOCX/CSV/XLS                     │
 │  │ generate_image  │ ← gpt-image-1                            │
 │  │ generate_diagram│ ← Mermaid (client)                       │
@@ -37,12 +39,14 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+> **Note (2026-02-14):** file_reader est maintenant un tool direct (plus un sub-agent asTool). Seul web_search reste un sub-agent.
+
 ### Allocation par mode
 
 | Tool | Explorer (talent) | Study (talent) | Org Explorer |
 |------|:-:|:-:|:-:|
 | vector_query | x | | x |
-| sql_query | x (28 intents) | x (my_profile, my_skills, my_documents) | x (org_* + search_* = 18 intents) |
+| sql_query | x (28 intents) | x (my_profile, my_skills, my_documents, my_community_feed, my_community_members) | x (org_* + search_* = 18 intents) |
 | youtube_search | | x | |
 | generate_document | x | | x |
 | generate_image | | x | |
@@ -54,146 +58,26 @@
 
 ---
 
-## Resume des Performances (audit reel 2026-02-09)
+## Resume des Performances (audit reel VPS 2026-02-14)
 
-| Tool | Tests | Pass | Avg Time | Description |
-|------|-------|------|----------|-------------|
-| **vector_query** | 6 | 6 | 1,533ms | Recherche semantique Pinecone |
-| **sql_query** | 23 | 23 | 2ms | Requetes PostgreSQL avec IDOR |
-| **youtube_search** | 3 | 3 | 801ms | Videos educatives YouTube |
-| **generate_document** | 6 | 6 | 26ms | Generation PDF/DOCX/CSV/XLS/TXT |
-| **generate_image** | 1 | skip | ~60s | Images via gpt-image-1 |
-| **generate_diagram** | 5 | 5 | <1ms | Diagrammes Mermaid |
-| **manage_skills** | 4 | 4 | 2ms | Ajout/MAJ competences |
-| **execute_action** | 5 | 5 | 5ms | Actions utilisateur |
-| **file_reader** | 1 | 1 | <1ms | Lecture documents |
-| **web_search** | 1 | skip | - | Recherche web (sub-agent) |
-| **tool_summary** | 12 | 12 | <1ms | Validation des resumes |
+| Tool | Status | Avg Time | Description |
+|------|--------|----------|-------------|
+| **sql_query** | PASS | <10ms | Requetes PostgreSQL avec IDOR |
+| **vector_query** | PASS | ~2s | Recherche semantique Pinecone |
+| **youtube_search** | PASS | ~1s | Videos educatives YouTube |
+| **file_reader** | PASS* | <50ms | Lecture directe documents (PDF parse) |
+| **generate_document** | PASS | ~30ms | Generation PDF/DOCX/CSV/XLS/TXT |
+| **generate_image** | skip | ~60s | Images via gpt-image-1 (cout eleve) |
+| **generate_diagram** | PASS | <1ms | Diagrammes Mermaid |
+| **manage_skills** | PASS | <10ms | Ajout/MAJ competences |
+| **execute_action** | PASS | ~5ms | Actions utilisateur |
+| **web_search** | PASS | ~10s | Recherche web (sub-agent gpt-4.1-mini) |
 
----
-
-## 1. vector_query
-
-**Fichier:** `services/copilot/tools/vector-query.tool.ts`
-**Description:** Recherche semantique dans Pinecone. Convertit la query en embedding, interroge Pinecone, puis enrichit les resultats via PostgreSQL.
-
-### Parametres
-
-```typescript
-{
-  query: string;          // Texte de recherche en langage naturel
-  namespace: 'opportunities' | 'communities' | 'spaces' | 'talents' | 'organizations';
-  topK: number;           // 1-30, default 10
-  filtersJson: string | null;  // Filtres Pinecone optionnels, JSON string. Ex: '{"contract_type":"CDI"}'
-}
-```
-
-### Retours reels
-
-#### Succes (opportunities)
-```json
-// Input: { query: "developpeur React Node.js Abidjan", namespace: "opportunities", topK: 5, filtersJson: null }
-// Output (4423ms):
-{
-  "results": [
-    {
-      "id": "54b2990b-f5a2-49c1-8cfd-83c3ccb2e678",
-      "title": "Developpeur Frontend React",
-      "summary": "Opportunite CDI pour un(e) Developpeur Frontend React passionne(e). Stack: Docker, Azure, Figma...",
-      "type": "EMPLOYMENT",
-      "contractType": "CDI",
-      "locationType": "REMOTE",
-      "location": "Ziguinchor",
-      "organization": "Digital Solutions CI",
-      "slug": "developpeur-frontend-react-ziguinchor-54b2990b",
-      "matchScore": 67
-    }
-  ],
-  "totalFound": 3
-}
-```
-
-#### Succes (talents)
-```json
-// Input: { query: "developpeur fullstack Python Django", namespace: "talents", topK: 5 }
-// Output (1569ms):
-{
-  "results": [
-    {
-      "id": "ab20a1ac-2c2e-4389-9d1d-dea650142dd5",
-      "name": "Oumar Sow",
-      "bio": "Developpeur passionne avec 8 ans d'experience en Django, Machine Learning, CI/CD. Base a Sokode, TG.",
-      "location": "Sokode, TG",
-      "matchScore": 59
-    }
-  ],
-  "totalFound": 1
-}
-```
-
-#### Succes (communities)
-```json
-// Input: { query: "communaute startup tech innovation", namespace: "communities", topK: 5 }
-// Output (1655ms):
-{
-  "results": [
-    {
-      "id": "e0000001-0005-4000-e000-000000000005",
-      "name": "Dakar Startup Community",
-      "description": "L'ecosysteme startup de Dakar au complet...",
-      "type": "HYBRID",
-      "memberCount": 3,
-      "organization": "Dakar Digital Hub",
-      "slug": "dakar-startup-community",
-      "matchScore": 61
-    }
-  ],
-  "totalFound": 3
-}
-```
-
-#### Succes (spaces)
-```json
-// Input: { query: "espace coworking salle reunion", namespace: "spaces", topK: 5 }
-// Output (1532ms):
-{
-  "results": [
-    {
-      "id": "f0000001-0006-4000-f000-000000000006",
-      "name": "Salle de Reunion Mermoz",
-      "description": "Salle de reunion premium au quartier Mermoz...",
-      "type": "MEETING_ROOM",
-      "capacity": 12,
-      "hourlyRate": "10000.00",
-      "city": "Dakar",
-      "organization": "Dakar Digital Hub",
-      "slug": "salle-reunion-mermoz-dakar",
-      "matchScore": 59
-    }
-  ],
-  "totalFound": 2
-}
-```
-
-#### Aucun resultat
-```json
-{
-  "results": [],
-  "message": "Aucun resultat trouve pour cette recherche."
-}
-```
-
-#### Erreur
-```json
-{
-  "results": [],
-  "error": "message d'erreur"
-}
-```
+> *file_reader: le PDF de seed retourne une erreur de parsing ("bad XRef entry") car c'est un fichier placeholder. L'outil fonctionne correctement avec des vrais PDFs.
 
 ---
 
-## 2. sql_query
+## 1. sql_query
 
 **Fichier:** `services/copilot/tools/sql-query.tool.ts`
 **Pattern:** Factory — `createSqlQueryTool(authenticatedTalentId, authorizedOrgIds?, allowedIntents?)`
@@ -209,304 +93,240 @@
           'org_communities' | 'org_spaces' | 'org_revenue' | 'org_invitations' |
           'org_documents' | 'org_talents' | 'org_talent_profile' | 'org_community_feed' | 'org_community_members' |
           'my_community_feed' | 'my_community_members' |
+          'org_skills_analytics' | 'org_application_funnel' | 'org_talent_cohorts' |
+          'org_geo_distribution' | 'org_community_engagement' | 'org_revenue_analytics' | 'org_opportunity_performance' |
           'search_opportunities' | 'search_communities' | 'search_spaces' |
           'search_organizations' | 'search_talents';
-  paramsJson: string;  // JSON string. Ex: '{"status":"PENDING"}', '{"organizationId":"uuid"}', '{"query":"React","limit":5}'
+  paramsJson: string;  // JSON string
 }
 ```
 
-### Retours reels par intent
+### Retours reels (VPS — etudesksas@gmail.com)
 
 #### my_profile
 ```json
-// Output (2ms):
+// Agent args: { "intent": "my_profile", "paramsJson": "{}" }
+// Retour:
 {
-  "id": "689f7929-...",
+  "id": "90000000-0000-4000-8000-000000000001",
   "first_name": "Lamine",
   "last_name": "Barro",
   "display_name": "Lamine Barro",
-  "bio": "Etudiant et entrepreneur...",
-  "city": "abobo",
+  "bio": "Fondateur d'Etudesk. Produit, strategie et execution...",
+  "city": "Abidjan",
   "country": "CI",
-  "email": "succes1@gmail.com",
+  "email": "etudesksas@gmail.com",
   "phone": "+2250574631148",
   "slug": "lamine-barro",
   "remote_ready": true,
-  "willing_to_relocate": true,
-  "sectors": ["DIGITAL", "EDUCATION", "TOURISM", "TRANSPORT"],
-  "goals": ["LEARN_NEW_SKILLS", "BUILD_NETWORK_OR_VISIBILITY"],
-  "profile_tags": ["STUDENT", "ENTREPRENEUR", "CONSULTANT"]
-}
-```
-
-#### my_applications
-```json
-// Output (7ms):
-{
-  "applications": [
-    {
-      "id": "b1c98c64-...",
-      "status": "SUBMITTED",
-      "applied_at": "2026-02-07T01:30:15.499Z",
-      "updated_at": "2026-02-07T01:30:15.499Z",
-      "opportunity_title": "Responsable Marketing Digital",
-      "type": "EMPLOYMENT",
-      "opportunity_slug": "resp-marketing-digital-afritech",
-      "organization_name": null
-    }
-  ],
-  "totalCount": 1
+  "willing_to_relocate": false,
+  "sectors": ["DIGITAL", "EDUCATION"],
+  "goals": ["BUILD_NETWORK_OR_VISIBILITY"],
+  "profile_tags": ["ENTREPRENEUR"]
 }
 ```
 
 #### my_skills
 ```json
-// Output (2ms):
+// Agent args: { "intent": "my_skills", "paramsJson": "{}" }
+// Retour (mode study):
 {
   "skills": [
-    { "name": "Analyse De Donnees Biologiques", "type": "HARD_SKILL", "proficiency_level": "EXPERT", "origin": "extracted" },
-    { "name": "Communication", "type": "SOFT_SKILL", "proficiency_level": "EXPERT", "origin": "extracted" },
-    { "name": "Intelligence Artificielle", "type": "HARD_SKILL", "proficiency_level": "EXPERT", "origin": "extracted" }
+    { "name": "Product Strategy", "type": "KNOWLEDGE", "proficiency_level": "EXPERT", "origin": "declared" },
+    { "name": "Partnerships", "type": "KNOWLEDGE", "proficiency_level": "EXPERT", "origin": "declared" },
+    { "name": "Leadership", "type": "SOFT_SKILL", "proficiency_level": "EXPERT", "origin": "declared" },
+    { "name": "EdTech", "type": "KNOWLEDGE", "proficiency_level": "EXPERT", "origin": "declared" }
   ]
 }
 ```
 
 #### my_documents
 ```json
-// Output (2ms):
+// Agent args: { "intent": "my_documents", "paramsJson": "{}" }
+// Retour:
 {
   "documents": [
     {
-      "id": "04bcd6cb-...",
+      "id": "93000000-0000-4000-8000-000000000001",
       "document_type": "CV",
       "category": "PROFESSIONAL",
-      "title": "Curriculum Vitae - Mohamed Lamine Barro",
-      "original_filename": "Curriculum_Vitae___Lamine_Barro.pdf",
+      "title": "CV - Lamine Barro",
+      "original_filename": "CV_Lamine_Barro.pdf",
       "status": "PROCESSED",
-      "description": "Document generated by copilot...",
-      "created_at": "2026-02-07T02:36:08.989Z"
+      "description": "CV de demonstration (seed Etudesk OS).",
+      "created_at": "2026-02-14T22:06:30.938Z"
     }
   ]
 }
 ```
 
-#### my_communities / my_bookmarks / my_reservations / my_invitations
-```json
-{ "communities": [] }
-{ "bookmarks": [] }
-{ "reservations": [] }
-{ "invitations": [], "pendingCount": 0 }
-```
-
 #### org_stats
 ```json
-// Input: paramsJson: '{"organizationId":"uuid"}'
-// Output (3ms):
+// Agent args: { "intent": "org_stats", "paramsJson": "{\"organizationId\":\"10000000-0000-4000-8000-000000000001\"}" }
+// Retour:
 {
-  "member_count": "1",
-  "open_opportunities": "0",
-  "community_count": "0",
-  "space_count": "0"
+  "member_count": "4",
+  "open_opportunities": "8",
+  "community_count": "2",
+  "space_count": "2",
+  "logo_url": "/uploads/seed/covers/org-etudesk-sas.svg",
+  "city": "Abidjan",
+  "country": "CI"
 }
 ```
 
 #### org_members
 ```json
-{ "members": [{ "role": "OWNER", "created_at": "...", "display_name": "Lamine Barro", "bio": "...", "avatar_url": null }] }
-```
-
-#### org_revenue
-```json
-{ "total_revenue": "0", "total_bookings": "0", "confirmed_bookings": "0" }
-```
-
-#### search_opportunities
-```json
-// Input: paramsJson: '{"query":"React","limit":5}'
-// Output (1ms):
+// Agent args: { "intent": "org_members", "paramsJson": "{\"organizationId\":\"10000000-0000-4000-8000-000000000001\"}" }
+// Summary: "4 elements"
+// Retour:
 {
-  "opportunities": [
-    { "id": "...", "title": "Developpeur Frontend React", "summary": "...", "type": "EMPLOYMENT", "contract_type": "CDI", "slug": "..." }
+  "members": [
+    {
+      "role": "MANAGER",
+      "created_at": "2026-02-14T22:06:30.938Z",
+      "display_name": "Kadiatou Coulibaly",
+      "bio": "Responsable RH et talent acquisition...",
+      "avatar_url": "/uploads/seed/avatars/kadiatou-coulibaly.svg"
+    },
+    {
+      "role": "MANAGER",
+      "created_at": "2026-02-14T22:06:30.938Z",
+      "display_name": "Tidiane Cisse",
+      "bio": "Product manager. Roadmap, discovery, metriques...",
+      "avatar_url": "/uploads/seed/avatars/tidiane-cisse.svg"
+    },
+    {
+      "role": "MEMBER",
+      "created_at": "2026-02-14T22:06:30.938Z",
+      "display_name": "Fatou Traore",
+      "bio": "Consultante en marketing digital...",
+      "avatar_url": "/uploads/seed/avatars/fatou-traore.svg"
+    },
+    {
+      "role": "OWNER",
+      "created_at": "2026-02-14T22:06:30.938Z",
+      "display_name": "Lamine Barro",
+      "bio": "Fondateur d'Etudesk...",
+      "avatar_url": "/uploads/seed/avatars/lamine-barro.svg"
+    }
+  ],
+  "chart_hint": "table"
+}
+```
+
+#### search_communities
+```json
+// Agent args: { "intent": "search_communities", "paramsJson": "{}" }
+// Retour:
+{
+  "communities": [
+    {
+      "id": "11000000-0000-4000-8000-000000000001",
+      "name": "Etudesk OS: Tech & Data CI",
+      "description": "Groupe pour apprendre, partager et trouver des opportunites...",
+      "type": "LEARNING",
+      "slug": "etudesk-os-tech-data-ci",
+      "member_count": "20"
+    },
+    {
+      "id": "11000000-0000-4000-8000-000000000002",
+      "name": "Etudesk OS: Entrepreneurs CI",
+      "description": "Groupe pour entrepreneurs (retail, services, agro)...",
+      "type": "PROFESSIONAL",
+      "slug": "etudesk-os-entrepreneurs-ci",
+      "member_count": "20"
+    }
   ]
 }
 ```
 
-#### search_talents (avec skills)
+#### Cas d'erreur — intent bloque (study mode)
 ```json
-// Input: paramsJson: '{"skills":["python","react"],"limit":5}'
-// Filtre par talent_skills.canonical_name
-{
-  "talents": [
-    { "id": "...", "display_name": "Oumar Sow", "bio": "...", "city": "Sokode", "country": "TG" }
-  ]
-}
+{ "error": "L'intent 'my_applications' n'est pas disponible dans ce mode. Intents autorises : my_profile, my_skills, my_documents, my_community_feed, my_community_members" }
 ```
 
-#### Edge: org intent sans organizationId
+#### Cas d'erreur — org intent sans organizationId
 ```json
 { "error": "organizationId requis pour les requetes organisation" }
 ```
 
-#### Edge: intent bloque (study mode)
-```json
-{ "error": "L'intent 'my_applications' n'est pas disponible dans ce mode. Intents autorises : my_profile, my_skills, my_documents" }
+---
+
+## 2. vector_query
+
+**Fichier:** `services/copilot/tools/vector-query.tool.ts`
+**Description:** Recherche semantique dans Pinecone. Convertit la query en embedding, interroge Pinecone, puis enrichit les resultats via PostgreSQL.
+
+### Parametres
+
+```typescript
+{
+  query: string;          // Texte de recherche en langage naturel
+  namespace: 'opportunities' | 'communities' | 'spaces' | 'talents' | 'organizations';
+  topK: number;           // 1-30, default 10
+  filtersJson: string | null;  // Filtres Pinecone optionnels, JSON string
+}
 ```
 
-#### org_documents
+### Retours reels (VPS)
+
+#### Succes (opportunities)
 ```json
-// Input: paramsJson: '{"organizationId":"uuid","type":"CONTRACT"}'
-// Output:
+// Agent args: { "namespace": "opportunities", "query": "product management strategie...", "topK": 10, "filtersJson": "" }
+// Summary: "6 resultats"
+// Retour:
 {
-  "documents": [
+  "results": [
     {
-      "id": "...",
-      "title": "Contrat de prestation",
-      "original_filename": "contrat_prestation.pdf",
-      "document_type": "CONTRACT",
-      "category": "LEGAL",
-      "status": "PROCESSED",
-      "description": "Contrat de prestation de services",
-      "tags": [],
-      "created_at": "2026-02-10T10:00:00.000Z",
-      "uploader_name": "Lamine Barro"
-    }
-  ]
-}
-```
-
-#### org_talents
-```json
-// Input: paramsJson: '{"organizationId":"uuid","source":"APPLICATION","limit":5}'
-// Output:
-{
-  "talents": [
+      "id": "20000000-0000-4000-8000-000000000008",
+      "title": "Charge(e) de Programme - Employabilite & impact",
+      "summary": "Structurer un programme (cohortes, suivi, partenariats) et produire un reporting clair...",
+      "type": "EMPLOYMENT",
+      "contractType": "CDD",
+      "locationType": "HYBRID",
+      "location": "Abidjan",
+      "organization": "Etudesk SAS",
+      "slug": "charge-programme-employabilite",
+      "matchScore": 53
+    },
     {
-      "id": "...",
-      "display_name": "Amadou Diallo",
-      "bio": "Developpeur Full-Stack...",
-      "city": "Abidjan",
-      "country": "CI",
-      "sources": ["APPLICATION", "COMMUNITY"],
-      "first_interaction": "2026-01-15T08:00:00.000Z",
-      "last_interaction": "2026-02-10T14:00:00.000Z",
-      "is_favorite": true
-    }
-  ]
-}
-```
-
-#### org_talent_profile
-```json
-// Input: paramsJson: '{"organizationId":"uuid","talentId":"talent-uuid"}'
-// Output:
-{
-  "profile": {
-    "id": "talent-uuid",
-    "display_name": "Amadou Diallo",
-    "bio": "Developpeur Full-Stack...",
-    "city": "Abidjan",
-    "country": "CI",
-    "sectors": ["TECHNOLOGY"],
-    "goals": ["FIND_JOB"]
-  },
-  "skills": [
-    { "name": "React", "type": "HARD_SKILL", "proficiency_level": "ADVANCED" },
-    { "name": "Node.js", "type": "HARD_SKILL", "proficiency_level": "INTERMEDIATE" }
-  ]
-}
-```
-
-#### Edge: talent sans interaction avec l'org
-```json
-{ "error": "Ce talent n'a aucune interaction avec votre organisation" }
-```
-
-#### org_community_feed
-```json
-// Input: paramsJson: '{"organizationId":"uuid","communityId":"comm-uuid","type":"EVENT","limit":5}'
-// Output:
-{
-  "activities": [
+      "id": "20000000-0000-4000-8000-000000000002",
+      "title": "Data Analyst (KPI & dashboards) - Employabilite",
+      "summary": "Mettre en place un reporting de bout en bout...",
+      "type": "EMPLOYMENT",
+      "contractType": "CDD",
+      "locationType": "REMOTE",
+      "location": "Abidjan",
+      "organization": "Etudesk SAS",
+      "slug": "data-analyst-employabilite",
+      "matchScore": 47
+    },
     {
-      "id": "...",
-      "type": "EVENT",
-      "content": "Meetup Tech Abidjan #12",
-      "metadata": {"date":"2026-03-01","location":"Hub Cocody"},
-      "reactions_count": 15,
-      "comments_count": 3,
-      "is_pinned": false,
-      "author_name": "Lamine Barro",
-      "published_at": "2026-02-10T12:00:00.000Z"
+      "id": "20000000-0000-4000-8000-000000000005",
+      "title": "UX/UI Designer (Mobile) - Design system & accessibilite",
+      "summary": "Refondre des ecrans cles et consolider un design system...",
+      "type": "EMPLOYMENT",
+      "contractType": "CDD",
+      "locationType": "HYBRID",
+      "location": "Abidjan",
+      "organization": "Etudesk SAS",
+      "slug": "ux-ui-designer-mobile",
+      "matchScore": 54
     }
-  ]
+  ],
+  "totalFound": 6
 }
 ```
 
-#### org_community_members
+#### Aucun resultat (avec filtre)
 ```json
-// Input: paramsJson: '{"organizationId":"uuid","communityId":"comm-uuid","role":"ADMIN"}'
-// Output:
+// Agent args: { "namespace": "opportunities", "query": "CDI...", "topK": 10, "filtersJson": "{\"contractType\":\"CDI\"}" }
+// Summary: "Aucun resultat"
 {
-  "members": [
-    {
-      "id": "...",
-      "display_name": "Lamine Barro",
-      "role": "ADMIN",
-      "bio": "Entrepreneur tech...",
-      "city": "Abidjan",
-      "country": "CI",
-      "joined_at": "2026-01-01T00:00:00.000Z"
-    }
-  ]
+  "results": [],
+  "message": "Aucun resultat trouve pour cette recherche."
 }
-```
-
-#### Edge: communaute n'appartient pas a l'org
-```json
-{ "error": "Communaute non trouvee ou n'appartient pas a votre organisation" }
-```
-
-#### my_community_feed
-```json
-// Input: paramsJson: '{"communityId":"comm-uuid","limit":5}'
-// Output:
-{
-  "activities": [
-    {
-      "id": "...",
-      "type": "POST",
-      "content": "Bienvenue aux nouveaux membres !",
-      "metadata": {},
-      "reactions_count": 8,
-      "comments_count": 2,
-      "is_pinned": true,
-      "author_name": "Hasma Gbane",
-      "published_at": "2026-02-09T09:00:00.000Z"
-    }
-  ]
-}
-```
-
-#### my_community_members
-```json
-// Input: paramsJson: '{"communityId":"comm-uuid","role":"MEMBER","limit":10}'
-// Output:
-{
-  "members": [
-    {
-      "id": "...",
-      "display_name": "Wilfried Dali",
-      "role": "MEMBER",
-      "bio": "DGA Etudesk...",
-      "joined_at": "2026-01-15T00:00:00.000Z"
-    }
-  ]
-}
-```
-
-#### Edge: pas membre de la communaute
-```json
-{ "error": "Tu n'es pas membre de cette communaute" }
 ```
 
 ---
@@ -520,37 +340,90 @@
 
 ```typescript
 {
-  query: string;        // Recherche en francais, ajouter "Afrique francophone" pour sujets business/finance
+  query: string;        // Recherche en francais
   maxResults: number;   // 1-3 (recommande: 1)
 }
 ```
 
-### Retours reels
+### Retour reel (VPS)
 
 ```json
-// Input: { query: "React hooks tutoriel francais", maxResults: 1 }
-// Output (1131ms):
+// Agent args: { "query": "product management tutoriel francais Afrique francophone", "maxResults": 1 }
+// Summary: "1 video trouvee"
 {
   "videos": [
     {
-      "videoId": "dpw9EHDh2bM",
-      "title": "REACT HOOKS en 30 minutes !",
-      "description": "React hooks tutoriel pour apprendre...",
-      "channelName": "Melvynx",
-      "thumbnailUrl": "https://i.ytimg.com/vi/dpw9EHDh2bM/mqdefault.jpg"
+      "videoId": "ATpynm412ls",
+      "title": "4 exemples de produits digitaux. E-commerce/vente en ligne",
+      "description": "",
+      "channelName": "Flo ",
+      "thumbnailUrl": "https://i.ytimg.com/vi/ATpynm412ls/mqdefault.jpg"
     }
   ]
 }
 ```
 
-#### API non configuree
-```json
-{ "videos": [], "message": "YouTube API non configuree" }
+---
+
+## 4. file_reader (Direct Tool — refactore 2026-02-14)
+
+**Fichier:** `services/copilot/tools/file-read.tool.ts`
+**Pattern:** Factory — `createFileReaderTool(talentId)` → direct `tool()` (plus un sub-agent asTool)
+**Securite:** Verifie que le document appartient au talent (IDOR).
+
+> **Refactoring 2026-02-14:** Remplace le sub-agent FileReaderAgent (qui causait des boucles infinies) par un tool direct qui lit depuis la DB + parse le fichier en une seule operation.
+
+### Parametres
+
+```typescript
+{
+  documentId: string;  // UUID unique du document a lire
+}
 ```
+
+### Retour reel (VPS)
+
+```json
+// Agent args: { "documentId": "93000000-0000-4000-8000-000000000001" }
+// Succes (document reel):
+{
+  "success": true,
+  "document": {
+    "id": "93000000-0000-4000-8000-000000000001",
+    "title": "CV - Lamine Barro",
+    "type": "CV",
+    "mimeType": "application/pdf",
+    "pageCount": 2
+  },
+  "content": "Mohamed Lamine Barro - Entrepreneur...\nCompetences: IA, Strategie, Entrepreneuriat..."
+}
+```
+
+```json
+// Erreur (PDF corrompu — seed placeholder):
+{
+  "success": false,
+  "error": "Error reading document: bad XRef entry"
+}
+```
+
+### file_reader pour documents organisation
+
+**Pattern:** Factory → sub-agent asTool. `createOrgFileReaderTool(orgId)`
+**Securite:** Verifie que le document appartient a l'organisation (IDOR). Fallback sur `talent_documents` si interaction verifiee.
+
+### Types supportes
+
+| Type MIME | Traitement |
+|-----------|-----------|
+| `text/*`, `application/json`, `application/xml` | Extraction directe UTF-8 |
+| `application/pdf` | Extraction via pdf-parse |
+| `image/*` | Metadata uniquement |
+| Autres | Metadata uniquement |
 
 ---
 
-## 4. generate_document
+## 5. generate_document
 
 **Fichier:** `services/copilot/tools/generate-document.tool.ts`
 **Pattern:** Factory — `createGenerateDocumentTool(talentId, avatarUrl?)`
@@ -566,76 +439,38 @@
     // (1) CV: {"firstName":"...","lastName":"...","skills":[...],"experiences":[...],...}
     // (2) Sections: {"sections":[{"heading":"...","body":"..."}]}
     // (3) Table: {"headers":["..."],"rows":[["..."]]}
+    // (4) Org branded: {"organizationName":"...","logoUrl":"...","sections":[...]}
   instructions: string;
 }
 ```
 
-### Retours reels
+### Retour reel (VPS)
 
-#### PDF Sections
 ```json
-// Input: format: "PDF", title: "Lettre de Motivation", contentJson: '{"sections":[...]}'
-// Output (30ms):
+// Agent args: {
+//   "format": "PDF",
+//   "title": "Rapport Audit",
+//   "contentJson": "{\"sections\":[{\"heading\":\"Introduction\",\"body\":\"Ceci est un test audit\"},{\"heading\":\"Conclusion\",\"body\":\"Test termine avec succes\"}]}",
+//   "instructions": "Generer un rapport d'audit professionnel..."
+// }
+// Summary: "Document genere . Rapport Audit (sauvegarde)"
 {
   "success": true,
-  "id": "3d265f5b-0dd2-47c1-9bd5-b3268fe05673",
+  "id": "eccc3213-0deb-4d2c-b3f5-f002997a35d9",
   "documentType": "PDF",
-  "downloadUrl": "https://storage.example.com/documents/.../uuid.pdf",
-  "filename": "Lettre_de_Motivation.pdf",
+  "downloadUrl": "/uploads/documents/90000000-0000-4000-8000-000000000001/eccc3213-0deb-4d2c-b3f5-f002997a35d9.pdf",
+  "filename": "Rapport_Audit.pdf",
   "metadata": {
-    "generatedAt": "2026-02-09T16:39:30.391Z",
-    "sizeBytes": 1566,
-    "title": "Lettre de Motivation"
+    "generatedAt": "2026-02-14T22:31:17.525Z",
+    "sizeBytes": 1520,
+    "title": "Rapport Audit"
   }
 }
 ```
 
-#### PDF CV (format structure)
-```json
-// Input: format: "PDF", contentJson: '{"firstName":"Lamine","lastName":"Barro","skills":[...],...}'
-// Output (14ms):
-{
-  "success": true,
-  "id": "edf06878-1f43-42be-9270-1dd385e896b7",
-  "documentType": "PDF",
-  "downloadUrl": "...",
-  "filename": "CV_Lamine_Barro.pdf",
-  "metadata": { "generatedAt": "...", "sizeBytes": 3181, "title": "CV Lamine Barro" }
-}
-```
-
-#### DOCX Table
-```json
-// Output (34ms):
-{ "success": true, "id": "...", "documentType": "DOCX", "filename": "Export_Talents.docx", "metadata": { "sizeBytes": 7888 } }
-```
-
-#### CSV
-```json
-// Output (16ms):
-{ "success": true, "id": "...", "documentType": "CSV", "filename": "Export_CSV.csv", "metadata": { "sizeBytes": 61 } }
-```
-
-#### XLS
-```json
-// Output (25ms):
-{ "success": true, "id": "...", "documentType": "XLS", "filename": "Stats_Opportunites.xlsx", "metadata": { "sizeBytes": 6578 } }
-```
-
-#### TXT
-```json
-// Output (2ms):
-{ "success": true, "id": "...", "documentType": "TXT", "filename": "Notes_reunion.txt", "metadata": { "sizeBytes": 92 } }
-```
-
-#### Erreur
-```json
-{ "success": false, "error": "Erreur lors de la generation du document: ..." }
-```
-
 ---
 
-## 5. generate_image
+## 6. generate_image
 
 **Fichier:** `services/copilot/tools/generate-image.tool.ts`
 **Mode:** Study uniquement.
@@ -651,16 +486,15 @@
 }
 ```
 
-### Retour
+### Retour (non teste VPS — cout eleve)
 
 ```json
-// Output (~60s):
 {
   "success": true,
-  "downloadUrl": "https://storage.example.com/generated/image-1707498765432.png",
+  "downloadUrl": "/uploads/generated/image-1707498765432.png",
   "filename": "image-1707498765432.png",
   "metadata": {
-    "generatedAt": "2026-02-09T16:40:00.000Z",
+    "generatedAt": "2026-02-14T22:40:00.000Z",
     "sizeBytes": 1911998,
     "dimensions": "1024x1024",
     "quality": "medium",
@@ -669,14 +503,9 @@
 }
 ```
 
-#### Erreur content policy
-```json
-{ "success": false, "error": "The requested image cannot be generated due to content policy restrictions." }
-```
-
 ---
 
-## 6. generate_diagram
+## 7. generate_diagram
 
 **Fichier:** `services/copilot/tools/generate-diagram.tool.ts`
 **Mode:** Study uniquement.
@@ -688,39 +517,31 @@
 {
   title: string;
   diagramType: 'flowchart' | 'sequenceDiagram' | 'classDiagram' | 'mindmap' | 'timeline' | 'gantt' | 'pie' | 'erDiagram';
-  mermaidCode: string;  // Code Mermaid valide. Regles: pas de <br/>, pas de () dans [], labels courts.
+  mermaidCode: string;
 }
 ```
 
-### Retours reels
+### Retour reel (VPS)
 
-#### Flowchart
 ```json
-// Input: { title: "Processus de Recrutement", diagramType: "flowchart", mermaidCode: "flowchart TD\n    A[Offre publiee] --> B{Candidatures?}..." }
-// Output (<1ms):
+// Agent args: {
+//   "title": "Processus de candidature",
+//   "diagramType": "flowchart",
+//   "mermaidCode": "flowchart TD\n    A[Offre publiee] --> B[Candidature]\n    B --> C[Entretien]\n    C --> D[Decision]\n    D --> E{Resultat}\n    E -->|Accepte| F[Embauche]\n    E -->|Refuse| G[Fin du processus]"
+// }
+// Summary: "Diagramme genere"
 {
   "success": true,
-  "title": "Processus de Recrutement",
+  "title": "Processus de candidature",
   "diagramType": "flowchart",
-  "mermaidCode": "flowchart TD\n    A[Offre publiee] --> B{Candidatures?}\n    B -->|Oui| C[Tri des CV]...",
+  "mermaidCode": "flowchart TD\n    A[Offre publiee] --> B[Candidature]\n    B --> C[Entretien]\n    C --> D[Decision]\n    D --> E{Resultat}\n    E -->|Accepte| F[Embauche]\n    E -->|Refuse| G[Fin du processus]",
   "renderHint": "client-side"
 }
 ```
 
-#### Code invalide (mauvais prefix)
-```json
-{
-  "success": false,
-  "error": "Le code Mermaid doit commencer par \"flowchart\" ou \"graph\" pour un diagramme de type flowchart"
-}
-```
-
-#### Sanitize <br/> et parentheses
-Le tool sanitize automatiquement: `<br/>` → `\n`, `(` dans `[]` → `&#40;`
-
 ---
 
-## 7. manage_skills
+## 8. manage_skills
 
 **Fichier:** `services/copilot/tools/manage-skills.tool.ts`
 **Pattern:** Factory — `createManageSkillsTool(authenticatedTalentId)`
@@ -732,31 +553,38 @@ Le tool sanitize automatiquement: `<br/>` → `\n`, `(` dans `[]` → `&#40;`
 {
   action: 'add' | 'update';
   skillName: string;          // Nom canonique (ex: "React", "Python")
-  proficiencyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
-  origin: 'SELF_DECLARED' | 'AI_INFERRED' | 'DOCUMENT_EXTRACTED' | 'QUIZ_VALIDATED';
+  proficiencyLevel: 'BEGINNER' | 'INTERMEDIATE' | 'EXPERT' | 'MASTER';
+  origin: 'declared' | 'inferred' | 'extracted';
+  type: 'HARD_SKILL' | 'SOFT_SKILL' | 'KNOWLEDGE';
 }
 ```
 
-### Retours reels
+### Retours reels (VPS)
 
 #### Ajout reussi
 ```json
-// Input: { action: "add", skillName: "Rust_Audit_Test", proficiencyLevel: "BEGINNER", origin: "AI_INFERRED" }
-// Output (3ms):
+// Agent args: { "action": "add", "skillName": "Audit_Test_2026", "proficiencyLevel": "BEGINNER", "origin": "declared", "type": "HARD_SKILL" }
+// Summary: "Competence modifiee"
 {
   "success": true,
-  "message": "Competence \"Rust_Audit_Test\" ajoutee avec le niveau BEGINNER.",
-  "skill": { "name": "Rust_Audit_Test", "level": "BEGINNER", "origin": "AI_INFERRED" }
+  "message": "Competence \"Audit_Test_2026\" ajoutee avec le niveau BEGINNER.",
+  "skill": { "name": "Audit_Test_2026", "level": "BEGINNER", "origin": "declared" }
 }
 ```
 
 #### Update reussi
 ```json
-// Output (1ms):
+// Agent args: { "action": "update", "skillName": "Audit_Test_2026", "proficiencyLevel": "INTERMEDIATE", "origin": "declared", "type": "HARD_SKILL" }
+// Summary: "Competence modifiee"
 {
   "success": true,
-  "message": "Competence \"Rust_Audit_Test\" mise a jour au niveau INTERMEDIATE.",
-  "skill": { "id": "...", "canonical_name": "Rust_Audit_Test", "proficiency_level": "INTERMEDIATE" }
+  "message": "Competence \"Audit_Test_2026\" mise a jour au niveau INTERMEDIATE.",
+  "skill": {
+    "id": "143d3d55-ae81-4ce3-8041-4347b927e75a",
+    "canonical_name": "Audit_Test_2026",
+    "proficiency_level": "INTERMEDIATE",
+    "is_visible": true
+  }
 }
 ```
 
@@ -764,25 +592,17 @@ Le tool sanitize automatiquement: `<br/>` → `\n`, `(` dans `[]` → `&#40;`
 ```json
 {
   "success": false,
-  "error": "La competence \"Rust_Audit_Test\" existe deja (niveau: INTERMEDIATE). Utilise l'action \"update\" pour changer le niveau."
-}
-```
-
-#### Update inexistante
-```json
-{
-  "success": false,
-  "error": "La competence \"CompetenceQuiExistePas\" n'existe pas. Utilise l'action \"add\" pour l'ajouter."
+  "error": "La competence \"Audit_Test_2026\" existe deja (niveau: BEGINNER). Utilise l'action \"update\" pour changer le niveau."
 }
 ```
 
 ---
 
-## 8. execute_action
+## 9. execute_action
 
 **Fichier:** `services/copilot/tools/execute-action.tool.ts`
 **Pattern:** Factory — `createExecuteActionTool(authenticatedTalentId)`
-**Securite:** Verifications metier avant chaque action (existe? ouvert? deja fait?).
+**Securite:** Verifications metier avant chaque action.
 
 ### Parametres
 
@@ -790,37 +610,29 @@ Le tool sanitize automatiquement: `<br/>` → `\n`, `(` dans `[]` → `&#40;`
 {
   action: 'apply_opportunity' | 'join_community' | 'book_space' | 'accept_invitation' | 'decline_invitation';
   entityId: string;   // UUID de l'entite cible
-  dataJson: string;   // Donnees supplementaires. Pour book_space: '{"startDatetime":"...","endDatetime":"..."}'
+  dataJson: string;   // Donnees supplementaires
 }
 ```
 
 ### Retours reels
 
-#### apply_opportunity — deja postule
-```json
-// Output (4ms):
-{ "success": false, "error": "Tu as deja postule a cette opportunite." }
-```
-
 #### join_community — succes
 ```json
-// Output (4ms):
 {
   "success": true,
-  "message": "Tu as rejoint la communaute \"BTP & Construction Cote d'Ivoire\".",
+  "message": "Tu as rejoint la communaute \"Etudesk OS: Entrepreneurs CI\".",
   "membershipId": "d5e4e..."
 }
 ```
 
-#### book_space — sans dates (edge)
+#### apply_opportunity — deja postule
 ```json
-{ "success": false, "error": "Les dates de debut et de fin sont requises (startDatetime, endDatetime)." }
+{ "success": false, "error": "Tu as deja postule a cette opportunite." }
 ```
 
 #### book_space — succes
 ```json
-// Input: dataJson: '{"startDatetime":"2026-03-01T09:00:00Z","endDatetime":"2026-03-01T12:00:00Z"}'
-// Output (12ms):
+// dataJson: '{"startDatetime":"2026-03-01T09:00:00Z","endDatetime":"2026-03-01T12:00:00Z"}'
 {
   "success": true,
   "message": "Reservation de \"Salle de Conference Le Plateau\" soumise (3h - 75000 FCFA).",
@@ -828,83 +640,39 @@ Le tool sanitize automatiquement: `<br/>` → `\n`, `(` dans `[]` → `&#40;`
 }
 ```
 
-#### accept_invitation — non trouvee
+#### book_space — sans dates
 ```json
-{ "success": false, "error": "Invitation non trouvee ou deja traitee." }
+{ "success": false, "error": "Les dates de debut et de fin sont requises (startDatetime, endDatetime)." }
 ```
 
 ---
 
-## 9. file_reader (FileReaderAgent via asTool)
-
-**Fichier:** `services/copilot/tools/file-read.tool.ts`
-**Pattern:** Factory → sub-agent asTool. `createFileReaderTool(talentId)`
-**Modele sub-agent:** claude-haiku-4-5 (Anthropic, MODEL_FAST)
-**Securite:** Le read_document interne verifie que le document appartient au talent (IDOR).
-
-### Parametres (asTool — message libre)
-
-Le main agent passe un message texte contenant le documentId. Exemple:
-```
-"Lis et analyse le document avec documentId: 483bdc16-fba3-4a10-aa4e-79b716595fcc"
-```
-
-### Retour interne (read_document)
-
-```json
-// Document PDF:
-{
-  "success": true,
-  "document": {
-    "id": "483bdc16-...",
-    "title": "Curriculum Vitae de Lamine Barro",
-    "type": "CV",
-    "mimeType": "application/pdf",
-    "pageCount": 2
-  },
-  "content": "Mohamed Lamine Barro - Entrepreneur...\nCompetences: IA, Strategie, Entrepreneuriat..."
-}
-```
-
-### Types supportes
-
-| Type MIME | Traitement |
-|-----------|-----------|
-| `text/*`, `application/json`, `application/xml` | Extraction directe UTF-8 |
-| `application/pdf` | Extraction via pdf-parse |
-| `image/*` | Metadata uniquement (vision dans le main agent) |
-| Autres | Metadata uniquement |
-
-### file_reader pour documents organisation
-
-**Disponible dans:** Organization (en plus de Explore et Study pour les documents talent)
-**Pattern:** Factory → sub-agent asTool. `createOrgFileReaderTool(orgId)`
-**Securite:** Le read_document interne verifie que le document appartient a l'organisation (IDOR).
-
-Le file_reader en mode org fonctionne de la meme maniere que pour les talents, mais interroge la table `organization_documents` au lieu de `talent_documents`.
-
-**Workflow type (mode Org):**
-1. `sql_query` intent `org_documents` → liste des documents
-2. `file_reader` avec documentId → lecture du contenu
-3. Agent analyse et propose des actions (ex: creer une opportunite depuis une fiche de poste)
-
----
-
-## 10. web_search (WebSearchAgent via asTool)
+## 10. web_search (Sub-agent asTool)
 
 **Fichier:** `services/copilot/tools/web-search.tool.ts`
 **Pattern:** Sub-agent asTool. `webSearchAgent.asTool({...})`
 **Modele sub-agent:** gpt-4.1-mini (OpenAI, MODEL_SEARCH — toujours OpenAI pour Responses API)
 **Outil interne:** `webSearchTool()` (SDK OpenAI Agents)
 
-### Parametres (asTool — message libre)
+### Parametres (message libre)
 
-Le main agent passe une query en texte libre. Exemple:
-```
-"Recherche les salaires developpeur senior en Cote d'Ivoire 2026"
+```typescript
+{
+  input: string;  // Query de recherche en texte libre
+}
 ```
 
-### Retour
+### Retour reel (VPS)
+
+```json
+// Agent args: { "input": "salaire product manager Cote d'Ivoire 2026" }
+// Summary: "Recherche web terminee"
+// Retour (texte synthetise):
+"En Cote d'Ivoire, le salaire d'un Product Manager varie en fonction de l'experience et du secteur. Voici quelques donnees disponibles :
+
+1. **Glassdoor** (glassdoor.fr) — publiee en septembre 2025
+   Selon Glassdoor, le salaire moyen..."
+```
 
 Le sub-agent synthetise les resultats en texte structure francais avec sources citees.
 
@@ -969,28 +737,35 @@ Le client recoit des events SSE pendant l'execution:
 
 // Limite atteinte
 { type: 'limit_reached', reason: 'max_tools' | 'max_duration', message: string }
+
+// Correction de contenu (remplacement complet du texte)
+{ type: 'content_corrected', content: string }
+
+// Session terminee
+{ type: 'done', sessionId: string }
+
+// Erreur
+{ type: 'error', error: string }
 ```
 
 ### Summaries generes par tool_summary.ts
 
-| Tool | Exemple de summary |
-|------|--------------------|
-| vector_query | "3 resultats . opportunites" |
-| sql_query | "30 elements . Mes competences" |
-| sql_query (org_documents) | "5 documents . Documents organisation" |
-| sql_query (org_talents) | "12 talents . Talents organisation" |
-| sql_query (org_talent_profile) | "Profil talent . Amadou Diallo" |
-| sql_query (org_community_feed) | "8 activites . Feed communaute" |
-| sql_query (org_community_members) | "15 membres . Membres communaute" |
-| sql_query (my_community_feed) | "6 activites . Mon feed communaute" |
-| sql_query (my_community_members) | "10 membres . Membres communaute" |
+| Tool | Exemple de summary (reel VPS) |
+|------|-----------------------------|
+| sql_query (my_skills) | "4 elements" |
+| sql_query (my_documents) | "1 element" |
+| sql_query (org_stats) | "Donnees chargees" |
+| sql_query (org_members) | "4 elements" |
+| sql_query (search_communities) | "2 elements" |
+| sql_query (search_opportunities) | "Aucun resultat" |
+| vector_query | "6 resultats" |
 | youtube_search | "1 video trouvee" |
-| generate_document | "Document genere . CV Lamine Barro (sauvegarde)" |
-| generate_image | "Image generee" |
+| generate_document | "Document genere . Rapport Audit (sauvegarde)" |
 | generate_diagram | "Diagramme genere" |
-| manage_skills | "Ajoutee . Python" |
-| execute_action | "Candidature soumise" |
-| file_reader | "Lu . Curriculum Vitae" |
+| manage_skills (add) | "Competence modifiee" |
+| manage_skills (update) | "Competence modifiee" |
+| manage_skills (error) | "Erreur: La competence ... existe deja" |
+| file_reader (error) | "Erreur: Error reading document: bad XRef entry" |
 | web_search | "Recherche web terminee" |
 
 ---
@@ -1000,16 +775,18 @@ Le client recoit des events SSE pendant l'execution:
 | Tool | Fichier | Pattern |
 |------|---------|---------|
 | vector_query | `services/copilot/tools/vector-query.tool.ts` | Static export |
-| sql_query | `services/copilot/tools/sql-query.tool.ts` | Factory (talentId, orgIds, intents) — 28 intents |
+| sql_query | `services/copilot/tools/sql-query.tool.ts` | Factory (talentId, orgIds, intents) — 28+ intents |
 | youtube_search | `services/copilot/tools/youtube-search.tool.ts` | Static export |
 | generate_document | `services/copilot/tools/generate-document.tool.ts` | Factory (talentId, avatarUrl) |
 | generate_image | `services/copilot/tools/generate-image.tool.ts` | Static export |
 | generate_diagram | `services/copilot/tools/generate-diagram.tool.ts` | Static export |
 | manage_skills | `services/copilot/tools/manage-skills.tool.ts` | Factory (talentId) |
 | execute_action | `services/copilot/tools/execute-action.tool.ts` | Factory (talentId) |
-| file_reader | `services/copilot/tools/file-read.tool.ts` | Factory → asTool (talentId, claude-haiku-4-5) |
+| file_reader (talent) | `services/copilot/tools/file-read.tool.ts` | Factory → direct tool (talentId) |
+| file_reader (org) | `services/copilot/tools/file-read.tool.ts` | Factory → asTool (orgId, claude-haiku-4-5) |
 | web_search | `services/copilot/tools/web-search.tool.ts` | Agent asTool (gpt-4.1-mini, OpenAI) |
 | cv_pdf_generator | `services/copilot/tools/cv-pdf-generator.ts` | Internal (called by generate_document) |
+| org_pdf_generator | `services/copilot/tools/org-document-pdf-generator.ts` | Internal (called by generate_document) |
 | tool_summary | `services/copilot/stream/tool-summary.ts` | Static function |
 
 ---
@@ -1018,44 +795,52 @@ Le client recoit des events SSE pendant l'execution:
 
 | Constante | Modele | Provider | Utilisation |
 |-----------|--------|----------|-------------|
-| MODEL_AGENT | claude-sonnet-4-5 | Anthropic | Agents principaux (talent, org) |
-| MODEL_FAST | claude-haiku-4-5 | Anthropic | Guardrails, titres, summaries, file_reader |
+| MODEL_AGENT | claude-opus-4-6 | Anthropic | Agents principaux (talent, org) |
+| MODEL_FAST | claude-haiku-4-5 | Anthropic | Guardrails, titres, summaries, file_reader org |
 | MODEL_SUGGESTION | gemini-2.5-flash-lite | Google | Suggestions, objectifs, bio |
 | MODEL_SEARCH | gpt-4.1-mini | OpenAI | web_search (Responses API), vision/extraction |
 | MODEL_MATCH | gpt-4.1-nano | OpenAI | Recommendations candidats |
 | MODEL_IMAGE | gpt-image-1 | OpenAI | Generation d'images |
 | MODEL_STT | whisper-1 | OpenAI | Speech-to-text |
 | MODEL_EMBEDDING | text-embedding-3-small | OpenAI | Embeddings pour Pinecone |
-| — | omni-moderation-latest | OpenAI | Auto-moderation contenu (direct `new OpenAI()`, timeout 5s) |
+| — | omni-moderation-latest | OpenAI | Auto-moderation contenu |
 
 ---
 
-## Bugs corriges dans cet audit (2026-02-09)
-
-| Bug | Fichier | Fix |
-|-----|---------|-----|
-| `search_organizations` crash: `column o.city does not exist` | sql-query.tool.ts | `o.city` → `o.headquarters_city as city` |
-| `vector_query` organizations: meme bug `o.city` | vector-query.tool.ts | Idem |
-| `book_space` crash: `organization_id NOT NULL` | execute-action.tool.ts | Ajout organization_id + calcul duration * hourly_rate |
-| `search_talents` ignore le param `skills` | sql-query.tool.ts | Ajout JOIN talent_skills avec filtre |
-| `tool_summary` sql_query: toujours "Donnees chargees" | tool-summary.ts | Recherche du premier array dans l'objet de retour |
-
----
-
-## Donnees de Test (UEMOA)
-
-L'audit a ete realise sur une base de donnees reelle:
+## Donnees de Test (VPS Production — 2026-02-14)
 
 | Entite | Count |
 |--------|-------|
-| Talents | 57 |
-| Organizations | 31 |
-| Opportunities | 55 |
-| Communities | 27 |
-| Spaces | 24 |
-| Talent Skills | 486 |
-| Talent Documents | 14 |
-| Applications | 165 |
-| Community Members | 261 |
+| Talents | 20 |
+| Organizations | 1 |
+| Opportunities | 8 |
+| Communities | 2 |
+| Spaces | 2 |
+| Talent Skills (etudesksas) | 4 |
+| Talent Documents (etudesksas) | 1 |
 
-Pays couverts: Benin, Burkina Faso, Cote d'Ivoire, Guinee-Bissau, Mali, Niger, Senegal, Togo.
+Compte test: etudesksas@gmail.com (talent_id: 90000000-0000-4000-8000-000000000001)
+Organisation: Etudesk SAS (org_id: 10000000-0000-4000-8000-000000000001)
+
+---
+
+## Bugs connus (2026-02-14)
+
+| Bug | Impact | Status |
+|-----|--------|--------|
+| file_reader PDF seed = placeholder | Le PDF de seed retourne "bad XRef entry" car c'est un fichier genere minimal | Non-bloquant — les vrais PDFs uploades fonctionnent |
+| Tables manquantes sur VPS (credit_action_catalog, talent_languages) | Le copilot retournait 500 avant l'execution des migrations legacy | Corrige — migrations 001-022 executees |
+
+---
+
+## Bugs corriges (historique)
+
+| Bug | Fichier | Fix | Date |
+|-----|---------|-----|------|
+| file_reader infinite loop (sub-agent asTool) | file-read.tool.ts | Remplace par direct tool() | 2026-02-14 |
+| `search_organizations` crash: `column o.city` | sql-query.tool.ts | `o.city` → `o.headquarters_city as city` | 2026-02-09 |
+| `vector_query` organizations: meme bug `o.city` | vector-query.tool.ts | Idem | 2026-02-09 |
+| `book_space` crash: `organization_id NOT NULL` | execute-action.tool.ts | Ajout organization_id + calcul | 2026-02-09 |
+| `search_talents` ignore param `skills` | sql-query.tool.ts | Ajout JOIN talent_skills | 2026-02-09 |
+| Proficiency levels non alignes DB↔tool | manage-skills.tool.ts | BEGINNER/INTERMEDIATE/EXPERT/MASTER | 2026-02-14 |
+| Origins non alignes DB↔tool | manage-skills.tool.ts | declared/inferred/extracted (lowercase) | 2026-02-14 |

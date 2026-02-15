@@ -361,7 +361,7 @@ export class AnthropicProvider implements ModelProvider {
     this.client = new Anthropic({
       apiKey: options?.apiKey || process.env.ANTHROPIC_API_KEY,
     });
-    this.defaultModel = options?.defaultModel || 'claude-sonnet-4-5-20250514';
+    this.defaultModel = options?.defaultModel || 'claude-opus-4-6';
   }
 
   getModel(modelName?: string): Model {
