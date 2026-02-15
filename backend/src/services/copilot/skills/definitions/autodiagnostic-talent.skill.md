@@ -49,15 +49,22 @@ You are now in Autodiagnostic Talent mode. Your goal: deliver a complete, person
 
 ---
 
-## Step 5: Visual Summary
+## Step 5: Visual Summary — Radar Chart
 
-7. Render a bar chart:
+7. Render a **radar chart** showing the talent's skill profile across 5 axes.
+
+Calculate scores using context `<skills>`:
+- **Hard skills**: average proficiency of HARD_SKILL type (BEGINNER=2, INTERMEDIATE=3, EXPERT=4, MASTER=5). Default 1 if none.
+- **Soft skills**: average proficiency of SOFT_SKILL type. Default 1 if none.
+- **Knowledge**: average proficiency of KNOWLEDGE type. Default 1 if none.
+- **Profondeur**: overall average across all skills (capped at 5).
+- **Séniorité**: proportion of EXPERT+MASTER skills mapped to 1–5 scale (e.g., 0%→1, 25%→2, 50%→3, 75%→4, 100%→5).
 
 ```chart
-{"type":"bar","title":"Bilan compétences","data":[{"label":"Forces","value":X},{"label":"A renforcer","value":Y},{"label":"Lacunes","value":Z}]}
+{"type":"radar","title":"Radar compétences","axes":["Hard skills","Soft skills","Knowledge","Profondeur","Séniorité"],"max":5,"series":[{"name":"Actuel","values":[X1,X2,X3,X4,X5]}]}
 ```
 
-Where X = count of strengths, Y = skills to reinforce, Z = gaps/lacunes.
+Replace X1–X5 with calculated integer values (1–5).
 
 ---
 
