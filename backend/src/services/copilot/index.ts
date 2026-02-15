@@ -1,11 +1,14 @@
 /**
  * Copilot — Main Exports
- * OpenAI Agents SDK + GPT-4o + SSE Streaming
+ * Native Anthropic SDK + Claude + SSE Streaming
  */
 
-// Agents
+// Agents (return AgentConfig, not Agent)
 export { createTalentAgent } from './agents/talent.agent';
 export { createOrgAgent } from './agents/organization.agent';
+
+// Tool helper types
+export type { ToolDefinition, AgentConfig } from './tools/tool-helper';
 
 // Tools
 export { vectorQueryTool } from './tools/vector-query.tool';
@@ -20,7 +23,7 @@ export { createManageSkillsTool } from './tools/manage-skills.tool';
 export { createExecuteActionTool } from './tools/execute-action.tool';
 
 // Guardrails
-export { inputSafetyGuardrail } from './guardrails/input.guardrail';
+export { inputSafetyGuardrail, runInputGuardrail } from './guardrails/input.guardrail';
 export { outputFormatGuardrail } from './guardrails/output.guardrail';
 
 // Prompts

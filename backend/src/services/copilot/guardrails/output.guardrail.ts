@@ -4,8 +4,16 @@
  * Logs violations for monitoring — does NOT block responses.
  */
 
-import type { OutputGuardrail } from '@openai/agents';
 import { logger } from '../../../utils';
+
+/** Local OutputGuardrail type (replaces @openai/agents import) */
+interface OutputGuardrail {
+  name: string;
+  execute: (params: { agentOutput: any; agent: any }) => Promise<{
+    tripwireTriggered: boolean;
+    outputInfo: Record<string, any>;
+  }>;
+}
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ENTITY_CARD_REGEX = /```entity:\w+\s*\n\s*(\{[^}]*\})\s*\n\s*```/g;

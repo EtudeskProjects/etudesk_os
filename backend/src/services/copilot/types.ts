@@ -1,6 +1,6 @@
 /**
  * Copilot — Shared Types
- * OpenAI Agents SDK + Claude (MODEL_AGENT) + SSE Streaming
+ * Native Anthropic SDK + Claude (MODEL_AGENT) + SSE Streaming
  */
 
 // --- Context Types ---

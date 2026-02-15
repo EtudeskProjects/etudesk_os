@@ -1,12 +1,16 @@
 /**
- * Web Search Tool — Agent asTool() pattern
- * Uses OpenAI Agents SDK webSearchTool() via a sub-agent.
- * Always runs on OpenAI Responses API (even when AI_PROVIDER=google|anthropic)
- * because webSearchTool() is a HostedTool that requires OpenAI Responses API.
+ * Web Search Tool — OpenAI webSearchTool() wrapped for Anthropic agents
+ * Uses OpenAI Agents SDK webSearchTool() via a sub-agent internally.
+ * Always runs on OpenAI Responses API (webSearchTool is a HostedTool).
+ * Exposed as a defineTool() for the native Anthropic agent loop.
  */
 
 import { Agent, webSearchTool } from '@openai/agents';
+import { z } from 'zod';
+import { defineTool } from './tool-helper';
 import { openaiResponsesProvider } from '../../ai/provider';
+import { Runner } from '@openai/agents';
+import { logger } from '../../../utils';
 
 const SEARCH_INSTRUCTIONS = `# Role and Objective
 
@@ -42,11 +46,11 @@ Return results as a structured list in French:
 Always cite your sources.`;
 
 /**
- * WebSearchAgent — Toujours sur OpenAI Responses API.
- * Utilise gpt-4.1-mini (hardcode, pas MODEL_T2) car ce sub-agent
- * tourne TOUJOURS sur OpenAI, independamment du provider global.
+ * WebSearchAgent — Always on OpenAI Responses API.
+ * Uses gpt-4.1-mini (hardcode) because this sub-agent
+ * always runs on OpenAI, regardless of the global provider.
  */
-export const webSearchAgent = new Agent({
+const webSearchAgent = new Agent({
   name: 'WebSearchAgent',
   model: 'gpt-4.1-mini',
   instructions: SEARCH_INSTRUCTIONS,
@@ -54,14 +58,37 @@ export const webSearchAgent = new Agent({
 });
 
 /**
- * Web search as a tool using asTool() pattern.
- * runConfig.modelProvider force l'execution sur OpenAI Responses API
- * meme quand le provider global est Google/Anthropic.
+ * Execute a web search query via the OpenAI sub-agent.
+ * Returns the text result.
  */
-export const webSearchAsTool = webSearchAgent.asTool({
-  toolName: 'web_search',
-  toolDescription:
-    'Search the web for current information (salary benchmarks, company info, market trends, training resources). Pass the search query as input message. Use ONLY when internal data is insufficient.',
-  runOptions: { maxTurns: 2 },
-  runConfig: { modelProvider: openaiResponsesProvider },
+async function executeWebSearch(query: string): Promise<string> {
+  const runner = new Runner({ modelProvider: openaiResponsesProvider });
+  const result = await runner.run(webSearchAgent, query, { maxTurns: 2 });
+  return result.finalOutput?.trim() || 'Aucun résultat trouvé.';
+}
+
+/**
+ * Web search as a native Anthropic tool.
+ * Internally delegates to the OpenAI sub-agent for actual web search.
+ */
+export const webSearchAsTool = defineTool({
+  name: 'web_search',
+  description:
+    'Search the web for current information (salary benchmarks, company info, market trends, training resources). Pass the search query as input. Use ONLY when internal data is insufficient.',
+  parameters: z.object({
+    query: z.string().describe('The search query in natural language. Be specific and include context (e.g., "salaire moyen développeur React Côte d\'Ivoire 2026").'),
+  }),
+  execute: async ({ query }) => {
+    try {
+      logger.info(`[web_search] Executing search: "${query.slice(0, 100)}"`);
+      const result = await executeWebSearch(query);
+      return { success: true, content: result };
+    } catch (error: any) {
+      logger.error(`[web_search] Error: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+  },
 });
+
+// Re-export for backward compatibility
+export { webSearchAgent };

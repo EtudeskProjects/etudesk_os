@@ -6,7 +6,7 @@
  * NOT from LLM parameters. This prevents IDOR attacks.
  */
 
-import { tool } from '@openai/agents';
+import { defineTool } from './tool-helper';
 import { z } from 'zod';
 import { pool } from '../../database';
 
@@ -29,7 +29,6 @@ const SQL_INTENTS = [
   'org_opportunities',
   'org_communities',
   'org_spaces',
-  'org_revenue',
   'org_invitations',
   'org_documents',
   'org_talents',
@@ -42,7 +41,6 @@ const SQL_INTENTS = [
   'org_talent_cohorts',
   'org_geo_distribution',
   'org_community_engagement',
-  'org_revenue_analytics',
   'org_opportunity_performance',
   // Talent community
   'my_community_feed',
@@ -77,27 +75,31 @@ export function createSqlQueryTool(
   authorizedOrgIds?: string[],
   allowedIntents?: readonly SqlIntent[]
 ) {
-  // Anti-loop: track recent calls to detect repeated identical queries
-  const recentCalls: string[] = [];
-  const MAX_IDENTICAL_CALLS = 2;
+  // Anti-loop: cache results per intent+params to return cached data on repeat calls
+  const resultCache = new Map<string, any>();
+  const callCounts = new Map<string, number>();
 
-  return tool({
+  return defineTool({
     name: 'sql_query',
     description:
-      'Query PostgreSQL for structured data. Use for personal data (my_profile, my_applications, my_communities, my_documents, my_skills, my_community_feed, my_community_members), org management (org_stats, org_applications, org_members, org_opportunities, org_revenue, org_documents, org_talents, org_talent_profile, org_community_feed, org_community_members), and structured search (search_opportunities, search_communities). Personal data is automatically filtered for the authenticated user — do NOT include talentId in params. IMPORTANT: Do NOT call the same intent twice — results are deterministic.',
+      'Query PostgreSQL for structured data. Use for personal data (my_profile, my_applications, my_communities, my_documents, my_skills, my_community_feed, my_community_members), org management (org_stats, org_applications, org_members, org_opportunities, org_documents, org_talents, org_talent_profile, org_community_feed, org_community_members), and structured search (search_opportunities, search_communities). Personal data is automatically filtered for the authenticated user — do NOT include talentId in params. IMPORTANT: Do NOT call the same intent twice — results are deterministic and already in your conversation.',
     parameters: z.object({
       intent: z.enum(SQL_INTENTS).describe('The query intent. Use my_* for personal data, org_* for organization data (requires organizationId in params), search_* for text search.'),
       paramsJson: z.string().describe('Optional parameters as JSON string. Examples: \'{"status":"PENDING"}\' to filter, \'{"organizationId":"uuid"}\' for org intents. Do NOT include talentId — it is injected automatically.'),
     }),
     execute: async ({ intent, paramsJson }) => {
-      // Anti-loop detection: block repeated identical calls
-      const callKey = `${intent}:${paramsJson || '{}'}`;
-      const identicalCount = recentCalls.filter(c => c === callKey).length;
-      if (identicalCount >= MAX_IDENTICAL_CALLS) {
-        logger.warn(`[sql_query] Blocked repeated call: ${intent} (${identicalCount + 1}x)`);
-        return { error: `STOP: You already called sql_query("${intent}") ${identicalCount} times with the same params. The data has not changed. Use the results you already have.` };
+      // Anti-loop: return cached result on repeat calls (NOT an error — errors cause retry loops)
+      const cacheKey = `${intent}:${paramsJson || '{}'}`;
+      const count = (callCounts.get(cacheKey) || 0) + 1;
+      callCounts.set(cacheKey, count);
+
+      if (count > 1 && resultCache.has(cacheKey)) {
+        logger.warn(`[sql_query] Returning cached result for ${intent} (call #${count})`);
+        const cached = resultCache.get(cacheKey);
+        // Return cached data with a _cached flag — agent gets data, not an error
+        return { ...cached, _cached: true, _note: `This is cached data from your first call. Do NOT call sql_query("${intent}") again.` };
       }
-      recentCalls.push(callKey);
+
       // If allowedIntents is provided, reject disallowed intents
       if (allowedIntents && !allowedIntents.includes(intent)) {
         return { error: `L'intent '${intent}' n'est pas disponible dans ce mode. Intents autorisés : ${allowedIntents.join(', ')}` };
@@ -107,6 +109,9 @@ export function createSqlQueryTool(
 
       // SECURITY: Always use the authenticated talentId, never from params
       const talentId = authenticatedTalentId;
+
+      // Execute query and cache result
+      const result = await (async () => {
 
       // For org intents, verify authorization
       if (intent.startsWith('org_')) {
@@ -347,21 +352,6 @@ export function createSqlQueryTool(
               [orgId]
             );
             return { spaces: res.rows };
-          }
-
-          case 'org_revenue': {
-            const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
-            const res = await pool.query(
-              `SELECT COALESCE(SUM(r.total_amount), 0) as total_revenue,
-                    COUNT(*) as total_bookings,
-                    COUNT(*) FILTER (WHERE r.status = 'CONFIRMED') as confirmed_bookings
-             FROM space_bookings r
-             JOIN spaces s ON r.space_id = s.id
-             WHERE s.organization_id = $1`,
-              [orgId]
-            );
-            return res.rows[0];
           }
 
           case 'org_invitations': {
@@ -702,41 +692,6 @@ export function createSqlQueryTool(
             return { engagement: res.rows, chart_hint: 'table' };
           }
 
-          case 'org_revenue_analytics': {
-            const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
-            const groupBy = (params?.groupBy as string) === 'space' ? 'space' : 'month';
-            if (groupBy === 'space') {
-              const res = await pool.query(
-                `SELECT s.name as label,
-                        COALESCE(SUM(r.total_amount), 0) as revenue,
-                        COUNT(*) as bookings,
-                        COUNT(*) FILTER (WHERE r.status = 'CONFIRMED') as confirmed,
-                        ROUND(COUNT(*) FILTER (WHERE r.status = 'CONFIRMED')::numeric / NULLIF(COUNT(*), 0) * 100, 1) as completion_rate
-                 FROM space_bookings r
-                 JOIN spaces s ON r.space_id = s.id
-                 WHERE s.organization_id = $1
-                 GROUP BY s.id, s.name ORDER BY revenue DESC`,
-                [orgId]
-              );
-              return { revenue: res.rows, groupBy: 'space', chart_hint: 'donut' };
-            }
-            const res = await pool.query(
-              `SELECT TO_CHAR(DATE_TRUNC('month', r.created_at), 'YYYY-MM') as month,
-                      COALESCE(SUM(r.total_amount), 0) as revenue,
-                      COUNT(*) as bookings,
-                      COUNT(*) FILTER (WHERE r.status = 'CONFIRMED') as confirmed,
-                      ROUND(COUNT(*) FILTER (WHERE r.status = 'CONFIRMED')::numeric / NULLIF(COUNT(*), 0) * 100, 1) as completion_rate
-               FROM space_bookings r
-               JOIN spaces s ON r.space_id = s.id
-               WHERE s.organization_id = $1
-               GROUP BY DATE_TRUNC('month', r.created_at)
-               ORDER BY month DESC LIMIT 12`,
-              [orgId]
-            );
-            return { revenue: res.rows, groupBy: 'month', chart_hint: 'bar' };
-          }
-
           case 'org_opportunity_performance': {
             const orgId = params?.organizationId as string;
             if (!orgId) return { error: 'organizationId requis' };
@@ -921,6 +876,14 @@ export function createSqlQueryTool(
         logger.error(`SQL query error (${intent}):`, error);
         return { error: error.message };
       }
+
+      })(); // end IIFE
+
+      // Cache successful results for anti-loop dedup
+      if (result && !result.error) {
+        resultCache.set(cacheKey, result);
+      }
+      return result;
     },
   });
 }

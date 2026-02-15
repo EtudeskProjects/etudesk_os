@@ -3,7 +3,7 @@
  * The LLM generates valid Mermaid code, the mobile app renders it via WebView + mermaid.js
  */
 
-import { tool } from '@openai/agents';
+import { defineTool } from './tool-helper';
 import { z } from 'zod';
 import { logger } from '../../../utils';
 
@@ -60,7 +60,7 @@ function validateMermaidCode(code: string, diagramType: string): { valid: boolea
   return { valid: true };
 }
 
-export const generateDiagramTool = tool({
+export const generateDiagramTool = defineTool({
   name: 'generate_diagram',
   description:
     'Generate a diagram as Mermaid code. The diagram is rendered visually on the client side (mobile app). Use to illustrate architecture, flows, processes, timelines, or data relationships. Supports flowchart, sequence, class, mindmap, timeline, gantt, pie, and ER diagrams.',

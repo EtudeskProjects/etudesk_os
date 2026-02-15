@@ -7,14 +7,14 @@
  */
 
 import 'dotenv/config';
-import { run } from '@openai/agents';
-import type { Agent } from '@openai/agents';
 import * as fs from 'fs';
 import * as path from 'path';
 import { pool } from '../services/database';
 import { createTalentAgent } from '../services/copilot/agents/talent.agent';
 import { createOrgAgent } from '../services/copilot/agents/organization.agent';
+import type { AgentConfig } from '../services/copilot/tools/tool-helper';
 import type { TalentContext, OrgContext } from '../services/copilot/types';
+import { getAnthropicClient } from '../services/ai/provider';
 
 // --- Config ---
 
@@ -282,7 +282,7 @@ function analyzeCalibration(output: string, toolCalls: ToolCallCapture[], textBe
 }
 
 async function runAgentTest(
-  agent: Agent,
+  agent: AgentConfig,
   testName: string,
   agentType: 'explorer' | 'study' | 'org',
   targetTool: string,
@@ -300,70 +300,84 @@ async function runAgentTest(
   log('dim', `Agent: ${agentType} | Message: "${message}"`);
 
   try {
-    const result = await run(agent, message, { stream: true, maxTurns: 15 });
+    const client = getAnthropicClient();
+    const messages: any[] = [{ role: 'user' as const, content: message }];
+    const toolDefs = agent.tools.map(t => t.definition);
+    let turnCount = 0;
+    const MAX_TURNS = 15;
 
-    for await (const event of result as AsyncIterable<any>) {
-      if (event.type === 'raw_model_stream_event') {
-        const data = event.data as any;
-        if (data?.type === 'output_text_delta') {
-          const delta = data.delta as string;
-          output += delta;
-          if (!firstToolSeen) textBeforeFirstTool += delta;
-        }
-      }
+    while (turnCount < MAX_TURNS) {
+      const stream = client.messages.stream({
+        model: agent.model,
+        system: agent.systemPrompt,
+        messages,
+        tools: toolDefs,
+        max_tokens: 4096,
+      });
 
-      if (event.type === 'run_item_stream_event') {
-        const item = event.item as any;
-
-        if (event.name === 'tool_called') {
-          if (!firstToolSeen) firstToolSeen = true;
-          currentToolStart = Date.now();
-          const toolName = item?.rawItem?.name || item?.name || 'unknown';
-          let toolArgs: any;
-          try {
-            const rawArgs = item?.rawItem?.arguments || item?.arguments;
-            toolArgs = typeof rawArgs === 'string' ? JSON.parse(rawArgs) : rawArgs;
-          } catch {
-            toolArgs = item?.rawItem?.arguments || item?.arguments;
-          }
-          log('blue', `  Tool: ${toolName}`);
-          log('dim', `     Args: ${JSON.stringify(toolArgs, null, 2)}`);
-          toolCalls.push({ name: toolName, args: toolArgs, output: null });
-        }
-
-        if (event.name === 'tool_output') {
-          const toolName = item?.rawItem?.name || item?.name || 'unknown';
-          const rawOutput = item?.output;
-          const toolDuration = Date.now() - currentToolStart;
-
-          let parsedOutput: any;
-          try {
-            parsedOutput = typeof rawOutput === 'string' ? JSON.parse(rawOutput) : rawOutput;
-          } catch {
-            parsedOutput = rawOutput;
-          }
-
-          const lastCall = [...toolCalls].reverse().find(tc => tc.name === toolName && !tc.output);
-          if (lastCall) {
-            lastCall.output = parsedOutput;
-            lastCall.durationMs = toolDuration;
-          }
-
-          if (parsedOutput?.error) {
-            errors.push(`${toolName}: ${parsedOutput.error}`);
-            log('red', `  ERROR: ${toolName}: ${parsedOutput.error}`);
-          } else {
-            log('green', `  OK: ${toolName} (${toolDuration}ms)`);
+      // Collect streaming events
+      for await (const event of stream) {
+        if (event.type === 'content_block_delta') {
+          const delta = event.delta as any;
+          if (delta.type === 'text_delta') {
+            output += delta.text;
+            if (!firstToolSeen) textBeforeFirstTool += delta.text;
           }
         }
       }
-    }
 
-    await (result as any).completed;
-    if (!output && (result as any).finalOutput) {
-      output = typeof (result as any).finalOutput === 'string'
-        ? (result as any).finalOutput
-        : JSON.stringify((result as any).finalOutput);
+      const response = await stream.finalMessage();
+
+      // Check for tool_use blocks
+      const toolUseBlocks = response.content.filter((b: any) => b.type === 'tool_use');
+
+      if (toolUseBlocks.length === 0) break; // No tools → done
+
+      // Execute tools
+      messages.push({ role: 'assistant' as const, content: response.content });
+      const toolResults: any[] = [];
+
+      for (const toolUse of toolUseBlocks) {
+        if (!firstToolSeen) firstToolSeen = true;
+        currentToolStart = Date.now();
+        const toolName = (toolUse as any).name;
+        const toolArgs = (toolUse as any).input;
+
+        log('blue', `  Tool: ${toolName}`);
+        log('dim', `     Args: ${JSON.stringify(toolArgs, null, 2)}`);
+        toolCalls.push({ name: toolName, args: toolArgs, output: null });
+
+        const toolDef = agent.tools.find(t => t.definition.name === toolName);
+        let result: any;
+        try {
+          result = toolDef ? await toolDef.execute(toolArgs) : { error: `Unknown tool: ${toolName}` };
+        } catch (err: any) {
+          result = { error: err.message };
+        }
+
+        const toolDuration = Date.now() - currentToolStart;
+        const lastCall = [...toolCalls].reverse().find(tc => tc.name === toolName && !tc.output);
+        if (lastCall) {
+          lastCall.output = result;
+          lastCall.durationMs = toolDuration;
+        }
+
+        if (result?.error) {
+          errors.push(`${toolName}: ${result.error}`);
+          log('red', `  ERROR: ${toolName}: ${result.error}`);
+        } else {
+          log('green', `  OK: ${toolName} (${toolDuration}ms)`);
+        }
+
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: (toolUse as any).id,
+          content: JSON.stringify(result),
+        });
+      }
+
+      messages.push({ role: 'user' as const, content: toolResults });
+      turnCount++;
     }
   } catch (error: any) {
     const errorDetail = error.code ? `${error.message} (code: ${error.code})` : error.message;

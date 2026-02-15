@@ -1,10 +1,11 @@
 /**
  * Talent Agent — Explorer + Study modes
- * Uses OpenAI Agents SDK with GPT-5
+ * Returns AgentConfig for native Anthropic SDK execution
  */
 
-import { Agent } from '@openai/agents';
 import { MODEL_AGENT } from '../../ai/models';
+import { AgentConfig } from '../tools/tool-helper';
+import type { ToolDefinition } from '../tools/tool-helper';
 import { TalentContext } from '../types';
 import { vectorQueryTool } from '../tools/vector-query.tool';
 import { createSqlQueryTool } from '../tools/sql-query.tool';
@@ -16,14 +17,12 @@ import { createFileReaderTool } from '../tools/file-read.tool';
 import { webSearchAsTool } from '../tools/web-search.tool';
 import { createManageSkillsTool } from '../tools/manage-skills.tool';
 import { createExecuteActionTool } from '../tools/execute-action.tool';
-import { inputSafetyGuardrail } from '../guardrails/input.guardrail';
-import { outputFormatGuardrail } from '../guardrails/output.guardrail';
 import { buildTalentExplorerPrompt } from '../prompts/talent-explorer.prompt';
 import { buildTalentStudyPrompt } from '../prompts/talent-study.prompt';
 
 export function createTalentAgent(
   context: TalentContext
-): Agent {
+): AgentConfig {
   const mode = context.session?.currentMode || 'explore';
   const authorizedOrgIds = context.organizations?.organizations?.map(
     (org) => org.organizationId
@@ -32,15 +31,14 @@ export function createTalentAgent(
   // Create SQL tool with authenticated talentId (SECURITY: prevents IDOR)
   const secureSqlTool = createSqlQueryTool(context.profile.id, authorizedOrgIds);
 
-  // Sub-agent tools (asTool pattern — main agent keeps control and synthesizes results)
+  // Direct file reader tool (no sub-agent)
   const fileReaderTool = createFileReaderTool(context.profile.id);
 
-  let tools: any[];
+  let tools: ToolDefinition[];
   let instructions: string;
 
   if (mode === 'study') {
-    // STUDY MODE: restricted sql_query (profile/skills/documents only), youtube_search, generate_image, generate_diagram + sub-agent tools + manage_skills
-    // NO vector_query, NO access to opportunities/communities/spaces
+    // STUDY MODE: restricted sql_query (profile/skills/documents only), youtube_search, generate_image, generate_diagram + manage_skills
     const studySqlTool = createSqlQueryTool(
       context.profile.id,
       authorizedOrgIds,
@@ -57,7 +55,7 @@ export function createTalentAgent(
     ];
     instructions = buildTalentStudyPrompt(context);
   } else {
-    // EXPLORER MODE (default): vector_query, sql_query, generate_document + sub-agent tools + execute_action
+    // EXPLORER MODE (default): vector_query, sql_query, generate_document + execute_action
     tools = [
       vectorQueryTool,
       secureSqlTool,
@@ -69,12 +67,10 @@ export function createTalentAgent(
     instructions = buildTalentExplorerPrompt(context);
   }
 
-  return new Agent({
+  return {
     name: `Talent Agent (${mode})`,
     model: MODEL_AGENT,
-    instructions,
+    systemPrompt: instructions,
     tools,
-    inputGuardrails: [inputSafetyGuardrail],
-    outputGuardrails: [outputFormatGuardrail],
-  });
+  };
 }

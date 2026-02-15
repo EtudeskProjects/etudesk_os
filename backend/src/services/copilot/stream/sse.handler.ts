@@ -1,27 +1,27 @@
 /**
- * SSE Streaming Handler
- * Handles Server-Sent Events for real-time copilot responses
+ * SSE Streaming Handler — Native Anthropic SDK
+ * Handles Server-Sent Events for real-time copilot responses.
+ * Uses anthropicClient.messages.stream() with a manual agentic loop.
  */
 
 import { Response } from 'express';
-import { run, Runner, InputGuardrailTripwireTriggered, MaxTurnsExceededError } from '@openai/agents';
-import type { Agent, AgentInputItem } from '@openai/agents';
+import Anthropic from '@anthropic-ai/sdk';
+import type { AgentConfig } from '../tools/tool-helper';
 import { SSEEvent, MessageSegment } from '../types';
-import { createTitleAgent, createSuggestionsAgent } from '../../ai/agent-factory';
-import { buildSuggestionsSystemPrompt } from '../../ai/prompts/session-utils.prompt';
-import { geminiProvider } from '../../ai/provider';
+import { runInputGuardrail } from '../guardrails/input.guardrail';
+import { getAnthropicClient } from '../../ai/provider';
 import { generateToolSummary } from './tool-summary';
 import { getFileBuffer } from '../../storage.service';
-
 import { logger } from '../../../utils';
 
+const MAX_TURNS = 15;
 const MAX_TOOL_CALLS = 20;
-const MAX_SAME_TOOL_CALLS = 3; // Prevent infinite loops (e.g., same sql_query repeated)
-const MAX_TURN_DURATION_MS = 120_000; // 2 minutes
-const HEARTBEAT_INTERVAL_MS = 30_000; // 30s — avoid proxy timeouts
+const MAX_SAME_TOOL_CALLS = 3;
+const MAX_TURN_DURATION_MS = 120_000;
+const HEARTBEAT_INTERVAL_MS = 30_000;
 
 /**
- * Send SSE comment (heartbeat) — keeps connection alive, no client-side event
+ * Send SSE comment (heartbeat) — keeps connection alive
  */
 function sendHeartbeat(res: Response): void {
   res.write(': keepalive\n\n');
@@ -34,7 +34,7 @@ export function initSSE(res: Response): void {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no'); // Nginx
+  res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders();
 }
 
@@ -46,11 +46,85 @@ export function sendSSE(res: Response, event: SSEEvent): void {
 }
 
 /**
- * Run an agent with SSE streaming
- * Returns the final output text, tool trace, and ordered segments for DB persistence
+ * Build Anthropic messages array from history + user message + attachments
+ */
+function buildMessages(
+  history: Array<{ role: string; content: string }>,
+  message: string,
+  attachments?: Array<{ id: string; name: string; url: string; type: string; size?: number }>,
+  imageBuffers?: Array<{ mimeType: string; base64: string; name: string }>
+): Anthropic.MessageParam[] {
+  const messages: Anthropic.MessageParam[] = [];
+
+  // Add conversation history (already alternating user/assistant from DB)
+  for (const h of history) {
+    if (h.role === 'user') {
+      messages.push({ role: 'user', content: h.content });
+    } else if (h.role === 'assistant') {
+      messages.push({ role: 'assistant', content: h.content });
+    }
+  }
+
+  // Build user message with attachment context
+  let userMessage = message;
+
+  // Document attachments → mention for file_reader tool
+  const docAttachments = attachments?.filter((a) => !a.type.startsWith('image/')) || [];
+  if (docAttachments.length > 0) {
+    const docList = docAttachments
+      .map((a) => `- ${a.name} (${a.type}) [documentId: ${a.id}]`)
+      .join('\n');
+    userMessage += `\n\n[Pièces jointes — Documents]\n${docList}\nCall file_reader with each documentId above to read the attached document(s).`;
+  }
+
+  // Image attachments → multimodal content parts
+  if (imageBuffers && imageBuffers.length > 0) {
+    const imgNames = imageBuffers.map((b) => `- ${b.name}`).join('\n');
+    userMessage += `\n\n[Pièces jointes — Images]\n${imgNames}\nThe images are provided below for direct visual analysis. Describe and analyze them.`;
+
+    const contentParts: Anthropic.ContentBlockParam[] = [
+      { type: 'text', text: userMessage },
+    ];
+    for (const img of imageBuffers) {
+      contentParts.push({
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: img.mimeType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+          data: img.base64,
+        },
+      });
+    }
+    messages.push({ role: 'user', content: contentParts });
+  } else {
+    messages.push({ role: 'user', content: userMessage });
+  }
+
+  // Ensure alternating roles (merge consecutive same-role messages)
+  const merged: Anthropic.MessageParam[] = [];
+  for (const msg of messages) {
+    const last = merged[merged.length - 1];
+    if (last && last.role === msg.role) {
+      // Merge text content
+      const lastText = typeof last.content === 'string' ? last.content : '';
+      const msgText = typeof msg.content === 'string' ? msg.content : '';
+      if (lastText && msgText) {
+        last.content = lastText + '\n' + msgText;
+      }
+    } else {
+      merged.push(msg);
+    }
+  }
+
+  return merged;
+}
+
+/**
+ * Run an agent with SSE streaming using native Anthropic SDK.
+ * Manual agentic loop: stream → collect tool_use → execute → re-submit.
  */
 export async function runAgentWithSSE(
-  agent: Agent,
+  agentConfig: AgentConfig,
   message: string,
   history: Array<{ role: string; content: string }>,
   res: Response,
@@ -63,269 +137,289 @@ export async function runAgentWithSSE(
   const toolTrace: Array<{ name: string; args?: any; result?: any; duration?: number }> = [];
   const segments: MessageSegment[] = [];
   let finalOutput = '';
-  const toolStartTimes = new Map<string, number>();
   let toolCallCounter = 0;
   const turnStart = Date.now();
   let limitReached = false;
-  const sameToolCounts = new Map<string, number>(); // key = toolName:argsJson
+  const sameToolCounts = new Map<string, number>();
 
   const heartbeatId = setInterval(() => sendHeartbeat(res), HEARTBEAT_INTERVAL_MS);
   logger.info(`[copilot] Start — "${message.slice(0, 100)}" (history: ${history.length} msgs)`);
 
   try {
-    // Build input with history + attachment context
-    const inputItems: AgentInputItem[] = [];
+    // --- Run input guardrail in parallel with message building ---
+    const guardrailPromise = runInputGuardrail(message);
 
-    // Add conversation history
-    for (const h of history) {
-      if (h.role === 'user') {
-        inputItems.push({ role: 'user', content: h.content });
-      } else if (h.role === 'assistant') {
-        inputItems.push({
-          role: 'assistant',
-          status: 'completed',
-          content: [{ type: 'output_text', text: h.content }],
-        } as AgentInputItem);
-      }
-    }
-
-    // Separate image attachments (vision) from document attachments (file_reader tool)
+    // Load image buffers for vision (if any)
     const imageAttachments = attachments?.filter((a) => a.type.startsWith('image/')) || [];
-    const docAttachments = attachments?.filter((a) => !a.type.startsWith('image/')) || [];
-
-    let userMessage = message;
-
-    // For documents (PDFs, etc.) → file_reader tool with documentId
-    if (docAttachments.length > 0) {
-      const docList = docAttachments
-        .map((a) => `- ${a.name} (${a.type}) [documentId: ${a.id}]`)
-        .join('\n');
-      userMessage += `\n\n[Pièces jointes — Documents]\n${docList}\nCall file_reader with each documentId above to read the attached document(s).`;
-    }
-
-    // For images → include as vision content parts (GPT-5 multimodal)
-    if (imageAttachments.length > 0) {
-      const imgNames = imageAttachments.map((a) => `- ${a.name}`).join('\n');
-      userMessage += `\n\n[Pièces jointes — Images]\n${imgNames}\nThe images are provided below for direct visual analysis. Describe and analyze them.`;
-
-      // Build multimodal content: text + image_url parts
-      const contentParts: any[] = [{ type: 'input_text', text: userMessage }];
-      for (const img of imageAttachments) {
-        try {
-          const buffer = await getFileBuffer(img.url);
-          if (!buffer || buffer.length === 0) {
-            throw new Error('Empty file buffer');
-          }
-          const base64 = buffer.toString('base64');
-          const mimeType = img.type || 'image/png';
-          contentParts.push({
-            type: 'input_image',
-            image: `data:${mimeType};base64,${base64}`,
-            detail: 'auto',
-          });
-        } catch (err: any) {
-          logger.error(`Failed to load image ${img.name}: ${err.message}`);
-          // Fallback: mention file cannot be loaded
-          contentParts[0] = { type: 'input_text', text: userMessage + `\n(Note: impossible de charger l'image ${img.name})` };
-        }
-      }
-
-      inputItems.push({ role: 'user', content: contentParts } as AgentInputItem);
-    } else {
-      inputItems.push({ role: 'user', content: userMessage });
-    }
-
-    const input = inputItems;
-    const result = await run(agent, input, { stream: true, maxTurns: 15 });
-
-    let currentTurnText = '';  // Track text generated in current turn (between tool calls)
-
-    for await (const event of result as AsyncIterable<any>) {
-      // Check duration limit
-      if (!limitReached && Date.now() - turnStart > MAX_TURN_DURATION_MS) {
-        limitReached = true;
-        const limitMsg = 'Temps maximum atteint. Voici les résultats disponibles.';
-        sendSSE(res, { type: 'limit_reached', reason: 'max_duration', message: limitMsg });
-      }
-
-      // Handle text deltas
-      if (event.type === 'raw_model_stream_event') {
-        const data = event.data as any;
-        if (data?.type === 'output_text_delta') {
-          const delta = data.delta as string;
-          finalOutput += delta;
-          currentTurnText += delta;
-          sendSSE(res, { type: 'text_delta', delta });
-
-          // Append to last text segment or create a new one
-          const lastSeg = segments[segments.length - 1];
-          if (lastSeg && lastSeg.type === 'text') {
-            lastSeg.content = (lastSeg.content || '') + delta;
-          } else {
-            segments.push({ type: 'text', content: delta });
-          }
-        }
-      }
-
-      // Handle tool events
-      if (event.type === 'run_item_stream_event') {
-        const item = event.item as any;
-
-        if (event.name === 'tool_called') {
-          toolCallCounter++;
-          const raw = item?.rawItem || {};
-          const toolName = raw?.name || item?.call?.name || item?.name || item?.type || 'unknown';
-          const toolArgs = raw?.arguments || item?.call?.args || item?.arguments;
-          const rawCallId = raw?.callId || raw?.id || item?.callId || item?.id;
-          const callId = rawCallId || `${toolName}-${Date.now()}-${toolCallCounter}`;
-          toolStartTimes.set(callId, Date.now());
-
-          // Log text generated before this tool call (agent's reasoning)
-          if (currentTurnText.trim()) {
-            logger.info(`[copilot] Agent text before tool #${toolCallCounter}: "${currentTurnText.trim().slice(0, 300)}"`);
-            currentTurnText = '';
-          }
-          logger.info(`[copilot] Tool #${toolCallCounter}: ${toolName}`, { args: typeof toolArgs === 'string' ? toolArgs : JSON.stringify(toolArgs) });
-
-          // Loop breaker: if the agent repeats the exact same tool call too many times, abort.
-          const argsKey = typeof toolArgs === 'string' ? toolArgs : JSON.stringify(toolArgs ?? {});
-          const loopKey = `${toolName}:${argsKey}`;
-          const sameCount = (sameToolCounts.get(loopKey) || 0) + 1;
-          sameToolCounts.set(loopKey, sameCount);
-          if (!limitReached && sameCount > MAX_SAME_TOOL_CALLS) {
-            limitReached = true;
-            const limitMsg = `Boucle d'outils detectee (${toolName} appele ${sameCount} fois). Je stoppe ici pour eviter de gaspiller des credits. Reessaie en precisant ton besoin (ou change de mode).`;
-            logger.warn(`[copilot] Tool loop detected — ${loopKey} (#${sameCount}). Aborting run.`);
-            sendSSE(res, { type: 'limit_reached', reason: 'tool_loop', message: limitMsg });
-            // Stream a short message so the user sees something even if the agent never finalizes.
-            finalOutput += `\n\n${limitMsg}`;
-            sendSSE(res, { type: 'text_delta', delta: `\n\n${limitMsg}` });
-            // Abort the underlying run stream (prevents MaxTurnsExceededError spam).
-            try { await (result as any).toStream?.().cancel?.(); } catch {}
-            break;
-          }
-
-          // Check tool count limit
-          if (!limitReached && toolCallCounter > MAX_TOOL_CALLS) {
-            limitReached = true;
-            const limitMsg = `Limite de ${MAX_TOOL_CALLS} outils atteinte. Voici les résultats disponibles.`;
-            sendSSE(res, { type: 'limit_reached', reason: 'max_tools', message: limitMsg });
-          }
-
-          // Push tool segment
-          segments.push({
-            type: 'tool',
-            tool: {
-              callId,
-              name: toolName,
-              args: typeof toolArgs === 'string' ? safeParseArgs(toolArgs) : toolArgs,
-              status: 'running',
-            },
-          });
-
-          sendSSE(res, {
-            type: 'tool_start',
-            tool: {
-              callId,
-              name: toolName,
-              args: typeof toolArgs === 'string' ? safeParseArgs(toolArgs) : toolArgs,
-            },
+    const imageBuffers: Array<{ mimeType: string; base64: string; name: string }> = [];
+    for (const img of imageAttachments) {
+      try {
+        const buffer = await getFileBuffer(img.url);
+        if (buffer && buffer.length > 0) {
+          imageBuffers.push({
+            mimeType: img.type || 'image/png',
+            base64: buffer.toString('base64'),
+            name: img.name,
           });
         }
-
-        if (event.name === 'tool_output') {
-          const raw = item?.rawItem || {};
-          const toolName = raw?.name || item?.call?.name || item?.name || item?.type || 'unknown';
-          const toolArgs = raw?.arguments || item?.call?.args || item?.arguments;
-          const callId = raw?.callId || raw?.id || item?.callId || item?.id || `${toolName}-unknown`;
-          const startTime = toolStartTimes.get(callId);
-          const duration = startTime ? Date.now() - startTime : undefined;
-          toolStartTimes.delete(callId);
-
-          const output = item?.output;
-          const isError = !!(output?.error || output?.isError);
-          const parsedArgs = typeof toolArgs === 'string' ? safeParseArgs(toolArgs) : toolArgs;
-          const summary = generateToolSummary(toolName, output, isError, parsedArgs);
-
-          // Log tool output details
-          const outputPreview = typeof output === 'string'
-            ? output.slice(0, 300)
-            : JSON.stringify(output)?.slice(0, 300);
-          logger.info(`[copilot] Tool #${toolCallCounter} result: ${toolName} → ${isError ? 'ERROR' : 'OK'} (${duration}ms)`, {
-            outputPreview,
-            cached: output?._cached || false,
-          });
-
-          const traceEntry = {
-            name: toolName,
-            args: toolArgs,
-            result: output,
-            duration,
-          };
-          toolTrace.push(traceEntry);
-
-          // Update matching segment
-          const toolSeg = segments.find(
-            (s) => s.type === 'tool' && s.tool?.callId === callId
-          );
-          if (toolSeg && toolSeg.tool) {
-            toolSeg.tool.result = output;
-            toolSeg.tool.summary = summary;
-            toolSeg.tool.duration = duration;
-            toolSeg.tool.status = isError ? 'error' : 'success';
-            if (isError) {
-              toolSeg.tool.error = typeof output === 'string' ? output : (output as any)?.message || (output as any)?.error;
-            }
-          }
-
-          sendSSE(res, {
-            type: 'tool_end',
-            tool: {
-              callId,
-              name: toolName,
-              summary,
-              result: typeof output === 'string' ? output.slice(0, 200) : output,
-              duration,
-              status: isError ? 'error' : 'success',
-              error: isError ? (typeof output === 'string' ? output : (output as any)?.message) : undefined,
-            },
-          });
-        }
+      } catch (err: any) {
+        logger.error(`Failed to load image ${img.name}: ${err.message}`);
       }
     }
 
-    // Ensure we capture final output if not captured via stream
-    await (result as any).completed;
-    if (!finalOutput && (result as any).finalOutput) {
-      finalOutput = typeof (result as any).finalOutput === 'string'
-        ? (result as any).finalOutput
-        : JSON.stringify((result as any).finalOutput);
-    }
+    // Build native Anthropic messages
+    const messages = buildMessages(history, message, attachments, imageBuffers);
 
-    // Log run summary
-    const elapsed = Date.now() - turnStart;
-    logger.info(`[copilot] Done — ${toolCallCounter} tools, ${elapsed}ms, output: ${finalOutput.length} chars`, {
-      toolNames: toolTrace.map(t => t.name).join(', '),
-      finalOutputPreview: finalOutput.slice(0, 200),
-    });
-  } catch (error: any) {
-    if (error instanceof InputGuardrailTripwireTriggered) {
-      const classification = error.result?.output?.outputInfo?.classification || 'BLOCKED';
+    // Check guardrail result
+    const guardrailResult = await guardrailPromise;
+    if (guardrailResult.tripwireTriggered) {
+      const classification = guardrailResult.outputInfo?.classification || 'BLOCKED';
       logger.warn(`[guardrail] Input blocked — classification: ${classification}`);
       const userMessage = classification === 'INJECTION'
         ? 'Je ne peux pas répondre à ce type de requête. Reformulez votre question en lien avec la plateforme.'
         : 'Cette requête ne peut pas être traitée. Je suis là pour vous accompagner sur la plateforme Etudesk.';
       sendSSE(res, { type: 'error', error: userMessage });
-    } else if (error instanceof MaxTurnsExceededError || error?.name === 'MaxTurnsExceededError') {
-      // Common failure mode when an agent loops on tool calls.
-      const userMessage =
-        "Le copilote a boucle (trop de tours). Reessaie en etant plus specifique, ou change de mode. Si ca persiste, on corrige le prompt ou on bloque l'appel repetitif cote tool.";
-      logger.error('SSE stream error (MaxTurnsExceededError):', error);
-      sendSSE(res, { type: 'error', error: userMessage });
-    } else {
-      logger.error('SSE stream error:', error);
-      sendSSE(res, { type: 'error', error: error.message || 'Erreur interne' });
+      return { finalOutput: '', toolTrace: [], segments: [] };
     }
+
+    // --- Agentic loop ---
+    const client = getAnthropicClient();
+    const toolDefs = agentConfig.tools.map((t) => t.definition);
+    let turnCount = 0;
+
+    while (turnCount < MAX_TURNS) {
+      turnCount++;
+
+      // Check duration limit
+      if (!limitReached && Date.now() - turnStart > MAX_TURN_DURATION_MS) {
+        limitReached = true;
+        const limitMsg = 'Temps maximum atteint. Voici les résultats disponibles.';
+        sendSSE(res, { type: 'limit_reached', reason: 'max_duration', message: limitMsg });
+        break;
+      }
+
+      // Stream the response
+      const stream = client.messages.stream({
+        model: agentConfig.model,
+        system: agentConfig.systemPrompt,
+        messages,
+        tools: toolDefs,
+        max_tokens: 4096,
+      });
+
+      // Collect streaming events
+      let currentTurnText = '';
+      const toolUseBlocks: Array<{ id: string; name: string; input: any }> = [];
+      let currentToolUse: { id: string; name: string; inputJson: string } | null = null;
+
+      for await (const event of stream) {
+        if (event.type === 'content_block_start') {
+          const block = (event as any).content_block;
+          if (block?.type === 'tool_use') {
+            currentToolUse = { id: block.id, name: block.name, inputJson: '' };
+          }
+        }
+
+        if (event.type === 'content_block_delta') {
+          const delta = (event as any).delta;
+          if (delta?.type === 'text_delta' && delta.text) {
+            finalOutput += delta.text;
+            currentTurnText += delta.text;
+            sendSSE(res, { type: 'text_delta', delta: delta.text });
+
+            // Append to last text segment or create new one
+            const lastSeg = segments[segments.length - 1];
+            if (lastSeg && lastSeg.type === 'text') {
+              lastSeg.content = (lastSeg.content || '') + delta.text;
+            } else {
+              segments.push({ type: 'text', content: delta.text });
+            }
+          }
+          if (delta?.type === 'input_json_delta' && currentToolUse) {
+            currentToolUse.inputJson += delta.partial_json || '';
+          }
+        }
+
+        if (event.type === 'content_block_stop') {
+          if (currentToolUse) {
+            let parsedInput: any = {};
+            try {
+              parsedInput = JSON.parse(currentToolUse.inputJson || '{}');
+            } catch {
+              parsedInput = {};
+            }
+            toolUseBlocks.push({
+              id: currentToolUse.id,
+              name: currentToolUse.name,
+              input: parsedInput,
+            });
+            currentToolUse = null;
+          }
+        }
+      }
+
+      // Get the final message to check stop_reason
+      const response = await stream.finalMessage();
+
+      // If no tool_use blocks, we're done
+      if (toolUseBlocks.length === 0 || response.stop_reason === 'end_turn') {
+        break;
+      }
+
+      // --- Execute tool calls ---
+      // Add assistant message to conversation
+      messages.push({ role: 'assistant', content: response.content });
+
+      const toolResults: Anthropic.ToolResultBlockParam[] = [];
+
+      for (const toolUse of toolUseBlocks) {
+        toolCallCounter++;
+
+        // Log text generated before this tool call
+        if (currentTurnText.trim()) {
+          logger.info(`[copilot] Agent text before tool #${toolCallCounter}: "${currentTurnText.trim().slice(0, 300)}"`);
+          currentTurnText = '';
+        }
+        logger.info(`[copilot] Tool #${toolCallCounter}: ${toolUse.name}`, {
+          args: JSON.stringify(toolUse.input),
+        });
+
+        // Loop breaker
+        const argsKey = stableStringify(toolUse.input);
+        const loopKey = `${toolUse.name}:${argsKey}`;
+        const sameCount = (sameToolCounts.get(loopKey) || 0) + 1;
+        sameToolCounts.set(loopKey, sameCount);
+
+        if (!limitReached && sameCount > MAX_SAME_TOOL_CALLS) {
+          limitReached = true;
+          const limitMsg = `Boucle d'outils detectee (${toolUse.name} appele ${sameCount} fois). Je stoppe ici pour eviter de gaspiller des credits.`;
+          logger.warn(`[copilot] Tool loop detected — ${loopKey} (#${sameCount}). Aborting run.`);
+          sendSSE(res, { type: 'limit_reached', reason: 'tool_loop', message: limitMsg });
+          finalOutput += `\n\n${limitMsg}`;
+          sendSSE(res, { type: 'text_delta', delta: `\n\n${limitMsg}` });
+          // Return cached error for remaining tool results
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: toolUse.id,
+            content: JSON.stringify({ error: 'Tool loop detected. Stopping.' }),
+          });
+          continue;
+        }
+
+        // Check tool count limit
+        if (!limitReached && toolCallCounter > MAX_TOOL_CALLS) {
+          limitReached = true;
+          const limitMsg = `Limite de ${MAX_TOOL_CALLS} outils atteinte. Voici les résultats disponibles.`;
+          sendSSE(res, { type: 'limit_reached', reason: 'max_tools', message: limitMsg });
+        }
+
+        // Push tool_start segment + SSE
+        const callId = toolUse.id;
+        segments.push({
+          type: 'tool',
+          tool: {
+            callId,
+            name: toolUse.name,
+            args: toolUse.input,
+            status: 'running',
+          },
+        });
+        sendSSE(res, {
+          type: 'tool_start',
+          tool: {
+            callId,
+            name: toolUse.name,
+            args: toolUse.input,
+          },
+        });
+
+        // Execute the tool
+        const toolStartTime = Date.now();
+        let output: any;
+        let isError = false;
+        try {
+          const toolDef = agentConfig.tools.find((t) => t.definition.name === toolUse.name);
+          if (!toolDef) {
+            throw new Error(`Unknown tool: ${toolUse.name}`);
+          }
+          output = await toolDef.execute(toolUse.input);
+          isError = !!(output?.error || output?.isError);
+        } catch (err: any) {
+          output = { error: err.message };
+          isError = true;
+        }
+        const duration = Date.now() - toolStartTime;
+
+        // Log tool output
+        const outputPreview = typeof output === 'string'
+          ? output.slice(0, 300)
+          : JSON.stringify(output)?.slice(0, 300);
+        logger.info(`[copilot] Tool #${toolCallCounter} result: ${toolUse.name} → ${isError ? 'ERROR' : 'OK'} (${duration}ms)`, {
+          outputPreview,
+          cached: output?._cached || false,
+        });
+
+        // Track
+        toolTrace.push({
+          name: toolUse.name,
+          args: toolUse.input,
+          result: output,
+          duration,
+        });
+
+        // Update segment
+        const summary = generateToolSummary(toolUse.name, output, isError, toolUse.input);
+        const toolSeg = segments.find(
+          (s) => s.type === 'tool' && s.tool?.callId === callId
+        );
+        if (toolSeg && toolSeg.tool) {
+          toolSeg.tool.result = output;
+          toolSeg.tool.summary = summary;
+          toolSeg.tool.duration = duration;
+          toolSeg.tool.status = isError ? 'error' : 'success';
+          if (isError) {
+            toolSeg.tool.error = typeof output === 'string' ? output : output?.message || output?.error;
+          }
+        }
+
+        // Send tool_end SSE
+        sendSSE(res, {
+          type: 'tool_end',
+          tool: {
+            callId,
+            name: toolUse.name,
+            summary,
+            result: typeof output === 'string' ? output.slice(0, 200) : output,
+            duration,
+            status: isError ? 'error' : 'success',
+            error: isError ? (typeof output === 'string' ? output : output?.message) : undefined,
+          },
+        });
+
+        // Add tool result for Anthropic
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: typeof output === 'string' ? output : JSON.stringify(output),
+        });
+      }
+
+      // Add tool results as user message
+      messages.push({ role: 'user', content: toolResults });
+
+      // If limit reached, break out of the loop
+      if (limitReached) break;
+    }
+
+    // Log run summary
+    const elapsed = Date.now() - turnStart;
+    logger.info(`[copilot] Done — ${toolCallCounter} tools, ${elapsed}ms, output: ${finalOutput.length} chars`, {
+      toolNames: toolTrace.map((t) => t.name).join(', '),
+      finalOutputPreview: finalOutput.slice(0, 200),
+    });
+  } catch (error: any) {
+    logger.error('SSE stream error:', error);
+    sendSSE(res, { type: 'error', error: error.message || 'Erreur interne' });
   } finally {
     clearInterval(heartbeatId);
   }
@@ -334,9 +428,7 @@ export async function runAgentWithSSE(
   const sanitized = sanitizeDiagramBlocks(finalOutput);
   if (sanitized !== finalOutput) {
     finalOutput = sanitized;
-    // Send corrected content so frontend can update its rendered output
     sendSSE(res, { type: 'content_corrected', content: sanitized });
-    // Also update text segments with sanitized content
     let fullText = '';
     for (const seg of segments) {
       if (seg.type === 'text') {
@@ -346,8 +438,7 @@ export async function runAgentWithSSE(
     if (fullText) {
       const sanitizedFull = sanitizeDiagramBlocks(fullText);
       if (sanitizedFull !== fullText) {
-        // Rebuild text segments with single sanitized segment
-        const nonTextSegments = segments.filter(s => s.type !== 'text');
+        const nonTextSegments = segments.filter((s) => s.type !== 'text');
         segments.length = 0;
         segments.push({ type: 'text', content: sanitizedFull });
         segments.push(...nonTextSegments);
@@ -355,12 +446,22 @@ export async function runAgentWithSSE(
     }
   }
 
+  // Run output guardrail (non-blocking — logs only, does not block)
+  try {
+    const { outputFormatGuardrail } = await import('../guardrails/output.guardrail');
+    await outputFormatGuardrail.execute({
+      agentOutput: finalOutput,
+      agent: { name: agentConfig.name },
+    });
+  } catch {
+    // Output guardrail is non-blocking
+  }
+
   return { finalOutput, toolTrace, segments };
 }
 
 /**
  * Post-process finalOutput to sanitize Mermaid code inside ```diagram blocks.
- * Fixes common LLM issues: <br/> tags, parentheses in [] labels, special chars.
  */
 function sanitizeDiagramBlocks(text: string): string {
   return text.replace(/```diagram\s*\n?\s*(\{[\s\S]*?\})\s*\n?\s*```/g, (fullMatch, jsonStr) => {
@@ -368,14 +469,11 @@ function sanitizeDiagramBlocks(text: string): string {
       const parsed = JSON.parse(jsonStr);
       if (parsed.code && typeof parsed.code === 'string') {
         let code = parsed.code;
-        // Replace <br/> and <br> with \n
         code = code.replace(/<br\s*\/?>/gi, '\\n');
-        // Escape parentheses inside square bracket labels []
         code = code.replace(/\[([^\]]*)\]/g, (_: string, content: string) => {
           const fixed = content.replace(/\(/g, '&#40;').replace(/\)/g, '&#41;');
           return `[${fixed}]`;
         });
-        // Fix pipe-based conditions: |text| must not contain special chars
         code = code.replace(/\|([^|]*)\|/g, (_: string, content: string) => {
           const fixed = content.replace(/[<>]/g, '').replace(/≤/g, ' lte ').replace(/≥/g, ' gte ');
           return `|${fixed}|`;
@@ -384,43 +482,61 @@ function sanitizeDiagramBlocks(text: string): string {
       }
       return '```diagram\n' + JSON.stringify(parsed) + '\n```';
     } catch {
-      return fullMatch; // If JSON parsing fails, return as-is
+      return fullMatch;
     }
   });
 }
 
-/** Safely parse JSON args string, fallback to wrapping as-is */
-function safeParseArgs(args: string): Record<string, unknown> | undefined {
-  try {
-    return JSON.parse(args);
-  } catch {
-    return args ? { raw: args } : undefined;
-  }
+/** Stable stringify with sorted object keys (for deterministic loop detection). */
+function stableStringify(value: any): string {
+  if (value === null) return 'null';
+  if (value === undefined) return 'undefined';
+  if (typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  const keys = Object.keys(value).sort();
+  const parts = keys.map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`);
+  return `{${parts.join(',')}}`;
 }
 
 /**
- * Generate a session title using Agents SDK (gpt-5-nano)
+ * Generate a session title using Anthropic Haiku
  */
 export async function generateSessionTitle(message: string): Promise<string> {
   try {
-    const agent = createTitleAgent();
-    const result = await run(agent, message);
-    return result.finalOutput?.trim() || message.slice(0, 50);
+    const { MODEL_FAST } = await import('../../ai/models');
+    const client = getAnthropicClient();
+    const { SESSION_TITLE_SYSTEM_PROMPT } = await import('../../ai/prompts/session-utils.prompt');
+
+    const response = await client.messages.create({
+      model: MODEL_FAST,
+      max_tokens: 50,
+      system: SESSION_TITLE_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: message }],
+    });
+
+    const title = response.content[0]?.type === 'text'
+      ? response.content[0].text.trim()
+      : message.slice(0, 50);
+    return title || message.slice(0, 50);
   } catch {
-    // Fallback to simple extraction
     const words = message.replace(/[?!.,]/g, '').trim().split(/\s+/);
     return words.slice(0, 5).join(' ') + (words.length > 5 ? '...' : '');
   }
 }
 
 /**
- * Generate prompt suggestions using Agents SDK (gpt-5-nano)
+ * Generate prompt suggestions using Gemini (unchanged — still via @openai/agents)
  */
 export async function generateSuggestions(
   mode: string,
   contextSummary: string
 ): Promise<string[]> {
   try {
+    const { buildSuggestionsSystemPrompt } = await import('../../ai/prompts/session-utils.prompt');
+    const { createSuggestionsAgent } = await import('../../ai/agent-factory');
+    const { Runner } = await import('@openai/agents');
+    const { geminiProvider } = await import('../../ai/provider');
+
     const systemPrompt = buildSuggestionsSystemPrompt(mode, contextSummary);
     const agent = createSuggestionsAgent(systemPrompt);
     const geminiRunner = new Runner({ modelProvider: geminiProvider });

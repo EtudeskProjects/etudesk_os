@@ -3,7 +3,7 @@
  * Wraps existing search tools with a unified Pinecone interface
  */
 
-import { tool } from '@openai/agents';
+import { defineTool } from './tool-helper';
 import { z } from 'zod';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { generateEmbedding } from '../../embedding.service';
@@ -42,7 +42,7 @@ function sanitizeFilters(raw: Record<string, unknown>): Record<string, unknown> 
   return clean;
 }
 
-export const vectorQueryTool = tool({
+export const vectorQueryTool = defineTool({
   name: 'vector_query',
   description:
     'Semantic search in Pinecone vector database. Use as the FIRST tool for discovery requests — finding opportunities, communities, spaces, talents, or organizations matching a natural language description. Put ALL search criteria (location, domain, skills, etc.) directly in the query text. Filters are optional and only support simple scalar values.',

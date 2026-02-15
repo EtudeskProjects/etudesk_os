@@ -5,8 +5,7 @@
  * receives raw content and analyzes it itself.
  */
 
-import { Agent, tool } from '@openai/agents';
-import { MODEL_FAST } from '../../ai/models';
+import { defineTool } from './tool-helper';
 import { z } from 'zod';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
@@ -88,27 +87,47 @@ async function readDocumentFromDB(
  * SECURITY: talentId is injected via factory, not from LLM.
  */
 export function createFileReaderTool(talentId: string) {
-  return tool({
+  // Per-session deduplication cache: documentId → result
+  const readCache = new Map<string, any>();
+
+  return defineTool({
     name: 'file_reader',
     description:
-      'Read a talent document (CV, diploma, certificate, PDF). Pass ONE documentId (UUID). Returns the raw text content of the document. Use documentId from the DOCUMENTS section in context or from [Pièces jointes].',
+      'Read a talent document (CV, diploma, certificate, PDF). Pass ONE documentId (UUID). Returns the raw text content of the document. Use documentId from the DOCUMENTS section in context or from [Pièces jointes]. IMPORTANT: Each document only needs to be read ONCE — the content is already in your conversation after the first read.',
     parameters: z.object({
       documentId: z.string().describe('ONE single UUID of the document to read.'),
     }),
     execute: async ({ documentId }) => {
       try {
+        const cleanId = documentId.trim();
+
+        // Deduplication: return cached result on repeat calls (same data, not an error)
+        if (readCache.has(cleanId)) {
+          const hitCount = (readCache.get(cleanId)._hits || 0) + 1;
+          readCache.get(cleanId)._hits = hitCount;
+          logger.warn(`[file_reader] Cache hit #${hitCount} for ${cleanId} — returning cached content`);
+          const cached = readCache.get(cleanId);
+          return {
+            ...cached,
+            _cached: true,
+            _note: `Cached result. You already have this document content. Do NOT call file_reader again for "${cached.document?.title}".`,
+          };
+        }
+
         logger.info(`[file_reader] Reading document ${documentId} for talent ${talentId}`);
         const result = await readDocumentFromDB(
           documentId,
           `SELECT id, title, original_filename, mime_type, file_url, document_type, description
            FROM talent_documents
            WHERE id = $1 AND talent_id = $2 AND deleted_at IS NULL`,
-          [documentId.trim(), talentId]
+          [cleanId, talentId]
         );
         if (!result.success) {
           logger.warn(`[file_reader] Failed: ${result.error}`);
         } else {
           logger.info(`[file_reader] Success: ${result.document?.title} (${result.content?.length || 0} chars)`);
+          // Cache successful reads
+          readCache.set(cleanId, result);
         }
         return result;
       } catch (error: any) {
@@ -122,14 +141,15 @@ export function createFileReaderTool(talentId: string) {
 // --- Organization Documents ---
 
 /**
- * Creates a read_document tool scoped to an organization
- * SECURITY: orgId is injected, never from LLM parameters
+ * Creates a file_reader tool scoped to an organization (DIRECT — no sub-agent).
+ * Reads organization documents AND talent CVs/documents if the talent has interacted with the org.
+ * SECURITY: orgId is injected via factory, not from LLM parameters.
  */
-function createOrgReadDocumentTool(orgId: string) {
-  return tool({
-    name: 'read_document',
+export function createOrgFileReaderTool(orgId: string) {
+  return defineTool({
+    name: 'file_reader',
     description:
-      'Read the content of a document belonging to the organization OR a talent CV/document if the talent has interacted with the org (applied, joined community, etc.). Use documentId from sql_query results (org_documents or org_talent_profile intent).',
+      'Read and analyze organization documents (job descriptions, contracts, policies, reports) AND talent CVs/documents for candidates who interacted with the org. Pass ONE documentId (UUID) from sql_query results (org_documents, org_talent_profile, or org_applications). Returns raw text content for the main agent to analyze.',
     parameters: z.object({
       documentId: z.string().describe('The UUID of the document to read. Get this from sql_query org_documents, org_talent_profile, or org_applications results.'),
     }),
@@ -150,7 +170,7 @@ function createOrgReadDocumentTool(orgId: string) {
              FROM talent_documents td
              WHERE td.id = $1 AND td.deleted_at IS NULL
                AND EXISTS (
-                 SELECT 1 FROM applications a
+                 SELECT 1 FROM opportunity_applications a
                    JOIN opportunities o ON o.id = a.opportunity_id
                  WHERE a.talent_id = td.talent_id AND o.organization_id = $2
                  UNION ALL
@@ -255,58 +275,5 @@ function createOrgReadDocumentTool(orgId: string) {
         };
       }
     },
-  });
-}
-
-/**
- * Creates an OrgFileReaderAgent scoped to a specific organization
- * SECURITY: orgId is injected via factory, not from LLM
- */
-function createOrgFileReaderAgent(orgId: string): Agent {
-  return new Agent({
-    name: 'OrgFileReaderAgent',
-    model: MODEL_FAST,
-    instructions: `# Role and Objective
-
-You are a document analysis specialist. Use the read_document tool to read organization documents AND talent documents (CVs, diplomas) when the talent has interacted with the organization. Provide structured analysis in French.
-
-# Instructions
-
-- The documentId is provided in the message. Use it directly with read_document — do NOT ask the user for it.
-- If multiple documentIds are provided, read each one sequentially.
-- Analyze the content and return a structured summary in French.
-- Be factual and concise in your analysis.
-
-## Document-Specific Analysis
-
-- **CVs/Resumes (talent documents)**: Extract full profile — name, current position, skills (technical + soft), work experience (company, role, dates), education, certifications, languages. Focus on skills match and experience relevance.
-- **Fiches de poste**: Extract role title, responsibilities, required qualifications, contract type, compensation if mentioned.
-- **Contracts/Legal**: Identify parties, key terms, dates, obligations, and notable clauses.
-- **Reports**: Summarize key findings, metrics, conclusions, and recommendations.
-- **Policies/Charters**: Extract rules, scope of application, and key provisions.
-- **Presentations/Brochures**: Summarize main message, target audience, and key data points.
-
-# Output Format
-
-Return analysis in French with clear sections using markdown headings. For CVs, use this structure:
-- **Identité**: name, location, contact
-- **Compétences**: list of skills by category
-- **Expériences**: chronological list
-- **Formation**: education history
-- **Certifications**: if any`,
-    tools: [createOrgReadDocumentTool(orgId)],
-  });
-}
-
-/**
- * Creates an org file_reader tool using asTool() pattern
- * SECURITY: orgId is injected via factory, not from LLM
- */
-export function createOrgFileReaderTool(orgId: string) {
-  return createOrgFileReaderAgent(orgId).asTool({
-    toolName: 'file_reader',
-    toolDescription:
-      'Read and analyze organization documents (job descriptions, contracts, policies, reports) AND talent CVs/documents for candidates who interacted with the org. Pass the documentId(s) from sql_query results (org_documents, org_talent_profile, or org_applications) as input message.',
-    runOptions: { maxTurns: 5 },
   });
 }

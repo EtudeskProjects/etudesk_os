@@ -3,13 +3,13 @@
  * Study mode only
  */
 
-import { tool } from '@openai/agents';
+import { defineTool } from './tool-helper';
 import { z } from 'zod';
 
 import { logger } from '../../../utils';
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
 
-export const youtubeSearchTool = tool({
+export const youtubeSearchTool = defineTool({
   name: 'youtube_search',
   description:
     'Search YouTube for educational videos on a topic. Study mode only. Returns the most relevant French-language video tutorials, prioritizing West African francophone creators. Call this tool ONCE per response — never multiple times. Pick the best single query.',

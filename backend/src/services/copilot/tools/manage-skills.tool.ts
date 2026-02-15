@@ -3,13 +3,13 @@
  * Factory pattern with injected authenticatedTalentId for IDOR protection
  */
 
-import { tool } from '@openai/agents';
+import { defineTool } from './tool-helper';
 import { z } from 'zod';
 import { pool } from '../../database';
 import { logger } from '../../../utils';
 
 export function createManageSkillsTool(authenticatedTalentId: string) {
-  return tool({
+  return defineTool({
     name: 'manage_skills',
     description:
       'Add or update skills for the authenticated talent. Use after the user demonstrates mastery (passes quizzes, completes exercises) or when analyzing documents. Always ask for confirmation before modifying skills.',

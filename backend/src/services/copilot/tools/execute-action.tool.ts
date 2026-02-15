@@ -4,7 +4,7 @@
  * Actions: apply_opportunity, join_community, book_space, accept_invitation, decline_invitation
  */
 
-import { tool } from '@openai/agents';
+import { defineTool } from './tool-helper';
 import { z } from 'zod';
 import { pool } from '../../database';
 import { logger } from '../../../utils';
@@ -18,7 +18,7 @@ const ACTION_TYPES = [
 ] as const;
 
 export function createExecuteActionTool(authenticatedTalentId: string) {
-  return tool({
+  return defineTool({
     name: 'execute_action',
     description:
       'Execute a user-confirmed action on the platform. ALWAYS show a confirmation block to the user BEFORE calling this tool. Actions: apply to opportunity, join community, book space, accept/decline invitation.',

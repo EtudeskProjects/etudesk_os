@@ -1,7 +1,7 @@
 /**
  * Copilot API Routes
  * Routes for AI copilot chat and session management
- * OpenAI Agents SDK + GPT-5 + SSE Streaming
+ * Native Anthropic SDK + Claude + SSE Streaming
  */
 
 import { Router, Response } from 'express';

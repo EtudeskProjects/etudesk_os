@@ -4,7 +4,7 @@
  * Factory pattern: injects talentId for auto-save to user's documents library
  */
 
-import { tool } from '@openai/agents';
+import { defineTool } from './tool-helper';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import PDFDocument from 'pdfkit';
@@ -281,7 +281,7 @@ const FORMAT_MIMETYPES: Record<string, string> = {
  * and triggers the extraction + skill merge pipeline.
  */
 export function createGenerateDocumentTool(talentId: string, avatarUrl?: string) {
-  return tool({
+  return defineTool({
     name: 'generate_document',
     description:
       'Generate a downloadable document (CV, cover letter, report, data export). Supports PDF, DOCX, XLS, CSV, TXT formats. Use AFTER gathering data via sql_query or vector_query. Returns a persistent download URL and document ID. The document is automatically saved to the user documents library. For CV generation, use the CV JSON format (see contentJson description).',
@@ -418,7 +418,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string)
 }
 
 // Keep backward-compatible static export (no auto-save, for non-authenticated contexts)
-export const generateDocumentTool = tool({
+export const generateDocumentTool = defineTool({
   name: 'generate_document',
   description:
     'Generate a downloadable document (CV, cover letter, report, data export). Supports PDF, DOCX, XLS, CSV, TXT formats. Use AFTER gathering data via sql_query or vector_query. Returns a persistent download URL.',

@@ -3,8 +3,8 @@
  *
  * Three providers used simultaneously for their strengths:
  * - Google Gemini Flash Lite: form suggestions (cheapest, fastest)
- * - OpenAI: images, web search, embeddings, STT, matching, vision/extraction
- * - Anthropic Claude: main agents (Sonnet), summaries/titles/guardrails (Haiku)
+ * - OpenAI: images, web search, embeddings, STT, matching, vision
+ * - Anthropic Claude: main agents (native SDK), summaries/titles/guardrails (Haiku)
  *
  * OPENAI_API_KEY is ALWAYS required (STT, moderation, embeddings, images, vision).
  * GOOGLE_API_KEY required for Gemini suggestions.
@@ -15,8 +15,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import OpenAI from 'openai';
-import { OpenAIProvider, setDefaultModelProvider } from '@openai/agents';
-import { AnthropicProvider } from './anthropic-provider';
+import Anthropic from '@anthropic-ai/sdk';
+import { OpenAIProvider } from '@openai/agents';
 import { logger } from '../../utils';
 
 // ---------------------------------------------------------------------------
@@ -39,13 +39,16 @@ const geminiClient = process.env.GOOGLE_API_KEY
   : null;
 
 // ---------------------------------------------------------------------------
-// 3. Anthropic Provider — native SDK via adapter
+// 3. Anthropic Client — Native SDK for agents, guardrails, titles
 // ---------------------------------------------------------------------------
 
-export const anthropicProvider = new AnthropicProvider();
+const anthropicClient = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 // ---------------------------------------------------------------------------
 // ModelProvider instances for @openai/agents run() overrides
+// (Still needed for Gemini suggestions + OpenAI web search sub-agent)
 // ---------------------------------------------------------------------------
 
 /** OpenAI provider for agents that MUST run on OpenAI (recommendations, etc.) */
@@ -69,15 +72,13 @@ export const geminiProvider = geminiClient
   : openaiProvider; // fallback to OpenAI if no Gemini key
 
 // ---------------------------------------------------------------------------
-// Set default model provider for all run() calls → Anthropic
+// Log provider status
 // ---------------------------------------------------------------------------
 
 if (process.env.ANTHROPIC_API_KEY) {
-  setDefaultModelProvider(anthropicProvider);
-  logger.info('[AI Provider] Default: ANTHROPIC (agents), OPENAI (images/STT/embeddings/vision), GEMINI (suggestions)');
+  logger.info('[AI Provider] ANTHROPIC (native SDK for agents), OPENAI (images/STT/embeddings/vision/web-search), GEMINI (suggestions)');
 } else {
-  // Fallback: OpenAI for everything if no Anthropic key
-  logger.warn('[AI Provider] ANTHROPIC_API_KEY missing — falling back to OpenAI for agents');
+  logger.warn('[AI Provider] ANTHROPIC_API_KEY missing — agents will fail');
 }
 
 if (!process.env.OPENAI_API_KEY) {
@@ -89,8 +90,11 @@ if (!process.env.GOOGLE_API_KEY) {
 }
 
 // ---------------------------------------------------------------------------
-// Client getters (for direct chat.completions.create calls)
+// Client getters
 // ---------------------------------------------------------------------------
+
+/** Anthropic client — for main agents, guardrails, titles */
+export function getAnthropicClient(): Anthropic { return anthropicClient; }
 
 /** Gemini client for form suggestions (chat.completions.create) */
 export function getGeminiClient(): OpenAI {

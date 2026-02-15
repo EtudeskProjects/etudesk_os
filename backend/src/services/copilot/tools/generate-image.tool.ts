@@ -4,7 +4,7 @@
  * Replaces DALL-E 3 (deprecated May 2026) with gpt-image-1 (autoregressive, better text rendering)
  */
 
-import { tool } from '@openai/agents';
+import { defineTool } from './tool-helper';
 import { MODEL_IMAGE } from '../../ai/models';
 import { getImageClient } from '../../ai/provider';
 import { z } from 'zod';
@@ -13,7 +13,7 @@ import { logger } from '../../../utils';
 
 const openai = getImageClient();
 
-export const generateImageTool = tool({
+export const generateImageTool = defineTool({
   name: 'generate_image',
   description:
     'Generate an image from a text description. Uses gpt-image-1 to create illustrations, visual diagrams, infographics, and educational visuals. Returns a persistent download URL. Use AFTER explaining a concept, as supplementary visual material.',

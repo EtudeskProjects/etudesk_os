@@ -14,6 +14,7 @@
     "db:seed": "node src/database/seed-etudesk-os.js",
     "db:reset:seed": "npm run db:reset && npm run db:seed",
     "seed:pinecone": "tsx src/scripts/seed-pinecone.ts",
+    "pinecone:reset:seed": "tsx src/scripts/pinecone-reset-and-seed.ts",
     "validate:skills": "tsx scripts/validate-skills.ts",
     "test:skills": "tsx src/services/copilot/skills/__tests__/skill-loader.test.ts"
   },
@@ -45,7 +46,8 @@
     "resend": "^6.9.1",
     "sharp": "^0.34.5",
     "uuid": "^9.0.0",
-    "zod": "^4.3.5"
+    "zod": "^4.3.5",
+    "zod-to-json-schema": "^3.25.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

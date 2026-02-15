@@ -4,12 +4,11 @@
  */
 
 import { Agent } from '@openai/agents';
-import { MODEL_SUGGESTION, MODEL_MATCH, MODEL_FAST } from './models';
+import { MODEL_SUGGESTION, MODEL_MATCH } from './models';
 import { SPACE_GEN_SYSTEM_PROMPT } from './prompts/space-gen.prompt';
 import { COMMUNITY_GEN_SYSTEM_PROMPT } from './prompts/community-gen.prompt';
 import { OPPORTUNITY_GEN_SYSTEM_PROMPT } from './prompts/opportunity-gen.prompt';
 import { RECOMMENDATION_SYSTEM_PROMPT } from './prompts/recommendation.prompt';
-import { SESSION_TITLE_SYSTEM_PROMPT } from './prompts/session-utils.prompt';
 
 // --- Space Generation (Gemini) ---
 
@@ -48,16 +47,6 @@ export function createRecommendationAgent(): Agent {
     name: 'Recommendation Generator',
     model: MODEL_MATCH,
     instructions: RECOMMENDATION_SYSTEM_PROMPT,
-  });
-}
-
-// --- Session Utils Title (Anthropic Haiku) ---
-
-export function createTitleAgent(): Agent {
-  return new Agent({
-    name: 'Session Title Generator',
-    model: MODEL_FAST,
-    instructions: SESSION_TITLE_SYSTEM_PROMPT,
   });
 }
 
