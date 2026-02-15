@@ -24,16 +24,19 @@ export const generateImageTool = defineTool({
         'Detailed description of the image to generate. Be specific about style, content, colors, and composition. For educational content, describe the concept visually.'
       ),
     size: z
-      .enum(['1024x1024', '1536x1024', '1024x1536'])
+      .string()
       .default('1024x1024')
       .describe('Image dimensions: 1024x1024 (square), 1536x1024 (landscape), 1024x1536 (portrait)'),
     quality: z
-      .enum(['low', 'medium', 'high'])
+      .string()
       .default('medium')
       .describe('Image quality: low (~$0.01), medium (~$0.04), high (~$0.17). Use medium for most cases.'),
   }),
-  execute: async ({ prompt, size, quality }) => {
+  execute: async ({ prompt, size: rawSize, quality: rawQuality }) => {
     try {
+      // Normalize case (Claude native SDK may send "High" or "HIGH")
+      const size = rawSize.toLowerCase() as '1024x1024' | '1536x1024' | '1024x1536';
+      const quality = rawQuality.toLowerCase() as 'low' | 'medium' | 'high';
       // Generate image via gpt-image-1
       const response = await openai.images.generate({
         model: MODEL_IMAGE,

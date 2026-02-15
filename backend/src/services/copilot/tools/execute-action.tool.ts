@@ -25,11 +25,17 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
     parameters: z.object({
       action: z.enum(ACTION_TYPES).describe('The action to execute'),
       entityId: z.string().describe('The UUID of the target entity (opportunity, community, space, or invitation)'),
-      dataJson: z.string().describe('Additional data as JSON string. For book_space: \'{"startDatetime":"...","endDatetime":"..."}\'. For other actions: pass empty string "".'),
+      dataJson: z
+        .union([z.string(), z.record(z.string(), z.unknown())])
+        .default('')
+        .describe('Additional data as JSON string or object. For book_space: \'{"startDatetime":"...","endDatetime":"..."}\'. For other actions: pass empty string "".'),
     }),
     execute: async ({ action, entityId, dataJson }) => {
       const talentId = authenticatedTalentId;
-      const data = dataJson && dataJson.trim() ? JSON.parse(dataJson) : {};
+      // Accept dataJson as object or string (Claude native SDK may send objects)
+      const data = typeof dataJson === 'object' && dataJson !== null
+        ? dataJson
+        : (typeof dataJson === 'string' && dataJson.trim() ? JSON.parse(dataJson) : {});
 
       try {
         switch (action) {

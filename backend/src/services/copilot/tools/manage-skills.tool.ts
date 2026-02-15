@@ -14,19 +14,24 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
     description:
       'Add or update skills for the authenticated talent. Use after the user demonstrates mastery (passes quizzes, completes exercises) or when analyzing documents. Always ask for confirmation before modifying skills.',
     parameters: z.object({
-      action: z.enum(['add', 'update']).describe('The action to perform on the skill (add or update level)'),
+      action: z.string().describe('The action to perform: "add" or "update"'),
       skillName: z.string().describe('The canonical name of the skill (e.g., "React", "Python", "Data Analysis")'),
       proficiencyLevel: z
-        .enum(['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'])
-        .describe('Proficiency level for the skill. BEGINNER → knows basics. INTERMEDIATE → can apply independently. EXPERT → deep mastery. MASTER → can teach and innovate.'),
+        .string()
+        .describe('Proficiency level: BEGINNER (knows basics), INTERMEDIATE (can apply independently), EXPERT (deep mastery), MASTER (can teach and innovate).'),
       origin: z
-        .enum(['declared', 'inferred', 'extracted'])
-        .describe('How the skill was identified. "declared" if the user claims it, "inferred" if you detected it from conversation or quiz performance, "extracted" from CV/certificates/documents.'),
+        .string()
+        .describe('How the skill was identified: "declared" (user claims it), "inferred" (detected from conversation/quiz), "extracted" (from CV/certificates/documents).'),
       type: z
-        .enum(['HARD_SKILL', 'SOFT_SKILL', 'KNOWLEDGE'])
-        .describe('The skill category. HARD_SKILL for technical/domain skills (Python, Data Analysis, Marketing), SOFT_SKILL for interpersonal skills (Leadership, Communication), KNOWLEDGE for theoretical knowledge (Machine Learning Theory, Business Strategy).'),
+        .string()
+        .describe('Skill category: HARD_SKILL (technical/domain), SOFT_SKILL (interpersonal), KNOWLEDGE (theoretical).'),
     }),
-    execute: async ({ action, skillName, proficiencyLevel, origin, type }) => {
+    execute: async ({ action: rawAction, skillName, proficiencyLevel: rawLevel, origin: rawOrigin, type: rawType }) => {
+      // Normalize enum values (Claude native SDK may send mixed case)
+      const action = rawAction.toLowerCase() as 'add' | 'update';
+      const proficiencyLevel = rawLevel.toUpperCase() as 'BEGINNER' | 'INTERMEDIATE' | 'EXPERT' | 'MASTER';
+      const origin = rawOrigin.toLowerCase() as 'declared' | 'inferred' | 'extracted';
+      const type = rawType.toUpperCase() as 'HARD_SKILL' | 'SOFT_SKILL' | 'KNOWLEDGE';
       const is_visible = true; // Skills are visible by default; users toggle visibility from profile settings
       const talentId = authenticatedTalentId;
 

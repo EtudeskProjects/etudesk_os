@@ -57,13 +57,16 @@ export const vectorQueryTool = defineTool({
     ]).describe('The entity type to search. Choose based on what the user is looking for.'),
     topK: z.number().min(1).max(30).default(10).describe('Number of results to return. Default 10. Use higher values (15-20) when the user needs comprehensive results.'),
     filtersJson: z
-      .string()
+      .union([z.string(), z.record(z.string(), z.unknown())])
       .default('')
-      .describe('Pinecone metadata filters as JSON string. ONLY simple scalar values: \'{"contract_type":"CDI"}\' or \'{"type":"EMPLOYMENT"}\'. Do NOT use nested objects or arrays of objects. Use empty string for no filter (recommended — put criteria in the query text instead).'),
+      .describe('Pinecone metadata filters as JSON string or object. ONLY simple scalar values: \'{"contract_type":"CDI"}\' or \'{"type":"EMPLOYMENT"}\'. Do NOT use nested objects or arrays of objects. Use empty string for no filter (recommended — put criteria in the query text instead).'),
   }),
   execute: async ({ query, namespace, topK, filtersJson }) => {
     try {
-      const rawFilters = filtersJson && filtersJson.trim() ? JSON.parse(filtersJson) : {};
+      // Accept filtersJson as object or string (Claude native SDK may send objects)
+      const rawFilters = typeof filtersJson === 'object' && filtersJson !== null
+        ? filtersJson as Record<string, unknown>
+        : (typeof filtersJson === 'string' && filtersJson.trim() ? JSON.parse(filtersJson) : {});
       const filters = sanitizeFilters(rawFilters);
       const embedding = await generateEmbedding(query);
       const index = pinecone.index(PINECONE_INDEX);
