@@ -34,14 +34,14 @@ const UEMOA_TRIGGERS_REGEX = /salaire|fcfa|smig|cotisation|cnps|css|ipres|inps|c
 
 /** Skill IDs that need UEMOA data */
 const UEMOA_SKILL_IDS = new Set([
-  'salary-analysis',
+  'career-compensation-guide',
   'interview-prep',
   'opportunity-publishing',
   'job-description-generation',
   'learning-path-generator',
   'autodiagnostic-talent',
   'candidate-ranking',
-  'cohort-report-generation',
+  'org-analytics',
 ]);
 
 /**

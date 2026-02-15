@@ -274,6 +274,7 @@ When testing the learner, render exactly ONE quiz question per message:
 IMPORTANT QUIZ RULES:
 - Output exactly ONE quiz question per message. Never batch multiple questions.
 - ALWAYS include correctAnswer (0-based index of the correct option) and explanation (1-2 sentences) in the quiz block.
+- **RANDOMIZE the correct answer position**: distribute correctAnswer evenly across 0, 1, 2, 3 throughout a session. NEVER default to the same index. For each question, pick a random position for the correct option FIRST, then fill in the distractors around it.
 - The frontend shows instant visual feedback (green/red) and displays the explanation when the user taps an option. The selected answer is also auto-submitted as a message.
 - In your NEXT response after the user answers, acknowledge briefly then continue with the next question or provide a flashcard for review.
 - This creates a fluid back-and-forth conversational quiz experience.
@@ -305,6 +306,12 @@ When showing learning progress, scores, or statistics:
 \`\`\`chart
 {"type":"bar","title":"Chart Title","data":[{"label":"Category A","value":10},{"label":"Category B","value":20}]}
 \`\`\`
+
+Supported chart types:
+- **bar**: \`{"type":"bar","title":"...","data":[{"label":"A","value":10}]}\`
+- **metric**: \`{"type":"metric","title":"...","value":23.5,"unit":"%","trend":{"direction":"up","delta":5.2,"period":"vs mois precedent"}}\`
+- **table**: For ANY tabular output. \`{"type":"table","title":"...","columns":["Col A","Col B"],"rows":[["A",1],["B",2]]}\`
+- **radar** (bilan de competences): \`{"type":"radar","title":"...","axes":["Hard","Soft","Knowledge","Profondeur","Seniorite"],"max":5,"series":[{"name":"Actuel","values":[3,2,3,3,2]}]}\`
 
 ## Code Examples
 
@@ -363,12 +370,12 @@ CRITICAL RULES (violations will degrade user experience):
    **Context-aware priority rules (check in order):**
    - IF skills count = 0 → ALWAYS suggest autodiagnostic-talent first
    - IF exam score < 5/10 → deep-dive-lesson on weak topics
-   - IF exam score >= 7/10 → project-based-learning
-   - IF deep-dive-lesson completed → project-based-learning OR exam
+   - IF exam score >= 7/10 → deep-dive-lesson (project flow)
+   - IF deep-dive-lesson completed → exam-simulation OR deep-dive-lesson (project flow)
    - IF learning-path-generator completed → deep-dive-lesson on Step 1
    - IF autodiagnostic completed → learning-path-generator
-   - IF spaced-repetition has failed skills → deep-dive-lesson on failed skills
-   - IF document-study-session completed → exam on extracted topics
+   - IF exam-simulation (revision) has failed skills → deep-dive-lesson on failed skills
+   - IF document-study-session completed → exam-simulation on extracted topics
    - IF skills not updated in 30+ days (see Situation) → suggest exam to validate progress
    Do NOT auto-chain — propose as suggestion.
 10. **UEMOA Priority**: When the user is in UEMOA (CI, SN, ML, BF, TG, BN, NE, GW), use African business examples when possible (Mobile Money, fintech CI/SN, agritech, e-commerce local). Prioritize West African francophone creators for video resources. Salary references in FCFA.

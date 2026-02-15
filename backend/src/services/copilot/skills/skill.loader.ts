@@ -41,6 +41,8 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
   ],
 };
 
+// NOTE: Charts/tables are not tools. Agents render them directly with ```chart blocks.
+
 // In-memory cache
 let cachedSkills: SkillDefinition[] | null = null;
 

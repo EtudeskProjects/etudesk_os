@@ -60,6 +60,11 @@ i18next
     interpolation: {
       escapeValue: false,
     },
+
+    // Suppress locize promo messages in stdout
+    saveMissing: false,
+    // @ts-ignore — undocumented option that suppresses console.info spam
+    showSupportNotice: false,
   });
 
 /** Express middleware — add after cors/json, before routes */

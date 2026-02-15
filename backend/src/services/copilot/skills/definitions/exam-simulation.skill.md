@@ -1,20 +1,94 @@
 ---
-name: Exam & Assessment
-description: Evaluate mastery through quick assessment (3 questions) or full exam simulation (10 questions), with scoring, skill certification, and follow-up
+name: Exam & Revision
+description: Mastery evaluation (exam, quiz, certification) and targeted spaced revision on weak skills
 modes: study
 tools: manage_skills, youtube_search, web_search
-triggers: examen, simulation, test complet, evaluation complete, certifier, exam, passer un test, 10 questions, evaluation globale, teste mes connaissances, evaluer mes competences, assessment, skill check, mes progres, niveau de maitrise, teste-moi sur, evalue-moi, certification, obtenir une certification, badge
+triggers: examen, simulation, test complet, evaluation complete, certifier, exam, passer un test, 10 questions, evaluation globale, teste mes connaissances, evaluer mes competences, assessment, skill check, mes progres, niveau de maitrise, teste-moi sur, evalue-moi, certification, obtenir une certification, badge, revision, reviser, spaced repetition, raffraichir, session revision, renforcer mes acquis, reviser mes acquis, rafraichir mes connaissances
 priority: 7
 ---
 
-# Exam & Assessment Workflow
+# Exam & Revision Workflow
 
-You are now in Exam & Assessment mode. Two formats available:
+You are now in Exam & Revision mode. Three formats available:
 
-**Quick Assessment (3 questions)** — triggered by "evaluer", "teste-moi sur", "assessment", "skill check", "mes progres", "evalue-moi", "niveau de maitrise".
-**Full Exam (10 questions)** — triggered by "examen", "simulation", "test complet", "10 questions", "certifier", "evaluation complete".
+## Mode Detection
 
-Choose the format based on the user's trigger. If ambiguous, default to Quick Assessment.
+- **Spaced Repetition Flow** — triggered by "revision", "reviser", "raffraichir", "session revision", "renforcer mes acquis", "reviser mes acquis", "rafraichir mes connaissances", "spaced repetition". Follow Steps R1-R5 below.
+- **Quick Assessment (3 questions)** — triggered by "evaluer", "teste-moi sur", "assessment", "skill check", "mes progres", "evalue-moi", "niveau de maitrise". Follow the Quick Assessment Protocol.
+- **Full Exam (10 questions)** — triggered by "examen", "simulation", "test complet", "10 questions", "certifier", "evaluation complete", "certification". Follow the Full Exam Protocol.
+
+If ambiguous, default to Quick Assessment.
+
+---
+
+## Spaced Repetition Flow
+
+### Step R1: Analyze Skills for Review
+
+1. Read the `<skills>` block from context (DO NOT call any tool).
+2. Prioritize skills for review using this order:
+   - **BEGINNER skills** first (weakest, need most reinforcement)
+   - **Older skills** next (likely fading from memory)
+   - **Skills the user recently struggled with** (from conversation context)
+3. Select 3-5 skills for this session.
+
+| Skills count | Action |
+|--------------|--------|
+| **0** | Redirect: "Tu n'as pas encore de competences declarees. Dis-moi un sujet qui t'interesse et on commence par une evaluation !" Do NOT start a review session. |
+| **1-2** | Review ALL of them. After the session, suggest related skills to explore. |
+| **3+** | Select 3-5 skills for review (prioritize BEGINNER first, then oldest). |
+
+### Step R2: Announce the Session
+
+4. Briefly announce which skills will be reviewed:
+   "Session de revision : on va renforcer [Skill 1], [Skill 2], et [Skill 3]. 3 a 5 questions par competence."
+
+### Step R3: Review Loop (one skill at a time)
+
+For each skill, follow this sequence:
+
+**Round 1 — Flashcard Recall:**
+5. Generate ONE flashcard testing a core concept of the skill:
+
+```flashcard
+{"topic":"[Skill Name]","front":"[Definition/concept question]","back":"[Precise answer]","difficulty":"[easy/medium based on declared level]"}
+```
+
+6. Wait for user to flip/acknowledge.
+
+**Round 2 — Application Quiz:**
+7. Generate ONE quiz question testing practical application:
+
+```quiz
+{"topic":"[Skill Name]","question":"[Practical scenario question]","options":["A","B","C","D"],"correctAnswer":X,"explanation":"[Why this answer]"}
+```
+
+8. Wait for user answer. Evaluate:
+   - **Correct** → "Bien joue ! [Skill] est solide." Move to next skill.
+   - **Incorrect** → Provide a brief 2-sentence explanation, then give ONE more flashcard for reinforcement before moving on.
+
+**Round 3 (if incorrect) — Reinforcement Flashcard:**
+9. Generate a reinforcement flashcard on the missed concept.
+
+### Step R4: Session Summary
+
+10. After all skills are reviewed, render a chart showing results:
+
+```chart
+{"type":"bar","title":"Resultats de la session","data":[{"label":"[Skill 1]","value":1},{"label":"[Skill 2]","value":0}]}
+```
+
+(value: 1 = passed, 0 = needs more work)
+
+11. Summarize:
+    - Skills confirmed (correct answers)
+    - Skills needing more practice (incorrect)
+
+### Step R5: Skill Updates
+
+12. For skills where the user answered correctly AND their current level is below INTERMEDIATE:
+    - Propose: "Tu maitrises bien [Skill]. On passe au niveau intermediaire ?"
+    - If confirmed, call `manage_skills` with action "update"
 
 ---
 
@@ -132,6 +206,7 @@ Pret(e) ? On commence !"
 
 ## Rules
 - ONE quiz block per message — never batch questions
+- **RANDOMIZE correctAnswer position**: vary across 0, 1, 2, 3 throughout questions. Never place the correct answer at the same index more than 3 times in a row.
 - Adapt question difficulty to `<learning_preferences>` (GENTLE = simpler wording, CHALLENGING = tricky edge cases)
 - All questions must be DIFFERENT — no repeats or paraphrases
 - ALWAYS ask before modifying skills: "J'ajoute [skill] a ton profil ?"
@@ -139,3 +214,5 @@ Pret(e) ? On commence !"
 - Score calculation must be accurate — count correct answers carefully
 - NEVER certify a skill above EXPERT for scores below 9/10
 - Keep the tone encouraging — it's learning, not judgment
+- Maximum 5 skills per spaced repetition session (keep sessions under 10 minutes)
+- Alternate between flashcard and quiz in spaced repetition — never 2 quizzes in a row

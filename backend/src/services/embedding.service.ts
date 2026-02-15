@@ -579,12 +579,33 @@ export async function batchUpdateTalentEmbeddings(limit: number = 100): Promise<
   // Note: We don't check PostgreSQL embedding column since it may not exist
   // Pinecone is the source of truth for embeddings
   const result = await pool.query(`
-    SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.sectors, t.bio, t.city, t.country, t.profile_tags,
+    SELECT
+           t.id,
+           COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
+           t.sectors,
+           t.bio,
+           t.city,
+           t.country,
+           t.profile_tags,
+           t.goals,
+           t.remote_ready,
+           t.willing_to_relocate,
            ARRAY(
              SELECT canonical_name FROM talent_skills
              WHERE talent_id = t.id
            ) as skills
+           ,
+           COALESCE(
+             (SELECT json_agg(json_build_object(
+               'title', d.title,
+               'original_filename', d.original_filename
+             ) ORDER BY d.created_at DESC)
+              FROM talent_documents d
+              WHERE d.talent_id = t.id AND d.deleted_at IS NULL),
+             '[]'::json
+           ) as documents_metadata
     FROM talents t
+    WHERE t.deleted_at IS NULL
     LIMIT $1
   `, [limit]);
 

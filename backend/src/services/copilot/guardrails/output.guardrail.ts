@@ -66,7 +66,7 @@ function validateOutput(text: string, mode?: string): OutputValidationResult {
 
   // 4. Character count (text outside code blocks)
   const textOnly = text.replace(/```[\s\S]*?```/g, '').trim();
-  const maxChars = mode === 'study' ? 1200 : 800;
+  const maxChars = mode === 'study' ? 3000 : 1500;
   const textCharCount = textOnly.length;
 
   if (textCharCount > maxChars) {

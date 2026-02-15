@@ -109,7 +109,7 @@ export class MatchingUtils {
         // 1. Exact City Match
         if (criteria.city && mapping.city) {
             if (isJson) {
-                parts.push(`CASE WHEN ${tableAlias}.${mapping.city} @> jsonb_build_array(jsonb_build_object('city', $${idx})) THEN 4 ELSE 0 END`);
+                parts.push(`CASE WHEN ${tableAlias}.${mapping.city} @> jsonb_build_array(jsonb_build_object('city', $${idx}::text)) THEN 4 ELSE 0 END`);
                 params.push(criteria.city);
                 idx++;
             } else {
@@ -122,7 +122,7 @@ export class MatchingUtils {
         // 2. Exact Region Match
         if (criteria.region && mapping.region) {
             if (isJson) {
-                parts.push(`CASE WHEN ${tableAlias}.${mapping.region} @> jsonb_build_array(jsonb_build_object('region', $${idx})) THEN 3 ELSE 0 END`);
+                parts.push(`CASE WHEN ${tableAlias}.${mapping.region} @> jsonb_build_array(jsonb_build_object('region', $${idx}::text)) THEN 3 ELSE 0 END`);
                 params.push(criteria.region);
                 idx++;
             } else {
@@ -135,7 +135,7 @@ export class MatchingUtils {
         // 3. Exact Country Match
         if (criteria.country && mapping.country) {
             if (isJson) {
-                parts.push(`CASE WHEN ${tableAlias}.${mapping.country} @> jsonb_build_array(jsonb_build_object('country', $${idx})) THEN 2 ELSE 0 END`);
+                parts.push(`CASE WHEN ${tableAlias}.${mapping.country} @> jsonb_build_array(jsonb_build_object('country', $${idx}::text)) THEN 2 ELSE 0 END`);
                 params.push(criteria.country);
                 idx++;
             } else {

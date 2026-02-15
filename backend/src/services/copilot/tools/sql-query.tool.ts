@@ -802,10 +802,10 @@ export function createSqlQueryTool(
             WHERE o.status = 'OPEN' AND o.deleted_at IS NULL`;
             const p: any[] = [];
             let idx = 1;
-            if (q) { sql += ` AND (o.title ILIKE '%' || $${idx} || '%' OR o.summary ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
-            if (type) { sql += ` AND o.type = $${idx}`; p.push(type); idx++; }
-            if (contractType) { sql += ` AND o.contract_type = $${idx}`; p.push(contractType); idx++; }
-            if (location) { sql += ` AND o.locations::text ILIKE '%' || $${idx} || '%'`; p.push(location); idx++; }
+            if (q) { sql += ` AND (o.title ILIKE '%' || $${idx}::text || '%' OR o.summary ILIKE '%' || $${idx}::text || '%')`; p.push(q); idx++; }
+            if (type) { sql += ` AND o.type = $${idx}::text`; p.push(type); idx++; }
+            if (contractType) { sql += ` AND o.contract_type = $${idx}::text`; p.push(contractType); idx++; }
+            if (location) { sql += ` AND o.locations::text ILIKE '%' || $${idx}::text || '%'`; p.push(location); idx++; }
             sql += ` ORDER BY o.posted_at DESC NULLS LAST LIMIT $${idx}`;
             p.push((lim as number) || 10);
             const res = await pool.query(sql, p);
