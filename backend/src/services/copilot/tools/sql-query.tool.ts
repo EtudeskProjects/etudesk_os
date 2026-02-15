@@ -85,11 +85,26 @@ export function createSqlQueryTool(
       'Query PostgreSQL for structured data. Use for personal data (my_profile, my_applications, my_communities, my_documents, my_skills, my_community_feed, my_community_members), org management (org_stats, org_applications, org_members, org_opportunities, org_documents, org_talents, org_talent_profile, org_community_feed, org_community_members), and structured search (search_opportunities, search_communities). Personal data is automatically filtered for the authenticated user — do NOT include talentId in params. IMPORTANT: Do NOT call the same intent twice — results are deterministic and already in your conversation.',
     parameters: z.object({
       intent: z.enum(SQL_INTENTS).describe('The query intent. Use my_* for personal data, org_* for organization data (requires organizationId in params), search_* for text search.'),
-      paramsJson: z.string().optional().describe('Optional parameters as JSON string. Examples: \'{"status":"PENDING"}\' to filter, \'{"organizationId":"uuid"}\' for org intents. Do NOT include talentId — it is injected automatically.'),
+      paramsJson: z.string().optional().describe('Optional JSON string with extra filters. Examples: \'{"status":"PENDING"}\', \'{"organizationId":"uuid"}\'. Do NOT include talentId — it is injected automatically.'),
+      params: z.record(z.string(), z.unknown()).optional().describe('Optional parameters as an object. Alternative to paramsJson. Example: {"organizationId":"uuid","status":"PENDING"}. Do NOT include talentId.'),
+      query: z.string().optional().describe('Text query for search_* intents (e.g., search_opportunities, search_communities).'),
+      country: z.string().optional().describe('Country code filter for search intents (e.g., "CI" for Côte d\'Ivoire).'),
     }),
-    execute: async ({ intent, paramsJson }) => {
+    execute: async ({ intent, paramsJson, params: paramsObj, query, country }) => {
+      // Merge params from multiple sources: paramsJson (string) or params (object)
+      let params: Record<string, unknown> = {};
+      if (paramsJson) {
+        try { params = JSON.parse(paramsJson); } catch { params = {}; }
+      }
+      if (paramsObj && typeof paramsObj === 'object') {
+        params = { ...params, ...paramsObj };
+      }
+      // Merge top-level query/country into params (agent may send them at root level)
+      if (query && !params.query) params.query = query;
+      if (country && !params.country) params.country = country;
+
       // Anti-loop: return cached result on repeat calls (NOT an error — errors cause retry loops)
-      const cacheKey = `${intent}:${paramsJson || '{}'}`;
+      const cacheKey = `${intent}:${JSON.stringify(params)}`;
       const count = (callCounts.get(cacheKey) || 0) + 1;
       callCounts.set(cacheKey, count);
 
@@ -105,16 +120,17 @@ export function createSqlQueryTool(
         return { error: `L'intent '${intent}' n'est pas disponible dans ce mode. Intents autorisés : ${allowedIntents.join(', ')}` };
       }
 
-      const params: Record<string, unknown> = paramsJson ? JSON.parse(paramsJson) : {};
-
       // SECURITY: Always use the authenticated talentId, never from params
       const talentId = authenticatedTalentId;
 
       // Execute query and cache result
       const result = await (async () => {
 
-      // For org intents, verify authorization
+      // For org intents, auto-inject organizationId if only one is authorized
       if (intent.startsWith('org_')) {
+        if (!params.organizationId && authorizedOrgIds?.length === 1) {
+          params.organizationId = authorizedOrgIds[0];
+        }
         const orgId = params?.organizationId as string;
         if (!orgId) {
           return { error: 'organizationId requis pour les requêtes organisation' };
