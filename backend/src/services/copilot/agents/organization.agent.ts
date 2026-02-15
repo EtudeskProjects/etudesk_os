@@ -55,7 +55,7 @@ export function createOrgAgent(context: OrgContext): AgentConfig {
     tools: [
       vectorQueryTool,
       secureSqlTool,
-      createGenerateDocumentTool(context.talentId),
+      createGenerateDocumentTool(context.talentId, undefined, context.organizationId),
       webSearchAsTool,
       createExecuteActionTool(context.talentId),
       orgFileReaderTool,
