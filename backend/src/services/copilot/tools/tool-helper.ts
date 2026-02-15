@@ -41,10 +41,14 @@ export function defineTool<T extends z.ZodType>(opts: {
   const jsonSchema = zodToJsonSchema(opts.parameters as any, {
     target: 'openApi3',
     $refStrategy: 'none',
-  });
+  }) as Record<string, any>;
 
-  // Anthropic expects input_schema with type: 'object' at root
-  // zodToJsonSchema may wrap in { type: 'object', properties: ... } already
+  // Anthropic REQUIRES type: 'object' at root of input_schema
+  // zodToJsonSchema may omit it depending on Zod version / target
+  if (!jsonSchema.type) {
+    jsonSchema.type = 'object';
+  }
+
   const inputSchema = jsonSchema as Anthropic.Tool['input_schema'];
 
   return {
