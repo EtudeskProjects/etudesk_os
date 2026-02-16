@@ -9,13 +9,11 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
 } from 'react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity, COMPONENT } from '../../../constants/theme';
 import { useTheme } from '../../../hooks/useTheme';
-import { getFullImageUrl } from '../../../utils/image';
 import type { BaseCardProps } from './types';
-import { IconButton, Tap } from '../../ui';
+import { IconButton, Tap, RemoteImage } from '../../ui';
 
 
 export const BaseCard: React.FC<BaseCardProps> = React.memo(({
@@ -51,11 +49,7 @@ export const BaseCard: React.FC<BaseCardProps> = React.memo(({
       {/* Image Section */}
       <View style={styles.imageContainer}>
         {imageUrl ? (
-          <Image
-            source={{ uri: getFullImageUrl(imageUrl) || '' }}
-            style={styles.image}
-            resizeMode="cover"
-          />
+          <RemoteImage uri={imageUrl} style={styles.image} resizeMode="cover" />
         ) : (
           <View style={[styles.imagePlaceholder, { backgroundColor: colors.gray100 }]}>
             <PlaceholderIcon

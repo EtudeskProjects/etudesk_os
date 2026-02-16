@@ -23,9 +23,15 @@ interface InputProps extends TextInputProps {
   hint?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  leftIconContainerStyle?: StyleProp<ViewStyle>;
+  rightIconContainerStyle?: StyleProp<ViewStyle>;
   containerStyle?: StyleProp<ViewStyle>;
   inputContainerStyle?: StyleProp<ViewStyle>;
   inputStyle?: StyleProp<TextStyle>;
+  /** When used inside KeyboardAwareScrollView, auto-scroll the field into view on focus. */
+  scrollOnFocus?: boolean;
+  /** Reserve helper line height below input to avoid layout jump when error/hint appears. */
+  reserveHelperSpace?: boolean;
   /** Accessibility label - defaults to label if not provided */
   accessibilityLabel?: string;
   /** Accessibility hint */
@@ -38,11 +44,15 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
   hint,
   leftIcon,
   rightIcon,
+  leftIconContainerStyle,
+  rightIconContainerStyle,
   containerStyle,
   inputContainerStyle,
   inputStyle,
   secureTextEntry,
   multiline,
+  scrollOnFocus = true,
+  reserveHelperSpace = true,
   accessibilityLabel,
   accessibilityHint,
   onFocus: onFocusProp,
@@ -57,6 +67,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
 
   const isPassword = secureTextEntry !== undefined;
   const innerRef = useRef<TextInput>(null);
+  const containerRef = useRef<View>(null);
 
   useImperativeHandle(ref, () => innerRef.current as TextInput, []);
 
@@ -67,7 +78,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
   }, [accessibilityHint, error, hint, t]);
 
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View ref={containerRef} style={[styles.container, containerStyle]}>
       {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
 
       <View
@@ -86,7 +97,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
           inputContainerStyle,
         ]}
       >
-        {leftIcon && <View style={styles.iconLeft}>{leftIcon}</View>}
+        {leftIcon && <View style={[styles.iconLeft, leftIconContainerStyle]}>{leftIcon}</View>}
 
         <TextInput
           ref={innerRef}
@@ -100,10 +111,16 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
           ]}
           multiline={multiline}
           placeholderTextColor={colors.gray500}
+          autoCorrect={false}
+          spellCheck={false}
           onFocus={(e) => {
             setIsFocused(true);
-            const node = findNodeHandle(innerRef.current);
-            if (node && scrollToInput) scrollToInput(node);
+            // Scroll to the whole field (label + input), not only the TextInput.
+            // Otherwise the label can appear "detached" (or get clipped) during keyboard adjustments.
+            if (scrollOnFocus) {
+              const node = findNodeHandle(containerRef.current) || findNodeHandle(innerRef.current);
+              if (node && scrollToInput) scrollToInput(node);
+            }
             onFocusProp?.(e);
           }}
           onBlur={(e) => {
@@ -122,7 +139,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
 
         {isPassword && (
           <Tap
-            style={styles.iconRight}
+            style={[styles.iconRight, rightIconContainerStyle]}
             onPress={() => setIsPasswordVisible(!isPasswordVisible)}
             accessible={true}
             accessibilityRole="button"
@@ -148,19 +165,35 @@ export const Input = forwardRef<TextInput, InputProps>(function Input({
         )}
 
         {rightIcon && !isPassword && (
-          <View style={styles.iconRight}>{rightIcon}</View>
+          <View style={[styles.iconRight, rightIconContainerStyle]}>{rightIcon}</View>
         )}
       </View>
 
-      {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
-      {hint && !error && <Text style={[styles.hint, { color: colors.gray500 }]}>{hint}</Text>}
+      {/* Reserve helper space to avoid layout jump when error/hint appears/disappears */}
+      {(reserveHelperSpace || error || hint) && (
+        <View style={styles.helper} accessible={false}>
+          <Text
+            style={[
+              styles.helperText,
+              {
+                color: error ? colors.error : colors.gray500,
+                opacity: error || hint ? 1 : 0,
+              },
+            ]}
+          >
+            {error || hint || '.'}
+          </Text>
+        </View>
+      )}
     </View>
   );
 });
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
+    // Stretch within parent while still respecting horizontal margins/padding.
+    // Using width: '100%' here causes overflow when consumers add marginHorizontal.
+    alignSelf: 'stretch',
   },
 
   label: {
@@ -180,10 +213,12 @@ const styles = StyleSheet.create({
 
   input: {
     flex: 1,
-    height: '100%',
     paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.md,
+    // Android only; on iOS this is ignored but harmless.
+    textAlignVertical: 'center' as const,
   },
 
   inputWithLeftIcon: {
@@ -202,15 +237,13 @@ const styles = StyleSheet.create({
     paddingRight: SPACING.md,
   },
 
-  error: {
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontSize: TYPOGRAPHY.fontSize.xs,
+  helper: {
     marginTop: SPACING.xs,
+    minHeight: TYPOGRAPHY.fontSize.xs * 1.5,
   },
 
-  hint: {
+  helperText: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.xs,
-    marginTop: SPACING.xs,
   },
 });

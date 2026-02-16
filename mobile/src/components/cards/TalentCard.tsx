@@ -4,11 +4,12 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { User, MapPin, Briefcase, Star } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT } from '../../constants/theme';
 import { CardContainer } from './BaseCard';
+import { RemoteImage } from '../ui/RemoteImage';
 
 export interface TalentCardData {
   id: string;
@@ -45,7 +46,7 @@ export const TalentCard: React.FC<TalentCardProps> = ({
       {/* Avatar */}
       <View style={styles.avatarContainer}>
         {talent.avatar_url ? (
-          <Image source={{ uri: talent.avatar_url }} style={styles.avatar} />
+          <RemoteImage uri={talent.avatar_url} style={styles.avatar} />
         ) : (
           <View style={[styles.avatarPlaceholder, { backgroundColor: colors.cardTalentAccent }]}>
             <User size={ICON.size.lg} color={colors.cardTalentText} strokeWidth={ICON.strokeWidth} />

@@ -23,8 +23,10 @@ import {
   User,
   Radar,
 } from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, COMPONENT, TAG_COLOR_PALETTE } from '../../../src/constants/theme';
-import { Button, Chip, FooterNav, IconButton, Input, LoadingShimmer, SelectCard } from '../../../src/components/ui';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, COMPONENT, TAG_COLOR_PALETTE, LAYOUT } from '../../../src/constants/theme';
+import { Button, Chip, FooterNav, IconButton, Input, SelectCard } from '../../../src/components/ui';
+import { ShimmerPlaceholder } from '../../../src/components/ui/ShimmerPlaceholder';
+import { RemoteImage } from '../../../src/components/ui/RemoteImage';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import {
@@ -186,16 +188,14 @@ export default function TalentsScreen() {
 
   const renderTalent = ({ item }: { item: OrgTalent }) => (
     <SelectCard
-      style={[styles.talentCard, { backgroundColor: colors.surface, borderWidth: 0, borderColor: 'transparent' }]}
+      style={[styles.talentCard, { backgroundColor: 'transparent', borderWidth: 0, borderColor: 'transparent', borderBottomWidth: BORDER.width.thin, borderBottomColor: colors.borderColor }]}
       onPress={() => router.push(`/details/talent/${item.talent_id}` as any)}
       selected={false}
       accessibilityLabel={`Ouvrir ${item.first_name} ${item.last_name}`}
     >
       <View style={[styles.avatar, { backgroundColor: colors.gray100 }]}>
         {item.avatar_url ? (
-          <View style={styles.avatarPlaceholder}>
-            <User size={20} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-          </View>
+          <RemoteImage uri={item.avatar_url} style={styles.avatarImage} />
         ) : (
           <Text style={[styles.avatarText, { color: colors.textPrimary }]}>
             {(item.first_name?.[0] || '') + (item.last_name?.[0] || '')}
@@ -284,9 +284,12 @@ export default function TalentsScreen() {
         onChangeText={setSearch}
         onSubmitEditing={loadTalents}
         returnKeyType="search"
-        containerStyle={{ marginHorizontal: SPACING.lg, marginTop: SPACING.sm }}
+        reserveHelperSpace={false}
+        containerStyle={{ marginHorizontal: SPACING.lg, marginTop: SPACING.sm, marginBottom: SPACING.xs }}
         inputContainerStyle={[styles.searchContainer, { backgroundColor: colors.gray100, borderColor: 'transparent', borderWidth: 0 }]}
-        inputStyle={[styles.searchInput, { color: colors.textPrimary, paddingHorizontal: 0 }]}
+        inputStyle={[styles.searchInput, { color: colors.textPrimary, paddingHorizontal: SPACING.xs }]}
+        leftIconContainerStyle={{ paddingLeft: SPACING.xs }}
+        rightIconContainerStyle={{ paddingRight: SPACING.xs }}
         leftIcon={<Search size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
         rightIcon={search.length > 0 ? (
           <IconButton
@@ -387,8 +390,17 @@ export default function TalentsScreen() {
 
       {/* List */}
       {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <LoadingShimmer variant="fullPage" />
+        <View style={styles.skeletonList}>
+          {[0, 1, 2, 3, 4].map(i => (
+            <View key={i} style={[styles.skeletonCard, { borderBottomColor: colors.borderColor }]}>
+              <ShimmerPlaceholder width={44} height={44} borderRadius={22} />
+              <View style={styles.skeletonContent}>
+                <ShimmerPlaceholder width="55%" height={14} />
+                <ShimmerPlaceholder width="70%" height={11} style={{ marginTop: 6 }} />
+                <ShimmerPlaceholder width="35%" height={10} style={{ marginTop: 8 }} />
+              </View>
+            </View>
+          ))}
         </View>
       ) : (
         <FlatList
@@ -443,9 +455,11 @@ export default function TalentsScreen() {
                 placeholder="Nom du tag"
                 value={newTagName}
                 onChangeText={setNewTagName}
-                containerStyle={{ flex: 1 }}
+                reserveHelperSpace={false}
+                scrollOnFocus={false}
+                containerStyle={{ flex: 1, alignSelf: 'center' }}
                 inputContainerStyle={[styles.tagInput, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
-                inputStyle={{ color: colors.textPrimary, paddingHorizontal: 0 }}
+                inputStyle={[styles.tagInputText, { color: colors.textPrimary }]}
               />
               <IconButton
                 onPress={handleCreateTag}
@@ -537,8 +551,6 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: SPACING.lg,
-    marginTop: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderRadius: BORDER.radius.sm,
     height: 40,
@@ -553,8 +565,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.sm,
-    paddingBottom: SPACING.xs,
+    paddingTop: SPACING.xs,
+    paddingBottom: 0,
     gap: SPACING.xs,
   },
   filterChip: {
@@ -570,10 +582,19 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  skeletonList: {
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.xs,
+  },
+  skeletonCard: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: SPACING.md,
+    borderBottomWidth: BORDER.width.thin,
+    gap: SPACING.sm,
+  },
+  skeletonContent: {
+    flex: 1,
   },
   listContent: {
     paddingHorizontal: SPACING.md,
@@ -583,9 +604,10 @@ const styles = StyleSheet.create({
   talentCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: SPACING.md,
-    borderRadius: BORDER.radius.md,
-    marginBottom: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
+    borderRadius: 0,
+    marginBottom: 0,
   },
   avatar: {
     width: 44,
@@ -594,6 +616,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SPACING.sm,
+  },
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   avatarPlaceholder: {
     alignItems: 'center',
@@ -681,6 +708,7 @@ const styles = StyleSheet.create({
   },
   createTagRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: SPACING.sm,
     marginBottom: SPACING.md,
   },
@@ -689,13 +717,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: BORDER.radius.sm,
     paddingHorizontal: SPACING.md,
-    height: 40,
+    height: LAYOUT.inputHeight,
+  },
+  tagInputText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
+    paddingHorizontal: 0,
+    paddingVertical: SPACING.sm,
+    textAlignVertical: 'center',
   },
   createTagButton: {
-    width: 40,
-    height: 40,
-    borderRadius: BORDER.radius.sm,
+    width: LAYOUT.inputHeight,
+    height: LAYOUT.inputHeight,
+    borderRadius: BORDER.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -743,7 +776,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.xs,
-    paddingBottom: SPACING.sm,
+    paddingBottom: SPACING.xs,
     gap: SPACING.xs,
   },
   tagFilterChip: {

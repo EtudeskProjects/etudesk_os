@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   Modal,
   FlatList,
   Pressable,
@@ -37,6 +36,7 @@ import {
 	import { useSpace } from '../../../src/contexts/SpaceContext';
 	import { useAuth } from '../../../src/contexts/AuthContext';
 	import { Button, FooterNav, Alert, IconButton, IconTile, LoadingShimmer, SelectCard } from '../../../src/components/ui';
+import { RemoteImage } from '../../../src/components/ui/RemoteImage';
 import { formatRelativeTime } from '../../../src/utils/date';
 import { talentService } from '../../../src/services/talentService';
 import { opportunityService } from '../../../src/services/opportunityService';
@@ -440,7 +440,7 @@ export default function TalentDetailScreen() {
           {/* Avatar Section */}
           <View style={styles.avatarSection}>
             {talent.avatar_url ? (
-              <Image source={{ uri: talent.avatar_url }} style={styles.avatar} />
+              <RemoteImage uri={talent.avatar_url} style={styles.avatar} />
             ) : (
               <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
                 <Text style={[styles.avatarPlaceholderText, { color: colors.textOnPrimary }]}>
@@ -1045,8 +1045,6 @@ const styles = StyleSheet.create({
   // Info Card
   infoCard: {
     padding: SPACING.md,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.md,
     marginBottom: SPACING.lg,
     gap: SPACING.md,
   },

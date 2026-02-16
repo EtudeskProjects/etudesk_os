@@ -8,15 +8,8 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
-import {
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Info,
-  AlertTriangle,
-  X,
-} from 'lucide-react-native';
-import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT, withOpacity } from '../../constants/theme';
+import { X } from 'lucide-react-native';
+import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { Button } from './Button';
 import { IconButton } from './IconButton';
@@ -40,14 +33,6 @@ export interface AlertProps {
   onClose: () => void;
   dismissable?: boolean;
 }
-
-const ALERT_ICONS: Record<AlertType, React.ComponentType<any>> = {
-  info: Info,
-  success: CheckCircle,
-  warning: AlertTriangle,
-  error: XCircle,
-  confirm: AlertCircle,
-};
 
 export function Alert({
   visible,
@@ -93,38 +78,6 @@ export function Alert({
     }
   }, [visible, fadeAnim, scaleAnim]);
 
-  const getIconColor = () => {
-    switch (type) {
-      case 'success':
-        return colors.success;
-      case 'error':
-        return colors.error;
-      case 'warning':
-        return colors.warning;
-      case 'info':
-      case 'confirm':
-      default:
-        return colors.info;
-    }
-  };
-
-  const getIconBackgroundColor = () => {
-    switch (type) {
-      case 'success':
-        return colors.successLight;
-      case 'error':
-        return colors.errorLight;
-      case 'warning':
-        return colors.warningLight;
-      case 'info':
-      case 'confirm':
-      default:
-        return colors.infoLight;
-    }
-  };
-
-  const IconComponent = ALERT_ICONS[type];
-
   const defaultButtons: AlertButton[] = buttons || [
     { text: 'OK', onPress: onClose },
   ];
@@ -169,20 +122,6 @@ export function Alert({
                 />
               )}
 
-              {/* Icon */}
-              <View
-                style={[
-                  styles.iconContainer,
-                  { backgroundColor: getIconBackgroundColor() },
-                ]}
-              >
-                <IconComponent
-                  size={ICON.size.xxl}
-                  color={getIconColor()}
-                  strokeWidth={ICON.strokeWidth}
-                />
-              </View>
-
               {/* Title */}
               <Text style={[styles.title, { color: colors.textPrimary }]}>
                 {title}
@@ -198,7 +137,8 @@ export function Alert({
               {/* Buttons */}
               <View style={[
                 styles.buttonsContainer,
-                defaultButtons.length === 1 && styles.buttonsContainerCentered
+                defaultButtons.length >= 3 && styles.buttonsContainerVertical,
+                defaultButtons.length === 1 && styles.buttonsContainerCentered,
               ]}>
                 {defaultButtons.map((button, index) => {
                   const isCancel = button.style === 'cancel';
@@ -209,7 +149,7 @@ export function Alert({
                       key={index}
                       style={[
                         styles.buttonWrapper,
-                        defaultButtons.length > 1 && { flex: 1 },
+                        defaultButtons.length === 2 && { flex: 1 },
                       ]}
                     >
                       <Button
@@ -254,21 +194,13 @@ const styles = StyleSheet.create({
     right: SPACING.md,
     zIndex: 1,
   },
-  iconContainer: {
-    width: LAYOUT.avatarXxl,
-    height: LAYOUT.avatarXxl,
-    borderRadius: BORDER.radius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-    marginTop: SPACING.sm,
-  },
   title: {
     fontFamily: TYPOGRAPHY.fontFamily.semibold,
     fontSize: TYPOGRAPHY.fontSize.lg,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
     textAlign: 'center',
     marginBottom: SPACING.xs,
+    marginTop: SPACING.sm,
   },
   message: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -282,6 +214,9 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     width: '100%',
     marginTop: SPACING.sm,
+  },
+  buttonsContainerVertical: {
+    flexDirection: 'column',
   },
   buttonsContainerCentered: {
     justifyContent: 'center',

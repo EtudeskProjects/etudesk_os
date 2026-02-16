@@ -99,6 +99,7 @@ export default function EmailLoginScreen() {
               autoCorrect={false}
               autoComplete="email"
               autoFocus={true}
+              scrollOnFocus={false}
               editable={!form.state.isSubmitting}
               leftIcon={<AtSign size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
               error={form.getError('email') || undefined}
@@ -144,14 +145,11 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'space-between',
     paddingBottom: SPACING.xxl,
   },
 
   content: {
-    flex: 1,
     paddingHorizontal: SPACING.lg,
-    justifyContent: 'center',
     paddingBottom: SPACING.xl,
   },
 
@@ -184,6 +182,7 @@ const styles = StyleSheet.create({
   },
 
   footer: {
+    marginTop: 'auto',
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.xl,
   },

@@ -3,7 +3,7 @@
  * Handles copilot sessions, messages, and mode switching
  */
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback, ReactNode } from 'react';
 import {
   copilotService,
   CopilotMode,
@@ -15,6 +15,7 @@ import {
 } from '../services/copilotService';
 import { logger } from '../services/logService';
 import { useTranslation } from './I18nContext';
+import { useSpace } from './SpaceContext';
 
 const LOG_SOURCE = 'Copilot';
 
@@ -52,6 +53,12 @@ interface CopilotProviderProps {
 
 export function CopilotProvider({ children }: CopilotProviderProps) {
   const { t } = useTranslation();
+  const { isOrganizationSpace, selectedOrgId } = useSpace();
+
+  const organizationId = useMemo(() => {
+    return isOrganizationSpace ? (selectedOrgId || undefined) : undefined;
+  }, [isOrganizationSpace, selectedOrgId]);
+
   const [state, setState] = useState<CopilotState>({
     mode: COPILOT_MODES.EXPLORE,
     sessionId: null,
@@ -77,6 +84,31 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
       return { ...prev, mode };
     });
   }, []);
+
+  // Keep copilot mode aligned with active space:
+  // - Organization space only supports EXPLORE (org agent). Force mode + reset session to avoid cross-space leakage.
+  // - Switching organizationId should also reset session state (sessions are org-scoped server-side).
+  const lastScopeOrgIdRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const prevScope = lastScopeOrgIdRef.current;
+    const nextScope = organizationId;
+    const scopeChanged = prevScope !== nextScope;
+    lastScopeOrgIdRef.current = nextScope;
+
+    setState((prev) => {
+      const nextMode = isOrganizationSpace ? COPILOT_MODES.EXPLORE : prev.mode;
+      const modeChanged = prev.mode !== nextMode;
+      if (!modeChanged && !scopeChanged) return prev;
+
+      return {
+        ...prev,
+        mode: nextMode,
+        sessionId: null,
+        messages: [],
+        error: null,
+      };
+    });
+  }, [isOrganizationSpace, organizationId]);
 
   // SEND MESSAGE
   const sendMessage = useCallback(
@@ -117,8 +149,9 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
         // 3. Send to API with attachment IDs
         const response = await copilotService.sendMessage(
           message,
-          state.mode,
+          isOrganizationSpace ? COPILOT_MODES.EXPLORE : state.mode,
           state.sessionId || undefined,
+          organizationId,
           attachmentIds.length > 0 ? attachmentIds : undefined
         );
 
@@ -170,7 +203,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
         return null;
       }
     },
-    [state.mode, state.sessionId]
+    [state.mode, state.sessionId, isOrganizationSpace, organizationId]
   );
 
   // LOAD SESSION
@@ -178,7 +211,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const response = await copilotService.getSession(sessionId);
+      const response = await copilotService.getSession(sessionId, organizationId);
 
       if (response.error || !response.data) {
         throw new Error(response.error || t('copilotContext.sessionNotFound'));
@@ -189,7 +222,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
       setState((prev) => ({
         ...prev,
         sessionId: session.id,
-        mode: session.mode,
+        mode: isOrganizationSpace ? COPILOT_MODES.EXPLORE : session.mode,
         messages: messages || [],
         isLoading: false,
       }));
@@ -205,7 +238,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
         error: errorMessage,
       }));
     }
-  }, []);
+  }, [organizationId, isOrganizationSpace]);
 
   // START NEW SESSION
   const startNewSession = useCallback(() => {
@@ -222,7 +255,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true }));
 
     try {
-      const response = await copilotService.listSessions(20);
+      const response = await copilotService.listSessions(20, organizationId);
 
       if (response.error || !response.data) {
         throw new Error(response.error || t('copilotContext.loadSessionsError'));
@@ -237,7 +270,7 @@ export function CopilotProvider({ children }: CopilotProviderProps) {
       logger.error(LOG_SOURCE, 'Failed to load sessions', error);
       setState((prev) => ({ ...prev, isLoading: false }));
     }
-  }, []);
+  }, [organizationId]);
 
   // DELETE SESSION
   const deleteSession = useCallback(

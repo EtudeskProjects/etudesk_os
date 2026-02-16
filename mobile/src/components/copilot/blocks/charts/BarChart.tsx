@@ -1,12 +1,11 @@
 /**
- * BarChart Component — Horizontal bar chart extracted from ChartBlock
+ * BarChart Component — Horizontal bar chart
  */
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { BarChart3 } from 'lucide-react-native';
 import { useTheme } from '../../../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../../../constants/theme';
 
 interface BarChartData {
   label: string;
@@ -18,52 +17,65 @@ interface BarChartProps {
   data: BarChartData[];
 }
 
-const BAR_COLORS_KEYS = ['primary', 'success', 'warning', 'info', 'error', 'primaryLight'] as const;
+const CHART_PALETTE = [
+  '#3B2416', // rich brown (primary)
+  '#4A6741', // forest green
+  '#A67C52', // warm amber
+  '#8B4A3C', // terracotta
+  '#5E6B52', // olive
+  '#6B525E', // mauve-brown
+  '#52656B', // blue-gray
+] as const;
+
+const CHART_PALETTE_DARK = [
+  '#C9A070', // warm gold
+  '#7CB870', // bright green
+  '#E8B870', // bright amber
+  '#E08070', // bright terracotta
+  '#A8C898', // light olive
+  '#C8A0B0', // light mauve
+  '#90B8C0', // light blue-gray
+] as const;
 
 export const BarChart: React.FC<BarChartProps> = ({ title, data }) => {
-  const { colors } = useTheme();
+  const { colors, mode } = useTheme();
   const maxValue = Math.max(...data.map(item => item.value), 1);
-
-  const barColors = BAR_COLORS_KEYS.map(k => (colors as any)[k]);
+  const palette = mode === 'dark' ? CHART_PALETTE_DARK : CHART_PALETTE;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-      <View style={styles.header}>
-        <BarChart3 size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
-          <Text style={[styles.type, { color: colors.textTertiary }]}>Graphique bar</Text>
-        </View>
-      </View>
+    <View style={styles.container}>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
 
       <View style={styles.chart}>
         {data.map((item, index) => {
-          const barWidth = (item.value / maxValue) * 100;
-          const barColor = barColors[index % barColors.length];
+          const barWidth = Math.max((item.value / maxValue) * 100, 1);
+          const barColor = palette[index % palette.length];
+          const isWide = barWidth > 30;
           return (
             <View key={index} style={styles.barRow}>
-              <View style={styles.labelContainer}>
-                <Text style={[styles.label, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {item.label}
+              <View
+                style={[
+                  styles.bar,
+                  { width: `${barWidth}%`, backgroundColor: barColor },
+                ]}
+              >
+                {isWide && (
+                  <Text style={[styles.innerLabel, { color: mode === 'dark' ? '#1A1A1A' : '#FFFFFF' }]} numberOfLines={1}>
+                    {item.label}
+                  </Text>
+                )}
+                <Text style={[styles.innerValue, { color: mode === 'dark' ? '#1A1A1A' : '#FFFFFF' }]}>
+                  {item.value.toLocaleString('fr-FR')}
                 </Text>
               </View>
-              <View style={styles.barContainer}>
-                <View style={[styles.bar, { width: `${barWidth}%`, backgroundColor: barColor }]}>
-                  {barWidth > 20 && (
-                    <Text style={[styles.valueInside, { color: colors.white }]}>{item.value}</Text>
-                  )}
-                </View>
-                {barWidth <= 20 && (
-                  <Text style={[styles.valueOutside, { color: colors.textSecondary }]}>{item.value}</Text>
-                )}
-              </View>
+              {!isWide && (
+                <Text style={[styles.outerLabel, { color: colors.textSecondary }]} numberOfLines={1}>
+                  {item.label} · {item.value.toLocaleString('fr-FR')}
+                </Text>
+              )}
             </View>
           );
         })}
-      </View>
-
-      <View style={[styles.legend, { backgroundColor: colors.backgroundSecondary, borderTopColor: withOpacity(colors.textPrimary, OPACITY[5]) }]}>
-        <Text style={[styles.legendText, { color: colors.textTertiary }]}>Valeur maximale: {maxValue}</Text>
       </View>
     </View>
   );
@@ -71,72 +83,43 @@ export const BarChart: React.FC<BarChartProps> = ({ title, data }) => {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: BORDER.radius.lg,
-    borderWidth: BORDER.width.thin,
-    overflow: 'hidden',
-    marginVertical: SPACING.sm,
+    marginVertical: SPACING.xs,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: SPACING.sm,
-    padding: SPACING.lg,
-    paddingBottom: SPACING.md,
-  },
-  headerText: { flex: 1 },
   title: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.md,
-    marginBottom: SPACING.xxs,
-  },
-  type: {
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    textTransform: 'uppercase',
-    letterSpacing: TYPOGRAPHY.letterSpacing.wide,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    marginBottom: SPACING.sm,
   },
   chart: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.md,
-    gap: SPACING.md,
+    gap: 4,
   },
-  barRow: { gap: SPACING.xs },
-  labelContainer: { flexDirection: 'row', alignItems: 'center' },
-  label: {
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-  },
-  barContainer: {
+  barRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 32,
-    gap: SPACING.sm,
+    gap: SPACING.xs,
   },
   bar: {
-    height: '100%',
+    height: 26,
     minWidth: 2,
     borderRadius: BORDER.radius.xs,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingHorizontal: SPACING.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
   },
-  valueInside: {
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
-  valueOutside: {
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
-  legend: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    borderTopWidth: BORDER.width.thin,
-    borderTopColor: 'transparent',
-  },
-  legendText: {
+  innerLabel: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontSize: 11,
+    flexShrink: 1,
+  },
+  innerValue: {
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontSize: 11,
+  },
+  outerLabel: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: 11,
+    flexShrink: 1,
   },
 });
 

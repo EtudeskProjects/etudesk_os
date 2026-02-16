@@ -15,6 +15,9 @@ const ACTION_TYPES = [
   'book_space',
   'accept_invitation',
   'decline_invitation',
+  // Agenda triggers (agent scheduled follow-ups / reminders)
+  'create_agenda_trigger',
+  'update_agenda_trigger',
 ] as const;
 
 export function createExecuteActionTool(authenticatedTalentId: string) {
@@ -24,11 +27,11 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
       'Execute a user-confirmed action on the platform. ALWAYS show a confirmation block to the user BEFORE calling this tool. Actions: apply to opportunity, join community, book space, accept/decline invitation.',
     parameters: z.object({
       action: z.enum(ACTION_TYPES).describe('The action to execute'),
-      entityId: z.string().describe('The UUID of the target entity (opportunity, community, space, or invitation)'),
+      entityId: z.string().optional().default('').describe('The UUID of the target entity (opportunity, community, space, invitation, or trigger). For create_agenda_trigger, pass empty string "".'),
       dataJson: z
         .union([z.string(), z.record(z.string(), z.unknown())])
         .default('')
-        .describe('Additional data as JSON string or object. For book_space: \'{"startDatetime":"...","endDatetime":"..."}\'. For other actions: pass empty string "".'),
+        .describe('Additional data as JSON string or object. For book_space: \'{"startDatetime":"...","endDatetime":"..."}\'. For agenda: \'{"code":"FOLLOW_UP","title":"...","dueAt":"...","organizationId":"...","priority":"HIGH","metadata":{...}}\''),
     }),
     execute: async ({ action, entityId, dataJson }) => {
       const talentId = authenticatedTalentId;
@@ -39,6 +42,110 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
 
       try {
         switch (action) {
+          case 'create_agenda_trigger': {
+            const code = String(data.code || '').trim();
+            const title = String(data.title || '').trim();
+            const description = (data.description !== undefined && data.description !== null) ? String(data.description) : null;
+            const dueAtRaw = data.dueAt || data.due_at;
+            const organizationId = data.organizationId || data.organization_id;
+            const priority = (data.priority === 'LOW' || data.priority === 'HIGH') ? data.priority : 'NORMAL';
+            const metadata = (data.metadata && typeof data.metadata === 'object') ? data.metadata : {};
+
+            if (!code || code.length < 2) {
+              return { success: false, error: 'code requis (ex: FOLLOW_UP, REMINDER, RESEARCH, ACTION)' };
+            }
+            if (!title || title.length < 2) {
+              return { success: false, error: 'title requis' };
+            }
+            if (!dueAtRaw) {
+              return { success: false, error: 'dueAt requis (ISO datetime)' };
+            }
+            const dueAt = new Date(String(dueAtRaw));
+            if (isNaN(dueAt.getTime())) {
+              return { success: false, error: 'dueAt invalide' };
+            }
+
+            if (organizationId) {
+              // Must be an active member of the org to create org triggers
+              const membership = await pool.query(
+                `SELECT 1 FROM organization_members WHERE organization_id = $1::uuid AND talent_id = $2::uuid AND status = 'ACTIVE' LIMIT 1`,
+                [String(organizationId), talentId]
+              );
+              if (membership.rows.length === 0) {
+                return { success: false, error: 'Accès non autorisé à cette organisation' };
+              }
+
+              const result = await pool.query(
+                `INSERT INTO agenda_triggers (scope, organization_id, code, title, description, due_at, status, priority, metadata, created_by)
+                 VALUES ('ORGANIZATION', $1::uuid, $2, $3, $4, $5, 'PENDING', $6, $7::jsonb, $8::uuid)
+                 RETURNING id`,
+                [String(organizationId), code, title, description, dueAt.toISOString(), priority, JSON.stringify(metadata), talentId]
+              );
+
+              return { success: true, message: 'Trigger organisation cree', triggerId: result.rows[0].id };
+            }
+
+            const result = await pool.query(
+              `INSERT INTO agenda_triggers (scope, talent_id, code, title, description, due_at, status, priority, metadata, created_by)
+               VALUES ('TALENT', $1::uuid, $2, $3, $4, $5, 'PENDING', $6, $7::jsonb, $8::uuid)
+               RETURNING id`,
+              [talentId, code, title, description, dueAt.toISOString(), priority, JSON.stringify(metadata), talentId]
+            );
+
+            return { success: true, message: 'Trigger talent cree', triggerId: result.rows[0].id };
+          }
+
+          case 'update_agenda_trigger': {
+            if (!entityId) return { success: false, error: 'entityId (triggerId) requis' };
+
+            const nextStatus = (data.status === 'PENDING' || data.status === 'DONE' || data.status === 'CANCELED') ? data.status : null;
+            const dueAtRaw = data.dueAt || data.due_at;
+            const nextDueAt = dueAtRaw ? new Date(String(dueAtRaw)) : null;
+            if (nextDueAt && isNaN(nextDueAt.getTime())) {
+              return { success: false, error: 'dueAt invalide' };
+            }
+            const metadata = (data.metadata && typeof data.metadata === 'object') ? data.metadata : null;
+
+            // Fetch trigger to enforce access control
+            const existing = await pool.query(
+              `SELECT id, scope, talent_id, organization_id FROM agenda_triggers WHERE id = $1::uuid LIMIT 1`,
+              [entityId]
+            );
+            if (existing.rows.length === 0) {
+              return { success: false, error: 'Trigger introuvable' };
+            }
+            const row = existing.rows[0];
+            if (row.scope === 'TALENT') {
+              if (String(row.talent_id) !== String(talentId)) {
+                return { success: false, error: 'Accès refusé' };
+              }
+            } else {
+              const membership = await pool.query(
+                `SELECT 1 FROM organization_members WHERE organization_id = $1::uuid AND talent_id = $2::uuid AND status = 'ACTIVE' LIMIT 1`,
+                [String(row.organization_id), talentId]
+              );
+              if (membership.rows.length === 0) {
+                return { success: false, error: 'Accès non autorisé à cette organisation' };
+              }
+            }
+
+            const result = await pool.query(
+              `
+              UPDATE agenda_triggers
+              SET
+                status = COALESCE($2::text, status),
+                due_at = COALESCE($3::timestamptz, due_at),
+                metadata = CASE WHEN $4::jsonb IS NULL THEN metadata ELSE (metadata || $4::jsonb) END,
+                completed_at = CASE WHEN COALESCE($2::text, status) = 'DONE' THEN CURRENT_TIMESTAMP ELSE completed_at END
+              WHERE id = $1::uuid
+              RETURNING id, status, due_at
+              `,
+              [entityId, nextStatus, nextDueAt ? nextDueAt.toISOString() : null, metadata ? JSON.stringify(metadata) : null]
+            );
+
+            return { success: true, message: 'Trigger mis a jour', data: result.rows[0] };
+          }
+
           case 'apply_opportunity': {
             // Check opportunity exists and is open
             const opp = await pool.query(

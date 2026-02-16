@@ -98,6 +98,7 @@ export default function WhatsAppLoginScreen() {
               autoCapitalize="none"
               autoCorrect={false}
               autoFocus={true}
+              scrollOnFocus={false}
               editable={!form.state.isSubmitting}
               leftIcon={<MessageCircle size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
               error={form.getError('phone') || undefined}
@@ -156,12 +157,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'space-between',
+    paddingBottom: SPACING.xxl,
   },
   content: {
-    flex: 1,
     paddingHorizontal: SPACING.lg,
-    justifyContent: 'center',
     paddingBottom: SPACING.xl,
   },
   iconContainer: {
@@ -211,6 +210,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   footer: {
+    marginTop: 'auto',
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.xl,
     gap: SPACING.md,

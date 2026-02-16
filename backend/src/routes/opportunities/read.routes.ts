@@ -21,6 +21,8 @@ type QueryParam = string | number | boolean | null | Date;
  * GET /api/opportunities - List all opportunities
  */
 router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) => {
+  // For debugging SQL errors in production, we keep the final query string available in catch.
+  let query = '';
   try {
     const { status, type, location_type, search } = req.query;
     const pagination = getPaginationParams(req);
@@ -35,7 +37,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
         SELECT id, email, city, region, country, remote_ready, willing_to_relocate,
           sectors, profile_tags, goals, bio
         FROM talents 
-        WHERE id = $1
+        WHERE id = $1::uuid
       `, [talentId]);
 
       if (userResult.rows.length > 0) {
@@ -59,7 +61,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
     const matchFragment = MatchingUtils.buildMatchScore('opp', criteria);
 
     // Base query: only PUBLIC opportunities OR those where user is invited
-    let query = `
+    query = `
       SELECT opp.*,
         ${matchFragment.sql} as match_score,
         COALESCE(
@@ -93,13 +95,13 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
         OR EXISTS (
           SELECT 1 FROM opportunity_invitations oi
           WHERE oi.opportunity_id = opp.id
-          AND (oi.invitee_talent_id = $${paramIndex} OR LOWER(oi.invitee_email) = LOWER($${paramIndex + 1}))
+          AND (oi.invitee_talent_id = $${paramIndex}::uuid OR LOWER(oi.invitee_email) = LOWER($${paramIndex + 1}::text))
         )
         OR EXISTS (
           SELECT 1 FROM opportunity_posters op2
           LEFT JOIN organization_members om ON op2.poster_organization_id = om.organization_id
           WHERE op2.opportunity_id = opp.id
-          AND (op2.poster_talent_id = $${paramIndex} OR om.talent_id = $${paramIndex})
+          AND (op2.poster_talent_id = $${paramIndex}::uuid OR om.talent_id = $${paramIndex}::uuid)
         )
       `;
       params.push(talentId, userEmail);
@@ -122,7 +124,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
     }
 
     if (search) {
-      query += ` AND (opp.title ILIKE $${paramIndex} OR opp.summary ILIKE $${paramIndex})`;
+      query += ` AND (opp.title ILIKE $${paramIndex}::text OR opp.summary ILIKE $${paramIndex}::text)`;
       params.push(`%${search}%`);
       paramIndex++;
     }
@@ -131,9 +133,14 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
     query += ` ORDER BY match_score DESC, opp.posted_at DESC NULLS LAST, opp.created_at DESC LIMIT $${paramIndex++}::integer OFFSET $${paramIndex++}::integer`;
     params.push(pagination.limit, pagination.offset);
 
+    logger.debug(`[opportunities] Query params count: ${params.length}, paramIndex: ${paramIndex}, matchParams: ${matchFragment.params.length}, talentId: ${!!talentId}`);
     const result = await pool.query(query, params);
     res.json({ data: result.rows, count: result.rowCount });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.includes('could not determine data type')) {
+      // Avoid silent production failures: log the full placeholder query + request query params.
+      logger.error(`[opportunities] SQL param type error — queryParams: ${JSON.stringify(req.query)} — sql: ${query}`);
+    }
     handleRouteError(res, error, 'Error fetching opportunities');
   }
 });

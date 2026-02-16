@@ -16,6 +16,7 @@ import {
   Handshake,
   FileText,
   Bell,
+  CalendarDays,
   ChevronRight,
   BookOpen,
   CheckCircle,
@@ -316,9 +317,9 @@ export default function EcosystemScreen() {
       const bookingsRes = bookingsResult.status === 'fulfilled' ? bookingsResult.value : null;
       const applicationsRes = applicationsResult.status === 'fulfilled' ? applicationsResult.value : null;
 
-      const communitiesCount = communitiesRes?.count ?? communitiesRes?.data?.memberships?.length ?? 0;
-      const reservationsCount = bookingsRes?.count ?? bookingsRes?.data?.length ?? 0;
-      const applicationsCount = applicationsRes?.count ?? applicationsRes?.data?.length ?? 0;
+      const communitiesCount = communitiesRes?.data?.pagination?.total ?? communitiesRes?.count ?? communitiesRes?.data?.memberships?.length ?? 0;
+      const reservationsCount = bookingsRes?.pagination?.total ?? bookingsRes?.count ?? bookingsRes?.data?.length ?? 0;
+      const applicationsCount = applicationsRes?.pagination?.total ?? applicationsRes?.count ?? applicationsRes?.data?.length ?? 0;
       const skillsCount = skillsResult.status === 'fulfilled' ? skillsResult.value.length : 0;
       const documentsCount = documentsResult.status === 'fulfilled' ? (documentsResult.value?.total ?? documentsResult.value?.documents?.length ?? 0) : 0;
 
@@ -539,6 +540,49 @@ const renderTalentContent = () => (
         )}
       </View>
     </View>
+
+    {/* Agenda Section */}
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionTitleRow}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('ecosystem.agenda')}</Text>
+        </View>
+        <Button
+          title="Voir tout"
+          onPress={() => router.push('/settings/calendar' as any)}
+          variant="ghost"
+          size="sm"
+          style={styles.seeMoreButton}
+          textStyle={styles.seeMore}
+        />
+      </View>
+
+      <View style={[styles.listContainer, { backgroundColor: colors.surface }]}>
+        <SelectCard
+          style={[
+            styles.listItem,
+            styles.listItemLast,
+            { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
+          ]}
+          onPress={() => router.push('/settings/calendar' as any)}
+          selected={false}
+          accessibilityLabel={t('ecosystem.agenda')}
+        >
+          <View style={[styles.listItemIconBox, { backgroundColor: colors.gray100 }]}>
+            <CalendarDays size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+          </View>
+          <View style={styles.listItemContent}>
+            <Text style={[styles.listItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+              Voir mon agenda
+            </Text>
+            <Text style={[styles.listItemSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+              Candidatures, réservations, événements et rappels
+            </Text>
+          </View>
+          <ChevronRight size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+        </SelectCard>
+      </View>
+    </View>
   </>
 );
 
@@ -548,6 +592,13 @@ return (
       title={t('ecosystem.title')}
       rightContent={
         <View style={styles.headerActions}>
+          <IconButton
+            variant="filled"
+            onPress={() => router.push('/settings/calendar' as any)}
+            icon={<CalendarDays size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel={t('ecosystem.agenda')}
+            style={{ backgroundColor: colors.gray100 }}
+          />
           <IconButton
             variant="filled"
             onPress={() => router.push('/settings/notifications')}

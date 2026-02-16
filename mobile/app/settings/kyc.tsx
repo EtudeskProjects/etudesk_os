@@ -95,18 +95,6 @@ export default function KYCScreen() {
     }
   };
 
-  const pickImage = async (side: 'front' | 'back') => {
-    try {
-      const image = await imageService.pickImage({ type: 'identity' });
-      if (image) {
-        if (side === 'front') setFrontImage(image.uri);
-        else setBackImage(image.uri);
-      }
-    } catch (error) {
-      console.error('Error selecting image:', error);
-    }
-  };
-
   const takePhoto = async (side: 'front' | 'back') => {
     try {
       const image = await imageService.takePhoto({ type: 'identity' });
@@ -119,12 +107,8 @@ export default function KYCScreen() {
     }
   };
 
-  const showImageOptions = (side: 'front' | 'back') => {
-    void alerts.showAlert({ title: 'Ajouter une photo', message: 'Comment voulez-vous ajouter la photo ?', buttons: [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Prendre une photo', onPress: () => takePhoto(side) },
-        { text: 'Galerie', onPress: () => pickImage(side) },
-      ] });
+  const handleCapture = (side: 'front' | 'back') => {
+    takePhoto(side);
   };
 
   const handleSubmit = async () => {
@@ -328,7 +312,7 @@ export default function KYCScreen() {
                 {/* Front */}
                 <SelectCard
                   style={[styles.uploadCard, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}
-                  onPress={() => showImageOptions('front')}
+                  onPress={() => handleCapture('front')}
                   selected={false}
                   accessibilityLabel="Ajouter la photo recto"
                 >
@@ -350,7 +334,7 @@ export default function KYCScreen() {
                 {/* Back */}
                 <SelectCard
                   style={[styles.uploadCard, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}
-                  onPress={() => showImageOptions('back')}
+                  onPress={() => handleCapture('back')}
                   selected={false}
                   accessibilityLabel="Ajouter la photo verso"
                 >

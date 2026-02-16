@@ -30,6 +30,7 @@ import {
   DocumentStatus,
 } from '../constants/documents';
 import { debitWalletForAction } from '../services/billing/credit.service';
+import { getOrgDocument } from '../services/org-documents/org-document.service';
 
 const router = Router();
 
@@ -152,11 +153,26 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
     }
 
     const document = await getDocument(req.params.id, talentId);
-    if (!document) {
-      return res.status(404).json({ error: req.t('documents:notFound') });
+    if (document) {
+      return res.json({ data: document });
     }
 
-    return res.json({ data: document });
+    // Fallback: check organization_documents (for copilot-generated org reports, etc.)
+    const orgDoc = await getOrgDocument(req.params.id);
+    if (orgDoc) {
+      // Verify caller is an active member of this document's organization
+      const memberCheck = await pool.query(
+        `SELECT 1 FROM organization_members
+         WHERE organization_id = $1 AND talent_id = $2 AND status = 'ACTIVE'
+         LIMIT 1`,
+        [orgDoc.organization_id, talentId]
+      );
+      if (memberCheck.rows.length > 0) {
+        return res.json({ data: orgDoc });
+      }
+    }
+
+    return res.status(404).json({ error: req.t('documents:notFound') });
   } catch (error) {
     logger.error('Error getting document:', error);
     return res.status(500).json({

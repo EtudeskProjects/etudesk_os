@@ -95,7 +95,11 @@ export default function ActivityDetailScreen() {
             if (response.activity) {
                 setLiked(response.activity.is_liked || false);
                 setLikesCount(response.activity.likes_count || 0);
-                const commentsTotal = response.activity.comments_count ?? response.comments?.length ?? 0;
+                // Count all comments including nested replies
+                const countAll = (list: ActivityComment[]): number =>
+                    list.reduce((sum, c) => sum + 1 + (c.replies ? countAll(c.replies) : 0), 0);
+                const fromArray = countAll(response.comments || []);
+                const commentsTotal = response.activity.comments_count || fromArray || 0;
                 setCommentsCount(commentsTotal);
                 setBookmarksCount(response.activity.bookmarks_count || 0);
                 setIsBookmarked(response.activity.is_bookmarked || false);
@@ -583,7 +587,7 @@ export default function ActivityDetailScreen() {
                                 styles.engagementText,
                                 { color: liked ? colors.error : colors.textSecondary }
                             ]}>
-	                                {formatCount(likesCount)} J'aime{likesCount > 1 ? 's' : ''}
+	                                {formatCount(likesCount)} j'aime
 	                            </Text>
 	                        </SelectCard>
 
@@ -595,7 +599,7 @@ export default function ActivityDetailScreen() {
                                 strokeWidth={ICON.strokeWidth}
                             />
                             <Text style={[styles.engagementText, { color: colors.primary }]}>
-                                {formatCount(commentsCount)} Commentaire{commentsCount > 1 ? 's' : ''}
+                                {formatCount(commentsCount)} {commentsCount <= 1 ? 'commentaire' : 'commentaires'}
                             </Text>
                         </View>
 
@@ -618,7 +622,7 @@ export default function ActivityDetailScreen() {
                                 styles.engagementText,
                                 { color: isBookmarked ? colors.primary : colors.textSecondary }
                             ]}>
-	                                {formatCount(bookmarksCount)} Bookmark{bookmarksCount > 1 ? 's' : ''}
+	                                {formatCount(bookmarksCount)} {bookmarksCount <= 1 ? 'sauvegarde' : 'sauvegardes'}
 	                            </Text>
 	                        </SelectCard>
 	                    </View>

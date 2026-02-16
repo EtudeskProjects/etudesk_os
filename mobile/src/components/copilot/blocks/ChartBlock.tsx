@@ -8,6 +8,8 @@ import { DonutChart } from './charts/DonutChart';
 import { StackedBarChart } from './charts/StackedBarChart';
 import { MetricCard } from './charts/MetricCard';
 import { TableChart } from './charts/TableChart';
+import { RadarChart } from './charts/RadarChart';
+import { LineChart } from './charts/LineChart';
 
 interface ChartBlockProps {
   data: {
@@ -31,9 +33,14 @@ export const ChartBlock: React.FC<ChartBlockProps> = ({ data }) => {
     case 'table':
       return <TableChart title={data.title} columns={data.columns} rows={data.rows} />;
 
+    case 'radar':
+      return <RadarChart title={data.title} axes={data.axes} series={data.series} max={data.max} />;
+
+    case 'line':
+      return <LineChart title={data.title} data={data.data} />;
+
     case 'bar':
     default:
-      // Fallback to BarChart for unknown types
       return <BarChart title={data.title} data={data.data || []} />;
   }
 };

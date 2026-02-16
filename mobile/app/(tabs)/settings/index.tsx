@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -30,6 +29,7 @@ import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { Button, Header, FooterNav, SelectCard } from '../../../src/components/ui';
+import { RemoteImage } from '../../../src/components/ui/RemoteImage';
 import { getFullImageUrl } from '../../../src/utils/image';
 import { useAlert } from '../../../src/contexts/AlertContext';
 
@@ -234,7 +234,7 @@ export default function AccountScreen() {
           {currentSpace === 'talent' ? (
             <>
               {getFullImageUrl(user?.avatarUrl) ? (
-                <Image source={{ uri: getFullImageUrl(user?.avatarUrl) }} style={styles.avatarImage} />
+                <RemoteImage uri={user?.avatarUrl} style={styles.avatarImage} />
               ) : (
                 <View style={[styles.avatarContainer, { backgroundColor: colors.primary }]}>
                   <Text style={[styles.avatarText, { color: colors.textOnPrimary }]}>{getUserInitials()}</Text>
@@ -248,7 +248,7 @@ export default function AccountScreen() {
           ) : (
             <>
               {selectedOrg?.logoUrl ? (
-                <Image source={{ uri: selectedOrg.logoUrl }} style={styles.avatarImage} />
+                <RemoteImage uri={selectedOrg.logoUrl} style={styles.avatarImage} />
               ) : (
                 <View style={[styles.avatarContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                   <Building2 size={ICON.size.lg} color={colors.primary} strokeWidth={ICON.strokeWidth} />
@@ -287,7 +287,7 @@ export default function AccountScreen() {
               accessibilityLabel="Basculer sur l’espace talent"
             >
               {getFullImageUrl(user?.avatarUrl) ? (
-                <Image source={{ uri: getFullImageUrl(user?.avatarUrl)! }} style={styles.spaceChipImage} />
+                <RemoteImage uri={user?.avatarUrl} style={styles.spaceChipImage} />
               ) : (
                 <View style={[
                   styles.spaceChipIcon,
@@ -320,7 +320,7 @@ export default function AccountScreen() {
                   accessibilityLabel={`Basculer sur l’espace organisation ${org.name}`}
                 >
                   {org.logoUrl ? (
-                    <Image source={{ uri: org.logoUrl }} style={styles.spaceChipImage} />
+                    <RemoteImage uri={org.logoUrl} style={styles.spaceChipImage} />
                   ) : (
                     <View style={[
                       styles.spaceChipIcon,

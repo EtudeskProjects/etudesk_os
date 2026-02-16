@@ -143,8 +143,8 @@ export default function MyCommunitiesScreen() {
   }, [loadData]);
 
   const chips = [
-    { key: 'memberships' as Tab, label: 'Adhésions', count: memberships.length },
-    { key: 'bookmarks' as Tab, label: 'Sauvegardes', count: bookmarkedActivities.length },
+    { key: 'memberships' as Tab, label: memberships.length <= 1 ? 'Adhésion' : 'Adhésions', count: memberships.length },
+    { key: 'bookmarks' as Tab, label: bookmarkedActivities.length <= 1 ? 'Sauvegarde' : 'Sauvegardes', count: bookmarkedActivities.length },
   ];
 
   const filteredMemberships = memberships.filter((m) => {

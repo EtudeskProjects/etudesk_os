@@ -3,8 +3,7 @@
  */
 
 import React from 'react';
-import { View, Text, Image, StyleSheet, Pressable } from 'react-native';
-import { getFullImageUrl } from '../../utils/image';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import {
   MapPin,
   Clock,
@@ -30,6 +29,7 @@ import {
   CardHeader,
   type CardAction,
 } from './BaseCard';
+import { RemoteImage } from '../ui/RemoteImage';
 
 interface StatusOverlay {
   label: string;
@@ -131,7 +131,7 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
     return (
       <View style={styles.orgRow}>
         {opportunity.organization?.logo_url ? (
-          <Image source={{ uri: getFullImageUrl(opportunity.organization.logo_url) || '' }} style={styles.orgLogo} />
+          <RemoteImage uri={opportunity.organization.logo_url} style={styles.orgLogo} />
         ) : (
           <View style={[styles.orgLogoPlaceholder, { backgroundColor: colors.gray200 }]}>
             <Text style={[styles.orgLogoText, { color: colors.gray500 }]}>

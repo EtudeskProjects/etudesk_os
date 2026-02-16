@@ -4,11 +4,12 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Building2, MapPin, Globe } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT } from '../../constants/theme';
 import { CardContainer, CardImage, CardContent, CardHeader } from './BaseCard';
+import { RemoteImage } from '../ui/RemoteImage';
 
 export interface OrganizationCardData {
   id: string;
@@ -45,7 +46,7 @@ export const OrganizationCard: React.FC<OrganizationCardProps> = ({
         style={[styles.compactContainer, { backgroundColor: colors.cardOrg, borderColor: colors.cardOrgAccent }]}
       >
         {organization.logo_url ? (
-          <Image source={{ uri: organization.logo_url }} style={styles.compactLogo} />
+          <RemoteImage uri={organization.logo_url} style={styles.compactLogo} />
         ) : (
           <View style={[styles.compactLogoPlaceholder, { backgroundColor: colors.cardOrgAccent }]}>
             <Building2 size={ICON.size.md} color={colors.cardOrgText} strokeWidth={ICON.strokeWidth} />
@@ -84,7 +85,7 @@ export const OrganizationCard: React.FC<OrganizationCardProps> = ({
         {/* Header with logo */}
         <View style={styles.header}>
           {organization.logo_url ? (
-            <Image source={{ uri: organization.logo_url }} style={styles.logo} />
+            <RemoteImage uri={organization.logo_url} style={styles.logo} />
           ) : (
             <View style={[styles.logoPlaceholder, { backgroundColor: colors.cardOrgAccent }]}>
               <Building2 size={ICON.size.lg} color={colors.cardOrgText} strokeWidth={ICON.strokeWidth} />

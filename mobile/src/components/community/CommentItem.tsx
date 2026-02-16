@@ -76,8 +76,8 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
 
     return (
         <View style={[styles.wrapper, isOptimistic && [styles.optimisticWrapper, { backgroundColor: withOpacity(colors.primary, OPACITY[8]) }]]}>
-            {/* Thread line - vertical connector to children */}
-            {hasReplies && depth < MAX_DEPTH && (
+            {/* Thread line - vertical connector to siblings and/or children */}
+            {((!isLast) || (hasReplies && depth < MAX_DEPTH)) && (
                 <View
                     style={[
                         styles.threadLine,

@@ -482,7 +482,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                         styles.engagementText,
                         { color: liked ? colors.error : colors.textSecondary }
                     ]}>
-                        {t('community.activity.likes', { count: formatCount(likesCount) })}
+                        {t('community.activity.likes', { count: likesCount, formattedCount: formatCount(likesCount) })}
                     </Text>
                 </SelectCard>
 
@@ -502,7 +502,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                         styles.engagementText,
                         { color: showComments ? colors.primary : colors.textSecondary }
                     ]}>
-                        {t('community.activity.comments', { count: formatCount(commentsCount) })}
+                        {t('community.activity.comments', { count: commentsCount, formattedCount: formatCount(commentsCount) })}
                     </Text>
                 </SelectCard>
 
@@ -525,7 +525,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                         styles.engagementText,
                         { color: isBookmarked ? colors.primary : colors.textSecondary }
                     ]}>
-                        {t('community.activity.bookmarks', { count: formatCount(bookmarksCount) })}
+                        {t('community.activity.bookmarks', { count: bookmarksCount, formattedCount: formatCount(bookmarksCount) })}
                     </Text>
                 </SelectCard>
             </View>

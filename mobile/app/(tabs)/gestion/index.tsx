@@ -435,22 +435,31 @@ export default function GestionScreen() {
       <Header
         title={t('ecosystem.title')}
         rightContent={
-          <IconButton
-            variant="filled"
-            onPress={() => router.push('/settings/notifications')}
-            icon={<Bell size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel={t('notifications.title')}
-            style={{ backgroundColor: colors.gray100 }}
-          >
-            {(() => {
-              const unread = notifications.filter(n => !n.read_at).length;
-              return unread > 0 ? (
-                <View style={[styles.notificationBadge, { backgroundColor: colors.error }]}>
-                  <Text style={[styles.notificationBadgeText, { color: colors.textOnPrimary }]}>{unread}</Text>
-                </View>
-              ) : null;
-            })()}
-          </IconButton>
+          <View style={styles.headerActions}>
+            <IconButton
+              variant="filled"
+              onPress={() => router.push('/settings/calendar' as any)}
+              icon={<CalendarDays size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+              accessibilityLabel={t('ecosystem.agenda')}
+              style={{ backgroundColor: colors.gray100 }}
+            />
+            <IconButton
+              variant="filled"
+              onPress={() => router.push('/settings/notifications')}
+              icon={<Bell size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+              accessibilityLabel={t('notifications.title')}
+              style={{ backgroundColor: colors.gray100 }}
+            >
+              {(() => {
+                const unread = notifications.filter(n => !n.read_at).length;
+                return unread > 0 ? (
+                  <View style={[styles.notificationBadge, { backgroundColor: colors.error }]}>
+                    <Text style={[styles.notificationBadgeText, { color: colors.textOnPrimary }]}>{unread}</Text>
+                  </View>
+                ) : null;
+              })()}
+            </IconButton>
+          </View>
         }
       />
 
@@ -633,6 +642,49 @@ export default function GestionScreen() {
                     );
                   })
                 )}
+              </View>
+            </View>
+
+            {/* Agenda Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionTitleRow}>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('ecosystem.agenda')}</Text>
+                </View>
+                <Button
+                  title="Voir tout"
+                  onPress={() => router.push('/settings/calendar' as any)}
+                  variant="ghost"
+                  size="sm"
+                  style={styles.seeMoreButton}
+                  textStyle={styles.seeMore}
+                />
+              </View>
+
+              <View style={[styles.listContainer, { backgroundColor: colors.surface }]}>
+                <SelectCard
+                  style={[
+                    styles.listItem,
+                    styles.listItemLast,
+                    { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent', borderRadius: 0 },
+                  ]}
+                  onPress={() => router.push('/settings/calendar' as any)}
+                  selected={false}
+                  accessibilityLabel={t('ecosystem.agenda')}
+                >
+                  <View style={[styles.listItemIconBox, { backgroundColor: colors.gray100 }]}>
+                    <CalendarDays size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  </View>
+                  <View style={styles.listItemContent}>
+                    <Text style={[styles.listItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                      Voir l'agenda
+                    </Text>
+                    <Text style={[styles.listItemSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                      Candidatures, réservations, événements et relances
+                    </Text>
+                  </View>
+                  <ChevronRight size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+                </SelectCard>
               </View>
             </View>
 

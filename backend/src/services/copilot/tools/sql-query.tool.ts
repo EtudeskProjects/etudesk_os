@@ -22,6 +22,7 @@ const SQL_INTENTS = [
   'my_bookmarks',
   'my_documents',
   'my_skills',
+  'my_triggers',
   // Org
   'org_members',
   'org_applications',
@@ -30,6 +31,7 @@ const SQL_INTENTS = [
   'org_communities',
   'org_spaces',
   'org_invitations',
+  'org_triggers',
   'org_documents',
   'org_talents',
   'org_talent_profile',
@@ -82,7 +84,7 @@ export function createSqlQueryTool(
   return defineTool({
     name: 'sql_query',
     description:
-      'Query PostgreSQL for structured data. Use for personal data (my_profile, my_applications, my_communities, my_documents, my_skills, my_community_feed, my_community_members), org management (org_stats, org_applications, org_members, org_opportunities, org_documents, org_talents, org_talent_profile, org_community_feed, org_community_members), and structured search (search_opportunities, search_communities). Personal data is automatically filtered for the authenticated user — do NOT include talentId in params. IMPORTANT: Do NOT call the same intent twice — results are deterministic and already in your conversation.',
+      'Query PostgreSQL for structured data. Use for personal data (my_profile, my_applications, my_communities, my_documents, my_skills, my_triggers, my_community_feed, my_community_members), org management (org_stats, org_applications, org_members, org_opportunities, org_documents, org_talents, org_talent_profile, org_triggers, org_community_feed, org_community_members), and structured search (search_opportunities, search_communities). Personal data is automatically filtered for the authenticated user — do NOT include talentId in params. IMPORTANT: Do NOT call the same intent twice — results are deterministic and already in your conversation.',
     parameters: z.object({
       intent: z.enum(SQL_INTENTS).describe('The query intent. Use my_* for personal data, org_* for organization data (requires organizationId in params), search_* for text search.'),
       paramsJson: z.string().optional().describe('Optional JSON string with extra filters. Examples: \'{"status":"PENDING"}\', \'{"organizationId":"uuid"}\'. Do NOT include talentId — it is injected automatically.'),
@@ -277,6 +279,30 @@ export function createSqlQueryTool(
             return { skills: res.rows };
           }
 
+          case 'my_triggers': {
+            const limit = (params?.limit as number) || 50;
+            const status = (params?.status as string) || 'PENDING';
+            const from = params?.from ? new Date(String(params.from)) : null;
+            const to = params?.to ? new Date(String(params.to)) : null;
+            if (from && isNaN(from.getTime())) return { error: 'from invalide (ISO datetime)' };
+            if (to && isNaN(to.getTime())) return { error: 'to invalide (ISO datetime)' };
+
+            const queryParams: any[] = [talentId, status];
+            let idx = 3;
+            let sql = `
+            SELECT at.id, at.code, at.title, at.description, at.due_at, at.status, at.priority,
+                   at.metadata, at.created_at, at.updated_at, at.completed_at
+            FROM agenda_triggers at
+            WHERE at.scope = 'TALENT' AND at.talent_id = $1 AND at.status = $2`;
+            if (from) { sql += ` AND at.due_at >= $${idx}`; queryParams.push(from.toISOString()); idx++; }
+            if (to) { sql += ` AND at.due_at <= $${idx}`; queryParams.push(to.toISOString()); idx++; }
+            sql += ` ORDER BY at.due_at ASC LIMIT $${idx}`;
+            queryParams.push(limit);
+
+            const res = await pool.query(sql, queryParams);
+            return { triggers: res.rows, totalCount: res.rows.length };
+          }
+
           // --- Org ---
           case 'org_members': {
             const orgId = params?.organizationId as string;
@@ -387,6 +413,34 @@ export function createSqlQueryTool(
               [orgId]
             );
             return { invitations: res.rows };
+          }
+
+          case 'org_triggers': {
+            const orgId = params?.organizationId as string;
+            if (!orgId) return { error: 'organizationId requis' };
+            const limit = (params?.limit as number) || 50;
+            const status = (params?.status as string) || 'PENDING';
+            const from = params?.from ? new Date(String(params.from)) : null;
+            const to = params?.to ? new Date(String(params.to)) : null;
+            if (from && isNaN(from.getTime())) return { error: 'from invalide (ISO datetime)' };
+            if (to && isNaN(to.getTime())) return { error: 'to invalide (ISO datetime)' };
+
+            const queryParams: any[] = [orgId, status];
+            let idx = 3;
+            let sql = `
+            SELECT at.id, at.code, at.title, at.description, at.due_at, at.status, at.priority,
+                   at.metadata, at.created_at, at.updated_at, at.completed_at,
+                   COALESCE(t.first_name || ' ' || t.last_name, t.email) as created_by_name
+            FROM agenda_triggers at
+            LEFT JOIN talents t ON t.id = at.created_by
+            WHERE at.scope = 'ORGANIZATION' AND at.organization_id = $1 AND at.status = $2`;
+            if (from) { sql += ` AND at.due_at >= $${idx}`; queryParams.push(from.toISOString()); idx++; }
+            if (to) { sql += ` AND at.due_at <= $${idx}`; queryParams.push(to.toISOString()); idx++; }
+            sql += ` ORDER BY at.due_at ASC LIMIT $${idx}`;
+            queryParams.push(limit);
+
+            const res = await pool.query(sql, queryParams);
+            return { triggers: res.rows, totalCount: res.rows.length };
           }
 
           case 'org_documents': {

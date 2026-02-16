@@ -6,7 +6,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { TrendingUp, TrendingDown } from 'lucide-react-native';
 import { useTheme } from '../../../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON } from '../../../../constants/theme';
 
 interface Trend {
   direction: 'up' | 'down';
@@ -23,27 +23,23 @@ interface MetricCardProps {
 
 export const MetricCard: React.FC<MetricCardProps> = ({ title, value, unit, trend }) => {
   const { colors } = useTheme();
-
   const trendColor = trend?.direction === 'up' ? colors.success : colors.error;
   const TrendIcon = trend?.direction === 'up' ? TrendingUp : TrendingDown;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-      <Text style={[styles.title, { color: colors.textTertiary }]}>{title}</Text>
-
+    <View style={styles.container}>
+      <Text style={[styles.label, { color: colors.textTertiary }]}>{title}</Text>
       <View style={styles.valueRow}>
         <Text style={[styles.value, { color: colors.textPrimary }]}>
           {typeof value === 'number' ? value.toLocaleString('fr-FR') : value}
         </Text>
         {unit && <Text style={[styles.unit, { color: colors.textSecondary }]}>{unit}</Text>}
       </View>
-
       {trend && (
         <View style={styles.trendRow}>
-          <TrendIcon size={ICON.size.sm} color={trendColor} strokeWidth={ICON.strokeWidth} />
+          <TrendIcon size={ICON.size.xs} color={trendColor} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.trendDelta, { color: trendColor }]}>
-            {trend.direction === 'up' ? '+' : '-'}{trend.delta}
-            {unit ? unit : ''}
+            {trend.direction === 'up' ? '+' : '-'}{trend.delta}{unit || ''}
           </Text>
           {trend.period && (
             <Text style={[styles.trendPeriod, { color: colors.textTertiary }]}>{trend.period}</Text>
@@ -56,44 +52,39 @@ export const MetricCard: React.FC<MetricCardProps> = ({ title, value, unit, tren
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: BORDER.radius.lg,
-    borderWidth: BORDER.width.thin,
-    padding: SPACING.lg,
-    marginVertical: SPACING.sm,
+    marginVertical: SPACING.xs,
   },
-  title: {
+  label: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    textTransform: 'uppercase',
-    letterSpacing: TYPOGRAPHY.letterSpacing.wide,
-    marginBottom: SPACING.xs,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    marginBottom: 2,
   },
   valueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: SPACING.xs,
+    gap: SPACING.xxs,
   },
   value: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    fontSize: 32,
+    fontSize: TYPOGRAPHY.fontSize.xxl,
   },
   unit: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontSize: TYPOGRAPHY.fontSize.sm,
   },
   trendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    marginTop: SPACING.sm,
+    gap: SPACING.xxs,
+    marginTop: 2,
   },
   trendDelta: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontSize: TYPOGRAPHY.fontSize.xs,
   },
   trendPeriod: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontSize: TYPOGRAPHY.fontSize.xxs,
   },
 });
 

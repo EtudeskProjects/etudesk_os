@@ -3,11 +3,11 @@
  */
 
 import React from 'react';
-import { View, Image, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import { LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { ICON, LAYOUT } from '../../../constants/theme';
-import { getFullImageUrl } from '../../../utils/image';
+import { RemoteImage } from '../../ui/RemoteImage';
 
 export interface CardImageProps {
   /** Image URL */
@@ -34,11 +34,7 @@ export const CardImage: React.FC<CardImageProps> = ({
   return (
     <View style={[styles.container, { height }, style]}>
       {imageUrl ? (
-        <Image
-          source={{ uri: getFullImageUrl(imageUrl) || '' }}
-          style={styles.image}
-          resizeMode="cover"
-        />
+        <RemoteImage uri={imageUrl} style={styles.image} resizeMode="cover" />
       ) : (
         <View style={[styles.placeholder, { backgroundColor: colors.gray100 }]}>
           <PlaceholderIcon

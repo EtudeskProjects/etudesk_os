@@ -23,6 +23,7 @@ const ORG_ALLOWED_INTENTS = [
   'org_communities',
   'org_spaces',
   'org_invitations',
+  'org_triggers',
   'org_documents',
   'org_talents',
   'org_talent_profile',

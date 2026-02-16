@@ -390,12 +390,20 @@ export class CommunityActivityService {
                     `DELETE FROM community_activity_reactions WHERE activity_id = $1 AND user_id = $2`,
                     [activityId, userId]
                 );
+                await client.query(
+                    'UPDATE community_activities SET reactions_count = GREATEST(COALESCE(reactions_count, 0) - 1, 0) WHERE id = $1',
+                    [activityId]
+                );
                 isLiked = false;
             } else {
                 // Add like
                 await client.query(
                     `INSERT INTO community_activity_reactions (activity_id, user_id) VALUES ($1, $2)`,
                     [activityId, userId]
+                );
+                await client.query(
+                    'UPDATE community_activities SET reactions_count = COALESCE(reactions_count, 0) + 1 WHERE id = $1',
+                    [activityId]
                 );
                 isLiked = true;
 
@@ -506,6 +514,12 @@ export class CommunityActivityService {
                 );
                 parentComment = parentRes.rows[0];
             }
+
+            // Increment comments_count on the activity
+            await client.query(
+                'UPDATE community_activities SET comments_count = COALESCE(comments_count, 0) + 1 WHERE id = $1',
+                [dto.activity_id]
+            );
 
             await client.query('COMMIT');
 
@@ -618,7 +632,7 @@ export class CommunityActivityService {
             throw new Error('Comment not found');
         }
 
-        const { author_id, community_id } = commentRes.rows[0];
+        const { author_id, community_id, activity_id } = commentRes.rows[0];
 
         // Allow author or Admin/Moderator
         if (author_id !== userId) {
@@ -629,6 +643,12 @@ export class CommunityActivityService {
         }
 
         await pool.query('UPDATE community_activity_comments SET deleted_at = NOW() WHERE id = $1', [commentId]);
+
+        // Decrement comments_count on the activity
+        await pool.query(
+            'UPDATE community_activities SET comments_count = GREATEST(COALESCE(comments_count, 0) - 1, 0) WHERE id = $1',
+            [activity_id]
+        );
     }
 
     /**

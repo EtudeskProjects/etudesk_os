@@ -346,10 +346,10 @@ export default function MyCommunityDetailsScreen() {
           <Button
             title="Quitter la communauté"
             onPress={handleLeaveCommunity}
-            variant="outline"
+            variant="ghost"
             fullWidth
             icon={<LogOut size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-            style={[styles.leaveButton, { borderColor: colors.error }]}
+            style={styles.leaveButton}
             textStyle={[styles.leaveText, { color: colors.error }]}
           />
         )}
@@ -358,10 +358,10 @@ export default function MyCommunityDetailsScreen() {
           <Button
             title="Annuler ma demande"
             onPress={handleLeaveCommunity}
-            variant="outline"
+            variant="ghost"
             fullWidth
             icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-            style={[styles.leaveButton, { borderColor: colors.error }]}
+            style={styles.leaveButton}
             textStyle={[styles.leaveText, { color: colors.error }]}
           />
         )}
@@ -672,9 +672,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
-    padding: SPACING.md,
-    borderWidth: 1,
-    borderRadius: BORDER.radius.sm,
+    paddingVertical: SPACING.sm,
     marginTop: SPACING.md,
   },
 

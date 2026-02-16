@@ -7,6 +7,18 @@
 
 ---
 
+## Note Importante : Charts et Tableaux (rendu client)
+
+Les **charts** et **tableaux** ne sont **pas des tools**. L'agent les rend directement via des blocs:
+
+```
+```chart
+{"type":"table","title":"...","columns":["Col A"],"rows":[["A"]]}
+```
+```
+
+Types supportes cote client: `bar`, `donut`, `stacked_bar`, `metric`, `table`, `radar`.
+
 ## Architecture
 
 ```

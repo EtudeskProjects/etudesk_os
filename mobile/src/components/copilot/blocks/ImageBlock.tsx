@@ -9,6 +9,7 @@ import { Image as ImageIcon, ExternalLink } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { useTranslation } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../constants/theme';
+import { getFullImageUrl } from '../../../utils/image';
 import { showToastGlobal, LoadingShimmer } from '../../ui';
 
 interface ImageBlockProps {
@@ -26,6 +27,9 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [aspectRatio, setAspectRatio] = useState(16 / 9);
+
+  // Resolve relative URLs (e.g. /uploads/...) to full absolute URLs
+  const imageUrl = getFullImageUrl(data.url);
 
   const handleImageLoad = (event: any) => {
     const { width, height } = event.nativeEvent.source;
@@ -78,7 +82,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
           </View>
         ) : (
           <Image
-            source={{ uri: data.url }}
+            source={{ uri: imageUrl }}
             style={[styles.image, { aspectRatio }]}
             resizeMode="contain"
             onLoad={handleImageLoad}

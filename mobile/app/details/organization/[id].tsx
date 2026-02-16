@@ -79,6 +79,7 @@ export default function OrganizationDetailScreen() {
   const [isLoadingOpportunities, setIsLoadingOpportunities] = useState(true);
   const [isLoadingCommunities, setIsLoadingCommunities] = useState(true);
   const [isLoadingSpaces, setIsLoadingSpaces] = useState(true);
+  const [logoError, setLogoError] = useState(false);
   const alerts = useAlert();
 
   const isValidId = !!id && id !== 'null' && id !== 'undefined';
@@ -257,11 +258,15 @@ export default function OrganizationDetailScreen() {
         <View style={styles.contentPadded}>
           {/* Organization Header */}
           <View style={styles.orgHeader}>
-            {logoUrl ? (
-              <Image source={{ uri: logoUrl }} style={styles.logo} />
+            {logoUrl && !logoError ? (
+              <Image
+                source={{ uri: logoUrl }}
+                style={styles.logo}
+                onError={() => setLogoError(true)}
+              />
             ) : (
-              <View style={[styles.logoPlaceholder, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.logoPlaceholderText, { color: colors.textOnPrimary }]}>
+              <View style={[styles.logoPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
+                <Text style={[styles.logoPlaceholderText, { color: colors.primary }]}>
                   {getInitials(organization.name)}
                 </Text>
               </View>
@@ -346,7 +351,7 @@ export default function OrganizationDetailScreen() {
           )}
 
 	          {/* Info Card */}
-		          <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+		          <View style={styles.infoCard}>
 		            {organization.website_url && (
 		              <SelectCard
 		                selected={false}
@@ -770,17 +775,16 @@ const styles = StyleSheet.create({
   },
 
   infoCard: {
-    padding: SPACING.md,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.md,
     marginBottom: SPACING.lg,
-    gap: SPACING.md,
+    gap: SPACING.sm,
   },
 
   infoCardRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
 
   infoCardContent: {
@@ -820,6 +824,7 @@ const styles = StyleSheet.create({
     borderWidth: BORDER.width.thin,
     borderRadius: BORDER.radius.sm,
     marginBottom: SPACING.sm,
+    gap: SPACING.md,
   },
 
   opportunityContent: {

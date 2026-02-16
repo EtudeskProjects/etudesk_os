@@ -47,6 +47,41 @@
 
 ---
 
+## REGLE CRITIQUE : Tableaux et Charts (tous agents)
+
+### Principe
+
+Les **tableaux** et **visualisations** ne sont **pas des tools**. Ils sont rendus directement par le client mobile via des blocs:
+
+```
+```chart
+{...json...}
+```
+```
+
+**Regle absolue:** si tu dois afficher un tableau, utilise **toujours** `chart.type="table"` (pas un tableau markdown, pas une liste “quasi-tableau”).
+
+### Types supportes
+
+| Type | Usage | Schema minimal |
+|------|-------|----------------|
+| `bar` | Distribution / scores | `{"type":"bar","title":"...","data":[{"label":"A","value":10}]}` |
+| `donut` | Parts d'un total | `{"type":"donut","title":"...","data":[{"label":"A","value":30}],"total_label":"Total"}` |
+| `stacked_bar` | Funnel / segments | `{"type":"stacked_bar","title":"...","data":[{"label":"X","segments":[{"key":"a","value":1,"color":"primary"}]}]}` |
+| `metric` | KPI unique | `{"type":"metric","title":"...","value":23.5,"unit":"%","trend":{"direction":"up","delta":5.2,"period":"vs mois precedent"}}` |
+| `table` | Tableau de donnees | `{"type":"table","title":"...","columns":["Col A","Col B"],"rows":[["A",1],["B",2]]}` |
+| `radar` | RH / bilan de competences | `{"type":"radar","title":"...","axes":["Hard","Soft","Knowledge"],"max":5,"series":[{"name":"Actuel","values":[3,2,4]}]}` |
+
+### Exemple RH : bilan de competences en radar
+
+```
+```chart
+{"type":"radar","title":"Bilan de competences (RH)","axes":["Hard skills","Soft skills","Knowledge","Profondeur","Seniorite"],"max":5,"series":[{"name":"Actuel","values":[3,2,3,3,2]}]}
+```
+```
+
+---
+
 ## Entites de la Plateforme
 
 ### Types d'Entites Supportes
@@ -65,8 +100,8 @@
 | Type | Raison | Comment les afficher |
 |------|--------|---------------------|
 | `publication` | Contenu contextuel | Lien ou citation inline |
-| `application` | Relation, pas ressource | Tableau ou liste texte |
-| `booking` | Relation, pas ressource | Tableau ou liste texte |
+| `application` | Relation, pas ressource | Chart table (`type:"table"`) ou liste texte |
+| `booking` | Relation, pas ressource | Chart table (`type:"table"`) ou liste texte |
 | `notification` | Ephemere | Liste texte |
 
 ---
@@ -805,7 +840,7 @@ search_talents
 | `document` | Documents generes (fiches de poste, rapports) |
 
 **INTERDIT en mode Org :** `entity:community`, `entity:space`, `entity:organization`
-**NOTE :** L'agent peut rechercher communautes/espaces via sql_query (org_communities, org_spaces, search_*), mais les resultats sont affiches en texte/tableau, jamais en cartes entites.
+**NOTE :** L'agent peut rechercher communautes/espaces via sql_query (org_communities, org_spaces, search_*), mais les resultats sont affiches en **chart table** (`type:"table"`) ou en texte, jamais en cartes entites.
 
 ---
 

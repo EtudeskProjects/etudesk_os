@@ -42,7 +42,7 @@ export function createTalentAgent(
     const studySqlTool = createSqlQueryTool(
       context.profile.id,
       authorizedOrgIds,
-      ['my_profile', 'my_skills', 'my_documents', 'my_community_feed', 'my_community_members'] as const
+      ['my_profile', 'my_skills', 'my_documents', 'my_triggers', 'my_community_feed', 'my_community_members'] as const
     );
     tools = [
       studySqlTool,

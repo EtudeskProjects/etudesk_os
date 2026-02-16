@@ -208,21 +208,21 @@ export default function VerifyOTPScreen() {
                 keyboardType="number-pad"
                 selectTextOnFocus
                 editable={!isLoading}
-                inputContainerStyle={[
-                  {
-                    width: 48,
-                    height: 56,
-                    borderWidth: BORDER.width.medium,
-                    borderRadius: BORDER.radius.sm,
-                    backgroundColor: colors.surface,
-                    borderColor: error ? colors.error : digit ? colors.primary : colors.borderColor,
-                  },
-                ]}
+                containerStyle={{ width: 48 }}
+                inputContainerStyle={{
+                  width: 48,
+                  height: 56,
+                  borderWidth: BORDER.width.medium,
+                  borderRadius: BORDER.radius.sm,
+                  backgroundColor: colors.surface,
+                  borderColor: error ? colors.error : digit ? colors.primary : colors.borderColor,
+                }}
                 inputStyle={{
                   color: colors.textPrimary,
                   fontSize: TYPOGRAPHY.fontSize.xl,
                   fontWeight: TYPOGRAPHY.fontWeight.bold,
                   textAlign: 'center',
+                  paddingVertical: 0,
                   paddingHorizontal: 0,
                 }}
               />

@@ -654,8 +654,9 @@ export default function ExploreScreen() {
           returnKeyType="search"
           autoCorrect={false}
           autoCapitalize="none"
-          containerStyle={{ flex: 1 }}
-          inputContainerStyle={[styles.searchBar, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
+          reserveHelperSpace={false}
+          containerStyle={{ flex: 1, alignSelf: 'center' }}
+          inputContainerStyle={[styles.searchBar, { backgroundColor: colors.gray100, borderColor: 'transparent', borderWidth: 0 }]}
 	          inputStyle={[styles.searchInput, { color: colors.textPrimary, paddingHorizontal: 0 }]}
 	          leftIcon={<Search size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
 	          rightIcon={searchQuery.length > 0 ? (
@@ -728,8 +729,8 @@ const styles = StyleSheet.create({
 
   // Header
   filterButton: {
-    width: LAYOUT.inputHeightSm,
-    height: LAYOUT.inputHeightSm,
+    width: LAYOUT.inputHeight,
+    height: LAYOUT.inputHeight,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: BORDER.radius.sm,
@@ -753,9 +754,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    height: LAYOUT.inputHeightSm,
+    height: LAYOUT.inputHeight,
     paddingHorizontal: SPACING.md,
-    borderWidth: BORDER.width.thin,
+    borderWidth: 0,
     borderRadius: BORDER.radius.sm,
   },
 
@@ -763,7 +764,8 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: TYPOGRAPHY.fontSize.md,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    paddingVertical: 0,
+    paddingVertical: SPACING.sm,
+    textAlignVertical: 'center',
   },
 
   // Modal

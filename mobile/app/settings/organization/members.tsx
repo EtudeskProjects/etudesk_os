@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxl,
+    paddingBottom: SPACING.xxl * 3,
   },
 
   // List
@@ -557,14 +557,7 @@ const styles = StyleSheet.create({
   },
 
   deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
     marginTop: SPACING.xxl,
-    paddingVertical: SPACING.md,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
   },
 
   deleteButtonText: {

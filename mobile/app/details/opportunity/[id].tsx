@@ -32,6 +32,7 @@ import { useSpace } from '../../../src/contexts/SpaceContext';
 import { formatRelativeTime, formatDeadline, formatDate } from '../../../src/utils/date';
 import { getFullImageUrl } from '../../../src/utils/image';
 import { getFileType, getFullFileUrl } from '../../../src/utils/file';
+import { RemoteImage } from '../../../src/components/ui/RemoteImage';
 import type { Opportunity, OpportunityAttachment } from '../../../src/types/models';
 import {
   OPPORTUNITY_TYPE_LABELS,
@@ -319,7 +320,7 @@ export default function OpportunityDetailScreen() {
               accessibilityLabel={`Voir ${opportunity.organization.name}`}
             >
               {opportunity.organization.logo_url ? (
-                <Image source={{ uri: opportunity.organization.logo_url }} style={styles.orgLogo} />
+                <RemoteImage uri={opportunity.organization.logo_url} style={styles.orgLogo} />
               ) : (
                 <View style={[styles.orgLogoPlaceholder, { backgroundColor: colors.primary }]}>
                   <Text style={[styles.orgLogoText, { color: colors.textOnPrimary }]}>

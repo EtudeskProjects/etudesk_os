@@ -140,7 +140,7 @@ async function runTest(
   }
 
   // Org intents
-  const orgIntents = ['org_stats', 'org_members', 'org_opportunities', 'org_communities', 'org_spaces', 'org_revenue', 'org_invitations'];
+  const orgIntents = ['org_stats', 'org_members', 'org_opportunities', 'org_communities', 'org_spaces', 'org_invitations'];
   for (const intent of orgIntents) {
     await runTest('sql_query', intent,
       { intent, paramsJson: JSON.stringify({ organizationId: ORG_ID }) },

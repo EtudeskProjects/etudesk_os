@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { TYPOGRAPHY, LAYOUT, withOpacity, OPACITY } from '../../../constants/theme';
 import { useTheme } from '../../../hooks/useTheme';
+import { RemoteImage } from '../../ui/RemoteImage';
 
 interface AvatarProps {
     uri?: string | null;
@@ -51,10 +52,7 @@ export const Avatar: React.FC<AvatarProps> = ({
 
     if (uri) {
         return (
-            <Image
-                source={{ uri }}
-                style={[styles.image, avatarStyle, ringStyle, { backgroundColor: colors.gray200 }]}
-            />
+            <RemoteImage uri={uri} style={[styles.image, avatarStyle, ringStyle, { backgroundColor: colors.gray200 }]} />
         );
     }
 

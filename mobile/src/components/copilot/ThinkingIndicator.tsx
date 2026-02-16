@@ -1,14 +1,16 @@
 /**
- * ThinkingIndicator — Shimmer effect + "Réfléchit…"
- * Replaces ActivityIndicator in copilot/assistant contexts
- * Visible in light and dark mode with biological rhythm
+ * ThinkingIndicator — Brain icon with shimmer + "Réfléchit…"
+ * Replaces skeleton bars with a compact brain icon + label row
+ * The brain icon pulses with a breathing shimmer effect
  */
 
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { Brain } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
-import { ShimmerPlaceholder } from '../ui/ShimmerPlaceholder';
-import { SPACING, TYPOGRAPHY } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, ICON } from '../../constants/theme';
+
+const CYCLE_MS = 2800; // Breathing rhythm
 
 interface ThinkingIndicatorProps {
   /** Default: "Réfléchit…" */
@@ -19,14 +21,44 @@ export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({
   label = 'Réfléchit…',
 }) => {
   const { colors } = useTheme();
+  const anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const breathing = Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: CYCLE_MS / 2,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        Animated.timing(anim, {
+          toValue: 0,
+          duration: CYCLE_MS / 2,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease),
+        }),
+      ])
+    );
+    breathing.start();
+    return () => breathing.stop();
+  }, [anim]);
+
+  const opacity = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.35, 1],
+  });
+
+  const scale = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.95, 1.05],
+  });
 
   return (
     <View style={styles.container}>
-      <View style={styles.bars}>
-        <ShimmerPlaceholder width="80%" height={12} variant="bar" />
-        <ShimmerPlaceholder width="60%" height={12} variant="bar" style={styles.bar2} />
-        <ShimmerPlaceholder width="70%" height={12} variant="bar" style={styles.bar3} />
-      </View>
+      <Animated.View style={{ opacity, transform: [{ scale }] }}>
+        <Brain size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+      </Animated.View>
       <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
@@ -34,14 +66,11 @@ export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: SPACING.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: SPACING.sm,
+    paddingVertical: SPACING.sm,
   },
-  bars: {
-    gap: SPACING.xs,
-  },
-  bar2: { marginLeft: SPACING.sm },
-  bar3: { marginLeft: SPACING.xs },
   label: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
