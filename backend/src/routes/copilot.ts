@@ -190,13 +190,13 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         : EXPLORER_CONTEXT_OPTIONS;
 
     const [session, talentContext, userLanguage] = await Promise.all([
-      // Session (create or get)
+      // Session (create or get — scoped by organizationId for isolation)
       (async () => {
         if (inputSessionId) {
-          const existing = await copilotService.getSession(inputSessionId, talentId);
+          const existing = await copilotService.getSession(inputSessionId, talentId, organizationId);
           if (existing) return existing;
         }
-        return copilotService.createSession(talentId, validMode);
+        return copilotService.createSession(talentId, validMode, organizationId);
       })(),
       // Context loading
       loadTalentContext(talentId, contextOptions),
@@ -361,9 +361,10 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
 
     const mode = (req.query.mode as string) || 'explore';
     const sessionId = req.query.sessionId as string | undefined;
+    const organizationId = req.query.organizationId as string | undefined;
 
     // 1. Check cache FIRST — before any DB/AI calls
-    const cacheKey = `${talentId}:${sessionId || 'new'}:${mode}`;
+    const cacheKey = `${talentId}:${sessionId || 'new'}:${mode}:${organizationId || 'personal'}`;
     const cached = suggestionsCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
       return res.json({
@@ -721,8 +722,9 @@ router.get('/sessions', authMiddleware, async (req: AuthRequest, res: Response) 
     }
 
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+    const organizationId = req.query.organizationId as string | undefined;
 
-    const sessions = await copilotService.listSessions(talentId, limit);
+    const sessions = await copilotService.listSessions(talentId, limit, organizationId);
 
     res.json({
       success: true,
@@ -748,10 +750,10 @@ router.post('/sessions', authMiddleware, async (req: AuthRequest, res: Response)
       return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
     }
 
-    const { mode } = req.body;
+    const { mode, organizationId } = req.body;
     const validMode: CopilotMode = COPILOT_MODES.EXPLORE;
 
-    const session = await copilotService.createSession(talentId, validMode);
+    const session = await copilotService.createSession(talentId, validMode, organizationId);
 
     res.json({
       success: true,
@@ -777,8 +779,9 @@ router.get('/sessions/:id', authMiddleware, async (req: AuthRequest, res: Respon
     }
 
     const sessionId = req.params.id;
+    const organizationId = req.query.organizationId as string | undefined;
 
-    const session = await copilotService.getSession(sessionId, talentId);
+    const session = await copilotService.getSession(sessionId, talentId, organizationId);
     if (!session) {
       return res.status(404).json({ error: req.t('copilot:sessionNotFound') });
     }
@@ -840,9 +843,10 @@ router.get('/sessions/:id/messages', authMiddleware, async (req: AuthRequest, re
 
     const sessionId = req.params.id;
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+    const organizationId = req.query.organizationId as string | undefined;
 
-    // Verify session belongs to user
-    const session = await copilotService.getSession(sessionId, talentId);
+    // Verify session belongs to user (and org scope if applicable)
+    const session = await copilotService.getSession(sessionId, talentId, organizationId);
     if (!session) {
       return res.status(404).json({ error: req.t('copilot:sessionNotFound') });
     }
