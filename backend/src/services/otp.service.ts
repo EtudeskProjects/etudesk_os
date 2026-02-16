@@ -333,6 +333,70 @@ async function resolveOrCreateUserForWhatsAppPhone(
 }
 
 /**
+ * Resolve or create a user for Google OAuth sign-in.
+ * Looks up user by email (already unique in DB). If not found, creates one.
+ */
+export async function resolveOrCreateUserForGoogle(
+  email: string,
+  googleProfile: { name?: string; picture?: string }
+): Promise<{ userId: string; email: string; isNewUser: boolean }> {
+  const client = await pool.connect();
+  try {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user already exists by email
+    const existingUser = await client.query(
+      `SELECT id, email FROM users WHERE email = $1 AND deleted_at IS NULL`,
+      [normalizedEmail]
+    );
+
+    if (existingUser.rows.length > 0) {
+      // Update last login
+      await client.query(
+        `UPDATE users SET last_login_at = NOW(), login_count = login_count + 1 WHERE id = $1`,
+        [existingUser.rows[0].id]
+      );
+      return { userId: existingUser.rows[0].id, email: existingUser.rows[0].email, isNewUser: false };
+    }
+
+    // Check if a talent exists with this email → link it
+    const existingTalent = await client.query(
+      `SELECT id FROM talents WHERE email = $1 AND deleted_at IS NULL LIMIT 1`,
+      [normalizedEmail]
+    );
+
+    let talentId: string | null = null;
+    if (existingTalent.rows.length > 0) {
+      talentId = existingTalent.rows[0].id;
+
+      // Check if a user is already linked to this talent
+      const userByTalent = await client.query(
+        `SELECT id, email FROM users WHERE talent_id = $1 AND deleted_at IS NULL LIMIT 1`,
+        [talentId]
+      );
+      if (userByTalent.rows.length > 0) {
+        await client.query(
+          `UPDATE users SET last_login_at = NOW(), login_count = login_count + 1 WHERE id = $1`,
+          [userByTalent.rows[0].id]
+        );
+        return { userId: userByTalent.rows[0].id, email: userByTalent.rows[0].email, isNewUser: false };
+      }
+    }
+
+    // Create new user
+    const insertQuery = talentId
+      ? `INSERT INTO users (email, email_verified, email_verified_at, talent_id) VALUES ($1, TRUE, NOW(), $2) RETURNING id, email`
+      : `INSERT INTO users (email, email_verified, email_verified_at) VALUES ($1, TRUE, NOW()) RETURNING id, email`;
+    const insertParams = talentId ? [normalizedEmail, talentId] : [normalizedEmail];
+
+    const created = await client.query(insertQuery, insertParams);
+    return { userId: created.rows[0].id, email: created.rows[0].email, isNewUser: true };
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Verify an OTP code
  */
 export async function verifyOTP(email: string, code: string): Promise<VerifyOTPResult> {

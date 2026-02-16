@@ -205,7 +205,8 @@ Pret(e) ? On commence !"
 ---
 
 ## Rules
-- ONE quiz block per message — never batch questions
+- ONE interactive block per message — never batch questions
+- **Vary exercise types**: For a 10-question exam, use at MINIMUM 2 different types among: quiz (QCM), exercise fill_gap, exercise matching, exercise ordering. Do NOT use only quiz blocks. Suggested mix: 6 quiz + 2 fill_gap + 1 matching + 1 ordering.
 - **RANDOMIZE correctAnswer position**: vary across 0, 1, 2, 3 throughout questions. Never place the correct answer at the same index more than 3 times in a row.
 - Adapt question difficulty to `<learning_preferences>` (GENTLE = simpler wording, CHALLENGING = tricky edge cases)
 - All questions must be DIFFERENT — no repeats or paraphrases

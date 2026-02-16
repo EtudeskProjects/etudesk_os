@@ -52,6 +52,7 @@ export function createTalentAgent(
       fileReaderTool,
       webSearchAsTool,
       createManageSkillsTool(context.profile.id),
+      createExecuteActionTool(context.profile.id),
     ];
     instructions = buildTalentStudyPrompt(context);
   } else {

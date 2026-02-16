@@ -1,6 +1,6 @@
 /**
  * MarkdownRenderer — Custom markdown parser for copilot messages
- * Detects special blocks (entity, quiz, flashcard, youtube, diagram, image, chart, code)
+ * Detects special blocks (entity, quiz, flashcard, youtube, diagram, image, chart, code, math, steps, exercise, playground, canvas)
  * and renders them as interactive components.
  * Standard markdown: **bold**, _italic_, # headings, - lists, [links](url), > quotes
  */
@@ -19,6 +19,11 @@ import { ImageBlock } from './blocks/ImageBlock';
 import { ChartBlock } from './blocks/ChartBlock';
 import { CodeBlock } from './blocks/CodeBlock';
 import { ConfirmationBlock } from './blocks/ConfirmationBlock';
+import { MathBlock } from './blocks/MathBlock';
+import { StepSolverBlock } from './blocks/StepSolverBlock';
+import { ExerciseBlock } from './blocks/ExerciseBlock';
+import { CodePlaygroundBlock } from './blocks/CodePlaygroundBlock';
+import { CanvasBlock } from './blocks/CanvasBlock';
 
 const MONO_FONT_FAMILY = Platform.select({
   ios: 'Menlo',
@@ -35,7 +40,7 @@ interface MarkdownRendererProps {
 
 // Parse content into blocks
 interface Block {
-  type: 'text' | 'entity' | 'quiz' | 'flashcard' | 'youtube' | 'diagram' | 'image' | 'chart' | 'code' | 'confirmation' | 'loading';
+  type: 'text' | 'entity' | 'quiz' | 'flashcard' | 'youtube' | 'diagram' | 'image' | 'chart' | 'code' | 'confirmation' | 'math' | 'steps' | 'exercise' | 'playground' | 'canvas' | 'loading';
   content: string;
   meta?: string; // entity type, language, etc.
   data?: any; // parsed JSON data
@@ -138,6 +143,31 @@ function parseBlocks(content: string): Block[] {
     else if (tag === 'chart' || ['bar', 'donut', 'stacked_bar', 'table', 'line', 'radar', 'metric'].includes(tag)) {
       const data = tryParseJSON(body);
       if (data) blocks.push({ type: 'chart', content: body, data });
+    }
+    // Math block
+    else if (tag === 'math') {
+      const data = tryParseJSON(body);
+      if (data && data.expression) blocks.push({ type: 'math', content: body, data });
+    }
+    // Steps block
+    else if (tag === 'steps') {
+      const data = tryParseJSON(body);
+      if (data && data.steps) blocks.push({ type: 'steps', content: body, data });
+    }
+    // Exercise block
+    else if (tag === 'exercise') {
+      const data = tryParseJSON(body);
+      if (data && data.type) blocks.push({ type: 'exercise', content: body, data });
+    }
+    // Code Playground block
+    else if (tag === 'playground') {
+      const data = tryParseJSON(body);
+      if (data && data.code) blocks.push({ type: 'playground', content: body, data });
+    }
+    // Canvas block
+    else if (tag === 'canvas') {
+      const data = tryParseJSON(body);
+      if (data && data.elements) blocks.push({ type: 'canvas', content: body, data });
     }
     // Confirmation block
     else if (tag === 'confirmation') {
@@ -539,6 +569,16 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQ
                 interactive={interactiveConfirmation}
               />
             );
+          case 'math':
+            return <MathBlock key={index} data={block.data} />;
+          case 'steps':
+            return <StepSolverBlock key={index} data={block.data} />;
+          case 'exercise':
+            return <ExerciseBlock key={index} data={block.data} onAnswer={onQuizAnswer} />;
+          case 'playground':
+            return <CodePlaygroundBlock key={index} data={block.data} />;
+          case 'canvas':
+            return <CanvasBlock key={index} data={block.data} />;
           case 'code':
             return (
               <CodeBlock key={index} language={block.meta || ''} code={block.content} />

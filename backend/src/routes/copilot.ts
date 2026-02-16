@@ -46,6 +46,7 @@ import { summarizeHistoryIfNeeded } from '../services/copilot/session-summarizer
 import { handleConfirmation } from '../services/copilot/actions/action.handler';
 import { copilotChatLimiter, copilotGeneralLimiter } from '../middleware/rateLimit.middleware';
 import { debitWalletForAction } from '../services/billing/credit.service';
+import { cache } from '../utils/cache';
 
 const router = Router();
 
@@ -189,6 +190,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         ? STUDY_CONTEXT_OPTIONS
         : EXPLORER_CONTEXT_OPTIONS;
 
+    // Cache key: ctx:{talentId}:{mode} — TTL 5 min, invalidated on profile/skills/docs mutation
+    const ctxCacheKey = `ctx:${talentId}:${isOrg ? 'org' : validMode}`;
+
     const [session, talentContext, userLanguage] = await Promise.all([
       // Session (create or get — scoped by organizationId for isolation)
       (async () => {
@@ -198,8 +202,8 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         }
         return copilotService.createSession(talentId, validMode, organizationId);
       })(),
-      // Context loading
-      loadTalentContext(talentId, contextOptions),
+      // Context loading (cached 5 min per talent+mode)
+      cache.getOrSet(ctxCacheKey, () => loadTalentContext(talentId, contextOptions), 5 * 60 * 1000),
       // Language preference
       req.userId
         ? pool.query('SELECT preferred_language FROM users WHERE id = $1', [req.userId])

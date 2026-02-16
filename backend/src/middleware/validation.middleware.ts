@@ -211,6 +211,10 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1, 'validation:auth.refreshTokenRequired')
 });
 
+export const googleAuthSchema = z.object({
+  idToken: z.string().min(100, 'validation:auth.invalidToken'),
+});
+
 // --- Onboarding Schemas ---
 
 const VALID_PROFILE_TAGS = [

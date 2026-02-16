@@ -37,17 +37,21 @@ import waitlistRouter from './routes/waitlist';
 import whatsappRouter from './routes/whatsapp';
 import communityNotificationsRouter from './routes/community-notifications.routes';
 import ecosystemRouter from './routes/ecosystem.routes';
+import entitiesRouter from './routes/entities';
+import bootstrapRouter from './routes/bootstrap';
 import { verifyEmailConnection } from './services/email.service';
 import { cleanupExpiredOTPs } from './services/otp.service';
 import { apiLimiter, authLimiter, otpLimiter, writeLimiter } from './middleware/rateLimit.middleware';
 
 import * as notificationService from './services/notification.service';
 import { communityActivityService } from './services/community-activity.service';
+import { processDueAgendaTriggers } from './services/agenda-trigger.service';
 import { AppError, isAppError, RateLimitError } from './errors';
 import { createVersionedRouter, CURRENT_API_VERSION } from './middleware/api-version.middleware';
 import { logger } from './utils';
 import { i18nMiddleware } from './i18n';
 import { pool } from './services/database';
+import { cache } from './utils/cache';
 import { v4 as uuidv4 } from 'uuid';
 import { precomputeSkillEmbeddings } from './services/copilot/skills/skill.loader';
 
@@ -138,18 +142,43 @@ app.use(i18nMiddleware);
 const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadDir));
 
-// Health check (no rate limit)
+// Health check (no rate limit) — enriched monitoring
 app.get('/health', async (req, res) => {
+  const mem = process.memoryUsage();
+  const uptime = process.uptime();
+
+  // Optional: check DB connectivity
+  let dbOk = true;
+  try {
+    await pool.query('SELECT 1');
+  } catch {
+    dbOk = false;
+  }
+
   res.json({
-    status: 'ok',
+    status: dbOk ? 'ok' : 'degraded',
     name: 'Etudesk API',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
+    uptime: {
+      seconds: Math.floor(uptime),
+      human: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
+    },
     db: {
+      status: dbOk ? 'ok' : 'error',
       totalConnections: pool.totalCount,
       idleConnections: pool.idleCount,
       waitingClients: pool.waitingCount,
     },
+    cache: {
+      entries: cache.size,
+    },
+    memory: {
+      rss: `${Math.round(mem.rss / 1024 / 1024)}MB`,
+      heapUsed: `${Math.round(mem.heapUsed / 1024 / 1024)}MB`,
+      heapTotal: `${Math.round(mem.heapTotal / 1024 / 1024)}MB`,
+    },
+    pid: process.pid,
   });
 });
 
@@ -185,6 +214,8 @@ v1Router.use('/bookmarks', writeLimiter, bookmarksRouter);
 v1Router.use('/notifications', notificationsRouter);
 v1Router.use('/community-notifications', communityNotificationsRouter);
 v1Router.use('/ecosystem', ecosystemRouter);
+v1Router.use('/entities', entitiesRouter);
+v1Router.use('/bootstrap', bootstrapRouter);
 v1Router.use('/images', imagesRouter);
 v1Router.use('/files', filesRouter);
 v1Router.use('/payment-methods', paymentMethodsRouter);
@@ -297,6 +328,21 @@ const server = app.listen(PORT, async () => {
   };
   runPublishScheduledCron();
   setInterval(runPublishScheduledCron, 5 * 60 * 1000);
+
+  // Execute due agenda triggers every 5 minutes
+  const runAgendaTriggersCron = async () => {
+    try {
+      const result = await processDueAgendaTriggers(100);
+      if (result.skipped) return;
+      if (result.processed > 0) {
+        cronLogger.info('Processed agenda triggers', result);
+      }
+    } catch (err) {
+      cronLogger.error('Failed to process agenda triggers', err);
+    }
+  };
+  runAgendaTriggersCron();
+  setInterval(runAgendaTriggersCron, 5 * 60 * 1000);
 
   // Cleanup old notifications weekly
   const runNotificationCleanupCron = async () => {

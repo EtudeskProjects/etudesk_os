@@ -16,6 +16,7 @@ import { buildTalentObject, talentObjectToText } from '../services/ai/talent-obj
 import { normalizeCountryCode } from '../constants/countries';
 
 import { logger } from '../utils';
+import { cache } from '../utils/cache';
 // Type for SQL query parameters
 type QueryParam = string | number | boolean | null | Date | string[];
 
@@ -224,6 +225,9 @@ router.put('/me', authMiddleware, validate(updateTalentSchema), async (req: Auth
     if (result.rows.length === 0) {
       return res.status(404).json({ error: req.t('talents:profileNotFound') });
     }
+
+    // Invalidate copilot context cache for this talent
+    cache.deleteByPrefix(`ctx:${req.talentId}:`);
 
     // Generate/update embedding for semantic search (async, non-blocking)
     onTalentProfileUpdate(req.talentId).catch(err =>

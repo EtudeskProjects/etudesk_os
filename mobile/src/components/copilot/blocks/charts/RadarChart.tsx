@@ -4,7 +4,7 @@
 
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
-import Svg, { G, Polygon, Line, Circle, Text as SvgText } from 'react-native-svg';
+import Svg, { G, Polygon, Line, Circle, Text as SvgText, TSpan } from 'react-native-svg';
 import { useTheme } from '../../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, OPACITY, withOpacity } from '../../../../constants/theme';
 
@@ -33,6 +33,24 @@ function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
 }
 
+/** Split a label into lines of up to `maxChars` characters, breaking on spaces. */
+function wrapLabel(text: string, maxChars: number): string[] {
+  if (text.length <= maxChars) return [text];
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    if (current && (current.length + 1 + word.length) > maxChars) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = current ? `${current} ${word}` : word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
 function toPoints(values: number[], max: number, cx: number, cy: number, r: number): string {
   const n = values.length;
   const pts: string[] = [];
@@ -59,8 +77,8 @@ export const RadarChart: React.FC<RadarChartProps> = ({ title, axes, series, max
     [mode]
   );
 
-  const labelPad = 60; // extra space for labels around the radar
-  const radarSize = Math.min(260, Math.max(200, Math.floor(width - SPACING.lg * 2 - labelPad * 2)));
+  const labelPad = 72; // extra space for labels around the radar
+  const radarSize = Math.min(240, Math.max(180, Math.floor(width - SPACING.lg * 2 - labelPad * 2)));
   const size = radarSize + labelPad * 2; // total SVG size including label space
   const cx = size / 2;
   const cy = size / 2;
@@ -88,13 +106,22 @@ export const RadarChart: React.FC<RadarChartProps> = ({ title, axes, series, max
     return { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
   });
 
+  const LABEL_FONT_SIZE = 10;
+  const LABEL_LINE_HEIGHT = 13;
+  const LABEL_MAX_CHARS = 14;
+
   const labelPoints = safeAxes.map((label, i) => {
     const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-    const rr = radius + 20;
-    const x = cx + rr * Math.cos(angle);
-    const y = cy + rr * Math.sin(angle);
-    const anchor = Math.cos(angle) > 0.35 ? 'start' : Math.cos(angle) < -0.35 ? 'end' : 'middle';
-    return { label, x, y, anchor };
+    const cosA = Math.cos(angle);
+    const sinA = Math.sin(angle);
+    const rr = radius + 18;
+    const x = cx + rr * cosA;
+    const y = cy + rr * sinA;
+    const anchor = cosA > 0.35 ? 'start' : cosA < -0.35 ? 'end' : 'middle';
+    const lines = wrapLabel(label, LABEL_MAX_CHARS);
+    // Vertical offset: center the multi-line block around the point
+    const dyStart = -((lines.length - 1) * LABEL_LINE_HEIGHT) / 2;
+    return { lines, x, y, anchor, dyStart };
   });
 
   return (
@@ -142,14 +169,23 @@ export const RadarChart: React.FC<RadarChartProps> = ({ title, axes, series, max
           {labelPoints.map((p, idx) => (
             <SvgText
               key={`l-${idx}`}
-              x={p.x} y={p.y}
+              x={p.x}
+              y={p.y + p.dyStart}
               fill={colors.textSecondary}
-              fontSize={11}
+              fontSize={LABEL_FONT_SIZE}
               fontFamily={TYPOGRAPHY.fontFamily.regular}
               textAnchor={p.anchor as any}
               alignmentBaseline="middle"
             >
-              {p.label}
+              {p.lines.map((line, li) => (
+                <TSpan
+                  key={li}
+                  x={p.x}
+                  dy={li === 0 ? 0 : LABEL_LINE_HEIGHT}
+                >
+                  {line}
+                </TSpan>
+              ))}
             </SvgText>
           ))}
         </G>

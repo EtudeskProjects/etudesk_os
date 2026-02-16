@@ -20,6 +20,53 @@ const ACTION_TYPES = [
   'update_agenda_trigger',
 ] as const;
 
+function parseDateOnly(dateOnly: string): Date {
+  return new Date(`${dateOnly}T00:00:00.000Z`);
+}
+
+function dayBeforeStartAt0900Utc(startDateOnly: string): Date {
+  const start = parseDateOnly(startDateOnly);
+  const due = new Date(Date.UTC(
+    start.getUTCFullYear(),
+    start.getUTCMonth(),
+    start.getUTCDate(),
+    9, 0, 0, 0
+  ));
+  due.setUTCDate(due.getUTCDate() - 1);
+  return due;
+}
+
+async function resolveOpportunityStartDateForFollowUp(data: Record<string, any>): Promise<string | null> {
+  const metadata = (data.metadata && typeof data.metadata === 'object') ? data.metadata as Record<string, any> : {};
+  const applicationId = data.applicationId || data.application_id || metadata.applicationId || metadata.application_id || null;
+  const opportunityId = data.opportunityId || data.opportunity_id || metadata.opportunityId || metadata.opportunity_id || null;
+
+  if (applicationId) {
+    const appRes = await pool.query(
+      `SELECT o.start_date
+       FROM opportunity_applications oa
+       JOIN opportunities o ON o.id = oa.opportunity_id
+       WHERE oa.id = $1::uuid
+       LIMIT 1`,
+      [String(applicationId)]
+    );
+    return appRes.rows[0]?.start_date || null;
+  }
+
+  if (opportunityId) {
+    const oppRes = await pool.query(
+      `SELECT start_date
+       FROM opportunities
+       WHERE id = $1::uuid
+       LIMIT 1`,
+      [String(opportunityId)]
+    );
+    return oppRes.rows[0]?.start_date || null;
+  }
+
+  return null;
+}
+
 export function createExecuteActionTool(authenticatedTalentId: string) {
   return defineTool({
     name: 'execute_action',
@@ -49,7 +96,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
             const dueAtRaw = data.dueAt || data.due_at;
             const organizationId = data.organizationId || data.organization_id;
             const priority = (data.priority === 'LOW' || data.priority === 'HIGH') ? data.priority : 'NORMAL';
-            const metadata = (data.metadata && typeof data.metadata === 'object') ? data.metadata : {};
+            let metadata = (data.metadata && typeof data.metadata === 'object') ? { ...(data.metadata as Record<string, any>) } : {};
 
             if (!code || code.length < 2) {
               return { success: false, error: 'code requis (ex: FOLLOW_UP, REMINDER, RESEARCH, ACTION)' };
@@ -60,9 +107,26 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
             if (!dueAtRaw) {
               return { success: false, error: 'dueAt requis (ISO datetime)' };
             }
-            const dueAt = new Date(String(dueAtRaw));
+            let dueAt = new Date(String(dueAtRaw));
             if (isNaN(dueAt.getTime())) {
               return { success: false, error: 'dueAt invalide' };
+            }
+
+            // FOLLOW_UP must account for opportunity start_date when available.
+            if (code.toUpperCase() === 'FOLLOW_UP') {
+              const startDate = await resolveOpportunityStartDateForFollowUp(data);
+              if (startDate) {
+                const cappedDueAt = dayBeforeStartAt0900Utc(startDate);
+                if (dueAt > cappedDueAt) {
+                  dueAt = cappedDueAt;
+                  metadata = {
+                    ...metadata,
+                    adjusted_due_to_start_date: true,
+                    opportunity_start_date: startDate,
+                    adjusted_due_at: dueAt.toISOString(),
+                  };
+                }
+              }
             }
 
             if (organizationId) {

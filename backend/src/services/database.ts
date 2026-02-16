@@ -9,7 +9,7 @@ export const pool = new Pool({
   // Keep connections alive during long-running operations (agent workflows, tests)
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 10_000,
-  max: 20,
+  max: parseInt(process.env.DB_POOL_MAX || '50'),
   keepAlive: true,
   keepAliveInitialDelayMillis: 10_000,
 });

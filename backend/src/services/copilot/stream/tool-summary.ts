@@ -152,6 +152,8 @@ export function generateToolSummary(
           book_space: 'Espace réservé',
           accept_invitation: 'Invitation acceptée',
           decline_invitation: 'Invitation déclinée',
+          create_agenda_trigger: 'Trigger créé',
+          update_agenda_trigger: 'Trigger mis à jour',
         };
         return action ? actionLabels[action] || 'Action effectuée' : 'Action effectuée';
       }

@@ -31,6 +31,7 @@ import {
 } from '../constants/documents';
 import { debitWalletForAction } from '../services/billing/credit.service';
 import { getOrgDocument } from '../services/org-documents/org-document.service';
+import { cache } from '../utils/cache';
 
 const router = Router();
 
@@ -320,6 +321,9 @@ router.post(
         ? 'Document uploadé avec succès. Le traitement est en cours.'
         : `${uploadedDocuments.length} documents uploadés avec succès. Le traitement est en cours.`;
 
+      // Invalidate copilot context cache (documents changed)
+      cache.deleteByPrefix(`ctx:${talentId}:`);
+
       return res.status(201).json({
         message,
         document: uploadedDocuments.length === 1 ? uploadedDocuments[0] : undefined,
@@ -392,6 +396,9 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     if (!deleted) {
       return res.status(404).json({ error: req.t('documents:notFound') });
     }
+
+    // Invalidate copilot context cache
+    cache.deleteByPrefix(`ctx:${talentId}:`);
 
     return res.json({ message: req.t('documents:deleteSuccess') });
   } catch (error) {

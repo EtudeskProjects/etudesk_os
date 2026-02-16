@@ -8,6 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Animated,
+  Easing,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as DocumentPicker from 'expo-document-picker';
@@ -108,6 +110,33 @@ export default function AssistantScreen() {
 
   // Audio recording hook
   const audioRecorder = useAudioRecorder();
+
+  // Pulse animation for recording dot
+  const recordingPulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (audioRecorder.state.isRecording) {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(recordingPulse, {
+            toValue: 0.3,
+            duration: 600,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(recordingPulse, {
+            toValue: 1,
+            duration: 600,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulse.start();
+      return () => pulse.stop();
+    } else {
+      recordingPulse.setValue(1);
+    }
+  }, [audioRecorder.state.isRecording, recordingPulse]);
 
   const { colors } = useTheme();
   const modeColors = {
@@ -1034,7 +1063,7 @@ export default function AssistantScreen() {
                       </>
                     ) : (
                       <>
-                        <View style={[styles.recordingDot, { backgroundColor: colors.error }]} />
+                        <Animated.View style={[styles.recordingDot, { backgroundColor: colors.error, opacity: recordingPulse, transform: [{ scale: recordingPulse.interpolate({ inputRange: [0.3, 1], outputRange: [0.8, 1.2] }) }] }]} />
                         <Text style={[styles.recordingText, { color: colors.textPrimary }]}>
                           {formatDuration(audioRecorder.state.duration)} / 0:30
                         </Text>

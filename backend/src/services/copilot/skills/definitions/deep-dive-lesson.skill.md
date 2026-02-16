@@ -33,6 +33,15 @@ If ambiguous, default to Direct Teaching.
    - INTERMEDIATE → **Advanced level** (edge cases, patterns, best practices)
    - EXPERT/MASTER → **Expert level** (architecture decisions, tradeoffs, advanced patterns)
 
+### STEM Enhancement
+
+For STEM topics (math, physics, computer science, engineering):
+- Use `math` blocks for formulas, equations, and mathematical definitions
+- Use `steps` blocks for demonstrations and problem-solving walkthroughs
+- Use `canvas` blocks to illustrate geometric figures, coordinate planes, or visual proofs
+- Use `playground` blocks for coding exercises where the learner can run and modify code
+- Use `exercise` blocks (fill_gap, matching, ordering) to vary practice beyond QCM
+
 ### Step 2: Introduction (Message 1)
 
 4. Open with a hook — a surprising fact, real-world problem, or provocative question related to the topic.
@@ -210,6 +219,9 @@ For each project step, follow this pattern:
 ---
 
 ## Rules
+- For STEM lessons, prefer `math` + `steps` over plain text for formulas and demonstrations
+- For geometry topics, use `canvas` to illustrate figures
+- For coding topics, prefer `playground` over static code blocks when the learner should experiment
 - Follow the chosen protocol strictly — do NOT mix protocols mid-lesson
 - ONE component per message — the lesson unfolds over multiple exchanges
 - Each message stays under 1200 characters of text (excluding code blocks and components)

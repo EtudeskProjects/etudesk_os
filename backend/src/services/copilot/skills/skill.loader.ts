@@ -30,6 +30,7 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
     'file_reader',
     'web_search',
     'manage_skills',
+    'execute_action',
   ],
   org: [
     'vector_query',

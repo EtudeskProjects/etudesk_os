@@ -12,6 +12,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
+import { readCache, writeCache } from '../services/persistentCache';
 
 // Cache storage
 interface CacheEntry<T> {
@@ -147,10 +148,10 @@ export function useDataFetching<T>(
   }, [fetcher]);
 
   /**
-   * Main fetch function with caching and deduplication
+   * Main fetch function with caching, persistent cache fallback, and deduplication
    */
   const fetchData = useCallback(async (bypassCache: boolean = false) => {
-    // Check cache first (if enabled and not bypassing)
+    // Check in-memory cache first (if enabled and not bypassing)
     if (!bypassCache && configRef.current.useCache) {
       const cachedEntry = cache.get(cacheKey);
       if (isCacheValid(cachedEntry)) {
@@ -161,6 +162,27 @@ export function useDataFetching<T>(
           setError(null);
         }
         return;
+      }
+
+      // Fallback: check persistent cache (AsyncStorage) — stale-while-revalidate
+      const persistent = await readCache<T>(cacheKey).catch(() => null);
+      if (persistent) {
+        // Show stale data immediately
+        if (mountedRef.current) {
+          setData(persistent.data);
+          setIsFromCache(true);
+          setIsLoading(persistent.isStale); // Keep loading spinner if stale
+          setError(null);
+        }
+        // Populate in-memory cache
+        cache.set(cacheKey, {
+          data: persistent.data,
+          timestamp: Date.now(),
+          expiresAt: Date.now() + (persistent.isStale ? 0 : configRef.current.cacheTTL),
+        });
+        // If fresh, we're done
+        if (!persistent.isStale) return;
+        // If stale, continue to revalidate in background (no early return)
       }
     }
 
@@ -180,8 +202,8 @@ export function useDataFetching<T>(
       }
     }
 
-    // Start loading
-    if (mountedRef.current) {
+    // Start loading (only if we don't already have stale data showing)
+    if (mountedRef.current && data === null) {
       setIsLoading(true);
       setError(null);
     }
@@ -193,13 +215,16 @@ export function useDataFetching<T>(
     try {
       const result = await fetchPromise;
 
-      // Store in cache
+      // Store in both in-memory and persistent cache
       if (configRef.current.useCache) {
+        const ttl = configRef.current.cacheTTL;
         cache.set(cacheKey, {
           data: result,
           timestamp: Date.now(),
-          expiresAt: Date.now() + configRef.current.cacheTTL,
+          expiresAt: Date.now() + ttl,
         });
+        // Persist to AsyncStorage (fire-and-forget)
+        writeCache(cacheKey, result, ttl).catch(() => {});
       }
 
       if (mountedRef.current) {
@@ -212,13 +237,16 @@ export function useDataFetching<T>(
       const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
 
       if (mountedRef.current) {
-        setError(errorMessage);
+        // Only set error if we don't have stale data to show
+        if (data === null) {
+          setError(errorMessage);
+        }
         setIsLoading(false);
       }
     } finally {
       inFlightRequests.delete(cacheKey);
     }
-  }, [cacheKey, fetchWithRetry]);
+  }, [cacheKey, fetchWithRetry, data]);
 
   /**
    * Refetch data (bypasses cache)

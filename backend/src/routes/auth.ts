@@ -5,7 +5,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { createOTP, createWhatsAppOTP, verifyOTP, verifyOTPByChannel } from '../services/otp.service';
+import { createOTP, createWhatsAppOTP, verifyOTP, verifyOTPByChannel, resolveOrCreateUserForGoogle } from '../services/otp.service';
 import { sendOTPEmail } from '../services/email.service';
 import { sendWhatsAppOtp, formatPhoneToE164 } from '../services/whatsapp.service';
 import {
@@ -28,6 +28,7 @@ import {
   verifyOtpSchema,
   verifyWhatsAppOtpSchema,
   refreshTokenSchema,
+  googleAuthSchema,
 } from '../middleware/validation.middleware';
 
 const router = Router();
@@ -247,6 +248,93 @@ router.post('/verify-whatsapp-otp', validate(verifyWhatsAppOtpSchema), auditLog(
     });
   } catch (error) {
     logger.error('❌ Verify WhatsApp OTP error:', error);
+    return res.status(500).json({
+      success: false,
+      error: req.t('common:serverError'),
+    });
+  }
+});
+
+/**
+ * POST /auth/google
+ *
+ * Authenticate with Google OAuth ID token
+ */
+router.post('/google', validate(googleAuthSchema), auditLog('AUTH_GOOGLE'), async (req: Request, res: Response) => {
+  try {
+    const { idToken } = req.body;
+
+    // Verify the Google ID token
+    const { OAuth2Client } = await import('google-auth-library');
+    const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+    let ticket;
+    try {
+      ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+    } catch (verifyError) {
+      logger.warn('Google ID token verification failed', { error: verifyError });
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid Google token',
+      });
+    }
+
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid Google token payload',
+      });
+    }
+
+    const { email, name, picture, email_verified } = payload;
+
+    if (!email_verified) {
+      return res.status(401).json({
+        success: false,
+        error: 'Google email not verified',
+      });
+    }
+
+    // Resolve or create user
+    const result = await resolveOrCreateUserForGoogle(email, { name, picture });
+
+    // Generate tokens
+    const tokens = generateTokens(result.userId, result.email);
+
+    // Create session
+    const ipAddress = req.ip || req.socket.remoteAddress;
+    const userAgent = req.headers['user-agent'];
+
+    await createSession(result.userId, tokens.refreshToken, {
+      ipAddress,
+      userAgent,
+      deviceType: detectDeviceType(userAgent),
+    });
+
+    // Check if user needs onboarding
+    const needsOnboard = result.isNewUser || await needsOnboarding(result.userId);
+
+    // Get user profile
+    const profile = await getUserProfile(result.userId);
+
+    return res.json({
+      success: true,
+      message: result.isNewUser ? req.t('auth:accountCreated') : req.t('auth:loginSuccess'),
+      tokens: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresIn: tokens.expiresIn,
+      },
+      user: profile,
+      isNewUser: result.isNewUser,
+      needsOnboarding: needsOnboard,
+    });
+  } catch (error) {
+    logger.error('❌ Google auth error:', error);
     return res.status(500).json({
       success: false,
       error: req.t('common:serverError'),

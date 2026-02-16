@@ -32,8 +32,8 @@ export const ShimmerPlaceholder: React.FC<ShimmerPlaceholderProps> = ({
   const { colors } = useTheme();
   const anim = useRef(new Animated.Value(0)).current;
 
-  // Theme-aware colors: visible in both light and dark mode
-  const baseColor = colors.gray200;
+  // Theme-aware colors: use gray400 for visible contrast in both modes
+  const baseColor = colors.gray400;
 
   useEffect(() => {
     const breathing = Animated.loop(
@@ -58,7 +58,7 @@ export const ShimmerPlaceholder: React.FC<ShimmerPlaceholderProps> = ({
 
   const opacity = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.35, 0.85],
+    outputRange: [0.25, 1],
   });
 
   if (variant === 'bar') {
@@ -81,10 +81,10 @@ export const ShimmerPlaceholder: React.FC<ShimmerPlaceholderProps> = ({
 
   // Block variant: multiple bars with staggered opacity for wave effect
   const barOpacities = [
-    anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.35, 0.85, 0.35] }),
-    anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.45, 0.35, 0.75] }),
-    anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.55, 0.45, 0.65] }),
-    anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.65, 0.55, 0.55] }),
+    anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.25, 1, 0.25] }),
+    anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.35, 0.25, 0.85] }),
+    anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.5, 0.35, 0.7] }),
+    anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.65, 0.5, 0.55] }),
   ];
   const barWidths: DimensionValue[] = ['60%', '90%', '100%', '80%'];
   const barHeight = Math.max(12, height * 0.7);

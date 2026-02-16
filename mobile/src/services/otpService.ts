@@ -349,11 +349,56 @@ async function getCurrentUser(): Promise<any | null> {
   }
 }
 
+/**
+ * Sign in with Google OAuth ID token
+ */
+async function signInWithGoogle(idToken: string): Promise<VerifyOTPResult> {
+  try {
+    const response = await fetch(getApiUrl('/auth/google'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ idToken }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      logger.apiError(LOG_SOURCE, response.status, data.error || 'Google auth failed', '/api/auth/google');
+      return { success: false, needsOnboarding: false };
+    }
+
+    if (data.success && data.tokens) {
+      const stored = await storeAuthSession(data);
+      if (!stored) {
+        return { success: false, needsOnboarding: false };
+      }
+
+      logger.info(LOG_SOURCE, 'Google authentication successful', {
+        needsOnboarding: data.needsOnboarding,
+      });
+
+      return {
+        success: true,
+        needsOnboarding: data.needsOnboarding ?? false,
+        user: data.user,
+      };
+    }
+
+    return { success: false, needsOnboarding: false };
+  } catch (error) {
+    logger.error(LOG_SOURCE, 'Google sign-in error', error);
+    return { success: false, needsOnboarding: false };
+  }
+}
+
 export const otpService = {
   sendOTP,
   sendWhatsAppOTP,
   verifyOTP,
   verifyWhatsAppOTP,
+  signInWithGoogle,
   getAccessToken,
   getUser,
   getCurrentUser,

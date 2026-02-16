@@ -19,6 +19,7 @@ const MAX_TOOL_CALLS = 20;
 const MAX_SAME_TOOL_CALLS = 3;
 const MAX_TURN_DURATION_MS = 120_000;
 const HEARTBEAT_INTERVAL_MS = 30_000;
+const SSE_BUFFER_FLUSH_MS = 50; // Buffer text deltas and flush every 50ms
 
 /**
  * Send SSE comment (heartbeat) — keeps connection alive
@@ -198,24 +199,45 @@ export async function runAgentWithSSE(
         break;
       }
 
-      // Stream the response
+      // Stream the response — with prompt caching on system prompt
       const stream = client.messages.stream({
         model: agentConfig.model,
-        system: agentConfig.systemPrompt,
+        system: [
+          {
+            type: 'text' as const,
+            text: agentConfig.systemPrompt,
+            cache_control: { type: 'ephemeral' as const },
+          },
+        ],
         messages,
         tools: toolDefs,
         max_tokens: 4096,
       });
 
-      // Collect streaming events
+      // Collect streaming events — with text delta buffering (flush every 50ms)
       let currentTurnText = '';
       const toolUseBlocks: Array<{ id: string; name: string; input: any }> = [];
       let currentToolUse: { id: string; name: string; inputJson: string } | null = null;
+      let textBuffer = '';
+      let bufferTimer: ReturnType<typeof setTimeout> | null = null;
+
+      const flushTextBuffer = () => {
+        if (textBuffer) {
+          sendSSE(res, { type: 'text_delta', delta: textBuffer });
+          textBuffer = '';
+        }
+        if (bufferTimer) {
+          clearTimeout(bufferTimer);
+          bufferTimer = null;
+        }
+      };
 
       for await (const event of stream) {
         if (event.type === 'content_block_start') {
           const block = (event as any).content_block;
           if (block?.type === 'tool_use') {
+            // Flush any pending text before tool use
+            flushTextBuffer();
             currentToolUse = { id: block.id, name: block.name, inputJson: '' };
           }
         }
@@ -225,7 +247,7 @@ export async function runAgentWithSSE(
           if (delta?.type === 'text_delta' && delta.text) {
             finalOutput += delta.text;
             currentTurnText += delta.text;
-            sendSSE(res, { type: 'text_delta', delta: delta.text });
+            textBuffer += delta.text;
 
             // Append to last text segment or create new one
             const lastSeg = segments[segments.length - 1];
@@ -233,6 +255,11 @@ export async function runAgentWithSSE(
               lastSeg.content = (lastSeg.content || '') + delta.text;
             } else {
               segments.push({ type: 'text', content: delta.text });
+            }
+
+            // Schedule flush if not already scheduled
+            if (!bufferTimer) {
+              bufferTimer = setTimeout(flushTextBuffer, SSE_BUFFER_FLUSH_MS);
             }
           }
           if (delta?.type === 'input_json_delta' && currentToolUse) {
@@ -257,6 +284,9 @@ export async function runAgentWithSSE(
           }
         }
       }
+
+      // Flush any remaining buffered text after stream ends
+      flushTextBuffer();
 
       // Get the final message to check stop_reason
       const response = await stream.finalMessage();
@@ -396,11 +426,15 @@ export async function runAgentWithSSE(
           },
         });
 
-        // Add tool result for Anthropic
+        // Add tool result for Anthropic (trimmed only for very large payloads)
+        const rawContent = typeof output === 'string' ? output : JSON.stringify(output);
+        const trimmedContent = rawContent.length > 8000
+          ? rawContent.slice(0, 8000) + '\n... [trimmed — ' + rawContent.length + ' chars total]'
+          : rawContent;
         toolResults.push({
           type: 'tool_result',
           tool_use_id: toolUse.id,
-          content: typeof output === 'string' ? output : JSON.stringify(output),
+          content: trimmedContent,
         });
       }
 
@@ -510,7 +544,13 @@ export async function generateSessionTitle(message: string): Promise<string> {
     const response = await client.messages.create({
       model: MODEL_FAST,
       max_tokens: 50,
-      system: SESSION_TITLE_SYSTEM_PROMPT,
+      system: [
+        {
+          type: 'text' as const,
+          text: SESSION_TITLE_SYSTEM_PROMPT,
+          cache_control: { type: 'ephemeral' as const },
+        },
+      ],
       messages: [{ role: 'user', content: message }],
     });
 

@@ -8,8 +8,8 @@ import { Agent, run } from '@openai/agents';
 import { MODEL_FAST } from '../ai/models';
 import { logger } from '../../utils';
 
-const SUMMARY_THRESHOLD = 10; // Summarize when history exceeds this count
-const KEEP_RECENT = 4; // Keep last N messages verbatim
+const SUMMARY_THRESHOLD = 6; // Summarize when history exceeds this count (was 10)
+const KEEP_RECENT = 3; // Keep last N messages verbatim (was 4)
 
 const summarizerAgent = new Agent({
   name: 'Session Summarizer',
@@ -28,8 +28,8 @@ ALSO capture (critical for conversation continuity):
 - Refinements: what the user rejected and what they kept, what filters worked
 - Pending threads: topics started but not resolved
 
-Keep the summary concise (max 250 words). Use bullet points.
-Start with "[Résumé de la conversation précédente]" header.`,
+Keep the summary very concise (max 150 words). Use short bullet points (one line each).
+Start with "[Résumé]" header. Omit greetings and pleasantries.`,
 });
 
 /**

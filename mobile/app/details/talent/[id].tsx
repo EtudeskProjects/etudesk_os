@@ -635,9 +635,16 @@ export default function TalentDetailScreen() {
                   </View>
                   {talentApplications.map((app) => (
                     <View key={app.id} style={[styles.interactionItem, { backgroundColor: colors.gray100 }]}>
-                      <Text style={[styles.interactionItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                        {app.opportunity?.title || 'Opportunité'}
-                      </Text>
+                      <View style={styles.interactionItemContent}>
+                        <Text style={[styles.interactionItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                          {app.opportunity?.title || 'Opportunité'}
+                        </Text>
+                        {app.applied_at && (
+                          <Text style={[styles.interactionItemDate, { color: colors.textTertiary }]}>
+                            {formatRelativeTime(app.applied_at)}
+                          </Text>
+                        )}
+                      </View>
                       <View style={[styles.interactionBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                         <Text style={[styles.interactionBadgeText, { color: colors.primary }]}>
                           {app.status}
@@ -658,9 +665,16 @@ export default function TalentDetailScreen() {
                   </View>
                   {talentCommunities.map((comm: any) => (
                     <View key={comm.id} style={[styles.interactionItem, { backgroundColor: colors.gray100 }]}>
-                      <Text style={[styles.interactionItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                        {comm.name || comm.title}
-                      </Text>
+                      <View style={styles.interactionItemContent}>
+                        <Text style={[styles.interactionItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                          {comm.name || comm.title}
+                        </Text>
+                        {comm.joined_at && (
+                          <Text style={[styles.interactionItemDate, { color: colors.textTertiary }]}>
+                            {formatRelativeTime(comm.joined_at)}
+                          </Text>
+                        )}
+                      </View>
                       <View style={[styles.interactionBadge, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
                         <Text style={[styles.interactionBadgeText, { color: colors.success }]}>
                           Membre
@@ -681,9 +695,16 @@ export default function TalentDetailScreen() {
                   </View>
                   {talentBookings.map((booking: any) => (
                     <View key={booking.id} style={[styles.interactionItem, { backgroundColor: colors.gray100 }]}>
-                      <Text style={[styles.interactionItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                        {booking.space?.name || booking.space?.title || 'Espace'}
-                      </Text>
+                      <View style={styles.interactionItemContent}>
+                        <Text style={[styles.interactionItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                          {booking.space?.name || booking.space?.title || 'Espace'}
+                        </Text>
+                        {(booking.start_date || booking.created_at) && (
+                          <Text style={[styles.interactionItemDate, { color: colors.textTertiary }]}>
+                            {formatRelativeTime(booking.start_date || booking.created_at)}
+                          </Text>
+                        )}
+                      </View>
                       <View style={[styles.interactionBadge, {
                         backgroundColor: withOpacity(
                           booking.status === 'CONFIRMED' ? colors.success : colors.warning,
@@ -788,11 +809,11 @@ export default function TalentDetailScreen() {
               orgTags.map(tag => {
                 const isAssigned = talentTagIds.includes(tag.id);
                 return (
-                  <SelectCard
+                  <Pressable
                     key={tag.id}
                     style={[styles.tagAssignRow, { borderBottomColor: colors.gray100 }]}
                     onPress={() => handleToggleTag(tag.id)}
-                    selected={false}
+                    accessibilityRole="button"
                     accessibilityLabel={`Basculer catégorie ${tag.name}`}
                   >
                     <View style={[styles.tagDot, { backgroundColor: tag.color }]} />
@@ -803,7 +824,7 @@ export default function TalentDetailScreen() {
                     ]}>
                       {isAssigned && <Check size={14} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
                     </View>
-                  </SelectCard>
+                  </Pressable>
                 );
               })
             )}
@@ -1147,10 +1168,16 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.sm,
     marginBottom: SPACING.xs,
   },
-  interactionItemTitle: {
+  interactionItemContent: {
     flex: 1,
-    fontSize: TYPOGRAPHY.fontSize.sm,
     marginRight: SPACING.sm,
+  },
+  interactionItemTitle: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+  },
+  interactionItemDate: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    marginTop: 2,
   },
   interactionBadge: {
     paddingVertical: COMPONENT.pill.paddingVertical,

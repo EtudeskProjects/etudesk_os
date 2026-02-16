@@ -19,7 +19,7 @@ import {
 import { useTheme } from '../../hooks/useTheme';
 import { useI18n } from '../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
-import { api } from '../../services/api';
+import { fetchEntityBatched } from '../../services/entityBatchFetcher';
 import { ShimmerPlaceholder } from '../ui';
 
 
@@ -142,22 +142,22 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  // Auto-fetch entity data when only id is provided
+  // Auto-fetch entity data via batched API call (debounced 100ms)
   useEffect(() => {
     if (!needsFetch(initialData)) return;
-
-    const endpoint = ENTITY_ENDPOINTS[type];
-    if (!endpoint || !initialData.id) return;
+    if (!initialData.id) return;
 
     let cancelled = false;
     setLoading(true);
 
-    api.get<any>(`${endpoint}/${initialData.id}`)
-      .then((response) => {
+    fetchEntityBatched(type, initialData.id)
+      .then((entity) => {
         if (cancelled) return;
-        const raw = response.data || response;
-        const normalized = normalizeEntity(type, raw);
-        setEntityData({ ...initialData, ...normalized });
+        if (entity) {
+          setEntityData({ ...initialData, ...entity });
+        } else {
+          setError(true);
+        }
       })
       .catch(() => {
         if (cancelled) return;

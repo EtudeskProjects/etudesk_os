@@ -1,13 +1,20 @@
-import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AtSign } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER, BRAND_COLORS, LIGHT_COLORS } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useAlert } from '../../src/contexts/AlertContext';
+import { useAuth } from '../../src/contexts/AuthContext';
 import { SelectCard } from '../../src/components/ui';
 
+WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_CLIENT_ID = '46989075752-9q595dp7klvqf1d0q6eh8osctrt2idok.apps.googleusercontent.com';
 
 const { width, height } = Dimensions.get('window');
 
@@ -16,13 +23,56 @@ export default function LoginScreen() {
   const { colors } = useTheme();
   const { t } = useI18n();
   const alerts = useAlert();
+  const { signInGoogle } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
 
-  const showComingSoonAlert = (provider: string) => {
-    void alerts.showAlert({ title: 'Bientôt disponible', message: `La connexion via ${provider} sera disponible prochainement. En attendant, utilisez la connexion par email.`, buttons: [{ text: 'OK' }] });
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: GOOGLE_CLIENT_ID,
+  });
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      if (id_token) {
+        handleGoogleSignIn(id_token);
+      }
+    } else if (response?.type === 'error') {
+      setGoogleLoading(false);
+      void alerts.showAlert({
+        title: t('common.error'),
+        message: t('auth.login.googleError'),
+        buttons: [{ text: 'OK' }],
+      });
+    } else if (response?.type === 'dismiss') {
+      setGoogleLoading(false);
+    }
+  }, [response]);
+
+  const handleGoogleSignIn = async (idToken: string) => {
+    try {
+      setGoogleLoading(true);
+      const success = await signInGoogle(idToken);
+      if (!success) {
+        void alerts.showAlert({
+          title: t('common.error'),
+          message: t('auth.login.googleError'),
+          buttons: [{ text: 'OK' }],
+        });
+      }
+    } catch {
+      void alerts.showAlert({
+        title: t('common.error'),
+        message: t('auth.login.googleError'),
+        buttons: [{ text: 'OK' }],
+      });
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const handleGoogleLogin = () => {
-    showComingSoonAlert('Google');
+    setGoogleLoading(true);
+    promptAsync();
   };
 
   const handleWhatsAppLogin = () => {
@@ -53,15 +103,20 @@ export default function LoginScreen() {
           </Text>
 
           <SelectCard
-            style={[styles.authButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+            style={[styles.authButton, { backgroundColor: colors.surface, borderColor: colors.borderColor, opacity: googleLoading ? 0.7 : 1 }]}
             onPress={handleGoogleLogin}
             selected={false}
+            disabled={!request || googleLoading}
             accessibilityLabel="Continuer avec Google"
           >
-            <Image
-              source={require('../../assets/google_icon.png')}
-              style={styles.socialIcon}
-            />
+            {googleLoading ? (
+              <ActivityIndicator size="small" color={colors.textPrimary} />
+            ) : (
+              <Image
+                source={require('../../assets/google_icon.png')}
+                style={styles.socialIcon}
+              />
+            )}
             <Text style={[styles.authButtonText, { color: colors.textPrimary }]}>Google</Text>
           </SelectCard>
 

@@ -22,6 +22,52 @@ type TriggerScope = 'TALENT' | 'ORGANIZATION';
 type TriggerStatus = 'PENDING' | 'DONE' | 'CANCELED';
 type TriggerPriority = 'LOW' | 'NORMAL' | 'HIGH';
 
+function parseDateOnly(dateOnly: string): Date {
+    return new Date(`${dateOnly}T00:00:00.000Z`);
+}
+
+function dayBeforeStartAt0900Utc(startDateOnly: string): Date {
+    const start = parseDateOnly(startDateOnly);
+    const due = new Date(Date.UTC(
+        start.getUTCFullYear(),
+        start.getUTCMonth(),
+        start.getUTCDate(),
+        9, 0, 0, 0
+    ));
+    due.setUTCDate(due.getUTCDate() - 1);
+    return due;
+}
+
+async function resolveOpportunityStartDateForFollowUp(metadata: Record<string, any>): Promise<string | null> {
+    const applicationId = metadata.applicationId || metadata.application_id || null;
+    const opportunityId = metadata.opportunityId || metadata.opportunity_id || null;
+
+    if (applicationId) {
+        const appRes = await pool.query(
+            `SELECT o.start_date
+             FROM opportunity_applications oa
+             JOIN opportunities o ON o.id = oa.opportunity_id
+             WHERE oa.id = $1::uuid
+             LIMIT 1`,
+            [String(applicationId)]
+        );
+        return appRes.rows[0]?.start_date || null;
+    }
+
+    if (opportunityId) {
+        const oppRes = await pool.query(
+            `SELECT start_date
+             FROM opportunities
+             WHERE id = $1::uuid
+             LIMIT 1`,
+            [String(opportunityId)]
+        );
+        return oppRes.rows[0]?.start_date || null;
+    }
+
+    return null;
+}
+
 /**
  * POST /api/calendar/triggers
  * Create an agenda trigger (agent-scheduled action / reminder).
@@ -61,13 +107,30 @@ router.post('/triggers', authMiddleware, async (req: AuthRequest, res: Response)
         if (!due_at || typeof due_at !== 'string') {
             return res.status(400).json({ error: 'due_at requis' });
         }
-        const dueAt = new Date(due_at);
+        let dueAt = new Date(due_at);
         if (isNaN(dueAt.getTime())) {
             return res.status(400).json({ error: 'due_at invalide' });
         }
 
         const pr: TriggerPriority = (priority === 'LOW' || priority === 'HIGH') ? priority : 'NORMAL';
-        const metaObj = (metadata && typeof metadata === 'object') ? metadata : {};
+        let metaObj = (metadata && typeof metadata === 'object') ? { ...metadata } : {};
+
+        // FOLLOW_UP must account for opportunity start_date when available.
+        if (String(code).toUpperCase().trim() === 'FOLLOW_UP') {
+            const startDate = await resolveOpportunityStartDateForFollowUp(metaObj);
+            if (startDate) {
+                const cappedDueAt = dayBeforeStartAt0900Utc(startDate);
+                if (dueAt > cappedDueAt) {
+                    dueAt = cappedDueAt;
+                    metaObj = {
+                        ...metaObj,
+                        adjusted_due_to_start_date: true,
+                        opportunity_start_date: startDate,
+                        adjusted_due_at: dueAt.toISOString(),
+                    };
+                }
+            }
+        }
 
         const scope: TriggerScope = organizationId ? 'ORGANIZATION' : 'TALENT';
 

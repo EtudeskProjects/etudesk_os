@@ -51,6 +51,30 @@ export class MemoryCache {
     return value;
   }
 
+  /**
+   * Delete all keys matching a prefix (e.g., 'ctx:talentId:')
+   */
+  deleteByPrefix(prefix: string): number {
+    let count = 0;
+    for (const key of this.store.keys()) {
+      if (key.startsWith(prefix)) {
+        this.store.delete(key);
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Return cache stats for monitoring
+   */
+  getStats(): { size: number; keys: string[] } {
+    return {
+      size: this.store.size,
+      keys: [...this.store.keys()],
+    };
+  }
+
   clear(): void {
     this.store.clear();
   }

@@ -27,6 +27,7 @@ interface AuthContextType extends AuthState {
   // Actions
   signIn: (email: string, code: string) => Promise<boolean>;
   signInWhatsApp: (phone: string, code: string) => Promise<boolean>;
+  signInGoogle: (idToken: string) => Promise<boolean>;
   signOut: (allDevices?: boolean) => Promise<void>;
   refreshUser: () => Promise<void>;
   completeOnboarding: () => void;
@@ -238,6 +239,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  // SIGN IN WITH GOOGLE
+  const signInGoogle = useCallback(async (idToken: string): Promise<boolean> => {
+    try {
+      logger.debug(LOG_SOURCE, 'Attempting Google sign in');
+      const result = await otpService.signInWithGoogle(idToken);
+
+      if (result.success) {
+        logger.info(LOG_SOURCE, 'Google sign in successful', { needsOnboarding: result.needsOnboarding });
+        await checkAuthState();
+        return true;
+      }
+
+      logger.warn(LOG_SOURCE, 'Google sign in failed');
+      return false;
+    } catch (error) {
+      logger.error(LOG_SOURCE, 'Google sign in error', error);
+      return false;
+    }
+  }, []);
+
   // SIGN OUT
   const signOut = useCallback(async (allDevices: boolean = false) => {
     try {
@@ -296,6 +317,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     ...state,
     signIn,
     signInWhatsApp,
+    signInGoogle,
     signOut,
     refreshUser,
     completeOnboarding,

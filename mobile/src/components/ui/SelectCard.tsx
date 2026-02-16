@@ -7,6 +7,7 @@ import { Tap } from './Tap';
 
 type SelectCardProps = {
   selected?: boolean;
+  disabled?: boolean;
   onPress: () => void;
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -17,6 +18,7 @@ type SelectCardProps = {
 // This is a design-system primitive so screens don't hand-roll <Tap> cards.
 export function SelectCard({
   selected = false,
+  disabled = false,
   onPress,
   children,
   style,
@@ -30,12 +32,13 @@ export function SelectCard({
   return (
     <Tap
       onPress={onPress}
+      disabled={disabled}
       activeOpacity={0.7}
       style={[styles.base, { backgroundColor, borderColor }, style]}
       accessible={true}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ selected }}
+      accessibilityState={{ selected, disabled }}
     >
       {children}
       {selected ? (

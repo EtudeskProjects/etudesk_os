@@ -10,10 +10,19 @@ import { isValidSkillType, isValidProficiencyLevel } from '../constants/skills';
 import { mergeExtractedSkills } from '../services/skills/skill-merge.service';
 
 import { logger } from '../utils';
+import { cache } from '../utils/cache';
 const router = Router();
 
 // All routes require auth
 router.use(authMiddleware);
+
+// Invalidate copilot context cache on any skill mutation
+router.use((req: AuthRequest, _res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method) && req.talentId) {
+    cache.deleteByPrefix(`ctx:${req.talentId}:`);
+  }
+  next();
+});
 
 /**
  * GET /api/skills/my
