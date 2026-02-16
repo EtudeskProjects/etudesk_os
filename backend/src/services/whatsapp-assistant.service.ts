@@ -4,20 +4,21 @@ import { logger } from '../utils';
 import { MODEL_SUGGESTION } from './ai/models';
 import { pool } from './database';
 
-const SYSTEM_PROMPT = `Tu es Etudesk Support, l'assistant WhatsApp officiel de la plateforme Etudesk OS.
+const SYSTEM_PROMPT = `Tu es l'assistant WhatsApp d'Etudesk, la plateforme de gestion des talents en Afrique.
+
+Ton role: aider les utilisateurs sur connexion, profil, candidatures, communautes et credits.
 
 Regles:
-- Reponds en francais clair, ton professionnel et chaleureux.
-- Message court (max 500 caracteres).
-- Ton perimetre: support minimum (connexion, OTP, navigation de base, profil, candidatures, credits).
-- Si la demande depasse ce perimetre, recueille le probleme/feedback puis informe que l equipe entreprise prendra le relais.
-- Donne des etapes concretes si l'utilisateur demande une action.
-- Si la demande concerne le compte (OTP, connexion), propose des instructions simples.
-- N'invente jamais des donnees privees utilisateur.
-- Redirige toujours vers le telechargement de l'app Etudesk pour continuer le parcours.`;
+- Francais naturel, ton chaleureux, tutoiement. Pas de jargon technique.
+- Messages courts (max 400 caracteres). Va droit au but.
+- Si tu connais le prenom de l'utilisateur, utilise-le.
+- Donne des etapes concretes quand on te demande une action.
+- N'invente JAMAIS de donnees utilisateur (email, profil, etc.).
+- Si la demande depasse ton perimetre, note le probleme et dis que l'equipe reviendra vers eux.
+- N'ajoute PAS de lien de telechargement sauf si l'utilisateur demande ou c'est pertinent (ex: premiere interaction, demande d'inscription).
+- Ne demande JAMAIS de verification d'identite (email, OTP) sauf si l'utilisateur a un probleme de connexion specifique.`;
 
-const APP_DOWNLOAD_URL = process.env.ETUDESK_APP_DOWNLOAD_URL || 'https://etudesk.com/app';
-const APP_DOWNLOAD_CTA = `Telecharge l'app Etudesk: ${APP_DOWNLOAD_URL}`;
+const APP_URL = 'https://etudesk.com';
 
 type LinkedAccountContext = {
   linked: boolean;
@@ -257,8 +258,9 @@ function buildContextPrompt(account: LinkedAccountContext): string {
   if (account.talentPhone) lines.push(`Telephone profil: ${account.talentPhone}`);
   if (account.linkAction !== 'none') lines.push(`Action de liaison: ${account.linkAction}`);
 
-  lines.push('Si le compte n est pas lie, propose verification identite par email + OTP WhatsApp.');
-  lines.push('Ne divulguer aucune donnee sensible sans verification explicite.');
+  if (!account.linked) {
+    lines.push('Le compte WhatsApp n\'est pas lie a un profil Etudesk. Ne pas demander de verification sauf si l\'utilisateur a un probleme de connexion.');
+  }
 
   return lines.join('\n');
 }
@@ -309,22 +311,16 @@ function detectSupportIntent(message: string): {
   return { category: 'other', priority: 'low', tags: Array.from(tags) };
 }
 
-function applyAppDownloadRedirect(reply: string): string {
+function appendAppLinkIfNeeded(reply: string): string {
   const trimmed = (reply || '').trim();
-  const hasCta = trimmed.toLowerCase().includes('telecharge l\'app etudesk')
-    || trimmed.toLowerCase().includes('télécharge l\'app etudesk')
-    || trimmed.toLowerCase().includes(APP_DOWNLOAD_URL.toLowerCase());
-
-  const withCta = hasCta
-    ? trimmed
-    : `${trimmed}\n${APP_DOWNLOAD_CTA}`.trim();
-
-  if (withCta.length <= 500) return withCta;
-
-  // Preserve CTA while keeping answer within 500 chars.
-  const reserve = APP_DOWNLOAD_CTA.length + 2; // "\n\n"
-  const maxHead = Math.max(0, 500 - reserve - 3); // ellipsis
-  return `${withCta.slice(0, maxHead).trim()}...\n\n${APP_DOWNLOAD_CTA}`;
+  const lower = trimmed.toLowerCase();
+  // Only add link if the reply already mentions downloading, inscription, or the URL
+  const mentionsApp = lower.includes('telecharge') || lower.includes('télécharge')
+    || lower.includes('inscription') || lower.includes('inscrire')
+    || lower.includes('etudesk.com');
+  if (!mentionsApp) return trimmed;
+  if (lower.includes(APP_URL.toLowerCase())) return trimmed;
+  return `${trimmed}\n${APP_URL}`;
 }
 
 async function storeWhatsAppSupportMessage(params: {
@@ -408,17 +404,15 @@ export async function generateWhatsAppAssistantReply(message: string, account: L
   const lower = trimmed.toLowerCase();
 
   if (lower.includes('otp') || lower.includes('code')) {
-    const msg = account.linked
-      ? 'Ton numero est reconnu sur Etudesk. Pour recevoir un code OTP, ouvre l app et choisis connexion WhatsApp. Si le code tarde, renvoie apres 60 secondes.'
-      : 'Pour recevoir un code OTP, ouvre Etudesk puis choisis connexion WhatsApp. Si le code tarde, demande un nouveau code apres 60 secondes.';
-    return applyAppDownloadRedirect(msg);
+    const name = account.talentFirstName ? ` ${account.talentFirstName}` : '';
+    return `Pour recevoir ton code OTP${name}, ouvre l'app Etudesk et choisis "Connexion WhatsApp". Le code arrive en quelques secondes. S'il tarde, attends 60s puis redemande.\n${APP_URL}`;
   }
 
-  if (lower.includes('bonjour') || lower.includes('salut')) {
-    if (account.linked && account.talentFirstName) {
-      return applyAppDownloadRedirect(`Bonjour ${account.talentFirstName} 👋 Je suis l'assistant WhatsApp Etudesk. Je peux t'aider sur connexion, profil, candidatures et credits.`);
-    }
-    return applyAppDownloadRedirect('Bonjour 👋 Je suis l\'assistant WhatsApp Etudesk. Dis-moi ce que tu veux faire: connexion, profil, candidatures, ou credits.');
+  if (lower.includes('bonjour') || lower.includes('salut') || lower.includes('hello') || lower.includes('hi')) {
+    const name = account.talentFirstName || '';
+    return name
+      ? `Salut ${name} ! Comment je peux t'aider aujourd'hui ?`
+      : `Salut ! Je suis l'assistant Etudesk. Comment je peux t'aider ?`;
   }
 
   try {
@@ -438,7 +432,7 @@ export async function generateWhatsAppAssistantReply(message: string, account: L
       return 'Je peux t\'aider sur Etudesk (connexion, profil, candidatures, credits). Dis-moi ton besoin precis.';
     }
 
-    return applyAppDownloadRedirect(content);
+    return appendAppLinkIfNeeded(content);
   } catch (error) {
     const err: any = error;
     logger.error('Failed to generate WhatsApp assistant reply', err, {
@@ -446,7 +440,7 @@ export async function generateWhatsAppAssistantReply(message: string, account: L
       status: err?.status,
       code: err?.code,
     });
-    return applyAppDownloadRedirect('Je rencontre un souci temporaire. Reessaie dans quelques instants.');
+    return appendAppLinkIfNeeded('Je rencontre un souci temporaire. Reessaie dans quelques instants.');
   }
 }
 
