@@ -46,6 +46,8 @@ export interface CopilotMessage {
   toolResults?: Array<{ toolCallId: string; result: unknown }>;
   outputData?: MessageSegment[];
   attachments?: any[];
+  senderName?: string;
+  senderAvatarUrl?: string;
   createdAt: string;
 }
 
@@ -79,6 +81,7 @@ export interface SessionSummary {
   id: string;
   title?: string;
   mode: CopilotMode;
+  createdByName?: string;
   lastMessageAt?: string;
   createdAt: string;
   messageCount: number;
@@ -98,12 +101,14 @@ class CopilotService {
     message: string,
     mode?: CopilotMode,
     sessionId?: string,
+    organizationId?: string,
     attachmentIds?: string[]
   ): Promise<ApiResponse<{ data: ChatResponse }>> {
     return api.post('/api/copilot/chat', {
       message,
       mode,
       sessionId,
+      organizationId,
       attachmentIds,
     });
   }

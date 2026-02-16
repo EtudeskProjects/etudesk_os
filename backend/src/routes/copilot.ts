@@ -253,10 +253,10 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       agent = createTalentAgent(talentCtx);
     }
 
-    // Save user message FIRST (needed in history)
+    // Save user message FIRST (needed in history) — include talent_id for sender tracking
     await pool.query(
-      `INSERT INTO copilot_messages (session_id, role, content, attachments) VALUES ($1, 'user', $2, $3)`,
-      [sessionId, sanitizeForPg(message.trim()), sanitizeJsonForPg(null)]
+      `INSERT INTO copilot_messages (session_id, role, content, attachments, talent_id) VALUES ($1, 'user', $2, $3, $4)`,
+      [sessionId, sanitizeForPg(message.trim()), sanitizeJsonForPg(null), talentId]
     );
 
     // --- PHASE 2: Attachments + Load history in parallel ---

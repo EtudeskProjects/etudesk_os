@@ -77,6 +77,7 @@ interface StreamingMessage {
   content: string;
   segments: MessageSegment[];
   attachments?: AttachmentInfo[];
+  senderName?: string;
   isStreaming?: boolean;
   error?: string;
   lastUserMessage?: string;
@@ -140,31 +141,91 @@ export default function AssistantScreen() {
     }
   }, [mode, isOrganizationSpace]);
 
-  // Organization space does not support "study": force explore and reset session state to avoid cross-space leakage.
+  // Switching between talent/org space must also switch the assistant "agent scope":
+  // - Org space: force EXPLORE + org agent
+  // - Talent space: restore last talent mode (EXPLORE/STUDY)
+  // Always reset session state to avoid cross-space session reuse.
+  const lastTalentModeRef = useRef<Mode>('explore');
+  const lastIsOrgRef = useRef<boolean>(false);
   useEffect(() => {
-    if (isOrganizationSpace) {
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = null;
-      setIsSending(false);
-      setShowHistory(false);
-      setError(null);
-      setSessionId(null);
-      setMessages([]);
-      setActiveMode('explore');
+    const wasOrg = lastIsOrgRef.current;
+    const nowOrg = isOrganizationSpace;
+    if (wasOrg === nowOrg) return;
+    lastIsOrgRef.current = nowOrg;
+
+    if (!wasOrg && nowOrg) {
+      // Save talent mode before entering org space
+      lastTalentModeRef.current = activeMode;
     }
-  }, [isOrganizationSpace]);
+
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setIsSending(false);
+    setShowHistory(false);
+    setError(null);
+    setSessionId(null);
+    setMessages([]);
+    setActiveMode(nowOrg ? 'explore' : lastTalentModeRef.current);
+  }, [isOrganizationSpace, activeMode]);
+
+  // When switching between organizations while staying in organization space,
+  // reset the assistant state so we don't reuse a session from another org.
+  const lastOrgIdRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!isOrganizationSpace) {
+      lastOrgIdRef.current = undefined;
+      return;
+    }
+
+    const nextOrgId = selectedOrg?.id;
+    const prevOrgId = lastOrgIdRef.current;
+    const changed = prevOrgId !== undefined && prevOrgId !== nextOrgId;
+
+    lastOrgIdRef.current = nextOrgId;
+    if (!changed) return;
+
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setIsSending(false);
+    setShowHistory(false);
+    setError(null);
+    setSessionId(null);
+    setMessages([]);
+    setActiveMode('explore');
+  }, [isOrganizationSpace, selectedOrg?.id]);
 
   // Handle prompt and focus from URL parameters
+  // When navigating from action buttons (Se former, Auto-diagnostic, Cohorte),
+  // reset session to a fresh state
+  const pendingPromptRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (prompt) {
-      setInputText(prompt);
-    }
     if (prompt || focusInput === 'true') {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
+      // Reset to a fresh session
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+      setSessionId(null);
+      setMessages([]);
+      setError(null);
+      setIsSending(false);
+      if (prompt) {
+        setInputText(prompt);
+        pendingPromptRef.current = prompt;
+      } else {
+        setTimeout(() => inputRef.current?.focus(), 100);
+      }
     }
   }, [prompt, focusInput]);
+
+  // Auto-send pending prompt once state has settled (session reset + mode set)
+  useEffect(() => {
+    if (pendingPromptRef.current && !sessionId && messages.length === 0 && !isSending) {
+      const text = pendingPromptRef.current;
+      pendingPromptRef.current = null;
+      setInputText('');
+      setTimeout(() => startStream(text), 100);
+    }
+  }, [sessionId, messages, isSending]);
 
   // Load session if sessionId is provided
   useEffect(() => {
@@ -240,6 +301,7 @@ export default function AssistantScreen() {
             role: m.role as 'user' | 'assistant',
             content: m.content,
             segments,
+            senderName: m.senderName,
             attachments: m.attachments && Array.isArray(m.attachments) && m.attachments.length > 0
               ? m.attachments.map((a: any) => ({ name: a.name, type: a.type, size: a.size }))
               : undefined,
@@ -321,6 +383,7 @@ export default function AssistantScreen() {
       role: 'user',
       content: userContent,
       segments: [],
+      senderName: isOrganizationSpace ? (firstName || undefined) : undefined,
       attachments: attachmentFiles.length > 0
         ? attachmentFiles.map((a: any) => ({ name: a.name, type: a.type, size: a.size }))
         : undefined,
@@ -691,7 +754,7 @@ export default function AssistantScreen() {
         </Text>
       ) : (
         <Text style={[styles.greeting, { color: colors.textPrimary }]}>
-          Bienvenue <Text style={{ color: colors.primary, fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold }}>{firstName}</Text>. Comment puis-je éclairer votre chemin aujourd'hui ?
+          Bienvenue <Text style={{ color: colors.primary, fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold }}>{firstName}</Text>. Comment puis-je éclairer votre chemin aujourd&apos;hui ?
         </Text>
       )}
     </ScrollView>
@@ -715,6 +778,11 @@ export default function AssistantScreen() {
           {message.role === 'user' ? (
             /* User message: bubble style (right-aligned), long-press for actions */
             <View style={styles.userMessageContainer}>
+              {message.senderName && isOrganizationSpace ? (
+                <Text style={[styles.senderLabel, { color: colors.textSecondary }]}>
+                  {message.senderName}
+                </Text>
+              ) : null}
               <Pressable
                 style={({ pressed }) => [
                   styles.userMessage,
@@ -871,6 +939,7 @@ export default function AssistantScreen() {
                 </Text>
                 <Text style={[styles.historyItemMeta, { color: colors.textSecondary }]}>
                   {session.messageCount} messages · {formatRelativeTime(session.lastMessageAt || session.createdAt)}
+                  {session.createdByName ? ` · ${session.createdByName}` : ''}
                 </Text>
               </View>
             </View>
@@ -1029,8 +1098,8 @@ export default function AssistantScreen() {
                   maxLength={500}
                   editable={!isSending && !audioRecorder.state.isRecording && !isTranscribing}
                   containerStyle={{ flex: 1 }}
-                  inputContainerStyle={{ backgroundColor: 'transparent', borderColor: 'transparent', height: undefined, minHeight: 36, maxHeight: 100, alignItems: 'flex-start' }}
-                  inputStyle={[styles.input, { color: colors.textPrimary, paddingHorizontal: 0 }]}
+                  inputContainerStyle={{ backgroundColor: 'transparent', borderColor: 'transparent', borderWidth: 0, height: undefined, minHeight: 32, maxHeight: 100, paddingVertical: 0 }}
+                  inputStyle={{ color: colors.textPrimary, paddingHorizontal: 0, paddingVertical: 4, fontSize: TYPOGRAPHY.fontSize.md, minHeight: 32, maxHeight: 100 }}
                 />
 
 	                <IconButton
@@ -1259,6 +1328,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
 
+  senderLabel: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    marginBottom: 2,
+    marginRight: SPACING.xs,
+  },
+
   userMessage: {
     alignSelf: 'flex-end',
     maxWidth: '85%',
@@ -1354,17 +1430,16 @@ const styles = StyleSheet.create({
   // Input Area
   inputArea: {
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xxs,
-    paddingBottom: SPACING.xs,
+    paddingTop: 2,
+    paddingBottom: 4,
   },
 
   inputContainer: {
     borderWidth: BORDER.width.thin,
     borderRadius: BORDER.radius.md,
     paddingHorizontal: SPACING.sm,
-    paddingTop: SPACING.xxs,
-    paddingBottom: SPACING.xs,
-    gap: SPACING.xxs,
+    paddingVertical: 4,
+    gap: 0,
   },
 
   inputRow: {
@@ -1377,11 +1452,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
+    paddingTop: 2,
   },
 
   inputAction: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1390,14 +1466,14 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: TYPOGRAPHY.fontSize.md,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    minHeight: 44,
+    minHeight: 32,
     maxHeight: 100,
-    paddingVertical: SPACING.sm,
+    paddingVertical: 4,
   },
 
   sendButton: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: BORDER.radius.sm,
@@ -1407,7 +1483,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
+    height: 28,
+    paddingVertical: 0,
     paddingHorizontal: SPACING.sm,
     borderRadius: BORDER.radius.xs,
   },
