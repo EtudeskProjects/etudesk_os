@@ -34,7 +34,7 @@ const handleWebhook = async (req: Request, res: Response) => {
     const ipAddress = req.ip || req.socket.remoteAddress;
     if (!isAllowedIp(ipAddress)) {
       logger.warn('WhatsApp webhook unauthorized IP', { ipAddress });
-      return res.status(403).json({ success: false, error: 'Unauthorized' });
+      return res.status(403).json({ success: false, error: req.t('common:unauthorized') });
     }
 
     const payload = req.body?.data ?? req.body ?? {};
@@ -49,7 +49,7 @@ const handleWebhook = async (req: Request, res: Response) => {
     }
 
     if (!phone) {
-      return res.status(400).json({ success: false, error: 'Missing or invalid sender phone' });
+      return res.status(400).json({ success: false, error: req.t('auth:invalidPhone') });
     }
 
     if (!['text', 'chat'].includes(messageType)) {
@@ -66,7 +66,7 @@ const handleWebhook = async (req: Request, res: Response) => {
         phone,
         error: result.error,
       });
-      return res.status(500).json({ success: false, error: result.error || 'Assistant reply failed' });
+      return res.status(500).json({ success: false, error: result.error || req.t('common:serverError') });
     }
 
     return res.status(200).json({
@@ -76,7 +76,7 @@ const handleWebhook = async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('WhatsApp webhook processing error', error);
-    return res.status(500).json({ success: false, error: 'Webhook processing failed' });
+    return res.status(500).json({ success: false, error: req.t('common:serverError') });
   }
 };
 

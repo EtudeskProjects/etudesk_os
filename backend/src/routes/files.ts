@@ -69,7 +69,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
     // Path traversal protection: ensure resolved path stays within UPLOAD_BASE_DIR
     const resolvedBase = path.resolve(UPLOAD_BASE_DIR);
     if (!absolutePath.startsWith(resolvedBase + path.sep) && absolutePath !== resolvedBase) {
-      return res.status(400).json({ error: 'Invalid file path' });
+      return res.status(400).json({ error: req.t('common:invalidFilePath') });
     }
 
     await fs.promises.writeFile(absolutePath, req.file.buffer);

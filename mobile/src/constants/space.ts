@@ -87,9 +87,9 @@ export type SpaceCategory = (typeof SPACE_CATEGORIES)[keyof typeof SPACE_CATEGOR
 export const SPACE_CATEGORY_LABELS: Record<SpaceCategory, string> = {
   FORMATION: 'Formation',
   TRAVAIL: 'Travail',
-  REUNION: 'Reunion',
+  REUNION: 'Réunion',
   ATELIER: 'Atelier',
-  EVENEMENT: 'Evenement',
+  EVENEMENT: 'Événement',
 };
 
 // Map space types to categories
@@ -172,9 +172,9 @@ export type BookingStatus = (typeof BOOKING_STATUS)[keyof typeof BOOKING_STATUS]
 
 export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   PENDING: 'En attente',
-  CONFIRMED: 'Confirmee',
-  CANCELLED: 'Annulee',
-  COMPLETED: 'Terminee',
+  CONFIRMED: 'Confirmée',
+  CANCELLED: 'Annulée',
+  COMPLETED: 'Terminée',
   NO_SHOW: 'Absent',
 };
 
@@ -190,8 +190,8 @@ export type PaymentStatus = (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS]
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   PENDING: 'En attente',
   PARTIAL: 'Partiel',
-  PAID: 'Paye',
-  REFUNDED: 'Rembourse',
+  PAID: 'Payé',
+  REFUNDED: 'Remboursé',
 };
 
 // --- Pricing ---

@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { RotateCw } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
+import { useI18n } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 
 
@@ -21,6 +22,7 @@ interface FlashcardBlockProps {
 
 export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [isFlipped, setIsFlipped] = useState(false);
 
   const handleFlip = () => {
@@ -46,11 +48,14 @@ export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
   const getDifficultyLabel = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case 'easy':
-        return 'Facile';
+      case 'facile':
+        return t('copilot.flashcard.easy');
       case 'medium':
-        return 'Moyen';
+      case 'moyen':
+        return t('copilot.flashcard.medium');
       case 'hard':
-        return 'Difficile';
+      case 'difficile':
+        return t('copilot.flashcard.hard');
       default:
         return difficulty;
     }
@@ -84,11 +89,11 @@ export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
         ]}
         onPress={handleFlip}
         accessibilityRole="button"
-        accessibilityLabel="Retourner la carte"
+        accessibilityLabel={t('copilot.flashcard.flipCard')}
       >
         <View style={styles.cardContent}>
           <Text style={[styles.cardLabel, { color: colors.textTertiary }]}>
-            {isFlipped ? 'Réponse' : 'Question'}
+            {isFlipped ? t('copilot.flashcard.answer') : t('copilot.flashcard.question')}
           </Text>
           <Text style={[styles.cardText, { color: colors.textPrimary }]}>
             {isFlipped ? data.back : data.front}
@@ -103,7 +108,7 @@ export const FlashcardBlock: React.FC<FlashcardBlockProps> = ({ data }) => {
             strokeWidth={ICON.strokeWidth}
           />
           <Text style={[styles.flipText, { color: isFlipped ? colors.primary : colors.textTertiary }]}>
-            Toucher pour {isFlipped ? 'revenir' : 'révéler'}
+            {isFlipped ? t('copilot.flashcard.tapToReturn') : t('copilot.flashcard.tapToReveal')}
           </Text>
         </View>
       </Pressable>

@@ -156,7 +156,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req: AuthRe
     // Path traversal protection
     const resolvedBase = path.resolve(UPLOAD_BASE_DIR);
     if (!absolutePath.startsWith(resolvedBase + path.sep)) {
-      return res.status(400).json({ error: 'Invalid file path' });
+      return res.status(400).json({ error: req.t('common:invalidFilePath') });
     }
 
     // Save the optimized image
@@ -223,7 +223,7 @@ router.post('/upload-multiple', authMiddleware, upload.array('files', 10), async
       // Path traversal protection
       const resolvedBase = path.resolve(UPLOAD_BASE_DIR);
       if (!absolutePath.startsWith(resolvedBase + path.sep)) {
-        return res.status(400).json({ error: 'Invalid file path' });
+        return res.status(400).json({ error: req.t('common:invalidFilePath') });
       }
 
       await fs.promises.writeFile(absolutePath, buffer);

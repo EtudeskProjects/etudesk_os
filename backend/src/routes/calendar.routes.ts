@@ -194,13 +194,13 @@ router.patch('/triggers/:id', authMiddleware, async (req: AuthRequest, res: Resp
             [id]
         );
         if (existing.rows.length === 0) {
-            return res.status(404).json({ error: 'Trigger introuvable' });
+            return res.status(404).json({ error: req.t('calendar:triggerNotFound') });
         }
 
         const row = existing.rows[0];
         if (row.scope === 'TALENT') {
             if (String(row.talent_id) !== String(talentId)) {
-                return res.status(403).json({ error: 'Accès refusé' });
+                return res.status(403).json({ error: req.t('calendar:accessDenied') });
             }
         } else {
             const allowed = await canAccessOrganizationAgenda(String(row.organization_id), talentId);

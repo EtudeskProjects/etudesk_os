@@ -28,6 +28,7 @@ type PolicyResult = {
 };
 
 const TERMINAL_APPLICATION_STATUSES = new Set(['ACCEPTED', 'REJECTED', 'WITHDRAWN', 'CANCELED']);
+const AGENDA_TRIGGER_CRON_LOCK_KEY = 8420191;
 
 let isAgendaCronRunning = false;
 
@@ -86,6 +87,42 @@ function mergeExecutionMetadata(
     output: execution,
     history: newHistory,
   };
+}
+
+async function notifyOrganizationManagers(
+  organizationId: string,
+  title: string,
+  body: string,
+  data: Record<string, any>,
+  triggerId: string
+): Promise<number> {
+  const members = await pool.query(
+    `
+    SELECT talent_id
+    FROM organization_members
+    WHERE organization_id = $1::uuid
+      AND status = 'ACTIVE'
+      AND role IN ('OWNER', 'ADMIN', 'MANAGER')
+    `,
+    [organizationId]
+  );
+
+  const uniqueTalentIds = Array.from(new Set(members.rows.map((r: any) => String(r.talent_id))));
+  if (uniqueTalentIds.length === 0) return 0;
+
+  for (const talentId of uniqueTalentIds) {
+    await notificationService.create({
+      talentId,
+      type: 'SYSTEM',
+      title,
+      body,
+      data,
+      referenceType: 'agenda_trigger',
+      referenceId: triggerId,
+    });
+  }
+
+  return uniqueTalentIds.length;
 }
 
 async function fetchFollowUpContext(trigger: TriggerRow): Promise<null | {
@@ -259,11 +296,203 @@ async function executeFollowUpPolicy(trigger: TriggerRow, now: Date): Promise<Po
   };
 }
 
+async function executeProgressReviewPolicy(trigger: TriggerRow): Promise<PolicyResult> {
+  if (!trigger.talent_id) {
+    return { outcome: 'NO_RECIPIENT', note: 'PROGRESS_REVIEW requires talent scope.' };
+  }
+
+  const [appsRes, skillsRes] = await Promise.all([
+    pool.query(
+      `
+      SELECT
+        COUNT(*)::int AS total_applications,
+        COUNT(*) FILTER (WHERE status IN ('SUBMITTED', 'IN_REVIEW', 'REVIEWING', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'INTERVIEW_COMPLETED', 'OFFER_MADE'))::int AS active_applications,
+        COUNT(*) FILTER (WHERE status = 'ACCEPTED')::int AS accepted_applications
+      FROM opportunity_applications
+      WHERE talent_id = $1::uuid
+      `,
+      [trigger.talent_id]
+    ),
+    pool.query(
+      `
+      SELECT COUNT(*)::int AS skills_count
+      FROM talent_skills
+      WHERE talent_id = $1::uuid
+      `,
+      [trigger.talent_id]
+    ),
+  ]);
+
+  const stats = {
+    totalApplications: appsRes.rows[0]?.total_applications || 0,
+    activeApplications: appsRes.rows[0]?.active_applications || 0,
+    acceptedApplications: appsRes.rows[0]?.accepted_applications || 0,
+    skillsCount: skillsRes.rows[0]?.skills_count || 0,
+  };
+
+  await notificationService.create({
+    talentId: trigger.talent_id,
+    type: 'REMINDER',
+    title: trigger.title || 'Checkpoint progression',
+    body: `Bilan: ${stats.activeApplications} candidature(s) active(s), ${stats.acceptedApplications} acceptee(s), ${stats.skillsCount} competence(s).`,
+    data: {
+      triggerId: trigger.id,
+      code: 'PROGRESS_REVIEW',
+      ...stats,
+    },
+    referenceType: 'agenda_trigger',
+    referenceId: trigger.id,
+  });
+
+  return {
+    outcome: 'PROGRESS_REVIEW_SENT',
+    data: stats,
+  };
+}
+
+async function executeOpportunityScanPolicy(trigger: TriggerRow): Promise<PolicyResult> {
+  if (!trigger.talent_id) {
+    return { outcome: 'NO_RECIPIENT', note: 'OPPORTUNITY_SCAN requires talent scope.' };
+  }
+
+  const metadata = (trigger.metadata && typeof trigger.metadata === 'object') ? trigger.metadata : {};
+  const filters = (metadata.filters && typeof metadata.filters === 'object') ? metadata.filters as Record<string, any> : {};
+
+  const role = String(filters.role || filters.query || '').trim();
+  const contractType = String(filters.contractType || '').trim();
+  const location = String(filters.location || '').trim();
+  const limit = Math.max(1, Math.min(Number(filters.limit || 3), 10));
+
+  const params: any[] = [];
+  let idx = 1;
+  let sql = `
+    SELECT o.id, o.title, o.contract_type, o.location_type, o.locations, o.deadline
+    FROM opportunities o
+    WHERE o.deleted_at IS NULL
+      AND o.status = 'OPEN'
+      AND (o.deadline IS NULL OR o.deadline > NOW())`;
+
+  if (role) {
+    sql += ` AND (o.title ILIKE '%' || $${idx}::text || '%' OR COALESCE(o.summary, '') ILIKE '%' || $${idx}::text || '%')`;
+    params.push(role);
+    idx += 1;
+  }
+  if (contractType) {
+    sql += ` AND o.contract_type = $${idx}::text`;
+    params.push(contractType);
+    idx += 1;
+  }
+  if (location) {
+    sql += ` AND (COALESCE(o.locations::text, '') ILIKE '%' || $${idx}::text || '%' OR COALESCE(o.location_type, '') ILIKE '%' || $${idx}::text || '%')`;
+    params.push(location);
+    idx += 1;
+  }
+
+  sql += ` ORDER BY o.posted_at DESC NULLS LAST LIMIT $${idx}`;
+  params.push(limit);
+
+  const found = await pool.query(sql, params);
+  const rows = found.rows || [];
+  const topTitles = rows.slice(0, 3).map((r: any) => r.title);
+
+  await notificationService.create({
+    talentId: trigger.talent_id,
+    type: 'OPPORTUNITY',
+    title: trigger.title || 'Veille opportunites',
+    body: rows.length > 0
+      ? `${rows.length} opportunite(s) trouvee(s). Top: ${topTitles.join(' | ')}`
+      : 'Aucune nouvelle opportunite pour les filtres actuels.',
+    data: {
+      triggerId: trigger.id,
+      code: 'OPPORTUNITY_SCAN',
+      count: rows.length,
+      topOpportunityIds: rows.slice(0, 3).map((r: any) => r.id),
+      filters,
+    },
+    referenceType: 'agenda_trigger',
+    referenceId: trigger.id,
+  });
+
+  return {
+    outcome: 'OPPORTUNITY_SCAN_SENT',
+    data: {
+      count: rows.length,
+      topOpportunityIds: rows.slice(0, 3).map((r: any) => r.id),
+      filters,
+    },
+  };
+}
+
+async function executePipelineReviewPolicy(trigger: TriggerRow): Promise<PolicyResult> {
+  if (!trigger.organization_id) {
+    return { outcome: 'NO_ORG_SCOPE', note: 'PIPELINE_REVIEW requires organization scope.' };
+  }
+
+  const metadata = (trigger.metadata && typeof trigger.metadata === 'object') ? trigger.metadata : {};
+  const staleThresholdHours = Math.max(1, Math.min(Number(metadata.staleThresholdHours || 72), 24 * 30));
+
+  const res = await pool.query(
+    `
+    SELECT
+      COUNT(*)::int AS total_applications,
+      COUNT(*) FILTER (
+        WHERE oa.updated_at < NOW() - ($2::int || ' hours')::interval
+          AND oa.status NOT IN ('ACCEPTED', 'REJECTED', 'WITHDRAWN', 'CANCELED')
+      )::int AS stale_applications
+    FROM opportunity_applications oa
+    JOIN opportunities o ON o.id = oa.opportunity_id
+    LEFT JOIN opportunity_posters op ON op.opportunity_id = o.id
+    WHERE op.poster_organization_id = $1::uuid
+      AND oa.deleted_at IS NULL
+      AND o.deleted_at IS NULL
+    `,
+    [trigger.organization_id, staleThresholdHours]
+  );
+
+  const stats = {
+    totalApplications: res.rows[0]?.total_applications || 0,
+    staleApplications: res.rows[0]?.stale_applications || 0,
+    staleThresholdHours,
+  };
+
+  const notified = await notifyOrganizationManagers(
+    trigger.organization_id,
+    trigger.title || 'Revue pipeline recrutement',
+    `Pipeline: ${stats.totalApplications} candidature(s), ${stats.staleApplications} en attente depuis plus de ${staleThresholdHours}h.`,
+    {
+      triggerId: trigger.id,
+      code: 'PIPELINE_REVIEW',
+      ...stats,
+    },
+    trigger.id
+  );
+
+  return {
+    outcome: 'PIPELINE_REVIEW_SENT',
+    data: {
+      ...stats,
+      notifiedManagers: notified,
+    },
+  };
+}
+
 async function executeTriggerPolicy(trigger: TriggerRow, now: Date): Promise<PolicyResult> {
   const code = String(trigger.code || '').toUpperCase().trim();
 
   if (code === 'FOLLOW_UP') {
     return executeFollowUpPolicy(trigger, now);
+  }
+
+  if (code === 'PROGRESS_REVIEW') {
+    return executeProgressReviewPolicy(trigger);
+  }
+
+  if (code === 'OPPORTUNITY_SCAN') {
+    return executeOpportunityScanPolicy(trigger);
+  }
+
+  if (code === 'PIPELINE_REVIEW') {
+    return executePipelineReviewPolicy(trigger);
   }
 
   if (trigger.talent_id) {
@@ -339,6 +568,7 @@ export async function processDueAgendaTriggers(limit: number = 100): Promise<{
   }
 
   isAgendaCronRunning = true;
+  let hasDbLock = false;
 
   const stats = {
     processed: 0,
@@ -349,6 +579,15 @@ export async function processDueAgendaTriggers(limit: number = 100): Promise<{
   };
 
   try {
+    const lockRes = await pool.query(
+      `SELECT pg_try_advisory_lock($1) AS locked`,
+      [AGENDA_TRIGGER_CRON_LOCK_KEY]
+    );
+    hasDbLock = Boolean(lockRes.rows[0]?.locked);
+    if (!hasDbLock) {
+      return { ...stats, skipped: true };
+    }
+
     const due = await pool.query(
       `
       SELECT id, scope, talent_id, organization_id, code, title, description, due_at, status, priority, metadata, created_by
@@ -397,7 +636,18 @@ export async function processDueAgendaTriggers(limit: number = 100): Promise<{
 
     return stats;
   } finally {
+    if (hasDbLock) {
+      try {
+        await pool.query(
+          `SELECT pg_advisory_unlock($1)`,
+          [AGENDA_TRIGGER_CRON_LOCK_KEY]
+        );
+      } catch (unlockErr: any) {
+        logger.warn('[agenda_trigger_cron] Failed to release advisory lock', {
+          error: unlockErr?.message || String(unlockErr),
+        });
+      }
+    }
     isAgendaCronRunning = false;
   }
 }
-

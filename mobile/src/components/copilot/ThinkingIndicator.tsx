@@ -8,19 +8,21 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { Brain } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, ICON } from '../../constants/theme';
 
 const CYCLE_MS = 2800; // Breathing rhythm
 
 interface ThinkingIndicatorProps {
-  /** Default: "Réfléchit…" */
   label?: string;
 }
 
 export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({
-  label = 'Réfléchit…',
+  label,
 }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
+  const displayLabel = label || t('common.thinking');
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -59,7 +61,7 @@ export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({
       <Animated.View style={{ opacity, transform: [{ scale }] }}>
         <Brain size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
       </Animated.View>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{displayLabel}</Text>
     </View>
   );
 };

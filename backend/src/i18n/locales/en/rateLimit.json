@@ -1,0 +1,14 @@
+{
+  "tooManyRequests": "Too many requests. Please try again in a few minutes.",
+  "tooManyLoginAttempts": "Too many login attempts. Please try again in 15 minutes.",
+  "codeLimitReached": "Code sending limit reached. Please try again in 1 hour.",
+  "tooManyApplications": "Too many applications submitted. Please try again later.",
+  "tooManyOperations": "Too many operations. Please try again in a few minutes.",
+  "tooManySearches": "Too many searches. Please wait.",
+  "tooManyMessages": "Too many messages sent. Please wait a moment.",
+  "tooManyCopilotRequests": "Too many copilot requests. Please wait.",
+  "tooManyDemands": "Too many requests. Please try again in 1 hour.",
+  "webhookLimitExceeded": "Too many webhook requests.",
+  "webhookRetryLimitExceeded": "Too many webhook requests. Please try again.",
+  "exportLimitReached": "Export limit reached. Please try again later."
+}

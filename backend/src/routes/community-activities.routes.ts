@@ -126,7 +126,7 @@ router.post('/:communityId/activities', authMiddleware, upload.array('attachment
             } catch (debitError: any) {
                 if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
                     return res.status(402).json({
-                        error: 'Solde crédits insuffisant. Rechargez votre wallet pour programmer une publication.',
+                        error: req.t('billing:insufficientCreditsForPublication'),
                         code: 'INSUFFICIENT_CREDITS',
                     });
                 }

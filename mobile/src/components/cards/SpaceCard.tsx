@@ -15,6 +15,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, BORDER, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { formatCompactNumber } from '../../utils/number';
 import { SPACE_TYPE_LABELS, formatPrice } from '../../constants/space';
 import type { Space } from '../../services/spaceService';
@@ -66,6 +67,7 @@ export const SpaceCard: React.FC<SpaceCardProps> = ({
   statusOverlay,
 }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   // Get the best price to display
   const getDisplayPrice = (): { text: string; isFree: boolean } => {
@@ -73,7 +75,7 @@ export const SpaceCard: React.FC<SpaceCardProps> = ({
     if (space.daily_rate && space.daily_rate > 0) return { text: formatPrice(space.daily_rate) + '/j', isFree: false };
     if (space.weekly_rate && space.weekly_rate > 0) return { text: formatPrice(space.weekly_rate) + '/sem', isFree: false };
     if (space.monthly_rate && space.monthly_rate > 0) return { text: formatPrice(space.monthly_rate) + '/mois', isFree: false };
-    return { text: 'Gratuit', isFree: true };
+    return { text: t('common.free'), isFree: true };
   };
 
   const displayPrice = getDisplayPrice();
@@ -101,11 +103,11 @@ export const SpaceCard: React.FC<SpaceCardProps> = ({
   const metaItems: MetaItem[] = [
     {
       Icon: Users,
-      text: `${formatCompactNumber(space.capacity || 0)} ${(space.capacity || 0) <= 1 ? 'place' : 'places'}`,
+      text: `${formatCompactNumber(space.capacity || 0)} ${(space.capacity || 0) <= 1 ? t('common.place') : t('common.places')}`,
     },
     {
       Icon: MapPin,
-      text: space.city && space.country ? `${space.city}, ${space.country}` : space.city || 'Non specifié',
+      text: space.city && space.country ? `${space.city}, ${space.country}` : space.city || t('common.notSpecified'),
     },
   ];
 
@@ -135,11 +137,11 @@ export const SpaceCard: React.FC<SpaceCardProps> = ({
   const getStatusLabel = () => {
     switch (space.status) {
       case 'ACTIVE':
-        return 'Actif';
+        return t('space.status.active');
       case 'INACTIVE':
-        return 'Inactif';
+        return t('space.status.inactive');
       case 'MAINTENANCE':
-        return 'Maintenance';
+        return t('space.status.maintenance');
       default:
         return space.status;
     }

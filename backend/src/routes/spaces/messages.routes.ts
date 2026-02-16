@@ -212,7 +212,7 @@ router.put('/booking-messages/:messageId/read', authMiddleware, async (req: Auth
 
     const senderTypeToMark = msg.booking_talent_id === talentId ? 'ORGANIZATION' : 'TALENT';
     if (msg.sender_type !== senderTypeToMark) {
-      return res.json({ data: { message: 'Nothing to mark' } });
+      return res.json({ data: { message: req.t('common:operationSuccess') } });
     }
 
     const result = await pool.query(

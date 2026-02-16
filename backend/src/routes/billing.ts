@@ -55,27 +55,27 @@ async function ensureOrgBillingAccess(orgId: string, talentId: string): Promise<
   }
 }
 
-function handleBillingAccessError(res: Response, error: unknown): Response {
+function handleBillingAccessError(req: AuthRequest, res: Response, error: unknown): Response {
   const msg = String((error as Error)?.message || 'unknown');
 
   if (msg === 'ORGANIZATION_ACCESS_DENIED') {
-    return res.status(403).json({ error: 'Vous n\'avez pas accès à cette organisation' });
+    return res.status(403).json({ error: req.t('billing:noAccessToOrg') });
   }
 
   if (msg === 'ORGANIZATION_BILLING_ROLE_REQUIRED') {
-    return res.status(403).json({ error: 'Rôle insuffisant pour gérer la facturation de cette organisation' });
+    return res.status(403).json({ error: req.t('billing:insufficientRoleForBilling') });
   }
 
-  return res.status(500).json({ error: 'Erreur interne billing' });
+  return res.status(500).json({ error: req.t('billing:internalError') });
 }
 
-router.get('/catalog', authMiddleware, async (_req: AuthRequest, res: Response) => {
+router.get('/catalog', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const catalog = await getCatalogByScope();
     res.json({ data: catalog });
   } catch (error) {
     logger.error('Failed to fetch billing catalog', error);
-    res.status(500).json({ error: 'Impossible de charger le catalogue crédits' });
+    res.status(500).json({ error: req.t('billing:failedToLoadCatalog') });
   }
 });
 
@@ -84,11 +84,11 @@ router.get('/balance', authMiddleware, async (req: AuthRequest, res: Response) =
     const scope = parseScope(req.query.scope);
 
     if (!scope) {
-      return res.status(400).json({ error: 'scope requis: TALENT ou ORGANIZATION' });
+      return res.status(400).json({ error: req.t('billing:scopeRequired') });
     }
 
     if (!req.talentId) {
-      return res.status(401).json({ error: 'Authentification talent requise' });
+      return res.status(401).json({ error: req.t('billing:talentAuthRequired') });
     }
 
     let ownerId: string;
@@ -96,11 +96,11 @@ router.get('/balance', authMiddleware, async (req: AuthRequest, res: Response) =
     if (scope === 'TALENT') {
       ownerId = typeof req.query.id === 'string' ? req.query.id : req.talentId;
       if (ownerId !== req.talentId) {
-        return res.status(403).json({ error: 'Accès refusé à ce wallet talent' });
+        return res.status(403).json({ error: req.t('billing:talentWalletAccessDenied') });
       }
     } else {
       if (typeof req.query.id !== 'string' || !req.query.id) {
-        return res.status(400).json({ error: 'id organisation requis pour scope ORGANIZATION' });
+        return res.status(400).json({ error: req.t('billing:orgIdRequired') });
       }
       ownerId = req.query.id;
       await ensureOrgBillingAccess(ownerId, req.talentId);
@@ -117,7 +117,7 @@ router.get('/balance', authMiddleware, async (req: AuthRequest, res: Response) =
     });
   } catch (error) {
     logger.error('Failed to fetch billing balance', error);
-    return handleBillingAccessError(res, error);
+    return handleBillingAccessError(req, res, error);
   }
 });
 
@@ -126,7 +126,7 @@ router.get('/balance', authMiddleware, async (req: AuthRequest, res: Response) =
 router.post('/checkout/init', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId || !req.userEmail) {
-      return res.status(401).json({ error: 'Authentification requise' });
+      return res.status(401).json({ error: req.t('billing:authRequired') });
     }
 
     const scope = parseScope(req.body.scope);
@@ -135,15 +135,15 @@ router.post('/checkout/init', authMiddleware, async (req: AuthRequest, res: Resp
     const idempotencyKey = typeof req.body.idempotency_key === 'string' ? req.body.idempotency_key : '';
 
     if (!scope) {
-      return res.status(400).json({ error: 'scope requis: TALENT ou ORGANIZATION' });
+      return res.status(400).json({ error: req.t('billing:scopeRequired') });
     }
 
     if (typeof ownerId !== 'string' || ownerId.length === 0) {
-      return res.status(400).json({ error: 'owner_id requis' });
+      return res.status(400).json({ error: req.t('billing:ownerIdRequired') });
     }
 
     if (scope === 'TALENT' && ownerId !== req.talentId) {
-      return res.status(403).json({ error: 'owner_id talent invalide' });
+      return res.status(403).json({ error: req.t('billing:invalidTalentOwnerId') });
     }
 
     if (scope === 'ORGANIZATION') {
@@ -174,7 +174,7 @@ router.post('/checkout/init', authMiddleware, async (req: AuthRequest, res: Resp
   } catch (error: any) {
     logger.error('Failed to initialize checkout', error);
 
-    const message = String(error?.message || 'Erreur checkout');
+    const message = String(error?.message || req.t('billing:internalError'));
     if (message.includes('Minimum amount')) {
       return res.status(400).json({ error: message });
     }
@@ -182,19 +182,19 @@ router.post('/checkout/init', authMiddleware, async (req: AuthRequest, res: Resp
       return res.status(400).json({ error: message });
     }
 
-    return handleBillingAccessError(res, error);
+    return handleBillingAccessError(req, res, error);
   }
 });
 
 router.post('/checkout/verify', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(401).json({ error: 'Authentification requise' });
+      return res.status(401).json({ error: req.t('billing:authRequired') });
     }
 
     const reference = req.body.paystack_reference;
     if (typeof reference !== 'string' || reference.length === 0) {
-      return res.status(400).json({ error: 'paystack_reference requis' });
+      return res.status(400).json({ error: req.t('billing:paystackRefRequired') });
     }
 
     const paymentOwner = await pool.query(
@@ -203,7 +203,7 @@ router.post('/checkout/verify', authMiddleware, async (req: AuthRequest, res: Re
     );
 
     if (paymentOwner.rows.length === 0) {
-      return res.status(404).json({ error: 'Paiement introuvable' });
+      return res.status(404).json({ error: req.t('billing:paymentNotFound') });
     }
 
     const row = paymentOwner.rows[0];
@@ -211,7 +211,7 @@ router.post('/checkout/verify', authMiddleware, async (req: AuthRequest, res: Re
 
     if (scope === 'TALENT') {
       if (row.talent_id !== req.talentId) {
-        return res.status(403).json({ error: 'Accès refusé à ce paiement' });
+        return res.status(403).json({ error: req.t('billing:paymentAccessDenied') });
       }
     } else {
       await ensureOrgBillingAccess(row.organization_id, req.talentId);
@@ -230,7 +230,7 @@ router.post('/checkout/verify', authMiddleware, async (req: AuthRequest, res: Re
     });
   } catch (error) {
     logger.error('Failed to verify checkout', error);
-    return handleBillingAccessError(res, error);
+    return handleBillingAccessError(req, res, error);
   }
 });
 
@@ -265,13 +265,13 @@ router.post('/webhooks/paystack', paystackWebhookLimiter, async (req: AuthReques
 router.get('/invoices', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(401).json({ error: 'Authentification requise' });
+      return res.status(401).json({ error: req.t('billing:authRequired') });
     }
 
     const scope = parseScope(req.query.scope);
 
     if (!scope) {
-      return res.status(400).json({ error: 'scope requis: TALENT ou ORGANIZATION' });
+      return res.status(400).json({ error: req.t('billing:scopeRequired') });
     }
 
     let ownerId: string;
@@ -279,11 +279,11 @@ router.get('/invoices', authMiddleware, async (req: AuthRequest, res: Response) 
     if (scope === 'TALENT') {
       ownerId = typeof req.query.id === 'string' ? req.query.id : req.talentId;
       if (ownerId !== req.talentId) {
-        return res.status(403).json({ error: 'Accès refusé aux factures talent' });
+        return res.status(403).json({ error: req.t('billing:invoiceAccessDenied') });
       }
     } else {
       if (typeof req.query.id !== 'string' || !req.query.id) {
-        return res.status(400).json({ error: 'id organisation requis pour scope ORGANIZATION' });
+        return res.status(400).json({ error: req.t('billing:orgIdRequired') });
       }
       ownerId = req.query.id;
       await ensureOrgBillingAccess(ownerId, req.talentId);
@@ -295,25 +295,25 @@ router.get('/invoices', authMiddleware, async (req: AuthRequest, res: Response) 
     return res.json({ data: invoices });
   } catch (error) {
     logger.error('Failed to list invoices', error);
-    return handleBillingAccessError(res, error);
+    return handleBillingAccessError(req, res, error);
   }
 });
 
 router.get('/invoices/:invoiceId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.talentId) {
-      return res.status(401).json({ error: 'Authentification requise' });
+      return res.status(401).json({ error: req.t('billing:authRequired') });
     }
 
     const invoice = await getInvoiceDetails(req.params.invoiceId);
 
     if (!invoice) {
-      return res.status(404).json({ error: 'Facture introuvable' });
+      return res.status(404).json({ error: req.t('billing:invoiceNotFound') });
     }
 
     if (invoice.scope === 'TALENT') {
       if (invoice.talent_id !== req.talentId) {
-        return res.status(403).json({ error: 'Accès refusé à cette facture' });
+        return res.status(403).json({ error: req.t('billing:invoiceAccessDenied') });
       }
     } else {
       await ensureOrgBillingAccess(invoice.organization_id, req.talentId);
@@ -322,7 +322,7 @@ router.get('/invoices/:invoiceId', authMiddleware, async (req: AuthRequest, res:
     return res.json({ data: invoice });
   } catch (error) {
     logger.error('Failed to get invoice details', error);
-    return handleBillingAccessError(res, error);
+    return handleBillingAccessError(req, res, error);
   }
 });
 

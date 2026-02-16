@@ -56,5 +56,11 @@
   "mustBeOrgMember": "You must be a member of this organization",
   "onlyAdminsCanUpdate": "Only admins can update",
   "onlyAdminsCanDelete": "Only admins can delete",
-  "onlyAdminsCanPerformAction": "Only community admins can perform this action"
+  "onlyAdminsCanPerformAction": "Only community admins can perform this action",
+  "authRequired": "Authentication required",
+  "invalidFilePath": "Invalid file path",
+  "itemsRequired": "items parameter required (format: type:id,type:id)",
+  "fetchFailed": "Failed to fetch data",
+  "bootstrapAuthRequired": "Authentication required",
+  "bootstrapLoadFailed": "Failed to load bootstrap data"
 }

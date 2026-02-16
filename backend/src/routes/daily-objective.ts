@@ -36,7 +36,7 @@ router.get('/talent', authMiddleware, async (req: AuthRequest, res: Response) =>
     } catch (debitError: any) {
       if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
         return res.status(402).json({
-          error: 'Solde crédits insuffisant. Rechargez votre wallet pour actualiser l’objectif.',
+          error: req.t('billing:insufficientCredits'),
           code: 'INSUFFICIENT_CREDITS',
         });
       }
@@ -73,13 +73,13 @@ router.get('/organization/:orgId', authMiddleware, async (req: AuthRequest, res:
     );
 
     if (!member.rows.length || member.rows[0].status !== 'ACTIVE') {
-      return res.status(403).json({ error: 'Accès refusé à cette organisation' });
+      return res.status(403).json({ error: req.t('billing:noAccessToOrg') });
     }
 
     const role = String(member.rows[0].role || '').toUpperCase();
     const allowedRoles = new Set(['OWNER', 'ADMIN', 'MANAGER', 'SUB_ADMIN']);
     if (!allowedRoles.has(role)) {
-      return res.status(403).json({ error: 'Rôle insuffisant pour consommer les crédits organisation' });
+      return res.status(403).json({ error: req.t('billing:insufficientRoleForBilling') });
     }
 
     const day = new Date().toISOString().slice(0, 10);
@@ -95,7 +95,7 @@ router.get('/organization/:orgId', authMiddleware, async (req: AuthRequest, res:
     } catch (debitError: any) {
       if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
         return res.status(402).json({
-          error: 'Solde crédits organisation insuffisant. Rechargez le wallet pour actualiser l’objectif.',
+          error: req.t('billing:insufficientOrgCredits'),
           code: 'INSUFFICIENT_CREDITS',
         });
       }

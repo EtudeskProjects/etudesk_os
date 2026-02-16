@@ -145,15 +145,18 @@ const styles = StyleSheet.create({
 
   // Sizes - Using design system layout constants
   size_sm: {
-    height: LAYOUT.buttonHeightSm,
+    minHeight: LAYOUT.buttonHeightSm,
+    paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
   },
   size_md: {
-    height: LAYOUT.buttonHeight,
+    minHeight: LAYOUT.buttonHeight,
+    paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.lg,
   },
   size_lg: {
-    height: LAYOUT.buttonHeightLg,
+    minHeight: LAYOUT.buttonHeightLg,
+    paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.xl,
   },
 

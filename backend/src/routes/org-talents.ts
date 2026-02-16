@@ -44,10 +44,10 @@ async function checkOrgMembership(orgId: string, talentId: string): Promise<stri
 router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgTalents:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgTalents:notOrgMember') });
 
     const { source, is_favorite, tag_id, search, limit, offset } = req.query;
 
@@ -64,7 +64,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     return res.json({ data: result });
   } catch (error) {
     logger.error('Error listing org talents:', error);
-    return res.status(500).json({ error: 'Erreur lors de la récupération des talents' });
+    return res.status(500).json({ error: req.t('orgTalents:talentsListError') });
   }
 });
 
@@ -75,16 +75,16 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 router.get('/count', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgTalents:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgTalents:notOrgMember') });
 
     const count = await getOrganizationTalentCount(orgId);
     return res.json({ data: { count } });
   } catch (error) {
     logger.error('Error getting org talent count:', error);
-    return res.status(500).json({ error: 'Erreur lors du comptage des talents' });
+    return res.status(500).json({ error: req.t('orgTalents:talentsCountError') });
   }
 });
 
@@ -95,16 +95,16 @@ router.get('/count', authMiddleware, async (req: AuthRequest, res: Response) => 
 router.get('/favorites/ids', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgTalents:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgTalents:notOrgMember') });
 
     const ids = await getFavoriteIds(orgId);
     return res.json({ data: ids });
   } catch (error) {
     logger.error('Error getting favorite ids:', error);
-    return res.status(500).json({ error: 'Erreur lors de la récupération des favoris' });
+    return res.status(500).json({ error: req.t('orgTalents:favoritesListError') });
   }
 });
 
@@ -114,17 +114,17 @@ router.get('/favorites/ids', authMiddleware, async (req: AuthRequest, res: Respo
 router.post('/:talentId/favorite', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId, talentId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgTalents:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgTalents:notOrgMember') });
 
     const { notes } = req.body || {};
     await favoriteOrgTalent(orgId, talentId, req.talentId, notes);
-    return res.json({ message: 'Talent ajouté aux favoris' });
+    return res.json({ message: req.t('orgTalents:favoritesAdded') });
   } catch (error) {
     logger.error('Error favoriting talent:', error);
-    return res.status(500).json({ error: 'Erreur lors de l\'ajout aux favoris' });
+    return res.status(500).json({ error: req.t('orgTalents:favoritesAddError') });
   }
 });
 
@@ -134,16 +134,16 @@ router.post('/:talentId/favorite', authMiddleware, async (req: AuthRequest, res:
 router.delete('/:talentId/favorite', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId, talentId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgTalents:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgTalents:notOrgMember') });
 
     await unfavoriteOrgTalent(orgId, talentId);
-    return res.json({ message: 'Talent retiré des favoris' });
+    return res.json({ message: req.t('orgTalents:favoritesRemoved') });
   } catch (error) {
     logger.error('Error unfavoriting talent:', error);
-    return res.status(500).json({ error: 'Erreur lors du retrait des favoris' });
+    return res.status(500).json({ error: req.t('orgTalents:favoritesRemoveError') });
   }
 });
 
@@ -154,16 +154,16 @@ router.delete('/:talentId/favorite', authMiddleware, async (req: AuthRequest, re
 router.get('/tags', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgTalents:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgTalents:notOrgMember') });
 
     const tags = await listTags(orgId);
     return res.json({ data: tags });
   } catch (error) {
     logger.error('Error listing tags:', error);
-    return res.status(500).json({ error: 'Erreur lors de la récupération des tags' });
+    return res.status(500).json({ error: req.t('orgTalents:tagsError') });
   }
 });
 
@@ -174,24 +174,24 @@ router.get('/tags', authMiddleware, async (req: AuthRequest, res: Response) => {
 router.post('/tags', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgTalents:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgTalents:notOrgMember') });
 
     const { name, color } = req.body;
     if (!name || !name.trim()) {
-      return res.status(400).json({ error: 'Le nom du tag est requis' });
+      return res.status(400).json({ error: req.t('orgTalents:tagNameRequired') });
     }
 
     const tag = await createTag(orgId, name, color || '#6B5E52', req.talentId);
     return res.status(201).json({ data: tag });
   } catch (error: any) {
     if (error?.constraint === 'organization_talent_tag_definitions_organization_id_name_key') {
-      return res.status(409).json({ error: 'Un tag avec ce nom existe déjà' });
+      return res.status(409).json({ error: req.t('orgTalents:tagExists') });
     }
     logger.error('Error creating tag:', error);
-    return res.status(500).json({ error: 'Erreur lors de la création du tag' });
+    return res.status(500).json({ error: req.t('orgTalents:tagCreateError') });
   }
 });
 
@@ -201,19 +201,19 @@ router.post('/tags', authMiddleware, async (req: AuthRequest, res: Response) => 
 router.patch('/tags/:tagId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId, tagId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgTalents:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgTalents:notOrgMember') });
 
     const { name, color } = req.body;
     const tag = await updateTag(tagId, orgId, { name, color });
-    if (!tag) return res.status(404).json({ error: 'Tag non trouvé' });
+    if (!tag) return res.status(404).json({ error: req.t('orgTalents:tagNotFound') });
 
     return res.json({ data: tag });
   } catch (error) {
     logger.error('Error updating tag:', error);
-    return res.status(500).json({ error: 'Erreur lors de la mise à jour du tag' });
+    return res.status(500).json({ error: req.t('orgTalents:tagUpdateError') });
   }
 });
 
@@ -223,18 +223,18 @@ router.patch('/tags/:tagId', authMiddleware, async (req: AuthRequest, res: Respo
 router.delete('/tags/:tagId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId, tagId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgTalents:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgTalents:notOrgMember') });
 
     const deleted = await deleteTag(tagId, orgId);
-    if (!deleted) return res.status(404).json({ error: 'Tag non trouvé' });
+    if (!deleted) return res.status(404).json({ error: req.t('orgTalents:tagNotFound') });
 
-    return res.json({ message: 'Tag supprimé' });
+    return res.json({ message: req.t('orgTalents:tagDeleted') });
   } catch (error) {
     logger.error('Error deleting tag:', error);
-    return res.status(500).json({ error: 'Erreur lors de la suppression du tag' });
+    return res.status(500).json({ error: req.t('orgTalents:tagDeleteError') });
   }
 });
 
@@ -245,16 +245,16 @@ router.delete('/tags/:tagId', authMiddleware, async (req: AuthRequest, res: Resp
 router.post('/:talentId/tags/:tagId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId, talentId, tagId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgTalents:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgTalents:notOrgMember') });
 
     await assignTag(tagId, talentId, req.talentId);
-    return res.json({ message: 'Tag assigné' });
+    return res.json({ message: req.t('orgTalents:tagAssigned') });
   } catch (error) {
     logger.error('Error assigning tag:', error);
-    return res.status(500).json({ error: 'Erreur lors de l\'assignation du tag' });
+    return res.status(500).json({ error: req.t('orgTalents:tagAssignError') });
   }
 });
 
@@ -265,16 +265,16 @@ router.post('/:talentId/tags/:tagId', authMiddleware, async (req: AuthRequest, r
 router.delete('/:talentId/tags/:tagId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId, talentId, tagId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgTalents:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgTalents:notOrgMember') });
 
     await unassignTag(tagId, talentId);
-    return res.json({ message: 'Tag retiré' });
+    return res.json({ message: req.t('orgTalents:tagRemoved') });
   } catch (error) {
     logger.error('Error unassigning tag:', error);
-    return res.status(500).json({ error: 'Erreur lors du retrait du tag' });
+    return res.status(500).json({ error: req.t('orgTalents:tagRemoveError') });
   }
 });
 

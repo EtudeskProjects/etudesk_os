@@ -17,6 +17,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { formatCompactNumber } from '../../utils/number';
 import type { Community } from '../../types/models';
 import { COMMUNITY_TYPE_LABELS, VISIBILITY_LABELS } from '../../types/models';
@@ -68,6 +69,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = React.memo(({
   statusOverlay,
 }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   // Helpers
   const getTypeIcon = () => {
@@ -120,7 +122,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = React.memo(({
   const metaItems = [
     {
       Icon: Users,
-      text: `${formatCompactNumber(community.members_count || 0)} ${(community.members_count || 0) <= 1 ? 'membre' : 'membres'}`,
+      text: `${formatCompactNumber(community.members_count || 0)} ${(community.members_count || 0) <= 1 ? t('common.member') : t('common.members')}`,
     },
   ];
 
@@ -129,7 +131,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = React.memo(({
       Icon: MapPin,
       text: community.city && community.country
         ? `${community.city}, ${community.country}`
-        : community.city || 'En ligne',
+        : community.city || t('common.online'),
     });
   } else {
     metaItems.push({

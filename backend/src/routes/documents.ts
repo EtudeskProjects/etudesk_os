@@ -292,7 +292,7 @@ router.post(
         } catch (debitError: any) {
           if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
             return res.status(402).json({
-              error: 'Solde crédits insuffisant. Rechargez votre wallet pour continuer.',
+              error: req.t('billing:insufficientCredits'),
               code: 'INSUFFICIENT_CREDITS',
             });
           }

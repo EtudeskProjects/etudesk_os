@@ -232,10 +232,10 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
   }
   if (data.memberCount !== undefined || data.members_count !== undefined) {
     const count = data.memberCount ?? data.members_count;
-    metaItems.push({ icon: Users, text: `${count} membres` });
+    metaItems.push({ icon: Users, text: t('copilot.entity.memberCount', { count }) });
   }
   if (data.capacity) {
-    metaItems.push({ text: `${data.capacity} places` });
+    metaItems.push({ text: t('copilot.entity.capacityCount', { count: data.capacity }) });
   }
   if (data.hourlyRate || data.hourly_rate) {
     const rate = data.hourlyRate || `${data.hourly_rate} FCFA/h`;

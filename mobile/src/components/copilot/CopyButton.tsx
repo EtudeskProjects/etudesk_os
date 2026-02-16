@@ -8,6 +8,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Copy, Check } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { ICON } from '../../constants/theme';
 import { api } from '../../services/api';
 import { ShimmerPlaceholder } from '../ui';
@@ -171,6 +172,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ content, size = ICON.siz
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const handleCopy = async () => {
     if (loading) return;
@@ -196,7 +198,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ content, size = ICON.siz
       onPress={handleCopy}
       disabled={loading}
       accessibilityRole="button"
-      accessibilityLabel="Copier"
+      accessibilityLabel={t('common.copy')}
     >
       {loading ? (
         <ShimmerPlaceholder width={(size || 18) + 4} height={12} variant="bar" />

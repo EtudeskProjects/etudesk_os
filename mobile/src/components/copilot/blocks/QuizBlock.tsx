@@ -7,6 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { BookOpen, CheckCircle2, XCircle } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
+import { useI18n } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 
 
@@ -33,6 +34,7 @@ const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   // Normalize data: support both new and old format
@@ -203,7 +205,7 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
               <XCircle size={ICON.size.sm} color={colors.error} strokeWidth={ICON.strokeWidth} />
             )}
             <Text style={[styles.explanationTitle, { color: isCorrectAnswer ? colors.success : colors.error }]}>
-              {isCorrectAnswer ? 'Bonne réponse !' : 'Mauvaise réponse'}
+              {isCorrectAnswer ? t('copilot.quiz.correctAnswer') : t('copilot.quiz.wrongAnswer')}
             </Text>
           </View>
           <Text style={[styles.explanationText, { color: colors.textSecondary }]}>
@@ -215,7 +217,7 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
       {/* Hint when not interactive and not answered locally */}
       {!onAnswer && !answered && (
         <Text style={[styles.answeredHint, { color: colors.textDisabled }]}>
-          Question déjà répondue
+          {t('copilot.quiz.alreadyAnswered')}
         </Text>
       )}
     </View>

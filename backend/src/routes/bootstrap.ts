@@ -22,7 +22,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ error: req.t('common:authRequired') });
     }
 
     const [profileRes, sessionsRes, notificationsRes, ecosystemRes, walletRes] = await Promise.all([
@@ -92,7 +92,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     logger.error('Error in bootstrap:', error);
-    res.status(500).json({ error: 'Failed to load bootstrap data' });
+    res.status(500).json({ error: req.t('common:bootstrapLoadFailed') });
   }
 });
 

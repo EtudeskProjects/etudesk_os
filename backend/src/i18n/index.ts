@@ -36,6 +36,10 @@ const NAMESPACES = [
   'payments',
   'copilot',
   'calendar',
+  'billing',
+  'rateLimit',
+  'orgDocs',
+  'orgTalents',
 ] as const;
 
 i18next

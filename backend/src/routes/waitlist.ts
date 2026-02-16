@@ -21,14 +21,14 @@ router.post('/', waitlistLimiter, async (req: Request, res: Response) => {
   try {
     const parsed = waitlistSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: 'Invalid data', details: parsed.error.flatten().fieldErrors });
+      return res.status(400).json({ error: req.t('validation:validationFailed'), details: parsed.error.flatten().fieldErrors });
     }
 
     const { type, country, contactType, contactValue } = parsed.data;
 
     // Basic email validation
     if (contactType === 'EMAIL' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactValue)) {
-      return res.status(400).json({ error: 'Invalid email address' });
+      return res.status(400).json({ error: req.t('common:invalidEmail') });
     }
 
     // Basic WhatsApp validation (digits, optional +, 7-15 chars)
@@ -37,7 +37,7 @@ router.post('/', waitlistLimiter, async (req: Request, res: Response) => {
       ? contactValue.replace(/[\s\-\(\)]/g, '')
       : contactValue;
     if (contactType === 'WHATSAPP' && !/^\+?\d{7,15}$/.test(cleanedWhatsApp)) {
-      return res.status(400).json({ error: 'Invalid WhatsApp number' });
+      return res.status(400).json({ error: req.t('validation:invalidWhatsApp') });
     }
 
     const storedContactValue = contactType === 'WHATSAPP' ? cleanedWhatsApp : contactValue;
@@ -55,7 +55,7 @@ router.post('/', waitlistLimiter, async (req: Request, res: Response) => {
     res.status(201).json({ success: true });
   } catch (error) {
     logger.error('Waitlist error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: req.t('common:internalError') });
   }
 });
 

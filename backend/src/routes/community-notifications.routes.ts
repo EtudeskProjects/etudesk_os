@@ -18,7 +18,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(401).json({ error: 'Authentification requise' });
+      return res.status(401).json({ error: req.t('common:authRequired') });
     }
 
     const community_id = req.query.community_id as string | undefined;
@@ -49,7 +49,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     logger.error('Error fetching community notifications:', error);
-    res.status(500).json({ error: error.message || 'Erreur serveur' });
+    res.status(500).json({ error: error.message || req.t('common:serverError') });
   }
 });
 
@@ -61,14 +61,14 @@ router.get('/unread-counts', authMiddleware, async (req: AuthRequest, res: Respo
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(401).json({ error: 'Authentification requise' });
+      return res.status(401).json({ error: req.t('common:authRequired') });
     }
 
     const rows = await communityNotificationService.getUnreadCounts(talentId);
     res.json({ data: rows });
   } catch (error: any) {
     logger.error('Error fetching unread counts:', error);
-    res.status(500).json({ error: error.message || 'Erreur serveur' });
+    res.status(500).json({ error: error.message || req.t('common:serverError') });
   }
 });
 
@@ -81,7 +81,7 @@ router.post('/read', authMiddleware, async (req: AuthRequest, res: Response) => 
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(401).json({ error: 'Authentification requise' });
+      return res.status(401).json({ error: req.t('common:authRequired') });
     }
 
     const { notification_ids, community_id, all } = req.body;
@@ -100,7 +100,7 @@ router.post('/read', authMiddleware, async (req: AuthRequest, res: Response) => 
     res.json({ success: true, marked_read: marked });
   } catch (error: any) {
     logger.error('Error marking community notifications as read:', error);
-    res.status(500).json({ error: error.message || 'Erreur serveur' });
+    res.status(500).json({ error: error.message || req.t('common:serverError') });
   }
 });
 
@@ -113,14 +113,14 @@ router.post('/:communityId/read-all', authMiddleware, async (req: AuthRequest, r
     const talentId = req.talentId;
     const { communityId } = req.params;
     if (!talentId) {
-      return res.status(401).json({ error: 'Authentification requise' });
+      return res.status(401).json({ error: req.t('common:authRequired') });
     }
 
     const marked = await communityNotificationService.markAsRead(talentId, undefined, communityId);
     res.json({ success: true, marked_read: marked });
   } catch (error: any) {
     logger.error('Error marking community notifications as read:', error);
-    res.status(500).json({ error: error.message || 'Erreur serveur' });
+    res.status(500).json({ error: error.message || req.t('common:serverError') });
   }
 });
 

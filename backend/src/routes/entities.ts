@@ -20,7 +20,7 @@ router.get('/batch', authMiddleware, async (req: AuthRequest, res: Response) => 
   try {
     const itemsParam = req.query.items as string;
     if (!itemsParam) {
-      return res.status(400).json({ error: 'items parameter required (format: type:id,type:id)' });
+      return res.status(400).json({ error: req.t('common:itemsRequired') });
     }
 
     const items = itemsParam.split(',').slice(0, 20); // Max 20
@@ -178,7 +178,7 @@ router.get('/batch', authMiddleware, async (req: AuthRequest, res: Response) => 
     res.json({ success: true, data: results });
   } catch (error) {
     logger.error('Error in batch entity fetch:', error);
-    res.status(500).json({ error: 'Failed to fetch entities' });
+    res.status(500).json({ error: req.t('common:fetchFailed') });
   }
 });
 

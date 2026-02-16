@@ -1,6 +1,10 @@
 {
   "common": {
     "loading": "Loading...",
+    "thinking": "Thinking…",
+    "member": "member",
+    "members": "members",
+    "online": "Online",
     "error": "Error",
     "success": "Success",
     "cancel": "Cancel",
@@ -32,7 +36,9 @@
     "notSpecified": "Not specified",
     "copied": "Copied!",
     "information": "Information",
-    "places": "seats"
+    "places": "seats",
+    "place": "seat",
+    "copy": "Copy"
   },
   "auth": {
     "login": {
@@ -565,6 +571,11 @@
     "daily": "Daily",
     "weekly": "Weekly",
     "monthly": "Monthly",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "maintenance": "Maintenance"
+    },
     "manage": "Manage space",
     "bookSpace": "Book this space",
     "notFound": "Space not found",
@@ -866,6 +877,21 @@
     "permissionDeniedMessage": "You don't have permission for this action."
   },
   "copilot": {
+    "quiz": {
+      "correctAnswer": "Correct answer!",
+      "wrongAnswer": "Wrong answer",
+      "alreadyAnswered": "Already answered"
+    },
+    "flashcard": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard",
+      "flipCard": "Flip card",
+      "answer": "Answer",
+      "question": "Question",
+      "tapToReveal": "Tap to reveal",
+      "tapToReturn": "Tap to go back"
+    },
     "tool": {
       "searchPlatform": "Searching platform",
       "searchOpportunities": "Searching opportunities",
@@ -926,7 +952,10 @@
       "organization": "Organization",
       "talent": "Talent",
       "document": "Document",
-      "viewDetails": "View details"
+      "viewDetails": "View details",
+      "memberCount": "{{count}} members",
+      "capacityCount": "{{count}} seats",
+      "hourlyRate": "{{rate}} FCFA/h"
     }
   },
   "applicationDetail": {

@@ -71,10 +71,10 @@ async function checkOrgMembership(orgId: string, talentId: string): Promise<stri
 router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgDocs:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgDocs:notOrgMember') });
 
     const { type, category, status, is_public, search, limit, offset } = req.query;
 
@@ -92,7 +92,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
     return res.json({ data: result });
   } catch (error) {
     logger.error('Error listing org documents:', error);
-    return res.status(500).json({ error: 'Erreur lors de la récupération des documents' });
+    return res.status(500).json({ error: req.t('orgDocs:fetchError') });
   }
 });
 
@@ -102,10 +102,10 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 router.get('/stats', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgDocs:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgDocs:notOrgMember') });
 
     const stats = await getOrgDocumentStats(orgId);
     const uploadCheck = await canOrgUploadDocument(orgId);
@@ -121,7 +121,7 @@ router.get('/stats', authMiddleware, async (req: AuthRequest, res: Response) => 
     });
   } catch (error) {
     logger.error('Error getting org document stats:', error);
-    return res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
+    return res.status(500).json({ error: req.t('orgDocs:statsError') });
   }
 });
 
@@ -148,18 +148,18 @@ router.get('/types', (_req: Request, res: Response) => {
 router.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId, id } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgDocs:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgDocs:notOrgMember') });
 
     const document = await getOrgDocument(id, orgId);
-    if (!document) return res.status(404).json({ error: 'Document non trouvé' });
+    if (!document) return res.status(404).json({ error: req.t('orgDocs:notFound') });
 
     return res.json({ data: document });
   } catch (error) {
     logger.error('Error getting org document:', error);
-    return res.status(500).json({ error: 'Erreur lors de la récupération du document' });
+    return res.status(500).json({ error: req.t('orgDocs:fetchError') });
   }
 });
 
@@ -173,14 +173,14 @@ router.post(
   async (req: AuthRequest, res: Response) => {
     try {
       const { orgId } = req.params;
-      if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+      if (!req.talentId) return res.status(403).json({ error: req.t('orgDocs:authRequired') });
 
       const role = await checkOrgMembership(orgId, req.talentId);
-      if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+      if (!role) return res.status(403).json({ error: req.t('orgDocs:notOrgMember') });
 
       const files = req.files as Express.Multer.File[] | undefined;
       if (!files || files.length === 0) {
-        return res.status(400).json({ error: 'Aucun fichier fourni' });
+        return res.status(400).json({ error: req.t('orgDocs:noFileProvided') });
       }
 
       if (files.length > ORG_DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST) {
@@ -203,7 +203,7 @@ router.post(
       const { document_type, title, description, is_public } = req.body;
 
       if (document_type && !isValidOrgDocumentType(document_type)) {
-        return res.status(400).json({ error: 'Type de document invalide' });
+        return res.status(400).json({ error: req.t('orgDocs:invalidDocType') });
       }
 
       const uploadedDocuments = [];
@@ -245,7 +245,7 @@ router.post(
         } catch (debitError: any) {
           if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
             return res.status(402).json({
-              error: 'Solde crédits organisation insuffisant. Rechargez le wallet pour continuer.',
+              error: req.t('billing:insufficientOrgCredits'),
               code: 'INSUFFICIENT_CREDITS',
             });
           }
@@ -282,7 +282,7 @@ router.post(
     } catch (error) {
       logger.error('Error uploading org document:', error);
       return res.status(500).json({
-        error: 'Erreur lors de l\'upload du document',
+        error: req.t('orgDocs:uploadError'),
         details: error instanceof Error ? error.message : 'Unknown error',
       });
     }
@@ -295,15 +295,15 @@ router.post(
 router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId, id } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgDocs:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgDocs:notOrgMember') });
 
     const { document_type, title, description, is_public, tags } = req.body;
 
     if (document_type && !isValidOrgDocumentType(document_type)) {
-      return res.status(400).json({ error: 'Type de document invalide' });
+      return res.status(400).json({ error: req.t('orgDocs:invalidDocType') });
     }
 
     const document = await updateOrgDocument(id, orgId, {
@@ -314,12 +314,12 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
       tags,
     });
 
-    if (!document) return res.status(404).json({ error: 'Document non trouvé' });
+    if (!document) return res.status(404).json({ error: req.t('orgDocs:notFound') });
 
-    return res.json({ message: 'Document mis à jour', document });
+    return res.json({ message: req.t('orgDocs:updated'), document });
   } catch (error) {
     logger.error('Error updating org document:', error);
-    return res.status(500).json({ error: 'Erreur lors de la mise à jour du document' });
+    return res.status(500).json({ error: req.t('orgDocs:updateError') });
   }
 });
 
@@ -329,18 +329,18 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
 router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId, id } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgDocs:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgDocs:notOrgMember') });
 
     const deleted = await deleteOrgDocument(id, orgId);
-    if (!deleted) return res.status(404).json({ error: 'Document non trouvé' });
+    if (!deleted) return res.status(404).json({ error: req.t('orgDocs:notFound') });
 
-    return res.json({ message: 'Document supprimé' });
+    return res.json({ message: req.t('orgDocs:deleted') });
   } catch (error) {
     logger.error('Error deleting org document:', error);
-    return res.status(500).json({ error: 'Erreur lors de la suppression du document' });
+    return res.status(500).json({ error: req.t('orgDocs:deleteError') });
   }
 });
 
@@ -350,19 +350,19 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
 router.post('/:id/retry', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { orgId, id } = req.params;
-    if (!req.talentId) return res.status(403).json({ error: 'Auth required' });
+    if (!req.talentId) return res.status(403).json({ error: req.t('orgDocs:authRequired') });
 
     const role = await checkOrgMembership(orgId, req.talentId);
-    if (!role) return res.status(403).json({ error: 'Vous n\'êtes pas membre de cette organisation' });
+    if (!role) return res.status(403).json({ error: req.t('orgDocs:notOrgMember') });
 
     const success = await retryOrgExtraction(id, orgId);
-    if (!success) return res.status(404).json({ error: 'Document non trouvé' });
+    if (!success) return res.status(404).json({ error: req.t('orgDocs:notFound') });
 
-    return res.json({ message: 'Extraction relancée' });
+    return res.json({ message: req.t('orgDocs:extractionRestarted') });
   } catch (error) {
     logger.error('Error retrying org extraction:', error);
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Erreur lors de la relance',
+      error: error instanceof Error ? error.message : req.t('orgDocs:uploadError'),
     });
   }
 });

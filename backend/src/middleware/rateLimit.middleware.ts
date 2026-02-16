@@ -29,9 +29,8 @@ const getOtpMax = () => {
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: getApiMax(),
-  message: {
-    error: 'Trop de requêtes. Veuillez réessayer dans quelques minutes.',
-    retry_after: 15 * 60
+  message: (_req: any, res: any) => {
+    return res.status(429).json({ error: _req.t('rateLimit:tooManyRequests'), retry_after: 15 * 60 });
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -41,9 +40,8 @@ export const apiLimiter = rateLimit({
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: getAuthMax(),
-  message: {
-    error: 'Trop de tentatives de connexion. Veuillez réessayer dans 15 minutes.',
-    retry_after: 15 * 60
+  message: (_req: any, res: any) => {
+    return res.status(429).json({ error: _req.t('rateLimit:tooManyLoginAttempts'), retry_after: 15 * 60 });
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -54,9 +52,8 @@ export const authLimiter = rateLimit({
 export const otpLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: getOtpMax(),
-  message: {
-    error: 'Limite d\'envoi de code atteinte. Veuillez réessayer dans 1 heure.',
-    retry_after: 60 * 60
+  message: (_req: any, res: any) => {
+    return res.status(429).json({ error: _req.t('rateLimit:codeLimitReached'), retry_after: 60 * 60 });
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -66,9 +63,8 @@ export const otpLimiter = rateLimit({
 export const applicationLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 200,
-  message: {
-    error: 'Vous avez soumis trop de candidatures. Veuillez réessayer plus tard.',
-    retry_after: 60 * 60
+  message: (_req: any, res: any) => {
+    return res.status(429).json({ error: _req.t('rateLimit:tooManyApplications'), retry_after: 60 * 60 });
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -78,9 +74,8 @@ export const applicationLimiter = rateLimit({
 export const writeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000,
-  message: {
-    error: 'Trop d\'opérations. Veuillez réessayer dans quelques minutes.',
-    retry_after: 15 * 60
+  message: (_req: any, res: any) => {
+    return res.status(429).json({ error: _req.t('rateLimit:tooManyOperations'), retry_after: 15 * 60 });
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -90,9 +85,8 @@ export const writeLimiter = rateLimit({
 export const searchLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 300,
-  message: {
-    error: 'Trop de recherches. Veuillez patienter.',
-    retry_after: 60
+  message: (_req: any, res: any) => {
+    return res.status(429).json({ error: _req.t('rateLimit:tooManySearches'), retry_after: 60 });
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -102,9 +96,8 @@ export const searchLimiter = rateLimit({
 export const copilotChatLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 60,
-  message: {
-    error: 'Trop de messages envoyés. Veuillez patienter quelques instants.',
-    retry_after: 60
+  message: (_req: any, res: any) => {
+    return res.status(429).json({ error: _req.t('rateLimit:tooManyMessages'), retry_after: 60 });
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -114,9 +107,8 @@ export const copilotChatLimiter = rateLimit({
 export const copilotGeneralLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 200,
-  message: {
-    error: 'Trop de requêtes copilot. Veuillez patienter.',
-    retry_after: 60
+  message: (_req: any, res: any) => {
+    return res.status(429).json({ error: _req.t('rateLimit:tooManyCopilotRequests'), retry_after: 60 });
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -126,9 +118,8 @@ export const copilotGeneralLimiter = rateLimit({
 export const waitlistLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 30,
-  message: {
-    error: 'Trop de demandes. Veuillez réessayer dans 1 heure.',
-    retry_after: 60 * 60
+  message: (_req: any, res: any) => {
+    return res.status(429).json({ error: _req.t('rateLimit:tooManyDemands'), retry_after: 60 * 60 });
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -138,9 +129,8 @@ export const waitlistLimiter = rateLimit({
 export const paystackWebhookLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 100,
-  message: {
-    error: 'Trop de requêtes webhook.',
-    retry_after: 60
+  message: (_req: any, res: any) => {
+    return res.status(429).json({ error: _req.t('rateLimit:webhookLimitExceeded'), retry_after: 60 });
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -150,9 +140,8 @@ export const paystackWebhookLimiter = rateLimit({
 export const whatsappWebhookLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 100,
-  message: {
-    error: 'Trop de requêtes webhook. Veuillez réessayer.',
-    retry_after: 60
+  message: (_req: any, res: any) => {
+    return res.status(429).json({ error: _req.t('rateLimit:webhookRetryLimitExceeded'), retry_after: 60 });
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -162,9 +151,8 @@ export const whatsappWebhookLimiter = rateLimit({
 export const exportLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 100,
-  message: {
-    error: 'Limite d\'exportation atteinte. Veuillez réessayer plus tard.',
-    retry_after: 60 * 60
+  message: (_req: any, res: any) => {
+    return res.status(429).json({ error: _req.t('rateLimit:exportLimitReached'), retry_after: 60 * 60 });
   },
   standardHeaders: true,
   legacyHeaders: false,

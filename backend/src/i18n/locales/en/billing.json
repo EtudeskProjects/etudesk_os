@@ -1,0 +1,21 @@
+{
+  "noAccessToOrg": "You do not have access to this organization",
+  "insufficientRoleForBilling": "Insufficient role to manage billing for this organization",
+  "internalError": "Internal billing error",
+  "failedToLoadCatalog": "Failed to load credits catalog",
+  "scopeRequired": "scope required: TALENT or ORGANIZATION",
+  "talentAuthRequired": "Talent authentication required",
+  "talentWalletAccessDenied": "Access denied to this talent wallet",
+  "orgIdRequired": "organization id required for ORGANIZATION scope",
+  "authRequired": "Authentication required",
+  "ownerIdRequired": "owner_id required",
+  "invalidTalentOwnerId": "Invalid talent owner_id",
+  "paystackRefRequired": "paystack_reference required",
+  "paymentNotFound": "Payment not found",
+  "paymentAccessDenied": "Access denied to this payment",
+  "invoiceAccessDenied": "Access denied to talent invoices",
+  "invoiceNotFound": "Invoice not found",
+  "insufficientCredits": "Insufficient credits. Top up your wallet to continue.",
+  "insufficientOrgCredits": "Insufficient organization credits. Top up the wallet to continue.",
+  "insufficientCreditsForPublication": "Insufficient credits. Top up your wallet to schedule a publication."
+}

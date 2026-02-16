@@ -567,7 +567,6 @@ const styles = StyleSheet.create({
   // Date section
   dateSection: {
     marginBottom: SPACING.lg,
-    paddingHorizontal: SPACING.lg,
   },
 
   dateLabelRow: {

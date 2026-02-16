@@ -114,7 +114,7 @@ router.post('/request-whatsapp-otp', validate(requestWhatsAppOtpSchema), async (
     if (!formattedPhone) {
       return res.status(400).json({
         success: false,
-        error: 'Numéro de téléphone invalide',
+        error: req.t('auth:invalidPhone'),
       });
     }
 
@@ -278,7 +278,7 @@ router.post('/google', validate(googleAuthSchema), auditLog('AUTH_GOOGLE'), asyn
       logger.warn('Google ID token verification failed', { error: verifyError });
       return res.status(401).json({
         success: false,
-        error: 'Invalid Google token',
+        error: req.t('auth:googleTokenInvalid'),
       });
     }
 
@@ -286,7 +286,7 @@ router.post('/google', validate(googleAuthSchema), auditLog('AUTH_GOOGLE'), asyn
     if (!payload || !payload.email) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid Google token payload',
+        error: req.t('auth:googleTokenPayloadInvalid'),
       });
     }
 
@@ -295,7 +295,7 @@ router.post('/google', validate(googleAuthSchema), auditLog('AUTH_GOOGLE'), asyn
     if (!email_verified) {
       return res.status(401).json({
         success: false,
-        error: 'Google email not verified',
+        error: req.t('auth:googleEmailNotVerified'),
       });
     }
 

@@ -56,5 +56,11 @@
   "mustBeOrgMember": "Vous devez être membre de cette organisation",
   "onlyAdminsCanUpdate": "Seuls les admins peuvent modifier",
   "onlyAdminsCanDelete": "Seuls les admins peuvent supprimer",
-  "onlyAdminsCanPerformAction": "Seuls les admins de la communauté peuvent effectuer cette action"
+  "onlyAdminsCanPerformAction": "Seuls les admins de la communauté peuvent effectuer cette action",
+  "authRequired": "Authentification requise",
+  "invalidFilePath": "Chemin de fichier invalide",
+  "itemsRequired": "Paramètre items requis (format: type:id,type:id)",
+  "fetchFailed": "Échec de la récupération des données",
+  "bootstrapAuthRequired": "Authentification requise",
+  "bootstrapLoadFailed": "Impossible de charger les données de démarrage"
 }

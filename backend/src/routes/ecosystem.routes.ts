@@ -18,7 +18,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const talentId = req.talentId;
     if (!talentId) {
-      return res.status(401).json({ error: 'Authentification requise' });
+      return res.status(401).json({ error: req.t('common:authRequired') });
     }
 
     const [opportunitiesRes, communitiesRes, spacesRes] = await Promise.all([
@@ -98,7 +98,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     logger.error('Error fetching ecosystem data:', error);
-    res.status(500).json({ error: error.message || 'Erreur serveur' });
+    res.status(500).json({ error: error.message || req.t('common:serverError') });
   }
 });
 

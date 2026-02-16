@@ -2,6 +2,9 @@
   "common": {
     "loading": "Chargement...",
     "thinking": "Réfléchit…",
+    "member": "membre",
+    "members": "membres",
+    "online": "En ligne",
     "error": "Erreur",
     "success": "Succès",
     "cancel": "Annuler",
@@ -33,7 +36,9 @@
     "notSpecified": "Non spécifié",
     "copied": "Copié !",
     "information": "Information",
-    "places": "places"
+    "places": "places",
+    "place": "place",
+    "copy": "Copier"
   },
   "auth": {
     "login": {
@@ -566,6 +571,11 @@
     "daily": "À la journée",
     "weekly": "À la semaine",
     "monthly": "Au mois",
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif",
+      "maintenance": "Maintenance"
+    },
     "manage": "Gérer l'espace",
     "bookSpace": "Réserver l'espace",
     "notFound": "Espace non trouvé",
@@ -864,6 +874,21 @@
     "permissionDeniedMessage": "Tu n'as pas les droits pour cette action."
   },
   "copilot": {
+    "quiz": {
+      "correctAnswer": "Bonne réponse !",
+      "wrongAnswer": "Mauvaise réponse",
+      "alreadyAnswered": "Question déjà répondue"
+    },
+    "flashcard": {
+      "easy": "Facile",
+      "medium": "Moyen",
+      "hard": "Difficile",
+      "flipCard": "Retourner la carte",
+      "answer": "Réponse",
+      "question": "Question",
+      "tapToReveal": "Toucher pour révéler",
+      "tapToReturn": "Toucher pour revenir"
+    },
     "tool": {
       "searchPlatform": "Recherche sur la plateforme",
       "searchOpportunities": "Recherche d'opportunités",
@@ -924,7 +949,10 @@
       "organization": "Organisation",
       "talent": "Talent",
       "document": "Document",
-      "viewDetails": "Voir les détails"
+      "viewDetails": "Voir les détails",
+      "memberCount": "{{count}} membres",
+      "capacityCount": "{{count}} places",
+      "hourlyRate": "{{rate}} FCFA/h"
     }
   },
   "applicationDetail": {
