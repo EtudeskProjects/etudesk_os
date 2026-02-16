@@ -36,9 +36,120 @@ function isTableContent(data: any): data is TableContent {
   return data && Array.isArray(data.headers) && Array.isArray(data.rows);
 }
 
-/** Detect CVData-structured content (has firstName + lastName + skills array) */
-function isCVContent(data: any): data is CVData {
-  return data && typeof data.firstName === 'string' && typeof data.lastName === 'string' && Array.isArray(data.skills);
+/** Detect CVData-structured content — supports both canonical and agent-alternate formats */
+function isCVContent(data: any): boolean {
+  // Canonical format: { firstName, lastName, skills: [{name}] }
+  if (data && typeof data.firstName === 'string' && typeof data.lastName === 'string' && Array.isArray(data.skills)) {
+    return true;
+  }
+  // Agent alternate format: { personalInfo: { firstName, lastName }, skills/experience }
+  if (data?.personalInfo && typeof data.personalInfo.firstName === 'string' && typeof data.personalInfo.lastName === 'string') {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Normalize agent-alternate CV format to canonical CVData.
+ * Agent often sends: { personalInfo: { firstName, lastName, title, email, ... }, experience: [...], skills: [{category, items}], ... }
+ * We need: { firstName, lastName, email, skills: [{name, type, level}], experiences: [{title, company, period, description}], ... }
+ */
+function normalizeCVData(data: any): CVData {
+  // Already canonical format
+  if (typeof data.firstName === 'string' && typeof data.lastName === 'string') {
+    return data as CVData;
+  }
+
+  const pi = data.personalInfo || {};
+
+  // Flatten skills from category groups: [{category, items: string[]}] → [{name}]
+  let flatSkills: Array<{ name: string; type?: string; level?: string }> = [];
+  if (Array.isArray(data.skills)) {
+    for (const s of data.skills) {
+      if (s.category && Array.isArray(s.items)) {
+        // Grouped format: {category: "Tech", items: ["Python", "Node.js"]}
+        for (const item of s.items) {
+          flatSkills.push({ name: item, type: s.category.toLowerCase().includes('soft') ? 'soft' : 'hard' });
+        }
+      } else if (s.name) {
+        // Already flat format
+        flatSkills.push(s);
+      }
+    }
+  }
+
+  // Normalize experiences: {position, company, startDate, endDate, highlights} → {title, company, period, description}
+  let experiences: CVData['experiences'] = undefined;
+  const rawExp = data.experience || data.experiences;
+  if (Array.isArray(rawExp)) {
+    experiences = rawExp.map((e: any) => ({
+      title: e.position || e.title || '',
+      company: e.company || e.organization || '',
+      location: e.location,
+      period: e.period || `${e.startDate || ''}${e.endDate ? ' - ' + e.endDate : e.current ? ' - Présent' : ''}`,
+      description: Array.isArray(e.highlights) ? e.highlights.join('\n') : (e.description || ''),
+    }));
+  }
+
+  // Normalize education: {institution, degree, startDate, endDate, highlights} → {institution, degree, period, description}
+  let education: CVData['education'] = undefined;
+  if (Array.isArray(data.education)) {
+    education = data.education.map((e: any) => ({
+      degree: e.degree || '',
+      institution: e.institution || '',
+      location: e.location,
+      period: e.period || `${e.startDate || ''}${e.endDate ? ' - ' + e.endDate : ''}`,
+      description: Array.isArray(e.highlights) ? e.highlights.join('\n') : (e.description || ''),
+    }));
+  }
+
+  // Normalize certifications
+  let certifications: CVData['certifications'] = undefined;
+  if (Array.isArray(data.certifications)) {
+    certifications = data.certifications.map((c: any) => ({
+      name: c.name || '',
+      issuer: c.issuer,
+      date: c.date,
+    }));
+  }
+
+  // Normalize languages
+  let languages: CVData['languages'] = undefined;
+  if (Array.isArray(data.languages)) {
+    languages = data.languages.map((l: any) => ({
+      language: l.language || l.name || '',
+      level: l.level || '',
+    }));
+  }
+
+  // Volunteer/other sections
+  let other: CVData['other'] = undefined;
+  if (Array.isArray(data.volunteerWork) && data.volunteerWork.length > 0) {
+    other = [{
+      heading: 'Bénévolat & Engagement',
+      content: data.volunteerWork.map((v: any) =>
+        `${v.role || v.position || ''} — ${v.organization || ''} (${v.startDate || ''}${v.current ? ' - Présent' : v.endDate ? ' - ' + v.endDate : ''})`
+      ).join('\n'),
+    }];
+  }
+
+  return {
+    firstName: pi.firstName || data.firstName || '',
+    lastName: pi.lastName || data.lastName || '',
+    email: pi.email || data.email || '',
+    phone: pi.phone || data.phone,
+    city: pi.location?.split(',')[0]?.trim() || pi.city || data.city,
+    country: pi.location?.split(',')[1]?.trim() || pi.country || data.country,
+    bio: pi.summary || pi.bio || data.bio,
+    skills: flatSkills,
+    languages,
+    interests: data.interests,
+    goals: data.goals,
+    experiences,
+    education,
+    certifications,
+    other,
+  };
 }
 
 /**
@@ -325,11 +436,12 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
             // Route CV-structured content to the specialized elegant generator
             if (isCVContent(data)) {
               isCV = true;
+              const cvData = normalizeCVData(data);
               // Inject user's avatar if available, not already provided, and not explicitly excluded
-              if (avatarUrl && !data.avatarUrl && data.includePhoto !== false) {
-                data.avatarUrl = avatarUrl;
+              if (avatarUrl && !cvData.avatarUrl && cvData.includePhoto !== false) {
+                cvData.avatarUrl = avatarUrl;
               }
-              buffer = await generateCVPDF(data);
+              buffer = await generateCVPDF(cvData);
             } else if (isOrgDocumentContent(data)) {
               // Route org-branded documents (fiche de poste, rapport) to org generator
               buffer = await generateOrgDocumentPDF(title, data);
