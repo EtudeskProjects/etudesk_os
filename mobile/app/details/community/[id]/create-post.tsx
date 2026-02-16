@@ -62,7 +62,7 @@ const MAX_FILES = 5;
 export default function CreatePostScreen() {
     const { id, activityId } = useLocalSearchParams<{ id: string; activityId?: string }>();
     const router = useRouter();
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
     const inputRef = useRef<RNTextInput>(null);
     const scrollRef = useRef<ScrollView>(null);
 
@@ -856,6 +856,8 @@ export default function CreatePostScreen() {
                     value={scheduledDate}
                     mode="date"
                     display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    themeVariant={isDark ? 'dark' : 'light'}
+                    textColor={colors.textPrimary}
                     minimumDate={new Date()}
                     onChange={(event, selectedDate) => {
                         if (Platform.OS === 'android') {
@@ -904,6 +906,8 @@ export default function CreatePostScreen() {
                     mode="time"
                     is24Hour={true}
                     display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    themeVariant={isDark ? 'dark' : 'light'}
+                    textColor={colors.textPrimary}
                     onChange={(event, selectedDate) => {
                         if (Platform.OS === 'android') {
                             setShowTimePicker(false);

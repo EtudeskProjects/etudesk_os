@@ -23,6 +23,7 @@ import {
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 import { copilotService } from '../../../services/copilotService';
+import { formatNumberNoTrailingZeros } from '../../../utils/number';
 import { Button, ShimmerPlaceholder } from '../../ui';
 
 
@@ -186,8 +187,8 @@ function SpacePreview({ data, colors }: { data: Record<string, any>; colors: any
 
       <View style={styles.chipsRow}>
         <Chip icon={Briefcase} label={type} colors={colors} />
-        {data.surface_m2 && <Chip icon={Maximize2} label={`${data.surface_m2} m²`} colors={colors} />}
-        {data.capacity && <Chip icon={Users} label={`${data.capacity} pers.`} colors={colors} />}
+        {data.surface_m2 && <Chip icon={Maximize2} label={`${formatNumberNoTrailingZeros(data.surface_m2)} m²`} colors={colors} />}
+        {data.capacity && <Chip icon={Users} label={`${formatNumberNoTrailingZeros(data.capacity, 0)} pers.`} colors={colors} />}
       </View>
 
       {locationStr && <DetailRow icon={MapPin} text={locationStr} colors={colors} />}

@@ -1,9 +1,9 @@
 {
-  "fetchStatusError": "Échec de la récupération du statut KYC",
+  "fetchStatusError": "Impossible de récupérer le statut KYC",
   "invalidDocumentType": "Type de document invalide",
   "frontImageRequired": "L'image recto est requise",
-  "alreadyVerified": "Votre identité est déjà vérifiée.",
-  "submitError": "Échec de la soumission de la vérification KYC",
-  "uploadUrlError": "Échec de la génération de l'URL d'upload",
-  "fetchHistoryError": "Échec de la récupération de l'historique KYC"
+  "alreadyVerified": "Ton identité est déjà vérifiée.",
+  "submitError": "Impossible de soumettre la vérification KYC",
+  "uploadUrlError": "Impossible de générer l'URL d'upload",
+  "fetchHistoryError": "Impossible de récupérer l'historique KYC"
 }

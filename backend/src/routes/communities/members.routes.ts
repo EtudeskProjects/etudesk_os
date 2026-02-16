@@ -36,6 +36,13 @@ router.get('/memberships/me', authMiddleware, async (req: AuthRequest, res: Resp
           'name', c.name,
           'slug', c.slug,
           'cover_image_url', c.cover_image_url,
+          'images', c.images,
+          'members_count', (
+            SELECT COUNT(*)::int
+            FROM community_members cm2
+            WHERE cm2.community_id = c.id
+              AND (cm2.status IS NULL OR cm2.status = 'ACTIVE')
+          ),
           'type', c.type,
           'visibility', c.visibility,
           'organization', (

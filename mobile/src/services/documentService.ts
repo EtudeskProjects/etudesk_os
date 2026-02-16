@@ -5,6 +5,7 @@
 
 import { api } from './api';
 import { LIGHT_COLORS } from '../constants/theme';
+import { formatNumberNoTrailingZeros } from '../utils/number';
 
 
 export type DocumentType =
@@ -385,8 +386,8 @@ async function retryExtraction(documentId: string): Promise<{ message: string }>
  */
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024) return `${formatNumberNoTrailingZeros(bytes / 1024, 1)} KB`;
+  return `${formatNumberNoTrailingZeros(bytes / (1024 * 1024), 1)} MB`;
 }
 
 /**

@@ -157,7 +157,7 @@ class CommunityService {
   // USER MEMBERSHIP METHODS
   /**
    * Get communities the current user is a member of (including PENDING requests).
-   * Backend returns { data: array, pagination }; we normalize to { data: { memberships } }.
+   * Backend returns paginated payload; we normalize to { data: { memberships, pagination }, count }.
    */
   async getMyMemberships(filters?: { status?: 'ACTIVE' | 'PENDING' | 'REJECTED'; limit?: number; offset?: number }): Promise<ApiResponse<{
     memberships: Array<{
@@ -170,14 +170,24 @@ class CommunityService {
     }>;
     pagination?: { total: number; limit: number; offset: number; hasMore: boolean };
   }>> {
-    const res = await api.get<{ data: any[]; pagination?: any }>('/api/communities/memberships/me', filters);
-    const resData = res?.data as any;
-    const list = Array.isArray(resData) ? resData : resData?.memberships ?? (res as any)?.memberships ?? [];
+    const res = await api.get<any>('/api/communities/memberships/me', filters);
+    const rawData = res?.data as any;
+    const list = Array.isArray(rawData)
+      ? rawData
+      : rawData?.data ?? rawData?.memberships ?? (res as any)?.memberships ?? [];
+    const pagination = (res as any)?.pagination ?? rawData?.pagination;
+    const totalFromPagination = pagination?.total;
+    const totalFromCount = (res as any)?.count ?? rawData?.count;
+    const normalizedCount = typeof totalFromPagination === 'number'
+      ? totalFromPagination
+      : (typeof totalFromCount === 'number' ? totalFromCount : undefined);
+
     return {
       data: {
         memberships: list,
-        ...(resData?.pagination && { pagination: resData.pagination }),
+        ...(pagination && { pagination }),
       },
+      ...(typeof normalizedCount === 'number' ? { count: normalizedCount } : {}),
     } as any;
   }
 

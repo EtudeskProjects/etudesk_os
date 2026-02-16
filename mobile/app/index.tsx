@@ -15,19 +15,19 @@ const STORAGE_KEY_ONBOARDING_SEEN = 'onboarding_seen';
 const SLIDES = [
   {
     id: 1,
-    image: require('../assets/onboarding_1.png'),
+    image: require('../assets/onboarding_1.jpg'),
     title: 'Transforme tes compétences en carrière',
     description: 'Construis un profil professionnel percutant et valorise ton expertise unique auprès des recruteurs.',
   },
   {
     id: 2,
-    image: require('../assets/onboarding_2.png'),
+    image: require('../assets/onboarding_2.jpg'),
     title: 'Accède aux meilleures opportunités',
     description: 'Découvre des offres d\'emploi parfaitement ciblées selon tes talents et ambitions.',
   },
   {
     id: 3,
-    image: require('../assets/onboarding_3.png'),
+    image: require('../assets/onboarding_3.jpg'),
     title: 'Évolue avec l\'élite',
     description: 'Rejoins une communauté dynamique de talents et d\'entreprises pour booster ton réseau professionnel.',
   },

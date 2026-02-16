@@ -20,6 +20,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useI18n } from '../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
 import { fetchEntityBatched } from '../../services/entityBatchFetcher';
+import { formatNumberNoTrailingZeros } from '../../utils/number';
 import { ShimmerPlaceholder } from '../ui';
 
 
@@ -68,7 +69,7 @@ function normalizeEntity(type: string, raw: Record<string, any>): Record<string,
         subtitle: raw.organization?.name,
         location: raw.city,
         capacity: raw.capacity,
-        hourlyRate: raw.hourly_rate ? `${raw.hourly_rate} FCFA/h` : undefined,
+        hourlyRate: raw.hourly_rate ? `${formatNumberNoTrailingZeros(raw.hourly_rate, 0)} FCFA/h` : undefined,
         metaType: raw.type,
       };
     case 'organization':
@@ -235,10 +236,10 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
     metaItems.push({ icon: Users, text: t('copilot.entity.memberCount', { count }) });
   }
   if (data.capacity) {
-    metaItems.push({ text: t('copilot.entity.capacityCount', { count: data.capacity }) });
+    metaItems.push({ text: t('copilot.entity.capacityCount', { count: formatNumberNoTrailingZeros(data.capacity, 0) }) });
   }
   if (data.hourlyRate || data.hourly_rate) {
-    const rate = data.hourlyRate || `${data.hourly_rate} FCFA/h`;
+    const rate = data.hourlyRate || `${formatNumberNoTrailingZeros(data.hourly_rate, 0)} FCFA/h`;
     metaItems.push({ text: rate, color: colors.primary });
   }
   if (data.topSkills?.length) {

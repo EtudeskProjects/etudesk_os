@@ -28,6 +28,7 @@ import {
 import { ActivityFeed } from '../../../src/components/community/ActivityFeed';
 import { formatRelativeTime, formatDate } from '../../../src/utils/date';
 import { getFullImageUrl } from '../../../src/utils/image';
+import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import type { Community, CommunityMemberPreview } from '../../../src/types/models';
 import {
   ORGANIZATION_TYPE_LABELS,
@@ -366,7 +367,7 @@ export default function CommunityDetailScreen() {
 
         {/* Content based on active tab */}
         {activeTab === 'presentation' && (
-          <View style={styles.contentPadded}>
+          <View style={[styles.contentPadded, styles.tabContent]}>
             {/* Meta Info Card */}
             <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
               {/* Members */}
@@ -376,7 +377,7 @@ export default function CommunityDetailScreen() {
                   <View>
                     <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('community.members')}</Text>
                     <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
-                      {community.members_count?.toLocaleString() || '0'}
+                      {formatNumberNoTrailingZeros(community.members_count || 0, 0)}
                     </Text>
                   </View>
                 </View>
@@ -464,7 +465,7 @@ export default function CommunityDetailScreen() {
                   ))}
                   {(community.members_count ?? membersPreview.length) > 5 && (
                     <View style={[styles.moreMembersCircle, { backgroundColor: colors.gray100, borderColor: colors.background }]}>
-                      <Text style={[styles.moreMembersText, { color: colors.textSecondary }]}>+{(community.members_count ?? membersPreview.length) - 5}</Text>
+                      <Text style={[styles.moreMembersText, { color: colors.textSecondary }]}>+{formatNumberNoTrailingZeros((community.members_count ?? membersPreview.length) - 5, 0)}</Text>
                     </View>
                   )}
                 </View>

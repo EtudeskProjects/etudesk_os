@@ -1,20 +1,20 @@
 {
   "otp": {
-    "subject": "{{code}} - Login code",
+    "subject": "{{code}} - Your login code",
     "title": "Login code",
     "yourCode": "Your login code",
     "validFor": "Valid {{minutes}} min",
-    "neverShare": "Never share this code"
+    "neverShare": "Never share this code with anyone"
   },
   "welcome": {
-    "subject": "Welcome to Etudesk, {{name}}! 🎉",
-    "title": "Welcome to Etudesk! 🎉",
-    "greeting": "Hello {{name}},",
-    "congratulations": "Congratulations! Your talent profile is now created on Etudesk. You can now:",
-    "feature1": "Discover job opportunities, internships and freelance missions",
+    "subject": "Welcome to Etudesk, {{name}}!",
+    "title": "Welcome to Etudesk!",
+    "greeting": "Hi {{name}},",
+    "congratulations": "Your talent profile is now active on Etudesk. Here's what you can do:",
+    "feature1": "Discover jobs, internships and freelance gigs",
     "feature2": "Join professional communities",
     "feature3": "Find coworking spaces and incubators",
-    "feature4": "Grow your professional network",
+    "feature4": "Grow your network with an AI copilot",
     "exploreButton": "Explore Etudesk",
     "copyright": "© {{year}} Etudesk. All rights reserved."
   },
@@ -23,7 +23,7 @@
     "title": "You're invited!",
     "inviterInvites": "{{inviter}} invites you to join the organization",
     "asRole": "as {{role}}",
-    "connectToAccept": "Log in to Etudesk to accept this invitation and start collaborating.",
+    "connectToAccept": "Sign in to Etudesk to accept and start collaborating.",
     "viewInvitation": "View invitation",
     "expiresIn": "This invitation expires in 7 days.",
     "copyright": "© {{year}} Etudesk. All rights reserved.",
@@ -38,10 +38,10 @@
   "communityInvite": {
     "subject": "{{inviter}} invites you to join {{community}}",
     "title": "You're invited!",
-    "greeting": "Hello {{name}},",
+    "greeting": "Hi {{name}},",
     "inviterInvites": "{{inviter}} invites you to join the community",
     "asRole": "as {{role}}",
-    "connectToAccept": "Log in to Etudesk to accept this invitation and join the community.",
+    "connectToAccept": "Sign in to Etudesk to accept and join the community.",
     "viewInvitation": "View invitation",
     "expiresIn": "This invitation expires in 7 days.",
     "copyright": "© {{year}} Etudesk. All rights reserved.",
@@ -53,15 +53,15 @@
   "spaceInvite": {
     "subject": "{{inviter}} invites you to discover {{space}}",
     "title": "Space Invitation",
-    "greeting": "Hello {{name}},",
+    "greeting": "Hi {{name}},",
     "inviterInvites": "{{inviter}} invites you to discover the space",
     "viewInvitation": "View invitation",
     "expiresIn": "This invitation expires in 7 days."
   },
   "opportunityInvite": {
-    "subject": "{{inviter}} invites you to apply - {{opportunity}}",
+    "subject": "{{inviter}} invites you to apply — {{opportunity}}",
     "title": "Invitation to Apply",
-    "greeting": "Hello {{name}},",
+    "greeting": "Hi {{name}},",
     "inviterInvites": "{{inviter}} from {{organization}} invites you to apply for the opportunity",
     "viewOpportunity": "View opportunity",
     "expiresIn": "This invitation expires in 7 days."

@@ -70,6 +70,7 @@ import { useAlert } from '../../../../src/contexts/AlertContext';
 import { FormTextArea } from '../../../../src/components/forms/FormTextArea';
 import { uploadFile } from '../../../../src/services/fileService';
 import { getFullImageUrl } from '../../../../src/utils/image';
+import { formatNumberNoTrailingZeros } from '../../../../src/utils/number';
 
 type Step = 'info' | 'lieu' | 'conditions' | 'media' | 'preview';
 
@@ -117,7 +118,7 @@ const LOCATION_TYPE_ICONS: Record<LocationType, React.ComponentType<any>> = {
 export default function EditOpportunityScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const alerts = useAlert();
   const { showToast } = useToast();
@@ -591,8 +592,8 @@ export default function EditOpportunityScreen() {
   const formatFileSize = (bytes: number | undefined | null): string => {
     if (!bytes) return '';
     if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024 * 1024) return `${formatNumberNoTrailingZeros(bytes / 1024, 1)} KB`;
+    return `${formatNumberNoTrailingZeros(bytes / (1024 * 1024), 1)} MB`;
   };
 
   const getLocationLabel = () => {
@@ -1026,6 +1027,8 @@ export default function EditOpportunityScreen() {
             value={deadline || new Date()}
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            themeVariant={isDark ? 'dark' : 'light'}
+            textColor={colors.textPrimary}
             onChange={(_, selectedDate) => {
               setShowDeadlinePicker(Platform.OS === 'ios');
               if (selectedDate) {
@@ -1050,6 +1053,8 @@ export default function EditOpportunityScreen() {
             value={startDate || (deadline ? new Date(deadline.getTime() + 24 * 60 * 60 * 1000) : new Date())}
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            themeVariant={isDark ? 'dark' : 'light'}
+            textColor={colors.textPrimary}
             onChange={(_, selectedDate) => {
               setShowStartDatePicker(Platform.OS === 'ios');
               if (selectedDate) {
@@ -1220,7 +1225,7 @@ export default function EditOpportunityScreen() {
               <FileText size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
               <View style={styles.attachmentInfo}>
                 <Text style={[styles.attachmentName, { color: colors.textPrimary }]} numberOfLines={1}>{attachment.name}</Text>
-                {attachment.size && <Text style={[styles.attachmentSize, { color: colors.gray500 }]}>{(attachment.size / (1024 * 1024)).toFixed(1)} MB</Text>}
+                {attachment.size && <Text style={[styles.attachmentSize, { color: colors.gray500 }]}>{formatNumberNoTrailingZeros(attachment.size / (1024 * 1024), 1)} MB</Text>}
               </View>
               <IconButton
                 onPress={() => removeAttachment(attachment.id)}

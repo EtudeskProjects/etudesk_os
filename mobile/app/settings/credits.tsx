@@ -18,6 +18,7 @@ import { useSpace } from '../../src/contexts/SpaceContext';
 import { billingService, BillingScope, BillingBalance, BillingInvoice } from '../../src/services/billingService';
 import { BORDER, ICON, OPACITY, SPACING, TYPOGRAPHY, withOpacity } from '../../src/constants/theme';
 import { useAlert } from '../../src/contexts/AlertContext';
+import { formatNumberNoTrailingZeros } from '../../src/utils/number';
 
 function parseError(error: any): string {
   if (!error) return 'Une erreur est survenue';
@@ -29,7 +30,7 @@ function formatFcfa(value: number): string {
 }
 
 function formatCredits(value: number): string {
-  return Number(value || 0).toFixed(2).replace(/\.00$/, '');
+  return formatNumberNoTrailingZeros(value || 0, 2);
 }
 
 export default function CreditsScreen() {

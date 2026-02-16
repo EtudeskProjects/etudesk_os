@@ -31,6 +31,7 @@ import { useSpace } from '../../../src/contexts/SpaceContext';
 	import { Button, IconButton, ImageSlider, FooterNav, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { formatRelativeTime, formatDeadline, formatDate } from '../../../src/utils/date';
 import { getFullImageUrl } from '../../../src/utils/image';
+import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import { getFileType, getFullFileUrl } from '../../../src/utils/file';
 import { RemoteImage } from '../../../src/components/ui/RemoteImage';
 import type { Opportunity, OpportunityAttachment } from '../../../src/types/models';
@@ -227,8 +228,8 @@ export default function OpportunityDetailScreen() {
   const formatFileSize = (bytes?: number): string => {
     if (!bytes) return '';
     if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024 * 1024) return `${formatNumberNoTrailingZeros(bytes / 1024, 1)} KB`;
+    return `${formatNumberNoTrailingZeros(bytes / (1024 * 1024), 1)} MB`;
   };
 
   const isLocalFile = (url: string): boolean => {
@@ -421,7 +422,7 @@ export default function OpportunityDetailScreen() {
                 <View>
                   <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('opportunity.applications')}</Text>
                   <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
-                    {opportunity.applications_count?.toLocaleString() || '0'}
+                    {formatNumberNoTrailingZeros(opportunity.applications_count || 0, 0)}
                   </Text>
                 </View>
               </View>

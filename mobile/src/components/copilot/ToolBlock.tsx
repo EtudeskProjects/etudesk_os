@@ -51,7 +51,7 @@ const TOOL_ICONS: Record<string, any> = {
 
 function formatDuration(ms?: number): string {
   if (!ms) return '';
-  return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
+  return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1).replace(/\.0$/, '')}s`;
 }
 
 function truncate(str: string, max: number): string {

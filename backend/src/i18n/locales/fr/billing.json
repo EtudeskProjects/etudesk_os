@@ -1,5 +1,5 @@
 {
-  "noAccessToOrg": "Vous n'avez pas accès à cette organisation",
+  "noAccessToOrg": "Tu n'as pas accès à cette organisation",
   "insufficientRoleForBilling": "Rôle insuffisant pour gérer la facturation de cette organisation",
   "internalError": "Erreur interne billing",
   "failedToLoadCatalog": "Impossible de charger le catalogue crédits",
@@ -15,7 +15,7 @@
   "paymentAccessDenied": "Accès refusé à ce paiement",
   "invoiceAccessDenied": "Accès refusé aux factures talent",
   "invoiceNotFound": "Facture introuvable",
-  "insufficientCredits": "Solde crédits insuffisant. Rechargez votre wallet pour continuer.",
+  "insufficientCredits": "Solde crédits insuffisant. Recharge ton wallet pour continuer.",
   "insufficientOrgCredits": "Solde crédits organisation insuffisant. Rechargez le wallet pour continuer.",
-  "insufficientCreditsForPublication": "Solde crédits insuffisant. Rechargez votre wallet pour programmer une publication."
+  "insufficientCreditsForPublication": "Solde crédits insuffisant. Recharge ton wallet pour programmer une publication."
 }

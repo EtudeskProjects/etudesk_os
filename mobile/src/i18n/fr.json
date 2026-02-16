@@ -43,7 +43,7 @@
   "auth": {
     "login": {
       "title": "Connexion",
-      "subtitle": "Là où l'ambition rencontre l'opportunité",
+      "subtitle": "Opportunités, communautés et espaces — tout est là",
       "continueWith": "Continuer avec",
       "emailPlaceholder": "Adresse email",
       "passwordPlaceholder": "Mot de passe",
@@ -54,23 +54,23 @@
       "termsPrefix": "En continuant, tu acceptes nos"
     },
     "welcome": {
-      "congrats": "Bienvenue !",
+      "congrats": "Tu y es !",
       "title": "Ton profil est prêt",
-      "subtitle": "Tu fais maintenant partie de la communauté Etudesk",
+      "subtitle": "Bienvenue sur Etudesk — ton espace carrière commence ici",
       "getStarted": "C'est parti !",
       "whatYouCanDo": "Ce que tu peux faire",
       "features": {
         "explore": {
           "title": "Trouve des opportunités",
-          "description": "Emplois, stages, formations et événements près de chez toi"
+          "description": "Emplois, stages, missions et formations adaptés à ton profil"
         },
         "connect": {
           "title": "Rejoins des communautés",
-          "description": "Connecte-toi avec des professionnels de ton domaine"
+          "description": "Échange avec des pros de ton secteur"
         },
         "assistant": {
-          "title": "Un assistant pour toi",
-          "description": "Reçois des conseils personnalisés pour ta carrière"
+          "title": "Un copilote IA pour toi",
+          "description": "Conseils carrière, CV, préparation d'entretien et plus"
         }
       }
     },
@@ -90,7 +90,7 @@
       "gender": "Genre",
       "yourProfile": "Ton profil",
       "bio": "Présentation",
-      "bioPlaceholder": "Décris-toi en quelques mots : ton parcours, tes ambitions...",
+      "bioPlaceholder": "Ex : Développeur web avec 2 ans d'expérience, passionné par la fintech. Je cherche un CDI à Abidjan.",
       "country": "Pays",
       "region": "Région / District",
       "city": "Ville / Commune",
@@ -99,8 +99,8 @@
       "locating": "Localisation...",
       "selectInterests": "Choisis tes centres d'intérêt",
       "addPhoto": "Ajouter une photo",
-      "photoHint": "Une photo aide les recruteurs à te reconnaître",
-      "complete": "Terminer",
+      "photoHint": "Les profils avec photo reçoivent 5x plus de vues",
+      "complete": "Créer mon profil",
       "continue": "Continuer",
       "workPreferences": "Préférences de travail",
       "remoteAvailable": "Disponible en télétravail",
@@ -111,7 +111,7 @@
       "sectorsHint": "Choisis jusqu'à {{max}} secteurs",
       "selected": "{{count}}/{{max}} sélectionnés",
       "yourGoals": "Tes objectifs",
-      "goalsHint": "Qu'est-ce que tu recherches ? ({{max}} max)",
+      "goalsHint": "Sélectionne tes objectifs (max {{max}})",
       "permissionRequired": "Autorisation nécessaire",
       "photoPermissionMessage": "Autorise l'accès à tes photos pour continuer.",
       "photoError": "Impossible de sélectionner l'image. Réessaie."
@@ -157,12 +157,13 @@
   },
   "assistant": {
     "title": "Assistant",
-    "greeting": "Comment puis-je t'aider ?",
-    "inputPlaceholder": "Pose ta question...",
+    "greeting": "Salut ! Comment puis-je t'aider ?",
+    "inputPlaceholder": "Pose une question ou décris ce que tu cherches...",
     "suggestions": "Suggestions",
     "modes": {
       "explore": "Découvrir",
-      "study": "Apprendre"
+      "study": "Apprendre",
+      "org": "Gérer"
     },
     "prompts": {
       "explore": {
@@ -175,6 +176,12 @@
         "plan": "Crée-moi un plan d'apprentissage",
         "certifications": "Quelles certifications sont utiles pour moi ?",
         "basics": "Explique-moi les bases du marketing digital"
+      },
+      "org": {
+        "candidates": "Montre-moi les dernières candidatures reçues",
+        "stats": "Quelles sont les stats de mon organisation ?",
+        "outreach": "Rédige un message pour contacter un talent",
+        "jobDescription": "Génère une fiche de poste pour un développeur"
       }
     }
   },
@@ -212,7 +219,7 @@
   },
   "ecosystem": {
     "title": "Accueil",
-    "weeklyInsight": "{{name}}, belle semaine ! Tu as acquis {{skills}} compétences et terminé {{modules}} modules.",
+    "weeklyInsight": "{{name}}, bravo ! {{skills}} compétences acquises, {{modules}} modules terminés cette semaine.",
     "train": "Me former",
     "notifications": "Notifications",
     "agenda": "Agenda",
@@ -244,16 +251,19 @@
     "offers": "Offres",
     "overview": "Aperçu",
     "recentActivity": "Activité récente",
-    "noOrganization": "Pas d'organisation",
-    "selectOrganization": "Sélectionne une organisation dans les paramètres.",
+    "noOrganization": "Aucune organisation sélectionnée",
+    "selectOrganization": "Choisis une organisation pour commencer.",
     "goToSettings": "Aller aux paramètres",
     "myApplications": "Mes candidatures",
     "myBookings": "Mes réservations",
     "myCommunities": "Mes communautés",
     "empty": {
-      "applications": "Aucune candidature",
-      "bookings": "Aucune réservation",
-      "communities": "Aucune communauté"
+      "applications": "Pas encore de candidature",
+      "applicationsHint": "Explore les opportunités pour postuler",
+      "bookings": "Pas encore de réservation",
+      "bookingsHint": "Découvre les espaces disponibles",
+      "communities": "Pas encore de communauté",
+      "communitiesHint": "Rejoins une communauté dans ton domaine"
     }
   },
   "settings": {
@@ -408,7 +418,7 @@
   },
   "kyc": {
     "title": "Vérification d'identité",
-    "subtitle": "Vérifie ton identité pour accéder à toutes les fonctionnalités",
+    "subtitle": "Vérifie ton identité pour débloquer toutes les fonctionnalités (5 min)",
     "status": {
       "notStarted": "Non commencée",
       "pending": "En cours",
@@ -420,7 +430,7 @@
       "selfie": "Photo selfie",
       "address": "Justificatif de domicile"
     },
-    "start": "Commencer",
+    "start": "Vérifier mon identité",
     "uploadDocument": "Télécharger"
   },
   "payment": {
@@ -431,7 +441,7 @@
       "mobileMoney": "Mobile Money",
       "bankTransfer": "Virement bancaire"
     },
-    "empty": "Aucun moyen de paiement",
+    "empty": "Aucun moyen de paiement ajouté",
     "default": "Par défaut",
     "setDefault": "Définir par défaut",
     "remove": "Supprimer",
@@ -458,7 +468,7 @@
   },
   "notifications": {
     "title": "Notifications",
-    "empty": "Aucune notification",
+    "empty": "Tu es à jour !",
     "markAllRead": "Tout marquer comme lu",
     "types": {
       "application": "Candidature",
@@ -471,11 +481,16 @@
     "today": "Aujourd'hui",
     "upcoming": "À venir",
     "past": "Passés",
-    "noEvents": "Rien de prévu",
+    "noEvents": "Rien de prévu pour le moment",
     "eventTypes": {
       "interview": "Entretien",
       "deadline": "Date limite",
-      "booking": "Réservation"
+      "booking": "Réservation",
+      "application": "Candidature",
+      "trigger": "Rappel",
+      "scheduledPost": "Publication programmée",
+      "event": "Événement",
+      "opportunity": "Opportunité"
     }
   },
   "documents": {
@@ -487,7 +502,7 @@
       "portfolio": "Portfolio",
       "other": "Autre"
     },
-    "empty": "Aucun document",
+    "empty": "Aucun document ajouté",
     "skills": "compétences"
   },
   "opportunity": {
@@ -608,12 +623,12 @@
       "deleteError": "Impossible de supprimer",
       "subscribersOnly": "Réservé aux abonnés",
       "expiredSubscription": "Ton abonnement a expiré. Renouvelle pour accéder au contenu.",
-      "subscribePrompt": "Abonne-toi pour accéder au contenu de « {{name}} ».",
+      "subscribePrompt": "Accède au contenu exclusif de « {{name}} ».",
       "perMonth": "/mois",
       "renew": "Renouveler",
       "subscribe": "S'abonner",
       "loadMore": "Voir plus",
-      "noActivity": "Aucune activité"
+      "noActivity": "Rien de nouveau pour le moment"
     },
     "comments": {
       "title": "Commentaires",
@@ -635,15 +650,15 @@
     "paywall": {
       "expiredTitle": "Abonnement expiré",
       "cancelledTitle": "Abonnement annulé",
-      "subscribersOnly": "Réservé aux abonnés",
-      "renewDescription": "Renouvelle ton abonnement pour continuer à accéder au contenu.",
-      "subscribeDescription": "Abonne-toi pour accéder à tout le contenu exclusif.",
+      "subscribersOnly": "Contenu exclusif",
+      "renewDescription": "Renouvelle ton abonnement pour retrouver l'accès.",
+      "subscribeDescription": "Accède à tout le contenu exclusif de cette communauté.",
       "monthlySubscription": "Abonnement mensuel",
       "perMonth": "/mois",
       "trialDays": "{{days}} jours d'essai gratuit",
-      "benefitPosts": "Toutes les publications",
-      "benefitEvents": "Accès aux événements",
-      "benefitPolls": "Sondages et discussions",
+      "benefitPosts": "Publications exclusives",
+      "benefitEvents": "Événements et ateliers",
+      "benefitPolls": "Sondages, discussions et networking",
       "startTrial": "Essayer gratuitement",
       "renewSubscription": "Renouveler",
       "subscribeNow": "S'abonner",
@@ -678,7 +693,7 @@
       }
     },
     "manage": "Gérer la communauté",
-    "joinCommunity": "Rejoindre la communauté",
+    "joinCommunity": "Rejoindre",
     "tags": "Tags",
     "notFound": "Communauté non trouvée",
     "loadError": "Impossible de charger cette communauté",
@@ -690,14 +705,14 @@
     "createdAt": "Créée le",
     "memberSince": "Membre depuis",
     "noMembers": "Aucun membre pour le moment",
-    "noMembersSubtext": "Les membres apparaîtront ici une fois qu'ils auront rejoint la communauté",
+    "noMembersSubtext": "Les premiers membres apparaîtront ici",
     "cancelRequest": "Annuler ma demande",
     "cancelRequestTitle": "Annuler la demande",
-    "cancelRequestConfirm": "Voulez-vous annuler votre demande d'adhésion ?",
+    "cancelRequestConfirm": "Tu veux annuler ta demande d'adhésion ?",
     "cancelRequestYes": "Oui, annuler",
-    "requestCancelled": "Votre demande a été annulée.",
+    "requestCancelled": "Ta demande a été annulée.",
     "cancelRequestError": "Impossible d'annuler la demande.",
-    "alreadyMember": "Vous êtes déjà membre de cette communauté."
+    "alreadyMember": "Tu es déjà membre de cette communauté."
   },
   "date": {
     "today": "Aujourd'hui",
@@ -767,8 +782,8 @@
   },
   "errorBoundary": {
     "errorReportTitle": "Rapport d'erreur Etudesk",
-    "title": "Oups ! Une erreur s'est produite",
-    "subtitle": "Désolé, quelque chose ne s'est pas passé comme prévu.",
+    "title": "Une erreur s'est produite",
+    "subtitle": "Quelque chose n'a pas fonctionné. Réessaie ou contacte le support.",
     "unknownError": "Erreur inconnue",
     "technicalDetails": "Détails techniques",
     "stackTrace": "Stack Trace :",
@@ -842,8 +857,8 @@
     "sendError": "Impossible d'envoyer le code"
   },
   "errors": {
-    "generic": "Une erreur s'est produite",
-    "network": "Problème de connexion",
+    "generic": "Une erreur s'est produite. Réessaie.",
+    "network": "Vérifie ta connexion internet",
     "unauthorized": "Accès non autorisé",
     "notFound": "Non trouvé",
     "validation": "Données invalides",
@@ -890,57 +905,57 @@
       "tapToReturn": "Toucher pour revenir"
     },
     "tool": {
-      "searchPlatform": "Recherche sur la plateforme",
-      "searchOpportunities": "Recherche d'opportunités",
-      "searchCommunities": "Recherche de communautés",
-      "searchSpaces": "Recherche d'espaces",
-      "searchTalents": "Recherche de talents",
-      "searchOrganizations": "Recherche d'organisations",
-      "dataQuery": "Consultation des données",
-      "myProfile": "Consultation de votre profil",
-      "myApplications": "Consultation de vos candidatures",
-      "myReservations": "Consultation de vos réservations",
-      "myInvitations": "Consultation de vos invitations",
-      "myCommunities": "Consultation de vos communautés",
-      "myBookmarks": "Consultation de vos favoris",
-      "myDocuments": "Consultation de vos documents",
-      "mySkills": "Consultation de vos compétences",
-      "orgMembers": "Consultation des membres",
-      "orgApplications": "Consultation des candidatures reçues",
-      "orgStats": "Consultation des statistiques",
-      "orgOpportunities": "Consultation des opportunités",
-      "orgCommunities": "Consultation des communautés",
-      "orgSpaces": "Consultation des espaces",
-      "orgRevenue": "Consultation des revenus",
-      "orgInvitations": "Consultation des invitations",
-      "advSearchOpportunities": "Recherche avancée d'opportunités",
-      "advSearchCommunities": "Recherche avancée de communautés",
-      "advSearchSpaces": "Recherche avancée d'espaces",
-      "advSearchOrganizations": "Recherche avancée d'organisations",
-      "advSearchTalents": "Recherche avancée de talents",
-      "submitApplication": "Soumission de candidature",
-      "joinRequest": "Demande d'adhésion",
-      "spaceBooking": "Réservation d'espace",
-      "createActivity": "Création d'activité",
-      "respondInvitation": "Réponse à une invitation",
-      "updateApplication": "Mise à jour de candidature",
-      "videoSearch": "Recherche de vidéos",
-      "webSearch": "Recherche sur le web",
-      "generateDoc": "Génération de document",
+      "searchPlatform": "Recherche en cours…",
+      "searchOpportunities": "Recherche d'opportunités…",
+      "searchCommunities": "Recherche de communautés…",
+      "searchSpaces": "Recherche d'espaces…",
+      "searchTalents": "Recherche de talents…",
+      "searchOrganizations": "Recherche d'organisations…",
+      "dataQuery": "Analyse des données…",
+      "myProfile": "Chargement de ton profil…",
+      "myApplications": "Chargement de tes candidatures…",
+      "myReservations": "Chargement de tes réservations…",
+      "myInvitations": "Chargement de tes invitations…",
+      "myCommunities": "Chargement de tes communautés…",
+      "myBookmarks": "Chargement de tes favoris…",
+      "myDocuments": "Chargement de tes documents…",
+      "mySkills": "Chargement de tes compétences…",
+      "orgMembers": "Chargement des membres…",
+      "orgApplications": "Chargement des candidatures…",
+      "orgStats": "Chargement des statistiques…",
+      "orgOpportunities": "Chargement des opportunités…",
+      "orgCommunities": "Chargement des communautés…",
+      "orgSpaces": "Chargement des espaces…",
+      "orgRevenue": "Chargement des revenus…",
+      "orgInvitations": "Chargement des invitations…",
+      "advSearchOpportunities": "Recherche avancée…",
+      "advSearchCommunities": "Recherche avancée…",
+      "advSearchSpaces": "Recherche avancée…",
+      "advSearchOrganizations": "Recherche avancée…",
+      "advSearchTalents": "Recherche avancée…",
+      "submitApplication": "Envoi de ta candidature…",
+      "joinRequest": "Demande d'adhésion…",
+      "spaceBooking": "Réservation en cours…",
+      "createActivity": "Création en cours…",
+      "respondInvitation": "Réponse en cours…",
+      "updateApplication": "Mise à jour…",
+      "videoSearch": "Recherche de vidéos…",
+      "webSearch": "Recherche sur le web…",
+      "generateDoc": "Génération du document…",
       "generatePrefix": "Génération : {{title}}",
-      "generateImage": "Génération d'image",
-      "createDiagram": "Création de diagramme",
-      "readDocument": "Lecture d'un document",
+      "generateImage": "Génération de l'image…",
+      "createDiagram": "Création du diagramme…",
+      "readDocument": "Lecture du document…",
       "readPrefix": "Lecture : {{name}}",
       "addSkillPrefix": "Ajout : {{skill}}",
       "updateSkillPrefix": "Mise à jour : {{skill}}",
-      "updateSkills": "Mise à jour de compétences",
-      "applyInProgress": "Candidature en cours",
-      "joinInProgress": "Adhésion en cours",
-      "bookingInProgress": "Réservation en cours",
-      "acceptInvitation": "Acceptation d'invitation",
-      "declineInvitation": "Déclin d'invitation",
-      "executeAction": "Exécution d'une action"
+      "updateSkills": "Mise à jour des compétences…",
+      "applyInProgress": "Candidature en cours…",
+      "joinInProgress": "Adhésion en cours…",
+      "bookingInProgress": "Réservation en cours…",
+      "acceptInvitation": "Acceptation…",
+      "declineInvitation": "Refus…",
+      "executeAction": "Action en cours…"
     },
     "entity": {
       "opportunity": "Opportunité",
@@ -976,7 +991,7 @@
     "statusUpdated": "Statut mis à jour : {{status}}",
     "statusUpdateError": "Impossible de mettre à jour le statut.",
     "deleteTitle": "Supprimer la candidature",
-    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette candidature ? Cette action est irréversible.",
+    "deleteConfirm": "Tu veux vraiment supprimer cette candidature ? Cette action est irréversible.",
     "deleteSuccess": "Candidature supprimée.",
     "deleteError": "Impossible de supprimer la candidature.",
     "notesSaved": "Notes enregistrées.",
@@ -999,7 +1014,7 @@
     "additionalInfo": "Informations complémentaires",
     "candidateCV": "CV du candidat",
     "cvDisplayUnavailable": "Affichage indisponible",
-    "cvDisplayHint": "Ouvrez le CV avec le bouton ci-dessous pour le consulter.",
+    "cvDisplayHint": "Ouvre le CV avec le bouton ci-dessous pour le consulter.",
     "loadingCV": "Chargement du CV...",
     "openCV": "Ouvrir le CV",
     "additionalQuestions": "Questions complémentaires",
@@ -1007,11 +1022,11 @@
     "candidateAccepted": "Ce candidat a été accepté !",
     "deleteApplication": "Supprimer cette candidature",
     "internalNotes": "Notes internes",
-    "notesPlaceholder": "Ajoutez des notes internes sur ce candidat...",
-    "notesHint": "Ces notes sont visibles uniquement par votre équipe.",
+    "notesPlaceholder": "Ajoute des notes internes sur ce candidat...",
+    "notesHint": "Ces notes sont visibles uniquement par ton équipe.",
     "noMessages": "Pas encore de messages",
-    "noMessagesHint": "Envoyez un message au candidat pour démarrer la conversation.",
-    "writeMessage": "Écrivez votre message...",
+    "noMessagesHint": "Envoie un message au candidat pour démarrer la conversation.",
+    "writeMessage": "Écris ton message...",
     "notFound": "Candidature non trouvée",
     "tabProfile": "Profil",
     "tabMessages": "Messages",
@@ -1022,7 +1037,8 @@
       "pending": "En attente",
       "confirmed": "Confirmée",
       "cancelled": "Annulée",
-      "completed": "Terminée"
+      "completed": "Terminée",
+      "noShow": "Absent"
     },
     "memberStatus": {
       "pending": "En attente",
@@ -1048,9 +1064,9 @@
       "loadError": "Impossible de charger les réservations.",
       "statusUpdateError": "Impossible de mettre à jour le statut.",
       "confirmTitle": "Confirmer la réservation",
-      "confirmMessage": "Voulez-vous confirmer cette réservation ?",
+      "confirmMessage": "Tu veux confirmer cette réservation ?",
       "cancelTitle": "Annuler la réservation",
-      "cancelMessage": "Voulez-vous annuler cette réservation ?",
+      "cancelMessage": "Tu veux annuler cette réservation ?",
       "cancelYes": "Oui, annuler",
       "confirmBooking": "Confirmer",
       "cancelBooking": "Annuler",
@@ -1060,7 +1076,7 @@
       "noResultsDesc": "Aucune réservation avec ce statut.",
       "detailsLoadError": "Impossible de charger les détails de la réservation.",
       "deleteTitle": "Supprimer la réservation",
-      "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette réservation ?",
+      "deleteConfirm": "Tu veux vraiment supprimer cette réservation ? Cette action est irréversible.",
       "deleteError": "Impossible de supprimer la réservation.",
       "notesSaved": "Notes enregistrées.",
       "notesSaveError": "Impossible de sauvegarder les notes.",
@@ -1074,7 +1090,7 @@
       "exportSuccess": "Le fichier CSV a été téléchargé.",
       "exportError": "Impossible d'exporter en CSV.",
       "deleteTitle": "Supprimer la candidature",
-      "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette candidature ?",
+      "deleteConfirm": "Tu veux vraiment supprimer cette candidature ? Cette action est irréversible.",
       "deleteError": "Une erreur est survenue lors de la suppression.",
       "noApplications": "Aucune candidature",
       "noApplicationsDesc": "Cette opportunité n'a pas encore de candidatures.",
@@ -1085,7 +1101,7 @@
       "loadError": "Impossible de charger les membres.",
       "statusUpdateError": "Impossible de mettre à jour le statut.",
       "removeTitle": "Retirer le membre",
-      "removeConfirm": "Voulez-vous retirer ce membre de la communauté ?",
+      "removeConfirm": "Tu veux retirer ce membre de la communauté ?",
       "removeSuccess": "Membre supprimé.",
       "removeError": "Impossible de supprimer le membre.",
       "statusUpdated": "Statut mis à jour : {{status}}",
@@ -1096,7 +1112,7 @@
       "ratingUpdateError": "Impossible de mettre à jour la note."
     },
     "invitations": {
-      "invalidEmail": "Veuillez entrer une adresse email valide",
+      "invalidEmail": "Entre une adresse email valide",
       "sendError": "Impossible d'envoyer l'invitation",
       "resendSuccess": "Invitation renvoyée",
       "resendError": "Impossible de renvoyer l'invitation",

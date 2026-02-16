@@ -14,7 +14,7 @@ import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputCont
 export default function CreateEventScreen() {
     const { id, activityId } = useLocalSearchParams<{ id: string; activityId?: string }>();
     const router = useRouter();
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
 
     // Edit mode - when activityId is provided, we're editing an existing event
     const isEditMode = !!activityId;
@@ -475,6 +475,8 @@ export default function CreateEventScreen() {
 	                                mode={pickerMode}
                                 is24Hour={true}
                                 display="spinner"
+                                themeVariant={isDark ? 'dark' : 'light'}
+                                textColor={colors.textPrimary}
                                 onChange={handleDateChange}
                                 style={styles.picker}
 	                            />
@@ -504,6 +506,8 @@ export default function CreateEventScreen() {
                     mode={pickerMode}
                     is24Hour={true}
                     display="default"
+                    themeVariant={isDark ? 'dark' : 'light'}
+                    textColor={colors.textPrimary}
                     onChange={handleDateChange}
                 />
             )}

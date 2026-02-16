@@ -12,6 +12,7 @@ import { pool } from '../database';
 export const COPILOT_MODES = {
   EXPLORE: 'explore',
   STUDY: 'study',
+  ORG: 'org',
 } as const;
 
 export type CopilotMode = (typeof COPILOT_MODES)[keyof typeof COPILOT_MODES];
@@ -151,7 +152,7 @@ export async function listSessions(
       `SELECT
          cs.id, cs.title, cs.mode, cs.organization_id, cs.last_message_at, cs.created_at,
          COALESCE(t.first_name || ' ' || t.last_name, t.email) as created_by_name,
-         (SELECT COUNT(*) FROM copilot_messages cm WHERE cm.session_id = cs.id) as message_count
+         (SELECT COUNT(*) FROM copilot_messages cm WHERE cm.session_id = cs.id AND cm.deleted_at IS NULL) as message_count
        FROM copilot_sessions cs
        LEFT JOIN talents t ON t.id = cs.talent_id
        WHERE cs.organization_id = $2
@@ -169,7 +170,7 @@ export async function listSessions(
     result = await pool.query(
       `SELECT
          cs.id, cs.title, cs.mode, cs.organization_id, cs.last_message_at, cs.created_at,
-         (SELECT COUNT(*) FROM copilot_messages cm WHERE cm.session_id = cs.id) as message_count
+         (SELECT COUNT(*) FROM copilot_messages cm WHERE cm.session_id = cs.id AND cm.deleted_at IS NULL) as message_count
        FROM copilot_sessions cs
        WHERE cs.talent_id = $1 AND cs.organization_id IS NULL AND cs.deleted_at IS NULL
        ORDER BY cs.last_message_at DESC NULLS LAST, cs.created_at DESC
@@ -226,7 +227,7 @@ export async function getSessionMessages(sessionId: string, limit: number = 50):
             END as sender_avatar_url
      FROM copilot_messages cm
      LEFT JOIN talents t ON t.id = cm.talent_id
-     WHERE cm.session_id = $1
+     WHERE cm.session_id = $1 AND cm.deleted_at IS NULL
      ORDER BY cm.created_at ASC
      LIMIT $2`,
     [sessionId, limit]

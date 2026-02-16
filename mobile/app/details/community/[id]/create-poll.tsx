@@ -14,7 +14,7 @@ import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputCont
 export default function CreatePollScreen() {
     const { id, activityId } = useLocalSearchParams<{ id: string; activityId?: string }>();
     const router = useRouter();
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
 
     // Edit mode - when activityId is provided, we're editing an existing poll
     const isEditMode = !!activityId;
@@ -473,6 +473,8 @@ export default function CreatePollScreen() {
                     value={pollEndDate}
                     mode="date"
                     display="default"
+                    themeVariant={isDark ? 'dark' : 'light'}
+                    textColor={colors.textPrimary}
                     minimumDate={new Date()}
                     onChange={(event, selectedDate) => {
                         setShowDatePicker(false);
@@ -489,6 +491,8 @@ export default function CreatePollScreen() {
                     mode="time"
                     is24Hour={true}
                     display="default"
+                    themeVariant={isDark ? 'dark' : 'light'}
+                    textColor={colors.textPrimary}
                     onChange={(event, selectedDate) => {
                         setShowTimePicker(false);
                         if (selectedDate) {

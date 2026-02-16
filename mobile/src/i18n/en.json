@@ -43,7 +43,7 @@
   "auth": {
     "login": {
       "title": "Sign in",
-      "subtitle": "Where ambition meets opportunity",
+      "subtitle": "Opportunities, communities and spaces — all in one place",
       "continueWith": "Continue with",
       "emailPlaceholder": "Email address",
       "passwordPlaceholder": "Password",
@@ -54,23 +54,23 @@
       "termsPrefix": "By continuing, you agree to our"
     },
     "welcome": {
-      "congrats": "Welcome!",
+      "congrats": "You're in!",
       "title": "Your profile is ready",
-      "subtitle": "You're now part of the Etudesk community",
+      "subtitle": "Welcome to Etudesk — your career journey starts here",
       "getStarted": "Let's go!",
       "whatYouCanDo": "What you can do",
       "features": {
         "explore": {
           "title": "Find opportunities",
-          "description": "Jobs, internships, trainings and events near you"
+          "description": "Jobs, internships, gigs and trainings tailored to you"
         },
         "connect": {
           "title": "Join communities",
-          "description": "Connect with professionals in your field"
+          "description": "Connect with professionals in your industry"
         },
         "assistant": {
-          "title": "Your personal assistant",
-          "description": "Get personalized career advice"
+          "title": "Your AI copilot",
+          "description": "Career advice, resume help, interview prep and more"
         }
       }
     },
@@ -90,7 +90,7 @@
       "gender": "Gender",
       "yourProfile": "Your profile",
       "bio": "About me",
-      "bioPlaceholder": "Describe yourself briefly: your background, your goals...",
+      "bioPlaceholder": "E.g.: Web developer with 2 years experience, passionate about fintech. Looking for a full-time role in Abidjan.",
       "country": "Country",
       "region": "Region / District",
       "city": "City / Town",
@@ -99,8 +99,8 @@
       "locating": "Locating...",
       "selectInterests": "Select your interests",
       "addPhoto": "Add a photo",
-      "photoHint": "A photo helps recruiters recognize you",
-      "complete": "Complete",
+      "photoHint": "Profiles with photos get 5x more views",
+      "complete": "Create my profile",
       "continue": "Continue",
       "workPreferences": "Work preferences",
       "remoteAvailable": "Available for remote work",
@@ -111,7 +111,7 @@
       "sectorsHint": "Choose up to {{max}} sectors",
       "selected": "{{count}}/{{max}} selected",
       "yourGoals": "Your goals",
-      "goalsHint": "What are you looking for? ({{max}} max)",
+      "goalsHint": "Select your goals (max {{max}})",
       "permissionRequired": "Permission needed",
       "photoPermissionMessage": "Allow access to your photos to continue.",
       "photoError": "Unable to select image. Please try again."
@@ -157,12 +157,13 @@
   },
   "assistant": {
     "title": "Assistant",
-    "greeting": "How can I help you?",
-    "inputPlaceholder": "Ask a question...",
+    "greeting": "Hi! How can I help you?",
+    "inputPlaceholder": "Ask a question or describe what you need...",
     "suggestions": "Suggestions",
     "modes": {
       "explore": "Discover",
-      "study": "Learn"
+      "study": "Learn",
+      "org": "Manage"
     },
     "prompts": {
       "explore": {
@@ -175,6 +176,12 @@
         "plan": "Create a learning plan for me",
         "certifications": "What certifications are useful for me?",
         "basics": "Explain the basics of digital marketing"
+      },
+      "org": {
+        "candidates": "Show me the latest applications received",
+        "stats": "What are my organization's stats?",
+        "outreach": "Draft a message to reach out to a talent",
+        "jobDescription": "Generate a job description for a developer"
       }
     }
   },
@@ -212,7 +219,7 @@
   },
   "ecosystem": {
     "title": "Home",
-    "weeklyInsight": "{{name}}, great week! You gained {{skills}} skills and completed {{modules}} modules.",
+    "weeklyInsight": "{{name}}, well done! {{skills}} skills gained, {{modules}} modules completed this week.",
     "train": "Learn",
     "notifications": "Notifications",
     "agenda": "Agenda",
@@ -244,16 +251,19 @@
     "offers": "Offers",
     "overview": "Overview",
     "recentActivity": "Recent activity",
-    "noOrganization": "No organization",
-    "selectOrganization": "Select an organization in settings.",
+    "noOrganization": "No organization selected",
+    "selectOrganization": "Choose an organization to get started.",
     "goToSettings": "Go to settings",
     "myApplications": "My applications",
     "myBookings": "My bookings",
     "myCommunities": "My communities",
     "empty": {
-      "applications": "No applications",
-      "bookings": "No bookings",
-      "communities": "No communities"
+      "applications": "No applications yet",
+      "applicationsHint": "Explore opportunities to apply",
+      "bookings": "No bookings yet",
+      "bookingsHint": "Discover available spaces",
+      "communities": "No communities yet",
+      "communitiesHint": "Join a community in your field"
     }
   },
   "settings": {
@@ -408,7 +418,7 @@
   },
   "kyc": {
     "title": "Identity verification",
-    "subtitle": "Verify your identity to access all features",
+    "subtitle": "Verify your identity to unlock all features (5 min)",
     "status": {
       "notStarted": "Not started",
       "pending": "In progress",
@@ -420,7 +430,7 @@
       "selfie": "Selfie",
       "address": "Proof of address"
     },
-    "start": "Start",
+    "start": "Verify my identity",
     "uploadDocument": "Upload"
   },
   "payment": {
@@ -431,7 +441,7 @@
       "mobileMoney": "Mobile Money",
       "bankTransfer": "Bank transfer"
     },
-    "empty": "No payment methods",
+    "empty": "No payment methods added",
     "default": "Default",
     "setDefault": "Set as default",
     "remove": "Remove",
@@ -458,7 +468,7 @@
   },
   "notifications": {
     "title": "Notifications",
-    "empty": "No notifications",
+    "empty": "You're all caught up!",
     "markAllRead": "Mark all as read",
     "types": {
       "application": "Application",
@@ -471,11 +481,16 @@
     "today": "Today",
     "upcoming": "Upcoming",
     "past": "Past",
-    "noEvents": "Nothing planned",
+    "noEvents": "Nothing planned for now",
     "eventTypes": {
       "interview": "Interview",
       "deadline": "Deadline",
-      "booking": "Booking"
+      "booking": "Booking",
+      "application": "Application",
+      "trigger": "Reminder",
+      "scheduledPost": "Scheduled post",
+      "event": "Event",
+      "opportunity": "Opportunity"
     }
   },
   "documents": {
@@ -487,7 +502,7 @@
       "portfolio": "Portfolio",
       "other": "Other"
     },
-    "empty": "No documents",
+    "empty": "No documents added",
     "skills": "skills"
   },
   "opportunity": {
@@ -608,12 +623,12 @@
       "deleteError": "Unable to delete",
       "subscribersOnly": "Subscribers only",
       "expiredSubscription": "Your subscription expired. Renew to access content.",
-      "subscribePrompt": "Subscribe to access content from \"{{name}}\".",
+      "subscribePrompt": "Get access to exclusive content from \"{{name}}\".",
       "perMonth": "/month",
       "renew": "Renew",
       "subscribe": "Subscribe",
       "loadMore": "Load more",
-      "noActivity": "No activity"
+      "noActivity": "Nothing new for now"
     },
     "comments": {
       "title": "Comments",
@@ -635,15 +650,15 @@
     "paywall": {
       "expiredTitle": "Subscription expired",
       "cancelledTitle": "Subscription cancelled",
-      "subscribersOnly": "Subscribers only",
-      "renewDescription": "Renew your subscription to keep accessing content.",
-      "subscribeDescription": "Subscribe to access all exclusive content.",
+      "subscribersOnly": "Exclusive content",
+      "renewDescription": "Renew your subscription to regain access.",
+      "subscribeDescription": "Get access to all exclusive content from this community.",
       "monthlySubscription": "Monthly subscription",
       "perMonth": "/month",
       "trialDays": "{{days}} days free trial",
-      "benefitPosts": "All posts",
-      "benefitEvents": "Event access",
-      "benefitPolls": "Polls and discussions",
+      "benefitPosts": "Exclusive posts",
+      "benefitEvents": "Events and workshops",
+      "benefitPolls": "Polls, discussions and networking",
       "startTrial": "Try for free",
       "renewSubscription": "Renew",
       "subscribeNow": "Subscribe",
@@ -681,7 +696,7 @@
       }
     },
     "manage": "Manage community",
-    "joinCommunity": "Join community",
+    "joinCommunity": "Join",
     "tags": "Tags",
     "notFound": "Community not found",
     "loadError": "Unable to load this community",
@@ -693,7 +708,7 @@
     "createdAt": "Created on",
     "memberSince": "Member since",
     "noMembers": "No members yet",
-    "noMembersSubtext": "Members will appear here once they join the community",
+    "noMembersSubtext": "First members will appear here",
     "cancelRequest": "Cancel my request",
     "cancelRequestTitle": "Cancel request",
     "cancelRequestConfirm": "Do you want to cancel your membership request?",
@@ -770,8 +785,8 @@
   },
   "errorBoundary": {
     "errorReportTitle": "Etudesk Error Report",
-    "title": "Oops! Something went wrong",
-    "subtitle": "Sorry, something didn't work as expected.",
+    "title": "Something went wrong",
+    "subtitle": "An error occurred. Please try again or contact support.",
     "unknownError": "Unknown error",
     "technicalDetails": "Technical details",
     "stackTrace": "Stack Trace:",
@@ -845,8 +860,8 @@
     "sendError": "Unable to send code"
   },
   "errors": {
-    "generic": "An error occurred",
-    "network": "Connection issue",
+    "generic": "An error occurred. Please try again.",
+    "network": "Check your internet connection",
     "unauthorized": "Unauthorized",
     "notFound": "Not found",
     "validation": "Invalid data",
@@ -893,57 +908,57 @@
       "tapToReturn": "Tap to go back"
     },
     "tool": {
-      "searchPlatform": "Searching platform",
-      "searchOpportunities": "Searching opportunities",
-      "searchCommunities": "Searching communities",
-      "searchSpaces": "Searching spaces",
-      "searchTalents": "Searching talents",
-      "searchOrganizations": "Searching organizations",
-      "dataQuery": "Querying data",
-      "myProfile": "Viewing your profile",
-      "myApplications": "Viewing your applications",
-      "myReservations": "Viewing your bookings",
-      "myInvitations": "Viewing your invitations",
-      "myCommunities": "Viewing your communities",
-      "myBookmarks": "Viewing your bookmarks",
-      "myDocuments": "Viewing your documents",
-      "mySkills": "Viewing your skills",
-      "orgMembers": "Viewing members",
-      "orgApplications": "Viewing received applications",
-      "orgStats": "Viewing statistics",
-      "orgOpportunities": "Viewing opportunities",
-      "orgCommunities": "Viewing communities",
-      "orgSpaces": "Viewing spaces",
-      "orgRevenue": "Viewing revenue",
-      "orgInvitations": "Viewing invitations",
-      "advSearchOpportunities": "Advanced opportunity search",
-      "advSearchCommunities": "Advanced community search",
-      "advSearchSpaces": "Advanced space search",
-      "advSearchOrganizations": "Advanced organization search",
-      "advSearchTalents": "Advanced talent search",
-      "submitApplication": "Submitting application",
-      "joinRequest": "Join request",
-      "spaceBooking": "Booking space",
-      "createActivity": "Creating activity",
-      "respondInvitation": "Responding to invitation",
-      "updateApplication": "Updating application",
-      "videoSearch": "Searching videos",
-      "webSearch": "Searching the web",
-      "generateDoc": "Generating document",
+      "searchPlatform": "Searching…",
+      "searchOpportunities": "Searching opportunities…",
+      "searchCommunities": "Searching communities…",
+      "searchSpaces": "Searching spaces…",
+      "searchTalents": "Searching talents…",
+      "searchOrganizations": "Searching organizations…",
+      "dataQuery": "Analyzing data…",
+      "myProfile": "Loading your profile…",
+      "myApplications": "Loading your applications…",
+      "myReservations": "Loading your bookings…",
+      "myInvitations": "Loading your invitations…",
+      "myCommunities": "Loading your communities…",
+      "myBookmarks": "Loading your bookmarks…",
+      "myDocuments": "Loading your documents…",
+      "mySkills": "Loading your skills…",
+      "orgMembers": "Loading members…",
+      "orgApplications": "Loading applications…",
+      "orgStats": "Loading statistics…",
+      "orgOpportunities": "Loading opportunities…",
+      "orgCommunities": "Loading communities…",
+      "orgSpaces": "Loading spaces…",
+      "orgRevenue": "Loading revenue…",
+      "orgInvitations": "Loading invitations…",
+      "advSearchOpportunities": "Advanced search…",
+      "advSearchCommunities": "Advanced search…",
+      "advSearchSpaces": "Advanced search…",
+      "advSearchOrganizations": "Advanced search…",
+      "advSearchTalents": "Advanced search…",
+      "submitApplication": "Submitting your application…",
+      "joinRequest": "Requesting to join…",
+      "spaceBooking": "Booking in progress…",
+      "createActivity": "Creating…",
+      "respondInvitation": "Responding…",
+      "updateApplication": "Updating…",
+      "videoSearch": "Searching videos…",
+      "webSearch": "Searching the web…",
+      "generateDoc": "Generating document…",
       "generatePrefix": "Generating: {{title}}",
-      "generateImage": "Generating image",
-      "createDiagram": "Creating diagram",
-      "readDocument": "Reading document",
+      "generateImage": "Generating image…",
+      "createDiagram": "Creating diagram…",
+      "readDocument": "Reading document…",
       "readPrefix": "Reading: {{name}}",
       "addSkillPrefix": "Adding: {{skill}}",
       "updateSkillPrefix": "Updating: {{skill}}",
-      "updateSkills": "Updating skills",
-      "applyInProgress": "Applying...",
-      "joinInProgress": "Joining...",
-      "bookingInProgress": "Booking...",
-      "acceptInvitation": "Accepting invitation",
-      "declineInvitation": "Declining invitation",
-      "executeAction": "Executing action"
+      "updateSkills": "Updating skills…",
+      "applyInProgress": "Applying…",
+      "joinInProgress": "Joining…",
+      "bookingInProgress": "Booking…",
+      "acceptInvitation": "Accepting…",
+      "declineInvitation": "Declining…",
+      "executeAction": "Processing…"
     },
     "entity": {
       "opportunity": "Opportunity",
@@ -1025,7 +1040,8 @@
       "pending": "Pending",
       "confirmed": "Confirmed",
       "cancelled": "Cancelled",
-      "completed": "Completed"
+      "completed": "Completed",
+      "noShow": "No show"
     },
     "memberStatus": {
       "pending": "Pending",

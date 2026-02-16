@@ -179,13 +179,18 @@ router.patch('/triggers/:id', authMiddleware, async (req: AuthRequest, res: Resp
         }
 
         const { id } = req.params;
-        const { status, due_at } = req.body || {};
+        const { status, due_at, title, description } = req.body || {};
 
         const nextStatus: TriggerStatus | null =
             (status === 'PENDING' || status === 'DONE' || status === 'CANCELED') ? status : null;
         const nextDueAt = due_at ? new Date(due_at) : null;
+        const nextTitle = typeof title === 'string' ? title.trim() : null;
+        const nextDescription = typeof description === 'string' ? description.trim() : null;
         if (nextDueAt && isNaN(nextDueAt.getTime())) {
             return res.status(400).json({ error: 'due_at invalide' });
+        }
+        if (nextTitle !== null && !nextTitle) {
+            return res.status(400).json({ error: 'title invalide' });
         }
 
         // Fetch trigger to enforce ownership/membership
@@ -215,11 +220,19 @@ router.patch('/triggers/:id', authMiddleware, async (req: AuthRequest, res: Resp
             SET
               status = COALESCE($2::text, status),
               due_at = COALESCE($3::timestamptz, due_at),
+              title = COALESCE($4::text, title),
+              description = COALESCE($5::text, description),
               completed_at = CASE WHEN COALESCE($2::text, status) = 'DONE' THEN CURRENT_TIMESTAMP ELSE completed_at END
             WHERE id = $1::uuid
             RETURNING *
             `,
-            [id, nextStatus, nextDueAt ? nextDueAt.toISOString() : null]
+            [
+                id,
+                nextStatus,
+                nextDueAt ? nextDueAt.toISOString() : null,
+                nextTitle,
+                nextDescription,
+            ]
         );
 
         return res.json({ data: result.rows[0] });

@@ -36,6 +36,7 @@ import { ChatMessage, ChatInput } from '../../../../../src/components/chat';
 import { useTheme } from '../../../../../src/hooks/useTheme';
 import { spaceBookingService, spaceBookingMessageService, SpaceBookingDetails, BookingStatus, BookingMessage } from '../../../../../src/services';
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
+import { formatNumberNoTrailingZeros } from '../../../../../src/utils/number';
 import { useAlert } from '../../../../../src/contexts/AlertContext';
 
 // Status configuration
@@ -405,7 +406,7 @@ export default function BookingDetailsScreen() {
             <View style={styles.infoRow}>
               <Users size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.infoText, { color: colors.textPrimary }]}>
-                {booking.attendees_count} participant{booking.attendees_count > 1 ? 's' : ''}
+                {formatNumberNoTrailingZeros(booking.attendees_count, 0)} participant{booking.attendees_count > 1 ? 's' : ''}
               </Text>
             </View>
           )}
@@ -423,8 +424,8 @@ export default function BookingDetailsScreen() {
           </View>
 
           <View style={styles.priceRow}>
-            <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>
-              Quantite ({booking?.units_count || 0} {booking?.pricing_type === 'HOURLY' ? 'heures' : booking?.pricing_type === 'DAILY' ? 'jours' : 'unites'})
+              <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>
+              Quantite ({formatNumberNoTrailingZeros(booking?.units_count || 0)} {booking?.pricing_type === 'HOURLY' ? 'heures' : booking?.pricing_type === 'DAILY' ? 'jours' : 'unites'})
             </Text>
             <Text style={[styles.priceValue, { color: colors.textPrimary }]}>
               {booking ? formatPrice(booking.subtotal) : '-'}

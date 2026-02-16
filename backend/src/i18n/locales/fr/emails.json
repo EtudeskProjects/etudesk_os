@@ -1,29 +1,29 @@
 {
   "otp": {
-    "subject": "{{code}} - Code de connexion",
+    "subject": "{{code}} - Ton code de connexion",
     "title": "Code de connexion",
-    "yourCode": "Votre code de connexion",
+    "yourCode": "Ton code de connexion",
     "validFor": "Valide {{minutes}} min",
-    "neverShare": "Ne partagez jamais ce code"
+    "neverShare": "Ne partage jamais ce code avec qui que ce soit"
   },
   "welcome": {
-    "subject": "Bienvenue sur Etudesk, {{name}}! 🎉",
-    "title": "Bienvenue sur Etudesk! 🎉",
-    "greeting": "Bonjour {{name}},",
-    "congratulations": "Félicitations! Votre profil talent est maintenant créé sur Etudesk. Vous pouvez désormais:",
-    "feature1": "Découvrir des opportunités d'emploi, stages et missions",
+    "subject": "Bienvenue sur Etudesk, {{name}} !",
+    "title": "Bienvenue sur Etudesk !",
+    "greeting": "Salut {{name}},",
+    "congratulations": "Ton profil talent est maintenant actif sur Etudesk. Voici ce que tu peux faire :",
+    "feature1": "Découvrir des emplois, stages et missions freelance",
     "feature2": "Rejoindre des communautés de professionnels",
     "feature3": "Trouver des espaces de coworking et incubateurs",
-    "feature4": "Développer votre réseau professionnel",
+    "feature4": "Développer ton réseau avec un copilote IA",
     "exploreButton": "Explorer Etudesk",
     "copyright": "© {{year}} Etudesk. Tous droits réservés."
   },
   "orgInvite": {
-    "subject": "{{inviter}} vous invite à rejoindre {{organization}} sur Etudesk",
-    "title": "Vous êtes invité(e)!",
-    "inviterInvites": "{{inviter}} vous invite à rejoindre l'organisation",
+    "subject": "{{inviter}} t'invite à rejoindre {{organization}} sur Etudesk",
+    "title": "Tu es invité(e) !",
+    "inviterInvites": "{{inviter}} t'invite à rejoindre l'organisation",
     "asRole": "en tant que {{role}}",
-    "connectToAccept": "Connectez-vous à Etudesk pour accepter cette invitation et commencer à collaborer.",
+    "connectToAccept": "Connecte-toi à Etudesk pour accepter et commencer à collaborer.",
     "viewInvitation": "Voir l'invitation",
     "expiresIn": "Cette invitation expire dans 7 jours.",
     "copyright": "© {{year}} Etudesk. Tous droits réservés.",
@@ -36,12 +36,12 @@
     }
   },
   "communityInvite": {
-    "subject": "{{inviter}} vous invite à rejoindre {{community}}",
-    "title": "Vous êtes invité(e)!",
-    "greeting": "Bonjour {{name}},",
-    "inviterInvites": "{{inviter}} vous invite à rejoindre la communauté",
+    "subject": "{{inviter}} t'invite à rejoindre {{community}}",
+    "title": "Tu es invité(e) !",
+    "greeting": "Salut {{name}},",
+    "inviterInvites": "{{inviter}} t'invite à rejoindre la communauté",
     "asRole": "en tant que {{role}}",
-    "connectToAccept": "Connectez-vous à Etudesk pour accepter cette invitation et rejoindre la communauté.",
+    "connectToAccept": "Connecte-toi à Etudesk pour accepter et rejoindre la communauté.",
     "viewInvitation": "Voir l'invitation",
     "expiresIn": "Cette invitation expire dans 7 jours.",
     "copyright": "© {{year}} Etudesk. Tous droits réservés.",
@@ -51,18 +51,18 @@
     }
   },
   "spaceInvite": {
-    "subject": "{{inviter}} vous invite à découvrir {{space}}",
+    "subject": "{{inviter}} t'invite à découvrir {{space}}",
     "title": "Invitation à un espace",
-    "greeting": "Bonjour {{name}},",
-    "inviterInvites": "{{inviter}} vous invite à découvrir l'espace",
+    "greeting": "Salut {{name}},",
+    "inviterInvites": "{{inviter}} t'invite à découvrir l'espace",
     "viewInvitation": "Voir l'invitation",
     "expiresIn": "Cette invitation expire dans 7 jours."
   },
   "opportunityInvite": {
-    "subject": "{{inviter}} vous invite à postuler - {{opportunity}}",
+    "subject": "{{inviter}} t'invite à postuler — {{opportunity}}",
     "title": "Invitation à postuler",
-    "greeting": "Bonjour {{name}},",
-    "inviterInvites": "{{inviter}} de {{organization}} vous invite à postuler à l'opportunité",
+    "greeting": "Salut {{name}},",
+    "inviterInvites": "{{inviter}} de {{organization}} t'invite à postuler à l'opportunité",
     "viewOpportunity": "Voir l'opportunité",
     "expiresIn": "Cette invitation expire dans 7 jours."
   }

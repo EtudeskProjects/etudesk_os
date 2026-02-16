@@ -28,6 +28,7 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../contexts/I18nContext';
+import { formatNumberNoTrailingZeros } from '../../utils/number';
 	import { formatDate, formatTime } from '../../utils/date';
 	import { showToastGlobal } from '../ui';
 	import { Button, IconButton, Input } from '../ui';
@@ -58,8 +59,8 @@ interface ChatInputProps {
 const formatFileSize = (bytes?: number): string => {
   if (!bytes) return '';
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024) return `${formatNumberNoTrailingZeros(bytes / 1024, 1)} KB`;
+  return `${formatNumberNoTrailingZeros(bytes / (1024 * 1024), 1)} MB`;
 };
 
 export function ChatInput({

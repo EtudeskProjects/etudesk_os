@@ -71,6 +71,7 @@ import { FormTextArea } from '../../../src/components/forms/FormTextArea';
 import { opportunityService, CreateOpportunityData, imageService } from '../../../src/services';
 import { organizationService } from '../../../src/services';
 import { uploadFile } from '../../../src/services/fileService';
+import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 
 type Step = 'info' | 'lieu' | 'conditions' | 'media' | 'preview';
 
@@ -148,7 +149,7 @@ const LOCATION_TYPE_ICONS: Record<LocationType, React.ComponentType<any>> = {
 
 export default function CreateOpportunityScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { selectedOrgId, selectedOrg } = useSpace();
   const alerts = useAlert();
@@ -1155,6 +1156,8 @@ export default function CreateOpportunityScreen() {
             value={deadline || new Date()}
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            themeVariant={isDark ? 'dark' : 'light'}
+            textColor={colors.textPrimary}
             onChange={(_, selectedDate) => {
               setShowDeadlinePicker(false);
               if (selectedDate) {
@@ -1181,6 +1184,8 @@ export default function CreateOpportunityScreen() {
             value={startDate || (deadline ? new Date(deadline.getTime() + 24 * 60 * 60 * 1000) : new Date())}
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            themeVariant={isDark ? 'dark' : 'light'}
+            textColor={colors.textPrimary}
             onChange={(_, selectedDate) => {
               setShowStartDatePicker(false);
               if (selectedDate) {
@@ -1362,11 +1367,11 @@ export default function CreateOpportunityScreen() {
                 <Text style={[styles.attachmentName, { color: colors.textPrimary }]} numberOfLines={1}>
                   {attachment.name}
                 </Text>
-                {attachment.size && (
-                  <Text style={[styles.attachmentSize, { color: colors.gray500 }]}>
-                    {(attachment.size / (1024 * 1024)).toFixed(1)} MB
-                  </Text>
-                )}
+                  {attachment.size && (
+                    <Text style={[styles.attachmentSize, { color: colors.gray500 }]}>
+                    {formatNumberNoTrailingZeros(attachment.size / (1024 * 1024), 1)} MB
+                    </Text>
+                  )}
               </View>
               <IconButton
                 onPress={() => removeAttachment(attachment.id)}

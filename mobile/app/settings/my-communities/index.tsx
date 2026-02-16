@@ -25,6 +25,7 @@ import { CommunityCard } from '../../../src/components/cards';
 import { communityService, communityActivityService } from '../../../src/services';
 import { formatRelativeTime } from '../../../src/utils/date';
 import { getFullImageUrl } from '../../../src/utils/image';
+import { toNumberOrNull } from '../../../src/utils/number';
 import type { Community } from '../../../src/types/models';
 
 const getMemberStatusConfig = (colors: any) => ({
@@ -49,7 +50,7 @@ interface Membership {
     slug: string;
     cover_image_url?: string;
     images?: string[];
-    members_count?: number;
+    members_count?: number | string;
     type?: string;
   };
 }
@@ -170,13 +171,16 @@ export default function MyCommunitiesScreen() {
   ];
 
   const renderMembershipItem = (membership: Membership) => {
+    const parsedMembersCount = toNumberOrNull(membership.community.members_count);
+    const normalizedMembersCount = parsedMembersCount ?? (membership.status === 'ACTIVE' ? 1 : 0);
+
     const community: Community = {
       id: membership.community_id,
       name: membership.community.name,
       slug: membership.community.slug,
       cover_image_url: membership.community.cover_image_url,
       images: membership.community.images,
-      members_count: membership.community.members_count,
+      members_count: normalizedMembersCount,
       type: membership.community.type as any,
     } as Community;
 

@@ -43,7 +43,7 @@ import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { Header, FooterNav, Button, IconButton, SelectCard, LoadingShimmer } from '../../../src/components/ui';
 import { CreateOfferModal } from '../../../src/components/CreateOfferModal';
-import { formatCompactNumber } from '../../../src/utils/number';
+import { formatCompactNumber, formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import {
   opportunityService,
   communityService,
@@ -200,7 +200,7 @@ export default function GestionScreen() {
             id: `opp-${opp.id}`,
             type: 'application',
             title: 'Nouvelle candidature',
-            message: `${opp.applications_count} candidature(s) pour "${opp.title}"`,
+            message: `${formatNumberNoTrailingZeros(opp.applications_count, 0)} candidature(s) pour "${opp.title}"`,
             time: formatRelativeDate(opp.updated_at || opp.created_at),
           });
         }
@@ -211,7 +211,7 @@ export default function GestionScreen() {
           id: `comm-${comm.id}`,
           type: 'community',
           title: 'Communauté active',
-          message: `${comm.members_count || 0} membres dans "${comm.name}"`,
+          message: `${formatNumberNoTrailingZeros(comm.members_count || 0, 0)} membres dans "${comm.name}"`,
           time: formatRelativeDate(comm.updated_at || comm.created_at),
         });
       });

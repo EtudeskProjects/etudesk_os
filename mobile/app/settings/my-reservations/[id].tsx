@@ -34,6 +34,7 @@ import { spaceBookingService, spaceBookingMessageService } from '../../../src/se
 import type { SpaceBookingDetails } from '../../../src/services/spaceBookingService';
 import type { BookingMessage } from '../../../src/services/spaceBookingMessageService';
 import { formatDate, formatTime } from '../../../src/utils/date';
+import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import { useAlert } from '../../../src/contexts/AlertContext';
 
 // Booking status types
@@ -310,7 +311,7 @@ export default function ReservationDetailsScreen() {
               <View>
                 <Text style={[styles.dateTimeLabel, { color: colors.gray500 }]}>Participants</Text>
                 <Text style={[styles.dateTimeValue, { color: colors.textPrimary }]}>
-                  {booking.attendees_count || 1} {(booking.attendees_count || 1) > 1 ? 'personnes' : 'personne'}
+                  {formatNumberNoTrailingZeros(booking.attendees_count || 1, 0)} {(booking.attendees_count || 1) > 1 ? 'personnes' : 'personne'}
                 </Text>
               </View>
             </View>
@@ -319,7 +320,7 @@ export default function ReservationDetailsScreen() {
               <View>
                 <Text style={[styles.dateTimeLabel, { color: colors.gray500 }]}>Duree</Text>
                 <Text style={[styles.dateTimeValue, { color: colors.textPrimary }]}>
-                  {durationHours} {durationHours > 1 ? 'heures' : 'heure'}
+                  {formatNumberNoTrailingZeros(durationHours)} {durationHours > 1 ? 'heures' : 'heure'}
                 </Text>
               </View>
             </View>
@@ -334,7 +335,7 @@ export default function ReservationDetailsScreen() {
             <View style={[styles.priceRow, styles.priceTotalRow, { borderTopColor: colors.gray200 }]}>
               <Text style={[styles.priceTotalLabel, { color: colors.textPrimary }]}>Total</Text>
               <Text style={[styles.priceTotalValue, { color: colors.primary }]}>
-                {(booking as any).total_price.toLocaleString()} FCFA
+                {formatNumberNoTrailingZeros((booking as any).total_price, 0)} FCFA
               </Text>
             </View>
           </View>

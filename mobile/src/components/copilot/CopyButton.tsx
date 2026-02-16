@@ -11,6 +11,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useI18n } from '../../contexts/I18nContext';
 import { ICON } from '../../constants/theme';
 import { api } from '../../services/api';
+import { formatNumberNoTrailingZeros } from '../../utils/number';
 import { ShimmerPlaceholder } from '../ui';
 
 
@@ -76,8 +77,8 @@ function formatEntity(type: string, data: Record<string, any>): string {
       parts.push(name);
       if (org) parts.push(org);
       if (city) parts.push(city);
-      if (capacity) parts.push(`${capacity} places`);
-      if (rate) parts.push(`${rate} FCFA/h`);
+      if (capacity) parts.push(`${formatNumberNoTrailingZeros(capacity, 0)} places`);
+      if (rate) parts.push(`${formatNumberNoTrailingZeros(rate, 0)} FCFA/h`);
       break;
     }
     case 'organization': {

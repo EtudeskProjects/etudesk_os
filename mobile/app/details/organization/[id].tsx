@@ -24,6 +24,7 @@ import { useSpace } from '../../../src/contexts/SpaceContext';
 import { Button, FooterNav, IconButton, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { formatRelativeTime } from '../../../src/utils/date';
 import { getFullImageUrl } from '../../../src/utils/image';
+import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import type { Organization, Opportunity } from '../../../src/types/models';
 import {
   ORGANIZATION_TYPE_LABELS,
@@ -474,7 +475,7 @@ export default function OrganizationDetailScreen() {
 	                    </Text>
 	                    {community.members_count !== undefined && (
 	                      <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
-	                        {community.members_count} {t('explore.members')}
+	                        {formatNumberNoTrailingZeros(community.members_count, 0)} {t('explore.members')}
 	                      </Text>
 	                    )}
 	                  </View>
@@ -524,7 +525,7 @@ export default function OrganizationDetailScreen() {
 	                    </Text>
 	                    {space.capacity !== undefined && (
 	                      <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
-	                        {space.capacity} {t('common.places')}
+	                        {formatNumberNoTrailingZeros(space.capacity, 0)} {t('common.places')}
 	                      </Text>
 	                    )}
 	                  </View>

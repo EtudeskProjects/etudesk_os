@@ -14,7 +14,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import * as DocumentPicker from 'expo-document-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import {
   SendHorizontal,
   Paperclip,
@@ -22,7 +22,6 @@ import {
   MicOff,
   Compass,
   BookOpen,
-  Lightbulb,
   History,
   Plus,
   AlertCircle,
@@ -30,8 +29,6 @@ import {
   Trash2,
   Square,
   RefreshCw,
-  Pencil,
-  Copy,
 } from 'lucide-react-native';
 import { useAudioRecorder } from '../../../src/hooks/useAudioRecorder';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
@@ -47,7 +44,6 @@ import {
   ThinkingIndicator,
   ToolBlock,
   PulsingOrb,
-  SuggestionsTooltip,
 } from '../../../src/components/copilot';
 import {
   copilotService,
@@ -103,8 +99,10 @@ export default function AssistantScreen() {
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(false);
   const [attachments, setAttachments] = useState<any[]>([]);
+  const [floatingSuggestions, setFloatingSuggestions] = useState<string[]>([]);
+  const [hideFloatingSuggestions, setHideFloatingSuggestions] = useState(false);
+  const replaceLastExchangeRef = useRef<boolean>(false);
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
@@ -140,13 +138,12 @@ export default function AssistantScreen() {
 
   const { colors } = useTheme();
   const modeColors = {
-    explore: { bg: colors.surface, text: colors.textSecondary },
+    explore: { bg: withOpacity(colors.primary, OPACITY[10]), text: colors.primary },
     study: { bg: withOpacity(colors.success, OPACITY[10]), text: colors.success },
   };
   const { t } = useI18n();
   const { isOrganizationSpace, selectedOrg } = useSpace();
   const { user } = useAuth();
-  const router = useRouter();
   const inputRef = useRef<any>(null);
   const messagesListRef = useRef<FlatList<StreamingMessage>>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -271,6 +268,48 @@ export default function AssistantScreen() {
       }, 100);
     }
   }, [messages]);
+
+  const getFallbackSuggestions = useCallback((currentMode: Mode, orgSpace: boolean): string[] => {
+    if (orgSpace) {
+      return [
+        'Fais un point priorités recrutement cette semaine',
+        'Classe les candidats les plus prometteurs',
+        'Propose 3 actions pour accélérer le pipeline',
+      ];
+    }
+    if (currentMode === 'study') {
+      return [
+        'Fais-moi un quiz rapide sur ce sujet',
+        'Donne-moi un exercice pratique guidé',
+        'Résume en plan de révision 7 jours',
+      ];
+    }
+    return [
+      'Trouve 3 opportunités adaptées à mon profil',
+      'Optimise mon CV pour ces postes',
+      'Donne-moi un plan d’action concret pour candidater',
+    ];
+  }, []);
+
+  const loadFloatingSuggestions = useCallback(async (forceShow: boolean = false, targetSessionId?: string | null) => {
+    const effectiveMode: CopilotMode = isOrganizationSpace ? COPILOT_MODES.EXPLORE : activeMode;
+    try {
+      const res = await copilotService.getSuggestions(effectiveMode, targetSessionId || sessionId || undefined);
+      const next = (res.suggestions || [])
+        .map((s) => (s || '').trim())
+        .filter(Boolean)
+        .slice(0, 3);
+      setFloatingSuggestions(next.length > 0 ? next : getFallbackSuggestions(activeMode, isOrganizationSpace));
+    } catch {
+      setFloatingSuggestions(getFallbackSuggestions(activeMode, isOrganizationSpace));
+    } finally {
+      if (forceShow) setHideFloatingSuggestions(false);
+    }
+  }, [activeMode, getFallbackSuggestions, isOrganizationSpace, sessionId]);
+
+  useEffect(() => {
+    loadFloatingSuggestions(true);
+  }, [loadFloatingSuggestions]);
 
   // Load session
   const loadSession = async (id: string) => {
@@ -403,6 +442,11 @@ export default function AssistantScreen() {
   const startStream = useCallback(async (userContent: string, attachmentFiles: any[] = []) => {
     setIsSending(true);
     setError(null);
+    setHideFloatingSuggestions(true);
+
+    // Capture and reset replaceLastExchange flag (one-shot)
+    const shouldReplace = replaceLastExchangeRef.current;
+    replaceLastExchangeRef.current = false;
 
     const effectiveMode: Mode = isOrganizationSpace ? 'explore' : activeMode;
     const organizationId = isOrganizationSpace ? selectedOrg?.id : undefined;
@@ -503,6 +547,7 @@ export default function AssistantScreen() {
           onDone: (newSessionId) => {
             setSessionId(newSessionId);
             setIsSending(false);
+            void loadFloatingSuggestions(false, newSessionId);
             setMessages((prev) =>
               prev.map((m) => {
                 if (m.id !== assistantMsgId) return m;
@@ -557,7 +602,8 @@ export default function AssistantScreen() {
           },
         },
         organizationId,
-        attachmentIds.length > 0 ? attachmentIds : undefined
+        attachmentIds.length > 0 ? attachmentIds : undefined,
+        shouldReplace || undefined
       );
     } catch (err: any) {
       setIsSending(false);
@@ -569,7 +615,7 @@ export default function AssistantScreen() {
         )
       );
     }
-  }, [activeMode, sessionId, isOrganizationSpace, selectedOrg?.id]);
+  }, [activeMode, sessionId, isOrganizationSpace, selectedOrg?.id, loadFloatingSuggestions]);
 
   // Audio recording handlers
   const handleMicPress = useCallback(async () => {
@@ -599,10 +645,6 @@ export default function AssistantScreen() {
     }
   }, [audioRecorder]);
 
-  const handleCancelRecording = useCallback(async () => {
-    await audioRecorder.cancelRecording();
-  }, [audioRecorder]);
-
   // Auto-stop recording when reaching 30 seconds
   useEffect(() => {
     if (audioRecorder.remainingTime === 0 && audioRecorder.state.isRecording) {
@@ -620,7 +662,7 @@ export default function AssistantScreen() {
   // Send message from input
   const handleSend = () => {
     if ((!inputText.trim() && attachments.length === 0) || isSending) return;
-    const text = inputText.trim();
+    const text = inputText.trim().replace(/\n{2,}/g, '\n').replace(/^\n+|\n+$/g, '');
     const currentAttachments = [...attachments];
     setInputText('');
     setAttachments([]);
@@ -684,11 +726,13 @@ export default function AssistantScreen() {
           {
             text: 'Modifier et renvoyer',
             onPress: () => {
-              // Remove this user message and its following assistant response
+              // Remove this user message and its following assistant response from local state
               const msgIndex = messages.findIndex((m) => m.id === messageId);
               if (msgIndex === -1) return;
               setMessages((prev) => prev.slice(0, msgIndex));
               setInputText(content);
+              // Flag so next send will tell backend to replace the last exchange
+              replaceLastExchangeRef.current = true;
               setTimeout(() => inputRef.current?.focus(), 100);
             },
           },
@@ -732,6 +776,110 @@ export default function AssistantScreen() {
   const currentMode = MODES.find((m) => m.id === activeMode);
   const ModeIcon = currentMode?.icon || Compass;
   const firstName = user?.firstName || user?.displayName?.split(' ')[0] || 'toi';
+  const latestAssistantId = [...messages].reverse().find((m) => m.role === 'assistant')?.id;
+
+  const buildFollowUps = useCallback((assistantText: string): string[] => {
+    const text = (assistantText || '').toLowerCase();
+    if (text.includes('```confirmation')) {
+      return [
+        'Ajuste ce draft avant confirmation',
+        'Rends la proposition plus concise',
+        'Valide et passe à l’action suivante',
+      ];
+    }
+    if (text.includes('```entity:document')) {
+      return [
+        'Fais-moi un résumé exécutif en 5 points',
+        'Transforme ça en plan d’action 30 jours',
+        'Ajoute les risques + mitigations',
+      ];
+    }
+    if (isOrganizationSpace) {
+      return [
+        'Priorise les 3 actions les plus urgentes',
+        'Donne-moi la prochaine étape opérationnelle',
+        'Affine la recommandation pour Abidjan',
+      ];
+    }
+    if (activeMode === 'study') {
+      return [
+        'Teste-moi avec un mini quiz',
+        'Donne un exercice pratique progressif',
+        'Réexplique le point le plus complexe simplement',
+      ];
+    }
+    return [
+      'Donne-moi la prochaine étape concrète',
+      'Propose 3 options selon mon profil',
+      'Prépare un message prêt à envoyer',
+    ];
+  }, [activeMode, isOrganizationSpace]);
+
+  const hasClearNextStep = useCallback((assistantText: string): boolean => {
+    const raw = (assistantText || '').trim();
+    if (!raw) return false;
+
+    // If assistant already rendered a confirmation flow, next action is explicit.
+    if (raw.includes('```confirmation')) return true;
+
+    // Remove fenced code blocks to avoid false positives from JSON/chart syntax.
+    const text = raw
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+
+    if (!text) return false;
+
+    // Focus on ending where next-step cues usually appear.
+    const tail = text.slice(Math.max(0, text.length - 320));
+
+    // Direct invitation to continue.
+    const ctaPatterns = [
+      /souhaitez-vous/,
+      /veux-tu/,
+      /veut-tu/,
+      /voulez-vous/,
+      /on commence/,
+      /prochaine étape/,
+      /confirmez/,
+      /cliquez/,
+      /choisissez/,
+      /dites-moi si/,
+      /je peux (te|vous) aider/,
+      /would you like/,
+      /do you want/,
+      /shall we/,
+      /next step/,
+      /confirm/,
+      /click/,
+      /choose/,
+      /let me know if/,
+      /i can help/,
+    ];
+    if (ctaPatterns.some((p) => p.test(tail))) return true;
+
+    // Explicit question near the end => step is likely clear.
+    if (/[?]\s*$/.test(tail) || /[?]\s*[”"]?\s*$/.test(tail)) return true;
+
+    // Clear action plan already provided (e.g., numbered "next steps").
+    const hasStepList =
+      /(prochaines? étapes?|plan d'action|plan d’\s*action|next steps?|action plan|roadmap)/.test(text) &&
+      /(?:^|\s)1[\).\-\s]/.test(text) &&
+      /(?:^|\s)2[\).\-\s]/.test(text);
+    if (hasStepList) return true;
+
+    return false;
+  }, []);
+
+  const shouldShowFloatingSuggestions =
+    floatingSuggestions.length > 0 &&
+    !hideFloatingSuggestions &&
+    !isSending &&
+    !audioRecorder.state.isRecording &&
+    !isTranscribing &&
+    !messages.some((m) => m.role === 'assistant') &&
+    inputText.trim().length === 0;
 
   // Human-readable relative timestamp from message ID (which embeds Date.now())
   const formatTimestamp = (messageId: string): string => {
@@ -780,6 +928,10 @@ export default function AssistantScreen() {
       {isOrganizationSpace ? (
         <Text style={[styles.greeting, { color: colors.textPrimary }]}>
           <Text style={{ color: colors.primary, fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold }}>{selectedOrg?.name || 'Organisation'}</Text> — recrutement, talents, communautés ou espaces : que souhaitez-vous piloter ?
+        </Text>
+      ) : activeMode === 'study' ? (
+        <Text style={[styles.greeting, { color: colors.textPrimary }]}>
+          Prêt à apprendre, <Text style={{ color: colors.success, fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold }}>{firstName}</Text> ? Choisis un sujet et commence ta session.
         </Text>
       ) : (
         <Text style={[styles.greeting, { color: colors.textPrimary }]}>
@@ -843,26 +995,28 @@ export default function AssistantScreen() {
           ) : (
             /* Assistant message: transparent, full-width */
             <View style={styles.assistantMessage}>
-              {/* Inline segments: ordered text/tool blocks */}
+              {/* Always pin tool blocks on top, in execution order */}
               {message.segments.length > 0 ? (
-                message.segments.map((seg, idx) => {
-                  if (seg.type === 'tool' && seg.tool) {
-                    return <ToolBlock key={`seg-${idx}`} tool={seg.tool} />;
-                  }
-                  if (seg.type === 'text' && seg.content) {
-                    const isLastMessage = msgIdx === messages.length - 1 && !message.isStreaming && !isSending;
-                    return (
-                      <MarkdownRenderer
-                        key={`seg-${idx}`}
-                        content={seg.content}
-                        onQuizAnswer={isLastMessage ? handleQuizAnswer : undefined}
-                        sessionId={sessionId || undefined}
-                        interactiveConfirmation={!message.isStreaming}
-                      />
-                    );
-                  }
-                  return null;
-                })
+                <>
+                  {message.segments.map((seg, idx) => {
+                    if (seg.type === 'tool' && seg.tool) {
+                      return <ToolBlock key={`seg-${idx}`} tool={seg.tool} />;
+                    }
+                    if (seg.type === 'text' && seg.content) {
+                      const isLastMessage = msgIdx === messages.length - 1 && !message.isStreaming && !isSending;
+                      return (
+                        <MarkdownRenderer
+                          key={`seg-${idx}`}
+                          content={seg.content}
+                          onQuizAnswer={isLastMessage ? handleQuizAnswer : undefined}
+                          sessionId={sessionId || undefined}
+                          interactiveConfirmation={!message.isStreaming}
+                        />
+                      );
+                    }
+                    return null;
+                  })}
+                </>
               ) : message.isStreaming ? (
                 <ThinkingIndicator />
               ) : message.error ? null : null}
@@ -902,6 +1056,35 @@ export default function AssistantScreen() {
                     {formatTimestamp(message.id)}
                   </Text>
                   <CopyButton content={message.content} />
+                </View>
+              )}
+
+              {/* Clickable follow-ups to steer next turn */}
+              {message.content &&
+                !message.isStreaming &&
+                !message.error &&
+                message.id === latestAssistantId &&
+                !hasClearNextStep(message.content) && (
+                <View style={styles.followUpsWrap}>
+                  {buildFollowUps(message.content).slice(0, 3).map((followUp, idx) => (
+                    <Pressable
+                      key={`${message.id}-followup-${idx}`}
+                      onPress={() => {
+                        setInputText(followUp);
+                        setHideFloatingSuggestions(true);
+                        setTimeout(() => inputRef.current?.focus(), 80);
+                      }}
+                      style={({ pressed }) => [
+                        styles.followUpChip,
+                        { borderColor: colors.borderColor, backgroundColor: withOpacity(colors.primary, OPACITY[5]) },
+                        pressed && { backgroundColor: withOpacity(colors.primary, OPACITY[12]) },
+                      ]}
+                    >
+                      <Text style={[styles.followUpText, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {followUp}
+                      </Text>
+                    </Pressable>
+                  ))}
                 </View>
               )}
             </View>
@@ -1042,6 +1225,29 @@ export default function AssistantScreen() {
 
           {/* Input Area */}
           <View style={styles.inputArea}>
+            {shouldShowFloatingSuggestions && (
+              <View style={styles.floatingSuggestionsWrap}>
+                {floatingSuggestions.slice(0, 3).map((suggestion, idx) => (
+                  <Pressable
+                    key={`floating-suggestion-${idx}`}
+                    onPress={() => {
+                      setInputText(suggestion);
+                      setHideFloatingSuggestions(true);
+                      setTimeout(() => inputRef.current?.focus(), 80);
+                    }}
+                    style={({ pressed }) => [
+                      styles.floatingSuggestionChip,
+                      { borderColor: colors.borderColor, backgroundColor: withOpacity(colors.background, OPACITY[90]) },
+                      pressed && { backgroundColor: withOpacity(colors.primary, OPACITY[8]), borderColor: withOpacity(colors.primary, OPACITY[30]) },
+                    ]}
+                  >
+                    <Text style={[styles.floatingSuggestionText, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {suggestion}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
             <View
               style={[styles.inputContainer, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
             >
@@ -1116,7 +1322,7 @@ export default function AssistantScreen() {
 	                </ScrollView>
 	              )}
 
-              {/* Row 1: TextInput + Mic + Send */}
+              {/* TextInput */}
               <View style={styles.inputRow}>
                 <Input
                   ref={inputRef}
@@ -1130,6 +1336,38 @@ export default function AssistantScreen() {
                   inputContainerStyle={{ backgroundColor: 'transparent', borderColor: 'transparent', borderWidth: 0, height: undefined, minHeight: 32, maxHeight: 100, paddingVertical: 0 }}
                   inputStyle={{ color: colors.textPrimary, paddingHorizontal: 0, paddingVertical: 4, fontSize: TYPOGRAPHY.fontSize.md, minHeight: 32, maxHeight: 100 }}
                 />
+              </View>
+
+              {/* Actions row: Attach + Mode | Mic + Send */}
+              <View style={styles.actionsRow}>
+                <IconButton
+                  onPress={handlePickFile}
+                  disabled={isSending || audioRecorder.state.isRecording || isTranscribing}
+                  icon={
+                    <Plus
+                      size={ICON.size.md}
+                      color={(isSending || audioRecorder.state.isRecording || isTranscribing) ? colors.gray300 : colors.gray500}
+                      strokeWidth={ICON.strokeWidth}
+                    />
+                  }
+                  accessibilityLabel="Ajouter une pièce jointe"
+                  size="sm"
+                  variant="ghost"
+                  style={styles.inputAction}
+                />
+
+	                <Button
+	                  title={currentMode?.label || ''}
+	                  onPress={() => setActiveMode(activeMode === 'explore' ? 'study' : 'explore')}
+	                  disabled={MODES.length === 1}
+	                  variant="secondary"
+	                  size="sm"
+	                  icon={<ModeIcon size={ICON.size.sm} color={modeColors[activeMode].text} strokeWidth={ICON.strokeWidth} />}
+	                  style={[styles.modeToggle, { backgroundColor: modeColors[activeMode].bg }]}
+	                  textStyle={[styles.modeToggleText, { color: modeColors[activeMode].text }]}
+	                />
+
+                <View style={{ flex: 1 }} />
 
 	                <IconButton
 	                  onPress={handleMicPress}
@@ -1145,7 +1383,7 @@ export default function AssistantScreen() {
 	                      />
 	                    )
 	                  }
-	                  accessibilityLabel={audioRecorder.state.isRecording ? 'Arrêter l’enregistrement' : 'Démarrer un enregistrement'}
+	                  accessibilityLabel={audioRecorder.state.isRecording ? "Arrêter l'enregistrement" : "Démarrer un enregistrement"}
 	                  size="sm"
 	                  variant="ghost"
 	                  style={[
@@ -1154,7 +1392,7 @@ export default function AssistantScreen() {
 	                    audioRecorder.state.isRecording && { backgroundColor: withOpacity(colors.error, OPACITY[20]) },
 	                  ]}
 	                />
-	
+
 	                <IconButton
 	                  onPress={isSending ? handleStop : handleSend}
 	                  disabled={!isSending && ((!inputText.trim() && attachments.length === 0) || audioRecorder.state.isRecording)}
@@ -1181,58 +1419,8 @@ export default function AssistantScreen() {
 	                  ]}
 	                />
 	              </View>
-
-              {/* Row 2: Actions */}
-              <View style={styles.actionsRow}>
-                <IconButton
-                  onPress={handlePickFile}
-                  disabled={isSending || audioRecorder.state.isRecording || isTranscribing}
-                  icon={
-                    <Plus
-                      size={ICON.size.md}
-                      color={(isSending || audioRecorder.state.isRecording || isTranscribing) ? colors.gray300 : colors.gray500}
-                      strokeWidth={ICON.strokeWidth}
-                    />
-                  }
-                  accessibilityLabel="Ajouter une pièce jointe"
-                  size="sm"
-                  variant="ghost"
-                  style={styles.inputAction}
-                />
-
-                <IconButton
-                  onPress={() => setIsSuggestionsVisible(true)}
-                  icon={<Lightbulb size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-                  accessibilityLabel="Suggestions"
-                  size="sm"
-                  variant="ghost"
-                  style={styles.inputAction}
-                />
-
-	                <Button
-	                  title={currentMode?.label || ''}
-	                  onPress={() => setActiveMode(activeMode === 'explore' ? 'study' : 'explore')}
-	                  disabled={MODES.length === 1}
-	                  variant="secondary"
-	                  size="sm"
-	                  icon={<ModeIcon size={ICON.size.sm} color={modeColors[activeMode].text} strokeWidth={ICON.strokeWidth} />}
-	                  style={[styles.modeToggle, { backgroundColor: modeColors[activeMode].bg }]}
-	                  textStyle={[styles.modeToggleText, { color: modeColors[activeMode].text }]}
-	                />
-	              </View>
 	            </View>
 	          </View>
-
-          <SuggestionsTooltip
-            visible={isSuggestionsVisible}
-            onClose={() => setIsSuggestionsVisible(false)}
-            onSelectSuggestion={(suggestion) => {
-              setInputText(suggestion);
-              setIsSuggestionsVisible(false);
-            }}
-            mode={isOrganizationSpace ? 'explore' : activeMode}
-            sessionId={sessionId}
-          />
 
           {/* History Panel (overlay) */}
           {showHistory && renderHistoryPanel()}
@@ -1442,6 +1630,23 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
+  followUpsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+    marginTop: SPACING.sm,
+  },
+  followUpChip: {
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.full,
+    paddingVertical: 6,
+    paddingHorizontal: SPACING.sm,
+    maxWidth: '100%',
+  },
+  followUpText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
   retryButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1461,6 +1666,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: 2,
     paddingBottom: 4,
+  },
+  floatingSuggestionsWrap: {
+    marginBottom: SPACING.xs,
+    gap: SPACING.xs,
+  },
+  floatingSuggestionChip: {
+    borderWidth: BORDER.width.thin,
+    borderRadius: BORDER.radius.full,
+    paddingVertical: 8,
+    paddingHorizontal: SPACING.md,
+  },
+  floatingSuggestionText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
 
   inputContainer: {

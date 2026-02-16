@@ -45,10 +45,20 @@ export function buildKaTeXHTML(
       justify-content: center;
       align-items: center;
       min-height: 40px;
-      padding: 12px 16px;
-      overflow: hidden;
+      padding: 12px 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
     }
-    #math { color: ${textColor}; width: 100%; text-align: center; }
+    #math {
+      color: ${textColor};
+      width: 100%;
+      text-align: center;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .katex-display { overflow-x: auto; overflow-y: hidden; padding-bottom: 4px; }
+    .katex { white-space: nowrap; }
     #error {
       color: ${textColor};
       font-family: monospace;
@@ -119,12 +129,12 @@ export const MathBlock: React.FC<MathBlockProps> = ({ data }) => {
             baseUrl: 'https://cdn.jsdelivr.net',
           }}
           style={styles.webview}
-          scrollEnabled={false}
+          scrollEnabled={true}
           javaScriptEnabled
           onMessage={onMessage}
           originWhitelist={['*']}
           showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
+          showsHorizontalScrollIndicator={true}
         />
       </View>
       {data.caption ? (
@@ -143,7 +153,7 @@ const styles = StyleSheet.create({
   webviewContainer: {
     width: '100%',
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   webview: {
     flex: 1,

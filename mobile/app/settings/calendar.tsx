@@ -8,24 +8,18 @@ import {
   TextInput,
   Platform,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  Calendar,
-  Briefcase,
-  Users,
-  MapPin,
-  FileText,
-  Send,
-  Sparkles,
+  Calendar as CalendarIcon,
   ChevronRight,
   ChevronLeft,
   Plus,
   X,
-  MessageCircle,
 } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, ThemeColors } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, ThemeColors } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useSpace } from '../../src/contexts/SpaceContext';
 import { PageLayout, EmptyState, IconButton } from '../../src/components/ui';
@@ -38,6 +32,7 @@ interface CalendarEvent {
   type: EventType;
   title: string;
   description?: string;
+  isoDateTime?: string;
   date: string;
   time: string;
   location?: string;
@@ -93,10 +88,8 @@ const formatTime = (dateStr: string): string => {
   return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 };
 
-type SheetMode = 'menu' | 'reminder';
-
 export default function CalendarScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { isOrganizationSpace, selectedOrg } = useSpace();
   const router = useRouter();
   const now = new Date();
@@ -108,12 +101,13 @@ export default function CalendarScreen() {
 
   // FAB sheet state
   const [showSheet, setShowSheet] = useState(false);
-  const [sheetMode, setSheetMode] = useState<SheetMode>('menu');
   const [reminderTitle, setReminderTitle] = useState('');
   const [reminderDate, setReminderDate] = useState(new Date());
+  const [eventDescription, setEventDescription] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [editingTriggerId, setEditingTriggerId] = useState<string | null>(null);
 
   const fetchCalendarEvents = useCallback(async () => {
     try {
@@ -155,6 +149,7 @@ export default function CalendarScreen() {
             type,
             title,
             description: item.description || item.content?.substring(0, 100),
+            isoDateTime: eventDate || undefined,
             date: eventDate?.split('T')[0] || new Date().toISOString().split('T')[0],
             time: formatTime(eventDate || new Date().toISOString()),
             location: item.location || item.metadata?.location,
@@ -217,6 +212,13 @@ export default function CalendarScreen() {
   const handleEventPress = (event: CalendarEvent) => {
     if ((event.type === 'event' || event.type === 'scheduled_post') && event.community_id) {
       router.push(`/details/community/${event.community_id}`);
+    } else if (event.type === 'trigger') {
+      const dueDate = event.isoDateTime ? new Date(event.isoDateTime) : new Date(`${event.date}T08:00:00`);
+      setEditingTriggerId(event.id);
+      setReminderTitle(event.title || '');
+      setEventDescription(event.description || '');
+      setReminderDate(isNaN(dueDate.getTime()) ? new Date() : dueDate);
+      setShowSheet(true);
     } else if (event.type === 'application') {
       router.push(`/gestion/opportunities/applications/details/${event.id}` as any);
     } else if (event.type === 'opportunity') {
@@ -230,28 +232,40 @@ export default function CalendarScreen() {
 
   // --- FAB / Sheet handlers ---
   const openSheet = () => {
-    setSheetMode('menu');
+    setEditingTriggerId(null);
     setReminderTitle('');
     setReminderDate(new Date());
+    setEventDescription('');
     setShowSheet(true);
   };
 
   const closeSheet = () => {
     setShowSheet(false);
+    setEditingTriggerId(null);
     setShowDatePicker(false);
     setShowTimePicker(false);
   };
 
-  const handleCreateReminder = async () => {
+  const handleCreate = async () => {
     if (!reminderTitle.trim()) return;
     setIsCreating(true);
     try {
-      await api.post('/api/calendar/triggers', {
-        code: 'user_reminder',
-        title: reminderTitle.trim(),
-        due_at: reminderDate.toISOString(),
-        ...(isOrganizationSpace && selectedOrg?.id ? { organizationId: selectedOrg.id } : {}),
-      });
+      if (editingTriggerId) {
+        await api.patch(`/api/calendar/triggers/${editingTriggerId}`, {
+          title: reminderTitle.trim(),
+          description: eventDescription.trim() || null,
+          due_at: reminderDate.toISOString(),
+          status: 'PENDING',
+        });
+      } else {
+        await api.post('/api/calendar/triggers', {
+          code: 'user_event',
+          title: reminderTitle.trim(),
+          due_at: reminderDate.toISOString(),
+          ...(eventDescription.trim() ? { description: eventDescription.trim() } : {}),
+          ...(isOrganizationSpace && selectedOrg?.id ? { organizationId: selectedOrg.id } : {}),
+        });
+      }
       closeSheet();
       handleRefresh();
     } catch (_) {
@@ -292,32 +306,6 @@ export default function CalendarScreen() {
       />
     </View>
   );
-
-  // --- Sheet menu options ---
-  const menuOptions = [
-    {
-      icon: Sparkles,
-      label: 'Créer un rappel',
-      onPress: () => setSheetMode('reminder'),
-    },
-    {
-      icon: MessageCircle,
-      label: "Demander à l'assistant",
-      onPress: () => {
-        closeSheet();
-        router.push('/(tabs)/assistant');
-      },
-    },
-    ...(isOrganizationSpace ? [{
-      icon: Users,
-      label: 'Créer un événement',
-      onPress: () => {
-        closeSheet();
-        // Navigate to communities tab for event creation
-        router.push('/(tabs)/communities' as any);
-      },
-    }] : []),
-  ];
 
   return (
     <View style={{ flex: 1 }}>
@@ -379,7 +367,7 @@ export default function CalendarScreen() {
 
         {sortedDates.length === 0 && (
           <EmptyState
-            icon={Calendar}
+            icon={CalendarIcon}
             title={isOrganizationSpace ? `Agenda ${selectedOrg?.name || 'Organisation'}` : 'Aucun événement ce mois-ci'}
             subtitle={
               isOrganizationSpace
@@ -393,149 +381,139 @@ export default function CalendarScreen() {
         <View style={{ height: 80 }} />
       </PageLayout>
 
-      {/* FAB */}
+      {/* FAB — direct open modal */}
       <Pressable
         style={[styles.fab, { backgroundColor: colors.primary }]}
         onPress={openSheet}
         accessibilityRole="button"
-        accessibilityLabel="Ajouter"
+        accessibilityLabel="Créer un événement"
       >
-        <Plus size={24} color={colors.textOnPrimary} strokeWidth={2} />
+        <Plus size={ICON.size.xl} color={colors.textOnPrimary} strokeWidth={2} />
       </Pressable>
 
       {/* Bottom sheet modal */}
-      <Modal visible={showSheet} transparent animationType="fade" onRequestClose={closeSheet}>
-        <Pressable style={styles.overlay} onPress={closeSheet}>
-          <Pressable
-            style={[styles.sheet, { backgroundColor: colors.surface }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            {sheetMode === 'menu' ? (
-              <>
-                <View style={styles.sheetHeader}>
-                  <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>Nouvelle action</Text>
-                  <Pressable onPress={closeSheet} hitSlop={8}>
-                    <X size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                  </Pressable>
-                </View>
-                {menuOptions.map((option, i) => {
-                  const Icon = option.icon;
-                  return (
-                    <Pressable
-                      key={i}
-                      style={[styles.sheetOption, { borderBottomColor: colors.gray100 }]}
-                      onPress={option.onPress}
-                    >
-                      <View style={[styles.sheetOptionIcon, { backgroundColor: colors.backgroundSecondary }]}>
-                        <Icon size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                      </View>
-                      <Text style={[styles.sheetOptionLabel, { color: colors.textPrimary }]}>
-                        {option.label}
-                      </Text>
-                      <ChevronRight size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                    </Pressable>
-                  );
-                })}
-              </>
-            ) : (
-              <>
-                <View style={styles.sheetHeader}>
-                  <Pressable onPress={() => setSheetMode('menu')} hitSlop={8}>
-                    <ChevronLeft size={20} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
-                  </Pressable>
-                  <Text style={[styles.sheetTitle, { color: colors.textPrimary, flex: 1, textAlign: 'center' }]}>
-                    Créer un rappel
-                  </Text>
-                  <Pressable onPress={closeSheet} hitSlop={8}>
-                    <X size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-                  </Pressable>
-                </View>
-
-                <TextInput
-                  style={[styles.reminderInput, {
-                    color: colors.textPrimary,
-                    backgroundColor: colors.backgroundSecondary,
-                    borderColor: colors.borderColor,
-                  }]}
-                  placeholder="Ex: Relancer le candidat..."
-                  placeholderTextColor={colors.textTertiary}
-                  value={reminderTitle}
-                  onChangeText={setReminderTitle}
-                  autoFocus
-                />
-
-                <View style={styles.dateTimeRow}>
-                  <Pressable
-                    style={[styles.dateTimeButton, { backgroundColor: colors.backgroundSecondary, borderColor: colors.borderColor }]}
-                    onPress={() => setShowDatePicker(true)}
-                  >
-                    <Text style={[styles.dateTimeText, { color: colors.textPrimary }]}>
-                      {formatReminderDate(reminderDate)}
-                    </Text>
-                  </Pressable>
-                </View>
-
-                {(showDatePicker || showTimePicker) && (
-                  <DateTimePicker
-                    value={reminderDate}
-                    mode={showDatePicker ? 'date' : 'time'}
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    minimumDate={new Date()}
-                    onChange={(_, selectedDate) => {
-                      if (Platform.OS === 'android') {
-                        setShowDatePicker(false);
-                        setShowTimePicker(false);
-                      }
-                      if (selectedDate) {
-                        setReminderDate(selectedDate);
-                        // On Android, chain date → time picker
-                        if (Platform.OS === 'android' && showDatePicker) {
-                          setTimeout(() => setShowTimePicker(true), 300);
-                        }
-                      }
-                    }}
-                  />
-                )}
-
-                {Platform.OS === 'ios' && showDatePicker && (
-                  <Pressable
-                    style={[styles.pickerDone, { borderTopColor: colors.gray200 }]}
-                    onPress={() => {
-                      setShowDatePicker(false);
-                      setShowTimePicker(true);
-                    }}
-                  >
-                    <Text style={[styles.pickerDoneText, { color: colors.primary }]}>Choisir l'heure</Text>
-                  </Pressable>
-                )}
-
-                {Platform.OS === 'ios' && showTimePicker && (
-                  <Pressable
-                    style={[styles.pickerDone, { borderTopColor: colors.gray200 }]}
-                    onPress={() => setShowTimePicker(false)}
-                  >
-                    <Text style={[styles.pickerDoneText, { color: colors.primary }]}>OK</Text>
-                  </Pressable>
-                )}
-
-                <Pressable
-                  style={[
-                    styles.createButton,
-                    { backgroundColor: reminderTitle.trim() ? colors.primary : colors.gray300 },
-                  ]}
-                  onPress={handleCreateReminder}
-                  disabled={!reminderTitle.trim() || isCreating}
-                >
-                  {isCreating ? (
-                    <ActivityIndicator size="small" color={colors.textOnPrimary} />
-                  ) : (
-                    <Text style={[styles.createButtonText, { color: colors.textOnPrimary }]}>Créer</Text>
-                  )}
+      <Modal visible={showSheet} transparent animationType="slide" onRequestClose={closeSheet}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={0}
+        >
+          <Pressable style={styles.overlay} onPress={closeSheet}>
+            <View
+              style={[styles.sheet, { backgroundColor: colors.surface }]}
+              onStartShouldSetResponder={() => true}
+            >
+              {/* Header */}
+              <View style={styles.sheetHeader}>
+                <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>
+                  {editingTriggerId ? 'Modifier l’événement' : 'Nouvel événement'}
+                </Text>
+                <Pressable onPress={closeSheet} hitSlop={8}>
+                  <X size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
                 </Pressable>
-              </>
-            )}
+              </View>
+
+              {/* Title */}
+              <TextInput
+                style={[styles.input, {
+                  color: colors.textPrimary,
+                  backgroundColor: colors.backgroundSecondary,
+                  borderColor: colors.borderColor,
+                }]}
+                placeholder="Titre"
+                placeholderTextColor={colors.textTertiary}
+                value={reminderTitle}
+                onChangeText={setReminderTitle}
+                autoFocus
+              />
+
+              {/* Description */}
+              <TextInput
+                style={[styles.input, styles.descriptionInput, {
+                  color: colors.textPrimary,
+                  backgroundColor: colors.backgroundSecondary,
+                  borderColor: colors.borderColor,
+                }]}
+                placeholder="Description (optionnel)"
+                placeholderTextColor={colors.textTertiary}
+                value={eventDescription}
+                onChangeText={setEventDescription}
+                multiline
+                numberOfLines={2}
+              />
+
+              {/* Date & Time */}
+              <Pressable
+                style={[styles.dateTimeButton, { backgroundColor: colors.backgroundSecondary, borderColor: colors.borderColor }]}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <CalendarIcon size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+                <Text style={[styles.dateTimeText, { color: colors.textPrimary }]}>
+                  {formatReminderDate(reminderDate)}
+                </Text>
+              </Pressable>
+
+              {(showDatePicker || showTimePicker) && (
+                <DateTimePicker
+                  value={reminderDate}
+                  mode={showDatePicker ? 'date' : 'time'}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  themeVariant={isDark ? 'dark' : 'light'}
+                  textColor={colors.textPrimary}
+                  minimumDate={new Date()}
+                  onChange={(_, selectedDate) => {
+                    if (Platform.OS === 'android') {
+                      setShowDatePicker(false);
+                      setShowTimePicker(false);
+                    }
+                    if (selectedDate) {
+                      setReminderDate(selectedDate);
+                      if (Platform.OS === 'android' && showDatePicker) {
+                        setTimeout(() => setShowTimePicker(true), 300);
+                      }
+                    }
+                  }}
+                />
+              )}
+
+              {Platform.OS === 'ios' && showDatePicker && (
+                <Pressable
+                  style={[styles.pickerDone, { borderTopColor: colors.gray200 }]}
+                  onPress={() => { setShowDatePicker(false); setShowTimePicker(true); }}
+                >
+                  <Text style={[styles.pickerDoneText, { color: colors.primary }]}>Choisir l&apos;heure</Text>
+                </Pressable>
+              )}
+
+              {Platform.OS === 'ios' && showTimePicker && (
+                <Pressable
+                  style={[styles.pickerDone, { borderTopColor: colors.gray200 }]}
+                  onPress={() => setShowTimePicker(false)}
+                >
+                  <Text style={[styles.pickerDoneText, { color: colors.primary }]}>OK</Text>
+                </Pressable>
+              )}
+
+              {/* Create button */}
+              <Pressable
+                style={[
+                  styles.createButton,
+                  { backgroundColor: reminderTitle.trim() ? colors.primary : colors.gray300 },
+                ]}
+                onPress={handleCreate}
+                disabled={!reminderTitle.trim() || isCreating}
+              >
+                {isCreating ? (
+                  <ActivityIndicator size="small" color={colors.textOnPrimary} />
+                ) : (
+                  <Text style={[styles.createButtonText, { color: colors.textOnPrimary }]}>
+                    {editingTriggerId ? 'Enregistrer' : 'Créer'}
+                  </Text>
+                )}
+              </Pressable>
+            </View>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -611,11 +589,11 @@ const styles = StyleSheet.create({
   // FAB
   fab: {
     position: 'absolute',
-    bottom: 24,
-    right: 20,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    bottom: SPACING.xl,
+    right: SPACING.lg,
+    width: LAYOUT.fabSize,
+    height: LAYOUT.fabSize,
+    borderRadius: LAYOUT.fabSize / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -626,95 +604,72 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
   },
-
   sheet: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 36,
   },
-
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
   },
-
   sheetTitle: {
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
-  sheetOption: {
+  // Form
+  input: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    borderWidth: 1,
+    borderRadius: BORDER.radius.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 12,
+    marginBottom: SPACING.sm,
+  },
+  descriptionInput: {
+    minHeight: 56,
+    textAlignVertical: 'top',
+  },
+  dateTimeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: SPACING.md,
-  },
-
-  sheetOptionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: BORDER.radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  sheetOptionLabel: {
-    flex: 1,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  // Reminder form
-  reminderInput: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
+    gap: SPACING.sm,
     borderWidth: 1,
     borderRadius: BORDER.radius.sm,
     paddingHorizontal: SPACING.md,
     paddingVertical: 12,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
-
-  dateTimeRow: {
-    marginBottom: SPACING.md,
-  },
-
-  dateTimeButton: {
-    borderWidth: 1,
-    borderRadius: BORDER.radius.sm,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 12,
-  },
-
   dateTimeText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
-
   pickerDone: {
     alignItems: 'flex-end',
     paddingVertical: SPACING.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     marginBottom: SPACING.xs,
   },
-
   pickerDoneText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
-
   createButton: {
     borderRadius: BORDER.radius.sm,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: SPACING.sm,
+    marginTop: SPACING.xs,
   },
-
   createButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.semibold,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 });

@@ -182,7 +182,8 @@ class CopilotService {
       onContentCorrected?: (content: string) => void;
     },
     organizationId?: string,
-    attachmentIds?: string[]
+    attachmentIds?: string[],
+    replaceLastExchange?: boolean
   ): AbortController {
     const controller = new AbortController();
 
@@ -314,7 +315,7 @@ class CopilotService {
           xhr.abort();
         });
 
-        xhr.send(JSON.stringify({ message, mode, sessionId, organizationId, attachmentIds }));
+        xhr.send(JSON.stringify({ message, mode, sessionId, organizationId, attachmentIds, replaceLastExchange: replaceLastExchange || undefined }));
 
       } catch (error: any) {
         if (error.name !== 'AbortError') {

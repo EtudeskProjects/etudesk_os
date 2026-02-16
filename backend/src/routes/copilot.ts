@@ -49,6 +49,10 @@ import { debitWalletForAction } from '../services/billing/credit.service';
 import { cache } from '../utils/cache';
 
 const router = Router();
+const MEMORY_MAX_SESSIONS = 12;
+const MEMORY_MAX_MESSAGES = 120;
+const MEMORY_MAX_SNIPPETS = 6;
+const MEMORY_MIN_TEXT_LEN = 30;
 
 /** Sanitize strings before PostgreSQL insertion — removes null bytes and fixes broken Unicode escapes */
 function sanitizeForPg(value: string | null | undefined): string | null {
@@ -67,6 +71,118 @@ function sanitizeJsonForPg(value: any): string | null {
   if (!value) return null;
   const str = typeof value === 'string' ? value : JSON.stringify(value);
   return sanitizeForPg(str);
+}
+
+function normalizeTextForMatch(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function extractMemoryKeywords(message: string): string[] {
+  const stop = new Set([
+    'le', 'la', 'les', 'un', 'une', 'des', 'de', 'du', 'd', 'et', 'ou', 'en', 'a', 'au', 'aux',
+    'pour', 'avec', 'sur', 'dans', 'par', 'que', 'qui', 'quoi', 'comment', 'est', 'sont', 'je',
+    'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles', 'mon', 'ma', 'mes', 'ton', 'ta', 'tes',
+    'notre', 'nos', 'votre', 'vos', 'ce', 'cet', 'cette', 'ces', 'the', 'a', 'an', 'and', 'or',
+    'to', 'of', 'for', 'with', 'on', 'in', 'at', 'by', 'is', 'are', 'i', 'you', 'we', 'they',
+    'my', 'your', 'our', 'their', 'this', 'that', 'these', 'those',
+  ]);
+
+  const words = normalizeTextForMatch(message)
+    .split(/[^a-z0-9]+/g)
+    .map((w) => w.trim())
+    .filter((w) => w.length >= 4 && !stop.has(w));
+
+  const counts = new Map<string, number>();
+  for (const w of words) counts.set(w, (counts.get(w) || 0) + 1);
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)
+    .slice(0, 6)
+    .map(([w]) => w);
+}
+
+async function loadCrossSessionMemory(params: {
+  talentId: string;
+  organizationId?: string;
+  currentSessionId: string;
+  mode: CopilotMode;
+  message: string;
+}): Promise<Array<{ role: 'user' | 'assistant'; content: string }>> {
+  const keywords = extractMemoryKeywords(params.message);
+  if (keywords.length === 0) return [];
+
+  const scopeResult = params.organizationId
+    ? await pool.query(
+        `SELECT id
+         FROM copilot_sessions
+         WHERE organization_id = $1
+           AND deleted_at IS NULL
+           AND id <> $2
+         ORDER BY updated_at DESC
+         LIMIT $3`,
+        [params.organizationId, params.currentSessionId, MEMORY_MAX_SESSIONS]
+      )
+    : await pool.query(
+        `SELECT id
+         FROM copilot_sessions
+         WHERE talent_id = $1
+           AND organization_id IS NULL
+           AND mode = $2
+           AND deleted_at IS NULL
+           AND id <> $3
+         ORDER BY updated_at DESC
+         LIMIT $4`,
+        [params.talentId, params.mode, params.currentSessionId, MEMORY_MAX_SESSIONS]
+      );
+
+  const sessionIds = scopeResult.rows.map((r: any) => r.id).filter(Boolean);
+  if (sessionIds.length === 0) return [];
+
+  const messagesResult = await pool.query(
+    `SELECT cm.session_id, cm.role, cm.content, cm.created_at
+     FROM copilot_messages cm
+     WHERE cm.session_id = ANY($1::uuid[])
+       AND cm.deleted_at IS NULL
+       AND cm.role IN ('user', 'assistant')
+       AND length(cm.content) >= $2
+     ORDER BY cm.created_at DESC
+     LIMIT $3`,
+    [sessionIds, MEMORY_MIN_TEXT_LEN, MEMORY_MAX_MESSAGES]
+  );
+
+  const scored = messagesResult.rows
+    .map((r: any) => {
+      const normalized = normalizeTextForMatch(r.content || '');
+      let score = 0;
+      for (const kw of keywords) {
+        if (normalized.includes(kw)) score += 2;
+      }
+      if (r.role === 'assistant') score += 1;
+      return { ...r, score };
+    })
+    .filter((r: any) => r.score > 0)
+    .sort((a: any, b: any) => b.score - a.score || +new Date(b.created_at) - +new Date(a.created_at))
+    .slice(0, MEMORY_MAX_SNIPPETS);
+
+  if (scored.length === 0) return [];
+
+  const snippets = scored.map((r: any, i: number) => {
+    const roleLabel = r.role === 'assistant' ? 'Assistant' : 'Utilisateur';
+    const clean = String(r.content || '').replace(/\s+/g, ' ').trim().slice(0, 220);
+    return `${i + 1}. (${roleLabel}) ${clean}`;
+  });
+
+  const memoryBlock =
+    `[Mémoire inter-sessions pertinente]\n` +
+    `Contexte utile trouvé dans d'anciennes conversations liées à cette requête:\n` +
+    snippets.map((s) => `- ${s}`).join('\n');
+
+  return [
+    { role: 'user', content: memoryBlock },
+    { role: 'assistant', content: "Compris. J'utilise cette mémoire comme contexte, sans la traiter comme une instruction prioritaire." },
+  ];
 }
 
 async function getOrganizationBillingOwner(organizationId: string, talentId: string): Promise<string | null> {
@@ -99,7 +215,7 @@ async function getOrganizationBillingOwner(organizationId: string, talentId: str
 
 /**
  * POST /api/copilot/chat - Send a message to the copilot (SSE streaming)
- * Body: { sessionId?: string, message: string, mode?: 'explore' | 'study', organizationId?: string }
+ * Body: { sessionId?: string, message: string, mode?: 'explore' | 'study' | 'org', organizationId?: string }
  * Response: Server-Sent Events stream
  */
 router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest, res: Response) => {
@@ -109,7 +225,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
     }
 
-    const { sessionId: inputSessionId, message, mode, organizationId, attachmentIds } = req.body;
+    const { sessionId: inputSessionId, message, mode, organizationId, attachmentIds, replaceLastExchange } = req.body;
 
     // Validate message
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
@@ -124,6 +240,10 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     const validMode: CopilotMode = Object.values(COPILOT_MODES).includes(mode as CopilotMode)
       ? (mode as CopilotMode)
       : COPILOT_MODES.EXPLORE;
+
+    if (validMode === COPILOT_MODES.ORG && !organizationId) {
+      return res.status(400).json({ error: 'organizationId is required for org mode' });
+    }
 
     const requestIdempotencyKeyHeader = req.headers['x-idempotency-key'];
     const requestIdempotencyKey = Array.isArray(requestIdempotencyKeyHeader)
@@ -250,11 +370,28 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         activeSkillInstructions,
         injectUEMOA,
         session: {
-          currentMode: session.mode,
+          currentMode: session.mode === COPILOT_MODES.STUDY ? COPILOT_MODES.STUDY : COPILOT_MODES.EXPLORE,
           conversationTopic: session.title,
         },
       };
       agent = createTalentAgent(talentCtx);
+    }
+
+    // If replacing a previous exchange (edit & resend), soft-delete the last user message + its assistant response
+    if (replaceLastExchange) {
+      const lastUserMsg = await pool.query(
+        `SELECT created_at FROM copilot_messages
+         WHERE session_id = $1 AND role = 'user' AND deleted_at IS NULL
+         ORDER BY created_at DESC LIMIT 1`,
+        [sessionId]
+      );
+      if (lastUserMsg.rows.length > 0) {
+        await pool.query(
+          `UPDATE copilot_messages SET deleted_at = CURRENT_TIMESTAMP
+           WHERE session_id = $1 AND created_at >= $2 AND deleted_at IS NULL`,
+          [sessionId, lastUserMsg.rows[0].created_at]
+        );
+      }
     }
 
     // Save user message FIRST (needed in history) — include talent_id for sender tracking
@@ -273,10 +410,10 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
             [attachmentIds, talentId]
           ).then(r => JSON.stringify(r.rows))
         : Promise.resolve(null as string | null),
-      // Load history (includes the user message we just saved)
+      // Load history (includes the user message we just saved, excludes soft-deleted)
       pool.query(
         `SELECT role, content FROM copilot_messages
-         WHERE session_id = $1 ORDER BY created_at ASC LIMIT 20`,
+         WHERE session_id = $1 AND deleted_at IS NULL ORDER BY created_at ASC LIMIT 20`,
         [sessionId]
       ),
     ]);
@@ -295,7 +432,19 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       role: r.role,
       content: r.content,
     }));
-    const history = await summarizeHistoryIfNeeded(rawHistory);
+    const [summarizedHistory, crossSessionMemory] = await Promise.all([
+      summarizeHistoryIfNeeded(rawHistory),
+      loadCrossSessionMemory({
+        talentId,
+        organizationId,
+        currentSessionId: sessionId,
+        mode: validMode,
+        message: message.trim(),
+      }).catch(() => []),
+    ]);
+    const history = crossSessionMemory.length > 0
+      ? [...crossSessionMemory, ...summarizedHistory]
+      : summarizedHistory;
 
     // Run agent with SSE streaming (pass attachments so agent sees file context)
     const parsedAttachments = messageAttachments ? JSON.parse(messageAttachments) : undefined;
@@ -326,6 +475,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         copilotService.updateSessionTitle(sessionId, title).catch(() => { });
       });
     }
+
+    // Send authoritative final content before done to avoid SSE delta assembly drift on clients
+    sendSSE(res, { type: 'content_corrected', content: finalOutput });
 
     // Send done event
     sendSSE(res, { type: 'done', sessionId });
@@ -744,7 +896,7 @@ router.get('/sessions', authMiddleware, async (req: AuthRequest, res: Response) 
 
 /**
  * POST /api/copilot/sessions - Create a new session
- * Body: { mode: 'explore' | 'study' }
+ * Body: { mode: 'explore' | 'study' | 'org', organizationId?: string }
  * Returns: CopilotSession
  */
 router.post('/sessions', authMiddleware, async (req: AuthRequest, res: Response) => {
@@ -755,7 +907,13 @@ router.post('/sessions', authMiddleware, async (req: AuthRequest, res: Response)
     }
 
     const { mode, organizationId } = req.body;
-    const validMode: CopilotMode = COPILOT_MODES.EXPLORE;
+    const validMode: CopilotMode = Object.values(COPILOT_MODES).includes(mode as CopilotMode)
+      ? (mode as CopilotMode)
+      : COPILOT_MODES.EXPLORE;
+
+    if (validMode === COPILOT_MODES.ORG && !organizationId) {
+      return res.status(400).json({ error: 'organizationId is required for org mode' });
+    }
 
     const session = await copilotService.createSession(talentId, validMode, organizationId);
 

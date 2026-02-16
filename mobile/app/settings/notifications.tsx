@@ -180,58 +180,52 @@ export default function NotificationsScreen() {
             tintColor={colors.primary}
           />
         }
-        renderItem={({ item: notification, index }) => {
+        renderItem={({ item: notification }) => {
           const NotifIcon = getNotificationIcon(notification.type);
           const notifColor = getNotificationColor(notification.type, colors);
-          const isFirst = index === 0;
-          const isLast = index === notifications.length - 1;
 
           return (
-            <Pressable
-              style={[
-                styles.notificationItem,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.borderColor,
-                  borderLeftWidth: BORDER.width.thin,
-                  borderRightWidth: BORDER.width.thin,
-                  borderTopWidth: isFirst ? BORDER.width.thin : 0,
-                  borderBottomWidth: isLast ? 0 : BORDER.width.thin,
-                  borderBottomColor: colors.gray100,
-                  borderTopLeftRadius: isFirst ? BORDER.radius.md : 0,
-                  borderTopRightRadius: isFirst ? BORDER.radius.md : 0,
-                  borderBottomLeftRadius: isLast ? BORDER.radius.md : 0,
-                  borderBottomRightRadius: isLast ? BORDER.radius.md : 0,
-                },
-              ]}
-              onPress={() => handleNotificationPress(notification)}
-              accessibilityRole="button"
-              accessibilityLabel={notification.title}
-            >
-              <View style={[styles.notificationIcon, { backgroundColor: withOpacity(notifColor, OPACITY[15]) }]}>
-                <NotifIcon size={ICON.size.md} color={notifColor} strokeWidth={ICON.strokeWidth} />
-              </View>
-              <View style={styles.notificationContent}>
-                <Text style={[styles.notificationTitle, { color: colors.textPrimary }]}>
-                  {notification.title}
-                </Text>
-                <Text style={[styles.notificationMessage, { color: colors.textSecondary }]} numberOfLines={2}>
-                  {notification.body}
-                </Text>
-                <View style={styles.notificationMeta}>
-                  <Clock size={12} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                  <Text style={[styles.notificationTime, { color: colors.gray400 }]}>
-                    {formatRelativeTime(notification.created_at)}
-                  </Text>
+            <View>
+              <Pressable
+                style={[
+                  styles.notificationItem,
+                  {
+                    backgroundColor: colors.surface,
+                    borderWidth: 0,
+                    borderColor: 'transparent',
+                    borderRadius: 0,
+                  },
+                ]}
+                onPress={() => handleNotificationPress(notification)}
+                accessibilityRole="button"
+                accessibilityLabel={notification.title}
+              >
+                <View style={[styles.notificationIcon, { backgroundColor: withOpacity(notifColor, OPACITY[15]) }]}>
+                  <NotifIcon size={ICON.size.md} color={notifColor} strokeWidth={ICON.strokeWidth} />
                 </View>
-              </View>
-              <IconButton
-                onPress={() => deleteNotification(notification.id)}
-                icon={<Trash2 size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
-                accessibilityLabel="Supprimer la notification"
-                style={styles.deleteButton}
-              />
-            </Pressable>
+                <View style={styles.notificationContent}>
+                  <Text style={[styles.notificationTitle, { color: colors.textPrimary }]}>
+                    {notification.title}
+                  </Text>
+                  <Text style={[styles.notificationMessage, { color: colors.textSecondary }]} numberOfLines={2}>
+                    {notification.body}
+                  </Text>
+                  <View style={styles.notificationMeta}>
+                    <Clock size={12} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
+                    <Text style={[styles.notificationTime, { color: colors.gray400 }]}>
+                      {formatRelativeTime(notification.created_at)}
+                    </Text>
+                  </View>
+                </View>
+                <IconButton
+                  onPress={() => deleteNotification(notification.id)}
+                  icon={<Trash2 size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+                  accessibilityLabel="Supprimer la notification"
+                  style={styles.deleteButton}
+                />
+              </Pressable>
+              <View style={[styles.notificationSeparator, { backgroundColor: colors.gray200 }]} />
+            </View>
           );
         }}
         ListEmptyComponent={
@@ -267,12 +261,11 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: TYPOGRAPHY.fontSize.lg, fontWeight: TYPOGRAPHY.fontWeight.semibold },
   loadingContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scrollView: { flex: 1 },
-  scrollContent: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxl },
+  scrollContent: { paddingHorizontal: SPACING.sm, paddingBottom: SPACING.xxl },
   notificationItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     padding: SPACING.md,
-    borderBottomWidth: BORDER.width.thin,
   },
   notificationIcon: {
     width: 44,
@@ -287,6 +280,10 @@ const styles = StyleSheet.create({
   notificationMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: SPACING.xs },
   notificationTime: { fontSize: TYPOGRAPHY.fontSize.xs },
   deleteButton: { padding: SPACING.xs, marginLeft: SPACING.sm },
+  notificationSeparator: {
+    height: 1,
+    width: '100%',
+  },
   emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: SPACING.xxxl, paddingHorizontal: SPACING.xl },
   emptyIcon: { width: 80, height: 80, borderRadius: BORDER.radius.lg, alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.lg },
   emptyTitle: { fontSize: TYPOGRAPHY.fontSize.lg, fontWeight: TYPOGRAPHY.fontWeight.semibold, marginBottom: SPACING.sm },

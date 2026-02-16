@@ -40,8 +40,9 @@ router.get('/batch', authMiddleware, async (req: AuthRequest, res: Response) => 
     if (grouped.opportunity?.length) {
       queries.push(
         pool.query(
-          `SELECT o.id, o.title, o.type, o.city,
+          `SELECT o.id, o.title, o.type,
             o.cover_image_url,
+            o.locations->0->>'city' as city,
             (SELECT org.name FROM opportunity_posters op
              JOIN organizations org ON op.poster_organization_id = org.id
              WHERE op.opportunity_id = o.id LIMIT 1) as organization_name

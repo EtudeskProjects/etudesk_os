@@ -61,6 +61,7 @@ import {
   PRICING_TYPE_LABELS,
   PRICING_TYPE_UNITS,
 } from '../../../../src/constants/space';
+import { formatNumberNoTrailingZeros } from '../../../../src/utils/number';
 
 // ===================================================================
 // TYPES
@@ -981,10 +982,10 @@ export default function BookSpaceScreen() {
 	                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
 	              />
 	              <View style={styles.counterValue}>
-	                <Text style={[styles.counterValueText, { color: colors.textPrimary }]}>
-	                  {durationHours}h
-	                </Text>
-	              </View>
+                <Text style={[styles.counterValueText, { color: colors.textPrimary }]}>
+                  {formatNumberNoTrailingZeros(durationHours)}h
+                </Text>
+              </View>
 	              <IconButton
 	                onPress={() => handleDurationChange(1)}
 	                disabled={durationHours >= (space?.max_booking_hours || 24)}
@@ -1001,7 +1002,7 @@ export default function BookSpaceScreen() {
 	              />
 	            </View>
             <Text style={[styles.hintText, { color: colors.gray500 }]}>
-              Min: {space?.min_booking_hours || 1}h - Max: {space?.max_booking_hours || 24}h
+              Min: {formatNumberNoTrailingZeros(space?.min_booking_hours || 1)}h - Max: {formatNumberNoTrailingZeros(space?.max_booking_hours || 24)}h
             </Text>
           </View>
         )}
@@ -1049,7 +1050,7 @@ export default function BookSpaceScreen() {
 	              />
 	            </View>
             <Text style={[styles.hintText, { color: colors.gray500 }]}>
-              Capacite maximale: {space?.capacity || 0} personnes
+              Capacite maximale: {formatNumberNoTrailingZeros(space?.capacity || 0, 0)} personnes
             </Text>
           </View>
         )}
@@ -1066,7 +1067,7 @@ export default function BookSpaceScreen() {
               <>
                 <View style={styles.priceRow}>
                   <Text style={[styles.priceItemLabel, { color: colors.textSecondary }]}>
-                    {durationHours}h x {formatPrice(space?.hourly_rate || 0)}
+                    {formatNumberNoTrailingZeros(durationHours)}h x {formatPrice(space?.hourly_rate || 0)}
                   </Text>
                   <Text style={[styles.priceItemValue, { color: colors.textPrimary }]}>
                     {formatPrice(estimatedPrice.subtotal)}
@@ -1375,7 +1376,7 @@ export default function BookSpaceScreen() {
                 <>
                   <View style={styles.priceRow}>
                     <Text style={[styles.priceItemLabel, { color: colors.textSecondary }]}>
-                      {durationHours}h x {formatPrice(space?.hourly_rate || 0)}
+                      {formatNumberNoTrailingZeros(durationHours)}h x {formatPrice(space?.hourly_rate || 0)}
                     </Text>
                     <Text style={[styles.priceItemValue, { color: colors.textPrimary }]}>
                       {formatPrice(estimatedPrice.subtotal)}

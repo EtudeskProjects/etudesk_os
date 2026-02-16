@@ -29,6 +29,7 @@ import { ChatMessage, ChatInput } from '../../../src/components/chat';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { communityService, communityMembershipMessageService } from '../../../src/services';
 import { formatRelativeTime } from '../../../src/utils/date';
+import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import type { Community } from '../../../src/types/models';
 import type { MemberStatus } from '../../../src/services/communityService';
 import type { MembershipMessage } from '../../../src/services/communityMembershipMessageService';
@@ -298,7 +299,7 @@ export default function MyCommunityDetailsScreen() {
               <View style={styles.detailRow}>
                 <Users size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
                 <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                  {community.members_count} membres
+                  {formatNumberNoTrailingZeros(community.members_count, 0)} membres
                 </Text>
               </View>
             )}

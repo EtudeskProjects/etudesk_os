@@ -1,10 +1,10 @@
 {
-  "registerError": "Échec de l'enregistrement du token push",
-  "deactivateError": "Échec de la désactivation du token push",
-  "fetchError": "Échec de la récupération des notifications",
-  "markReadError": "Échec du marquage de la notification comme lue",
-  "markAllReadError": "Échec du marquage de toutes les notifications",
-  "deleteError": "Échec de la suppression de la notification",
-  "fetchPreferencesError": "Échec de la récupération des préférences",
-  "updatePreferencesError": "Échec de la mise à jour des préférences"
+  "registerError": "Impossible d'enregistrer le token push",
+  "deactivateError": "Impossible de désactiver le token push",
+  "fetchError": "Impossible de récupérer les notifications",
+  "markReadError": "Impossible de marquer la notification comme lue",
+  "markAllReadError": "Impossible de marquer toutes les notifications",
+  "deleteError": "Impossible de supprimer la notification",
+  "fetchPreferencesError": "Impossible de récupérer les préférences",
+  "updatePreferencesError": "Impossible de mettre à jour les préférences"
 }

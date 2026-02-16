@@ -1,6 +1,6 @@
 {
   "authRequired": "Authentification requise",
-  "notOrgMember": "Vous n'êtes pas membre de cette organisation",
+  "notOrgMember": "Tu n'es pas membre de cette organisation",
   "favoritesAddError": "Erreur lors de l'ajout aux favoris",
   "favoritesRemoved": "Talent retiré des favoris",
   "favoritesRemoveError": "Erreur lors du retrait des favoris",

@@ -1,6 +1,6 @@
 {
   "authRequired": "Authentification requise",
-  "notOrgMember": "Vous n'êtes pas membre de cette organisation",
+  "notOrgMember": "Tu n'es pas membre de cette organisation",
   "fetchError": "Erreur lors de la récupération des documents",
   "statsError": "Erreur lors de la récupération des statistiques",
   "notFound": "Document non trouvé",

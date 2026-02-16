@@ -67,6 +67,7 @@ import { useSpace } from '../../../src/contexts/SpaceContext';
 import { Button, IconButton, ImageSlider, FooterNav, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { spaceService, Space, bookmarkService } from '../../../src/services';
 import { getFullImageUrl } from '../../../src/utils/image';
+import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import {
   SPACE_TYPE_LABELS,
   SPACE_AMENITY_LABELS,
@@ -474,7 +475,7 @@ export default function SpaceDetailScreen() {
                 <View>
                   <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('space.capacity')}</Text>
                   <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
-                    {space.capacity} {t('common.places')}
+                    {formatNumberNoTrailingZeros(space.capacity, 0)} {t('common.places')}
                   </Text>
                 </View>
               </View>
@@ -708,25 +709,25 @@ export default function SpaceDetailScreen() {
                 {space.min_booking_hours !== undefined && (
                   <View style={styles.ruleRow}>
                     <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>Duree minimum</Text>
-                    <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>{space.min_booking_hours}h</Text>
+                    <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>{formatNumberNoTrailingZeros(space.min_booking_hours)}h</Text>
                   </View>
                 )}
                 {space.max_booking_hours !== undefined && (
                   <View style={styles.ruleRow}>
                     <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>Duree maximum</Text>
-                    <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>{space.max_booking_hours}h</Text>
+                    <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>{formatNumberNoTrailingZeros(space.max_booking_hours)}h</Text>
                   </View>
                 )}
                 {space.advance_booking_days !== undefined && (
                   <View style={styles.ruleRow}>
                     <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>Reservation a l'avance</Text>
-                    <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>Jusqu'a {space.advance_booking_days} jours</Text>
+                    <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>Jusqu'a {formatNumberNoTrailingZeros(space.advance_booking_days, 0)} jours</Text>
                   </View>
                 )}
                 {space.cancellation_hours !== undefined && (
                   <View style={styles.ruleRow}>
                     <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>Annulation gratuite</Text>
-                    <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>{space.cancellation_hours}h avant</Text>
+                    <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>{formatNumberNoTrailingZeros(space.cancellation_hours)}h avant</Text>
                   </View>
                 )}
               </View>

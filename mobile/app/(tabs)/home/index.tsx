@@ -317,7 +317,12 @@ export default function EcosystemScreen() {
       const bookingsRes = bookingsResult.status === 'fulfilled' ? bookingsResult.value : null;
       const applicationsRes = applicationsResult.status === 'fulfilled' ? applicationsResult.value : null;
 
-      const communitiesCount = communitiesRes?.data?.pagination?.total ?? communitiesRes?.count ?? communitiesRes?.data?.memberships?.length ?? 0;
+      const communitiesCount =
+        communitiesRes?.data?.pagination?.total ??
+        communitiesRes?.pagination?.total ??
+        communitiesRes?.count ??
+        communitiesRes?.data?.memberships?.length ??
+        0;
       const reservationsCount = bookingsRes?.pagination?.total ?? bookingsRes?.count ?? bookingsRes?.data?.length ?? 0;
       const applicationsCount = applicationsRes?.pagination?.total ?? applicationsRes?.count ?? applicationsRes?.data?.length ?? 0;
       const skillsCount = skillsResult.status === 'fulfilled' ? skillsResult.value.length : 0;

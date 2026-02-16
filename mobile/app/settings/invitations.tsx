@@ -45,6 +45,7 @@ import {
 } from '../../src/services/spaceInvitationService';
 import { ORGANIZATION_ROLE_LABELS } from '../../src/types/models';
 import { getFullImageUrl } from '../../src/utils/image';
+import { formatNumberNoTrailingZeros } from '../../src/utils/number';
 import { useAlert } from '../../src/contexts/AlertContext';
 
 type TabType = 'organizations' | 'offers';
@@ -477,7 +478,7 @@ export default function InvitationsScreen() {
                 <View style={styles.detailRow}>
                   <Users size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
                   <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                    {inv.members_count} membres
+                    {formatNumberNoTrailingZeros(inv.members_count, 0)} membres
                   </Text>
                 </View>
               )}
@@ -701,7 +702,7 @@ export default function InvitationsScreen() {
                 <View style={styles.detailRow}>
                   <CreditCard size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
                   <Text style={[styles.detailText, { color: colors.success }]}>
-                    {inv.hourly_rate} FCFA/h
+                    {formatNumberNoTrailingZeros(inv.hourly_rate, 0)} FCFA/h
                   </Text>
                 </View>
               )}
