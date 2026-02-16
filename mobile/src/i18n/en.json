@@ -192,7 +192,10 @@
       "popularityDesc": "Most viewed"
     },
     "noResultsSearch": "No results for \"{{query}}\"",
-    "resultsCount": "{{count}} result(s)",
+    "resultsCount": {
+      "one": "{{count}} result",
+      "other": "{{count}} results"
+    },
     "remote": "Remote",
     "members": "members",
     "create": "Create",
@@ -603,7 +606,10 @@
     },
     "comments": {
       "title": "Comments",
-      "viewMore": "View {{count}} more comment(s)",
+      "viewMore": {
+        "one": "View {{count}} more comment",
+        "other": "View {{count}} more comments"
+      },
       "noComments": "Be the first to comment!",
       "replyTo": "Reply to {{name}}",
       "replyPlaceholder": "Your reply...",
@@ -640,16 +646,28 @@
       "pin": "Pin",
       "scheduled": "Scheduled",
       "pollLoading": "Loading...",
-      "votes": "{{count}} vote(s)",
+      "votes": {
+        "one": "{{count}} vote",
+        "other": "{{count}} votes"
+      },
       "dateLabel": "Date",
       "online": "Online",
       "location": "Location",
       "meetingLinkAvailable": "Meeting link available",
       "detailsComingSoon": "Details coming soon",
       "locationTbc": "Location TBC",
-      "likes": "{{count}} like(s)",
-      "comments": "{{count}} comment(s)",
-      "bookmarks": "{{count}} save(s)"
+      "likes": {
+        "one": "{{formattedCount}} like",
+        "other": "{{formattedCount}} likes"
+      },
+      "comments": {
+        "one": "{{formattedCount}} comment",
+        "other": "{{formattedCount}} comments"
+      },
+      "bookmarks": {
+        "one": "{{formattedCount}} save",
+        "other": "{{formattedCount}} saves"
+      }
     },
     "manage": "Manage community",
     "joinCommunity": "Join community",

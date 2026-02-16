@@ -193,7 +193,10 @@
       "popularityDesc": "Les plus consultés"
     },
     "noResultsSearch": "Aucun résultat pour « {{query}} »",
-    "resultsCount": "{{count}} résultat(s)",
+    "resultsCount": {
+      "one": "{{count}} résultat",
+      "other": "{{count}} résultats"
+    },
     "remote": "À distance",
     "members": "membres",
     "create": "Créer",
@@ -604,7 +607,10 @@
     },
     "comments": {
       "title": "Commentaires",
-      "viewMore": "Voir {{count}} commentaire(s) de plus",
+      "viewMore": {
+        "one": "Voir {{count}} commentaire de plus",
+        "other": "Voir {{count}} commentaires de plus"
+      },
       "noComments": "Sois le premier à commenter !",
       "replyTo": "Répondre à {{name}}",
       "replyPlaceholder": "Ta réponse...",
@@ -641,16 +647,25 @@
       "pin": "Épingler",
       "scheduled": "Programmé",
       "pollLoading": "Chargement...",
-      "votes": "{{count}} vote(s)",
+      "votes": {
+        "one": "{{count}} vote",
+        "other": "{{count}} votes"
+      },
       "dateLabel": "Date",
       "online": "En ligne",
       "location": "Lieu",
       "meetingLinkAvailable": "Lien de réunion disponible",
       "detailsComingSoon": "Détails à venir",
       "locationTbc": "Lieu à confirmer",
-      "likes": "{{count}} j'aime",
-      "comments": "{{count}} commentaire(s)",
-      "bookmarks": "{{count}} sauvegarde(s)"
+      "likes": "{{formattedCount}} j'aime",
+      "comments": {
+        "one": "{{formattedCount}} commentaire",
+        "other": "{{formattedCount}} commentaires"
+      },
+      "bookmarks": {
+        "one": "{{formattedCount}} sauvegarde",
+        "other": "{{formattedCount}} sauvegardes"
+      }
     },
     "manage": "Gérer la communauté",
     "joinCommunity": "Rejoindre la communauté",

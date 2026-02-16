@@ -134,8 +134,8 @@ function parseBlocks(content: string): Block[] {
       const data = tryParseJSON(body);
       if (data) blocks.push({ type: 'image', content: body, data });
     }
-    // Chart block
-    else if (tag === 'chart') {
+    // Chart block — accept both ```chart and direct type tags (bar, donut, stacked_bar, table, line, radar, metric)
+    else if (tag === 'chart' || ['bar', 'donut', 'stacked_bar', 'table', 'line', 'radar', 'metric'].includes(tag)) {
       const data = tryParseJSON(body);
       if (data) blocks.push({ type: 'chart', content: body, data });
     }
@@ -264,16 +264,117 @@ function renderInlineMarkdown(text: string, colors: any): React.ReactNode[] {
   return parts;
 }
 
-// Render a text block (with headings, lists, quotes, paragraphs)
+/** Parse a markdown table row into cells */
+function parseTableRow(line: string): string[] {
+  return line
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map(cell => cell.trim());
+}
+
+/** Check if a line is a table separator (e.g. |---|---|---| ) */
+function isTableSeparator(line: string): boolean {
+  return /^\|?[\s-:]+(\|[\s-:]+)+\|?$/.test(line.trim());
+}
+
+/** Render a markdown table */
+function MarkdownTable({ rows, colors }: { rows: string[][]; colors: any }) {
+  if (rows.length === 0) return null;
+  const header = rows[0];
+  const body = rows.slice(1);
+
+  return (
+    <View style={{ marginVertical: SPACING.xs }}>
+      {/* Header row */}
+      <View style={{ flexDirection: 'row', borderBottomWidth: 1.5, borderBottomColor: colors.borderColorStrong }}>
+        {header.map((cell, ci) => (
+          <View key={ci} style={{ flex: 1, paddingVertical: SPACING.xs, paddingHorizontal: SPACING.xs }}>
+            <Text
+              style={{
+                fontFamily: TYPOGRAPHY.fontFamily.semibold,
+                fontSize: TYPOGRAPHY.fontSize.xs,
+                color: colors.textSecondary,
+                textTransform: 'uppercase',
+                letterSpacing: 0.3,
+              }}
+              numberOfLines={2}
+            >
+              {cell}
+            </Text>
+          </View>
+        ))}
+      </View>
+      {/* Body rows */}
+      {body.map((row, ri) => (
+        <View
+          key={ri}
+          style={{
+            flexDirection: 'row',
+            borderBottomWidth: ri < body.length - 1 ? StyleSheet.hairlineWidth : 0,
+            borderBottomColor: colors.borderColor,
+          }}
+        >
+          {row.map((cell, ci) => (
+            <View key={ci} style={{ flex: 1, paddingVertical: SPACING.xs, paddingHorizontal: SPACING.xs }}>
+              <Text
+                style={{
+                  fontFamily: ci === 0 ? TYPOGRAPHY.fontFamily.medium : TYPOGRAPHY.fontFamily.regular,
+                  fontSize: TYPOGRAPHY.fontSize.sm,
+                  color: colors.textPrimary,
+                  lineHeight: TYPOGRAPHY.fontSize.sm * 1.4,
+                }}
+              >
+                {renderInlineMarkdown(cell, colors)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+// Render a text block (with headings, lists, quotes, tables, paragraphs)
 function TextBlock({ content, colors }: { content: string; colors: any }) {
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
   let key = 0;
+  let i = 0;
 
-  for (const line of lines) {
-    const trimmed = line.trim();
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
+
+    // Empty line
     if (!trimmed) {
       elements.push(<View key={key++} style={{ height: SPACING.xs }} />);
+      i++;
+      continue;
+    }
+
+    // Horizontal rule (--- or ***)
+    if (/^[-*_]{3,}$/.test(trimmed)) {
+      elements.push(
+        <View key={key++} style={{ height: StyleSheet.hairlineWidth, backgroundColor: colors.borderColor, marginVertical: SPACING.sm }} />
+      );
+      i++;
+      continue;
+    }
+
+    // Table detection: collect consecutive lines starting with |
+    if (trimmed.startsWith('|')) {
+      const tableLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith('|')) {
+        tableLines.push(lines[i].trim());
+        i++;
+      }
+      // Parse table: skip separator rows
+      const dataRows = tableLines
+        .filter(l => !isTableSeparator(l))
+        .map(parseTableRow);
+      if (dataRows.length > 0) {
+        elements.push(<MarkdownTable key={key++} rows={dataRows} colors={colors} />);
+      }
       continue;
     }
 
@@ -302,6 +403,7 @@ function TextBlock({ content, colors }: { content: string; colors: any }) {
           {headingMatch[2]}
         </Text>
       );
+      i++;
       continue;
     }
 
@@ -330,6 +432,7 @@ function TextBlock({ content, colors }: { content: string; colors: any }) {
           </Text>
         </View>
       );
+      i++;
       continue;
     }
 
@@ -352,6 +455,7 @@ function TextBlock({ content, colors }: { content: string; colors: any }) {
           </Text>
         </View>
       );
+      i++;
       continue;
     }
 
@@ -376,6 +480,7 @@ function TextBlock({ content, colors }: { content: string; colors: any }) {
           </Text>
         </View>
       );
+      i++;
       continue;
     }
 
@@ -394,6 +499,7 @@ function TextBlock({ content, colors }: { content: string; colors: any }) {
         {renderInlineMarkdown(trimmed, colors)}
       </Text>
     );
+    i++;
   }
 
   return <View>{elements}</View>;

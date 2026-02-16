@@ -158,7 +158,7 @@ export function createSqlQueryTool(
                     t.city, t.country, t.email, t.phone, t.slug,
                     t.remote_ready, t.willing_to_relocate, t.sectors,
                     t.goals, t.profile_tags,
-                    (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level))
+                    (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level, 'type', ts.type, 'origin', ts.origin, 'context', ts.context, 'updated_at', ts.updated_at))
                      FROM talent_skills ts WHERE ts.talent_id = t.id) as skills
              FROM talents t
              WHERE t.id = $1`,
@@ -283,8 +283,8 @@ export function createSqlQueryTool(
             if (!orgId) return { error: 'organizationId requis' };
             const res = await pool.query(
               `SELECT om.role, om.created_at, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio, t.avatar_url,
-                    (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level))
-                     FROM (SELECT canonical_name, proficiency_level FROM talent_skills WHERE talent_id = t.id ORDER BY canonical_name LIMIT 5) ts) as top_skills
+                    (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level, 'type', ts.type, 'origin', ts.origin, 'context', ts.context, 'updated_at', ts.updated_at))
+                     FROM (SELECT canonical_name, proficiency_level, type, origin, context, updated_at FROM talent_skills WHERE talent_id = t.id ORDER BY canonical_name LIMIT 5) ts) as top_skills
              FROM organization_members om
              JOIN talents t ON om.talent_id = t.id
              WHERE om.organization_id = $1 AND om.status = 'ACTIVE'
@@ -303,8 +303,8 @@ export function createSqlQueryTool(
                     t.id as talent_id,
                     o.title as opportunity_title, o.id as opportunity_id,
                     o.summary as opportunity_summary, o.type as opportunity_type,
-                    (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level))
-                     FROM (SELECT canonical_name, proficiency_level FROM talent_skills WHERE talent_id = t.id ORDER BY canonical_name LIMIT 5) ts) as top_skills
+                    (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level, 'type', ts.type, 'origin', ts.origin, 'context', ts.context, 'updated_at', ts.updated_at))
+                     FROM (SELECT canonical_name, proficiency_level, type, origin, context, updated_at FROM talent_skills WHERE talent_id = t.id ORDER BY canonical_name LIMIT 5) ts) as top_skills
              FROM opportunity_applications a
              JOIN opportunities o ON a.opportunity_id = o.id
              JOIN opportunity_posters op ON o.id = op.opportunity_id
@@ -452,8 +452,8 @@ export function createSqlQueryTool(
             SELECT a.talent_id as id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
                    t.bio, t.city, t.country, a.sources, a.first_interaction, a.last_interaction,
                    (otf.talent_id IS NOT NULL) as is_favorite,
-                   (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level))
-                    FROM (SELECT canonical_name, proficiency_level FROM talent_skills WHERE talent_id = a.talent_id ORDER BY canonical_name LIMIT 5) ts) as top_skills
+                   (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level, 'type', ts.type, 'origin', ts.origin, 'context', ts.context, 'updated_at', ts.updated_at))
+                    FROM (SELECT canonical_name, proficiency_level, type, origin, context, updated_at FROM talent_skills WHERE talent_id = a.talent_id ORDER BY canonical_name LIMIT 5) ts) as top_skills
             FROM aggregated a
             JOIN talents t ON a.talent_id = t.id
             LEFT JOIN organization_talent_favorites otf ON otf.talent_id = a.talent_id AND otf.organization_id = $1`;

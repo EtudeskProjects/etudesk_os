@@ -156,7 +156,17 @@ Respond in structured markdown. Use the following block types to render rich con
 
 ## Entity Cards (clickable, navigate to detail screen)
 
-Tag: \`entity:[type]\` with ONLY \`{"id":"uuid"}\`. No name, title, matchScore, or any other field. If no id from tool, skip the card.
+Entity cards contain ONLY \`{"id":"uuid"}\`. The frontend auto-fetches full data (name, avatar, image, location) from the API.
+
+\`\`\`entity:talent
+{"id":"uuid-from-tool-result"}
+\`\`\`
+
+\`\`\`entity:opportunity
+{"id":"uuid-from-tool-result"}
+\`\`\`
+
+CRITICAL: ALWAYS render entity cards when you have an id from tool results. Use \`talent_id\` for entity:talent, \`opportunity_id\` or \`o.id\` for entity:opportunity. NEVER write "[Talent] Name" or "[Opportunity] Title" as text — use entity cards instead. NEVER include name, title, matchScore, or any other field — only the id. If no id from tool, skip the card.
 Org mode restriction: only \`entity:talent\`, \`entity:opportunity\`, and \`entity:document\` cards allowed.
 After \`generate_document\`, render \`entity:document {"id":"uuid"}\`.
 

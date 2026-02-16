@@ -1,7 +1,6 @@
 /**
  * SuggestionsTooltip Component
- * Displays AI-generated intent suggestions in a floating tooltip
- * with refresh functionality (3 max per hour)
+ * Displays intent suggestions in a clean floating tooltip
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -14,12 +13,12 @@ import {
     Animated,
     Pressable,
 } from 'react-native';
-import { RefreshCw, X, Lightbulb } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../contexts/AuthContext';
-import { copilotService, CopilotMode } from '../../services/copilotService';
-import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../constants/theme';
-import { IconButton, LoadingShimmer, SelectCard } from '../ui';
+import { CopilotMode } from '../../services/copilotService';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, withOpacity } from '../../constants/theme';
+import { IconButton } from '../ui';
 
 
 interface SuggestionsTooltipProps {
@@ -44,7 +43,6 @@ export function SuggestionsTooltip({
     const isOrg = !!user?.organizationMemberships && user.organizationMemberships.length > 0;
 
     const [suggestions, setSuggestions] = useState<string[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
     const [fadeAnim] = useState(new Animated.Value(0));
 
     // Get default suggestions based on mode and user type
@@ -74,33 +72,10 @@ export function SuggestionsTooltip({
         }
     }, [visible, getDefaultSuggestions]);
 
-    const loadAISuggestions = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const result = await copilotService.getSuggestions(
-                mode,
-                sessionId || undefined
-            );
-            setSuggestions(result.suggestions);
-        } catch (error) {
-            console.error('Failed to load suggestions:', error);
-            setSuggestions(getDefaultSuggestions());
-        } finally {
-            setIsLoading(false);
-        }
-    }, [mode, sessionId, getDefaultSuggestions]);
-
-    const handleRefresh = useCallback(async () => {
-        if (isLoading) return;
-        await loadAISuggestions();
-    }, [isLoading, loadAISuggestions]);
-
     const handleSelectSuggestion = useCallback((suggestion: string) => {
         onSelectSuggestion(suggestion);
         onClose();
     }, [onSelectSuggestion, onClose]);
-
-
 
     if (!visible) return null;
 
@@ -112,17 +87,17 @@ export function SuggestionsTooltip({
             transparent
             animationType="none"
             onRequestClose={onClose}
-	        >
-	            <Pressable
-	                style={[styles.overlay, { backgroundColor: colors.overlayLight }]}
-	                onPress={onClose}
-	            >
+        >
+            <Pressable
+                style={[styles.overlay, { backgroundColor: colors.overlayLight }]}
+                onPress={onClose}
+            >
                 <Animated.View
                     style={[
                         styles.tooltip,
                         {
-                            backgroundColor: withOpacity(colors.surface, 0.95), // Slight transparency for glass effect
-                            borderColor: withOpacity(colors.primary, 0.2), // Subtle primary border
+                            backgroundColor: colors.surface,
+                            borderColor: colors.borderColor,
                             opacity: fadeAnim,
                             transform: [
                                 {
@@ -139,79 +114,42 @@ export function SuggestionsTooltip({
                         },
                     ]}
                 >
-                    {/* Header */}
+                    {/* Header — minimal */}
                     <View style={styles.header}>
-                        <View style={styles.headerTitle}>
-                            <Lightbulb size={ICON.size.sm} color={colors.primary} />
-                            <Text style={[styles.title, { color: colors.textPrimary }]}>
-                                Suggestions
-                            </Text>
-                        </View>
-                        <View style={styles.headerActions}>
-                            {/* Refresh button */}
-                            <IconButton
-                                onPress={handleRefresh}
-                                disabled={isLoading}
-                                icon={
-                                    <RefreshCw
-                                        size={14}
-                                        color={colors.primary}
-                                        strokeWidth={ICON.strokeWidth}
-                                        style={isLoading ? { opacity: 0.5 } : undefined}
-                                    />
-                                }
-                                accessibilityLabel="Rafraîchir"
-                                size="sm"
-                                variant="outline"
-                                style={[styles.refreshButton, { borderColor: colors.borderColor }]}
-                            />
-                            {/* Close button */}
-                            <IconButton
-                                onPress={onClose}
-                                icon={<X size={18} color={colors.textSecondary} />}
-                                accessibilityLabel="Fermer"
-                                style={styles.closeButton}
-                            />
-                        </View>
+                        <Text style={[styles.title, { color: colors.textSecondary }]}>
+                            Suggestions
+                        </Text>
+                        <IconButton
+                            onPress={onClose}
+                            icon={<X size={16} color={colors.textSecondary} />}
+                            accessibilityLabel="Fermer"
+                            size="sm"
+                            variant="ghost"
+                            style={styles.closeButton}
+                        />
                     </View>
-
-
 
                     {/* Suggestions list */}
                     <View style={styles.suggestionsContainer}>
-                        {isLoading ? (
-                            <View style={styles.loadingContainer}>
-                                <LoadingShimmer variant="inline" />
-                            </View>
-                        ) : (
-                            suggestions.map((suggestion, index) => (
-                                <SelectCard
-                                    key={index}
-                                    style={[
-                                        styles.suggestionItem,
-                                        {
-                                            backgroundColor: withOpacity(colors.primary, 0.03),
-                                            borderColor: withOpacity(colors.primary, 0.08),
-                                            borderWidth: 1,
-                                        },
-                                        index < suggestions.length - 1 && { marginBottom: SPACING.xs },
-                                    ]}
-                                    onPress={() => handleSelectSuggestion(suggestion)}
-                                    selected={false}
-                                    accessibilityLabel={suggestion}
+                        {suggestions.map((suggestion, index) => (
+                            <Pressable
+                                key={index}
+                                style={({ pressed }) => [
+                                    styles.suggestionItem,
+                                    { backgroundColor: withOpacity(colors.primary, 0.04) },
+                                    pressed && { backgroundColor: withOpacity(colors.primary, 0.10) },
+                                ]}
+                                onPress={() => handleSelectSuggestion(suggestion)}
+                                accessibilityLabel={suggestion}
+                            >
+                                <Text
+                                    style={[styles.suggestionText, { color: colors.textPrimary }]}
+                                    numberOfLines={1}
                                 >
-                                    <View style={[styles.suggestionIcon, { backgroundColor: withOpacity(colors.primary, 0.12) }]}>
-                                        <Lightbulb size={12} color={colors.primary} />
-                                    </View>
-                                    <Text
-                                        style={[styles.suggestionText, { color: colors.textPrimary }]}
-                                        numberOfLines={1}
-                                    >
-                                        {suggestion}
-                                    </Text>
-                                </SelectCard>
-                            ))
-                        )}
+                                    {suggestion}
+                                </Text>
+                            </Pressable>
+                        ))}
                     </View>
                 </Animated.View>
             </Pressable>
@@ -219,75 +157,47 @@ export function SuggestionsTooltip({
     );
 }
 
-	const styles = StyleSheet.create({
-	    overlay: {
-	        flex: 1,
-	        justifyContent: 'flex-end',
-	    },
-	    tooltip: {
+const styles = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+    },
+    tooltip: {
         position: 'absolute',
-        borderRadius: BORDER.radius.xl,
-        borderWidth: 1.5,
+        borderRadius: BORDER.radius.lg,
+        borderWidth: 1,
         padding: SPACING.md,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: SPACING.md,
+        marginBottom: SPACING.sm,
         paddingHorizontal: SPACING.xs,
     },
-    headerTitle: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: SPACING.xs,
-    },
     title: {
-        fontSize: TYPOGRAPHY.fontSize.sm,
-        fontFamily: TYPOGRAPHY.fontFamily.bold,
+        fontSize: TYPOGRAPHY.fontSize.xs,
+        fontFamily: TYPOGRAPHY.fontFamily.medium,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
-    headerActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: SPACING.xs,
-    },
-    refreshButton: {
-        padding: 6,
-        borderRadius: 20,
-        borderWidth: 1,
-        backgroundColor: 'transparent',
-    },
     closeButton: {
-        padding: 6,
-        borderRadius: 20,
+        padding: 4,
+        borderRadius: 16,
     },
     suggestionsContainer: {
-        gap: SPACING.xs,
-    },
-    loadingContainer: {
-        paddingVertical: SPACING.lg,
-        alignItems: 'center',
+        gap: 6,
     },
     suggestionItem: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: SPACING.sm,
-        paddingHorizontal: SPACING.sm,
-        borderRadius: BORDER.radius.md,
-        gap: SPACING.sm,
-    },
-    suggestionIcon: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
+        paddingHorizontal: SPACING.md,
+        borderRadius: BORDER.radius.sm,
     },
     suggestionText: {
         fontSize: TYPOGRAPHY.fontSize.sm,
-        fontFamily: TYPOGRAPHY.fontFamily.medium,
+        fontFamily: TYPOGRAPHY.fontFamily.regular,
         flex: 1,
     },
 });
