@@ -10,6 +10,11 @@ import { pool } from './database';
 import { formatPhoneToE164 } from './whatsapp.service';
 
 import { logger } from '../utils';
+
+// Apple App Store Review test account — fixed OTP bypass
+const APP_REVIEW_EMAIL = 'etd-app-review@etudesk.com';
+const APP_REVIEW_OTP = '999999';
+
 // OTP Configuration
 const OTP_CONFIG = {
   length: 6,
@@ -423,6 +428,39 @@ export async function verifyOTPByChannel(
         success: false,
         error: 'Identifiant invalide',
       };
+    }
+
+    // Apple App Store Review bypass — fixed OTP for test account
+    if (normalizedIdentifier === APP_REVIEW_EMAIL && code === APP_REVIEW_OTP) {
+      const existingUser = await client.query(
+        `SELECT id, email FROM users WHERE email = $1 AND deleted_at IS NULL`,
+        [APP_REVIEW_EMAIL]
+      );
+
+      let userId: string;
+      let isNewUser = false;
+
+      if (existingUser.rows.length > 0) {
+        userId = existingUser.rows[0].id;
+      } else {
+        const newUserResult = await client.query(
+          `INSERT INTO users (email, email_verified, email_verified_at)
+           VALUES ($1, TRUE, NOW())
+           RETURNING id`,
+          [APP_REVIEW_EMAIL]
+        );
+        userId = newUserResult.rows[0].id;
+        isNewUser = true;
+      }
+
+      await client.query(
+        `UPDATE users SET email_verified = TRUE, last_login_at = NOW(), login_count = login_count + 1 WHERE id = $1`,
+        [userId]
+      );
+
+      await client.query('COMMIT');
+      logger.info(`✅ App Review OTP bypass for ${APP_REVIEW_EMAIL}`);
+      return { success: true, userId, email: APP_REVIEW_EMAIL, isNewUser };
     }
 
     // Find valid OTP for this email
