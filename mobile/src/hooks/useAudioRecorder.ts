@@ -65,8 +65,12 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             if (autoStopTimeoutRef.current) {
                 clearTimeout(autoStopTimeoutRef.current);
             }
-            if (recorder.isRecording) {
-                recorder.stop().catch(() => { });
+            try {
+                if (recorder.isRecording) {
+                    recorder.stop().catch(() => { });
+                }
+            } catch {
+                // expo-audio native module not available (e.g. Expo Go)
             }
         };
     }, []);
@@ -99,7 +103,12 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             autoStopTimeoutRef.current = null;
         }
 
-        if (!recorder.isRecording) {
+        try {
+            if (!recorder.isRecording) {
+                setState(prev => ({ ...prev, isRecording: false, isProcessing: false }));
+                return null;
+            }
+        } catch {
             setState(prev => ({ ...prev, isRecording: false, isProcessing: false }));
             return null;
         }
@@ -213,12 +222,12 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             autoStopTimeoutRef.current = null;
         }
 
-        if (recorder.isRecording) {
-            try {
+        try {
+            if (recorder.isRecording) {
                 await recorder.stop();
-            } catch {
-                // Ignore errors when cancelling
             }
+        } catch {
+            // Ignore errors when cancelling / native module unavailable
         }
 
         // Reset audio mode
