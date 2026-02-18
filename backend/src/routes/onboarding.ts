@@ -76,6 +76,10 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
 
       const user = userResult.rows[0];
 
+      // Don't propagate placeholder emails (wa_XXX@etudesk.local) to talent profile
+      const isPlaceholderEmail = user.email?.endsWith('@etudesk.local');
+      const talentEmail = isPlaceholderEmail ? null : user.email;
+
       if (user.talent_id) {
         return res.status(400).json({
           success: false,
@@ -140,7 +144,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
             data.firstName?.trim() || null,
             data.lastName?.trim() || null,
             data.bio?.trim() || null,
-            user.email,
+            talentEmail,
             data.phone.trim(),
             data.city?.trim() || null,
             data.region?.trim() || null,
@@ -172,7 +176,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
               data.firstName?.trim() || null,
               data.lastName?.trim() || null,
               data.bio?.trim() || null,
-              user.email,
+              talentEmail,
               data.phone.trim(),
               data.city?.trim() || null,
               data.region?.trim() || null,
@@ -207,11 +211,13 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
 
       await client.query('COMMIT');
 
-      // Send welcome email (async, don't wait)
-      const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ') || user.email;
-      sendWelcomeEmail(user.email, fullName).catch(err => {
-        logger.error('❌ Failed to send welcome email:', err);
-      });
+      // Send welcome email (async, don't wait) — skip for WhatsApp-only users
+      const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ') || 'Talent';
+      if (talentEmail) {
+        sendWelcomeEmail(talentEmail, fullName).catch(err => {
+          logger.error('❌ Failed to send welcome email:', err);
+        });
+      }
 
       // Generate embedding for semantic search (async, don't wait)
       onTalentProfileUpdate(talentId).catch(err => {
@@ -227,7 +233,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
             id: talentId,
             slug: finalSlug,
             displayName: fullName,
-            email: user.email,
+            email: talentEmail || null,
           },
           tokens: {
             accessToken: tokens.accessToken,
