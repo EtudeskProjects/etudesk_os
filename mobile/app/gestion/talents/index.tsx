@@ -171,7 +171,7 @@ export default function TalentsScreen() {
 
   const handleCohortAnalysis = () => {
     const cohort = getCohortLabel();
-    const prompt = `Analyse de cohorte : ${cohort} (${total} talents).\n`;
+    const prompt = `Analyse de cohorte : ${cohort} (${total} talents).`;
     router.push({
       pathname: '/(tabs)/assistant',
       params: { prompt, focusInput: 'true' },

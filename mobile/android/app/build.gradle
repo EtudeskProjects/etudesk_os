@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.etudesk.app'
+    namespace 'com.etudesk.os'
     defaultConfig {
-        applicationId 'com.etudesk.app'
+        applicationId 'com.etudesk.os'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

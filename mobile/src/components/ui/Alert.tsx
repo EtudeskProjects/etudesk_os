@@ -159,7 +159,7 @@ export function Alert({
                         fullWidth
                         style={
                           isDestructive
-                            ? { backgroundColor: colors.error }
+                            ? { backgroundColor: colors.primary }
                             : undefined
                         }
                       />

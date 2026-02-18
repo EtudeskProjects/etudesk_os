@@ -104,6 +104,11 @@ export default function EmailLoginScreen() {
               leftIcon={<AtSign size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
               error={form.getError('email') || undefined}
             />
+            {form.state.submitError && (
+              <Text style={[styles.submitErrorText, { color: colors.error }]}>
+                {form.state.submitError}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -196,5 +201,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: SPACING.md,
     lineHeight: TYPOGRAPHY.fontSize.xs * 1.5,
+  },
+
+  submitErrorText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    marginTop: SPACING.sm,
+    textAlign: 'center',
   },
 });

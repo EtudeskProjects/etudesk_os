@@ -14,7 +14,10 @@ import { SelectCard } from '../../src/components/ui';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GOOGLE_CLIENT_ID = '46989075752-9q595dp7klvqf1d0q6eh8osctrt2idok.apps.googleusercontent.com';
+// All client IDs must be from the same Google Cloud project (179108590788)
+const GOOGLE_WEB_CLIENT_ID = '179108590788-i7lpp0ef6ffj1uklf5tegfo453vg337e.apps.googleusercontent.com';
+const GOOGLE_IOS_CLIENT_ID = '179108590788-7oklrr2vai9g12alnn3b3o42i0q9s1qj.apps.googleusercontent.com';
+const GOOGLE_ANDROID_CLIENT_ID = '179108590788-3thuhbkilqqc6vd1oavle46cf22tt0li.apps.googleusercontent.com';
 
 const { width, height } = Dimensions.get('window');
 
@@ -27,7 +30,9 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: GOOGLE_CLIENT_ID,
+    clientId: GOOGLE_WEB_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
   });
 
   useEffect(() => {
@@ -102,23 +107,7 @@ export default function LoginScreen() {
             {t('auth.login.continueWith')}
           </Text>
 
-          <SelectCard
-            style={[styles.authButton, { backgroundColor: colors.surface, borderColor: colors.borderColor, opacity: googleLoading ? 0.7 : 1 }]}
-            onPress={handleGoogleLogin}
-            selected={false}
-            disabled={!request || googleLoading}
-            accessibilityLabel="Continuer avec Google"
-          >
-            {googleLoading ? (
-              <ActivityIndicator size="small" color={colors.textPrimary} />
-            ) : (
-              <Image
-                source={require('../../assets/google_icon.png')}
-                style={styles.socialIcon}
-              />
-            )}
-            <Text style={[styles.authButtonText, { color: colors.textPrimary }]}>Google</Text>
-          </SelectCard>
+          {/* TODO: Google OAuth — réactiver quand les client IDs seront configurés en production */}
 
           <SelectCard
             style={[styles.authButton, styles.authButtonWhatsApp]}

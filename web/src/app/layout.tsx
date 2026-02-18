@@ -6,8 +6,8 @@ export const metadata: Metadata = {
   title: 'Etudesk',
   description: 'Etudesk - Votre assistant intelligent',
   icons: {
-    icon: '/images/favicon.png',
-    apple: '/images/favicon.png',
+    icon: '/images/etudesk_squared_icon.png',
+    apple: '/images/etudesk_squared_icon.png',
   },
 };
 

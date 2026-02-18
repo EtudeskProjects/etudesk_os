@@ -108,6 +108,11 @@ export default function WhatsAppLoginScreen() {
               ]}
               inputStyle={[styles.input, { color: colors.textPrimary, paddingHorizontal: 0 }]}
             />
+            {form.state.submitError && (
+              <Text style={[styles.submitErrorText, { color: colors.error }]}>
+                {form.state.submitError}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -232,6 +237,12 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
+    textAlign: 'center',
+  },
+
+  submitErrorText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    marginTop: SPACING.sm,
     textAlign: 'center',
   },
 });

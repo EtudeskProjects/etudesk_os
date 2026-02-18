@@ -47,8 +47,6 @@ import {
 } from '../../../src/components/copilot';
 import {
   copilotService,
-  CopilotMode,
-  COPILOT_MODES,
   CopilotMessage,
   SessionSummary,
   MessageSegment,
@@ -272,40 +270,33 @@ export default function AssistantScreen() {
   const getFallbackSuggestions = useCallback((currentMode: Mode, orgSpace: boolean): string[] => {
     if (orgSpace) {
       return [
-        'Fais un point priorités recrutement cette semaine',
-        'Classe les candidats les plus prometteurs',
-        'Propose 3 actions pour accélérer le pipeline',
+        'Trouve-moi des talents disponibles dans ma ville.',
+        'Fais un résumé des candidatures des 7 derniers jours.',
+        'Propose 3 actions pour augmenter les candidatures qualifiées.',
+        'Aide-moi à rédiger une fiche de poste sur [intitulé].',
       ];
     }
     if (currentMode === 'study') {
       return [
-        'Fais-moi un quiz rapide sur ce sujet',
-        'Donne-moi un exercice pratique guidé',
-        'Résume en plan de révision 7 jours',
+        'Évalue-moi sur l’une de mes lacunes.',
+        'Donne-moi une image du schéma d’une cellule végétale.',
+        'Explique-moi le cycle de l’eau en diagramme.',
+        'Crée un exercice pratique sur les fonctions affines.',
       ];
     }
     return [
-      'Trouve 3 opportunités adaptées à mon profil',
-      'Optimise mon CV pour ces postes',
-      'Donne-moi un plan d’action concret pour candidater',
+      'Trouve 3 offres adaptées à mon profil cette semaine.',
+      'Montre les communautés utiles pour mon objectif.',
+      'Analyse mon CV.',
+      'Quelles compétences me manquent pour atteindre mes objectifs ?',
     ];
   }, []);
 
-  const loadFloatingSuggestions = useCallback(async (forceShow: boolean = false, targetSessionId?: string | null) => {
-    const effectiveMode: CopilotMode = isOrganizationSpace ? COPILOT_MODES.EXPLORE : activeMode;
-    try {
-      const res = await copilotService.getSuggestions(effectiveMode, targetSessionId || sessionId || undefined);
-      const next = (res.suggestions || [])
-        .map((s) => (s || '').trim())
-        .filter(Boolean)
-        .slice(0, 3);
-      setFloatingSuggestions(next.length > 0 ? next : getFallbackSuggestions(activeMode, isOrganizationSpace));
-    } catch {
-      setFloatingSuggestions(getFallbackSuggestions(activeMode, isOrganizationSpace));
-    } finally {
-      if (forceShow) setHideFloatingSuggestions(false);
-    }
-  }, [activeMode, getFallbackSuggestions, isOrganizationSpace, sessionId]);
+  const loadFloatingSuggestions = useCallback((forceShow: boolean = false) => {
+    const next = getFallbackSuggestions(activeMode, isOrganizationSpace);
+    setFloatingSuggestions(next);
+    if (forceShow) setHideFloatingSuggestions(false);
+  }, [activeMode, getFallbackSuggestions, isOrganizationSpace]);
 
   useEffect(() => {
     loadFloatingSuggestions(true);
@@ -547,7 +538,7 @@ export default function AssistantScreen() {
           onDone: (newSessionId) => {
             setSessionId(newSessionId);
             setIsSending(false);
-            void loadFloatingSuggestions(false, newSessionId);
+            loadFloatingSuggestions(false);
             setMessages((prev) =>
               prev.map((m) => {
                 if (m.id !== assistantMsgId) return m;
@@ -574,15 +565,54 @@ export default function AssistantScreen() {
             abortControllerRef.current = null;
           },
           onContentCorrected: (correctedContent) => {
-            // Replace text content with server-sanitized version (fixes Mermaid diagram issues)
+            // Update text without collapsing/reordering text/tool interleaving.
             setMessages((prev) =>
               prev.map((m) => {
                 if (m.id !== assistantMsgId) return m;
-                const nonTextSegments = m.segments.filter((s) => s.type !== 'text');
+                const textIndexes: number[] = [];
+                const textContents: string[] = [];
+                m.segments.forEach((s, i) => {
+                  if (s.type === 'text') {
+                    textIndexes.push(i);
+                    textContents.push(s.content || '');
+                  }
+                });
+
+                if (textIndexes.length === 0) {
+                  return { ...m, content: correctedContent };
+                }
+
+                if (textIndexes.length === 1) {
+                  const idx = textIndexes[0];
+                  const nextSegments = [...m.segments];
+                  nextSegments[idx] = { ...nextSegments[idx], type: 'text', content: correctedContent };
+                  return { ...m, content: correctedContent, segments: nextSegments };
+                }
+
+                // Keep original boundaries between text segments to preserve tool placement.
+                const boundaries: number[] = [];
+                let acc = 0;
+                for (let i = 0; i < textContents.length - 1; i++) {
+                  acc += textContents[i].length;
+                  boundaries.push(acc);
+                }
+
+                const nextSegments = [...m.segments];
+                let cursor = 0;
+                for (let i = 0; i < textIndexes.length; i++) {
+                  const segIdx = textIndexes[i];
+                  const end = i < boundaries.length
+                    ? Math.min(correctedContent.length, boundaries[i])
+                    : correctedContent.length;
+                  const chunk = correctedContent.slice(cursor, end);
+                  nextSegments[segIdx] = { ...nextSegments[segIdx], type: 'text', content: chunk };
+                  cursor = end;
+                }
+
                 return {
                   ...m,
                   content: correctedContent,
-                  segments: [{ type: 'text' as const, content: correctedContent }, ...nonTextSegments],
+                  segments: nextSegments,
                 };
               })
             );
@@ -1227,7 +1257,7 @@ export default function AssistantScreen() {
           <View style={styles.inputArea}>
             {shouldShowFloatingSuggestions && (
               <View style={styles.floatingSuggestionsWrap}>
-                {floatingSuggestions.slice(0, 3).map((suggestion, idx) => (
+                {floatingSuggestions.slice(0, 4).map((suggestion, idx) => (
                   <Pressable
                     key={`floating-suggestion-${idx}`}
                     onPress={() => {

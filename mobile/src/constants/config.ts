@@ -5,7 +5,7 @@
 // API Configuration — source unique /api/v1
 export const API_PREFIX = '/api/v1';
 export const API_CONFIG = {
-  BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000',
+  BASE_URL: __DEV__ ? 'http://localhost:3000' : 'https://api.etudesk.com',
   API_PREFIX,
   TIMEOUT: 30000,
 };

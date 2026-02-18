@@ -324,6 +324,7 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>): U
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
       setSubmitError(errorMessage);
+      throw err;
     } finally {
       setIsSubmitting(false);
     }

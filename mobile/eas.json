@@ -22,7 +22,7 @@
     "production": {
       "ios": {
         "appleId": "etudesksas@gmail.com",
-        "ascAppId": "TODO_REMPLACER_APRES_CREATION_COMPTE"
+        "ascAppId": "6759287937"
       },
       "android": {
         "serviceAccountKeyPath": "./google-play-service-account.json",

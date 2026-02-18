@@ -81,7 +81,8 @@ type UserType = 'TALENT' | 'ORGANIZATION';
 type ContactType = 'EMAIL' | 'WHATSAPP';
 type FormStatus = 'idle' | 'loading' | 'success' | 'error';
 
-const API_URL = 'https://api.etudesk.com/api/waitlist';
+// Use same-origin API to avoid DNS/CORS issues on mobile browsers and in-app webviews.
+const API_URL = '/api/v1/waitlist';
 
 export default function Home() {
   const [lang, setLang] = useState<Lang>('fr');
@@ -91,7 +92,7 @@ export default function Home() {
   // Waitlist form state
   const [userType, setUserType] = useState<UserType>('TALENT');
   const [country, setCountry] = useState('');
-  const [contactType, setContactType] = useState<ContactType>('EMAIL');
+  const [contactType, setContactType] = useState<ContactType>('WHATSAPP');
   const [contactValue, setContactValue] = useState('');
   const [status, setStatus] = useState<FormStatus>('idle');
   const [errorMsg, setErrorMsg] = useState('');
@@ -105,15 +106,15 @@ export default function Home() {
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: userType,
-          country,
-          contactType,
-          contactValue: contactType === 'WHATSAPP'
-            ? contactValue.replace(/[\s\-\(\)]/g, '').trim()
-            : contactValue.trim(),
-        }),
-      });
+          body: JSON.stringify({
+            type: userType,
+            country,
+            contactType,
+            contactValue: contactType === 'WHATSAPP'
+              ? contactValue.replace(/[\s\-\(\)]/g, '').trim()
+              : contactValue.trim().toLowerCase().replace(/\s+/g, '').replace(/[,\.;]+$/, ''),
+          }),
+        });
 
       if (res.status === 429) {
         setStatus('error');
