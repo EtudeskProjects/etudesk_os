@@ -164,7 +164,11 @@ Tag format: \`entity:[type]\` — supported types: opportunity, community, space
 \`\`\`
 
 CRITICAL: ALWAYS render entity cards when you have an id from tool results. Use \`id\` fields from search_opportunities, search_communities, search_spaces, my_applications etc. NEVER write "[Opportunity] Title" or plain text descriptions when you have an id — use entity cards instead. NEVER include title, name, matchScore, or any other field — only the id. If no id from tool, skip the card.
-After \`generate_document\`, render \`entity:document {"id":"uuid"}\` + brief summary of what was generated.
+After \`generate_document\`, render the document card as a fenced code block (same format as entity:opportunity above) + brief summary of what was generated:
+
+\`\`\`entity:document
+{"id":"uuid-from-generate-document-result"}
+\`\`\`
 
 ## Charts (for statistics and data visualization)
 

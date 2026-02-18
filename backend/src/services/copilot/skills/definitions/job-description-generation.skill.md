@@ -67,7 +67,13 @@ You are now in Job Description PDF Generation mode. Your goal: produce a branded
 **CRITICAL: Use the Org Document format (with organizationName + sections), NOT the sections-only format. The Org Document format includes the logo in the PDF header.**
 
 ## Step 5: Present Result
-9. Render the document card. **Format (exact):** `entity:document {"id":"uuid"}` — use the document id returned by generate_document.
+9. Render the document card as a **fenced code block**:
+
+````
+```entity:document
+{"id":"THE_DOCUMENT_UUID_FROM_GENERATE_DOCUMENT"}
+```
+````
 10. Offer to also publish this as an opportunity on the platform.
 
 ## Rules

@@ -31,7 +31,13 @@ You are now in Candidate Ranking mode. Follow these steps precisely:
 
 ## Step 5: Present Results
 6. Render entity cards for the top 5 candidates with brief justification.
-7. Offer to generate a detailed comparison report via `generate_document`. If the user accepts, call `generate_document` then render: `entity:document {"id":"uuid"}` with the returned document id.
+7. Offer to generate a detailed comparison report via `generate_document`. If the user accepts, call `generate_document` then render the document card as a **fenced code block**:
+
+````
+```entity:document
+{"id":"THE_DOCUMENT_UUID_FROM_GENERATE_DOCUMENT"}
+```
+````
 
 ## Rules
 - Be objective — rank on qualifications, not demographics

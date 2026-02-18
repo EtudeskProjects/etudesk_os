@@ -35,7 +35,13 @@ You are now in Interview Preparation mode. Follow these steps precisely:
    - Red flags to prepare for (gaps, career changes)
 
 ## Step 5: Present Result
-8. Render the document card. **Format (exact):** `entity:document {"id":"uuid"}` — use the document id returned by generate_document. Provide a concise summary with top 3 tips.
+8. Render the document card as a **fenced code block**, then provide a concise summary with top 3 tips:
+
+````
+```entity:document
+{"id":"THE_DOCUMENT_UUID_FROM_GENERATE_DOCUMENT"}
+```
+````
 
 ## Rules
 - Tailor advice to the French-speaking African job market when relevant

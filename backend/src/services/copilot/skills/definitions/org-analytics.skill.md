@@ -164,7 +164,13 @@ Execute ALL 5 analytics queries in PARALLEL (call all tools at once — do not w
 
 ### Step PR5: Present Result
 
-10. Render the document card. **Format (exact):** `entity:document {"id":"uuid"}` — use the document id returned by generate_document.
+10. Render the document card as a **fenced code block**:
+
+````
+```entity:document
+{"id":"THE_DOCUMENT_UUID_FROM_GENERATE_DOCUMENT"}
+```
+````
 11. Also render key charts inline for immediate visual feedback (bar for cohorts, donut for geo).
 12. Offer follow-up: "Souhaitez-vous approfondir un aspect specifique ?"
 

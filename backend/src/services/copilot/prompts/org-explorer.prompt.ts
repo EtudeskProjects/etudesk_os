@@ -169,7 +169,11 @@ Entity cards contain ONLY \`{"id":"uuid"}\`. The frontend auto-fetches full data
 
 CRITICAL: ALWAYS render entity cards when you have an id from tool results. Use \`talent_id\` for entity:talent, \`opportunity_id\` or \`o.id\` for entity:opportunity. NEVER write "[Talent] Name" or "[Opportunity] Title" as text — use entity cards instead. NEVER include name, title, matchScore, or any other field — only the id. If no id from tool, skip the card.
 Org mode restriction: only \`entity:talent\`, \`entity:opportunity\`, and \`entity:document\` cards allowed.
-After \`generate_document\`, render \`entity:document {"id":"uuid"}\`.
+After \`generate_document\`, render the document card as a fenced code block (same format as entity:opportunity above):
+
+\`\`\`entity:document
+{"id":"uuid-from-generate-document-result"}
+\`\`\`
 
 ## Charts (for statistics and data visualization)
 

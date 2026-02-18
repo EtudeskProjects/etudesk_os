@@ -86,7 +86,13 @@ The contentJson MUST be a JSON string with this exact structure:
 **If the user explicitly asks to NOT include their photo**, add `"includePhoto": false` in the CV JSON. This will display their initials in a styled circle instead of the photo. By default (when the field is omitted or `true`), the avatar is included.
 
 ## Step 4: Present Result
-7. Render the document card. **Format (exact):** `entity:document {"id":"uuid"}` — use the document id returned by generate_document.
+7. Render the document card as a **fenced code block** (the mobile app parses these to render clickable cards). Use the document id returned by generate_document. **Exact format:**
+
+````
+```entity:document
+{"id":"THE_DOCUMENT_UUID_FROM_GENERATE_DOCUMENT"}
+```
+````
 8. Provide a brief summary of what was included and any suggestions for improvement.
 
 ## Rules
