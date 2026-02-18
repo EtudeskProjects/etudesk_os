@@ -54,7 +54,7 @@ export const vectorQueryTool = defineTool({
       'spaces',
       'talents',
       'organizations',
-    ]).describe('The entity type to search. Choose based on what the user is looking for.'),
+    ]).default('opportunities').describe('The entity type to search. Choose based on what the user is looking for.'),
     topK: z.number().min(1).max(30).default(10).describe('Number of results to return. Default 10. Use higher values (15-20) when the user needs comprehensive results.'),
     filtersJson: z
       .union([z.string(), z.record(z.string(), z.unknown())])

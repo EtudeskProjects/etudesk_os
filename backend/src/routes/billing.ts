@@ -181,6 +181,9 @@ router.post('/checkout/init', authMiddleware, async (req: AuthRequest, res: Resp
     if (message.includes('idempotency_key')) {
       return res.status(400).json({ error: message });
     }
+    if (message.toLowerCase().includes('invalid email')) {
+      return res.status(400).json({ error: 'Veuillez ajouter une adresse email valide à votre profil avant de procéder au paiement.', code: 'EMAIL_REQUIRED' });
+    }
 
     return handleBillingAccessError(req, res, error);
   }

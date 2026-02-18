@@ -67,6 +67,49 @@ function toMinorUnits(amountFcfa: number): number {
   return Math.round(amountFcfa * 100);
 }
 
+function normalizeEmail(raw: string | null | undefined): string {
+  return String(raw || '').trim().toLowerCase().replace(/\s+/g, '');
+}
+
+function isValidEmail(email: string): boolean {
+  if (!email || email.endsWith('@etudesk.local')) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+async function resolveCheckoutEmail(actorEmail: string, actorTalentId: string): Promise<string> {
+  const fromToken = normalizeEmail(actorEmail);
+  if (isValidEmail(fromToken)) return fromToken;
+
+  const userRes = await pool.query(
+    `SELECT email
+     FROM users
+     WHERE talent_id = $1
+       AND deleted_at IS NULL
+       AND email IS NOT NULL
+       AND email NOT LIKE '%@etudesk.local'
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [actorTalentId]
+  );
+  const fromUser = normalizeEmail(userRes.rows[0]?.email);
+  if (isValidEmail(fromUser)) return fromUser;
+
+  const talentRes = await pool.query(
+    `SELECT email
+     FROM talents
+     WHERE id = $1
+       AND deleted_at IS NULL
+       AND email IS NOT NULL
+       AND email NOT LIKE '%@etudesk.local'
+     LIMIT 1`,
+    [actorTalentId]
+  );
+  const fromTalent = normalizeEmail(talentRes.rows[0]?.email);
+  if (isValidEmail(fromTalent)) return fromTalent;
+
+  throw new Error('Invalid Email Address Passed');
+}
+
 async function paystackRequest(path: string, method: 'GET' | 'POST', body?: Record<string, unknown>): Promise<any> {
   if (!PAYSTACK_SECRET_KEY) {
     throw new Error('PAYSTACK_NOT_CONFIGURED');
@@ -131,6 +174,7 @@ export async function initCheckout(params: InitCheckoutParams): Promise<any> {
     return existing.rows[0];
   }
 
+  const checkoutEmail = await resolveCheckoutEmail(actorEmail, actorTalentId);
   const creditsToCredit = creditsForAmount(amountFcfa);
   const reference = createPaystackReference(scope);
 
@@ -186,7 +230,7 @@ export async function initCheckout(params: InitCheckoutParams): Promise<any> {
   }
 
   const paystackPayload: Record<string, unknown> = {
-    email: actorEmail,
+    email: checkoutEmail,
     amount: toMinorUnits(amountFcfa),
     reference,
     currency: PAYSTACK_CURRENCY,
