@@ -5,6 +5,7 @@ import { formatPhoneToE164 } from '../services/whatsapp.service';
 import { logger } from '../utils';
 
 const router = Router();
+const isWhatsAppSupportAssistantEnabled = process.env.WHATSAPP_SUPPORT_AGENT_ENABLED === 'true';
 
 function isAllowedIp(ipAddress?: string): boolean {
   const whitelist = (process.env.ULTRAMSG_ALLOWED_IPS || '')
@@ -26,11 +27,23 @@ function normalizeIncomingPhone(rawPhone?: string): string | null {
 }
 
 router.get('/webhook', (_req: Request, res: Response) => {
-  return res.status(200).json({ success: true, status: 'ok' });
+  return res.status(200).json({
+    success: true,
+    status: 'ok',
+    assistantEnabled: isWhatsAppSupportAssistantEnabled,
+  });
 });
 
 const handleWebhook = async (req: Request, res: Response) => {
   try {
+    if (!isWhatsAppSupportAssistantEnabled) {
+      return res.status(200).json({
+        success: true,
+        status: 'ignored',
+        reason: 'assistant_disabled',
+      });
+    }
+
     const ipAddress = req.ip || req.socket.remoteAddress;
     if (!isAllowedIp(ipAddress)) {
       logger.warn('WhatsApp webhook unauthorized IP', { ipAddress });

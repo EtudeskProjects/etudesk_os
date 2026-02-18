@@ -20,6 +20,8 @@ const MAX_SAME_TOOL_CALLS = 3;
 const MAX_TURN_DURATION_MS = 120_000;
 const HEARTBEAT_INTERVAL_MS = 30_000;
 const SSE_BUFFER_FLUSH_MS = 50; // Buffer text deltas and flush every 50ms
+const MAX_PROVIDER_RETRIES = 2;
+const RETRY_BASE_DELAY_MS = 800;
 
 /**
  * Send SSE comment (heartbeat) — keeps connection alive
@@ -44,6 +46,22 @@ export function initSSE(res: Response): void {
  */
 export function sendSSE(res: Response, event: SSEEvent): void {
   res.write(`data: ${JSON.stringify(event)}\n\n`);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isOverloadedProviderError(error: any): boolean {
+  const message = String(error?.message || '').toLowerCase();
+  const status = Number(error?.status || error?.statusCode || error?.response?.status);
+  return (
+    message.includes('overloaded_error') ||
+    message.includes('"message":"overloaded"') ||
+    status === 529 ||
+    status === 503 ||
+    status === 429
+  );
 }
 
 /**
@@ -200,96 +218,114 @@ export async function runAgentWithSSE(
       }
 
       // Stream the response — with prompt caching on system prompt
-      const stream = client.messages.stream({
-        model: agentConfig.model,
-        system: [
-          {
-            type: 'text' as const,
-            text: agentConfig.systemPrompt,
-            cache_control: { type: 'ephemeral' as const },
-          },
-        ],
-        messages,
-        tools: toolDefs,
-        max_tokens: 4096,
-      });
-
-      // Collect streaming events — with text delta buffering (flush every 50ms)
+      let response: Anthropic.Message | null = null;
       let currentTurnText = '';
-      const toolUseBlocks: Array<{ id: string; name: string; input: any }> = [];
-      let currentToolUse: { id: string; name: string; inputJson: string } | null = null;
-      let textBuffer = '';
-      let bufferTimer: ReturnType<typeof setTimeout> | null = null;
+      let toolUseBlocks: Array<{ id: string; name: string; input: any }> = [];
+      const maxAttempts = MAX_PROVIDER_RETRIES + 1;
 
-      const flushTextBuffer = () => {
-        if (textBuffer) {
-          sendSSE(res, { type: 'text_delta', delta: textBuffer });
-          textBuffer = '';
-        }
-        if (bufferTimer) {
-          clearTimeout(bufferTimer);
-          bufferTimer = null;
-        }
-      };
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        let attemptProducedOutput = false;
+        currentTurnText = '';
+        toolUseBlocks = [];
+        let currentToolUse: { id: string; name: string; inputJson: string } | null = null;
+        let textBuffer = '';
+        let bufferTimer: ReturnType<typeof setTimeout> | null = null;
 
-      for await (const event of stream) {
-        if (event.type === 'content_block_start') {
-          const block = (event as any).content_block;
-          if (block?.type === 'tool_use') {
-            // Flush any pending text before tool use
-            flushTextBuffer();
-            currentToolUse = { id: block.id, name: block.name, inputJson: '' };
+        const flushTextBuffer = () => {
+          if (textBuffer) {
+            sendSSE(res, { type: 'text_delta', delta: textBuffer });
+            textBuffer = '';
+            attemptProducedOutput = true;
           }
-        }
+          if (bufferTimer) {
+            clearTimeout(bufferTimer);
+            bufferTimer = null;
+          }
+        };
 
-        if (event.type === 'content_block_delta') {
-          const delta = (event as any).delta;
-          if (delta?.type === 'text_delta' && delta.text) {
-            finalOutput += delta.text;
-            currentTurnText += delta.text;
-            textBuffer += delta.text;
+        try {
+          const stream = client.messages.stream({
+            model: agentConfig.model,
+            system: [
+              {
+                type: 'text' as const,
+                text: agentConfig.systemPrompt,
+                cache_control: { type: 'ephemeral' as const },
+              },
+            ],
+            messages,
+            tools: toolDefs,
+            max_tokens: 4096,
+          });
 
-            // Append to last text segment or create new one
-            const lastSeg = segments[segments.length - 1];
-            if (lastSeg && lastSeg.type === 'text') {
-              lastSeg.content = (lastSeg.content || '') + delta.text;
-            } else {
-              segments.push({ type: 'text', content: delta.text });
+          for await (const event of stream) {
+            if (event.type === 'content_block_start') {
+              const block = (event as any).content_block;
+              if (block?.type === 'tool_use') {
+                flushTextBuffer();
+                currentToolUse = { id: block.id, name: block.name, inputJson: '' };
+                attemptProducedOutput = true;
+              }
             }
 
-            // Schedule flush if not already scheduled
-            if (!bufferTimer) {
-              bufferTimer = setTimeout(flushTextBuffer, SSE_BUFFER_FLUSH_MS);
-            }
-          }
-          if (delta?.type === 'input_json_delta' && currentToolUse) {
-            currentToolUse.inputJson += delta.partial_json || '';
-          }
-        }
+            if (event.type === 'content_block_delta') {
+              const delta = (event as any).delta;
+              if (delta?.type === 'text_delta' && delta.text) {
+                finalOutput += delta.text;
+                currentTurnText += delta.text;
+                textBuffer += delta.text;
 
-        if (event.type === 'content_block_stop') {
-          if (currentToolUse) {
-            let parsedInput: any = {};
-            try {
-              parsedInput = JSON.parse(currentToolUse.inputJson || '{}');
-            } catch {
-              parsedInput = {};
+                const lastSeg = segments[segments.length - 1];
+                if (lastSeg && lastSeg.type === 'text') {
+                  lastSeg.content = (lastSeg.content || '') + delta.text;
+                } else {
+                  segments.push({ type: 'text', content: delta.text });
+                }
+
+                if (!bufferTimer) {
+                  bufferTimer = setTimeout(flushTextBuffer, SSE_BUFFER_FLUSH_MS);
+                }
+              }
+              if (delta?.type === 'input_json_delta' && currentToolUse) {
+                currentToolUse.inputJson += delta.partial_json || '';
+              }
             }
-            toolUseBlocks.push({
-              id: currentToolUse.id,
-              name: currentToolUse.name,
-              input: parsedInput,
-            });
-            currentToolUse = null;
+
+            if (event.type === 'content_block_stop') {
+              if (currentToolUse) {
+                let parsedInput: any = {};
+                try {
+                  parsedInput = JSON.parse(currentToolUse.inputJson || '{}');
+                } catch {
+                  parsedInput = {};
+                }
+                toolUseBlocks.push({
+                  id: currentToolUse.id,
+                  name: currentToolUse.name,
+                  input: parsedInput,
+                });
+                currentToolUse = null;
+              }
+            }
           }
+
+          flushTextBuffer();
+          response = await stream.finalMessage();
+          break;
+        } catch (streamError: any) {
+          const isRetriable = isOverloadedProviderError(streamError) && !attemptProducedOutput && attempt < maxAttempts;
+          if (!isRetriable) {
+            throw streamError;
+          }
+          const delayMs = RETRY_BASE_DELAY_MS * attempt;
+          logger.warn(`[copilot] Provider overloaded, retrying stream (${attempt}/${maxAttempts - 1}) in ${delayMs}ms`);
+          await sleep(delayMs);
         }
       }
 
-      // Flush any remaining buffered text after stream ends
-      flushTextBuffer();
-
-      // Get the final message to check stop_reason
-      const response = await stream.finalMessage();
+      if (!response) {
+        throw new Error('Service IA temporairement indisponible. Réessayez dans quelques secondes.');
+      }
 
       // If no tool_use blocks, we're done
       if (toolUseBlocks.length === 0 || response.stop_reason === 'end_turn') {
@@ -453,7 +489,10 @@ export async function runAgentWithSSE(
     });
   } catch (error: any) {
     logger.error('SSE stream error:', error);
-    sendSSE(res, { type: 'error', error: error.message || 'Erreur interne' });
+    const userMessage = isOverloadedProviderError(error)
+      ? 'Service IA temporairement saturé. Merci de réessayer dans quelques secondes.'
+      : error.message || 'Erreur interne';
+    sendSSE(res, { type: 'error', error: userMessage });
   } finally {
     clearInterval(heartbeatId);
   }
@@ -463,19 +502,10 @@ export async function runAgentWithSSE(
   if (sanitized !== finalOutput) {
     finalOutput = sanitized;
     sendSSE(res, { type: 'content_corrected', content: sanitized });
-    let fullText = '';
     for (const seg of segments) {
       if (seg.type === 'text') {
-        fullText += seg.content || '';
-      }
-    }
-    if (fullText) {
-      const sanitizedFull = sanitizeDiagramBlocks(fullText);
-      if (sanitizedFull !== fullText) {
-        const nonTextSegments = segments.filter((s) => s.type !== 'text');
-        segments.length = 0;
-        segments.push({ type: 'text', content: sanitizedFull });
-        segments.push(...nonTextSegments);
+        // Preserve text/tool/text ordering as emitted by the agent.
+        seg.content = sanitizeDiagramBlocks(seg.content || '');
       }
     }
   }
