@@ -76,9 +76,14 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-async function resolveCheckoutEmail(actorEmail: string, actorTalentId: string): Promise<string> {
+/**
+ * Resolve a valid email for Paystack checkout.
+ * Priority: token email → users table → talents table.
+ * Fallback for WhatsApp-only users: hello@etudesk.org (with phone in metadata).
+ */
+async function resolveCheckoutEmail(actorEmail: string, actorTalentId: string): Promise<{ email: string; whatsappPhone?: string }> {
   const fromToken = normalizeEmail(actorEmail);
-  if (isValidEmail(fromToken)) return fromToken;
+  if (isValidEmail(fromToken)) return { email: fromToken };
 
   const userRes = await pool.query(
     `SELECT email
@@ -92,22 +97,22 @@ async function resolveCheckoutEmail(actorEmail: string, actorTalentId: string): 
     [actorTalentId]
   );
   const fromUser = normalizeEmail(userRes.rows[0]?.email);
-  if (isValidEmail(fromUser)) return fromUser;
+  if (isValidEmail(fromUser)) return { email: fromUser };
 
   const talentRes = await pool.query(
-    `SELECT email
+    `SELECT email, phone
      FROM talents
      WHERE id = $1
        AND deleted_at IS NULL
-       AND email IS NOT NULL
-       AND email NOT LIKE '%@etudesk.local'
      LIMIT 1`,
     [actorTalentId]
   );
   const fromTalent = normalizeEmail(talentRes.rows[0]?.email);
-  if (isValidEmail(fromTalent)) return fromTalent;
+  if (isValidEmail(fromTalent)) return { email: fromTalent };
 
-  throw new Error('Invalid Email Address Passed');
+  // WhatsApp-only user: use Etudesk email as billing proxy, attach phone for traceability
+  const phone = talentRes.rows[0]?.phone || null;
+  return { email: 'hello@etudesk.org', whatsappPhone: phone };
 }
 
 async function paystackRequest(path: string, method: 'GET' | 'POST', body?: Record<string, unknown>): Promise<any> {
@@ -174,7 +179,7 @@ export async function initCheckout(params: InitCheckoutParams): Promise<any> {
     return existing.rows[0];
   }
 
-  const checkoutEmail = await resolveCheckoutEmail(actorEmail, actorTalentId);
+  const { email: checkoutEmail, whatsappPhone } = await resolveCheckoutEmail(actorEmail, actorTalentId);
   const creditsToCredit = creditsForAmount(amountFcfa);
   const reference = createPaystackReference(scope);
 
@@ -239,6 +244,7 @@ export async function initCheckout(params: InitCheckoutParams): Promise<any> {
       ownerId,
       actorTalentId,
       etudeskPaymentId: payment.id,
+      ...(whatsappPhone ? { whatsappPhone } : {}),
       ...metadata,
     },
   };
