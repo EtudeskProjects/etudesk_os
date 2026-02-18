@@ -22,6 +22,44 @@ import {
   logger,
 } from '../../utils';
 
+/**
+ * Convert French duration strings to PostgreSQL interval syntax.
+ * "1 mois" → "1 month", "6 mois" → "6 months", "2 ans" → "2 years", etc.
+ * Returns null for non-interval values (e.g. "CDI", free text).
+ */
+function normalizeDurationToInterval(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const s = raw.trim().toLowerCase();
+  if (!s) return null;
+
+  const frToEn: Record<string, string> = {
+    'jour': 'day', 'jours': 'days',
+    'semaine': 'week', 'semaines': 'weeks',
+    'mois': 'month',
+    'an': 'year', 'ans': 'years', 'année': 'year', 'années': 'years', 'annee': 'year', 'annees': 'years',
+  };
+
+  // Pattern: "3 mois", "1 an", "6 semaines", "12 mois", etc.
+  const match = s.match(/^(\d+)\s*(.+)$/);
+  if (match) {
+    const num = parseInt(match[1], 10);
+    const unit = match[2].trim();
+    const enUnit = frToEn[unit];
+    if (enUnit) {
+      // PostgreSQL accepts "1 month" and "6 months" equally
+      return `${num} ${enUnit}`;
+    }
+    // Already in English? Try as-is (e.g. "3 months")
+    const enUnits = ['day', 'days', 'week', 'weeks', 'month', 'months', 'year', 'years', 'hour', 'hours'];
+    if (enUnits.includes(unit)) {
+      return `${num} ${unit}`;
+    }
+  }
+
+  // Not a parseable interval (e.g. "CDI", "Indéterminée") → store as NULL interval
+  return null;
+}
+
 const router = Router();
 
 /**
@@ -156,7 +194,7 @@ router.post('/', authMiddleware, validate(createOpportunitySchema), async (req: 
       summary || null, requirements || null, nice_to_have || null,
       compensation_min || null, compensation_max || null, currency || null, compensation_frequency || null,
       location_type || null, locations ? JSON.stringify(locations) : null, postedAt,
-      deadline || null, start_date || null, duration || null,
+      deadline || null, start_date || null, normalizeDurationToInterval(duration),
       status, cover_image_url || null, cv_required || false,
       application_questions?.length > 0 ? JSON.stringify(application_questions) : null,
       sectors || null, images || null, attachments ? JSON.stringify(attachments) : null,
@@ -279,7 +317,7 @@ router.put('/:id', authMiddleware, validate(updateOpportunitySchema), async (req
     `, [
       title, type, contract_type, work_rhythm, summary, requirements, nice_to_have,
       compensation_min, compensation_max, currency, compensation_frequency,
-      location_type, finalLocations, postedAt, deadline, start_date, duration,
+      location_type, finalLocations, postedAt, deadline, start_date, normalizeDurationToInterval(duration),
       newStatus, cover_image_url, cv_required, finalQuestions,
       finalSectors, finalImages, finalAttachments, visibility, id
     ]);

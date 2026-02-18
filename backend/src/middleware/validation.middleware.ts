@@ -280,7 +280,9 @@ export const onboardingSchema = z.object({
 
 const COMMUNITY_TYPES = [
   'GENERAL', 'PROFESSIONAL', 'ALUMNI',
-  'INTEREST', 'LOCAL', 'LEARNING'
+  'INTEREST', 'LOCAL', 'LEARNING',
+  // Meeting mode types (used by mobile)
+  'ONLINE', 'OFFLINE', 'HYBRID',
 ] as const;
 
 const COMMUNITY_ACCESS_TYPES = [
@@ -311,6 +313,12 @@ export const createCommunitySchema = z.object({
   country: z.string().length(2, 'validation:common.countryCodeFormat').optional(),
   cover_image_url: z.string().max(2000).optional(),
   images: z.array(z.string().max(2000)).max(20).optional(),
+  default_member_permissions: z.object({
+    can_post: z.boolean().optional(),
+    can_create_event: z.boolean().optional(),
+    can_create_poll: z.boolean().optional(),
+  }).optional(),
+  status: z.enum(['DRAFT', 'ACTIVE', 'INACTIVE']).optional(),
 });
 
 export const updateCommunitySchema = createCommunitySchema.partial();

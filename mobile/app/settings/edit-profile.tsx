@@ -107,6 +107,7 @@ export default function EditProfileScreen() {
         country: values.country || undefined,
         region: values.region || undefined,
         city: values.commune || undefined,
+        email: values.email?.trim() || undefined,
         phone: values.phone || undefined,
         avatar_url: values.avatarUri || undefined,
         remote_ready: values.remoteReady,

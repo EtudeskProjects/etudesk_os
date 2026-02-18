@@ -12,6 +12,7 @@ export interface UpdateTalentData {
   last_name?: string;
   bio?: string;
   avatar_url?: string;
+  email?: string | null;
   phone?: string;
   gender?: 'M' | 'F' | 'O';
   city?: string;

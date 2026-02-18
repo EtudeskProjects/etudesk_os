@@ -83,6 +83,8 @@ router.post('/', authMiddleware, validate(createCommunitySchema), async (req: Au
       country,
       cover_image_url,
       images,
+      default_member_permissions,
+      status = 'ACTIVE',
     } = req.body;
 
     // Verify organization membership
@@ -112,9 +114,9 @@ router.post('/', authMiddleware, validate(createCommunitySchema), async (req: Au
         name, slug, organization_id, type, description, rules,
         application_questions, access_type, visibility, tags, sectors,
         city, region, country, cover_image_url, images,
-        created_by, status
+        default_member_permissions, created_by, status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'ACTIVE')
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       RETURNING *
     `, [
       name, slug, organization_id, type, description, rules,
@@ -123,7 +125,8 @@ router.post('/', authMiddleware, validate(createCommunitySchema), async (req: Au
       sectors ? JSON.stringify(sectors) : null,
       city, region, country, cover_image_url,
       images || [],
-      talentId
+      default_member_permissions ? JSON.stringify(default_member_permissions) : null,
+      talentId, status
     ]);
 
     const community = result.rows[0];
