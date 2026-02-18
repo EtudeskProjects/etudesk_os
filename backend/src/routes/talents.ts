@@ -92,6 +92,7 @@ router.put('/me', authMiddleware, validate(updateTalentSchema), async (req: Auth
       last_name,
       bio,
       avatar_url,
+      email,
       phone,
       gender,
       city,
@@ -143,6 +144,13 @@ router.put('/me', authMiddleware, validate(updateTalentSchema), async (req: Auth
     if (avatar_url !== undefined) {
       updates.push(`avatar_url = $${paramIndex++}`);
       params.push(avatar_url || null);
+    }
+
+    if (email !== undefined) {
+      // Don't accept placeholder emails
+      const cleanEmail = email && !email.endsWith('@etudesk.local') ? email.trim().toLowerCase() : null;
+      updates.push(`email = $${paramIndex++}`);
+      params.push(cleanEmail);
     }
 
     if (phone !== undefined) {

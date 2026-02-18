@@ -379,6 +379,7 @@ export const updateTalentSchema = z.object({
   last_name: z.string().min(1).max(100).optional(),
   bio: z.string().max(2000).optional(),
   avatar_url: z.string().max(2000).optional(),
+  email: z.string().email().max(255).optional().nullable(),
   phone: z.string().max(20).optional(),
   gender: z.string().max(20).optional(),
   city: z.string().max(100).optional(),
