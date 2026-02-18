@@ -144,8 +144,10 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
   const [error, setError] = useState(false);
 
   // Auto-fetch entity data via batched API call (debounced 100ms)
+  // Documents always need fetch to get file_url for clickable download
   useEffect(() => {
-    if (!needsFetch(initialData)) return;
+    const needsDocumentUrl = type === 'document' && !initialData.file_url && !initialData.downloadUrl;
+    if (!needsFetch(initialData) && !needsDocumentUrl) return;
     if (!initialData.id) return;
 
     let cancelled = false;
