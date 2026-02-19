@@ -592,7 +592,7 @@ const renderTalentContent = () => (
 );
 
 return (
-  <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+  <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
     <Header
       title={t('ecosystem.title')}
       rightContent={

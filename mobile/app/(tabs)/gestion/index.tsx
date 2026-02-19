@@ -410,7 +410,7 @@ export default function GestionScreen() {
   // Si pas en mode organisation, afficher un message
   if (!isOrganizationSpace || !selectedOrg) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.emptyState}>
           <View style={[styles.emptyIcon, { backgroundColor: PASTEL_COLORS.indigo.bg }]}>
             <Building2 size={40} color={PASTEL_COLORS.indigo.icon} strokeWidth={ICON.strokeWidth} />
@@ -431,7 +431,7 @@ export default function GestionScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       <Header
         title={t('ecosystem.title')}
         rightContent={

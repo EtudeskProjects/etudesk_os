@@ -44,10 +44,8 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
 
   const normalizedActiveTab: TabName | undefined =
     isOrganizationSpace && activeTab === 'home' ? 'gestion' : activeTab;
-  const bottomPadding =
-    Platform.OS === 'android'
-      ? Math.max(SPACING.sm, insets.bottom + SPACING.xs)
-      : Math.max(insets.bottom, SPACING.sm);
+  // SafeAreaView with edges=['bottom'] handles system insets — only add minimal padding
+  const bottomPadding = Math.max(SPACING.xs, insets.bottom > 0 ? 0 : SPACING.xs);
 
   const tabs: { name: TabName; icon: typeof Home; route: string }[] = [
     isOrganizationSpace

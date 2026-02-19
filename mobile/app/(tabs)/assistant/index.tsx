@@ -15,7 +15,7 @@ import {
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Clipboard from 'expo-clipboard';
 import * as DocumentPicker from 'expo-document-picker';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 import {
   SendHorizontal,
@@ -139,6 +139,7 @@ export default function AssistantScreen() {
   }, [audioRecorder.state.isRecording, recordingPulse]);
 
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const modeColors = {
     explore: { bg: withOpacity(colors.primary, OPACITY[10]), text: colors.primary },
     study: { bg: withOpacity(colors.success, OPACITY[10]), text: colors.success },
@@ -1280,7 +1281,7 @@ export default function AssistantScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

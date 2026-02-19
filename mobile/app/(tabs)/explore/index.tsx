@@ -632,7 +632,7 @@ export default function ExploreScreen() {
   const CurrentSortIcon = currentSortIcon;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <Header
         title={t('explore.title')}
