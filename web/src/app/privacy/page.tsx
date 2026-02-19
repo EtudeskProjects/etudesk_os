@@ -81,7 +81,7 @@ En utilisant Etudesk, vous acceptez les pratiques décrites dans cette politique
 
 **Traitement des données IA :**
 - Les conversations avec l'IA sont traitées de manière sécurisée
-- Les modèles IA sont hébergés chez nos partenaires (OpenAI) avec des garanties contractuelles
+- Les modèles IA sont hébergés chez nos partenaires (Anthropic, OpenAI) avec des garanties contractuelles
 - Vos données ne sont pas utilisées pour entraîner les modèles IA sans votre consentement explicite
 
 Vous pouvez supprimer votre historique de conversations IA à tout moment depuis les paramètres de l'application.`,
@@ -96,7 +96,7 @@ Vous pouvez supprimer votre historique de conversations IA à tout moment depuis
 
 **Avec nos prestataires :**
 - Hébergement cloud (LWS)
-- Services d'IA (OpenAI)
+- Services d'IA (Anthropic, OpenAI)
 - Services de paiement
 - Services d'envoi d'emails
 
@@ -143,7 +143,7 @@ Vos données sont hébergées sur des serveurs sécurisés situés dans l'Union 
 
 **Droit de limitation :** Demander la limitation du traitement dans certaines circonstances.
 
-Pour exercer ces droits, contactez-nous à : privacy@etudesk.org
+Pour exercer ces droits, contactez-nous à : hello@etudesk.org
 
 Nous répondrons à votre demande dans un délai de 30 jours.`,
       },
@@ -174,7 +174,7 @@ Nous nous assurons que le niveau de protection de vos données reste équivalent
         title: '10. Protection des mineurs',
         content: `Etudesk n'est pas destiné aux personnes de moins de 16 ans. Nous ne collectons pas sciemment de données auprès de mineurs.
 
-Si vous êtes parent ou tuteur et pensez que votre enfant nous a fourni des données personnelles, veuillez nous contacter immédiatement à privacy@etudesk.org pour que nous puissions supprimer ces informations.`,
+Si vous êtes parent ou tuteur et pensez que votre enfant nous a fourni des données personnelles, veuillez nous contacter immédiatement à hello@etudesk.org pour que nous puissions supprimer ces informations.`,
       },
       {
         title: '11. Modifications de cette politique',
@@ -189,14 +189,14 @@ Nous vous encourageons à consulter régulièrement cette page pour rester infor
         title: '12. Contact',
         content: `Pour toute question concernant cette Politique de Confidentialité ou vos données personnelles :
 
-**Email :** privacy@etudesk.org
-**Délégué à la protection des données :** dpo@etudesk.org
+**Email :** hello@etudesk.org
 
 **Adresse postale :**
 Etudesk SAS
+Résidences Aghien Bloc A Villa 8, Cocody II Plateau
 Abidjan, Côte d'Ivoire
 
-Si vous n'êtes pas satisfait de notre réponse, vous avez le droit de déposer une plainte auprès de l'autorité de protection des données compétente.`,
+Si vous n'êtes pas satisfait de notre réponse, vous avez le droit de déposer une plainte auprès de l'autorité de protection des données compétente (ARTCI en Côte d'Ivoire).`,
       },
     ],
   },
@@ -276,7 +276,7 @@ By using Etudesk, you accept the practices described in this policy. We encourag
 
 **AI data processing:**
 - Conversations with AI are processed securely
-- AI models are hosted with our partners (OpenAI) with contractual guarantees
+- AI models are hosted with our partners (Anthropic, OpenAI) with contractual guarantees
 - Your data is not used to train AI models without your explicit consent
 
 You can delete your AI conversation history at any time from the app settings.`,
@@ -291,7 +291,7 @@ You can delete your AI conversation history at any time from the app settings.`,
 
 **With our service providers:**
 - Cloud hosting (LWS)
-- AI services (OpenAI)
+- AI services (Anthropic, OpenAI)
 - Payment services
 - Email delivery services
 
@@ -338,7 +338,7 @@ Your data is hosted on secure servers located in the European Union and West Afr
 
 **Right to restriction:** Request restriction of processing in certain circumstances.
 
-To exercise these rights, contact us at: privacy@etudesk.org
+To exercise these rights, contact us at: hello@etudesk.org
 
 We will respond to your request within 30 days.`,
       },
@@ -369,7 +369,7 @@ We ensure that the level of protection of your data remains equivalent to that p
         title: '10. Protection of Minors',
         content: `Etudesk is not intended for persons under 16 years of age. We do not knowingly collect data from minors.
 
-If you are a parent or guardian and believe your child has provided us with personal data, please contact us immediately at privacy@etudesk.org so we can delete this information.`,
+If you are a parent or guardian and believe your child has provided us with personal data, please contact us immediately at hello@etudesk.org so we can delete this information.`,
       },
       {
         title: '11. Changes to This Policy',
@@ -384,14 +384,14 @@ We encourage you to regularly review this page to stay informed of our privacy p
         title: '12. Contact',
         content: `For any questions regarding this Privacy Policy or your personal data:
 
-**Email:** privacy@etudesk.org
-**Data Protection Officer:** dpo@etudesk.org
+**Email:** hello@etudesk.org
 
 **Mailing address:**
 Etudesk SAS
+Résidences Aghien Bloc A Villa 8, Cocody II Plateau
 Abidjan, Ivory Coast
 
-If you are not satisfied with our response, you have the right to file a complaint with the competent data protection authority.`,
+If you are not satisfied with our response, you have the right to file a complaint with the competent data protection authority (ARTCI in Ivory Coast).`,
       },
     ],
   },

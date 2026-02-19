@@ -49,16 +49,16 @@ Vous devez avoir au moins 16 ans pour créer un compte. L'utilisation de faux pr
 Etudesk se réserve le droit de suspendre ou supprimer tout compte en cas de violation de ces règles.`,
       },
       {
-        title: '5. Abonnements et paiements',
-        content: `Etudesk propose plusieurs formules d'abonnement :
-- Discover (gratuit) : accès limité aux fonctionnalités
-- Talent : accès étendu pour les professionnels
-- Pro : fonctionnalités avancées pour consultants et PME
-- Corporate : solutions sur mesure pour grandes entreprises
+        title: '5. Crédits et paiements',
+        content: `Etudesk fonctionne sur un système de crédits prépayés :
+- Chaque utilisateur (talent ou organisation) dispose d'un portefeuille de crédits
+- Les crédits sont achetés à l'avance via paiement sécurisé (Paystack) en FCFA
+- Montant minimum : 2 000 FCFA (talent) / 10 000 FCFA (organisation)
+- Les crédits sont consommés à l'usage (interactions avec l'assistant IA, génération de documents, etc.)
 
-Les prix sont indiqués en FCFA et incluent les taxes applicables. Les paiements sont traités de manière sécurisée. Les abonnements se renouvellent automatiquement sauf annulation avant la date de renouvellement.
+Les prix sont indiqués en FCFA. Les paiements sont traités de manière sécurisée par Paystack. Les crédits achetés ne sont pas remboursables sauf disposition légale contraire.
 
-Les remboursements sont accordés conformément à notre politique de remboursement disponible sur demande.`,
+Les crédits n'expirent pas tant que votre compte est actif.`,
       },
       {
         title: '6. Propriété intellectuelle',
@@ -99,6 +99,7 @@ En cas de traduction, la version française prévaut.`,
 
 Email : hello@etudesk.org
 Etudesk SAS
+Résidences Aghien Bloc A Villa 8, Cocody II Plateau
 Abidjan, Côte d'Ivoire`,
       },
     ],
@@ -147,16 +148,16 @@ You must be at least 16 years old to create an account. The use of fake profiles
 Etudesk reserves the right to suspend or delete any account in case of violation of these rules.`,
       },
       {
-        title: '5. Subscriptions and Payments',
-        content: `Etudesk offers several subscription plans:
-- Discover (free): limited access to features
-- Talent: extended access for professionals
-- Pro: advanced features for consultants and SMEs
-- Corporate: custom solutions for large enterprises
+        title: '5. Credits and Payments',
+        content: `Etudesk operates on a prepaid credit system:
+- Each user (talent or organization) has a credit wallet
+- Credits are purchased in advance via secure payment (Paystack) in FCFA
+- Minimum purchase: 2,000 FCFA (talent) / 10,000 FCFA (organization)
+- Credits are consumed on usage (AI assistant interactions, document generation, etc.)
 
-Prices are indicated in FCFA and include applicable taxes. Payments are processed securely. Subscriptions renew automatically unless cancelled before the renewal date.
+Prices are indicated in FCFA. Payments are processed securely by Paystack. Purchased credits are non-refundable except as required by law.
 
-Refunds are granted in accordance with our refund policy available upon request.`,
+Credits do not expire as long as your account is active.`,
       },
       {
         title: '6. Intellectual Property',
@@ -197,6 +198,7 @@ In case of translation, the French version prevails.`,
 
 Email: hello@etudesk.org
 Etudesk SAS
+Résidences Aghien Bloc A Villa 8, Cocody II Plateau
 Abidjan, Ivory Coast`,
       },
     ],

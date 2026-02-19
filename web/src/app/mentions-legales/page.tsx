@@ -13,16 +13,18 @@ const translations = {
       {
         title: '1. Éditeur de la plateforme',
         content: `**Etudesk SAS**
-Société par Actions Simplifiée
-Capital social : 10 000 000 FCFA
-Siège social : Abidjan, Côte d'Ivoire
+Société par Actions Simplifiée (SAS)
+Capital social : 1 334 000 FCFA
+Siège social : Résidences Aghien Bloc A Villa 8, Cocody II Plateau, Abidjan, Côte d'Ivoire
 RCCM : CI-ABJ-2016-B-14288
+DFE : 1740183 C
+Date de création : 16 mai 2016
 Email : hello@etudesk.org`,
       },
       {
         title: '2. Directeur de la publication',
         content: `Lamine Barro
-Président d'Etudesk SAS`,
+Directeur Général d'Etudesk SAS`,
       },
       {
         title: '3. Hébergement',
@@ -63,6 +65,7 @@ En cas de traduction, la version française prévaut.`,
 
 **Adresse postale :**
 Etudesk SAS
+Résidences Aghien Bloc A Villa 8, Cocody II Plateau
 Abidjan, Côte d'Ivoire`,
       },
     ],
@@ -76,15 +79,17 @@ Abidjan, Côte d'Ivoire`,
         title: '1. Platform Publisher',
         content: `**Etudesk SAS**
 Simplified Joint-Stock Company (Société par Actions Simplifiée)
-Share capital: 10,000,000 FCFA
-Registered office: Abidjan, Ivory Coast
+Share capital: 1,334,000 FCFA
+Registered office: Résidences Aghien Bloc A Villa 8, Cocody II Plateau, Abidjan, Ivory Coast
 Trade Registry (RCCM): CI-ABJ-2016-B-14288
+Tax ID (DFE): 1740183 C
+Founded: May 16, 2016
 Email: hello@etudesk.org`,
       },
       {
         title: '2. Publication Director',
         content: `Lamine Barro
-President of Etudesk SAS`,
+Chief Executive Officer (Directeur Général) of Etudesk SAS`,
       },
       {
         title: '3. Hosting',
@@ -125,6 +130,7 @@ In case of translation, the French version prevails.`,
 
 **Mailing address:**
 Etudesk SAS
+Résidences Aghien Bloc A Villa 8, Cocody II Plateau
 Abidjan, Ivory Coast`,
       },
     ],
