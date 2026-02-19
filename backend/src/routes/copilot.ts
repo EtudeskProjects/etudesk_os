@@ -398,9 +398,13 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     }
 
     // Save user message FIRST (needed in history) — include talent_id for sender tracking
+    // Include voiceNoteUrl in attachments at INSERT time (not a separate UPDATE) for reliable persistence
+    const initialAttachments = voiceNoteUrl
+      ? sanitizeJsonForPg({ voiceNoteUrl, voiceNoteMimeType })
+      : sanitizeJsonForPg(null);
     await pool.query(
       `INSERT INTO copilot_messages (session_id, role, content, attachments, talent_id) VALUES ($1, 'user', $2, $3, $4)`,
-      [sessionId, sanitizeForPg(message.trim()), sanitizeJsonForPg(null), talentId]
+      [sessionId, sanitizeForPg(message.trim()), initialAttachments, talentId]
     );
 
     // --- PHASE 2: Attachments + Load history in parallel ---
@@ -421,12 +425,15 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       ),
     ]);
 
-    // Update user message with attachments if present (non-blocking, fire-and-forget)
+    // Update user message with file attachments if present (merge with existing voiceNote data)
     if (messageAttachments) {
+      const mergedAttachments = voiceNoteUrl
+        ? JSON.stringify({ voiceNoteUrl, voiceNoteMimeType, files: JSON.parse(messageAttachments) })
+        : messageAttachments;
       pool.query(
         `UPDATE copilot_messages SET attachments = $1
-         WHERE session_id = $2 AND role = 'user' ORDER BY created_at DESC LIMIT 1`,
-        [sanitizeJsonForPg(messageAttachments), sessionId]
+         WHERE id = (SELECT id FROM copilot_messages WHERE session_id = $2 AND role = 'user' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1)`,
+        [sanitizeJsonForPg(mergedAttachments), sessionId]
       ).catch(() => {});
     }
 
@@ -475,16 +482,6 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       res,
       parsedAttachments
     );
-
-    // Update user message with voiceNoteUrl if present
-    if (voiceNoteUrl) {
-      pool.query(
-        `UPDATE copilot_messages SET attachments = $1
-         WHERE session_id = $2 AND role = 'user' AND deleted_at IS NULL
-         ORDER BY created_at DESC LIMIT 1`,
-        [sanitizeJsonForPg({ voiceNoteUrl, voiceNoteMimeType }), sessionId]
-      ).catch(() => {});
-    }
 
     // --- TTS generation (study mode only, non-blocking for SSE) ---
     let audioUrl: string | undefined;

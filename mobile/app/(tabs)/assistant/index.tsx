@@ -396,9 +396,14 @@ export default function AssistantScreen() {
             }
           }
 
-          // Extract voiceNoteUrl from attachments (persisted as JSON { voiceNoteUrl, voiceNoteMimeType })
-          const attachmentsData = m.attachments && !Array.isArray(m.attachments) ? m.attachments as any : null;
-          const voiceNoteUrl = attachmentsData?.voiceNoteUrl || undefined;
+          // Extract voiceNoteUrl and file attachments from persisted attachments JSON
+          // Format: { voiceNoteUrl, voiceNoteMimeType, files?: [...] } or [...files] (legacy)
+          const raw = m.attachments as any;
+          const isObj = raw && !Array.isArray(raw);
+          const voiceNoteUrl = isObj ? raw.voiceNoteUrl : undefined;
+          const fileAttachments = isObj && Array.isArray(raw.files)
+            ? raw.files
+            : (Array.isArray(raw) ? raw : []);
 
           return {
             id: m.id,
@@ -407,8 +412,8 @@ export default function AssistantScreen() {
             segments,
             senderName: m.senderName,
             voiceNoteUrl,
-            attachments: m.attachments && Array.isArray(m.attachments) && m.attachments.length > 0
-              ? m.attachments.map((a: any) => ({ name: a.name, type: a.type, size: a.size }))
+            attachments: fileAttachments.length > 0
+              ? fileAttachments.map((a: any) => ({ name: a.name, type: a.type, size: a.size }))
               : undefined,
           };
         });

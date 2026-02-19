@@ -50,8 +50,14 @@ export function useAudioPlayerHook(url: string | null): UseAudioPlayerReturn {
   };
 
   const play = useCallback(() => {
+    // If audio finished (at end), seek to beginning before playing
+    const dur = status.duration ?? 0;
+    const cur = status.currentTime ?? 0;
+    if (dur > 0 && cur >= dur - 0.1) {
+      player.seekTo(0);
+    }
     player.play();
-  }, [player]);
+  }, [player, status.duration, status.currentTime]);
 
   const pause = useCallback(() => {
     player.pause();
