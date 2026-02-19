@@ -360,6 +360,23 @@ export async function handleConfirmation(
           return { success: false, message: 'Aucune donnée de profil à mettre à jour.' };
         }
 
+        // --- Strict constants ---
+        const VALID_PROFILE_TAGS = new Set([
+          'STUDENT', 'PUPIL', 'JOB_SEEKER', 'SALARIED', 'ENTREPRENEUR',
+          'CIVIL_SERVANT', 'MANAGER', 'CONSULTANT', 'INVESTOR',
+          'CONTENT_CREATOR', 'COACH', 'RETIRED',
+        ]);
+        const VALID_GOALS = new Set([
+          'LEARN_NEW_SKILLS', 'PREPARE_EXAMS', 'FIND_JOB', 'ADVANCE_CAREER',
+          'RESEARCH_SUPPORT', 'IMPROVE_PRODUCTIVITY', 'COLLABORATIVE_LEARNING',
+          'TEACH_OR_MENTOR', 'BUILD_NETWORK_OR_VISIBILITY', 'CONTRIBUTE_OR_GIVE_BACK',
+        ]);
+        const MAX_ARRAY = 3;
+        const MAX_BIO = 500;
+        const MAX_CITY = 100;
+        const MAX_COUNTRY = 100;
+        const MAX_GOALS_TEXT = 500;
+
         // Allowed fields for profile update
         const ALLOWED_FIELDS: Record<string, string> = {
           bio: 'bio',
@@ -379,13 +396,37 @@ export async function handleConfirmation(
           const dbField = ALLOWED_FIELDS[key];
           if (!dbField) continue;
 
-          // Handle array fields (profile_tags, goals — max 3 each, pass as JS array for pg TEXT[])
-          if ((dbField === 'profile_tags' || dbField === 'goals') && Array.isArray(value)) {
+          // Strict validation per field
+          if (dbField === 'profile_tags') {
+            if (!Array.isArray(value)) continue;
+            const valid = value.filter((v: any) => typeof v === 'string' && VALID_PROFILE_TAGS.has(v)).slice(0, MAX_ARRAY);
+            if (valid.length === 0) continue;
             setClauses.push(`${dbField} = $${paramIndex}`);
-            values.push(value.slice(0, 3));
-          } else {
+            values.push(valid);
+          } else if (dbField === 'goals') {
+            if (!Array.isArray(value)) continue;
+            const valid = value.filter((v: any) => typeof v === 'string' && VALID_GOALS.has(v)).slice(0, MAX_ARRAY);
+            if (valid.length === 0) continue;
+            setClauses.push(`${dbField} = $${paramIndex}`);
+            values.push(valid);
+          } else if (dbField === 'bio') {
+            if (typeof value !== 'string' || !value.trim()) continue;
+            setClauses.push(`${dbField} = $${paramIndex}`);
+            values.push(value.trim().slice(0, MAX_BIO));
+          } else if (dbField === 'city') {
+            if (typeof value !== 'string' || !value.trim()) continue;
+            setClauses.push(`${dbField} = $${paramIndex}`);
+            values.push(value.trim().slice(0, MAX_CITY));
+          } else if (dbField === 'country') {
+            if (typeof value !== 'string' || !value.trim()) continue;
+            setClauses.push(`${dbField} = $${paramIndex}`);
+            values.push(value.trim().slice(0, MAX_COUNTRY));
+          } else if (dbField === 'remote_ready' || dbField === 'willing_to_relocate') {
+            if (typeof value !== 'boolean') continue;
             setClauses.push(`${dbField} = $${paramIndex}`);
             values.push(value);
+          } else {
+            continue;
           }
           paramIndex++;
         }
