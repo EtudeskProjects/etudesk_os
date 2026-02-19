@@ -461,10 +461,14 @@
     "chat": "WhatsApp"
   },
   "legal": {
-    "title": "Mentions légales",
+    "title": "Informations légales",
     "terms": "Conditions d'utilisation",
-    "privacy": "Confidentialité",
-    "cookies": "Cookies"
+    "termsDesc": "CGU et règles d'utilisation",
+    "privacy": "Politique de confidentialité",
+    "privacyDesc": "Protection de vos données",
+    "legalNotice": "Mentions légales",
+    "legalNoticeDesc": "Éditeur, hébergement, RCCM",
+    "footer": "Ces documents sont consultables sur etudesk.com et régis par le droit ivoirien."
   },
   "notifications": {
     "title": "Notifications",

@@ -100,14 +100,12 @@ export function PromptModal({
                     onPress={onCancel}
                     variant="secondary"
                     fullWidth
-                    style={{ flex: 1 }}
                   />
                   <Button
                     title={confirmText}
                     onPress={() => onConfirm(value)}
                     variant="primary"
                     fullWidth
-                    style={{ flex: 1 }}
                   />
                 </View>
               </Animated.View>
@@ -145,7 +143,7 @@ const styles = StyleSheet.create({
     lineHeight: TYPOGRAPHY.fontSize.md * TYPOGRAPHY.lineHeight.relaxed,
   },
   buttons: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: SPACING.sm,
     marginTop: SPACING.lg,
   },

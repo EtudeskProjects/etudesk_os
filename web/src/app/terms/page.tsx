@@ -208,7 +208,7 @@ type Lang = 'fr' | 'en';
 export default function TermsPage() {
   const [lang, setLang] = useState<Lang>('fr');
   const t = translations[lang];
-  const updateDate = '2026-02-01';
+  const updateDate = '2026-02-19';
 
   return (
     <main className="legal-page">

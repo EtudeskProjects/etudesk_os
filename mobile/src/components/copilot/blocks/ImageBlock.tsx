@@ -4,7 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, Linking, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { Image as ImageIcon, ExternalLink } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { useTranslation } from '../../../contexts/I18nContext';
@@ -48,12 +49,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
     if (!data.source) return;
 
     try {
-      const supported = await Linking.canOpenURL(data.source);
-      if (supported) {
-        await Linking.openURL(data.source);
-      } else {
-        showToastGlobal({ type: 'error', title: t('common.error'), message: t('copilotImage.openLinkError') });
-      }
+      await WebBrowser.openBrowserAsync(data.source);
     } catch (err) {
       showToastGlobal({ type: 'error', title: t('common.error'), message: t('copilotImage.openLinkErrorMessage') });
     }

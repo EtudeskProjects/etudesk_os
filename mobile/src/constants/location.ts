@@ -113,7 +113,6 @@ export type CountryCode = string;
 export const GENDERS = [
   { id: 'M', label: 'Homme' },
   { id: 'F', label: 'Femme' },
-  { id: 'OTHER', label: 'Autre' },
 ] as const;
 
 export type Gender = (typeof GENDERS)[number]['id'];

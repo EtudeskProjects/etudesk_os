@@ -6,7 +6,8 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Linking, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { useTheme } from '../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
 import { ShimmerPlaceholder } from '../ui/ShimmerPlaceholder';
@@ -264,7 +265,7 @@ function renderInlineMarkdown(text: string, colors: any): React.ReactNode[] {
         <Text
           key={key++}
           style={{ color: colors.primary, textDecorationLine: 'underline' }}
-          onPress={() => Linking.openURL(resolvedUrl)}
+          onPress={() => WebBrowser.openBrowserAsync(resolvedUrl).catch(() => {})}
         >
           {m[6]}
         </Text>

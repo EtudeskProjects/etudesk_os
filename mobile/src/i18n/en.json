@@ -461,10 +461,14 @@
     "chat": "WhatsApp"
   },
   "legal": {
-    "title": "Legal",
-    "terms": "Terms of use",
-    "privacy": "Privacy",
-    "cookies": "Cookies"
+    "title": "Legal Information",
+    "terms": "Terms of Service",
+    "termsDesc": "Terms and conditions of use",
+    "privacy": "Privacy Policy",
+    "privacyDesc": "How we protect your data",
+    "legalNotice": "Legal Notice",
+    "legalNoticeDesc": "Publisher, hosting, registration",
+    "footer": "These documents are available on etudesk.com and governed by Ivorian law."
   },
   "notifications": {
     "title": "Notifications",

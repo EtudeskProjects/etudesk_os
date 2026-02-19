@@ -95,7 +95,7 @@ Vous pouvez supprimer votre historique de conversations IA à tout moment depuis
 - Lorsque vous rejoignez une communauté, certaines informations de profil sont visibles aux autres membres
 
 **Avec nos prestataires :**
-- Hébergement cloud (AWS, Google Cloud)
+- Hébergement cloud (LWS)
 - Services d'IA (OpenAI)
 - Services de paiement
 - Services d'envoi d'emails
@@ -290,7 +290,7 @@ You can delete your AI conversation history at any time from the app settings.`,
 - When you join a community, certain profile information is visible to other members
 
 **With our service providers:**
-- Cloud hosting (AWS, Google Cloud)
+- Cloud hosting (LWS)
 - AI services (OpenAI)
 - Payment services
 - Email delivery services
@@ -402,7 +402,7 @@ type Lang = 'fr' | 'en';
 export default function PrivacyPage() {
   const [lang, setLang] = useState<Lang>('fr');
   const t = translations[lang];
-  const updateDate = '2026-02-01';
+  const updateDate = '2026-02-19';
 
   return (
     <main className="legal-page">

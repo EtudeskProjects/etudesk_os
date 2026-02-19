@@ -22,6 +22,7 @@ const translations = {
     followUs: 'Suivez-nous',
     terms: 'Conditions d\'utilisation',
     privacy: 'Politique de confidentialité',
+    legalNotice: 'Mentions légales',
     rights: 'Tous droits réservés.',
     // Waitlist
     waitlistTitle: 'Sois parmi les premiers',
@@ -54,6 +55,7 @@ const translations = {
     followUs: 'Follow us',
     terms: 'Terms of Service',
     privacy: 'Privacy Policy',
+    legalNotice: 'Legal Notice',
     rights: 'All rights reserved.',
     // Waitlist
     waitlistTitle: 'Be among the first',
@@ -356,6 +358,8 @@ export default function Home() {
           <a href="/terms">{t.terms}</a>
           <span className="footer-dot" aria-hidden="true" />
           <a href="/privacy">{t.privacy}</a>
+          <span className="footer-dot" aria-hidden="true" />
+          <a href="/mentions-legales">{t.legalNotice}</a>
         </div>
         <p className="footer-copy">&copy; {new Date().getFullYear()} Etudesk. {t.rights}</p>
       </footer>

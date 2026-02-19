@@ -5,8 +5,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, Linking, Pressable } from 'react-native';
+import { View, Text, Image, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import {
   Briefcase,
   Users,
@@ -177,6 +178,9 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
 
   const handlePress = () => {
     const id = data.id;
+    if (__DEV__ && type === 'document') {
+      console.log('[EntityCard] document press — data:', JSON.stringify({ id, file_url: data.file_url, downloadUrl: data.downloadUrl }, null, 2));
+    }
     if (!id || id === 'null' || id === 'undefined') return;
 
     switch (type) {
@@ -199,9 +203,8 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
         const fileUrl = data.file_url || data.downloadUrl;
         if (fileUrl) {
           const url = fileUrl.startsWith('http') ? fileUrl : `${process.env.EXPO_PUBLIC_API_URL || ''}${fileUrl}`;
-          Linking.openURL(url);
+          WebBrowser.openBrowserAsync(url).catch(() => {});
         } else {
-          // No file URL yet, navigate to document details or just press through
           router.push(`/details/document/${id}` as any);
         }
         break;

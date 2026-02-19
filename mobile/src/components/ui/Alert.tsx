@@ -134,36 +134,25 @@ export function Alert({
                 </Text>
               )}
 
-              {/* Buttons */}
-              <View style={[
-                styles.buttonsContainer,
-                defaultButtons.length >= 3 && styles.buttonsContainerVertical,
-                defaultButtons.length === 1 && styles.buttonsContainerCentered,
-              ]}>
+              {/* Buttons — always vertical, full width */}
+              <View style={styles.buttonsContainer}>
                 {defaultButtons.map((button, index) => {
                   const isCancel = button.style === 'cancel';
                   const isDestructive = button.style === 'destructive';
 
                   return (
-                    <View
+                    <Button
                       key={index}
-                      style={[
-                        styles.buttonWrapper,
-                        defaultButtons.length === 2 && { flex: 1 },
-                      ]}
-                    >
-                      <Button
-                        title={button.text}
-                        onPress={() => handleButtonPress(button)}
-                        variant={isCancel ? 'outline' : 'primary'}
-                        fullWidth
-                        style={
-                          isDestructive
-                            ? { backgroundColor: colors.primary }
-                            : undefined
-                        }
-                      />
-                    </View>
+                      title={button.text}
+                      onPress={() => handleButtonPress(button)}
+                      variant={isCancel ? 'outline' : 'primary'}
+                      fullWidth
+                      style={
+                        isDestructive
+                          ? { backgroundColor: colors.primary }
+                          : undefined
+                      }
+                    />
                   );
                 })}
               </View>
@@ -210,18 +199,9 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   buttonsContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: SPACING.sm,
     width: '100%',
     marginTop: SPACING.sm,
-  },
-  buttonsContainerVertical: {
-    flexDirection: 'column',
-  },
-  buttonsContainerCentered: {
-    justifyContent: 'center',
-  },
-  buttonWrapper: {
-    minWidth: 100,
   },
 });
