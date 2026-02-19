@@ -677,7 +677,7 @@ export default function AssistantScreen() {
                     ...m,
                     segments: [
                       ...m.segments,
-                      { type: 'audio' as const, audioUrl, audioDuration: duration },
+                      { type: 'audio' as const, audioUrl, audioDuration: duration, autoPlay: true },
                     ],
                   }
                   : m
@@ -1122,7 +1122,7 @@ export default function AssistantScreen() {
                     }
                     if (seg.type === 'audio' && seg.audioUrl) {
                       const { AudioBlock } = require('../../../src/components/copilot/blocks/AudioBlock');
-                      return <AudioBlock key={`seg-${idx}`} url={seg.audioUrl} duration={seg.audioDuration} autoPlay={!message.isStreaming} />;
+                      return <AudioBlock key={`seg-${idx}`} url={seg.audioUrl} duration={seg.audioDuration} autoPlay={!!(seg as any).autoPlay} />;
                     }
                     return null;
                   })}
