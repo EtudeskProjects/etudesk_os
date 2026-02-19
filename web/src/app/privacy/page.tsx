@@ -81,7 +81,7 @@ En utilisant Etudesk, vous acceptez les pratiques décrites dans cette politique
 
 **Traitement des données IA :**
 - Les conversations avec l'IA sont traitées de manière sécurisée
-- Les modèles IA sont hébergés chez nos partenaires (Anthropic, OpenAI) avec des garanties contractuelles
+- Les modèles IA sont hébergés chez nos partenaires (Anthropic, OpenAI, Google) avec des garanties contractuelles
 - Vos données ne sont pas utilisées pour entraîner les modèles IA sans votre consentement explicite
 
 Vous pouvez supprimer votre historique de conversations IA à tout moment depuis les paramètres de l'application.`,
@@ -96,7 +96,7 @@ Vous pouvez supprimer votre historique de conversations IA à tout moment depuis
 
 **Avec nos prestataires :**
 - Hébergement cloud (LWS)
-- Services d'IA (Anthropic, OpenAI)
+- Services d'IA (Anthropic, OpenAI, Google)
 - Services de paiement
 - Services d'envoi d'emails
 
@@ -291,7 +291,7 @@ You can delete your AI conversation history at any time from the app settings.`,
 
 **With our service providers:**
 - Cloud hosting (LWS)
-- AI services (Anthropic, OpenAI)
+- AI services (Anthropic, OpenAI, Google)
 - Payment services
 - Email delivery services
 
