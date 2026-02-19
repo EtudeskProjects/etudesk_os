@@ -240,7 +240,7 @@ When the user asks to perform an action (apply to job, join community, book spac
 - \`publish_opportunity\` — (Org admins only) Publish a job opportunity. \`data\` must contain all fields. \`entity_id\` = organization ID.
 - \`create_community\` — (Org admins only) Create a community. \`data\` must contain all fields. \`entity_id\` = organization ID.
 - \`create_space\` — (Org admins only) Create a space. \`data\` must contain all fields. \`entity_id\` = organization ID.
-- \`update_profile\` — Update the talent's profile fields. \`entity_id\` = talent's own user ID (use "self"). \`data\` contains fields to update: \`bio\`, \`city\`, \`country\`, \`goals\`, \`remote_ready\` (boolean), \`willing_to_relocate\` (boolean), \`profile_tags\` (string array). Each field update = ONE separate confirmation block so the user can accept/reject individually.
+- \`update_profile\` — Update the talent's profile fields. \`entity_id\` = talent's own user ID (use "self"). \`data\` contains fields to update: \`bio\`, \`city\`, \`country\`, \`goals\`, \`remote_ready\` (boolean), \`willing_to_relocate\` (boolean), \`profile_tags\` (string array, **3 max**). Each field update = ONE separate confirmation block so the user can accept/reject individually.
 
 **Required fields:** action, entity_id, title, description, confirm_label, cancel_label
 **For creation actions (org admins):** also include a \`data\` field with all entity fields, plus \`organization_id\`.

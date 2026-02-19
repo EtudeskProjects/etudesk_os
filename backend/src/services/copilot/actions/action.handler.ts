@@ -379,10 +379,11 @@ export async function handleConfirmation(
           const dbField = ALLOWED_FIELDS[key];
           if (!dbField) continue;
 
-          // Handle array fields (profile_tags)
+          // Handle array fields (profile_tags — max 3, pass as JS array for pg TEXT[])
           if (dbField === 'profile_tags' && Array.isArray(value)) {
+            const tags = value.slice(0, 3);
             setClauses.push(`${dbField} = $${paramIndex}`);
-            values.push(JSON.stringify(value));
+            values.push(tags);
           } else {
             setClauses.push(`${dbField} = $${paramIndex}`);
             values.push(value);

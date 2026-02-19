@@ -154,10 +154,17 @@ export async function extractDocumentMetadata(
     }
 
     // Strip markdown fences if present
-    const cleanedContent = content
+    let cleanedContent = content
       .replace(/^```(?:json)?\s*\n?/i, '')
       .replace(/\n?```\s*$/i, '')
       .trim();
+
+    // Robust JSON extraction: find first { and last matching }
+    const firstBrace = cleanedContent.indexOf('{');
+    const lastBrace = cleanedContent.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      cleanedContent = cleanedContent.substring(firstBrace, lastBrace + 1);
+    }
 
     const extractedData = JSON.parse(cleanedContent) as Partial<ExtractedDocumentData>;
 
