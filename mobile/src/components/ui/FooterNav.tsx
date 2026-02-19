@@ -46,7 +46,7 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
     isOrganizationSpace && activeTab === 'home' ? 'gestion' : activeTab;
   const bottomPadding =
     Platform.OS === 'android'
-      ? Math.max(SPACING.xxxl, insets.bottom + SPACING.sm)
+      ? Math.max(SPACING.sm, insets.bottom + SPACING.xs)
       : Math.max(insets.bottom, SPACING.sm);
 
   const tabs: { name: TabName; icon: typeof Home; route: string }[] = [
