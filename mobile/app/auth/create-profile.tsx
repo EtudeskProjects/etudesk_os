@@ -14,25 +14,15 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   ChevronRight,
   ArrowLeft,
-  Check,
   Laptop,
   Plane,
   Camera,
 	} from 'lucide-react-native';
 	import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
-	import { Chip, IconButton, Input, Button, Toggle, StepIndicator } from '../../src/components/ui';
-import { FormTextArea } from '../../src/components/forms/FormTextArea';
+	import { Chip, IconButton, Input, Button, Toggle } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useForm } from '../../src/hooks/useForm';
-import {
-  SECTOR_DATA,
-  PROFILE_TAG_DATA,
-  GOAL_DATA,
-  MAX_SECTORS,
-  MAX_PROFILE_TAGS,
-  MAX_GOALS,
-} from '../../src/constants/talent';
 import { COUNTRIES, GENDERS, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
 import { otpService } from '../../src/services/otpService';
 import { onboardingService } from '../../src/services/onboardingService';
@@ -42,8 +32,6 @@ import { useAuth } from '../../src/contexts/AuthContext';
 import { useAlert } from '../../src/contexts/AlertContext';
 import { ScrollToInputContext } from '../../src/contexts/ScrollToInputContext';
 
-type Step = 'info' | 'sectors' | 'goals';
-
 interface ProfileFormValues {
   firstName: string;
   lastName: string;
@@ -51,15 +39,11 @@ interface ProfileFormValues {
   country: string;
   region: string;
   commune: string;
-  bio: string;
   phone: string;
   email: string;
   avatarUri: string | null;
   remoteReady: boolean;
   willingToRelocate: boolean;
-  selectedTags: string[];
-  selectedSectors: string[];
-  selectedGoals: string[];
 }
 
 export default function CreateProfileScreen() {
@@ -68,7 +52,6 @@ export default function CreateProfileScreen() {
   const { t } = useI18n();
   const { completeOnboarding } = useAuth();
   const insets = useSafeAreaInsets();
-  const [currentStep, setCurrentStep] = useState<Step>('info');
 
   // Form management with useForm hook
   const form = useForm<ProfileFormValues>({
@@ -79,15 +62,11 @@ export default function CreateProfileScreen() {
       country: { initialValue: 'CI' },
       region: { initialValue: '' },
       commune: { initialValue: '' },
-      bio: { initialValue: '' },
       phone: { initialValue: '', required: true, requiredMessage: 'Le téléphone est requis' },
       email: { initialValue: '' },
       avatarUri: { initialValue: null },
       remoteReady: { initialValue: true },
       willingToRelocate: { initialValue: true },
-      selectedTags: { initialValue: [] },
-      selectedSectors: { initialValue: [], required: true },
-      selectedGoals: { initialValue: [], required: true },
     },
     onSubmit: async (values) => {
       const displayName = `${values.firstName.trim()} ${values.lastName.trim()}`.trim();
@@ -99,13 +78,9 @@ export default function CreateProfileScreen() {
         city: values.commune || undefined,
         region: values.region || undefined,
         country: values.country || undefined,
-        profileTags: values.selectedTags.length > 0 ? values.selectedTags : undefined,
-        goals: values.selectedGoals.length > 0 ? values.selectedGoals : undefined,
-        bio: values.bio.trim() || undefined,
         remoteReady: values.remoteReady,
         willingToRelocate: values.willingToRelocate,
         gender: values.gender || undefined,
-        sectors: values.selectedSectors.length > 0 ? values.selectedSectors : undefined,
       };
       const response = await onboardingService.complete(profileData);
       if (response.data) {
@@ -124,15 +99,11 @@ export default function CreateProfileScreen() {
   const country = form.getValue('country');
   const region = form.getValue('region');
   const commune = form.getValue('commune');
-  const bio = form.getValue('bio');
   const phone = form.getValue('phone');
   const email = form.getValue('email');
   const avatarUri = form.getValue('avatarUri');
   const remoteReady = form.getValue('remoteReady');
   const willingToRelocate = form.getValue('willingToRelocate');
-  const selectedTags = form.getValue('selectedTags');
-  const selectedSectors = form.getValue('selectedSectors');
-  const selectedGoals = form.getValue('selectedGoals');
 
   // Main vertical scroll (used for keyboard-aware scrolling on focus)
   const mainScrollRef = useRef<ScrollView>(null);
@@ -192,7 +163,6 @@ export default function CreateProfileScreen() {
   ) => {
     const position = positions.current[chipId];
     if (position && scrollRef.current) {
-      // Center the chip in the scroll view (approximate scroll container width ~350)
       const scrollContainerWidth = 350;
       const offset = Math.max(0, position.x - (scrollContainerWidth - position.width) / 2);
       scrollRef.current.scrollTo({ x: offset, animated });
@@ -236,44 +206,6 @@ export default function CreateProfileScreen() {
     }
   };
 
-  const toggleSector = (sectorId: string) => {
-    const currentSectors = form.getValue('selectedSectors');
-    if (currentSectors.includes(sectorId)) {
-      form.setValue('selectedSectors', currentSectors.filter((id) => id !== sectorId));
-    } else if (currentSectors.length < MAX_SECTORS) {
-      form.setValue('selectedSectors', [...currentSectors, sectorId]);
-    }
-  };
-
-  const toggleTag = (tagId: string) => {
-    const currentTags = form.getValue('selectedTags');
-    if (currentTags.includes(tagId)) {
-      form.setValue('selectedTags', currentTags.filter((id) => id !== tagId));
-    } else if (currentTags.length < MAX_PROFILE_TAGS) {
-      form.setValue('selectedTags', [...currentTags, tagId]);
-    }
-  };
-
-  const toggleGoal = (goalId: string) => {
-    const currentGoals = form.getValue('selectedGoals');
-    if (currentGoals.includes(goalId)) {
-      form.setValue('selectedGoals', currentGoals.filter((id) => id !== goalId));
-    } else if (currentGoals.length < MAX_GOALS) {
-      form.setValue('selectedGoals', [...currentGoals, goalId]);
-    }
-  };
-
-  const handleNext = async () => {
-    if (currentStep === 'info') {
-      setCurrentStep('sectors');
-    } else if (currentStep === 'sectors') {
-      setCurrentStep('goals');
-    } else {
-      // Submit profile to backend
-      await handleSubmitProfile();
-    }
-  };
-
   const handleSubmitProfile = async () => {
     if (form.state.isSubmitting) return;
 
@@ -311,7 +243,6 @@ export default function CreateProfileScreen() {
         return;
       }
 
-      // Build detailed error message for debugging
       let errorMessage = 'Une erreur est survenue lors de la création de votre profil.';
 
       if (error.status === 500) {
@@ -331,437 +262,27 @@ export default function CreateProfileScreen() {
     }
   };
 
-  const handleBack = () => {
-    if (currentStep === 'info') {
-      router.back();
-    } else if (currentStep === 'sectors') {
-      setCurrentStep('info');
-    } else if (currentStep === 'goals') {
-      setCurrentStep('sectors');
-    }
-  };
-
   const canProceed = () => {
-    if (currentStep === 'info') {
-      // Required: firstName, lastName, country, phone
-      return (
-        firstName.trim().length >= 2 &&
-        lastName.trim().length >= 2 &&
-        country.length > 0 &&
-        phone.trim().length >= 8
-      );
-    }
-    if (currentStep === 'sectors') {
-      return selectedSectors.length > 0;
-    }
-    return selectedGoals.length > 0;
+    return (
+      firstName.trim().length >= 2 &&
+      lastName.trim().length >= 2 &&
+      country.length > 0 &&
+      phone.trim().length >= 8
+    );
   };
-
-  /*
-   * STEP DATA
-   */
-  const STEPS_DATA = [
-    { id: 'info', label: 'Infos' },
-    { id: 'sectors', label: 'Secteurs' },
-    { id: 'goals', label: 'Objectifs' },
-  ];
-
-  const renderStepIndicator = () => (
-    <StepIndicator steps={STEPS_DATA} currentStepId={currentStep} />
-  );
-
-  const renderInfoStep = () => (
-    <View style={styles.stepContent}>
-      <View style={styles.stepHeader}>
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('auth.createProfile.tellUsAboutYou')}</Text>
-      </View>
-
-      <View style={styles.formFields}>
-	        {/* Photo de profil */}
-	        <View style={styles.photoSection}>
-	          <Pressable
-	            style={[styles.photoContainer, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
-	            onPress={pickImage}
-	            accessibilityRole="button"
-	            accessibilityLabel={t('auth.createProfile.addPhoto')}
-	          >
-	            {avatarUri ? (
-	              <Image source={{ uri: getFullImageUrl(avatarUri) || avatarUri }} style={styles.photoImage} resizeMode="cover" />
-	            ) : (
-	              <Camera size={ICON.size.lg} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
-	            )}
-	          </Pressable>
-	          <Text style={[styles.photoHint, { color: colors.textSecondary }]}>
-	            {t('auth.createProfile.addPhoto')}
-	          </Text>
-	        </View>
-
-        {/* Prénom & Nom */}
-        <View style={styles.rowFields}>
-          <View style={styles.halfField}>
-            <Input
-              label={`${t('auth.createProfile.firstName')} *`}
-              placeholder=""
-              value={firstName}
-              onChangeText={(value) => form.setValue('firstName', value)}
-              autoCapitalize="words"
-              autoFocus
-            />
-          </View>
-          <View style={styles.halfField}>
-            <Input
-              label={`${t('auth.createProfile.lastName')} *`}
-              placeholder=""
-              value={lastName}
-              onChangeText={(value) => form.setValue('lastName', value)}
-              autoCapitalize="words"
-            />
-          </View>
-        </View>
-
-        {/* Genre */}
-	        <View style={styles.fieldContainer}>
-	          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.gender')}</Text>
-	          <View style={styles.optionsRow}>
-	            {GENDERS.map((g) => (
-	              <Chip
-	                key={g.id}
-	                label={g.label}
-	                selected={gender === g.id}
-	                onPress={() => form.setValue('gender', g.id)}
-	                style={[
-	                  styles.optionButton,
-	                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-	                  gender === g.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-	                ]}
-	                textStyle={[
-	                  styles.optionButtonText,
-	                  { color: colors.gray700 },
-	                  gender === g.id && { color: colors.textOnPrimary },
-	                ]}
-	              />
-	            ))}
-	          </View>
-	        </View>
-
-        {/* Profil Tags */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            {t('auth.createProfile.yourProfile')} ({selectedTags.length}/{MAX_PROFILE_TAGS})
-          </Text>
-	          <View style={styles.tagsContainer}>
-	            {PROFILE_TAG_DATA.map((tag) => {
-	              const isSelected = selectedTags.includes(tag.id);
-	              return (
-	                <Chip
-	                  key={tag.id}
-	                  label={tag.label}
-	                  selected={isSelected}
-	                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
-	                  onPress={() => toggleTag(tag.id)}
-	                  style={[
-	                    styles.selectableTag,
-	                    { backgroundColor: colors.surface, borderColor: colors.gray200 },
-	                    isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-	                  ]}
-	                  textStyle={[
-	                    styles.selectableTagText,
-	                    { color: colors.gray600 },
-	                    isSelected && { color: colors.primary },
-	                  ]}
-	                />
-	              );
-	            })}
-	          </View>
-	        </View>
-
-        {/* Bio */}
-        <View style={styles.fieldContainer}>
-          <FormTextArea
-            label="Bio"
-            placeholder="Décris-toi en quelques mots..."
-            value={bio}
-            onChangeText={(text) => form.setValue('bio', text.slice(0, 300))}
-            rows={4}
-            maxLength={300}
-          />
-        </View>
-
-        {/* Separator - Localisation */}
-        <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
-
-        {/* Pays */}
-        <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.country')} *</Text>
-          <ScrollView
-            ref={countryScrollRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.horizontalScroll}
-            contentContainerStyle={styles.horizontalScrollContent}
-          >
-	            {COUNTRIES.map((c) => (
-	              <Chip
-	                key={c.id}
-	                label={c.label}
-	                selected={country === c.id}
-	                onLayout={(event) => {
-	                  const { x, width } = event.nativeEvent.layout;
-	                  handleChipLayout(countryChipPositions, c.id, x, width);
-	                }}
-	                onPress={() => {
-	                  form.setValue('country', c.id);
-	                  form.setValue('region', '');
-	                  form.setValue('commune', '');
-	                  setTimeout(() => scrollToChip(countryScrollRef, countryChipPositions, c.id, true), 50);
-	                }}
-	                style={[
-	                  styles.optionChip,
-	                  { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-	                  country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-	                ]}
-	                textStyle={[
-	                  styles.optionChipText,
-	                  { color: colors.gray700 },
-	                  country === c.id && { color: colors.textOnPrimary },
-	                ]}
-	              />
-	            ))}
-	          </ScrollView>
-	        </View>
-
-        {/* Région */}
-        {availableRegions.length > 0 && (
-          <View style={styles.fieldContainer}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.region')}</Text>
-            <ScrollView
-              ref={regionScrollRef}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.horizontalScroll}
-              contentContainerStyle={styles.horizontalScrollContent}
-            >
-	              {availableRegions.map((r) => (
-	                <Chip
-	                  key={r.id}
-	                  label={r.label}
-	                  selected={region === r.id}
-	                  onLayout={(event) => {
-	                    const { x, width } = event.nativeEvent.layout;
-	                    handleChipLayout(regionChipPositions, r.id, x, width);
-	                  }}
-	                  onPress={() => {
-	                    form.setValue('region', r.id);
-	                    form.setValue('commune', '');
-	                    setTimeout(() => scrollToChip(regionScrollRef, regionChipPositions, r.id, true), 50);
-	                  }}
-	                  style={[
-	                    styles.optionChip,
-	                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-	                    region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-	                  ]}
-	                  textStyle={[
-	                    styles.optionChipText,
-	                    { color: colors.gray700 },
-	                    region === r.id && { color: colors.textOnPrimary },
-	                  ]}
-	                />
-	              ))}
-	            </ScrollView>
-	          </View>
-	        )}
-
-        {/* Commune / Ville */}
-        {availableCommunes.length > 0 && (
-          <View style={styles.fieldContainer}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.commune')}</Text>
-            <ScrollView
-              ref={communeScrollRef}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.horizontalScroll}
-              contentContainerStyle={styles.horizontalScrollContent}
-            >
-	              {availableCommunes.map((c) => (
-	                <Chip
-	                  key={c.id}
-	                  label={c.label}
-	                  selected={commune === c.id}
-	                  onLayout={(event) => {
-	                    const { x, width } = event.nativeEvent.layout;
-	                    handleChipLayout(communeChipPositions, c.id, x, width);
-	                  }}
-	                  onPress={() => {
-	                    form.setValue('commune', c.id);
-	                    setTimeout(() => scrollToChip(communeScrollRef, communeChipPositions, c.id, true), 50);
-	                  }}
-	                  style={[
-	                    styles.optionChip,
-	                    { backgroundColor: colors.gray100, borderColor: colors.gray200 },
-	                    commune === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
-	                  ]}
-	                  textStyle={[
-	                    styles.optionChipText,
-	                    { color: colors.gray700 },
-	                    commune === c.id && { color: colors.textOnPrimary },
-	                  ]}
-	                />
-	              ))}
-	            </ScrollView>
-	          </View>
-	        )}
-
-        {/* Separator - Contact */}
-        <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
-
-        {/* Téléphone */}
-        <Input
-          label={`${t('auth.createProfile.phone')} *`}
-          placeholder="+225 07 00 00 00 00"
-          value={phone}
-          onChangeText={(value) => form.setValue('phone', value)}
-          keyboardType="phone-pad"
-          hint="Ce numéro doit être unique pour votre profil"
-        />
-
-        {/* Email */}
-        <Input
-          label={t('auth.createProfile.email')}
-          placeholder="ton@email.com"
-          value={email}
-          onChangeText={(value) => form.setValue('email', value)}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        {/* Préférences de travail */}
-        <View style={[styles.preferencesSection, { borderTopColor: colors.gray200 }]}>
-          <Text style={[styles.preferencesSectionTitle, { color: colors.gray700 }]}>{t('auth.createProfile.workPreferences')}</Text>
-
-          <View style={styles.preferenceItem}>
-            <View style={styles.preferenceInfo}>
-              <Laptop size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-              <View style={styles.preferenceTextContainer}>
-                <Text style={[styles.preferenceLabel, { color: colors.textPrimary }]}>{t('auth.createProfile.remoteAvailable')}</Text>
-                <Text style={[styles.preferenceDescription, { color: colors.gray500 }]}>{t('auth.createProfile.remoteAvailableDesc')}</Text>
-              </View>
-            </View>
-            <Toggle
-              value={remoteReady}
-              onValueChange={(value) => form.setValue('remoteReady', value)}
-            />
-          </View>
-
-          <View style={styles.preferenceItem}>
-            <View style={styles.preferenceInfo}>
-              <Plane size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-              <View style={styles.preferenceTextContainer}>
-                <Text style={[styles.preferenceLabel, { color: colors.textPrimary }]}>{t('auth.createProfile.willingToRelocate')}</Text>
-                <Text style={[styles.preferenceDescription, { color: colors.gray500 }]}>{t('auth.createProfile.willingToRelocateDesc')}</Text>
-              </View>
-            </View>
-            <Toggle
-              value={willingToRelocate}
-              onValueChange={(value) => form.setValue('willingToRelocate', value)}
-            />
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderSectorsStep = () => (
-    <View style={styles.stepContent}>
-      <View style={styles.stepHeader}>
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('auth.createProfile.yourSectors')}</Text>
-        <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          {t('auth.createProfile.sectorsHint', { max: MAX_SECTORS })}
-        </Text>
-      </View>
-
-	    <View style={styles.tagsContainer}>
-	      {SECTOR_DATA.map((sector) => {
-	        const isSelected = selectedSectors.includes(sector.id);
-	        return (
-	          <Chip
-	            key={sector.id}
-	            label={sector.label}
-	            selected={isSelected}
-	            leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
-	            onPress={() => toggleSector(sector.id)}
-	            style={[
-	              styles.selectableTag,
-	              { backgroundColor: colors.surface, borderColor: colors.gray200 },
-	              isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-	            ]}
-	            textStyle={[
-	              styles.selectableTagText,
-	              { color: colors.gray600 },
-	              isSelected && { color: colors.primary },
-	            ]}
-	          />
-	        );
-	      })}
-	    </View>
-
-      <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
-        {t('auth.createProfile.selected', { count: selectedSectors.length, max: MAX_SECTORS })}
-      </Text>
-    </View>
-  );
-
-  const renderGoalsStep = () => (
-    <View style={styles.stepContent}>
-      <View style={styles.stepHeader}>
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('auth.createProfile.yourGoals')}</Text>
-        <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          {t('auth.createProfile.goalsHint', { max: MAX_GOALS })}
-        </Text>
-      </View>
-
-	    <View style={styles.tagsContainer}>
-	      {GOAL_DATA.map((goal) => {
-	        const isSelected = selectedGoals.includes(goal.id);
-	        return (
-	          <Chip
-	            key={goal.id}
-	            label={goal.label}
-	            selected={isSelected}
-	            leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
-	            onPress={() => toggleGoal(goal.id)}
-	            style={[
-	              styles.selectableTag,
-	              { backgroundColor: colors.surface, borderColor: colors.gray200 },
-	              isSelected && { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary },
-	            ]}
-	            textStyle={[
-	              styles.selectableTagText,
-	              { color: colors.gray600 },
-	              isSelected && { color: colors.primary },
-	            ]}
-	          />
-	        );
-	      })}
-	    </View>
-
-      <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
-        {t('auth.createProfile.selected', { count: selectedGoals.length, max: MAX_GOALS })}
-      </Text>
-    </View>
-  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header with back button */}
-	      <View style={styles.header}>
-	        <IconButton
-	          onPress={handleBack}
-	          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	          accessibilityLabel="Retour"
-	        />
-	        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('auth.createProfile.title')}</Text>
-	        <View style={styles.headerSpacer} />
-	      </View>
+	    <View style={styles.header}>
+	      <IconButton
+	        onPress={() => router.back()}
+	        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+	        accessibilityLabel="Retour"
+	      />
+	      <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('auth.createProfile.title')}</Text>
+	      <View style={styles.headerSpacer} />
+	    </View>
 
       <KeyboardAvoidingView
         style={styles.keyboardView}
@@ -776,11 +297,260 @@ export default function CreateProfileScreen() {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           >
-            {renderStepIndicator()}
+            <View style={styles.stepContent}>
+              <View style={styles.stepHeader}>
+                <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('auth.createProfile.tellUsAboutYou')}</Text>
+              </View>
 
-            {currentStep === 'info' && renderInfoStep()}
-            {currentStep === 'sectors' && renderSectorsStep()}
-            {currentStep === 'goals' && renderGoalsStep()}
+              <View style={styles.formFields}>
+	              {/* Photo de profil */}
+	              <View style={styles.photoSection}>
+	                <Pressable
+	                  style={[styles.photoContainer, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
+	                  onPress={pickImage}
+	                  accessibilityRole="button"
+	                  accessibilityLabel={t('auth.createProfile.addPhoto')}
+	                >
+	                  {avatarUri ? (
+	                    <Image source={{ uri: getFullImageUrl(avatarUri) || avatarUri }} style={styles.photoImage} resizeMode="cover" />
+	                  ) : (
+	                    <Camera size={ICON.size.lg} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
+	                  )}
+	                </Pressable>
+	                <Text style={[styles.photoHint, { color: colors.textSecondary }]}>
+	                  {t('auth.createProfile.addPhoto')}
+	                </Text>
+	              </View>
+
+                {/* Prénom & Nom */}
+                <View style={styles.rowFields}>
+                  <View style={styles.halfField}>
+                    <Input
+                      label={`${t('auth.createProfile.firstName')} *`}
+                      placeholder=""
+                      value={firstName}
+                      onChangeText={(value) => form.setValue('firstName', value)}
+                      autoCapitalize="words"
+                      autoFocus
+                    />
+                  </View>
+                  <View style={styles.halfField}>
+                    <Input
+                      label={`${t('auth.createProfile.lastName')} *`}
+                      placeholder=""
+                      value={lastName}
+                      onChangeText={(value) => form.setValue('lastName', value)}
+                      autoCapitalize="words"
+                    />
+                  </View>
+                </View>
+
+                {/* Genre */}
+	              <View style={styles.fieldContainer}>
+	                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.gender')}</Text>
+	                <View style={styles.optionsRow}>
+	                  {GENDERS.map((g) => (
+	                    <Chip
+	                      key={g.id}
+	                      label={g.label}
+	                      selected={gender === g.id}
+	                      onPress={() => form.setValue('gender', g.id)}
+	                      style={[
+	                        styles.optionButton,
+	                        { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                        gender === g.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                      ]}
+	                      textStyle={[
+	                        styles.optionButtonText,
+	                        { color: colors.gray700 },
+	                        gender === g.id && { color: colors.textOnPrimary },
+	                      ]}
+	                    />
+	                  ))}
+	                </View>
+	              </View>
+
+                {/* Separator - Localisation */}
+                <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
+
+                {/* Pays */}
+                <View style={styles.fieldContainer}>
+                  <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.country')} *</Text>
+                  <ScrollView
+                    ref={countryScrollRef}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.horizontalScroll}
+                    contentContainerStyle={styles.horizontalScrollContent}
+                  >
+	                  {COUNTRIES.map((c) => (
+	                    <Chip
+	                      key={c.id}
+	                      label={c.label}
+	                      selected={country === c.id}
+	                      onLayout={(event) => {
+	                        const { x, width } = event.nativeEvent.layout;
+	                        handleChipLayout(countryChipPositions, c.id, x, width);
+	                      }}
+	                      onPress={() => {
+	                        form.setValue('country', c.id);
+	                        form.setValue('region', '');
+	                        form.setValue('commune', '');
+	                        setTimeout(() => scrollToChip(countryScrollRef, countryChipPositions, c.id, true), 50);
+	                      }}
+	                      style={[
+	                        styles.optionChip,
+	                        { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                        country === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                      ]}
+	                      textStyle={[
+	                        styles.optionChipText,
+	                        { color: colors.gray700 },
+	                        country === c.id && { color: colors.textOnPrimary },
+	                      ]}
+	                    />
+	                  ))}
+	                </ScrollView>
+	              </View>
+
+                {/* Région */}
+                {availableRegions.length > 0 && (
+                  <View style={styles.fieldContainer}>
+                    <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.region')}</Text>
+                    <ScrollView
+                      ref={regionScrollRef}
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.horizontalScroll}
+                      contentContainerStyle={styles.horizontalScrollContent}
+                    >
+	                    {availableRegions.map((r) => (
+	                      <Chip
+	                        key={r.id}
+	                        label={r.label}
+	                        selected={region === r.id}
+	                        onLayout={(event) => {
+	                          const { x, width } = event.nativeEvent.layout;
+	                          handleChipLayout(regionChipPositions, r.id, x, width);
+	                        }}
+	                        onPress={() => {
+	                          form.setValue('region', r.id);
+	                          form.setValue('commune', '');
+	                          setTimeout(() => scrollToChip(regionScrollRef, regionChipPositions, r.id, true), 50);
+	                        }}
+	                        style={[
+	                          styles.optionChip,
+	                          { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                          region === r.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                        ]}
+	                        textStyle={[
+	                          styles.optionChipText,
+	                          { color: colors.gray700 },
+	                          region === r.id && { color: colors.textOnPrimary },
+	                        ]}
+	                      />
+	                    ))}
+	                  </ScrollView>
+	                </View>
+                )}
+
+                {/* Commune / Ville */}
+                {availableCommunes.length > 0 && (
+                  <View style={styles.fieldContainer}>
+                    <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.commune')}</Text>
+                    <ScrollView
+                      ref={communeScrollRef}
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.horizontalScroll}
+                      contentContainerStyle={styles.horizontalScrollContent}
+                    >
+	                    {availableCommunes.map((c) => (
+	                      <Chip
+	                        key={c.id}
+	                        label={c.label}
+	                        selected={commune === c.id}
+	                        onLayout={(event) => {
+	                          const { x, width } = event.nativeEvent.layout;
+	                          handleChipLayout(communeChipPositions, c.id, x, width);
+	                        }}
+	                        onPress={() => {
+	                          form.setValue('commune', c.id);
+	                          setTimeout(() => scrollToChip(communeScrollRef, communeChipPositions, c.id, true), 50);
+	                        }}
+	                        style={[
+	                          styles.optionChip,
+	                          { backgroundColor: colors.gray100, borderColor: colors.gray200 },
+	                          commune === c.id && { backgroundColor: colors.primary, borderColor: colors.primary },
+	                        ]}
+	                        textStyle={[
+	                          styles.optionChipText,
+	                          { color: colors.gray700 },
+	                          commune === c.id && { color: colors.textOnPrimary },
+	                        ]}
+	                      />
+	                    ))}
+	                  </ScrollView>
+	                </View>
+                )}
+
+                {/* Separator - Contact */}
+                <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
+
+                {/* Téléphone */}
+                <Input
+                  label={`${t('auth.createProfile.phone')} *`}
+                  placeholder="+225 07 00 00 00 00"
+                  value={phone}
+                  onChangeText={(value) => form.setValue('phone', value)}
+                  keyboardType="phone-pad"
+                  hint="Ce numéro doit être unique pour votre profil"
+                />
+
+                {/* Email */}
+                <Input
+                  label={t('auth.createProfile.email')}
+                  placeholder="ton@email.com"
+                  value={email}
+                  onChangeText={(value) => form.setValue('email', value)}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+
+                {/* Préférences de travail */}
+                <View style={[styles.preferencesSection, { borderTopColor: colors.gray200 }]}>
+                  <Text style={[styles.preferencesSectionTitle, { color: colors.gray700 }]}>{t('auth.createProfile.workPreferences')}</Text>
+
+                  <View style={styles.preferenceItem}>
+                    <View style={styles.preferenceInfo}>
+                      <Laptop size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
+                      <View style={styles.preferenceTextContainer}>
+                        <Text style={[styles.preferenceLabel, { color: colors.textPrimary }]}>{t('auth.createProfile.remoteAvailable')}</Text>
+                        <Text style={[styles.preferenceDescription, { color: colors.gray500 }]}>{t('auth.createProfile.remoteAvailableDesc')}</Text>
+                      </View>
+                    </View>
+                    <Toggle
+                      value={remoteReady}
+                      onValueChange={(value) => form.setValue('remoteReady', value)}
+                    />
+                  </View>
+
+                  <View style={styles.preferenceItem}>
+                    <View style={styles.preferenceInfo}>
+                      <Plane size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
+                      <View style={styles.preferenceTextContainer}>
+                        <Text style={[styles.preferenceLabel, { color: colors.textPrimary }]}>{t('auth.createProfile.willingToRelocate')}</Text>
+                        <Text style={[styles.preferenceDescription, { color: colors.gray500 }]}>{t('auth.createProfile.willingToRelocateDesc')}</Text>
+                      </View>
+                    </View>
+                    <Toggle
+                      value={willingToRelocate}
+                      onValueChange={(value) => form.setValue('willingToRelocate', value)}
+                    />
+                  </View>
+                </View>
+              </View>
+            </View>
           </ScrollView>
 
           <View
@@ -793,11 +563,9 @@ export default function CreateProfileScreen() {
               title={
                 form.state.isSubmitting
                   ? 'Création...'
-                  : currentStep === 'goals'
-                    ? t('auth.createProfile.complete')
-                    : t('auth.createProfile.continue')
+                  : t('auth.createProfile.complete')
               }
-              onPress={handleNext}
+              onPress={handleSubmitProfile}
               disabled={!canProceed() || form.state.isSubmitting}
               fullWidth
               icon={
@@ -832,14 +600,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: BORDER.width.thin,
   },
 
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: BORDER.radius.full,
-  },
-
   headerTitle: {
     fontSize: TYPOGRAPHY.fontSize.lg,
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
@@ -863,22 +623,6 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xl,
   },
 
-  stepIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.md,
-    marginBottom: SPACING.xl,
-  },
-
-  stepDot: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: BORDER.radius.full,
-  },
-
-
   stepContent: {
     flex: 1,
   },
@@ -892,11 +636,6 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.xxl,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
     marginBottom: SPACING.sm,
-  },
-
-  stepDescription: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    textAlign: 'center',
   },
 
   formFields: {
@@ -969,14 +708,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-
   optionButtonText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  optionButtonTextSelected: {
-    // color applied inline with colors.textOnPrimary
   },
 
   horizontalScroll: {
@@ -995,106 +729,9 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.full,
   },
 
-
   optionChipText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  optionChipTextSelected: {
-    // color applied inline with colors.textOnPrimary
-  },
-
-  textAreaContainer: {
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
-    padding: SPACING.md,
-  },
-
-  textArea: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-
-  charCount: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    textAlign: 'right',
-    marginTop: SPACING.xs,
-  },
-
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-
-  // Unified selectable tag style (for sectors and profile tags)
-  selectableTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderWidth: 1.5,
-    borderRadius: BORDER.radius.full,
-  },
-
-  selectableTagSelected: {
-  },
-
-  selectableTagText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  selectableTagTextSelected: {
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  // Goals container
-  goalsContainer: {
-    gap: SPACING.sm,
-  },
-
-  // Unified selectable item style (for goals - list style)
-  selectableItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    borderWidth: 1.5,
-    borderRadius: BORDER.radius.md,
-  },
-
-
-  selectableItemCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: BORDER.radius.sm,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  selectableItemCheckboxSelected: {
-  },
-
-  selectableItemText: {
-    flex: 1,
-    fontSize: TYPOGRAPHY.fontSize.md,
-  },
-
-  selectableItemTextSelected: {
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
-  },
-
-  // Selection hint
-  selectionHint: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    textAlign: 'center',
-    marginTop: SPACING.lg,
   },
 
   footer: {
