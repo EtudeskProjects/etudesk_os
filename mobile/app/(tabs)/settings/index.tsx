@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -20,6 +21,7 @@ import {
   Trash2,
   Settings,
   Scale,
+  ExternalLink,
   Mail,
 } from 'lucide-react-native';
 import { kycService } from '../../../src/services/kycService';
@@ -204,11 +206,20 @@ export default function AccountScreen() {
       onPress: () => router.push('/settings/help'),
     },
     {
-      id: 'legal',
-      label: t('settings.menu.legal'),
+      id: 'privacy',
+      label: language === 'fr' ? 'Politique de confidentialité' : 'Privacy Policy',
       icon: Scale,
-      description: t('settings.menu.legalDesc'),
-      onPress: () => router.push('/settings/legal'),
+      description: language === 'fr' ? 'Consulter notre politique de confidentialité' : 'View our privacy policy',
+      onPress: () => Linking.openURL('https://etudesk.com/privacy'),
+      external: true,
+    },
+    {
+      id: 'legal-notice',
+      label: language === 'fr' ? 'Mentions légales' : 'Legal Notice',
+      icon: Scale,
+      description: language === 'fr' ? 'Consulter nos mentions légales' : 'View our legal notice',
+      onPress: () => Linking.openURL('https://etudesk.com/mentions-legales'),
+      external: true,
     },
   ];
 
@@ -415,11 +426,19 @@ export default function AccountScreen() {
                       <Text style={[styles.badgeText, { color: item.badgeColor }]}>{item.badge}</Text>
                     </View>
                   )}
-                  <ChevronRight
-                    size={ICON.size.md}
-                    color={colors.gray400}
-                    strokeWidth={ICON.strokeWidth}
-                  />
+                  {item.external ? (
+                    <ExternalLink
+                      size={ICON.size.md}
+                      color={colors.gray400}
+                      strokeWidth={ICON.strokeWidth}
+                    />
+                  ) : (
+                    <ChevronRight
+                      size={ICON.size.md}
+                      color={colors.gray400}
+                      strokeWidth={ICON.strokeWidth}
+                    />
+                  )}
                 </SelectCard>
               );
             })}
