@@ -15,7 +15,7 @@ import {
 } from '../../constants/documents';
 import { EXTRACTION_SYSTEM_PROMPT, buildExtractionPrompt } from '../ai/prompts/extraction.prompt';
 import { buildTalentObject, talentObjectToText } from '../ai/talent-object';
-
+import { pool } from '../database';
 import { logger } from '../../utils';
 
 export interface ExtractedSkill {
@@ -92,14 +92,24 @@ export async function extractDocumentMetadata(
       };
     }
 
-    // Build talent context if available
+    // Build talent context + existing skills for dedup
     let talentContext: string | undefined;
+    let existingSkills: string[] | undefined;
     if (talentId) {
-      const talentObj = await buildTalentObject(talentId, true);
+      const [talentObj, skillsResult] = await Promise.all([
+        buildTalentObject(talentId, true),
+        pool.query(
+          `SELECT canonical_name FROM talent_skills WHERE talent_id = $1 ORDER BY canonical_name`,
+          [talentId]
+        ),
+      ]);
       if (talentObj) talentContext = talentObjectToText(talentObj);
+      if (skillsResult.rows.length > 0) {
+        existingSkills = skillsResult.rows.map((r: any) => r.canonical_name);
+      }
     }
 
-    const prompt = buildExtractionPrompt(mimeType, talentContext);
+    const prompt = buildExtractionPrompt(mimeType, talentContext, existingSkills);
     const openai = getOpenAIClient();
 
     // Build content parts
