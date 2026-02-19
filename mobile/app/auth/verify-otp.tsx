@@ -233,6 +233,22 @@ export default function VerifyOTPScreen() {
             <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
           ) : null}
 
+        </View>
+
+        <View style={[styles.footer, { paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
+          <Button
+            title={t('auth.verifyOtp.verify')}
+            onPress={handleVerifyOTP}
+            disabled={!isOtpComplete || isLoading}
+            loading={isLoading}
+            fullWidth
+            style={[
+              styles.verifyButton,
+              { backgroundColor: colors.primary },
+              (!isOtpComplete || isLoading) && styles.verifyButtonDisabled,
+            ]}
+            textStyle={[styles.verifyButtonText, { color: colors.textOnPrimary }]}
+          />
           <SelectCard
             style={[styles.resendButton, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
             onPress={() => {
@@ -254,22 +270,6 @@ export default function VerifyOTPScreen() {
             </Text>
           </SelectCard>
         </View>
-
-        <View style={[styles.footer, { paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
-          <Button
-            title={t('auth.verifyOtp.verify')}
-            onPress={handleVerifyOTP}
-            disabled={!isOtpComplete || isLoading}
-            loading={isLoading}
-            fullWidth
-            style={[
-              styles.verifyButton,
-              { backgroundColor: colors.primary },
-              (!isOtpComplete || isLoading) && styles.verifyButtonDisabled,
-            ]}
-            textStyle={[styles.verifyButtonText, { color: colors.textOnPrimary }]}
-          />
-        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -282,6 +282,7 @@ const styles = StyleSheet.create({
 
   keyboardView: {
     flex: 1,
+    justifyContent: 'space-between',
   },
 
   header: {
@@ -302,6 +303,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingBottom: SPACING.xl,
   },
 
   iconContainer: {
@@ -358,7 +360,7 @@ const styles = StyleSheet.create({
 
   footer: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xl,
+    paddingTop: SPACING.md,
   },
 
   verifyButton: {

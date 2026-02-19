@@ -243,6 +243,35 @@ function DetailRow({ icon: Icon, text, colors }: { icon: any; text: string; colo
   );
 }
 
+function ProfileUpdatePreview({ data, colors }: { data: Record<string, any>; colors: any }) {
+  const FIELD_LABELS: Record<string, string> = {
+    bio: 'Bio',
+    city: 'Ville',
+    country: 'Pays',
+    goals: 'Objectifs',
+    remote_ready: 'Travail à distance',
+    willing_to_relocate: 'Prêt à déménager',
+    profile_tags: 'Tags',
+  };
+
+  const entries = Object.entries(data).filter(([key]) => FIELD_LABELS[key]);
+
+  return (
+    <View style={styles.previewBody}>
+      {entries.map(([key, value]) => (
+        <View key={key} style={styles.profileUpdateRow}>
+          <Text style={[styles.profileUpdateLabel, { color: colors.textSecondary }]}>
+            {FIELD_LABELS[key]}
+          </Text>
+          <Text style={[styles.profileUpdateValue, { color: colors.textPrimary }]} numberOfLines={4}>
+            {typeof value === 'boolean' ? (value ? 'Oui' : 'Non') : Array.isArray(value) ? value.join(', ') : String(value)}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 // --- Determine Which Preview To Render ---
 function renderPreview(action: string, data: Record<string, any> | undefined, colors: any) {
   if (!data) return null;
@@ -254,6 +283,8 @@ function renderPreview(action: string, data: Record<string, any> | undefined, co
       return data.name ? <CommunityPreview data={data} colors={colors} /> : null;
     case 'create_space':
       return data.name ? <SpacePreview data={data} colors={colors} /> : null;
+    case 'update_profile':
+      return <ProfileUpdatePreview data={data} colors={colors} />;
     default:
       return null;
   }
@@ -585,6 +616,20 @@ const styles = StyleSheet.create({
   retryText: {
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
+  profileUpdateRow: {
+    gap: 2,
+  },
+  profileUpdateLabel: {
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    textTransform: 'uppercase',
+    letterSpacing: TYPOGRAPHY.letterSpacing.wide,
+  },
+  profileUpdateValue: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    lineHeight: TYPOGRAPHY.fontSize.sm * TYPOGRAPHY.lineHeight.normal,
   },
 });
 

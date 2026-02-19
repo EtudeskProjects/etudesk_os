@@ -38,7 +38,6 @@ const UEMOA_SKILL_IDS = new Set([
   'interview-prep',
   'opportunity-publishing',
   'job-description-generation',
-  'learning-path-generator',
   'autodiagnostic-talent',
   'candidate-ranking',
   'org-analytics',

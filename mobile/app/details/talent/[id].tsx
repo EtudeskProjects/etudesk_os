@@ -1004,13 +1004,13 @@ const styles = StyleSheet.create({
   avatar: {
     width: 100,
     height: 100,
-    borderRadius: 50,
+    borderRadius: BORDER.radius.lg,
     marginBottom: SPACING.md,
   },
   avatarPlaceholder: {
     width: 100,
     height: 100,
-    borderRadius: 50,
+    borderRadius: BORDER.radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.md,

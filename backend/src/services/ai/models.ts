@@ -37,5 +37,8 @@ export const MODEL_MATCH = 'gpt-4.1-nano';
 /** Speech-to-text (Whisper — always OpenAI) */
 export const MODEL_STT = 'whisper-1';
 
+/** Text-to-speech (OpenAI — study mode audio responses) */
+export const MODEL_TTS = 'gpt-4o-mini-tts';
+
 /** Text embeddings (always OpenAI for Pinecone 1536d compat) */
 export const MODEL_EMBEDDING = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small';

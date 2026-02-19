@@ -21,3 +21,5 @@ export { ImageBlock } from './blocks/ImageBlock';
 export { ChartBlock } from './blocks/ChartBlock';
 export { CodeBlock } from './blocks/CodeBlock';
 export { ConfirmationBlock } from './blocks/ConfirmationBlock';
+export { AudioBlock } from './blocks/AudioBlock';
+export { VoiceNotePlayer } from './VoiceNotePlayer';

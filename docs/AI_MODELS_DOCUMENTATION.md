@@ -1,6 +1,6 @@
 # Documentation des Modeles AI - Etudesk OS
 
-> **Derniere mise a jour:** 14 fevrier 2026
+> **Derniere mise a jour:** 19 fevrier 2026
 > **Architecture:** Multi-provider (Anthropic + Google Gemini + OpenAI)
 
 ---
@@ -43,6 +43,7 @@ Etudesk OS utilise **3 providers AI simultanement**, chacun pour ses forces :
 | `MODEL_SEARCH` | gpt-4.1-mini | OpenAI | Vision/extraction, web search agent | $0.40 / $1.60 |
 | `MODEL_IMAGE` | gpt-image-1 | OpenAI | Generation d'images | $0.02-$0.19/image |
 | `MODEL_STT` | whisper-1 | OpenAI | Transcription audio | $0.006/min |
+| `MODEL_TTS` | gpt-4o-mini-tts | OpenAI | Synthese vocale (steerable) | ~$0.015/min |
 | `MODEL_EMBEDDING` | text-embedding-3-small | OpenAI | Embeddings vectoriels | $0.02/1M tokens |
 
 ---
@@ -340,6 +341,97 @@ ANTHROPIC_API_KEY=sk-ant-...    # Agents copilot principaux
 
 > 99+ langues, 25 MB max, 5-10x temps reel.
 
+**Note:** Whisper est un modele STT (Speech-to-Text) — il transcrit l'audio en texte, sans comprehension semantique. Pour une comprehension audio native (ton, emotion, rythme), voir la section [Capacites Audio Natives](#capacites-audio-natives-multimodal).
+
+### GPT-Audio / GPT-Audio-Mini (Audio Natif)
+
+> **Role:** Comprehension audio native (pas de transcription intermediaire)
+> **Model IDs:** `gpt-audio` (ex gpt-4o-audio-preview), `gpt-audio-mini`
+> **Statut Etudesk:** Non utilise — whisper-1 + Claude suffit pour le copilot
+
+| Type | Cout / 1M tokens |
+|------|-------------------|
+| Input (audio) | Variable selon modele |
+| Output (text) | Variable selon modele |
+
+**Formats supportes:** WAV, MP3
+
+**Difference avec Whisper:** Le modele comprend nativement le contenu audio (ton, emotion, rythme, bruits de fond) — il ne fait PAS de transcription puis analyse du texte.
+
+```typescript
+// Exemple — audio natif via Chat Completions
+const response = await openai.chat.completions.create({
+  model: 'gpt-audio',
+  modalities: ['text'],
+  messages: [{
+    role: 'user',
+    content: [
+      { type: 'text', text: 'Analyse le ton de cet enregistrement' },
+      { type: 'input_audio', input_audio: { data: base64Audio, format: 'wav' } }
+    ]
+  }]
+});
+```
+
+### GPT-Realtime (Audio Temps Reel)
+
+> **Role:** Conversations vocales temps reel (<200ms latence)
+> **Model ID:** `gpt-realtime`
+> **Statut Etudesk:** Non utilise
+
+**Format audio:** PCM16 uniquement (16-bit, 24kHz, mono, little-endian)
+**Protocoles:** WebSocket, WebRTC, SIP
+**Latence:** <200ms speech-to-speech
+
+---
+
+### TTS-1 / TTS-1-HD (Text-to-Speech)
+
+> **Role:** Synthese vocale (texte → audio)
+> **Model IDs:** `tts-1` (rapide), `tts-1-hd` (haute fidelite)
+> **Statut Etudesk:** Non utilise
+
+| Modele | Cout / 1M caracteres | Qualite | Latence |
+|--------|----------------------|---------|---------|
+| `tts-1` | $15 | Bonne | ~0.5s (temps reel) |
+| `tts-1-hd` | $30 | Haute fidelite | Moyenne |
+
+**Voix disponibles (13) :** `alloy`, `ash`, `ballad`, `coral`, `echo`, `fable`, `nova`, `onyx`, `sage`, `shimmer`, `verse`, `marin`, `cedar`
+
+**Formats output :** mp3 (defaut), opus, aac, flac, wav, pcm
+
+**Streaming :** Oui (chunked transfer encoding)
+
+---
+
+### GPT-4o-mini-TTS (TTS Steerable)
+
+> **Role:** TTS avance avec controle du ton, emotion, accent via instructions en langage naturel
+> **Model ID:** `gpt-4o-mini-tts`
+> **Statut Etudesk:** Non utilise — **recommande pour future fonctionnalite vocale**
+
+| Type | Cout |
+|------|------|
+| Input | $0.60 / 1M tokens |
+| Audio output | $12.00 / 1M tokens (~$0.015/min) |
+
+**Avantage cle :** Parametre `instructions` pour piloter le style vocal en langage naturel (ton chaleureux, accent ouest-africain, rythme lent, etc.)
+
+**Contexte max :** 2,000 tokens input par requete (segmenter le contenu long)
+
+```typescript
+// Exemple — TTS steerable avec streaming
+const response = await openai.audio.speech.create({
+  model: 'gpt-4o-mini-tts',
+  voice: 'coral',
+  input: 'Bonjour, bienvenue sur Etudesk.',
+  instructions: 'Parle avec un ton chaleureux et professionnel, accent francophone ouest-africain.',
+});
+// response.body est un ReadableStream
+```
+
+**Francais :** Support natif, auto-detection de langue. Avec `instructions`, on peut specifier l'accent (ex: francais ivoirien, senegalais).
+
 ---
 
 ### Text-Embedding-3-Small
@@ -486,7 +578,8 @@ Fichier `src/services/ai/anthropic-provider.ts` implemente `Model` et `ModelProv
 | Suggestion formulaire | Gemini | par generation | ~$0.0005 |
 | Objectif quotidien | Gemini | par generation | ~$0.0005 |
 | Generation image | OpenAI | par image | $0.02-$0.19 |
-| Transcription audio | OpenAI | par minute | $0.006 |
+| Transcription audio (STT) | OpenAI | par minute | $0.006 |
+| Synthese vocale (TTS) | OpenAI | par minute | ~$0.015 |
 | Extraction CV (vision) | OpenAI | par document | ~$0.005 |
 | Recommendation candidat | OpenAI | par recommendation | ~$0.0005 |
 | Web search | OpenAI | par recherche | ~$0.005 |
@@ -587,6 +680,59 @@ GPT-4.1 family suit les instructions de facon tres litterale :
 
 ---
 
+## Capacites Audio Natives (Multimodal)
+
+### Comparatif Audio Input par Provider
+
+| Provider | Modele | Audio Natif | Formats | Methode | Statut Etudesk |
+|----------|--------|------------|---------|---------|----------------|
+| **OpenAI** | `gpt-audio` / `gpt-audio-mini` | Oui | WAV, MP3 | Base64 inline (Chat Completions) | Non utilise |
+| **OpenAI** | `gpt-realtime` | Oui | PCM16 24kHz | WebSocket/WebRTC streaming | Non utilise |
+| **OpenAI** | `whisper-1` | Non (STT) | m4a, mp3, wav, etc. | Transcription → texte | **EN PRODUCTION** |
+| **Google** | Gemini 2.5/3 (tous) | Oui | WAV, MP3, AIFF, AAC, OGG, FLAC | File upload ou inline bytes | Non utilise |
+| **Google** | Gemini 2.5 Flash Native Audio | Oui | PCM, WAV, MP3, FLAC, OGG, WebM, AAC, M4A | Live API streaming | Non utilise |
+| **Anthropic** | Claude (tous) | **Non** | — | — | N/A |
+
+### Architecture Audio Etudesk (actuelle)
+
+```
+Mobile (enregistrement m4a) → OpenAI whisper-1 (STT) → texte → Claude (agent copilot)
+```
+
+Claude ne supporte pas l'audio natif. Le pipeline actuel est : enregistrement → transcription Whisper → envoi du texte a l'agent Claude.
+
+### Comparatif TTS (Text-to-Speech) par Provider
+
+| Provider | Modele | Cout | Voix | Steerable | Streaming | Francais |
+|----------|--------|------|------|-----------|-----------|----------|
+| **OpenAI** | `tts-1` | $15/1M chars | 13 | Non | Oui | Oui (auto) |
+| **OpenAI** | `tts-1-hd` | $30/1M chars | 13 | Non | Oui | Oui (auto) |
+| **OpenAI** | `gpt-4o-mini-tts` | ~$0.015/min | 13 | **Oui (instructions)** | Oui | Oui + accent controlable |
+| **Google** | `gemini-2.5-flash-preview-tts` | $0.50/$10 (1M tokens) | 30+ | Oui (style prompts) | Oui | Oui (24 langues) |
+| **Google** | `gemini-2.5-pro-preview-tts` | $1.00/$20 (1M tokens) | 30+ | Oui | Oui | Oui |
+| **Google** | Cloud TTS Neural2 | $16/1M chars | 380+ | Non | Oui | Oui (5+ voix fr-FR + fr-CA) |
+| **Google** | Cloud TTS Standard | $4/1M chars | 380+ | Non | Oui | Oui |
+| **Anthropic** | — | — | — | — | — | **Pas de TTS** |
+
+### Recommandation TTS pour Etudesk
+
+| Usage | Modele recommande | Justification |
+|-------|------------------|---------------|
+| **Reponses vocales copilot** | `gpt-4o-mini-tts` | Steerable (accent UEMOA), streaming, deja integre OpenAI |
+| **Narration cours/contenu** | Google Cloud TTS Neural2 | Free tier 1M chars/mois, voix fr-FR de qualite |
+| **Dialogues multi-locuteurs** | `gemini-2.5-flash-preview-tts` | Multi-speaker natif en 1 seul appel API |
+
+**Estimation budget :** ~$0.015/min avec `gpt-4o-mini-tts` → 1000 min/mois = ~$15 (~9 750 FCFA)
+
+### Alternatives futures possibles
+
+1. **Audio natif OpenAI** (`gpt-audio`) : Envoyer l'audio directement au modele pour comprendre ton/emotion/rythme — utile pour coaching vocal, entretiens
+2. **Audio natif Gemini** : Support le plus large en formats (6+), API simple (file upload sans base64), integration possible avec les suggestions Gemini existantes
+3. **Temps reel** : `gpt-realtime` ou Gemini Live API pour conversations vocales avec latence <200ms
+4. **TTS steerable** (`gpt-4o-mini-tts`) : Reponses vocales du copilot avec accent francophone ouest-africain personnalisable
+
+---
+
 ## Sources
 
 ### Documentation Officielle
@@ -613,4 +759,4 @@ GPT-4.1 family suit les instructions de facon tres litterale :
 
 ---
 
-*Document mis a jour le 14 fevrier 2026 — Architecture multi-provider (Anthropic + Gemini + OpenAI)*
+*Document mis a jour le 19 fevrier 2026 — Architecture multi-provider + capacites audio/TTS multimodales*

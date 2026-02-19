@@ -29,6 +29,7 @@ const ENABLE_REQUEST_LOGGING = __DEV__;
 interface ApiResponse<T> {
   data: T;
   count?: number;
+  pagination?: { total: number; limit: number; offset: number; hasMore: boolean };
   error?: string;
   success?: boolean;
 }

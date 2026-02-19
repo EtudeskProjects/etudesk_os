@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -16,9 +16,8 @@ import {
   Compass,
   Settings,
 } from 'lucide-react-native';
-import { SPACING, ICON, BORDER, LAYOUT } from '../../constants/theme';
+import { SPACING, ICON, BORDER } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
-import { Platform } from 'react-native';
 import { useSpace } from '../../contexts/SpaceContext';
 import { Tap } from './Tap';
 
@@ -43,10 +42,12 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
   const insets = useSafeAreaInsets();
   const { isOrganizationSpace } = useSpace();
 
-  // Backward compatibility: many screens hardcode activeTab="home".
-  // In organization space, the first tab is "gestion" (not "home").
   const normalizedActiveTab: TabName | undefined =
     isOrganizationSpace && activeTab === 'home' ? 'gestion' : activeTab;
+  const bottomPadding =
+    Platform.OS === 'android'
+      ? Math.max(SPACING.xxxl, insets.bottom + SPACING.sm)
+      : Math.max(insets.bottom, SPACING.sm);
 
   const tabs: { name: TabName; icon: typeof Home; route: string }[] = [
     isOrganizationSpace
@@ -58,14 +59,10 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, borderTopColor: colors.borderColor, paddingBottom: Math.max(insets.bottom, SPACING.sm) }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, borderTopColor: colors.borderColor, paddingBottom: bottomPadding }]}>
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = normalizedActiveTab === tab.name;
-
-        // Match the tabs layout styling:
-        // Active: white icon on primary squared background
-        // Inactive: gray icon, no background
         const iconColor = isActive ? colors.textOnPrimary : colors.textSecondary;
 
         return (
@@ -78,9 +75,7 @@ export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
             accessibilityRole="tab"
             accessibilityLabel={TAB_ACCESSIBILITY[tab.name].label}
             accessibilityHint={TAB_ACCESSIBILITY[tab.name].hint}
-            accessibilityState={{
-              selected: isActive,
-            }}
+            accessibilityState={{ selected: isActive }}
           >
             <View style={[
               styles.tabIcon,
@@ -116,7 +111,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: SPACING.sm,
   },
-  // Note: tabIconActive backgroundColor is applied dynamically with colors.primary
   tabIconActive: {
     borderRadius: BORDER.radius.md,
   },

@@ -1,6 +1,6 @@
 # Documentation des Modeles Anthropic (Claude) - Reference Etudesk
 
-> **Derniere mise a jour:** 13 fevrier 2026
+> **Derniere mise a jour:** 19 fevrier 2026
 > **Sources:** [Anthropic Models Overview](https://platform.claude.com/docs/en/about-claude/models/overview), [Anthropic Pricing](https://platform.claude.com/docs/en/about-claude/pricing)
 
 ---
@@ -260,6 +260,11 @@ Le modele decide automatiquement quand activer le raisonnement profond, sans con
 ### Vision
 Tous les modeles actuels supportent l'input image (texte + images).
 
+### Audio
+**Claude ne supporte PAS l'audio natif en input (fev 2026).** Les modalites d'input supportees sont : texte, images, et PDF. L'app mobile Claude a des fonctions vocales, mais elles utilisent un pipeline STT separe avant d'envoyer du texte au modele — ce n'est pas de la comprehension audio native.
+
+Pour le copilot Etudesk, l'audio passe par OpenAI Whisper (STT) avant d'etre envoye a Claude. Si la comprehension audio native (ton, emotion, rythme) est necessaire, utiliser OpenAI `gpt-audio` ou Google Gemini qui supportent l'audio natif.
+
 ### Computer Use
 Claude Haiku 4.5 et Opus 4.6 supportent computer use (controle d'interface).
 
@@ -347,4 +352,4 @@ Claude Haiku 4.5 et Opus 4.6 supportent computer use (controle d'interface).
 
 ---
 
-*Document cree le 13 fevrier 2026 — Reference pour evaluation future des alternatives a OpenAI*
+*Document mis a jour le 19 fevrier 2026 — Ajout section audio (non supporte par Claude)*

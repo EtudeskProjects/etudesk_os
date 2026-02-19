@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { TYPOGRAPHY, LAYOUT, withOpacity, OPACITY } from '../../../constants/theme';
+import { TYPOGRAPHY, LAYOUT, BORDER, withOpacity, OPACITY } from '../../../constants/theme';
 import { useTheme } from '../../../hooks/useTheme';
 import { RemoteImage } from '../../ui/RemoteImage';
 
@@ -42,7 +42,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     const avatarStyle = {
         width: dimension,
         height: dimension,
-        borderRadius: dimension / 2,
+        borderRadius: BORDER.radius.lg,
     };
 
     const ringStyle = showRing ? {

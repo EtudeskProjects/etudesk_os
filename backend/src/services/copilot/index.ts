@@ -85,6 +85,7 @@ export type {
   SSEDoneEvent,
   SSEErrorEvent,
   SSELimitReachedEvent,
+  SSEAudioReadyEvent,
   ToolContext,
   MessageSegment,
   ToolSegmentData,

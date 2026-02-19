@@ -8,10 +8,9 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Platform, Alert } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 import { useTheme } from '../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER } from '../../constants/theme';
+import { API_CONFIG } from '../../constants/config';
 import { ShimmerPlaceholder } from '../ui/ShimmerPlaceholder';
 import { EntityCard } from './EntityCard';
 import { QuizBlock } from './blocks/QuizBlock';
@@ -27,6 +26,8 @@ import { StepSolverBlock } from './blocks/StepSolverBlock';
 import { ExerciseBlock } from './blocks/ExerciseBlock';
 import { CodePlaygroundBlock } from './blocks/CodePlaygroundBlock';
 import { CanvasBlock } from './blocks/CanvasBlock';
+import { AudioBlock } from './blocks/AudioBlock';
+import { downloadAndOpenDocument } from '../../utils/documentDownload';
 
 const MONO_FONT_FAMILY = Platform.select({
   ios: 'Menlo',
@@ -43,7 +44,7 @@ interface MarkdownRendererProps {
 
 // Parse content into blocks
 interface Block {
-  type: 'text' | 'entity' | 'quiz' | 'flashcard' | 'youtube' | 'diagram' | 'image' | 'chart' | 'code' | 'confirmation' | 'math' | 'steps' | 'exercise' | 'playground' | 'canvas' | 'loading';
+  type: 'text' | 'entity' | 'quiz' | 'flashcard' | 'youtube' | 'diagram' | 'image' | 'chart' | 'code' | 'confirmation' | 'math' | 'steps' | 'exercise' | 'playground' | 'canvas' | 'audio' | 'loading';
   content: string;
   meta?: string; // entity type, language, etc.
   data?: any; // parsed JSON data
@@ -172,6 +173,11 @@ function parseBlocks(content: string): Block[] {
       const data = tryParseJSON(body);
       if (data && data.elements) blocks.push({ type: 'canvas', content: body, data });
     }
+    // Audio block
+    else if (tag === 'audio') {
+      const data = tryParseJSON(body);
+      if (data && data.url) blocks.push({ type: 'audio', content: body, data });
+    }
     // Confirmation block
     else if (tag === 'confirmation') {
       const data = tryParseJSON(body);
@@ -262,7 +268,7 @@ function renderInlineMarkdown(text: string, colors: any): React.ReactNode[] {
     } else if (m[6] && m[7]) {
       // [text](url) — resolve relative URLs to absolute for mobile
       const rawUrl = m![7];
-      const resolvedUrl = rawUrl.startsWith('/') ? `${process.env.EXPO_PUBLIC_API_URL || ''}${rawUrl}` : rawUrl;
+      const resolvedUrl = rawUrl.startsWith('/') ? `${API_CONFIG.BASE_URL}${rawUrl}` : rawUrl;
       parts.push(
         <Text
           key={key++}
@@ -270,15 +276,11 @@ function renderInlineMarkdown(text: string, colors: any): React.ReactNode[] {
           onPress={() => {
             const isDownloadable = /\.(pdf|docx?|xlsx?|csv|txt)(\?|$)/i.test(resolvedUrl);
             if (isDownloadable) {
-              const filename = resolvedUrl.split('/').pop()?.split('?')[0] || 'document.pdf';
-              const localUri = `${FileSystem.cacheDirectory}${filename}`;
-              FileSystem.downloadAsync(resolvedUrl, localUri)
-                .then(async ({ uri }) => {
-                  const canShare = await Sharing.isAvailableAsync();
-                  if (canShare) {
-                    await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
-                  }
-                })
+              const rawFilename = resolvedUrl.split('/').pop()?.split('?')[0] || 'document.pdf';
+              downloadAndOpenDocument({
+                url: resolvedUrl,
+                filename: rawFilename,
+              })
                 .catch(() => Alert.alert('Erreur', 'Impossible de télécharger le fichier.'));
             } else {
               WebBrowser.openBrowserAsync(resolvedUrl).catch(() => {});
@@ -598,6 +600,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQ
             return <CodePlaygroundBlock key={index} data={block.data} />;
           case 'canvas':
             return <CanvasBlock key={index} data={block.data} />;
+          case 'audio':
+            return <AudioBlock key={index} url={block.data.url} duration={block.data.duration} autoPlay={block.data.autoPlay} />;
           case 'code':
             return (
               <CodeBlock key={index} language={block.meta || ''} code={block.content} />

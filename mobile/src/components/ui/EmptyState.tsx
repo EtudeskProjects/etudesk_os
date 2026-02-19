@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../constants/theme';
+import { Lightbulb } from 'lucide-react-native';
+import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { Button } from './Button';
 import type { LucideIcon } from 'lucide-react-native';
@@ -11,9 +12,10 @@ interface EmptyStateProps {
   subtitle: string;
   actionLabel?: string;
   onAction?: () => void;
+  tip?: string;
 }
 
-export function EmptyState({ icon: Icon, title, subtitle, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, title, subtitle, actionLabel, onAction, tip }: EmptyStateProps) {
   const { colors } = useTheme();
 
   return (
@@ -24,6 +26,12 @@ export function EmptyState({ icon: Icon, title, subtitle, actionLabel, onAction 
       {actionLabel && onAction && (
         <View style={styles.actionContainer}>
           <Button title={actionLabel} onPress={onAction} fullWidth />
+        </View>
+      )}
+      {tip && (
+        <View style={[styles.tipContainer, { backgroundColor: withOpacity(colors.warning, OPACITY[10]) }]}>
+          <Lightbulb size={14} color={colors.warning} strokeWidth={ICON.strokeWidth} />
+          <Text style={[styles.tipText, { color: colors.textSecondary }]}>{tip}</Text>
         </View>
       )}
     </View>
@@ -52,5 +60,19 @@ const styles = StyleSheet.create({
   actionContainer: {
     marginTop: SPACING.md,
     width: '100%',
+  },
+  tipContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: BORDER.radius.sm,
+    width: '100%',
+  },
+  tipText: {
+    flex: 1,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    lineHeight: TYPOGRAPHY.fontSize.xs * 1.5,
   },
 });

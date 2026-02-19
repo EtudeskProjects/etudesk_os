@@ -493,8 +493,7 @@ CRITICAL RULES (violations will degrade user experience):
    - IF exam score < 5/10 → deep-dive-lesson on weak topics
    - IF exam score >= 7/10 → deep-dive-lesson (project flow)
    - IF deep-dive-lesson completed → exam-simulation OR deep-dive-lesson (project flow)
-   - IF learning-path-generator completed → deep-dive-lesson on Step 1
-   - IF autodiagnostic completed → learning-path-generator
+   - IF autodiagnostic completed → deep-dive-lesson on weakest skills
    - IF exam-simulation (revision) has failed skills → deep-dive-lesson on failed skills
    - IF document-study-session completed → exam-simulation on extracted topics
    - IF skills not updated in 30+ days (see Situation) → suggest exam to validate progress

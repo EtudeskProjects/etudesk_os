@@ -1,6 +1,6 @@
 # Documentation des Modeles Google (Gemini) - Reference Etudesk
 
-> **Derniere mise a jour:** 13 fevrier 2026
+> **Derniere mise a jour:** 19 fevrier 2026
 > **Sources:** [Gemini Models](https://ai.google.dev/gemini-api/docs/models), [Gemini Pricing](https://ai.google.dev/gemini-api/docs/pricing)
 
 ---
@@ -432,12 +432,52 @@ La generation Gemini 3 apporte des ameliorations significatives en reasoning, co
 | **Imagen 4 Fast** | `imagen-4.0-fast-generate-001` | $0.02 | Rapide, economique |
 | **Gemini 2.5 Flash Image** | `gemini-2.5-flash-image` | $0.039 | Multimodal |
 
-### Text-to-Speech
+### Text-to-Speech (Gemini TTS)
 
-| Modele | Model ID | Input/Output (1M) |
-|--------|----------|-------------------|
-| **Gemini 2.5 Flash TTS** | `gemini-2.5-flash-preview-tts` | $0.50 / $10.00 |
-| **Gemini 2.5 Pro TTS** | `gemini-2.5-pro-preview-tts` | $1.00 / $20.00 |
+| Modele | Model ID | Input/Output (1M tokens) | Voix | Multi-speaker |
+|--------|----------|--------------------------|------|---------------|
+| **Gemini 2.5 Flash TTS** | `gemini-2.5-flash-preview-tts` | $0.50 / $10.00 | 30+ | Oui |
+| **Gemini 2.5 Pro TTS** | `gemini-2.5-pro-preview-tts` | $1.00 / $20.00 | 30+ | Oui |
+
+**Voix disponibles (30+) :** `Puck` (defaut), `Charon`, `Kore`, `Fenrir`, `Achernar`, `Achird`, `Algenib`, `Algieba`, `Alnilam`, `Aoede`, `Autonoe`, `Callirhoe`, `Despina`, `Enceladus`, `Erinome`, `Gacrux`, `Iapetus`, `Laomedeia`, `Leda`, `Orus`, `Pulcherrima`, `Rasalgethi`, `Sadachbia`, `Sadaltager`, `Schedar`, `Sulafar`, `Umbriel`, `Vindemiatrix`, `Zephyr`, `Zubenelgenubi`
+
+**Fonctionnalites cles :**
+- Style prompting (controle du ton, accent, rythme en langage naturel)
+- Multi-speaker natif (assigner differentes voix a differents locuteurs en 1 requete)
+- 24 langues supportees dont le francais
+- Auto-detection de langue
+
+```python
+# Exemple — Gemini TTS
+response = client.models.generate_content(
+    model="gemini-2.5-flash-preview-tts",
+    contents="Bonjour, bienvenue sur Etudesk.",
+    config=genai.types.GenerateContentConfig(
+        response_modalities=["AUDIO"],
+        speech_config=genai.types.SpeechConfig(
+            voice_config=genai.types.VoiceConfig(
+                prebuilt_voice_config=genai.types.PrebuiltVoiceConfig(
+                    voice_name="Kore"
+                )
+            )
+        )
+    )
+)
+```
+
+### Text-to-Speech (Cloud TTS Classic)
+
+| Type de voix | Cout / 1M caracteres | Free Tier | Qualite |
+|-------------|----------------------|-----------|---------|
+| **Standard** | $4 | 4M chars/mois | Basique |
+| **WaveNet** | $16 | 1M chars/mois | Naturelle |
+| **Neural2** | $16 | 1M chars/mois | Meilleure qualite classique |
+
+**Voix francaises :** `fr-FR-Standard-A` a `E`, `fr-FR-Wavenet-A` a `E`, `fr-FR-Neural2-A/B`, + `fr-CA` (canadien)
+
+**380+ voix** au total sur 75+ langues et dialectes.
+
+**Pertinence Etudesk :** Cloud TTS Neural2 avec free tier (1M chars/mois gratuit) est ideal pour narration de contenu pedagogique pre-genere en francais.
 
 ### Generation video
 
@@ -541,6 +581,41 @@ Les tokens de thinking sont factures au tarif output.
 Tous les modeles 2.5+ supportent:
 - **Input:** Texte, images, video, audio, PDF
 - **Output:** Texte (+ images pour certains modeles)
+
+### Audio Natif (Comprehension directe)
+
+Gemini est le provider avec le support audio natif le plus large. Contrairement a un pipeline STT→texte, le modele comprend directement le contenu audio (parole, ton, emotion, bruits de fond, musique).
+
+**Formats supportes:** WAV, MP3, AIFF, AAC, OGG, FLAC (6 formats — le plus large du marche)
+
+**Deux methodes d'envoi :**
+
+```python
+# Methode 1 — File Upload (fichiers volumineux)
+myfile = client.files.upload(file="audio.mp3")
+response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents=["Analyse cet audio", myfile]
+)
+
+# Methode 2 — Inline bytes (< 20 MB)
+audio_bytes = open("audio.mp3", "rb").read()
+response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents=[
+        "Analyse cet audio",
+        types.Part.from_bytes(data=audio_bytes, mime_type="audio/mp3")
+    ]
+)
+```
+
+**Gemini Live API (temps reel) :**
+- Modele: `gemini-2.5-flash-native-audio` (GA sur Vertex AI)
+- 12+ formats audio supportes (PCM, WAV, MP3, FLAC, OGG, WebM, AAC, M4A, etc.)
+- 30 voix HD dans 24 langues
+- Traduction vocale native en temps reel
+
+**Pertinence Etudesk :** Gemini est deja utilise pour les suggestions. L'ajout d'audio natif serait simple via l'API existante — utile pour analyse de presentations orales, coaching entretien, ou contenu audio pedagogique.
 
 ### Batch API
 
@@ -685,4 +760,4 @@ Embeddings:      gemini-embedding-001 ($0.15) — plus cher que OpenAI
 
 ---
 
-*Document cree le 13 fevrier 2026 — Reference pour evaluation comparative des fournisseurs AI*
+*Document mis a jour le 19 fevrier 2026 — Ajout audio natif, TTS Gemini + Cloud TTS*

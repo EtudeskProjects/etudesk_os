@@ -108,6 +108,12 @@ export interface SSEContentCorrectedEvent {
   content: string;
 }
 
+export interface SSEAudioReadyEvent {
+  type: 'audio_ready';
+  audioUrl: string;
+  duration: number;
+}
+
 export type SSEEvent =
   | SSETextDeltaEvent
   | SSEToolStartEvent
@@ -115,7 +121,8 @@ export type SSEEvent =
   | SSEDoneEvent
   | SSEErrorEvent
   | SSELimitReachedEvent
-  | SSEContentCorrectedEvent;
+  | SSEContentCorrectedEvent
+  | SSEAudioReadyEvent;
 
 // --- Tool Context Passed To Tool Execute Functions ---
 

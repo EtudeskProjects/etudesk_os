@@ -313,6 +313,7 @@ export default function SkillsScreen() {
               subtitle="Ajoute tes compétences pour améliorer ton profil et être mieux recommandé."
               actionLabel="Ajouter une compétence"
               onAction={() => setShowAddModal(true)}
+              tip="Astuce : charge un CV ou un certificat de formation dans tes documents et l'assistant extraira automatiquement tes compétences."
             />
           ) : (
             <>
@@ -527,7 +528,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER.radius.md,
     marginBottom: SPACING.sm,
   },
-  skillName: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.medium, paddingRight: SPACING.xl },
+  skillName: { fontSize: TYPOGRAPHY.fontSize.md, fontWeight: TYPOGRAPHY.fontWeight.medium, paddingRight: 72 },
   skillType: { fontSize: TYPOGRAPHY.fontSize.xs, marginTop: 2 },
 
   tagsRow: {

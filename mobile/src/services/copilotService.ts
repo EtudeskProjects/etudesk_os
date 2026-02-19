@@ -31,9 +31,11 @@ export interface ToolSegmentData {
 }
 
 export interface MessageSegment {
-  type: 'text' | 'tool';
+  type: 'text' | 'tool' | 'audio';
   content?: string;
   tool?: ToolSegmentData;
+  audioUrl?: string;
+  audioDuration?: number;
 }
 
 // Message types
@@ -180,10 +182,13 @@ class CopilotService {
       onError: (error: string) => void;
       onLimitReached?: (reason: string, message: string) => void;
       onContentCorrected?: (content: string) => void;
+      onAudioReady?: (audioUrl: string, duration: number) => void;
     },
     organizationId?: string,
     attachmentIds?: string[],
-    replaceLastExchange?: boolean
+    replaceLastExchange?: boolean,
+    voiceNoteUrl?: string,
+    voiceNoteMimeType?: string
   ): AbortController {
     const controller = new AbortController();
 
@@ -255,6 +260,9 @@ class CopilotService {
                 case 'content_corrected':
                   callbacks.onContentCorrected?.(event.content);
                   break;
+                case 'audio_ready':
+                  callbacks.onAudioReady?.(event.audioUrl, event.duration);
+                  break;
               }
             } catch {
               // Malformed JSON — skip this event
@@ -315,7 +323,7 @@ class CopilotService {
           xhr.abort();
         });
 
-        xhr.send(JSON.stringify({ message, mode, sessionId, organizationId, attachmentIds, replaceLastExchange: replaceLastExchange || undefined }));
+        xhr.send(JSON.stringify({ message, mode, sessionId, organizationId, attachmentIds, replaceLastExchange: replaceLastExchange || undefined, voiceNoteUrl: voiceNoteUrl || undefined, voiceNoteMimeType: voiceNoteMimeType || undefined }));
 
       } catch (error: any) {
         if (error.name !== 'AbortError') {
@@ -431,6 +439,70 @@ class CopilotService {
         success: false,
         error: error.message || i18n.t('copilotService.audioTranscriptionError'),
         data: { text: '' },
+      };
+    }
+  }
+
+  /**
+   * Upload a voice note for direct audio analysis
+   * @param audioUri - Local file URI of the audio recording
+   * @param mimeType - MIME type of the audio file
+   * @returns Voice note URL and MIME type for use with sendMessageStream
+   */
+  async sendVoiceNote(audioUri: string, mimeType: string = 'audio/m4a'): Promise<ApiResponse<{ voiceNoteUrl: string; mimeType: string }>> {
+    try {
+      const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+
+      const extensionMap: Record<string, string> = {
+        'audio/m4a': 'm4a',
+        'audio/x-m4a': 'm4a',
+        'audio/mp4': 'm4a',
+        'audio/mpeg': 'mp3',
+        'audio/mp3': 'mp3',
+        'audio/wav': 'wav',
+        'audio/x-wav': 'wav',
+        'audio/webm': 'webm',
+      };
+      const extension = extensionMap[mimeType] || 'm4a';
+
+      const formData = new FormData();
+      formData.append('audio', {
+        uri: audioUri,
+        type: mimeType,
+        name: `voice-note.${extension}`,
+      } as any);
+
+      const response = await fetch(getApiUrl('/copilot/voice-note'), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || 'Erreur upload note vocale',
+          data: { voiceNoteUrl: '', mimeType: '' },
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          voiceNoteUrl: data.data?.voiceNoteUrl || '',
+          mimeType: data.data?.mimeType || mimeType,
+        },
+      };
+    } catch (error: any) {
+      console.error('Voice note upload error:', error);
+      return {
+        success: false,
+        error: error.message || 'Erreur upload note vocale',
+        data: { voiceNoteUrl: '', mimeType: '' },
       };
     }
   }

@@ -6,6 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { pool, generateSlug } from '../../database';
 import { logger } from '../../../utils';
+import { cache } from '../../../utils/cache';
 import {
   upsertOpportunityEmbedding,
   upsertCommunityEmbedding,
@@ -39,6 +40,9 @@ export async function handleConfirmation(
   request: ActionRequest
 ): Promise<ActionResult> {
   const { action, entityId, sessionId, data } = request;
+
+  // Resolve "self" entity_id to the talent's own ID
+  const resolvedEntityId = entityId === 'self' ? talentId : entityId;
 
   try {
     switch (action) {
@@ -349,6 +353,64 @@ export async function handleConfirmation(
 
         logger.info(`[action.handler] Talent ${talentId} created space ${id} for org ${orgId}`);
         return { success: true, message, data: { spaceId: id } };
+      }
+
+      case 'update_profile': {
+        if (!data || Object.keys(data).length === 0) {
+          return { success: false, message: 'Aucune donnée de profil à mettre à jour.' };
+        }
+
+        // Allowed fields for profile update
+        const ALLOWED_FIELDS: Record<string, string> = {
+          bio: 'bio',
+          city: 'city',
+          country: 'country',
+          goals: 'goals',
+          remote_ready: 'remote_ready',
+          willing_to_relocate: 'willing_to_relocate',
+          profile_tags: 'profile_tags',
+        };
+
+        const setClauses: string[] = [];
+        const values: any[] = [];
+        let paramIndex = 1;
+
+        for (const [key, value] of Object.entries(data)) {
+          const dbField = ALLOWED_FIELDS[key];
+          if (!dbField) continue;
+
+          // Handle array fields (profile_tags)
+          if (dbField === 'profile_tags' && Array.isArray(value)) {
+            setClauses.push(`${dbField} = $${paramIndex}`);
+            values.push(JSON.stringify(value));
+          } else {
+            setClauses.push(`${dbField} = $${paramIndex}`);
+            values.push(value);
+          }
+          paramIndex++;
+        }
+
+        if (setClauses.length === 0) {
+          return { success: false, message: 'Aucun champ valide à mettre à jour.' };
+        }
+
+        setClauses.push(`updated_at = NOW()`);
+        values.push(talentId);
+
+        await pool.query(
+          `UPDATE talents SET ${setClauses.join(', ')} WHERE id = $${paramIndex} AND deleted_at IS NULL`,
+          values
+        );
+
+        // Invalidate copilot context cache
+        cache.deleteByPrefix(`ctx:${talentId}:`);
+
+        const updatedFields = Object.keys(data).filter(k => ALLOWED_FIELDS[k]).join(', ');
+        const message = `Profil mis à jour (${updatedFields}).`;
+        await saveActionMessage(sessionId, message);
+
+        logger.info(`[action.handler] Talent ${talentId} updated profile: ${updatedFields}`);
+        return { success: true, message };
       }
 
       default:

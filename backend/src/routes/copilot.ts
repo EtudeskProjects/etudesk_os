@@ -20,6 +20,9 @@ import {
   validateFile,
 } from '../services/documents/document.service';
 import { MODEL_STT } from '../services/ai/models';
+import { analyzeAudio } from '../services/ai/audio-analysis.service';
+import { generateTTS } from '../services/ai/tts.service';
+import { uploadFile } from '../services/storage.service';
 import {
   copilotService,
   createTalentAgent,
@@ -225,7 +228,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
     }
 
-    const { sessionId: inputSessionId, message, mode, organizationId, attachmentIds, replaceLastExchange } = req.body;
+    const { sessionId: inputSessionId, message, mode, organizationId, attachmentIds, replaceLastExchange, voiceNoteUrl, voiceNoteMimeType } = req.body;
 
     // Validate message
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
@@ -446,15 +449,61 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       ? [...crossSessionMemory, ...summarizedHistory]
       : summarizedHistory;
 
+    // --- Voice note analysis (if present) ---
+    let agentMessage = message.trim();
+    let voiceNoteAnalysis: string | undefined;
+    if (voiceNoteUrl && voiceNoteMimeType) {
+      try {
+        const { getFileBuffer } = await import('../services/storage.service');
+        const audioBuffer = await getFileBuffer(voiceNoteUrl);
+        const audioBase64 = audioBuffer.toString('base64');
+        const audioMode = validMode === COPILOT_MODES.STUDY ? 'study' : (validMode === COPILOT_MODES.ORG ? 'org' : 'explore');
+        voiceNoteAnalysis = await analyzeAudio(audioBase64, voiceNoteMimeType, audioMode as 'study' | 'explore' | 'org');
+        agentMessage = voiceNoteAnalysis;
+      } catch (audioErr: any) {
+        logger.error('[copilot] Voice note analysis failed:', audioErr);
+        // Fallback: send original message text
+      }
+    }
+
     // Run agent with SSE streaming (pass attachments so agent sees file context)
     const parsedAttachments = messageAttachments ? JSON.parse(messageAttachments) : undefined;
     const { finalOutput, toolTrace, segments } = await runAgentWithSSE(
       agent,
-      message.trim(),
+      agentMessage,
       history,
       res,
       parsedAttachments
     );
+
+    // Update user message with voiceNoteUrl if present
+    if (voiceNoteUrl) {
+      pool.query(
+        `UPDATE copilot_messages SET attachments = $1
+         WHERE session_id = $2 AND role = 'user' AND deleted_at IS NULL
+         ORDER BY created_at DESC LIMIT 1`,
+        [sanitizeJsonForPg({ voiceNoteUrl, voiceNoteMimeType }), sessionId]
+      ).catch(() => {});
+    }
+
+    // --- TTS generation (study mode only, non-blocking for SSE) ---
+    let audioUrl: string | undefined;
+    if (validMode === COPILOT_MODES.STUDY && finalOutput.length > 10) {
+      try {
+        const ttsBuffer = await generateTTS(
+          finalOutput,
+          'nova',
+          'Parle lentement et clairement pour un apprenant. Sois naturel et encourageant.'
+        );
+        const audioPath = `copilot/tts/${sessionId}/${Date.now()}.mp3`;
+        audioUrl = await uploadFile(ttsBuffer, audioPath, 'audio/mpeg');
+        const estimatedDuration = Math.ceil(finalOutput.split(/\s+/).length / 2.5); // ~2.5 words/sec
+        sendSSE(res, { type: 'audio_ready', audioUrl, duration: estimatedDuration });
+      } catch (ttsErr: any) {
+        logger.error('[copilot] TTS generation failed:', ttsErr);
+        // Non-blocking: skip TTS if it fails
+      }
+    }
 
     // Save assistant response (persist segments in output_data for reload)
     await pool.query(
@@ -464,7 +513,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         sessionId,
         sanitizeForPg(finalOutput),
         toolTrace.length > 0 ? sanitizeJsonForPg(toolTrace) : null,
-        segments.length > 0 ? sanitizeJsonForPg(segments) : null,
+        segments.length > 0 ? sanitizeJsonForPg(audioUrl ? [...segments, { type: 'audio', audioUrl }] : segments) : null,
       ]
     );
 
@@ -630,6 +679,65 @@ router.post('/confirm', authMiddleware, async (req: AuthRequest, res: Response) 
     res.status(500).json({ error: req.t('copilot:processingError') });
   }
 });
+
+// --- Voice Note Upload ---
+
+const voiceNoteUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB max (30s audio)
+    files: 1,
+  },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['audio/webm', 'audio/mp4', 'audio/m4a', 'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/x-m4a'];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Type audio non supporté: ${file.mimetype}`));
+    }
+  },
+});
+
+/**
+ * POST /api/copilot/voice-note - Upload a voice note for analysis
+ * Body: FormData with 'audio' file field
+ * Returns: { voiceNoteUrl: string, mimeType: string }
+ */
+router.post(
+  '/voice-note',
+  authMiddleware,
+  voiceNoteUpload.single('audio'),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const talentId = req.talentId;
+      if (!talentId) {
+        return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
+      }
+
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ error: req.t('copilot:noAudioFile') });
+      }
+
+      // Store the voice note
+      const storagePath = `copilot/voice-notes/${talentId}/${Date.now()}-${file.originalname || 'voice.m4a'}`;
+      const fileUrl = await uploadFile(file.buffer, storagePath, file.mimetype);
+
+      logger.info(`[copilot] Voice note uploaded for talent ${talentId}: ${fileUrl}`);
+
+      res.json({
+        success: true,
+        data: {
+          voiceNoteUrl: fileUrl,
+          mimeType: file.mimetype,
+        },
+      });
+    } catch (error: any) {
+      logger.error('Error uploading voice note:', error);
+      res.status(500).json({ error: 'Erreur lors de l\'upload de la note vocale' });
+    }
+  }
+);
 
 // --- Audio Transcription Whisper Stt ---
 

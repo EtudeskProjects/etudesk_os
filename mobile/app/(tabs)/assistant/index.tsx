@@ -10,7 +10,9 @@ import {
   Pressable,
   Animated,
   Easing,
+  AppState,
 } from 'react-native';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Clipboard from 'expo-clipboard';
 import * as DocumentPicker from 'expo-document-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -44,6 +46,7 @@ import {
   ThinkingIndicator,
   ToolBlock,
   PulsingOrb,
+  VoiceNotePlayer,
 } from '../../../src/components/copilot';
 import {
   copilotService,
@@ -77,6 +80,7 @@ interface StreamingMessage {
   isStreaming?: boolean;
   error?: string;
   lastUserMessage?: string;
+  voiceNoteUrl?: string;
 }
 
 export default function AssistantScreen() {
@@ -146,6 +150,43 @@ export default function AssistantScreen() {
   const messagesListRef = useRef<FlatList<StreamingMessage>>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const alerts = useAlert();
+
+  // Track AppState for foreground reload
+  const appStateRef = useRef(AppState.currentState);
+  const isSendingRef = useRef(false);
+
+  // Keep isSendingRef in sync with isSending state
+  useEffect(() => {
+    isSendingRef.current = isSending;
+  }, [isSending]);
+
+  // Keep-awake: prevent screen sleep while streaming
+  useEffect(() => {
+    if (isSending) {
+      activateKeepAwakeAsync('copilot-stream').catch(() => {});
+    } else {
+      deactivateKeepAwake('copilot-stream');
+    }
+  }, [isSending]);
+
+  // Session reload on foreground: if the app was backgrounded during streaming,
+  // reload the session messages when it comes back
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      const wasBackground = appStateRef.current.match(/inactive|background/);
+      appStateRef.current = nextAppState;
+
+      if (wasBackground && nextAppState === 'active' && isSendingRef.current && sessionId) {
+        // Stream was likely interrupted — abort, reload session, clean up
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = null;
+        setIsSending(false);
+        deactivateKeepAwake('copilot-stream');
+        loadSession(sessionId);
+      }
+    });
+    return () => subscription.remove();
+  }, [sessionId]);
 
   // Build modes with translated labels
   const ALL_MODES = [
@@ -355,12 +396,17 @@ export default function AssistantScreen() {
             }
           }
 
+          // Extract voiceNoteUrl from attachments (persisted as JSON { voiceNoteUrl, voiceNoteMimeType })
+          const attachmentsData = m.attachments && !Array.isArray(m.attachments) ? m.attachments as any : null;
+          const voiceNoteUrl = attachmentsData?.voiceNoteUrl || undefined;
+
           return {
             id: m.id,
             role: m.role as 'user' | 'assistant',
             content: m.content,
             segments,
             senderName: m.senderName,
+            voiceNoteUrl,
             attachments: m.attachments && Array.isArray(m.attachments) && m.attachments.length > 0
               ? m.attachments.map((a: any) => ({ name: a.name, type: a.type, size: a.size }))
               : undefined,
@@ -430,7 +476,7 @@ export default function AssistantScreen() {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const startStream = useCallback(async (userContent: string, attachmentFiles: any[] = []) => {
+  const startStream = useCallback(async (userContent: string, attachmentFiles: any[] = [], voiceNoteUrl?: string, voiceNoteMimeType?: string) => {
     setIsSending(true);
     setError(null);
     setHideFloatingSuggestions(true);
@@ -451,6 +497,7 @@ export default function AssistantScreen() {
       attachments: attachmentFiles.length > 0
         ? attachmentFiles.map((a: any) => ({ name: a.name, type: a.type, size: a.size }))
         : undefined,
+      voiceNoteUrl,
     };
 
     const assistantMsgId = `assistant-${Date.now() + 1}`;
@@ -617,6 +664,21 @@ export default function AssistantScreen() {
               })
             );
           },
+          onAudioReady: (audioUrl, duration) => {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMsgId
+                  ? {
+                    ...m,
+                    segments: [
+                      ...m.segments,
+                      { type: 'audio' as const, audioUrl, audioDuration: duration },
+                    ],
+                  }
+                  : m
+              )
+            );
+          },
           onLimitReached: (_reason, message) => {
             setMessages((prev) =>
               prev.map((m) =>
@@ -633,7 +695,9 @@ export default function AssistantScreen() {
         },
         organizationId,
         attachmentIds.length > 0 ? attachmentIds : undefined,
-        shouldReplace || undefined
+        shouldReplace || undefined,
+        voiceNoteUrl,
+        voiceNoteMimeType
       );
     } catch (err: any) {
       setIsSending(false);
@@ -650,21 +714,21 @@ export default function AssistantScreen() {
   // Audio recording handlers
   const handleMicPress = useCallback(async () => {
     if (audioRecorder.state.isRecording) {
-      // Stop recording and transcribe
+      // Stop recording and send as voice note
       const audioUri = await audioRecorder.stopRecording();
       if (audioUri) {
         setIsTranscribing(true);
         try {
-          const result = await copilotService.transcribeAudio(audioUri, 'audio/m4a');
-          if (result.success && result.data?.text) {
-            // Append transcribed text to input (or replace if empty)
-            setInputText(prev => prev.trim() ? `${prev} ${result.data!.text}` : result.data!.text);
-            inputRef.current?.focus();
+          // Upload voice note to server
+          const uploadResult = await copilotService.sendVoiceNote(audioUri, 'audio/m4a');
+          if (uploadResult.success && uploadResult.data?.voiceNoteUrl) {
+            // Send as voice note — the backend will analyze it with Gemini
+            startStreamWithVoiceNote(uploadResult.data.voiceNoteUrl, uploadResult.data.mimeType);
           } else {
-            void alerts.alert('Erreur', result.error || 'Impossible de transcrire l\'audio');
+            void alerts.alert('Erreur', uploadResult.error || 'Impossible d\'envoyer la note vocale');
           }
         } catch (err: any) {
-          void alerts.alert('Erreur', err.message || 'Erreur de transcription');
+          void alerts.alert('Erreur', err.message || 'Erreur d\'envoi');
         } finally {
           setIsTranscribing(false);
         }
@@ -674,6 +738,11 @@ export default function AssistantScreen() {
       await audioRecorder.startRecording();
     }
   }, [audioRecorder]);
+
+  // Send a voice note as a message (upload + stream with audio analysis)
+  const startStreamWithVoiceNote = useCallback((voiceNoteUrl: string, mimeType: string) => {
+    startStream('\ud83c\udfa4 Note vocale', [], voiceNoteUrl, mimeType);
+  }, [startStream]);
 
   // Auto-stop recording when reaching 30 seconds
   useEffect(() => {
@@ -1003,7 +1072,9 @@ export default function AssistantScreen() {
                 onLongPress={() => handleUserMessageLongPress(message.id, message.content)}
                 delayLongPress={400}
               >
-                {message.content ? (
+                {message.voiceNoteUrl ? (
+                  <VoiceNotePlayer url={message.voiceNoteUrl} />
+                ) : message.content ? (
                   <Text style={[styles.userMessageText, { color: colors.textOnPrimary }]}>
                     {message.content}
                   </Text>
@@ -1043,6 +1114,10 @@ export default function AssistantScreen() {
                           interactiveConfirmation={!message.isStreaming}
                         />
                       );
+                    }
+                    if (seg.type === 'audio' && seg.audioUrl) {
+                      const { AudioBlock } = require('../../../src/components/copilot/blocks/AudioBlock');
+                      return <AudioBlock key={`seg-${idx}`} url={seg.audioUrl} duration={seg.audioDuration} autoPlay={!message.isStreaming} />;
                     }
                     return null;
                   })}
@@ -1203,7 +1278,7 @@ export default function AssistantScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.keyboardView}>
           {/* Header */}

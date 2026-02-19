@@ -5,11 +5,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, Pressable, Alert, Platform } from 'react-native';
+import { View, Text, Image, StyleSheet, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
-import * as WebBrowser from 'expo-web-browser';
 import {
   Briefcase,
   Users,
@@ -23,8 +20,10 @@ import { useTheme } from '../../hooks/useTheme';
 import { useI18n } from '../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
 import { fetchEntityBatched } from '../../services/entityBatchFetcher';
+import { API_CONFIG } from '../../constants/config';
 import { formatNumberNoTrailingZeros } from '../../utils/number';
 import { ShimmerPlaceholder } from '../ui';
+import { downloadAndOpenDocument } from '../../utils/documentDownload';
 
 
 interface EntityCardProps {
@@ -100,7 +99,7 @@ function normalizeEntity(type: string, raw: Record<string, any>): Record<string,
         ...raw,
         title: raw.title || raw.original_filename,
         subtitle: raw.document_type || raw.category,
-        file_url: raw.file_url,
+        file_url: raw.file_url || raw.downloadUrl,
       };
     default:
       return raw;
@@ -205,27 +204,23 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
       case 'document': {
         const fileUrl = data.file_url || data.downloadUrl;
         if (fileUrl) {
-          const url = fileUrl.startsWith('http') ? fileUrl : `${process.env.EXPO_PUBLIC_API_URL || ''}${fileUrl}`;
-          const filename = data.filename || data.original_filename || data.title || 'document';
-          const ext = filename.includes('.') ? '' : '.pdf';
-          const localUri = `${FileSystem.cacheDirectory}${filename}${ext}`;
+          const rawName = data.filename || data.original_filename || data.title || 'document';
 
           setDownloading(true);
-          FileSystem.downloadAsync(url, localUri)
-            .then(async ({ uri }) => {
-              const canShare = await Sharing.isAvailableAsync();
-              if (canShare) {
-                await Sharing.shareAsync(uri, {
-                  mimeType: 'application/pdf',
-                  UTI: 'com.adobe.pdf',
-                });
-              } else {
-                Alert.alert('Téléchargé', `Fichier enregistré : ${filename}${ext}`);
-              }
-            })
+          downloadAndOpenDocument({
+            url: fileUrl,
+            filename: rawName,
+            mimeType: data.mime_type || 'application/pdf',
+          })
             .catch((err) => {
-              if (__DEV__) console.error('[EntityCard] download error:', err);
-              Alert.alert('Erreur', 'Impossible de télécharger le fichier.');
+              const url = fileUrl.startsWith('http') ? fileUrl : `${API_CONFIG.BASE_URL}${fileUrl}`;
+              console.error('[EntityCard] download error:', err, 'url:', url);
+              Alert.alert(
+                'Erreur',
+                __DEV__
+                  ? `Téléchargement échoué: ${err?.message || err}\nURL: ${url}`
+                  : 'Impossible de télécharger le fichier.'
+              );
             })
             .finally(() => setDownloading(false));
         } else {

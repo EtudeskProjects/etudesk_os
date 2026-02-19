@@ -6,6 +6,7 @@ import {
   Modal,
   Image,
   Dimensions,
+  Platform,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { WebView } from 'react-native-webview';
@@ -15,6 +16,7 @@ import {
   FileText,
   FolderOpen,
   Trash2,
+  Download,
   RotateCcw,
   Clock,
   CheckCircle,
@@ -37,6 +39,7 @@ import {
   formatOrgFileSize,
 } from '../../../src/services';
 import { useAlert } from '../../../src/contexts/AlertContext';
+import { downloadAndOpenDocument } from '../../../src/utils/documentDownload';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -178,6 +181,18 @@ export default function OrgDocumentsScreen() {
     }
   };
 
+  const handleDownload = async (doc: OrgDocument) => {
+    try {
+      await downloadAndOpenDocument({
+        url: doc.file_url,
+        filename: doc.original_filename,
+        mimeType: doc.mime_type,
+      });
+    } catch (error) {
+      void alerts.alert('Erreur', 'Impossible de télécharger le document');
+    }
+  };
+
   const handleDelete = (doc: OrgDocument) => {
     if (!selectedOrg?.id) return;
     void alerts.showAlert({ title: 'Supprimer le document', message: `Veux-tu vraiment supprimer "${doc.title || doc.original_filename}" ?`, buttons: [
@@ -259,13 +274,19 @@ export default function OrgDocumentsScreen() {
         key={doc.id}
         style={[styles.documentCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
       >
-        {/* Delete button */}
-        <IconButton
-          onPress={() => handleDelete(doc)}
-          icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Supprimer"
-          style={styles.deleteButton}
-        />
+        {/* Action buttons */}
+        <View style={styles.cardActions}>
+          <IconButton
+            onPress={() => handleDownload(doc)}
+            icon={<Download size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel="Télécharger"
+          />
+          <IconButton
+            onPress={() => handleDelete(doc)}
+            icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+            accessibilityLabel="Supprimer"
+          />
+        </View>
 
         <View style={styles.cardContent}>
           {/* Thumbnail */}
@@ -385,6 +406,7 @@ export default function OrgDocumentsScreen() {
             subtitle="Uploadez vos documents d'organisation pour les analyser automatiquement."
             actionLabel="Ajouter un document"
             onAction={handleUpload}
+            tip="Astuce : l'assistant a accès à tous les documents chargés ici et peut également en sauvegarder depuis une conversation."
           />
         ) : (
           <>
@@ -433,7 +455,10 @@ export default function OrgDocumentsScreen() {
                   />
                 ) : (
                   <WebView
-                    source={{ uri: getFullFileUrl(previewDoc) }}
+                    source={{ uri: Platform.OS === 'android'
+                      ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(getFullFileUrl(previewDoc))}`
+                      : getFullFileUrl(previewDoc)
+                    }}
                     style={styles.previewWebView}
                     startInLoadingState
                   />
@@ -464,14 +489,13 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
 
-  deleteButton: {
+  cardActions: {
     position: 'absolute',
     top: SPACING.xs,
     right: SPACING.xs,
-    width: 44,
-    height: 44,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 0,
     zIndex: 1,
   },
 
@@ -496,7 +520,7 @@ const styles = StyleSheet.create({
 
   cardInfo: {
     flex: 1,
-    paddingRight: SPACING.xl,
+    paddingRight: 80,
   },
 
   documentTitle: {
