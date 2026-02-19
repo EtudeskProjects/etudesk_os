@@ -15,6 +15,15 @@ export async function validateApplyOpportunity(
   talentId: string,
   opportunityId: string
 ): Promise<ValidationResult> {
+  // KYC gate: require verified identity before applying
+  const identityCheck = await pool.query(
+    `SELECT id FROM kyc_verifications WHERE talent_id = $1 AND status = 'VERIFIED' LIMIT 1`,
+    [talentId]
+  );
+  if (identityCheck.rows.length === 0) {
+    return { valid: false, error: 'Tu dois vérifier ton identité avant de postuler. Va dans Paramètres > Vérification d\'identité.' };
+  }
+
   // Check opportunity exists and is open
   const opp = await pool.query(
     `SELECT id, title, status, deadline FROM opportunities WHERE id = $1 AND deleted_at IS NULL`,

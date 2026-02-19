@@ -197,21 +197,8 @@ router.post(
         return res.status(404).json({ error: req.t('talents:profileNotFound') });
       }
 
-      // KYC gate: require verified identity before uploading documents
-      const identityCheck = await pool.query(
-        `SELECT id FROM kyc_verifications
-         WHERE talent_id = $1 AND status = 'VERIFIED'
-         LIMIT 1`,
-        [talentId]
-      );
-
-      if (identityCheck.rows.length === 0) {
-        return res.status(403).json({
-          error: req.t('documents:identityNotVerified'),
-          code: 'IDENTITY_REQUIRED',
-          message: req.t('documents:identityRequiredMessage'),
-        });
-      }
+      // KYC gate removed — document upload is now open to all authenticated users.
+      // KYC verification is only required for organization creation and job applications.
 
       const files = req.files as Express.Multer.File[] | undefined;
 

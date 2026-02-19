@@ -41,7 +41,7 @@ import documentService, {
   formatFileSize,
   getStatusColor,
 } from '../../src/services/documentService';
-import { kycService } from '../../src/services/kycService';
+
 import { useAlert } from '../../src/contexts/AlertContext';
 import { downloadAndOpenDocument } from '../../src/utils/documentDownload';
 
@@ -124,25 +124,6 @@ export default function DocumentsScreen() {
 
   const handleUpload = async () => {
     try {
-      // KYC gate: check identity verification BEFORE opening picker
-      try {
-        const kycRes = await kycService.getStatus();
-        const kycData = kycRes?.data;
-        if (!kycData || kycData.status !== 'VERIFIED') {
-          void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant d\'ajouter des documents.', buttons: [
-              { text: 'Plus tard', style: 'cancel' },
-              { text: 'Vérifier', onPress: () => router.push('/settings/kyc') },
-            ] });
-          return;
-        }
-      } catch {
-        void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant d\'ajouter des documents.', buttons: [
-            { text: 'Plus tard', style: 'cancel' },
-            { text: 'Vérifier', onPress: () => router.push('/settings/kyc') },
-          ] });
-        return;
-      }
-
       const result = await DocumentPicker.getDocumentAsync({
         type: ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
         copyToCacheDirectory: true,
@@ -191,18 +172,6 @@ export default function DocumentsScreen() {
       startPolling();
     } catch (error: any) {
       console.error('Error uploading document:', error);
-
-      // KYC gate: redirect to identity verification
-      if (error?.code === 'IDENTITY_REQUIRED') {
-        void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant d\'ajouter des documents.', buttons: [
-            { text: 'Plus tard', style: 'cancel' },
-            {
-              text: 'Vérifier',
-              onPress: () => router.push('/settings/kyc'),
-            },
-          ] });
-        return;
-      }
 
       void alerts.alert('Erreur', error?.message || "Erreur lors de l'upload");
     } finally {
