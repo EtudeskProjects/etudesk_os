@@ -254,6 +254,24 @@ function ProfileUpdatePreview({ data, colors }: { data: Record<string, any>; col
     profile_tags: 'Tags',
   };
 
+  const ENUM_LABELS: Record<string, string> = {
+    LEARN_NEW_SKILLS: 'Apprendre', PREPARE_EXAMS: 'Préparer des examens',
+    FIND_JOB: 'Trouver un emploi', ADVANCE_CAREER: 'Évoluer dans ma carrière',
+    RESEARCH_SUPPORT: 'Recherche', IMPROVE_PRODUCTIVITY: 'Productivité',
+    COLLABORATIVE_LEARNING: 'Apprentissage collaboratif', TEACH_OR_MENTOR: 'Enseigner / Mentorer',
+    BUILD_NETWORK_OR_VISIBILITY: 'Réseau & Visibilité', CONTRIBUTE_OR_GIVE_BACK: 'Contribuer',
+    STUDENT: 'Étudiant', PUPIL: 'Élève', JOB_SEEKER: 'En recherche d\'emploi',
+    SALARIED: 'Salarié', ENTREPRENEUR: 'Entrepreneur', CIVIL_SERVANT: 'Fonctionnaire',
+    MANAGER: 'Manager', CONSULTANT: 'Consultant', INVESTOR: 'Investisseur',
+    CONTENT_CREATOR: 'Créateur de contenu', COACH: 'Coach', RETIRED: 'Retraité',
+  };
+
+  const formatValue = (value: any): string => {
+    if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
+    if (Array.isArray(value)) return value.map(v => ENUM_LABELS[v] || v).join(', ');
+    return String(value);
+  };
+
   const entries = Object.entries(data).filter(([key]) => FIELD_LABELS[key]);
 
   return (
@@ -264,7 +282,7 @@ function ProfileUpdatePreview({ data, colors }: { data: Record<string, any>; col
             {FIELD_LABELS[key]}
           </Text>
           <Text style={[styles.profileUpdateValue, { color: colors.textPrimary }]} numberOfLines={4}>
-            {typeof value === 'boolean' ? (value ? 'Oui' : 'Non') : Array.isArray(value) ? value.join(', ') : String(value)}
+            {formatValue(value)}
           </Text>
         </View>
       ))}
