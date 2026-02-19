@@ -230,12 +230,17 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
 
     const { sessionId: inputSessionId, message, mode, organizationId, attachmentIds, replaceLastExchange, voiceNoteUrl, voiceNoteMimeType } = req.body;
 
-    // Validate message
-    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+    // Normalize message — default to empty string when attachments/voice present
+    const safeMessage = (typeof message === 'string' ? message : '').trim();
+    const hasAttachments = Array.isArray(attachmentIds) && attachmentIds.length > 0;
+    const hasVoiceNote = !!voiceNoteUrl;
+
+    // Validate: require message OR attachments OR voice note
+    if (safeMessage.length === 0 && !hasAttachments && !hasVoiceNote) {
       return res.status(400).json({ error: req.t('copilot:messageRequired') });
     }
 
-    if (message.length > 4000) {
+    if (safeMessage.length > 4000) {
       return res.status(400).json({ error: req.t('copilot:messageTooLong') });
     }
 
@@ -337,13 +342,13 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
 
     // Detect active skill from user message triggers (CPU only, instant)
     const skillMode = isOrg ? 'org' : validMode;
-    const detectedSkill = await detectSkillFromMessage(message.trim(), skillMode as 'explore' | 'study' | 'org');
+    const detectedSkill = await detectSkillFromMessage(safeMessage, skillMode as 'explore' | 'study' | 'org');
     const activeSkillInstructions = detectedSkill
       ? `\n<active_skill_instructions skill="${detectedSkill.skillId}" name="${detectedSkill.skillName}">\n${detectedSkill.instructions}\n</active_skill_instructions>\n`
       : undefined;
 
     // Conditional UEMOA knowledge injection (~2500 tokens saved when not relevant)
-    const injectUEMOA = shouldInjectUEMOA(message.trim(), detectedSkill?.skillId);
+    const injectUEMOA = shouldInjectUEMOA(safeMessage, detectedSkill?.skillId);
 
     // Build agent context (CPU only, instant)
     let agent: any;
@@ -404,7 +409,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       : sanitizeJsonForPg(null);
     await pool.query(
       `INSERT INTO copilot_messages (session_id, role, content, attachments, talent_id) VALUES ($1, 'user', $2, $3, $4)`,
-      [sessionId, sanitizeForPg(message.trim()), initialAttachments, talentId]
+      [sessionId, sanitizeForPg(safeMessage), initialAttachments, talentId]
     );
 
     // --- PHASE 2: Attachments + Load history in parallel ---
@@ -449,15 +454,15 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         organizationId,
         currentSessionId: sessionId,
         mode: validMode,
-        message: message.trim(),
+        message: safeMessage,
       }).catch(() => []),
     ]);
     const history = crossSessionMemory.length > 0
       ? [...crossSessionMemory, ...summarizedHistory]
       : summarizedHistory;
 
-    // --- Voice note analysis (if present) ---
-    let agentMessage = message.trim();
+    // --- Default agent message: infer intent from attachments if text is empty ---
+    let agentMessage = safeMessage || (hasAttachments ? '[L\'utilisateur a envoyé un ou plusieurs fichiers sans message. Analyse les fichiers joints et propose une action pertinente.]' : '');
     let voiceNoteAnalysis: string | undefined;
     if (voiceNoteUrl && voiceNoteMimeType) {
       try {
@@ -517,7 +522,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     // Generate title for first message (non-blocking)
     const messageCount = historyRes.rows.length;
     if (messageCount <= 2) {
-      generateSessionTitle(message.trim()).then((title) => {
+      generateSessionTitle(safeMessage).then((title) => {
         copilotService.updateSessionTitle(sessionId, title).catch(() => { });
       });
     }
