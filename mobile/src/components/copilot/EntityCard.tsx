@@ -5,8 +5,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, Pressable } from 'react-native';
+import { View, Text, Image, StyleSheet, Pressable, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import * as WebBrowser from 'expo-web-browser';
 import {
   Briefcase,
@@ -142,6 +144,7 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
   const router = useRouter();
   const [entityData, setEntityData] = useState<Record<string, any>>(initialData);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState(false);
 
   // Auto-fetch entity data via batched API call (debounced 100ms)
@@ -203,7 +206,28 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
         const fileUrl = data.file_url || data.downloadUrl;
         if (fileUrl) {
           const url = fileUrl.startsWith('http') ? fileUrl : `${process.env.EXPO_PUBLIC_API_URL || ''}${fileUrl}`;
-          WebBrowser.openBrowserAsync(url).catch(() => {});
+          const filename = data.filename || data.original_filename || data.title || 'document';
+          const ext = filename.includes('.') ? '' : '.pdf';
+          const localUri = `${FileSystem.cacheDirectory}${filename}${ext}`;
+
+          setDownloading(true);
+          FileSystem.downloadAsync(url, localUri)
+            .then(async ({ uri }) => {
+              const canShare = await Sharing.isAvailableAsync();
+              if (canShare) {
+                await Sharing.shareAsync(uri, {
+                  mimeType: 'application/pdf',
+                  UTI: 'com.adobe.pdf',
+                });
+              } else {
+                Alert.alert('Téléchargé', `Fichier enregistré : ${filename}${ext}`);
+              }
+            })
+            .catch((err) => {
+              if (__DEV__) console.error('[EntityCard] download error:', err);
+              Alert.alert('Erreur', 'Impossible de télécharger le fichier.');
+            })
+            .finally(() => setDownloading(false));
         } else {
           router.push(`/details/document/${id}` as any);
         }

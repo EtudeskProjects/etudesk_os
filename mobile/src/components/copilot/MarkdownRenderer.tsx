@@ -6,8 +6,10 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, Alert } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { useTheme } from '../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../constants/theme';
 import { ShimmerPlaceholder } from '../ui/ShimmerPlaceholder';
@@ -265,7 +267,23 @@ function renderInlineMarkdown(text: string, colors: any): React.ReactNode[] {
         <Text
           key={key++}
           style={{ color: colors.primary, textDecorationLine: 'underline' }}
-          onPress={() => WebBrowser.openBrowserAsync(resolvedUrl).catch(() => {})}
+          onPress={() => {
+            const isDownloadable = /\.(pdf|docx?|xlsx?|csv|txt)(\?|$)/i.test(resolvedUrl);
+            if (isDownloadable) {
+              const filename = resolvedUrl.split('/').pop()?.split('?')[0] || 'document.pdf';
+              const localUri = `${FileSystem.cacheDirectory}${filename}`;
+              FileSystem.downloadAsync(resolvedUrl, localUri)
+                .then(async ({ uri }) => {
+                  const canShare = await Sharing.isAvailableAsync();
+                  if (canShare) {
+                    await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
+                  }
+                })
+                .catch(() => Alert.alert('Erreur', 'Impossible de télécharger le fichier.'));
+            } else {
+              WebBrowser.openBrowserAsync(resolvedUrl).catch(() => {});
+            }
+          }}
         >
           {m[6]}
         </Text>
