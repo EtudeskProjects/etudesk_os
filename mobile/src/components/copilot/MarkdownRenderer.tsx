@@ -571,7 +571,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, onQ
         switch (block.type) {
           case 'entity':
             return (
-              <EntityCard key={index} type={block.meta || ''} data={block.data} />
+              <EntityCard key={`entity-${block.meta}-${block.data?.id || index}`} type={block.meta || ''} data={block.data} />
             );
           case 'quiz':
             return <QuizBlock key={index} data={block.data} onAnswer={onQuizAnswer} />;

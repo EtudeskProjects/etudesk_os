@@ -434,6 +434,17 @@ const renderTalentContent = () => (
       </Text>
     </View>
 
+    {/* Train Button */}
+    <Button
+      title="Se former"
+      onPress={() => router.push({ pathname: '/(tabs)/assistant', params: { mode: 'study', focusInput: 'true' } })}
+      variant="primary"
+      fullWidth
+      icon={<BookOpen size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+      style={styles.actionButton}
+      textStyle={styles.actionButtonText}
+    />
+
     {/* Quick Actions Grid */}
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -468,17 +479,6 @@ const renderTalentContent = () => (
         })}
       </View>
     </View>
-
-    {/* Train Button */}
-    <Button
-      title="Se former"
-      onPress={() => router.push({ pathname: '/(tabs)/assistant', params: { mode: 'study', focusInput: 'true' } })}
-      variant="primary"
-      fullWidth
-      icon={<BookOpen size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-      style={styles.actionButton}
-      textStyle={styles.actionButtonText}
-    />
 
     {/* Notifications Section */}
     <View style={styles.section}>

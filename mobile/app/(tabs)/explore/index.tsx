@@ -193,11 +193,11 @@ export default function ExploreScreen() {
     loadData();
   };
 
-  // Categories with translated labels
+  // Categories with translated labels — local Midjourney images (UEMOA context)
   const CATEGORIES_TRANSLATED = [
-    { id: 'communities' as Category, label: t('explore.categories.communities'), icon: Users, image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80' },
-    { id: 'spaces' as Category, label: t('explore.categories.spaces') || 'Espaces', icon: MapPin, image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80' },
-    { id: 'opportunities' as Category, label: t('explore.categories.opportunities'), icon: Briefcase, image: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&q=80' },
+    { id: 'communities' as Category, label: t('explore.categories.communities'), icon: Users, image: require('../../../assets/explore_communities.jpg') },
+    { id: 'spaces' as Category, label: t('explore.categories.spaces') || 'Espaces', icon: MapPin, image: require('../../../assets/explore_spaces.jpg') },
+    { id: 'opportunities' as Category, label: t('explore.categories.opportunities'), icon: Briefcase, image: require('../../../assets/explore_opportunities.jpg') },
   ];
 
   // Sort options configuration
@@ -438,7 +438,7 @@ export default function ExploreScreen() {
             onPress={() => setActiveCategory(category.id)}
           >
             <ImageBackground
-              source={{ uri: category.image }}
+              source={category.image}
               style={styles.categoryTabBackground}
               imageStyle={styles.categoryTabImage}
             >

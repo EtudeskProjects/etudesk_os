@@ -3,7 +3,7 @@ name: Deep Dive Lesson
 description: Structured lesson (direct teaching, Socratic discovery, or hands-on project) with diagrams, quizzes, and skill tracking
 modes: study
 tools: youtube_search, manage_skills, generate_diagram, web_search
-triggers: cours, lecon, apprends-moi, enseigne-moi, explique en detail, cours complet, formation sur, deep dive, approfondir, socratique, guide-moi, fais-moi reflechir, decouvrir par moi-meme, methode socratique, questionne-moi, aide-moi a comprendre, raisonnement guide, projet, mini-projet, construire, coder, build, pratique, exercice pratique, hands-on, tp, atelier, projet mobile money, projet fintech
+triggers: cours, lecon, apprends-moi, enseigne-moi, explique en detail, cours complet, formation sur, deep dive, approfondir, socratique, guide-moi, fais-moi reflechir, decouvrir par moi-meme, methode socratique, questionne-moi, aide-moi a comprendre, raisonnement guide, projet, mini-projet, construire, coder, build, pratique, exercice pratique, hands-on, tp, atelier, projet mobile money, projet fintech, apprendre anglais, learn english, pratiquer anglais, pratiquer francais, apprendre espagnol, ameliorer prononciation, practice english, cours anglais, cours de langue, apprendre une langue
 ---
 
 # Deep Dive Lesson Workflow
@@ -16,6 +16,7 @@ Choose the mode based on the user's trigger:
 - **Direct Teaching** (default) — triggered by "cours", "lecon", "apprends-moi", "explique", "deep dive", "approfondir", "formation sur". Follow the Direct Teaching Protocol below.
 - **Socratic Discovery** — triggered by "socratique", "questionne-moi", "fais-moi reflechir", "guide-moi", "decouvrir par moi-meme", "raisonnement guide", "aide-moi a comprendre". Follow the Socratic Protocol below.
 - **Project Flow** — triggered by "projet", "mini-projet", "construire", "coder", "build", "pratique", "exercice pratique", "hands-on", "tp", "atelier". Follow the Project Flow below.
+- **Vocal Language Practice** — triggered by "apprendre anglais", "learn english", "pratiquer", "prononciation", "cours anglais", "cours de langue", "apprendre une langue", or any language learning request. Follow the Vocal Language Protocol below.
 
 If ambiguous, default to Direct Teaching.
 
@@ -215,6 +216,100 @@ For each project step, follow this pattern:
 13. Propose to add/upgrade skills demonstrated during the project:
     - "Tu as mis en pratique [Skill 1], [Skill 2]. Je les ajoute a ton profil ?"
     - Call `manage_skills` for each confirmed skill
+
+---
+
+## Vocal Language Protocol (when triggered)
+
+Language is oral before written. Prioritize speaking exercises from the FIRST message.
+
+### Step L1: Assess Level & Set Context
+
+1. Identify the target language from the user's message.
+2. Check `<skills>` for existing language skills (e.g. "English — BEGINNER").
+3. Set difficulty:
+   - **BEGINNER**: Short phrases (3-5 words), basic vocabulary, greetings, introductions
+   - **INTERMEDIATE**: Full sentences, professional situations, grammar nuances
+   - **EXPERT**: Paragraphs, nuanced discussions, idiomatic expressions, debate
+
+4. Greet briefly (1 sentence), then IMMEDIATELY launch the first vocal exercise.
+
+### Step L2: Vocal Exercise Loop
+
+Each message follows this pattern: **Model → Prompt → Wait for voice note**
+
+**Exercise types (rotate — never repeat the same type twice in a row):**
+
+**A) Listen & Repeat**
+- Generate `audio_tts` with a phrase in the target language
+- Ask the user to record themselves repeating it
+- Example:
+  > Écoute et répète cette phrase :
+  > ```audio_tts
+  > {"text":"I would like to schedule a meeting for tomorrow afternoon.","instructions":"Speak slowly and clearly with standard American English. Emphasize 'schedule' and 'afternoon'. Warm tone.","voice":"marin"}
+  > ```
+  > 🎙 Envoie un vocal en répétant cette phrase !
+
+**B) Translate & Speak**
+- Give a sentence in the user's native language
+- Ask them to translate it in the target language AND record it
+- Example:
+  > Traduis en anglais et envoie un vocal : "Je cherche un stage en développement web à Abidjan."
+  > 🎙 Envoie ta traduction en vocal !
+
+**C) Situational Role-Play**
+- Set a real-world scenario relevant to the user's career
+- Ask them to respond vocally
+- Example:
+  > 🎭 Situation : Tu es en entretien. Le recruteur te demande "What are your strengths?"
+  > 🎙 Réponds en vocal comme si tu étais en vrai entretien !
+
+**D) Shadowing (Imitation)**
+- Generate `audio_tts` at normal speed
+- Ask them to imitate the exact rhythm and intonation
+- Example:
+  > Écoute attentivement et imite EXACTEMENT le rythme :
+  > ```audio_tts
+  > {"text":"We need to finalize the budget before the board meeting next Friday.","instructions":"Natural business English pace. Emphasize 'finalize' and 'Friday'. Professional tone.","voice":"coral"}
+  > ```
+  > 🎙 À toi ! Imite le rythme et l'intonation.
+
+**E) Minimal Pair Drill**
+- Two similar-sounding words/phrases via `audio_tts`
+- Ask the user to pronounce both
+- Example:
+  > Ces mots se ressemblent : "live" (/lɪv/) vs "leave" (/liːv/). Écoute :
+  > ```audio_tts
+  > {"text":"Live. Leave. I live in Abidjan. I will leave tomorrow.","instructions":"Clearly distinguish the short 'i' in 'live' from the long 'ee' in 'leave'. Pause between words. Clear and slow.","voice":"marin"}
+  > ```
+  > 🎙 Enregistre-toi en prononçant les deux !
+
+### Step L3: Correction & Feedback (after voice note)
+
+When you receive the user's voice note:
+1. **Praise** — always start with encouragement ("Bravo !", "Bien joué !", "C'est mieux !")
+2. **Correct** — show incorrect vs correct, explain the rule briefly (1-2 sentences max)
+3. **Audio model** — generate `audio_tts` with the corrected version so they can compare
+4. **Next exercise** — immediately launch the NEXT vocal exercise (different type than the previous one)
+
+### Step L4: Progress Check (every 5 exercises)
+
+After ~5 vocal exchanges:
+1. Generate ONE quiz on vocabulary/grammar covered:
+```quiz
+{"topic":"English Practice","question":"[Grammar/vocab question from the session]","options":["A","B","C","D"],"correctAnswer":X,"explanation":"[Rule explanation]"}
+```
+2. Propose to add/upgrade the language skill via `manage_skills`
+3. Continue with more vocal exercises if the user wants
+
+### Language Exercise Scenarios (UEMOA-relevant)
+- Job interview (entretien d'embauche)
+- Client call (appel client)
+- Startup pitch (pitcher son projet)
+- Business meeting (réunion d'équipe)
+- Networking event (Africa CEO Forum, AfricArena)
+- Market negotiation (négocier au marché)
+- Email/message professionnel
 
 ---
 

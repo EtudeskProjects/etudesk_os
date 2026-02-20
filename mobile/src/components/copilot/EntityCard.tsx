@@ -4,7 +4,7 @@
  * Routes to detail pages on press
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Image, StyleSheet, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
@@ -137,7 +137,7 @@ function getImageUrl(type: string, data: Record<string, any>): string | undefine
   }
 }
 
-export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData }) => {
+export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: initialData }) => {
   const { colors } = useTheme();
   const { t } = useI18n();
   const router = useRouter();
@@ -145,6 +145,7 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   // Auto-fetch entity data via batched API call (debounced 100ms)
   // Documents always need fetch to get file_url for clickable download
@@ -232,6 +233,9 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
   };
 
   const imageUrl = getImageUrl(type, data);
+
+  // Reset image error when URL changes
+  useEffect(() => { setImgError(false); }, [imageUrl]);
 
   // Type badge config
   const typeConfig = {
@@ -339,11 +343,13 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
           { backgroundColor: withOpacity(typeConfig.color, OPACITY[10]) },
         ]}
       >
-        {imageUrl ? (
+        {imageUrl && !imgError ? (
           <Image
+            key={imageUrl}
             source={{ uri: imageUrl }}
             style={isRound ? styles.imageRound : styles.imageSquare}
             resizeMode="cover"
+            onError={() => setImgError(true)}
           />
         ) : (
           <TypeIcon size={20} color={typeConfig.color} />
@@ -393,7 +399,7 @@ export const EntityCard: React.FC<EntityCardProps> = ({ type, data: initialData 
       <ChevronRight size={16} color={colors.textSecondary} style={styles.chevron} />
     </Pressable>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {

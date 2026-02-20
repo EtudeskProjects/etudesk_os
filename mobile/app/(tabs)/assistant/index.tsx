@@ -1480,7 +1480,16 @@ export default function AssistantScreen() {
 
 	                <Button
 	                  title={currentMode?.label || ''}
-	                  onPress={() => setActiveMode(activeMode === 'explore' ? 'study' : 'explore')}
+	                  onPress={() => {
+	                    const nextMode = activeMode === 'explore' ? 'study' : 'explore';
+	                    abortControllerRef.current?.abort();
+	                    abortControllerRef.current = null;
+	                    setIsSending(false);
+	                    setError(null);
+	                    setSessionId(null);
+	                    setMessages([]);
+	                    setActiveMode(nextMode);
+	                  }}
 	                  disabled={MODES.length === 1}
 	                  variant="secondary"
 	                  size="sm"

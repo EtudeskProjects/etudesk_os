@@ -37,28 +37,47 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
   const { t } = useI18n();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  // Normalize data: support both new and old format
+  // Normalize data + shuffle options at render time (stable via useMemo)
   const { topic, question, options, correctAnswer, explanation } = useMemo(() => {
+    let rawTopic = '';
+    let rawQuestion = '';
+    let rawOptions: string[] = [];
+    let rawCorrect = -1;
+    let rawExplanation = '';
+
     if (data.question && data.options) {
-      return {
-        topic: data.topic,
-        question: data.question,
-        options: data.options,
-        correctAnswer: data.correctAnswer ?? -1,
-        explanation: data.explanation || '',
-      };
-    }
-    if (data.questions?.length) {
+      rawTopic = data.topic;
+      rawQuestion = data.question;
+      rawOptions = data.options;
+      rawCorrect = data.correctAnswer ?? -1;
+      rawExplanation = data.explanation || '';
+    } else if (data.questions?.length) {
       const q = data.questions[0];
-      return {
-        topic: data.topic,
-        question: q.question,
-        options: q.options || [],
-        correctAnswer: q.correctAnswer ?? -1,
-        explanation: q.explanation || '',
-      };
+      rawTopic = data.topic;
+      rawQuestion = q.question;
+      rawOptions = q.options || [];
+      rawCorrect = q.correctAnswer ?? -1;
+      rawExplanation = q.explanation || '';
+    } else {
+      return { topic: data.topic || '', question: '', options: [] as string[], correctAnswer: -1, explanation: '' };
     }
-    return { topic: data.topic || '', question: '', options: [] as string[], correctAnswer: -1, explanation: '' };
+
+    // Shuffle options with Fisher-Yates and remap correctAnswer
+    const indices = rawOptions.map((_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    const shuffledOptions = indices.map(i => rawOptions[i]);
+    const newCorrect = rawCorrect >= 0 ? indices.indexOf(rawCorrect) : -1;
+
+    return {
+      topic: rawTopic,
+      question: rawQuestion,
+      options: shuffledOptions,
+      correctAnswer: newCorrect,
+      explanation: rawExplanation,
+    };
   }, [data]);
 
   const answered = selectedIndex !== null;
