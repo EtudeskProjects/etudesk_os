@@ -360,7 +360,7 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
         setResultMessage(response.data.message || 'Action effectuée.');
       } else {
         setState('error');
-        setResultMessage(response.error || 'Une erreur est survenue.');
+        setResultMessage(response.data?.message || response.error || 'Une erreur est survenue.');
       }
     } catch (err: any) {
       setState('error');
