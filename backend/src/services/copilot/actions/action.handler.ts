@@ -468,8 +468,8 @@ export async function handleConfirmation(
       }
 
       case 'create_agenda_trigger': {
-        if (!data || !data.code || !data.title || !data.dueAt) {
-          return { success: false, message: 'Données manquantes pour le trigger (code, title, dueAt requis).' };
+        if (!data || !data.title) {
+          return { success: false, message: 'Données manquantes pour le trigger (title requis).' };
         }
 
         const VALID_CODES = new Set([
@@ -478,9 +478,12 @@ export async function handleConfirmation(
         ]);
         const VALID_PRIORITIES = new Set(['LOW', 'NORMAL', 'HIGH', 'URGENT']);
 
-        const triggerCode = VALID_CODES.has(data.code) ? data.code : 'CUSTOM';
+        // Accept "code" or "type" (agent sometimes sends "type" instead of "code")
+        const rawCode = (data.code || data.type || 'CUSTOM').toUpperCase();
+        const triggerCode = VALID_CODES.has(rawCode) ? rawCode : 'CUSTOM';
         const priority = VALID_PRIORITIES.has(data.priority) ? data.priority : 'NORMAL';
-        const dueAt = new Date(data.dueAt);
+        // Default dueAt to 7 days from now if not provided
+        const dueAt = data.dueAt ? new Date(data.dueAt) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         if (isNaN(dueAt.getTime())) {
           return { success: false, message: 'Date invalide pour le trigger.' };
         }
@@ -496,7 +499,7 @@ export async function handleConfirmation(
             data.description?.slice(0, 500) || null,
             dueAt.toISOString(),
             priority,
-            data.metadata ? JSON.stringify(data.metadata) : '{}',
+            JSON.stringify({ ...data.metadata, ...(data.keywords ? { keywords: data.keywords } : {}), ...(data.frequency ? { frequency: data.frequency } : {}) }),
           ]
         );
 
