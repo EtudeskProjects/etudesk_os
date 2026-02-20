@@ -13,12 +13,7 @@ import { useI18n } from '../../src/contexts/I18nContext';
 import { useForm } from '../../src/hooks/useForm';
 import { otpService } from '../../src/services/otpService';
 import { useAlert } from '../../src/contexts/AlertContext';
-import { Button, IconButton, Input, KeyboardAwareScrollView } from '../../src/components/ui';
-
-function isPhoneInvalid(value: string): boolean {
-  const cleaned = value.replace(/[^\d+]/g, '');
-  return !/^\+?\d{8,15}$/.test(cleaned);
-}
+import { Button, IconButton, PhoneInput, KeyboardAwareScrollView } from '../../src/components/ui';
 
 export default function WhatsAppLoginScreen() {
   const router = useRouter();
@@ -32,10 +27,6 @@ export default function WhatsAppLoginScreen() {
         initialValue: '',
         required: true,
         requiredMessage: t('errors.required'),
-        validate: (value: string) => {
-          if (!value) return null;
-          return isPhoneInvalid(value) ? t('errors.invalidPhone') : null;
-        },
       },
     },
     onSubmit: async (values) => {
@@ -88,25 +79,13 @@ export default function WhatsAppLoginScreen() {
           </Text>
 
           <View style={styles.inputContainer}>
-            <Input
+            <PhoneInput
               label={t('auth.whatsappLogin.phoneLabel')}
-              placeholder="+2250700000000"
               value={form.getValue('phone')}
-              onChangeText={(text) => form.setValue('phone', text)}
-              onBlur={() => form.setTouched('phone')}
-              keyboardType="phone-pad"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoFocus={true}
-              scrollOnFocus={false}
+              onChangeValue={(e164) => form.setValue('phone', e164)}
+              defaultCountryCode="CI"
               editable={!form.state.isSubmitting}
-              leftIcon={<MessageCircle size={ICON.size.md} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
               error={form.getError('phone') || undefined}
-              inputContainerStyle={[
-                styles.inputWrapper,
-                { backgroundColor: colors.surface, borderColor: form.getError('phone') ? colors.error : colors.borderColor },
-              ]}
-              inputStyle={[styles.input, { color: colors.textPrimary, paddingHorizontal: 0 }]}
             />
             {form.state.submitError && (
               <Text style={[styles.submitErrorText, { color: colors.error }]}>
@@ -196,19 +175,6 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
     marginBottom: SPACING.sm,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: LAYOUT.buttonHeight,
-    paddingHorizontal: SPACING.md,
-    borderWidth: BORDER.width.thin,
-    borderRadius: BORDER.radius.sm,
-    gap: SPACING.sm,
-  },
-  input: {
-    flex: 1,
-    fontSize: TYPOGRAPHY.fontSize.md,
   },
   errorText: {
     fontSize: TYPOGRAPHY.fontSize.sm,

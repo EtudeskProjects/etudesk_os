@@ -19,7 +19,7 @@ import {
   Camera,
 	} from 'lucide-react-native';
 	import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
-	import { Chip, IconButton, Input, Button, Toggle } from '../../src/components/ui';
+	import { Chip, IconButton, Input, Button, Toggle, PhoneInput } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useForm } from '../../src/hooks/useForm';
@@ -498,12 +498,11 @@ export default function CreateProfileScreen() {
                 <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
 
                 {/* Téléphone */}
-                <Input
+                <PhoneInput
                   label={`${t('auth.createProfile.phone')} *`}
-                  placeholder="+225 07 00 00 00 00"
                   value={phone}
-                  onChangeText={(value) => form.setValue('phone', value)}
-                  keyboardType="phone-pad"
+                  onChangeValue={(e164) => form.setValue('phone', e164)}
+                  defaultCountryCode={country}
                   hint="Ce numéro doit être unique pour votre profil"
                 />
 

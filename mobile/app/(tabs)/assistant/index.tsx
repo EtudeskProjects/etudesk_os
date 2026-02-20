@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   ScrollView,
   FlatList,
@@ -69,6 +70,7 @@ interface AttachmentInfo {
   name: string;
   type: string;
   size?: number;
+  uri?: string;
 }
 
 interface StreamingMessage {
@@ -323,25 +325,22 @@ export default function AssistantScreen() {
   const getFallbackSuggestions = useCallback((currentMode: Mode, orgSpace: boolean): string[] => {
     if (orgSpace) {
       return [
-        'Trouve-moi des talents disponibles dans ma ville.',
-        'Fais un résumé des candidatures des 7 derniers jours.',
-        'Propose 3 actions pour augmenter les candidatures qualifiées.',
-        'Aide-moi à rédiger une fiche de poste sur [intitulé].',
+        ‘Trouve-moi des talents disponibles dans ma ville.’,
+        ‘Fais un résumé des candidatures des 7 derniers jours.’,
+        ‘Aide-moi à rédiger une fiche de poste sur [intitulé].’,
       ];
     }
-    if (currentMode === 'study') {
+    if (currentMode === ‘study’) {
       return [
-        'Évalue-moi sur l’une de mes lacunes.',
-        'Donne-moi une image du schéma d’une cellule végétale.',
-        'Explique-moi le cycle de l’eau en diagramme.',
-        'Crée un exercice pratique sur les fonctions affines.',
+        ‘Évalue-moi sur l’une de mes lacunes.’,
+        ‘Explique-moi le cycle de l’eau en diagramme.’,
+        ‘Crée un exercice pratique sur les fonctions affines.’,
       ];
     }
     return [
-      'Trouve 3 offres adaptées à mon profil cette semaine.',
-      'Montre les communautés utiles pour mon objectif.',
-      'Analyse mon CV.',
-      'Quelles compétences me manquent pour atteindre mes objectifs ?',
+      ‘Trouve 3 offres adaptées à mon profil cette semaine.’,
+      ‘Montre les communautés utiles pour mon objectif.’,
+      ‘Analyse mon CV.’,
     ];
   }, []);
 
@@ -512,7 +511,7 @@ export default function AssistantScreen() {
       segments: [],
       senderName: isOrganizationSpace ? (firstName || undefined) : undefined,
       attachments: attachmentFiles.length > 0
-        ? attachmentFiles.map((a: any) => ({ name: a.name, type: a.type, size: a.size }))
+        ? attachmentFiles.map((a: any) => ({ name: a.name, type: a.type, size: a.size, uri: a.uri }))
         : undefined,
       voiceNoteUrl,
     };
@@ -1098,14 +1097,19 @@ export default function AssistantScreen() {
                 ) : null}
                 {message.attachments && message.attachments.length > 0 && (
                   <View style={[styles.userAttachments, message.content ? { marginTop: 6 } : undefined]}>
-                    {message.attachments.map((att, i) => (
-                      <View key={i} style={[styles.userAttachmentChip, { backgroundColor: withOpacity(colors.textOnPrimary, OPACITY[20]) }]}>
-                        <Paperclip size={10} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-                        <Text style={[styles.userAttachmentText, { color: colors.textOnPrimary }]} numberOfLines={1}>
-                          {att.name}
-                        </Text>
-                      </View>
-                    ))}
+                    {message.attachments.map((att, i) => {
+                      const isImage = att.type?.startsWith('image/') && att.uri;
+                      return isImage ? (
+                        <Image key={i} source={{ uri: att.uri }} style={[styles.userMsgThumb, { borderColor: withOpacity(colors.textOnPrimary, OPACITY[30]) }]} />
+                      ) : (
+                        <View key={i} style={[styles.userAttachmentChip, { backgroundColor: withOpacity(colors.textOnPrimary, OPACITY[20]) }]}>
+                          <Paperclip size={10} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+                          <Text style={[styles.userAttachmentText, { color: colors.textOnPrimary }]} numberOfLines={1}>
+                            {att.name}
+                          </Text>
+                        </View>
+                      );
+                    })}
                   </View>
                 )}
               </Pressable>
@@ -1349,7 +1353,7 @@ export default function AssistantScreen() {
           <View style={styles.inputArea}>
             {shouldShowFloatingSuggestions && (
               <View style={styles.floatingSuggestionsWrap}>
-                {floatingSuggestions.slice(0, 4).map((suggestion, idx) => (
+                {floatingSuggestions.slice(0, 3).map((suggestion, idx) => (
                   <Pressable
                     key={`floating-suggestion-${idx}`}
                     onPress={() => {
@@ -1417,7 +1421,20 @@ export default function AssistantScreen() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.attachmentPreviewContainer}
                 >
-	                  {attachments.map((file, index) => (
+	                  {attachments.map((file, index) => {
+                      const isImage = file.type?.startsWith('image/');
+                      return isImage ? (
+                        <View key={index} style={styles.attachmentThumbWrap}>
+                          <Image source={{ uri: file.uri }} style={[styles.attachmentThumb, { borderColor: colors.borderColor }]} />
+                          <Pressable
+                            onPress={() => removeAttachment(index)}
+                            style={[styles.attachmentThumbRemove, { backgroundColor: colors.primary }]}
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                          >
+                            <X size={8} color={colors.textOnPrimary} strokeWidth={3} />
+                          </Pressable>
+                        </View>
+                      ) : (
 	                    <View
 	                      key={index}
 	                      style={[styles.attachmentPreview, { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]}
@@ -1440,7 +1457,8 @@ export default function AssistantScreen() {
 	                        style={[styles.removeAttachmentButton, { backgroundColor: colors.primary }]}
 	                      />
 	                    </View>
-	                  ))}
+                      );
+	                  })}
 	                </ScrollView>
 	              )}
 
@@ -2060,5 +2078,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 4,
+  },
+  attachmentThumbWrap: {
+    position: 'relative',
+  },
+  attachmentThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: BORDER.radius.sm,
+    borderWidth: 1,
+  },
+  attachmentThumbRemove: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userMsgThumb: {
+    width: 56,
+    height: 56,
+    borderRadius: BORDER.radius.sm,
+    borderWidth: 1,
   },
 });

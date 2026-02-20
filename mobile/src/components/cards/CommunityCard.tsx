@@ -153,12 +153,6 @@ export const CommunityCard: React.FC<CommunityCardProps> = React.memo(({
               textColor={colors.textOnPrimary}
             />
           )}
-          <CardBadge
-            label={getVisibilityText()}
-            backgroundColor={isPrivateCommunity() ? colors.warning : colors.success}
-            textColor={colors.textOnPrimary}
-            Icon={isPrivateCommunity() ? Lock : Globe}
-          />
           {isManagement && (
             <CardBadge
               label="Active"

@@ -313,7 +313,18 @@ export default function SkillsScreen() {
               subtitle="Ajoute tes compétences pour améliorer ton profil et être mieux recommandé."
               actionLabel="Ajouter une compétence"
               onAction={() => setShowAddModal(true)}
-              tip="Astuce : charge un CV ou un certificat de formation dans tes documents et l'assistant extraira automatiquement tes compétences."
+              tip={
+                <Text style={{ fontSize: TYPOGRAPHY.fontSize.xs, lineHeight: TYPOGRAPHY.fontSize.xs * 1.5, color: colors.textSecondary }}>
+                  Astuce : charge un CV ou un certificat de formation dans{' '}
+                  <Text
+                    style={{ fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold, color: colors.primary }}
+                    onPress={() => router.push('/settings/documents')}
+                  >
+                    tes documents
+                  </Text>
+                  {' '}et l'assistant extraira automatiquement tes compétences.
+                </Text>
+              }
             />
           ) : (
             <>

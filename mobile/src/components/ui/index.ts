@@ -28,6 +28,7 @@ export { CheckboxRow } from './CheckboxRow';
 export { AccordionRow } from './AccordionRow';
 export { IconTile } from './IconTile';
 export { Tap } from './Tap';
+export { PhoneInput } from './PhoneInput';
 export { RemoteImage } from './RemoteImage';
 export { ToastProvider, useToast, toast, showToastGlobal } from './Toast';
 export type { ToastType, ToastConfig } from './Toast';

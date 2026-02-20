@@ -12,7 +12,7 @@ interface EmptyStateProps {
   subtitle: string;
   actionLabel?: string;
   onAction?: () => void;
-  tip?: string;
+  tip?: React.ReactNode;
 }
 
 export function EmptyState({ icon: Icon, title, subtitle, actionLabel, onAction, tip }: EmptyStateProps) {
@@ -31,7 +31,11 @@ export function EmptyState({ icon: Icon, title, subtitle, actionLabel, onAction,
       {tip && (
         <View style={[styles.tipContainer, { backgroundColor: withOpacity(colors.warning, OPACITY[10]) }]}>
           <Lightbulb size={14} color={colors.warning} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.tipText, { color: colors.textSecondary }]}>{tip}</Text>
+          {typeof tip === 'string' ? (
+            <Text style={[styles.tipText, { color: colors.textSecondary }]}>{tip}</Text>
+          ) : (
+            <View style={{ flex: 1 }}>{tip}</View>
+          )}
         </View>
       )}
     </View>
