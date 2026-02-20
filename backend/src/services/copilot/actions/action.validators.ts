@@ -21,7 +21,7 @@ export async function validateApplyOpportunity(
     [talentId]
   );
   if (identityCheck.rows.length === 0) {
-    return { valid: false, error: 'Tu dois vérifier ton identité avant de postuler. Va dans Paramètres > Vérification d\'identité.' };
+    return { valid: false, error: 'La vérification d\'identité est obligatoire pour postuler. Elle garantit que c\'est bien ta vraie identité qui est considérée dans les candidatures. Va dans Paramètres > Vérification d\'identité pour te vérifier.' };
   }
 
   // Check opportunity exists and is open
