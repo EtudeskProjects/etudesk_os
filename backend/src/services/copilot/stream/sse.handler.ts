@@ -463,14 +463,14 @@ export async function runAgentWithSSE(
         });
 
         // Add tool result for Anthropic (trimmed only for very large payloads)
-        const rawContent = typeof output === 'string' ? output : JSON.stringify(output);
-        const trimmedContent = rawContent.length > 8000
+        const rawContent = typeof output === 'string' ? output : JSON.stringify(output) ?? '';
+        const trimmedContent = (rawContent || '[no output]').length > 8000
           ? rawContent.slice(0, 8000) + '\n... [trimmed — ' + rawContent.length + ' chars total]'
-          : rawContent;
+          : rawContent || '[no output]';
         toolResults.push({
           type: 'tool_result',
           tool_use_id: toolUse.id,
-          content: trimmedContent,
+          content: trimmedContent || '[no output]',
         });
       }
 
