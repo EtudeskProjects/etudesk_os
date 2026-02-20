@@ -249,6 +249,7 @@ function ProfileUpdatePreview({ data, colors }: { data: Record<string, any>; col
     city: 'Ville',
     country: 'Pays',
     goals: 'Objectifs',
+    sectors: 'Secteurs d\'activité',
     remote_ready: 'Travail à distance',
     willing_to_relocate: 'Prêt à déménager',
     profile_tags: 'Tags',
@@ -264,6 +265,14 @@ function ProfileUpdatePreview({ data, colors }: { data: Record<string, any>; col
     SALARIED: 'Salarié', ENTREPRENEUR: 'Entrepreneur', CIVIL_SERVANT: 'Fonctionnaire',
     MANAGER: 'Manager', CONSULTANT: 'Consultant', INVESTOR: 'Investisseur',
     CONTENT_CREATOR: 'Créateur de contenu', COACH: 'Coach', RETIRED: 'Retraité',
+    // Sectors
+    AGRICULTURE: 'Agriculture', RESOURCES: 'Ressources naturelles', ENERGY: 'Énergie',
+    ENVIRONMENT: 'Environnement', INDUSTRY: 'Industrie', CONSTRUCTION: 'Construction',
+    TRANSPORT: 'Transport & Logistique', COMMERCE: 'Commerce', FINANCE: 'Finance & Banque',
+    DIGITAL: 'Numérique & Tech', MEDIA: 'Médias & Communication', TOURISM: 'Tourisme & Hôtellerie',
+    HEALTH: 'Santé', EDUCATION: 'Éducation & Formation', PROFESSIONAL_SERVICES: 'Services professionnels',
+    RESEARCH: 'Recherche', PUBLIC: 'Secteur public', SECURITY: 'Sécurité & Défense',
+    SOCIAL_IMPACT: 'Impact social', PERSONAL_SERVICES: 'Services à la personne', CRAFTS: 'Artisanat',
   };
 
   const formatValue = (value: any): string => {
@@ -281,9 +290,21 @@ function ProfileUpdatePreview({ data, colors }: { data: Record<string, any>; col
           <Text style={[styles.profileUpdateLabel, { color: colors.textSecondary }]}>
             {FIELD_LABELS[key]}
           </Text>
-          <Text style={[styles.profileUpdateValue, { color: colors.textPrimary }]} numberOfLines={4}>
-            {formatValue(value)}
-          </Text>
+          {Array.isArray(value) ? (
+            <View style={styles.profileTagsWrap}>
+              {value.map((v: string, i: number) => (
+                <View key={i} style={[styles.profileTagChip, { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]}>
+                  <Text style={[styles.profileTagChipText, { color: colors.primary }]}>
+                    {ENUM_LABELS[v] || v}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={[styles.profileUpdateValue, { color: colors.textPrimary }]} numberOfLines={4}>
+              {formatValue(value)}
+            </Text>
+          )}
         </View>
       ))}
     </View>
@@ -394,7 +415,6 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
             title={confirmLabel}
             onPress={handleConfirm}
             variant="primary"
-            icon={<CheckCircle2 size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
             style={[styles.confirmButton, { backgroundColor: colors.primary }]}
             textStyle={[styles.confirmText, { color: colors.textOnPrimary }]}
           />
@@ -569,26 +589,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER.radius.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER.radius.sm,
     borderWidth: BORDER.width.thin,
   },
   cancelText: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.md,
+    fontSize: TYPOGRAPHY.fontSize.sm,
   },
   confirmButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER.radius.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER.radius.sm,
   },
   confirmText: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.md,
+    fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
   hintText: {
@@ -636,7 +655,7 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
   profileUpdateRow: {
-    gap: 2,
+    gap: SPACING.xs,
   },
   profileUpdateLabel: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
@@ -648,6 +667,21 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.sm,
     lineHeight: TYPOGRAPHY.fontSize.sm * TYPOGRAPHY.lineHeight.normal,
+  },
+  profileTagsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  profileTagChip: {
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    borderWidth: 1.5,
+    borderRadius: BORDER.radius.full,
+  },
+  profileTagChipText: {
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontSize: TYPOGRAPHY.fontSize.sm,
   },
 });
 

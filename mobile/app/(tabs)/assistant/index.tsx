@@ -6,6 +6,7 @@ import {
   ScrollView,
   FlatList,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   Pressable,
   Animated,
@@ -104,6 +105,7 @@ export default function AssistantScreen() {
   const [attachments, setAttachments] = useState<any[]>([]);
   const [floatingSuggestions, setFloatingSuggestions] = useState<string[]>([]);
   const [hideFloatingSuggestions, setHideFloatingSuggestions] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const replaceLastExchangeRef = useRef<boolean>(false);
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
@@ -169,6 +171,15 @@ export default function AssistantScreen() {
       deactivateKeepAwake('copilot-stream');
     }
   }, [isSending]);
+
+  // Track keyboard visibility to hide footer when keyboard is open
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   // Session reload on foreground: if the app was backgrounded during streaming,
   // reload the session messages when it comes back
@@ -1281,7 +1292,7 @@ export default function AssistantScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={keyboardVisible ? ['top'] : ['top', 'bottom']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior="padding"
@@ -1537,7 +1548,7 @@ export default function AssistantScreen() {
           {showHistory && renderHistoryPanel()}
         </View>
       </KeyboardAvoidingView>
-      <FooterNav activeTab="assistant" />
+      {!keyboardVisible && <FooterNav activeTab="assistant" />}
     </SafeAreaView>
   );
 }

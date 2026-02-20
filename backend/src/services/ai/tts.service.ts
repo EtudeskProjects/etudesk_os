@@ -1,7 +1,10 @@
 /**
- * TTS Service — Text-to-Speech via OpenAI
+ * TTS Service — Text-to-Speech via OpenAI gpt-4o-mini-tts
  * Generates MP3 audio from text for study mode responses.
- * Uses gpt-4o-mini-tts for natural voice output.
+ * Steerable voice via `instructions` parameter — optimized for UEMOA French context.
+ *
+ * Voices: https://platform.openai.com/docs/guides/text-to-speech
+ * Recommended by OpenAI for quality: marin, cedar, coral
  */
 
 import { getOpenAIClient } from './provider';
@@ -10,18 +13,33 @@ import { logger } from '../../utils';
 
 const MAX_WORDS = 150; // ~1 min of audio
 
-type TTSVoice = 'alloy' | 'ash' | 'coral' | 'echo' | 'fable' | 'nova' | 'onyx' | 'sage' | 'shimmer';
+/** All available gpt-4o-mini-tts voices (as of 2025-12) */
+type TTSVoice =
+  | 'alloy' | 'ash' | 'ballad' | 'coral' | 'echo'
+  | 'fable' | 'marin' | 'nova' | 'onyx' | 'sage'
+  | 'shimmer' | 'verse' | 'cedar';
+
+/**
+ * Default voice instructions for UEMOA French educational context.
+ * Structured per OpenAI best practices: Voice Affect → Tone → Pacing → Emotion → Pronunciation.
+ */
+const DEFAULT_INSTRUCTIONS = `Voice Affect: Warm, clear, and gently encouraging — like a trusted mentor.
+Tone: Patient, supportive, and natural — never robotic or condescending.
+Pacing: Moderate and steady. Slow down slightly on key terms, corrections, and new vocabulary.
+Emotion: Friendly and positive. Celebrate small wins. Be empathetic on errors.
+Pronunciation: Speak standard French clearly. When pronouncing proper nouns, technical terms, or English loanwords, articulate them distinctly.
+Language: French is the primary language. If the text contains English technical terms, pronounce them with a natural French-English blend.`;
 
 /**
  * Generate TTS audio from text.
  * @param text - The text to convert to speech
- * @param voice - OpenAI TTS voice (default: nova — natural, works well for French)
- * @param instructions - Style instructions (e.g. "Parle lentement et clairement")
+ * @param voice - OpenAI TTS voice (default: coral — warm, natural, best quality for French)
+ * @param instructions - Style instructions for voice control (uses UEMOA-optimized default)
  * @returns Buffer containing MP3 audio data
  */
 export async function generateTTS(
   text: string,
-  voice: TTSVoice = 'nova',
+  voice: TTSVoice = 'coral',
   instructions?: string
 ): Promise<Buffer> {
   const openai = getOpenAIClient();
@@ -32,6 +50,8 @@ export async function generateTTS(
     ? words.slice(0, MAX_WORDS).join(' ') + '...'
     : text;
 
+  const finalInstructions = instructions || DEFAULT_INSTRUCTIONS;
+
   logger.info(`[TTS] Generating audio: ${truncated.length} chars, voice=${voice}`);
 
   const response = await openai.audio.speech.create({
@@ -39,7 +59,7 @@ export async function generateTTS(
     voice,
     input: truncated,
     response_format: 'mp3',
-    ...(instructions ? { instructions } : {}),
+    instructions: finalInstructions,
   } as any);
 
   const arrayBuffer = await response.arrayBuffer();

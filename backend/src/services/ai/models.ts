@@ -34,10 +34,10 @@ export const MODEL_SEARCH = 'gpt-4.1-mini';
 /** Recommendations matching (cost-effective) */
 export const MODEL_MATCH = 'gpt-4.1-nano';
 
-/** Speech-to-text (Whisper — always OpenAI) */
-export const MODEL_STT = 'whisper-1';
+/** Speech-to-text (OpenAI — gpt-4o-mini-transcribe: lower WER, better French recognition than whisper-1) */
+export const MODEL_STT = 'gpt-4o-mini-transcribe';
 
-/** Text-to-speech (OpenAI — study mode audio responses) */
+/** Text-to-speech (OpenAI — gpt-4o-mini-tts: steerable voice with instructions parameter) */
 export const MODEL_TTS = 'gpt-4o-mini-tts';
 
 /** Text embeddings (always OpenAI for Pinecone 1536d compat) */

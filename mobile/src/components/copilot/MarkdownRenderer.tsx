@@ -178,6 +178,10 @@ function parseBlocks(content: string): Block[] {
       const data = tryParseJSON(body);
       if (data && data.url) blocks.push({ type: 'audio', content: body, data });
     }
+    // Audio TTS block — agent-driven TTS, handled server-side via SSE audio_ready. Strip from display.
+    else if (tag === 'audio_tts') {
+      // Silently consumed — the backend extracts this block and generates TTS audio via SSE.
+    }
     // Confirmation block
     else if (tag === 'confirmation') {
       const data = tryParseJSON(body);

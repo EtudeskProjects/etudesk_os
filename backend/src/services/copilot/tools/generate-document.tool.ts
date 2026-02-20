@@ -36,7 +36,7 @@ function isTableContent(data: any): data is TableContent {
   return data && Array.isArray(data.headers) && Array.isArray(data.rows);
 }
 
-/** Detect CVData-structured content — supports both canonical and agent-alternate formats */
+/** Detect CVData-structured content — supports canonical, agent-alternate, and JSON Resume formats */
 function isCVContent(data: any): boolean {
   // Canonical format: { firstName, lastName, skills: [{name}] }
   if (data && typeof data.firstName === 'string' && typeof data.lastName === 'string' && Array.isArray(data.skills)) {
@@ -46,7 +46,119 @@ function isCVContent(data: any): boolean {
   if (data?.personalInfo && typeof data.personalInfo.firstName === 'string' && typeof data.personalInfo.lastName === 'string') {
     return true;
   }
+  // JSON Resume format: { basics: { name: "..." }, work/education/skills arrays }
+  if (data?.basics && typeof data.basics.name === 'string') {
+    return true;
+  }
   return false;
+}
+
+/**
+ * Normalize JSON Resume format to canonical CVData.
+ * JSON Resume: { basics: { name, label, email, phone, location: { city, region, countryCode }, summary },
+ *   work: [{ company, position, startDate, endDate, summary, highlights }],
+ *   education: [{ institution, area, studyType, startDate, endDate, description }],
+ *   skills: [{ name, level, keywords }],
+ *   languages: [{ language, fluency }],
+ *   volunteer: [{ organization, position, startDate, endDate, summary }],
+ *   awards: [{ title, awarder, date, summary }] }
+ */
+function normalizeJsonResume(data: any): CVData {
+  const basics = data.basics || {};
+  const nameParts = (basics.name || '').trim().split(/\s+/);
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+  const loc = basics.location || {};
+
+  // Skills: JSON Resume has { name, level, keywords[] } — flatten keywords as sub-skills
+  let skills: CVData['skills'] = [];
+  if (Array.isArray(data.skills)) {
+    for (const s of data.skills) {
+      if (s.name) {
+        skills.push({ name: s.name, level: s.level });
+      }
+      // Also add keywords as individual skills if present
+      if (Array.isArray(s.keywords)) {
+        for (const kw of s.keywords) {
+          if (kw && !skills.some((sk) => sk.name.toLowerCase() === kw.toLowerCase())) {
+            skills.push({ name: kw, type: 'hard' });
+          }
+        }
+      }
+    }
+  }
+
+  // Work → experiences
+  let experiences: CVData['experiences'] = undefined;
+  if (Array.isArray(data.work) && data.work.length > 0) {
+    experiences = data.work.map((w: any) => ({
+      title: w.position || '',
+      company: w.company || w.name || '',
+      location: w.location,
+      period: `${w.startDate || ''}${w.endDate ? ' - ' + w.endDate : ' - Present'}`,
+      description: Array.isArray(w.highlights) && w.highlights.length > 0
+        ? w.highlights.join('\n')
+        : (w.summary || ''),
+    }));
+  }
+
+  // Education
+  let education: CVData['education'] = undefined;
+  if (Array.isArray(data.education) && data.education.length > 0) {
+    education = data.education.map((e: any) => ({
+      degree: [e.studyType, e.area].filter(Boolean).join(' — ') || '',
+      institution: e.institution || '',
+      location: e.location,
+      period: `${e.startDate || ''}${e.endDate ? ' - ' + e.endDate : ''}`,
+      description: e.description || '',
+    }));
+  }
+
+  // Languages: JSON Resume has { language, fluency }
+  let languages: CVData['languages'] = undefined;
+  if (Array.isArray(data.languages) && data.languages.length > 0) {
+    languages = data.languages.map((l: any) => ({
+      language: l.language || '',
+      level: l.fluency || '',
+    }));
+  }
+
+  // Certifications from awards
+  let certifications: CVData['certifications'] = undefined;
+  if (Array.isArray(data.awards) && data.awards.length > 0) {
+    certifications = data.awards.map((a: any) => ({
+      name: a.title || '',
+      issuer: a.awarder || '',
+      date: a.date || '',
+    }));
+  }
+
+  // Volunteer → other sections
+  let other: CVData['other'] = undefined;
+  if (Array.isArray(data.volunteer) && data.volunteer.length > 0) {
+    other = [{
+      heading: 'Engagement & Benevolat',
+      content: data.volunteer.map((v: any) =>
+        `${v.position || ''} — ${v.organization || ''} (${v.startDate || ''}${v.endDate ? ' - ' + v.endDate : ' - Present'})${v.summary ? '\n' + v.summary : ''}`
+      ).join('\n\n'),
+    }];
+  }
+
+  return {
+    firstName,
+    lastName,
+    email: basics.email || '',
+    phone: basics.phone,
+    city: loc.city || loc.region,
+    country: loc.countryCode,
+    bio: basics.summary || basics.label,
+    skills,
+    languages,
+    experiences,
+    education,
+    certifications,
+    other,
+  };
 }
 
 /**
@@ -58,6 +170,11 @@ function normalizeCVData(data: any): CVData {
   // Already canonical format
   if (typeof data.firstName === 'string' && typeof data.lastName === 'string') {
     return data as CVData;
+  }
+
+  // JSON Resume format: { basics: { name, label, email, phone, location, summary }, work, education, skills, languages, volunteer, awards }
+  if (data.basics && typeof data.basics.name === 'string') {
+    return normalizeJsonResume(data);
   }
 
   const pi = data.personalInfo || {};

@@ -375,7 +375,13 @@ export async function handleConfirmation(
         const MAX_BIO = 500;
         const MAX_CITY = 100;
         const MAX_COUNTRY = 100;
-        const MAX_GOALS_TEXT = 500;
+        const VALID_SECTORS = new Set([
+          'AGRICULTURE', 'RESOURCES', 'ENERGY', 'ENVIRONMENT', 'INDUSTRY',
+          'CONSTRUCTION', 'TRANSPORT', 'COMMERCE', 'FINANCE', 'DIGITAL',
+          'MEDIA', 'TOURISM', 'HEALTH', 'EDUCATION', 'PROFESSIONAL_SERVICES',
+          'RESEARCH', 'PUBLIC', 'SECURITY', 'SOCIAL_IMPACT', 'PERSONAL_SERVICES', 'CRAFTS',
+        ]);
+        const MAX_SECTORS = 5;
 
         // Allowed fields for profile update
         const ALLOWED_FIELDS: Record<string, string> = {
@@ -386,6 +392,7 @@ export async function handleConfirmation(
           remote_ready: 'remote_ready',
           willing_to_relocate: 'willing_to_relocate',
           profile_tags: 'profile_tags',
+          sectors: 'sectors',
         };
 
         const setClauses: string[] = [];
@@ -406,6 +413,12 @@ export async function handleConfirmation(
           } else if (dbField === 'goals') {
             if (!Array.isArray(value)) continue;
             const valid = value.filter((v: any) => typeof v === 'string' && VALID_GOALS.has(v)).slice(0, MAX_ARRAY);
+            if (valid.length === 0) continue;
+            setClauses.push(`${dbField} = $${paramIndex}`);
+            values.push(valid);
+          } else if (dbField === 'sectors') {
+            if (!Array.isArray(value)) continue;
+            const valid = value.filter((v: any) => typeof v === 'string' && VALID_SECTORS.has(v)).slice(0, MAX_SECTORS);
             if (valid.length === 0) continue;
             setClauses.push(`${dbField} = $${paramIndex}`);
             values.push(valid);

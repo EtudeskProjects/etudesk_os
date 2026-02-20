@@ -488,22 +488,30 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       parsedAttachments
     );
 
-    // --- TTS generation (study mode only, non-blocking for SSE) ---
+    // --- TTS generation (agent-driven, study mode only) ---
+    // The agent embeds ```audio_tts\n{"text":"...","instructions":"..."}\n``` blocks
+    // when it wants to produce complementary audio (pronunciation, correction, vocal expression).
+    // We extract these, generate TTS, and emit audio_ready SSE events.
     let audioUrl: string | undefined;
-    if (validMode === COPILOT_MODES.STUDY && finalOutput.length > 10) {
-      try {
-        const ttsBuffer = await generateTTS(
-          finalOutput,
-          'nova',
-          'Parle lentement et clairement pour un apprenant. Sois naturel et encourageant.'
-        );
-        const audioPath = `copilot/tts/${sessionId}/${Date.now()}.mp3`;
-        audioUrl = await uploadFile(ttsBuffer, audioPath, 'audio/mpeg');
-        const estimatedDuration = Math.ceil(finalOutput.split(/\s+/).length / 2.5); // ~2.5 words/sec
-        sendSSE(res, { type: 'audio_ready', audioUrl, duration: estimatedDuration });
-      } catch (ttsErr: any) {
-        logger.error('[copilot] TTS generation failed:', ttsErr);
-        // Non-blocking: skip TTS if it fails
+    if (validMode === COPILOT_MODES.STUDY) {
+      const ttsBlockRegex = /```audio_tts\n([\s\S]*?)```/g;
+      let ttsMatch: RegExpExecArray | null;
+      while ((ttsMatch = ttsBlockRegex.exec(finalOutput)) !== null) {
+        try {
+          const raw = ttsMatch[1].trim();
+          const ttsData = JSON.parse(raw);
+          const ttsText = (ttsData.text || '').trim();
+          if (!ttsText || ttsText.length < 5) continue;
+          const ttsInstructions = ttsData.instructions || undefined; // Falls back to DEFAULT_INSTRUCTIONS in tts.service.ts
+          const ttsVoice = ttsData.voice || 'coral';
+          const ttsBuffer = await generateTTS(ttsText, ttsVoice, ttsInstructions);
+          const audioPath = `copilot/tts/${sessionId}/${Date.now()}.mp3`;
+          audioUrl = await uploadFile(ttsBuffer, audioPath, 'audio/mpeg');
+          const estimatedDuration = Math.ceil(ttsText.split(/\s+/).length / 2.5);
+          sendSSE(res, { type: 'audio_ready', audioUrl, duration: estimatedDuration });
+        } catch (ttsErr: any) {
+          logger.error('[copilot] TTS block generation failed:', ttsErr);
+        }
       }
     }
 
@@ -770,7 +778,8 @@ const audioUpload = multer({
 });
 
 /**
- * POST /api/copilot/transcribe - Transcribe audio using OpenAI Whisper
+ * POST /api/copilot/transcribe - Transcribe audio using OpenAI gpt-4o-mini-transcribe
+ * Better WER and French language recognition than whisper-1.
  * Body: FormData with 'audio' file field
  * Returns: { text: string }
  */
@@ -790,7 +799,6 @@ router.post(
         return res.status(400).json({ error: req.t('copilot:noAudioFile') });
       }
 
-      // STT always uses OpenAI (Whisper)
       const { getOpenAIClient } = await import('../services/ai/provider');
       const openai = getOpenAIClient();
 
@@ -799,13 +807,15 @@ router.post(
         type: file.mimetype,
       });
 
-      // Call Whisper API
-      const transcription = await openai.audio.transcriptions.create({
+      // gpt-4o-mini-transcribe: better accuracy, lower WER, better French support
+      // response_format must be 'json' for gpt-4o-mini-transcribe (text not supported)
+      const result = await openai.audio.transcriptions.create({
         file: audioFile,
         model: MODEL_STT,
-        language: 'fr', // French by default, auto-detect if not specified
-        response_format: 'text',
+        language: 'fr',
       });
+
+      const transcription = typeof result === 'string' ? result : (result as any).text || '';
 
       logger.info(`Audio transcribed for talent ${talentId}: ${transcription.slice(0, 50)}...`);
 
