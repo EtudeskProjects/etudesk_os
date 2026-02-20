@@ -1,20 +1,17 @@
 /**
  * Session Summarizer
- * Uses gpt-5-nano to summarize long conversations.
- * Keeps last 4 messages verbatim, summarizes the rest.
+ * Uses Claude Haiku to summarize long conversations.
+ * Keeps last 3 messages verbatim, summarizes the rest.
  */
 
-import { Agent, run } from '@openai/agents';
+import { getAnthropicClient } from '../ai/provider';
 import { MODEL_FAST } from '../ai/models';
 import { logger } from '../../utils';
 
-const SUMMARY_THRESHOLD = 6; // Summarize when history exceeds this count (was 10)
-const KEEP_RECENT = 3; // Keep last N messages verbatim (was 4)
+const SUMMARY_THRESHOLD = 6; // Summarize when history exceeds this count
+const KEEP_RECENT = 3; // Keep last N messages verbatim
 
-const summarizerAgent = new Agent({
-  name: 'Session Summarizer',
-  model: MODEL_FAST,
-  instructions: `You are a conversation summarizer for a talent/employment platform.
+const SYSTEM_PROMPT = `You are a conversation summarizer for a talent/employment platform.
 
 Summarize the conversation in French. Focus on:
 - What the user asked for (topics, entities mentioned)
@@ -29,8 +26,7 @@ ALSO capture (critical for conversation continuity):
 - Pending threads: topics started but not resolved
 
 Keep the summary very concise (max 150 words). Use short bullet points (one line each).
-Start with "[Résumé]" header. Omit greetings and pleasantries.`,
-});
+Start with "[Résumé]" header. Omit greetings and pleasantries.`;
 
 /**
  * Summarizes conversation history if it exceeds the threshold.
@@ -53,8 +49,19 @@ export async function summarizeHistoryIfNeeded(
       .map((m) => `${m.role === 'user' ? 'Utilisateur' : 'Assistant'}: ${m.content.slice(0, 500)}`)
       .join('\n\n');
 
-    const result = await run(summarizerAgent, conversationText);
-    const summary = result.finalOutput?.trim();
+    const client = getAnthropicClient();
+    const response = await client.messages.create({
+      model: MODEL_FAST,
+      max_tokens: 512,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: conversationText }],
+    });
+
+    const summary = response.content
+      .filter((b) => b.type === 'text')
+      .map((b) => (b as any).text)
+      .join('')
+      .trim();
 
     if (!summary) {
       return history;

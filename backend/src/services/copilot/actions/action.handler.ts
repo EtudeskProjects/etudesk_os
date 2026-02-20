@@ -408,20 +408,21 @@ export async function handleConfirmation(
             if (!Array.isArray(value)) continue;
             const valid = value.filter((v: any) => typeof v === 'string' && VALID_PROFILE_TAGS.has(v)).slice(0, MAX_ARRAY);
             if (valid.length === 0) continue;
-            setClauses.push(`${dbField} = $${paramIndex}`);
-            values.push(valid);
+            setClauses.push(`${dbField} = $${paramIndex}::text[]`);
+            values.push(`{${valid.join(',')}}`);
           } else if (dbField === 'goals') {
             if (!Array.isArray(value)) continue;
             const valid = value.filter((v: any) => typeof v === 'string' && VALID_GOALS.has(v)).slice(0, MAX_ARRAY);
             if (valid.length === 0) continue;
-            setClauses.push(`${dbField} = $${paramIndex}`);
-            values.push(valid);
+            setClauses.push(`${dbField} = $${paramIndex}::text[]`);
+            values.push(`{${valid.join(',')}}`);
           } else if (dbField === 'sectors') {
             if (!Array.isArray(value)) continue;
             const valid = value.filter((v: any) => typeof v === 'string' && VALID_SECTORS.has(v)).slice(0, MAX_SECTORS);
             if (valid.length === 0) continue;
-            setClauses.push(`${dbField} = $${paramIndex}`);
-            values.push(valid);
+            setClauses.push(`${dbField} = $${paramIndex}::text[]`);
+            values.push(`{${valid.join(',')}}`);
+
           } else if (dbField === 'bio') {
             if (typeof value !== 'string' || !value.trim()) continue;
             setClauses.push(`${dbField} = $${paramIndex}`);
