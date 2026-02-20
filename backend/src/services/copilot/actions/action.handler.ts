@@ -467,6 +467,105 @@ export async function handleConfirmation(
         return { success: true, message };
       }
 
+      case 'create_agenda_trigger': {
+        if (!data || !data.code || !data.title || !data.dueAt) {
+          return { success: false, message: 'Données manquantes pour le trigger (code, title, dueAt requis).' };
+        }
+
+        const VALID_CODES = new Set([
+          'FOLLOW_UP', 'REMINDER', 'RESEARCH', 'LEARNING', 'APPLICATION',
+          'INTERVIEW', 'DEADLINE', 'REVIEW', 'CUSTOM',
+        ]);
+        const VALID_PRIORITIES = new Set(['LOW', 'NORMAL', 'HIGH', 'URGENT']);
+
+        const triggerCode = VALID_CODES.has(data.code) ? data.code : 'CUSTOM';
+        const priority = VALID_PRIORITIES.has(data.priority) ? data.priority : 'NORMAL';
+        const dueAt = new Date(data.dueAt);
+        if (isNaN(dueAt.getTime())) {
+          return { success: false, message: 'Date invalide pour le trigger.' };
+        }
+
+        const result = await pool.query(
+          `INSERT INTO agenda_triggers (scope, talent_id, code, title, description, due_at, status, priority, metadata, created_by)
+           VALUES ('TALENT', $1, $2, $3, $4, $5, 'PENDING', $6, $7, $1)
+           RETURNING id`,
+          [
+            talentId,
+            triggerCode,
+            data.title.slice(0, 200),
+            data.description?.slice(0, 500) || null,
+            dueAt.toISOString(),
+            priority,
+            data.metadata ? JSON.stringify(data.metadata) : '{}',
+          ]
+        );
+
+        const message = `Trigger "${data.title}" créé pour le ${dueAt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}.`;
+        await saveActionMessage(sessionId, message);
+
+        logger.info(`[action.handler] Talent ${talentId} created agenda trigger ${result.rows[0].id}`);
+        return { success: true, message, data: { triggerId: result.rows[0].id } };
+      }
+
+      case 'update_agenda_trigger': {
+        if (!data) {
+          return { success: false, message: 'Aucune donnée à mettre à jour.' };
+        }
+
+        // Verify the trigger belongs to this talent
+        const existing = await pool.query(
+          `SELECT id, status FROM agenda_triggers WHERE id = $1 AND talent_id = $2`,
+          [resolvedEntityId, talentId]
+        );
+        if (existing.rows.length === 0) {
+          return { success: false, message: 'Trigger introuvable ou non autorisé.' };
+        }
+
+        const updates: string[] = [];
+        const vals: any[] = [];
+        let idx = 1;
+
+        if (data.status && ['PENDING', 'COMPLETED', 'CANCELLED', 'SNOOZED'].includes(data.status)) {
+          updates.push(`status = $${idx}`);
+          vals.push(data.status);
+          idx++;
+          if (data.status === 'COMPLETED') {
+            updates.push(`completed_at = NOW()`);
+          }
+        }
+        if (data.dueAt) {
+          const newDue = new Date(data.dueAt);
+          if (!isNaN(newDue.getTime())) {
+            updates.push(`due_at = $${idx}`);
+            vals.push(newDue.toISOString());
+            idx++;
+          }
+        }
+        if (data.metadata) {
+          updates.push(`metadata = metadata || $${idx}::jsonb`);
+          vals.push(JSON.stringify(data.metadata));
+          idx++;
+        }
+
+        if (updates.length === 0) {
+          return { success: false, message: 'Aucun champ valide à mettre à jour.' };
+        }
+
+        updates.push(`updated_at = NOW()`);
+        vals.push(resolvedEntityId);
+
+        await pool.query(
+          `UPDATE agenda_triggers SET ${updates.join(', ')} WHERE id = $${idx}`,
+          vals
+        );
+
+        const message = `Trigger mis à jour.`;
+        await saveActionMessage(sessionId, message);
+
+        logger.info(`[action.handler] Talent ${talentId} updated agenda trigger ${resolvedEntityId}`);
+        return { success: true, message };
+      }
+
       default:
         return { success: false, message: `Action "${action}" non supportée.` };
     }
