@@ -515,17 +515,19 @@ export default function TalentsScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Cohort Analysis Button */}
-      <View style={[styles.cohortButtonContainer, { backgroundColor: colors.background }]}>
-        <Button
-          title="Analyse de cohorte"
-          onPress={handleCohortAnalysis}
-          fullWidth
-          icon={<Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-          style={[styles.cohortButton, { backgroundColor: colors.primary }]}
-          textStyle={[styles.cohortButtonText, { color: colors.textOnPrimary }]}
-        />
-      </View>
+      {/* Cohort Analysis Button — hidden when no talents */}
+      {total > 0 && (
+        <View style={[styles.cohortButtonContainer, { backgroundColor: colors.background }]}>
+          <Button
+            title="Analyse de cohorte"
+            onPress={handleCohortAnalysis}
+            fullWidth
+            icon={<Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+            style={[styles.cohortButton, { backgroundColor: colors.primary }]}
+            textStyle={[styles.cohortButtonText, { color: colors.textOnPrimary }]}
+          />
+        </View>
+      )}
 
       <FooterNav activeTab="gestion" />
     </SafeAreaView>

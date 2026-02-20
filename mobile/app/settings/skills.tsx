@@ -372,18 +372,20 @@ export default function SkillsScreen() {
         </ScrollView>
       )}
 
-	      {/* Auto-diagnostic Button */}
-	      <View style={[styles.diagnosticContainer, { backgroundColor: colors.background }]}>
-	        <Button
-	          title="Auto-diagnostic"
-	          onPress={handleAutoDiagnostic}
-	          fullWidth
-	          icon={<Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-	          iconPosition="left"
-	          style={[styles.diagnosticButton, { backgroundColor: colors.primary }]}
-	          textStyle={styles.diagnosticButtonText}
-	        />
-	      </View>
+	      {/* Auto-diagnostic Button — hidden when no skills */}
+	      {skills.length > 0 && (
+	        <View style={[styles.diagnosticContainer, { backgroundColor: colors.background }]}>
+	          <Button
+	            title="Auto-diagnostic"
+	            onPress={handleAutoDiagnostic}
+	            fullWidth
+	            icon={<Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+	            iconPosition="left"
+	            style={[styles.diagnosticButton, { backgroundColor: colors.primary }]}
+	            textStyle={styles.diagnosticButtonText}
+	          />
+	        </View>
+	      )}
 
       <FooterNav activeTab="home" />
 
