@@ -306,7 +306,7 @@ export default function SpaceDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <LoadingShimmer variant="fullPage" />
         </View>
@@ -316,7 +316,7 @@ export default function SpaceDetailScreen() {
 
   if (!space) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.errorContainer}>
           <X size={48} color={colors.textDisabled} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>
@@ -348,7 +348,7 @@ export default function SpaceDetailScreen() {
   const shouldTruncateDescription = space.description && space.description.length > DESCRIPTION_LIMIT;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
         <IconButton

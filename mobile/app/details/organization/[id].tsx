@@ -188,7 +188,7 @@ export default function OrganizationDetailScreen() {
   // Loading state
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <LoadingShimmer variant="fullPage" />
         </View>
@@ -199,7 +199,7 @@ export default function OrganizationDetailScreen() {
   // Error state
   if (!organization) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	        <View style={styles.header}>
 	          <IconButton
 	            onPress={() => router.back()}
@@ -231,7 +231,7 @@ export default function OrganizationDetailScreen() {
   const logoUrl = organization.logo_url ? getFullImageUrl(organization.logo_url) : null;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
 	      <View style={styles.header}>
 	        <IconButton

@@ -238,7 +238,7 @@ export default function OpportunityDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <LoadingShimmer variant="fullPage" />
         </View>
@@ -248,7 +248,7 @@ export default function OpportunityDetailScreen() {
 
   if (!opportunity) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <Text style={{ color: colors.textPrimary }}>{t('opportunity.notFound')}</Text>
         </View>
@@ -260,7 +260,7 @@ export default function OpportunityDetailScreen() {
   const postedAt = opportunity.posted_at ? formatRelativeTime(opportunity.posted_at) : null;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	      {/* Header with floating CTA */}
 	      <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
 	        <IconButton

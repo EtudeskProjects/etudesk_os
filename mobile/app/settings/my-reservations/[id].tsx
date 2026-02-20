@@ -460,7 +460,7 @@ export default function ReservationDetailsScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
         <IconButton

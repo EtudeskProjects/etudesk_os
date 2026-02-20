@@ -203,7 +203,7 @@ export default function CommunityDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <LoadingShimmer variant="fullPage" />
         </View>
@@ -213,7 +213,7 @@ export default function CommunityDetailScreen() {
 
   if (!community) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
           <Text style={{ color: colors.textPrimary }}>{t('community.notFound')}</Text>
         </View>
@@ -224,7 +224,7 @@ export default function CommunityDetailScreen() {
   const tags = community.tags || [];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	      {/* Header */}
 	      <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
 	        <IconButton

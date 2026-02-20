@@ -365,7 +365,7 @@ export default function TalentDetailScreen() {
   // Loading state
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	        <View style={styles.header}>
 	          <IconButton
 	            onPress={() => router.back()}
@@ -385,7 +385,7 @@ export default function TalentDetailScreen() {
   // Error state
   if (error || !talent) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	        <View style={styles.header}>
 	          <IconButton
 	            onPress={() => router.back()}
@@ -411,7 +411,7 @@ export default function TalentDetailScreen() {
       : [];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
         <IconButton
