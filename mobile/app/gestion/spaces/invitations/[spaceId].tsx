@@ -72,7 +72,7 @@ export default function SpaceInvitationsScreen() {
         setInvitations(pendingInvitations);
       }
     } catch (error) {
-      console.error('Error fetching invitations:', error);
+      if (__DEV__) console.error('Error fetching invitations:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);

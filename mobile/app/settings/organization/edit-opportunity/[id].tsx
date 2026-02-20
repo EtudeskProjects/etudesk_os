@@ -418,7 +418,7 @@ export default function EditOpportunityScreen() {
         }
       }
     } catch (error: any) {
-      console.error('Error generating opportunity:', error);
+      if (__DEV__) console.error('Error generating opportunity:', error);
       showToast({
         type: 'error',
         title: 'Erreur de génération',
@@ -463,7 +463,7 @@ export default function EditOpportunityScreen() {
           );
           uploadedImageUrls.push(uploaded.url);
         } catch (uploadError) {
-          console.error('Error uploading image:', uploadError);
+          if (__DEV__) console.error('Error uploading image:', uploadError);
           await alerts.error('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
           setIsSubmitting(false);
           return;
@@ -488,7 +488,7 @@ export default function EditOpportunityScreen() {
           });
           uploadedAttachments.push({ ...attachment, uri: uploaded.url });
         } catch (uploadError) {
-          console.error('Error uploading attachment:', uploadError);
+          if (__DEV__) console.error('Error uploading attachment:', uploadError);
           await alerts.error('Erreur', 'Impossible d\'uploader une pièce jointe. Veuillez réessayer.');
           setIsSubmitting(false);
           return;

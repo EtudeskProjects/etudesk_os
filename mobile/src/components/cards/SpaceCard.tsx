@@ -53,7 +53,7 @@ interface SpaceCardProps {
   statusOverlay?: StatusOverlay;
 }
 
-export const SpaceCard: React.FC<SpaceCardProps> = ({
+export const SpaceCard = React.memo<SpaceCardProps>(({
   space,
   onPress,
   isBookmarked = false,
@@ -194,7 +194,9 @@ export const SpaceCard: React.FC<SpaceCardProps> = ({
       </CardContent>
     </CardContainer>
   );
-};
+});
+
+SpaceCard.displayName = 'SpaceCard';
 
 const styles = StyleSheet.create({
   metaRow: {

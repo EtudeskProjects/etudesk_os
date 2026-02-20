@@ -112,7 +112,7 @@ export default function ActivityDetailScreen() {
                 );
             }
         } catch (error) {
-            console.error(error);
+            if (__DEV__) console.error(error);
             void alerts.alert('Erreur', 'Impossible de charger l\'activité');
         } finally {
             setIsLoading(false);
@@ -148,7 +148,7 @@ export default function ActivityDetailScreen() {
             // Revert on error
             setLiked(!newLiked);
             setLikesCount(prev => newLiked ? Math.max(0, prev - 1) : prev + 1);
-            console.error('Like failed:', error);
+            if (__DEV__) console.error('Like failed:', error);
         }
     }, [liked, id, likeScaleAnim]);
 
@@ -165,7 +165,7 @@ export default function ActivityDetailScreen() {
             // Revert on error
             setIsBookmarked(!newBookmarked);
             setBookmarksCount(prev => newBookmarked ? Math.max(0, prev - 1) : prev + 1);
-            console.error('Bookmark failed:', error);
+            if (__DEV__) console.error('Bookmark failed:', error);
         }
     }, [isBookmarked, id, bookmarkScaleAnim]);
 
@@ -191,7 +191,7 @@ export default function ActivityDetailScreen() {
                 votes_count: opt.id === optionId ? opt.votes_count - 1 : opt.votes_count,
                 is_voted_by_user: false
             })));
-            console.error('Vote failed:', error);
+            if (__DEV__) console.error('Vote failed:', error);
             void alerts.alert('Erreur', 'Impossible de voter');
         }
     }, [userVotedOptionId, id]);
@@ -232,7 +232,7 @@ export default function ActivityDetailScreen() {
             // Refresh activity to update pin state
             loadDetails();
         } catch (error) {
-            console.error('Toggle pin failed:', error);
+            if (__DEV__) console.error('Toggle pin failed:', error);
             void alerts.alert('Erreur', 'Impossible de modifier l\'épingle');
         }
     };

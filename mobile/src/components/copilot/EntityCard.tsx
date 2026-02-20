@@ -215,7 +215,7 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
           })
             .catch((err) => {
               const url = fileUrl.startsWith('http') ? fileUrl : `${API_CONFIG.BASE_URL}${fileUrl}`;
-              console.error('[EntityCard] download error:', err, 'url:', url);
+              if (__DEV__) console.error('[EntityCard] download error:', err, 'url:', url);
               Alert.alert(
                 'Erreur',
                 __DEV__

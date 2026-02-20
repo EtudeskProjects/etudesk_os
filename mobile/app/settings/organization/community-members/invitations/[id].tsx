@@ -72,10 +72,10 @@ export default function CommunityInvitationsScreen() {
       const pendingInvitations = invitationsData.filter(
         (inv: CommunityInvitation) => inv.status === 'PENDING'
       );
-      console.log('Invitations loaded:', invitationsData.length, 'Pending:', pendingInvitations.length);
+      if (__DEV__) console.log('Invitations loaded:', invitationsData.length, 'Pending:', pendingInvitations.length);
       setInvitations(pendingInvitations);
     } catch (error) {
-      console.error('Error loading data:', error);
+      if (__DEV__) console.error('Error loading data:', error);
       void alerts.alert('Erreur', 'Impossible de charger les invitations.');
     } finally {
       setIsLoading(false);

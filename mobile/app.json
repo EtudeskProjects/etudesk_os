@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.etudesk.app"
+      "bundleIdentifier": "com.etudesk.mobile"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/etudesk_squared_icon.png",
         "backgroundColor": "#2F4ABF"
       },
-      "package": "com.etudesk.os",
+      "package": "com.etudesk.mobile",
       "navigationBarColor": "#FFFFFF",
       "navigationBarStyle": "dark",
       "softwareKeyboardLayoutMode": "resize",

@@ -55,7 +55,7 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
         await AsyncStorage.removeItem(STORAGE_KEYS.SELECTED_ORG_ID);
       }
     } catch (error) {
-      console.error('[Space] Failed to persist space:', error);
+      if (__DEV__) console.error('[Space] Failed to persist space:', error);
     }
   }, []);
 
@@ -71,7 +71,7 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
       }
       return { space: null, orgId: null };
     } catch (error) {
-      console.error('[Space] Failed to restore space:', error);
+      if (__DEV__) console.error('[Space] Failed to restore space:', error);
       return { space: null, orgId: null };
     }
   }, []);
@@ -125,7 +125,7 @@ export function SpaceProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('[Space] Failed to load organizations:', error);
+      if (__DEV__) console.error('[Space] Failed to load organizations:', error);
     } finally {
       setIsLoading(false);
     }

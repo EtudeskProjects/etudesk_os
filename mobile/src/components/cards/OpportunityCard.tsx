@@ -56,7 +56,7 @@ interface OpportunityCardProps {
   statusOverlay?: StatusOverlay;
 }
 
-export const OpportunityCard: React.FC<OpportunityCardProps> = ({
+export const OpportunityCard = React.memo<OpportunityCardProps>(({
   opportunity,
   onPress,
   isBookmarked = false,
@@ -239,7 +239,9 @@ export const OpportunityCard: React.FC<OpportunityCardProps> = ({
       </CardContent>
     </CardContainer>
   );
-};
+});
+
+OpportunityCard.displayName = 'OpportunityCard';
 
 const styles = StyleSheet.create({
   container: {

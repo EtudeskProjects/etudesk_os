@@ -75,7 +75,7 @@ export default function OrgDocumentsScreen() {
       setTotal(result.total);
       return result.documents;
     } catch (error) {
-      console.error('Error loading org documents:', error);
+      if (__DEV__) console.error('Error loading org documents:', error);
       return [];
     } finally {
       setIsLoading(false);
@@ -174,7 +174,7 @@ export default function OrgDocumentsScreen() {
       await loadDocuments();
       startPolling();
     } catch (error: any) {
-      console.error('Error uploading document:', error);
+      if (__DEV__) console.error('Error uploading document:', error);
       void alerts.alert('Erreur', error?.message || "Erreur lors de l'upload");
     } finally {
       setIsUploading(false);

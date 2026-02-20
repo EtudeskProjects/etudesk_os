@@ -44,7 +44,7 @@ export default function PaymentMethodsScreen() {
         setPaymentMethods(response.data);
       }
     } catch (error) {
-      console.error('Error fetching payment methods:', error);
+      if (__DEV__) console.error('Error fetching payment methods:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);

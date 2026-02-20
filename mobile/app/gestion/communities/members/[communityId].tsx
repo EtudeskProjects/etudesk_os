@@ -69,7 +69,7 @@ export default function CommunityMembersScreen() {
       setMembers(membersResponse.data?.data || []);
       setStatusCounts(membersResponse.data?.statusCounts || {});
     } catch (error) {
-      console.error('Error loading data:', error);
+      if (__DEV__) console.error('Error loading data:', error);
       void alerts.alert('Erreur', 'Impossible de charger les membres.');
     } finally {
       setIsLoading(false);
@@ -85,7 +85,7 @@ export default function CommunityMembersScreen() {
       setMembers(response.data?.data || []);
       setStatusCounts(response.data?.statusCounts || {});
     } catch (error) {
-      console.error('Error refreshing members:', error);
+      if (__DEV__) console.error('Error refreshing members:', error);
     } finally {
       setIsRefreshing(false);
     }

@@ -434,7 +434,7 @@ class CopilotService {
         data: { text },
       };
     } catch (error: any) {
-      console.error('Transcription error:', error);
+      if (__DEV__) console.error('Transcription error:', error);
       return {
         success: false,
         error: error.message || i18n.t('copilotService.audioTranscriptionError'),
@@ -498,7 +498,7 @@ class CopilotService {
         },
       };
     } catch (error: any) {
-      console.error('Voice note upload error:', error);
+      if (__DEV__) console.error('Voice note upload error:', error);
       return {
         success: false,
         error: error.message || 'Erreur upload note vocale',
@@ -560,7 +560,7 @@ class CopilotService {
         data: { documents: data.data?.documents || [] },
       };
     } catch (error: any) {
-      console.error('Upload error:', error);
+      if (__DEV__) console.error('Upload error:', error);
       return {
         success: false,
         error: error.message || i18n.t('copilotService.uploadError'),

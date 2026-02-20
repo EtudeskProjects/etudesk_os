@@ -87,7 +87,7 @@ export default function CommunityInvitationsScreen() {
         setStatusCounts(response.data.statusCounts);
       }
     } catch (error) {
-      console.error('Error fetching invitations:', error);
+      if (__DEV__) console.error('Error fetching invitations:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);

@@ -177,7 +177,7 @@ export default function ExploreScreen() {
       // Load bookmarks after data
       loadBookmarks();
     } catch (error) {
-      console.error('Error loading explore data:', error);
+      if (__DEV__) console.error('Error loading explore data:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -331,7 +331,7 @@ export default function ExploreScreen() {
       await bookmarkService.toggle(entityType, id, isCurrentlyBookmarked);
     } catch (error) {
       // Revert on error
-      console.error('Error toggling bookmark:', error);
+      if (__DEV__) console.error('Error toggling bookmark:', error);
       setBookmarkedItems(prev => {
         const newSet = new Set(prev[categoryKey]);
         if (isCurrentlyBookmarked) {

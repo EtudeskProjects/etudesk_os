@@ -70,7 +70,7 @@ class NotificationService {
         Constants.expoConfig?.extra?.eas?.projectId ??
         (Constants as any).easConfig?.projectId;
       if (!projectId) {
-        console.warn('Push notifications: no projectId found — skipping token registration');
+        if (__DEV__) console.warn('Push notifications: no projectId found — skipping token registration');
         return null;
       }
       const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
@@ -88,7 +88,7 @@ class NotificationService {
 
       return this.expoPushToken;
     } catch (error) {
-      console.error('Error registering for push notifications:', error);
+      if (__DEV__) console.error('Error registering for push notifications:', error);
       return null;
     }
   }
@@ -109,7 +109,7 @@ class NotificationService {
 
       return response.success ?? true;
     } catch (error) {
-      console.error('Error registering token with backend:', error);
+      if (__DEV__) console.error('Error registering token with backend:', error);
       return false;
     }
   }
@@ -127,7 +127,7 @@ class NotificationService {
       this.expoPushToken = null;
       return true;
     } catch (error) {
-      console.error('Error unregistering token:', error);
+      if (__DEV__) console.error('Error unregistering token:', error);
       return false;
     }
   }

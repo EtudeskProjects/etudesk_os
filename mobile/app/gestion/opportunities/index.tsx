@@ -50,7 +50,7 @@ export default function OpportunitiesListScreen() {
         setOpportunities(transformedOpps);
       }
     } catch (error) {
-      console.error('Error loading opportunities:', error);
+      if (__DEV__) console.error('Error loading opportunities:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -84,7 +84,7 @@ export default function OpportunitiesListScreen() {
         setOpportunities(prev => prev.filter(o => o.id !== id));
         success('Supprimé', 'L\'opportunité a été supprimée.');
       } catch (error) {
-        console.error('Error deleting opportunity:', error);
+        if (__DEV__) console.error('Error deleting opportunity:', error);
       }
     }
   };

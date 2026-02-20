@@ -139,7 +139,7 @@ export default function MyCommunityDetailsScreen() {
       }
     } catch (error: any) {
       if (error?.status !== 404) {
-        console.error('Error loading messages:', error);
+        if (__DEV__) console.error('Error loading messages:', error);
       }
       setMessages([]);
     } finally {

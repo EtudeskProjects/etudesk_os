@@ -89,12 +89,12 @@ export const CommunityCard: React.FC<CommunityCardProps> = React.memo(({
   };
 
   const getVisibilityText = () => {
-    const accessType = (community as any).access_type || 'PUBLIC';
+    const accessType = community.access_type || 'PUBLIC';
     return VISIBILITY_LABELS[accessType as keyof typeof VISIBILITY_LABELS] || accessType;
   };
 
   const isPrivateCommunity = () => {
-    const accessType = (community as any).access_type || 'PUBLIC';
+    const accessType = community.access_type || 'PUBLIC';
     return accessType === 'PRIVATE' || accessType === 'MEMBERSHIP';
   };
 

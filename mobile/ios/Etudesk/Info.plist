@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>etudesk</string>
-          <string>com.etudesk.app</string>
+          <string>com.etudesk.mobile</string>
         </array>
       </dict>
     </array>

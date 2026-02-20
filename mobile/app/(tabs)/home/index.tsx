@@ -248,7 +248,7 @@ export default function EcosystemScreen() {
         setNotifications(notifs);
       }
     } catch (error) {
-      console.error('[Home] Failed to load notifications:', error);
+      if (__DEV__) console.error('[Home] Failed to load notifications:', error);
     }
   }, []);
 
@@ -256,17 +256,17 @@ export default function EcosystemScreen() {
     try {
       const response = await dailyObjectiveService.getTalentObjective();
 
-      console.log('[Home] Daily objective response:', JSON.stringify(response, null, 2));
+      if (__DEV__) console.log('[Home] Daily objective response:', JSON.stringify(response, null, 2));
 
       if (response.data) {
         setDailyObjective(response.data);
         setIsObjectiveExpanded(false);
-        console.log('[Home] Daily objective set:', response.data.objective?.slice(0, 50));
+        if (__DEV__) console.log('[Home] Daily objective set:', response.data.objective?.slice(0, 50));
       } else {
-        console.log('[Home] No data in response');
+        if (__DEV__) console.log('[Home] No data in response');
       }
     } catch (error) {
-      console.error('[Home] Failed to load daily objective:', error);
+      if (__DEV__) console.error('[Home] Failed to load daily objective:', error);
     }
   }, []);
 
@@ -286,7 +286,7 @@ export default function EcosystemScreen() {
 
     // Set timeout to refresh when objective expires
     const timeoutId = setTimeout(() => {
-      console.log('[Home] Daily objective expired, auto-refreshing...');
+      if (__DEV__) console.log('[Home] Daily objective expired, auto-refreshing...');
       loadDailyObjective();
     }, timeUntilExpiry);
 
@@ -350,7 +350,7 @@ export default function EcosystemScreen() {
         },
       }));
     } catch (error) {
-      console.error('[Ecosystem] Failed to load quick action counts:', error);
+      if (__DEV__) console.error('[Ecosystem] Failed to load quick action counts:', error);
     }
   }, []);
 

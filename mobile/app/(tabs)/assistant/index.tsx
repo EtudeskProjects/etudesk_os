@@ -325,22 +325,22 @@ export default function AssistantScreen() {
   const getFallbackSuggestions = useCallback((currentMode: Mode, orgSpace: boolean): string[] => {
     if (orgSpace) {
       return [
-        ‘Trouve-moi des talents disponibles dans ma ville.’,
-        ‘Fais un résumé des candidatures des 7 derniers jours.’,
-        ‘Aide-moi à rédiger une fiche de poste sur [intitulé].’,
+        'Trouve-moi des talents disponibles dans ma ville.',
+        'Fais un résumé des candidatures des 7 derniers jours.',
+        'Aide-moi à rédiger une fiche de poste sur [intitulé].',
       ];
     }
-    if (currentMode === ‘study’) {
+    if (currentMode === 'study') {
       return [
-        ‘Évalue-moi sur l’une de mes lacunes.’,
-        ‘Explique-moi le cycle de l’eau en diagramme.’,
-        ‘Crée un exercice pratique sur les fonctions affines.’,
+        "Évalue-moi sur l'une de mes lacunes.",
+        "Explique-moi le cycle de l'eau en diagramme.",
+        'Crée un exercice pratique sur les fonctions affines.',
       ];
     }
     return [
-      ‘Trouve 3 offres adaptées à mon profil cette semaine.’,
-      ‘Montre les communautés utiles pour mon objectif.’,
-      ‘Analyse mon CV.’,
+      'Trouve 3 offres adaptées à mon profil cette semaine.',
+      'Montre les communautés utiles pour mon objectif.',
+      'Analyse mon CV.',
     ];
   }, []);
 
@@ -444,7 +444,7 @@ export default function AssistantScreen() {
         setSessions(response.data.sessions);
       }
     } catch (err) {
-      console.error('Failed to load sessions:', err);
+      if (__DEV__) console.error('Failed to load sessions:', err);
     }
   };
 
@@ -483,7 +483,7 @@ export default function AssistantScreen() {
         ]);
       }
     } catch (error) {
-      console.error('Error picking file:', error);
+      if (__DEV__) console.error('Error picking file:', error);
       void alerts.alert('Erreur', 'Impossible de sélectionner le fichier.');
     }
   };
@@ -884,7 +884,7 @@ export default function AssistantScreen() {
         handleNewConversation();
       }
     } catch (err) {
-      console.error('Failed to delete session:', err);
+      if (__DEV__) console.error('Failed to delete session:', err);
     }
   };
 
@@ -899,13 +899,13 @@ export default function AssistantScreen() {
       return [
         'Ajuste ce draft avant confirmation',
         'Rends la proposition plus concise',
-        'Valide et passe à l’action suivante',
+        "Valide et passe à l'action suivante",
       ];
     }
     if (text.includes('```entity:document')) {
       return [
         'Fais-moi un résumé exécutif en 5 points',
-        'Transforme ça en plan d’action 30 jours',
+        "Transforme ça en plan d'action 30 jours",
         'Ajoute les risques + mitigations',
       ];
     }
@@ -975,11 +975,11 @@ export default function AssistantScreen() {
     if (ctaPatterns.some((p) => p.test(tail))) return true;
 
     // Explicit question near the end => step is likely clear.
-    if (/[?]\s*$/.test(tail) || /[?]\s*[”"]?\s*$/.test(tail)) return true;
+    if (/[?]\s*$/.test(tail) || /[?]\s*["\u201C\u201D]?\s*$/.test(tail)) return true;
 
     // Clear action plan already provided (e.g., numbered "next steps").
     const hasStepList =
-      /(prochaines? étapes?|plan d'action|plan d’\s*action|next steps?|action plan|roadmap)/.test(text) &&
+      /(prochaines? étapes?|plan d'action|plan d'\s*action|next steps?|action plan|roadmap)/.test(text) &&
       /(?:^|\s)1[\).\-\s]/.test(text) &&
       /(?:^|\s)2[\).\-\s]/.test(text);
     if (hasStepList) return true;

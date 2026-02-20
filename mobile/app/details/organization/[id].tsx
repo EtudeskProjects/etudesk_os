@@ -102,7 +102,7 @@ export default function OrganizationDetailScreen() {
         setOrganization(response.data);
       }
     } catch (error: any) {
-      console.error('Error loading organization:', error);
+      if (__DEV__) console.error('Error loading organization:', error);
       void alerts.alert(t('common.error'), t('organizationDetail.loadError'));
     } finally {
       setIsLoading(false);
@@ -117,7 +117,7 @@ export default function OrganizationDetailScreen() {
         setOpportunities(response.data);
       }
     } catch (error: any) {
-      console.error('Error loading opportunities:', error);
+      if (__DEV__) console.error('Error loading opportunities:', error);
     } finally {
       setIsLoadingOpportunities(false);
     }
@@ -131,7 +131,7 @@ export default function OrganizationDetailScreen() {
         setCommunities(response.data);
       }
     } catch (error: any) {
-      console.error('Error loading communities:', error);
+      if (__DEV__) console.error('Error loading communities:', error);
     } finally {
       setIsLoadingCommunities(false);
     }
@@ -145,7 +145,7 @@ export default function OrganizationDetailScreen() {
         setSpaces(response.data);
       }
     } catch (error: any) {
-      console.error('Error loading spaces:', error);
+      if (__DEV__) console.error('Error loading spaces:', error);
     } finally {
       setIsLoadingSpaces(false);
     }
@@ -163,7 +163,7 @@ export default function OrganizationDetailScreen() {
         await Linking.openURL(url);
       }
     } catch (error) {
-      console.error('Error opening website:', error);
+      if (__DEV__) console.error('Error opening website:', error);
     }
   };
 
@@ -181,7 +181,7 @@ export default function OrganizationDetailScreen() {
         await Linking.openURL(url);
       }
     } catch (error) {
-      console.error(`Error opening ${type}:`, error);
+      if (__DEV__) console.error(`Error opening ${type}:`, error);
     }
   };
 

@@ -263,7 +263,7 @@ export default function CreateEventScreen() {
                 { text: 'OK', onPress: () => router.back() }
             ] });
         } catch (error: any) {
-            console.error('Failed to save event:', error);
+            if (__DEV__) console.error('Failed to save event:', error);
             const message = error?.response?.data?.error || error?.message || 'Impossible de sauvegarder l\'événement.';
             void alerts.alert('Erreur', message);
         } finally {

@@ -79,7 +79,7 @@ export default function InvitationsScreen() {
         setOrgInvitations(response.data);
       }
     } catch (error) {
-      console.error('Error fetching org invitations:', error);
+      if (__DEV__) console.error('Error fetching org invitations:', error);
     } finally {
       setOrgLoading(false);
     }
@@ -103,7 +103,7 @@ export default function InvitationsScreen() {
         setSpaceInvitations(spaceRes.data.data);
       }
     } catch (error) {
-      console.error('Error fetching offer invitations:', error);
+      if (__DEV__) console.error('Error fetching offer invitations:', error);
     } finally {
       setOffersLoading(false);
     }

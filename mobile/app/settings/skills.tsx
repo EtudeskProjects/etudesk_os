@@ -111,7 +111,7 @@ export default function SkillsScreen() {
       const data = await skillService.getMySkills();
       setSkills(data);
     } catch (error) {
-      console.error('Error loading skills:', error);
+      if (__DEV__) console.error('Error loading skills:', error);
       void alerts.alert('Erreur', 'Impossible de charger les compétences');
     }
   }, []);

@@ -181,7 +181,7 @@ export default function EditProfileScreen() {
         });
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
+      if (__DEV__) console.error('Error loading profile:', error);
     } finally {
       setIsLoading(false);
     }
@@ -213,7 +213,7 @@ export default function EditProfileScreen() {
         form.setValue('avatarUri', uploaded.url);
       }
     } catch (error) {
-      console.error('Erreur lors de la selection de l\'image:', error);
+      if (__DEV__) console.error('Erreur lors de la selection de l\'image:', error);
     }
   };
 

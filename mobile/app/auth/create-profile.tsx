@@ -201,7 +201,7 @@ export default function CreateProfileScreen() {
         form.setValue('avatarUri', uploaded.url);
       }
     } catch (error) {
-      console.error('Error selecting image:', error);
+      if (__DEV__) console.error('Error selecting image:', error);
       void alerts.showAlert({ title: t('common.error'), message: t('auth.createProfile.photoError'), buttons: [{ text: 'OK' }] });
     }
   };
@@ -233,7 +233,7 @@ export default function CreateProfileScreen() {
     try {
       await form.handleSubmit();
     } catch (error: any) {
-      console.error('[CreateProfile] Error creating profile:', JSON.stringify(error, null, 2));
+      if (__DEV__) console.error('[CreateProfile] Error creating profile:', JSON.stringify(error, null, 2));
 
       // Check if profile already exists - redirect to main app
       const errorMsg = error.error || error.message || '';
@@ -247,7 +247,7 @@ export default function CreateProfileScreen() {
 
       if (error.status === 500) {
         errorMessage = 'Erreur serveur (500). Veuillez réessayer plus tard ou contacter le support.';
-        console.error('[CreateProfile] Server error details:', {
+        if (__DEV__) console.error('[CreateProfile] Server error details:', {
           status: error.status,
           error: error.error,
           message: error.message,

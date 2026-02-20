@@ -222,7 +222,7 @@ export default function ApplicationOrgDetailsScreen() {
         setRecommendation(response.data.recommendation);
       }
     } catch (error) {
-      console.error('Error loading recommendation:', error);
+      if (__DEV__) console.error('Error loading recommendation:', error);
     } finally {
       setIsLoadingRecommendation(false);
     }
@@ -237,7 +237,7 @@ export default function ApplicationOrgDetailsScreen() {
       setMessages(response.data || []);
       await applicationMessageService.markAllAsRead(application.id);
     } catch (error) {
-      console.error('Error loading messages:', error);
+      if (__DEV__) console.error('Error loading messages:', error);
     } finally {
       setIsLoadingMessages(false);
     }
@@ -380,7 +380,7 @@ export default function ApplicationOrgDetailsScreen() {
         await Linking.openURL(openUrl);
       }
     } catch (error) {
-      console.error('Error opening CV:', error);
+      if (__DEV__) console.error('Error opening CV:', error);
       void alerts.alert(t('common.error'), t('applicationDetail.cvOpenError'));
     }
   };

@@ -154,7 +154,7 @@ export default function MemberDetailsScreen() {
       setMessages(response.data || []);
       await communityMembershipMessageService.markAllAsRead(membership.id);
     } catch (error) {
-      console.error('Error loading messages:', error);
+      if (__DEV__) console.error('Error loading messages:', error);
     } finally {
       setIsLoadingMessages(false);
     }

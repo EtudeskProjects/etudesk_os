@@ -316,7 +316,7 @@ export default function EditCommunityScreen() {
         }
       }
     } catch (error: any) {
-      console.error('Error generating community:', error);
+      if (__DEV__) console.error('Error generating community:', error);
       showToast({ type: 'error', title: 'Erreur de génération', message: error?.error || 'Une erreur est survenue lors de la génération.' });
     } finally {
       setIsGenerating(false);
@@ -377,7 +377,7 @@ export default function EditCommunityScreen() {
         );
         uploadedImageUrls.push(uploaded.url);
       } catch (error) {
-        console.error('Error uploading image:', error);
+        if (__DEV__) console.error('Error uploading image:', error);
         await alerts.error('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
         return null;
       }

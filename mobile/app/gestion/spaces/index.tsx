@@ -44,7 +44,7 @@ export default function SpacesListScreen() {
         setSpaces(response.data);
       }
     } catch (error) {
-      console.error('Error loading spaces:', error);
+      if (__DEV__) console.error('Error loading spaces:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -78,7 +78,7 @@ export default function SpacesListScreen() {
         setSpaces(prev => prev.filter(s => s.id !== id));
         success('Supprime', 'L\'espace a ete supprime.');
       } catch (error) {
-        console.error('Error deleting space:', error);
+        if (__DEV__) console.error('Error deleting space:', error);
       }
     }
   };

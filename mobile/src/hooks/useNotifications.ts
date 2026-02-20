@@ -67,7 +67,7 @@ export function useNotifications() {
         Constants.expoConfig?.extra?.eas?.projectId ??
         (Constants as any).easConfig?.projectId;
       if (!projectId) {
-        console.warn('Push notifications: no projectId found — skipping token registration');
+        if (__DEV__) console.warn('Push notifications: no projectId found — skipping token registration');
         return null;
       }
       const token = await Notifications.getExpoPushTokenAsync({ projectId });
@@ -82,7 +82,7 @@ export function useNotifications() {
 
       return token.data;
     } catch (error) {
-      console.error('Error getting push token:', error);
+      if (__DEV__) console.error('Error getting push token:', error);
       return null;
     }
   }, []);
@@ -96,7 +96,7 @@ export function useNotifications() {
         deviceName: Device.modelName || 'Unknown Device',
       });
     } catch (error) {
-      console.error('Error sending push token to backend:', error);
+      if (__DEV__) console.error('Error sending push token to backend:', error);
     }
   }, []);
 
@@ -178,7 +178,7 @@ export function useNotifications() {
         try { await Notifications.setBadgeCountAsync(response.unreadCount); } catch {}
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      if (__DEV__) console.error('Error fetching notifications:', error);
     } finally {
       setIsLoading(false);
     }
@@ -194,7 +194,7 @@ export function useNotifications() {
       setUnreadCount(prev => Math.max(0, prev - 1));
       try { await Notifications.setBadgeCountAsync(Math.max(0, unreadCount - 1)); } catch {}
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      if (__DEV__) console.error('Error marking notification as read:', error);
     }
   }, [unreadCount]);
 
@@ -208,7 +208,7 @@ export function useNotifications() {
       setUnreadCount(0);
       try { await Notifications.setBadgeCountAsync(0); } catch {}
     } catch (error) {
-      console.error('Error marking all as read:', error);
+      if (__DEV__) console.error('Error marking all as read:', error);
     }
   }, []);
 
@@ -222,7 +222,7 @@ export function useNotifications() {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      if (__DEV__) console.error('Error deleting notification:', error);
     }
   }, [notifications]);
 
@@ -234,7 +234,7 @@ export function useNotifications() {
       const prefs = response?.data ?? response;
       if (prefs && typeof prefs === 'object') setPreferences(prefs);
     } catch (error) {
-      console.error('Error fetching preferences:', error);
+      if (__DEV__) console.error('Error fetching preferences:', error);
     }
   }, [isAuthenticated]);
 
@@ -246,7 +246,7 @@ export function useNotifications() {
       if (prefs && typeof prefs === 'object') setPreferences(prefs);
       return true;
     } catch (error) {
-      console.error('Error updating preferences:', error);
+      if (__DEV__) console.error('Error updating preferences:', error);
       return false;
     }
   }, []);
@@ -258,7 +258,7 @@ export function useNotifications() {
       await api.delete('/api/notifications/push-token', { token: expoPushToken });
       setExpoPushToken(null);
     } catch (error) {
-      console.error('Error deactivating push token:', error);
+      if (__DEV__) console.error('Error deactivating push token:', error);
     }
   }, [expoPushToken]);
 

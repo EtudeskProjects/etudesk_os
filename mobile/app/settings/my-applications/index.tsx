@@ -44,7 +44,7 @@ export default function MyApplicationsScreen() {
       const response = await applicationService.getMyApplications();
       setApplications(response.data || []);
     } catch (error) {
-      console.error('Error loading applications:', error);
+      if (__DEV__) console.error('Error loading applications:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);

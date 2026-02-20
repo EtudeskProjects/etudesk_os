@@ -75,7 +75,7 @@ export default function SpaceBookingsScreen() {
       });
       setStatusCounts(counts);
     } catch (error) {
-      console.error('Error loading data:', error);
+      if (__DEV__) console.error('Error loading data:', error);
       void alerts.alert('Erreur', 'Impossible de charger les réservations.');
     } finally {
       setIsLoading(false);
@@ -97,7 +97,7 @@ export default function SpaceBookingsScreen() {
       });
       setStatusCounts(counts);
     } catch (error) {
-      console.error('Error refreshing bookings:', error);
+      if (__DEV__) console.error('Error refreshing bookings:', error);
     } finally {
       setIsRefreshing(false);
     }

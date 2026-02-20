@@ -71,7 +71,7 @@ export default function DocumentsScreen() {
       setDocuments(docsResponse.documents);
       return docsResponse.documents;
     } catch (error) {
-      console.error('Error loading documents:', error);
+      if (__DEV__) console.error('Error loading documents:', error);
       void alerts.alert('Erreur', 'Impossible de charger les documents');
       return [];
     }
@@ -171,7 +171,7 @@ export default function DocumentsScreen() {
       await loadDocuments();
       startPolling();
     } catch (error: any) {
-      console.error('Error uploading document:', error);
+      if (__DEV__) console.error('Error uploading document:', error);
 
       void alerts.alert('Erreur', error?.message || "Erreur lors de l'upload");
     } finally {

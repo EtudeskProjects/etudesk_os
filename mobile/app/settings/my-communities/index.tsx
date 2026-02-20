@@ -112,7 +112,7 @@ export default function MyCommunitiesScreen() {
         setMemberships(response.data.memberships);
       }
     } catch (error) {
-      console.error('Error loading memberships:', error);
+      if (__DEV__) console.error('Error loading memberships:', error);
     }
   }, []);
 
@@ -123,7 +123,7 @@ export default function MyCommunitiesScreen() {
         setBookmarkedActivities(response.data);
       }
     } catch (error) {
-      console.error('Error loading bookmarks:', error);
+      if (__DEV__) console.error('Error loading bookmarks:', error);
     }
   }, []);
 

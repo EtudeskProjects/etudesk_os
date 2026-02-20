@@ -99,7 +99,7 @@ export default function CommunityDetailScreen() {
 
       }
     } catch (error: any) {
-      console.error('Error loading community:', error);
+      if (__DEV__) console.error('Error loading community:', error);
       void alerts.alert(t('common.error'), t('community.loadError'));
     } finally {
       setIsLoading(false);
@@ -139,7 +139,7 @@ export default function CommunityDetailScreen() {
       });
       setMembersPreview(preview);
     } catch (e) {
-      console.error('Error loading members:', e);
+      if (__DEV__) console.error('Error loading members:', e);
       setMembersPreview([]);
     } finally {
       setMembersLoading(false);

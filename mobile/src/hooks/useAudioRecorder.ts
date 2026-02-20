@@ -87,7 +87,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             }
             return true;
         } catch (error) {
-            console.error('Error requesting audio permissions:', error);
+            if (__DEV__) console.error('Error requesting audio permissions:', error);
             return false;
         }
     }, []);
@@ -130,7 +130,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
             return uri;
         } catch (error: any) {
-            console.error('Failed to stop recording:', error);
+            if (__DEV__) console.error('Failed to stop recording:', error);
             setState(prev => ({
                 ...prev,
                 isRecording: false,
@@ -199,7 +199,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             }, MAX_RECORDING_DURATION_MS) as any;
 
         } catch (error: any) {
-            console.error('Failed to start recording:', error);
+            if (__DEV__) console.error('Failed to start recording:', error);
             setState(prev => ({
                 ...prev,
                 isRecording: false,

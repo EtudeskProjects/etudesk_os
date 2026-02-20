@@ -193,7 +193,7 @@ export function useGeolocation(): UseGeolocationReturn {
       return result;
 
     } catch (err: any) {
-      console.error('Geolocation error:', err);
+      if (__DEV__) console.error('Geolocation error:', err);
 
       if (err.code === 'ERR_LOCATION_TIMEOUT') {
         setError(t('geolocation.timeout'));

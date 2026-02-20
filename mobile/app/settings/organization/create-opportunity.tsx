@@ -357,7 +357,7 @@ export default function CreateOpportunityScreen() {
         );
         uploadedImageUrls.push(uploaded.url);
       } catch (error) {
-        console.error('Error uploading image:', error);
+        if (__DEV__) console.error('Error uploading image:', error);
         await alerts.error('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
         return null;
       }
@@ -382,7 +382,7 @@ export default function CreateOpportunityScreen() {
         });
         uploadedAttachments.push({ ...attachment, uri: uploaded.url });
       } catch (error) {
-        console.error('Error uploading attachment:', error);
+        if (__DEV__) console.error('Error uploading attachment:', error);
         await alerts.error('Erreur', 'Impossible d\'uploader une pièce jointe. Veuillez réessayer.');
         return null;
       }
@@ -489,7 +489,7 @@ export default function CreateOpportunityScreen() {
         form.setValues(updates);
       }
     } catch (error: any) {
-      console.error('Error generating opportunity:', error);
+      if (__DEV__) console.error('Error generating opportunity:', error);
       showToast({
         type: 'error',
         title: 'Erreur de génération',

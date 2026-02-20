@@ -123,7 +123,7 @@ export default function ApplicationDetailsScreen() {
       // Mark all as read
       await applicationMessageService.markAllAsRead(application.id);
     } catch (error) {
-      console.error('Error loading messages:', error);
+      if (__DEV__) console.error('Error loading messages:', error);
     } finally {
       setIsLoadingMessages(false);
     }

@@ -89,7 +89,7 @@ export default function KYCScreen() {
         if (data.rejection_reason) setRejectionReason(data.rejection_reason);
       }
     } catch (error) {
-      console.error('Error loading KYC status:', error);
+      if (__DEV__) console.error('Error loading KYC status:', error);
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +103,7 @@ export default function KYCScreen() {
         else setBackImage(image.uri);
       }
     } catch (error) {
-      console.error('Error taking photo:', error);
+      if (__DEV__) console.error('Error taking photo:', error);
     }
   };
 
@@ -145,7 +145,7 @@ export default function KYCScreen() {
         void alerts.showAlert({ title: 'Non vérifié', message: result.data?.rejection_reason || 'Le document n\'a pas pu être vérifié. Réessaie avec une meilleure photo.', buttons: [{ text: 'OK' }] });
       }
     } catch (error: any) {
-      console.error('Error submitting KYC:', error);
+      if (__DEV__) console.error('Error submitting KYC:', error);
       void alerts.alert('Erreur', error?.error || 'Erreur lors de la soumission.');
     } finally {
       setIsSubmitting(false);

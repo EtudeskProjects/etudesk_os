@@ -93,7 +93,7 @@ export function OrganizationMemberProvider({ children }: OrganizationMemberProvi
       });
       setInvitations(prev => [...prev, response.data]);
     } catch (error) {
-      console.error('Error inviting member:', error);
+      if (__DEV__) console.error('Error inviting member:', error);
       throw error;
     }
   }, [selectedOrgId, currentUserMember]);
@@ -112,7 +112,7 @@ export function OrganizationMemberProvider({ children }: OrganizationMemberProvi
         m.id === memberId ? { ...m, ...response.data } : m
       ));
     } catch (error) {
-      console.error('Error updating member:', error);
+      if (__DEV__) console.error('Error updating member:', error);
       throw error;
     }
   }, [selectedOrgId]);
@@ -124,7 +124,7 @@ export function OrganizationMemberProvider({ children }: OrganizationMemberProvi
       await organizationMemberService.removeMember(selectedOrgId, memberId);
       setMembers(prev => prev.filter(m => m.id !== memberId));
     } catch (error) {
-      console.error('Error removing member:', error);
+      if (__DEV__) console.error('Error removing member:', error);
       throw error;
     }
   }, [selectedOrgId]);
@@ -138,7 +138,7 @@ export function OrganizationMemberProvider({ children }: OrganizationMemberProvi
         inv.id === invitationId ? { ...inv, status: 'CANCELLED' as const } : inv
       ));
     } catch (error) {
-      console.error('Error cancelling invitation:', error);
+      if (__DEV__) console.error('Error cancelling invitation:', error);
       throw error;
     }
   }, [selectedOrgId]);
@@ -152,7 +152,7 @@ export function OrganizationMemberProvider({ children }: OrganizationMemberProvi
         inv.id === invitationId ? { ...inv, ...response.data } : inv
       ));
     } catch (error) {
-      console.error('Error resending invitation:', error);
+      if (__DEV__) console.error('Error resending invitation:', error);
       throw error;
     }
   }, [selectedOrgId]);
@@ -169,7 +169,7 @@ export function OrganizationMemberProvider({ children }: OrganizationMemberProvi
       setMembers(membersResponse.data || []);
       setInvitations(invitationsResponse.data || []);
     } catch (error) {
-      console.error('Error fetching members:', error);
+      if (__DEV__) console.error('Error fetching members:', error);
       // Keep existing data on error
     } finally {
       setIsLoading(false);

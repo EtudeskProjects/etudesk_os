@@ -180,7 +180,7 @@ export default function CreateOrganizationScreen() {
         form.setValue('logoUri', image.uri);
       }
     } catch (error) {
-      console.error('Erreur lors de la sélection du logo:', error);
+      if (__DEV__) console.error('Erreur lors de la sélection du logo:', error);
     }
   };
 
@@ -245,7 +245,7 @@ export default function CreateOrganizationScreen() {
       try {
         await form.handleSubmit();
       } catch (error: any) {
-        console.error('Error creating organization:', error);
+        if (__DEV__) console.error('Error creating organization:', error);
         void alerts.showAlert({ title: 'Erreur', message: error?.message || 'Une erreur est survenue lors de la création de l\'organisation.', buttons: [{ text: 'OK' }] });
       }
     }

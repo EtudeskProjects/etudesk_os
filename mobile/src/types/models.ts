@@ -319,12 +319,14 @@ export const PRICING_TYPE_LABELS: Record<PricingType, string> = {
 
 export const ACCESS_TYPES = {
   PUBLIC: 'PUBLIC',
+  PRIVATE: 'PRIVATE',
   MEMBERSHIP: 'MEMBERSHIP',
 } as const;
 export type AccessType = (typeof ACCESS_TYPES)[keyof typeof ACCESS_TYPES];
 
 export const ACCESS_TYPE_LABELS: Record<AccessType, string> = {
   PUBLIC: 'Accès libre',
+  PRIVATE: 'Privé',
   MEMBERSHIP: 'Adhésion requise',
 };
 

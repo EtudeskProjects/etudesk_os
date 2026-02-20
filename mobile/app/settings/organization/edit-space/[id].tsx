@@ -262,7 +262,7 @@ export default function EditSpaceScreen() {
           })));
         }
       } catch (error) {
-        console.error('Error loading space:', error);
+        if (__DEV__) console.error('Error loading space:', error);
         await alerts.error('Erreur', 'Impossible de charger l\'espace.');
         router.back();
       } finally {
@@ -288,7 +288,7 @@ export default function EditSpaceScreen() {
 
     setIsGenerating(true);
     const startTime = Date.now();
-    console.log('[EditSpace] AI Generation - Starting...');
+    if (__DEV__) console.log('[EditSpace] AI Generation - Starting...');
 
     try {
       // Collect all existing form data
@@ -321,11 +321,11 @@ export default function EditSpaceScreen() {
       });
 
       const duration = Date.now() - startTime;
-      console.log(`[EditSpace] AI Generation - Completed in ${duration}ms`);
+      if (__DEV__) console.log(`[EditSpace] AI Generation - Completed in ${duration}ms`);
 
       if (response.success && response.data) {
         const data = response.data;
-        console.log('[EditSpace] AI Generation - Data received:', Object.keys(data));
+        if (__DEV__) console.log('[EditSpace] AI Generation - Data received:', Object.keys(data));
 
         // Apply generated data to form fields
         if (data.suggested_name) setName(data.suggested_name);
@@ -372,7 +372,7 @@ export default function EditSpaceScreen() {
       }
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      console.error(`[EditSpace] AI Generation - Failed after ${duration}ms:`, error);
+      if (__DEV__) console.error(`[EditSpace] AI Generation - Failed after ${duration}ms:`, error);
       showToast({
         type: 'error',
         title: 'Erreur de génération',

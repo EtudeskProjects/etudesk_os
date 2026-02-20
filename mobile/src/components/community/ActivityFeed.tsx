@@ -75,7 +75,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 setNextCursor(response.nextCursor ?? null);
             }
         } catch (error: any) {
-            console.error('Failed to load feed:', error);
+            if (__DEV__) console.error('Failed to load feed:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -92,7 +92,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             setActivities(response.data ?? []);
             setNextCursor(response.nextCursor ?? null);
         } catch (error: any) {
-            console.error('Failed to refresh feed:', error);
+            if (__DEV__) console.error('Failed to refresh feed:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -118,7 +118,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             await communityActivityService.toggleLike(activityId);
             // Optimistic update is already handled in ActivityCard
         } catch (error) {
-            console.error('Like failed:', error);
+            if (__DEV__) console.error('Like failed:', error);
         }
     }, []);
 
@@ -128,7 +128,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             // Refresh feed to update bookmark status
             refreshFeed();
         } catch (error) {
-            console.error('Bookmark failed:', error);
+            if (__DEV__) console.error('Bookmark failed:', error);
         }
     }, [refreshFeed]);
 
@@ -137,7 +137,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             await communityActivityService.vote(activityId, optionId);
             // Optimistic update is already handled in ActivityCard
         } catch (error) {
-            console.error('Vote failed:', error);
+            if (__DEV__) console.error('Vote failed:', error);
             showToastGlobal({ type: 'error', title: t('common.error'), message: t('community.feed.voteError') });
         }
     }, []);
@@ -147,7 +147,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
             await communityActivityService.togglePin(activityId);
             refreshFeed();
         } catch (error) {
-            console.error('Toggle pin failed:', error);
+            if (__DEV__) console.error('Toggle pin failed:', error);
             showToastGlobal({ type: 'error', title: t('common.error'), message: t('community.feed.pinError') });
         }
     }, [refreshFeed]);

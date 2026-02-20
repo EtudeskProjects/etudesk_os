@@ -335,7 +335,7 @@ export default function CreateCommunityScreen() {
       }
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      console.error(`[CreateCommunity] AI Generation - Failed after ${duration}ms:`, error);
+      if (__DEV__) console.error(`[CreateCommunity] AI Generation - Failed after ${duration}ms:`, error);
       showToast({ type: 'error', title: 'Erreur de génération', message: error?.error || 'Une erreur est survenue lors de la génération.' });
     } finally {
       setIsGenerating(false);
@@ -399,7 +399,7 @@ export default function CreateCommunityScreen() {
         );
         uploadedImageUrls.push(uploaded.url);
       } catch (error) {
-        console.error('[CreateCommunity] Error uploading image:', error);
+        if (__DEV__) console.error('[CreateCommunity] Error uploading image:', error);
         await alerts.error('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
         return null;
       }
@@ -475,7 +475,7 @@ export default function CreateCommunityScreen() {
         buttons: [{ text: 'OK', onPress: () => router.back() }],
       });
     } catch (error: any) {
-      console.error('[CreateCommunity] handlePublish - Error:', error);
+      if (__DEV__) console.error('[CreateCommunity] handlePublish - Error:', error);
       await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de la création.');
     } finally {
       setIsSubmitting(false);

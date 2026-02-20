@@ -256,7 +256,7 @@ export default function CreatePollScreen() {
                 { text: 'OK', onPress: () => router.back() }
             ] });
         } catch (error: any) {
-            console.error('Failed to save poll:', error);
+            if (__DEV__) console.error('Failed to save poll:', error);
             const message = error?.response?.data?.error || error?.message || 'Impossible de sauvegarder le sondage.';
             void alerts.alert('Erreur', message);
         } finally {

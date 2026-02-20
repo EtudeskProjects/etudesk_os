@@ -125,7 +125,7 @@ export function ChatInput({
         ]);
       }
     } catch (error) {
-      console.error('Error picking file:', error);
+      if (__DEV__) console.error('Error picking file:', error);
       showToastGlobal({ type: 'error', title: t('common.error'), message: t('chat.fileSelectError') });
     }
   };

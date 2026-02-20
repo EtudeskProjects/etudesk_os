@@ -223,7 +223,7 @@ export default function ApplyOpportunityScreen() {
         form.setValue('answers', initialAnswers);
       }
     } catch (error) {
-      console.error('Error loading apply data:', error);
+      if (__DEV__) console.error('Error loading apply data:', error);
       void alerts.alert('Erreur', 'Impossible de charger les données.');
       router.back();
     } finally {

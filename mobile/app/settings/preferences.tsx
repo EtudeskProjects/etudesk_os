@@ -128,7 +128,7 @@ export default function PreferencesScreen() {
                 }
             }
         } catch (error) {
-            console.error('Error loading preferences:', error);
+            if (__DEV__) console.error('Error loading preferences:', error);
             setLoadError(true);
         } finally {
             setIsLoading(false);
@@ -185,7 +185,7 @@ export default function PreferencesScreen() {
                 learning_preferences: newPrefs as any,
             });
         } catch (error) {
-            console.error('Error saving learning preference:', error);
+            if (__DEV__) console.error('Error saving learning preference:', error);
             setLearningPrefs(previousPrefs);
             void alerts.showAlert({ title: t('common.error'), message: t('preferences.learningSaveError'), buttons: [{ text: t('common.confirm') }] });
         } finally {

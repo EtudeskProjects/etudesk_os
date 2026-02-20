@@ -83,7 +83,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
     try {
       return i18n.t(key, options);
     } catch (error) {
-      console.warn(`Translation missing for key: ${key}`);
+      if (__DEV__) console.warn(`Translation missing for key: ${key}`);
       return key;
     }
   }, [language]); // Re-create when language changes

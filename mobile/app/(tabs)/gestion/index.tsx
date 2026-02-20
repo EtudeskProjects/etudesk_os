@@ -218,7 +218,7 @@ export default function GestionScreen() {
 
       setRecentActivities(activities.slice(0, 5));
     } catch (error) {
-      console.error('[Gestion] Error loading data:', error);
+      if (__DEV__) console.error('[Gestion] Error loading data:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -233,7 +233,7 @@ export default function GestionScreen() {
         setNotifications(notifs);
       }
     } catch (error) {
-      console.error('[Gestion] Failed to load notifications:', error);
+      if (__DEV__) console.error('[Gestion] Failed to load notifications:', error);
     }
   }, []);
 
@@ -246,7 +246,7 @@ export default function GestionScreen() {
         setIsObjectiveExpanded(false);
       }
     } catch (error) {
-      console.error('[Gestion] Failed to load daily objective:', error);
+      if (__DEV__) console.error('[Gestion] Failed to load daily objective:', error);
     }
   }, [selectedOrg?.id]);
 

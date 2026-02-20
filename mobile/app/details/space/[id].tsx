@@ -186,7 +186,7 @@ export default function SpaceDetailScreen() {
 
       }
     } catch (error) {
-      console.error('Error loading space:', error);
+      if (__DEV__) console.error('Error loading space:', error);
       void alerts.alert(t('common.error'), t('space.loadError'));
     } finally {
       setIsLoading(false);
@@ -216,7 +216,7 @@ export default function SpaceDetailScreen() {
     } catch (error) {
       // Revert on error
       setIsBookmarked(isBookmarked);
-      console.error('Error toggling bookmark:', error);
+      if (__DEV__) console.error('Error toggling bookmark:', error);
     }
   };
 
@@ -228,7 +228,7 @@ export default function SpaceDetailScreen() {
         title: space.name,
       });
     } catch (error) {
-      console.error('Error sharing:', error);
+      if (__DEV__) console.error('Error sharing:', error);
     }
   };
 

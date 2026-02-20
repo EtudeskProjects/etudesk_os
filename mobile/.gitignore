@@ -4,3 +4,14 @@
 
 expo-env.d.ts
 # @end expo-cli
+
+# Environment variables (secrets)
+.env
+.env.local
+.env.production
+
+# Google Play service account
+google-play-service-account.json
+
+# Build artifacts
+dist/

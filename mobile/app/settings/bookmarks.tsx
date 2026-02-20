@@ -54,7 +54,7 @@ export default function BookmarksScreen() {
       if (spacesRes.data) setSpaces(spacesRes.data);
       if (communitiesRes.data) setCommunities(communitiesRes.data);
     } catch (error) {
-      console.error('Error loading bookmarks:', error);
+      if (__DEV__) console.error('Error loading bookmarks:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -87,7 +87,7 @@ export default function BookmarksScreen() {
           break;
       }
     } catch (error) {
-      console.error('Error removing bookmark:', error);
+      if (__DEV__) console.error('Error removing bookmark:', error);
     }
   };
 

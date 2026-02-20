@@ -46,7 +46,7 @@ export default function CommunitiesListScreen() {
         setCommunities(response.data);
       }
     } catch (error) {
-      console.error('Error loading communities:', error);
+      if (__DEV__) console.error('Error loading communities:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -80,7 +80,7 @@ export default function CommunitiesListScreen() {
         setCommunities(prev => prev.filter(c => c.id !== id));
         success('Supprimé', 'La communauté a été supprimée.');
       } catch (error) {
-        console.error('Error deleting community:', error);
+        if (__DEV__) console.error('Error deleting community:', error);
       }
     }
   };

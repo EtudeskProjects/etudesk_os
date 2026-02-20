@@ -62,7 +62,7 @@ export default function CommunitiesScreen() {
                 setCommunities(response.data);
             }
         } catch (error) {
-            console.error('Error loading communities:', error);
+            if (__DEV__) console.error('Error loading communities:', error);
         } finally {
             setIsLoading(false);
             setIsRefreshing(false);

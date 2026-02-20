@@ -479,7 +479,7 @@ export default function CreateSpaceScreen() {
       }
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      console.error(`[CreateSpace] AI Generation - Failed after ${duration}ms:`, error);
+      if (__DEV__) console.error(`[CreateSpace] AI Generation - Failed after ${duration}ms:`, error);
       showToast({
         type: 'error',
         title: 'Erreur de génération',

@@ -49,7 +49,7 @@ export default function MyReservationsScreen() {
       const response = await spaceBookingService.getMyBookings();
       setBookings(response.data || []);
     } catch (error) {
-      console.error('Error loading bookings:', error);
+      if (__DEV__) console.error('Error loading bookings:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);

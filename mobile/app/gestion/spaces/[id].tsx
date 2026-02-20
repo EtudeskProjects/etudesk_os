@@ -77,7 +77,7 @@ export default function SpaceBookingsManagementScreen() {
       });
       setStatusCounts(counts);
     } catch (error) {
-      console.error('Error loading data:', error);
+      if (__DEV__) console.error('Error loading data:', error);
       void alerts.alert(t('common.error'), t('gestion.bookings.loadError'));
     } finally {
       setIsLoading(false);
@@ -99,7 +99,7 @@ export default function SpaceBookingsManagementScreen() {
       });
       setStatusCounts(counts);
     } catch (error) {
-      console.error('Error refreshing bookings:', error);
+      if (__DEV__) console.error('Error refreshing bookings:', error);
     } finally {
       setIsRefreshing(false);
     }

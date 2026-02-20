@@ -154,7 +154,7 @@ export default function CommunityMemberDetailsScreen() {
       }
     } catch (error: any) {
       if (error?.status !== 404) {
-        console.error('Error loading permissions:', error);
+        if (__DEV__) console.error('Error loading permissions:', error);
       }
       setPermissions(DEFAULT_MEMBER_PERMISSIONS);
       setCommunityDefaults(DEFAULT_MEMBER_PERMISSIONS);
@@ -229,7 +229,7 @@ export default function CommunityMemberDetailsScreen() {
       setMessages(response.data || []);
       await communityMembershipMessageService.markAllAsRead(member.id);
     } catch (error) {
-      console.error('Error loading messages:', error);
+      if (__DEV__) console.error('Error loading messages:', error);
     } finally {
       setIsLoadingMessages(false);
     }

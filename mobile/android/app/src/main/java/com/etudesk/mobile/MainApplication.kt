@@ -1,4 +1,4 @@
-package com.etudesk.os
+package com.etudesk.mobile
 
 import android.app.Application
 import android.content.res.Configuration

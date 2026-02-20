@@ -120,7 +120,7 @@ export default function ReservationDetailsScreen() {
       // Mark all as read
       await spaceBookingMessageService.markAsRead(booking.id);
     } catch (error) {
-      console.error('Error loading messages:', error);
+      if (__DEV__) console.error('Error loading messages:', error);
     } finally {
       setIsLoadingMessages(false);
     }

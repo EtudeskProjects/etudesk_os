@@ -1,4 +1,4 @@
-package com.etudesk.os
+package com.etudesk.mobile
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

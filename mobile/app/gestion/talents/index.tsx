@@ -84,7 +84,7 @@ export default function TalentsScreen() {
       setTalents(result.talents);
       setTotal(result.total);
     } catch (error) {
-      console.error('Error loading talents:', error);
+      if (__DEV__) console.error('Error loading talents:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -97,7 +97,7 @@ export default function TalentsScreen() {
       const result = await orgTalentService.getTags(selectedOrg.id);
       setTags(result);
     } catch (error) {
-      console.error('Error loading tags:', error);
+      if (__DEV__) console.error('Error loading tags:', error);
     }
   }, [selectedOrg?.id]);
 
@@ -131,7 +131,7 @@ export default function TalentsScreen() {
         )
       );
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      if (__DEV__) console.error('Error toggling favorite:', error);
     }
   };
 
@@ -142,7 +142,7 @@ export default function TalentsScreen() {
       setNewTagName('');
       loadTags();
     } catch (error) {
-      console.error('Error creating tag:', error);
+      if (__DEV__) console.error('Error creating tag:', error);
     }
   };
 
@@ -153,7 +153,7 @@ export default function TalentsScreen() {
       loadTags();
       if (activeTagFilter === tagId) setActiveTagFilter(undefined);
     } catch (error) {
-      console.error('Error deleting tag:', error);
+      if (__DEV__) console.error('Error deleting tag:', error);
     }
   };
 

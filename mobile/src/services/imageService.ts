@@ -171,7 +171,7 @@ export async function optimizeImage(
       fileSize,
     };
   } catch (error) {
-    console.error('[ImageService] Error optimizing image:', error);
+    if (__DEV__) console.error('[ImageService] Error optimizing image:', error);
     throw new Error(i18n.t('imageService.optimizeError'));
   }
 }
@@ -200,7 +200,7 @@ export async function pickImage(options: PickImageOptions): Promise<OptimizedIma
 
     return await optimizeImage(asset.uri, type, includeBase64);
   } catch (error) {
-    console.error('[ImageService] Error picking image:', error);
+    if (__DEV__) console.error('[ImageService] Error picking image:', error);
     void alertsGlobal.error(i18n.t('common.error'), i18n.t('imageService.pickError'));
     return null;
   }
@@ -229,7 +229,7 @@ export async function takePhoto(options: PickImageOptions): Promise<OptimizedIma
 
     return await optimizeImage(asset.uri, type, includeBase64);
   } catch (error) {
-    console.error('[ImageService] Error taking photo:', error);
+    if (__DEV__) console.error('[ImageService] Error taking photo:', error);
     void alertsGlobal.error(i18n.t('common.error'), i18n.t('imageService.captureError'));
     return null;
   }
@@ -342,7 +342,7 @@ export async function uploadImage(
       fileId: data.data.file_id,
     };
   } catch (error: any) {
-    console.error('[ImageService] Error uploading image:', error);
+    if (__DEV__) console.error('[ImageService] Error uploading image:', error);
     throw new Error(error.message || i18n.t('imageService.uploadError'));
   }
 }

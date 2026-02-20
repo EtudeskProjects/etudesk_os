@@ -124,7 +124,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             });
 
         } catch (error) {
-            console.error('[CommentSection] Failed to load comments:', error);
+            if (__DEV__) console.error('[CommentSection] Failed to load comments:', error);
         } finally {
             setLoading(false);
         }
@@ -279,7 +279,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                 setComments(prev => replaceOptimisticComment(prev, tempId, realComment));
             }
         } catch (error: any) {
-            console.error('[CommentSection] Failed to post comment:', error);
+            if (__DEV__) console.error('[CommentSection] Failed to post comment:', error);
 
             // Helper function to recursively remove optimistic comment on error
             const removeOptimisticComment = (comments: OptimisticComment[], targetTempId: string): OptimisticComment[] => {
@@ -351,7 +351,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             // Call API
             await communityActivityService.deleteComment(activityId, comment.id);
         } catch (error: any) {
-            console.error('[CommentSection] Failed to delete comment:', error);
+            if (__DEV__) console.error('[CommentSection] Failed to delete comment:', error);
             // Reload comments on error
             loadComments();
             showToastGlobal({ type: 'error', title: t('common.error'), message: t('community.comments.deleteError') });

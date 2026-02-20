@@ -99,7 +99,7 @@ export function ChatMessage({
         await Linking.openURL(url);
       }
     } catch (error) {
-      console.error('Error opening link:', error);
+      if (__DEV__) console.error('Error opening link:', error);
     }
   };
 
@@ -124,7 +124,7 @@ export function ChatMessage({
         }
       }
     } catch (error) {
-      console.error('Error opening attachment:', error);
+      if (__DEV__) console.error('Error opening attachment:', error);
     }
   };
 
@@ -165,7 +165,7 @@ export function ChatMessage({
 
       showToastGlobal({ type: 'success', title: t('common.success'), message: t('chat.eventAdded') });
     } catch (error) {
-      console.error('Error adding to calendar:', error);
+      if (__DEV__) console.error('Error adding to calendar:', error);
       showToastGlobal({ type: 'error', title: t('common.error'), message: t('chat.eventAddError') });
     }
   };

@@ -158,7 +158,7 @@ export default function OpportunityDetailScreen() {
     } catch (error) {
       // Revert on error
       setIsBookmarked(isBookmarked);
-      console.error('Error toggling bookmark:', error);
+      if (__DEV__) console.error('Error toggling bookmark:', error);
     }
   };
 
@@ -175,7 +175,7 @@ export default function OpportunityDetailScreen() {
         setOpportunity(opp);
       }
     } catch (error: any) {
-      console.error('Error loading opportunity:', error);
+      if (__DEV__) console.error('Error loading opportunity:', error);
       void alerts.alert(t('common.error'), t('opportunity.loadError'));
     } finally {
       setIsLoading(false);
@@ -215,7 +215,7 @@ export default function OpportunityDetailScreen() {
         void alerts.alert(t('common.error'), t('opportunity.openError'));
       }
     } catch (error) {
-      console.error('Error opening attachment:', error);
+      if (__DEV__) console.error('Error opening attachment:', error);
       void alerts.alert(t('common.error'), t('opportunity.openError'));
     }
   };

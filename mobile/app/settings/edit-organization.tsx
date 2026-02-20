@@ -190,7 +190,7 @@ export default function EditOrganizationScreen() {
         });
       }
     } catch (error) {
-      console.error('Error loading organization:', error);
+      if (__DEV__) console.error('Error loading organization:', error);
       // Try to load user profile for default location
       await loadUserProfileDefaults();
       void alerts.showAlert({ title: 'Erreur', message: 'Impossible de charger l\'organisation.', buttons: [
@@ -230,7 +230,7 @@ export default function EditOrganizationScreen() {
         await loadUserProfileDefaults();
       }
     } catch (error) {
-      console.error('Error loading organizations:', error);
+      if (__DEV__) console.error('Error loading organizations:', error);
       await loadUserProfileDefaults();
     } finally {
       setIsLoading(false);
@@ -265,7 +265,7 @@ export default function EditOrganizationScreen() {
         form.setValue('logoUri', image.uri);
       }
     } catch (error) {
-      console.error('Erreur lors de la sélection du logo:', error);
+      if (__DEV__) console.error('Erreur lors de la sélection du logo:', error);
     }
   };
 
@@ -330,7 +330,7 @@ export default function EditOrganizationScreen() {
       try {
         await form.handleSubmit();
       } catch (error: any) {
-        console.error('Error saving organization:', error);
+        if (__DEV__) console.error('Error saving organization:', error);
         void alerts.showAlert({ title: 'Erreur', message: error?.error || 'Une erreur est survenue lors de la mise à jour.', buttons: [{ text: 'OK' }] });
       }
     }

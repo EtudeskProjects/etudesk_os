@@ -92,7 +92,7 @@ export default function OpportunityApplicationsScreen() {
       });
       setRecommendations(recos);
     } catch (error) {
-      console.error('Error loading data:', error);
+      if (__DEV__) console.error('Error loading data:', error);
       void alerts.alert('Erreur', 'Impossible de charger les candidatures.');
     } finally {
       setIsLoading(false);
@@ -115,7 +115,7 @@ export default function OpportunityApplicationsScreen() {
       });
       setRecommendations(recos);
     } catch (error) {
-      console.error('Error refreshing applications:', error);
+      if (__DEV__) console.error('Error refreshing applications:', error);
     } finally {
       setIsRefreshing(false);
     }
@@ -133,7 +133,7 @@ export default function OpportunityApplicationsScreen() {
         }));
       }
     } catch (error) {
-      console.error('Error loading recommendation:', error);
+      if (__DEV__) console.error('Error loading recommendation:', error);
     }
   }, [recommendations]);
 
@@ -181,7 +181,7 @@ export default function OpportunityApplicationsScreen() {
         void alerts.alert('Succès', 'Le fichier CSV a été téléchargé.');
       }
     } catch (error: any) {
-      console.error('Error exporting CSV:', error);
+      if (__DEV__) console.error('Error exporting CSV:', error);
       void alerts.alert('Erreur', error.message || 'Impossible d\'exporter en CSV.');
     }
   };
