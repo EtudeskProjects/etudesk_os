@@ -10,6 +10,7 @@ import { TalentContext } from '../types';
 import { vectorQueryTool } from '../tools/vector-query.tool';
 import { createSqlQueryTool } from '../tools/sql-query.tool';
 import { youtubeSearchTool } from '../tools/youtube-search.tool';
+import { analyzeYoutubeVideoTool } from '../tools/youtube-analyze.tool';
 import { createGenerateDocumentTool } from '../tools/generate-document.tool';
 import { generateImageTool } from '../tools/generate-image.tool';
 import { generateDiagramTool } from '../tools/generate-diagram.tool';
@@ -47,6 +48,7 @@ export function createTalentAgent(
     tools = [
       studySqlTool,
       youtubeSearchTool,
+      analyzeYoutubeVideoTool,
       generateImageTool,
       generateDiagramTool,
       fileReaderTool,

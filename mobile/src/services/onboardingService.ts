@@ -15,7 +15,7 @@ export interface OnboardingData {
   firstName?: string;
   lastName?: string;
   bio?: string;
-  phone: string;
+  phone?: string;
   city?: string;
   region?: string;
   country?: string;

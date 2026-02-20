@@ -1,9 +1,9 @@
 ---
 name: Document Study Session
-description: Analyze an uploaded document (PDF, slides, notes) or community-shared content (posts + documents) and create a study session with summary, key points, flashcards, and quiz
+description: Analyze an uploaded document (PDF, slides, notes), community-shared content, or YouTube video and create a study session with summary, key points, flashcards, and quiz
 modes: study
-tools: sql_query, file_reader, manage_skills
-triggers: etudier ce document, analyser ce PDF, resume ce cours, flashcards depuis, apprendre depuis, fiche de revision, etudier mes notes, etudier ce post, contenu communaute
+tools: sql_query, file_reader, manage_skills, analyze_youtube_video
+triggers: etudier ce document, analyser ce PDF, resume ce cours, flashcards depuis, apprendre depuis, fiche de revision, etudier mes notes, etudier ce post, contenu communaute, youtube.com, youtu.be, analyse cette video, etudier cette video, resume cette video, video youtube, apprendre depuis cette video
 ---
 
 # Document Study Session Workflow
@@ -26,6 +26,12 @@ You are now in Document Study Session mode. Your goal: transform an uploaded doc
    - Adapt the session: fewer flashcards (2-3), shorter quiz (2 questions).
 
    **D. No content provided** — If the user says "étudie ce doc" or similar WITHOUT a [Pièces jointes] section, check the `DOCUMENTS:` section in context — document IDs and titles are listed there. Present them and ask which one to study. DO NOT call `sql_query(my_documents)` — documents are already loaded in context.
+
+   **E. YouTube video URL** — If the user's message contains a YouTube URL (youtube.com or youtu.be):
+   - Call `analyze_youtube_video` IMMEDIATELY with the URL.
+   - Render a youtube block with the bestVideoId from the analysis result.
+   - Use the analysis (resume, concepts_cles, moments_importants) as study material for the rest of the session.
+   - Continue to Steps 2-5 using the video analysis as the source content (instead of a document).
 
 ## Step 2: Analyze Content
 

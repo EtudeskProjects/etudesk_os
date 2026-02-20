@@ -252,7 +252,8 @@ export const onboardingSchema = z.object({
     .optional(),
   phone: z.string()
     .min(8, 'validation:onboarding.phoneMinLength')
-    .max(20, 'validation:onboarding.phoneTooLong'),
+    .max(20, 'validation:onboarding.phoneTooLong')
+    .optional(),
   city: z.string()
     .max(100, 'validation:onboarding.cityTooLong')
     .optional(),

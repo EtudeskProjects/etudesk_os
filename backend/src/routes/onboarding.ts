@@ -88,18 +88,20 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
         });
       }
 
-      // Check if phone number is already used by another talent
-      const phoneCheckResult = await client.query(
-        `SELECT id FROM talents WHERE phone = $1 AND deleted_at IS NULL`,
-        [data.phone.trim()]
-      );
+      // Check if phone number is already used by another talent (only if phone provided)
+      if (data.phone?.trim()) {
+        const phoneCheckResult = await client.query(
+          `SELECT id FROM talents WHERE phone = $1 AND deleted_at IS NULL`,
+          [data.phone.trim()]
+        );
 
-      if (phoneCheckResult.rows.length > 0) {
-        return res.status(400).json({
-          success: false,
-          error: req.t('onboarding:phoneAlreadyUsed'),
-          field: 'phone',
-        });
+        if (phoneCheckResult.rows.length > 0) {
+          return res.status(400).json({
+            success: false,
+            error: req.t('onboarding:phoneAlreadyUsed'),
+            field: 'phone',
+          });
+        }
       }
 
       // Generate unique slug
@@ -145,7 +147,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
             data.lastName?.trim() || null,
             data.bio?.trim() || null,
             talentEmail,
-            data.phone.trim(),
+            data.phone?.trim() || null,
             data.city?.trim() || null,
             data.region?.trim() || null,
             data.country?.toUpperCase() || null,
@@ -177,7 +179,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
               data.lastName?.trim() || null,
               data.bio?.trim() || null,
               talentEmail,
-              data.phone.trim(),
+              data.phone?.trim() || null,
               data.city?.trim() || null,
               data.region?.trim() || null,
               data.country?.toUpperCase() || null,

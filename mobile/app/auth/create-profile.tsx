@@ -62,7 +62,7 @@ export default function CreateProfileScreen() {
       country: { initialValue: 'CI' },
       region: { initialValue: '' },
       commune: { initialValue: '' },
-      phone: { initialValue: '', required: true, requiredMessage: 'Le téléphone est requis' },
+      phone: { initialValue: '', required: false },
       email: { initialValue: '' },
       avatarUri: { initialValue: null },
       remoteReady: { initialValue: true },
@@ -74,7 +74,7 @@ export default function CreateProfileScreen() {
         displayName,
         firstName: values.firstName.trim(),
         lastName: values.lastName.trim(),
-        phone: values.phone.trim(),
+        phone: values.phone.trim() || undefined,
         city: values.commune || undefined,
         region: values.region || undefined,
         country: values.country || undefined,
@@ -266,8 +266,7 @@ export default function CreateProfileScreen() {
     return (
       firstName.trim().length >= 2 &&
       lastName.trim().length >= 2 &&
-      country.length > 0 &&
-      phone.trim().length >= 8
+      country.length > 0
     );
   };
 
@@ -499,11 +498,11 @@ export default function CreateProfileScreen() {
 
                 {/* Téléphone */}
                 <PhoneInput
-                  label={`${t('auth.createProfile.phone')} *`}
+                  label={t('auth.createProfile.phone')}
                   value={phone}
                   onChangeValue={(e164) => form.setValue('phone', e164)}
                   defaultCountryCode={country}
-                  hint="Ce numéro doit être unique pour votre profil"
+                  hint="Optionnel — requis uniquement pour la connexion WhatsApp"
                 />
 
                 {/* Email */}

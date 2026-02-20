@@ -12,10 +12,10 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
 export const youtubeSearchTool = defineTool({
   name: 'youtube_search',
   description:
-    'Search YouTube for educational videos on a topic. Study mode only. Returns the most relevant French-language video tutorials, prioritizing West African francophone creators. Call this tool ONCE per response — never multiple times. Pick the best single query.',
+    'Search YouTube for educational videos on a topic. Study mode only. Returns up to 7 results. After receiving results, select 2-3 most relevant by title/description, then ALWAYS call analyze_youtube_video to compare and analyze before presenting. Never present a video without analysis.',
   parameters: z.object({
     query: z.string().describe('Search query for educational videos. ALWAYS write the query in French. Prioritize West African francophone (UEMOA) creators: append "Afrique francophone" or "Afrique de l\'Ouest" to queries when the topic allows it (business, marketing, entrepreneuriat, droit, finance, etc.). For universal tech topics (coding, frameworks), French is enough. Examples: "marketing digital Afrique francophone", "entrepreneuriat UEMOA", "tutoriel React hooks en francais"'),
-    maxResults: z.number().min(1).max(3).describe('Number of videos to return. Always pass 1 — the agent picks the best single video to display.'),
+    maxResults: z.number().min(1).max(10).describe('Default 7. Agent compares titles/descriptions, picks 2-3 best candidates for analyze_youtube_video.'),
   }),
   execute: async ({ query, maxResults }) => {
     if (!YOUTUBE_API_KEY) {
@@ -54,6 +54,7 @@ export const youtubeSearchTool = defineTool({
         description: item.snippet.description?.slice(0, 200),
         channelName: item.snippet.channelTitle,
         thumbnailUrl: item.snippet.thumbnails?.medium?.url,
+        url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
       }));
 
       return { videos };

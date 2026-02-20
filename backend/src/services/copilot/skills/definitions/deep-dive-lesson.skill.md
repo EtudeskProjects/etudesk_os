@@ -2,7 +2,7 @@
 name: Deep Dive Lesson
 description: Structured lesson (direct teaching, Socratic discovery, or hands-on project) with diagrams, quizzes, and skill tracking
 modes: study
-tools: youtube_search, manage_skills, generate_diagram, web_search
+tools: youtube_search, analyze_youtube_video, manage_skills, generate_diagram, web_search
 triggers: cours, lecon, apprends-moi, enseigne-moi, explique en detail, cours complet, formation sur, deep dive, approfondir, socratique, guide-moi, fais-moi reflechir, decouvrir par moi-meme, methode socratique, questionne-moi, aide-moi a comprendre, raisonnement guide, projet, mini-projet, construire, coder, build, pratique, exercice pratique, hands-on, tp, atelier, projet mobile money, projet fintech, apprendre anglais, learn english, pratiquer anglais, pratiquer francais, apprendre espagnol, ameliorer prononciation, practice english, cours anglais, cours de langue, apprendre une langue
 ---
 
@@ -324,6 +324,7 @@ After ~5 vocal exchanges:
 - Use African/UEMOA examples when the topic allows it (Mobile Money API, fintech CI/SN, agritech, e-commerce local Jumia/Glovo, paiement Orange Money/Wave). Prefer concrete African business scenarios over Silicon Valley case studies.
 - Code examples must be complete and runnable (not pseudocode)
 - Never use youtube_search before Step 7 — the lesson teaches first, video supplements
+- **MANDATORY after youtube_search**: Select 2-3 most relevant videos by title/description match. Call analyze_youtube_video with these 2-3 URLs (single call). Present ONLY the best video (youtube block) with pedagogical summary: key takeaways (3-5 points from concepts_cles), key timestamp ("Regarde a MM:SS pour..."), connection to current lesson. Never show a bare youtube block without analysis.
 - If the user seems impatient ("resume", "abrege"), skip to the quiz directly
 - If the user explicitly asks "dis-moi la reponse" during Socratic mode, respect their wish — give a brief answer then quiz
 - Projects must be completable in one sitting (1-4h max)
