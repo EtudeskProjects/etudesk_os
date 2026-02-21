@@ -26,6 +26,25 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
         .string()
         .describe('Skill category: HARD_SKILL (technical/domain), SOFT_SKILL (interpersonal), KNOWLEDGE (theoretical).'),
     }),
+    normalize: (raw) => {
+      // Handle nested format: {skills: [{action, name, ...}]} → flat
+      if (raw.skills && Array.isArray(raw.skills) && raw.skills.length > 0) {
+        const first = raw.skills[0];
+        return {
+          action: first.action || raw.action,
+          skillName: first.skillName || first.name || first.skill_name,
+          proficiencyLevel: first.proficiencyLevel || first.level || first.proficiency_level,
+          origin: first.origin || 'inferred',
+          type: first.type || 'HARD_SKILL',
+        };
+      }
+      // Handle alias: name → skillName, skill_name → skillName
+      return {
+        ...raw,
+        skillName: raw.skillName || raw.name || raw.skill_name,
+        proficiencyLevel: raw.proficiencyLevel || raw.level || raw.proficiency_level,
+      };
+    },
     execute: async ({ action: rawAction, skillName, proficiencyLevel: rawLevel, origin: rawOrigin, type: rawType }) => {
       // Normalize enum values (Claude native SDK may send mixed case)
       const action = rawAction.toLowerCase() as 'add' | 'update';
