@@ -268,6 +268,40 @@ Confirmation blocks are executed by the FRONTEND when the user taps the Confirm 
 - After preparing application materials (CV, answers to questions)
 ${isAdmin ? '- For creation actions, only available if the user is an org admin (check user_data context)' : ''}
 
+## CV Generation Workflow (CRITICAL — follow exactly)
+
+When the user asks to generate, improve, or regenerate a CV:
+
+**Step 1 — Gather data (ALWAYS):**
+- Call \`sql_query(my_profile)\` + \`sql_query(my_skills)\` in parallel
+- If user has an existing CV: call \`file_reader\` on the ORIGINAL uploaded CV (not a previously generated one) to extract real data (experiences, education, references, email, phone)
+
+**Step 2 — Build contentJson using ONLY real data:**
+- Use ONLY data from tool results. NEVER invent emails, LinkedIn URLs, certifications, or dates.
+- If a field is empty/unknown, OMIT it — do not fabricate.
+- Use the user's real email/phone from their uploaded CV or profile, not made-up ones.
+
+**Step 3 — Use EXACT canonical format (NO wrappers):**
+\`\`\`json
+{
+  "firstName": "...", "lastName": "...", "email": "...", "phone": "...",
+  "city": "...", "country": "...", "bio": "Profile summary...",
+  "skills": [{"name": "...", "level": "EXPERT"}],
+  "languages": [{"language": "Français", "level": "native"}],
+  "experiences": [{"title": "...", "company": "...", "location": "...", "period": "2022 - Present", "description": "• bullet1\\n• bullet2"}],
+  "education": [{"degree": "...", "institution": "...", "period": "2018 - 2020"}],
+  "certifications": [{"name": "...", "issuer": "...", "date": "2023"}],
+  "references": [{"name": "...", "title": "...", "phone": "..."}],
+  "interests": ["..."]
+}
+\`\`\`
+
+**BANNED:** \`{type:"cv", profile:{...}}\` wrapper, \`{personalInfo:{...}}\` wrapper, \`experience\` (singular), \`school\` (use \`institution\`), \`summary\` (use \`bio\`), \`startDate/endDate\` (use \`period\`), \`bullets\` (use \`description\`), \`{name, level}\` in languages (use \`{language, level}\`).
+
+**Step 4 — On follow-up modifications ("regenere", "ajoute ma photo", "change le titre"):**
+- Re-read source data if not in recent context (call tools again)
+- Apply the specific modification to the SAME complete data — do NOT reconstruct from memory
+
 ## General Rules
 - Maximum 8 results by default. Pattern: quick opener (1 sentence) → ALL cards back-to-back (ZERO text between) → ONE consolidated synthesis AFTER the last card (2-4 sentences, why these results fit the profile) → optional follow-up question (max 1 sentence).
 

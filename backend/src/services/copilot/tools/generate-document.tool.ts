@@ -230,6 +230,36 @@ function normalizeCVData(data: any): CVData {
       country = parts[1] || country;
     }
 
+    // Normalize languages: [{name, level}] → [{language, level}]
+    let languages: CVData['languages'] = undefined;
+    if (Array.isArray(data.languages)) {
+      languages = data.languages.map((l: any) => ({
+        language: l.language || l.name || '',
+        level: l.level || '',
+      }));
+    }
+
+    // Normalize certifications: [{name, issuer, year/date}]
+    let certifications: CVData['certifications'] = undefined;
+    if (Array.isArray(data.certifications)) {
+      certifications = data.certifications.map((c: any) => ({
+        name: c.name || '',
+        issuer: c.issuer,
+        date: c.date || c.year,
+      }));
+    }
+
+    // Convert references → other section
+    let other: CVData['other'] = undefined;
+    if (Array.isArray(data.references) && data.references.length > 0) {
+      other = [{
+        heading: 'Références',
+        content: data.references.map((r: any) =>
+          `${r.name || ''}${r.title ? ' — ' + r.title : ''}${r.contact ? ' | ' + r.contact : ''}${r.phone ? ' | ' + r.phone : ''}${r.email ? ' | ' + r.email : ''}`
+        ).join('\n'),
+      }];
+    }
+
     return {
       ...data,
       bio: data.bio || data.summary,
@@ -238,6 +268,9 @@ function normalizeCVData(data: any): CVData {
       skills,
       experiences,
       education,
+      languages,
+      certifications,
+      other: other || data.other,
     };
   }
 
@@ -616,7 +649,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
       contentJson: z
         .union([z.string(), z.record(z.string(), z.unknown())])
         .describe(
-          'Content as JSON string or object. Four formats supported: (1) CV format (PREFERRED for CV/resume): {"firstName":"John","lastName":"Doe","email":"john@example.com","phone":"+221...","city":"Dakar","country":"Senegal","bio":"Profile summary...","skills":[{"name":"Python","type":"hard","level":"expert"}],"languages":[{"language":"Francais","level":"native"}],"interests":["AI","Fintech"],"goals":["Lead developer"],"experiences":[{"title":"Dev Senior","company":"Wave","location":"Dakar","period":"2022 - Present","description":"Led team of 5..."}],"education":[{"degree":"Master Informatique","institution":"ESP Dakar","location":"Dakar","period":"2018 - 2020","description":"Specialisation IA"}],"certifications":[{"name":"AWS Solutions Architect","issuer":"Amazon","date":"2023"}]} (2) Org document format (PREFERRED for org-branded PDFs — fiche de poste, rapports): {"organizationName":"Acme Corp","organizationCity":"Abidjan","organizationCountry":"Côte d\'Ivoire","logoUrl":"https://...","documentDate":"2026-02-14","sections":[{"heading":"Section Title","body":"Content with\\n- bullet points"}]} (3) Sections: {"sections":[{"heading":"Title","body":"Content"}]} — for letters, reports. (4) Table: {"headers":[...],"rows":[...]} — for data exports.'
+          'Content as JSON object. STRICT FORMAT for CV/resume — use EXACTLY these field names (no wrappers, no nesting): {"firstName":"John","lastName":"Doe","email":"john@example.com","phone":"+221...","city":"Dakar","country":"Senegal","bio":"Profile summary...","skills":[{"name":"Python","type":"hard","level":"expert"}],"languages":[{"language":"Francais","level":"native"}],"interests":["AI","Fintech"],"goals":["Lead developer"],"experiences":[{"title":"Dev Senior","company":"Wave","location":"Dakar","period":"2022 - Present","description":"Led team of 5..."}],"education":[{"degree":"Master Informatique","institution":"ESP Dakar","location":"Dakar","period":"2018 - 2020","description":"Specialisation IA"}],"certifications":[{"name":"AWS Solutions Architect","issuer":"Amazon","date":"2023"}],"references":[{"name":"M. Dupont","title":"CEO, Acme","phone":"+221..."}]}. IMPORTANT CV RULES: (a) Use "bio" not "summary", "experiences" not "experience", "institution" not "school", "period" not "startDate/endDate", "description" not "bullets", "language" not "name" in languages. (b) Use ONLY real data from sql_query/file_reader — NEVER invent emails, LinkedIn URLs, certifications, or dates not in the source data. (c) Do NOT wrap in {type:"cv", profile:{...}} — put fields at root level. Other formats: (2) Org document: {"organizationName":"...","sections":[{"heading":"...","body":"..."}]} (3) Sections: {"sections":[...]} (4) Table: {"headers":[...],"rows":[...]}'
         ),
       instructions: z.string().optional().describe('Generation instructions describing the purpose and style of the document'),
     }),
