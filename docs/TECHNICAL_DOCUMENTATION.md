@@ -391,7 +391,7 @@ Barème crédits (extrait):
 | Scope | Action | Crédits |
 |---|---|---:|
 | Talent | Assistant Explorer (requête) | 1 |
-| Talent | Assistant Study (requête) | 0,25 |
+| Talent | Assistant Study (requête) | 0,5 |
 | Talent | Génération de document / image / upload document | 1 |
 | Organisation | Assistant Manager (requête) | 1 |
 | Organisation | Analyse et scoring d'application | 0,5 |
