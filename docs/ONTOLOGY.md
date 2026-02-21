@@ -1,845 +1,342 @@
-# Etudesk Platform Ontology (OWL-structured)
+# Etudesk Platform Ontology (Runtime-Aligned)
 
-> Complete ontology of all entities, relationships, actions, and permissions on the Etudesk platform.
+> Version aligned with the current codebase behavior (backend + mobile + copilot workflows).
+> Last updated: 2026-02-21.
 
 ---
 
-## 1. Classes (Entities)
+## 0. Scope and Source of Truth
+
+This ontology documents the platform as it is currently implemented.
+
+Priority order for truth:
+1. Runtime behavior in services/routes/tools
+2. SQL actually queried by runtime code
+3. Current frontend confirmation protocol
+4. This ontology document
+
+Notes:
+- This is intentionally implementation-first, not idealized OWL.
+- Section 5 (action ontology) and section 8 (copilot mapping) are reference-only for humans and are stripped from agent runtime prompt injection by `ontology.cache.ts`.
+
+---
+
+## 1. Entity Model (Current)
 
 ### 1.1 Core Actors
 
-| Class | Description | Superclass |
-|-------|-------------|------------|
-| `Agent` | Abstract root class for all actors | `owl:Thing` |
-| `Talent` | Individual user (student, job seeker, professional…) | `Agent` |
-| `Organization` | Legal entity (company, startup, NGO, institution…) | `Agent` |
-| `SystemAgent` | Platform system (automated actions, copilot) | `Agent` |
+| Entity | Description |
+|---|---|
+| `User` | Authentication account (email/session/otp scope) |
+| `Talent` | Personal profile and activity owner |
+| `Organization` | Company/institution profile |
+| `SystemAgent` | Platform automations (notifications, scheduled jobs, embeddings) |
 
 ### 1.2 Core Resources
 
-| Class | Description | Superclass |
-|-------|-------------|------------|
-| `Resource` | Abstract root class for all platform objects | `owl:Thing` |
-| `Community` | Group of talents around a topic or organization | `Resource` |
-| `Opportunity` | Job, internship, freelance gig, volunteer posting | `Resource` |
-| `Space` | Bookable physical location (room, coworking, studio…) | `Resource` |
-| `TalentDocument` | File strictly owned by a talent (CV, diploma, certificate…) | `Resource` |
-| `TalentSkill` | Competency strictly associated with a specific talent | `Resource` |
-| `Publication` | Community activity (post, event, poll) | `Resource` |
-| `Comment` | Threaded comment on a publication | `Resource` |
-| `Notification` | System or community notification | `Resource` |
-| `CopilotSession` | AI assistant conversation session | `Resource` |
+| Entity | Description |
+|---|---|
+| `Community` | Group space owned by an organization |
+| `CommunityActivity` | Feed publication (`POST`, `EVENT`, `POLL`) |
+| `Opportunity` | Job/internship/freelance/volunteer listing |
+| `Space` | Bookable physical resource |
+| `TalentDocument` | Document owned by a talent |
+| `OrganizationDocument` | Document owned by an organization |
+| `TalentSkill` | Skill record attached to a talent |
+| `CopilotSession` | AI conversation session |
+| `CopilotMessage` | Message in a copilot session |
+| `CopilotTrace` | Copilot execution telemetry + user feedback |
+| `AgendaTrigger` | Reminder/follow-up trigger (talent or org scope) |
 
-### 1.3 Relationship Objects (Reified Relations)
+### 1.3 Relationship Objects
 
-| Class | Description | Connects |
-|-------|-------------|----------|
-| `Membership` | Talent belonging to a community | Talent → Community |
-| `OrgMembership` | Talent belonging to an organization | Talent → Organization |
-| `Application` | Talent applying to an opportunity | Talent → Opportunity |
-| `Booking` | Talent reserving a space | Talent → Space |
-| `Subscription` | Talent subscribing to a paid community | Talent → Community |
-| `OrgInvitation` | Organization inviting a talent to join (as ADMIN, MANAGER, or MEMBER) | Organization → Talent |
-| `OfferInvitation` | Organization inviting a talent to an offer (Community, Opportunity, or Space) | Organization → Talent |
-| `Reaction` | Talent liking a publication | Talent → Publication |
-| `Bookmark` | Talent saving a resource for later | Talent → Resource |
-| `PollVote` | Talent voting on a poll option | Talent → Publication(POLL) |
+| Entity | Connects |
+|---|---|
+| `OrganizationMember` | Talent <-> Organization |
+| `CommunityMember` | Talent <-> Community |
+| `OpportunityApplication` | Talent <-> Opportunity |
+| `SpaceBooking` | Talent <-> Space |
+| `CommunitySubscription` | Talent <-> Community (paid) |
+| `OpportunityPoster` | Opportunity <-> Talent/Organization poster |
+| `CommunityInvitation` | Community -> Talent |
+| `OrganizationInvitation` | Organization -> Talent(email) |
+| `OpportunityInvitation` | Opportunity -> Talent |
+| `SpaceInvitation` | Space -> Talent |
+| `CommunityActivityReaction` | Talent -> CommunityActivity |
+| `CommunityActivityBookmark` | Talent -> CommunityActivity |
+| `OpportunityBookmark` | Talent -> Opportunity |
+| `CommunityPollVote` | Talent -> Poll option/activity |
 
 ---
 
-## 2. Datatype Properties (Attributes)
+## 2. Data Properties (Implemented)
 
 ### 2.1 Talent
 
-| Property | Type | Constraints |
-|----------|------|-------------|
-| `slug` | `xsd:string` | unique |
-| `firstName` | `xsd:string` | required |
-| `lastName` | `xsd:string` | required |
-| `email` | `xsd:string` | unique, via User |
-| `phone` | `xsd:string` | optional |
-| `bio` | `xsd:string` | optional |
-| `avatarUrl` | `xsd:anyURI` | optional |
-| `gender` | `xsd:string` | optional |
-| `city` | `xsd:string` | optional |
-| `region` | `xsd:string` | optional |
-| `country` | `xsd:string` | optional |
-| `remoteReady` | `xsd:boolean` | default false |
-| `willingToRelocate` | `xsd:boolean` | default false |
-| `profileTags` | `ProfileTag[]` | enum, multi-valued |
-| `goals` | `Goal[]` | enum, multi-valued |
-| `sectors` | `Sector[]` | enum, multi-valued |
-| `embedding` | `vector(1536)` | auto-computed |
-| `isVisible` | `xsd:boolean` | default true |
+- Identity/profile: `slug`, `first_name`, `last_name`, `email`, `phone`, `bio`, `avatar_url`, `gender`
+- Location/mobility: `city`, `region`, `country`, `remote_ready`, `willing_to_relocate`
+- Positioning: `profile_tags[]`, `goals[]`, `sectors[]`
+- Visibility/AI: `is_visible`, `embedding`
+- Lifecycle: `created_at`, `updated_at`, `deleted_at`
 
 ### 2.2 Organization
 
-| Property | Type | Constraints |
-|----------|------|-------------|
-| `name` | `xsd:string` | required |
-| `slug` | `xsd:string` | unique |
-| `types` | `OrgType[]` | enum, multi-valued |
-| `sectors` | `Sector[]` | enum, multi-valued |
-| `description` | `xsd:string` | optional |
-| `logoUrl` | `xsd:anyURI` | optional |
-| `websiteUrl` | `xsd:anyURI` | optional |
-| `contactEmail` | `xsd:string` | optional |
-| `contactPhone` | `xsd:string` | optional |
-| `headquarters_city` | `xsd:string` | optional |
-| `headquarters_region` | `xsd:string` | optional |
-| `headquarters_country` | `xsd:string` | optional, CHAR(2) |
-| `coordinates` | `geo:Point` | optional |
-| `verificationStatus` | `VerificationStatus` | enum |
-| `createdBy` | `Talent` | FK, required |
-| `embedding` | `vector(1536)` | auto-computed |
-| `isVisible` | `xsd:boolean` | default true |
+- Core: `name`, `slug`, `types[]`, `sectors[]`, `goals[]`, `description`
+- Contact/brand: `logo_url`, `website_url`, `contact_email`, `contact_phone`
+- HQ: `headquarters_city`, `headquarters_region`, `headquarters_country`, `headquarters_coordinates`
+- Trust/AI: `verification_status`, `is_visible`, `embedding`, `culture_summary`
+- Ownership: `created_by`
+- Lifecycle: `created_at`, `updated_at`, `deleted_at`
 
 ### 2.3 Community
 
-| Property | Type | Constraints |
-|----------|------|-------------|
-| `name` | `xsd:string` | required |
-| `slug` | `xsd:string` | unique |
-| `type` | `CommunityType` | enum |
-| `description` | `xsd:string` | optional |
-| `rules` | `xsd:string` | optional |
-| `visibility` | `Visibility` | enum |
-| `accessType` | `AccessType` | enum |
-| `isPaid` | `xsd:boolean` | default false |
-| `monthlyPrice` | `xsd:decimal` | if isPaid |
-| `currency` | `xsd:string` | default XOF |
-| `trialPeriodDays` | `xsd:integer` | enum: 0,1,3,7,30 |
-| `applicationQuestions` | `xsd:string[]` | if accessType=MEMBERSHIP |
-| `coverImageUrl` | `xsd:anyURI` | optional |
-| `images` | `xsd:anyURI[]` | optional |
-| `status` | `CommunityStatus` | enum |
-| `organizationId` | `Organization` | FK, required |
-| `createdBy` | `Talent` | FK, required |
-| `embedding` | `vector(1536)` | auto-computed |
+- Core: `name`, `slug`, `type`, `description`, `rules`, `application_questions[]`
+- Access/visibility: `access_type`, `visibility`
+- Market data: `tags(jsonb)`, `sectors(jsonb)`, `city`, `region`, `country`, `coordinates`
+- Media/monetization: `cover_image_url`, `images[]`, `is_paid`, `monthly_price`, `currency`, `trial_period_days`
+- State/ownership: `status`, `organization_id`, `created_by`, `embedding`
+- Lifecycle: `created_at`, `updated_at`, `deleted_at`
 
 ### 2.4 Opportunity
 
-| Property | Type | Constraints |
-|----------|------|-------------|
-| `title` | `xsd:string` | required |
-| `slug` | `xsd:string` | unique |
-| `type` | `OpportunityType` | enum |
-| `contractType` | `ContractType` | enum |
-| `workRhythm` | `WorkRhythm` | enum |
-| `summary` | `xsd:string` | optional |
-| `requirements` | `xsd:string` | optional |
-| `niceToHave` | `xsd:string` | optional |
-| `compensationMin` | `xsd:decimal` | optional |
-| `compensationMax` | `xsd:decimal` | optional |
-| `compensationCurrency` | `xsd:string` | default XOF |
-| `compensationFrequency` | `CompensationFrequency` | enum |
-| `locationType` | `LocationType` | enum |
-| `locations` | `Location[]` | array of objects |
-| `cvRequired` | `xsd:boolean` | default false |
-| `applicationQuestions` | `xsd:string[]` | optional |
-| `status` | `OpportunityStatus` | enum |
-| `visibility` | `Visibility` | enum |
-| `deadline` | `xsd:dateTime` | optional |
-| `startDate` | `xsd:date` | optional |
-| `duration` | `xsd:string` | optional |
-| `idealCandidateSummary` | `xsd:string` | auto-generated |
-| `embedding` | `vector(1536)` | auto-computed |
+- Core: `title`, `slug`, `type`, `contract_type`, `work_rhythm`, `summary`, `requirements`, `nice_to_have`
+- Fit/matching: `sectors[]`, `cv_required`, `application_questions(jsonb)`, `ideal_candidate_summary`
+- Compensation: `compensation_min`, `compensation_max`, `currency`, `compensation_frequency`
+- Location: `location_type`, `locations(jsonb)`
+- Media/visibility: `cover_image_url`, `images[]`, `attachments(jsonb)`, `visibility`
+- Timeline: `posted_at`, `deadline`, `start_date`, `duration(interval)`
+- State/ownership: `status`, `organization_id`, `embedding`
+- Lifecycle: `created_at`, `updated_at`, `deleted_at`
 
 ### 2.5 Space
 
-| Property | Type | Constraints |
-|----------|------|-------------|
-| `name` | `xsd:string` | required |
-| `slug` | `xsd:string` | unique |
-| `type` | `SpaceType` | enum |
-| `description` | `xsd:string` | optional |
-| `surfaceM2` | `xsd:decimal` | optional |
-| `capacity` | `xsd:integer` | optional |
-| `floorNumber` | `xsd:integer` | optional |
-| `address` | `xsd:string` | optional |
-| `city` | `xsd:string` | optional |
-| `region` | `xsd:string` | optional |
-| `country` | `xsd:string` | optional |
-| `coordinates` | `geo:Point` | optional |
-| `equipment` | `xsd:string[]` | optional |
-| `amenities` | `xsd:string[]` | optional |
-| `isAccessible` | `xsd:boolean` | default false |
-| `accessibilityFeatures` | `xsd:string[]` | optional |
-| `coverImageUrl` | `xsd:anyURI` | optional |
-| `galleryImages` | `xsd:anyURI[]` | optional |
-| `hourlyRate` | `xsd:decimal` | FCFA |
-| `dailyRate` | `xsd:decimal` | FCFA |
-| `weeklyRate` | `xsd:decimal` | FCFA |
-| `monthlyRate` | `xsd:decimal` | FCFA |
-| `depositAmount` | `xsd:decimal` | FCFA |
-| `isBookable` | `xsd:boolean` | default true |
-| `minBookingHours` | `xsd:integer` | optional |
-| `maxBookingHours` | `xsd:integer` | optional |
-| `advanceBookingDays` | `xsd:integer` | optional |
-| `cancellationHours` | `xsd:integer` | optional |
-| `status` | `SpaceStatus` | enum |
-| `organizationId` | `Organization` | FK, required |
+- Core: `name`, `slug`, `type`, `description`, `surface_m2`, `capacity`
+- Location: `floor_number`, `address`, `city`, `region`, `country`, `coordinates`
+- Infrastructure: `equipment[]`, `amenities[]`, `sectors[]`
+- Accessibility: `is_accessible`, `accessibility_features[]`, `accessibility_notes`
+- Media: `cover_image_url`, `gallery_images[]`
+- Pricing/policy: `hourly_rate`, `daily_rate`, `weekly_rate`, `monthly_rate`, `deposit_amount`
+- Booking controls: `is_bookable`, `min_booking_hours`, `max_booking_hours`, `advance_booking_days`, `cancellation_hours`, `booking_rules[]`, `requires_approval`, `questions[]`
+- Visibility/contact: `visibility`, `contact_name`, `contact_phone`, `contact_email`
+- Ownership/state: `organization_id`, `created_by`, `status`
+- Lifecycle: `created_at`, `updated_at`, `deleted_at`
 
-### 2.6 TalentDocument
+### 2.6 Documents and Skills
 
-| Property | Type | Constraints |
-|----------|------|-------------|
-| `type` | `DocumentType` | enum |
-| `category` | `DocumentCategory` | enum |
-| `originalFilename` | `xsd:string` | required |
-| `mimeType` | `xsd:string` | required |
-| `fileSize` | `xsd:integer` | required |
-| `fileUrl` | `xsd:anyURI` | required |
-| `tags` | `xsd:string[]` | optional |
-| `isPublic` | `xsd:boolean` | default false |
-| `isVerified` | `xsd:boolean` | default false |
-| `verifiedBy` | `xsd:string` | optional |
-| `status` | `DocumentStatus` | enum |
+- `TalentDocument`: typed, categorized, processing status, verification fields, soft-delete
+- `OrganizationDocument`: typed, categorized, processing status, soft-delete
+- `TalentSkill`: `canonical_name`, `type`, `proficiency_level`, `origin`, `document_id`, `context`, `is_visible`
 
-### 2.7 TalentSkill
+### 2.7 Copilot and Planning
 
-| Property | Type | Constraints |
-|----------|------|-------------|
-| `canonicalName` | `xsd:string` | required |
-| `type` | `SkillType` | enum |
-| `proficiencyLevel` | `ProficiencyLevel` | enum |
-| `origin` | `SkillOrigin` | enum |
-| `documentId` | `TalentDocument` | FK, optional |
-| `context` | `xsd:string` | optional |
-
-### 2.8 Publication
-
-| Property | Type | Constraints |
-|----------|------|-------------|
-| `type` | `PublicationType` | enum: POST, EVENT, POLL |
-| `content` | `xsd:string` | required |
-| `attachments` | `Attachment[]` | max 5, max 20MB each |
-| `metadata` | `xsd:JSON` | event/poll-specific |
-| `status` | `PublicationStatus` | enum |
-| `moderationStatus` | `ModerationStatus` | enum |
-| `isPinned` | `xsd:boolean` | default false |
-| `reactionsCount` | `xsd:integer` | computed |
-| `commentsCount` | `xsd:integer` | computed |
-| `publishedAt` | `xsd:dateTime` | null = immediate |
+- `CopilotSession`: `mode` in (`explore`,`study`,`org`), optional `organization_id`, soft-delete
+- `CopilotMessage`: role/content/tool payloads/output payloads, soft-delete
+- `CopilotTrace`: execution metrics + optional user rating
+- `AgendaTrigger` (runtime-used): `scope` (`TALENT`/`ORGANIZATION`), `code`, `title`, `description`, `due_at`, `status`, `priority`, `metadata`, `created_by`
 
 ---
 
-## 3. Enumerations (Named Individuals)
+## 3. Enumerations and Controlled Values (Runtime)
 
-### 3.1 Actor Enums
+### 3.1 Stable canonical enums
 
-```
-ProfileTag := { STUDENT | PUPIL | JOB_SEEKER | SALARIED | ENTREPRENEUR |
-                CIVIL_SERVANT | MANAGER | CONSULTANT | INVESTOR |
-                CONTENT_CREATOR | COACH | RETIRED }
+- `ProfileTag`: `STUDENT`, `PUPIL`, `JOB_SEEKER`, `SALARIED`, `ENTREPRENEUR`, `CIVIL_SERVANT`, `MANAGER`, `CONSULTANT`, `INVESTOR`, `CONTENT_CREATOR`, `COACH`, `RETIRED`
+- `Goal`: `LEARN_NEW_SKILLS`, `PREPARE_EXAMS`, `FIND_JOB`, `ADVANCE_CAREER`, `RESEARCH_SUPPORT`, `IMPROVE_PRODUCTIVITY`, `COLLABORATIVE_LEARNING`, `TEACH_OR_MENTOR`, `BUILD_NETWORK_OR_VISIBILITY`, `CONTRIBUTE_OR_GIVE_BACK`
+- `Sector`: `AGRICULTURE`, `RESOURCES`, `ENERGY`, `ENVIRONMENT`, `INDUSTRY`, `CONSTRUCTION`, `TRANSPORT`, `COMMERCE`, `FINANCE`, `DIGITAL`, `MEDIA`, `TOURISM`, `HEALTH`, `EDUCATION`, `PROFESSIONAL_SERVICES`, `RESEARCH`, `PUBLIC`, `SECURITY`, `SOCIAL_IMPACT`, `PERSONAL_SERVICES`, `CRAFTS`
+- `OpportunityStatus`: `DRAFT`, `OPEN`, `PAUSED`, `FILLED`, `EXPIRED`
+- `ApplicationStatus`: `SUBMITTED`, `IN_REVIEW`, `ACCEPTED`, `REJECTED`
+- `SkillType`: `KNOWLEDGE`, `SOFT_SKILL`, `HARD_SKILL`
+- `ProficiencyLevel`: `BEGINNER`, `INTERMEDIATE`, `EXPERT`, `MASTER`
+- `SkillOrigin`: `declared`, `inferred`, `extracted` (tool input), persisted in DB as lowercase by convention
 
-Goal := { LEARN_NEW_SKILLS | PREPARE_EXAMS | FIND_JOB | ADVANCE_CAREER |
-          RESEARCH_SUPPORT | IMPROVE_PRODUCTIVITY | COLLABORATIVE_LEARNING |
-          TEACH_OR_MENTOR | BUILD_NETWORK_OR_VISIBILITY | CONTRIBUTE_OR_GIVE_BACK }
+### 3.2 Community/Access values in current workflows
 
-OrgType := { COMPANY | STARTUP | NGO | ASSOCIATION | EDUCATIONAL_INSTITUTION |
-             PUBLIC_ADMINISTRATION | TRAINING_CENTER | CONSULTING_FIRM |
-             RECRUITMENT_AGENCY | FINANCIAL_INSTITUTION | RESEARCH_CENTER |
-             COOPERATIVE | SOCIAL_ENTERPRISE }
+The codebase currently accepts multiple vocabularies depending on entry path:
+- Canonical model constants: `CommunityType` = `ONLINE|OFFLINE|HYBRID`, `AccessType` = `PUBLIC|MEMBERSHIP`
+- Copilot creation workflow defaults: `type=PROFESSIONAL`, `access_type=OPEN`
+- Validation middleware may accept: `GENERAL|PROFESSIONAL|ALUMNI|INTEREST|LOCAL|LEARNING|ONLINE|OFFLINE|HYBRID` and `OPEN|APPROVAL|INVITE_ONLY|PAID`
 
-VerificationStatus := { CLAIMED | VERIFIED | OFFICIAL }
+Therefore `community.type` and `community.access_type` are currently treated as controlled-but-not-single-source fields.
 
-OrgRole := { OWNER | ADMIN | MANAGER | MEMBER }
+### 3.3 Invitation expiration policies (implemented)
 
-OrgMemberStatus := { PENDING | ACTIVE | SUSPENDED }
-
-```
-
-### 3.2 Resource Enums
-
-```
-Sector := { AGRICULTURE | RESOURCES | ENERGY | ENVIRONMENT | INDUSTRY |
-            CONSTRUCTION | TRANSPORT | COMMERCE | FINANCE | DIGITAL |
-            MEDIA | TOURISM | HEALTH | EDUCATION | PROFESSIONAL_SERVICES |
-            RESEARCH | PUBLIC | SECURITY | SOCIAL_IMPACT |
-            PERSONAL_SERVICES | CRAFTS }
-
-Visibility := { PUBLIC | PRIVATE }
-
-CommunityType := { ONLINE | OFFLINE | HYBRID }
-CommunityStatus := { ACTIVE | INACTIVE | ARCHIVED }
-AccessType := { PUBLIC | MEMBERSHIP }
-CommunityRole := { ADMIN | MEMBER }
-MembershipStatus := { PENDING | ACTIVE | REJECTED | SUSPENDED | ARCHIVED }
-MembershipType := { MEMBER | ALUMNI | STAFF }
-
-OpportunityType := { EMPLOYMENT | INTERNSHIP | ENTREPRENEURSHIP |
-                     ALTERNATION | FREELANCE | VOLUNTEER }
-OpportunityStatus := { DRAFT | OPEN | PAUSED | FILLED | EXPIRED }
-ContractType := { CDI | CDD | APPRENTICESHIP | INTERNSHIP |
-                  FREELANCE | SERVICE | INTERIM }
-WorkRhythm := { FULL_TIME | PART_TIME | FLEXIBLE | OCCASIONAL }
-CompensationFrequency := { HOURLY | MONTHLY | YEARLY | PROJECT }
-LocationType := { ON_SITE | REMOTE | HYBRID }
-ApplicationStatus := { SUBMITTED | IN_REVIEW | ACCEPTED | REJECTED }
-
-SpaceType := { SALLE_COURS | SALLE_INFORMATIQUE | AMPHITHEATRE |
-               SALLE_FORMATION | OPEN_SPACE | BUREAU_PRIVE |
-               POSTE_NOMADE | SALLE_REUNION | SALLE_CONFERENCE |
-               CABINE_APPEL | ATELIER | LABORATOIRE | STUDIO |
-               SALLE_EVENEMENT | ROOFTOP | TERRASSE }
-SpaceStatus := { ACTIVE | INACTIVE | MAINTENANCE }
-BookingStatus := { PENDING | CONFIRMED | CANCELLED | COMPLETED | NO_SHOW }
-PricingType := { HOURLY | DAILY | WEEKLY | MONTHLY }
-
-
-DocumentType := { CV | CERTIFICATE | DIPLOMA | LICENSE | PORTFOLIO |
-                  RECOMMENDATION_LETTER | TRANSCRIPT | PUBLICATION |
-                  PATENT | ID_CARD | PASSPORT | DRIVER_LICENSE |
-                  STUDENT_CARD | PROOF_OF_ADDRESS | OTHER }
-DocumentCategory := { PROFESSIONAL | ACADEMIC | IDENTITY | OTHER }
-DocumentStatus := { PENDING | PROCESSING | PROCESSED | FAILED |
-                    VERIFIED | REJECTED }
-
-SkillType := { KNOWLEDGE | SOFT_SKILL | HARD_SKILL }
-ProficiencyLevel := { BEGINNER | INTERMEDIATE | EXPERT | MASTER }
-SkillOrigin := { DECLARED | EXTRACTED | INFERRED }
-
-PublicationType := { POST | EVENT | POLL }
-PublicationStatus := { DRAFT | PUBLISHED | ARCHIVED }
-ModerationStatus := { APPROVED | FLAGGED | PENDING | REJECTED }
-
-NotificationType := { MENTION | COMMENT_REPLY | NEW_ACTIVITY |
-                      EVENT_REMINDER_1D | EVENT_REMINDER_1H |
-                      SUBSCRIPTION_EXPIRING | SUBSCRIPTION_EXPIRED |
-                      MEMBERSHIP_APPROVED | MEMBERSHIP_REJECTED |
-                      APPLICATION_STATUS_CHANGED | NEW_MESSAGE |
-                      NEW_APPLICATION | INTERVIEW_SCHEDULED |
-                      INTERVIEW_REMINDER | INVITATION_RECEIVED | SYSTEM }
-
-SubscriptionStatus := { ACTIVE | CANCELLED | EXPIRED | TRIAL | PAST_DUE }
-
-InvitationStatus := { PENDING | ACCEPTED | DECLINED | EXPIRED | CANCELLED }
-
-
-CopilotMode := { EXPLORE | STUDY | ORG }
-```
+- `organization_invitations`: default 7 days
+- `community_invitations`: default 30 days
+- `opportunity_invitations`: default 30 days
+- `space_invitations`: default 30 days
 
 ---
 
-## 4. Object Properties (Relationships)
+## 4. Object Relationships (Implemented)
 
-### 4.1 Ownership & Creation
+### 4.1 Ownership and creation
 
-| Property | Domain | Range | Inverse | Cardinality |
-|----------|--------|-------|---------|-------------|
-| `createdBy` | `Organization` | `Talent` | `createdOrganizations` | N:1 |
-| `createdBy` | `Community` | `Talent` | `createdCommunities` | N:1 |
-| `belongsToOrg` | `Community` | `Organization` | `hasCommunities` | N:1 |
-| `hostedBy` | `Space` | `Organization` | `hasSpaces` | N:1 |
-| `publishedBy` | `Opportunity` | `Organization` | `hasOpportunities` | N:1 |
-| `authoredBy` | `Publication` | `Talent` | `hasPublications` | N:1 |
-| `postedIn` | `Publication` | `Community` | `hasFeed` | N:1 |
-| `ownedBy` | `TalentDocument` | `Talent` | `hasDocuments` | N:1 |
-| `authoredBy` | `Comment` | `Talent` | `hasComments` | N:1 |
-| `commentOn` | `Comment` | `Publication` | `hasComments` | N:1 |
-| `replyTo` | `Comment` | `Comment` | `hasReplies` | N:1 (optional) |
+- `Organization.created_by -> Talent`
+- `Community.created_by -> Talent`, `Community.organization_id -> Organization`
+- `Opportunity.organization_id -> Organization`, poster links via `OpportunityPoster`
+- `Space.organization_id -> Organization`, `Space.created_by -> Talent`
+- `TalentDocument.talent_id -> Talent`
+- `OrganizationDocument.organization_id -> Organization`, `uploaded_by -> Talent`
+- `CopilotSession.talent_id -> Talent`, optional `organization_id -> Organization`
+- `CopilotMessage.session_id -> CopilotSession`
 
-### 4.2 Membership & Association
+### 4.2 Membership and participation
 
-| Property | Domain | Range | Cardinality | Note |
-|----------|--------|-------|-------------|------|
-| `hasMembership` | `Talent` | `Membership` | 1:N | |
-| `inCommunity` | `Membership` | `Community` | N:1 | |
-| `hasOrgMembership` | `Talent` | `OrgMembership` | 1:N | |
-| `inOrganization` | `OrgMembership` | `Organization` | N:1 | |
-| `hasSkill` | `Talent` | `TalentSkill` | 1:N | unique per canonical name |
-| `extractedFrom` | `TalentSkill` | `TalentDocument` | N:1 | optional |
+- `OrganizationMember(organization_id, talent_id, role, status)`
+- `CommunityMember(community_id, talent_id, role, status)`
+- `OpportunityApplication(opportunity_id, talent_id, status)`
+- `SpaceBooking(space_id, talent_id, organization_id, status)`
+- `CommunitySubscription(community_id, talent_id, status)`
 
-### 4.3 Actions & Transactions
+### 4.3 Engagement
 
-| Property | Domain | Range | Cardinality |
-|----------|--------|-------|-------------|
-| `hasApplication` | `Talent` | `Application` | 1:N |
-| `appliedTo` | `Application` | `Opportunity` | N:1 |
-| `hasBooking` | `Talent` | `Booking` | 1:N |
-| `bookedSpace` | `Booking` | `Space` | N:1 |
-| `hasSubscription` | `Talent` | `Subscription` | 1:N |
-| `subscribedTo` | `Subscription` | `Community` | N:1 |
-### 4.4 Engagement
-
-| Property | Domain | Range | Cardinality |
-|----------|--------|-------|-------------|
-| `hasReaction` | `Talent` | `Reaction` | 1:N |
-| `reactedTo` | `Reaction` | `Publication` | N:1 |
-| `hasBookmark` | `Talent` | `Bookmark` | 1:N |
-| `bookmarked` | `Bookmark` | `Resource` | N:1 |
-| `hasVote` | `Talent` | `PollVote` | 1:N |
-| `votedOn` | `PollVote` | `PollOption` | N:1 |
-
-### 4.5 Notification & Communication
-
-| Property | Domain | Range | Cardinality |
-|----------|--------|-------|-------------|
-| `notifiedTo` | `Notification` | `Talent` | N:1 |
-| `triggeredBy` | `Notification` | `Talent` | N:1 (optional) |
-| `hasMessage` | `Application` | `ApplicationMessage` | 1:N |
-| `hasMessage` | `Booking` | `BookingMessage` | 1:N |
+- `CommunityActivity(author_id, community_id, type)`
+- `CommunityActivityReaction(activity_id, user_id)`
+- `CommunityActivityComment(activity_id, author_id, parent_id)`
+- `CommunityPollVote(activity_id, option_id, user_id)`
+- `OpportunityBookmark(talent_id, opportunity_id)`
+- `CommunityActivityBookmark(activity_id, user_id)`
 
 ---
 
-## 5. Action Ontology (Intent = Action + Subject + Object)
+## 5. Action Ontology (Current Runtime)
 
-### 5.1 Intent Grammar
+### 5.1 Confirmation channels
 
-```
-Intent := <Action>_<Subject>_<Object> [filter?, params?]
-Subject := TALENT | ORGANIZATION | SYSTEM
-Action  := CREATE | READ | UPDATE | DELETE | EXECUTE
-Object  := see §5.3
-```
+Two write channels coexist:
+1. **Tool execution** via `execute_action` (agent tool)
+2. **Frontend confirmation endpoint** `/api/copilot/confirm` (uses `action.handler.ts`)
 
-### 5.2 Action Definitions
+`/api/copilot/confirm` requires both `action` and **non-empty** `entityId`.
 
-| Action | Semantics | Confirmation Required |
-|--------|-----------|----------------------|
-| `CREATE` | Instantiate a new resource | No (except paid actions) |
-| `READ` | Retrieve / list / search resources | No |
-| `UPDATE` | Modify properties of an existing resource | No |
-| `DELETE` | Remove or archive a resource | **Yes, always** |
-| `EXECUTE` | Trigger a stateful side-effect (apply, book, vote…) | Depends on context |
+### 5.2 `execute_action` supported actions
 
-### 5.3 Complete Intent Matrix
+- `apply_opportunity`
+- `join_community`
+- `book_space`
+- `accept_invitation` (community + organization invitations)
+- `decline_invitation` (community + organization invitations)
+- `create_agenda_trigger`
+- `update_agenda_trigger`
 
-#### TALENT as Subject
+### 5.3 `/confirm` (`action.handler`) supported actions
 
-| Intent | Object | Constraints | Status |
-|--------|--------|-------------|--------|
-| **Profile** | | | |
-| `read_talent_profile` | `Talent` | own or public others | ALLOWED |
-| `update_talent_profile` | `Talent` | own only | ALLOWED |
-| `create_talent_profile` | `Talent` | — | DENIED (system-created on signup) |
-| `delete_talent_profile` | `Talent` | — | DENIED (account deactivation only) |
-| **TalentDocument** | | | |
-| `create_talent_document` | `TalentDocument` | own, max 20 | ALLOWED |
-| `read_talent_document` | `TalentDocument` | own (all), others (public only) | ALLOWED |
-| `update_talent_document` | `TalentDocument` | own only (tags, visibility) | ALLOWED |
-| `delete_talent_document` | `TalentDocument` | own only, **confirm** | ALLOWED |
-| **TalentSkill** | | | |
-| `create_talent_skill` | `TalentSkill` | own, unique canonical_name | ALLOWED |
-| `read_talent_skill` | `TalentSkill` | own (all), others (public) | ALLOWED |
-| `update_talent_skill` | `TalentSkill` | own only (proficiency, type) | ALLOWED |
-| `delete_talent_skill` | `TalentSkill` | own only, **confirm** | ALLOWED |
-| **Organization** | | | |
-| `create_talent_organization` | `Organization` | becomes OWNER | ALLOWED |
-| `read_talent_organization` | `Organization` | any public org | ALLOWED |
-| `update_talent_organization` | `Organization` | — | DENIED (via org role) |
-| `delete_talent_organization` | `Organization` | — | DENIED |
-| **Community** | | | |
-| `read_talent_community` | `Community` | public or member-of | ALLOWED |
-| `create_talent_community` | `Community` | — | DENIED (org only) |
-| `update_talent_community` | `Community` | — | DENIED (org admin only) |
-| `delete_talent_community` | `Community` | — | DENIED |
-| **Membership** | | | |
-| `create_talent_membership` | `Membership` | join public / request membership | ALLOWED |
-| `read_talent_membership` | `Membership` | own memberships | ALLOWED |
-| `update_talent_membership` | `Membership` | — | DENIED (admin only) |
-| `delete_talent_membership` | `Membership` | leave, **confirm** | ALLOWED |
-| **Publication** | | | |
-| `create_talent_publication` | `Publication(POST)` | must be community member | ALLOWED |
-| `create_talent_publication` | `Publication(EVENT)` | — | DENIED (admin only) |
-| `create_talent_publication` | `Publication(POLL)` | — | DENIED (admin only) |
-| `read_talent_publication` | `Publication` | community member | ALLOWED |
-| `update_talent_publication` | `Publication` | own only | ALLOWED |
-| `delete_talent_publication` | `Publication` | own only, **confirm** | ALLOWED |
-| **Comment** | | | |
-| `create_talent_comment` | `Comment` | community member | ALLOWED |
-| `read_talent_comment` | `Comment` | community member | ALLOWED |
-| `update_talent_comment` | `Comment` | own only | ALLOWED |
-| `delete_talent_comment` | `Comment` | own only, **confirm** | ALLOWED |
-| **Reaction** | | | |
-| `create_talent_reaction` | `Reaction` | community member, 1 per pub | ALLOWED |
-| `delete_talent_reaction` | `Reaction` | own only | ALLOWED |
-| **Bookmark** | | | |
-| `create_talent_bookmark` | `Bookmark` | any accessible resource | ALLOWED |
-| `read_talent_bookmark` | `Bookmark` | own only | ALLOWED |
-| `delete_talent_bookmark` | `Bookmark` | own only | ALLOWED |
-| **PollVote** | | | |
-| `execute_talent_vote` | `PollVote` | community member, 1 per poll | ALLOWED |
-| **Opportunity** | | | |
-| `read_talent_opportunity` | `Opportunity` | public or via org | ALLOWED |
-| `create_talent_opportunity` | `Opportunity` | — | DENIED (org only) |
-| `update_talent_opportunity` | `Opportunity` | — | DENIED (org only) |
-| `delete_talent_opportunity` | `Opportunity` | — | DENIED |
-| **Application** | | | |
-| `create_talent_application` | `Application` | 1 per opportunity | ALLOWED |
-| `read_talent_application` | `Application` | own only | ALLOWED |
-| `update_talent_application` | `Application` | — | DENIED (org reviews) |
-| `delete_talent_application` | `Application` | withdraw, **confirm** | ALLOWED |
-| **Space** | | | |
-| `read_talent_space` | `Space` | public and active | ALLOWED |
-| `create_talent_space` | `Space` | — | DENIED (org only) |
-| `update_talent_space` | `Space` | — | DENIED (org only) |
-| `delete_talent_space` | `Space` | — | DENIED |
-| **Booking** | | | |
-| `create_talent_booking` | `Booking` | bookable space, no conflict | ALLOWED |
-| `read_talent_booking` | `Booking` | own only | ALLOWED |
-| `update_talent_booking` | `Booking` | cancel own (within policy), **confirm** | ALLOWED |
-| `delete_talent_booking` | `Booking` | — | DENIED (cancel instead) |
-| **Subscription** | | | |
-| `create_talent_subscription` | `Subscription` | for paid community | ALLOWED |
-| `read_talent_subscription` | `Subscription` | own only | ALLOWED |
-| `update_talent_subscription` | `Subscription` | cancel/resume | ALLOWED |
-| `delete_talent_subscription` | `Subscription` | — | DENIED (cancel instead) |
-| **Notification** | | | |
-| `read_talent_notification` | `Notification` | own only | ALLOWED |
-| `update_talent_notification` | `Notification` | mark as read | ALLOWED |
-| `delete_talent_notification` | `Notification` | own only | ALLOWED |
-| `create_talent_notification` | `Notification` | — | DENIED (system only) |
-| **Copilot** | | | |
-| `create_talent_copilot_session` | `CopilotSession` | own | ALLOWED |
-| `read_talent_copilot_session` | `CopilotSession` | own only | ALLOWED |
-| `update_talent_copilot_session` | `CopilotSession` | own (title) | ALLOWED |
-| `delete_talent_copilot_session` | `CopilotSession` | own, **confirm** | ALLOWED |
-| `execute_talent_copilot_message` | `CopilotMessage` | in own session | ALLOWED |
-| **Invitations** | | | |
-| `read_talent_invitation` | `OrgInvitation`/`OfferInvitation` | received by self | ALLOWED |
-| `execute_talent_invitation` | `OrgInvitation`/`OfferInvitation` | accept/decline | ALLOWED |
-| `create_talent_invitation` | `OrgInvitation`/`OfferInvitation` | — | DENIED (org only) |
+- `apply_opportunity`
+- `join_community`
+- `book_space`
+- `accept_invitation`
+- `decline_invitation`
+- `publish_opportunity`
+- `create_community`
+- `create_space`
+- `update_profile`
+- `create_agenda_trigger`
+- `update_agenda_trigger`
+
+### 5.4 SQL intents (`sql_query`) currently implemented
+
+Talent:
+- `my_profile`, `my_applications`, `my_reservations`, `my_invitations`, `my_communities`, `my_bookmarks`, `my_documents`, `my_skills`, `my_triggers`, `my_community_feed`, `my_community_members`
+
+Organization:
+- `org_members`, `org_applications`, `org_stats`, `org_opportunities`, `org_communities`, `org_spaces`, `org_invitations`, `org_triggers`, `org_documents`, `org_talents`, `org_talent_profile`, `org_community_feed`, `org_community_members`
+
+Analytics:
+- `org_skills_analytics`, `org_application_funnel`, `org_talent_cohorts`, `org_geo_distribution`, `org_community_engagement`, `org_opportunity_performance`
+
+Declared but not implemented in switch-case:
+- `create_activity`, `respond_invitation`, `update_application`, and action-like intents listed in constants are not executable via `sql_query`.
 
 ---
 
-#### ORGANIZATION as Subject
+## 6. Permissions and Role Rules (As Implemented)
 
-> **Note:** Organizations act through their members. The acting talent's `OrgRole` determines permissions.
+### 6.1 Talent-side
 
-| Intent | Object | Required Role | Constraints | Status |
-|--------|--------|---------------|-------------|--------|
-| **Organization** | | | | |
-| `read_org_organization` | `Organization` | any member | own org | ALLOWED |
-| `update_org_organization` | `Organization` | OWNER, ADMIN | own org | ALLOWED |
-| `delete_org_organization` | `Organization` | — | — | DENIED |
-| **OrgMembership** | | | | |
-| `create_org_membership` | `OrgMembership` | OWNER, ADMIN | via invitation | ALLOWED |
-| `read_org_membership` | `OrgMembership` | any member | own org | ALLOWED |
-| `update_org_membership` | `OrgMembership` | OWNER, ADMIN | change role/status | ALLOWED |
-| `delete_org_membership` | `OrgMembership` | OWNER, ADMIN | remove member, **confirm** | ALLOWED |
-| **Invitations** | | | | |
-| `create_org_invitation` | `OrgInvitation` | OWNER, ADMIN | for Organization, includes ADMIN role | ALLOWED |
-| `create_offer_invitation` | `OfferInvitation` | OWNER, ADMIN, MANAGER | target: Community, Opportunity, or Space | ALLOWED |
-| `read_org_invitation` | `OrgInvitation`/`OfferInvitation` | OWNER, ADMIN | own org's invitations | ALLOWED |
-| `update_org_invitation` | `OrgInvitation`/`OfferInvitation` | — | — | DENIED (auto-expires) |
-| `delete_org_invitation` | `OrgInvitation`/`OfferInvitation` | OWNER, ADMIN | cancel, **confirm** | ALLOWED |
-| **Community** | | | | |
-| `create_org_community` | `Community` | OWNER, ADMIN | linked to org | ALLOWED |
-| `read_org_community` | `Community` | any member | own org | ALLOWED |
-| `update_org_community` | `Community` | OWNER, ADMIN | settings, pricing | ALLOWED |
-| `delete_org_community` | `Community` | OWNER | archive, **confirm** | ALLOWED |
-| **Community Members** | | | | |
-| `read_org_membership` | `Membership` | ADMIN | community members | ALLOWED |
-| `update_org_membership` | `Membership` | ADMIN | approve/reject/suspend | ALLOWED |
-| `delete_org_membership` | `Membership` | ADMIN | remove member, **confirm** | ALLOWED |
-| **Publication (Community)** | | | | |
-| `create_org_publication` | `Publication(POST)` | ADMIN | in own communities | ALLOWED |
-| `create_org_publication` | `Publication(EVENT)` | ADMIN | in own communities | ALLOWED |
-| `create_org_publication` | `Publication(POLL)` | ADMIN | in own communities | ALLOWED |
-| `update_org_publication` | `Publication` | ADMIN | moderate, pin/unpin | ALLOWED |
-| `delete_org_publication` | `Publication` | ADMIN | any in own communities, **confirm** | ALLOWED |
-| **Comment (Moderation)** | | | | |
-| `update_org_comment` | `Comment` | ADMIN | moderate | ALLOWED |
-| `delete_org_comment` | `Comment` | ADMIN | in own communities, **confirm** | ALLOWED |
-| **Opportunity** | | | | |
-| `create_org_opportunity` | `Opportunity` | OWNER, ADMIN, MANAGER | linked to org | ALLOWED |
-| `read_org_opportunity` | `Opportunity` | any member | own org | ALLOWED |
-| `update_org_opportunity` | `Opportunity` | OWNER, ADMIN, MANAGER | own org's opps | ALLOWED |
-| `delete_org_opportunity` | `Opportunity` | OWNER, ADMIN | archive, **confirm** | ALLOWED |
-| **Application (Review)** | | | | |
-| `read_org_application` | `Application` | OWNER, ADMIN, MANAGER | own org's opps | ALLOWED |
-| `update_org_application` | `Application` | OWNER, ADMIN, MANAGER | status, notes, rating | ALLOWED |
-| `create_org_application` | `Application` | — | — | DENIED (talent only) |
-| `delete_org_application` | `Application` | — | — | DENIED |
-| **Application Messages** | | | | |
-| `create_org_application_message` | `ApplicationMessage` | OWNER, ADMIN, MANAGER | in own org's apps | ALLOWED |
-| `read_org_application_message` | `ApplicationMessage` | OWNER, ADMIN, MANAGER | in own org's apps | ALLOWED |
-| **Space** | | | | |
-| `create_org_space` | `Space` | OWNER, ADMIN, MANAGER | linked to org | ALLOWED |
-| `read_org_space` | `Space` | any member | own org | ALLOWED |
-| `update_org_space` | `Space` | OWNER, ADMIN, MANAGER | settings, availability | ALLOWED |
-| `delete_org_space` | `Space` | OWNER, ADMIN | deactivate, **confirm** | ALLOWED |
-| **Space Availability** | | | | |
-| `create_org_availability` | `SpaceAvailability` | OWNER, ADMIN, MANAGER | for own spaces | ALLOWED |
-| `read_org_availability` | `SpaceAvailability` | any | public | ALLOWED |
-| `create_org_unavailability` | `SpaceUnavailability` | OWNER, ADMIN, MANAGER | blackout dates | ALLOWED |
-| **Booking (Management)** | | | | |
-| `read_org_booking` | `Booking` | OWNER, ADMIN, MANAGER | own org's spaces | ALLOWED |
-| `update_org_booking` | `Booking` | OWNER, ADMIN, MANAGER | confirm/cancel | ALLOWED |
-| `create_org_booking` | `Booking` | — | — | DENIED (talent only) |
-| `delete_org_booking` | `Booking` | — | — | DENIED (cancel instead) |
-| **Booking Messages** | | | | |
-| `create_org_booking_message` | `BookingMessage` | OWNER, ADMIN, MANAGER | in own org bookings | ALLOWED |
-| `read_org_booking_message` | `BookingMessage` | OWNER, ADMIN, MANAGER | in own org bookings | ALLOWED |
-| **Subscription (View)** | | | | |
-| `read_org_subscription` | `Subscription` | ADMIN | own community subs | ALLOWED |
-| `create_org_subscription` | `Subscription` | — | — | DENIED (talent only) |
+- Apply to opportunity: requires opportunity `OPEN`, deadline valid, no duplicate application; KYC verified check enforced in confirmation validator path.
+- Join community: checks community exists + `ACTIVE` + not already active member.
+- Book space: checks space `ACTIVE` + start/end provided + no conflicting booking.
+- Invitation response: community and organization invitations handled in current action logic.
+- Profile update via confirmation is allowed for whitelisted fields (`bio`, `city`, `country`, `goals`, `remote_ready`, `willing_to_relocate`, `profile_tags`, `sectors`).
+
+### 6.2 Organization-side (current validators)
+
+- `publish_opportunity`: `OWNER` or `ADMIN`
+- `create_space`: `OWNER` or `ADMIN`
+- `create_community`: any active organization member
+
+### 6.3 ORG copilot access control
+
+- ORG agent SQL intents are restricted to `org_*` + org analytics intents only.
+- ORG session access requires active membership in target organization.
 
 ---
 
-#### SYSTEM as Subject
+## 7. Business Rules (Implemented)
 
-| Intent | Object | Trigger | Status |
-|--------|--------|---------|--------|
-| `create_system_notification` | `Notification` | on events (mention, reply, status change…) | ALLOWED |
-| `update_system_subscription` | `Subscription` | on expiry | ALLOWED |
-| `execute_system_skill_extraction` | `TalentSkill` | on document upload (PROCESSED) | ALLOWED |
-| `execute_system_embedding` | `embedding` | on entity create/update | ALLOWED |
-| `update_system_booking` | `Booking` | auto-complete past bookings | ALLOWED |
-| `update_system_invitation` | `Invitation` | auto-expire after 7 days | ALLOWED |
-| `update_system_otp` | `OTP` | auto-expire, max attempts | ALLOWED |
-| `execute_system_skill_inference` | `TalentSkill` | Study Mode (Socratic assessment) | ALLOWED |
+### 7.1 Persistence/lifecycle
 
----
+- Soft delete present on major entities (`deleted_at`) and queried in most read paths.
+- Document limits enforced by DB trigger:
+  - Talent docs <= 20
+  - Organization docs <= 50
 
-## 6. Restrictions & Business Rules
+### 7.2 Booking and scheduling
 
-### 6.1 Study Mode & Skill Inference Rules
+- No overlapping pending/confirmed bookings on identical `(space_id, start_datetime, end_datetime)` via unique partial index.
+- Runtime availability checks also evaluate `space_unavailabilities`.
 
-| Rule | Description |
-|------|-------------|
-| **L1** | **Inference Authority**: `INFERRED` origin > `EXTRACTED` > `DECLARED`. Agent updates override user claims if evidence contradicts. |
-| **L2** | **Progression Constraints**: BEGINNER → INTERMEDIATE (min 5h active study) → EXPERT (min 20h + verification) → MASTER (peer review/cert). |
-| **L3** | **Degradation Logic**: If User claims EXPERT but fails basic Socratic questions, Agent sets level to INTERMEDIATE or BEGINNER with `confidence_score`. |
-| **L4** | **Socratic Method**: Agent must ask guiding questions to verify depth before "teaching". No direct answers for "Challenging" difficulty. |
-| **L5** | **Adaptive Format**: Agent adapts content format based on context, skill level, and conversation history (e.g., diagrams for architecture, code for implementation, quizzes for assessment). |
+### 7.3 Invitation expiry
 
-### 6.2 Universal Restrictions
+- Organization: 7 days
+- Community/opportunity/space: 30 days
 
-| Rule | Description |
-|------|-------------|
-| **R1** | All DELETE actions require user confirmation |
-| **R2** | Soft delete via `deleted_at` — data is never physically removed |
-| **R3** | All entities support `created_at`, `updated_at` timestamps |
-| **R4** | Vector embeddings (1536-dim) are auto-computed on create/update for Talent, Organization, Community, Opportunity |
-| **R5** | All list endpoints use limit/offset pagination |
-| **R6** | **Universal Matching Logic prioritizes**: City > Region > Country > Continent > Global, then relocation flexibility/remote, then sectors, then profile objectives. |
-| **R7** | Entities where `isVisible` is false are excluded from public listings and Copilot global search (unless specific access). |
+### 7.4 Copilot skill management
 
-### 6.2 Talent Restrictions
-
-| Rule | Description |
-|------|-------------|
-| **T1** | A talent cannot create their own profile (created on signup) |
-| **T2** | A talent cannot delete their profile (deactivation only via User.is_active) |
-| **T3** | Max 20 documents per talent (enforced by DB trigger) |
-| **T4** | 1 application per talent per opportunity (unique constraint) |
-| **T5** | 1 reaction per talent per publication (PK constraint) |
-| **T6** | 1 vote per talent per poll (PK constraint) |
-| **T7** | A talent can only create POST-type publications (not EVENT/POLL) |
-| **T8** | A talent must be a community member to interact with community content |
-| **T9** | A talent cannot book a space that has a conflicting PENDING/CONFIRMED booking |
-
-| **T11** | OTP max 3 attempts before code invalidation |
-
-### 6.3 Organization Restrictions
-
-| Rule | Description |
-|------|-------------|
-| **O1** | An organization cannot be deleted |
-| **O2** | Only OWNER/ADMIN can manage org members |
-| **O3** | Only OWNER/ADMIN/MANAGER can create opportunities and spaces |
-| **O4** | Only ADMIN role in community can create EVENT and POLL publications |
-| **O5** | Only ADMIN can moderate content (flag, approve, reject) |
-| **O6** | OrgInvitations and OfferInvitations (Community/Opportunity) expire after 7 days |
-| **O6.1** | OfferInvitations for Spaces expire after 30 days |
-| **O7** | An organization must have at least one OWNER |
-| **O8** | Community must belong to exactly one organization |
-
-### 6.4 Subscription Rules
-
-| Rule | Description |
-|------|-------------|
-| **P2** | Trial periods: 0, 1, 3, 7, or 30 days only |
-| **P3** | Subscriptions auto-renew monthly unless cancelled |
-| **P5** | Cancellation takes effect at end of current billing period |
-
-### 6.5 Community Rules
-
-| Rule | Description |
-|------|-------------|
-| **C1** | PUBLIC access → auto-join, MEMBERSHIP access → requires approval |
-| **C2** | Paid communities require active subscription for membership |
-| **C3** | Max 5 attachments per publication, max 20MB each |
-| **C4** | Org members automatically get ADMIN role in org's communities |
-| **C5** | Pinning is ADMIN-only |
-| **C6** | Scheduled publications use `published_at` (null = immediate) |
-
-### 6.6 Space Booking Rules
-
-| Rule | Description |
-|------|-------------|
-| **S1** | No double-booking (unique constraint on space + time range where status IN PENDING, CONFIRMED) |
-| **S2** | Booking duration must respect `min_booking_hours` and `max_booking_hours` |
-| **S3** | Advance booking limited by `advance_booking_days` |
-| **S4** | Space invitations expire after 30 days |
-| **S5** | Only org admin/manager can confirm bookings |
-| **S6** | Booking lifecycle: PENDING → CONFIRMED → COMPLETED (or CANCELLED/NO_SHOW) |
+- `manage_skills` currently supports `add` and `update`
+- `remove` is not supported
+- If adding an existing skill with higher level, tool auto-upgrades
 
 ---
 
-## 7. Capability Matrix (Summary View)
+## 8. Copilot Agent Mapping (Current)
 
-### 7.1 Talent Capabilities
+### 8.1 Mode -> tools
 
-```
-CAN CREATE:   TalentDocument, TalentSkill, Organization, Membership (join),
-              Application, Booking,
-              Subscription, Publication(POST), Comment, Reaction,
-              Bookmark, PollVote, CopilotSession
+- `EXPLORE` (Talent Agent): `smart_search`, `sql_query`, `generate_document`, `file_reader`, `web_search`, `execute_action`
+- `STUDY` (Talent Agent): restricted `sql_query`, `youtube_search`, `analyze_youtube_video`, `generate_image`, `generate_diagram`, `file_reader`, `web_search`, `manage_skills`, `execute_action`
+- `ORG` (Organization Agent): `smart_search`, restricted `sql_query`, `generate_document`, `web_search`, `execute_action`, org-scoped `file_reader`
 
-CAN READ:     Own profile, Public profiles, Public organizations,
-              Public communities, Public opportunities, Public spaces,
-              Own talent_documents/talent_skills/applications/bookings/subscriptions/
-              notifications/copilot sessions,
-              Community feed (if member)
+### 8.2 Study mode SQL whitelist
 
-CAN UPDATE:   Own profile, Own talent_documents (tags/visibility),
-              Own talent_skills (proficiency), Own publications,
-              Own comments, Own subscription (cancel/resume),
-              Own notifications (mark read), Own copilot session (title)
+In study mode, `sql_query` is runtime-restricted to:
+- `my_profile`, `my_triggers`, `my_community_feed`, `my_community_members`
 
-CAN DELETE:   Own talent_documents, Own talent_skills, Own membership (leave),
-              Own publications, Own comments, Own reactions,
-              Own bookmarks,
-              Own notifications, Own copilot sessions
-              ⚠️ All deletes require confirmation
+`my_skills` and `my_documents` are expected from preloaded context, not re-queried via SQL tool.
 
-CANNOT:       Create/delete own profile,
-              Create community/opportunity/space,
-              Create EVENT or POLL publications,
-              Moderate content,
-              Manage org/community members,
-              Review applications,
-              Confirm/manage bookings (org side)
-```
+### 8.3 Runtime ontology injection behavior
 
-### 7.2 Organization Capabilities (by Role)
-
-```
-OWNER:        Full control of organization
-              + All ADMIN capabilities
-
-ADMIN:        Create/update community, opportunity, space
-              Manage org members (invite, update role, remove)
-              Moderate community content (flag, approve, reject, pin)
-              Manage community members (approve, reject, suspend, remove)
-              Create EVENT and POLL publications
-              Review applications (status, notes, rating)
-              Manage space bookings (confirm, cancel)
-              Manage space availability/unavailability
-              Send application & booking messages
-              View subscription data
-
-MANAGER:      Create/update opportunity, space
-              Review applications
-              Manage space bookings
-              Send application & booking messages
-
-MEMBER:       View org profile and opportunities
-              View own org's spaces
-              No management capabilities
-```
-
-### 7.3 System Capabilities
-
-```
-CAN CREATE:   Notifications
-CAN UPDATE:   Subscriptions, Bookings (auto-complete),
-              Invitations (auto-expire), OTP (invalidate)
-CAN EXECUTE:  Skill extraction, Embedding computation
-CANNOT:       Create/update/delete core entities (Talent, Organization)
-```
-
+- Agent prompt injection uses ontology cache variants.
+- Sections 5 and 8 from this file are removed in runtime slim ontology injection.
 
 ---
 
-## 8. Copilot Agent Mapping
+## 9. Integrity Constraints to Preserve
 
-The Copilot operates in 3 modes, each with dedicated tools and SQL intents.
+1. Keep this ontology synchronized with:
+- `backend/src/services/copilot/tools/*.ts`
+- `backend/src/services/copilot/actions/*.ts`
+- `backend/src/services/copilot/agents/*.ts`
+- `backend/src/routes/copilot.ts`
+- `mobile/src/components/copilot/*`
 
-### 8.1 Modes & Tools
+2. Any new write action must be declared in all relevant layers:
+- tool schema (if tool-based)
+- confirmation block contract (`entity_id`/`data`)
+- backend execution path
+- this ontology
 
-| Mode | Agent | Tools disponibles |
-|------|-------|-------------------|
-| **EXPLORE** | Talent Explorer | `smart_search`, `sql_query`, `generate_document`, `file_reader`, `web_search`, `execute_action`, `cv_generation` |
-| **STUDY** | Talent Study | `sql_query`, `youtube_search`, `analyze_youtube_video`, `generate_image`, `generate_diagram`, `file_reader`, `web_search`, `manage_skills`, `execute_action` |
-| **ORG** | Org Explorer | `smart_search`, `sql_query`, `generate_document`, `file_reader`, `web_search`, `execute_action` |
+3. Any role change must update both:
+- validator enforcement
+- ontology permissions matrix
 
-### 8.2 SQL Intents (sql_query tool)
-
-| Intent | Mode(s) | Maps To |
-|--------|---------|---------|
-| `my_profile` | EXPLORE, STUDY | `read_talent_profile` (own) |
-| `my_applications` | EXPLORE | `read_talent_application` (own) |
-| `my_reservations` | EXPLORE | `read_talent_booking` (own) |
-| `my_invitations` | EXPLORE | `read_talent_invitation` (own) |
-| `my_communities` | EXPLORE | `read_talent_membership` (own) |
-| `my_bookmarks` | EXPLORE | `read_talent_bookmark` (own) |
-| `my_documents` | EXPLORE | `read_talent_document` (own) |
-| `my_skills` | EXPLORE | `read_talent_skill` (own) |
-| `my_triggers` | EXPLORE, STUDY | `read_talent_trigger` (own) |
-| `my_community_feed` | EXPLORE, STUDY | `read_talent_community_feed` (own) |
-| `my_community_members` | EXPLORE, STUDY | `read_talent_community_members` (own) |
-| `org_members` | ORG | `read_org_membership` |
-| `org_applications` | ORG | `read_org_application` |
-| `org_stats` | ORG | `read_org_organization` (stats) |
-| `org_opportunities` | ORG | `read_org_opportunity` |
-| `org_communities` | ORG | `read_org_community` |
-| `org_spaces` | ORG | `read_org_space` |
-| `org_invitations` | ORG | `read_org_invitation` |
-| `org_triggers` | ORG | `read_org_trigger` |
-| `org_documents` | ORG | `read_org_document` |
-| `org_talents` | ORG | `read_org_talent` |
-| `org_talent_profile` | ORG | `read_org_talent_profile` (interaction check) |
-| `org_community_feed` | ORG | `read_org_community_feed` |
-| `org_community_members` | ORG | `read_org_community_members` |
-| `org_skills_analytics` | ORG | `read_org_analytics` (skills distribution) |
-| `org_application_funnel` | ORG | `read_org_analytics` (recruitment funnel) |
-| `org_talent_cohorts` | ORG | `read_org_analytics` (talent cohorts) |
-| `org_geo_distribution` | ORG | `read_org_analytics` (geo) |
-| `org_community_engagement` | ORG | `read_org_analytics` (engagement) |
-| `org_opportunity_performance` | ORG | `read_org_analytics` (opportunity perf) |
-
-### 8.3 Actions (execute_action tool — EXPLORE only)
-
-| Action | Type | Confirmation |
-|--------|------|-------------|
-| `apply_opportunity` | EXECUTE → `create_talent_application` | Verbale (LLM demande confirmation) |
-| `join_community` | EXECUTE → `create_talent_membership` | Verbale |
-| `book_space` | EXECUTE → `create_talent_booking` | Verbale |
-| `accept_invitation` | EXECUTE → `execute_talent_invitation` | Verbale |
-| `decline_invitation` | EXECUTE → `execute_talent_invitation` | Verbale |
-
-### 8.4 Actions (confirmation UI — ORG only)
-
-| Action | Type | Confirmation |
-|--------|------|-------------|
-| `publish_opportunity` | CREATE → `create_org_opportunity` | Bloc de confirmation frontend |
-| `create_community` | CREATE → `create_org_community` | Bloc de confirmation frontend |
-| `create_space` | CREATE → `create_org_space` | Bloc de confirmation frontend |
-
-### 8.5 Skill Management (manage_skills tool — STUDY only)
-
-| Action | Type | Confirmation |
-|--------|------|-------------|
-| `add` | CREATE → `create_talent_skill` | Aucune (inference automatique) |
-| `update` | UPDATE → `update_talent_skill` | Aucune (post-evaluation) |
-
-### 8.6 Document Generation (generate_document tool — tous modes)
-
-| Action | Type | Confirmation |
-|--------|------|-------------|
-| Generate + auto-save | CREATE → `create_talent_document` | Aucune (sauvegarde auto) |
-
-### 8.7 Copilot Restrictions
-
-- **Cannot** CREATE/DELETE profiles (`Talent`) — systeme uniquement (signup/deactivation)
-- **Cannot** CREATE/DELETE organisations (`Organization`) — via API routes uniquement
-- **Cannot** UPDATE profils, organisations, ou ressources existantes (sauf skills via `manage_skills`)
-- **Cannot** DELETE aucune ressource
-- **Cannot** acceder aux donnees personnelles du talent en mode ORG (IDOR par design)
-- **Toutes les actions d'ecriture** passent par confirmation verbale (EXPLORE) ou bloc UI (ORG)
-- Les requetes SQL sont **pre-construites** cote serveur (pas de SQL arbitraire)
