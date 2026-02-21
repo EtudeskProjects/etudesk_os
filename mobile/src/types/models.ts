@@ -7,13 +7,6 @@ export type UUID = string;
 export type ISODate = string;
 export type ISOTimestamp = string;
 
-export interface LearningPreference {
-  style?: 'VISUAL' | 'AUDITORY' | 'TEXT_BASED' | 'INTERACTIVE';
-  interaction?: 'SOCRATIC' | 'DIRECT' | 'EXPLORATORY';
-  depth?: 'THEORETICAL' | 'PRACTICAL' | 'BALANCED';
-  difficulty?: 'GENTLE' | 'STANDARD' | 'CHALLENGING';
-}
-
 // --- Interfaces - User & Auth ---
 
 export interface User {
@@ -562,7 +555,6 @@ export interface TalentObjectData {
   email: string | null;
   remote_ready: boolean;
   willing_to_relocate: boolean;
-  learning_preferences: LearningPreference;
   skills: string[];
   documents_metadata: { id: string; original_filename: string; document_type: string | null; title: string | null; uploaded_at: string }[];
 }
@@ -590,7 +582,6 @@ export interface Talent {
   // === PRÉFÉRENCES ===
   remote_ready?: boolean;
   willing_to_relocate?: boolean;
-  learning_preferences?: LearningPreference;
   // === COMPÉTENCES & INTÉRÊTS ===
   sectors?: string[];
   profile_tags?: string[];

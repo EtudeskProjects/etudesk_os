@@ -37,6 +37,7 @@ import {
   ORG_DOCUMENT_STATUS_LABELS,
   getOrgDocStatusColor,
   formatOrgFileSize,
+  ORG_UPLOAD_LIMITS,
 } from '../../../src/services';
 import { useAlert } from '../../../src/contexts/AlertContext';
 import { downloadAndOpenDocument } from '../../../src/utils/documentDownload';
@@ -138,19 +139,27 @@ export default function OrgDocumentsScreen() {
     if (!selectedOrg?.id) return;
 
     try {
+      // Check quota before opening picker
+      if (documents.length >= ORG_UPLOAD_LIMITS.MAX_DOCUMENTS_PER_ORG) {
+        void alerts.alert('Limite atteinte', `Votre organisation a atteint la limite de ${ORG_UPLOAD_LIMITS.MAX_DOCUMENTS_PER_ORG} documents.`);
+        return;
+      }
+
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+        type: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'],
         copyToCacheDirectory: true,
         multiple: true,
       });
 
       if (result.canceled || !result.assets || result.assets.length === 0) return;
 
-      const assets = result.assets.slice(0, 5);
+      const remaining = ORG_UPLOAD_LIMITS.MAX_DOCUMENTS_PER_ORG - documents.length;
+      const maxPerRequest = Math.min(ORG_UPLOAD_LIMITS.MAX_FILES_PER_REQUEST, remaining);
+      const assets = result.assets.slice(0, maxPerRequest);
 
       for (const file of assets) {
-        if (file.size && file.size > 20 * 1024 * 1024) {
-          void alerts.alert('Fichier trop volumineux', `"${file.name}" dépasse la taille maximale de 20 MB`);
+        if (file.size && file.size > ORG_UPLOAD_LIMITS.MAX_FILE_SIZE_BYTES) {
+          void alerts.alert('Fichier trop volumineux', `"${file.name}" dépasse la taille maximale de ${ORG_UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB`);
           return;
         }
       }
@@ -421,7 +430,7 @@ export default function OrgDocumentsScreen() {
                 iconPosition="left"
               />
               <Text style={[styles.uploadHint, { color: colors.textDisabled }]}>
-                PDF et images (JPEG, PNG, WebP) · Max 5 fichiers, 20 MB chacun
+                PDF et images (JPEG, PNG, WebP, HEIC) · Max {ORG_UPLOAD_LIMITS.MAX_FILES_PER_REQUEST} fichiers, {ORG_UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB chacun · {ORG_UPLOAD_LIMITS.MAX_DOCUMENTS_PER_ORG} documents max
               </Text>
             </View>
             {documents.map(renderDocument)}

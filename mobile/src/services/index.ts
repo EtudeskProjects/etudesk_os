@@ -219,6 +219,7 @@ export {
   ORG_DOCUMENT_TYPE_LABELS,
   ORG_DOCUMENT_CATEGORY_LABELS,
   ORG_DOCUMENT_STATUS_LABELS,
+  ORG_UPLOAD_LIMITS,
   formatFileSize as formatOrgFileSize,
   getOrgDocStatusColor,
   getOrgDocCategoryIcon,

@@ -21,13 +21,6 @@ import {
     Briefcase,
     Calendar,
     Smartphone,
-    BookOpen,
-    Brain,
-    Layers,
-    Gauge,
-    Headphones,
-    FileText,
-    MousePointer2,
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 import { STORAGE_KEYS } from '../../src/constants/config';
@@ -36,24 +29,8 @@ import { useI18n } from '../../src/contexts/I18nContext';
 import { useNotifications, NotificationPreferences } from '../../src/hooks/useNotifications';
     import { Button, IconButton, Toggle, LoadingShimmer, ShimmerPlaceholder } from '../../src/components/ui';
 import { Language } from '../../src/i18n';
-import { talentService } from '../../src/services/talentService';
-import {
-    LEARNING_STYLE_DATA,
-    LEARNING_INTERACTION_DATA,
-    LEARNING_DEPTH_DATA,
-    LEARNING_DIFFICULTY_DATA,
-} from '../../src/constants/talent';
-import { LearningPreference } from '../../src/types/models';
-
 import type { ThemePreference } from '../../src/contexts/ThemeContext';
-import { useAlert } from '../../src/contexts/AlertContext';
 
-const DEFAULT_LEARNING_PREFS: LearningPreference = {
-    style: 'TEXT_BASED',
-    interaction: 'SOCRATIC',
-    depth: 'BALANCED',
-    difficulty: 'STANDARD',
-};
 
 export default function PreferencesScreen() {
     const router = useRouter();
@@ -75,8 +52,6 @@ export default function PreferencesScreen() {
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
-
-    const [learningPrefs, setLearningPrefs] = useState<LearningPreference>({ ...DEFAULT_LEARNING_PREFS });
 
     // Privacy settings (persisted locally to AsyncStorage)
     const [profilePublic, setProfilePublic] = useState(true);
@@ -110,12 +85,6 @@ export default function PreferencesScreen() {
         setLoadError(false);
         try {
             await fetchPreferences();
-            const talentResponse = await talentService.getMyProfile();
-            setLearningPrefs(prev => ({
-                ...DEFAULT_LEARNING_PREFS,
-                ...prev,
-                ...talentResponse.data?.learning_preferences,
-            }));
             const storedPrivacy = await AsyncStorage.getItem(STORAGE_KEYS.PRIVACY_PREFERENCES);
             if (storedPrivacy) {
                 try {
@@ -134,8 +103,6 @@ export default function PreferencesScreen() {
             setIsLoading(false);
         }
     }, [fetchPreferences]);
-    const alerts = useAlert();
-
     useEffect(() => {
         loadPreferences();
     }, [loadPreferences]);
@@ -171,26 +138,6 @@ export default function PreferencesScreen() {
     // Handle language change
     const handleLanguageChange = (lang: Language) => {
         setLanguage(lang);
-    };
-
-    // Handle learning preference change
-    const handleLearningPreferenceChange = async (key: keyof LearningPreference, value: string) => {
-        const previousPrefs = learningPrefs;
-        const newPrefs = { ...learningPrefs, [key]: value };
-        setLearningPrefs(newPrefs);
-
-        setIsSaving(true);
-        try {
-            await talentService.updateMyProfile({
-                learning_preferences: newPrefs as any,
-            });
-        } catch (error) {
-            if (__DEV__) console.error('Error saving learning preference:', error);
-            setLearningPrefs(previousPrefs);
-            void alerts.showAlert({ title: t('common.error'), message: t('preferences.learningSaveError'), buttons: [{ text: t('common.confirm') }] });
-        } finally {
-            setIsSaving(false);
-        }
     };
 
     const THEME_OPTIONS: { id: ThemePreference; labelKey: string; icon: any }[] = [
@@ -440,172 +387,6 @@ export default function PreferencesScreen() {
                             (value) => handlePreferenceChange('notify_reminders', value),
                             !localPrefs.push_enabled && !localPrefs.email_enabled
                         )}
-                    </>
-                )}
-
-                {/* Learning Preferences Section */}
-                {renderSection(
-                    t('preferences.learningPreferences'),
-                    <>
-                        {/* Learning Style */}
-                        <View style={styles.settingItem}>
-                            <View style={styles.settingInfo}>
-                                <Eye size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-                                <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                                    {t('preferences.learningStyle')}
-                                </Text>
-                            </View>
-                        </View>
-                        <View style={styles.optionsRow}>
-                            {LEARNING_STYLE_DATA.map((option) => {
-                                let Icon;
-                                switch (option.id) {
-                                    case 'VISUAL': Icon = Eye; break;
-                                    case 'AUDITORY': Icon = Headphones; break;
-                                    case 'TEXT_BASED': Icon = FileText; break;
-                                    case 'INTERACTIVE': Icon = MousePointer2; break;
-                                    default: Icon = BookOpen;
-                                }
-                                const isSelected = learningPrefs.style === option.id;
-                                return (
-                                    <Button
-                                        key={option.id}
-                                        onPress={() => handleLearningPreferenceChange('style', option.id)}
-                                        title={language === 'fr' ? option.label : option.id}
-                                        variant={isSelected ? 'primary' : 'secondary'}
-                                        size="sm"
-                                        icon={<Icon size={ICON.size.sm} color={isSelected ? colors.textOnPrimary : colors.gray600} strokeWidth={ICON.strokeWidth} />}
-                                        style={[
-                                            styles.optionButton,
-                                            { backgroundColor: colors.gray100, borderColor: colors.borderColor },
-                                            isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
-                                        ]}
-                                        textStyle={[
-                                            styles.optionButtonText,
-                                            { color: colors.textSecondary },
-                                            isSelected && { color: colors.textOnPrimary },
-                                        ]}
-                                    />
-                                );
-                            })}
-                        </View>
-
-                        <View style={[styles.divider, { backgroundColor: colors.borderColor }]} />
-
-                        {/* Interaction Mode */}
-                        <View style={styles.settingItem}>
-                            <View style={styles.settingInfo}>
-                                <Brain size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-                                <View style={styles.settingTextContainer}>
-                                    <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                                        {t('preferences.interactionMode')}
-                                    </Text>
-                                    <Text style={[styles.settingDescription, { color: colors.gray500 }]}>
-                                        {learningPrefs.interaction === 'SOCRATIC'
-                                            ? t('preferences.interactionSocratic')
-                                            : learningPrefs.interaction === 'DIRECT'
-                                                ? t('preferences.interactionDirect')
-                                                : t('preferences.interactionExploratory')}
-                                    </Text>
-                                </View>
-                            </View>
-                        </View>
-                        <View style={styles.optionsRow}>
-                            {LEARNING_INTERACTION_DATA.map((option) => {
-                                const isSelected = learningPrefs.interaction === option.id;
-                                return (
-                                    <Button
-                                        key={option.id}
-                                        onPress={() => handleLearningPreferenceChange('interaction', option.id)}
-                                        title={language === 'fr' ? option.label : option.id}
-                                        variant={isSelected ? 'primary' : 'secondary'}
-                                        size="sm"
-                                        style={[
-                                            styles.optionButton,
-                                            { backgroundColor: colors.gray100, borderColor: colors.borderColor },
-                                            isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
-                                        ]}
-                                        textStyle={[
-                                            styles.optionButtonText,
-                                            { color: colors.textSecondary },
-                                            isSelected && { color: colors.textOnPrimary },
-                                        ]}
-                                    />
-                                );
-                            })}
-                        </View>
-
-                        <View style={[styles.divider, { backgroundColor: colors.borderColor }]} />
-
-                        {/* Content Depth */}
-                        <View style={styles.settingItem}>
-                            <View style={styles.settingInfo}>
-                                <Layers size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-                                <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                                    {t('preferences.contentDepth')}
-                                </Text>
-                            </View>
-                        </View>
-                        <View style={styles.optionsRow}>
-                            {LEARNING_DEPTH_DATA.map((option) => {
-                                const isSelected = learningPrefs.depth === option.id;
-                                return (
-                                    <Button
-                                        key={option.id}
-                                        onPress={() => handleLearningPreferenceChange('depth', option.id)}
-                                        title={language === 'fr' ? option.label : option.id}
-                                        variant={isSelected ? 'primary' : 'secondary'}
-                                        size="sm"
-                                        style={[
-                                            styles.optionButton,
-                                            { backgroundColor: colors.gray100, borderColor: colors.borderColor },
-                                            isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
-                                        ]}
-                                        textStyle={[
-                                            styles.optionButtonText,
-                                            { color: colors.textSecondary },
-                                            isSelected && { color: colors.textOnPrimary },
-                                        ]}
-                                    />
-                                );
-                            })}
-                        </View>
-
-                        <View style={[styles.divider, { backgroundColor: colors.borderColor }]} />
-
-                        {/* Difficulty */}
-                        <View style={styles.settingItem}>
-                            <View style={styles.settingInfo}>
-                                <Gauge size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
-                                <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                                    {t('preferences.difficultyLevel')}
-                                </Text>
-                            </View>
-                        </View>
-                        <View style={styles.optionsRow}>
-                            {LEARNING_DIFFICULTY_DATA.map((option) => {
-                                const isSelected = learningPrefs.difficulty === option.id;
-                                return (
-                                    <Button
-                                        key={option.id}
-                                        onPress={() => handleLearningPreferenceChange('difficulty', option.id)}
-                                        title={language === 'fr' ? option.label : option.id}
-                                        variant={isSelected ? 'primary' : 'secondary'}
-                                        size="sm"
-                                        style={[
-                                            styles.optionButton,
-                                            { backgroundColor: colors.gray100, borderColor: colors.borderColor },
-                                            isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
-                                        ]}
-                                        textStyle={[
-                                            styles.optionButtonText,
-                                            { color: colors.textSecondary },
-                                            isSelected && { color: colors.textOnPrimary },
-                                        ]}
-                                    />
-                                );
-                            })}
-                        </View>
                     </>
                 )}
 

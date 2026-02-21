@@ -286,11 +286,11 @@ function normalizeTags(tags: string[], data: Partial<ExtractedDocumentData>): st
     if (lang) normalizedTags.add(lang.toLowerCase().trim());
   });
 
-  if (data.field_of_study) {
+  if (data.field_of_study && typeof data.field_of_study === 'string') {
     normalizedTags.add(data.field_of_study.toLowerCase().trim());
   }
 
-  if (data.institution) {
+  if (data.institution && typeof data.institution === 'string') {
     normalizedTags.add(data.institution.toLowerCase().trim());
   }
 

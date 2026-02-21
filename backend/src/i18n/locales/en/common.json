@@ -44,7 +44,6 @@
   "sectorsMustBeArray": "sectors must be an array",
   "goalsMustBeArray": "goals must be an array",
   "maxGoalsAllowed": "Maximum 3 goals allowed",
-  "learningPreferencesMustBeObject": "learning_preferences must be an object",
   "countryMustBeIsoCode": "Country must be a 2-letter ISO code or a recognized country name",
   "notEnoughInfoForBio": "Not enough information to generate a bio. Fill in your profile first.",
   "bioGenerationFailed": "Generation failed",

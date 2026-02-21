@@ -29,7 +29,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
       // 1. Profile (simplified — just key fields)
       pool.query(
         `SELECT t.id, t.first_name, t.last_name, t.email, t.phone, t.avatar_url, t.bio,
-          t.city, t.country, t.remote_ready, t.learning_preferences, t.goals, t.sectors,
+          t.city, t.country, t.remote_ready, t.goals, t.sectors,
           (SELECT COUNT(*) FROM talent_skills WHERE talent_id = t.id)::int as skill_count,
           CASE WHEN EXISTS (SELECT 1 FROM kyc_verifications WHERE talent_id = t.id AND status = 'VERIFIED')
             THEN 'VERIFIED' ELSE 'UNVERIFIED' END as verification_status

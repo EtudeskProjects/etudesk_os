@@ -393,7 +393,6 @@ export default function BookSpaceScreen() {
             country: (user as any).country || null,
             remote_ready: false,
             willing_to_relocate: false,
-            learning_preferences: {} as any,
             skills: [],
             documents_metadata: [],
           });

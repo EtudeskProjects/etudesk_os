@@ -7,6 +7,7 @@
 export { MarkdownRenderer } from './MarkdownRenderer';
 export { EntityCard } from './EntityCard';
 export { CopyButton } from './CopyButton';
+export { FeedbackButtons } from './FeedbackButtons';
 export { ThinkingIndicator } from './ThinkingIndicator';
 export { ToolBlock } from './ToolBlock';
 export { PulsingOrb } from './PulsingOrb';

@@ -125,11 +125,3 @@ export const ORGANIZATION_ROLE = {
   MEMBER: 'MEMBER',
 } as const;
 
-// --- Learning Preferences Study Mode Analysis ---
-
-export const LEARNING_PREFERENCES = {
-  STYLE: ['VISUAL', 'AUDITORY', 'TEXT_BASED', 'INTERACTIVE'],
-  INTERACTION: ['SOCRATIC', 'DIRECT', 'EXPLORATORY'],
-  DEPTH: ['THEORETICAL', 'PRACTICAL', 'BALANCED'],
-  DIFFICULTY: ['GENTLE', 'STANDARD', 'CHALLENGING'],
-} as const;

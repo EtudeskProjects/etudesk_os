@@ -399,7 +399,6 @@ export const updateTalentSchema = z.object({
   sectors: z.array(z.enum(VALID_SECTORS)).max(5).optional(),
   remote_ready: z.boolean().optional(),
   willing_to_relocate: z.boolean().optional(),
-  learning_preferences: z.record(z.string(), z.unknown()).optional(),
 });
 
 // --- Pagination Schemas ---

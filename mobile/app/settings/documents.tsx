@@ -124,8 +124,16 @@ export default function DocumentsScreen() {
 
   const handleUpload = async () => {
     try {
+      const remaining = UPLOAD_LIMITS.MAX_DOCUMENTS_PER_TALENT - documents.length;
+      if (remaining <= 0) {
+        void alerts.alert('Limite atteinte', `Vous avez atteint la limite de ${UPLOAD_LIMITS.MAX_DOCUMENTS_PER_TALENT} documents.`);
+        return;
+      }
+
+      const maxFiles = Math.min(UPLOAD_LIMITS.MAX_FILES_PER_REQUEST, remaining);
+
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
+        type: ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'],
         copyToCacheDirectory: true,
         multiple: true,
       });
@@ -134,7 +142,7 @@ export default function DocumentsScreen() {
         return;
       }
 
-      const assets = result.assets.slice(0, UPLOAD_LIMITS.MAX_FILES_PER_REQUEST);
+      const assets = result.assets.slice(0, maxFiles);
 
       for (const file of assets) {
         if (file.size && file.size > UPLOAD_LIMITS.MAX_FILE_SIZE_BYTES) {
@@ -419,7 +427,7 @@ export default function DocumentsScreen() {
                 iconPosition="left"
               />
               <Text style={[styles.uploadHint, { color: colors.textDisabled }]}>
-                PDF et images (JPEG, PNG, WebP) · Max {UPLOAD_LIMITS.MAX_FILES_PER_REQUEST} fichiers, {UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB chacun
+                PDF et images (JPEG, PNG, WebP, HEIC) · Max {UPLOAD_LIMITS.MAX_FILES_PER_REQUEST} fichiers, {UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB chacun · {documents.length}/{UPLOAD_LIMITS.MAX_DOCUMENTS_PER_TALENT} documents
               </Text>
             </View>
             {documents.map(renderDocument)}

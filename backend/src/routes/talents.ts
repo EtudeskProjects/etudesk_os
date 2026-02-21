@@ -103,7 +103,6 @@ router.put('/me', authMiddleware, validate(updateTalentSchema), async (req: Auth
       profile_tags,
       goals,
       sectors,
-      learning_preferences,
     } = req.body;
 
     // Content moderation for user-generated text fields
@@ -208,11 +207,6 @@ router.put('/me', authMiddleware, validate(updateTalentSchema), async (req: Auth
     if (goals !== undefined) {
       updates.push(`goals = $${paramIndex++}`);
       params.push(goals);
-    }
-
-    if (learning_preferences !== undefined) {
-      updates.push(`learning_preferences = $${paramIndex++}::jsonb`);
-      params.push(JSON.stringify(learning_preferences));
     }
 
     if (updates.length === 0) {

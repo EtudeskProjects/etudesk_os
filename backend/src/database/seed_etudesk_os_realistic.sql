@@ -39,7 +39,7 @@ INSERT INTO talents (
   email, phone, city, region, country,
   remote_ready, willing_to_relocate,
   profile_tags, goals, sectors,
-  learning_preferences, is_visible
+  is_visible
 ) VALUES
   (
     '90000000-0000-4000-8000-000000000001',
@@ -55,7 +55,6 @@ INSERT INTO talents (
     ARRAY['ENTREPRENEUR','MANAGER'],
     ARRAY['BUILD_NETWORK_OR_VISIBILITY','CONTRIBUTE_OR_GIVE_BACK','ADVANCE_CAREER'],
     ARRAY['TECH','EDUCATION','SERVICES'],
-    '{"style":"TEXT_BASED","interaction":"SOCRATIC","depth":"BALANCED","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -72,7 +71,6 @@ INSERT INTO talents (
     ARRAY['JOB_SEEKER'],
     ARRAY['FIND_JOB','LEARN_NEW_SKILLS','ADVANCE_CAREER'],
     ARRAY['TECH'],
-    '{"style":"VISUAL","interaction":"DIRECT","depth":"PRACTICAL","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -89,7 +87,6 @@ INSERT INTO talents (
     ARRAY['STUDENT'],
     ARRAY['FIND_JOB','PREPARE_EXAMS','LEARN_NEW_SKILLS'],
     ARRAY['INDUSTRY','SERVICES'],
-    '{"style":"TEXT_BASED","interaction":"EXPLORATORY","depth":"PRACTICAL","difficulty":"GENTLE"}'::jsonb,
     true
   ),
   (
@@ -106,7 +103,6 @@ INSERT INTO talents (
     ARRAY['CONSULTANT','ENTREPRENEUR'],
     ARRAY['ADVANCE_CAREER','BUILD_NETWORK_OR_VISIBILITY','TEACH_OR_MENTOR'],
     ARRAY['MEDIA','RETAIL','SERVICES'],
-    '{"style":"INTERACTIVE","interaction":"DIRECT","depth":"PRACTICAL","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -123,7 +119,6 @@ INSERT INTO talents (
     ARRAY['SALARIED'],
     ARRAY['ADVANCE_CAREER','IMPROVE_PRODUCTIVITY','LEARN_NEW_SKILLS'],
     ARRAY['TECH','FINANCE'],
-    '{"style":"TEXT_BASED","interaction":"DIRECT","depth":"BALANCED","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -140,7 +135,6 @@ INSERT INTO talents (
     ARRAY['JOB_SEEKER'],
     ARRAY['FIND_JOB','ADVANCE_CAREER'],
     ARRAY['TECH'],
-    '{"style":"TEXT_BASED","interaction":"SOCRATIC","depth":"THEORETICAL","difficulty":"CHALLENGING"}'::jsonb,
     true
   ),
   (
@@ -157,7 +151,6 @@ INSERT INTO talents (
     ARRAY['MANAGER','SALARIED'],
     ARRAY['IMPROVE_PRODUCTIVITY','BUILD_NETWORK_OR_VISIBILITY'],
     ARRAY['SERVICES'],
-    '{"style":"AUDITORY","interaction":"DIRECT","depth":"PRACTICAL","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -174,7 +167,6 @@ INSERT INTO talents (
     ARRAY['SALARIED'],
     ARRAY['ADVANCE_CAREER','LEARN_NEW_SKILLS'],
     ARRAY['TECH','ENERGY'],
-    '{"style":"TEXT_BASED","interaction":"DIRECT","depth":"THEORETICAL","difficulty":"CHALLENGING"}'::jsonb,
     true
   ),
   (
@@ -191,7 +183,6 @@ INSERT INTO talents (
     ARRAY['COACH','CONSULTANT'],
     ARRAY['TEACH_OR_MENTOR','CONTRIBUTE_OR_GIVE_BACK','BUILD_NETWORK_OR_VISIBILITY'],
     ARRAY['EDUCATION','SERVICES'],
-    '{"style":"INTERACTIVE","interaction":"SOCRATIC","depth":"PRACTICAL","difficulty":"GENTLE"}'::jsonb,
     true
   ),
   (
@@ -208,7 +199,6 @@ INSERT INTO talents (
     ARRAY['ENTREPRENEUR'],
     ARRAY['IMPROVE_PRODUCTIVITY','BUILD_NETWORK_OR_VISIBILITY'],
     ARRAY['RETAIL','SERVICES'],
-    '{"style":"TEXT_BASED","interaction":"DIRECT","depth":"PRACTICAL","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -225,7 +215,6 @@ INSERT INTO talents (
     ARRAY['CONTENT_CREATOR'],
     ARRAY['BUILD_NETWORK_OR_VISIBILITY','TEACH_OR_MENTOR','LEARN_NEW_SKILLS'],
     ARRAY['MEDIA','EDUCATION'],
-    '{"style":"VISUAL","interaction":"EXPLORATORY","depth":"BALANCED","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -242,7 +231,6 @@ INSERT INTO talents (
     ARRAY['SALARIED'],
     ARRAY['ADVANCE_CAREER','LEARN_NEW_SKILLS'],
     ARRAY['ENERGY','INDUSTRY'],
-    '{"style":"TEXT_BASED","interaction":"DIRECT","depth":"PRACTICAL","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -259,7 +247,6 @@ INSERT INTO talents (
     ARRAY['STUDENT'],
     ARRAY['PREPARE_EXAMS','LEARN_NEW_SKILLS','RESEARCH_SUPPORT'],
     ARRAY['HEALTH','EDUCATION'],
-    '{"style":"TEXT_BASED","interaction":"SOCRATIC","depth":"THEORETICAL","difficulty":"GENTLE"}'::jsonb,
     true
   ),
   (
@@ -276,7 +263,6 @@ INSERT INTO talents (
     ARRAY['JOB_SEEKER'],
     ARRAY['FIND_JOB','LEARN_NEW_SKILLS','ADVANCE_CAREER'],
     ARRAY['TECH','AGRICULTURE'],
-    '{"style":"INTERACTIVE","interaction":"DIRECT","depth":"PRACTICAL","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -293,7 +279,6 @@ INSERT INTO talents (
     ARRAY['ENTREPRENEUR'],
     ARRAY['BUILD_NETWORK_OR_VISIBILITY','IMPROVE_PRODUCTIVITY'],
     ARRAY['AGRICULTURE','RETAIL'],
-    '{"style":"VISUAL","interaction":"DIRECT","depth":"PRACTICAL","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -310,7 +295,6 @@ INSERT INTO talents (
     ARRAY['COACH'],
     ARRAY['TEACH_OR_MENTOR','CONTRIBUTE_OR_GIVE_BACK'],
     ARRAY['EDUCATION','SERVICES'],
-    '{"style":"AUDITORY","interaction":"DIRECT","depth":"PRACTICAL","difficulty":"GENTLE"}'::jsonb,
     true
   ),
   (
@@ -327,7 +311,6 @@ INSERT INTO talents (
     ARRAY['MANAGER','SALARIED'],
     ARRAY['ADVANCE_CAREER','IMPROVE_PRODUCTIVITY'],
     ARRAY['TECH','SERVICES'],
-    '{"style":"TEXT_BASED","interaction":"SOCRATIC","depth":"BALANCED","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -344,7 +327,6 @@ INSERT INTO talents (
     ARRAY['JOB_SEEKER'],
     ARRAY['FIND_JOB','ADVANCE_CAREER'],
     ARRAY['TECH','MEDIA'],
-    '{"style":"VISUAL","interaction":"EXPLORATORY","depth":"PRACTICAL","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -361,7 +343,6 @@ INSERT INTO talents (
     ARRAY['SALARIED'],
     ARRAY['IMPROVE_PRODUCTIVITY','ADVANCE_CAREER'],
     ARRAY['TRANSPORT','INDUSTRY'],
-    '{"style":"TEXT_BASED","interaction":"DIRECT","depth":"PRACTICAL","difficulty":"STANDARD"}'::jsonb,
     true
   ),
   (
@@ -378,7 +359,6 @@ INSERT INTO talents (
     ARRAY['CONSULTANT'],
     ARRAY['CONTRIBUTE_OR_GIVE_BACK','BUILD_NETWORK_OR_VISIBILITY'],
     ARRAY['SERVICES','EDUCATION'],
-    '{"style":"TEXT_BASED","interaction":"SOCRATIC","depth":"BALANCED","difficulty":"STANDARD"}'::jsonb,
     true
   );
 

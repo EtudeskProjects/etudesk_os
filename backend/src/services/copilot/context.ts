@@ -26,14 +26,6 @@ export const TalentProfileSchema = z.object({
   // Preferences
   remoteReady: z.boolean().optional(),
 
-  // Learning preferences (for Study mode)
-  learningPreferences: z.object({
-    style: z.enum(['VISUAL', 'AUDITORY', 'TEXT_BASED', 'INTERACTIVE']).optional(),
-    interaction: z.enum(['SOCRATIC', 'DIRECT', 'EXPLORATORY']).optional(),
-    depth: z.enum(['THEORETICAL', 'PRACTICAL', 'BALANCED']).optional(),
-    difficulty: z.enum(['GENTLE', 'STANDARD', 'CHALLENGING']).optional(),
-  }).optional(),
-
   // Skills summary
   skills: z.array(
     z.object({
@@ -571,7 +563,6 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
       t.avatar_url, t.bio,
       t.city, t.country,
       t.remote_ready,
-      t.learning_preferences,
       t.created_at, t.updated_at
     FROM talents t
     WHERE t.id = $1
@@ -656,7 +647,6 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
     city: row.city,
     country: row.country,
     remoteReady: row.remote_ready,
-    learningPreferences: row.learning_preferences || undefined,
     skills,
     languages,
     profileCompleteness: completeness,

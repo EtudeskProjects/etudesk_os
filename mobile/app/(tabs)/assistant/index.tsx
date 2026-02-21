@@ -45,6 +45,7 @@ import { useTheme } from '../../../src/hooks/useTheme';
 import {
   MarkdownRenderer,
   CopyButton,
+  FeedbackButtons,
   ThinkingIndicator,
   ToolBlock,
   PulsingOrb,
@@ -111,6 +112,7 @@ export default function AssistantScreen() {
   const replaceLastExchangeRef = useRef<boolean>(false);
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+  const MAX_ATTACHMENTS = 3;
 
   // Audio recording hook
   const audioRecorder = useAudioRecorder();
@@ -451,36 +453,38 @@ export default function AssistantScreen() {
   // Core streaming function — used by handleSend, handleQuizAnswer, and handleRetry
   const handlePickFile = async () => {
     try {
+      const remaining = MAX_ATTACHMENTS - attachments.length;
+      if (remaining <= 0) {
+        void alerts.alert('Limite atteinte', `Vous pouvez ajouter jusqu'à ${MAX_ATTACHMENTS} pièces jointes.`);
+        return;
+      }
+
       const result = await DocumentPicker.getDocumentAsync({
         type: ['application/pdf', 'image/*'],
         copyToCacheDirectory: true,
-        multiple: false,
+        multiple: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const file = result.assets[0];
+        const selected = result.assets.slice(0, remaining);
+        const validFiles: { name: string; uri: string; type: string; size?: number }[] = [];
 
-        // Check file size
-        if (file.size && file.size > MAX_FILE_SIZE) {
-          void alerts.alert('Fichier trop volumineux', 'La taille maximale est de 20 Mo.');
-          return;
-        }
-
-        // Check max attachments
-        if (attachments.length >= 3) {
-          void alerts.alert('Limite atteinte', 'Vous pouvez ajouter jusqu\'à 3 pièces jointes.');
-          return;
-        }
-
-        setAttachments((prev) => [
-          ...prev,
-          {
+        for (const file of selected) {
+          if (file.size && file.size > MAX_FILE_SIZE) {
+            void alerts.alert('Fichier trop volumineux', `${file.name} dépasse la limite de 20 Mo.`);
+            continue;
+          }
+          validFiles.push({
             name: file.name,
             uri: file.uri,
             type: file.mimeType || 'application/octet-stream',
             size: file.size,
-          },
-        ]);
+          });
+        }
+
+        if (validFiles.length > 0) {
+          setAttachments((prev) => [...prev, ...validFiles]);
+        }
       }
     } catch (error) {
       if (__DEV__) console.error('Error picking file:', error);
@@ -1175,13 +1179,16 @@ export default function AssistantScreen() {
                 </View>
               )}
 
-              {/* Footer: copy button + generation timestamp — at the bottom */}
+              {/* Footer: timestamp + feedback + copy — at the bottom */}
               {message.content && !message.isStreaming && !message.error && (
                 <View style={styles.messageFooter}>
                   <Text style={[styles.messageTimestamp, { color: colors.textDisabled }]}>
                     {formatTimestamp(message.id)}
                   </Text>
-                  <CopyButton content={message.content} />
+                  <View style={styles.messageActions}>
+                    <FeedbackButtons messageId={message.id} />
+                    <CopyButton content={message.content} />
+                  </View>
                 </View>
               )}
 
@@ -1747,6 +1754,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: SPACING.sm,
     paddingTop: SPACING.xs,
+  },
+  messageActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
   },
   messageTimestamp: {
     fontSize: TYPOGRAPHY.fontSize.xs,

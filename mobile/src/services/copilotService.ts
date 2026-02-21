@@ -508,6 +508,15 @@ class CopilotService {
   }
 
   /**
+   * Rate a copilot message (DPO feedback)
+   * @param messageId - Assistant message ID
+   * @param rating - 1 (thumbs down) or 3 (thumbs up)
+   */
+  async rateMessage(messageId: string, rating: 1 | 3): Promise<ApiResponse<{ success: boolean }>> {
+    return api.patch(`/api/copilot/messages/${messageId}/feedback`, { rating });
+  }
+
+  /**
    * Confirm a copilot action (apply, join, book, etc.)
    */
   async confirmAction(

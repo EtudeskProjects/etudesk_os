@@ -151,7 +151,6 @@ CREATE TABLE talents (
     goals TEXT[],
     sectors TEXT[],
     payment_methods JSONB DEFAULT '[]'::jsonb,
-    learning_preferences JSONB DEFAULT '{}'::jsonb,
     is_visible BOOLEAN DEFAULT TRUE,
     embedding VECTOR(1536),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

@@ -44,7 +44,6 @@
   "sectorsMustBeArray": "sectors doit être un tableau",
   "goalsMustBeArray": "goals doit être un tableau",
   "maxGoalsAllowed": "Maximum 3 objectifs autorisés",
-  "learningPreferencesMustBeObject": "learning_preferences doit être un objet",
   "countryMustBeIsoCode": "Le pays doit être un code ISO à 2 lettres ou un nom de pays reconnu",
   "notEnoughInfoForBio": "Pas assez d'informations pour générer une bio. Remplis d'abord ton profil.",
   "bioGenerationFailed": "Échec de la génération",
