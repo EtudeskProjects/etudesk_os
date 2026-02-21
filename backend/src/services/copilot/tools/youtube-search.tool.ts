@@ -7,7 +7,6 @@ import { defineTool } from './tool-helper';
 import { z } from 'zod';
 
 import { logger } from '../../../utils';
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
 
 export const youtubeSearchTool = defineTool({
   name: 'youtube_search',
@@ -18,6 +17,7 @@ export const youtubeSearchTool = defineTool({
     maxResults: z.number().min(1).max(10).describe('Default 7. Agent compares titles/descriptions, picks 2-3 best candidates for analyze_youtube_video.'),
   }),
   execute: async ({ query, maxResults }) => {
+    const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
     if (!YOUTUBE_API_KEY) {
       return { videos: [], message: 'YouTube API non configurée' };
     }

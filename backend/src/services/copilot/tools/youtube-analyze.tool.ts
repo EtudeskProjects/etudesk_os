@@ -10,8 +10,6 @@ import { z } from 'zod';
 import { GoogleGenAI } from '@google/genai';
 import { logger } from '../../../utils';
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || '';
-
 /** Extract YouTube video ID from various URL formats */
 function extractVideoId(url: string): string | null {
   const patterns = [
@@ -120,6 +118,7 @@ export const analyzeYoutubeVideoTool = defineTool({
     language: z.enum(['fr', 'en']).default('fr'),
   }),
   execute: async ({ urls, focusTopics, language }) => {
+    const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || '';
     if (!GOOGLE_API_KEY) {
       return { success: false, error: 'Google API non configurée' };
     }
