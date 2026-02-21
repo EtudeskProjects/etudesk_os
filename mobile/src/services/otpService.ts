@@ -8,7 +8,10 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
+import * as Notifications from 'expo-notifications';
 import { logger } from './logService';
+import { clearPersistentCache } from './persistentCache';
 import { API_CONFIG, STORAGE_KEYS, getApiUrl } from '../constants/config';
 import i18n from '../i18n';
 
@@ -396,7 +399,12 @@ async function signInWithGoogle(idToken: string): Promise<VerifyOTPResult> {
 /**
  * Delete the current user's account
  */
-async function deleteAccount(): Promise<{ success: boolean; error?: string }> {
+async function deleteAccount(): Promise<{
+  success: boolean;
+  error?: string;
+  status?: number;
+  blockedOrganizations?: Array<{ id: string; name: string; memberCount: number }>;
+}> {
   try {
     const accessToken = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     if (!accessToken) {
@@ -413,18 +421,23 @@ async function deleteAccount(): Promise<{ success: boolean; error?: string }> {
     const data = await response.json();
 
     if (!response.ok) {
-      return { success: false, error: data.error || 'Failed to delete account' };
+      return {
+        success: false,
+        error: data.error || 'Failed to delete account',
+        status: response.status,
+        blockedOrganizations: data.blockedOrganizations,
+      };
     }
 
-    // Clear local auth data
-    await AsyncStorage.multiRemove([
-      STORAGE_KEYS.ACCESS_TOKEN,
-      STORAGE_KEYS.REFRESH_TOKEN,
-      STORAGE_KEYS.USER,
-      STORAGE_KEYS.ONBOARDING_SEEN,
-    ]);
+    // Clear ALL local data
+    await AsyncStorage.multiRemove(Object.values(STORAGE_KEYS));
+    await clearPersistentCache().catch(() => {});
+    if (FileSystem.cacheDirectory) {
+      await FileSystem.deleteAsync(FileSystem.cacheDirectory, { idempotent: true }).catch(() => {});
+    }
+    await Notifications.setBadgeCountAsync(0).catch(() => {});
 
-    logger.info(LOG_SOURCE, 'Account deleted successfully');
+    logger.info(LOG_SOURCE, 'Account deleted successfully — all local data cleared');
     return { success: true };
   } catch (error) {
     logger.error(LOG_SOURCE, 'Delete account error', error);

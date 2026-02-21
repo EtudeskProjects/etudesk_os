@@ -19,7 +19,7 @@ Etudesk se réserve le droit de modifier ces CGU à tout moment. Les modificatio
       {
         title: '2. Description des services',
         content: `Etudesk est une plateforme intelligente qui propose :
-- Un assistant IA personnel pour accompagner votre carrière (modes Explorer et Study)
+- Un assistant IA personnel pour accompagner votre carrière (modes Explorer, Étudier et Gérer)
 - Un accès à des opportunités professionnelles (emplois, stages, missions freelance)
 - Des communautés professionnelles pour développer votre réseau
 - Des outils de gestion pour les organisations (recrutement, formation, communautés)
@@ -83,7 +83,7 @@ Etudesk ne peut être tenu responsable des dommages directs ou indirects résult
       },
       {
         title: '9. Résiliation',
-        content: `Vous pouvez supprimer votre compte à tout moment depuis les paramètres de l'application ou en contactant notre support.
+        content: `Vous pouvez supprimer votre compte à tout moment depuis les paramètres de l'application. La suppression désactive votre profil et supprime vos données conformément à notre Politique de Confidentialité. Si vous êtes administrateur unique d'une organisation avec d'autres membres, vous devez transférer les droits d'administration au préalable.
 
 Etudesk peut suspendre ou supprimer votre compte en cas de violation des CGU, avec ou sans préavis. En cas de résiliation, vous perdez l'accès à vos données et contenus associés au compte.`,
       },
@@ -118,7 +118,7 @@ Etudesk reserves the right to modify these Terms at any time. Changes take effec
       {
         title: '2. Description of Services',
         content: `Etudesk is an intelligent platform that offers:
-- A personal AI assistant to support your career (Explorer and Study modes)
+- A personal AI assistant to support your career (Explore, Study and Manage modes)
 - Access to professional opportunities (jobs, internships, freelance missions)
 - Professional communities to expand your network
 - Management tools for organizations (recruitment, training, communities)
@@ -182,7 +182,7 @@ Etudesk cannot be held liable for direct or indirect damages resulting from use 
       },
       {
         title: '9. Termination',
-        content: `You may delete your account at any time from the app settings or by contacting our support.
+        content: `You may delete your account at any time from the app settings. Deletion deactivates your profile and removes your data in accordance with our Privacy Policy. If you are the sole administrator of an organization with other members, you must transfer admin rights beforehand.
 
 Etudesk may suspend or delete your account in case of Terms violation, with or without notice. Upon termination, you lose access to your data and content associated with the account.`,
       },
@@ -210,7 +210,7 @@ type Lang = 'fr' | 'en';
 export default function TermsPage() {
   const [lang, setLang] = useState<Lang>('fr');
   const t = translations[lang];
-  const updateDate = '2026-02-19';
+  const updateDate = '2026-02-21';
 
   return (
     <main className="legal-page">

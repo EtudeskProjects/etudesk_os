@@ -161,8 +161,8 @@
     "inputPlaceholder": "Ask a question or describe what you need...",
     "suggestions": "Suggestions",
     "modes": {
-      "explore": "Discover",
-      "study": "Learn",
+      "explore": "Explore",
+      "study": "Study",
       "org": "Manage"
     },
     "prompts": {
@@ -292,6 +292,17 @@
     },
     "logout": "Sign out",
     "logoutConfirm": "Are you sure you want to sign out?",
+    "deleteAccount": "Delete my account",
+    "deleteAccountMessage": "This action is irreversible. All your data will be permanently deleted.",
+    "deleteAccountConfirmTitle": "Confirmation",
+    "deleteAccountConfirmMessage": "Are you really sure you want to delete your account?",
+    "deleteAccountConfirm": "Confirm deletion",
+    "deleteAccountBlockedTitle": "Transfer required",
+    "deleteAccountBlockedMessage": "You are the sole admin of the following organizations:\n\n{{orgList}}\n\nTransfer admin rights before deleting your account.",
+    "deleteAccountBlockedMembers": "{{count}} members",
+    "deleteAccountManageTeam": "Manage team",
+    "deleteAccountError": "Failed to delete account",
+    "deleteAccountGenericError": "An error occurred",
     "version": "Version"
   },
   "preferences": {

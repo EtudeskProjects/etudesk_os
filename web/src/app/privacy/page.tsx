@@ -77,7 +77,9 @@ En utilisant Etudesk, vous acceptez les pratiques décrites dans cette politique
 
 **Mode Explorer :** L'IA analyse votre profil, vos compétences et vos objectifs pour vous recommander des opportunités, des communautés et des formations pertinentes.
 
-**Mode Study :** Vos documents et préférences sont utilisés pour personnaliser votre parcours de formation et vous proposer des contenus adaptés.
+**Mode Étudier :** Vos documents et préférences sont utilisés pour personnaliser votre parcours de formation et vous proposer des contenus adaptés.
+
+**Mode Gérer :** L'IA aide les administrateurs d'organisations à gérer les candidatures, analyser les talents et piloter leurs communautés.
 
 **Traitement des données IA :**
 - Les conversations avec l'IA sont traitées de manière sécurisée
@@ -125,7 +127,19 @@ Nous ne vendons jamais vos données personnelles à des tiers.`,
 - Accès restreint aux données sur le principe du besoin d'en connaître
 
 **Localisation des données :**
-Vos données sont hébergées sur des serveurs sécurisés situés dans l'Union Européenne et en Afrique de l'Ouest.`,
+Vos données sont hébergées sur des serveurs sécurisés situés dans l'Union Européenne et en Afrique de l'Ouest.
+
+**Suppression de compte :**
+Vous pouvez supprimer votre compte à tout moment depuis les paramètres de l'application. La suppression entraîne :
+- Désactivation immédiate de votre accès (sessions révoquées)
+- Suppression de votre profil, documents, candidatures, publications et commentaires communautaires
+- Anonymisation de vos traces IA (conservées pour analytics)
+- Suppression de vos connexions, recommandations, favoris et abonnements
+- Annulation des réservations d'espaces futures
+- Si vous êtes seul administrateur d'une organisation sans autre membre, elle sera aussi supprimée
+- Si l'organisation a d'autres administrateurs, seule votre adhésion est retirée
+
+Les données de facturation sont conservées selon les obligations fiscales (10 ans).`,
       },
       {
         title: '7. Vos droits',
@@ -135,7 +149,7 @@ Vos données sont hébergées sur des serveurs sécurisés situés dans l'Union 
 
 **Droit de rectification :** Corriger les données inexactes ou incomplètes.
 
-**Droit à l'effacement :** Demander la suppression de vos données (dans les limites légales).
+**Droit à l'effacement :** Demander la suppression de vos données (dans les limites légales). Vous pouvez exercer ce droit directement depuis l'application en supprimant votre compte dans les paramètres.
 
 **Droit à la portabilité :** Recevoir vos données dans un format structuré et lisible par machine.
 
@@ -270,9 +284,11 @@ By using Etudesk, you accept the practices described in this policy. We encourag
         title: '4. Artificial Intelligence and Your Data',
         content: `Our AI assistant uses your data to provide you with a personalized experience:
 
-**Explorer mode:** AI analyzes your profile, skills and goals to recommend relevant opportunities, communities and training.
+**Explore mode:** AI analyzes your profile, skills and goals to recommend relevant opportunities, communities and training.
 
 **Study mode:** Your documents and preferences are used to customize your learning path and suggest tailored content.
+
+**Manage mode:** AI helps organization administrators manage applications, analyze talents and run their communities.
 
 **AI data processing:**
 - Conversations with AI are processed securely
@@ -320,7 +336,19 @@ We never sell your personal data to third parties.`,
 - Restricted data access on a need-to-know basis
 
 **Data location:**
-Your data is hosted on secure servers located in the European Union and West Africa.`,
+Your data is hosted on secure servers located in the European Union and West Africa.
+
+**Account deletion:**
+You can delete your account at any time from the app settings. Deletion results in:
+- Immediate deactivation of your access (sessions revoked)
+- Deletion of your profile, documents, applications, community posts and comments
+- Anonymization of your AI traces (retained for analytics)
+- Deletion of your connections, recommendations, bookmarks and subscriptions
+- Cancellation of future space bookings
+- If you are the sole administrator of an organization with no other members, it will also be deleted
+- If the organization has other administrators, only your membership is removed
+
+Billing data is retained in accordance with tax obligations (10 years).`,
       },
       {
         title: '7. Your Rights',
@@ -330,7 +358,7 @@ Your data is hosted on secure servers located in the European Union and West Afr
 
 **Right of rectification:** Correct inaccurate or incomplete data.
 
-**Right to erasure:** Request deletion of your data (within legal limits).
+**Right to erasure:** Request deletion of your data (within legal limits). You can exercise this right directly from the app by deleting your account in the settings.
 
 **Right to portability:** Receive your data in a structured, machine-readable format.
 
@@ -402,7 +430,7 @@ type Lang = 'fr' | 'en';
 export default function PrivacyPage() {
   const [lang, setLang] = useState<Lang>('fr');
   const t = translations[lang];
-  const updateDate = '2026-02-19';
+  const updateDate = '2026-02-21';
 
   return (
     <main className="legal-page">

@@ -43,6 +43,8 @@ Toute reproduction, représentation, modification, publication ou adaptation de 
         title: '5. Données personnelles',
         content: `Etudesk SAS s'engage à respecter la vie privée de ses utilisateurs et à protéger leurs données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et aux lois ivoiriennes applicables.
 
+Les utilisateurs peuvent supprimer leur compte et les données associées à tout moment depuis les paramètres de l'application.
+
 Pour plus d'informations, consultez notre Politique de Confidentialité accessible à l'adresse : https://etudesk.com/privacy`,
       },
       {
@@ -108,6 +110,8 @@ Any reproduction, representation, modification, publication or adaptation of all
         title: '5. Personal Data',
         content: `Etudesk SAS is committed to respecting the privacy of its users and protecting their personal data in accordance with the General Data Protection Regulation (GDPR) and applicable Ivorian laws.
 
+Users can delete their account and associated data at any time from the app settings.
+
 For more information, please consult our Privacy Policy available at: https://etudesk.com/privacy`,
       },
       {
@@ -142,7 +146,7 @@ type Lang = 'fr' | 'en';
 export default function MentionsLegalesPage() {
   const [lang, setLang] = useState<Lang>('fr');
   const t = translations[lang];
-  const updateDate = '2026-02-19';
+  const updateDate = '2026-02-21';
 
   return (
     <main className="legal-page">

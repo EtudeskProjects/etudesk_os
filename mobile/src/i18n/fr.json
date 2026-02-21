@@ -161,8 +161,8 @@
     "inputPlaceholder": "Pose une question ou décris ce que tu cherches...",
     "suggestions": "Suggestions",
     "modes": {
-      "explore": "Découvrir",
-      "study": "Apprendre",
+      "explore": "Explorer",
+      "study": "Étudier",
       "org": "Gérer"
     },
     "prompts": {
@@ -292,6 +292,17 @@
     },
     "logout": "Se déconnecter",
     "logoutConfirm": "Tu veux vraiment te déconnecter ?",
+    "deleteAccount": "Supprimer mon compte",
+    "deleteAccountMessage": "Cette action est irréversible. Toutes tes données seront supprimées définitivement.",
+    "deleteAccountConfirmTitle": "Confirmation",
+    "deleteAccountConfirmMessage": "Es-tu vraiment sûr de vouloir supprimer ton compte ?",
+    "deleteAccountConfirm": "Confirmer la suppression",
+    "deleteAccountBlockedTitle": "Transfert requis",
+    "deleteAccountBlockedMessage": "Tu es le seul administrateur des organisations suivantes :\n\n{{orgList}}\n\nTransfère les droits d'administration avant de supprimer ton compte.",
+    "deleteAccountBlockedMembers": "{{count}} membres",
+    "deleteAccountManageTeam": "Gérer l'équipe",
+    "deleteAccountError": "Impossible de supprimer le compte",
+    "deleteAccountGenericError": "Une erreur est survenue",
     "version": "Version"
   },
   "preferences": {

@@ -118,26 +118,16 @@ export default function AccountScreen() {
   };
 
   const handleDeleteAccount = () => {
-    const deleteTitle = language === 'fr' ? 'Supprimer mon compte' : 'Delete my account';
-    const deleteMessage = language === 'fr'
-      ? 'Cette action est irréversible. Toutes tes données seront supprimées définitivement.'
-      : 'This action is irreversible. All your data will be permanently deleted.';
-    const confirmTitle = language === 'fr' ? 'Confirmation' : 'Confirmation';
-    const confirmMessage = language === 'fr'
-      ? 'Es-tu vraiment sûr de vouloir supprimer ton compte ?'
-      : 'Are you really sure you want to delete your account?';
-    const confirmDelete = language === 'fr' ? 'Confirmer la suppression' : 'Confirm deletion';
-
-    void alerts.showAlert({ title: deleteTitle, message: deleteMessage, buttons: [
+    void alerts.showAlert({ title: t('settings.deleteAccount'), message: t('settings.deleteAccountMessage'), buttons: [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
-            void alerts.showAlert({ title: confirmTitle, message: confirmMessage, buttons: [
+            void alerts.showAlert({ title: t('settings.deleteAccountConfirmTitle'), message: t('settings.deleteAccountConfirmMessage'), buttons: [
                 { text: t('common.cancel'), style: 'cancel' },
                 {
-                  text: confirmDelete,
+                  text: t('settings.deleteAccountConfirm'),
                   style: 'destructive',
                   onPress: async () => {
                     try {
@@ -148,16 +138,32 @@ export default function AccountScreen() {
                         // Reset space and sign out
                         setSpace('talent');
                         await signOut();
+                      } else if (result.status === 409 && result.blockedOrganizations?.length) {
+                        // Sole admin of orgs with members — must transfer admin first
+                        const orgList = result.blockedOrganizations
+                          .map(o => `\u2022 ${o.name} (${t('settings.deleteAccountBlockedMembers', { count: o.memberCount })})`)
+                          .join('\n');
+                        void alerts.showAlert({
+                          title: t('settings.deleteAccountBlockedTitle'),
+                          message: t('settings.deleteAccountBlockedMessage', { orgList }),
+                          buttons: [
+                            { text: t('common.cancel'), style: 'cancel' },
+                            {
+                              text: t('settings.deleteAccountManageTeam'),
+                              onPress: () => router.push('/settings/organization/members'),
+                            },
+                          ],
+                        });
                       } else {
                         void alerts.alert(
-                          language === 'fr' ? 'Erreur' : 'Error',
-                          result.error || (language === 'fr' ? 'Impossible de supprimer le compte' : 'Failed to delete account')
+                          t('common.error'),
+                          result.error || t('settings.deleteAccountError')
                         );
                       }
                     } catch {
                       void alerts.alert(
-                        language === 'fr' ? 'Erreur' : 'Error',
-                        language === 'fr' ? 'Une erreur est survenue' : 'An error occurred'
+                        t('common.error'),
+                        t('settings.deleteAccountGenericError')
                       );
                     }
                   },
