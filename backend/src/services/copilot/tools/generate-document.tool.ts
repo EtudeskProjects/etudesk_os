@@ -653,6 +653,16 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
         ),
       instructions: z.string().optional().describe('Generation instructions describing the purpose and style of the document'),
     }),
+    normalize: (raw) => {
+      // Handle aliases: content → contentJson, content_json → contentJson, type → format
+      return {
+        ...raw,
+        format: raw.format || raw.type || raw.output_format || 'PDF',
+        title: raw.title || raw.name || raw.documentTitle || 'Document',
+        contentJson: raw.contentJson || raw.content_json || raw.content || raw.data || '',
+        instructions: raw.instructions || raw.instruction || raw.description,
+      };
+    },
     execute: async ({ format: rawFormat, title, contentJson, instructions }) => {
       try {
         // Normalize format to uppercase (Claude native SDK may send lowercase)

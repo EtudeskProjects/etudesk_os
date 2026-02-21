@@ -40,6 +40,26 @@ export function getRegionalContextRule(): string {
   return `**Regional Context**: For benchmarks (salaries, trends, market data), ALWAYS prioritize French-speaking African data (UEMOA, CEMAC). Use XOF as default currency. Silicon Valley benchmarks are irrelevant to users in Abidjan.`;
 }
 
+/**
+ * Chart quality rules — centralized block injected into all 3 prompts.
+ * Controls when and how the agent should generate chart blocks.
+ */
+export function getChartRulesBlock(): string {
+  return `**Chart Quality Rules (MANDATORY):**
+- **Minimum 2 non-zero items** for bar/donut/stacked_bar/line charts. For 1 data point → use **metric** card or plain text.
+- **Exclude zero-value items** — bars/slices at 0 add visual noise, omit them from data arrays.
+- **Human-readable labels only** — NEVER use raw numbers, enum codes, or IDs as labels. BAD: \`"value":2\` for proficiency level. GOOD: use a **table** with text labels (Débutant, Intermédiaire, Expert).
+- **Values = quantities, not ordinal levels** — bar/donut values must be counts, percentages, or amounts. Proficiency levels (BEGINNER=1, etc.) are NOT bar-appropriate. Use **table** (with text labels) or **radar** (for multi-axis comparison) instead.
+- **Chart type selection guide:**
+  - **bar** → comparing quantities across ≥2 categories (counts, scores, percentages)
+  - **donut** → distribution/proportions across ≥2 categories
+  - **stacked_bar** → multi-segment comparison across ≥2 items
+  - **metric** → single KPI with optional trend (the ONLY chart for 1 data point)
+  - **table** → detailed data, text-based comparisons, proficiency levels, structured lists
+  - **radar** → multi-axis balance (≥3 axes, same numeric scale)
+  - **line** → time series or progression over ≥2 points`;
+}
+
 /** Conversational steering rules — identical across all 3 prompts */
 export function getConversationalSteeringBlock(): string {
   return `## Conversational Steering

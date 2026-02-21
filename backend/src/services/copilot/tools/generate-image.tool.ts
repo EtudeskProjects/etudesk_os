@@ -32,6 +32,15 @@ export const generateImageTool = defineTool({
       .default('medium')
       .describe('Image quality: low (~$0.01), medium (~$0.04), high (~$0.17). Use medium for most cases.'),
   }),
+  normalize: (raw) => {
+    // Handle aliases: description → prompt, dimensions → size
+    return {
+      ...raw,
+      prompt: raw.prompt || raw.description || raw.text || '',
+      size: raw.size || raw.dimensions || raw.resolution || '1024x1024',
+      quality: raw.quality || raw.level || 'medium',
+    };
+  },
   execute: async ({ prompt, size: rawSize, quality: rawQuality }) => {
     const jobId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     const size = rawSize.toLowerCase() as '1024x1024' | '1536x1024' | '1024x1536';

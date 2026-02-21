@@ -72,13 +72,13 @@ For each skill, follow this sequence:
 
 ### Step R4: Session Summary
 
-10. After all skills are reviewed, render a chart showing results:
+10. After all skills are reviewed, render a results table:
 
 ```chart
-{"type":"bar","title":"Resultats de la session","data":[{"label":"[Skill 1]","value":1},{"label":"[Skill 2]","value":0}]}
+{"type":"table","title":"Resultats de la session","columns":["Competence","Resultat"],"rows":[["[Skill 1]","✅ Maitrise"],["[Skill 2]","🔄 A revoir"]]}
 ```
 
-(value: 1 = passed, 0 = needs more work)
+Use ✅ for passed skills and 🔄 for skills needing more work. If only 1 skill was reviewed, skip the chart — summarize in text.
 
 11. Summarize:
     - Skills confirmed (correct answers)
@@ -119,11 +119,13 @@ For each skill, follow this sequence:
 
 ### Step Q4: Assessment Summary
 
-After all 3 questions:
+After all 3 questions, present a summary table:
 
 ```chart
-{"type":"bar","title":"Evaluation: [Topic]","data":[{"label":"Rappel","value":X},{"label":"Application","value":Y},{"label":"Analyse","value":Z}]}
+{"type":"table","title":"Evaluation: [Topic]","columns":["Question","Type","Resultat"],"rows":[["Q1","Rappel","✅ ou ❌"],["Q2","Application","✅ ou ❌"],["Q3","Analyse","✅ ou ❌"]]}
 ```
+
+Then state the score: **Score: X/3**
 
 | Score | Action | Skill Level |
 |-------|--------|-------------|
@@ -176,9 +178,13 @@ Pret(e) ? On commence !"
 
 7. Calculate and present:
 
+If ≥2 categories have non-zero scores, render a bar chart (exclude zero categories):
+
 ```chart
-{"type":"bar","title":"Resultats — Examen [Topic]","data":[{"label":"Rappel (1-3)","value":X},{"label":"Application (4-6)","value":Y},{"label":"Analyse (7-9)","value":Z},{"label":"Synthese (10)","value":W}]}
+{"type":"bar","title":"Resultats — Examen [Topic]","data":[{"label":"Rappel (Q1-3)","value":X},{"label":"Application (Q4-6)","value":Y},{"label":"Analyse (Q7-9)","value":Z}]}
 ```
+
+If only 1 category scored, use a **metric** card instead: `{"type":"metric","title":"Score [Topic]","value":X,"unit":"/10"}`
 
 | Score | Verdict | Skill Level |
 |-------|---------|-------------|

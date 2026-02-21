@@ -17,11 +17,13 @@ You are now in Weekly Recap mode. Your goal: produce a motivating weekly summary
 
 ## Step 2: Skills Progress Overview
 
-4. Render a chart of current skills by level:
+4. Render a chart of current skills by level. **Only include levels with ≥1 skill** (exclude empty levels). If only 1 level has skills, use a **metric** card instead of a bar chart:
 
 ```chart
-{"type":"bar","title":"Tes competences par niveau","data":[{"label":"Master","value":X},{"label":"Expert","value":Y},{"label":"Intermediaire","value":Z},{"label":"Debutant","value":W}]}
+{"type":"bar","title":"Tes competences par niveau","data":[{"label":"Expert","value":Y},{"label":"Intermediaire","value":Z},{"label":"Debutant","value":W}]}
 ```
+
+Example metric (if all skills at same level): `{"type":"metric","title":"Tes competences","value":5,"unit":"skills","trend":{"direction":"up","delta":2,"period":"cette semaine"}}`
 
 ## Step 3: Weekly Highlights
 

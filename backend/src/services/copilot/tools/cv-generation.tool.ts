@@ -114,6 +114,13 @@ export function createCvGenerationTool(talentId: string, avatarUrl?: string): To
                                         tool_use_id: block.id,
                                         content: typeof result === 'string' ? result : JSON.stringify(result),
                                     });
+                                } else {
+                                    toolResults.push({
+                                        type: 'tool_result',
+                                        tool_use_id: block.id,
+                                        content: JSON.stringify({ error: `Tool "${block.name}" not available` }),
+                                        is_error: true,
+                                    });
                                 }
                             }
                         }

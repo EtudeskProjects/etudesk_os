@@ -80,6 +80,15 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
         .default('')
         .describe('Additional data as JSON string or object. For book_space: \'{"startDatetime":"...","endDatetime":"..."}\'. For agenda: \'{"code":"FOLLOW_UP","title":"...","dueAt":"...","organizationId":"...","priority":"HIGH","metadata":{...}}\''),
     }),
+    normalize: (raw) => {
+      // Handle aliases: entity_id → entityId, data → dataJson, data_json → dataJson
+      return {
+        ...raw,
+        action: raw.action || raw.type,
+        entityId: raw.entityId || raw.entity_id || raw.id || '',
+        dataJson: raw.dataJson || raw.data_json || raw.data || '',
+      };
+    },
     execute: async ({ action, entityId, dataJson }) => {
       const talentId = authenticatedTalentId;
       // Accept dataJson as object or string (Claude native SDK may send objects)

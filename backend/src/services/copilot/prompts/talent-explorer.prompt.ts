@@ -8,7 +8,7 @@ import { TalentContext } from '../types';
 import { getOntologyForExplore } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
 import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
-import { getActiveSkillBlock } from './prompt-shared';
+import { getActiveSkillBlock, getChartRulesBlock } from './prompt-shared';
 
 /** Get language-specific instructions for the prompt */
 function getLanguageInstructions(language?: 'fr' | 'en') {
@@ -193,7 +193,9 @@ When showing stats, distributions, or comparisons:
 {"type":"bar","title":"Chart Title","data":[{"label":"Category A","value":10},{"label":"Category B","value":20}]}
 \`\`\`
 
-Supported chart types:
+${getChartRulesBlock()}
+
+Supported chart types (explore mode):
 - **bar**: \`{"type":"bar","title":"...","data":[{"label":"A","value":10}]}\`
 - **donut**: \`{"type":"donut","title":"...","data":[{"label":"A","value":30}],"total_label":"Total"}\`
 - **stacked_bar**: \`{"type":"stacked_bar","title":"...","data":[{"label":"Poste","segments":[{"key":"submitted","value":20,"color":"primary"},{"key":"accepted","value":5,"color":"success"}]}]}\`

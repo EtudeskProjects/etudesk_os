@@ -9,7 +9,7 @@ import { getContextForPrompt } from '../context';
 import { getOntologyForStudy } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
 import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
-import { getActiveSkillBlock } from './prompt-shared';
+import { getActiveSkillBlock, getChartRulesBlock } from './prompt-shared';
 
 /** Get language-specific instructions for the prompt */
 function getLanguageInstructions(language?: 'fr' | 'en') {
@@ -428,7 +428,9 @@ When showing learning progress, scores, or statistics:
 {"type":"bar","title":"Chart Title","data":[{"label":"Category A","value":10},{"label":"Category B","value":20}]}
 \`\`\`
 
-Supported chart types:
+${getChartRulesBlock()}
+
+Supported chart types (study mode):
 - **bar**: \`{"type":"bar","title":"...","data":[{"label":"A","value":10}]}\`
 - **metric**: \`{"type":"metric","title":"...","value":23.5,"unit":"%","trend":{"direction":"up","delta":5.2,"period":"vs mois precedent"}}\`
 - **table**: For ANY tabular output. \`{"type":"table","title":"...","columns":["Col A","Col B"],"rows":[["A",1],["B",2]]}\`

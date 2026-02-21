@@ -8,7 +8,7 @@ import { OrgContext } from '../types';
 import { getOntologyForOrg } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
 import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
-import { getActiveSkillBlock } from './prompt-shared';
+import { getActiveSkillBlock, getChartRulesBlock } from './prompt-shared';
 
 /** Get language-specific instructions for the prompt */
 function getLanguageInstructions(language?: 'fr' | 'en') {
@@ -178,7 +178,9 @@ When showing stats, distributions, or comparisons:
 {"type":"bar","title":"Chart Title","data":[{"label":"Category A","value":10},{"label":"Category B","value":20}]}
 \`\`\`
 
-Supported chart types:
+${getChartRulesBlock()}
+
+Supported chart types (org mode):
 - **bar**: Horizontal bar chart. \`{"type":"bar","title":"...","data":[{"label":"A","value":10}]}\`
 - **donut**: Ring chart with total center. \`{"type":"donut","title":"...","data":[{"label":"A","value":30}],"total_label":"Total"}\`
 - **stacked_bar**: Horizontal bars with colored segments. \`{"type":"stacked_bar","title":"...","data":[{"label":"Poste","segments":[{"key":"submitted","value":20,"color":"primary"},{"key":"accepted","value":5,"color":"success"}]}]}\`
