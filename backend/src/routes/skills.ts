@@ -93,6 +93,15 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
       return res.json({ data: { id: existing.rows[0].id, updated: true } });
     }
 
+    // Check max 100 skills limit
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS total FROM talent_skills WHERE talent_id = $1`,
+      [talentId]
+    );
+    if (countResult.rows[0].total >= 100) {
+      return res.status(400).json({ error: 'Limite de 100 compétences atteinte. Supprime ou modifie des compétences existantes avant d\'en ajouter.' });
+    }
+
     const columns = ['talent_id', 'canonical_name', 'type', 'proficiency_level'];
     const values: any[] = [talentId, canonicalName, type, proficiencyLevel];
     if (context) { columns.push('context'); values.push(context); }

@@ -38,16 +38,45 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
       try {
         switch (action) {
           case 'add': {
-            // Check if skill already exists
+            // Check if skill already exists (exact match)
             const existing = await pool.query(
               `SELECT id, proficiency_level FROM talent_skills WHERE talent_id = $1 AND LOWER(canonical_name) = LOWER($2)`,
               [talentId, skillName]
             );
 
             if (existing.rows.length > 0) {
+              // Smart merge: if new level is higher, auto-upgrade instead of rejecting
+              const LEVEL_ORDER = ['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'];
+              const currentIdx = LEVEL_ORDER.indexOf(existing.rows[0].proficiency_level);
+              const newIdx = LEVEL_ORDER.indexOf(proficiencyLevel);
+              if (newIdx > currentIdx) {
+                await pool.query(
+                  `UPDATE talent_skills SET proficiency_level = $3, updated_at = NOW()
+                   WHERE talent_id = $1 AND LOWER(canonical_name) = LOWER($2)`,
+                  [talentId, skillName, proficiencyLevel]
+                );
+                logger.info(`[manage_skills] Auto-upgraded skill "${skillName}" from ${existing.rows[0].proficiency_level} to ${proficiencyLevel} for talent ${talentId}`);
+                return {
+                  success: true,
+                  message: `Compétence "${skillName}" mise à jour de ${existing.rows[0].proficiency_level} à ${proficiencyLevel}.`,
+                  skill: { name: skillName, level: proficiencyLevel, origin, merged: true },
+                };
+              }
               return {
                 success: false,
                 error: `La compétence "${skillName}" existe déjà (niveau: ${existing.rows[0].proficiency_level}). Utilise l'action "update" pour changer le niveau.`,
+              };
+            }
+
+            // Check max 100 skills limit
+            const countResult = await pool.query(
+              `SELECT COUNT(*)::int AS total FROM talent_skills WHERE talent_id = $1`,
+              [talentId]
+            );
+            if (countResult.rows[0].total >= 100) {
+              return {
+                success: false,
+                error: `Tu as atteint la limite de 100 compétences. Supprime ou modifie des compétences existantes depuis ton profil avant d'en ajouter de nouvelles.`,
               };
             }
 
