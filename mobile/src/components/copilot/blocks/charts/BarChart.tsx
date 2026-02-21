@@ -39,15 +39,28 @@ const CHART_PALETTE_DARK = [
 
 export const BarChart: React.FC<BarChartProps> = ({ title, data }) => {
   const { colors, mode } = useTheme();
-  const maxValue = Math.max(...data.map(item => item.value), 1);
+  // Filter out items with value 0 or non-numeric — zero bars add visual noise
+  const safeData = Array.isArray(data) ? data.filter(item => item && typeof item.value === 'number' && item.value > 0) : [];
+  const maxValue = safeData.length > 0 ? Math.max(...safeData.map(item => item.value), 1) : 1;
   const palette = mode === 'dark' ? CHART_PALETTE_DARK : CHART_PALETTE;
+
+  if (safeData.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+        <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
+          Aucune donnée disponible
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
 
       <View style={styles.chart}>
-        {data.map((item, index) => {
+        {safeData.map((item, index) => {
           const barWidth = Math.max((item.value / maxValue) * 100, 1);
           const barColor = palette[index % palette.length];
           const isWide = barWidth > 30;

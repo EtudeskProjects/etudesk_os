@@ -42,7 +42,20 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
 export const DonutChart: React.FC<DonutChartProps> = ({ title, data, total_label }) => {
   const { colors, mode } = useTheme();
   const palette = mode === 'dark' ? CHART_PALETTE_DARK : CHART_PALETTE;
-  const total = data.reduce((sum, d) => sum + d.value, 0);
+  // Filter out zero-value segments — they add empty legend entries
+  const safeData = Array.isArray(data) ? data.filter(d => d && typeof d.value === 'number' && d.value > 0) : [];
+  const total = safeData.reduce((sum, d) => sum + d.value, 0);
+
+  if (safeData.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+        <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textTertiary }}>
+          Aucune donnée disponible
+        </Text>
+      </View>
+    );
+  }
 
   const cx = 56;
   const cy = 56;
@@ -50,7 +63,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({ title, data, total_label
   const strokeWidth = 20;
 
   let currentAngle = 0;
-  const arcs = data.map((segment, i) => {
+  const arcs = safeData.map((segment, i) => {
     const fraction = total > 0 ? segment.value / total : 0;
     const angle = fraction * 360;
     const startAngle = currentAngle;
@@ -92,7 +105,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({ title, data, total_label
         </View>
 
         <View style={styles.legendList}>
-          {data.map((segment, i) => {
+          {safeData.map((segment, i) => {
             const pct = total > 0 ? Math.round((segment.value / total) * 100) : 0;
             return (
               <View key={i} style={styles.legendItem}>

@@ -15,11 +15,25 @@ interface TableChartProps {
 
 export const TableChart: React.FC<TableChartProps> = ({ title, columns, rows }) => {
   const { colors } = useTheme();
+  const safeCols = Array.isArray(columns) ? columns : [];
+  const safeRows = Array.isArray(rows) ? rows : [];
 
-  const formatCell = (value: string | number): string => {
+  const formatCell = (value: string | number | null | undefined): string => {
+    if (value == null) return '—';
     if (typeof value === 'number') return value.toLocaleString('fr-FR');
     return String(value);
   };
+
+  if (safeCols.length === 0 && safeRows.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+        <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
+          Aucune donnée disponible
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -27,8 +41,9 @@ export const TableChart: React.FC<TableChartProps> = ({ title, columns, rows }) 
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View>
+          {safeCols.length > 0 && (
           <View style={[styles.tableRow, { borderBottomWidth: 1, borderBottomColor: withOpacity(colors.textPrimary, OPACITY[8]) }]}>
-            {columns.map((col, i) => (
+            {safeCols.map((col, i) => (
               <View key={i} style={[styles.cell, i === 0 && styles.firstCell]}>
                 <Text style={[styles.headerCell, { color: colors.textTertiary }]} numberOfLines={1}>
                   {col}
@@ -36,8 +51,16 @@ export const TableChart: React.FC<TableChartProps> = ({ title, columns, rows }) 
               </View>
             ))}
           </View>
+          )}
 
-          {rows.map((row, ri) => (
+          {safeRows.map((row, ri) => {
+            const safeRow = Array.isArray(row) ? row : [];
+            // Pad row to match column count to avoid misalignment
+            const colCount = safeCols.length || safeRow.length;
+            const paddedRow = safeRow.length < colCount
+              ? [...safeRow, ...Array(colCount - safeRow.length).fill(null)]
+              : safeRow;
+            return (
             <View
               key={ri}
               style={[
@@ -45,7 +68,7 @@ export const TableChart: React.FC<TableChartProps> = ({ title, columns, rows }) 
                 ri % 2 === 1 && { backgroundColor: withOpacity(colors.textPrimary, OPACITY[5]) },
               ]}
             >
-              {row.map((cell, ci) => (
+              {paddedRow.map((cell, ci) => (
                 <View key={ci} style={[styles.cell, ci === 0 && styles.firstCell]}>
                   <Text style={[styles.cellText, { color: ci === 0 ? colors.textPrimary : colors.textSecondary }]} numberOfLines={1}>
                     {formatCell(cell)}
@@ -53,7 +76,8 @@ export const TableChart: React.FC<TableChartProps> = ({ title, columns, rows }) 
                 </View>
               ))}
             </View>
-          ))}
+            );
+          })}
         </View>
       </ScrollView>
     </View>

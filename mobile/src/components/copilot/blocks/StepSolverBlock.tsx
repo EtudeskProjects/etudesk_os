@@ -69,9 +69,21 @@ const InlineMath: React.FC<{ expression: string; bgColor: string; textColor: str
 
 export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
   const { colors } = useTheme();
-  const [revealedCount, setRevealedCount] = useState(1); // First step always visible
-  const totalSteps = data.steps.length;
-  const allRevealed = revealedCount >= totalSteps;
+  const safeSteps = Array.isArray(data?.steps) ? data.steps : [];
+  const totalSteps = safeSteps.length;
+  const [revealedCount, setRevealedCount] = useState(Math.min(1, totalSteps)); // First step always visible
+  const allRevealed = totalSteps === 0 || revealedCount >= totalSteps;
+
+  if (totalSteps === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{data?.title || 'Résolution'}</Text>
+        <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
+          Aucune étape disponible
+        </Text>
+      </View>
+    );
+  }
 
   const revealNext = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -105,7 +117,7 @@ export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
       </Text>
 
       {/* Steps */}
-      {data.steps.map((step, index) => {
+      {safeSteps.map((step, index) => {
         const isRevealed = index < revealedCount;
         const isActive = index === revealedCount - 1;
 

@@ -1,5 +1,6 @@
 /**
  * ChartBlock Component — Router that dispatches to chart sub-components
+ * Includes minimum-data gate: suppresses charts that have too few meaningful items
  */
 
 import React from 'react';
@@ -19,8 +20,28 @@ interface ChartBlockProps {
   };
 }
 
+/**
+ * Count meaningful (non-zero) items in a label/value data array.
+ * Returns 0 if data is not a valid array.
+ */
+function countMeaningfulItems(data: any): number {
+  if (!Array.isArray(data)) return 0;
+  return data.filter(item => item && typeof item.value === 'number' && item.value > 0).length;
+}
+
 export const ChartBlock: React.FC<ChartBlockProps> = ({ data }) => {
-  switch (data.type) {
+  // Minimum-data gate: bar, donut, stacked_bar, line need ≥2 meaningful items
+  // A single bar/slice/point is not a chart — the agent should use text or metric instead
+  const chartType = data.type || 'bar';
+  if (['bar', 'donut', 'line'].includes(chartType)) {
+    if (countMeaningfulItems(data.data) < 2) return null;
+  }
+  if (chartType === 'stacked_bar') {
+    const items = Array.isArray(data.data) ? data.data : [];
+    if (items.length < 2) return null;
+  }
+
+  switch (chartType) {
     case 'donut':
       return <DonutChart title={data.title} data={data.data} total_label={data.total_label} />;
 

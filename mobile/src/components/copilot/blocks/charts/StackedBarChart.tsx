@@ -39,10 +39,23 @@ const resolveColor = (colors: any, colorKey: string, mode: string, fallbackIdx: 
 
 export const StackedBarChart: React.FC<StackedBarChartProps> = ({ title, data }) => {
   const { colors, mode } = useTheme();
-  const maxTotal = Math.max(...data.map(item => item.segments.reduce((s, seg) => s + seg.value, 0)), 1);
+  const safeData = Array.isArray(data) ? data.filter(item => item && Array.isArray(item.segments)) : [];
+
+  if (safeData.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+        <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textTertiary }}>
+          Aucune donnée disponible
+        </Text>
+      </View>
+    );
+  }
+
+  const maxTotal = Math.max(...safeData.map(item => item.segments.reduce((s, seg) => s + seg.value, 0)), 1);
 
   const legendKeys = new Map<string, string>();
-  data.forEach(item => {
+  safeData.forEach(item => {
     item.segments.forEach(seg => {
       if (!legendKeys.has(seg.key)) legendKeys.set(seg.key, seg.color);
     });
@@ -53,7 +66,7 @@ export const StackedBarChart: React.FC<StackedBarChartProps> = ({ title, data })
       <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
 
       <View style={styles.chart}>
-        {data.map((item, index) => {
+        {safeData.map((item, index) => {
           const total = item.segments.reduce((s, seg) => s + seg.value, 0);
           return (
             <View key={index} style={styles.barRow}>

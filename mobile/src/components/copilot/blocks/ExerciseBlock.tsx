@@ -52,7 +52,7 @@ const FillGapExercise: React.FC<{ data: FillGapData; onAnswer?: (answer: string)
   const [validated, setValidated] = useState(false);
   const [activeGapId, setActiveGapId] = useState<string | null>(null);
 
-  const allFilled = data.gaps.every((g) => selections[g.id]);
+  const allFilled = data.gaps.length > 0 && data.gaps.every((g) => selections[g.id]);
 
   const handleSelectOption = useCallback(
     (gapId: string, option: string) => {
@@ -185,6 +185,9 @@ const FillGapExercise: React.FC<{ data: FillGapData; onAnswer?: (answer: string)
 
 // --- Matching Exercise ---
 
+// Pair colors for matching visual indicators
+const PAIR_COLORS = ['#E07A5F', '#3D85C6', '#81B29A', '#F2CC8F', '#9B72AA', '#E8A87C', '#5B8C5A', '#D4A5A5'];
+
 const MatchingExercise: React.FC<{ data: MatchingData; onAnswer?: (answer: string) => void }> = ({
   data,
   onAnswer,
@@ -204,12 +207,30 @@ const MatchingExercise: React.FC<{ data: MatchingData; onAnswer?: (answer: strin
     return indices;
   });
 
-  const allMatched = Object.keys(matches).length === data.pairs.length;
+  const allMatched = data.pairs.length > 0 && Object.keys(matches).length === data.pairs.length;
+
+  // Get the pair number for a left index (1-based, in order of matching)
+  const getPairNumber = (leftIdx: number): number | null => {
+    if (matches[leftIdx] === undefined) return null;
+    const matchedKeys = Object.keys(matches).map(Number).sort((a, b) => a - b);
+    return matchedKeys.indexOf(leftIdx) + 1;
+  };
+
+  // Get the pair number for a right actual index
+  const getRightPairNumber = (actualRightIdx: number): number | null => {
+    const entry = Object.entries(matches).find(([, r]) => r === actualRightIdx);
+    if (!entry) return null;
+    return getPairNumber(Number(entry[0]));
+  };
+
+  // Get pair color by pair number
+  const getPairColor = (pairNum: number): string => PAIR_COLORS[(pairNum - 1) % PAIR_COLORS.length];
 
   const handleLeftPress = useCallback(
     (idx: number) => {
       if (validated) return;
-      setSelectedLeft(idx);
+      // Toggle: deselect if already selected
+      setSelectedLeft((prev) => (prev === idx ? null : idx));
     },
     [validated]
   );
@@ -218,7 +239,15 @@ const MatchingExercise: React.FC<{ data: MatchingData; onAnswer?: (answer: strin
     (rightShuffledIdx: number) => {
       if (validated || selectedLeft === null) return;
       const actualRightIdx = shuffledRight[rightShuffledIdx];
-      setMatches((prev) => ({ ...prev, [selectedLeft]: actualRightIdx }));
+      // Remove any previous match pointing to this right item
+      setMatches((prev) => {
+        const next = { ...prev };
+        for (const [k, v] of Object.entries(next)) {
+          if (v === actualRightIdx) delete next[Number(k)];
+        }
+        next[selectedLeft] = actualRightIdx;
+        return next;
+      });
       setSelectedLeft(null);
     },
     [validated, selectedLeft, shuffledRight]
@@ -232,8 +261,7 @@ const MatchingExercise: React.FC<{ data: MatchingData; onAnswer?: (answer: strin
     onAnswer?.(`matching: ${correct}/${data.pairs.length} correct`);
   }, [matches, data.pairs.length, onAnswer]);
 
-  const getMatchColor = (leftIdx: number) => {
-    if (!validated) return colors.primary;
+  const getValidationColor = (leftIdx: number) => {
     return leftIdx === matches[leftIdx] ? colors.success : colors.error;
   };
 
@@ -248,64 +276,98 @@ const MatchingExercise: React.FC<{ data: MatchingData; onAnswer?: (answer: strin
       <View style={styles.matchingContainer}>
         {/* Left column */}
         <View style={styles.matchColumn}>
-          {data.pairs.map((pair, i) => (
-            <Pressable
-              key={i}
-              style={[
-                styles.matchItem,
-                {
-                  backgroundColor:
-                    selectedLeft === i
-                      ? withOpacity(colors.primary, OPACITY[15])
-                      : matches[i] !== undefined
-                        ? withOpacity(getMatchColor(i), OPACITY[10])
-                        : colors.background,
-                  borderColor:
-                    selectedLeft === i
-                      ? colors.primary
-                      : matches[i] !== undefined
-                        ? getMatchColor(i)
-                        : colors.borderColor,
-                },
-              ]}
-              onPress={() => handleLeftPress(i)}
-            >
-              <Text style={[styles.matchText, { color: colors.textPrimary }]}>{pair.left}</Text>
-              {validated && matches[i] !== undefined && (
-                matches[i] === i ? (
-                  <CheckCircle2 size={14} color={colors.success} />
-                ) : (
-                  <XCircle size={14} color={colors.error} />
-                )
-              )}
-            </Pressable>
-          ))}
+          {data.pairs.map((pair, i) => {
+            const pairNum = getPairNumber(i);
+            const pairColor = pairNum ? getPairColor(pairNum) : null;
+            const isSelected = selectedLeft === i;
+            const isMatched = matches[i] !== undefined;
+
+            return (
+              <Pressable
+                key={i}
+                style={[
+                  styles.matchItem,
+                  {
+                    backgroundColor: validated && isMatched
+                      ? withOpacity(getValidationColor(i), OPACITY[10])
+                      : isSelected
+                        ? withOpacity(colors.primary, OPACITY[15])
+                        : isMatched && pairColor
+                          ? withOpacity(pairColor, OPACITY[10])
+                          : colors.background,
+                    borderColor: validated && isMatched
+                      ? getValidationColor(i)
+                      : isSelected
+                        ? colors.primary
+                        : isMatched && pairColor
+                          ? pairColor
+                          : colors.borderColor,
+                  },
+                ]}
+                onPress={() => handleLeftPress(i)}
+                disabled={validated}
+              >
+                {isMatched && pairNum && (
+                  <View style={[styles.pairBadge, { backgroundColor: validated ? getValidationColor(i) : pairColor! }]}>
+                    <Text style={styles.pairBadgeText}>{pairNum}</Text>
+                  </View>
+                )}
+                <Text style={[styles.matchText, { color: colors.textPrimary }]}>{pair.left}</Text>
+                {validated && isMatched && (
+                  matches[i] === i ? (
+                    <CheckCircle2 size={14} color={colors.success} />
+                  ) : (
+                    <XCircle size={14} color={colors.error} />
+                  )
+                )}
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* Right column */}
         <View style={styles.matchColumn}>
-          {shuffledRight.map((actualIdx, shuffledIdx) => (
-            <Pressable
-              key={shuffledIdx}
-              style={[
-                styles.matchItem,
-                {
-                  backgroundColor: isRightMatched(actualIdx)
-                    ? withOpacity(colors.primary, OPACITY[5])
-                    : colors.background,
-                  borderColor: isRightMatched(actualIdx)
-                    ? withOpacity(colors.primary, OPACITY[30])
-                    : colors.borderColor,
-                },
-              ]}
-              onPress={() => handleRightPress(shuffledIdx)}
-              disabled={validated}
-            >
-              <Text style={[styles.matchText, { color: colors.textPrimary }]}>
-                {data.pairs[actualIdx].right}
-              </Text>
-            </Pressable>
-          ))}
+          {shuffledRight.map((actualIdx, shuffledIdx) => {
+            const pairNum = getRightPairNumber(actualIdx);
+            const pairColor = pairNum ? getPairColor(pairNum) : null;
+            const matched = isRightMatched(actualIdx);
+            // Find leftIdx for validation color
+            const matchedLeftIdx = matched
+              ? Number(Object.entries(matches).find(([, r]) => r === actualIdx)?.[0])
+              : null;
+
+            return (
+              <Pressable
+                key={shuffledIdx}
+                style={[
+                  styles.matchItem,
+                  {
+                    backgroundColor: validated && matched && matchedLeftIdx !== null
+                      ? withOpacity(getValidationColor(matchedLeftIdx), OPACITY[10])
+                      : matched && pairColor
+                        ? withOpacity(pairColor, OPACITY[10])
+                        : colors.background,
+                    borderColor: validated && matched && matchedLeftIdx !== null
+                      ? getValidationColor(matchedLeftIdx)
+                      : matched && pairColor
+                        ? pairColor
+                        : colors.borderColor,
+                  },
+                ]}
+                onPress={() => handleRightPress(shuffledIdx)}
+                disabled={validated}
+              >
+                {matched && pairNum && (
+                  <View style={[styles.pairBadge, { backgroundColor: validated && matchedLeftIdx !== null ? getValidationColor(matchedLeftIdx) : pairColor! }]}>
+                    <Text style={styles.pairBadgeText}>{pairNum}</Text>
+                  </View>
+                )}
+                <Text style={[styles.matchText, { color: colors.textPrimary }]}>
+                  {data.pairs[actualIdx].right}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
 
@@ -512,7 +574,11 @@ export const ExerciseBlock: React.FC<ExerciseBlockProps> = ({ data, onAnswer }) 
       case 'ordering':
         return <OrderingExercise data={data} onAnswer={onAnswer} />;
       default:
-        return null;
+        return (
+          <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
+            Type d'exercice non supporté : {String((data as any)?.type || 'inconnu')}
+          </Text>
+        );
     }
   };
 
@@ -607,6 +673,19 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.sm,
     flex: 1,
     lineHeight: TYPOGRAPHY.fontSize.sm * 1.4,
+  },
+  pairBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pairBadgeText: {
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: 11,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    color: '#FFFFFF',
   },
   // Ordering
   orderItem: {
