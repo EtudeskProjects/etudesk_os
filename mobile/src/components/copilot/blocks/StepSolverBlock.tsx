@@ -29,7 +29,8 @@ interface StepSolverBlockProps {
   };
 }
 
-const MATH_HEIGHT = 50;
+const MIN_MATH_HEIGHT = 50;
+const MAX_MATH_HEIGHT = 160;
 
 /** Inline KaTeX WebView for a single math expression within a step */
 const InlineMath: React.FC<{ expression: string; bgColor: string; textColor: string }> = ({
@@ -37,18 +38,29 @@ const InlineMath: React.FC<{ expression: string; bgColor: string; textColor: str
   bgColor,
   textColor,
 }) => {
+  const [height, setHeight] = useState(MIN_MATH_HEIGHT);
   const html = useMemo(
     () => buildKaTeXHTML(expression, { backgroundColor: bgColor, textColor, displayMode: true }),
     [expression, bgColor, textColor]
   );
 
+  const onMessage = useCallback((event: { nativeEvent: { data: string } }) => {
+    try {
+      const msg = JSON.parse(event.nativeEvent.data);
+      if (msg.type === 'height') {
+        setHeight(Math.max(MIN_MATH_HEIGHT, Math.min(MAX_MATH_HEIGHT, msg.value + 12)));
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   return (
-    <View style={{ height: MATH_HEIGHT, borderRadius: 8, overflow: 'hidden', marginTop: SPACING.xs }}>
+    <View style={{ height, borderRadius: 8, overflow: 'hidden', marginTop: SPACING.xs }}>
       <WebView
         source={{ html, baseUrl: 'https://cdn.jsdelivr.net' }}
         style={{ flex: 1, backgroundColor: 'transparent' }}
         scrollEnabled={false}
         javaScriptEnabled
+        onMessage={onMessage}
         originWhitelist={['*']}
       />
     </View>

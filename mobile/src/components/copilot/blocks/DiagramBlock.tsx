@@ -31,11 +31,9 @@ function resolveCode(data: DiagramBlockProps['data']): string {
 /** Sanitize Mermaid code to fix common LLM generation issues */
 function sanitizeMermaidCode(code: string): string {
   let s = code;
-  // Fix literal \n (two chars: backslash + n) → real newlines
-  // This happens when LLMs double-escape newlines in JSON
-  s = s.replace(/\\n/g, '\n');
-  // Replace <br/> and <br> with newline
-  s = s.replace(/<br\s*\/?>/gi, '\n');
+  // Convert literal \n (two chars: backslash + n) → <br> for Mermaid line breaks in labels
+  // Mermaid uses <br> tags (not \n) for line breaks when securityLevel is 'loose'
+  s = s.replace(/\\n/g, '<br>');
   // Escape parentheses inside square bracket labels []
   s = s.replace(/\[([^\]]*)\]/g, (_, content: string) => {
     const fixed = content.replace(/\(/g, '&#40;').replace(/\)/g, '&#41;');

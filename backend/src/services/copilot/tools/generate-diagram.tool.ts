@@ -23,10 +23,11 @@ const VALID_DIAGRAM_PREFIXES: Record<string, string[]> = {
  */
 function sanitizeMermaidCode(code: string): string {
   let sanitized = code;
-  // Replace <br/> and <br> tags with newline character that Mermaid supports in labels
-  sanitized = sanitized.replace(/<br\s*\/?>/gi, '\\n');
+  // Normalize <br/> variants to <br> (Mermaid supports <br> with securityLevel: 'loose')
+  sanitized = sanitized.replace(/<br\s*\/?>/gi, '<br>');
+  // Convert literal \n (2 chars: backslash + n) to <br> for Mermaid label line breaks
+  sanitized = sanitized.replace(/\\n/g, '<br>');
   // Escape parentheses inside square bracket labels [] — they break Mermaid parsing
-  // Match [...content with (...)...] and replace parens with unicode equivalents
   sanitized = sanitized.replace(/\[([^\]]*)\]/g, (match, content) => {
     const fixed = content.replace(/\(/g, '&#40;').replace(/\)/g, '&#41;');
     return `[${fixed}]`;

@@ -618,7 +618,9 @@ function sanitizeDiagramBlocks(text: string): string {
       }
       if (parsed.code && typeof parsed.code === 'string') {
         let code = parsed.code;
-        code = code.replace(/<br\s*\/?>/gi, '\\n');
+        // Normalize <br> variants and literal \n to <br> (Mermaid line breaks)
+        code = code.replace(/<br\s*\/?>/gi, '<br>');
+        code = code.replace(/\\n/g, '<br>');
         code = code.replace(/\[([^\]]*)\]/g, (_: string, content: string) => {
           const fixed = content.replace(/\(/g, '&#40;').replace(/\)/g, '&#41;');
           return `[${fixed}]`;
