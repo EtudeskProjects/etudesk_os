@@ -34,6 +34,8 @@ export function defineTool<T extends z.ZodType>(opts: {
   name: string;
   description: string;
   parameters: T;
+  /** Optional normalizer applied BEFORE Zod parsing — use to remap common LLM param aliases */
+  normalize?: (raw: Record<string, any>) => Record<string, any>;
   execute: (input: z.infer<T>) => Promise<any>;
 }): ToolDefinition {
   // Convert Zod schema to JSON Schema (OpenAPI 3 target strips $schema key)
@@ -59,9 +61,13 @@ export function defineTool<T extends z.ZodType>(opts: {
     },
     execute: async (input: any) => {
       // Unwrap nested {input: {...}} that Claude sometimes sends
-      const unwrapped = (input && typeof input === 'object' && 'input' in input && Object.keys(input).length === 1)
+      let unwrapped = (input && typeof input === 'object' && 'input' in input && Object.keys(input).length === 1)
         ? input.input
         : input;
+      // Apply normalizer if provided (remap LLM param aliases before Zod parsing)
+      if (opts.normalize && unwrapped && typeof unwrapped === 'object') {
+        unwrapped = opts.normalize(unwrapped);
+      }
       const parsed = opts.parameters.parse(unwrapped);
       return opts.execute(parsed);
     },

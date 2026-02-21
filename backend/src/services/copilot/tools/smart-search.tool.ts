@@ -288,6 +288,11 @@ export const smartSearchTool = defineTool({
       .optional()
       .describe('Optional structured filters. Example: {"contract_type":"CDI"} or {"type":"EMPLOYMENT"}. Put search criteria in query text instead when possible.'),
   }),
+  normalize: (raw) => ({
+    ...raw,
+    entity: raw.entity || raw.namespace || raw.entity_type,
+    topK: raw.topK ?? raw.top_k,
+  }),
   execute: async ({ query, entity, topK, filters: rawFilters }): Promise<any> => {
     const cacheKey = `${entity}:${query}:${topK}:${JSON.stringify(rawFilters || {})}`;
 

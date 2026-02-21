@@ -71,6 +71,11 @@ export const generateDiagramTool = defineTool({
       .describe('Mermaid diagram type: flowchart, sequenceDiagram, classDiagram, mindmap, timeline, gantt, pie, erDiagram. Use flowchart for processes, sequenceDiagram for interactions, mindmap for concepts, timeline for history, pie for distributions.'),
     mermaidCode: z.string().describe('Valid Mermaid code. Must start with the correct diagram type keyword (e.g., "flowchart TD", "sequenceDiagram", "mindmap"). Use French labels. CRITICAL RULES: 1) NEVER use <br/> or <br> tags — use \\n for line breaks inside labels. 2) NEVER use raw parentheses () inside square bracket labels [] — rephrase or remove them. 3) Keep labels short (max 6 words per line). 4) Use simple ASCII characters only in labels, no special punctuation.'),
   }),
+  normalize: (raw) => ({
+    ...raw,
+    diagramType: raw.diagramType || raw.type || raw.diagram_type,
+    mermaidCode: raw.mermaidCode || raw.code || raw.mermaid_code,
+  }),
   execute: async ({ title, diagramType: rawDiagramType, mermaidCode }) => {
     try {
       // Normalize diagramType case (Claude native SDK may send "Flowchart" or "FLOWCHART")

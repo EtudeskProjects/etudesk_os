@@ -74,9 +74,13 @@ async function executeWebSearch(query: string): Promise<string> {
 export const webSearchAsTool = defineTool({
   name: 'web_search',
   description:
-    'Search the web for current information (salary benchmarks, company info, market trends, training resources). Pass the search query as input. Use ONLY when internal data is insufficient.',
+    'Search the web for current information (salary benchmarks, company info, market trends, training resources). Use ONLY when internal data is insufficient.',
   parameters: z.object({
     query: z.string().describe('The search query in natural language. Be specific and include context (e.g., "salaire moyen développeur React Côte d\'Ivoire 2026").'),
+  }),
+  normalize: (raw) => ({
+    ...raw,
+    query: raw.query || (typeof raw.input === 'string' ? raw.input : raw.query),
   }),
   execute: async ({ query }) => {
     try {
