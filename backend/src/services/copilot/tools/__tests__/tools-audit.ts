@@ -38,17 +38,11 @@ interface TestResult {
 const results: TestResult[] = [];
 
 /**
- * OpenAI Agents SDK tool.invoke(context, inputJsonString)
- * context = {} (empty for standalone tests)
- * inputJsonString = JSON.stringify(params)
+ * Native Anthropic ToolDefinition pattern: toolObj.execute(params)
+ * execute() receives parsed params and returns the result directly.
  */
 async function invokeTool(toolObj: any, params: Record<string, any>): Promise<any> {
-  const raw = await toolObj.invoke({}, JSON.stringify(params));
-  // invoke returns a string — parse it back to object
-  if (typeof raw === 'string') {
-    try { return JSON.parse(raw); } catch { return raw; }
-  }
-  return raw;
+  return toolObj.execute(params);
 }
 
 async function runTest(
@@ -120,6 +114,19 @@ async function runTest(
     { toolName: 'smart_search', args: { entity: 'opportunities' } }
   );
 
+  // Entity inference test — NO entity param, should infer from query
+  await runTest('smart_search', 'Entity inference (communauté sans entity param)',
+    { query: 'communauté tech innovation Abidjan', topK: 5 },
+    smartSearchTool,
+    { toolName: 'smart_search', args: { entity: 'communities' } }
+  );
+
+  await runTest('smart_search', 'Entity inference (stage sans entity param)',
+    { query: 'stage développement web', topK: 5 },
+    smartSearchTool,
+    { toolName: 'smart_search', args: { entity: 'opportunities' } }
+  );
+
   console.log('');
 
   // ═══════════════════════════════════════════
@@ -154,37 +161,6 @@ async function runTest(
     { intent: 'org_applications', paramsJson: JSON.stringify({ organizationId: ORG_ID }) },
     sqlTool,
     { toolName: 'sql_query', args: { intent: 'org_applications' } }
-  );
-
-  // Search intents
-  await runTest('sql_query', 'search_opportunities (React)',
-    { intent: 'search_opportunities', paramsJson: '{"query":"React","limit":5}' },
-    sqlTool,
-    { toolName: 'sql_query', args: { intent: 'search_opportunities' } }
-  );
-
-  await runTest('sql_query', 'search_communities (tech)',
-    { intent: 'search_communities', paramsJson: '{"query":"tech","limit":5}' },
-    sqlTool,
-    { toolName: 'sql_query', args: { intent: 'search_communities' } }
-  );
-
-  await runTest('sql_query', 'search_spaces (coworking)',
-    { intent: 'search_spaces', paramsJson: '{"query":"coworking","limit":5}' },
-    sqlTool,
-    { toolName: 'sql_query', args: { intent: 'search_spaces' } }
-  );
-
-  await runTest('sql_query', 'search_organizations (tech)',
-    { intent: 'search_organizations', paramsJson: '{"query":"tech","limit":5}' },
-    sqlTool,
-    { toolName: 'sql_query', args: { intent: 'search_organizations' } }
-  );
-
-  await runTest('sql_query', 'search_talents (développeur)',
-    { intent: 'search_talents', paramsJson: '{"query":"développeur","limit":5}' },
-    sqlTool,
-    { toolName: 'sql_query', args: { intent: 'search_talents' } }
   );
 
   // Edge: org intent without orgId

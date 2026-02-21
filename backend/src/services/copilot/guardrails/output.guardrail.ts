@@ -91,6 +91,47 @@ function extractModeFromAgent(agent: any): string | undefined {
   return undefined;
 }
 
+/**
+ * Sanitize output text — removes invalid entity cards before sending to client.
+ * - Study mode: remove ALL entity cards (purely pedagogical)
+ * - Invalid UUID: remove the card
+ * - Org mode: remove cards with types not in whitelist (talent/opportunity/document)
+ * - Cleans up triple-newlines after removals
+ * Returns the sanitized text (unchanged if no issues).
+ */
+export function sanitizeOutput(text: string, mode?: string): string {
+  if (!text) return text;
+  let result = text;
+
+  // Study mode: remove ALL entity cards
+  if (mode === 'study') {
+    result = result.replace(/```entity:\w+\s*\n\s*\{[^}]*\}\s*\n\s*```/g, '');
+  } else {
+    // Remove cards with invalid UUIDs
+    result = result.replace(/```entity:\w+\s*\n\s*(\{[^}]*\})\s*\n\s*```/g, (fullMatch, jsonStr) => {
+      try {
+        const json = JSON.parse(jsonStr);
+        if (!json.id || !UUID_REGEX.test(json.id)) {
+          return '';
+        }
+      } catch {
+        return ''; // Malformed JSON → remove
+      }
+      return fullMatch;
+    });
+
+    // Org mode: remove cards with types not in whitelist
+    if (mode === 'org') {
+      result = result.replace(/```entity:(?!talent|opportunity|document)\w+\s*\n\s*\{[^}]*\}\s*\n\s*```/g, '');
+    }
+  }
+
+  // Clean up triple-newlines left by removals
+  result = result.replace(/\n{3,}/g, '\n\n');
+
+  return result;
+}
+
 export const outputFormatGuardrail: OutputGuardrail = {
   name: 'output_format',
   execute: async ({ agentOutput, agent }) => {

@@ -16,7 +16,8 @@
     "seed:pinecone": "tsx src/scripts/seed-pinecone.ts",
     "pinecone:reset:seed": "tsx src/scripts/pinecone-reset-and-seed.ts",
     "validate:skills": "tsx scripts/validate-skills.ts",
-    "test:skills": "tsx src/services/copilot/skills/__tests__/skill-loader.test.ts"
+    "test:skills": "tsx src/services/copilot/skills/__tests__/skill-loader.test.ts",
+    "test:copilot": "tsx src/services/copilot/tools/__tests__/tools-audit.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",

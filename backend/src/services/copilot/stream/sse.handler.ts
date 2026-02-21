@@ -11,6 +11,7 @@ import { SSEEvent, MessageSegment } from '../types';
 import { runInputGuardrail } from '../guardrails/input.guardrail';
 import { getAnthropicClient } from '../../ai/provider';
 import { generateToolSummary } from './tool-summary';
+import { sanitizeOutput } from '../guardrails/output.guardrail';
 import { getFileBuffer } from '../../storage.service';
 import { logger } from '../../../utils';
 
@@ -163,6 +164,9 @@ export async function runAgentWithSSE(
     hitLoopDetection: boolean;
     hitTurnLimit: boolean;
     guardrailBlocked: boolean;
+    inputTokens: number;
+    outputTokens: number;
+    cacheReadTokens: number;
   };
 }> {
   const toolTrace: Array<{ name: string; args?: any; result?: any; duration?: number }> = [];
@@ -176,6 +180,9 @@ export async function runAgentWithSSE(
   let hitTurnLimit = false;
   let guardrailBlocked = false;
   let turnCount = 0;
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+  let totalCacheReadTokens = 0;
   const sameToolCounts = new Map<string, number>();
 
   const heartbeatId = setInterval(() => sendHeartbeat(res), HEARTBEAT_INTERVAL_MS);
@@ -222,6 +229,7 @@ export async function runAgentWithSSE(
           turnCount: 0, toolCount: 0, toolNames: [], toolErrors: 0,
           durationMs: Date.now() - turnStart, outputChars: 0,
           hasToolError: false, hitLoopDetection: false, hitTurnLimit: false, guardrailBlocked: true,
+          inputTokens: 0, outputTokens: 0, cacheReadTokens: 0,
         },
       };
     }
@@ -336,6 +344,13 @@ export async function runAgentWithSSE(
 
           flushTextBuffer();
           response = await stream.finalMessage();
+
+          // Accumulate token usage
+          if (response?.usage) {
+            totalInputTokens += response.usage.input_tokens || 0;
+            totalOutputTokens += response.usage.output_tokens || 0;
+            totalCacheReadTokens += (response.usage as any).cache_read_input_tokens || 0;
+          }
           break;
         } catch (streamError: any) {
           const isRetriable = isOverloadedProviderError(streamError) && !attemptProducedOutput && attempt < maxAttempts;
@@ -510,7 +525,7 @@ export async function runAgentWithSSE(
 
     // Log run summary
     const elapsed = Date.now() - turnStart;
-    logger.info(`[copilot] Done — ${toolCallCounter} tools, ${elapsed}ms, output: ${finalOutput.length} chars`, {
+    logger.info(`[copilot] Done — ${toolCallCounter} tools, ${elapsed}ms, output: ${finalOutput.length} chars, tokens: {in: ${totalInputTokens}, out: ${totalOutputTokens}, cached: ${totalCacheReadTokens}}`, {
       toolNames: toolTrace.map((t) => t.name).join(', '),
       finalOutputPreview: finalOutput.slice(0, 200),
     });
@@ -537,6 +552,21 @@ export async function runAgentWithSSE(
     }
   }
 
+  // Sanitize output — remove invalid entity cards before sending to client
+  const agentMode = agentConfig.name.includes('study') ? 'study'
+    : agentConfig.name.includes('Organization') ? 'org'
+    : 'explore';
+  const sanitized2 = sanitizeOutput(finalOutput, agentMode);
+  if (sanitized2 !== finalOutput) {
+    finalOutput = sanitized2;
+    sendSSE(res, { type: 'content_corrected', content: sanitized2 });
+    for (const seg of segments) {
+      if (seg.type === 'text') {
+        seg.content = sanitizeOutput(seg.content || '', agentMode);
+      }
+    }
+  }
+
   // Run output guardrail (non-blocking — logs only, does not block)
   try {
     const { outputFormatGuardrail } = await import('../guardrails/output.guardrail');
@@ -559,6 +589,9 @@ export async function runAgentWithSSE(
     hitLoopDetection,
     hitTurnLimit,
     guardrailBlocked,
+    inputTokens: totalInputTokens,
+    outputTokens: totalOutputTokens,
+    cacheReadTokens: totalCacheReadTokens,
   };
 
   return { finalOutput, toolTrace, segments, traceMetrics };

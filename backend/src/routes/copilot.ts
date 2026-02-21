@@ -576,8 +576,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       `INSERT INTO copilot_traces
         (session_id, message_id, talent_id, organization_id, mode, skill_id,
          turn_count, tool_count, tool_names, tool_errors, duration_ms, output_chars,
-         has_tool_error, hit_loop_detection, hit_turn_limit, guardrail_blocked)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+         has_tool_error, hit_loop_detection, hit_turn_limit, guardrail_blocked,
+         input_tokens, output_tokens, cache_read_tokens)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
       [
         sessionId,
         assistantMessageId,
@@ -595,6 +596,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         traceMetrics.hitLoopDetection,
         traceMetrics.hitTurnLimit,
         traceMetrics.guardrailBlocked,
+        traceMetrics.inputTokens,
+        traceMetrics.outputTokens,
+        traceMetrics.cacheReadTokens,
       ]
     ).catch((err) => logger.error('[copilot] Failed to persist trace:', err));
 

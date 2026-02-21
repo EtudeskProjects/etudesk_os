@@ -30,6 +30,25 @@ const ENTITY_TO_TYPE: Record<string, string> = {
   organizations: 'organization',
 };
 
+/**
+ * Infer entity type from query text when the LLM omits the entity param.
+ * Returns undefined only if no pattern matches (caller falls back to 'opportunities').
+ */
+function inferEntityFromQuery(query: string): string | undefined {
+  const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const patterns: Array<[RegExp, string]> = [
+    [/opportunit|emploi|stage|job|poste|offre|cdi|cdd|freelance|mission/, 'opportunities'],
+    [/communaut|groupe|reseau|hub|forum|club/, 'communities'],
+    [/espace|cowork|bureau|salle|workspace/, 'spaces'],
+    [/talent|profil|candidat|developpeur|ingenieur|designer/, 'talents'],
+    [/organisation|entreprise|societe|startup|cabinet/, 'organizations'],
+  ];
+  for (const [regex, entity] of patterns) {
+    if (regex.test(q)) return entity;
+  }
+  return undefined;
+}
+
 /** Valid Pinecone metadata filter keys per entity type */
 const VALID_FILTER_KEYS: Record<string, ReadonlySet<string>> = {
   opportunities: new Set(['type', 'contract_type', 'contractType', 'location_type', 'locationType', 'location', 'sector', 'status']),
@@ -288,11 +307,18 @@ export const smartSearchTool = defineTool({
       .optional()
       .describe('Optional structured filters. Example: {"contract_type":"CDI"} or {"type":"EMPLOYMENT"}. Put search criteria in query text instead when possible.'),
   }),
-  normalize: (raw) => ({
-    ...raw,
-    entity: raw.entity || raw.namespace || raw.entity_type,
-    topK: raw.topK ?? raw.top_k,
-  }),
+  normalize: (raw) => {
+    let entity = raw.entity || raw.namespace || raw.entity_type;
+    if (!entity && raw.query) {
+      entity = inferEntityFromQuery(raw.query) || 'opportunities';
+      logger.info(`[smart_search] Entity inferred from query: ${entity}`);
+    }
+    return {
+      ...raw,
+      entity,
+      topK: raw.topK ?? raw.top_k,
+    };
+  },
   execute: async ({ query, entity, topK, filters: rawFilters }): Promise<any> => {
     const cacheKey = `${entity}:${query}:${topK}:${JSON.stringify(rawFilters || {})}`;
 
@@ -407,13 +433,20 @@ export const smartSearchTool = defineTool({
       _smartSearchCache.set(cacheKey, result);
 
       if (finalResults.length === 0) {
-        return { results: [], totalFound: 0, source, message: 'Aucun resultat trouve pour cette recherche.' };
+        return {
+          results: [], totalFound: 0, source,
+          message: 'Aucun resultat trouve pour cette recherche.',
+          fallback_suggestion: `Try web_search('${query}') for information beyond the platform.`,
+        };
       }
 
       return result;
     } catch (error: any) {
       logger.error('[smart_search] Error:', error);
-      return { results: [], error: error.message };
+      return {
+        results: [], error: error.message,
+        fallback_suggestion: `Use web_search('${query}') for external data.`,
+      };
     }
   },
 });
