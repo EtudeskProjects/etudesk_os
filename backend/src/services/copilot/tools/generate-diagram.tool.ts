@@ -74,7 +74,7 @@ export const generateDiagramTool = defineTool({
   normalize: (raw) => ({
     ...raw,
     diagramType: raw.diagramType || raw.type || raw.diagram_type,
-    mermaidCode: raw.mermaidCode || raw.code || raw.mermaid_code,
+    mermaidCode: raw.mermaidCode || raw.code || raw.content || raw.mermaid_code,
   }),
   execute: async ({ title, diagramType: rawDiagramType, mermaidCode }) => {
     try {

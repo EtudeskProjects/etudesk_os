@@ -281,7 +281,7 @@ export const smartSearchTool = defineTool({
       'spaces',
       'talents',
       'organizations',
-    ]).describe('The entity type to search.'),
+    ]).describe('REQUIRED. The entity type to search: "opportunities", "communities", "spaces", "talents", or "organizations". You MUST specify this parameter.'),
     topK: z.number().min(1).max(30).default(10).describe('Number of results to return. Default 10.'),
     filters: z
       .record(z.string(), z.unknown())

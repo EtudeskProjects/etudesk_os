@@ -1,5 +1,5 @@
 /**
- * Ontology Cache — Loads docs/ONTOLOGY.md once at startup and caches in memory
+ * Ontology Cache — Loads docs/ontology.md once at startup and caches in memory
  * Injected into all copilot agent prompts so agents know the platform's
  * entities, enums, relationships, permissions, and business rules.
  */
@@ -24,7 +24,7 @@ export function getOntology(): string {
   }
 
   try {
-    const ontologyPath = path.resolve(__dirname, '../../../../docs/ONTOLOGY.md');
+    const ontologyPath = path.resolve(__dirname, '../../../../docs/ontology.md');
     cachedOntology = fs.readFileSync(ontologyPath, 'utf-8');
     logger.info(`[ontology.cache] Loaded ontology (${cachedOntology.length} chars)`);
   } catch (error: any) {
