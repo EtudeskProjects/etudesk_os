@@ -69,15 +69,33 @@ export const generateDiagramTool = defineTool({
     diagramType: z
       .string()
       .describe('Mermaid diagram type: flowchart, sequenceDiagram, classDiagram, mindmap, timeline, gantt, pie, erDiagram. Use flowchart for processes, sequenceDiagram for interactions, mindmap for concepts, timeline for history, pie for distributions.'),
-    mermaidCode: z.string().describe('Valid Mermaid code. Must start with the correct diagram type keyword (e.g., "flowchart TD", "sequenceDiagram", "mindmap"). Use French labels. CRITICAL RULES: 1) NEVER use <br/> or <br> tags — use \\n for line breaks inside labels. 2) NEVER use raw parentheses () inside square bracket labels [] — rephrase or remove them. 3) Keep labels short (max 6 words per line). 4) Use simple ASCII characters only in labels, no special punctuation.'),
+    mermaidCode: z.string().optional().describe('REQUIRED. Valid Mermaid syntax code — NOT a text description. Must start with the diagram type keyword (e.g., "flowchart TD\\n  A[Start] --> B[End]", "mindmap\\n  root((Topic))\\n    Branch1", "sequenceDiagram\\n  A->>B: msg"). Use French labels. RULES: 1) No <br/> tags — use \\n. 2) No raw parentheses () inside [] labels. 3) Short labels (max 6 words).'),
   }),
-  normalize: (raw) => ({
-    ...raw,
-    diagramType: raw.diagramType || raw.type || raw.diagram_type,
-    mermaidCode: raw.mermaidCode || raw.code || raw.content || raw.mermaid_code,
-  }),
+  normalize: (raw) => {
+    const diagramType = raw.diagramType || raw.type || raw.diagram_type;
+    // Resolve mermaidCode from multiple possible aliases
+    let mermaidCode = raw.mermaidCode || raw.code || raw.content || raw.mermaid_code || raw.mermaid;
+    // If still missing, check if 'description' contains actual Mermaid code (starts with a diagram keyword)
+    if (!mermaidCode && raw.description) {
+      const descTrimmed = raw.description.trim();
+      const allPrefixes = Object.values(VALID_DIAGRAM_PREFIXES).flat();
+      const looksLikeMermaid = allPrefixes.some((p) => descTrimmed.startsWith(p));
+      if (looksLikeMermaid) {
+        mermaidCode = raw.description;
+      }
+    }
+    return { ...raw, diagramType, mermaidCode };
+  },
   execute: async ({ title, diagramType: rawDiagramType, mermaidCode }) => {
     try {
+      // If mermaidCode is missing, return an instructive error so the LLM retries correctly
+      if (!mermaidCode) {
+        return {
+          success: false,
+          error: 'Missing mermaidCode. You sent a text description instead of Mermaid syntax code. Retry with mermaidCode containing valid Mermaid code, e.g.: "flowchart TD\\n  A[Start] --> B[End]"',
+        };
+      }
+
       // Normalize diagramType case (Claude native SDK may send "Flowchart" or "FLOWCHART")
       const diagramTypeLower = rawDiagramType.toLowerCase();
       const diagramType = Object.keys(VALID_DIAGRAM_PREFIXES).find(
