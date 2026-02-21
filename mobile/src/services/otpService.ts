@@ -393,6 +393,45 @@ async function signInWithGoogle(idToken: string): Promise<VerifyOTPResult> {
   }
 }
 
+/**
+ * Delete the current user's account
+ */
+async function deleteAccount(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const accessToken = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    if (!accessToken) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const response = await fetch(getApiUrl('/auth/delete-account'), {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { success: false, error: data.error || 'Failed to delete account' };
+    }
+
+    // Clear local auth data
+    await AsyncStorage.multiRemove([
+      STORAGE_KEYS.ACCESS_TOKEN,
+      STORAGE_KEYS.REFRESH_TOKEN,
+      STORAGE_KEYS.USER,
+      STORAGE_KEYS.ONBOARDING_SEEN,
+    ]);
+
+    logger.info(LOG_SOURCE, 'Account deleted successfully');
+    return { success: true };
+  } catch (error) {
+    logger.error(LOG_SOURCE, 'Delete account error', error);
+    return { success: false, error: 'Network error' };
+  }
+}
+
 export const otpService = {
   sendOTP,
   sendWhatsAppOTP,
@@ -403,6 +442,7 @@ export const otpService = {
   getUser,
   getCurrentUser,
   logout,
+  deleteAccount,
   isAuthenticated,
   OTP_EXPIRY_MINUTES,
   OTP_LENGTH,

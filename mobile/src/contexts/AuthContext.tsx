@@ -9,6 +9,7 @@ import { useRouter, useSegments } from 'expo-router';
 import { User } from '../types/models';
 import { otpService } from '../services/otpService';
 import { onboardingService } from '../services/onboardingService';
+import { notificationService } from '../services/notificationService';
 import { logger } from '../services/logService';
 
 const LOG_SOURCE = 'Auth';
@@ -131,8 +132,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (freshUser) {
           user = freshUser;
           logger.debug(LOG_SOURCE, 'Fresh user from API', { userId: freshUser.id });
+        } else if (!user) {
+          // API returned null AND no cached user — session is truly invalid
+          logger.warn(LOG_SOURCE, 'API returned no user and no cache, clearing auth');
+          await otpService.logout();
+          setState({
+            status: 'unauthenticated',
+            user: null,
+            isLoading: false,
+            needsOnboarding: false,
+          });
+          return;
         }
-      } catch (error) {
+      } catch (error: any) {
+        // If 401 error, session is invalid — force logout
+        if (error?.status === 401) {
+          logger.warn(LOG_SOURCE, 'Session expired (401), clearing auth');
+          await otpService.logout();
+          setState({
+            status: 'unauthenticated',
+            user: null,
+            isLoading: false,
+            needsOnboarding: false,
+          });
+          return;
+        }
         logger.warn(LOG_SOURCE, 'Could not fetch fresh user, using cached data');
       }
 
@@ -263,6 +287,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signOut = useCallback(async (allDevices: boolean = false) => {
     try {
       logger.info(LOG_SOURCE, 'Signing out', { allDevices });
+      // Unregister push token before logout (while we still have auth)
+      await notificationService.unregisterToken().catch(err =>
+        logger.warn(LOG_SOURCE, 'Failed to unregister push token', err)
+      );
       await otpService.logout(allDevices);
       logger.info(LOG_SOURCE, 'Sign out successful');
     } catch (error) {

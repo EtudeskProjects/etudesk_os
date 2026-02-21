@@ -17,6 +17,8 @@ import {
   revokeAllSessions,
   getUserProfile,
   needsOnboarding,
+  deactivateAllPushTokens,
+  deleteAccount,
 } from '../services/auth.service';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { auditLog } from '../middleware/audit.middleware';
@@ -382,6 +384,13 @@ router.post('/logout', authMiddleware, auditLog('AUTH_LOGOUT'), async (req: Auth
   try {
     const { refreshToken, allDevices } = req.body;
 
+    // Deactivate push tokens for this user's talent
+    if (req.talentId) {
+      await deactivateAllPushTokens(req.talentId).catch(err =>
+        logger.warn('Failed to deactivate push tokens on logout', { error: err })
+      );
+    }
+
     if (allDevices) {
       // Revoke all sessions for this user
       const count = await revokeAllSessions(req.userId!, 'USER_LOGOUT_ALL');
@@ -437,6 +446,35 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     logger.error('❌ Get profile error:', error);
+    return res.status(500).json({
+      success: false,
+      error: req.t('common:serverError'),
+    });
+  }
+});
+
+/**
+ * DELETE /auth/delete-account
+ *
+ * Permanently delete user account (soft-delete)
+ */
+router.delete('/delete-account', authMiddleware, auditLog('AUTH_DELETE_ACCOUNT'), async (req: AuthRequest, res: Response) => {
+  try {
+    const success = await deleteAccount(req.userId!);
+
+    if (!success) {
+      return res.status(404).json({
+        success: false,
+        error: req.t('auth:userNotFound'),
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: req.t('auth:accountDeleted'),
+    });
+  } catch (error) {
+    logger.error('Delete account error:', error);
     return res.status(500).json({
       success: false,
       error: req.t('common:serverError'),

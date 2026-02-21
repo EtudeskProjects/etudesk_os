@@ -25,6 +25,8 @@ import {
   Mail,
 } from 'lucide-react-native';
 import { kycService } from '../../../src/services/kycService';
+import { otpService } from '../../../src/services/otpService';
+import { notificationService } from '../../../src/services/notificationService';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useI18n } from '../../../src/contexts/I18nContext';
@@ -137,11 +139,27 @@ export default function AccountScreen() {
                 {
                   text: confirmDelete,
                   style: 'destructive',
-                  onPress: () => {
-                    void alerts.alert(
-                      'Fonctionnalité en cours',
-                      'La suppression de compte nécessite une confirmation par email. Cette fonctionnalité sera disponible prochainement.'
-                    );
+                  onPress: async () => {
+                    try {
+                      // Unregister push token first
+                      await notificationService.unregisterToken().catch(() => {});
+                      const result = await otpService.deleteAccount();
+                      if (result.success) {
+                        // Reset space and sign out
+                        setSpace('talent');
+                        await signOut();
+                      } else {
+                        void alerts.alert(
+                          language === 'fr' ? 'Erreur' : 'Error',
+                          result.error || (language === 'fr' ? 'Impossible de supprimer le compte' : 'Failed to delete account')
+                        );
+                      }
+                    } catch {
+                      void alerts.alert(
+                        language === 'fr' ? 'Erreur' : 'Error',
+                        language === 'fr' ? 'Une erreur est survenue' : 'An error occurred'
+                      );
+                    }
                   },
                 },
               ] });

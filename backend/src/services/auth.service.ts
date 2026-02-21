@@ -347,6 +347,97 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 }
 
 /**
+ * Deactivate all push tokens for a talent
+ */
+export async function deactivateAllPushTokens(talentId: string): Promise<number> {
+  try {
+    const result = await pool.query(
+      `UPDATE push_tokens SET is_active = false, updated_at = NOW()
+       WHERE talent_id = $1 AND is_active = true`,
+      [talentId]
+    );
+    return result.rowCount || 0;
+  } catch (error) {
+    logger.error('❌ Failed to deactivate push tokens:', error);
+    return 0;
+  }
+}
+
+/**
+ * Delete a user account (soft-delete user + talent, revoke sessions, deactivate push tokens)
+ */
+export async function deleteAccount(userId: string): Promise<boolean> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Get talent_id
+    const userRes = await client.query(
+      `SELECT talent_id FROM users WHERE id = $1 AND deleted_at IS NULL`,
+      [userId]
+    );
+    if (userRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return false;
+    }
+    const talentId = userRes.rows[0].talent_id;
+
+    // Revoke all sessions
+    await client.query(
+      `UPDATE sessions SET is_active = FALSE, revoked_at = NOW(), revoked_reason = 'ACCOUNT_DELETED'
+       WHERE user_id = $1 AND is_active = TRUE`,
+      [userId]
+    );
+
+    // Deactivate all push tokens
+    if (talentId) {
+      await client.query(
+        `UPDATE push_tokens SET is_active = false, updated_at = NOW()
+         WHERE talent_id = $1`,
+        [talentId]
+      );
+
+      // Soft-delete talent
+      await client.query(
+        `UPDATE talents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`,
+        [talentId]
+      );
+    }
+
+    // Soft-delete user
+    await client.query(
+      `UPDATE users SET deleted_at = NOW(), is_active = false WHERE id = $1`,
+      [userId]
+    );
+
+    await client.query('COMMIT');
+    logger.info(`Account deleted for user ${userId}`);
+    return true;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    logger.error('❌ Failed to delete account:', error);
+    return false;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Cleanup expired sessions (housekeeping)
+ */
+export async function cleanupExpiredSessions(): Promise<number> {
+  try {
+    const result = await pool.query(
+      `DELETE FROM sessions WHERE expires_at < NOW() AND is_active = FALSE`
+    );
+    return result.rowCount || 0;
+  } catch (error) {
+    logger.error('❌ Failed to cleanup expired sessions:', error);
+    return 0;
+  }
+}
+
+/**
  * Check if user needs onboarding (no talent profile)
  */
 export async function needsOnboarding(userId: string): Promise<boolean> {
