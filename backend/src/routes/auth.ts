@@ -456,16 +456,32 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
 /**
  * DELETE /auth/delete-account
  *
- * Permanently delete user account (soft-delete)
+ * Permanently delete user account with full cascade
  */
 router.delete('/delete-account', authMiddleware, auditLog('AUTH_DELETE_ACCOUNT'), async (req: AuthRequest, res: Response) => {
   try {
-    const success = await deleteAccount(req.userId!);
+    const result = await deleteAccount(req.userId!);
 
-    if (!success) {
-      return res.status(404).json({
+    if (!result.success) {
+      if (result.code === 'USER_NOT_FOUND') {
+        return res.status(404).json({
+          success: false,
+          error: req.t('auth:userNotFound'),
+          code: result.code,
+        });
+      }
+      if (result.code === 'ORG_SOLE_ADMIN_WITH_MEMBERS') {
+        return res.status(409).json({
+          success: false,
+          error: req.t('auth:orgSoleAdminWithMembers'),
+          code: result.code,
+          blockedOrganizations: result.blockedOrganizations,
+        });
+      }
+      return res.status(500).json({
         success: false,
-        error: req.t('auth:userNotFound'),
+        error: req.t('common:serverError'),
+        code: result.code,
       });
     }
 
