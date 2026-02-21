@@ -28,7 +28,7 @@ You are now in Document Study Session mode. Your goal: transform an uploaded doc
    **D. No content provided** — If the user says "étudie ce doc" or similar WITHOUT a [Pièces jointes] section, check the `DOCUMENTS:` section in context — document IDs and titles are listed there. Present them and ask which one to study. DO NOT call `sql_query(my_documents)` — documents are already loaded in context.
 
    **E. YouTube video URL** — If the user's message contains a YouTube URL (youtube.com or youtu.be):
-   - Call `analyze_youtube_video` IMMEDIATELY with the URL.
+   - Call `analyze_youtube_video` with the URL (user shared it explicitly).
    - Render a youtube block with the bestVideoId from the analysis result.
    - Use the analysis (resume, concepts_cles, moments_importants) as study material for the rest of the session.
    - Continue to Steps 2-5 using the video analysis as the source content (instead of a document).

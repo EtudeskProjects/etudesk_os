@@ -11,10 +11,10 @@ import { logger } from '../../../utils';
 export const youtubeSearchTool = defineTool({
   name: 'youtube_search',
   description:
-    'Search YouTube for educational videos on a topic. Study mode only. Returns up to 7 results. After receiving results, select 2-3 most relevant by title/description, then ALWAYS call analyze_youtube_video to compare and analyze before presenting. Never present a video without analysis.',
+    'Search YouTube for educational videos on a topic. Study mode only. Returns up to 7 results. Present the top 3-5 most relevant videos directly to the user with title, channel, and link. Do NOT automatically call analyze_youtube_video after search — only use analyze_youtube_video when the user explicitly asks to analyze a video or shares a YouTube URL.',
   parameters: z.object({
     query: z.string().describe('Search query for educational videos. ALWAYS write the query in French. Prioritize West African francophone (UEMOA) creators: append "Afrique francophone" or "Afrique de l\'Ouest" to queries when the topic allows it (business, marketing, entrepreneuriat, droit, finance, etc.). For universal tech topics (coding, frameworks), French is enough. Examples: "marketing digital Afrique francophone", "entrepreneuriat UEMOA", "tutoriel React hooks en francais"'),
-    maxResults: z.number().min(1).max(10).describe('Default 7. Agent compares titles/descriptions, picks 2-3 best candidates for analyze_youtube_video.'),
+    maxResults: z.number().min(1).max(10).describe('Number of results to return (default 5).'),
   }),
   execute: async ({ query, maxResults }) => {
     const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';

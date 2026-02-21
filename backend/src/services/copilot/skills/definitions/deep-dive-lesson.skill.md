@@ -324,7 +324,7 @@ After ~5 vocal exchanges:
 - Use African/UEMOA examples when the topic allows it (Mobile Money API, fintech CI/SN, agritech, e-commerce local Jumia/Glovo, paiement Orange Money/Wave). Prefer concrete African business scenarios over Silicon Valley case studies.
 - Code examples must be complete and runnable (not pseudocode)
 - Never use youtube_search before Step 7 — the lesson teaches first, video supplements
-- **MANDATORY after youtube_search**: Select 2-3 most relevant videos by title/description match. Call analyze_youtube_video with these 2-3 URLs (single call). Present ONLY the best video (youtube block) with pedagogical summary: key takeaways (3-5 points from concepts_cles), key timestamp ("Regarde a MM:SS pour..."), connection to current lesson. Never show a bare youtube block without analysis.
+- **After youtube_search**: Present top 3-5 results directly with youtube blocks. Do NOT auto-call analyze_youtube_video. Only call it if the user asks to analyze a specific video or shares a YouTube URL.
 - If the user seems impatient ("resume", "abrege"), skip to the quiz directly
 - If the user explicitly asks "dis-moi la reponse" during Socratic mode, respect their wish — give a brief answer then quiz
 - Projects must be completable in one sitting (1-4h max)

@@ -104,7 +104,7 @@ Rules:
 export const analyzeYoutubeVideoTool = defineTool({
   name: 'analyze_youtube_video',
   description:
-    'Analyze 1-3 YouTube videos. Each video is analyzed individually then compared. MUST be called after every youtube_search. Also use when user pastes a YouTube URL.',
+    'Analyze 1-3 YouTube videos with Gemini AI (audio + visual). Only call this tool when: (1) the user explicitly asks to analyze/explain a video, or (2) the user shares a YouTube URL. Do NOT call automatically after youtube_search.',
   parameters: z.object({
     urls: z
       .array(z.string())
