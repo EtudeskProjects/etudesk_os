@@ -36,8 +36,12 @@ function isTableContent(data: any): data is TableContent {
   return data && Array.isArray(data.headers) && Array.isArray(data.rows);
 }
 
-/** Detect CVData-structured content — supports canonical, agent-alternate, personal, and JSON Resume formats */
+/** Detect CVData-structured content — supports canonical, agent-alternate, personal, wrapper, and JSON Resume formats */
 function isCVContent(data: any): boolean {
+  // Wrapper format: { type: "cv", profile: { firstName, lastName, ... } }
+  if (data?.type === 'cv' && data?.profile && typeof data.profile.firstName === 'string') {
+    return true;
+  }
   // Canonical format: { firstName, lastName, skills: [{name}] }
   if (data && typeof data.firstName === 'string' && typeof data.lastName === 'string' && Array.isArray(data.skills)) {
     return true;
@@ -171,9 +175,70 @@ function normalizeJsonResume(data: any): CVData {
  * We need: { firstName, lastName, email, skills: [{name, type, level}], experiences: [{title, company, period, description}], ... }
  */
 function normalizeCVData(data: any): CVData {
-  // Already canonical format
+  // Wrapper format: { type: "cv", profile: { firstName, lastName, ... } }
+  // Unwrap and recurse — the profile object may be canonical, alternate, or any other format
+  if (data?.type === 'cv' && data?.profile && typeof data.profile === 'object') {
+    return normalizeCVData(data.profile);
+  }
+
+  // Canonical-like format: has firstName + lastName at top level
+  // Still needs normalization for field name variants (experience→experiences, summary→bio, location→city/country)
   if (typeof data.firstName === 'string' && typeof data.lastName === 'string') {
-    return data as CVData;
+    // Normalize experience/experiences
+    const rawExp = data.experience || data.experiences;
+    let experiences: CVData['experiences'] = undefined;
+    if (Array.isArray(rawExp)) {
+      experiences = rawExp.map((e: any) => ({
+        title: e.position || e.title || '',
+        company: e.company || e.organization || '',
+        location: e.location,
+        period: e.period || `${e.startDate || ''}${e.endDate ? ' - ' + e.endDate : e.current ? ' - Présent' : ''}`,
+        description: Array.isArray(e.highlights) ? e.highlights.join('\n') : Array.isArray(e.bullets) ? e.bullets.join('\n') : (e.description || ''),
+      }));
+    }
+
+    // Normalize education
+    let education: CVData['education'] = undefined;
+    if (Array.isArray(data.education)) {
+      education = data.education.map((e: any) => ({
+        degree: e.degree || '',
+        institution: e.institution || e.school || '',
+        location: e.location,
+        period: e.period || `${e.startDate || ''}${e.endDate ? ' - ' + e.endDate : ''}`,
+        description: Array.isArray(e.highlights) ? e.highlights.join('\n') : (e.description || ''),
+      }));
+    }
+
+    // Normalize skills (handle string arrays, grouped, or flat objects)
+    let skills = data.skills || [];
+    if (Array.isArray(skills)) {
+      skills = skills.map((s: any) => {
+        if (typeof s === 'string') return { name: s };
+        if (s.category && Array.isArray(s.items)) {
+          return s.items.map((item: string) => ({ name: item, type: s.category.toLowerCase().includes('soft') ? 'soft' : 'hard' }));
+        }
+        return s;
+      }).flat();
+    }
+
+    // Normalize location string → city/country
+    let city = data.city;
+    let country = data.country;
+    if (!city && typeof data.location === 'string') {
+      const parts = data.location.split(',').map((p: string) => p.trim());
+      city = parts[0];
+      country = parts[1] || country;
+    }
+
+    return {
+      ...data,
+      bio: data.bio || data.summary,
+      city,
+      country,
+      skills,
+      experiences,
+      education,
+    };
   }
 
   // JSON Resume format: { basics: { name, label, email, phone, location, summary }, work, education, skills, languages, volunteer, awards }
