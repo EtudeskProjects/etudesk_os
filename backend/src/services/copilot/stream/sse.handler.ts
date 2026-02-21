@@ -604,6 +604,18 @@ function sanitizeDiagramBlocks(text: string): string {
   return text.replace(/```diagram\s*\n?\s*(\{[\s\S]*?\})\s*\n?\s*```/g, (fullMatch, jsonStr) => {
     try {
       const parsed = JSON.parse(jsonStr);
+      // Normalize key aliases: mermaidCode/content → code (mobile expects 'code')
+      if (!parsed.code && (parsed.mermaidCode || parsed.content)) {
+        parsed.code = parsed.mermaidCode || parsed.content;
+        delete parsed.mermaidCode;
+        delete parsed.content;
+      }
+      // Normalize diagramType/diagram_type → type (mobile expects 'type')
+      if (!parsed.type && (parsed.diagramType || parsed.diagram_type)) {
+        parsed.type = parsed.diagramType || parsed.diagram_type;
+        delete parsed.diagramType;
+        delete parsed.diagram_type;
+      }
       if (parsed.code && typeof parsed.code === 'string') {
         let code = parsed.code;
         code = code.replace(/<br\s*\/?>/gi, '\\n');

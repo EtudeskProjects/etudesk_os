@@ -12,20 +12,30 @@ import { SPACING, TYPOGRAPHY } from '../../../constants/theme';
 
 interface DiagramBlockProps {
   data: {
-    type: string;
-    title: string;
-    code: string;
+    type?: string;
+    title?: string;
+    code?: string;
+    mermaidCode?: string;
+    content?: string;
   };
 }
 
 const MIN_HEIGHT = 200;
 const MAX_HEIGHT = 600;
 
+/** Resolve mermaid code from multiple possible keys */
+function resolveCode(data: DiagramBlockProps['data']): string {
+  return data.code || data.mermaidCode || data.content || '';
+}
+
 /** Sanitize Mermaid code to fix common LLM generation issues */
 function sanitizeMermaidCode(code: string): string {
   let s = code;
-  // Replace <br/> and <br> with \n (Mermaid line break)
-  s = s.replace(/<br\s*\/?>/gi, '\\n');
+  // Fix literal \n (two chars: backslash + n) → real newlines
+  // This happens when LLMs double-escape newlines in JSON
+  s = s.replace(/\\n/g, '\n');
+  // Replace <br/> and <br> with newline
+  s = s.replace(/<br\s*\/?>/gi, '\n');
   // Escape parentheses inside square bracket labels []
   s = s.replace(/\[([^\]]*)\]/g, (_, content: string) => {
     const fixed = content.replace(/\(/g, '&#40;').replace(/\)/g, '&#41;');
@@ -188,7 +198,9 @@ const buildMermaidHTML = (
   const { backgroundColor: bg, isDark, errorColor, textColor } = opts;
   const themeVars = isDark ? MERMAID_THEME_DARK : MERMAID_THEME_LIGHT;
   const themeVarsJson = JSON.stringify(themeVars);
-  const safeCode = code.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/<\/script/gi, '<\\/script');
+  // Only escape backticks and </script> — do NOT double-escape backslashes
+  // as sanitizeMermaidCode already normalizes \n to real newlines
+  const safeCode = code.replace(/`/g, '\\`').replace(/<\/script/gi, '<\\/script');
 
   return `<!DOCTYPE html>
 <html>
@@ -275,6 +287,8 @@ export const DiagramBlock: React.FC<DiagramBlockProps> = ({ data }) => {
   const { colors, isDark } = useTheme();
   const [webViewHeight, setWebViewHeight] = useState(MIN_HEIGHT);
 
+  const code = resolveCode(data);
+
   const onMessage = useCallback((event: WebViewMessageEvent) => {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
@@ -285,18 +299,23 @@ export const DiagramBlock: React.FC<DiagramBlockProps> = ({ data }) => {
     } catch { /* ignore */ }
   }, []);
 
+  // No code to render — skip WebView entirely
+  if (!code) return null;
+
   return (
     <View style={styles.container}>
       {/* Title */}
-      <Text style={[styles.title, { color: colors.textPrimary }]}>
-        {data.title}
-      </Text>
+      {data.title ? (
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          {data.title}
+        </Text>
+      ) : null}
 
       {/* Mermaid Render */}
       <View style={[styles.webviewContainer, { height: webViewHeight }]}>
         <WebView
           source={{
-            html: buildMermaidHTML(sanitizeMermaidCode(data.code), {
+            html: buildMermaidHTML(sanitizeMermaidCode(code), {
               backgroundColor: colors.surface,
               isDark,
               errorColor: colors.error,
