@@ -1477,7 +1477,7 @@ export default function AssistantScreen() {
                   value={inputText}
                   onChangeText={setInputText}
                   multiline
-                  maxLength={500}
+                  maxLength={2000}
                   editable={!isSending && !audioRecorder.state.isRecording && !isTranscribing}
                   containerStyle={{ flex: 1 }}
                   inputContainerStyle={{ backgroundColor: 'transparent', borderColor: 'transparent', borderWidth: 0, height: undefined, minHeight: 32, maxHeight: 100, paddingVertical: 0 }}
