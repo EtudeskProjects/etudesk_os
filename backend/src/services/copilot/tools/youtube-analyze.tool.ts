@@ -31,7 +31,7 @@ export const analyzeYoutubeVideoTool = defineTool({
   description:
     'Analyze 1-3 YouTube videos in a single call. Compares content quality and returns pedagogical analysis of the best one. MUST be called after every youtube_search. Also use when user pastes a YouTube URL.',
   parameters: z.object({
-    videoUrls: z
+    urls: z
       .array(z.string())
       .min(1)
       .max(3)
@@ -42,14 +42,14 @@ export const analyzeYoutubeVideoTool = defineTool({
       .describe('Topic focus for relevance comparison'),
     language: z.enum(['fr', 'en']).default('fr'),
   }),
-  execute: async ({ videoUrls, focusTopics, language }) => {
+  execute: async ({ urls, focusTopics, language }) => {
     if (!GOOGLE_API_KEY) {
       return { success: false, error: 'Google API non configurée' };
     }
 
     // 1. Validate URLs and extract video IDs
     const videos: { url: string; videoId: string }[] = [];
-    for (const url of videoUrls) {
+    for (const url of urls) {
       const videoId = extractVideoId(url);
       if (!videoId) {
         return {
