@@ -133,6 +133,7 @@ export interface UploadDocumentParams {
   title?: string;
   description?: string;
   isPublic?: boolean;
+  source?: 'application';
 }
 
 export const UPLOAD_LIMITS = {
@@ -281,6 +282,9 @@ async function uploadDocument(
   }
   if (params.isPublic !== undefined) {
     formData.append('is_public', String(params.isPublic));
+  }
+  if (params.source) {
+    formData.append('source', params.source);
   }
 
   const response = await api.post<{ message: string; document: TalentDocument }>(

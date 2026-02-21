@@ -233,7 +233,9 @@ router.post(
       }
 
       // Get optional metadata from body
-      const { document_type, title, description, is_public } = req.body;
+      const { document_type, title, description, is_public, source } = req.body;
+      // Skip billing for CV uploads during application flow (source='application')
+      const skipBilling = source === 'application' && document_type === 'CV';
 
       // Validate document type if provided
       if (document_type && !isValidDocumentType(document_type)) {
@@ -260,30 +262,32 @@ router.post(
           return res.status(400).json({ error: `${file.originalname}: ${validation.error}` });
         }
 
-        const fileDebitKey = idempotencyPrefix
-          ? `documents_upload_${idempotencyPrefix}_${index}`
-          : `documents_upload_${crypto.randomUUID()}`;
+        if (!skipBilling) {
+          const fileDebitKey = idempotencyPrefix
+            ? `documents_upload_${idempotencyPrefix}_${index}`
+            : `documents_upload_${crypto.randomUUID()}`;
 
-        try {
-          await debitWalletForAction({
-            scope: 'TALENT',
-            ownerId: talentId,
-            actionCode: 'TALENT_DOCUMENT_UPLOAD',
-            idempotencyKey: fileDebitKey,
-            metadata: {
-              channel: 'documents',
-              fileName: file.originalname,
-            },
-            createdBy: talentId,
-          });
-        } catch (debitError: any) {
-          if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
-            return res.status(402).json({
-              error: req.t('billing:insufficientCredits'),
-              code: 'INSUFFICIENT_CREDITS',
+          try {
+            await debitWalletForAction({
+              scope: 'TALENT',
+              ownerId: talentId,
+              actionCode: 'TALENT_DOCUMENT_UPLOAD',
+              idempotencyKey: fileDebitKey,
+              metadata: {
+                channel: 'documents',
+                fileName: file.originalname,
+              },
+              createdBy: talentId,
             });
+          } catch (debitError: any) {
+            if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
+              return res.status(402).json({
+                error: req.t('billing:insufficientCredits'),
+                code: 'INSUFFICIENT_CREDITS',
+              });
+            }
+            throw debitError;
           }
-          throw debitError;
         }
 
         // Upload document

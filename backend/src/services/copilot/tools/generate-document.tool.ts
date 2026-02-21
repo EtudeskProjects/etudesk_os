@@ -563,7 +563,12 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
           return { success: false, error: `Format non supporté: ${rawFormat}. Formats valides: PDF, DOCX, XLS, CSV, TXT` };
         }
         // Accept contentJson as object or string
-        const data = typeof contentJson === 'object' ? contentJson : JSON.parse(contentJson);
+        let data: any;
+        try {
+          data = typeof contentJson === 'object' ? contentJson : JSON.parse(contentJson);
+        } catch (parseErr) {
+          return { success: false, error: 'Invalid contentJson: failed to parse as JSON' };
+        }
         const documentId = uuidv4();
         const extension = FORMAT_EXTENSIONS[format];
         const mimeType = FORMAT_MIMETYPES[format];
@@ -736,7 +741,12 @@ export const generateDocumentTool = defineTool({
       if (!FORMAT_EXTENSIONS[format]) {
         return { success: false, error: `Format non supporté: ${rawFormat}. Formats valides: PDF, DOCX, XLS, CSV, TXT` };
       }
-      const data = typeof contentJson === 'object' ? contentJson : JSON.parse(contentJson);
+      let data: any;
+        try {
+          data = typeof contentJson === 'object' ? contentJson : JSON.parse(contentJson);
+        } catch (parseErr) {
+          return { success: false, error: 'Invalid contentJson: failed to parse as JSON' };
+        }
       const timestamp = Date.now();
       const safeTitle = title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
       const extension = FORMAT_EXTENSIONS[format];

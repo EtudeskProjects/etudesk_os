@@ -133,9 +133,22 @@ export default function ApplyOpportunityScreen() {
           // Use the file_url from documents
           cvUrl = selectedCV.uri;
         } else {
-          // TODO: Upload the file first, then use the returned URL
-          // For now, using the local URI (would need real upload implementation)
-          cvUrl = selectedCV.uri;
+          // Upload the file first, then use the returned URL
+          try {
+            const uploadResult = await documentService.uploadDocument({
+              file: {
+                uri: selectedCV.uri,
+                name: selectedCV.name,
+                type: selectedCV.type,
+              },
+              documentType: 'CV',
+              isPublic: false,
+              source: 'application',
+            });
+            cvUrl = uploadResult.document.file_url;
+          } catch (uploadError) {
+            throw new Error('Erreur lors du téléchargement de votre CV. Veuillez réessayer.');
+          }
         }
       }
 

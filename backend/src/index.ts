@@ -138,9 +138,18 @@ app.use(express.json({
 app.use(express.urlencoded({ extended: true }));
 app.use(i18nMiddleware);
 
-// Serve uploaded files statically
+// Serve uploaded files — split into public and private directories
 const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');
-app.use('/uploads', express.static(uploadDir));
+
+// Public directories: avatars, logos, illustrations (no auth required)
+const PUBLIC_UPLOAD_DIRS = ['avatars', 'logos', 'illustrations'];
+for (const dir of PUBLIC_UPLOAD_DIRS) {
+  app.use(`/uploads/${dir}`, express.static(path.join(uploadDir, dir)));
+}
+
+// Private directories: everything else requires authentication
+const { authMiddleware: uploadsAuthMiddleware } = require('./middleware/auth.middleware');
+app.use('/uploads', uploadsAuthMiddleware, express.static(uploadDir));
 
 // Health check (no rate limit) — enriched monitoring
 app.get('/health', async (req, res) => {

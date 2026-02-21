@@ -27,3 +27,13 @@ backend/uploads/
 # Generated copilot outputs
 backend/generated-docs/
 backend/generated-images/
+
+# Build artifacts
+*.tsbuildinfo
+
+# Test/audit outputs
+**/tools-audit-results.json
+
+# Android debug keystore (generated locally)
+*.keystore
+!release.keystore

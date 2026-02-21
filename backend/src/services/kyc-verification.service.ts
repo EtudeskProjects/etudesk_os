@@ -103,9 +103,18 @@ const UPLOAD_BASE_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '../../up
 
 async function imageToBase64(imageUrl: string): Promise<{ data: string; mimeType: string } | null> {
   try {
+    // SECURITY: Only accept /uploads/ local paths and data: URIs.
+    // Reject file://, absolute paths, and arbitrary HTTP(S) URLs to prevent SSRF and local file exfiltration.
+
     if (imageUrl.startsWith('/uploads/')) {
       const relativePath = imageUrl.replace('/uploads/', '');
-      const filePath = path.join(UPLOAD_BASE_DIR, relativePath);
+      // Path traversal protection: resolve and verify it stays inside UPLOAD_BASE_DIR
+      const resolvedBase = path.resolve(UPLOAD_BASE_DIR);
+      const filePath = path.resolve(UPLOAD_BASE_DIR, relativePath);
+      if (!filePath.startsWith(resolvedBase + path.sep)) {
+        logger.error(`KYC image path traversal attempt: ${imageUrl}`);
+        return null;
+      }
 
       if (!fs.existsSync(filePath)) {
         logger.error(`KYC image file not found: ${filePath}`);
@@ -119,35 +128,15 @@ async function imageToBase64(imageUrl: string): Promise<{ data: string; mimeType
       return { data: buffer.toString('base64'), mimeType };
     }
 
-    if (imageUrl.startsWith('/') || imageUrl.startsWith('file://')) {
-      const filePath = imageUrl.replace('file://', '');
-      if (!fs.existsSync(filePath)) {
-        logger.error(`Image file not found: ${filePath}`);
-        return null;
-      }
-      const buffer = fs.readFileSync(filePath);
-      const ext = path.extname(filePath).toLowerCase();
-      const mimeType = ext === '.png' ? 'image/png' :
-                       ext === '.webp' ? 'image/webp' : 'image/jpeg';
-      return { data: buffer.toString('base64'), mimeType };
-    }
-
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-      const response = await fetch(imageUrl);
-      if (!response.ok) return null;
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const contentType = response.headers.get('content-type') || 'image/jpeg';
-      return { data: buffer.toString('base64'), mimeType: contentType };
-    }
-
     if (imageUrl.startsWith('data:')) {
       const [header, data] = imageUrl.split(',');
       const mimeType = header.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
       return { data, mimeType };
     }
 
-    return { data: imageUrl, mimeType: 'image/jpeg' };
+    // Reject all other schemes (file://, http://, https://, absolute paths, etc.)
+    logger.error(`KYC image URL rejected (unsupported scheme): ${imageUrl.slice(0, 80)}`);
+    return null;
   } catch (error) {
     logger.error('Error converting image to base64:', error);
     return null;
@@ -347,7 +336,7 @@ export async function verifyKYCDocument(
       throw new Error('Empty response from API');
     }
 
-    logger.info('gpt-5-mini raw response', { response: analysisText });
+    logger.info('gpt-5-mini KYC analysis received', { length: analysisText.length });
 
     interface DocumentAnalysisResponse {
       detected_document_type: DocumentType | 'UNKNOWN' | 'INVALID';

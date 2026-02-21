@@ -285,8 +285,29 @@ const MAPPERS: Record<string, (r: any, score: number) => any> = {
   talents: mapTalent,
 };
 
-// Anti-loop cache — module level to avoid self-reference issues
-const _smartSearchCache = new Map<string, any>();
+// Anti-loop cache — module level with TTL and max size to prevent unbounded memory growth
+const CACHE_MAX_SIZE = 200;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const _smartSearchCache = new Map<string, { data: any; ts: number }>();
+
+function getCached(key: string): any | undefined {
+  const entry = _smartSearchCache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() - entry.ts > CACHE_TTL_MS) {
+    _smartSearchCache.delete(key);
+    return undefined;
+  }
+  return entry.data;
+}
+
+function setCache(key: string, data: any): void {
+  // Evict oldest entries if at capacity
+  if (_smartSearchCache.size >= CACHE_MAX_SIZE) {
+    const firstKey = _smartSearchCache.keys().next().value;
+    if (firstKey) _smartSearchCache.delete(firstKey);
+  }
+  _smartSearchCache.set(key, { data, ts: Date.now() });
+}
 
 export const smartSearchTool = defineTool({
   name: 'smart_search',
@@ -323,9 +344,9 @@ export const smartSearchTool = defineTool({
     const cacheKey = `${entity}:${query}:${topK}:${JSON.stringify(rawFilters || {})}`;
 
     // Anti-loop: return cached result on repeat calls
-    if (_smartSearchCache.has(cacheKey)) {
+    const cached = getCached(cacheKey);
+    if (cached) {
       logger.warn(`[smart_search] Returning cached result for ${entity}:${query}`);
-      const cached = _smartSearchCache.get(cacheKey);
       return { ...cached, _cached: true, _note: `Cached data from your first call. Do NOT call smart_search again with the same query.` };
     }
 
@@ -429,8 +450,8 @@ export const smartSearchTool = defineTool({
         source,
       };
 
-      // Cache for anti-loop
-      _smartSearchCache.set(cacheKey, result);
+      // Cache for anti-loop (with TTL)
+      setCache(cacheKey, result);
 
       if (finalResults.length === 0) {
         return {

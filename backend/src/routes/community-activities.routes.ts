@@ -23,17 +23,32 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
+        // Sanitize: use only the extension from basename (strip path components)
+        const safeName = path.basename(file.originalname);
+        const ext = path.extname(safeName);
         cb(null, `${uuidv4()}${ext}`);
     },
 });
+
+const ALLOWED_ACTIVITY_MIMES = [
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+    'application/pdf',
+    'video/mp4', 'video/quicktime',
+];
 
 const upload = multer({
     storage,
     limits: {
         fileSize: 20 * 1024 * 1024, // 20MB limit (per spec)
         files: 5
-    }
+    },
+    fileFilter: (_req, file, cb) => {
+        if (ALLOWED_ACTIVITY_MIMES.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error(`Type de fichier non autorisé: ${file.mimetype}`));
+        }
+    },
 });
 
 // GET /api/communities/:communityId/activities

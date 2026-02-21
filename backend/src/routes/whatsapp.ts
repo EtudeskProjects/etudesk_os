@@ -13,7 +13,11 @@ function isAllowedIp(ipAddress?: string): boolean {
     .map((ip) => ip.trim())
     .filter(Boolean);
 
-  if (!whitelist.length) return true;
+  // SECURITY: Fail-closed — if no whitelist configured, reject all webhook requests
+  if (!whitelist.length) {
+    logger.warn('WhatsApp webhook: ULTRAMSG_ALLOWED_IPS not configured, rejecting request');
+    return false;
+  }
   if (!ipAddress) return false;
 
   const normalized = ipAddress.includes('::ffff:') ? ipAddress.replace('::ffff:', '') : ipAddress;

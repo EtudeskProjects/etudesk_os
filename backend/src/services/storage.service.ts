@@ -32,7 +32,14 @@ export async function uploadFile(
   storagePath: string,
   mimeType: string
 ): Promise<string> {
-  const fullPath = path.join(LOCAL_STORAGE_PATH, storagePath);
+  const fullPath = path.resolve(LOCAL_STORAGE_PATH, storagePath);
+
+  // Path traversal protection: ensure resolved path stays inside storage root
+  const resolvedBase = path.resolve(LOCAL_STORAGE_PATH);
+  if (!fullPath.startsWith(resolvedBase + path.sep)) {
+    throw new Error('Invalid storage path: directory traversal detected');
+  }
+
   ensureDir(fullPath);
 
   await fs.promises.writeFile(fullPath, buffer);

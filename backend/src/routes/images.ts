@@ -251,25 +251,59 @@ router.post('/upload-multiple', authMiddleware, upload.array('files', 10), async
 
 /**
  * DELETE /api/images/:fileId - Delete an image
+ * SECURITY: Verify the caller owns the image by checking DB references
  */
 router.delete('/:fileId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { fileId } = req.params;
+    const talentId = req.talentId;
+    const userId = req.userId;
 
-    // Search for file in all directories
+    if (!talentId && !userId) {
+      return res.status(401).json({ error: req.t('common:unauthorized') });
+    }
+
+    // Find the file first
+    let foundPath: string | null = null;
+    let foundRelative: string | null = null;
     for (const dir of UPLOAD_DIRS) {
       const extensions = ['jpg', 'jpeg', 'png', 'webp'];
       for (const ext of extensions) {
         const filePath = path.join(UPLOAD_BASE_DIR, dir, `${fileId}.${ext}`);
         if (fs.existsSync(filePath)) {
-          await fs.promises.unlink(filePath);
-          logger.info(`[Images] Deleted: ${dir}/${fileId}.${ext}`);
-          return res.json({ success: true, message: req.t('common:imageDeleted') });
+          foundPath = filePath;
+          foundRelative = `/uploads/${dir}/${fileId}.${ext}`;
+          break;
         }
       }
+      if (foundPath) break;
     }
 
-    return res.status(404).json({ error: req.t('common:imageNotFound') });
+    if (!foundPath || !foundRelative) {
+      return res.status(404).json({ error: req.t('common:imageNotFound') });
+    }
+
+    // SECURITY: Verify ownership — check if this image URL is referenced by the caller's talent or their organizations
+    const { pool: dbPool } = require('../services/database');
+    const ownerCheck = await dbPool.query(
+      `SELECT 1 FROM talents WHERE id = $1 AND avatar_url LIKE '%' || $2 || '%'
+       UNION ALL
+       SELECT 1 FROM organizations o
+         JOIN organization_members om ON om.organization_id = o.id
+         WHERE om.talent_id = $1 AND om.status = 'ACTIVE'
+           AND (o.logo_url LIKE '%' || $2 || '%' OR o.cover_image_url LIKE '%' || $2 || '%')
+       LIMIT 1`,
+      [talentId, fileId]
+    );
+
+    if (ownerCheck.rows.length === 0) {
+      logger.warn(`[Images] Unauthorized delete attempt: talent ${talentId} tried to delete ${fileId}`);
+      return res.status(403).json({ error: req.t('common:unauthorized') });
+    }
+
+    await fs.promises.unlink(foundPath);
+    logger.info(`[Images] Deleted: ${foundRelative} by talent ${talentId}`);
+    return res.json({ success: true, message: req.t('common:imageDeleted') });
   } catch (error: any) {
     logger.error('[Images] Delete error:', error);
     res.status(500).json({ error: req.t('common:serverError') });

@@ -883,8 +883,9 @@ router.post(
         return res.status(400).json({ error: req.t('copilot:noAudioFile') });
       }
 
-      // Store the voice note
-      const storagePath = `copilot/voice-notes/${talentId}/${Date.now()}-${file.originalname || 'voice.m4a'}`;
+      // Store the voice note — sanitize filename to prevent path traversal
+      const safeName = (file.originalname || 'voice.m4a').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 50);
+      const storagePath = `copilot/voice-notes/${talentId}/${Date.now()}-${safeName}`;
       const fileUrl = await uploadFile(file.buffer, storagePath, file.mimetype);
 
       logger.info(`[copilot] Voice note uploaded for talent ${talentId}: ${fileUrl}`);

@@ -289,7 +289,13 @@ export async function processOrgDocumentExtraction(
       .replace(/\n?```\s*$/i, '')
       .trim();
 
-    const extractedData = JSON.parse(cleanedContent) as ExtractedOrgData;
+    let extractedData: ExtractedOrgData;
+    try {
+      extractedData = JSON.parse(cleanedContent) as ExtractedOrgData;
+    } catch (parseError) {
+      logger.error('Failed to parse AI extraction response as JSON', { contentPreview: cleanedContent.slice(0, 200) });
+      throw new Error('AI extraction returned invalid JSON');
+    }
 
     // Normalize type
     const validTypes = Object.values(ORG_DOCUMENT_TYPES);

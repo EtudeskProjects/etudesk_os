@@ -87,6 +87,15 @@ router.post('/submit', authMiddleware, async (req: AuthRequest, res: Response) =
       return res.status(400).json({ error: req.t('kyc:frontImageRequired') });
     }
 
+    // SECURITY: Only allow /uploads/ paths and data: URIs — reject file://, http(s)://, absolute paths
+    const isAllowedUrl = (url: string) => url.startsWith('/uploads/') || url.startsWith('data:');
+    if (!isAllowedUrl(front_image_url)) {
+      return res.status(400).json({ error: 'Invalid image URL format. Only uploaded images are accepted.' });
+    }
+    if (back_image_url && !isAllowedUrl(back_image_url)) {
+      return res.status(400).json({ error: 'Invalid image URL format. Only uploaded images are accepted.' });
+    }
+
     // Check if already verified
     const existingVerified = await pool.query(`
       SELECT id FROM kyc_verifications
@@ -244,15 +253,15 @@ router.post('/upload-url', authMiddleware, async (req: AuthRequest, res: Respons
     const extension = filename.split('.').pop() || 'jpg';
     const storedFilename = `kyc/${req.talentId}/${fileId}.${extension}`;
 
-    // In development, we'll use a local storage path
+    // In development, use local image upload endpoint
     // In production, this would be a cloud storage URL
     const uploadUrl = process.env.NODE_ENV === 'production'
       ? `${process.env.STORAGE_URL}/upload/${storedFilename}`
-      : `/api/kyc/upload/${fileId}`;
+      : `/api/images/upload`;
 
     const publicUrl = process.env.NODE_ENV === 'production'
       ? `${process.env.CDN_URL}/${storedFilename}`
-      : `/uploads/kyc/${storedFilename}`;
+      : `/uploads/${storedFilename}`;
 
     res.json({
       data: {
