@@ -1,6 +1,7 @@
 /**
  * YouTube Video Analyzer Tool — Gemini-powered pedagogical video analysis
  * Uses @google/genai SDK to analyze YouTube videos natively (audio + visual)
+ * Analyzes each video individually then compares scores server-side
  * Study mode only
  */
 
@@ -26,10 +27,86 @@ function extractVideoId(url: string): string | null {
   return null;
 }
 
+interface VideoAnalysis {
+  videoId: string;
+  resume: string;
+  concepts_cles: Array<{ concept: string; explanation: string }>;
+  moments_importants: Array<{ timestamp: string; description: string }>;
+  niveau: string;
+  competences: string[];
+  elements_visuels: string[];
+  quality_score?: number;
+}
+
+/** Analyze a single video with Gemini */
+async function analyzeSingleVideo(
+  genai: GoogleGenAI,
+  videoId: string,
+  focusTopics: string | undefined,
+  lang: string,
+  needsScore: boolean
+): Promise<VideoAnalysis | null> {
+  const topicContext = focusTopics ? `Focus topic: "${focusTopics}". ` : '';
+  const scoreInstruction = needsScore
+    ? `\n  "quality_score": <1-10 integer rating: relevance to topic (40%), pedagogical clarity (30%), production quality (30%)>,`
+    : '';
+
+  const prompt = `${topicContext}Analyze this YouTube video for educational purposes. Respond in ${lang}.
+
+Return a JSON object with EXACTLY this structure:
+{
+  "resume": "150-200 word pedagogical summary of the video content",
+  "concepts_cles": [{"concept": "Name", "explanation": "1-2 sentence explanation"}],
+  "moments_importants": [{"timestamp": "MM:SS", "description": "What happens at this point"}],
+  "niveau": "debutant|intermediaire|avance",
+  "competences": ["skill1", "skill2", "skill3"],
+  "elements_visuels": ["Notable visual elements, demos, or diagrams shown"]${scoreInstruction}
+}
+
+Rules:
+- concepts_cles: 5-10 items
+- moments_importants: 3-7 timestamps
+- competences: 3-5 skills covered
+- resume must be pedagogically focused (what the viewer will LEARN, not just a description)
+- Return ONLY the JSON, no markdown fences`;
+
+  try {
+    const response = await genai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              fileData: {
+                fileUri: `https://www.youtube.com/watch?v=${videoId}`,
+                mimeType: 'video/mp4',
+              },
+            },
+            { text: prompt },
+          ],
+        },
+      ],
+    });
+
+    const responseText = response.text?.trim() || '';
+    const cleanJson = responseText
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim();
+
+    const parsed = JSON.parse(cleanJson);
+    return { videoId, ...parsed };
+  } catch (error: any) {
+    logger.warn(`[analyze_youtube_video] Failed to analyze video ${videoId}: ${error.message}`);
+    return null;
+  }
+}
+
 export const analyzeYoutubeVideoTool = defineTool({
   name: 'analyze_youtube_video',
   description:
-    'Analyze 1-3 YouTube videos in a single call. Compares content quality and returns pedagogical analysis of the best one. MUST be called after every youtube_search. Also use when user pastes a YouTube URL.',
+    'Analyze 1-3 YouTube videos. Each video is analyzed individually then compared. MUST be called after every youtube_search. Also use when user pastes a YouTube URL.',
   parameters: z.object({
     urls: z
       .array(z.string())
@@ -60,139 +137,66 @@ export const analyzeYoutubeVideoTool = defineTool({
       videos.push({ url, videoId });
     }
 
+    const lang = language === 'en' ? 'English' : 'French';
+    const needsScore = videos.length > 1;
+
     try {
       const genai = new GoogleGenAI({ apiKey: GOOGLE_API_KEY });
 
-      // 2. Build content parts with fileData for each video + analysis prompt
-      const videoParts: Array<{ fileData: { fileUri: string; mimeType: string } }> = videos.map(
-        (v) => ({
-          fileData: {
-            fileUri: `https://www.youtube.com/watch?v=${v.videoId}`,
-            mimeType: 'video/mp4',
-          },
-        })
+      // 2. Analyze each video individually in parallel
+      const results = await Promise.allSettled(
+        videos.map((v) => analyzeSingleVideo(genai, v.videoId, focusTopics, lang, needsScore))
       );
 
-      const lang = language === 'en' ? 'English' : 'French';
-      const topicContext = focusTopics ? `Focus topic: "${focusTopics}". ` : '';
-
-      let analysisPrompt: string;
-      if (videos.length === 1) {
-        analysisPrompt = `${topicContext}Analyze this YouTube video for educational purposes. Respond in ${lang}.
-
-Return a JSON object with EXACTLY this structure:
-{
-  "bestVideoId": "${videos[0].videoId}",
-  "resume": "150-200 word pedagogical summary of the video content",
-  "concepts_cles": [{"concept": "Name", "explanation": "1-2 sentence explanation"}],
-  "moments_importants": [{"timestamp": "MM:SS", "description": "What happens at this point"}],
-  "niveau": "debutant|intermediaire|avance",
-  "competences": ["skill1", "skill2", "skill3"],
-  "elements_visuels": ["Notable visual elements, demos, or diagrams shown"]
-}
-
-Rules:
-- concepts_cles: 5-10 items
-- moments_importants: 3-7 timestamps
-- competences: 3-5 skills covered
-- resume must be pedagogically focused (what the viewer will LEARN, not just a description)
-- Return ONLY the JSON, no markdown fences`;
-      } else {
-        const videoList = videos
-          .map((v, i) => `Video ${i + 1}: https://www.youtube.com/watch?v=${v.videoId}`)
-          .join('\n');
-        analysisPrompt = `${topicContext}Compare these ${videos.length} YouTube videos and select the BEST one for learning. Respond in ${lang}.
-
-${videoList}
-
-Selection criteria (in order of priority):
-1. Content relevance to the focus topic
-2. Pedagogical quality (clear explanations, structured content, examples)
-3. Production quality (audio clarity, visual aids)
-4. Depth of coverage
-
-Return a JSON object with EXACTLY this structure:
-{
-  "bestVideoId": "<videoId of the best video>",
-  "selection_reason": "1-2 sentences explaining why this video was selected over the others",
-  "resume": "150-200 word pedagogical summary of the BEST video's content",
-  "concepts_cles": [{"concept": "Name", "explanation": "1-2 sentence explanation"}],
-  "moments_importants": [{"timestamp": "MM:SS", "description": "What happens at this point"}],
-  "niveau": "debutant|intermediaire|avance",
-  "competences": ["skill1", "skill2", "skill3"],
-  "elements_visuels": ["Notable visual elements, demos, or diagrams shown"]
-}
-
-Rules:
-- bestVideoId MUST be one of: ${videos.map((v) => v.videoId).join(', ')}
-- concepts_cles: 5-10 items
-- moments_importants: 3-7 timestamps
-- competences: 3-5 skills covered
-- Analyze ONLY the best video in detail
-- Return ONLY the JSON, no markdown fences`;
+      // 3. Collect successful analyses
+      const analyses: VideoAnalysis[] = [];
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          analyses.push(result.value);
+        }
       }
 
-      // 3. Call Gemini with video(s) + prompt
-      const response = await genai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
-          {
-            role: 'user',
-            parts: [...videoParts, { text: analysisPrompt }],
-          },
-        ],
-      });
-
-      const responseText = response.text?.trim() || '';
-
-      // 4. Parse JSON response (with fallback)
-      let analysis: any;
-      try {
-        // Remove potential markdown fences
-        const cleanJson = responseText
-          .replace(/^```(?:json)?\s*/i, '')
-          .replace(/\s*```$/i, '')
-          .trim();
-        analysis = JSON.parse(cleanJson);
-      } catch {
-        // Fallback: return raw text as summary
-        logger.warn('[analyze_youtube_video] Failed to parse JSON, returning raw text');
+      if (analyses.length === 0) {
         return {
-          success: true,
-          bestVideoId: videos[0].videoId,
-          videoUrl: `https://www.youtube.com/watch?v=${videos[0].videoId}`,
-          analysis: {
-            resume: responseText.slice(0, 1000),
-            concepts_cles: [],
-            moments_importants: [],
-            niveau: 'intermediaire',
-            competences: [],
-            elements_visuels: [],
-          },
-          rawText: true,
+          success: false,
+          error:
+            language === 'fr'
+              ? 'Aucune vidéo n\'a pu être analysée. Les vidéos sont peut-être trop longues, privées ou indisponibles.'
+              : 'No video could be analyzed. Videos may be too long, private, or unavailable.',
         };
       }
 
-      const bestVideoId = analysis.bestVideoId || videos[0].videoId;
+      // 4. Pick the best video
+      let best: VideoAnalysis;
+      if (analyses.length === 1) {
+        best = analyses[0];
+      } else {
+        // Sort by quality_score descending, fallback to first
+        best = analyses.sort((a, b) => (b.quality_score || 5) - (a.quality_score || 5))[0];
+      }
+
+      const selectionReason =
+        analyses.length > 1
+          ? `Sélectionnée parmi ${analyses.length} vidéos analysées (score: ${best.quality_score || 'N/A'}/10).`
+          : undefined;
 
       return {
         success: true,
-        bestVideoId,
-        videoUrl: `https://www.youtube.com/watch?v=${bestVideoId}`,
+        bestVideoId: best.videoId,
+        videoUrl: `https://www.youtube.com/watch?v=${best.videoId}`,
         analysis: {
-          resume: analysis.resume || '',
-          concepts_cles: analysis.concepts_cles || [],
-          moments_importants: analysis.moments_importants || [],
-          niveau: analysis.niveau || 'intermediaire',
-          competences: analysis.competences || [],
-          elements_visuels: analysis.elements_visuels || [],
-          selection_reason: analysis.selection_reason,
+          resume: best.resume || '',
+          concepts_cles: best.concepts_cles || [],
+          moments_importants: best.moments_importants || [],
+          niveau: best.niveau || 'intermediaire',
+          competences: best.competences || [],
+          elements_visuels: best.elements_visuels || [],
+          selection_reason: selectionReason,
         },
       };
     } catch (error: any) {
-      logger.error('[analyze_youtube_video] Gemini analysis error:', error);
+      logger.error('[analyze_youtube_video] Error:', error);
 
-      // Handle specific errors
       if (error.message?.includes('not found') || error.message?.includes('unavailable')) {
         return {
           success: false,
