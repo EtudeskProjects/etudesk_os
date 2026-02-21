@@ -96,6 +96,11 @@ Rules:
     const parsed = JSON.parse(cleanJson);
     return { videoId, ...parsed };
   } catch (error: any) {
+    // Gemini token limit exceeded — video is too long
+    if (error.message?.includes('token count exceeds') || error.message?.includes('1048576')) {
+      logger.warn(`[analyze_youtube_video] Video ${videoId} too long for Gemini (>1M tokens)`);
+      return null;
+    }
     logger.warn(`[analyze_youtube_video] Failed to analyze video ${videoId}: ${error.message}`);
     return null;
   }
@@ -160,8 +165,8 @@ export const analyzeYoutubeVideoTool = defineTool({
           success: false,
           error:
             language === 'fr'
-              ? 'Aucune vidéo n\'a pu être analysée. Les vidéos sont peut-être trop longues, privées ou indisponibles.'
-              : 'No video could be analyzed. Videos may be too long, private, or unavailable.',
+              ? 'Aucune vidéo n\'a pu être analysée. Les vidéos sont peut-être trop longues (max ~45 min), privées ou indisponibles. Essaie avec une vidéo plus courte.'
+              : 'No video could be analyzed. Videos may be too long (max ~45 min), private, or unavailable. Try a shorter video.',
         };
       }
 
