@@ -18,8 +18,7 @@ You are now in Candidate Ranking mode. Follow these steps precisely:
 3. Call `sql_query` with intent `org_applications` filtered by the opportunity to get all applicants.
 
 ## Step 3: Analyze CVs (Top Candidates)
-4. Limit `file_reader` to the **top 3 candidates** only (by initial screening based on `org_talent_profile` data). For candidates #4-5, use profile data from `org_talent_profile` (skills, bio, location) without reading full CVs — this reduces tool calls and latency.
-   - Call `file_reader` for each top 3 candidate's CV document (if available)
+4. Use the `top_skills` returned by `org_applications` for initial screening — no extra tool call needed. Then for the **top 3 candidates** only, call `org_talent_profile(talentId)` to get their document IDs, then `file_reader` on their CV for deeper analysis.
    - Extract: skills match, experience relevance, education alignment
 
 ## Step 4: Score & Rank

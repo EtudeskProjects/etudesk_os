@@ -365,6 +365,32 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       const orgInfo = talentContext.organizations?.organizations?.find(
         (o: any) => o.organizationId === organizationId
       );
+
+      // Pre-load org stats (logo, city, country, member_count, sectors) — avoids org_stats tool calls
+      let logoUrl: string | undefined;
+      let orgCity: string | undefined;
+      let orgCountry: string | undefined;
+      let memberCount: number | undefined;
+      let orgSectors: string[] | undefined;
+      try {
+        const orgStatsResult = await pool.query(
+          `SELECT o.logo_url, o.city, o.country, o.sectors,
+                  (SELECT COUNT(*) FROM organization_members om WHERE om.organization_id = o.id AND om.status = 'ACTIVE') as member_count
+           FROM organizations o WHERE o.id = $1`,
+          [organizationId]
+        );
+        if (orgStatsResult.rows.length > 0) {
+          const row = orgStatsResult.rows[0];
+          logoUrl = row.logo_url || undefined;
+          orgCity = row.city || undefined;
+          orgCountry = row.country || undefined;
+          memberCount = parseInt(row.member_count) || 0;
+          orgSectors = row.sectors?.length ? row.sectors : undefined;
+        }
+      } catch (err) {
+        logger.warn('[copilot] Failed to pre-load org stats', err);
+      }
+
       const orgCtx: OrgContext = {
         talentId,
         talentName: `${talentContext.profile.firstName} ${talentContext.profile.lastName}`,
@@ -373,6 +399,11 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         role: orgInfo?.role || 'MEMBER',
         language: userLanguage,
         country: talentContext.profile.country,
+        orgSectors,
+        memberCount,
+        logoUrl,
+        orgCity,
+        orgCountry,
         activeSkillInstructions,
         injectUEMOA,
       };

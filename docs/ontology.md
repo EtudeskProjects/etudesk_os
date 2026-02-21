@@ -69,7 +69,6 @@
 | `profileTags` | `ProfileTag[]` | enum, multi-valued |
 | `goals` | `Goal[]` | enum, multi-valued |
 | `sectors` | `Sector[]` | enum, multi-valued |
-| `learningPreferences` | `LearningPreference` | JSONB (Style, Interaction, Depth, Difficulty) |
 | `embedding` | `vector(1536)` | auto-computed |
 | `isVisible` | `xsd:boolean` | default true |
 
@@ -249,12 +248,6 @@ OrgRole := { OWNER | ADMIN | MANAGER | MEMBER }
 
 OrgMemberStatus := { PENDING | ACTIVE | SUSPENDED }
 
-LearningPreference := {
-  STYLE: { VISUAL | AUDITORY | TEXT_BASED | INTERACTIVE },
-  INTERACTION: { SOCRATIC | DIRECT | EXPLORATORY },
-  DEPTH: { THEORETICAL | PRACTICAL | BALANCED },
-  DIFFICULTY: { GENTLE | STANDARD | CHALLENGING }
-}
 ```
 
 ### 3.2 Resource Enums
@@ -611,7 +604,7 @@ Object  := see §5.3
 | **L2** | **Progression Constraints**: BEGINNER → INTERMEDIATE (min 5h active study) → EXPERT (min 20h + verification) → MASTER (peer review/cert). |
 | **L3** | **Degradation Logic**: If User claims EXPERT but fails basic Socratic questions, Agent sets level to INTERMEDIATE or BEGINNER with `confidence_score`. |
 | **L4** | **Socratic Method**: Agent must ask guiding questions to verify depth before "teaching". No direct answers for "Challenging" difficulty. |
-| **L5** | **Hyper-parameters**: `learningPreferences` dictate content format (e.g., `VISUAL` = generated diagrams, `AUDITORY` = text-to-speech prompts). |
+| **L5** | **Adaptive Format**: Agent adapts content format based on context, skill level, and conversation history (e.g., diagrams for architecture, code for implementation, quizzes for assessment). |
 
 ### 6.2 Universal Restrictions
 
@@ -771,9 +764,9 @@ The Copilot operates in 3 modes, each with dedicated tools and SQL intents.
 
 | Mode | Agent | Tools disponibles |
 |------|-------|-------------------|
-| **EXPLORE** | Talent Explorer | `sql_query`, `vector_query`, `execute_action`, `youtube_search`, `web_search`, `generate_document` |
-| **STUDY** | Talent Study | `sql_query`, `vector_query`, `manage_skills`, `youtube_search`, `web_search`, `generate_document`, `generate_image` |
-| **ORG** | Org Explorer | `sql_query`, `vector_query`, `youtube_search`, `web_search`, `generate_document` |
+| **EXPLORE** | Talent Explorer | `smart_search`, `sql_query`, `generate_document`, `file_reader`, `web_search`, `execute_action`, `cv_generation` |
+| **STUDY** | Talent Study | `sql_query`, `youtube_search`, `analyze_youtube_video`, `generate_image`, `generate_diagram`, `file_reader`, `web_search`, `manage_skills`, `execute_action` |
+| **ORG** | Org Explorer | `smart_search`, `sql_query`, `generate_document`, `file_reader`, `web_search`, `execute_action` |
 
 ### 8.2 SQL Intents (sql_query tool)
 
@@ -785,21 +778,30 @@ The Copilot operates in 3 modes, each with dedicated tools and SQL intents.
 | `my_invitations` | EXPLORE | `read_talent_invitation` (own) |
 | `my_communities` | EXPLORE | `read_talent_membership` (own) |
 | `my_bookmarks` | EXPLORE | `read_talent_bookmark` (own) |
-| `my_documents` | EXPLORE, STUDY | `read_talent_document` (own) |
-| `my_skills` | STUDY | `read_talent_skill` (own) |
+| `my_documents` | EXPLORE | `read_talent_document` (own) |
+| `my_skills` | EXPLORE | `read_talent_skill` (own) |
+| `my_triggers` | EXPLORE, STUDY | `read_talent_trigger` (own) |
+| `my_community_feed` | EXPLORE, STUDY | `read_talent_community_feed` (own) |
+| `my_community_members` | EXPLORE, STUDY | `read_talent_community_members` (own) |
 | `org_members` | ORG | `read_org_membership` |
 | `org_applications` | ORG | `read_org_application` |
 | `org_stats` | ORG | `read_org_organization` (stats) |
 | `org_opportunities` | ORG | `read_org_opportunity` |
 | `org_communities` | ORG | `read_org_community` |
 | `org_spaces` | ORG | `read_org_space` |
-| `org_revenue` | ORG | `read_org_subscription` (revenue) |
 | `org_invitations` | ORG | `read_org_invitation` |
-| `search_opportunities` | EXPLORE, ORG | `read_talent_opportunity` (public) |
-| `search_communities` | EXPLORE, ORG | `read_talent_community` (public) |
-| `search_spaces` | EXPLORE, ORG | `read_talent_space` (public) |
-| `search_organizations` | EXPLORE, ORG | `read_talent_organization` (public) |
-| `search_talents` | ORG | `read_talent_profile` (public) |
+| `org_triggers` | ORG | `read_org_trigger` |
+| `org_documents` | ORG | `read_org_document` |
+| `org_talents` | ORG | `read_org_talent` |
+| `org_talent_profile` | ORG | `read_org_talent_profile` (interaction check) |
+| `org_community_feed` | ORG | `read_org_community_feed` |
+| `org_community_members` | ORG | `read_org_community_members` |
+| `org_skills_analytics` | ORG | `read_org_analytics` (skills distribution) |
+| `org_application_funnel` | ORG | `read_org_analytics` (recruitment funnel) |
+| `org_talent_cohorts` | ORG | `read_org_analytics` (talent cohorts) |
+| `org_geo_distribution` | ORG | `read_org_analytics` (geo) |
+| `org_community_engagement` | ORG | `read_org_analytics` (engagement) |
+| `org_opportunity_performance` | ORG | `read_org_analytics` (opportunity perf) |
 
 ### 8.3 Actions (execute_action tool — EXPLORE only)
 

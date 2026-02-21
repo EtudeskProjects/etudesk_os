@@ -13,12 +13,9 @@ You are now in Job Description PDF Generation mode. Your goal: produce a branded
 
 **CRITICAL: This skill generates a PDF document. If the user wants to PUBLISH an opportunity on the platform, use the opportunity-publishing skill instead.**
 
-## Step 1: Gather Organization Context
-1. Call `sql_query` with intent `org_stats` to retrieve the organization's `logo_url`, `city`, and `country`.
-2. Store `logo_url`, `city`, `country` for the PDF header.
-
-## Step 2: Gather Role Details
-3. From the user's message, extract:
+## Step 1: Gather Role Details
+1. Use `logo_url`, `city`, `country` from the `<organization>` context block (pre-loaded, no tool call needed).
+2. From the user's message, extract:
    - **Job title** (required)
    - **Contract type** (CDI, CDD, Stage, Freelance, etc.)
    - **Location / remote policy**
@@ -27,11 +24,11 @@ You are now in Job Description PDF Generation mode. Your goal: produce a branded
    - **Required qualifications**
    - **Nice-to-have skills**
    - **Compensation range** (only if mentioned)
-4. If the user referenced an existing opportunity, call `sql_query` with `org_opportunities` to get its details.
-5. Optionally call `web_search` for market benchmarks on the role (salary ranges, typical requirements in UEMOA region).
+3. If the user referenced an existing opportunity, call `sql_query` with `org_opportunities` to get its details.
+4. Optionally call `web_search` for market benchmarks on the role (salary ranges, typical requirements in UEMOA region).
 
-## Step 3: Draft & Confirm
-6. Present a structured preview of the fiche de poste content:
+## Step 2: Draft & Confirm
+5. Present a structured preview of the fiche de poste content:
    - Titre du Poste
    - Type de Contrat / Rythme
    - Lieu de Travail
@@ -40,10 +37,10 @@ You are now in Job Description PDF Generation mode. Your goal: produce a branded
    - Atouts appréciés (2-3 bullet points)
    - Conditions (rémunération, avantages — only if provided)
    - Comment postuler
-7. Ask for confirmation: "Voulez-vous que je génère le PDF ?"
+6. Ask for confirmation: "Voulez-vous que je génère le PDF ?"
 
-## Step 4: Generate Branded PDF
-8. After confirmation, call `generate_document` with format "PDF" and the **Org Document JSON format**:
+## Step 3: Generate Branded PDF
+7. After confirmation, call `generate_document` with format "PDF" and the **Org Document JSON format**:
 
 ```
 {
@@ -66,20 +63,20 @@ You are now in Job Description PDF Generation mode. Your goal: produce a branded
 
 **CRITICAL: Use the Org Document format (with organizationName + sections), NOT the sections-only format. The Org Document format includes the logo in the PDF header.**
 
-## Step 5: Present Result
-9. Render the document card as a **fenced code block**:
+## Step 4: Present Result
+8. Render the document card as a **fenced code block**:
 
 ````
 ```entity:document
 {"id":"THE_DOCUMENT_UUID_FROM_GENERATE_DOCUMENT"}
 ```
 ````
-10. Offer to also publish this as an opportunity on the platform.
+9. Offer to also publish this as an opportunity on the platform.
 
 ## Rules
 - **Separation from opportunity-publishing**: "generer une fiche de poste" / "fiche PDF" = this skill (PDF output). "publier une offre" / "creer une offre" = opportunity-publishing (platform publish). Never confuse the two.
 - ALWAYS use the Org Document JSON format for PDF generation — never the plain sections format
-- ALWAYS fetch org_stats FIRST to get logo_url, city, country
+- Use logo_url, city, country from `<organization>` context (pre-loaded, no org_stats call needed)
 - Write content in professional French appropriate for the UEMOA job market
 - Use bullet points for responsibilities and qualifications
 - Never invent salary data — only include if the user mentioned it

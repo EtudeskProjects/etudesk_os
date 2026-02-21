@@ -36,7 +36,7 @@ function isTableContent(data: any): data is TableContent {
   return data && Array.isArray(data.headers) && Array.isArray(data.rows);
 }
 
-/** Detect CVData-structured content — supports canonical, agent-alternate, and JSON Resume formats */
+/** Detect CVData-structured content — supports canonical, agent-alternate, personal, and JSON Resume formats */
 function isCVContent(data: any): boolean {
   // Canonical format: { firstName, lastName, skills: [{name}] }
   if (data && typeof data.firstName === 'string' && typeof data.lastName === 'string' && Array.isArray(data.skills)) {
@@ -44,6 +44,10 @@ function isCVContent(data: any): boolean {
   }
   // Agent alternate format: { personalInfo: { firstName, lastName }, skills/experience }
   if (data?.personalInfo && typeof data.personalInfo.firstName === 'string' && typeof data.personalInfo.lastName === 'string') {
+    return true;
+  }
+  // Agent "personal" shorthand: { personal: { firstName, lastName }, experiences/skills }
+  if (data?.personal && typeof data.personal.firstName === 'string' && typeof data.personal.lastName === 'string') {
     return true;
   }
   // JSON Resume format: { basics: { name: "..." }, work/education/skills arrays }
@@ -177,9 +181,9 @@ function normalizeCVData(data: any): CVData {
     return normalizeJsonResume(data);
   }
 
-  const pi = data.personalInfo || {};
+  const pi = data.personalInfo || data.personal || {};
 
-  // Flatten skills from category groups: [{category, items: string[]}] → [{name}]
+  // Flatten skills from various formats → [{name, type?, level?}]
   let flatSkills: Array<{ name: string; type?: string; level?: string }> = [];
   if (Array.isArray(data.skills)) {
     for (const s of data.skills) {
@@ -193,9 +197,22 @@ function normalizeCVData(data: any): CVData {
         flatSkills.push(s);
       }
     }
+  } else if (data.skills && typeof data.skills === 'object' && !Array.isArray(data.skills)) {
+    // Object format: {hard: ["Skill1", ...], soft: ["Skill2", ...]}
+    for (const [type, items] of Object.entries(data.skills)) {
+      if (Array.isArray(items)) {
+        for (const item of items) {
+          if (typeof item === 'string') {
+            flatSkills.push({ name: item, type: type.toLowerCase().includes('soft') ? 'soft' : 'hard' });
+          } else if (item && typeof item === 'object' && item.name) {
+            flatSkills.push({ name: item.name, type: item.type || type, level: item.level });
+          }
+        }
+      }
+    }
   }
 
-  // Normalize experiences: {position, company, startDate, endDate, highlights} → {title, company, period, description}
+  // Normalize experiences: {position, company, startDate, endDate, highlights/bullets} → {title, company, period, description}
   let experiences: CVData['experiences'] = undefined;
   const rawExp = data.experience || data.experiences;
   if (Array.isArray(rawExp)) {
@@ -204,16 +221,16 @@ function normalizeCVData(data: any): CVData {
       company: e.company || e.organization || '',
       location: e.location,
       period: e.period || `${e.startDate || ''}${e.endDate ? ' - ' + e.endDate : e.current ? ' - Présent' : ''}`,
-      description: Array.isArray(e.highlights) ? e.highlights.join('\n') : (e.description || ''),
+      description: Array.isArray(e.highlights) ? e.highlights.join('\n') : Array.isArray(e.bullets) ? e.bullets.join('\n') : (e.description || ''),
     }));
   }
 
-  // Normalize education: {institution, degree, startDate, endDate, highlights} → {institution, degree, period, description}
+  // Normalize education: {institution, degree/school, startDate, endDate, highlights} → {institution, degree, period, description}
   let education: CVData['education'] = undefined;
   if (Array.isArray(data.education)) {
     education = data.education.map((e: any) => ({
       degree: e.degree || '',
-      institution: e.institution || '',
+      institution: e.institution || e.school || '',
       location: e.location,
       period: e.period || `${e.startDate || ''}${e.endDate ? ' - ' + e.endDate : ''}`,
       description: Array.isArray(e.highlights) ? e.highlights.join('\n') : (e.description || ''),
@@ -240,14 +257,26 @@ function normalizeCVData(data: any): CVData {
   }
 
   // Volunteer/other sections
-  let other: CVData['other'] = undefined;
-  if (Array.isArray(data.volunteerWork) && data.volunteerWork.length > 0) {
-    other = [{
+  let otherSections: CVData['other'] = undefined;
+  const volunteerData = data.volunteerWork || data.volunteer;
+  if (Array.isArray(volunteerData) && volunteerData.length > 0) {
+    otherSections = [{
       heading: 'Bénévolat & Engagement',
-      content: data.volunteerWork.map((v: any) =>
-        `${v.role || v.position || ''} — ${v.organization || ''} (${v.startDate || ''}${v.current ? ' - Présent' : v.endDate ? ' - ' + v.endDate : ''})`
+      content: volunteerData.map((v: any) =>
+        `${v.role || v.position || ''} — ${v.organization || ''} (${v.startDate || v.period || ''}${v.current ? ' - Présent' : v.endDate ? ' - ' + v.endDate : ''})`
       ).join('\n'),
     }];
+  }
+
+  // References section (if provided)
+  if (Array.isArray(data.references) && data.references.length > 0) {
+    const refSection = {
+      heading: 'Références',
+      content: data.references.map((r: any) =>
+        `${r.name || ''}${r.title ? ' — ' + r.title : ''}${r.phone ? ' | ' + r.phone : ''}${r.email ? ' | ' + r.email : ''}`
+      ).join('\n'),
+    };
+    otherSections = [...(otherSections || []), refSection];
   }
 
   return {
@@ -257,7 +286,7 @@ function normalizeCVData(data: any): CVData {
     phone: pi.phone || data.phone,
     city: pi.location?.split(',')[0]?.trim() || pi.city || data.city,
     country: pi.location?.split(',')[1]?.trim() || pi.country || data.country,
-    bio: pi.summary || pi.bio || data.bio,
+    bio: pi.summary || pi.bio || data.bio || data.summary,
     skills: flatSkills,
     languages,
     interests: data.interests,
@@ -265,7 +294,7 @@ function normalizeCVData(data: any): CVData {
     experiences,
     education,
     certifications,
-    other,
+    other: otherSections,
   };
 }
 
@@ -512,12 +541,12 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
   return defineTool({
     name: 'generate_document',
     description:
-      'Generate a downloadable document (CV, cover letter, report, data export). Supports PDF, DOCX, XLS, CSV, TXT formats. Use AFTER gathering data via sql_query or smart_search. Returns a persistent download URL and document ID. The document is automatically saved to the user documents library. For CV generation, use the CV JSON format (see contentJson description).',
+      'Generate a downloadable document (CV, report, job description, data export). Supports PDF, DOCX, XLS, CSV, TXT formats. Use AFTER gathering data via sql_query or smart_search. Returns a persistent download URL and document ID. The document is automatically saved to the user documents library. For CV generation, use the CV JSON format (see contentJson description).',
     parameters: z.object({
       format: z
         .string()
         .default('PDF')
-        .describe('Output format: PDF (default, good for CVs/letters), DOCX (editable), XLS (spreadsheets), CSV (data export), TXT (plain text)'),
+        .describe('Output format: PDF (default, good for CVs/reports), DOCX (editable), XLS (spreadsheets), CSV (data export), TXT (plain text)'),
       title: z.string().describe('Document title displayed at the top of the generated file'),
       contentJson: z
         .union([z.string(), z.record(z.string(), z.unknown())])
@@ -687,12 +716,12 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
 export const generateDocumentTool = defineTool({
   name: 'generate_document',
   description:
-    'Generate a downloadable document (CV, cover letter, report, data export). Supports PDF, DOCX, XLS, CSV, TXT formats. Use AFTER gathering data via sql_query or smart_search. Returns a persistent download URL.',
+    'Generate a downloadable document (CV, report, job description, data export). Supports PDF, DOCX, XLS, CSV, TXT formats. Use AFTER gathering data via sql_query or smart_search. Returns a persistent download URL.',
   parameters: z.object({
     format: z
       .string()
       .default('PDF')
-      .describe('Output format: PDF (default, good for CVs/letters), DOCX (editable), XLS (spreadsheets), CSV (data export), TXT (plain text)'),
+      .describe('Output format: PDF (default, good for CVs/reports), DOCX (editable), XLS (spreadsheets), CSV (data export), TXT (plain text)'),
     title: z.string().describe('Document title displayed at the top of the generated file'),
     contentJson: z
       .union([z.string(), z.record(z.string(), z.unknown())])

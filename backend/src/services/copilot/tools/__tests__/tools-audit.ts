@@ -236,8 +236,8 @@ async function runTest(
 
   const genDocTool = createGenerateDocumentTool(TALENT_ID);
 
-  await runTest('generate_document', 'PDF Sections (lettre motivation)',
-    { format: 'PDF', title: 'Lettre de Motivation', contentJson: '{"sections":[{"heading":"Objet","body":"Candidature au poste de développeur fullstack."},{"heading":"Compétences","body":"5 ans en React, Node.js et PostgreSQL."}]}', instructions: 'Lettre de motivation formelle' },
+  await runTest('generate_document', 'PDF Sections (rapport)',
+    { format: 'PDF', title: 'Rapport de Competences', contentJson: '{"sections":[{"heading":"Profil","body":"Développeur fullstack avec 5 ans d\'expérience."},{"heading":"Compétences clés","body":"React, Node.js et PostgreSQL."}]}', instructions: 'Rapport de compétences professionnel' },
     genDocTool,
     { toolName: 'generate_document' }
   );

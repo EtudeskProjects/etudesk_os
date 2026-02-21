@@ -31,6 +31,9 @@ export interface OrgContext {
   /** Pre-loaded org enrichment (avoids org_stats call) */
   orgSectors?: string[];
   memberCount?: number;
+  logoUrl?: string;
+  orgCity?: string;
+  orgCountry?: string;
   /** Admin's country — used for UEMOA knowledge injection */
   country?: string;
   /** Dynamically injected skill instructions when a skill trigger matches the user message */

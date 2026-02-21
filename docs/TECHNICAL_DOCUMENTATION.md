@@ -18,7 +18,7 @@
 10. [API REST — Endpoints complets](#10-api-rest--endpoints-complets)
 11. [Authentification & Sécurité](#11-authentification--sécurité)
 12. [Copilote IA — Architecture agents](#12-copilote-ia--architecture-agents)
-13. [Copilote — Outils (10 tools)](#13-copilote--outils-10-tools)
+13. [Copilote — Outils (12 tools)](#13-copilote--outils-12-tools)
 14. [Copilote — Guardrails](#14-copilote--guardrails)
 15. [Copilote — Skills Library](#15-copilote--skills-library)
 16. [Copilote — Streaming SSE](#16-copilote--streaming-sse)
@@ -50,7 +50,7 @@ Démocratiser l'accès aux opportunités professionnelles en Afrique de l'Ouest 
 | **Marketplace** | Offres d'emploi, stages, freelance, communautés, espaces de coworking |
 | **Gestion d'organisation** | Dashboard pour recruteurs, publication d'offres, gestion de talents |
 | **Apprentissage** | Mode Study avec quiz, flashcards, diagrammes, vidéos YouTube |
-| **Documents IA** | Génération de CV, lettres de motivation, fiches de poste |
+| **Documents IA** | Génération de CV, fiches de poste, rapports |
 
 ### Architecture monorepo
 
@@ -433,8 +433,8 @@ Barème crédits (extrait):
 │  │  └────────┬───────┘  └──────┬───────┘  └────────┬────────┘  │   │
 │  │           │                 │                    │           │   │
 │  │  ┌────────┴─────────────────┴────────────────────┴────────┐  │   │
-│  │  │                    10 TOOLS                             │  │   │
-│  │  │ vector_query | sql_query | youtube | generate_doc/img  │  │   │
+│  │  │                    12 TOOLS                             │  │   │
+│  │  │ smart_search | sql_query | youtube | generate_doc/img  │  │   │
 │  │  │ generate_diagram | file_reader | web_search            │  │   │
 │  │  │ manage_skills | execute_action                         │  │   │
 │  │  └────────────────────────────────────────────────────────┘  │   │
@@ -496,15 +496,15 @@ Barème crédits (extrait):
 
 | Technologie | Provider | Rôle |
 |-------------|----------|------|
-| **OpenAI Agents SDK** | - | Framework multi-agents (orchestre les 3 providers) |
-| **claude-opus-4-6** (MODEL_AGENT) | Anthropic | Agents principaux (TalentAgent, OrgAgent) |
-| **claude-haiku-4-5** (MODEL_FAST) | Anthropic | Guardrails, titres, summaries, FileReaderAgent |
+| **Anthropic SDK natif** | Anthropic | Agents copilot (boucle agentic manuelle) |
+| **claude-sonnet-4-6** (MODEL_AGENT) | Anthropic | Agents principaux (TalentAgent, OrgAgent) |
+| **claude-haiku-4-5** (MODEL_FAST) | Anthropic | Guardrails, titres, summaries |
 | **gemini-2.5-flash-lite** (MODEL_SUGGESTION) | Google | Suggestions, objectifs quotidiens, bio |
 | **gpt-4.1-mini** (MODEL_SEARCH) | OpenAI | WebSearchAgent, vision/extraction documents |
 | **gpt-4.1-nano** (MODEL_MATCH) | OpenAI | Recommendations candidats |
 | **gpt-image-1** (MODEL_IMAGE) | OpenAI | Génération d'images éducatives |
 | **text-embedding-3-small** (MODEL_EMBEDDING) | OpenAI | Embeddings vectoriels (1536 dims) |
-| **whisper-1** (MODEL_STT) | OpenAI | Transcription audio (voice-to-text) |
+| **gpt-4o-mini-transcribe** (MODEL_STT) | OpenAI | Transcription audio (voice-to-text) |
 | **@anthropic-ai/sdk** | - | SDK natif Anthropic (AnthropicProvider adapter) |
 
 ### Mobile
@@ -597,7 +597,7 @@ backend/src/
 │   ├── ai/                     # Services IA (multi-provider)
 │   │   ├── models.ts           # Constantes modèles par usage (AGENT/FAST/SUGGESTION/MATCH/SEARCH)
 │   │   ├── provider.ts         # Config multi-provider (Anthropic, Gemini, OpenAI)
-│   │   ├── anthropic-provider.ts # AnthropicProvider adapter pour @openai/agents
+│   │   ├── provider.ts          # 3 clients (Anthropic, OpenAI, Gemini)
 │   │   ├── agent-factory.ts    # Création agents (Anthropic pour copilot, Gemini pour suggestions)
 │   │   └── talent-object.ts    # Contexte talent enrichi
 │   └── copilot/                # Copilote IA complet
@@ -950,328 +950,86 @@ createGenerateDocumentTool(talentId, avatarUrl)
 
 ## 12. Copilote IA — Architecture agents
 
-### Vue d'ensemble
+Le copilote utilise **Anthropic SDK natif** (`@anthropic-ai/sdk`) avec une boucle agentic manuelle.
 
-Le copilote est un système multi-agents basé sur le **OpenAI Agents SDK** (`@openai/agents`).
+Pour la documentation complete de l'architecture technique, voir [COPILOT_ARCHITECTURE.md](./COPILOT_ARCHITECTURE.md).
 
 ### Agents
 
-| Agent | Modèle | Provider | Modes | Rôle |
-|-------|--------|----------|-------|------|
-| **TalentAgent** | claude-opus-4-6 | Anthropic | Explorer, Study | Agent principal pour talents individuels |
-| **OrgAgent** | claude-opus-4-6 | Anthropic | Organisation | Agent pour administrateurs d'organisations |
-| **FileReaderAgent** | claude-haiku-4-5 | Anthropic | Sub-agent | Lecture et analyse de documents (via `asTool()`) |
-| **WebSearchAgent** | gpt-4.1-mini | OpenAI | Sub-agent | Recherche web (via `asTool()`, Responses API) |
+| Agent | Modele | Provider | Modes |
+|-------|--------|----------|-------|
+| **TalentAgent** | claude-sonnet-4-6 | Anthropic | Explorer, Study |
+| **OrgAgent** | claude-sonnet-4-6 | Anthropic | Organisation |
 
-### Modes de fonctionnement
+### Modes
 
-#### Mode Explorer (par défaut)
-- **Persona :** Guide distingué, inspirant, expert
-- **Capacités :** Recherche opportunités/communautés/espaces, génération de CV, candidatures, analyse de documents
-- **Outils :** Tous les 10 outils
-- **Entity cards :** Oui (opportunité, communauté, espace, talent, organisation, document)
-- **Limite texte :** 800 caractères (hors cards et blocs)
-
-#### Mode Study
-- **Persona :** Pédagogue, encourageant, haute érudition
-- **Capacités :** Enseignement structuré, quiz, flashcards, diagrammes, vidéos YouTube
-- **Restrictions :** PAS d'entity cards, PAS de vector_query, sql_query limité à (my_profile, my_skills, my_documents)
-- **Suppression de skill :** Interdite (uniquement ajout/mise à jour)
-- **Limite texte :** 1200 caractères
-- **Pédagogie :** UN composant interactif par message (quiz OU flashcard OU diagramme OU vidéo)
-
-#### Mode Organisation
-- **Persona :** Homme d'état de l'industrie, partenaire stratégique
-- **Capacités :** Dashboard org, gestion talents, publication d'offres, création communautés/espaces
-- **Données :** sql_query org_* intents uniquement, PAS d'accès aux données personnelles
-- **Entity cards :** Uniquement entity:talent et entity:opportunity
-- **Limite texte :** 800 caractères
-
-### Contexte par mode
-
-| Données | Explorer | Study | Organisation |
-|---------|----------|-------|--------------|
-| Documents | Oui (tous) | Oui (5 max) | Non |
-| Candidatures | Oui | Non | Non |
-| Adhésions | Oui | Non | Non |
-| Réservations | Oui | Non | Non |
-| Notifications | Oui | Non | Non |
-| Favoris | Oui | Non | Non |
-| Calendrier | Oui | Non | Non |
-| Invitations | Oui | Non | Non |
-| Organisations | Oui | Non | Oui |
-
-### Session & mémoire
-
-- **Historique :** Derniers 50 messages par session
-- **Résumé automatique :** claude-haiku-4-5 (Anthropic) résume les messages > 10 (garde les 4 derniers verbatim)
-- **Titre auto :** claude-haiku-4-5 (Anthropic) génère un titre après le 1er message
-- **Suggestions :** gemini-2.5-flash-lite (Google) propose des amorces de conversation contextuelles
+| Mode | Tools | Skills | Entity cards |
+|------|-------|--------|--------------|
+| **Explorer** | 6 + cv_generation | 5 | Tous types |
+| **Study** | 9 | 8 | Aucun |
+| **Organisation** | 6 | 10 | talent, opportunity, document |
 
 ---
 
-## 13. Copilote — Outils (10 tools)
+## 13. Copilote — Outils (12 tools)
 
-### 1. `vector_query`
+Pour la documentation complete de chaque tool (parametres, retours, securite), voir [COPILOT_TOOLS.md](./COPILOT_TOOLS.md).
 
-| Propriété | Valeur |
-|-----------|--------|
-| **Type** | Recherche sémantique |
-| **Backend** | Pinecone (cosine similarity) |
-| **Namespaces** | talent, opportunity, community, space |
-| **Usage** | Découverte d'entités par description naturelle |
-| **Mode Study** | INTERDIT |
-
-### 2. `sql_query`
-
-| Propriété | Valeur |
-|-----------|--------|
-| **Type** | Requêtes structurées par intent |
-| **Protection** | Factory pattern avec talentId injecté |
-| **23 intents** | my_profile, my_applications, my_reservations, my_skills, my_documents, my_bookmarks, my_communities, my_invitations, org_members, org_applications, org_stats, org_opportunities, org_communities, org_spaces, org_revenue, org_invitations, search_opportunities, search_communities, search_spaces, search_organizations, search_talents, apply_opportunity, join_community |
-
-**Restrictions par mode :**
-- **Study :** my_profile, my_skills, my_documents uniquement
-- **Organisation :** org_* et search_* uniquement
-
-### 3. `youtube_search`
-
-| Propriété | Valeur |
-|-----------|--------|
-| **API** | YouTube Data API v3 |
-| **Langue** | Français prioritaire |
-| **Résultats** | 1-5 vidéos (3 par défaut) |
-| **Usage** | Mode Study uniquement, vidéos éducatives |
-
-### 4. `generate_document`
-
-| Propriété | Valeur |
-|-----------|--------|
-| **Formats** | PDF, DOCX, XLS, CSV, TXT |
-| **CV spécial** | Layout 2 colonnes élégant avec avatar |
-| **Auto-save** | Sauvegardé dans talent_documents + extraction IA |
-| **Stockage** | `documents/{talentId}/{documentId}.{ext}` |
-
-### 5. `generate_image`
-
-| Propriété | Valeur |
-|-----------|--------|
-| **Modèle** | gpt-image-1 |
-| **Tailles** | 1024x1024, 1536x1024, 1024x1536 |
-| **Qualité** | low (~$0.01), medium (~$0.04), high (~$0.17) |
-| **Sortie** | Base64 → PNG persisté |
-
-### 6. `generate_diagram`
-
-| Propriété | Valeur |
-|-----------|--------|
-| **Format** | Code Mermaid (rendu client-side) |
-| **Types** | flowchart, sequenceDiagram, classDiagram, mindmap, timeline, gantt, pie, erDiagram |
-| **Rendu** | WebView mermaid.js dans l'app mobile |
-
-### 7. `file_reader`
-
-| Propriété | Valeur |
-|-----------|--------|
-| **Pattern** | Sub-agent via `asTool()` (claude-haiku-4-5, Anthropic) |
-| **Formats** | PDF (pdf-parse), texte (UTF-8), images (métadonnées) |
-| **Sécurité** | Vérifie propriété du document avant lecture |
-| **Max turns** | 5 |
-
-### 8. `web_search`
-
-| Propriété | Valeur |
-|-----------|--------|
-| **Pattern** | Sub-agent via `asTool()` (gpt-4.1-mini, OpenAI — Responses API) |
-| **API** | OpenAI Agents SDK webSearchTool() + Brave Search |
-| **Langues** | FR + EN, résultats en français |
-| **Citations** | Obligatoires (URL, date) |
-
-### 9. `manage_skills`
-
-| Propriété | Valeur |
-|-----------|--------|
-| **Actions** | add, update (pas de remove en Study) |
-| **Niveaux** | BEGINNER, INTERMEDIATE, ADVANCED, EXPERT |
-| **Origines** | SELF_DECLARED, AI_INFERRED, DOCUMENT_EXTRACTED, QUIZ_VALIDATED |
-| **Dédoublonnage** | Vérification case-insensitive avant ajout |
-
-### 10. `execute_action`
-
-| Propriété | Valeur |
-|-----------|--------|
-| **Actions** | apply_opportunity, join_community, book_space, accept_invitation, decline_invitation |
-| **Validation** | Existence entité + statut + permissions + pas de doublon |
-| **Transaction** | Atomique (invitation + membership ensemble) |
-| **Confirmation** | Requise via bloc confirmation côté frontend |
+| Tool | Description | Modes |
+|------|-------------|-------|
+| `smart_search` | Recherche semantique 3 phases (Pinecone → PG → keyword) | explore, org |
+| `sql_query` | Requetes structurees par intent | tous |
+| `youtube_search` | YouTube Data API v3 | study |
+| `analyze_youtube_video` | Analyse pedagogique Gemini 2.5 Flash | study |
+| `generate_document` | Generation PDF/DOCX/CSV/XLS/TXT | explore, org |
+| `generate_image` | Generation images gpt-image-1 | study |
+| `generate_diagram` | Diagrammes Mermaid (client-side render) | study |
+| `file_reader` | Lecture documents (direct tool, PAS sub-agent) | tous |
+| `web_search` | Recherche web OpenAI Responses API | tous |
+| `manage_skills` | Gestion competences (BEGINNER/INTERMEDIATE/EXPERT/MASTER, declared/inferred/extracted) | study |
+| `execute_action` | Actions de mutation avec confirmation | explore, org |
+| `cv_generation` | Sub-agent generation CV avec timeout 30s | explore |
 
 ---
 
 ## 14. Copilote — Guardrails
 
-### Input Safety Guardrail
+Voir [COPILOT_ARCHITECTURE.md](./COPILOT_ARCHITECTURE.md#5-guardrails) pour les details.
 
-| Propriété | Valeur |
-|-----------|--------|
-| **Modèle** | claude-haiku-4-5 (Anthropic) |
-| **Exécution** | Parallèle avec l'agent principal |
-| **Mode** | Fail-open (disponibilité > sécurité) |
-
-**Classifications :**
-| Catégorie | Action |
-|-----------|--------|
-| **SAFE** | Laissé passer |
-| **OFF_TOPIC** | Laissé passer (agent gère) |
-| **INJECTION** | BLOQUÉ (tentative override instructions) |
-| **HARMFUL** | BLOQUÉ (contenu illégal, violence, discrimination) |
-
-### Output Format Guardrail
-
-| Propriété | Valeur |
-|-----------|--------|
-| **Mode** | Log uniquement (ne bloque PAS) |
-| **Validations** | UUID format, champs entity cards, restrictions par mode |
-
-**Règles par mode :**
-| Mode | Entity cards | Limite texte |
-|------|-------------|--------------|
-| Explorer | Tous types | 800 chars |
-| Study | AUCUN | 1200 chars |
-| Organisation | entity:talent, entity:opportunity uniquement | 800 chars |
-
-**Format entity card obligatoire :**
-```
-```entity:type {"id":"uuid-v4-format"}```
-```
+- **Input guardrail** : claude-haiku-4-5, parallele, fail-open. Classifications : SAFE, OFF_TOPIC, INJECTION, HARMFUL.
+- **Output guardrail** : log-only, valide entity cards et limites texte par mode.
 
 ---
 
-## 15. Copilote — Skills Library
+## 15. Copilote — Skills Library (17 skills)
 
-### Structure
+Pour la liste complete des skills et leurs declencheurs, voir [COPILOT_PERIMETER.md](./COPILOT_PERIMETER.md).
+Pour le guide de creation de skills, voir [COPILOT_SKILLS_GUIDE.md](./COPILOT_SKILLS_GUIDE.md).
 
-```
-backend/src/services/copilot/skills/
-├── skill.loader.ts          # Singleton cache + chargement
-├── skill.types.ts           # Interfaces TypeScript
-└── definitions/
-    ├── cv-generation.skill.md
-    ├── opportunity-publishing.skill.md
-    ├── community-creation.skill.md
-    ├── space-creation.skill.md
-    ├── candidate-ranking.skill.md
-    ├── salary-analysis.skill.md
-    ├── interview-prep.skill.md
-    └── skill-assessment.skill.md
-```
+| Mode | Nombre | Exemples |
+|------|--------|----------|
+| Explorer | 4 | CV Generation, Interview Prep, Career & Compensation Guide, Application Tracker, Onboarding |
+| Study | 8 | Deep Dive Lesson, Exam & Revision, Document Study Session, Weekly Recap, Autodiagnostic |
+| Organisation | 10 | Candidate Ranking, Opportunity Publishing, Job Description, Org Analytics, Talent Outreach |
 
-### Skills disponibles (8)
-
-| Skill | Mode | Déclencheurs | Description |
-|-------|------|-------------|-------------|
-| **CV Generation** | Explorer | "génère mon CV", "crée un CV" | Workflow complet de génération CV PDF |
-| **Opportunity Publishing** | Organisation | "publie une offre", "recrute" | Publication d'offres avec smart defaults |
-| **Community Creation** | Organisation | "crée une communauté" | Création communautés avec access types |
-| **Space Creation** | Organisation | "crée un espace", "ajoute une salle" | Création espaces avec capacité/tarifs |
-| **Candidate Ranking** | Organisation | "classement candidats", "meilleurs profils" | Tri candidats par score de matching |
-| **Salary Analysis** | Explorer | "quel salaire", "benchmark salarial" | Recherche salaires marché via web_search |
-| **Interview Prep** | Study | "prépare l'entretien" | Préparation entretien structurée + quiz |
-| **Skill Assessment** | Study | "évalue-moi", "teste mon niveau" | Évaluation rapide en 3 questions |
-
-### Format .skill.md
-
-```markdown
----
-name: Nom du Skill
-description: Description courte pour l'agent
-modes: explore, study, org
-tools: sql_query, file_reader, vector_query
-triggers: mot-clé1, mot-clé2, phrase utilisateur
----
-# Instructions détaillées (markdown)
-Workflow étape par étape...
-```
-
-### Chargement
-
-- **Singleton pattern** : Cache en mémoire (comme ontology.cache)
-- `loadAllSkillMetadata()` : Liste légère (~100 tokens) injectée dans le prompt
-- `getSkillsForMode(mode)` : Filtre par mode
-- `getSkillBody(skillId)` : Charge instructions complètes à la demande
+Detection : embeddings semantiques (cosine >= 0.45) avec fallback statique (substring match sur triggers).
 
 ---
 
 ## 16. Copilote — Streaming SSE
 
-### Headers SSE
+Voir [COPILOT_ARCHITECTURE.md](./COPILOT_ARCHITECTURE.md#4-sse-streaming-protocol) pour le protocole complet.
 
-```
-Content-Type: text/event-stream
-Cache-Control: no-cache
-Connection: keep-alive
-X-Accel-Buffering: no
-```
+Events : `text_delta`, `tool_start`, `tool_end`, `audio_ready`, `content_corrected`, `limit_reached`, `done`, `error`.
 
-### Types d'événements
-
-| Événement | Payload | Description |
-|-----------|---------|-------------|
-| `text_delta` | `{ text }` | Fragment de texte (streaming caractère par caractère) |
-| `tool_start` | `{ callId, name, args }` | Début d'appel outil |
-| `tool_end` | `{ callId, name, summary, result, duration, status, error }` | Fin d'appel outil |
-| `done` | `{ sessionId }` | Agent terminé |
-| `error` | `{ error }` | Exception |
-| `limit_reached` | `{ reason }` | Limite atteinte (20 tools ou 2 min) |
-
-### Limites
-
-| Limite | Valeur |
-|--------|--------|
-| Max tool calls par message | 20 |
-| Max durée par tour | 120 secondes (2 min) |
-
-### Gestion des pièces jointes
-
-- **Documents :** Passés au FileReaderAgent (claude-haiku-4-5) avec documentId
-- **Images :** Embedées en vision content (base64 data:// URLs) pour Claude Sonnet multimodal
+Limites : 15 turns, 20 tool calls, 3 same-tool loop detection, 2 min timeout.
 
 ---
 
 ## 17. Copilote — Actions & Confirmation
 
-### Flux de confirmation
-
-```
-1. Agent détecte intention d'action
-2. Agent génère un bloc confirmation dans la réponse :
-   ```confirmation
-   {
-     "action": "apply_opportunity",
-     "entity_id": "uuid",
-     "title": "Titre de l'action",
-     "description": "Détails",
-     "confirm_label": "Confirmer",
-     "cancel_label": "Annuler"
-   }
-   ```
-3. Frontend affiche boutons Confirmer/Annuler
-4. Utilisateur clique → POST /api/copilot/confirm
-5. Backend valide + exécute la transaction
-6. Réponse success + ID généré
-```
-
-### Actions supportées (8)
-
-| Action | Validation | Résultat |
-|--------|-----------|----------|
-| `apply_opportunity` | Offre existe, OPEN, deadline pas dépassée, pas déjà candidat | Crée application (SUBMITTED) |
-| `join_community` | Communauté existe, ACTIVE, pas déjà membre | Crée membership (MEMBER) |
-| `book_space` | Espace ACTIVE, dates valides, pas de conflit | Crée booking (PENDING) |
-| `accept_invitation` | Invitation existe, PENDING | Met à jour statut + crée membership |
-| `decline_invitation` | Invitation existe, PENDING | Met à jour statut |
-| `publish_opportunity` | Admin org vérifié, champs requis | Crée opportunité + embedding Pinecone |
-| `create_community` | Admin org vérifié, nom unique | Crée communauté + admin member + embedding |
-| `create_space` | Admin org vérifié, champs requis | Crée espace + embedding |
+8 actions supportees via `execute_action` tool et/ou bloc `confirmation` frontend.
+Voir [COPILOT_TOOLS.md](./COPILOT_TOOLS.md#11-execute_action) et [COPILOT_PERIMETER.md](./COPILOT_PERIMETER.md) pour les details.
 
 ---
 
@@ -1413,14 +1171,14 @@ mobile/app/
 
 | Service | Modèle | Usage | Coût estimé |
 |---------|--------|-------|-------------|
-| **Anthropic** | claude-opus-4-6 | Agents principaux (TalentAgent, OrgAgent) | $3/$15 per 1M tokens |
+| **Anthropic** | claude-sonnet-4-6 | Agents principaux (TalentAgent, OrgAgent) | $3/$15 per 1M tokens |
 | **Anthropic** | claude-haiku-4-5 | Guardrails, titres, summaries, file_reader | $0.80/$4 per 1M tokens |
 | **Google** | gemini-2.5-flash-lite | Suggestions, objectifs, bio | ~$0.02/$0.07 per 1M tokens |
 | **OpenAI** | gpt-4.1-mini | Web search, vision/extraction | $0.40/$1.60 per 1M tokens |
 | **OpenAI** | gpt-4.1-nano | Recommendations candidats | $0.10/$0.40 per 1M tokens |
 | **OpenAI** | text-embedding-3-small | Embeddings vectoriels | $0.02 per 1M tokens |
 | **OpenAI** | gpt-image-1 | Génération d'images | $0.02-$0.19 per image |
-| **OpenAI** | whisper-1 | Transcription audio | $0.006 per minute |
+| **OpenAI** | gpt-4o-mini-transcribe | Transcription audio | $0.006 per minute |
 | **OpenAI** | omni-moderation-latest | Moderation contenu (auto-moderation) | Gratuit |
 
 ### Cartographie complete : Service → Provider → Modele
@@ -1428,12 +1186,12 @@ mobile/app/
 | Service | Fichier | Provider | Modele | Pattern |
 |---------|---------|----------|--------|---------|
 | **Copilot — Agents principaux** | | | | |
-| TalentAgent (explore) | `copilot/agents/talent.agent.ts` | Anthropic | claude-opus-4-6 | `run()` default provider |
-| TalentAgent (study) | `copilot/agents/talent.agent.ts` | Anthropic | claude-opus-4-6 | `run()` default provider |
-| OrgAgent | `copilot/agents/organization.agent.ts` | Anthropic | claude-opus-4-6 | `run()` default provider |
+| TalentAgent (explore) | `copilot/agents/talent.agent.ts` | Anthropic | claude-sonnet-4-6 | `run()` default provider |
+| TalentAgent (study) | `copilot/agents/talent.agent.ts` | Anthropic | claude-sonnet-4-6 | `run()` default provider |
+| OrgAgent | `copilot/agents/organization.agent.ts` | Anthropic | claude-sonnet-4-6 | `run()` default provider |
 | **Copilot — Sub-agents** | | | | |
-| FileReaderAgent | `copilot/tools/file-read.tool.ts` | Anthropic | claude-haiku-4-5 | `agent.asTool()` |
-| WebSearchAgent | `copilot/tools/web-search.tool.ts` | OpenAI | gpt-4.1-mini | `agent.asTool()` + Responses API |
+| file_reader | `copilot/tools/file-read.tool.ts` | — | — | `defineTool()` (direct tool) |
+| web_search | `copilot/tools/web-search.tool.ts` | OpenAI | gpt-4.1-mini | `defineTool()` + Responses API sub-agent |
 | **Copilot — Utilitaires** | | | | |
 | Input guardrail | `copilot/guardrails/input.guardrail.ts` | Anthropic | claude-haiku-4-5 | `run()` default provider |
 | Session summarizer | `copilot/session-summarizer.ts` | Anthropic | claude-haiku-4-5 | `run()` default provider |
@@ -1441,7 +1199,7 @@ mobile/app/
 | Suggestions prompt | `copilot/stream/sse.handler.ts` | Google | gemini-2.5-flash-lite | `Runner({ modelProvider: geminiProvider })` |
 | Intent suggestions | `routes/copilot.ts` | Google | gemini-2.5-flash-lite | `Runner({ modelProvider: geminiProvider })` |
 | **Copilot — Voice** | | | | |
-| Transcription audio (STT) | `routes/copilot.ts` | OpenAI | whisper-1 | `getOpenAIClient().audio.transcriptions` |
+| Transcription audio (STT) | `routes/copilot.ts` | OpenAI | gpt-4o-mini-transcribe | `getOpenAIClient().audio.transcriptions` |
 | **Copilot — Images** | | | | |
 | Generation images | `copilot/tools/generate-image.tool.ts` | OpenAI | gpt-image-1 | `getImageClient().images.generate` |
 | **Suggestions formulaires** | | | | |
@@ -1614,20 +1372,19 @@ Un utilisateur Talent (30 crédits/jour) parraine 3 amis qui souscrivent :
 
 | Fichier | Description |
 |---------|-------------|
-| `docs/ontology.md` | Ontologie complète (entités, relations, enums, règles métier) |
-| `docs/COPILOT_AGENT_ARCHITECTURE.md` | Architecture agents, tools, handoffs, SSE |
-| `docs/COPILOT_AGENT_PERIMETER.md` | 3 modes, 20+ exemples, 8 use cases |
-| `docs/COPILOT_TOOLS_DOCUMENTATION.md` | 8 outils avec cas de test réels |
-| `docs/AI_MODELS_DOCUMENTATION.md` | Architecture multi-provider (Anthropic + Gemini + OpenAI) |
-| `docs/OPENAI_AGENTS_SDK_DOCUMENTATION.md` | SDK primitives, memory, streaming |
-| `docs/AI_AGENT_DESIGN_GUIDE.md` | Best practices design agents |
+| `docs/ONTOLOGY.md` | Ontologie complète (entités, relations, enums, règles métier) |
+| `docs/COPILOT_ARCHITECTURE.md` | Architecture agents, tools, boucle agentic, SSE |
+| `docs/COPILOT_PERIMETER.md` | 3 modes, 17 skills, exemples d'usage |
+| `docs/COPILOT_TOOLS.md` | 12 tools avec parametres et retours |
+| `docs/AI_MODELS.md` | Architecture multi-provider (Anthropic + Gemini + OpenAI) |
+| `docs/COPILOT_SKILLS_GUIDE.md` | Guide creation et maintenance skills |
 | `docs/copilot-calibration-audit.md` | 14 tests calibration (100% pass) |
 
 ### B. Gotchas critiques
 
 1. **Zod v4.3.5** : Tous les paramètres d'outils DOIVENT être dans `required` (pas de `.optional()` → erreur 400 OpenAI)
 2. **Entity cards** : Format `{"id":"uuid"}` UNIQUEMENT — jamais de champs supplémentaires
-3. **Mode Study** : AUCUN entity card, AUCUN vector_query, pas de suppression de skills
+3. **Mode Study** : AUCUN entity card, AUCUN smart_search, pas de suppression de skills
 4. **Template literals** : Éviter les backticks dans les prompts (conflit JS)
 5. **IDOR** : talentId TOUJOURS injecté côté serveur, JAMAIS depuis les paramètres LLM
 
@@ -1644,8 +1401,8 @@ Un utilisateur Talent (30 crédits/jour) parraine 3 amis qui souscrivent :
 
 | Usage | Modèle | Provider | Coût/requête (estimé) |
 |-------|--------|----------|----------------------|
-| Message copilote (Explorer) | claude-opus-4-6 | Anthropic | ~$0.03-0.08 |
-| Message copilote (Study) | claude-opus-4-6 | Anthropic | ~$0.02-0.05 |
+| Message copilote (Explorer) | claude-sonnet-4-6 | Anthropic | ~$0.03-0.08 |
+| Message copilote (Study) | claude-sonnet-4-6 | Anthropic | ~$0.02-0.05 |
 | Sub-agent (file_reader) | claude-haiku-4-5 | Anthropic | ~$0.005-0.01 |
 | Sub-agent (web_search) | gpt-4.1-mini | OpenAI | ~$0.005-0.01 |
 | Guardrail input | claude-haiku-4-5 | Anthropic | ~$0.002 |

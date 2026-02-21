@@ -62,31 +62,11 @@ function buildSkillsBlock(context: TalentContext): string {
    return `<skills count="${skills.length}">\n${lines.join('\n')}\n</skills>`;
 }
 
-/**
- * Build learning preferences block for pedagogy adaptation.
- */
-function buildLearningPreferencesBlock(context: TalentContext): string {
-   const prefs = context.profile.learningPreferences;
-   if (!prefs) {
-      return `<learning_preferences>
-Not configured. Use defaults: STYLE=TEXT_BASED, INTERACTION=DIRECT, DEPTH=BALANCED, DIFFICULTY=STANDARD.
-</learning_preferences>`;
-   }
-
-   return `<learning_preferences>
-- style: ${prefs.style || 'TEXT_BASED'}
-- interaction: ${prefs.interaction || 'DIRECT'}
-- depth: ${prefs.depth || 'BALANCED'}
-- difficulty: ${prefs.difficulty || 'STANDARD'}
-</learning_preferences>`;
-}
-
 /** Build a dynamic Situation block personalized to the learner's profile */
 function buildSituationBlock(context: TalentContext): string {
    const p = context.profile;
    const skillCount = p.skills?.length || 0;
    const location = [p.city, p.country].filter(Boolean).join(', ');
-   const prefs = p.learningPreferences;
 
    let situation = `# Situation\n\n`;
    situation += `${p.firstName} is a learner`;
@@ -99,10 +79,6 @@ function buildSituationBlock(context: TalentContext): string {
       situation += `They have ${skillCount} skills across multiple domains — a generalist or experienced professional. Challenge them, connect new concepts to what they already know, and help them deepen or specialize.`;
    } else {
       situation += `They have ${skillCount} skills — building their expertise. Help them strengthen existing knowledge and expand into related areas.`;
-   }
-
-   if (prefs) {
-      situation += ` They prefer ${prefs.style?.toLowerCase() || 'text-based'} content with a ${prefs.interaction?.toLowerCase() || 'direct'} interaction style.`;
    }
 
    // Document hints for study mode
@@ -132,7 +108,6 @@ function buildSituationBlock(context: TalentContext): string {
 export function buildTalentStudyPrompt(context: TalentContext): string {
    const baseContext = getContextForPrompt(context);
    const skillsBlock = buildSkillsBlock(context);
-   const learningPrefsBlock = buildLearningPreferencesBlock(context);
    const lang = getLanguageInstructions(context.language);
 
    return `${lang.languageBlock}
@@ -275,12 +250,9 @@ Never present raw results without interpretation.
 
 **GROUPING RULE**: When listing multiple items (skills, results, resources), group ALL items together first (chart, list, or table), then write ONE consolidated synthesis AFTER. NEVER insert commentary or analysis between individual items.
 
-## Learning Preferences (soft guidance)
-The <learning_preferences> block is a nudge, NOT a constraint. The user's explicit request always takes priority. Lean toward their preference when the choice is ambiguous, but mix approaches naturally.
-
 ## Teaching Protocol — Choose the RIGHT Component
 
-**Step 1: Assess silently** from the <skills> block and <learning_preferences> — get a sense of their level and style. Do NOT narrate the assessment.
+**Step 1: Assess silently** from the <skills> block and the conversation context — get a sense of their level and adapt naturally. Do NOT narrate the assessment.
 
 **Step 2: Explain concisely** the concept in 3-5 sentences with one concrete example.
 
@@ -622,10 +594,6 @@ ${baseContext}
 Mode: Apprendre
 Topic: ${context.session?.conversationTopic || 'General learning'}
 </session>
-
-## Learning Preferences
-
-${learningPrefsBlock}
 
 ## Learner Skills (complete list — DO NOT call any tool to read these)
 

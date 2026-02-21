@@ -30,8 +30,7 @@ From the user's message, extract everything you can:
 - **compensation_frequency**: MONTHLY (default)
 - **deadline**: ONLY include if the user mentioned it
 
-**CRITICAL RULES:**
-- NEVER write "a confirmer", "a valider", "a definir", "a preciser" in the preview. Either provide a concrete value or omit the field.
+**RULES:**
 - The organization is ALWAYS known from context — never question it.
 - If the user gives minimal info ("cree une offre commercial CDD"), you MUST still generate a complete, professional summary and requirements. You are the expert — draft it.
 - Optionally call `sql_query` (org_opportunities) to check similar existing opportunities for tone and style reference.

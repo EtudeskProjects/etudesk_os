@@ -18,7 +18,6 @@ import { createFileReaderTool } from '../tools/file-read.tool';
 import { webSearchAsTool } from '../tools/web-search.tool';
 import { createManageSkillsTool } from '../tools/manage-skills.tool';
 import { createExecuteActionTool } from '../tools/execute-action.tool'; 
-import { createCvGenerationTool } from '../tools/cv-generation.tool';
 import { buildTalentExplorerPrompt } from '../prompts/talent-explorer.prompt';
 import { buildTalentStudyPrompt } from '../prompts/talent-study.prompt';
 
@@ -40,11 +39,12 @@ export function createTalentAgent(
   let instructions: string;
 
   if (mode === 'study') {
-    // STUDY MODE: restricted sql_query (profile/skills/documents only), youtube_search, generate_image, generate_diagram + manage_skills
+    // STUDY MODE: restricted sql_query — my_skills and my_documents are already in the system prompt context
+    // (rule 7: skills in context, rule 8: document IDs in context), so they are excluded from the whitelist
     const studySqlTool = createSqlQueryTool(
       context.profile.id,
       authorizedOrgIds,
-      ['my_profile', 'my_skills', 'my_documents', 'my_triggers', 'my_community_feed', 'my_community_members'] as const
+      ['my_profile', 'my_triggers', 'my_community_feed', 'my_community_members'] as const
     );
     tools = [
       studySqlTool,

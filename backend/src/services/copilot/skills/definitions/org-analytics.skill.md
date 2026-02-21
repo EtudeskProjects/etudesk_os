@@ -26,32 +26,28 @@ If ambiguous, ask: "Quel type d'analyse souhaitez-vous ? Cohortes de talents, en
 
 ## Talent Cohorts Dashboard
 
-### Step TC1: Overview Stats
+### Step TC1: Talent Cohorts Over Time
 
-1. Call `sql_query` with intent `org_stats` to get the current organization snapshot.
-2. Present a brief summary of the org's current state.
+1. Use member_count and org_sectors from `<organization>` context for the overview.
+2. Call `sql_query` with intent `org_talent_cohorts` (params: `{"months": 12}`) to get monthly new talent acquisition.
+3. Render a `bar` chart showing new talents per month.
+4. Identify trends: growth, plateau, or decline.
 
-### Step TC2: Talent Cohorts Over Time
+### Step TC2: Skills Distribution
 
-3. Call `sql_query` with intent `org_talent_cohorts` (params: `{"months": 12}`) to get monthly new talent acquisition.
-4. Render a `bar` chart showing new talents per month.
-5. Identify trends: growth, plateau, or decline.
+5. Call `sql_query` with intent `org_skills_analytics` (params: `{"limit": 15}`) to get top skills in the talent pool.
+6. Render a `bar` chart showing top skills by talent count.
+7. Highlight skill gaps or concentrations.
 
-### Step TC3: Skills Distribution
+### Step TC3: Geographic Distribution
 
-6. Call `sql_query` with intent `org_skills_analytics` (params: `{"limit": 15}`) to get top skills in the talent pool.
-7. Render a `bar` chart showing top skills by talent count.
-8. Highlight skill gaps or concentrations.
+8. Call `sql_query` with intent `org_geo_distribution` (params: `{"groupBy": "country"}`) for country view.
+9. Render a `donut` chart showing geographic repartition.
+10. Comment on geographic diversity and potential for expansion.
 
-### Step TC4: Geographic Distribution
+### Step TC4: Synthesis
 
-9. Call `sql_query` with intent `org_geo_distribution` (params: `{"groupBy": "country"}`) for country view.
-10. Render a `donut` chart showing geographic repartition.
-11. Comment on geographic diversity and potential for expansion.
-
-### Step TC5: Synthesis
-
-12. Provide a strategic synthesis with:
+11. Provide a strategic synthesis with:
     - Key trends (growing/declining talent segments)
     - Top 3 strengths of the talent pool
     - Top 3 gaps or risks
@@ -110,36 +106,32 @@ If ambiguous, ask: "Quel type d'analyse souhaitez-vous ? Cohortes de talents, en
 
 ## Full PDF Report
 
-### Step PR1: Gather Organization Context
+### Step PR1: Gather Analytics Data
 
-1. Call `sql_query` with intent `org_stats` to retrieve:
-   - Organization stats (member_count, open_opportunities, community_count, space_count)
-   - `logo_url`, `city`, `country` for the PDF header
-
-### Step PR2: Gather Analytics Data
+Use `logo_url`, `city`, `country`, `member_count` from `<organization>` context (pre-loaded, no org_stats call needed).
 
 Execute ALL 5 analytics queries in PARALLEL (call all tools at once — do not wait for each result sequentially):
 
-2. `sql_query` intent `org_talent_cohorts` (params: `{"months": 12}`) — monthly new talent acquisition
-3. `sql_query` intent `org_skills_analytics` (params: `{"limit": 15}`) — top skills distribution
-4. `sql_query` intent `org_geo_distribution` (params: `{"groupBy": "country"}`) — geographic repartition
-5. `sql_query` intent `org_application_funnel` — recruitment funnel
-6. `sql_query` intent `org_community_engagement` — community engagement metrics
+1. `sql_query` intent `org_talent_cohorts` (params: `{"months": 12}`) — monthly new talent acquisition
+2. `sql_query` intent `org_skills_analytics` (params: `{"limit": 15}`) — top skills distribution
+3. `sql_query` intent `org_geo_distribution` (params: `{"groupBy": "country"}`) — geographic repartition
+4. `sql_query` intent `org_application_funnel` — recruitment funnel
+5. `sql_query` intent `org_community_engagement` — community engagement metrics
 
 **IMPORTANT**: These 5 calls are independent — call them ALL in a single tool-use turn for speed.
 
-### Step PR3: Generation Decision
+### Step PR2: Generation Decision
 
-7. Present a brief summary of available data:
+6. Present a brief summary of available data:
    - "X talents dans le pool, Y candidatures, Z communautes actives"
    - "Donnees couvrant les 12 derniers mois"
-8. Decision rule:
+7. Decision rule:
    - If the user explicitly requested PDF generation/export: call `generate_document` immediately (no confirmation question).
    - If the request was generic ("analyse", "tableau de bord", no explicit PDF generation intent): ask one confirmation question before generating the PDF.
 
-### Step PR4: Generate Branded PDF
+### Step PR3: Generate Branded PDF
 
-9. After confirmation, call `generate_document` with format "PDF" and the **Org Document JSON format**:
+8. After confirmation, call `generate_document` with format "PDF" and the **Org Document JSON format**:
 
 ```
 {
@@ -162,17 +154,17 @@ Execute ALL 5 analytics queries in PARALLEL (call all tools at once — do not w
 
 **CRITICAL: Use the Org Document format (with organizationName + sections). Replace ALL bracketed values with real data from tool results. Never leave placeholders.**
 
-### Step PR5: Present Result
+### Step PR4: Present Result
 
-10. Render the document card as a **fenced code block**:
+9. Render the document card as a **fenced code block**:
 
 ````
 ```entity:document
 {"id":"THE_DOCUMENT_UUID_FROM_GENERATE_DOCUMENT"}
 ```
 ````
-11. Also render key charts inline for immediate visual feedback (bar for cohorts, donut for geo).
-12. Offer follow-up: "Souhaitez-vous approfondir un aspect specifique ?"
+10. Also render key charts inline for immediate visual feedback (bar for cohorts, donut for geo).
+11. Offer follow-up: "Souhaitez-vous approfondir un aspect specifique ?"
 
 ---
 
@@ -184,7 +176,7 @@ Execute ALL 5 analytics queries in PARALLEL (call all tools at once — do not w
 - Never exceed 3 metric cards per dashboard
 - Focus on actionable insights, not raw data
 - ALWAYS use the Org Document JSON format for PDF reports — never the plain sections format
-- ALWAYS fetch org_stats FIRST to get logo_url for PDF reports
+- Use logo_url, city, country from `<organization>` context (pre-loaded, no org_stats call needed)
 - Format numbers with French locale (espace pour les milliers, virgule pour les decimales)
 - Currency: XOF / FCFA
 - Write analysis and recommendations in professional French

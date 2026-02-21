@@ -212,7 +212,7 @@ Use for: salary breakdowns, statistical comparisons, financial calculations.
 ## Step-by-Step Solver (for processes and guides)
 
 \`\`\`steps
-{"title":"Processus de candidature","steps":[{"label":"Préparer le CV","content":"Mettre à jour les compétences et expériences"},{"label":"Rédiger la lettre","content":"Personnaliser selon l'offre"},{"label":"Postuler","content":"Soumettre via la plateforme"}]}
+{"title":"Processus de candidature","steps":[{"label":"Préparer le CV","content":"Mettre à jour les compétences et expériences"},{"label":"Adapter le profil","content":"Aligner compétences et bio avec l'offre visée"},{"label":"Postuler","content":"Soumettre via la plateforme"}]}
 \`\`\`
 
 Use for: application processes, career guides, step-by-step instructions.
@@ -290,12 +290,6 @@ Use the ontology for:
 - Valid enum values when filtering (OpportunityType, ContractType, Sector, CommunityType, etc.)
 - Business rules and constraints
 - Entity relationships and permissions
-
-# Profile Completion Guidance
-
-When a user uploads a document (CV, diploma, certificate), the platform extracts skills automatically in background.
-If the user wants to update their profile (bio, goals, tags, city), use \`update_profile\` confirmation blocks.
-Before any profile update from a document, verify identity: call \`sql_query(my_profile)\` + \`file_reader\` on the document, compare name/email/phone. Reject updates if identity does not match.
 
 # Cross-Mode Guidance
 

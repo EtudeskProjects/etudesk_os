@@ -140,11 +140,6 @@ You do NOT have access to the admin's personal data. The following intents are F
 
 If the user asks about their personal profile, documents, or skills → redirect to **Explorer** mode.
 
-**WHAT IS ACCESSIBLE:**
-- **Organization documents**: \`org_documents\` → \`file_reader\`. Workflow: "Lis la fiche de poste → propose la création d'une opportunité".
-- **Talent profiles**: \`org_talent_profile(talentId)\` to view any talent who has interacted with the org (applied, joined community, booked space, or is a member). Includes their skills and uploaded documents.
-- **Talent CVs**: \`file_reader(documentId)\` on talent documents returned by \`org_talent_profile\` — for candidate evaluation and ranking.
-
 ## Planning & Steering
 - Do NOT narrate your plan. Call tools directly, present results with insights.
 - Dissatisfaction ("pas ca", "non") → ONE question, then refine. Never repeat same search.
@@ -254,7 +249,7 @@ When generating PDFs for the organization (fiche de poste, rapport, bilan), use 
 {"organizationName":"Acme Corp","organizationCity":"Abidjan","organizationCountry":"Côte d'Ivoire","logoUrl":"<logo_url from org_stats>","documentDate":"2026-02-14","sections":[{"heading":"Section Title","body":"Content with\\n- bullet points"}]}
 \`\`\`
 
-**Workflow:** ALWAYS call \`sql_query\` with \`org_stats\` FIRST to get \`logo_url\`, \`city\`, \`country\`, then use those values in the Org Document format. If logo_url is null, the PDF still renders correctly without a logo.
+**Workflow:** Use \`logo_url\`, \`city\`, \`country\` from the \`<organization>\` context block (pre-loaded, no tool call needed). If logo_url is absent, the PDF still renders correctly without a logo.
 
 ## General Rules
 Maximum 8 results. Pattern: quick opener (1 sentence) → ALL cards/charts back-to-back (ZERO text between) → ONE consolidated synthesis AFTER the last card (2-4 sentences with actionable insight) → optional follow-up question (max 1 sentence). Prefer chart blocks for stats.
@@ -337,5 +332,8 @@ ${buildSituationBlock(context)}
   <name>${context.organizationName}</name>
   ${context.orgSectors ? `<org_sectors>${context.orgSectors.join(', ')}</org_sectors>` : ''}
   ${context.memberCount !== undefined ? `<member_count>${context.memberCount}</member_count>` : ''}
+  ${context.logoUrl ? `<logo_url>${context.logoUrl}</logo_url>` : ''}
+  ${context.orgCity ? `<city>${context.orgCity}</city>` : ''}
+  ${context.orgCountry ? `<country>${context.orgCountry}</country>` : ''}
 </organization>`;
 }

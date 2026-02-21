@@ -1,7 +1,8 @@
-# Copilot Agent Perimeter — Guide des Cas d'Usage
+# Copilot Perimeter — Guide des Cas d'Usage
 
 > Definition exacte du perimetre de chaque mode avec exemples, processus de decision (tool routing) et reponses ideales.
-> Mis a jour : 15 Fevrier 2026 — Architecture multi-provider (Anthropic + Gemini + OpenAI)
+> Mis a jour : 21 Fevrier 2026
+> **Voir aussi** : [COPILOT_ARCHITECTURE.md](./COPILOT_ARCHITECTURE.md) (architecture technique), [COPILOT_TOOLS.md](./COPILOT_TOOLS.md) (reference tools)
 
 ---
 
@@ -37,7 +38,7 @@
 ### Flow de Rendu
 
 ```
-1. Agent appelle tool (vector_query, sql_query)
+1. Agent appelle tool (smart_search, sql_query)
 2. Tool retourne des resultats avec IDs
 3. Agent genere: ```entity:type {"id":"uuid"}```
 4. Frontend parse le markdown
@@ -114,13 +115,14 @@ Les **tableaux** et **visualisations** ne sont **pas des tools**. Ils sont rendu
 | **Study** | TalentAgent | Apprentissage + gestion competences | Aucune (mode pedagogique) |
 | **Organization** | OrgAgent | Gestion organisation + creation d'entites | `talent`, `opportunity`, `document` |
 
-### Allocation des 11 Tools par Mode (source : COPILOT_TOOLS_DOCUMENTATION.md)
+### Allocation des 12 Tools par Mode (source : [COPILOT_TOOLS.md](./COPILOT_TOOLS.md))
 
-| Tool | Explorer (talent) | Study (talent) | Org Explorer |
+| Tool | Explorer (6) | Study (9) | Org (6) |
 |------|:-:|:-:|:-:|
-| `vector_query` | x | | x |
-| `sql_query` | x (my_* + search_* + org_* scoped) | x (my_profile, my_skills, my_documents, my_community_feed, my_community_members) | x (org_* + org_analytics + search_*) |
+| `smart_search` | x | | x |
+| `sql_query` | x (all my_*) | x (4 intents: my_profile, my_triggers, my_community_feed, my_community_members) | x (org_* only) |
 | `youtube_search` | | x | |
+| `analyze_youtube_video` | | x | |
 | `generate_document` | x | | x |
 | `generate_image` | | x | |
 | `generate_diagram` | | x | |
@@ -128,37 +130,9 @@ Les **tableaux** et **visualisations** ne sont **pas des tools**. Ils sont rendu
 | `execute_action` | x | | x |
 | `file_reader` | x | x | x |
 | `web_search` | x | x | x |
-| `cv_pdf_generator` | (interne, via generate_document) | | (interne) |
+| `cv_generation` | x | | |
 
-**Modeles LLM (architecture multi-provider) :**
-
-| Constante | Modele | Provider | Utilisation |
-|-----------|--------|----------|-------------|
-| MODEL_AGENT | claude-opus-4-6 | Anthropic | Agents principaux (talent, org) |
-| MODEL_FAST | claude-haiku-4-5 | Anthropic | Guardrails, titres, summaries, file_reader |
-| MODEL_SUGGESTION | gemini-2.5-flash-lite | Google | Suggestions, objectifs quotidiens, bio |
-| MODEL_SEARCH | gpt-4.1-mini | OpenAI | web_search (Responses API), vision/extraction |
-| MODEL_MATCH | gpt-4.1-nano | OpenAI | Recommendations candidats |
-| MODEL_IMAGE | gpt-image-1 | OpenAI | Generation d'images |
-| MODEL_STT | whisper-1 | OpenAI | Speech-to-text |
-| MODEL_EMBEDDING | text-embedding-3-small | OpenAI | Embeddings Pinecone |
-| — | omni-moderation-latest | OpenAI | Auto-moderation contenu (direct `new OpenAI()`) |
-
-### Performances Audit (09 Fevrier 2026 — tests reels sur DB)
-
-| Tool | Tests | Pass | Avg Time |
-|------|-------|------|----------|
-| vector_query | 6 | 6 | 1,533ms |
-| sql_query | 23 | 23 | 2ms |
-| youtube_search | 3 | 3 | 801ms |
-| generate_document | 6 | 6 | 26ms |
-| generate_image | 1 | skip | ~60s |
-| generate_diagram | 5 | 5 | <1ms |
-| manage_skills | 4 | 4 | 2ms |
-| execute_action | 5 | 5 | 5ms |
-| file_reader | 1 | 1 | <1ms |
-| web_search | 1 | skip | — |
-| tool_summary | 12 | 12 | <1ms |
+**Modeles LLM** : Voir [AI_MODELS.md](./AI_MODELS.md) pour les constantes, providers et pricing.
 
 ---
 
@@ -178,24 +152,27 @@ Les **tableaux** et **visualisations** ne sont **pas des tools**. Ils sont rendu
 | **Creation d'entites** | Via confirmation (si admin org) | Creation directe |
 | **Communautes (activites)** | Feed d'activites, membres (communautes rejointes) | Creation, moderation |
 
-### Tools Disponibles (6 tools)
+### Tools Disponibles (6 tools + cv_generation)
 
-| Tool | Pattern | Fichier source | Usage |
-|------|---------|---------------|-------|
-| `vector_query` | Static export | vector-query.tool.ts | Recherche semantique Pinecone (5 namespaces : opportunities, communities, spaces, talents, organizations) |
-| `sql_query` | Factory (talentId, orgIds) | sql-query.tool.ts | Intents lecture implementes (au 14 fevrier 2026) : 8 my_* + 2 my_community_* + 13 org_* + 7 org_analytics + 5 search_* — donnees personnelles et org (scope org limite aux orgs autorisees) |
-| `generate_document` | Factory (talentId, avatarUrl) | generate-document.tool.ts | Generation PDF/DOCX/CSV/XLS/TXT + CV elegant via cv_pdf_generator |
-| `file_reader` | Factory → direct tool (talentId) | file-read.tool.ts | Lecture directe d'UN document (PDF/texte) et retour du contenu brut. Regle: lire chaque document une seule fois puis analyser (dedup/cache par session). |
-| `web_search` | Agent asTool (gpt-4.1-mini, OpenAI) | web-search.tool.ts | Sub-agent recherche web externe (Responses API) |
-| `execute_action` | Factory (talentId) | execute-action.tool.ts | 5 actions : apply_opportunity, join_community, book_space, accept/decline_invitation |
+| Tool | Usage |
+|------|-------|
+| `smart_search` | Recherche semantique 3 phases (Pinecone → PostgreSQL → keyword fallback) |
+| `sql_query` | Tous les intents my_* (11 intents) — donnees personnelles |
+| `generate_document` | Generation PDF/DOCX/CSV/XLS/TXT + CV brande |
+| `file_reader` | Lecture directe d'UN document (PDF/texte). Cache par session. |
+| `web_search` | Recherche web externe (OpenAI Responses API) |
+| `execute_action` | 7 actions : apply, join, book, accept/decline, create/update_agenda_trigger |
+| `cv_generation` | Sub-agent generation CV avec timeout 30s |
 
-### Skills Disponibles (Explore)
+### Skills Disponibles (Explore — 5 skills)
 
 | Skill | Declencheur | Description |
 |-------|-------------|-------------|
 | **CV Generation** | "genere mon CV", "cree un CV" | Workflow complet de generation CV PDF |
-| **Interview Preparation** | "prepare mon entretien", "interview" | Guide de preparation personnalise |
-| **Salary Analysis** | "salaire", "remuneration", "benchmark" | Analyse salariale avec benchmarks marche |
+| **Interview Preparation** | "entretien", "interview", "preparer mon entretien" | Guide de preparation personnalise |
+| **Career & Compensation Guide** | "salaire", "remuneration", "benchmark", "negocier", "freelance", "TJM" | Analyse salariale + negociation + freelance |
+| **Application Tracker** | "candidatures", "suivi", "postuler", "stage", "freelance" | Suivi candidatures et recherche |
+| **Onboarding** | "c'est parti", "bienvenue", "premiere fois", "comment commencer" | Accueil nouveaux utilisateurs |
 
 ---
 
@@ -206,8 +183,8 @@ Les **tableaux** et **visualisations** ne sont **pas des tools**. Ils sont rendu
 | Element | Detail |
 |---------|--------|
 | **Question** | "Trouve-moi des stages en developpement web a Dakar" |
-| **Processus** | Recherche semantique opportunites -> `vector_query` |
-| **Tool call** | `vector_query(query: "stage developpement web Dakar", namespace: "opportunities", topK: 5)` |
+| **Processus** | Recherche semantique opportunites -> `smart_search` |
+| **Tool call** | `smart_search(query: "stage developpement web Dakar", entity: "opportunities", limit: 5)` |
 
 **Reponse ideale :**
 ```
@@ -274,9 +251,9 @@ Tu veux que je modifie quelque chose ?
 
 ---
 
-### Retours reels des tools (exemples de l'audit — voir COPILOT_TOOLS_DOCUMENTATION.md pour tous les details)
+### Retours reels des tools (voir [COPILOT_TOOLS.md](./COPILOT_TOOLS.md) pour tous les details)
 
-**vector_query retourne :** `{ results: [{ id, title, summary, type, matchScore, ... }], totalFound: N }`
+**smart_search retourne :** `{ results: [{ id, title, summary, type, matchScore, source, ... }], totalFound: N }`
 **sql_query retourne :** `{ applications: [...] }`, `{ skills: [...] }`, `{ documents: [...] }`, etc. (cle = type d'entite)
 **generate_document retourne :** `{ success: true, id: "uuid", documentType, downloadUrl, filename, metadata }`
 **execute_action retourne :** `{ success: true/false, message: "...", applicationId/membershipId/bookingId }`
@@ -395,20 +372,7 @@ Le mode Study s'appuie sur 4 principes des sciences de l'education :
 | **Apprentissage actif** (Bloom) | Quizzes > explications passives. Le learner FAIT avant de lire. |
 | **Zone proximale de developpement** (Vygotsky) | Adapter la difficulte au niveau actuel + 1 cran. Ni trop facile, ni trop dur. |
 | **Repetition espacee** (Ebbinghaus) | Flashcards pour ancrer les concepts. Revenir sur les erreurs. |
-| **Differenciation pedagogique** (Tomlinson) | Adapter style, rythme et profondeur aux `learning_preferences` du talent. |
-
-### Preferences d'Apprentissage (guidance souple)
-
-Chaque talent a un profil pedagogique stocke en base (JSONB `learning_preferences`). Ces preferences sont des **tendances**, pas des regles rigides. La demande explicite de l'utilisateur et la nature du sujet priment toujours. Varier les approches est benefique — ne pas enfermer l'apprenant dans un seul format.
-
-| Dimension | Valeurs | Comment l'utiliser |
-|-----------|---------|-------------------|
-| **Style** | VISUAL, AUDITORY, TEXT_BASED, INTERACTIVE | Quand le choix est ambigu, pencher vers le format prefere. Un apprenant VISUAL beneficie quand meme d'un quiz. |
-| **Interaction** | SOCRATIC, DIRECT, EXPLORATORY | Le ton par defaut. Un apprenant DIRECT apprecie l'efficacite, mais une question bien placee reste pertinente. |
-| **Profondeur** | THEORETICAL, PRACTICAL, BALANCED | L'appetit pour la theorie vs la pratique. Meme un PRACTICAL a besoin du "pourquoi" parfois. |
-| **Difficulte** | GENTLE, STANDARD, CHALLENGING | Le confort. GENTLE = plus d'encouragements, pas de simplification excessive. CHALLENGING = pousser, pas obscurcir. |
-
-**Si non configure :** defauts = TEXT_BASED, DIRECT, BALANCED, STANDARD.
+| **Differenciation pedagogique** (Tomlinson) | Adapter style, rythme et profondeur au contexte de l'apprenant (skills, niveau, historique de conversation). Le LLM infere naturellement le bon format. |
 
 ### Perimetre
 
@@ -425,29 +389,37 @@ Chaque talent a un profil pedagogique stocke en base (JSONB `learning_preference
 | **Espaces** | — | Toute recherche |
 | **Actions** | — | Toute action (postuler, rejoindre, reserver, creer) |
 
-### Tools Disponibles (7 tools)
+### Tools Disponibles (9 tools)
 
-| Tool | Pattern | Fichier source | Usage |
-|------|---------|---------------|-------|
-| `sql_query` (restreint) | Factory (talentId, orgIds, allowedIntents) | sql-query.tool.ts | 5 intents UNIQUEMENT : my_profile, my_skills, my_documents, my_community_feed, my_community_members |
-| `manage_skills` | Factory (talentId) | manage-skills.tool.ts | Actions add/update competences (BEGINNER → MASTER) |
-| `youtube_search` | Static export | youtube-search.tool.ts | YouTube Data API (maxResults 1-3, priorite francophone UEMOA) |
-| `generate_diagram` | Static export | generate-diagram.tool.ts | Mermaid : flowchart, sequence, class, mindmap, timeline, gantt, pie, ER |
-| `generate_image` | Static export | generate-image.tool.ts | gpt-image-1 (1024x1024, 1536x1024, 1024x1536) |
-| `file_reader` | Factory → direct tool (talentId) | file-read.tool.ts | Lecture directe d'UN document (PDF/texte) et retour du contenu brut. Regle: lire chaque document une seule fois puis analyser. |
-| `web_search` | Agent asTool (gpt-4.1-mini, OpenAI) | web-search.tool.ts | Sub-agent recherche web externe (Responses API) |
+| Tool | Usage |
+|------|-------|
+| `sql_query` (restreint) | 4 intents : my_profile, my_triggers, my_community_feed, my_community_members. Skills et documents sont deja dans le contexte. |
+| `youtube_search` | YouTube Data API v3 (maxResults 1-5, priorite francophone UEMOA) |
+| `analyze_youtube_video` | Analyse pedagogique video via Gemini 2.5 Flash |
+| `generate_image` | gpt-image-1 (1024x1024, 1536x1024, 1024x1536) |
+| `generate_diagram` | Mermaid : flowchart, sequence, class, mindmap, timeline, gantt, pie, ER |
+| `file_reader` | Lecture directe d'UN document (PDF/texte). Cache par session. |
+| `web_search` | Recherche web externe (OpenAI Responses API) |
+| `manage_skills` | Actions add/update competences (BEGINNER → MASTER) |
+| `execute_action` | create/update_agenda_trigger uniquement |
 
-**Tools NON disponibles en Study (4 bloques) :**
-- `vector_query` — pas de recherche d'entites
-- `execute_action` — pas d'actions
+**Tools NON disponibles en Study (3 bloques) :**
+- `smart_search` — pas de recherche d'entites
 - `generate_document` — pas de generation de documents
-- `cv_pdf_generator` — pas de generation CV
+- `cv_generation` — pas de generation CV
 
-### Skills Disponibles (Study)
+### Skills Disponibles (Study — 8 skills)
 
 | Skill | Declencheur | Description |
 |-------|-------------|-------------|
-| **Skill Assessment** | "evalue mes competences", "bilan", "teste-moi sur" | Evaluation structuree en 3 questions + ajustement competences |
+| **Deep Dive Lesson** | "cours", "lecon", "apprends-moi", "socratique", "projet", "mini-projet" | Cours structure 6 etapes + methode socratique + projet guide |
+| **Exam & Revision** | "examen", "teste-moi", "revision", "certification", "spaced repetition" | Simulation examen + revision espacee + certification skill |
+| **Document Study Session** | "etudier ce document", "analyser ce PDF", "etudier cette video" | Analyse document/video → resume + flashcards + quiz |
+| **Weekly Recap** | "recap", "bilan semaine", "progression", "mon avancement" | Bilan hebdo skills + chart + recommandations |
+| **Autodiagnostic Talent** | "autodiagnostic", "bilan competences", "mes lacunes" | Diagnostic competences + plan developpement |
+| **HR Skill Radar** | "radar", "radar competences", "spider chart" | Bilan competences en radar chart (partage avec org) |
+| **Learning Path Generator** | (fusionne dans deep-dive-lesson) | Roadmap apprentissage avec gap analysis |
+| **Code Review Mentor** | (fusionne dans deep-dive-lesson) | Review pedagogique + quiz |
 
 ### REGLE CRITIQUE : UN SEUL COMPOSANT PAR OUTPUT
 
@@ -774,62 +746,47 @@ Je te propose un mini-cours sur les JOINs avec des exercices pratiques ?
 
 ### Tools Disponibles (6 tools)
 
-| Tool | Pattern | Fichier source | Usage |
-|------|---------|---------------|-------|
-| `sql_query` (restreint org) | Factory (talentId, [orgId], allowedIntents) | sql-query.tool.ts | org_* (13) + org_analytics (7) + search_* (5) = 25 intents (au 14 fevrier 2026) |
-| `vector_query` | Static export | vector-query.tool.ts | Recherche talents, opportunites marche (namespace talents, opportunities) |
-| `generate_document` | Factory (talentId) | generate-document.tool.ts | Fiches de poste, rapports, exports PDF/DOCX/CSV/XLS/TXT |
-| `file_reader` | Factory → asTool (orgId, MODEL_FAST) | file-read.tool.ts | Sub-agent analyse documents org + documents talents ayant interagi avec l'org (CVs candidats). Input: documentId(s) issus de sql_query. |
-| `web_search` | Agent asTool (gpt-4.1-mini, OpenAI) | web-search.tool.ts | Benchmark marche, tendances secteur (Responses API) |
-| `execute_action` | Factory (talentId) | execute-action.tool.ts | 5 actions talent (apply, join, book, accept/decline) |
+| Tool | Usage |
+|------|-------|
+| `smart_search` | Recherche semantique (talents, opportunites marche) |
+| `sql_query` (restreint org) | org_* intents uniquement (13 + 6 analytics = 19 intents) |
+| `generate_document` | Fiches de poste, rapports, exports PDF/DOCX/CSV/XLS/TXT (brande org) |
+| `file_reader` | Lecture documents org + documents talents avec interaction verifiee (CVs candidats) |
+| `web_search` | Benchmark marche, tendances secteur (OpenAI Responses API) |
+| `execute_action` | Actions talent + create/update_agenda_trigger |
 
-**Tools NON disponibles en Organization (5 bloques) :**
+**Tools NON disponibles en Organization (6 bloques) :**
 - `manage_skills` — pas de gestion de competences
 - `youtube_search` — pas de recherche video
+- `analyze_youtube_video` — pas d'analyse video
 - `generate_image` — pas de generation d'images
 - `generate_diagram` — pas de generation de diagrammes
-- `cv_pdf_generator` — pas de generation CV
+- `cv_generation` — pas de generation CV
 
-**Intents SQL autorises en mode Org (25 intents au 14 fevrier 2026) :**
+**Intents SQL autorises en mode Org (19 intents) :**
 ```
-org_members
-org_applications
-org_stats
-org_opportunities
-org_communities
-org_spaces
-org_revenue
-org_invitations
-org_documents
-org_talents
-org_talent_profile
-org_community_feed
-org_community_members
-org_skills_analytics
-org_application_funnel
-org_talent_cohorts
-org_geo_distribution
-org_community_engagement
-org_revenue_analytics
-org_opportunity_performance
-search_opportunities
-search_communities
-search_spaces
-search_organizations
-search_talents
+org_members, org_applications, org_stats, org_opportunities, org_communities, org_spaces,
+org_invitations, org_triggers, org_documents, org_talents, org_talent_profile,
+org_community_feed, org_community_members,
+org_skills_analytics, org_application_funnel, org_talent_cohorts,
+org_geo_distribution, org_community_engagement, org_opportunity_performance
 ```
 
-**Intents SQL bloques en mode Org :**
-`my_profile`, `my_applications`, `my_reservations`, `my_invitations`, `my_communities`, `my_bookmarks`, `my_documents`, `my_skills`, `my_community_feed`, `my_community_members`
+**Intents SQL bloques en mode Org (IDOR par design) :**
+Tous les `my_*` intents — rediriger l'utilisateur vers le mode Explorer.
 
-### Skills Disponibles (Organization)
+### Skills Disponibles (Organization — 10 skills)
 
 | Skill | Declencheur | Description |
 |-------|-------------|-------------|
-| **Candidate Ranking** | "classe les candidats", "meilleurs profils" | Scoring et classement des candidatures |
-| **Opportunity Publishing** | "publie une offre", "cree un poste", "recrute" | Creation d'une offre sur la plateforme |
+| **Candidate Ranking** | "classe les candidats", "meilleurs profils", "shortlist" | Scoring et classement des candidatures |
+| **Opportunity Publishing** | "publie une offre", "cree un poste", "recrute", "CDI", "CDD" | Creation d'une offre sur la plateforme |
 | **Community Creation** | "cree une communaute", "nouvelle communaute" | Creation d'une communaute |
-| **Space Creation** | "cree un espace", "nouvel espace" | Creation d'un espace/lieu |
+| **Space Creation** | "cree un espace", "nouvel espace", "coworking" | Creation d'un espace/lieu |
+| **Job Description Generation** | "fiche de poste", "job description", "profil de poste" | Generation fiche de poste PDF brandee |
+| **Org Analytics** | "cohorte", "dashboard", "funnel", "rapport PDF", "tableau de bord" | Analytics cohortes + rapports PDF |
+| **Talent Outreach** | "trouver talents", "sourcing", "chercher candidats", "profils tech" | Sourcing proactif de talents |
+| **HR Skill Radar** | "radar", "radar competences", "bilan rh" | Bilan competences en radar chart |
 
 ### Entites Affichables (Organization)
 
@@ -978,7 +935,7 @@ Tu veux voir les candidats preselectionnes ?
 | Element | Detail |
 |---------|--------|
 | **Question** | "Trouve des developpeurs Python 3+ ans d'experience" |
-| **Processus** | Recherche semantique talents -> `vector_query` |
+| **Processus** | Recherche semantique talents -> `smart_search` |
 
 **Reponse ideale :**
 ```
@@ -1138,7 +1095,7 @@ Tu veux que je prepare les questions d'entretien pour le Top 3 ?
 
 ## Protocole de Confirmation — Architecture Technique
 
-### Deux mecanismes d'action (source : COPILOT_TOOLS_DOCUMENTATION.md + action.handler.ts)
+### Deux mecanismes d'action (source : [COPILOT_TOOLS.md](./COPILOT_TOOLS.md) + action.handler.ts)
 
 | Mecanisme | Declencheur | Backend | Actions supportees |
 |-----------|------------|---------|-------------------|
@@ -1184,29 +1141,28 @@ Tu veux que je prepare les questions d'entretien pour le Top 3 ?
 
 ---
 
-## Securite — Patterns IDOR (source : COPILOT_TOOLS_DOCUMENTATION.md)
+## Securite — Patterns IDOR (source : [COPILOT_TOOLS.md](./COPILOT_TOOLS.md))
 
-7 tools sur 12 utilisent le pattern **factory avec injection de `authenticatedTalentId`** :
+7 tools utilisent le pattern **factory avec injection de `authenticatedTalentId`** :
 
 ```typescript
-// Le talentId est injecte a la creation du tool, pas passe par l'agent
-createSqlQueryTool(authenticatedTalentId, authorizedOrgIds?, allowedIntents?)
-createExecuteActionTool(authenticatedTalentId)
-createManageSkillsTool(authenticatedTalentId)
-createGenerateDocumentTool(authenticatedTalentId, avatarUrl?)
-createFileReaderTool(authenticatedTalentId)  // direct tool, verifie document ownership (talent)
-createOrgFileReaderTool(organizationId)  // sub-agent, verifie ownership org + access candidats
-// action.handler.ts recoit aussi authenticatedTalentId pour les confirmations
+createSqlQueryTool(talentId, authorizedOrgIds?, allowedIntents?)
+createExecuteActionTool(talentId)
+createManageSkillsTool(talentId)
+createGenerateDocumentTool(talentId, avatarUrl?, orgId?)
+createFileReaderTool(talentId)       // direct tool, verifie document ownership
+createOrgFileReaderTool(orgId)       // direct tool, verifie ownership org + interaction talents
+createCvGenerationTool(talentId, avatarUrl?)
 ```
 
-**5 tools static (pas de factory) :** vectorQueryTool, youtubeSearchTool, generateImageTool, generateDiagramTool, webSearchAsTool
+**5 tools static (pas de factory) :** smartSearchTool, youtubeSearchTool, analyzeYoutubeVideoTool, generateImageTool, generateDiagramTool, webSearchAsTool
 
 **Garanties :**
 - L'agent ne peut pas usurper l'identite d'un autre utilisateur
 - Les queries SQL sont filtrees par `authenticatedTalentId` (IDOR impossible)
-- `allowedIntents` restreint les intents par mode (Study: 3, Org: 18, Explore: 28)
+- `allowedIntents` restreint les intents par mode
 - `authorizedOrgIds` limite l'acces aux organisations du user
-- Les actions de creation verifient le role (OWNER/ADMIN) dans l'organisation cote backend
+- Les actions de creation verifient le role (OWNER/ADMIN) cote backend
 - `file_reader` verifie que le document appartient au talent avant lecture
 - L'agent n'a pas acces au talentId — il est injecte dans le tool
 
@@ -1268,38 +1224,50 @@ Validation post-reponse (log, ne bloque pas) :
 | `organization` | oui | non | non |
 | `document` | oui | non | oui |
 
-### Skills par Mode (8 totales — chargees depuis services/copilot/skills/definitions/*.skill.md)
+### Skills par Mode (17 totales — chargees depuis services/copilot/skills/definitions/*.skill.md)
 
-| Skill | Fichier | Explore | Study | Organization | Tools utilises |
-|-------|---------|:-------:|:-----:|:------------:|---------------|
-| CV Generation | (inline dans prompt) | oui | non | non | sql_query, file_reader, generate_document |
-| Interview Preparation | (inline dans prompt) | oui | non | non | sql_query, web_search |
-| Salary Analysis | (inline dans prompt) | oui | non | non | web_search, sql_query |
-| Skill Assessment | skill-assessment.skill.md | non | oui | non | manage_skills |
-| Candidate Ranking | (inline dans prompt) | non | non | oui | sql_query, vector_query |
-| Opportunity Publishing | opportunity-publishing.skill.md | non | non | oui | sql_query, vector_query, web_search |
-| Community Creation | community-creation.skill.md | non | non | oui | sql_query |
-| Space Creation | space-creation.skill.md | non | non | oui | sql_query |
+| Skill | Explore | Study | Org | Tools principaux |
+|-------|:-------:|:-----:|:---:|-----------------|
+| CV Generation | oui | | | sql_query, file_reader, generate_document |
+| Interview Preparation | oui | | | sql_query, file_reader, web_search, generate_document |
+| Career & Compensation Guide | oui | | | smart_search, sql_query, web_search, generate_document |
+| Application Tracker | oui | | | sql_query, smart_search |
+| Onboarding | oui | | | sql_query, file_reader, generate_document |
+| Deep Dive Lesson | | oui | | youtube_search, analyze_youtube_video, manage_skills, generate_diagram, web_search |
+| Exam & Revision | | oui | | manage_skills, youtube_search, web_search |
+| Document Study Session | | oui | | sql_query, file_reader, manage_skills, analyze_youtube_video |
+| Weekly Recap | | oui | | manage_skills |
+| Autodiagnostic Talent | | oui | | file_reader, manage_skills |
+| HR Skill Radar | | oui | oui | sql_query, file_reader |
+| Candidate Ranking | | | oui | sql_query, file_reader, generate_document |
+| Opportunity Publishing | | | oui | sql_query |
+| Community Creation | | | oui | execute_action |
+| Space Creation | | | oui | execute_action |
+| Job Description Generation | | | oui | sql_query, generate_document, web_search |
+| Org Analytics | | | oui | sql_query, generate_document |
+| Talent Outreach | | | oui | sql_query, smart_search |
 
 ---
 
-## SSE Streaming — Tool Events (source : COPILOT_TOOLS_DOCUMENTATION.md)
+## SSE Streaming — Tool Events
 
-Le client recoit des events SSE pendant l'execution des tools :
+Voir [COPILOT_ARCHITECTURE.md](./COPILOT_ARCHITECTURE.md) pour le protocole SSE complet.
 
 | Event | Description |
 |-------|-------------|
 | `tool_start` | Debut d'un tool call (name, args) |
 | `tool_end` | Fin d'un tool call (summary, result, duration, status) |
-| `text_delta` | Texte genere par l'agent (streaming) |
-| `limit_reached` | Limite atteinte (max 20 tools ou 2 minutes) |
-| `content_corrected` | Correction post-traitement (sanitize Mermaid) |
+| `text_delta` | Texte genere par l'agent (streaming, buffered 50ms) |
+| `audio_ready` | Audio TTS genere (study mode) |
+| `limit_reached` | Limite atteinte (max 20 tools, 2 minutes, ou tool loop) |
+| `content_corrected` | Contenu canonique apres sanitization |
+| `done` | Fin de la reponse |
 
 ### Summaries affiches dans le UI (tool_summary.ts)
 
 | Tool | Exemple de summary |
 |------|--------------------|
-| vector_query | "3 resultats · opportunites" |
+| smart_search | "3 resultats · opportunites (semantic)" |
 | sql_query | "30 elements · Mes competences" |
 | youtube_search | "1 video trouvee" |
 | generate_document | "Document genere · CV Lamine Barro (sauvegarde)" |
@@ -1317,7 +1285,7 @@ Le client recoit des events SSE pendant l'execution des tools :
 | Bug | Fichier | Fix |
 |-----|---------|-----|
 | `search_organizations` crash : `column o.city does not exist` | sql-query.tool.ts | `o.city` → `o.headquarters_city as city` |
-| `vector_query` organizations : meme bug `o.city` | vector-query.tool.ts | Idem |
+| `smart_search` organizations : meme bug `o.city` | smart-search.tool.ts | Idem |
 | `book_space` crash : `organization_id NOT NULL` | execute-action.tool.ts | Ajout organization_id + calcul duration * hourly_rate |
 | `search_talents` ignore le param `skills` | sql-query.tool.ts | Ajout JOIN talent_skills avec filtre |
 | `tool_summary` sql_query : toujours "Donnees chargees" | tool-summary.ts | Recherche du premier array dans l'objet de retour |
@@ -1366,9 +1334,9 @@ Le client recoit des events SSE pendant l'execution des tools :
 
 ```
 0. Minimiser les tools : si une reponse peut etre produite sans tool, ne pas appeler de tool.
-1. Donnees internes d'abord : sql_query/vector_query/file_reader avant web_search.
-2. Parallele quand possible : regrouper les tool calls independants (ex: sql_query my_documents + sql_query my_skills).
-3. vector_query = decouverte (fuzzy) ; sql_query = donnees structurees (listes, stats, feed, candidats).
+1. Donnees internes d'abord : sql_query/smart_search/file_reader avant web_search.
+2. Parallele quand possible : regrouper les tool calls independants.
+3. smart_search = decouverte (fuzzy, semantic) ; sql_query = donnees structurees (listes, stats, feed, candidats).
 4. file_reader : utiliser seulement si un document est necessaire. Lire chaque document UNE seule fois.
 5. web_search : dernier recours (benchmarks, tendances, infos externes recentes). Toujours citer les sources.
 6. generate_* : uniquement apres collecte des infos. Jamais pour "creer" une entite (DB).
@@ -1379,13 +1347,12 @@ Le client recoit des events SSE pendant l'execution des tools :
 
 | Cas | Mode | Chaine recommandee |
 |-----|------|--------------------|
-| Recherche d'entites (opportunites, communautes, espaces, talents) | Explore/Org | `vector_query` -> grouper les entity cards (IDs seulement) |
-| Recherche "exacte" / filtres (search_*) | Explore/Org | `sql_query(search_*)` -> entity cards si autorisees (sinon tableau/texte) |
-| Donnees personnelles (profil, skills, documents, feed) | Explore/Study | `sql_query(my_*)` -> synthese courte -> (optionnel) file_reader si un doc doit etre lu |
-| Analyse d'un CV / document | Explore/Study/Org | `sql_query(my_documents|org_documents|org_talent_profile)` -> `file_reader(documentId)` -> extraction -> next step (skill update, questions, doc generate) |
-| Benchmarks (salaires, tendances marche, entreprises) | Explore/Study/Org | `web_search` -> synthese avec sources -> (optionnel) `generate_document` pour livrable |
-| Candidature / adhesion / reservation | Explore | `sql_query` (entity + contexte) -> preview -> confirmation -> `execute_action` |
-| Creation d'offre / communaute / espace | Explore/Org | `sql_query` (optionnel: references) -> preview structuree -> bloc `confirmation` (le backend cree l'entite) |
+| Recherche d'entites (opportunites, communautes, espaces, talents) | Explore/Org | `smart_search` → grouper les entity cards (IDs seulement) |
+| Donnees personnelles (profil, skills, documents, feed) | Explore/Study | `sql_query(my_*)` → synthese courte → (optionnel) file_reader si un doc doit etre lu |
+| Analyse d'un CV / document | Explore/Study/Org | `sql_query(my_documents|org_documents|org_talent_profile)` → `file_reader(documentId)` → extraction → next step |
+| Benchmarks (salaires, tendances marche, entreprises) | Explore/Study/Org | `web_search` → synthese avec sources → (optionnel) `generate_document` pour livrable |
+| Candidature / adhesion / reservation | Explore | `sql_query` (entity + contexte) → preview → confirmation → `execute_action` |
+| Creation d'offre / communaute / espace | Explore/Org | `sql_query` (optionnel: references) → preview structuree → bloc `confirmation` (le backend cree l'entite) |
 
 ---
 
@@ -1426,6 +1393,6 @@ Le client recoit des events SSE pendant l'execution des tools :
 
 ---
 
-> **Document mis a jour** : 15 Fevrier 2026 — Architecture multi-provider (Anthropic + Gemini + OpenAI)
+> **Document mis a jour** : 21 Fevrier 2026
 > **Regle critique** : IDs seulement, jamais de donnees generees
-> **Reference technique** : Voir COPILOT_TOOLS_DOCUMENTATION.md pour les parametres, retours reels et exemples d'output de chaque tool
+> **Reference technique** : Voir [COPILOT_TOOLS.md](./COPILOT_TOOLS.md) pour les parametres et retours de chaque tool
