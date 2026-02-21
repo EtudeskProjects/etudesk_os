@@ -7,7 +7,7 @@ import { MODEL_AGENT } from '../../ai/models';
 import { AgentConfig } from '../tools/tool-helper';
 import type { ToolDefinition } from '../tools/tool-helper';
 import { TalentContext } from '../types';
-import { vectorQueryTool } from '../tools/vector-query.tool';
+import { smartSearchTool } from '../tools/smart-search.tool';
 import { createSqlQueryTool } from '../tools/sql-query.tool';
 import { youtubeSearchTool } from '../tools/youtube-search.tool';
 import { analyzeYoutubeVideoTool } from '../tools/youtube-analyze.tool';
@@ -17,7 +17,8 @@ import { generateDiagramTool } from '../tools/generate-diagram.tool';
 import { createFileReaderTool } from '../tools/file-read.tool';
 import { webSearchAsTool } from '../tools/web-search.tool';
 import { createManageSkillsTool } from '../tools/manage-skills.tool';
-import { createExecuteActionTool } from '../tools/execute-action.tool';
+import { createExecuteActionTool } from '../tools/execute-action.tool'; 
+import { createCvGenerationTool } from '../tools/cv-generation.tool';
 import { buildTalentExplorerPrompt } from '../prompts/talent-explorer.prompt';
 import { buildTalentStudyPrompt } from '../prompts/talent-study.prompt';
 
@@ -58,9 +59,9 @@ export function createTalentAgent(
     ];
     instructions = buildTalentStudyPrompt(context);
   } else {
-    // EXPLORER MODE (default): vector_query, sql_query, generate_document + execute_action
+    // EXPLORER MODE (default): smart_search, sql_query, generate_document + execute_action
     tools = [
-      vectorQueryTool,
+      smartSearchTool,
       secureSqlTool,
       createGenerateDocumentTool(context.profile.id, context.profile.avatarUrl),
       fileReaderTool,

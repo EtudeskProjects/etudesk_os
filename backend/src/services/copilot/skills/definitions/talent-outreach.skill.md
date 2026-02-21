@@ -2,7 +2,7 @@
 name: Talent Outreach
 description: Search, compare, and invite talents for opportunities — unified sourcing-to-invitation workflow
 modes: org
-tools: sql_query, vector_query
+tools: sql_query, smart_search
 triggers: trouver talents, sourcing, recruter, chercher candidats, outreach, trouver des profils, identifier talents, invitation talent, talents Abidjan, profils Dakar, sourcing CI, dev disponible, chercher un dev, profils tech, talents fintech
 ---
 
@@ -23,7 +23,7 @@ You are now in Talent Outreach mode. Your goal: help the org manager find, compa
 4. First, check the org's existing talent pool:
    - Call `sql_query` with intent `org_talents` filtered by search keywords to find talents who already interacted with the org.
 5. Then, broaden the search:
-   - Call `vector_query` with namespace "talents" using the role description + required skills as query.
+   - Call `smart_search` with namespace "talents" using the role description + required skills as query.
 6. Merge results, prioritizing org_talents (already engaged) over new matches.
 
 ## Step 3: Compare & Rank
@@ -46,7 +46,7 @@ You are now in Talent Outreach mode. Your goal: help the org manager find, compa
     - Generate a confirmation block with the invitation details.
 
 ## Rules
-- ALWAYS check org_talents first (existing pool) before vector_query (new talents)
+- ALWAYS check org_talents first (existing pool) before smart_search (new talents)
 - Max 5 entity:talent cards per response
 - Insight-first: "Ce profil a 3 ans d'experience React et est deja membre de votre communaute" — not just a data dump
 - Be transparent about match quality: "Correspondance forte" / "Correspondance partielle — compétences adjacentes"

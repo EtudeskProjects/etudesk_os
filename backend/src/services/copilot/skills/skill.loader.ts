@@ -15,7 +15,7 @@ const SKILLS_DIR = path.join(__dirname, 'definitions');
 /** Tools available per mode — used for validation */
 const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = {
   explore: [
-    'vector_query',
+    'smart_search',
     'sql_query',
     'generate_document',
     'file_reader',
@@ -34,7 +34,7 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
     'execute_action',
   ],
   org: [
-    'vector_query',
+    'smart_search',
     'sql_query',
     'generate_document',
     'file_reader',
@@ -186,9 +186,22 @@ export function getSkillBody(skillId: string): string | null {
  * Checks if any trigger keyword appears in the normalized message.
  * If multiple skills match: (1) pick the one with the most trigger hits, (2) on tie, pick the one with highest priority.
  */
+/** Country-specific bonus triggers — boost skill matching when user is in a specific country */
+const COUNTRY_BONUS_TRIGGERS: Record<string, string[]> = {
+  CI: ['abidjan', 'cnps', 'cote d\'ivoire', 'yamoussoukro', 'fdfp', 'orange ci'],
+  SN: ['dakar', 'css', 'ipres', 'senegal', 'thies'],
+  ML: ['bamako', 'inps', 'mali'],
+  BF: ['ouagadougou', 'burkina', 'bobo-dioulasso', 'cnss bf'],
+  TG: ['lome', 'togo', 'cnss togo'],
+  BN: ['cotonou', 'benin', 'porto-novo'],
+  NE: ['niamey', 'niger'],
+  GW: ['bissau', 'guinee-bissau'],
+};
+
 export function detectSkillFromMessageStatic(
   message: string,
-  mode: 'explore' | 'study' | 'org'
+  mode: 'explore' | 'study' | 'org',
+  country?: string
 ): { skillId: string; skillName: string; instructions: string } | null {
   const skills = loadAllSkills().filter((s) => s.modes.includes(mode));
   const normalizedMsg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -207,6 +220,16 @@ export function detectSkillFromMessageStatic(
         hits++;
       }
     }
+    // Country bonus: if user is in a UEMOA country and message mentions their country-specific terms,
+    // give an extra hit to skills that deal with regional topics (salary, legal, etc.)
+    if (hits > 0 && country) {
+      const countryCode = country.trim().toUpperCase();
+      const bonusTriggers = COUNTRY_BONUS_TRIGGERS[countryCode];
+      if (bonusTriggers?.some((bt) => normalizedMsg.includes(bt))) {
+        hits += 1; // Regional relevance boost
+      }
+    }
+
     if (hits === 0) continue;
 
     const priority = skill.priority ?? 0;
@@ -260,14 +283,15 @@ export async function precomputeSkillEmbeddings(): Promise<void> {
  */
 export async function detectSkillFromMessage(
   message: string,
-  mode: 'explore' | 'study' | 'org'
+  mode: 'explore' | 'study' | 'org',
+  country?: string
 ): Promise<{ skillId: string; skillName: string; instructions: string } | null> {
   const skills = loadAllSkills().filter((s) => s.modes.includes(mode));
 
   // If no skill has an embedding yet (startup not done or failed), use static fallback
   const hasEmbeddings = skills.some((s) => s.embedding);
   if (!hasEmbeddings) {
-    return detectSkillFromMessageStatic(message, mode);
+    return detectSkillFromMessageStatic(message, mode, country);
   }
 
   try {
@@ -299,7 +323,7 @@ export async function detectSkillFromMessage(
   } catch (error) {
     // Embedding API down → graceful fallback to static matching
     logger.warn(`[skill.loader] Embedding-based detection failed, using static fallback: ${error}`);
-    return detectSkillFromMessageStatic(message, mode);
+    return detectSkillFromMessageStatic(message, mode, country);
   }
 }
 

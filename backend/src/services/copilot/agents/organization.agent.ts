@@ -6,7 +6,7 @@
 import { MODEL_AGENT } from '../../ai/models';
 import { AgentConfig } from '../tools/tool-helper';
 import { OrgContext } from '../types';
-import { vectorQueryTool } from '../tools/vector-query.tool';
+import { smartSearchTool } from '../tools/smart-search.tool';
 import { createSqlQueryTool } from '../tools/sql-query.tool';
 import { createGenerateDocumentTool } from '../tools/generate-document.tool';
 import { webSearchAsTool } from '../tools/web-search.tool';
@@ -35,11 +35,6 @@ const ORG_ALLOWED_INTENTS = [
   'org_geo_distribution',
   'org_community_engagement',
   'org_opportunity_performance',
-  'search_opportunities',
-  'search_communities',
-  'search_spaces',
-  'search_organizations',
-  'search_talents',
 ] as const;
 
 export function createOrgAgent(context: OrgContext): AgentConfig {
@@ -54,7 +49,7 @@ export function createOrgAgent(context: OrgContext): AgentConfig {
     model: MODEL_AGENT,
     systemPrompt: buildOrgExplorerPrompt(context),
     tools: [
-      vectorQueryTool,
+      smartSearchTool,
       secureSqlTool,
       createGenerateDocumentTool(context.talentId, undefined, context.organizationId),
       webSearchAsTool,

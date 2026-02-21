@@ -16,9 +16,9 @@ export const MODEL_SUGGESTION = 'gemini-2.5-flash-lite';
 // --- Anthropic Claude (agents — best reasoning + tool use) ---
 
 /** Main copilot agents: talent explorer, org explorer, study mode */
-// Upgraded 2026-02-15: Claude Opus 4.6 (Anthropic)
-// Anthropic model aliases are stable; pinning a dated suffix is optional.
-export const MODEL_AGENT = 'claude-opus-4-6';
+// Sonnet line (balanced quality/cost). Uses Anthropic alias by default.
+// Override with ANTHROPIC_MODEL_AGENT to pin a snapshot when needed.
+export const MODEL_AGENT = process.env.ANTHROPIC_MODEL_AGENT || 'claude-sonnet-4-6';
 
 /** Fast tasks: summaries, titles, guardrails, intent suggestions */
 export const MODEL_FAST = 'claude-haiku-4-5';

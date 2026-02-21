@@ -427,6 +427,21 @@ export async function upsertSpaceEmbedding(
   }
 }
 
+/**
+ * Delete a vector from Pinecone by entity type and ID.
+ * Call when an entity is soft-deleted to prevent ghost vectors.
+ */
+export async function deletePineconeVector(type: string, id: string): Promise<void> {
+  try {
+    const index = getPineconeIndex();
+    await index.deleteOne(`${type}:${id}`);
+    logger.info(`[embedding] Deleted Pinecone vector ${type}:${id}`);
+  } catch (error) {
+    logger.error(`[embedding] Error deleting Pinecone vector ${type}:${id}:`, error);
+    // Don't throw - deletion is best-effort
+  }
+}
+
 // --- Similarity Calculation ---
 
 /**
@@ -479,40 +494,7 @@ export async function getSemanticBoost(
       return (similarity - 0.5) * 40;
     }
 
-    // Fallback: try PostgreSQL (only if columns exist)
-    try {
-      const pgResult = await pool.query(`
-        SELECT
-          t.embedding as talent_embedding,
-          o.embedding as opp_embedding
-        FROM talents t, opportunities o
-        WHERE t.id = $1 AND o.id = $2
-      `, [talentId, opportunityId]);
-
-      if (pgResult.rows.length > 0) {
-        const { talent_embedding, opp_embedding } = pgResult.rows[0];
-
-        if (talent_embedding && opp_embedding) {
-          const talentEmb = typeof talent_embedding === 'string'
-            ? JSON.parse(talent_embedding)
-            : talent_embedding;
-          const oppEmb = typeof opp_embedding === 'string'
-            ? JSON.parse(opp_embedding)
-            : opp_embedding;
-
-          const similarity = cosineSimilarity(talentEmb, oppEmb);
-          return (similarity - 0.5) * 40;
-        }
-      }
-    } catch (pgError: any) {
-      // Ignore errors if embedding columns don't exist
-      // This is expected if migrations haven't been run
-      if (pgError.code !== '42703') { // 42703 = undefined column
-        logger.warn('PostgreSQL fallback failed (non-critical):', pgError.message);
-      }
-    }
-
-    // No embeddings available, return neutral
+    // No embeddings available in Pinecone, return neutral
     return 0;
   } catch (error) {
     logger.error('Error getting semantic boost:', error);

@@ -20,6 +20,7 @@ import {
   calculateCapacity,
 } from '../../types/space.types';
 import { generateSpaceSuggestion } from '../../services/space-generation.service';
+import { upsertSpaceEmbedding, deletePineconeVector } from '../../services/embedding.service';
 
 const router = Router();
 
@@ -359,7 +360,17 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
       ]
     );
 
-    res.json({ data: result.rows[0] });
+    // Update Pinecone embedding (fire-and-forget)
+    const updated = result.rows[0];
+    upsertSpaceEmbedding(id, {
+      name: updated.name, description: updated.description, type: updated.type,
+      capacity: updated.capacity, city: updated.city, country: updated.country,
+      hourly_rate: updated.hourly_rate, is_bookable: updated.is_bookable,
+      equipment: updated.equipment, amenities: updated.amenities,
+      sectors: updated.sectors, address: updated.address,
+    }).catch(err => logger.error('[spaces] Error updating Pinecone embedding:', err));
+
+    res.json({ data: updated });
   } catch (error) {
     handleRouteError(res, error, 'Error updating space');
   }
@@ -475,6 +486,9 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
        WHERE id = $1 AND deleted_at IS NULL`,
       [id]
     );
+
+    // Remove Pinecone vector (fire-and-forget)
+    deletePineconeVector('space', id).catch(err => logger.error('[spaces] Error deleting Pinecone vector:', err));
 
     res.json({ success: true, message: req.t('spaces:deleted') });
   } catch (error) {

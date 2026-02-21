@@ -13,6 +13,7 @@ import {
   GenerationInput,
 } from '../../services/community-generation.service';
 import { handleRouteError, createNotFoundError, createForbiddenError, logger } from '../../utils';
+import { upsertCommunityEmbedding, deletePineconeVector } from '../../services/embedding.service';
 
 const router = Router();
 
@@ -200,7 +201,17 @@ router.put('/:id', authMiddleware, validate(updateCommunitySchema), async (req: 
       throw createNotFoundError('Community');
     }
 
-    res.json({ data: result.rows[0] });
+    // Update Pinecone embedding (fire-and-forget)
+    const updated = result.rows[0];
+    upsertCommunityEmbedding(id, {
+      name: updated.name, description: updated.description, type: updated.type,
+      access_type: updated.access_type, city: updated.city, country: updated.country,
+      is_paid: updated.is_paid,
+      sectors: updated.sectors ? (typeof updated.sectors === 'string' ? JSON.parse(updated.sectors) : updated.sectors) : [],
+      tags: updated.tags ? (typeof updated.tags === 'string' ? JSON.parse(updated.tags) : updated.tags) : [],
+    }).catch(err => logger.error('[communities] Error updating Pinecone embedding:', err));
+
+    res.json({ data: updated });
   } catch (error) {
     handleRouteError(res, error, 'Error updating community');
   }
@@ -228,6 +239,9 @@ router.delete('/:id', authMiddleware, validate(uuidParamSchema, 'params'), async
       `UPDATE communities SET deleted_at = NOW(), status = 'DELETED' WHERE id = $1`,
       [id]
     );
+
+    // Remove Pinecone vector (fire-and-forget)
+    deletePineconeVector('community', id).catch(err => logger.error('[communities] Error deleting Pinecone vector:', err));
 
     res.json({ success: true, message: req.t('communities:deleted') });
   } catch (error) {

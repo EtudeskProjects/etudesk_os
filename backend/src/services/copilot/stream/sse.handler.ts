@@ -76,7 +76,9 @@ function buildMessages(
   const messages: Anthropic.MessageParam[] = [];
 
   // Add conversation history (already alternating user/assistant from DB)
+  // Skip entries with empty content — Anthropic rejects empty user messages
   for (const h of history) {
+    if (!h.content?.trim()) continue;
     if (h.role === 'user') {
       messages.push({ role: 'user', content: h.content });
     } else if (h.role === 'assistant') {
@@ -124,12 +126,10 @@ function buildMessages(
   for (const msg of messages) {
     const last = merged[merged.length - 1];
     if (last && last.role === msg.role) {
-      // Merge text content
+      // Merge text content — keep whichever is non-empty, or combine both
       const lastText = typeof last.content === 'string' ? last.content : '';
       const msgText = typeof msg.content === 'string' ? msg.content : '';
-      if (lastText && msgText) {
-        last.content = lastText + '\n' + msgText;
-      }
+      last.content = [lastText, msgText].filter(Boolean).join('\n') || lastText || msgText;
     } else {
       merged.push(msg);
     }
@@ -152,13 +152,30 @@ export async function runAgentWithSSE(
   finalOutput: string;
   toolTrace: Array<{ name: string; args?: any; result?: any; duration?: number }>;
   segments: MessageSegment[];
+  traceMetrics: {
+    turnCount: number;
+    toolCount: number;
+    toolNames: string[];
+    toolErrors: number;
+    durationMs: number;
+    outputChars: number;
+    hasToolError: boolean;
+    hitLoopDetection: boolean;
+    hitTurnLimit: boolean;
+    guardrailBlocked: boolean;
+  };
 }> {
   const toolTrace: Array<{ name: string; args?: any; result?: any; duration?: number }> = [];
   const segments: MessageSegment[] = [];
   let finalOutput = '';
   let toolCallCounter = 0;
+  let toolErrorCounter = 0;
   const turnStart = Date.now();
   let limitReached = false;
+  let hitLoopDetection = false;
+  let hitTurnLimit = false;
+  let guardrailBlocked = false;
+  let turnCount = 0;
   const sameToolCounts = new Map<string, number>();
 
   const heartbeatId = setInterval(() => sendHeartbeat(res), HEARTBEAT_INTERVAL_MS);
@@ -198,16 +215,24 @@ export async function runAgentWithSSE(
         ? 'Je ne peux pas répondre à ce type de requête. Reformulez votre question en lien avec la plateforme.'
         : 'Cette requête ne peut pas être traitée. Je suis là pour vous accompagner sur la plateforme Etudesk.';
       sendSSE(res, { type: 'error', error: userMessage });
-      return { finalOutput: '', toolTrace: [], segments: [] };
+      guardrailBlocked = true;
+      return {
+        finalOutput: '', toolTrace: [], segments: [],
+        traceMetrics: {
+          turnCount: 0, toolCount: 0, toolNames: [], toolErrors: 0,
+          durationMs: Date.now() - turnStart, outputChars: 0,
+          hasToolError: false, hitLoopDetection: false, hitTurnLimit: false, guardrailBlocked: true,
+        },
+      };
     }
 
     // --- Agentic loop ---
     const client = getAnthropicClient();
     const toolDefs = agentConfig.tools.map((t) => t.definition);
-    let turnCount = 0;
 
     while (turnCount < MAX_TURNS) {
       turnCount++;
+      if (turnCount >= MAX_TURNS) hitTurnLimit = true;
 
       // Check duration limit
       if (!limitReached && Date.now() - turnStart > MAX_TURN_DURATION_MS) {
@@ -358,6 +383,7 @@ export async function runAgentWithSSE(
 
         if (!limitReached && sameCount > MAX_SAME_TOOL_CALLS) {
           limitReached = true;
+          hitLoopDetection = true;
           const limitMsg = `Boucle d'outils detectee (${toolUse.name} appele ${sameCount} fois). Je stoppe ici pour eviter de gaspiller des credits.`;
           logger.warn(`[copilot] Tool loop detected — ${loopKey} (#${sameCount}). Aborting run.`);
           sendSSE(res, { type: 'limit_reached', reason: 'tool_loop', message: limitMsg });
@@ -414,6 +440,7 @@ export async function runAgentWithSSE(
           output = { error: err.message };
           isError = true;
         }
+        if (isError) toolErrorCounter++;
         const duration = Date.now() - toolStartTime;
 
         // Log tool output
@@ -521,7 +548,20 @@ export async function runAgentWithSSE(
     // Output guardrail is non-blocking
   }
 
-  return { finalOutput, toolTrace, segments };
+  const traceMetrics = {
+    turnCount,
+    toolCount: toolCallCounter,
+    toolNames: [...new Set(toolTrace.map((t) => t.name))],
+    toolErrors: toolErrorCounter,
+    durationMs: Date.now() - turnStart,
+    outputChars: finalOutput.length,
+    hasToolError: toolErrorCounter > 0,
+    hitLoopDetection,
+    hitTurnLimit,
+    guardrailBlocked,
+  };
+
+  return { finalOutput, toolTrace, segments, traceMetrics };
 }
 
 /**

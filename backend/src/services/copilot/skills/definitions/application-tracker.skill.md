@@ -2,7 +2,7 @@
 name: Application Tracker
 description: Track and manage job applications — status overview, next steps per application, and suggestions for new opportunities
 modes: explore
-tools: sql_query, vector_query
+tools: sql_query, smart_search
 triggers: candidatures, mes candidatures, suivi, ou en sont, applications, postuler, statut candidature, mes postulations, suivi candidatures, mes offres, ou en est ma candidature, reponse employeur, en attente de reponse, stage, recherche stage, freelance, mission
 ---
 
@@ -43,7 +43,7 @@ You are now in Application Tracker mode. Your goal: give the user a clear overvi
 
 6. If the user has 0 applications:
    - "Tu n'as pas encore postule. Voyons les opportunites qui matchent ton profil."
-   - Call `vector_query` with namespace "opportunities" using the user's skills and location as query.
+   - Call `smart_search` with namespace "opportunities" using the user's skills and location as query.
    - Present top 5 matching opportunities as entity cards.
 
 ## Step 5: Follow-Up

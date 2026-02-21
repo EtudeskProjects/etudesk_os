@@ -45,6 +45,7 @@ import {
 } from '../services/copilot/context-options';
 import { detectSkillFromMessage } from '../services/copilot/skills/skill.loader';
 import { shouldInjectUEMOA } from '../services/copilot/uemoa-knowledge';
+import { getWinningTrajectories, invalidateTrajectoryCache } from '../services/copilot/trace.service';
 import { summarizeHistoryIfNeeded } from '../services/copilot/session-summarizer';
 import { handleConfirmation } from '../services/copilot/actions/action.handler';
 import { copilotChatLimiter, copilotGeneralLimiter } from '../middleware/rateLimit.middleware';
@@ -342,10 +343,17 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
 
     // Detect active skill from user message triggers (CPU only, instant)
     const skillMode = isOrg ? 'org' : validMode;
-    const detectedSkill = await detectSkillFromMessage(safeMessage, skillMode as 'explore' | 'study' | 'org');
-    const activeSkillInstructions = detectedSkill
-      ? `\n<active_skill_instructions skill="${detectedSkill.skillId}" name="${detectedSkill.skillName}">\n${detectedSkill.instructions}\n</active_skill_instructions>\n`
-      : undefined;
+    const userCountry = talentContext.profile?.country;
+    const detectedSkill = await detectSkillFromMessage(safeMessage, skillMode as 'explore' | 'study' | 'org', userCountry);
+    // Build active skill instructions with DPO few-shot examples
+    let activeSkillInstructions: string | undefined;
+    if (detectedSkill) {
+      const trajectories = await getWinningTrajectories(detectedSkill.skillId).catch(() => '');
+      activeSkillInstructions = `\n<active_skill_instructions skill="${detectedSkill.skillId}" name="${detectedSkill.skillName}">\n${detectedSkill.instructions}\n</active_skill_instructions>\n`;
+      if (trajectories) {
+        activeSkillInstructions += `\n${trajectories}\n`;
+      }
+    }
 
     // Conditional UEMOA knowledge injection (~2500 tokens saved when not relevant)
     const injectUEMOA = shouldInjectUEMOA(safeMessage, detectedSkill?.skillId);
@@ -480,7 +488,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
 
     // Run agent with SSE streaming (pass attachments so agent sees file context)
     const parsedAttachments = messageAttachments ? JSON.parse(messageAttachments) : undefined;
-    const { finalOutput, toolTrace, segments } = await runAgentWithSSE(
+    const { finalOutput, toolTrace, segments, traceMetrics } = await runAgentWithSSE(
       agent,
       agentMessage,
       history,
@@ -526,6 +534,38 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         segments.length > 0 ? sanitizeJsonForPg(audioUrl ? [...segments, { type: 'audio', audioUrl }] : segments) : null,
       ]
     );
+
+    // Persist copilot trace (DPO analytics — non-blocking)
+    const assistantMsgResult = await pool.query(
+      `SELECT id FROM copilot_messages WHERE session_id = $1 AND role = 'assistant' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`,
+      [sessionId]
+    );
+    const assistantMessageId = assistantMsgResult.rows[0]?.id || null;
+    pool.query(
+      `INSERT INTO copilot_traces
+        (session_id, message_id, talent_id, organization_id, mode, skill_id,
+         turn_count, tool_count, tool_names, tool_errors, duration_ms, output_chars,
+         has_tool_error, hit_loop_detection, hit_turn_limit, guardrail_blocked)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+      [
+        sessionId,
+        assistantMessageId,
+        talentId,
+        organizationId || null,
+        validMode,
+        detectedSkill?.skillId || null,
+        traceMetrics.turnCount,
+        traceMetrics.toolCount,
+        traceMetrics.toolNames,
+        traceMetrics.toolErrors,
+        traceMetrics.durationMs,
+        traceMetrics.outputChars,
+        traceMetrics.hasToolError,
+        traceMetrics.hitLoopDetection,
+        traceMetrics.hitTurnLimit,
+        traceMetrics.guardrailBlocked,
+      ]
+    ).catch((err) => logger.error('[copilot] Failed to persist trace:', err));
 
     // Generate title for first message (non-blocking)
     const messageCount = historyRes.rows.length;
@@ -652,6 +692,85 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
         suggestions: ['Offres qui matchent mon profil', 'Génère mon CV en PDF', 'Communautés dans mon secteur', 'Analyse mes compétences'],
       },
     });
+  }
+});
+
+// --- Message Feedback (DPO Signal) ---
+
+/**
+ * PATCH /api/copilot/messages/:messageId/feedback - Rate a copilot response
+ * Body: { rating: 1 | 3 }  // 1 = thumbs down, 3 = thumbs up
+ * Returns: { success: boolean }
+ */
+router.patch('/messages/:messageId/feedback', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const talentId = req.talentId;
+    if (!talentId) {
+      return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
+    }
+
+    const { messageId } = req.params;
+    const { rating } = req.body;
+
+    if (rating !== 1 && rating !== 3) {
+      return res.status(400).json({ error: 'rating must be 1 (thumbs down) or 3 (thumbs up)' });
+    }
+
+    // Verify the message belongs to the user's session
+    const msgCheck = await pool.query(
+      `SELECT cm.id, cs.talent_id, cs.organization_id
+       FROM copilot_messages cm
+       JOIN copilot_sessions cs ON cs.id = cm.session_id
+       WHERE cm.id = $1 AND cm.role = 'assistant' AND cm.deleted_at IS NULL`,
+      [messageId]
+    );
+
+    if (msgCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    const msg = msgCheck.rows[0];
+    // Allow if user owns the session OR is a member of the org
+    if (msg.talent_id !== talentId && msg.organization_id) {
+      const orgMember = await pool.query(
+        `SELECT 1 FROM organization_members WHERE organization_id = $1 AND talent_id = $2 AND status = 'ACTIVE' LIMIT 1`,
+        [msg.organization_id, talentId]
+      );
+      if (orgMember.rows.length === 0) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+    } else if (msg.talent_id !== talentId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Update the trace with user rating
+    const result = await pool.query(
+      `UPDATE copilot_traces SET user_rating = $1 WHERE message_id = $2 RETURNING id, skill_id`,
+      [rating, messageId]
+    );
+
+    // Invalidate trajectory cache for this skill so new ratings take effect
+    if (result.rows[0]?.skill_id) {
+      invalidateTrajectoryCache(result.rows[0].skill_id);
+    }
+
+    if (result.rows.length === 0) {
+      // Trace may not exist yet (race condition or old message) — create a minimal one
+      await pool.query(
+        `INSERT INTO copilot_traces (session_id, message_id, talent_id, organization_id, mode, user_rating, turn_count, tool_count, duration_ms, output_chars)
+         SELECT cm.session_id, cm.id, cs.talent_id, cs.organization_id, cs.mode, $1, 0, 0, 0, length(cm.content)
+         FROM copilot_messages cm
+         JOIN copilot_sessions cs ON cs.id = cm.session_id
+         WHERE cm.id = $2
+         ON CONFLICT DO NOTHING`,
+        [rating, messageId]
+      );
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Error saving feedback:', error);
+    res.status(500).json({ error: 'Failed to save feedback' });
   }
 });
 

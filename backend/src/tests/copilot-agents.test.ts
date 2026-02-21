@@ -435,19 +435,19 @@ const TESTS: TestDef[] = [
   {
     name: 'Explorer — Opportunites matching profil',
     agentType: 'explorer',
-    targetTool: 'vector_query',
+    targetTool: 'smart_search',
     message: 'Quels postes correspondent a mon profil en ce moment ?',
   },
   {
     name: 'Explorer — Espaces coworking Abidjan',
     agentType: 'explorer',
-    targetTool: 'vector_query',
+    targetTool: 'smart_search',
     message: 'Je cherche un espace de travail calme sur Abidjan avec wifi',
   },
   {
     name: 'Explorer — Communautes tech',
     agentType: 'explorer',
-    targetTool: 'vector_query',
+    targetTool: 'smart_search',
     message: 'Quelles communautes tech actives existent a Abidjan ?',
   },
   {
@@ -497,7 +497,7 @@ const TESTS: TestDef[] = [
   {
     name: 'Org — Recruter profils marketing',
     agentType: 'org',
-    targetTool: 'vector_query',
+    targetTool: 'smart_search',
     message: 'Trouve-moi 5 profils marketing digital seniors disponibles sur Abidjan',
   },
   {

@@ -47,12 +47,6 @@ const SQL_INTENTS = [
   // Talent community
   'my_community_feed',
   'my_community_members',
-  // Search
-  'search_opportunities',
-  'search_communities',
-  'search_spaces',
-  'search_organizations',
-  'search_talents',
   // Actions
   'apply_opportunity',
   'join_community',
@@ -84,13 +78,13 @@ export function createSqlQueryTool(
   return defineTool({
     name: 'sql_query',
     description:
-      'Query PostgreSQL for structured data. Use for personal data (my_profile, my_applications, my_communities, my_documents, my_skills, my_triggers, my_community_feed, my_community_members), org management (org_stats, org_applications, org_members, org_opportunities, org_documents, org_talents, org_talent_profile, org_triggers, org_community_feed, org_community_members), and structured search (search_opportunities, search_communities). Personal data is automatically filtered for the authenticated user — do NOT include talentId in params. IMPORTANT: Do NOT call the same intent twice — results are deterministic and already in your conversation.',
+      'Query PostgreSQL for structured data. Use for personal data (my_profile, my_applications, my_communities, my_documents, my_skills, my_triggers, my_community_feed, my_community_members), org management (org_stats, org_applications, org_members, org_opportunities, org_documents, org_talents, org_talent_profile, org_triggers, org_community_feed, org_community_members), and org analytics (org_skills_analytics, org_application_funnel, org_talent_cohorts, etc.). For discovery/search, use smart_search instead. Personal data is automatically filtered for the authenticated user — do NOT include talentId in params. IMPORTANT: Do NOT call the same intent twice — results are deterministic and already in your conversation.',
     parameters: z.object({
       intent: z.enum(SQL_INTENTS).describe('The query intent. Use my_* for personal data, org_* for organization data (requires organizationId in params), search_* for text search.'),
       paramsJson: z.string().optional().describe('Optional JSON string with extra filters. Examples: \'{"status":"PENDING"}\', \'{"organizationId":"uuid"}\'. Do NOT include talentId — it is injected automatically.'),
       params: z.record(z.string(), z.unknown()).optional().describe('Optional parameters as an object. Alternative to paramsJson. Example: {"organizationId":"uuid","status":"PENDING"}. Do NOT include talentId.'),
-      query: z.string().optional().describe('Text query for search_* intents (e.g., search_opportunities, search_communities).'),
-      country: z.string().optional().describe('Country code filter for search intents (e.g., "CI" for Côte d\'Ivoire).'),
+      query: z.string().optional().describe('Text query for filtering results (rarely needed).'),
+      country: z.string().optional().describe('Country code filter (e.g., "CI" for Côte d\'Ivoire).'),
     }),
     execute: async ({ intent, paramsJson, params: paramsObj, query, country }) => {
       // Merge params from multiple sources: paramsJson (string) or params (object)
@@ -849,104 +843,6 @@ export function createSqlQueryTool(
             queryParams.push(limit);
             const res = await pool.query(query, queryParams);
             return { members: res.rows };
-          }
-
-          // --- Search ---
-          case 'search_opportunities': {
-            const { query: q, type, contractType, location, limit: lim } = params || {};
-            let sql = `
-            SELECT o.id, o.title, o.summary, o.type, o.contract_type, o.location_type,
-                   o.slug, o.deadline, org.name as org_name,
-                   o.compensation_min, o.compensation_max, o.currency
-            FROM opportunities o
-            LEFT JOIN opportunity_posters op ON o.id = op.opportunity_id
-            LEFT JOIN organizations org ON op.poster_organization_id = org.id
-            WHERE o.status = 'OPEN' AND o.deleted_at IS NULL`;
-            const p: any[] = [];
-            let idx = 1;
-            if (q) { sql += ` AND (o.title ILIKE '%' || $${idx}::text || '%' OR o.summary ILIKE '%' || $${idx}::text || '%')`; p.push(q); idx++; }
-            if (type) { sql += ` AND o.type = $${idx}::text`; p.push(type); idx++; }
-            if (contractType) { sql += ` AND o.contract_type = $${idx}::text`; p.push(contractType); idx++; }
-            if (location) { sql += ` AND o.locations::text ILIKE '%' || $${idx}::text || '%'`; p.push(location); idx++; }
-            sql += ` ORDER BY o.posted_at DESC NULLS LAST LIMIT $${idx}`;
-            p.push((lim as number) || 10);
-            const res = await pool.query(sql, p);
-            return { opportunities: res.rows };
-          }
-
-          case 'search_communities': {
-            const { query: q, type, limit: lim } = params || {};
-            let sql = `
-            SELECT c.id, c.name, c.description, c.type, c.slug,
-                   (SELECT COUNT(*) FROM community_members cm WHERE cm.community_id = c.id AND cm.status = 'ACTIVE') as member_count
-            FROM communities c
-            WHERE c.status = 'ACTIVE' AND c.deleted_at IS NULL`;
-            const p: any[] = [];
-            let idx = 1;
-            if (q) { sql += ` AND (c.name ILIKE '%' || $${idx} || '%' OR c.description ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
-            if (type) { sql += ` AND c.type = $${idx}`; p.push(type); idx++; }
-            sql += ` ORDER BY member_count DESC LIMIT $${idx}`;
-            p.push((lim as number) || 10);
-            const res = await pool.query(sql, p);
-            return { communities: res.rows };
-          }
-
-          case 'search_spaces': {
-            const { query: q, type, location, limit: lim } = params || {};
-            let sql = `
-            SELECT s.id, s.name, s.description, s.type, s.slug, s.capacity,
-                   s.hourly_rate, s.city
-            FROM spaces s
-            WHERE s.status = 'ACTIVE' AND s.deleted_at IS NULL`;
-            const p: any[] = [];
-            let idx = 1;
-            if (q) { sql += ` AND (s.name ILIKE '%' || $${idx} || '%' OR s.description ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
-            if (type) { sql += ` AND s.type = $${idx}`; p.push(type); idx++; }
-            if (location) { sql += ` AND s.city ILIKE '%' || $${idx} || '%'`; p.push(location); idx++; }
-            sql += ` ORDER BY s.created_at DESC NULLS LAST LIMIT $${idx}`;
-            p.push((lim as number) || 10);
-            const res = await pool.query(sql, p);
-            return { spaces: res.rows };
-          }
-
-          case 'search_organizations': {
-            const { query: q, sectors, limit: lim } = params || {};
-            let sql = `
-            SELECT o.id, o.name, o.description, o.sectors, o.slug, o.headquarters_city as city, o.headquarters_country as country
-            FROM organizations o
-            WHERE o.deleted_at IS NULL AND o.verification_status IN ('VERIFIED', 'OFFICIAL')
-            AND o.is_visible = TRUE`;
-            const p: any[] = [];
-            let idx = 1;
-            if (q) { sql += ` AND (o.name ILIKE '%' || $${idx} || '%' OR o.description ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
-            if (sectors) { sql += ` AND o.sectors && $${idx}::text[]`; p.push(sectors); idx++; }
-            sql += ` ORDER BY o.name LIMIT $${idx}`;
-            p.push((lim as number) || 10);
-            const res = await pool.query(sql, p);
-            return { organizations: res.rows };
-          }
-
-          case 'search_talents': {
-            const { query: q, skills, limit: lim } = params || {};
-            let sql = `
-            SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio, t.city, t.country,
-                   (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level))
-                    FROM (SELECT canonical_name, proficiency_level FROM talent_skills WHERE talent_id = t.id ORDER BY canonical_name LIMIT 5) ts) as top_skills
-            FROM talents t
-            WHERE t.deleted_at IS NULL
-            AND t.is_visible = TRUE`;
-            const p: any[] = [];
-            let idx = 1;
-            if (q) { sql += ` AND (COALESCE(t.first_name || ' ' || t.last_name, t.email) ILIKE '%' || $${idx} || '%' OR t.bio ILIKE '%' || $${idx} || '%')`; p.push(q); idx++; }
-            if (skills && Array.isArray(skills) && skills.length > 0) {
-              sql += ` AND EXISTS (SELECT 1 FROM talent_skills ts WHERE ts.talent_id = t.id AND LOWER(ts.canonical_name) = ANY($${idx}::text[]))`;
-              p.push(skills.map((s: string) => s.toLowerCase()));
-              idx++;
-            }
-            sql += ` ORDER BY t.first_name, t.last_name LIMIT $${idx}`;
-            p.push((lim as number) || 10);
-            const res = await pool.query(sql, p);
-            return { talents: res.rows };
           }
 
           default:

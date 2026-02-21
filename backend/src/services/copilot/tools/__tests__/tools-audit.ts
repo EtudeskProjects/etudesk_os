@@ -6,7 +6,7 @@
 
 import 'dotenv/config';
 import { pool } from '../../../database';
-import { vectorQueryTool } from '../vector-query.tool';
+import { smartSearchTool } from '../smart-search.tool';
 import { createSqlQueryTool } from '../sql-query.tool';
 import { youtubeSearchTool } from '../youtube-search.tool';
 import { createGenerateDocumentTool } from '../generate-document.tool';
@@ -82,42 +82,42 @@ async function runTest(
   // ═══════════════════════════════════════════
   // 1. VECTOR_QUERY
   // ═══════════════════════════════════════════
-  console.log('┌─ 1. vector_query ──────────────────────────────────');
+  console.log('┌─ 1. smart_search ──────────────────────────────────');
 
-  await runTest('vector_query', 'Recherche opportunités dev React Abidjan',
-    { query: 'développeur React Node.js Abidjan', namespace: 'opportunities', topK: 5, filtersJson: null },
-    vectorQueryTool,
-    { toolName: 'vector_query', args: { namespace: 'opportunities' } }
+  await runTest('smart_search', 'Recherche opportunités dev React Abidjan',
+    { query: 'développeur React Node.js Abidjan', entity: 'opportunities', topK: 5, filtersJson: null },
+    smartSearchTool,
+    { toolName: 'smart_search', args: { entity: 'opportunities' } }
   );
 
-  await runTest('vector_query', 'Recherche talents fullstack',
-    { query: 'développeur fullstack Python Django', namespace: 'talents', topK: 5, filtersJson: null },
-    vectorQueryTool,
-    { toolName: 'vector_query', args: { namespace: 'talents' } }
+  await runTest('smart_search', 'Recherche talents fullstack',
+    { query: 'développeur fullstack Python Django', entity: 'talents', topK: 5, filtersJson: null },
+    smartSearchTool,
+    { toolName: 'smart_search', args: { entity: 'talents' } }
   );
 
-  await runTest('vector_query', 'Recherche communautés tech',
-    { query: 'communauté startup tech innovation', namespace: 'communities', topK: 5, filtersJson: null },
-    vectorQueryTool,
-    { toolName: 'vector_query', args: { namespace: 'communities' } }
+  await runTest('smart_search', 'Recherche communautés tech',
+    { query: 'communauté startup tech innovation', entity: 'communities', topK: 5, filtersJson: null },
+    smartSearchTool,
+    { toolName: 'smart_search', args: { entity: 'communities' } }
   );
 
-  await runTest('vector_query', 'Recherche espaces coworking',
-    { query: 'espace coworking salle réunion', namespace: 'spaces', topK: 5, filtersJson: null },
-    vectorQueryTool,
-    { toolName: 'vector_query', args: { namespace: 'spaces' } }
+  await runTest('smart_search', 'Recherche espaces coworking',
+    { query: 'espace coworking salle réunion', entity: 'spaces', topK: 5, filtersJson: null },
+    smartSearchTool,
+    { toolName: 'smart_search', args: { entity: 'spaces' } }
   );
 
-  await runTest('vector_query', 'Recherche organisations fintech',
-    { query: 'fintech paiement mobile Afrique', namespace: 'organizations', topK: 5, filtersJson: null },
-    vectorQueryTool,
-    { toolName: 'vector_query', args: { namespace: 'organizations' } }
+  await runTest('smart_search', 'Recherche organisations fintech',
+    { query: 'fintech paiement mobile Afrique', entity: 'organizations', topK: 5, filtersJson: null },
+    smartSearchTool,
+    { toolName: 'smart_search', args: { entity: 'organizations' } }
   );
 
-  await runTest('vector_query', 'Avec filtre contract_type CDI',
-    { query: 'emploi marketing digital', namespace: 'opportunities', topK: 5, filtersJson: '{"contract_type":"CDI"}' },
-    vectorQueryTool,
-    { toolName: 'vector_query', args: { namespace: 'opportunities' } }
+  await runTest('smart_search', 'Avec filtre contract_type CDI',
+    { query: 'emploi marketing digital', entity: 'opportunities', topK: 5, filtersJson: '{"contract_type":"CDI"}' },
+    smartSearchTool,
+    { toolName: 'smart_search', args: { entity: 'opportunities' } }
   );
 
   console.log('');
@@ -437,8 +437,8 @@ async function runTest(
   console.log('┌─ 11. tool_summary ─────────────────────────────────');
 
   const summaryTests: Array<{toolName: string; output: any; args: any; expected: string; check: 'exact' | 'includes'}> = [
-    { toolName: 'vector_query', output: { results: [{}, {}, {}], totalFound: 3 }, args: { namespace: 'opportunities' }, expected: '3 résultats · opportunités', check: 'exact' },
-    { toolName: 'vector_query', output: { results: [], message: 'Aucun résultat' }, args: { namespace: 'talents' }, expected: 'Aucun résultat · talents', check: 'exact' },
+    { toolName: 'smart_search', output: { results: [{}, {}, {}], totalFound: 3 }, args: { entity: 'opportunities' }, expected: '3 résultats · opportunités', check: 'exact' },
+    { toolName: 'smart_search', output: { results: [], message: 'Aucun résultat' }, args: { entity: 'talents' }, expected: 'Aucun résultat · talents', check: 'exact' },
     { toolName: 'sql_query', output: { applications: [{}, {}], totalCount: 2 }, args: { intent: 'my_applications' }, expected: 'Mes candidatures', check: 'includes' },
     { toolName: 'sql_query', output: { skills: [{}, {}, {}] }, args: { intent: 'my_skills' }, expected: 'Mes compétences', check: 'includes' },
     { toolName: 'youtube_search', output: { videos: [{}] }, args: {}, expected: '1 vidéo trouvée', check: 'exact' },
@@ -454,7 +454,7 @@ async function runTest(
   for (const st of summaryTests) {
     const summary = generateToolSummary(st.toolName, st.output, false, st.args);
     const pass = st.check === 'exact' ? summary === st.expected : summary.includes(st.expected);
-    const label = st.args?.intent || st.args?.action || st.args?.namespace || '';
+    const label = st.args?.intent || st.args?.action || st.args?.entity || '';
     console.log(`  ${pass ? '✓' : '✗'} ${st.toolName}(${label}) → "${summary}" ${!pass ? `(expected: "${st.expected}")` : ''}`);
     results.push({ tool: 'tool_summary', test: `${st.toolName}(${label}) summary`, input: st.args, output: { summary, expected: st.expected }, summary, duration: 0, status: pass ? 'PASS' : 'FAIL' });
   }

@@ -512,7 +512,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
   return defineTool({
     name: 'generate_document',
     description:
-      'Generate a downloadable document (CV, cover letter, report, data export). Supports PDF, DOCX, XLS, CSV, TXT formats. Use AFTER gathering data via sql_query or vector_query. Returns a persistent download URL and document ID. The document is automatically saved to the user documents library. For CV generation, use the CV JSON format (see contentJson description).',
+      'Generate a downloadable document (CV, cover letter, report, data export). Supports PDF, DOCX, XLS, CSV, TXT formats. Use AFTER gathering data via sql_query or smart_search. Returns a persistent download URL and document ID. The document is automatically saved to the user documents library. For CV generation, use the CV JSON format (see contentJson description).',
     parameters: z.object({
       format: z
         .string()
@@ -687,7 +687,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
 export const generateDocumentTool = defineTool({
   name: 'generate_document',
   description:
-    'Generate a downloadable document (CV, cover letter, report, data export). Supports PDF, DOCX, XLS, CSV, TXT formats. Use AFTER gathering data via sql_query or vector_query. Returns a persistent download URL.',
+    'Generate a downloadable document (CV, cover letter, report, data export). Supports PDF, DOCX, XLS, CSV, TXT formats. Use AFTER gathering data via sql_query or smart_search. Returns a persistent download URL.',
   parameters: z.object({
     format: z
       .string()

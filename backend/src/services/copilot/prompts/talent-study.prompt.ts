@@ -1,7 +1,7 @@
 /**
- * Talent Study Prompt — GPT-5 optimized
+ * Talent Study Prompt — Claude Sonnet 4.6 optimized
  * English system prompt with dynamic user-facing response language
- * Follows GPT-5 prompt skeleton: Role → Instructions → Tool Sequencing → Output Format → Context
+ * Follows Claude prompt skeleton: Role → Instructions → Tool Sequencing → Output Format → Context
  */
 
 import { TalentContext } from '../types';
@@ -9,6 +9,7 @@ import { getContextForPrompt } from '../context';
 import { getOntologyForStudy } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
 import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
+import { getActiveSkillBlock } from './prompt-shared';
 
 /** Get language-specific instructions for the prompt */
 function getLanguageInstructions(language?: 'fr' | 'en') {
@@ -341,7 +342,7 @@ When evaluating a learner on a topic, use this structured 3-question chain:
 
 You have access ONLY to the learner's personal data:
 - \`sql_query\` with \`my_profile\`, \`my_skills\`, \`my_documents\`, \`my_triggers\`, \`my_community_feed\`, \`my_community_members\` ONLY. All other intents are BLOCKED.
-- No access to \`vector_query\`, no entity cards, no opportunities/spaces.
+- No access to \`smart_search\`, no entity cards, no opportunities/spaces.
 - \`my_community_feed\` and \`my_community_members\` allow studying content from communities the user has joined (posts, events, shared resources).
 - \`execute_action\` is allowed only for trigger lifecycle:
   - \`create_agenda_trigger\` with \`dataJson\`: \`{"code","title","description?","dueAt","priority?","metadata?"}\`
@@ -546,15 +547,7 @@ When the user's request matches a skill trigger, activate the corresponding work
 <available_skills>
 ${getSkillsForMode('study').map((s) => `- **${s.name}** (${s.id}): ${s.description}`).join('\n')}
 </available_skills>
-${context.activeSkillInstructions ? `
-# ACTIVE SKILL — OVERRIDE MODE
-
-A specific skill was triggered. These instructions OVERRIDE the general Teaching Protocol and Tool Sequencing above. Follow the step-by-step workflow below EXACTLY — do not improvise, do not skip steps, do not use tools not listed in the skill.
-
-${context.activeSkillInstructions}
-
-**END OF SKILL INSTRUCTIONS — follow them precisely.**
-` : ''}
+${getActiveSkillBlock(context.activeSkillInstructions)}
 
 # Ontology (Platform Knowledge)
 

@@ -2,7 +2,7 @@
 name: Career & Compensation Guide
 description: Salary benchmarks, offer negotiation tactics, and freelance pricing guide with UEMOA context
 modes: explore
-tools: sql_query, web_search, generate_document
+tools: smart_search, sql_query, web_search, generate_document
 triggers: salaire, rémunération, combien gagne, salary, benchmark salarial, grille salariale, salaire FCFA, salaire Abidjan, SMIG, coût employeur, FDFP, financement formation, demission, preavis, charges patronales, negocier, negociation, offre recue, contre-proposition, ameliorer mon offre, negocier mon salaire, counter offer, clause non-concurrence, freelance, independant, consultant, tarif journalier, TJM, travailler en freelance, facturation, auto-entrepreneur, mission freelance
 priority: 5
 ---
@@ -37,8 +37,8 @@ If ambiguous, default to Salary Analysis Flow.
 
 ### Step S3: Internal Data
 
-5. Call `sql_query` with intent `search_opportunities` filtered by the relevant role type. If results include compensation_min/max, compare against UEMOA benchmarks.
-6. If the user has applications, check their opportunity details for salary info.
+5. Call `smart_search` with entity `opportunities` and query `[role] [country]` to find relevant opportunities with compensation data. If results include compensation_min/max, compare against UEMOA benchmarks.
+6. If the user has applications, call `sql_query` with intent `my_applications` to check their opportunity details for salary info.
 
 ### Step S4: External Benchmarks (only if needed)
 

@@ -142,6 +142,27 @@ PERSONAL_SERVICES → Accueil & Services | TRANSPORT → Achats & Supply Chain |
 | Logistique & Supply Chain | 84K–1.3M |
 | Ressources Humaines | 132K–4.4M |
 
+### Burkina Faso (fourchettes globales)
+| Secteur | Min–Max |
+|---------|---------|
+| Commercial | 60K–2M |
+| Digital, Marketing & Communication | 75K–1.5M |
+| Finance & Comptabilité | 80K–2M |
+| Industrie & Ingénieurs | 70K–2.5M |
+| Systèmes d'Information & Tech | 100K–2M |
+| Ressources Humaines | 80K–1.8M |
+
+### Togo (fourchettes globales)
+| Secteur | Min–Max |
+|---------|---------|
+| Commercial | 55K–1.5M |
+| Digital, Marketing & Communication | 65K–1.2M |
+| Finance & Comptabilité | 70K–1.5M |
+| Systèmes d'Information & Tech | 80K–1.8M |
+| Ressources Humaines | 65K–1.5M |
+
+*Note: NE et GW ont des marchés de l'emploi formel très réduits — utiliser les fourchettes SMIG + secteur informel comme référence.*
+
 ## Key Companies (employers & references)
 - **Telecom**: Orange CI/SN, MTN CI, Moov Africa, Wave, Togocel
 - **Fintech**: Wave, CinetPay, FedaPay, Julaya, Djamo, Bridge (Baobab)
@@ -153,11 +174,20 @@ PERSONAL_SERVICES → Accueil & Services | TRANSPORT → Achats & Supply Chain |
 ## Universities & Schools
 - CI: INP-HB (Yamoussoukro), UCAO, Université FHB, ESATIC, Sup'Management, IAM
 - SN: ESP Dakar, UCAD, ISM, BEM Dakar, ENSA, SUP DE CO
-- Regional: 2iE (BF), EPITECH Bénin, IFRI (BN), ESMT (SN)
+- BF: 2iE (Ouagadougou), Université Joseph Ki-Zerbo, ISTIC
+- BN: EPITECH Bénin, IFRI, UAC (Abomey-Calavi), ENEAM
+- TG: Université de Lomé, ESAG-NDE, UCAO Lomé
+- ML: Université de Bamako, IPR/IFRA, SUP'Management Bamako
+- NE: Université Abdou Moumouni (Niamey), EMIG
+- Regional: ESMT (SN), CESAG (SN)
 
 ## Hubs & Incubators
 - CI: Seedstars Abidjan, Orange Fab, VITIB, Akendewa, CIV Hub
 - SN: CTIC Dakar, Jokkolabs, Orange Fab SN, Concree
+- BF: Ouaga Lab, Yaam Digital, La Fabrique, SIRA Labs
+- BN: Sèmè City, Blolab, Etrilabs, CIPMEN
+- TG: Lomé Tech Hub, Innov Hub, WoeLab
+- ML: Impact Hub Bamako, Jokkolabs Bamako
 - Regional: AfricInvest, Seedstars Africa, Impact Hub, GSMA Innovation Fund
 
 ## Cotisations sociales (charges sur salaire brut)
@@ -189,6 +219,44 @@ PERSONAL_SERVICES → Accueil & Services | TRANSPORT → Achats & Supply Chain |
 | Retraite/invalidité/décès | 5.40% | 3.60% |
 | Taxe ANPE | 1.00% | — |
 
+### Burkina Faso (CNSS) — plafond 800 000 FCFA/mois
+| Branche | Employeur | Salarié |
+|---------|-----------|---------|
+| Prestations familiales | 6.00% | — |
+| Accidents du travail | 1.50% | — |
+| Retraite (vieillesse) | 8.50% | 5.50% |
+| **Total** | **16.00%** | **5.50%** |
+
+### Togo (CNSS)
+| Branche | Employeur | Salarié |
+|---------|-----------|---------|
+| Prestations familiales | 3.00% | — |
+| Accidents du travail | 2.00% | — |
+| Pensions (vieillesse/invalidité) | 12.50% | 4.00% |
+| **Total** | **17.50%** | **4.00%** |
+
+### Bénin (CNSS)
+| Branche | Employeur | Salarié |
+|---------|-----------|---------|
+| Prestations familiales | 9.00% | — |
+| Accidents du travail | 1–4%* | — |
+| Pensions (vieillesse/invalidité) | 6.40% | 3.60% |
+
+### Niger (CNSS) — plafond 500 000 FCFA/mois
+| Branche | Employeur | Salarié |
+|---------|-----------|---------|
+| Prestations familiales & maternité | 8.40% | — |
+| Accidents du travail | 1.75% | — |
+| Retraite/invalidité/décès | 6.25% | 5.25% |
+| Taxe ANPE | 1.00% | — |
+| **Total** | **17.40%** | **5.25%** |
+
+### Guinée-Bissau (INSS) — données limitées
+| Branche | Employeur | Salarié |
+|---------|-----------|---------|
+| Régime général (estimation) | ~15% | ~5% |
+*Système en cours de modernisation — consulter INSS pour taux à jour.
+
 ## Droit du travail (règles communes UEMOA)
 ### Durée légale du travail
 - CI: 40h/semaine (48h agriculture). SN: 40h/semaine (agricole: dérogation). ML: 40h/semaine.
@@ -216,7 +284,7 @@ PERSONAL_SERVICES → Accueil & Services | TRANSPORT → Achats & Supply Chain |
 - French is mandatory. English is a strong differentiator.
 - Most hiring via networks, LinkedIn, and platforms like Etudesk.
 - FDFP (CI) funds corporate training — key for B2B org proposals.
-- Organismes clés: CNPS (CI), CSS/IPRES (SN), INPS (ML), CNSS (BN/BF/TG/NE).
+- Organismes clés: CNPS (CI), CSS/IPRES (SN), INPS (ML), CNSS (BF/TG/BN/NE), INSS (GW).
 </uemoa_knowledge>
 `;
 }

@@ -86,7 +86,7 @@ After the CV step (or if they skip it), if the user shows interest in learning o
 
 "Pour l'apprentissage et la formation, je te recommande de passer en mode **Study**. Tu y trouveras des cours interactifs, des quiz, et un suivi de ta progression. Clique sur le bouton ci-dessous pour changer de mode."
 
-If instead they want to explore opportunities, help them directly with vector_query.
+If instead they want to explore opportunities, help them directly with smart_search.
 
 ## ONBOARDING RULES
 - NEVER mention "organisation" mode during onboarding — focus entirely on the talent experience

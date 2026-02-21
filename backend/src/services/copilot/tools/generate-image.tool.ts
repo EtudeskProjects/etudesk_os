@@ -1,7 +1,7 @@
 /**
  * Generate Image Tool — AI image generation via OpenAI gpt-image-1
- * Generates an image and saves locally for persistent access
- * Replaces DALL-E 3 (deprecated May 2026) with gpt-image-1 (autoregressive, better text rendering)
+ * Generates an image and saves locally for persistent access.
+ * Made asynchronous to prevent blocking the agent loop.
  */
 
 import { defineTool } from './tool-helper';
@@ -16,7 +16,7 @@ const openai = getImageClient();
 export const generateImageTool = defineTool({
   name: 'generate_image',
   description:
-    'Generate an image from a text description. Uses gpt-image-1 to create illustrations, visual diagrams, infographics, and educational visuals. Returns a persistent download URL. Use AFTER explaining a concept, as supplementary visual material.',
+    'Generate an image from a text description. The generation is slow (60s), so this tool responds immediately with status "processing" and a job_id. You MUST output a placeholder image block using this job_id: ```image\n{"id":"job_id_here","status":"processing"}\n```. Use AFTER explaining a concept, as supplementary visual material.',
   parameters: z.object({
     prompt: z
       .string()
@@ -33,61 +33,41 @@ export const generateImageTool = defineTool({
       .describe('Image quality: low (~$0.01), medium (~$0.04), high (~$0.17). Use medium for most cases.'),
   }),
   execute: async ({ prompt, size: rawSize, quality: rawQuality }) => {
-    try {
-      // Normalize case (Claude native SDK may send "High" or "HIGH")
-      const size = rawSize.toLowerCase() as '1024x1024' | '1536x1024' | '1024x1536';
-      const quality = rawQuality.toLowerCase() as 'low' | 'medium' | 'high';
-      // Generate image via gpt-image-1
-      const response = await openai.images.generate({
-        model: MODEL_IMAGE,
-        prompt,
-        size,
-        quality,
-      });
+    const jobId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    const size = rawSize.toLowerCase() as '1024x1024' | '1536x1024' | '1024x1536';
+    const quality = rawQuality.toLowerCase() as 'low' | 'medium' | 'high';
 
-      const imageData = response.data?.[0];
-      const b64 = imageData?.b64_json;
-      if (!b64) {
-        return { success: false, error: 'No image was generated.' };
-      }
-
-      // Decode base64 to buffer
-      const imageBuffer = Buffer.from(b64, 'base64');
-      const timestamp = Date.now();
-      const filename = `image-${timestamp}.png`;
-      const storagePath = `generated/${filename}`;
-
-      // Save locally for persistent access
-      const downloadUrl = await uploadFile(imageBuffer, storagePath, 'image/png');
-
-      logger.info(`[generate_image] Generated image: ${filename} (${imageBuffer.length} bytes)`);
-
-      return {
-        success: true,
-        downloadUrl,
-        filename,
-        metadata: {
-          generatedAt: new Date().toISOString(),
-          sizeBytes: imageBuffer.length,
-          dimensions: size,
-          quality,
+    // Background execution
+    (async () => {
+      try {
+        const response = await openai.images.generate({
           model: MODEL_IMAGE,
-        },
-      };
-    } catch (error: any) {
-      logger.error(`[generate_image] Error: ${error.message}`);
+          prompt,
+          size,
+          quality,
+        });
 
-      if (error?.code === 'content_policy_violation') {
-        return {
-          success: false,
-          error: 'The requested image cannot be generated due to content policy restrictions.',
-        };
+        const imageData = response.data?.[0];
+        const b64 = imageData?.b64_json;
+        if (!b64) return;
+
+        const imageBuffer = Buffer.from(b64, 'base64');
+        const filename = `image-${Date.now()}.png`;
+        const storagePath = `generated/${filename}`;
+
+        await uploadFile(imageBuffer, storagePath, 'image/png');
+        logger.info(`[generate_image] Background job ${jobId} completed: ${filename} (${imageBuffer.length} bytes)`);
+      } catch (err: any) {
+        logger.error(`[generate_image] Background job ${jobId} failed: ${err.message}`);
       }
+    })();
 
-      return {
-        success: false,
-        error: `Image generation error: ${error.message}`,
-      };
-    }
+    // Immediate return
+    return {
+      success: true,
+      status: 'processing',
+      job_id: jobId,
+      message: 'Image generation is processing in the background. Please output the image block placeholder.',
+    };
   },
 });

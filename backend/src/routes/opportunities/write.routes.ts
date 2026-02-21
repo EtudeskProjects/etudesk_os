@@ -13,7 +13,7 @@ import {
   canGenerate,
   GenerationInput,
 } from '../../services/opportunity-generation.service';
-import { onOpportunityUpdate } from '../../services/embedding.service';
+import { onOpportunityUpdate, deletePineconeVector } from '../../services/embedding.service';
 import { autoModerationService } from '../../services/auto-moderation.service';
 import {
   handleRouteError,
@@ -360,6 +360,9 @@ router.delete('/:id', authMiddleware, validate(uuidParamSchema, 'params'), async
     if (result.rows.length === 0) {
       throw createNotFoundError('Opportunity');
     }
+
+    // Remove Pinecone vector (fire-and-forget)
+    deletePineconeVector('opportunity', id).catch(err => logger.error('[opportunities] Error deleting Pinecone vector:', err));
 
     res.json({ success: true, message: req.t('opportunities:deleted') });
   } catch (error) {

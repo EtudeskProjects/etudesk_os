@@ -1,13 +1,14 @@
 /**
- * Organization Explorer Prompt — GPT-5 optimized
+ * Organization Explorer Prompt — Claude Sonnet 4.6 optimized
  * English system prompt with dynamic user-facing response language
- * Follows GPT-5 prompt skeleton: Role → Instructions → Tool Sequencing → Output Format → Context
+ * Follows Claude prompt skeleton: Role → Instructions → Tool Sequencing → Output Format → Context
  */
 
 import { OrgContext } from '../types';
 import { getOntologyForOrg } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
 import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
+import { getActiveSkillBlock } from './prompt-shared';
 
 /** Get language-specific instructions for the prompt */
 function getLanguageInstructions(language?: 'fr' | 'en') {
@@ -99,7 +100,7 @@ Never present data without a "so what" that helps the manager decide.
 **Primary tool: \`sql_query\`.** Always pass \`{"organizationId":"${context.organizationId}"}\` for org_* intents.
 
 **INTENT ROUTING:**
-| User Intent | Intent | chart_hint |
+| User Intent | Intent/Tool | chart_hint |
 |---|---|---|
 | Dashboard / overview | org_stats | — |
 | Candidatures / who applied | org_applications (+ org_opportunities for cross-ref) | — |
@@ -120,13 +121,12 @@ Never present data without a "so what" that helps the manager decide.
 | Geographic breakdown | org_geo_distribution(groupBy?) | donut |
 | Community engagement | org_community_engagement | table |
 | Opportunity KPIs | org_opportunity_performance | table |
-| Find candidates | vector_query (namespace: talents) | — |
-| Public search | search_talents, search_opportunities, search_communities | — |
+| Find candidates / public search | **smart_search** (entity: talents, opportunities, communities, etc.) | — |
 
 **chart_hint**: Use chart_hint from SQL results to pick chart type. Always prefer charts over raw data.
 
 **Other tools (in order):**
-- **vector_query**: Semantic talent search by job description. Namespace: "talents" or "opportunities".
+- **smart_search**: Semantic search for talents, opportunities, communities, spaces, organizations. Combines Pinecone ranking with keyword fallback automatically. ONE call is sufficient — no need to retry.
 - **generate_document**: AFTER gathering data with sql_query. Sequence: gather → confirm ("${lang.confirmGenerate}") → generate. NEVER skip data gathering.
 - **file_reader**: After org_documents to read content. Workflow: org_documents(search) → file_reader(documentId) → actionable insights.
 - **web_search**: Last resort for market data/trends not in platform.
@@ -266,15 +266,7 @@ When the user's request matches a skill trigger, activate the corresponding work
 <available_skills>
 ${getSkillsForMode('org').map((s) => `- **${s.name}** (${s.id}): ${s.description}`).join('\n')}
 </available_skills>
-${context.activeSkillInstructions ? `
-# ACTIVE SKILL — OVERRIDE MODE
-
-A specific skill was triggered. These instructions OVERRIDE the general Tool Sequencing Rules above. Follow the step-by-step workflow below EXACTLY — do not improvise, do not skip steps, do not use tools not listed in the skill.
-
-${context.activeSkillInstructions}
-
-**END OF SKILL INSTRUCTIONS — follow them precisely.**
-` : ''}
+${getActiveSkillBlock(context.activeSkillInstructions)}
 
 # Ontology (Platform Knowledge)
 

@@ -69,15 +69,17 @@ export function generateToolSummary(
 
   try {
     switch (toolName) {
-      case 'vector_query': {
+      case 'smart_search': {
         const results = Array.isArray(output) ? output : (output as any)?.results;
         const count = Array.isArray(results) ? results.length : 0;
-        const ns = args?.namespace as string | undefined;
-        const typeLabel = ns ? NAMESPACE_LABELS[ns] || ns : '';
+        const entity = args?.entity as string | undefined;
+        const typeLabel = entity ? NAMESPACE_LABELS[entity] || entity : '';
+        const source = (output as any)?.source;
+        const sourceLabel = source ? ` (${source})` : '';
         const countText = count > 0
           ? `${count} résultat${count > 1 ? 's' : ''}`
           : 'Aucun résultat';
-        return typeLabel ? `${countText} · ${typeLabel}` : countText;
+        return typeLabel ? `${countText} · ${typeLabel}${sourceLabel}` : `${countText}${sourceLabel}`;
       }
 
       case 'sql_query': {
