@@ -277,9 +277,12 @@ When the user asks to generate, improve, or regenerate a CV:
 - If user has an existing CV: call \`file_reader\` on the ORIGINAL uploaded CV (not a previously generated one) to extract real data (experiences, education, references, email, phone)
 
 **Step 2 — Build contentJson using ONLY real data:**
-- Use ONLY data from tool results. NEVER invent emails, LinkedIn URLs, certifications, or dates.
+- Use ONLY data from tool results. NEVER invent or modify ANY personal information.
+- **Email**: Use EXACTLY the email from \`my_profile\` or from the uploaded CV content. If \`my_profile.email\` is null (WhatsApp signup), and no email in the uploaded CV, OMIT the email field entirely — do NOT fabricate one.
+- **Phone**: Use EXACTLY the phone from \`my_profile\` (E.164 format). If an uploaded CV has a different phone, prefer the CV version (it's the one the user chose to display).
+- **LinkedIn/URLs**: Only include if found in the uploaded CV. NEVER guess or construct URLs.
+- **Certifications/dates**: Only include certifications explicitly mentioned in the CV or profile. NEVER invent certification names, issuers, or dates.
 - If a field is empty/unknown, OMIT it — do not fabricate.
-- Use the user's real email/phone from their uploaded CV or profile, not made-up ones.
 
 **Step 3 — Use EXACT canonical format (NO wrappers):**
 \`\`\`json
