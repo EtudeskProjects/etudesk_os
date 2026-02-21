@@ -126,6 +126,9 @@ export default function CreateProfileScreen() {
     }, delay);
   }, []);
 
+  // Track if user signed up via WhatsApp (phone becomes mandatory + locked)
+  const [isWhatsAppSignup, setIsWhatsAppSignup] = useState(false);
+
   // Pre-fill email/phone from authentication and check if user needs onboarding
   useEffect(() => {
     const loadAuthData = async () => {
@@ -140,12 +143,16 @@ export default function CreateProfileScreen() {
           }
 
           // Pre-fill email if user logged in with email
-          if (user.email) {
+          if (user.email && !user.email.includes('@etudesk.local')) {
             form.setValues({ email: user.email });
           }
           // Pre-fill phone if user logged in with WhatsApp/phone
           if (user.phone) {
             form.setValues({ phone: user.phone });
+          }
+          // Mark WhatsApp signup — phone becomes mandatory and locked
+          if (user.authMethod === 'whatsapp') {
+            setIsWhatsAppSignup(true);
           }
         }
       } catch (error) {
@@ -263,11 +270,10 @@ export default function CreateProfileScreen() {
   };
 
   const canProceed = () => {
-    return (
-      firstName.trim().length >= 2 &&
-      lastName.trim().length >= 2 &&
-      country.length > 0
-    );
+    const baseValid = firstName.trim().length >= 2 && lastName.trim().length >= 2 && country.length > 0;
+    // WhatsApp signup requires phone
+    if (isWhatsAppSignup && !phone.trim()) return false;
+    return baseValid;
   };
 
   return (
@@ -498,11 +504,12 @@ export default function CreateProfileScreen() {
 
                 {/* Téléphone */}
                 <PhoneInput
-                  label={t('auth.createProfile.phone')}
+                  label={isWhatsAppSignup ? `${t('auth.createProfile.phone')} *` : t('auth.createProfile.phone')}
                   value={phone}
                   onChangeValue={(e164) => form.setValue('phone', e164)}
                   defaultCountryCode={country}
-                  hint="Optionnel — requis uniquement pour la connexion WhatsApp"
+                  editable={!isWhatsAppSignup}
+                  hint={isWhatsAppSignup ? 'Numéro vérifié via WhatsApp' : 'Optionnel'}
                 />
 
                 {/* Email */}

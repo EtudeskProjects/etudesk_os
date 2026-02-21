@@ -215,6 +215,7 @@ async function storeAuthSession(data: any): Promise<boolean> {
       needsOnboarding: data.needsOnboarding ?? false,
       hasTalentProfile: !data.needsOnboarding,
       onboardingComplete: !data.needsOnboarding,
+      authMethod: data.authMethod || undefined,
     };
     await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userWithOnboarding));
   }

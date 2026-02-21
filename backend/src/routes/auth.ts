@@ -244,9 +244,10 @@ router.post('/verify-whatsapp-otp', validate(verifyWhatsAppOtpSchema), auditLog(
         refreshToken: tokens.refreshToken,
         expiresIn: tokens.expiresIn,
       },
-      user: profile,
+      user: { ...profile, phone: phone },
       isNewUser: verifyResult.isNewUser,
       needsOnboarding: needsOnboard,
+      authMethod: 'whatsapp',
     });
   } catch (error) {
     logger.error('❌ Verify WhatsApp OTP error:', error);
