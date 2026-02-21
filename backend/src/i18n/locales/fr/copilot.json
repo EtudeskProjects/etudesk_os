@@ -11,7 +11,7 @@
   "sessionDeleted": "Session supprimée",
   "sessionNotFound": "Session non trouvée",
   "messagesError": "Erreur lors de la récupération des messages",
-  "organizationRequired": "L'ID de l'organisation est requis pour le mode organisation",
+  "organizationRequired": "L'ID de l'organisation est requis pour le mode Gérer",
   "notAuthenticated": "Non authentifié",
   "noAudioFile": "Aucun fichier audio fourni",
   "invalidAudioFormat": "Format audio non valide ou fichier corrompu",

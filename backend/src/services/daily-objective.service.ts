@@ -206,7 +206,7 @@ ${previousContext}
 ACTIONS CONCRÈTES (choisis UNE selon le contexte):
 
 1. FORMATION: Propose UN sujet PRÉCIS parmi: ${suggestedSkills}
-   Exemple: "Lance le mode Apprendre pour te former sur ${suggestedSkills.split(',')[0]}"
+   Exemple: "Lance le mode Étudier pour te former sur ${suggestedSkills.split(',')[0]}"
 
 2. OPPORTUNITÉS: Si objectif emploi/stage → "Explore les offres en ${userSectors[0] || 'ton secteur'} et postule à au moins une"
 
@@ -218,7 +218,7 @@ RÈGLES STRICTES:
 1. Maximum 500 caractères
 2. PAS de salutation (pas de "Bonjour"), commence directement par l'action
 3. SOIS PRÉCIS: donne un sujet de formation CONCRET, pas "un sujet qui t'intéresse"
-4. Mentionne "mode Apprendre" pour les formations
+4. Mentionne "mode Étudier" pour les formations
 5. Tutoiement
 6. Objectif DIFFÉRENT du précédent
 

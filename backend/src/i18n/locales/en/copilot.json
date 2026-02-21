@@ -11,7 +11,7 @@
   "sessionDeleted": "Session deleted",
   "sessionNotFound": "Session not found",
   "messagesError": "Error fetching messages",
-  "organizationRequired": "Organization ID is required for organization mode",
+  "organizationRequired": "Organization ID is required for Manage mode",
   "notAuthenticated": "Not authenticated",
   "noAudioFile": "No audio file provided",
   "invalidAudioFormat": "Invalid audio format or corrupted file",
