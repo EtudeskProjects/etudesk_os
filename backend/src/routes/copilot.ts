@@ -387,7 +387,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
           memberCount = parseInt(row.member_count) || 0;
           orgSectors = row.sectors?.length ? row.sectors : undefined;
         }
-      } catch (err) {
+      } catch (err: any) {
         logger.warn('[copilot] Failed to pre-load org stats', err);
       }
 
