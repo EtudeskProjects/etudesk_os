@@ -58,7 +58,11 @@ export function defineTool<T extends z.ZodType>(opts: {
       input_schema: inputSchema,
     },
     execute: async (input: any) => {
-      const parsed = opts.parameters.parse(input);
+      // Unwrap nested {input: {...}} that Claude sometimes sends
+      const unwrapped = (input && typeof input === 'object' && 'input' in input && Object.keys(input).length === 1)
+        ? input.input
+        : input;
+      const parsed = opts.parameters.parse(unwrapped);
       return opts.execute(parsed);
     },
   };

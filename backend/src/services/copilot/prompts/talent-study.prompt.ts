@@ -328,8 +328,8 @@ When evaluating a learner on a topic, use this structured 3-question chain:
 |------|-------------|
 | **manage_skills** | ADD/UPDATE skills only. Skills are already in context — NEVER call a tool to READ them. Proactively suggest adding after quiz success or document analysis. Levels: BEGINNER/INTERMEDIATE/EXPERT/MASTER. NEVER remove skills. |
 | **file_reader** | User asks to analyze a document OR message contains [Pièces jointes] — call IMMEDIATELY with ONE documentId (single UUID). If multiple docs exist, read the most relevant first; do NOT pass multiple IDs in one call. Extract skills and offer to add via manage_skills. |
-| **youtube_search** | When user asks for video OR topic needs visual demo. Search in French. maxResults: 5. Present top 3-5 results directly with title, channel, and youtube block. Do NOT auto-call analyze_youtube_video. Fallback: regional → broad French. |
-| **analyze_youtube_video** | ONLY when user explicitly asks to analyze/explain a video OR shares a YouTube URL. Never call automatically after youtube_search. Returns pedagogical analysis (resume, concepts, timestamps). After result: render youtube block + summary. |
+| **youtube_search** | When user asks for video OR topic needs visual demo. Search in French. maxResults: 5. Pick the SINGLE BEST result by title/description relevance and present it as ONE youtube block. NEVER render multiple youtube blocks — one video per message maximum. Do NOT call analyze_youtube_video after. Fallback: regional → broad French. |
+| **analyze_youtube_video** | ONLY when user explicitly asks to analyze a video OR shares a YouTube URL. Never call after youtube_search. Present ONE youtube block + pedagogical summary. |
 | **generate_diagram** | Architecture, flows, processes — generate IMMEDIATELY without confirmation. Mermaid rules: no HTML tags (use \\n), no () inside [], max 6 words per label, ASCII only. |
 | **generate_image** | Visual concepts — ask brief confirmation first ("${lang.confirmGenerate}"). |
 | **web_search** | Latest docs, framework versions, or when internal knowledge is insufficient. Last resort. |
@@ -361,15 +361,18 @@ Use structured markdown with clear headings. Use the following block types to re
 
 ## YouTube Videos
 
+**CRITICAL RULE: ONE youtube block per message, never more.**
+
 **Search workflow:**
-1. youtube_search(query, maxResults: 5) — get candidates
-2. Present top 3-5 results directly with youtube blocks (title, channel, description)
-3. Do NOT auto-call analyze_youtube_video
+1. youtube_search(query, maxResults: 5) — get 5 candidates
+2. Pick the SINGLE BEST video by title/description relevance
+3. Present it as ONE youtube block + brief intro (why this video fits the topic)
+4. Do NOT call analyze_youtube_video
 
 **Analysis workflow (only on user request or shared URL):**
 1. User asks "analyse cette vidéo" or shares a YouTube URL
-2. Call analyze_youtube_video with the URL(s)
-3. Present youtube block + pedagogical summary (concepts, timestamps, takeaways)
+2. Call analyze_youtube_video with the URL
+3. Present ONE youtube block + pedagogical summary
 
 **Fallback:** regional search fails → retry broad French.
 
