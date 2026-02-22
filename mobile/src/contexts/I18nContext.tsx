@@ -36,18 +36,24 @@ function getDeviceLanguage(): Language {
   return 'fr';
 }
 
+const LANGUAGE_USER_CHOSEN_KEY = 'app_language_user_chosen';
+
 export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(getDeviceLanguage());
 
-  // Load stored language on mount
+  // Load stored language on mount — only if user explicitly chose it
   useEffect(() => {
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEYS.LANGUAGE);
-        if (stored && isValidLanguage(stored)) {
-          setLanguageState(stored);
-          i18n.locale = stored;
+        const userChose = await AsyncStorage.getItem(LANGUAGE_USER_CHOSEN_KEY);
+        if (userChose === 'true') {
+          const stored = await AsyncStorage.getItem(STORAGE_KEYS.LANGUAGE);
+          if (stored && isValidLanguage(stored)) {
+            setLanguageState(stored);
+            i18n.locale = stored;
+          }
         }
+        // If user never explicitly chose, device language (from getDeviceLanguage) is used
       } catch {
         // ignore
       }
@@ -62,6 +68,8 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   const setLanguage = useCallback(async (lang: Language) => {
     setLanguageState(lang);
     i18n.locale = lang;
+    // Mark as explicit user choice + persist
+    AsyncStorage.setItem(LANGUAGE_USER_CHOSEN_KEY, 'true').catch(() => {});
     AsyncStorage.setItem(STORAGE_KEYS.LANGUAGE, lang).catch(() => {});
 
     // Sync language preference to backend (fire-and-forget)
