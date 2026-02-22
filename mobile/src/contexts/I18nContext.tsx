@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-import { Platform, NativeModules } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getLocales } from 'expo-localization';
 import i18n, { Language } from '../i18n';
 import { STORAGE_KEYS } from '../constants/config';
 import { api } from '../services/api';
@@ -22,21 +22,18 @@ function isValidLanguage(value: string): value is Language {
   return value === 'fr' || value === 'en';
 }
 
-// Helper to safely get device locale without expo-localization
+// Get device language using expo-localization
 function getDeviceLanguage(): Language {
   try {
-    let locale = 'fr';
-    if (Platform.OS === 'ios') {
-      const settings = NativeModules.SettingsManager?.settings;
-      locale = settings?.AppleLocale || settings?.AppleLanguages?.[0] || 'fr';
-    } else if (Platform.OS === 'android') {
-      locale = NativeModules.I18nManager?.localeIdentifier || 'fr';
+    const locales = getLocales();
+    if (locales?.length > 0) {
+      const lang = locales[0].languageCode ?? 'fr';
+      return lang === 'en' ? 'en' : 'fr';
     }
-    const lang = locale.substring(0, 2);
-    return lang === 'en' ? 'en' : 'fr';
   } catch {
-    return 'fr';
+    // Fallback to French
   }
+  return 'fr';
 }
 
 export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
