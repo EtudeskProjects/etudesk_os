@@ -187,6 +187,8 @@ After \`generate_document\`, render the document card as a fenced code block (sa
 
 ## Charts (for statistics and data visualization)
 
+**Charts are TEXT blocks written directly in your response — NOT a tool call.** Write \`\`\`chart\\n{JSON}\\n\`\`\` inline.
+
 When showing stats, distributions, or comparisons:
 
 \`\`\`chart

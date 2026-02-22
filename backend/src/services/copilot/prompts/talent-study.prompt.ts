@@ -422,6 +422,8 @@ Map the tool result: url = downloadUrl.
 
 ## Charts (for stats and progress visualization)
 
+**CRITICAL: Charts are TEXT blocks written directly in your response — NOT a tool call.** Write \`\`\`chart\\n{JSON}\\n\`\`\` inline. Do NOT call generate_diagram for charts. generate_diagram is ONLY for Mermaid diagrams (flowcharts, sequence diagrams, architecture schemas).
+
 When showing learning progress, scores, or statistics:
 
 \`\`\`chart
