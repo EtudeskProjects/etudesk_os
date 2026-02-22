@@ -16,6 +16,7 @@ export interface OnboardingData {
   lastName?: string;
   bio?: string;
   phone?: string;
+  email?: string;
   city?: string;
   region?: string;
   country?: string;
@@ -25,6 +26,7 @@ export interface OnboardingData {
   gender?: string;
   remoteReady?: boolean;
   willingToRelocate?: boolean;
+  avatarUrl?: string;
 }
 
 export interface OnboardingStatus {
@@ -66,6 +68,7 @@ async function complete(data: OnboardingData): Promise<ApiResponse<OnboardingRes
     lastName: data.lastName,
     bio: data.bio,
     phone: data.phone,
+    email: data.email,
     city: data.city,
     region: data.region,
     country: data.country,
@@ -75,6 +78,7 @@ async function complete(data: OnboardingData): Promise<ApiResponse<OnboardingRes
     gender: data.gender,
     remoteReady: data.remoteReady,
     willingToRelocate: data.willingToRelocate,
+    avatarUrl: data.avatarUrl,
   };
 
   // Remove undefined values
@@ -128,6 +132,7 @@ async function complete(data: OnboardingData): Promise<ApiResponse<OnboardingRes
         last_name: data.lastName,
         bio: data.bio,
         phone: data.phone,
+        email: data.email,
         city: data.city,
         region: data.region,
         country: data.country,
@@ -137,6 +142,7 @@ async function complete(data: OnboardingData): Promise<ApiResponse<OnboardingRes
         gender: data.gender,
         remote_ready: data.remoteReady,
         willing_to_relocate: data.willingToRelocate,
+        avatar_url: data.avatarUrl,
       };
       const cleanedFallbackData = Object.fromEntries(
         Object.entries(fallbackData).filter(([_, v]) => v !== undefined)

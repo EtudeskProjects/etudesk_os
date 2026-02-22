@@ -4,8 +4,9 @@
  * States: idle → loading → success / error
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Zap,
   CheckCircle2,
@@ -25,6 +26,11 @@ import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../.
 import { copilotService } from '../../../services/copilotService';
 import { formatNumberNoTrailingZeros } from '../../../utils/number';
 import { Button, ShimmerPlaceholder } from '../../ui';
+
+/** Storage key for persisting confirmation action results */
+function getConfirmationKey(action: string, entityId: string): string {
+  return `confirmation_done_${action}_${entityId}`;
+}
 
 
 export interface ConfirmationData {
@@ -338,10 +344,36 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
   const { colors } = useTheme();
   const [state, setState] = useState<BlockState>('idle');
   const [resultMessage, setResultMessage] = useState('');
+  const [loaded, setLoaded] = useState(false);
+
+  const storageKey = getConfirmationKey(data.action, data.entity_id);
+
+  // On mount, check if this action was already executed
+  useEffect(() => {
+    AsyncStorage.getItem(storageKey).then((stored) => {
+      if (stored) {
+        try {
+          const { state: savedState, message } = JSON.parse(stored);
+          setState(savedState);
+          setResultMessage(message);
+        } catch { /* ignore parse errors */ }
+      }
+      setLoaded(true);
+    }).catch(() => setLoaded(true));
+  }, [storageKey]);
 
   const confirmLabel = data.confirm_label || 'Confirmer';
   const cancelLabel = data.cancel_label || 'Annuler';
   const hasPreview = renderPreview(data.action, data.data, colors) !== null;
+
+  /** Persist resolved state so it survives conversation reload */
+  const persistState = (newState: BlockState, message: string) => {
+    setState(newState);
+    setResultMessage(message);
+    if (newState === 'success') {
+      AsyncStorage.setItem(storageKey, JSON.stringify({ state: newState, message })).catch(() => {});
+    }
+  };
 
   const handleConfirm = async () => {
     if (state !== 'idle') return;
@@ -356,8 +388,7 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
       );
 
       if (response.success && response.data) {
-        setState('success');
-        setResultMessage(response.data.message || 'Action effectuée.');
+        persistState('success', response.data.message || 'Action effectuée.');
       } else {
         setState('error');
         setResultMessage(response.data?.message || response.error || 'Une erreur est survenue.');
@@ -369,8 +400,7 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
   };
 
   const handleCancel = () => {
-    setState('success');
-    setResultMessage('Action annulée.');
+    persistState('success', 'Action annulée.');
   };
 
   const handleRetry = () => {
@@ -379,6 +409,7 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
   };
 
   if (!data.action || !data.entity_id || !data.title) return null;
+  if (!loaded) return null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>

@@ -128,17 +128,20 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
       // Create talent profile
       const talentId = uuidv4();
 
+      // If user provided a real email during onboarding, use it (overrides placeholder)
+      const finalEmail = data.email?.trim() || talentEmail;
+
       // Try to insert with all columns, fallback to basic columns if some don't exist
       try {
         await client.query(
           `INSERT INTO talents (
             id, slug, first_name, last_name, bio, email, phone,
             city, region, country, remote_ready, willing_to_relocate,
-            profile_tags, goals, sectors, gender, created_at, updated_at
+            profile_tags, goals, sectors, gender, avatar_url, created_at, updated_at
           ) VALUES (
             $1, $2, $3, $4, $5, $6, $7,
             $8, $9, $10, $11, $12,
-            $13, $14, $15, $16, NOW(), NOW()
+            $13, $14, $15, $16, $17, NOW(), NOW()
           )`,
           [
             talentId,
@@ -146,7 +149,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
             data.firstName?.trim() || null,
             data.lastName?.trim() || null,
             data.bio?.trim() || null,
-            talentEmail,
+            finalEmail,
             data.phone?.trim() || null,
             data.city?.trim() || null,
             data.region?.trim() || null,
@@ -157,6 +160,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
             data.goals || [],
             data.sectors || [],
             data.gender || null,
+            data.avatarUrl?.trim() || null,
           ]
         );
       } catch (insertError: any) {
@@ -166,11 +170,11 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
             `INSERT INTO talents (
               id, slug, first_name, last_name, bio, email, phone,
               city, region, country, remote_ready, willing_to_relocate,
-              profile_tags, goals, gender, created_at, updated_at
+              profile_tags, goals, gender, avatar_url, created_at, updated_at
             ) VALUES (
               $1, $2, $3, $4, $5, $6, $7,
               $8, $9, $10, $11, $12,
-              $13, $14, $15, NOW(), NOW()
+              $13, $14, $15, $16, NOW(), NOW()
             )`,
             [
               talentId,
@@ -178,7 +182,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
               data.firstName?.trim() || null,
               data.lastName?.trim() || null,
               data.bio?.trim() || null,
-              talentEmail,
+              finalEmail,
               data.phone?.trim() || null,
               data.city?.trim() || null,
               data.region?.trim() || null,
@@ -188,6 +192,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
               data.profileTags || [],
               data.goals || [],
               data.gender || null,
+              data.avatarUrl?.trim() || null,
             ]
           );
         } else {
@@ -215,8 +220,8 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
 
       // Send welcome email (async, don't wait) — skip for WhatsApp-only users
       const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ') || 'Talent';
-      if (talentEmail) {
-        sendWelcomeEmail(talentEmail, fullName).catch(err => {
+      if (finalEmail) {
+        sendWelcomeEmail(finalEmail, fullName).catch(err => {
           logger.error('❌ Failed to send welcome email:', err);
         });
       }
@@ -235,7 +240,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
             id: talentId,
             slug: finalSlug,
             displayName: fullName,
-            email: talentEmail || null,
+            email: finalEmail || null,
           },
           tokens: {
             accessToken: tokens.accessToken,

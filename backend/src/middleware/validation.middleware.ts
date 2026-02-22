@@ -274,7 +274,10 @@ export const onboardingSchema = z.object({
     .optional(),
   gender: z.string().max(20).optional(),
   remoteReady: z.boolean().optional(),
-  willingToRelocate: z.boolean().optional()
+  willingToRelocate: z.boolean().optional(),
+  email: z.string().email().max(255).optional(),
+  avatarUrl: z.string().max(500).optional(),
+  displayName: z.string().max(200).optional(),
 });
 
 // --- Community Schemas ---

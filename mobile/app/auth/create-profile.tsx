@@ -75,12 +75,14 @@ export default function CreateProfileScreen() {
         firstName: values.firstName.trim(),
         lastName: values.lastName.trim(),
         phone: values.phone.trim() || undefined,
+        email: values.email.trim() || undefined,
         city: values.commune || undefined,
         region: values.region || undefined,
         country: values.country || undefined,
         remoteReady: values.remoteReady,
         willingToRelocate: values.willingToRelocate,
         gender: values.gender || undefined,
+        avatarUrl: values.avatarUri || undefined,
       };
       const response = await onboardingService.complete(profileData);
       if (response.data) {

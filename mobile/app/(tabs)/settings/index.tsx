@@ -72,11 +72,16 @@ export default function AccountScreen() {
   const getUserDisplayName = (): string => {
     if (!user) return '';
     // Try different fields that might contain the display name
+    // Never use placeholder @etudesk.local emails as display name
+    const emailName = user.email && !user.email.includes('@etudesk.local')
+      ? user.email.split('@')[0]
+      : null;
     const name = user.displayName ||
       (user.firstName && user.lastName
         ? `${user.firstName} ${user.lastName}`
         : null) ||
-      user.email?.split('@')[0] ||
+      emailName ||
+      user.phone ||
       '';
     return name;
   };
@@ -277,7 +282,7 @@ export default function AccountScreen() {
               )}
               <View style={styles.profileInfo}>
                 <Text style={[styles.profileName, { color: colors.textPrimary }]}>{getUserDisplayName()}</Text>
-                <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{user?.email || ''}</Text>
+                <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{user?.email && !user.email.includes('@etudesk.local') ? user.email : user?.phone || ''}</Text>
               </View>
             </>
           ) : (
