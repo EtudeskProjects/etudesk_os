@@ -14,6 +14,19 @@ const openai = getGeminiClient();
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 const MAX_OBJECTIVE_LENGTH = 500;
 
+/** Strip markdown formatting (bold, italic, links, headers) — objective is plain text */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')   // **bold** → bold
+    .replace(/\*(.*?)\*/g, '$1')        // *italic* → italic
+    .replace(/__(.*?)__/g, '$1')        // __bold__ → bold
+    .replace(/_(.*?)_/g, '$1')          // _italic_ → italic
+    .replace(/#{1,6}\s?/g, '')          // ### header → header
+    .replace(/\[(.*?)\]\(.*?\)/g, '$1') // [text](url) → text
+    .replace(/`(.*?)`/g, '$1')          // `code` → code
+    .trim();
+}
+
 interface DailyObjective {
   objective: string;
   generatedAt: string;
@@ -221,6 +234,7 @@ RÈGLES STRICTES:
 4. Mentionne "mode Étudier" pour les formations
 5. Tutoiement
 6. Objectif DIFFÉRENT du précédent
+7. PAS de markdown (pas de ** ni de # ni de _) — texte brut uniquement
 
 Génère l'objectif (500 caractères max):`;
 
@@ -232,6 +246,7 @@ Génère l'objectif (500 caractères max):`;
     });
 
     let objective = response.choices[0]?.message?.content?.trim() || '';
+    objective = stripMarkdown(objective);
 
     // Ensure max length
     if (objective.length > MAX_OBJECTIVE_LENGTH) {
@@ -499,6 +514,7 @@ RÈGLES STRICTES:
 4. Sois SPÉCIFIQUE: mentionne les chiffres, le secteur, le nom de l'org
 5. Vouvoiement professionnel
 6. Objectif DIFFÉRENT du précédent
+7. PAS de markdown (pas de ** ni de # ni de _) — texte brut uniquement
 
 Génère l'objectif (500 caractères max):`;
 
@@ -510,6 +526,7 @@ Génère l'objectif (500 caractères max):`;
     });
 
     let objective = response.choices[0]?.message?.content?.trim() || '';
+    objective = stripMarkdown(objective);
 
     if (objective.length > MAX_OBJECTIVE_LENGTH) {
       objective = objective.substring(0, MAX_OBJECTIVE_LENGTH - 3) + '...';
