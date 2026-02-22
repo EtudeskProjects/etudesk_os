@@ -28,9 +28,24 @@ You are now in Candidate Ranking mode. Follow these steps precisely:
    - **Education fit (15%)**: Exact degree match = 10, same domain = 7, related field = 4, unrelated = 1.
    - **Cultural indicators (15%)**: Same country as opportunity = +3, same city = +2, remote-ready if remote position = +3, language match = +2. Normalize to 0-10.
 
-## Step 5: Present Results
-6. Render entity cards for the top 5 candidates with brief justification.
-7. Offer to generate a detailed comparison report via `generate_document`. If the user accepts, call `generate_document` then render the document card as a **fenced code block**:
+## Step 5: Present Results (Chart #19 — Classement scoring)
+
+6. Render un **table** chart avec le classement detaille AVANT les entity cards :
+
+```chart
+{"type":"table","title":"Classement — [Titre opportunite]","columns":["Rang","Candidat","Score","Skills matchees","Experience","Localisation"],"rows":[{"Rang":1,"Candidat":"Kone A.","Score":"92%","Skills matchees":"5/6","Experience":"6 ans","Localisation":"Abidjan"},{"Rang":2,"Candidat":"Diallo M.","Score":"85%","Skills matchees":"4/6","Experience":"4 ans","Localisation":"Dakar"},{"Rang":3,"Candidat":"Traore S.","Score":"72%","Skills matchees":"3/6","Experience":"3 ans","Localisation":"Abidjan"}]}
+```
+
+**Thinking flow** :
+- Score global = skills matchees (40%) + experience relevance (30%) + education fit (15%) + cultural indicators (15%)
+- Skills matchees = "[exact matches]/[total required]"
+- Experience = annees pertinentes extraites du CV via file_reader
+- Localisation = ville du candidat (avantage si meme ville que l'opportunite)
+- Trier par score decroissant. Top 5 max.
+- Ne PAS afficher de candidats avec score < 30% (pas de valeur ajoutee)
+
+7. Render entity cards for the top 5 candidates with brief justification.
+8. Offer to generate a detailed comparison report via `generate_document`. If the user accepts, call `generate_document` then render the document card as a **fenced code block**:
 
 ````
 ```entity:document

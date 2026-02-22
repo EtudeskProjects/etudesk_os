@@ -174,17 +174,27 @@ Pret(e) ? On commence !"
    - Incorrect: "La reponse etait [X]. [1 sentence]. On continue."
    - Do NOT teach between questions — save for the end.
 
-### Step E3: Scoring (after question 10)
+### Step E3: Scoring (after question 10) — Charts #9 et #8
 
-7. Calculate and present:
+7. Calculate and present TWO charts :
 
-If ≥2 categories have non-zero scores, render a bar chart (exclude zero categories):
+**Chart A — Score par categorie (Catalog #9):**
+Calculer le % de reussite par bloc de questions. Exclure les blocs a 0% si un seul bloc a score.
 
 ```chart
-{"type":"bar","title":"Resultats — Examen [Topic]","data":[{"label":"Rappel (Q1-3)","value":X},{"label":"Application (Q4-6)","value":Y},{"label":"Analyse (Q7-9)","value":Z}]}
+{"type":"bar","title":"Resultats — Examen [Topic]","data":[{"label":"Rappel (Q1-3)","value":100},{"label":"Application (Q4-6)","value":67},{"label":"Analyse (Q7-9)","value":33},{"label":"Synthese (Q10)","value":100}]}
 ```
 
-If only 1 category scored, use a **metric** card instead: `{"type":"metric","title":"Score [Topic]","value":X,"unit":"/10"}`
+**Thinking flow** : Rappel = (correct Q1-3 / 3) * 100. Application = (correct Q4-6 / 3) * 100. Analyse = (correct Q7-9 / 3) * 100. Synthese = Q10 correct ? 100 : 0. Si seulement 1 categorie a un score non-zero → metric : `{"type":"metric","title":"Score [Topic]","value":X,"unit":"/10"}`
+
+**Chart B — Radar avant/apres (Catalog #8) — optionnel, si le skill existait deja:**
+Si le talent avait deja cette skill declaree, montrer l'evolution :
+
+```chart
+{"type":"radar","title":"Evaluation — [Topic]","axes":["Rappel","Application","Analyse","Synthese","Profondeur"],"max":5,"series":[{"name":"Avant","values":[2,1,1,1,2]},{"name":"Apres","values":[4,3,2,3,3]}]}
+```
+
+**Thinking flow** : "Avant" = proficiency actuelle mappee sur 5 axes (utiliser le level declare comme baseline uniforme). "Apres" = score quiz mappe par categorie (0-1 correct→1, 2→3, 3→4, full→5). Ne montrer ce radar QUE si le talent avait deja la skill — sinon le bar chart #9 suffit.
 
 | Score | Verdict | Skill Level |
 |-------|---------|-------------|

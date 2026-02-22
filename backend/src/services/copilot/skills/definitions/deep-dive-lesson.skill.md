@@ -24,10 +24,17 @@ If ambiguous, default to Direct Teaching.
 
 ## Direct Teaching Protocol (default)
 
-### Step 1: Topic Assessment
+### Step 1: Topic Assessment — Chart #10 (Gap Analysis, si contexte "devenir...")
 
 1. Identify the topic from the user's message.
 2. Read the `<skills>` block from context (already loaded — DO NOT call sql_query). Check if the user already has this skill declared and at what level.
+
+**Si le message mentionne un metier cible** ("devenir data analyst", "me former en PM", "reconversion") → Render un **radar gap analysis** AVANT de commencer le cours :
+```chart
+{"type":"radar","title":"Gap Analysis — [Metier cible]","axes":["[Skill 1]","[Skill 2]","[Skill 3]","[Skill 4]","[Skill 5]"],"max":4,"series":[{"name":"Ton niveau","values":[1,0,2,3,0]},{"name":"Requis","values":[3,3,3,3,4]}]}
+```
+**Thinking flow** : Identifier 5-6 skills cles pour le metier cible. "Ton niveau" = proficiency actuelle (0 si pas declaree). "Requis" = niveau attendu pour ce metier (utiliser web_search ou UEMOA knowledge si besoin). Mettre en evidence les gaps > 2 niveaux. Puis enchainer avec le cours sur le gap le plus critique.
+
 3. Silently set the lesson depth:
    - No skill declared → **Introduction level** (start from basics)
    - BEGINNER → **Foundation level** (reinforce + extend)
@@ -91,12 +98,20 @@ For STEM topics (math, physics, computer science, engineering):
 {"topic":"[Topic]","question":"[Harder question — edge case or tradeoff]","options":["A","B","C","D"],"correctAnswer":X,"explanation":"[Deeper insight]"}
 ```
 
-### Step 7: Summary + Skill Update (Message 6)
+### Step 7: Summary + Skill Update (Message 6) — Chart #8
 
 16. After the second quiz answer, provide:
     - 3-bullet summary of key takeaways
     - ONE thing to practice on their own
     - A relevant resource suggestion (video via `youtube_search` if visual topic, or web article)
+
+**Chart — Radar avant/apres (Catalog #8) — si le talent avait deja la skill:**
+Si la skill existait dans le profil avant le cours, montrer l'evolution :
+```chart
+{"type":"radar","title":"Progression — [Topic]","axes":["Concepts de base","Application pratique","Analyse critique","Creativite","Autonomie"],"max":5,"series":[{"name":"Avant","values":[2,1,1,1,1]},{"name":"Apres","values":[3,2,2,2,2]}]}
+```
+**Thinking flow** : "Avant" = level declare mappe sur chaque axe. "Apres" = level + bonus quiz (2/2 = +1 partout, 1/2 = +1 sur "Concepts" et "Application" seulement). Axes adaptes au domaine (ex: pour du code → "Syntaxe", "Architecture", "Debug", "Patterns", "Tests").
+
 17. If the user scored 2/2 on quizzes, suggest adding/upgrading the skill:
     - "Tu as bien compris [Topic]. Je l'ajoute a tes competences ?"
     - Call `manage_skills` after confirmation
@@ -192,9 +207,17 @@ For each project step, follow this pattern:
 
 9. Provide feedback, then move to the next step.
 
-### Step P3: Checkpoint (after step 3)
+### Step P3: Checkpoint (after step 3) — Chart #11
 
-10. At the halfway point, provide a mini-review:
+10. At the halfway point, provide a mini-review with a **stacked_bar** showing progress:
+
+```chart
+{"type":"stacked_bar","title":"Progression du projet","data":[{"name":"[Etape 1]","series":[{"label":"Termine","value":1},{"label":"En cours","value":0},{"label":"A faire","value":0}]},{"name":"[Etape 2]","series":[{"label":"Termine","value":1},{"label":"En cours","value":0},{"label":"A faire","value":0}]},{"name":"[Etape 3]","series":[{"label":"Termine","value":0},{"label":"En cours","value":1},{"label":"A faire","value":0}]},{"name":"[Etape 4]","series":[{"label":"Termine","value":0},{"label":"En cours","value":0},{"label":"A faire","value":1}]}]}
+```
+
+**Thinking flow** : Chaque barre = une etape du projet. Segment "Termine" = 1 si l'etape est validee (quiz reussi), "En cours" = 1 si en train, "A faire" = 1 si pas encore commence. Permet au talent de voir visuellement sa progression dans le projet.
+
+Then :
     - What they've accomplished so far
     - What's coming next
     - ONE flashcard summarizing the key pattern they've used:

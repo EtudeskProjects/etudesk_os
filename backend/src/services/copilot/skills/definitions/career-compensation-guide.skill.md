@@ -45,13 +45,22 @@ If ambiguous, default to Salary Analysis Flow.
 7. Call `web_search` ONLY if UEMOA reference data doesn't cover the specific role or if the user explicitly asks for external data. Query: "salaire [role] [user's country or 'Afrique francophone'] 2026".
    **CRITICAL:** ALWAYS include the user's country in the web query. Generic queries return US/EU data which is irrelevant.
 
-### Step S5: Present Analysis
+### Step S5: Present Analysis (Chart #5 — Grille salariale marche)
 
-8. Create a comparison using a chart block:
-   - UEMOA benchmark range for the sector/level
-   - Internal platform data (if available)
-   - External data (if fetched)
-   - SMIG comparison (flag if offer is below SMIG)
+8. Create a **table chart** with the salary grid:
+
+```chart
+{"type":"table","title":"Grille salariale — [Role], [Ville]","columns":["Niveau","Min (FCFA)","Max (FCFA)","Mediane"],"rows":[{"Niveau":"Junior (0-2 ans)","Min (FCFA)":"150 000","Max (FCFA)":"300 000","Mediane":"200 000"},{"Niveau":"Confirme (3-5 ans)","Min (FCFA)":"350 000","Max (FCFA)":"600 000","Mediane":"450 000"},{"Niveau":"Senior (5+ ans)","Min (FCFA)":"600 000","Max (FCFA)":"1 200 000","Mediane":"800 000"}]}
+```
+
+**Thinking flow** :
+- Sources : UEMOA knowledge block (primaire) + smart_search opportunities compensation_min/max (secondaire) + web_search (si role non couvert)
+- Toujours 3 lignes : Junior/Confirme/Senior avec fourchettes
+- Adapter la ville et le pays a la requete utilisateur
+- FCFA par defaut en zone UEMOA, EUR/USD si hors zone
+- Si des opportunites internes ont des compensations → ajouter une colonne "Plateforme Etudesk" pour comparer
+- Comparer au SMIG : si l'offre est en-dessous → flag explicite
+
 9. Provide 2-3 sentences of context:
    - Position vs market (below/within/above range)
    - Negotiation advice referencing the specific sector benchmark

@@ -26,23 +26,44 @@ If ambiguous, ask: "Quel type d'analyse souhaitez-vous ? Cohortes de talents, en
 
 ## Talent Cohorts Dashboard
 
-### Step TC1: Talent Cohorts Over Time
+### Step TC1: Talent Cohorts Over Time (Chart #17)
 
 1. Use member_count and org_sectors from `<organization>` context for the overview.
 2. Call `sql_query` with intent `org_talent_cohorts` (params: `{"months": 12}`) to get monthly new talent acquisition.
-3. Render a `bar` chart showing new talents per month.
+3. Render un **line** chart montrant l'evolution :
+
+```chart
+{"type":"line","title":"Nouveaux talents par mois","data":[{"label":"Sep 2025","value":5},{"label":"Oct 2025","value":8},{"label":"Nov 2025","value":12},{"label":"Dec 2025","value":15},{"label":"Jan 2026","value":22},{"label":"Fev 2026","value":18}]}
+```
+
+**Thinking flow** : Utiliser line (pas bar) pour montrer la tendance temporelle. Labels = mois abreges. Si baisse 2 mois consecutifs → alerter ("Ralentissement observe — envisagez une campagne de sourcing"). Annoter les pics si un evenement est connu.
+
 4. Identify trends: growth, plateau, or decline.
 
-### Step TC2: Skills Distribution
+### Step TC2: Skills Distribution (Chart #16)
 
 5. Call `sql_query` with intent `org_skills_analytics` (params: `{"limit": 15}`) to get top skills in the talent pool.
-6. Render a `bar` chart showing top skills by talent count.
+6. Render un **bar** chart des top skills :
+
+```chart
+{"type":"bar","title":"Top competences — Vivier talents","data":[{"label":"JavaScript","value":34},{"label":"Python","value":28},{"label":"Management","value":22},{"label":"Marketing Digital","value":18},{"label":"Communication","value":15}]}
+```
+
+**Thinking flow** : Top 10 max par talent_count. Labels = noms de skills lisibles (pas d'enums). Croiser avec les skills demandees dans org_opportunities : si une skill est tres demandee mais absente du vivier → le mentionner explicitement ("JavaScript est tres demande mais sous-represente dans votre vivier").
+
 7. Highlight skill gaps or concentrations.
 
-### Step TC3: Geographic Distribution
+### Step TC3: Geographic Distribution (Chart #15)
 
 8. Call `sql_query` with intent `org_geo_distribution` (params: `{"groupBy": "country"}`) for country view.
-9. Render a `donut` chart showing geographic repartition.
+9. Render un **donut** de distribution geographique :
+
+```chart
+{"type":"donut","title":"Talents par pays","data":[{"label":"Cote d'Ivoire","value":45},{"label":"Senegal","value":12},{"label":"Cameroun","value":8},{"label":"Mali","value":5},{"label":"Autres","value":10}],"total_label":"80 talents"}
+```
+
+**Thinking flow** : Grouper les pays < 3% du total en "Autres". Si > 80% dans un seul pays → recommander diversification geographique. total_label = somme de toutes les valeurs + " talents".
+
 10. Comment on geographic diversity and potential for expansion.
 
 ### Step TC4: Synthesis
@@ -57,28 +78,55 @@ If ambiguous, ask: "Quel type d'analyse souhaitez-vous ? Cohortes de talents, en
 
 ## Engagement Dashboard
 
-### Step E1: Community Engagement
+### Step E1: Community Engagement (Chart #18)
 
 1. Call `sql_query` with intent `org_community_engagement` to get engagement metrics for all communities.
-2. Render a `table` chart with columns: Communaute, Membres, Actifs 30j, Posts, Reactions, Commentaires.
+2. Render un **table** chart avec taux d'activite calcule :
+
+```chart
+{"type":"table","title":"Engagement des communautes","columns":["Communaute","Membres","Actifs 30j","Taux activite","Posts","Reactions"],"rows":[{"Communaute":"Tech Abidjan","Membres":120,"Actifs 30j":45,"Taux activite":"38%","Posts":23,"Reactions":156},{"Communaute":"RH Connect","Membres":80,"Actifs 30j":12,"Taux activite":"15%","Posts":5,"Reactions":18}]}
+```
+
+**Thinking flow** : Calculer taux activite = (active_30d / total_members) * 100, arrondi. Trier par taux decroissant. Si taux < 20% → marquer la communaute comme "faible engagement". Si taux > 50% → "communaute tres active".
+
 3. Identify the most and least engaged communities.
 
-### Step E2: Key Metrics
+### Step E2: Key Metrics (Chart #20 — Dashboard KPIs)
 
-4. Render `metric` cards for:
-    - Most active community engagement rate (active_30d / total_members)
-    - Total members across all communities
-    - Total posts across all communities
+4. Render 3-4 **metric** cards enchaines :
+
+```chart
+{"type":"metric","title":"Taux d'acceptation global","value":12,"unit":"%","trend":{"direction":"up","delta":3,"period":"vs mois dernier"}}
+```
+```chart
+{"type":"metric","title":"Candidatures recues","value":156,"unit":"total","trend":{"direction":"up","delta":23,"period":"ce mois"}}
+```
+```chart
+{"type":"metric","title":"Temps moyen 1ere candidature","value":4.2,"unit":"heures","trend":{"direction":"down","delta":1.5,"period":"vs mois dernier"}}
+```
+```chart
+{"type":"metric","title":"Opportunites ouvertes","value":8,"unit":"postes"}
+```
+
+**Thinking flow** : Calculer depuis org_stats + org_opportunity_performance. Taux acceptation = total accepted / total applications * 100. Temps moyen = moyenne hours_to_first_application. Toujours inclure trend quand les donnees historiques le permettent (delta vs mois precedent). Direction "down" est positive pour le temps (plus rapide = mieux). Max 4 metrics. Ne pas inventer de chiffres — utiliser uniquement les donnees retournees par les tools.
+
 5. Provide strategic synthesis with 2-3 recommendations to improve engagement.
 
 ---
 
 ## Recruitment Funnel Dashboard
 
-### Step RF1: Application Funnel
+### Step RF1: Application Funnel (Chart #14)
 
 1. Call `sql_query` with intent `org_application_funnel` to get the full funnel across all opportunities.
-2. Render a `stacked_bar` chart showing SUBMITTED / IN_REVIEW / ACCEPTED / REJECTED per opportunity.
+2. Render un **stacked_bar** du funnel de recrutement :
+
+```chart
+{"type":"stacked_bar","title":"Funnel recrutement","data":[{"name":"Dev Frontend","series":[{"label":"Soumises","value":45},{"label":"En revue","value":12},{"label":"Acceptees","value":3},{"label":"Refusees","value":18}]},{"name":"UX Designer","series":[{"label":"Soumises","value":28},{"label":"En revue","value":8},{"label":"Acceptees","value":2},{"label":"Refusees","value":10}]}]}
+```
+
+**Thinking flow** : Une barre par opportunite, segments = statuts de candidature. Labels : SUBMITTED→"Soumises", IN_REVIEW→"En revue", ACCEPTED→"Acceptees", REJECTED→"Refusees". Trier par acceptance_rate croissant (les opportunites problematiques en premier). Si ratio refus > 80% → alerter. Exclure les segments a 0.
+
 3. Highlight the overall conversion rate and any bottlenecks.
 
 ### Step RF2: Opportunity Performance

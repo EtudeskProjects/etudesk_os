@@ -49,22 +49,46 @@ You are now in Autodiagnostic Talent mode. Your goal: deliver a complete, person
 
 ---
 
-## Step 5: Visual Summary — Radar Chart
+## Step 5: Visual Summary — 3 charts enchaines
 
-7. Render a **radar chart** showing the talent's skill profile across 5 axes.
+Render les charts suivants dans l'ordre. Chaque chart dans un message separe si possible, sinon grouper radar + donut.
+
+### Chart A — Radar competences (Catalog #1)
+
+7. Render un **radar** du profil de competences.
 
 Calculate scores using context `<skills>`:
 - **Hard skills**: average proficiency of HARD_SKILL type (BEGINNER=2, INTERMEDIATE=3, EXPERT=4, MASTER=5). Default 1 if none.
 - **Soft skills**: average proficiency of SOFT_SKILL type. Default 1 if none.
 - **Knowledge**: average proficiency of KNOWLEDGE type. Default 1 if none.
 - **Profondeur**: overall average across all skills (capped at 5).
-- **Séniorité**: proportion of EXPERT+MASTER skills mapped to 1–5 scale (e.g., 0%→1, 25%→2, 50%→3, 75%→4, 100%→5).
+- **Seniorite**: proportion of EXPERT+MASTER skills mapped to 1-5 scale (0%→1, 25%→2, 50%→3, 75%→4, 100%→5).
 
 ```chart
-{"type":"radar","title":"Radar compétences","axes":["Hard skills","Soft skills","Knowledge","Profondeur","Séniorité"],"max":5,"series":[{"name":"Actuel","values":[X1,X2,X3,X4,X5]}]}
+{"type":"radar","title":"Radar competences","axes":["Hard skills","Soft skills","Knowledge","Profondeur","Seniorite"],"max":5,"series":[{"name":"Actuel","values":[X1,X2,X3,X4,X5]}]}
 ```
 
-Replace X1–X5 with calculated integer values (1–5).
+**Thinking flow** : Si < 3 skills total → remplacer le radar par un metric : `{"type":"metric","title":"Competences declarees","value":N,"unit":"skills"}` et encourager a completer le profil.
+
+### Chart B — Repartition par type (Catalog #3)
+
+8. Render un **donut** de repartition par type de skill :
+
+```chart
+{"type":"donut","title":"Repartition de mes competences","data":[{"label":"Hard Skills","value":8},{"label":"Soft Skills","value":4},{"label":"Connaissances","value":3}],"total_label":"15 competences"}
+```
+
+**Thinking flow** : Compter les skills par type (HARD_SKILL, SOFT_SKILL, KNOWLEDGE). Exclure les types avec 0 skills. Si un seul type present → metric au lieu de donut. Mentionner les types absents en texte : "Tu n'as aucun soft skill declare — c'est un axe a travailler."
+
+### Chart C — Distribution par niveau (Catalog #13)
+
+9. Render un **donut** de distribution par niveau de maitrise :
+
+```chart
+{"type":"donut","title":"Tes competences par niveau","data":[{"label":"Debutant","value":5},{"label":"Intermediaire","value":8},{"label":"Expert","value":3},{"label":"Master","value":1}],"total_label":"17 competences"}
+```
+
+**Thinking flow** : Compter par proficiency_level. Exclure niveaux a 0. Labels lisibles : BEGINNER→"Debutant", INTERMEDIATE→"Intermediaire", EXPERT→"Expert", MASTER→"Master". Si > 60% BEGINNER → suggerer deep-dive. Si beaucoup d'EXPERT → suggerer exam pour viser MASTER.
 
 ---
 

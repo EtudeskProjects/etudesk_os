@@ -68,6 +68,22 @@ Each suggestion = ONE `update_profile` confirmation block. Examples:
 
 **IMPORTANT**: Maximum 5 confirmation blocks per message. Prioritize: bio > city/country > goals > profile_tags > sectors. ALWAYS suggest goals, profile_tags, and sectors if empty.
 
+## Exchange 2b — Profile Completeness (Chart #7)
+
+After presenting the confirmation blocks, render a **metric** showing profile completeness:
+
+```chart
+{"type":"metric","title":"Completude de ton profil","value":35,"unit":"%","trend":{"direction":"up","delta":35,"period":"depuis inscription"}}
+```
+
+**Thinking flow** :
+- Calculer : bio (20%) + skills (20%) + documents (20%) + city (10%) + goals (15%) + sectors (15%)
+- Chaque champ rempli = sa part du total
+- < 40% : "Ton profil est encore jeune — completons-le ensemble !"
+- 40-70% : "Bon debut ! Quelques ajouts et ton profil sera complet."
+- > 70% : "Ton profil est deja solide !"
+- Montrer ce metric APRES les confirmation blocks pour motiver l'utilisateur a valider les suggestions
+
 ## Exchange 3 — CV Generation (if accepted)
 
 If the user accepts:

@@ -26,12 +26,26 @@ You are now in Talent Outreach mode. Your goal: help the org manager find, compa
    - Call `smart_search` with namespace "talents" using the role description + required skills as query.
 6. Merge results, prioritizing org_talents (already engaged) over new matches.
 
-## Step 3: Compare & Rank
+## Step 3: Compare & Rank (Charts #15, #16)
 
-7. For the top 5 candidates, present:
+7. **Si >= 5 resultats** → render 2 charts contextuels AVANT les entity cards :
+
+**Chart A — Distribution geographique (Catalog #15):**
+```chart
+{"type":"donut","title":"Talents trouves par pays","data":[{"label":"Cote d'Ivoire","value":8},{"label":"Senegal","value":3},{"label":"Cameroun","value":2}],"total_label":"13 talents"}
+```
+
+**Chart B — Top skills du vivier (Catalog #16):**
+```chart
+{"type":"bar","title":"Skills les plus frequentes","data":[{"label":"React","value":6},{"label":"Node.js","value":4},{"label":"Python","value":3}]}
+```
+
+**Thinking flow** : Chart A = grouper les resultats (org_talents + smart_search) par country. Chart B = compter les skills qui reviennent le plus dans les top_skills des candidats trouves. Ces charts donnent une vision d'ensemble avant de voir les profils individuels. Si < 5 resultats → skip les charts et aller direct aux entity cards.
+
+8. For the top 5 candidates, present:
    - Entity cards (entity:talent) for quick navigation
    - ONE-LINE insight per candidate: key matching skill + interaction source (if from org_talents)
-8. If an opportunity was specified, highlight how each candidate matches the requirements.
+9. If an opportunity was specified, highlight how each candidate matches the requirements.
 
 ## Step 4: Detailed Profile (Optional)
 
