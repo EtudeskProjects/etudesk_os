@@ -1,0 +1,11 @@
+{
+  "fetchError": "Fehler beim Laden der Kompetenzen",
+  "invalidProficiencyLevel": "Ungueltiges Kompetenzniveau",
+  "skillNameRequired": "skillName erforderlich",
+  "skillTypeRequired": "Der Kompetenztyp ist erforderlich (KNOWLEDGE, HARD_SKILL, SOFT_SKILL)",
+  "addError": "Fehler beim Hinzufuegen der Kompetenz",
+  "updateError": "Fehler bei der Aktualisierung",
+  "notFound": "Kompetenz nicht gefunden",
+  "deleteError": "Fehler beim Loeschen",
+  "mergeError": "Fehler beim Zusammenfuehren der Kompetenzen"
+}

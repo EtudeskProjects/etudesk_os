@@ -2,23 +2,29 @@
 
 import {
   COMMUNITY_TYPES,
-  COMMUNITY_TYPE_LABELS,
+  getCommunityTypeLabel,
   CommunityType,
   Visibility,
-  VISIBILITY_LABELS,
+  getVisibilityLabel,
 } from '../types/models';
+import { getLabel } from '../utils/labels';
 
 // --- Options FormatéEs Pour Les Formulaires ---
+// Functions instead of static arrays so labels resolve at render time (i18n-aware)
 
-export const COMMUNITY_TYPE_DATA: Array<{ id: CommunityType; label: string; description: string }> = [
-  { id: 'HYBRID', label: COMMUNITY_TYPE_LABELS.HYBRID, description: 'Mix événements en ligne et physiques' },
-  { id: 'ONLINE', label: COMMUNITY_TYPE_LABELS.ONLINE, description: 'Communauté 100% virtuelle' },
-];
+export function getCommunityTypeData(): Array<{ id: CommunityType; label: string; description: string }> {
+  return [
+    { id: 'HYBRID', label: getCommunityTypeLabel('HYBRID'), description: getLabel('communityVisibilityDescriptions', 'PUBLIC') },
+    { id: 'ONLINE', label: getCommunityTypeLabel('ONLINE'), description: getLabel('communityVisibilityDescriptions', 'PRIVATE') },
+  ];
+}
 
-export const VISIBILITY_DATA: Array<{ id: Visibility; label: string; description: string }> = [
-  { id: 'PUBLIC', label: VISIBILITY_LABELS.PUBLIC, description: 'Tout le monde peut voir et rejoindre' },
-  { id: 'PRIVATE', label: VISIBILITY_LABELS.PRIVATE, description: 'Seuls les membres peuvent voir le contenu' },
-];
+export function getVisibilityData(): Array<{ id: Visibility; label: string; description: string }> {
+  return [
+    { id: 'PUBLIC', label: getVisibilityLabel('PUBLIC'), description: getLabel('communityVisibilityDescriptions', 'PUBLIC') },
+    { id: 'PRIVATE', label: getVisibilityLabel('PRIVATE'), description: getLabel('communityVisibilityDescriptions', 'PRIVATE') },
+  ];
+}
 
 // --- Tags De CommunautéS Remplace Les CatéGories ---
 
@@ -37,29 +43,25 @@ export const COMMUNITY_TAGS = {
 
 export type CommunityTag = (typeof COMMUNITY_TAGS)[keyof typeof COMMUNITY_TAGS];
 
-export const COMMUNITY_TAG_DATA: Array<{ id: CommunityTag; label: string }> = [
-  { id: 'PROFESSIONAL', label: 'Professionnels' },
-  { id: 'STUDENT', label: 'Étudiants' },
-  { id: 'ENTREPRENEUR', label: 'Entrepreneurs' },
-  { id: 'TECH', label: 'Tech & Innovation' },
-  { id: 'CREATIVE', label: 'Créatifs & Artistes' },
-  { id: 'SOCIAL_IMPACT', label: 'Impact social' },
-  { id: 'ALUMNI', label: 'Alumni / Anciens' },
-  { id: 'WOMEN', label: 'Femmes' },
-  { id: 'YOUTH', label: 'Jeunes' },
-  { id: 'CLUB_ASSOCIATION', label: 'Club / Association' },
-];
+export function getCommunityTagData(): Array<{ id: CommunityTag; label: string }> {
+  return Object.values(COMMUNITY_TAGS).map(id => ({
+    id,
+    label: getLabel('communityTags', id),
+  }));
+}
 
 export const MAX_COMMUNITY_TAGS = 3;
 
 // --- Questions D'AdhéSion PréDéFinies ---
 
-export const DEFAULT_MEMBERSHIP_QUESTIONS: Array<{ id: string; question: string }> = [
-  { id: 'motivation', question: 'Pourquoi souhaitez-vous rejoindre cette communauté ?' },
-  { id: 'contribution', question: 'Comment pensez-vous contribuer à la communauté ?' },
-  { id: 'background', question: 'Quel est votre parcours professionnel ?' },
-  { id: 'referral', question: 'Comment avez-vous entendu parler de nous ?' },
-  { id: 'expectations', question: 'Quelles sont vos attentes vis-à-vis de cette communauté ?' },
-];
+export function getDefaultMembershipQuestions(): Array<{ id: string; question: string }> {
+  return [
+    { id: 'motivation', question: getLabel('membershipQuestions', 'motivation') },
+    { id: 'contribution', question: getLabel('membershipQuestions', 'contribution') },
+    { id: 'background', question: getLabel('membershipQuestions', 'background') },
+    { id: 'referral', question: getLabel('membershipQuestions', 'referral') },
+    { id: 'expectations', question: getLabel('membershipQuestions', 'expectations') },
+  ];
+}
 
 export const MAX_MEMBERSHIP_QUESTIONS = 5;

@@ -53,7 +53,7 @@ export default function WhatsAppLoginScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
           size="sm"
           variant="filled"
           style={[styles.backButton, { backgroundColor: colors.surface }]}

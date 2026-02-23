@@ -1,0 +1,22 @@
+{
+  "fetchError": "Fehler beim Abrufen der Dokumente",
+  "fetchStatsError": "Fehler beim Abrufen der Statistiken",
+  "notFound": "Dokument nicht gefunden",
+  "fetchSingleError": "Fehler beim Abrufen des Dokuments",
+  "identityNotVerified": "Identitaet nicht verifiziert",
+  "identityRequiredCode": "IDENTITY_REQUIRED",
+  "identityRequiredMessage": "Du musst deine Identitaet verifizieren, bevor du Dokumente hinzufuegen kannst. Gehe zu Einstellungen > Identitaetsueberpruefung.",
+  "maxFilesPerRequest": "Maximal {{count}} Dateien pro Anfrage",
+  "maxDocumentsExceeded": "Du kannst nur noch {{remaining}} weitere(s) Dokument(e) hinzufuegen. Limit: {{max}}.",
+  "invalidDocumentType": "Ungueltiger Dokumenttyp",
+  "uploadSuccess": "Dokument erfolgreich hochgeladen. Die Verarbeitung läuft.",
+  "uploadMultipleSuccess": "{{count}} Dokumente erfolgreich hochgeladen. Die Verarbeitung läuft.",
+  "uploadError": "Fehler beim Hochladen des Dokuments",
+  "updateSuccess": "Dokument erfolgreich aktualisiert",
+  "updateError": "Fehler beim Aktualisieren des Dokuments",
+  "deleteSuccess": "Dokument erfolgreich gelöscht",
+  "deleteError": "Fehler beim Loeschen des Dokuments",
+  "retrySuccess": "Neuer Extraktionsversuch gestartet",
+  "retryError": "Fehler beim Extraktionsversuch",
+  "fileTooLarge": "Datei zu gross. Maximum: {{size}}MB"
+}

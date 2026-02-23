@@ -38,6 +38,7 @@ import { spaceBookingService, spaceBookingMessageService, SpaceBookingDetails, B
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import { formatNumberNoTrailingZeros } from '../../../../../src/utils/number';
 import { useAlert } from '../../../../../src/contexts/AlertContext';
+import { useI18n } from '../../../../../src/contexts/I18nContext';
 
 // Status configuration
 const getStatusConfig = (colors: any): Record<BookingStatus, { color: string; icon: typeof Clock }> => ({
@@ -55,28 +56,28 @@ const getStatusFlow = (colors: any): Record<BookingStatus, {
   color: string;
 }> => ({
   PENDING: {
-    label: 'En attente',
-    description: 'Réservation en attente de confirmation',
+    label: 'gestion.bookingStatus.pending',
+    description: 'gestion.bookings.statusPendingDesc',
     color: colors.warning,
   },
   CONFIRMED: {
-    label: 'Confirmée',
-    description: 'Réservation confirmée',
+    label: 'gestion.bookingStatus.confirmed',
+    description: 'gestion.bookings.statusConfirmedDesc',
     color: colors.info,
   },
   COMPLETED: {
-    label: 'Terminée',
-    description: 'Réservation terminée avec succès',
+    label: 'gestion.bookingStatus.completed',
+    description: 'gestion.bookings.statusCompletedDesc',
     color: colors.success,
   },
   CANCELLED: {
-    label: 'Annulée',
-    description: 'Réservation annulée',
+    label: 'gestion.bookingStatus.cancelled',
+    description: 'gestion.bookings.statusCancelledDesc',
     color: colors.error,
   },
   NO_SHOW: {
-    label: 'Absent',
-    description: 'Le client ne s\'est pas présenté',
+    label: 'gestion.bookingStatus.noShow',
+    description: 'gestion.bookings.statusNoShowDesc',
     color: colors.gray500,
   },
 });
@@ -87,6 +88,7 @@ export default function BookingDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
 
   const STATUS_CONFIG = getStatusConfig(colors);
@@ -144,7 +146,7 @@ export default function BookingDetailsScreen() {
       setBooking(response.data);
       setInternalNotes(response.data?.internal_notes || '');
     } catch (error) {
-      void alerts.alert('Erreur', 'Impossible de charger les details de la reservation.');
+      void alerts.alert(t('common.error'), t('gestion.bookings.detailsLoadError'));
       router.back();
     } finally {
       setIsLoading(false);
@@ -173,27 +175,27 @@ export default function BookingDetailsScreen() {
       await spaceBookingService.updateBookingStatus(booking.id, newStatus);
       setBooking((prev) => prev ? { ...prev, status: newStatus } : null);
       setShowStatusPicker(false);
-      void alerts.alert('Succes', `Statut mis a jour: ${STATUS_FLOW[newStatus].label}`);
+      void alerts.alert(t('common.success'), t('gestion.bookings.statusUpdated', { status: t(STATUS_FLOW[newStatus].label) }));
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible de mettre a jour le statut.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.bookings.statusUpdateError'));
     }
   };
 
   const handleDeleteBooking = () => {
     if (!booking) return;
 
-    void alerts.showAlert({ title: 'Supprimer la reservation', message: 'Etes-vous sur de vouloir supprimer cette reservation ? Cette action est irreversible.', buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('gestion.bookings.deleteTitle'), message: t('gestion.bookings.deleteConfirm'), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await spaceBookingService.deleteBooking(booking.id);
-              void alerts.alert('Succes', 'Reservation supprimee.');
+              void alerts.alert(t('common.success'), t('gestion.bookings.deleteSuccess'));
               router.back();
             } catch (error: any) {
-              void alerts.alert('Erreur', error.error || 'Impossible de supprimer la reservation.');
+              void alerts.alert(t('common.error'), error.error || t('gestion.bookings.deleteError'));
             }
           },
         },
@@ -206,9 +208,9 @@ export default function BookingDetailsScreen() {
     try {
       await spaceBookingService.updateInternalNotes(booking.id, internalNotes);
       setIsEditingNotes(false);
-      void alerts.alert('Succes', 'Notes enregistrees.');
+      void alerts.alert(t('common.success'), t('gestion.bookings.notesSaved'));
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible de sauvegarder les notes.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.bookings.notesSaveError'));
     }
   };
 
@@ -240,7 +242,7 @@ export default function BookingDetailsScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.bookings.sendMessageError'));
       throw error;
     } finally {
       setIsSending(false);
@@ -311,7 +313,7 @@ export default function BookingDetailsScreen() {
     const talentName = talent?.display_name ||
       (talent?.first_name && talent?.last_name
         ? `${talent.first_name} ${talent.last_name}`
-        : 'Client');
+        : t('gestion.bookings.client'));
 
     return (
       <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
@@ -338,7 +340,7 @@ export default function BookingDetailsScreen() {
 
         {/* Contact Info */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Contact</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.bookings.contact')}</Text>
 
           {(talent?.city || talent?.country) && (
             <View style={styles.infoRow}>
@@ -370,7 +372,7 @@ export default function BookingDetailsScreen() {
 
         {/* Booking Details */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Details de la reservation</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.bookings.detailsTitle')}</Text>
 
           <View style={styles.infoRow}>
             <Calendar size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
@@ -389,7 +391,7 @@ export default function BookingDetailsScreen() {
           <View style={styles.infoRow}>
             <Clock size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.infoText, { color: colors.textPrimary }]}>
-              Duree: {booking ? formatDuration(booking.start_datetime, booking.end_datetime) : '-'}
+              {t('gestion.bookings.durationLabel')}: {booking ? formatDuration(booking.start_datetime, booking.end_datetime) : '-'}
             </Text>
           </View>
 
@@ -414,10 +416,10 @@ export default function BookingDetailsScreen() {
 
         {/* Price Breakdown */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Tarification</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.bookings.pricing')}</Text>
 
           <View style={styles.priceRow}>
-            <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Prix unitaire</Text>
+            <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>{t('gestion.bookings.unitPrice')}</Text>
             <Text style={[styles.priceValue, { color: colors.textPrimary }]}>
               {booking ? formatPrice(booking.unit_price) : '-'}
             </Text>
@@ -425,7 +427,7 @@ export default function BookingDetailsScreen() {
 
           <View style={styles.priceRow}>
               <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>
-              Quantite ({formatNumberNoTrailingZeros(booking?.units_count || 0)} {booking?.pricing_type === 'HOURLY' ? 'heures' : booking?.pricing_type === 'DAILY' ? 'jours' : 'unites'})
+              {t('gestion.bookings.quantity')} ({formatNumberNoTrailingZeros(booking?.units_count || 0)} {booking?.pricing_type === 'HOURLY' ? t('gestion.bookings.hours') : booking?.pricing_type === 'DAILY' ? t('gestion.bookings.days') : t('gestion.bookings.units')})
             </Text>
             <Text style={[styles.priceValue, { color: colors.textPrimary }]}>
               {booking ? formatPrice(booking.subtotal) : '-'}
@@ -433,7 +435,7 @@ export default function BookingDetailsScreen() {
           </View>
 
           <View style={[styles.priceRow, styles.totalRow, { borderTopColor: colors.gray200 }]}>
-            <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>Total</Text>
+            <Text style={[styles.totalLabel, { color: colors.textPrimary }]}>{t('gestion.bookings.total')}</Text>
             <Text style={[styles.totalValue, { color: colors.primary }]}>
               {booking ? formatPrice(booking.total_amount) : '-'}
             </Text>
@@ -443,7 +445,7 @@ export default function BookingDetailsScreen() {
         {/* Status */}
         {booking?.status && (
           <View style={[styles.section, { borderColor: colors.gray200 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Statut de la reservation</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.bookings.statusTitle')}</Text>
 
             <View style={[styles.currentStatusDisplay, { backgroundColor: withOpacity(STATUS_FLOW[booking.status]?.color || colors.warning, OPACITY[10]) }]}>
               {(() => {
@@ -452,12 +454,12 @@ export default function BookingDetailsScreen() {
                 return <StatusIcon size={20} color={STATUS_FLOW[booking.status]?.color || colors.warning} strokeWidth={ICON.strokeWidth} />;
               })()}
               <Text style={[styles.currentStatusDisplayText, { color: STATUS_FLOW[booking.status]?.color || colors.warning }]}>
-                {STATUS_FLOW[booking.status]?.label || booking.status}
+                {STATUS_FLOW[booking.status] ? t(STATUS_FLOW[booking.status].label) : booking.status}
               </Text>
             </View>
 
             <Button
-              title="Changer le statut"
+              title={t('gestion.bookings.changeStatus')}
               onPress={() => setShowStatusPicker(!showStatusPicker)}
               variant="secondary"
               iconPosition="right"
@@ -485,17 +487,17 @@ export default function BookingDetailsScreen() {
                         style={[styles.statusOption, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}
                         onPress={() => handleUpdateStatus(status)}
                         selected={false}
-                        accessibilityLabel={`Définir statut ${flow.label}`}
+                        accessibilityLabel={t('gestion.bookings.setStatus', { status: t(flow.label) })}
                       >
                         <View style={[styles.statusOptionIcon, { backgroundColor: withOpacity(config.color, OPACITY[15]) }]}>
                           <Icon size={16} color={config.color} strokeWidth={ICON.strokeWidth} />
                         </View>
                         <View style={styles.statusOptionInfo}>
                           <Text style={[styles.statusOptionLabel, { color: colors.textPrimary }]}>
-                            {flow.label}
+                            {t(flow.label)}
                           </Text>
                           <Text style={[styles.statusOptionDesc, { color: colors.gray500 }]}>
-                            {flow.description}
+                            {t(flow.description)}
                           </Text>
                         </View>
                       </SelectCard>
@@ -509,7 +511,7 @@ export default function BookingDetailsScreen() {
         {/* Special Requests */}
         {booking?.special_requests && (
           <View style={[styles.section, { borderColor: colors.gray200 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Demandes speciales</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.bookings.specialRequests')}</Text>
             <Text style={[styles.specialRequestsText, { color: colors.textSecondary }]}>
               {booking.special_requests}
             </Text>
@@ -519,7 +521,7 @@ export default function BookingDetailsScreen() {
         {/* Purpose */}
         {booking?.purpose && (
           <View style={[styles.section, { borderColor: colors.gray200 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Objet de la reservation</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.bookings.purpose')}</Text>
             <Text style={[styles.specialRequestsText, { color: colors.textSecondary }]}>
               {booking.purpose}
             </Text>
@@ -528,7 +530,7 @@ export default function BookingDetailsScreen() {
 
         {/* Delete button */}
         <Button
-          title="Supprimer cette reservation"
+          title={t('gestion.bookings.deleteThisBooking')}
           onPress={handleDeleteBooking}
           variant="outline"
           fullWidth
@@ -555,7 +557,7 @@ export default function BookingDetailsScreen() {
     const talentName = talent?.display_name ||
       (talent?.first_name && talent?.last_name
         ? `${talent.first_name} ${talent.last_name}`
-        : 'Client');
+        : t('gestion.bookings.client'));
 
     return (
       <View style={styles.messagesContainer}>
@@ -578,10 +580,10 @@ export default function BookingDetailsScreen() {
             <View style={styles.noMessages}>
               <MessageCircle size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.noMessagesTitle, { color: colors.textPrimary }]}>
-                Pas encore de messages
+                {t('gestion.bookings.noMessages')}
               </Text>
               <Text style={[styles.noMessagesText, { color: colors.gray500 }]}>
-                Envoyez un message au client pour demarrer la conversation.
+                {t('gestion.bookings.noMessagesHint')}
               </Text>
             </View>
           ) : (
@@ -604,7 +606,7 @@ export default function BookingDetailsScreen() {
         <ChatInput
           onSend={handleSendMessage}
           isSending={isSending}
-          placeholder="Ecrivez votre message..."
+          placeholder={t('gestion.bookings.messagePlaceholder')}
           showDatetimeOption={true}
         />
       </View>
@@ -615,7 +617,7 @@ export default function BookingDetailsScreen() {
     <View style={styles.tabContent}>
         <View style={[styles.notesCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
           <View style={styles.notesHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Notes internes</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.internalNotes')}</Text>
             <IconButton
               onPress={() => isEditingNotes ? handleSaveNotes() : setIsEditingNotes(true)}
               size="sm"
@@ -624,11 +626,11 @@ export default function BookingDetailsScreen() {
                   ? <Save size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                   : <SquarePen size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
               }
-              accessibilityLabel={isEditingNotes ? 'Enregistrer' : 'Modifier'}
+              accessibilityLabel={isEditingNotes ? t('common.save') : t('common.edit')}
             />
           </View>
           <Input
-            placeholder="Ajoutez des notes internes sur cette reservation..."
+            placeholder={t('gestion.bookings.notesPlaceholder')}
             placeholderTextColor={colors.gray400}
           value={internalNotes}
           onChangeText={setInternalNotes}
@@ -649,7 +651,7 @@ export default function BookingDetailsScreen() {
           }}
         />
         <Text style={[styles.notesHint, { color: colors.gray400 }]}>
-          Ces notes sont visibles uniquement par votre equipe.
+          {t('gestion.bookings.notesHint')}
         </Text>
       </View>
     </View>
@@ -667,7 +669,7 @@ export default function BookingDetailsScreen() {
     return (
       <SafeAreaView style={[styles.errorContainer, { backgroundColor: colors.background }]}>
         <Text style={[styles.errorText, { color: colors.textPrimary }]}>
-          Reservation non trouvee
+          {t('gestion.bookings.notFound')}
         </Text>
       </SafeAreaView>
     );
@@ -683,13 +685,13 @@ export default function BookingDetailsScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
         <View style={styles.headerContent}>
           <View style={[styles.statusBadge, { backgroundColor: withOpacity(statusConfig.color, OPACITY[15]) }]}>
             <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {STATUS_FLOW[booking.status]?.label || booking.status}
+              {STATUS_FLOW[booking.status] ? t(STATUS_FLOW[booking.status].label) : booking.status}
             </Text>
           </View>
         </View>
@@ -698,9 +700,9 @@ export default function BookingDetailsScreen() {
 
       {/* Tabs */}
       <View style={[styles.tabsContainer, { borderBottomColor: colors.gray200 }]}>
-        {renderTab('profile', 'Profil')}
-        {renderTab('messages', 'Messages')}
-        {renderTab('notes', 'Notes')}
+        {renderTab('profile', t('gestion.memberDetails.tabProfile'))}
+        {renderTab('messages', t('gestion.memberDetails.tabMessages'))}
+        {renderTab('notes', t('gestion.memberDetails.tabNotes'))}
       </View>
 
       {/* Content */}

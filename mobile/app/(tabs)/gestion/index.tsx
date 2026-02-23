@@ -99,7 +99,7 @@ export default function GestionScreen() {
     community: { bg: colors.cardCommunity, icon: colors.cardCommunityAccent, text: colors.cardCommunityText },
     space: { bg: colors.cardSpace, icon: colors.cardSpaceAccent, text: colors.cardSpaceText },
   };
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { selectedOrg, isOrganizationSpace } = useSpace();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -126,9 +126,9 @@ export default function GestionScreen() {
   // Get greeting based on time of day
   const getGreeting = (): { text: string; icon: typeof Sun } => {
     const hour = new Date().getHours();
-    if (hour < 12) return { text: 'Bonjour', icon: Sun };
-    if (hour < 18) return { text: 'Bon après-midi', icon: CloudSun };
-    return { text: 'Bonsoir', icon: Moon };
+    if (hour < 12) return { text: t('screens.gestion.greeting'), icon: Sun };
+    if (hour < 18) return { text: t('screens.gestion.goodAfternoon'), icon: CloudSun };
+    return { text: t('screens.gestion.goodEvening'), icon: Moon };
   };
 
   // Format relative date
@@ -140,10 +140,10 @@ export default function GestionScreen() {
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffHours < 1) return 'À l\'instant';
-    if (diffHours < 24) return `Il y a ${diffHours}h`;
-    if (diffDays === 1) return 'Hier';
-    return `Il y a ${diffDays}j`;
+    if (diffHours < 1) return t('common.time.justNow');
+    if (diffHours < 24) return t('common.time.hours', { count: diffHours });
+    if (diffDays === 1) return t('screens.gestion.yesterday');
+    return t('common.time.days', { count: diffDays });
   };
 
   // Load organization data
@@ -199,8 +199,8 @@ export default function GestionScreen() {
           activities.push({
             id: `opp-${opp.id}`,
             type: 'application',
-            title: 'Nouvelle candidature',
-            message: `${formatNumberNoTrailingZeros(opp.applications_count, 0)} candidature(s) pour "${opp.title}"`,
+            title: t('screens.gestion.newApplication'),
+            message: t('screens.gestion.applicationCount', { count: formatNumberNoTrailingZeros(opp.applications_count, 0), title: opp.title }),
             time: formatRelativeDate(opp.updated_at || opp.created_at),
           });
         }
@@ -210,8 +210,8 @@ export default function GestionScreen() {
         activities.push({
           id: `comm-${comm.id}`,
           type: 'community',
-          title: 'Communauté active',
-          message: `${formatNumberNoTrailingZeros(comm.members_count || 0, 0)} membres dans "${comm.name}"`,
+          title: t('screens.gestion.activeCommunity'),
+          message: t('screens.gestion.memberCount', { count: formatNumberNoTrailingZeros(comm.members_count || 0, 0), name: comm.name }),
           time: formatRelativeDate(comm.updated_at || comm.created_at),
         });
       });
@@ -254,13 +254,13 @@ export default function GestionScreen() {
     const now = Date.now();
     const diff = now - new Date(dateStr).getTime();
     const min = Math.floor(diff / 60000);
-    if (min < 1) return "À l'instant";
-    if (min < 60) return `${min} min`;
+    if (min < 1) return t('common.time.justNow');
+    if (min < 60) return t('common.time.minutes', { count: min });
     const h = Math.floor(min / 60);
-    if (h < 24) return `${h}h`;
+    if (h < 24) return t('common.time.hours', { count: h });
     const d = Math.floor(h / 24);
-    if (d < 7) return `${d}j`;
-    return `${Math.floor(d / 7)} sem.`;
+    if (d < 7) return t('common.time.days', { count: d });
+    return t('common.time.weeks', { count: Math.floor(d / 7) });
   };
 
   const getNotificationIcon = (type: string) => {
@@ -289,7 +289,7 @@ export default function GestionScreen() {
   const OBJECTIVE_TRUNCATE_LENGTH = 200;
   const getDisplayedObjective = (): string => {
     if (!dailyObjective?.objective) {
-      return 'Publiez une opportunité, créez une communauté ou ajoutez un espace pour commencer à attirer des talents.';
+      return t('screens.gestion.defaultObjective');
     }
     if (isObjectiveExpanded || dailyObjective.objective.length <= OBJECTIVE_TRUNCATE_LENGTH) {
       return dailyObjective.objective;
@@ -339,7 +339,7 @@ export default function GestionScreen() {
   const quickActions = [
     {
       id: 'talents',
-      label: 'Talents',
+      label: t('screens.gestion.talents'),
       icon: Gem,
       route: '/gestion/talents',
       count: stats.talents,
@@ -347,7 +347,7 @@ export default function GestionScreen() {
     },
     {
       id: 'documents',
-      label: 'Documents',
+      label: t('screens.gestion.documents'),
       icon: FolderOpen,
       route: '/gestion/documents',
       count: stats.documents,
@@ -355,7 +355,7 @@ export default function GestionScreen() {
     },
     {
       id: 'communities',
-      label: 'Communautés',
+      label: t('screens.gestion.communities'),
       icon: Users,
       route: '/gestion/communities',
       count: stats.communities,
@@ -363,7 +363,7 @@ export default function GestionScreen() {
     },
     {
       id: 'spaces',
-      label: 'Espaces',
+      label: t('screens.gestion.spaces'),
       icon: MapPin,
       route: '/gestion/spaces',
       count: stats.spaces,
@@ -371,7 +371,7 @@ export default function GestionScreen() {
     },
     {
       id: 'opportunities',
-      label: 'Opportunités',
+      label: t('screens.gestion.opportunities'),
       icon: Briefcase,
       route: '/gestion/opportunities',
       count: stats.opportunities,
@@ -379,7 +379,7 @@ export default function GestionScreen() {
     },
     {
       id: 'organization',
-      label: 'Mon organisation',
+      label: t('screens.gestion.myOrganization'),
       icon: Building2,
       route: `/details/organization/${selectedOrg?.id}`,
       count: undefined,
@@ -488,7 +488,7 @@ export default function GestionScreen() {
                 {greeting.text}, {selectedOrg.name} 👋
               </Text>
               <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-                {new Date().toLocaleDateString('fr-FR', {
+                {new Date().toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long'
@@ -502,16 +502,16 @@ export default function GestionScreen() {
                 style={[styles.creditBanner, { backgroundColor: colors.surface, borderWidth: 0, borderColor: 'transparent' }]}
                 onPress={() => router.push('/settings/credits' as any)}
                 selected={false}
-                accessibilityLabel="Ouvrir crédits et facturation"
+                accessibilityLabel={t('screens.gestion.openCredits')}
               >
                 <View style={styles.creditBannerLeft}>
                   <Coins size={16} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
                   <Text style={[styles.creditBannerText, { color: colors.textPrimary }]}>
-                    {creditBalance} crédits
+                    {t('screens.gestion.credits', { count: creditBalance })}
                   </Text>
                 </View>
                 <Text style={[styles.creditBannerLink, { color: colors.primary }]}>
-                  Recharger
+                  {t('screens.gestion.recharge')}
                 </Text>
               </SelectCard>
             )}
@@ -520,7 +520,7 @@ export default function GestionScreen() {
             <View style={[styles.insightContainer, { backgroundColor: CARD_THEMES.space.bg }]}>
               <View style={styles.insightHeader}>
                 <Target size={16} color={CARD_THEMES.space.icon} strokeWidth={ICON.strokeWidth} />
-                <Text style={[styles.insightLabel, { color: CARD_THEMES.space.text }]}>Objectif du jour</Text>
+                <Text style={[styles.insightLabel, { color: CARD_THEMES.space.text }]}>{t('screens.home.dailyObjective')}</Text>
               </View>
               <Text style={[styles.insightText, { color: colors.textPrimary }]}>
                 {getDisplayedObjective()}
@@ -529,7 +529,7 @@ export default function GestionScreen() {
                     style={[styles.seeMoreLink, { color: colors.primary }]}
                     onPress={() => setIsObjectiveExpanded(true)}
                   >
-                    {' '}Voir plus
+                    {' '}{t('screens.gestion.seeMore')}
                   </Text>
                 )}
               </Text>
@@ -538,7 +538,7 @@ export default function GestionScreen() {
             {/* Quick Actions Grid */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Accès rapide</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('screens.gestion.quickAccess')}</Text>
               </View>
               <View style={styles.quickActionsGrid}>
                 {quickActions.map((action) => {
@@ -570,7 +570,7 @@ export default function GestionScreen() {
 
             {/* Action Button */}
             <Button
-              title="Créer une offre"
+              title={t('screens.gestion.createOffer')}
               onPress={() => setShowCreateModal(true)}
               variant="primary"
               fullWidth
@@ -583,10 +583,10 @@ export default function GestionScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <View style={styles.sectionTitleRow}>
-                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Notifications</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('screens.gestion.notifications')}</Text>
                 </View>
                 <Button
-                  title="Voir tout"
+                  title={t('screens.gestion.seeAll')}
                   onPress={() => router.push('/settings/notifications')}
                   variant="ghost"
                   size="sm"
@@ -600,10 +600,10 @@ export default function GestionScreen() {
                   <View style={styles.emptyStateSmall}>
                     <Bell size={40} color={colors.gray300} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
-                      Aucune notification
+                      {t('screens.gestion.noNotifications')}
                     </Text>
                     <Text style={[styles.emptyStateSubtext, { color: colors.gray400 }]}>
-                      Vous êtes à jour !
+                      {t('screens.gestion.upToDate')}
                     </Text>
                   </View>
                 ) : (
@@ -652,7 +652,7 @@ export default function GestionScreen() {
                   <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('ecosystem.agenda')}</Text>
                 </View>
                 <Button
-                  title="Voir tout"
+                  title={t('screens.gestion.seeAll')}
                   onPress={() => router.push('/settings/calendar' as any)}
                   variant="ghost"
                   size="sm"
@@ -677,10 +677,10 @@ export default function GestionScreen() {
                   </View>
                   <View style={styles.listItemContent}>
                     <Text style={[styles.listItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                      Voir l'agenda
+                      {t('screens.gestion.viewAgenda')}
                     </Text>
                     <Text style={[styles.listItemSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-                      Candidatures, réservations, événements et relances
+                      {t('screens.gestion.agendaSubtitle')}
                     </Text>
                   </View>
                   <ChevronRight size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />

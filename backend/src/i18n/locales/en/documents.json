@@ -12,11 +12,12 @@
   "uploadSuccess": "Document uploaded successfully. Processing in progress.",
   "uploadMultipleSuccess": "{{count}} documents uploaded successfully. Processing in progress.",
   "uploadError": "Error uploading document",
-  "updateSuccess": "Document updated",
+  "updateSuccess": "Document updated successfully",
   "updateError": "Error updating document",
-  "deleteSuccess": "Document deleted",
+  "deleteSuccess": "Document deleted successfully",
   "deleteError": "Error deleting document",
   "retrySuccess": "New extraction attempt launched",
   "retryError": "Error during extraction attempt",
-  "fileTooLarge": "File too large. Maximum: {{size}}MB"
+  "fileTooLarge": "File too large. Maximum: {{size}}MB",
+  "fileTypeNotAllowed": "File type not allowed: {{mimetype}}"
 }

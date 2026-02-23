@@ -276,7 +276,7 @@ export function ChatMessage({
               </Text>
             )}
             <Text style={[styles.datetimeText, { color: isMe ? colors.textOnPrimary : colors.primary }]}>
-              {formatDate(proposedDatetime)} à {formatTime(proposedDatetime)}
+              {formatDate(proposedDatetime)}{t('calendar.at')}{formatTime(proposedDatetime)}
             </Text>
           </View>
           <Plus

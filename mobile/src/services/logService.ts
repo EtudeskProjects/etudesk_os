@@ -18,6 +18,7 @@ import {
   ErrorCode,
   ErrorCodes,
 } from '../types/errors';
+import i18n from '../i18n';
 
 // Configuration
 const CONFIG = {
@@ -143,16 +144,16 @@ function createAppError(
  */
 function getDefaultUserMessage(code: ErrorCode): string {
   const messages: Record<string, string> = {
-    [ErrorCodes.NETWORK_ERROR]: 'Problème de connexion. Vérifiez votre connexion internet.',
-    [ErrorCodes.TIMEOUT]: 'La requête a pris trop de temps. Réessayez.',
-    [ErrorCodes.NO_CONNECTION]: 'Pas de connexion internet.',
-    [ErrorCodes.UNAUTHORIZED]: 'Session expirée. Veuillez vous reconnecter.',
-    [ErrorCodes.SESSION_EXPIRED]: 'Votre session a expiré. Veuillez vous reconnecter.',
-    [ErrorCodes.SERVER_ERROR]: 'Erreur serveur. Réessayez plus tard.',
-    [ErrorCodes.NOT_FOUND]: 'Ressource introuvable.',
-    [ErrorCodes.VALIDATION_ERROR]: 'Données invalides. Vérifiez vos informations.',
-    [ErrorCodes.PERMISSION_DENIED]: 'Permission refusée.',
-    [ErrorCodes.UNKNOWN_ERROR]: 'Une erreur inattendue s\'est produite.',
+    [ErrorCodes.NETWORK_ERROR]: i18n.t('errors.networkError'),
+    [ErrorCodes.TIMEOUT]: i18n.t('errors.timeout'),
+    [ErrorCodes.NO_CONNECTION]: i18n.t('errors.noConnection'),
+    [ErrorCodes.UNAUTHORIZED]: i18n.t('errors.sessionExpired'),
+    [ErrorCodes.SESSION_EXPIRED]: i18n.t('errors.sessionExpiredAlt'),
+    [ErrorCodes.SERVER_ERROR]: i18n.t('errors.serverError'),
+    [ErrorCodes.NOT_FOUND]: i18n.t('errors.resourceNotFound'),
+    [ErrorCodes.VALIDATION_ERROR]: i18n.t('errors.validationError'),
+    [ErrorCodes.PERMISSION_DENIED]: i18n.t('errors.permissionDenied'),
+    [ErrorCodes.UNKNOWN_ERROR]: i18n.t('errors.unknownError'),
   };
   return messages[code] || messages[ErrorCodes.UNKNOWN_ERROR];
 }

@@ -31,7 +31,7 @@ import { getFullImageUrl } from '../../../src/utils/image';
 import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import type { Community, CommunityMemberPreview } from '../../../src/types/models';
 import {
-  ORGANIZATION_TYPE_LABELS,
+  getOrganizationTypeLabel,
 } from '../../../src/types/models';
 import { communityService, bookmarkService, MembershipStatus } from '../../../src/services';
 import { useAlert } from '../../../src/contexts/AlertContext';
@@ -230,7 +230,7 @@ export default function CommunityDetailScreen() {
 	        <IconButton
 	          onPress={() => router.back()}
 	          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	          accessibilityLabel="Retour"
+	          accessibilityLabel={t('common.back')}
 	          variant="filled"
 	          style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
 	        />
@@ -238,7 +238,7 @@ export default function CommunityDetailScreen() {
 	          <IconButton
 	            onPress={() => {}}
 	            icon={<Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	            accessibilityLabel="Partager"
+	            accessibilityLabel={t('common.share')}
 	            variant="filled"
 	            disabled
 	            style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
@@ -252,7 +252,7 @@ export default function CommunityDetailScreen() {
 		                <Bookmark size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
 		              )
 		            }
-		            accessibilityLabel={isBookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+		            accessibilityLabel={isBookmarked ? t('common.removeFromFavorites') : t('common.addToFavorites')}
 		            variant="filled"
 		            style={[
 		              styles.headerButton,
@@ -287,7 +287,7 @@ export default function CommunityDetailScreen() {
           {/* Organization Card */}
 	          {community.organization?.id && (
 	            <SelectCard
-	              accessibilityLabel="Voir l'organisation"
+	              accessibilityLabel={t('common.viewOrganization', { name: community.organization.name })}
 	              style={[styles.orgCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
 	              onPress={() => router.push(`/details/organization/${community.organization!.id}`)}
 	            >
@@ -313,7 +313,7 @@ export default function CommunityDetailScreen() {
                   {community.organization.type && (
                     <View style={[styles.orgTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                       <Text style={[styles.orgTagText, { color: colors.primary }]}>
-                        {ORGANIZATION_TYPE_LABELS[community.organization.type] || community.organization.type}
+                        {getOrganizationTypeLabel(community.organization.type) || community.organization.type}
                       </Text>
                     </View>
                   )}
@@ -642,7 +642,7 @@ export default function CommunityDetailScreen() {
         actions={[
           {
             icon: <BarChart2 size={24} color={colors.textOnPrimary} />,
-            label: 'Sondage',
+            label: t('myCommunities.activityTypes.poll'),
             onPress: () => {
               router.push(`/details/community/${id}/create-poll`);
             },
@@ -650,7 +650,7 @@ export default function CommunityDetailScreen() {
           },
           {
             icon: <Calendar size={24} color={colors.textOnPrimary} />,
-            label: 'Événement',
+            label: t('myCommunities.activityTypes.event'),
             onPress: () => {
               router.push(`/details/community/${id}/create-event`);
             },
@@ -658,7 +658,7 @@ export default function CommunityDetailScreen() {
           },
           {
             icon: <PenSquare size={24} color={colors.textOnPrimary} />,
-            label: 'Publication',
+            label: t('myCommunities.activityTypes.post'),
             onPress: () => {
               router.push(`/details/community/${id}/create-post`);
             },

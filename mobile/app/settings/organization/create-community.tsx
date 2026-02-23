@@ -41,22 +41,23 @@ import { useTheme } from '../../../src/hooks/useTheme';
 import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
 import {
-  COMMUNITY_TYPE_DATA,
-  VISIBILITY_DATA,
-  COMMUNITY_TAG_DATA,
+  getCommunityTypeData,
+  getVisibilityData,
+  getCommunityTagData,
   MAX_COMMUNITY_TAGS,
   MAX_MEMBERSHIP_QUESTIONS,
 } from '../../../src/constants/community';
 import {
   CommunityType,
   Visibility,
-  COMMUNITY_TYPE_LABELS,
-  VISIBILITY_LABELS,
+  getCommunityTypeLabel,
+  getVisibilityLabel,
   ApplicationQuestion,
 } from '../../../src/types/models';
 import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../../src/constants/talent';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAlert } from '../../../src/contexts/AlertContext';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { ScrollToInputContext } from '../../../src/contexts/ScrollToInputContext';
 import { FormTextArea } from '../../../src/components/forms/FormTextArea';
 import { communityService, CreateCommunityData, imageService, organizationService, MemberPermissions, DEFAULT_MEMBER_PERMISSIONS } from '../../../src/services';
@@ -66,11 +67,11 @@ type Step = 'info' | 'lieu' | 'conditions' | 'media' | 'preview';
 const STEPS: Step[] = ['info', 'lieu', 'conditions', 'media', 'preview'];
 
 const STEP_TITLES: Record<Step, string> = {
-  info: 'Infos',
-  lieu: 'Lieu',
-  conditions: 'Conditions',
-  media: 'Media',
-  preview: 'Aperçu',
+  info: 'community.form.steps.info',
+  lieu: 'community.form.steps.location',
+  conditions: 'community.form.steps.conditions',
+  media: 'community.form.steps.media',
+  preview: 'community.form.steps.preview',
 };
 
 // Constants for limits
@@ -113,10 +114,17 @@ const LOCATION_TYPE_ICONS: Record<CommunityType, React.ComponentType<any>> = {
 export default function CreateCommunityScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { selectedOrgId, selectedOrg } = useSpace();
   const alerts = useAlert();
   const { showToast } = useToast();
+
+  // Resolve getter data once per render
+  const COMMUNITY_TYPE_DATA = getCommunityTypeData();
+  const VISIBILITY_DATA = getVisibilityData();
+  const COMMUNITY_TAG_DATA = getCommunityTagData();
+
   const [currentStep, setCurrentStep] = useState<Step>('info');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -220,7 +228,7 @@ export default function CreateCommunityScreen() {
 
   const pickImage = async () => {
     if (images.length >= MAX_IMAGES) {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_IMAGES} images.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('community.form.maxImages', { count: MAX_IMAGES }) });
       return;
     }
 
@@ -234,7 +242,7 @@ export default function CreateCommunityScreen() {
         form.setValue('images', [...images, newImage]);
       }
     } catch (error) {
-      showToast({ type: 'error', title: 'Erreur', message: 'Une erreur est survenue lors de la sélection de l\'image.' });
+      showToast({ type: 'error', title: t('common.error'), message: t('community.form.imageSelectionError') });
     }
   };
 
@@ -249,7 +257,7 @@ export default function CreateCommunityScreen() {
     } else if (selectedTags.length < MAX_COMMUNITY_TAGS) {
       form.setValue('selectedTags', [...selectedTags, tagId]);
     } else {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez sélectionner au maximum ${MAX_COMMUNITY_TAGS} tags.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('community.form.maxTags', { count: MAX_COMMUNITY_TAGS }) });
     }
   };
 
@@ -259,7 +267,7 @@ export default function CreateCommunityScreen() {
     } else if (selectedSectors.length < MAX_SECTORS) {
       form.setValue('selectedSectors', [...selectedSectors, sectorId]);
     } else {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('community.form.maxSectors', { count: MAX_SECTORS }) });
     }
   };
 
@@ -336,7 +344,7 @@ export default function CreateCommunityScreen() {
     } catch (error: any) {
       const duration = Date.now() - startTime;
       if (__DEV__) console.error(`[CreateCommunity] AI Generation - Failed after ${duration}ms:`, error);
-      showToast({ type: 'error', title: 'Erreur de génération', message: error?.error || 'Une erreur est survenue lors de la génération.' });
+      showToast({ type: 'error', title: t('common.generationErrorTitle'), message: error?.error || t('common.generationError') });
     } finally {
       setIsGenerating(false);
     }
@@ -345,7 +353,7 @@ export default function CreateCommunityScreen() {
   // Question handlers
   const addQuestion = () => {
     if (applicationQuestions.length >= MAX_QUESTIONS) {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('community.form.maxQuestions', { count: MAX_QUESTIONS }) });
       return;
     }
     const newQuestion: ApplicationQuestion = {
@@ -400,7 +408,7 @@ export default function CreateCommunityScreen() {
         uploadedImageUrls.push(uploaded.url);
       } catch (error) {
         if (__DEV__) console.error('[CreateCommunity] Error uploading image:', error);
-        await alerts.error('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
+        await alerts.error(t('common.error'), t('community.form.uploadImageError'));
         return null;
       }
     }
@@ -443,12 +451,12 @@ export default function CreateCommunityScreen() {
       await communityService.saveDraft(data);
       await alerts.showAlert({
         type: 'success',
-        title: 'Brouillon enregistré',
-        message: 'La communauté a été enregistrée comme brouillon.',
+        title: t('common.draftSaved'),
+        message: t('common.draftSavedMessage'),
         buttons: [{ text: 'OK', onPress: () => router.back() }],
       });
     } catch (error: any) {
-      await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de l\'enregistrement.');
+      await alerts.error(t('common.error'), error.error || t('common.saveError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -470,13 +478,13 @@ export default function CreateCommunityScreen() {
       await communityService.create(data);
       await alerts.showAlert({
         type: 'success',
-        title: 'Communauté créée',
-        message: `"${name}" a été créée avec succès !`,
+        title: t('community.form.createdTitle'),
+        message: t('community.form.createdMessage', { name }),
         buttons: [{ text: 'OK', onPress: () => router.back() }],
       });
     } catch (error: any) {
       if (__DEV__) console.error('[CreateCommunity] handlePublish - Error:', error);
-      await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de la création.');
+      await alerts.error(t('common.error'), error.error || t('community.form.createError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -501,16 +509,19 @@ export default function CreateCommunityScreen() {
   };
 
   const getSectorsLabel = (ids: Sector[]) => {
-    if (ids.length === 0) return 'Non défini';
+    if (ids.length === 0) return t('community.form.notDefined');
     return ids
-      .map((id) => SECTOR_DATA.find((s) => s.id === id)?.label || id)
+      .map((id) => {
+        const sector = SECTOR_DATA.find((s) => s.id === id);
+        return sector ? t(sector.labelKey) : id;
+      })
       .join(', ');
   };
 
   const renderStepIndicator = () => {
     const stepsData = STEPS.map(step => ({
       id: step,
-      label: STEP_TITLES[step],
+      label: t(STEP_TITLES[step]),
     }));
     return <StepIndicator steps={stepsData} currentStepId={currentStep} />;
   };
@@ -519,17 +530,17 @@ export default function CreateCommunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <Users size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Informations de base</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('community.form.baseInfoTitle')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Décrivez votre communauté
+          {t('community.form.describeCommunity')}
         </Text>
       </View>
 
       <View style={styles.formFields}>
         {/* Nom */}
         <Input
-          label="Nom de la communauté *"
-          placeholder="Ex: Développeurs Abidjan"
+          label={t('community.form.nameLabel')}
+          placeholder={t('community.form.namePlaceholder')}
           value={name}
           onChangeText={(value) => form.setValue('name', value)}
           autoCapitalize="words"
@@ -538,7 +549,7 @@ export default function CreateCommunityScreen() {
         {/* Tags (replaces Categories) */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Tags ({selectedTags.length}/{MAX_COMMUNITY_TAGS})
+            {t('community.tags')} ({selectedTags.length}/{MAX_COMMUNITY_TAGS})
           </Text>
           <View style={styles.tagsContainer}>
             {COMMUNITY_TAG_DATA.map((tag) => {
@@ -562,7 +573,7 @@ export default function CreateCommunityScreen() {
         {canGenerate && (
           <View style={styles.generateButtonContainer}>
             <Button
-              title={isGenerating ? 'Suggestion...' : 'Suggérer'}
+              title={isGenerating ? t('community.form.suggesting') : t('community.form.suggest')}
               onPress={handleGenerate}
               loading={isGenerating}
               disabled={isGenerating}
@@ -576,7 +587,7 @@ export default function CreateCommunityScreen() {
         {/* Secteurs d'activité - Multi-selection (5 max) */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Secteurs d'activité ({selectedSectors.length}/{MAX_SECTORS})
+            {t('community.industries')} ({selectedSectors.length}/{MAX_SECTORS})
           </Text>
           <View style={styles.tagsContainer}>
             {SECTOR_DATA.slice(0, 15).map((sector) => {
@@ -584,7 +595,7 @@ export default function CreateCommunityScreen() {
               return (
                 <Chip
                   key={sector.id}
-                  label={sector.label}
+                  label={t(sector.labelKey)}
                   selected={isSelected}
                   leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   onPress={() => toggleSector(sector.id)}
@@ -598,8 +609,8 @@ export default function CreateCommunityScreen() {
 
         {/* Description */}
         <FormTextArea
-          label="Description"
-          placeholder="Décrivez votre communauté, ses objectifs et sa mission..."
+          label={t('opportunity.description')}
+          placeholder={t('community.form.descriptionPlaceholder')}
           value={description}
           onChangeText={(value) => form.setValue('description', value)}
           rows={4}
@@ -613,16 +624,16 @@ export default function CreateCommunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <MapPin size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Localisation</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('community.form.steps.location')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Où se déroulera la communauté ?
+          {t('community.form.locationDescription')}
         </Text>
       </View>
 
       <View style={styles.formFields}>
         {/* Mode de travail - 2 options horizontales avec icônes */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Type de communauté *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('community.form.communityTypeLabel')}</Text>
           <View style={styles.locationTypeRow}>
             {COMMUNITY_TYPE_DATA.map((type) => {
               const isSelected = communityType === type.id;
@@ -660,7 +671,7 @@ export default function CreateCommunityScreen() {
           <>
             {/* Pays */}
             <View style={styles.fieldContainer}>
-              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Pays *</Text>
+              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.country')} *</Text>
               <ScrollView
                 ref={countryScrollRef}
                 horizontal
@@ -701,7 +712,7 @@ export default function CreateCommunityScreen() {
             {/* Région */}
             {availableRegions.length > 0 && (
               <View style={styles.fieldContainer}>
-                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Région</Text>
+                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.region')}</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -741,7 +752,7 @@ export default function CreateCommunityScreen() {
             {/* Ville */}
             {availableCities.length > 0 && (
               <View style={styles.fieldContainer}>
-                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Ville</Text>
+                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.city')}</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -782,16 +793,16 @@ export default function CreateCommunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <FileText size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Conditions</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('community.form.steps.conditions')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Visibilité, tarification, règles et questions
+          {t('community.form.conditionsDescription')}
         </Text>
       </View>
 
       <View style={styles.formFields}>
         {/* Visibilité - 2 options horizontales avec icônes */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Visibilité *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('community.form.visibilityLabel')}</Text>
           <View style={styles.locationTypeRow}>
             {VISIBILITY_DATA.map((type) => {
               const isSelected = visibility === type.id;
@@ -828,8 +839,8 @@ export default function CreateCommunityScreen() {
 
         {/* Règles */}
         <FormTextArea
-          label="Règles de la communauté"
-          placeholder={'Ex: 1. Respectez les autres membres\n2. Pas de spam\n3. Restez courtois...'}
+          label={t('community.form.rulesLabel')}
+          placeholder={t('community.form.rulesPlaceholder')}
           value={rules}
           onChangeText={(value) => form.setValue('rules', value)}
           rows={5}
@@ -842,11 +853,11 @@ export default function CreateCommunityScreen() {
         <View style={styles.fieldContainer}>
           <View style={styles.permissionSectionHeader}>
             <Text style={[styles.fieldLabel, { color: colors.gray700, marginBottom: 0 }]}>
-              Permissions des membres
+              {t('community.form.memberPermissions')}
             </Text>
           </View>
           <Text style={[styles.fieldHint, { color: colors.gray500, marginTop: SPACING.xs }]}>
-            Définissez ce que les nouveaux membres peuvent faire par défaut (personnalisable par membre)
+            {t('community.form.memberPermissionsHint')}
           </Text>
 
           <View style={[styles.permissionsContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
@@ -858,10 +869,10 @@ export default function CreateCommunityScreen() {
                 </View>
                 <View>
                   <Text style={[styles.permissionLabel, { color: colors.textPrimary }]}>
-                    Créer des publications
+                    {t('community.form.canCreatePosts')}
                   </Text>
                   <Text style={[styles.permissionDesc, { color: colors.gray500 }]}>
-                    Peut publier du contenu
+                    {t('community.form.canPublishContent')}
                   </Text>
                 </View>
               </View>
@@ -879,10 +890,10 @@ export default function CreateCommunityScreen() {
                 </View>
                 <View>
                   <Text style={[styles.permissionLabel, { color: colors.textPrimary }]}>
-                    Créer des événements
+                    {t('community.form.canCreateEvents')}
                   </Text>
                   <Text style={[styles.permissionDesc, { color: colors.gray500 }]}>
-                    Peut organiser des événements
+                    {t('community.form.canOrganizeEvents')}
                   </Text>
                 </View>
               </View>
@@ -900,10 +911,10 @@ export default function CreateCommunityScreen() {
                 </View>
                 <View>
                   <Text style={[styles.permissionLabel, { color: colors.textPrimary }]}>
-                    Créer des sondages
+                    {t('community.form.canCreatePolls')}
                   </Text>
                   <Text style={[styles.permissionDesc, { color: colors.gray500 }]}>
-                    Peut lancer des sondages
+                    {t('community.form.canLaunchPolls')}
                   </Text>
                 </View>
               </View>
@@ -915,7 +926,7 @@ export default function CreateCommunityScreen() {
           </View>
 
           <Text style={[styles.fieldHint, { color: colors.gray400, marginTop: SPACING.xs, fontStyle: 'italic' }]}>
-            Les administrateurs ont toujours toutes les permissions.
+            {t('community.form.adminsHaveAllPermissions')}
           </Text>
         </View>
 
@@ -924,10 +935,10 @@ export default function CreateCommunityScreen() {
         {/* Questions complémentaires */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Questions complémentaires ({applicationQuestions.length}/{MAX_QUESTIONS})
+            {t('community.form.additionalQuestionsCount', { count: applicationQuestions.length, max: MAX_QUESTIONS })}
           </Text>
           <Text style={[styles.fieldHint, { color: colors.gray500 }]}>
-            Posez des questions aux candidats (réponse courte, max {MAX_QUESTION_LENGTH} caractères)
+            {t('community.form.askCandidatesQuestions', { max: MAX_QUESTION_LENGTH })}
           </Text>
 
           {/* Questions List */}
@@ -938,19 +949,19 @@ export default function CreateCommunityScreen() {
             >
               <View style={styles.questionHeader}>
                 <Text style={[styles.questionNumber, { color: colors.primary }]}>
-                  Question {index + 1}
+                  {t('community.form.questionN', { index: index + 1 })}
                 </Text>
                 <IconButton
                   onPress={() => removeQuestion(question.id)}
                   icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-                  accessibilityLabel="Supprimer la question"
+                  accessibilityLabel={t('community.form.removeQuestion')}
                   size="sm"
                   variant="ghost"
                 />
               </View>
 
               <FormTextArea
-                placeholder="Écrivez votre question..."
+                placeholder={t('community.form.questionPlaceholder')}
                 value={question.question}
                 onChangeText={(text) => updateQuestion(question.id, { question: text })}
                 maxLength={MAX_QUESTION_LENGTH}
@@ -961,7 +972,7 @@ export default function CreateCommunityScreen() {
 
               <View style={styles.questionFooter}>
                 <View style={styles.requiredToggle}>
-                  <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>Obligatoire</Text>
+                  <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>{t('common.required')}</Text>
                   <Toggle
                     value={question.required}
                     onValueChange={(value) => updateQuestion(question.id, { required: value })}
@@ -975,7 +986,7 @@ export default function CreateCommunityScreen() {
           {/* Add Question Button */}
           {applicationQuestions.length < MAX_QUESTIONS && (
             <Button
-              title="Ajouter une question"
+              title={t('community.form.addQuestion')}
               onPress={addQuestion}
               variant="outline"
               icon={<Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
@@ -992,9 +1003,9 @@ export default function CreateCommunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <ImageIcon size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Media</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('community.form.steps.media')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Ajoutez des visuels et documents
+          {t('community.form.mediaDescription')}
         </Text>
       </View>
 
@@ -1002,10 +1013,10 @@ export default function CreateCommunityScreen() {
         {/* Images d'illustration - Max 5 */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700, textAlign: 'center' }]}>
-            Images d'illustration ({images.length}/{MAX_IMAGES})
+            {t('community.form.illustrationImages')} ({images.length}/{MAX_IMAGES})
           </Text>
           <Text style={[styles.fieldHint, { color: colors.gray500, textAlign: 'center' }]}>
-            Format recommandé: 16:9 - Maximum {MAX_IMAGES} images
+            {t('community.form.imagesFormatHint', { max: MAX_IMAGES })}
           </Text>
 
           {/* Zone d'upload centrée et full width */}
@@ -1013,7 +1024,7 @@ export default function CreateCommunityScreen() {
             {/* Bouton ajouter image si pas encore 5 */}
             {images.length < MAX_IMAGES && (
               <Button
-                title="Ajouter une image"
+                title={t('community.form.addImage')}
                 onPress={pickImage}
                 variant="outline"
                 icon={<Upload size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
@@ -1032,7 +1043,7 @@ export default function CreateCommunityScreen() {
                     <IconButton
                       onPress={() => removeImage(image.id)}
                       icon={<X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />}
-                      accessibilityLabel="Retirer l'image"
+                      accessibilityLabel={t('community.form.removeImage')}
                       size="sm"
                       variant="filled"
                       style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
@@ -1052,9 +1063,9 @@ export default function CreateCommunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <Eye size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Aperçu</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('community.form.steps.preview')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Vérifiez toutes les informations avant publication
+          {t('community.form.reviewBeforePublish')}
         </Text>
       </View>
 
@@ -1069,34 +1080,34 @@ export default function CreateCommunityScreen() {
         ) : (
           <View style={[styles.previewNoImage, { backgroundColor: colors.gray100 }]}>
             <ImageIcon size={32} color={colors.gray400} />
-            <Text style={[styles.previewNoImageText, { color: colors.gray500 }]}>Aucune image</Text>
+            <Text style={[styles.previewNoImageText, { color: colors.gray500 }]}>{t('community.form.noImage')}</Text>
           </View>
         )}
 
         {/* Title & Type */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{name || 'Sans nom'}</Text>
+          <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{name || t('community.form.untitled')}</Text>
           <View style={styles.previewTags}>
             {communityType ? (
               <View style={[styles.previewTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.previewTagText, { color: colors.primary }]}>
-                  {COMMUNITY_TYPE_LABELS[communityType]}
+                  {getCommunityTypeLabel(communityType)}
                 </Text>
               </View>
             ) : (
               <View style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>Type non défini</Text>
+                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>{t('community.form.typeNotDefined')}</Text>
               </View>
             )}
             {visibility ? (
               <View style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
                 <Text style={[styles.previewTagText, { color: colors.gray700 }]}>
-                  {VISIBILITY_LABELS[visibility]}
+                  {getVisibilityLabel(visibility)}
                 </Text>
               </View>
             ) : (
               <View style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>Visibilité non définie</Text>
+                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>{t('community.form.visibilityNotDefined')}</Text>
               </View>
             )}
           </View>
@@ -1104,7 +1115,7 @@ export default function CreateCommunityScreen() {
 
         {/* Tags */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Tags</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('community.tags')}</Text>
           {selectedTags.length > 0 ? (
             <View style={styles.previewTags}>
               {getTagLabels().map((label, idx) => (
@@ -1114,13 +1125,13 @@ export default function CreateCommunityScreen() {
               ))}
             </View>
           ) : (
-            <Text style={[styles.previewText, { color: colors.gray500 }]}>Aucun tag sélectionné</Text>
+            <Text style={[styles.previewText, { color: colors.gray500 }]}>{t('community.form.noTagSelected')}</Text>
           )}
         </View>
 
         {/* Secteurs */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Secteurs d'activité</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('community.industries')}</Text>
           {selectedSectors.length > 0 ? (
             <View style={styles.previewTags}>
               {selectedSectors.map((sectorId) => {
@@ -1128,67 +1139,67 @@ export default function CreateCommunityScreen() {
                 return (
                   <View key={sectorId} style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
                     <Text style={[styles.previewTagText, { color: colors.gray700 }]}>
-                      {sector?.label || sectorId}
+                      {sector ? t(sector.labelKey) : sectorId}
                     </Text>
                   </View>
                 );
               })}
             </View>
           ) : (
-            <Text style={[styles.previewText, { color: colors.gray500 }]}>Aucun secteur sélectionné</Text>
+            <Text style={[styles.previewText, { color: colors.gray500 }]}>{t('community.form.noSectorSelected')}</Text>
           )}
         </View>
 
         {/* Info Grid */}
         <View style={styles.previewGrid}>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Type</Text>
+            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('community.form.typeLabel')}</Text>
             <Text style={[styles.previewGridValue, { color: colors.textPrimary }]}>
-              {COMMUNITY_TYPE_LABELS[communityType || 'ONLINE']}
+              {getCommunityTypeLabel(communityType || 'ONLINE')}
             </Text>
           </View>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Lieu</Text>
+            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('community.location')}</Text>
             <Text style={[styles.previewGridValue, { color: communityType === 'HYBRID' ? colors.textPrimary : colors.gray400 }]}>
               {communityType === 'HYBRID'
-                ? [city, region, country].filter(Boolean).join(', ') || 'Non défini'
-                : 'En ligne'}
+                ? [city, region, country].filter(Boolean).join(', ') || t('community.form.notDefined')
+                : t('community.form.online')}
             </Text>
           </View>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Visibilité</Text>
+            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('community.form.visibilitySimple')}</Text>
             <Text style={[styles.previewGridValue, { color: colors.textPrimary }]}>
-              {VISIBILITY_LABELS[visibility || 'PUBLIC']}
+              {getVisibilityLabel(visibility || 'PUBLIC')}
             </Text>
           </View>
         </View>
 
         {/* Description */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Description</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('opportunity.description')}</Text>
           {description ? (
             <Text style={[styles.previewText, { color: colors.textSecondary }]}>{description}</Text>
           ) : (
-            <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucune description</Text>
+            <Text style={[styles.previewText, { color: colors.gray400 }]}>{t('community.form.noDescription')}</Text>
           )}
         </View>
 
         {/* Rules */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Règles</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('community.form.rulesSimple')}</Text>
           {rules ? (
             <Text style={[styles.previewText, { color: colors.textSecondary }]}>{rules}</Text>
           ) : (
-            <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucune règle définie</Text>
+            <Text style={[styles.previewText, { color: colors.gray400 }]}>{t('community.form.noRules')}</Text>
           )}
         </View>
 
         {/* Questions complémentaires */}
         <View style={[styles.previewSection, { backgroundColor: colors.gray50 }]}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Questions complémentaires</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('space.form.additionalQuestions')}</Text>
           <View style={styles.previewApplicationSettings}>
             <View style={styles.previewSettingRow}>
-              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Nombre de questions</Text>
+              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('space.form.questionsCountLabel')}</Text>
               <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
                 {applicationQuestions.filter(q => q.question.trim()).length}
               </Text>
@@ -1222,7 +1233,7 @@ export default function CreateCommunityScreen() {
           <View style={styles.footerButtons}>
             {/* Bouton Retour */}
             <Button
-              title="Retour"
+              title={t('common.back')}
               onPress={handleBack}
               disabled={form.state.isSubmitting}
               variant="outline"
@@ -1235,14 +1246,14 @@ export default function CreateCommunityScreen() {
               onPress={handleSaveDraft}
               disabled={form.state.isSubmitting}
               icon={<Save size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
-              accessibilityLabel="Enregistrer le brouillon"
+              accessibilityLabel={t('common.saveDraft')}
               variant="outline"
               style={[styles.draftButton, { borderColor: colors.gray300 }]}
             />
             {/* Bouton Publier */}
             <View style={styles.publishButton}>
               <Button
-                title="Publier"
+                title={t('common.publish')}
                 onPress={handlePublish}
                 disabled={form.state.isSubmitting}
                 fullWidth
@@ -1259,7 +1270,7 @@ export default function CreateCommunityScreen() {
           {/* Bouton Retour (sauf sur le premier step) */}
           {!isFirstStep && (
             <Button
-              title="Retour"
+              title={t('common.back')}
               onPress={handleBack}
               variant="outline"
               icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
@@ -1270,7 +1281,7 @@ export default function CreateCommunityScreen() {
           {/* Bouton Continuer */}
           <View style={[styles.continueButton, !isFirstStep && { flex: 1 }]}>
             <Button
-              title="Continuer"
+              title={t('common.next')}
               onPress={handleNext}
               disabled={!canProceed()}
               fullWidth
@@ -1290,10 +1301,10 @@ export default function CreateCommunityScreen() {
         <IconButton
           onPress={handleBack}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
           style={styles.backButton}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Nouvelle communauté</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('community.form.newCommunityTitle')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 

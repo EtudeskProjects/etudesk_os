@@ -17,7 +17,7 @@ import { SPACING, TYPOGRAPHY, BORDER, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { useI18n } from '../../contexts/I18nContext';
 import { formatCompactNumber } from '../../utils/number';
-import { SPACE_TYPE_LABELS, formatPrice } from '../../constants/space';
+import { getSpaceTypeLabel, formatPrice } from '../../constants/space';
 import type { Space } from '../../services/spaceService';
 import {
   CardContainer,
@@ -71,10 +71,10 @@ export const SpaceCard = React.memo<SpaceCardProps>(({
 
   // Get the best price to display
   const getDisplayPrice = (): { text: string; isFree: boolean } => {
-    if (space.hourly_rate && space.hourly_rate > 0) return { text: formatPrice(space.hourly_rate) + '/h', isFree: false };
-    if (space.daily_rate && space.daily_rate > 0) return { text: formatPrice(space.daily_rate) + '/j', isFree: false };
-    if (space.weekly_rate && space.weekly_rate > 0) return { text: formatPrice(space.weekly_rate) + '/sem', isFree: false };
-    if (space.monthly_rate && space.monthly_rate > 0) return { text: formatPrice(space.monthly_rate) + '/mois', isFree: false };
+    if (space.hourly_rate && space.hourly_rate > 0) return { text: formatPrice(space.hourly_rate) + '/' + t('common.perHour'), isFree: false };
+    if (space.daily_rate && space.daily_rate > 0) return { text: formatPrice(space.daily_rate) + '/' + t('common.perDay'), isFree: false };
+    if (space.weekly_rate && space.weekly_rate > 0) return { text: formatPrice(space.weekly_rate) + '/' + t('common.perWeek'), isFree: false };
+    if (space.monthly_rate && space.monthly_rate > 0) return { text: formatPrice(space.monthly_rate) + '/' + t('common.perMonth'), isFree: false };
     return { text: t('common.free'), isFree: true };
   };
 
@@ -157,7 +157,7 @@ export const SpaceCard = React.memo<SpaceCardProps>(({
         <CardBadgeRow>
           {space.type && (
             <CardBadge
-              label={SPACE_TYPE_LABELS[space.type as keyof typeof SPACE_TYPE_LABELS] || space.type}
+              label={getSpaceTypeLabel(space.type) || space.type}
               backgroundColor={colors.primary}
               textColor={colors.textOnPrimary}
             />

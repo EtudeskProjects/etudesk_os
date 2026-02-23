@@ -6,13 +6,14 @@
 // --- Context Types ---
 
 import { TalentContext as BaseTalentContext } from './context';
+import { SupportedLanguage } from '../../i18n';
 
 export interface TalentContext extends BaseTalentContext {
   talentId: string;
   talentName: string;
   vectorStoreId?: string;
   /** User's preferred language for copilot responses */
-  language?: 'fr' | 'en';
+  language?: SupportedLanguage;
   /** Dynamically injected skill instructions when a skill trigger matches the user message */
   activeSkillInstructions?: string;
   /** Whether to inject UEMOA knowledge block (conditional on message relevance) */
@@ -27,7 +28,7 @@ export interface OrgContext {
   organizationName: string;
   role: string;
   /** User's preferred language for copilot responses */
-  language?: 'fr' | 'en';
+  language?: SupportedLanguage;
   /** Pre-loaded org enrichment (avoids org_stats call) */
   orgSectors?: string[];
   memberCount?: number;

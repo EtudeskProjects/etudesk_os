@@ -41,6 +41,9 @@ interface CreditWalletParams {
   credits: number;
   sourceType: 'PURCHASE' | 'ADJUSTMENT' | 'REFUND';
   actionCode?: string | null;
+  amount?: number | null;
+  currency?: string | null;
+  /** @deprecated Use amount + currency instead */
   amountFcfa?: number | null;
   paymentId?: string | null;
   invoiceId?: string | null;
@@ -145,6 +148,8 @@ export async function creditWallet(params: CreditWalletParams, existingClient?: 
       credits,
       sourceType,
       actionCode,
+      amount,
+      currency,
       amountFcfa,
       paymentId,
       invoiceId,
@@ -154,6 +159,10 @@ export async function creditWallet(params: CreditWalletParams, existingClient?: 
     } = params;
     const talentOwnerId = scope === 'TALENT' ? ownerId : null;
     const organizationOwnerId = scope === 'ORGANIZATION' ? ownerId : null;
+
+    // Resolve amount and currency (backward compat with amountFcfa)
+    const resolvedAmount = amount ?? amountFcfa ?? null;
+    const resolvedCurrency = currency ?? (amountFcfa != null ? 'XOF' : 'XOF');
 
     if (credits <= 0) {
       throw new Error('credits must be > 0');
@@ -190,7 +199,7 @@ export async function creditWallet(params: CreditWalletParams, existingClient?: 
     await client.query(
       `INSERT INTO credit_ledger (
         scope, talent_id, organization_id, action_code, direction, source_type,
-        credits, amount_fcfa, currency, payment_id, invoice_id, idempotency_key,
+        credits, amount, amount_fcfa, currency, payment_id, invoice_id, idempotency_key,
         metadata, created_by
       ) VALUES (
         $1, $2, $3, $4,
@@ -198,12 +207,13 @@ export async function creditWallet(params: CreditWalletParams, existingClient?: 
         $5,
         $6,
         $7,
-        'FCFA',
         $8,
         $9,
         $10,
         $11,
-        $12
+        $12,
+        $13,
+        $14
       )`,
       [
         scope,
@@ -212,7 +222,9 @@ export async function creditWallet(params: CreditWalletParams, existingClient?: 
         actionCode ?? null,
         sourceType,
         credits,
-        amountFcfa ?? null,
+        resolvedAmount,
+        resolvedCurrency === 'XOF' ? resolvedAmount : null,
+        resolvedCurrency,
         paymentId ?? null,
         invoiceId ?? null,
         idempotencyKey ?? null,
@@ -352,10 +364,10 @@ export async function debitWalletForAction({
         'DEBIT',
         'CONSUMPTION',
         $5,
-        'FCFA',
         $6,
         $7,
-        $8
+        $8,
+        $9
       )`,
       [
         scope,
@@ -363,6 +375,7 @@ export async function debitWalletForAction({
         organizationOwnerId,
         actionCode,
         creditsToDebit,
+        'CREDITS',
         idempotencyKey,
         JSON.stringify(metadata ?? {}),
         createdBy ?? null,

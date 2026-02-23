@@ -18,6 +18,7 @@ import {
   verifyPaystackSignature,
 } from '../services/billing/payment.service';
 import { logger } from '../utils';
+import { isSupportedCurrency, SupportedCurrency, CREDIT_PACKS_USD, CREDIT_PACKS_XOF } from '../constants';
 
 const router = Router();
 
@@ -68,6 +69,14 @@ function handleBillingAccessError(req: AuthRequest, res: Response, error: unknow
 
   return res.status(500).json({ error: req.t('billing:internalError') });
 }
+
+router.get('/credit-packs', authMiddleware, async (req: AuthRequest, res: Response) => {
+  const currency = typeof req.query.currency === 'string' && isSupportedCurrency(req.query.currency)
+    ? req.query.currency
+    : 'XOF';
+  const packs = currency === 'USD' ? CREDIT_PACKS_USD : CREDIT_PACKS_XOF;
+  res.json({ data: { currency, packs } });
+});
 
 router.get('/catalog', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
@@ -131,8 +140,19 @@ router.post('/checkout/init', authMiddleware, async (req: AuthRequest, res: Resp
 
     const scope = parseScope(req.body.scope);
     const ownerId = req.body.owner_id;
-    const amountFcfa = Number(req.body.amount_fcfa);
     const idempotencyKey = typeof req.body.idempotency_key === 'string' ? req.body.idempotency_key : '';
+
+    // Multi-currency: accept amount + currency OR amount_fcfa (backward compat)
+    let amount: number;
+    let currency: SupportedCurrency;
+    if (req.body.amount != null && req.body.currency) {
+      amount = Number(req.body.amount);
+      currency = isSupportedCurrency(req.body.currency) ? req.body.currency : 'XOF';
+    } else {
+      // Backward compat: amount_fcfa defaults to XOF
+      amount = Number(req.body.amount_fcfa);
+      currency = 'XOF';
+    }
 
     if (!scope) {
       return res.status(400).json({ error: req.t('billing:scopeRequired') });
@@ -155,7 +175,8 @@ router.post('/checkout/init', authMiddleware, async (req: AuthRequest, res: Resp
       ownerId,
       actorTalentId: req.talentId,
       actorEmail: req.userEmail,
-      amountFcfa,
+      amount,
+      currency,
       idempotencyKey,
       metadata: req.body.metadata,
     });
@@ -165,7 +186,9 @@ router.post('/checkout/init', authMiddleware, async (req: AuthRequest, res: Resp
         payment_id: payment.id,
         provider: payment.provider,
         status: payment.status,
-        amount_fcfa: Number(payment.amount_fcfa),
+        amount: Number(payment.amount),
+        amount_fcfa: payment.amount_fcfa != null ? Number(payment.amount_fcfa) : null,
+        currency: payment.currency,
         credits_to_credit: Number(payment.credits_to_credit),
         paystack_reference: payment.paystack_reference,
         checkout_url: payment.checkout_url,
@@ -182,7 +205,7 @@ router.post('/checkout/init', authMiddleware, async (req: AuthRequest, res: Resp
       return res.status(400).json({ error: message });
     }
     if (message.toLowerCase().includes('invalid email')) {
-      return res.status(400).json({ error: 'Veuillez ajouter une adresse email valide à votre profil avant de procéder au paiement.', code: 'EMAIL_REQUIRED' });
+      return res.status(400).json({ error: 'Please add a valid email address to your profile before proceeding with payment.', code: 'EMAIL_REQUIRED' });
     }
 
     return handleBillingAccessError(req, res, error);

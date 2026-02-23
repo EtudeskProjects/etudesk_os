@@ -485,7 +485,7 @@ class CopilotService {
       if (!response.ok) {
         return {
           success: false,
-          error: data.error || 'Erreur upload note vocale',
+          error: data.error || i18n.t('errors.voiceNoteUpload'),
           data: { voiceNoteUrl: '', mimeType: '' },
         };
       }
@@ -501,7 +501,7 @@ class CopilotService {
       if (__DEV__) console.error('Voice note upload error:', error);
       return {
         success: false,
-        error: error.message || 'Erreur upload note vocale',
+        error: error.message || i18n.t('errors.voiceNoteUpload'),
         data: { voiceNoteUrl: '', mimeType: '' },
       };
     }

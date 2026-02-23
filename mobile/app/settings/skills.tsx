@@ -35,11 +35,12 @@ import {
 	import { useTheme } from '../../src/hooks/useTheme';
 	import skillService, {
 	  TalentSkill,
-	  PROFICIENCY_LABELS,
-	  SKILL_TYPE_LABELS,
+	  getProficiencyLabel,
+	  getSkillTypeLabel,
   PROFICIENCY_LEVELS,
 } from '../../src/services/skillService';
 import { useAlert } from '../../src/contexts/AlertContext';
+import { useI18n } from '../../src/contexts/I18nContext';
 
 // Proficiency colors - Luxe Africain design system
 const getProficiencyColors = (colors: ThemeColors): Record<string, string> => ({
@@ -49,31 +50,9 @@ const getProficiencyColors = (colors: ThemeColors): Record<string, string> => ({
   MASTER: colors.success,        // Forest green
 });
 
-const ORIGIN_LABELS: Record<string, string> = {
-  declared: 'Déclarée',
-  extracted: 'Extraite',
-  inferred: 'Inférée',
-};
+// ORIGIN_LABELS moved to i18n: settings.skills.origin.*
 
-function formatRelativeDate(dateStr: string | null): string | null {
-  if (!dateStr) return null;
-  const now = new Date();
-  const date = new Date(dateStr);
-  const diffMs = now.getTime() - date.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffH = Math.floor(diffMin / 60);
-  const diffD = Math.floor(diffH / 24);
-  const diffW = Math.floor(diffD / 7);
-  const diffM = Math.floor(diffD / 30);
-
-  if (diffMin < 1) return "À l'instant";
-  if (diffMin < 60) return `Il y a ${diffMin} min`;
-  if (diffH < 24) return `Il y a ${diffH}h`;
-  if (diffD < 7) return `Il y a ${diffD}j`;
-  if (diffW < 5) return `Il y a ${diffW} sem.`;
-  if (diffM < 12) return `Il y a ${diffM} mois`;
-  return `Il y a ${Math.floor(diffD / 365)} an${Math.floor(diffD / 365) > 1 ? 's' : ''}`;
-}
+// formatRelativeDate is now inside the component to access t()
 
 
 function getTypeIcon(type: string) {
@@ -92,6 +71,34 @@ function getTypeIcon(type: string) {
 export default function SkillsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
+
+  const ORIGIN_LABELS: Record<string, string> = {
+    declared: t('settings.skills.origin.declared'),
+    extracted: t('settings.skills.origin.extracted'),
+    inferred: t('settings.skills.origin.inferred'),
+  };
+
+  const formatRelativeDate = (dateStr: string | null): string | null => {
+    if (!dateStr) return null;
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffMs = now.getTime() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffH = Math.floor(diffMin / 60);
+    const diffD = Math.floor(diffH / 24);
+    const diffW = Math.floor(diffD / 7);
+    const diffM = Math.floor(diffD / 30);
+
+    if (diffMin < 1) return t('date.justNow');
+    if (diffMin < 60) return t('date.minutesAgo', { minutes: diffMin });
+    if (diffH < 24) return t('date.hoursAgo', { hours: diffH });
+    if (diffD < 7) return t('date.daysAgo', { days: diffD });
+    if (diffW < 5) return t('settings.skills.timeAgo.weeks', { count: diffW });
+    if (diffM < 12) return t('settings.skills.timeAgo.months', { count: diffM });
+    const years = Math.floor(diffD / 365);
+    return t('settings.skills.timeAgo.years', { count: years });
+  };
 
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -112,7 +119,7 @@ export default function SkillsScreen() {
       setSkills(data);
     } catch (error) {
       if (__DEV__) console.error('Error loading skills:', error);
-      void alerts.alert('Erreur', 'Impossible de charger les compétences');
+      void alerts.alert(t('common.error'), t('settings.skills.loadError'));
     }
   }, []);
   const alerts = useAlert();
@@ -135,7 +142,7 @@ export default function SkillsScreen() {
   const handleAddSkill = async () => {
     if (!skillName.trim()) return;
     if (!selectedType) {
-      void alerts.alert('Type requis', 'Sélectionne un type de compétence.');
+      void alerts.alert(t('settings.skills.typeRequired'), t('settings.skills.typeRequiredMessage'));
       return;
     }
     try {
@@ -148,7 +155,7 @@ export default function SkillsScreen() {
       closeModal();
       await loadSkills();
     } catch (error: any) {
-      void alerts.alert('Erreur', error?.message || "Erreur lors de l'ajout");
+      void alerts.alert(t('common.error'), error?.message || t('settings.skills.addError'));
     }
   };
 
@@ -161,17 +168,17 @@ export default function SkillsScreen() {
   };
 
   const handleDelete = (skill: TalentSkill) => {
-    void alerts.showAlert({ title: 'Supprimer la compétence', message: `Veux-tu vraiment supprimer "${skill.canonical_name}" ?`, buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('settings.skills.deleteTitle'), message: t('settings.skills.deleteConfirm', { name: skill.canonical_name }), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await skillService.deleteSkill(skill.id);
               await loadSkills();
             } catch {
-              void alerts.alert('Erreur', 'Impossible de supprimer la compétence');
+              void alerts.alert(t('common.error'), t('settings.skills.deleteError'));
             }
           },
         },
@@ -185,7 +192,7 @@ export default function SkillsScreen() {
       await skillService.toggleVisibility(skill.id, !skill.is_visible);
       await loadSkills();
     } catch {
-      void alerts.alert('Erreur', 'Impossible de modifier la visibilité');
+      void alerts.alert(t('common.error'), t('settings.skills.visibilityError'));
     }
   };
 
@@ -210,7 +217,7 @@ export default function SkillsScreen() {
 	          <IconButton
 	            onPress={() => handleToggleVisibility(skill)}
 	            icon={<VisibilityIcon size={18} color={skill.is_visible ? colors.textSecondary : colors.warning} strokeWidth={ICON.strokeWidth} />}
-	            accessibilityLabel={skill.is_visible ? 'Masquer la compétence' : 'Afficher la compétence'}
+	            accessibilityLabel={skill.is_visible ? t('settings.skills.hideSkill') : t('settings.skills.showSkill')}
 	            size="sm"
 	            variant="ghost"
 	            style={styles.actionButton}
@@ -218,7 +225,7 @@ export default function SkillsScreen() {
 	          <IconButton
 	            onPress={() => handleDelete(skill)}
 	            icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-	            accessibilityLabel="Supprimer la compétence"
+	            accessibilityLabel={t('settings.skills.deleteTitle')}
 	            size="sm"
 	            variant="ghost"
 	            style={styles.actionButton}
@@ -234,7 +241,7 @@ export default function SkillsScreen() {
         <View style={styles.tagsRow}>
           <View style={[styles.tag, { backgroundColor: withOpacity(profColor, OPACITY[20]), borderColor: profColor }]}>
             <Text style={[styles.tagText, { color: profColor }]}>
-              {PROFICIENCY_LABELS[skill.proficiency_level]}
+              {getProficiencyLabel(skill.proficiency_level)}
             </Text>
           </View>
           <View style={[styles.tag, { backgroundColor: withOpacity(colors.textSecondary, OPACITY[15]), borderColor: withOpacity(colors.textSecondary, OPACITY[30]) }]}>
@@ -274,7 +281,7 @@ export default function SkillsScreen() {
       pathname: '/(tabs)/assistant',
       params: {
         mode: 'study',
-        prompt: 'Fais un auto-diagnostic complet de mes compétences. Analyse mes forces, identifie mes lacunes et axes d\'amélioration, et suggère un plan de développement adapté à mon profil.',
+        prompt: t('settings.skills.autoDiagnosticPrompt'),
         focusInput: 'true',
       },
     });
@@ -287,9 +294,9 @@ export default function SkillsScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Mes compétences</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('settings.skills.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -309,20 +316,20 @@ export default function SkillsScreen() {
           {skills.length === 0 ? (
             <EmptyState
               icon={Gem}
-              title="Aucune compétence"
-              subtitle="Ajoute tes compétences pour améliorer ton profil et être mieux recommandé."
-              actionLabel="Ajouter une compétence"
+              title={t('settings.skills.emptyTitle')}
+              subtitle={t('settings.skills.emptySubtitle')}
+              actionLabel={t('settings.skills.addSkill')}
               onAction={() => setShowAddModal(true)}
               tip={
                 <Text style={{ fontSize: TYPOGRAPHY.fontSize.xs, lineHeight: TYPOGRAPHY.fontSize.xs * 1.5, color: colors.textSecondary }}>
-                  Astuce : charge un CV ou un certificat de formation dans{' '}
+                  {t('settings.skills.tipPrefix')}{' '}
                   <Text
                     style={{ fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold, color: colors.primary }}
                     onPress={() => router.push('/settings/documents')}
                   >
-                    tes documents
+                    {t('settings.skills.tipDocumentsLink')}
                   </Text>
-                  {' '}et l'assistant extraira automatiquement tes compétences.
+                  {' '}{t('settings.skills.tipSuffix')}
                 </Text>
               }
             />
@@ -331,7 +338,7 @@ export default function SkillsScreen() {
               {/* Add Button */}
               <View style={styles.addSection}>
                 <Button
-                  title="Ajouter une compétence"
+                  title={t('settings.skills.addSkill')}
                   onPress={() => setShowAddModal(true)}
                   fullWidth
                   icon={<Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
@@ -350,11 +357,11 @@ export default function SkillsScreen() {
 	                      style={styles.sectionHeader}
 	                      onPress={() => setCollapsedSections((prev) => ({ ...prev, [type]: !prev[type] }))}
 	                      accessibilityRole="button"
-	                      accessibilityLabel={`Basculer section ${SKILL_TYPE_LABELS[type] || type}`}
+	                      accessibilityLabel={t('settings.skills.toggleSection', { section: getSkillTypeLabel(type) || type })}
 	                    >
 	                      <TypeIcon size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
 	                      <Text style={[styles.sectionTitle, { color: colors.textSecondary, flex: 1 }]}>
-	                        {SKILL_TYPE_LABELS[type] || type} ({typeSkills.length})
+	                        {getSkillTypeLabel(type) || type} ({typeSkills.length})
 	                      </Text>
                       <ChevronDown
                         size={16}
@@ -376,7 +383,7 @@ export default function SkillsScreen() {
 	      {skills.length > 0 && (
 	        <View style={[styles.diagnosticContainer, { backgroundColor: colors.background }]}>
 	          <Button
-	            title="Auto-diagnostic"
+	            title={t('settings.skills.autoDiagnostic')}
 	            onPress={handleAutoDiagnostic}
 	            fullWidth
 	            icon={<Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
@@ -397,11 +404,11 @@ export default function SkillsScreen() {
 	            <IconButton
 	              onPress={closeModal}
 	              icon={<X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	              accessibilityLabel="Fermer"
+	              accessibilityLabel={t('common.close')}
 	              size="sm"
 	              variant="ghost"
 	            />
-	            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Ajouter une compétence</Text>
+	            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('settings.skills.modalTitle')}</Text>
 	            <View style={{ width: 24 }} />
 	          </View>
 
@@ -409,8 +416,8 @@ export default function SkillsScreen() {
             {/* Skill Name */}
             <View style={styles.modalSection}>
               <Input
-                label="Nom de la compétence"
-                placeholder="Ex: React, Gestion de projet, Communication..."
+                label={t('settings.skills.skillName')}
+                placeholder={t('settings.skills.skillNamePlaceholder')}
                 value={skillName}
                 onChangeText={setSkillName}
                 autoFocus
@@ -419,16 +426,16 @@ export default function SkillsScreen() {
 
 	            {/* Type Selector */}
 	            <View style={styles.modalSection}>
-	              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Type de compétence *</Text>
+	              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>{t('settings.skills.skillType')}</Text>
 	              <View style={styles.chipRow}>
-	                {Object.entries(SKILL_TYPE_LABELS).map(([key, label]) => {
+	                {(['KNOWLEDGE', 'SOFT_SKILL', 'HARD_SKILL'] as const).map((key) => {
 	                  const isActive = selectedType === key;
 	                  const TypeIcon = getTypeIcon(key);
 	                  return (
 	                    <Chip
 	                      key={key}
 	                      onPress={() => setSelectedType(key)}
-	                      label={label}
+	                      label={getSkillTypeLabel(key)}
 	                      selected={isActive}
 	                      leftIcon={<TypeIcon size={14} color={isActive ? colors.primary : colors.textDisabled} strokeWidth={ICON.strokeWidth} />}
 	                      style={[
@@ -447,7 +454,7 @@ export default function SkillsScreen() {
 
             {/* Proficiency Selector */}
 	            <View style={styles.modalSection}>
-	              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>Niveau</Text>
+	              <Text style={[styles.modalSectionLabel, { color: colors.textSecondary }]}>{t('settings.skills.proficiency')}</Text>
 	              <View style={styles.chipRow}>
 	                {PROFICIENCY_LEVELS.map((level) => {
 	                  const isActive = selectedProficiency === level;
@@ -456,7 +463,7 @@ export default function SkillsScreen() {
 	                    <Chip
 	                      key={level}
 	                      onPress={() => setSelectedProficiency(level)}
-	                      label={PROFICIENCY_LABELS[level]}
+	                      label={getProficiencyLabel(level)}
 	                      selected={isActive}
 	                      style={[
 	                        styles.chip,
@@ -475,8 +482,8 @@ export default function SkillsScreen() {
             {/* Context field */}
             <View style={styles.modalSection}>
               <Input
-                label="Contexte"
-                placeholder="Comment et quand avez-vous acquis cette compétence ?"
+                label={t('settings.skills.context')}
+                placeholder={t('settings.skills.contextPlaceholder')}
                 value={skillContext}
                 onChangeText={(text) => setSkillContext(text.slice(0, 200))}
                 multiline
@@ -490,7 +497,7 @@ export default function SkillsScreen() {
             {/* Add Button */}
             <View style={styles.modalSection}>
               <Button
-                title="Ajouter"
+                title={t('common.add')}
                 onPress={handleAddSkill}
                 fullWidth
                 disabled={!skillName.trim() || !selectedType}

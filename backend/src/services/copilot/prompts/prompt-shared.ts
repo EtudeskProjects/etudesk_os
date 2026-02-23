@@ -3,7 +3,9 @@
  * Reduces code duplication; each helper is called once per prompt build.
  */
 
-export type PromptLanguage = 'fr' | 'en';
+import { SupportedLanguage } from '../../../i18n';
+
+export type PromptLanguage = SupportedLanguage;
 
 /** Banned phrases block — identical across all 3 prompts */
 export function getBannedPhrasesRule(language?: PromptLanguage): string {
@@ -58,6 +60,50 @@ export function getChartRulesBlock(): string {
   - **table** → detailed data, text-based comparisons, proficiency levels, structured lists
   - **radar** → multi-axis balance (≥3 axes, same numeric scale)
   - **line** → time series or progression over ≥2 points`;
+}
+
+// Language name map for prompt instructions
+const LANGUAGE_NAMES: Record<string, string> = {
+  fr: 'French',
+  en: 'English',
+  es: 'Spanish',
+  ar: 'Arabic',
+  it: 'Italian',
+  de: 'German',
+  zh: 'Chinese (Simplified)',
+};
+
+/** Get language-specific instructions for any supported language */
+export function getLanguageInstructions(language?: PromptLanguage) {
+  const langName = LANGUAGE_NAMES[language || 'fr'] || 'French';
+  const isFrench = !language || language === 'fr';
+
+  if (isFrench) {
+    return {
+      languageBlock: `# RESPONSE LANGUAGE — ABSOLUTE RULE
+
+You MUST respond in French. Every single word you write to the user MUST be in French.
+This system prompt is written in English for technical clarity — but your responses MUST ALWAYS be in French.
+NEVER respond in English. If you catch yourself writing English, STOP and rewrite in French.
+This rule applies to ALL responses: analysis, summaries, confirmations, questions, everything.`,
+      elegance: '**Elegance**: Respond with care and precision, reflecting a high level of erudition.',
+      finalReminder: 'Respond in FRENCH. Every word. No exceptions. The system prompt is in English but your output is ALWAYS in French.',
+      cvLanguageRule: 'Generate the CV in French by default. Only use another language if the user explicitly requests it.',
+      analysisLanguageRule: 'Present the full analysis in French.',
+    };
+  }
+
+  return {
+    languageBlock: `# RESPONSE LANGUAGE — ABSOLUTE RULE
+
+You MUST respond in ${langName}. Every single word you write to the user MUST be in ${langName}.
+This system prompt is written in English for technical clarity — your responses are ALWAYS in ${langName}.
+This rule applies to ALL responses: analysis, summaries, confirmations, questions, everything.`,
+    elegance: `**Elegance**: Respond with care and precision, reflecting expertise and erudition.`,
+    finalReminder: `Respond in ${langName.toUpperCase()}. Every word. No exceptions.`,
+    cvLanguageRule: `Generate the CV in ${langName} by default. Only use another language if the user explicitly requests it.`,
+    analysisLanguageRule: `Present the full analysis in ${langName}.`,
+  };
 }
 
 /** Conversational steering rules — identical across all 3 prompts */

@@ -1,0 +1,22 @@
+{
+  "fetchError": "获取文档时出错",
+  "fetchStatsError": "获取统计数据时出错",
+  "notFound": "文档未找到",
+  "fetchSingleError": "获取文档时出错",
+  "identityNotVerified": "身份未验证",
+  "identityRequiredCode": "IDENTITY_REQUIRED",
+  "identityRequiredMessage": "你需要先验证身份才能添加文档。请前往 设置 > 身份验证。",
+  "maxFilesPerRequest": "每次请求最多 {{count}} 个文件",
+  "maxDocumentsExceeded": "你只能再添加 {{remaining}} 个文档。上限：{{max}}。",
+  "invalidDocumentType": "文档类型无效",
+  "uploadSuccess": "文档已成功上传，正在处理中。",
+  "uploadMultipleSuccess": "{{count}} 个文档已成功上传，正在处理中。",
+  "uploadError": "上传文档时出错",
+  "updateSuccess": "文档已成功更新",
+  "updateError": "更新文档时出错",
+  "deleteSuccess": "文档已成功删除",
+  "deleteError": "删除文档时出错",
+  "retrySuccess": "已重新开始提取",
+  "retryError": "重新提取时出错",
+  "fileTooLarge": "文件太大。上限：{{size}}MB"
+}

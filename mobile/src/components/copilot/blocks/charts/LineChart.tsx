@@ -7,6 +7,7 @@ import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, OPACITY, withOpacity } from '../../../../constants/theme';
+import { getLabelDirect } from '../../../../utils/labels';
 
 interface LineChartDataPoint {
   label: string;
@@ -26,7 +27,7 @@ export const LineChart: React.FC<LineChartProps> = ({ title, data }) => {
     return (
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
-        <Text style={[styles.empty, { color: colors.textTertiary }]}>Aucune donnee</Text>
+        <Text style={[styles.empty, { color: colors.textTertiary }]}>{getLabelDirect('noData')}</Text>
       </View>
     );
   }

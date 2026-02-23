@@ -15,11 +15,12 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { PageLayout, EmptyState, Chip } from '../../../src/components/ui';
 import { OpportunityCard } from '../../../src/components/cards';
 import { applicationService } from '../../../src/services';
 import type { Application, ApplicationStatus, Opportunity } from '../../../src/types/models';
-import { APPLICATION_STATUS_LABELS } from '../../../src/types/models';
+import { getApplicationStatusLabel } from '../../../src/types/models';
 
 const getStatusConfig = (colors: any): Record<string, { color: string; icon: typeof Clock; bgColor: string }> => ({
   SUBMITTED: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]) },
@@ -33,6 +34,7 @@ type FilterStatus = 'all' | ApplicationStatus;
 export default function MyApplicationsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -109,7 +111,7 @@ export default function MyApplicationsScreen() {
         opportunity={(item.opportunity || {}) as Opportunity}
         onPress={() => router.push(`/settings/my-applications/${item.id}`)}
         statusOverlay={{
-          label: APPLICATION_STATUS_LABELS[item.status],
+          label: getApplicationStatusLabel(item.status),
           color: statusConfig.color,
           bgColor: statusConfig.bgColor,
           icon: <StatusIcon size={12} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />,
@@ -119,11 +121,11 @@ export default function MyApplicationsScreen() {
   };
 
   const filterChips = [
-    { key: 'all' as FilterStatus, label: 'Toutes' },
-    { key: 'SUBMITTED' as FilterStatus, label: 'Soumises' },
-    { key: 'IN_REVIEW' as FilterStatus, label: "En cours d'examen" },
-    { key: 'ACCEPTED' as FilterStatus, label: 'Acceptées' },
-    { key: 'REJECTED' as FilterStatus, label: 'Refusées' },
+    { key: 'all' as FilterStatus, label: t('myApplications.tabs.all') },
+    { key: 'SUBMITTED' as FilterStatus, label: t('myApplications.tabs.submitted') },
+    { key: 'IN_REVIEW' as FilterStatus, label: t('myApplications.tabs.inReview') },
+    { key: 'ACCEPTED' as FilterStatus, label: t('myApplications.tabs.accepted') },
+    { key: 'REJECTED' as FilterStatus, label: t('myApplications.tabs.rejected') },
   ];
 
   const headerContent = (
@@ -141,7 +143,7 @@ export default function MyApplicationsScreen() {
 
   return (
     <PageLayout
-      title="Mes candidatures"
+      title={t('myApplications.title')}
       onRefresh={handleRefresh}
       isRefreshing={isRefreshing}
       isLoading={isLoading}
@@ -157,14 +159,14 @@ export default function MyApplicationsScreen() {
         ListEmptyComponent={
           <EmptyState
             icon={Inbox}
-            title={filter === 'all' ? 'Aucune candidature' : 'Aucun résultat'}
+            title={filter === 'all' ? t('myApplications.empty.title') : t('myApplications.empty.filteredTitle')}
             subtitle={
               filter === 'all'
-                ? "Vous n'avez pas encore postulé à des opportunités. Explorez les offres disponibles."
-                : 'Aucune candidature avec ce statut.'
+                ? t('myApplications.empty.subtitle')
+                : t('myApplications.empty.filteredSubtitle')
             }
             {...(filter === 'all' ? {
-              actionLabel: 'Explorer',
+              actionLabel: t('myApplications.explore'),
               onAction: () => router.push('/(tabs)/explore?category=opportunities'),
             } : {})}
           />

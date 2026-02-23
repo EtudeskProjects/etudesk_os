@@ -88,7 +88,7 @@ export async function extractDocumentMetadata(
     if (!isImage && !isPdf) {
       return {
         success: false,
-        error: `Type de fichier non supporté: ${mimeType}`,
+        error: `Unsupported file type: ${mimeType}`,
       };
     }
 
@@ -159,7 +159,7 @@ export async function extractDocumentMetadata(
     if (!content) {
       return {
         success: false,
-        error: "Pas de réponse de l'API",
+        error: "No response from the API",
       };
     }
 
@@ -199,7 +199,7 @@ export async function extractDocumentMetadata(
     logger.error('Document extraction error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Erreur d'extraction inconnue",
+      error: error instanceof Error ? error.message : "Unknown extraction error",
     };
   }
 }

@@ -21,8 +21,8 @@
 | Copyright | 2026 Etudesk SAS |
 | Site web | https://etudesk.com |
 | Email support | hello@etudesk.org |
-| Email developpeur | etudesksas@gmail.com |
-| Telephone contact | +2250757510104 |
+| Email developpeur | lamine.barro@etudesk.org |
+| Telephone contact | +2250574631148 |
 | Telephone fiche Play Store | +2250584401313 |
 
 ---
@@ -32,23 +32,29 @@
 ### Apple App Store Connect
 | Champ | Valeur |
 |---|---|
-| Apple ID | etudesksas@gmail.com |
-| App Store Connect App ID | 6759287937 |
-| Team / Organisation | Mohamed Lamine Barro |
-| Status iOS | 1.0.0 — Waiting for Review |
-| Build actuel | 1.0.0 (6) — Ready to Submit |
+| Enrollment ID | 9FU4GSGGX3 |
+| D-U-N-S | 851758402 |
+| Email | hello@etudesk.org |
+| Work Email | lamine.barro@etudesk.org |
+| Legal Entity | ETUDESK |
+| Adresse legale | Abidjan Cocody II Plateaux Residences Aghien, Bloc A Villa 8, Abidjan, Cote d'Ivoire |
+| Historique D&B (anterieur) | Mise a jour DUNS confirmee par D&B Apple Customer Support (Case 34265776) |
+| Statut | Enrollment recu le 20/02/2026, verification d'autorite en cours (en attente du retour Apple) |
 
 ### Google Play Console
 | Champ | Valeur |
 |---|---|
-| Compte | etudesksas@gmail.com |
-| ID du compte | 5525361419516730377 |
-| Type de compte | Personnel |
+| Pays/region | Cote d'Ivoire (CI) |
+| Compte | ETUDESK |
+| Type de compte | Organisation |
+| Website | https://etudesk.com/ |
 | Nom du contact | Mohamed Lamine Barro |
-| Identite | Validee (18 fev 2026) |
-| Telephone | +2250757510104 (valide) |
-| Email contact | etudesksas@gmail.com (valide) |
-| Email developpeur public | hello@etudesk.org (valide) |
+| Email contact (Google) | lamine.barro@etudesk.org |
+| Telephone contact (Google) | +2250574631148 |
+| Email developpeur public | lamine.barro@etudesk.org |
+| Telephone developpeur public | +2250584401313 |
+| Comptes developpeur associes | Aucun |
+| Statut | Profil developpeur renseigne, publication Google Play en preparation |
 
 ---
 
@@ -362,11 +368,13 @@ emploi,formation,carriere,IA,competences,CV,recrutement,Afrique,UEMOA,talents
 - [ ] Demande d'acces production envoyee
 
 ### App Store
-- [x] Fiche App Store complete
-- [x] Screenshots et video ajoutees
-- [x] Build 6 (1.0.0) — Ready to Submit
-- [x] App Review info remplie (test account)
-- [x] Soumis pour review
+- [ ] Enrollment Apple Developer Program approuve (ID 9FU4GSGGX3)
+- [ ] Activation complete du compte App Store Connect
+- [ ] Fiche App Store complete
+- [ ] Screenshots et video ajoutees
+- [ ] Build iOS de production — Ready to Submit
+- [ ] App Review info remplie (test account)
+- [ ] Soumis pour review
 - [ ] Review approuvee
 - [ ] Publication
 
@@ -379,4 +387,4 @@ emploi,formation,carriere,IA,competences,CV,recrutement,Afrique,UEMOA,talents
 
 ---
 
-*Derniere mise a jour : 18 fevrier 2026*
+*Derniere mise a jour : 23 fevrier 2026*

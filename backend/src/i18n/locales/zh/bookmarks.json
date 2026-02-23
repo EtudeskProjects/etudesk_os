@@ -1,0 +1,12 @@
+{
+  "fetchError": "获取收藏夹时出错",
+  "addedToBookmarks": "已添加到收藏",
+  "removedFromBookmarks": "已从收藏中移除",
+  "checkStatusError": "检查收藏状态时出错",
+  "addError": "添加收藏时出错",
+  "removeError": "移除收藏时出错",
+  "opportunityNotFound": "机会未找到",
+  "spaceNotFound": "空间未找到",
+  "communityNotFound": "社区未找到",
+  "error": "错误"
+}

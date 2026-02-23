@@ -26,10 +26,11 @@ import { ScrollToInputContext } from '../../../src/contexts/ScrollToInputContext
 import {
   OrganizationRole,
   ORGANIZATION_ROLES,
-  ORGANIZATION_ROLE_LABELS,
-  ORGANIZATION_ROLE_DESCRIPTIONS,
+  getOrganizationRoleLabel,
+  getOrganizationRoleDescription,
 } from '../../../src/types/models';
 import { useAlert } from '../../../src/contexts/AlertContext';
+import { useI18n } from '../../../src/contexts/I18nContext';
 
 const getRoleIcon = (role: OrganizationRole) => {
   switch (role) {
@@ -39,6 +40,8 @@ const getRoleIcon = (role: OrganizationRole) => {
       return Shield;
     case ORGANIZATION_ROLES.MANAGER:
       return Users;
+    case ORGANIZATION_ROLES.OBSERVER:
+      return Eye;
     default:
       return Eye;
   }
@@ -60,11 +63,12 @@ const getRoleColor = (role: OrganizationRole, colors: any) => {
 export default function InviteMemberScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { inviteMember } = useOrganizationMembers();
 
   const [email, setEmail] = useState('');
-  const [selectedRole, setSelectedRole] = useState<OrganizationRole>(ORGANIZATION_ROLES.MEMBER);
+  const [selectedRole, setSelectedRole] = useState<OrganizationRole>(ORGANIZATION_ROLES.OBSERVER);
   const [isSending, setIsSending] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -74,16 +78,20 @@ export default function InviteMemberScreen() {
 
   const handleSend = async () => {
     if (!isValidEmail(email)) {
-      void alerts.alert('Erreur', 'Veuillez entrer une adresse email valide');
+      void alerts.alert(t('common.error'), t('organization.members.inviteScreen.invalidEmail'));
       return;
     }
 
     setIsSending(true);
     try {
       await inviteMember(email, selectedRole);
-      void alerts.showAlert({ title: 'Invitation envoyée', message: `Une invitation a été envoyée à ${email}`, buttons: [{ text: 'OK', onPress: () => router.back() }] });
+      void alerts.showAlert({
+        title: t('organization.members.inviteScreen.sentTitle'),
+        message: t('organization.members.inviteScreen.sentMessage', { email }),
+        buttons: [{ text: 'OK', onPress: () => router.back() }],
+      });
     } catch (error: any) {
-      void alerts.alert('Erreur', error?.message || 'Impossible d\'envoyer l\'invitation');
+      void alerts.alert(t('common.error'), error?.message || t('organization.members.inviteScreen.sendError'));
     } finally {
       setIsSending(false);
     }
@@ -103,7 +111,7 @@ export default function InviteMemberScreen() {
   const availableRoles: OrganizationRole[] = [
     ORGANIZATION_ROLES.ADMIN,
     ORGANIZATION_ROLES.MANAGER,
-    ORGANIZATION_ROLES.MEMBER,
+    ORGANIZATION_ROLES.OBSERVER,
   ];
 
   return (
@@ -113,9 +121,9 @@ export default function InviteMemberScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Inviter un membre</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('organization.members.inviteScreen.title')}</Text>
         <View style={styles.backButton} />
       </View>
 
@@ -133,9 +141,9 @@ export default function InviteMemberScreen() {
             keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           >
             {/* Email Input */}
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Adresse email</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('organization.members.email')}</Text>
             <Input
-              placeholder="email@exemple.com"
+              placeholder={t('organization.members.inviteScreen.emailPlaceholder')}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -148,7 +156,7 @@ export default function InviteMemberScreen() {
             />
 
           {/* Role Selection */}
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Rôle</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('organization.members.role')}</Text>
           <View style={[styles.roleList, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
             {availableRoles.map((role, index) => {
               const isLast = index === availableRoles.length - 1;
@@ -159,8 +167,8 @@ export default function InviteMemberScreen() {
               return (
                 <RadioRow
                   key={role}
-                  title={ORGANIZATION_ROLE_LABELS[role]}
-                  description={ORGANIZATION_ROLE_DESCRIPTIONS[role]}
+                  title={getOrganizationRoleLabel(role)}
+                  description={getOrganizationRoleDescription(role)}
                   selected={isSelected}
                   onPress={() => setSelectedRole(role)}
                   icon={<RIcon size={ICON.size.sm} color={rColor} strokeWidth={ICON.strokeWidth} />}
@@ -182,7 +190,7 @@ export default function InviteMemberScreen() {
           {/* Send Button */}
           <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
             <Button
-              title={isSending ? 'Envoi...' : "Envoyer l'invitation"}
+              title={isSending ? t('common.sending') : t('organization.members.inviteScreen.sendButton')}
               onPress={handleSend}
               disabled={!isValidEmail(email) || isSending}
               fullWidth

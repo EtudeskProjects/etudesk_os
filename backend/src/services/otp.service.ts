@@ -94,7 +94,7 @@ export async function createOTP(
 
       return {
         success: false,
-        error: 'Veuillez attendre avant de demander un nouveau code',
+        error: 'Please wait before requesting a new code',
         rateLimited: true,
         retryAfter,
       };
@@ -163,7 +163,7 @@ export async function createOTP(
     logger.error('❌ Failed to create OTP:', error);
     return {
       success: false,
-      error: 'Erreur lors de la création du code',
+      error: 'Error while creating code',
     };
   } finally {
     client.release();
@@ -184,7 +184,7 @@ export async function createWhatsAppOTP(
   if (!formattedPhone) {
     return {
       success: false,
-      error: 'Numéro de téléphone invalide',
+      error: 'Invalid phone number',
     };
   }
 
@@ -426,7 +426,7 @@ export async function verifyOTPByChannel(
       await client.query('COMMIT');
       return {
         success: false,
-        error: 'Identifiant invalide',
+        error: 'Invalid identifier',
       };
     }
 
@@ -481,7 +481,7 @@ export async function verifyOTPByChannel(
       await client.query('COMMIT');
       return {
         success: false,
-        error: 'Code invalide ou expiré. Veuillez demander un nouveau code.',
+        error: 'Invalid or expired code. Please request a new code.',
       };
     }
 
@@ -503,8 +503,8 @@ export async function verifyOTPByChannel(
       return {
         success: false,
         error: attemptsRemaining > 0
-          ? `Code incorrect. ${attemptsRemaining} tentative(s) restante(s).`
-          : 'Code incorrect. Veuillez demander un nouveau code.',
+          ? `Incorrect code. ${attemptsRemaining} attempt(s) remaining.`
+          : 'Incorrect code. Please request a new code.',
         attemptsRemaining,
       };
     }
@@ -577,7 +577,7 @@ export async function verifyOTPByChannel(
     logger.error('❌ Failed to verify OTP:', error);
     return {
       success: false,
-      error: 'Erreur lors de la vérification du code',
+      error: 'Error while verifying code',
     };
   } finally {
     client.release();

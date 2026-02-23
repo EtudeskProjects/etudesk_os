@@ -13,6 +13,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { readCache, writeCache } from '../services/persistentCache';
+import i18n from '../i18n';
 
 // Cache storage
 interface CacheEntry<T> {
@@ -234,7 +235,7 @@ export function useDataFetching<T>(
         setError(null);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
+      const errorMessage = err instanceof Error ? err.message : i18n.t('common.genericError');
 
       if (mountedRef.current) {
         // Only set error if we don't have stale data to show

@@ -103,34 +103,18 @@ export interface ListOrgDocumentsParams {
   offset?: number;
 }
 
-// --- Labels ---
+// --- Labels (i18n) ---
 
-export const ORG_DOCUMENT_TYPE_LABELS: Record<OrgDocumentType, string> = {
-  POLICY: 'Politique interne',
-  CONTRACT: 'Contrat',
-  REPORT: 'Rapport',
-  BROCHURE: 'Brochure',
-  PRESENTATION: 'Présentation',
-  CHARTER: 'Charte',
-  LEGAL: 'Document juridique',
-  OTHER: 'Autre document',
-};
+import { getLabel } from '../utils/labels';
 
-export const ORG_DOCUMENT_CATEGORY_LABELS: Record<OrgDocumentCategory, string> = {
-  ADMINISTRATIVE: 'Administratif',
-  COMMERCIAL: 'Commercial',
-  LEGAL: 'Juridique',
-  OTHER: 'Autre',
-};
+export const getOrgDocumentTypeLabel = (type: OrgDocumentType): string =>
+  getLabel('orgDocumentTypes', type);
 
-export const ORG_DOCUMENT_STATUS_LABELS: Record<OrgDocumentStatus, string> = {
-  PENDING: 'En attente',
-  PROCESSING: 'En cours',
-  PROCESSED: 'Traité',
-  FAILED: 'Échec',
-  VERIFIED: 'Vérifié',
-  REJECTED: 'Rejeté',
-};
+export const getOrgDocumentCategoryLabel = (cat: OrgDocumentCategory): string =>
+  getLabel('orgDocumentCategories', cat);
+
+export const getOrgDocumentStatusLabel = (status: OrgDocumentStatus): string =>
+  getLabel('orgDocumentStatuses', status);
 
 export const ORG_UPLOAD_LIMITS = {
   MAX_FILES_PER_REQUEST: 5,

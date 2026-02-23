@@ -26,13 +26,14 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, MATCH_COLORS } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { Button, FooterNav, IconButton, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../src/components/chat';
 import { useAuth } from '../../../src/contexts/AuthContext';
 import { applicationService, applicationMessageService } from '../../../src/services';
 import { formatRelativeTime } from '../../../src/utils/date';
 import type { Application, ApplicationMessage, ApplicationStatus } from '../../../src/types/models';
-import { APPLICATION_STATUS_LABELS, LOCATION_TYPE_LABELS } from '../../../src/types/models';
+import { getApplicationStatusLabel, getLocationTypeLabel } from '../../../src/types/models';
 import { useAlert } from '../../../src/contexts/AlertContext';
 
 // Status configuration - Simplified to 4 statuses
@@ -44,20 +45,13 @@ const getStatusConfig = (colors: any): Record<string, { color: string; icon: typ
   REJECTED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]) },
 });
 
-// Match category config - Uses Luxe Africain design system colors
-const MATCH_CATEGORY_CONFIG = {
-  excellent: { label: 'Excellent match', color: MATCH_COLORS.excellent.color, bgColor: MATCH_COLORS.excellent.bgColor },
-  good: { label: 'Bon match', color: MATCH_COLORS.good.color, bgColor: MATCH_COLORS.good.bgColor },
-  average: { label: 'Match moyen', color: MATCH_COLORS.average.color, bgColor: MATCH_COLORS.average.bgColor },
-  low: { label: 'Match faible', color: MATCH_COLORS.low.color, bgColor: MATCH_COLORS.low.bgColor },
-};
-
 type Tab = 'details' | 'messages';
 
 export default function ApplicationDetailsScreen() {
   const { id, tab } = useLocalSearchParams<{ id: string; tab?: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { user } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -69,6 +63,14 @@ export default function ApplicationDetailsScreen() {
   const [activeTab, setActiveTab] = useState<Tab>(tab === 'messages' ? 'messages' : 'details');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const alerts = useAlert();
+
+  // Match category config - Uses Luxe Africain design system colors
+  const MATCH_CATEGORY_CONFIG = {
+    excellent: { label: t('myApplications.detail.match.excellent'), color: MATCH_COLORS.excellent.color, bgColor: MATCH_COLORS.excellent.bgColor },
+    good: { label: t('myApplications.detail.match.good'), color: MATCH_COLORS.good.color, bgColor: MATCH_COLORS.good.bgColor },
+    average: { label: t('myApplications.detail.match.average'), color: MATCH_COLORS.average.color, bgColor: MATCH_COLORS.average.bgColor },
+    low: { label: t('myApplications.detail.match.low'), color: MATCH_COLORS.low.color, bgColor: MATCH_COLORS.low.bgColor },
+  };
 
   // Handle keyboard events for proper input positioning
   useEffect(() => {
@@ -105,7 +107,7 @@ export default function ApplicationDetailsScreen() {
       const response = await applicationService.getApplication(id);
       setApplication(response.data);
     } catch (error) {
-      void alerts.alert('Erreur', 'Impossible de charger les détails de la candidature.');
+      void alerts.alert(t('common.error'), t('myApplications.detail.loadError'));
       router.back();
     } finally {
       setIsLoading(false);
@@ -158,7 +160,7 @@ export default function ApplicationDetailsScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      void alerts.alert(t('common.error'), error.error || t('myApplications.detail.sendError'));
       throw error;
     } finally {
       setIsSending(false);
@@ -166,19 +168,19 @@ export default function ApplicationDetailsScreen() {
   };
 
   const handleWithdraw = () => {
-    void alerts.showAlert({ title: 'Retirer ma candidature', message: 'Êtes-vous sûr de vouloir retirer votre candidature ? Cette action est irréversible.', buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('myApplications.detail.withdrawTitle'), message: t('myApplications.detail.withdrawConfirm'), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Retirer',
+          text: t('myApplications.detail.withdraw'),
           style: 'destructive',
           onPress: async () => {
             try {
               await applicationService.withdraw(application!.id);
-              void alerts.showAlert({ title: 'Candidature retirée', message: 'Votre candidature a été retirée avec succès.', buttons: [
-                { text: 'OK', onPress: () => router.back() },
+              void alerts.showAlert({ title: t('myApplications.detail.withdrawSuccess'), message: t('myApplications.detail.withdrawSuccessMessage'), buttons: [
+                { text: t('alert.ok'), onPress: () => router.back() },
               ] });
             } catch (error: any) {
-              void alerts.alert('Erreur', error.error || 'Impossible de retirer la candidature.');
+              void alerts.alert(t('common.error'), error.error || t('myApplications.detail.withdrawError'));
             }
           },
         },
@@ -232,10 +234,10 @@ export default function ApplicationDetailsScreen() {
           <StatusIcon size={24} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
           <View style={styles.statusInfo}>
             <Text style={[styles.statusLabel, { color: statusConfig.color }]}>
-              {APPLICATION_STATUS_LABELS[application.status]}
+              {getApplicationStatusLabel(application.status)}
             </Text>
             <Text style={[styles.statusDate, { color: colors.gray600 }]}>
-              Postulé {formatRelativeTime(application.applied_at)}
+              {t('myApplications.detail.appliedAt', { time: formatRelativeTime(application.applied_at) })}
             </Text>
           </View>
           {(application as any).matchCategory && MATCH_CATEGORY_CONFIG[(application as any).matchCategory as keyof typeof MATCH_CATEGORY_CONFIG] && (
@@ -250,7 +252,7 @@ export default function ApplicationDetailsScreen() {
 
         {/* Opportunity Info */}
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Opportunité</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('myApplications.detail.sections.opportunity')}</Text>
           <Text style={[styles.opportunityTitle, { color: colors.textPrimary }]}>
             {opportunity?.title}
           </Text>
@@ -267,7 +269,7 @@ export default function ApplicationDetailsScreen() {
               <View style={styles.detailRow}>
                 <MapPin size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
                 <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                  {LOCATION_TYPE_LABELS[opportunity.location_type]}
+                  {getLocationTypeLabel(opportunity.location_type)}
                   {opportunity.locations?.[0]?.city && ` - ${opportunity.locations[0].city}`}
                 </Text>
               </View>
@@ -275,7 +277,7 @@ export default function ApplicationDetailsScreen() {
           </View>
 
           <Button
-            title="Voir l'opportunité"
+            title={t('myApplications.detail.viewOpportunity')}
             onPress={() => router.push(`/details/opportunity/${opportunity?.id}`)}
             variant="outline"
             fullWidth
@@ -287,13 +289,13 @@ export default function ApplicationDetailsScreen() {
         {/* Your Answers */}
         {application.answers && application.answers.length > 0 && (
           <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Vos réponses</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('myApplications.detail.sections.answers')}</Text>
             {application.answers.map((answer, index) => {
               const question = opportunity?.application_questions?.find((q) => q.id === answer.question_id);
               return (
                 <View key={answer.question_id} style={styles.answerItem}>
                   <Text style={[styles.answerQuestion, { color: colors.gray500 }]}>
-                    {question?.question || `Question ${index + 1}`}
+                    {question?.question || t('myApplications.detail.questionFallback', { index: index + 1 })}
                   </Text>
                   <Text style={[styles.answerText, { color: colors.textPrimary }]}>
                     {answer.answer}
@@ -307,11 +309,11 @@ export default function ApplicationDetailsScreen() {
         {/* CV */}
         {application.resume_url && (
           <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>CV soumis</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('myApplications.detail.sections.cv')}</Text>
             <View style={styles.cvRow}>
               <FileText size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.cvText, { color: colors.textPrimary }]}>
-                CV téléchargé
+                {t('myApplications.detail.cvUploaded')}
               </Text>
             </View>
           </View>
@@ -320,7 +322,7 @@ export default function ApplicationDetailsScreen() {
         {/* Actions */}
         {application.status === 'SUBMITTED' && (
           <Button
-            title="Retirer ma candidature"
+            title={t('myApplications.detail.withdraw')}
             onPress={handleWithdraw}
             variant="outline"
             fullWidth
@@ -367,10 +369,10 @@ export default function ApplicationDetailsScreen() {
             <View style={styles.noMessages}>
               <MessageCircle size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.noMessagesTitle, { color: colors.textPrimary }]}>
-                Pas encore de messages
+                {t('myApplications.detail.noMessages')}
               </Text>
               <Text style={[styles.noMessagesText, { color: colors.gray500 }]}>
-                L'organisation vous contactera si elle souhaite échanger avec vous.
+                {t('myApplications.detail.noMessagesHint')}
               </Text>
             </View>
           ) : (
@@ -379,7 +381,7 @@ export default function ApplicationDetailsScreen() {
                 key={message.id}
                 content={message.content}
                 isMe={message.sender_type === 'TALENT'}
-                senderName={message.sender_type === 'ORGANIZATION' ? (message.sender_name || 'Organisation') : undefined}
+                senderName={message.sender_type === 'ORGANIZATION' ? (message.sender_name || t('myApplications.detail.organizationFallback')) : undefined}
                 createdAt={message.created_at}
                 proposedDatetime={message.proposed_datetime}
                 attachments={message.attachments}
@@ -393,13 +395,13 @@ export default function ApplicationDetailsScreen() {
           <ChatInput
             onSend={handleSendMessage}
             isSending={isSending}
-            placeholder="Écrivez votre message..."
+            placeholder={t('myApplications.detail.messagePlaceholder')}
             showDatetimeOption={true}
           />
         ) : (
           <View style={[styles.waitingMessage, { backgroundColor: colors.gray50, borderTopColor: colors.gray200 }]}>
             <Text style={[styles.waitingText, { color: colors.gray500 }]}>
-              L'organisation doit vous contacter en premier
+              {t('myApplications.detail.waitingMessage')}
             </Text>
           </View>
         )}
@@ -419,7 +421,7 @@ export default function ApplicationDetailsScreen() {
     return (
       <SafeAreaView style={[styles.errorContainer, { backgroundColor: colors.background }]}>
         <Text style={[styles.errorText, { color: colors.textPrimary }]}>
-          Candidature non trouvée
+          {t('myApplications.detail.notFound')}
         </Text>
       </SafeAreaView>
     );
@@ -432,18 +434,18 @@ export default function ApplicationDetailsScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('myApplications.detail.backLabel')}
         />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-          {application.opportunity?.title || 'Candidature'}
+          {application.opportunity?.title || t('myApplications.detail.headerFallback')}
         </Text>
         <View style={styles.headerSpacer} />
       </View>
 
       {/* Tabs */}
       <View style={[styles.tabsContainer, { borderBottomColor: colors.gray200 }]}>
-        {renderTab('details', 'Détails', Briefcase)}
-        {renderTab('messages', 'Messages', MessageCircle)}
+        {renderTab('details', t('myApplications.detail.tabs.details'), Briefcase)}
+        {renderTab('messages', t('myApplications.detail.tabs.messages'), MessageCircle)}
       </View>
 
       {/* Content */}

@@ -251,7 +251,7 @@ class ApiService {
         } else {
           await this.clearAuth();
           logger.apiError(LOG_SOURCE, 401, 'Session expired', endpoint);
-          throw { error: 'Session expirée. Veuillez vous reconnecter.', status: 401 } as ApiError;
+          throw { error: i18n.t('errors.sessionExpired'), status: 401 } as ApiError;
         }
       }
 

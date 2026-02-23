@@ -1,0 +1,19 @@
+{
+  "messageRequired": "Die Nachricht ist erforderlich",
+  "messageTooLong": "Die Nachricht ist zu lang (max. 4000 Zeichen)",
+  "processingError": "Fehler bei der Nachrichtenverarbeitung",
+  "transcriptionError": "Fehler bei der Audiotranskription",
+  "uploadError": "Fehler beim Hochladen der Datei",
+  "sessionsError": "Fehler beim Abrufen der Sitzungen",
+  "sessionCreateError": "Fehler beim Erstellen der Sitzung",
+  "sessionFetchError": "Fehler beim Abrufen der Sitzung",
+  "sessionDeleteError": "Fehler beim Loeschen der Sitzung",
+  "sessionDeleted": "Sitzung geloescht",
+  "sessionNotFound": "Sitzung nicht gefunden",
+  "messagesError": "Fehler beim Abrufen der Nachrichten",
+  "organizationRequired": "Die Organisations-ID ist fuer den Verwaltungsmodus erforderlich",
+  "notAuthenticated": "Nicht authentifiziert",
+  "noAudioFile": "Keine Audiodatei bereitgestellt",
+  "invalidAudioFormat": "Ungueltiges Audioformat oder beschaedigte Datei",
+  "noFileProvided": "Keine Datei bereitgestellt"
+}

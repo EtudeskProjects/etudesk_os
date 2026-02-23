@@ -1,0 +1,14 @@
+{
+  "tooManyRequests": "Zu viele Anfragen. Versuche es in einigen Minuten erneut.",
+  "tooManyLoginAttempts": "Zu viele Anmeldeversuche. Versuche es in 15 Minuten erneut.",
+  "codeLimitReached": "Code-Sendelimit erreicht. Versuche es in 1 Stunde erneut.",
+  "tooManyApplications": "Du hast zu viele Bewerbungen eingereicht. Versuche es spaeter erneut.",
+  "tooManyOperations": "Zu viele Vorgaenge. Versuche es in einigen Minuten erneut.",
+  "tooManySearches": "Zu viele Suchanfragen. Warte einen Moment.",
+  "tooManyMessages": "Zu viele Nachrichten gesendet. Warte einen Moment.",
+  "tooManyCopilotRequests": "Zu viele Copilot-Anfragen. Warte einen Moment.",
+  "tooManyDemands": "Zu viele Anfragen. Versuche es in 1 Stunde erneut.",
+  "webhookLimitExceeded": "Zu viele Webhook-Anfragen.",
+  "webhookRetryLimitExceeded": "Zu viele Webhook-Anfragen. Versuche es erneut.",
+  "exportLimitReached": "Exportlimit erreicht. Versuche es spaeter erneut."
+}

@@ -28,13 +28,14 @@ import { Button, Chip, FooterNav, IconButton, Input, SelectCard } from '../../..
 import { ShimmerPlaceholder } from '../../../src/components/ui/ShimmerPlaceholder';
 import { RemoteImage } from '../../../src/components/ui/RemoteImage';
 import { useTheme } from '../../../src/hooks/useTheme';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import {
   orgTalentService,
   OrgTalent,
   OrgTalentFilters,
   OrgTagDefinition,
-  SOURCE_LABELS,
+  getSourceLabel,
 } from '../../../src/services';
 
 type SourceFilter = OrgTalentFilters['source'] | 'FAVORITES' | undefined;
@@ -42,6 +43,7 @@ type SourceFilter = OrgTalentFilters['source'] | 'FAVORITES' | undefined;
 export default function TalentsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { selectedOrg } = useSpace();
 
   const [talents, setTalents] = useState<OrgTalent[]>([]);
@@ -160,18 +162,18 @@ export default function TalentsScreen() {
 
   const getCohortLabel = (): string => {
     const parts: string[] = [];
-    if (activeFilter === 'FAVORITES') parts.push('Favoris');
-    else if (activeFilter === 'APPLICATION') parts.push('Candidatures');
-    else if (activeFilter === 'COMMUNITY') parts.push('Communautés');
-    else if (activeFilter === 'SPACE_BOOKING') parts.push('Réservations');
-    const activeTag = tags.find(t => t.id === activeTagFilter);
+    if (activeFilter === 'FAVORITES') parts.push(t('talents.favorites'));
+    else if (activeFilter === 'APPLICATION') parts.push(t('talents.applications'));
+    else if (activeFilter === 'COMMUNITY') parts.push(t('talents.communities'));
+    else if (activeFilter === 'SPACE_BOOKING') parts.push(t('talents.reservations'));
+    const activeTag = tags.find(tg => tg.id === activeTagFilter);
     if (activeTag) parts.push(activeTag.name);
-    return parts.length > 0 ? parts.join(' · ') : 'Tous les talents';
+    return parts.length > 0 ? parts.join(' · ') : t('talents.allTalents');
   };
 
   const handleCohortAnalysis = () => {
     const cohort = getCohortLabel();
-    const prompt = `Analyse de cohorte : ${cohort} (${total} talents).`;
+    const prompt = `${t('talents.cohortAnalysis')} : ${cohort} (${total} talents).`;
     router.push({
       pathname: '/(tabs)/assistant',
       params: { prompt, focusInput: 'true' },
@@ -179,11 +181,11 @@ export default function TalentsScreen() {
   };
 
   const filters: { key: SourceFilter; label: string }[] = [
-    { key: undefined, label: 'Tous' },
-    { key: 'APPLICATION', label: 'Candidatures' },
-    { key: 'COMMUNITY', label: 'Communautés' },
-    { key: 'SPACE_BOOKING', label: 'Réservations' },
-    { key: 'FAVORITES', label: 'Favoris' },
+    { key: undefined, label: t('talents.all') },
+    { key: 'APPLICATION', label: t('talents.applications') },
+    { key: 'COMMUNITY', label: t('talents.communities') },
+    { key: 'SPACE_BOOKING', label: t('talents.reservations') },
+    { key: 'FAVORITES', label: t('talents.favorites') },
   ];
 
   const renderTalent = ({ item }: { item: OrgTalent }) => (
@@ -191,7 +193,7 @@ export default function TalentsScreen() {
       style={[styles.talentCard, { backgroundColor: 'transparent', borderWidth: 0, borderColor: 'transparent', borderBottomWidth: BORDER.width.thin, borderBottomColor: colors.borderColor }]}
       onPress={() => router.push(`/details/talent/${item.talent_id}` as any)}
       selected={false}
-      accessibilityLabel={`Ouvrir ${item.first_name} ${item.last_name}`}
+      accessibilityLabel={t('talents.openTalent', { name: `${item.first_name} ${item.last_name}` })}
     >
       <View style={[styles.avatar, { backgroundColor: colors.gray100 }]}>
         {item.avatar_url ? (
@@ -218,7 +220,7 @@ export default function TalentsScreen() {
               style={[styles.sourcePill, { backgroundColor: colors.gray100 }]}
             >
               <Text style={[styles.sourcePillText, { color: colors.textSecondary }]}>
-                {SOURCE_LABELS[source] || source}
+                {getSourceLabel(source) || source}
               </Text>
             </View>
           ))}
@@ -250,7 +252,7 @@ export default function TalentsScreen() {
             strokeWidth={ICON.strokeWidth}
           />
         }
-        accessibilityLabel={item.is_favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+        accessibilityLabel={item.is_favorite ? t('talents.removeFavorite') : t('talents.addFavorite')}
         size="sm"
         variant="ghost"
       />
@@ -264,22 +266,22 @@ export default function TalentsScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
           style={styles.backButton}
         />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          Mes Talents ({total})
+          {t('talents.title', { count: total })}
         </Text>
         <IconButton
           onPress={() => setShowTagModal(true)}
           icon={<Tag size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Gérer les tags"
+          accessibilityLabel={t('talents.manageTags')}
         />
       </View>
 
       {/* Search */}
       <Input
-        placeholder="Rechercher un talent..."
+        placeholder={t('talents.searchPlaceholder')}
         value={search}
         onChangeText={setSearch}
         onSubmitEditing={loadTalents}
@@ -295,7 +297,7 @@ export default function TalentsScreen() {
           <IconButton
             onPress={() => setSearch('')}
             icon={<X size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel="Effacer la recherche"
+            accessibilityLabel={t('talents.clearSearch')}
             size="sm"
             variant="ghost"
             style={{ backgroundColor: 'transparent' }}
@@ -343,7 +345,7 @@ export default function TalentsScreen() {
         >
           <Tag size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
           <Chip
-            label="Tous"
+            label={t('talents.all')}
             selected={!activeTagFilter}
             onPress={() => setActiveTagFilter(undefined)}
             style={[
@@ -420,10 +422,10 @@ export default function TalentsScreen() {
             <View style={styles.emptyState}>
               <Heart size={40} color={colors.gray300} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                Aucun talent trouvé
+                {t('talents.emptyTitle')}
               </Text>
               <Text style={[styles.emptySubtext, { color: colors.gray400 }]}>
-                Les talents apparaîtront ici quand ils interagiront avec votre organisation
+                {t('talents.emptySubtitle')}
               </Text>
             </View>
           }
@@ -439,11 +441,11 @@ export default function TalentsScreen() {
           <Pressable style={styles.modalBackdrop} onPress={() => setShowTagModal(false)} />
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Gérer les tags</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('talents.manageTags')}</Text>
               <IconButton
                 onPress={() => setShowTagModal(false)}
                 icon={<X size={24} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-                accessibilityLabel="Fermer"
+                accessibilityLabel={t('common.close')}
                 size="sm"
                 variant="ghost"
               />
@@ -452,7 +454,7 @@ export default function TalentsScreen() {
             {/* Create tag */}
             <View style={styles.createTagRow}>
               <Input
-                placeholder="Nom du tag"
+                placeholder={t('talents.tagName')}
                 value={newTagName}
                 onChangeText={setNewTagName}
                 reserveHelperSpace={false}
@@ -464,7 +466,7 @@ export default function TalentsScreen() {
               <IconButton
                 onPress={handleCreateTag}
                 icon={<Plus size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-                accessibilityLabel="Créer le tag"
+                accessibilityLabel={t('talents.createTag')}
                 variant="filled"
                 size="md"
                 style={[styles.createTagButton, { backgroundColor: colors.primary }]}
@@ -483,7 +485,7 @@ export default function TalentsScreen() {
                   ]}
                   onPress={() => setNewTagColor(c)}
                   selected={false}
-                  accessibilityLabel={`Couleur ${c}`}
+                  accessibilityLabel={t('talents.tagColor', { color: c })}
                 >
                   <View />
                 </SelectCard>
@@ -499,7 +501,7 @@ export default function TalentsScreen() {
                   <IconButton
                     onPress={() => handleDeleteTag(tag.id)}
                     icon={<X size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
-                    accessibilityLabel={`Supprimer le tag ${tag.name}`}
+                    accessibilityLabel={t('talents.deleteTag', { name: tag.name })}
                     size="sm"
                     variant="ghost"
                   />
@@ -507,7 +509,7 @@ export default function TalentsScreen() {
               ))}
               {tags.length === 0 && (
                 <Text style={[styles.noTagsText, { color: colors.gray400 }]}>
-                  Aucun tag créé
+                  {t('talents.noTags')}
                 </Text>
               )}
             </View>
@@ -519,7 +521,7 @@ export default function TalentsScreen() {
       {total > 0 && (
         <View style={[styles.cohortButtonContainer, { backgroundColor: colors.background }]}>
           <Button
-            title="Analyse de cohorte"
+            title={t('talents.cohortAnalysis')}
             onPress={handleCohortAnalysis}
             fullWidth
             icon={<Radar size={18} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}

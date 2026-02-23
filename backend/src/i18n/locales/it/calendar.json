@@ -1,0 +1,10 @@
+{
+  "startEndDateRequired": "start_date e end_date sono richiesti",
+  "invalidDateFormat": "Formato della data non valido",
+  "codeRequired": "code richiesto",
+  "titleRequired": "title richiesto",
+  "dueDateRequired": "due_at richiesto",
+  "invalidDueDate": "due_at non valido",
+  "triggerNotFound": "Trigger non trovato",
+  "accessDenied": "Accesso negato"
+}

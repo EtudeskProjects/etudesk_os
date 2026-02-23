@@ -20,6 +20,7 @@ import { useTheme } from '../../../src/hooks/useTheme';
 import { useAlert } from '../../../src/contexts/AlertContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { opportunityService } from '../../../src/services';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { Opportunity } from '../../../src/types/models';
 
 export default function OpportunitiesListScreen() {
@@ -27,6 +28,7 @@ export default function OpportunitiesListScreen() {
   const { colors } = useTheme();
   const { confirm, success } = useAlert();
   const { selectedOrg } = useSpace();
+  const { t } = useI18n();
 
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,14 +77,14 @@ export default function OpportunitiesListScreen() {
 
   const handleDelete = async (id: string, title: string) => {
     const confirmed = await confirm(
-      'Supprimer cette opportunité ?',
-      `"${title}" sera supprimée définitivement.`
+      t('gestion.opportunities.deleteConfirm'),
+      t('gestion.opportunities.deleteMessage', { title })
     );
     if (confirmed) {
       try {
         await opportunityService.delete(id);
         setOpportunities(prev => prev.filter(o => o.id !== id));
-        success('Supprimé', 'L\'opportunité a été supprimée.');
+        success(t('common.deleted'), t('gestion.opportunities.deleteSuccess'));
       } catch (error) {
         if (__DEV__) console.error('Error deleting opportunity:', error);
       }
@@ -120,17 +122,17 @@ export default function OpportunitiesListScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
         <View style={styles.headerCenter}>
           <Briefcase size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Opportunités</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('gestion.opportunities.title')}</Text>
         </View>
         <IconButton
           variant="filled"
           onPress={() => router.push('/settings/organization/create-opportunity' as any)}
           icon={<Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Créer une opportunité"
+          accessibilityLabel={t('gestion.opportunities.create')}
           style={{ backgroundColor: colors.primary }}
         />
       </View>
@@ -161,13 +163,13 @@ export default function OpportunitiesListScreen() {
               <Briefcase size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-              Aucune opportunité
+              {t('gestion.opportunities.empty')}
             </Text>
             <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-              Créez votre première opportunité pour attirer des talents.
+              {t('gestion.opportunities.emptySubtitle')}
             </Text>
             <Button
-              title="Créer une opportunité"
+              title={t('gestion.opportunities.create')}
               onPress={() => router.push('/settings/organization/create-opportunity' as any)}
               icon={<Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
             />

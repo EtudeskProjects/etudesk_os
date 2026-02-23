@@ -35,8 +35,8 @@ import { API_CONFIG } from '../../src/constants/config';
 import documentService, {
   TalentDocument,
   DocumentStatus,
-  DOCUMENT_TYPE_LABELS,
-  DOCUMENT_STATUS_LABELS,
+  getDocumentTypeLabel,
+  getDocumentStatusLabel,
   UPLOAD_LIMITS,
   formatFileSize,
   getStatusColor,
@@ -44,12 +44,15 @@ import documentService, {
 
 import { useAlert } from '../../src/contexts/AlertContext';
 import { downloadAndOpenDocument } from '../../src/utils/documentDownload';
+import { useI18n } from '../../src/contexts/I18nContext';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function DocumentsScreen() {
   const { colors } = useTheme();
   const router = useRouter();
+  const { t, locale } = useI18n();
+  const alerts = useAlert();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -72,10 +75,10 @@ export default function DocumentsScreen() {
       return docsResponse.documents;
     } catch (error) {
       if (__DEV__) console.error('Error loading documents:', error);
-      void alerts.alert('Erreur', 'Impossible de charger les documents');
+      void alerts.alert(t('common.error'), t('settings.documentsScreen.loadError'));
       return [];
     }
-  }, []);
+  }, [alerts, t]);
 
   const startPolling = useCallback(() => {
     if (pollingRef.current) return;
@@ -100,7 +103,6 @@ export default function DocumentsScreen() {
       pollingRef.current = null;
     }
   }, []);
-  const alerts = useAlert();
 
   useEffect(() => {
     const load = async () => {
@@ -126,7 +128,7 @@ export default function DocumentsScreen() {
     try {
       const remaining = UPLOAD_LIMITS.MAX_DOCUMENTS_PER_TALENT - documents.length;
       if (remaining <= 0) {
-        void alerts.alert('Limite atteinte', `Vous avez atteint la limite de ${UPLOAD_LIMITS.MAX_DOCUMENTS_PER_TALENT} documents.`);
+        void alerts.alert(t('common.limitReached'), t('settings.documentsScreen.limitReachedMessage', { max: UPLOAD_LIMITS.MAX_DOCUMENTS_PER_TALENT }));
         return;
       }
 
@@ -146,7 +148,7 @@ export default function DocumentsScreen() {
 
       for (const file of assets) {
         if (file.size && file.size > UPLOAD_LIMITS.MAX_FILE_SIZE_BYTES) {
-          void alerts.alert('Fichier trop volumineux', `"${file.name}" dépasse la taille maximale de ${UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB`);
+          void alerts.alert(t('common.fileTooLarge'), t('settings.documentsScreen.fileTooLargeMessage', { name: file.name, max: UPLOAD_LIMITS.MAX_FILE_SIZE_MB }));
           return;
         }
       }
@@ -173,15 +175,15 @@ export default function DocumentsScreen() {
       }
 
       const msg = assets.length === 1
-        ? 'Document uploadé avec succès. Le traitement est en cours.'
-        : `${assets.length} documents uploadés avec succès. Le traitement est en cours.`;
-      void alerts.alert('Succès', msg);
+        ? t('settings.documentsScreen.uploadSuccessOne')
+        : t('settings.documentsScreen.uploadSuccessMultiple', { count: assets.length });
+      void alerts.alert(t('common.success'), msg);
       await loadDocuments();
       startPolling();
     } catch (error: any) {
       if (__DEV__) console.error('Error uploading document:', error);
 
-      void alerts.alert('Erreur', error?.message || "Erreur lors de l'upload");
+      void alerts.alert(t('common.error'), error?.message || t('settings.documentsScreen.uploadError'));
     } finally {
       setIsUploading(false);
     }
@@ -195,22 +197,22 @@ export default function DocumentsScreen() {
         mimeType: doc.mime_type,
       });
     } catch (error) {
-      void alerts.alert('Erreur', 'Impossible de télécharger le document');
+      void alerts.alert(t('common.error'), t('settings.documentsScreen.downloadError'));
     }
   };
 
   const handleDelete = (doc: TalentDocument) => {
-    void alerts.showAlert({ title: 'Supprimer le document', message: `Veux-tu vraiment supprimer "${doc.title || doc.original_filename}" ?`, buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('settings.documentsScreen.deleteDocument'), message: t('settings.documentsScreen.deleteConfirm', { name: doc.title || doc.original_filename }), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await documentService.deleteDocument(doc.id);
               await loadDocuments();
             } catch (error) {
-              void alerts.alert('Erreur', 'Impossible de supprimer le document');
+              void alerts.alert(t('common.error'), t('settings.documentsScreen.deleteError'));
             }
           },
         },
@@ -220,11 +222,11 @@ export default function DocumentsScreen() {
   const handleRetry = async (doc: TalentDocument) => {
     try {
       await documentService.retryExtraction(doc.id);
-      void alerts.alert('Succès', "Nouvelle tentative d'extraction lancée");
+      void alerts.alert(t('common.success'), t('settings.documentsScreen.retrySuccess'));
       await loadDocuments();
       startPolling();
     } catch (error) {
-      void alerts.alert('Erreur', "Impossible de relancer l'extraction");
+      void alerts.alert(t('common.error'), t('settings.documentsScreen.retryError'));
     }
   };
 
@@ -255,13 +257,14 @@ export default function DocumentsScreen() {
     const diffW = Math.floor(diffD / 7);
     const diffM = Math.floor(diffD / 30);
 
-    if (diffMin < 1) return "À l'instant";
-    if (diffMin < 60) return `Il y a ${diffMin} min`;
-    if (diffH < 24) return `Il y a ${diffH}h`;
-    if (diffD < 7) return `Il y a ${diffD}j`;
-    if (diffW < 5) return `Il y a ${diffW} sem.`;
-    if (diffM < 12) return `Il y a ${diffM} mois`;
-    return `Il y a ${Math.floor(diffD / 365)} an${Math.floor(diffD / 365) > 1 ? 's' : ''}`;
+    if (diffMin < 1) return t('settings.documentsScreen.justNow');
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'always' });
+    if (diffMin < 60) return rtf.format(-diffMin, 'minute');
+    if (diffH < 24) return rtf.format(-diffH, 'hour');
+    if (diffD < 7) return rtf.format(-diffD, 'day');
+    if (diffW < 5) return rtf.format(-diffW, 'week');
+    if (diffM < 12) return rtf.format(-diffM, 'month');
+    return rtf.format(-Math.floor(diffD / 365), 'year');
   };
 
   const renderDocument = (doc: TalentDocument) => {
@@ -286,12 +289,12 @@ export default function DocumentsScreen() {
           <IconButton
             onPress={() => handleDownload(doc)}
             icon={<Download size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel="Télécharger"
+            accessibilityLabel={t('settings.documentsScreen.downloadA11y')}
           />
           <IconButton
             onPress={() => handleDelete(doc)}
             icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel="Supprimer"
+            accessibilityLabel={t('settings.documentsScreen.deleteA11y')}
           />
         </View>
 
@@ -301,7 +304,7 @@ export default function DocumentsScreen() {
             style={[styles.thumbnail, { backgroundColor: colors.gray100, borderWidth: 0, borderColor: 'transparent' }]}
             onPress={() => setPreviewDoc(doc)}
             selected={false}
-            accessibilityLabel="Prévisualiser"
+            accessibilityLabel={t('settings.documentsScreen.previewA11y')}
           >
             {isImage ? (
               <Image source={{ uri: fileUrl }} style={styles.thumbnailImage} resizeMode="cover" />
@@ -316,7 +319,7 @@ export default function DocumentsScreen() {
             <SelectCard
               onPress={() => setPreviewDoc(doc)}
               selected={false}
-              accessibilityLabel="Prévisualiser"
+              accessibilityLabel={t('settings.documentsScreen.previewA11y')}
               style={{ borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }}
             >
               <Text style={[styles.documentTitle, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -326,7 +329,7 @@ export default function DocumentsScreen() {
 
             {/* Type · Size */}
             <Text style={[styles.documentMeta, { color: colors.textSecondary }]}>
-              {DOCUMENT_TYPE_LABELS[doc.document_type]} · {formatFileSize(doc.file_size)}
+              {getDocumentTypeLabel(doc.document_type)} · {formatFileSize(doc.file_size)}
             </Text>
 
             {/* Tags row: status + retry + date */}
@@ -338,13 +341,13 @@ export default function DocumentsScreen() {
                   <StatusIcon size={12} color={statusColor} strokeWidth={ICON.strokeWidth} />
                 )}
                 <Text style={[styles.tagText, { color: statusColor }]}>
-                  {DOCUMENT_STATUS_LABELS[doc.status]}
+                  {getDocumentStatusLabel(doc.status)}
                 </Text>
               </View>
-	              {doc.status === 'FAILED' && (
-	                <Chip
-	                  label="Réessayer"
-	                  onPress={() => handleRetry(doc)}
+		              {doc.status === 'FAILED' && (
+		                <Chip
+		                  label={t('settings.documentsScreen.retry')}
+		                  onPress={() => handleRetry(doc)}
 	                  leftIcon={<RotateCcw size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
 	                  style={[styles.tag, { backgroundColor: withOpacity(colors.primary, OPACITY[20]), borderColor: colors.primary }]}
 	                  textStyle={[styles.tagText, { color: colors.primary }]}
@@ -360,7 +363,7 @@ export default function DocumentsScreen() {
             {/* Skills count badge */}
             {doc.skills_count != null && doc.skills_count > 0 && (
               <Text style={[styles.skillsCount, { color: colors.primary }]}>
-                {doc.skills_count} compétence{doc.skills_count > 1 ? 's' : ''} extraite{doc.skills_count > 1 ? 's' : ''}
+                {t('settings.documentsScreen.skillsExtracted', { count: doc.skills_count })}
               </Text>
             )}
           </View>
@@ -371,7 +374,7 @@ export default function DocumentsScreen() {
           <SelectCard
             onPress={() => setExpandedDocs((prev) => ({ ...prev, [doc.id]: !prev[doc.id] }))}
             selected={false}
-            accessibilityLabel={isExpanded ? 'Réduire le résumé' : 'Déployer le résumé'}
+            accessibilityLabel={isExpanded ? t('settings.documentsScreen.collapseSummary') : t('settings.documentsScreen.expandSummary')}
             style={{ borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }}
           >
             <Text
@@ -388,7 +391,7 @@ export default function DocumentsScreen() {
             </Text>
             {summaryText.length > 100 && (
               <Text style={[styles.seeMore, { color: colors.primary }]}>
-                {isExpanded ? 'Voir moins' : 'Voir plus'}
+                {isExpanded ? t('settings.documentsScreen.seeLess') : t('settings.documentsScreen.seeMore')}
               </Text>
             )}
           </SelectCard>
@@ -400,7 +403,7 @@ export default function DocumentsScreen() {
   return (
     <>
       <PageLayout
-        title="Mes documents"
+        title={t('settings.documentsScreen.title')}
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
         isLoading={isLoading}
@@ -408,17 +411,17 @@ export default function DocumentsScreen() {
         {documents.length === 0 ? (
           <EmptyState
             icon={FileText}
-            title="Aucun document"
-            subtitle="Ajoute tes CV, diplômes, certificats et autres documents professionnels."
-            actionLabel="Ajouter un document"
+            title={t('settings.documentsScreen.noDocuments')}
+            subtitle={t('settings.documentsScreen.noDocumentsDesc')}
+            actionLabel={t('settings.documentsScreen.upload')}
             onAction={handleUpload}
-            tip="Astuce : l'assistant a accès à tous vos documents chargés ici et peut également sauvegarder des documents directement depuis une conversation."
+            tip={t('settings.documentsScreen.tip')}
           />
         ) : (
           <>
             <View style={styles.uploadSection}>
               <Button
-                title={isUploading ? 'Upload en cours...' : 'Ajouter un document'}
+                title={isUploading ? t('settings.documentsScreen.uploading') : t('settings.documentsScreen.upload')}
                 onPress={handleUpload}
                 fullWidth
                 disabled={isUploading}
@@ -427,7 +430,12 @@ export default function DocumentsScreen() {
                 iconPosition="left"
               />
               <Text style={[styles.uploadHint, { color: colors.textDisabled }]}>
-                PDF et images (JPEG, PNG, WebP, HEIC) · Max {UPLOAD_LIMITS.MAX_FILES_PER_REQUEST} fichiers, {UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB chacun · {documents.length}/{UPLOAD_LIMITS.MAX_DOCUMENTS_PER_TALENT} documents
+                {t('settings.documentsScreen.uploadHint', {
+                  maxFiles: UPLOAD_LIMITS.MAX_FILES_PER_REQUEST,
+                  maxSize: UPLOAD_LIMITS.MAX_FILE_SIZE_MB,
+                  current: documents.length,
+                  maxDocs: UPLOAD_LIMITS.MAX_DOCUMENTS_PER_TALENT,
+                })}
               </Text>
             </View>
             {documents.map(renderDocument)}
@@ -443,13 +451,13 @@ export default function DocumentsScreen() {
 	              <Text style={[styles.previewTitle, { color: colors.textPrimary }]} numberOfLines={1}>
 	                {previewDoc?.title || previewDoc?.original_filename}
 	              </Text>
-	              <IconButton
-	                onPress={() => setPreviewDoc(null)}
-	                icon={<X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                accessibilityLabel="Fermer"
-	                size="sm"
-	                variant="ghost"
-	              />
+		              <IconButton
+		                onPress={() => setPreviewDoc(null)}
+		                icon={<X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+		                accessibilityLabel={t('common.close')}
+		                size="sm"
+		                variant="ghost"
+		              />
 	            </View>
             {previewDoc && (
               <View style={styles.previewContent}>

@@ -29,6 +29,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { communityActivityService, communityService } from '../../../../src/services';
 import { useAlert } from '../../../../src/contexts/AlertContext';
 import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 
 interface Attachment {
     uri: string;
@@ -63,6 +64,7 @@ export default function CreatePostScreen() {
     const { id, activityId } = useLocalSearchParams<{ id: string; activityId?: string }>();
     const router = useRouter();
     const { colors, isDark } = useTheme();
+    const { t, locale } = useI18n();
     const inputRef = useRef<RNTextInput>(null);
     const scrollRef = useRef<ScrollView>(null);
 
@@ -110,13 +112,13 @@ export default function CreatePostScreen() {
         },
         onSubmit: async (values) => {
             if (!values.content.trim() && values.attachments.length === 0) {
-                void alerts.alert('Erreur', 'Veuillez ajouter du texte ou un fichier.');
+                void alerts.alert(t('common.error'), t('community.createPost.validationTextOrFile'));
                 return;
             }
 
             // Validate scheduled date is in the future (only for new posts)
             if (!isEditMode && values.isScheduled && values.scheduledDate <= new Date()) {
-                void alerts.alert('Erreur', 'La date de publication programmée doit être dans le futur.');
+                void alerts.alert(t('common.error'), t('community.createPost.validationFutureDate'));
                 return;
             }
 
@@ -162,13 +164,16 @@ export default function CreatePostScreen() {
 
             if (completeProgress) completeProgress();
             const message = isEditMode
-                ? 'Votre publication a été modifiée !'
+                ? t('community.createPost.updatedSuccess')
                 : values.isScheduled
-                    ? `Publication programmée pour le ${values.scheduledDate.toLocaleDateString('fr-FR')} à ${values.scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`
-                    : 'Votre publication a été créée !';
+                    ? t('community.createPost.scheduledSuccess', {
+                        date: values.scheduledDate.toLocaleDateString(locale),
+                        time: values.scheduledDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+                    })
+                    : t('community.createPost.createdSuccess');
 
-            void alerts.showAlert({ title: 'Succès', message: message, buttons: [
-                { text: 'OK', onPress: () => router.back() }
+            void alerts.showAlert({ title: t('common.success'), message: message, buttons: [
+                { text: t('community.createPost.ok'), onPress: () => router.back() }
             ] });
         },
     });
@@ -182,20 +187,20 @@ export default function CreatePostScreen() {
 
     // Track unsaved changes
     const hasUnsavedChanges = content !== initialContent || attachments.length > 0;
+    const alerts = useAlert();
 
     // Handle back button with confirmation
     const handleBack = useCallback(() => {
         if (hasUnsavedChanges && !isSubmitting) {
-            void alerts.showAlert({ title: 'Modifications non sauvegardées', message: 'Voulez-vous quitter sans sauvegarder ?', buttons: [
-                    { text: 'Continuer', style: 'cancel' },
-                    { text: 'Quitter', style: 'destructive', onPress: () => router.back() },
+            void alerts.showAlert({ title: t('common.unsavedChanges.title'), message: t('common.unsavedChanges.message'), buttons: [
+                    { text: t('common.continueEditing'), style: 'cancel' },
+                    { text: t('common.leave'), style: 'destructive', onPress: () => router.back() },
                 ] });
             return true;
         }
         router.back();
         return true;
-    }, [hasUnsavedChanges, isSubmitting, router]);
-    const alerts = useAlert();
+    }, [alerts, hasUnsavedChanges, isSubmitting, router, t]);
 
     // Android back button handler
     useEffect(() => {
@@ -345,14 +350,14 @@ export default function CreatePostScreen() {
     // Show file picker options
     const showFilePicker = () => {
         if (attachments.length >= MAX_FILES) {
-            void alerts.alert('Limite atteinte', `Maximum ${MAX_FILES} fichiers autorisés.`);
+            void alerts.alert(t('common.limitReached'), t('community.createPost.maxFilesAllowed', { max: MAX_FILES }));
             return;
         }
 
         if (Platform.OS === 'ios') {
             ActionSheetIOS.showActionSheetWithOptions(
                 {
-                    options: ['Annuler', 'Photos & Vidéos', 'Document PDF'],
+                    options: [t('common.cancel'), t('community.createPost.photosVideos'), t('community.createPost.pdfDocument')],
                     cancelButtonIndex: 0,
                 },
                 (buttonIndex) => {
@@ -361,10 +366,10 @@ export default function CreatePostScreen() {
                 }
             );
         } else {
-            void alerts.showAlert({ title: 'Ajouter un fichier', message: 'Choisissez le type de fichier', buttons: [
-                    { text: 'Photos & Vidéos', onPress: pickMedia },
-                    { text: 'Document PDF', onPress: pickDocuments },
-                    { text: 'Annuler', style: 'cancel' },
+            void alerts.showAlert({ title: t('community.createPost.addFileTitle'), message: t('community.createPost.chooseFileType'), buttons: [
+                    { text: t('community.createPost.photosVideos'), onPress: pickMedia },
+                    { text: t('community.createPost.pdfDocument'), onPress: pickDocuments },
+                    { text: t('common.cancel'), style: 'cancel' },
                 ] });
         }
     };
@@ -393,7 +398,7 @@ export default function CreatePostScreen() {
                 form.setValue('attachments', [...attachments, ...newAttachments]);
             }
         } catch (error) {
-            void alerts.alert('Erreur', 'Impossible de sélectionner les médias');
+            void alerts.alert(t('common.error'), t('community.createPost.pickMediaError'));
         }
     };
 
@@ -416,7 +421,7 @@ export default function CreatePostScreen() {
                 form.setValue('attachments', [...attachments, ...newAttachments]);
             }
         } catch (error) {
-            void alerts.alert('Erreur', 'Impossible de sélectionner le document');
+            void alerts.alert(t('common.error'), t('community.createPost.pickDocumentError'));
         }
     };
 
@@ -466,7 +471,7 @@ export default function CreatePostScreen() {
 
     const handleSaveAsDraft = async () => {
         if (!content.trim() && attachments.length === 0) {
-            void alerts.alert('Erreur', 'Veuillez ajouter du texte ou un fichier pour sauvegarder.');
+            void alerts.alert(t('common.error'), t('community.createPost.validationDraftTextOrFile'));
             return;
         }
 
@@ -503,15 +508,15 @@ export default function CreatePostScreen() {
             }
 
             if (completeProgress) completeProgress();
-            void alerts.showAlert({ title: 'Succès', message: 'Brouillon sauvegardé !', buttons: [
-                { text: 'OK', onPress: () => router.back() }
+            void alerts.showAlert({ title: t('common.success'), message: t('common.draftSaved'), buttons: [
+                { text: t('community.createPost.ok'), onPress: () => router.back() }
             ] });
         } catch (error: any) {
             setIsUploading(false);
             setUploadProgress(0);
             progressAnim.setValue(0);
-            const message = error?.response?.data?.error || error?.message || 'Impossible de sauvegarder le brouillon.';
-            void alerts.alert('Erreur', message);
+            const message = error?.response?.data?.error || error?.message || t('common.saveDraftError');
+            void alerts.alert(t('common.error'), message);
         } finally {
             setIsSavingDraft(false);
         }
@@ -545,27 +550,26 @@ export default function CreatePostScreen() {
 
     // Format scheduled button label
     const getScheduleButtonLabel = () => {
-        if (!isScheduled) return 'Publier';
-        const dateStr = scheduledDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-        const timeStr = scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-        return `Publier le ${dateStr}`;
+        if (!isScheduled) return t('common.publish');
+        const dateStr = scheduledDate.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+        return t('community.createPost.publishOn', { date: dateStr });
     };
 
     if (isLoadingDraft) {
         return (
 	            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-	                    <IconButton
-	                        onPress={() => router.back()}
-	                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                        accessibilityLabel="Retour"
-	                        style={styles.headerButton}
-	                    />
-	                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Publication</Text>
-	                    <View style={{ width: 44 }} />
-	                </View>
+		                    <IconButton
+		                        onPress={() => router.back()}
+		                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+		                        accessibilityLabel={t('common.back')}
+		                        style={styles.headerButton}
+		                    />
+		                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('community.createPost.publication')}</Text>
+		                    <View style={{ width: 44 }} />
+		                </View>
                 <View style={styles.loadingContainer}>
-                    <Text style={{ color: colors.textSecondary }}>Chargement...</Text>
+                    <Text style={{ color: colors.textSecondary }}>{t('common.loading')}</Text>
                 </View>
             </SafeAreaView>
         );
@@ -575,27 +579,27 @@ export default function CreatePostScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	            {/* Header */}
 	            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-	                <IconButton
-	                    onPress={handleBack}
-	                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                    accessibilityLabel="Retour"
-	                    style={styles.headerButton}
-	                />
-	                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-	                    {isEditMode ? 'Modifier' : hasDraft ? 'Brouillon' : 'Publication'}
-	                </Text>
-	                <View style={{ width: 44 }} />
-	            </View>
+		                <IconButton
+		                    onPress={handleBack}
+		                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+		                    accessibilityLabel={t('common.back')}
+		                    style={styles.headerButton}
+		                />
+		                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+		                    {isEditMode ? t('common.edit') : hasDraft ? t('common.draft') : t('community.createPost.publication')}
+		                </Text>
+		                <View style={{ width: 44 }} />
+		            </View>
 
             {/* Draft Banner - only show for drafts, not for edit mode */}
             {!isEditMode && hasDraft && (
                 <View style={[styles.draftBanner, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                     <SquarePen size={14} color={colors.primary} />
-                    <Text style={[styles.draftBannerText, { color: colors.primary }]}>
-                        Modifications non publiées
-                    </Text>
-                </View>
-            )}
+	                    <Text style={[styles.draftBannerText, { color: colors.primary }]}>
+	                        {t('common.unpublishedChanges')}
+	                    </Text>
+	                </View>
+	            )}
 
             <KeyboardAvoidingView
                 style={styles.keyboardView}
@@ -611,11 +615,11 @@ export default function CreatePostScreen() {
                         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
                     >
                     {/* Text Input */}
-                    <Input
-                        ref={inputRef}
-                        multiline
-                        placeholder="Écrivez quelque chose..."
-                        placeholderTextColor={colors.gray400}
+	                    <Input
+	                        ref={inputRef}
+	                        multiline
+	                        placeholder={t('community.createPost.writeSomething')}
+	                        placeholderTextColor={colors.gray400}
                         value={content}
                         onChangeText={handleTextChange}
                         onSelectionChange={handleSelectionChange}
@@ -652,9 +656,9 @@ export default function CreatePostScreen() {
 	                                        key={member.id}
 	                                        style={styles.mentionItem}
 	                                        onPress={() => insertMention(member)}
-	                                        accessibilityRole="button"
-	                                        accessibilityLabel={`Mentionner ${name || 'membre'}`}
-	                                    >
+		                                        accessibilityRole="button"
+		                                        accessibilityLabel={t('community.createPost.mentionMember', { name: name || t('common.member') })}
+		                                    >
 	                                        {avatar ? (
 	                                            <Image source={{ uri: avatar }} style={styles.mentionAvatar} />
 	                                        ) : (
@@ -690,11 +694,11 @@ export default function CreatePostScreen() {
                                     ]}
                                 />
                             </View>
-                            <Text style={[styles.uploadProgressText, { color: colors.textSecondary }]}>
-                                Téléchargement... {Math.round(uploadProgress)}%
-                            </Text>
-                        </View>
-                    )}
+	                            <Text style={[styles.uploadProgressText, { color: colors.textSecondary }]}>
+	                                {t('community.createPost.uploadingProgress', { progress: Math.round(uploadProgress) })}
+	                            </Text>
+	                        </View>
+	                    )}
 
                     {/* Attachments Grid */}
                     {attachments.length > 0 && (
@@ -720,14 +724,14 @@ export default function CreatePostScreen() {
                                             </Text>
                                         </View>
                                     )}
-		                                    <IconButton
-		                                        onPress={() => removeAttachment(index)}
-		                                        disabled={isUploading}
-		                                        icon={<X size={12} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-		                                        accessibilityLabel="Retirer le fichier"
-		                                        size="sm"
-		                                        variant="filled"
-		                                        style={[styles.removeButton, { backgroundColor: withOpacity(colors.black, OPACITY[80]) }]}
+			                                    <IconButton
+			                                        onPress={() => removeAttachment(index)}
+			                                        disabled={isUploading}
+			                                        icon={<X size={12} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
+			                                        accessibilityLabel={t('community.createPost.removeFile')}
+			                                        size="sm"
+			                                        variant="filled"
+			                                        style={[styles.removeButton, { backgroundColor: withOpacity(colors.black, OPACITY[80]) }]}
 		                                    />
 	                                </View>
 	                            ))}
@@ -739,42 +743,42 @@ export default function CreatePostScreen() {
                 {/* Schedule indicator - above toolbar (not shown in edit mode) */}
                 {!isEditMode && isScheduled && (
                     <View style={[styles.scheduleIndicator, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-	                        <IconButton
-	                            onPress={openDatePicker}
-	                            icon={<Calendar size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-	                            accessibilityLabel="Modifier la date de publication"
-	                            variant="filled"
-	                            size="sm"
-	                            style={[styles.scheduleIconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}
-	                        />
-	                        <View style={styles.scheduleContent}>
-	                            <Text style={[styles.scheduleLabel, { color: colors.textSecondary }]}>
-	                                Publication programmée
-	                            </Text>
-	                            <View style={styles.scheduleDateTimeRow}>
-	                                <Chip
-	                                    label={scheduledDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
-	                                    onPress={openDatePicker}
-	                                    leftIcon={<Calendar size={14} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-	                                    style={[styles.scheduleDateBtn, { backgroundColor: colors.gray100, borderWidth: 0 }]}
-	                                    textStyle={[styles.scheduleDateText, { color: colors.textPrimary }]}
-	                                />
-	                                <Chip
-	                                    label={scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-	                                    onPress={openTimePicker}
-	                                    leftIcon={<Clock size={14} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-	                                    style={[styles.scheduleDateBtn, { backgroundColor: colors.gray100, borderWidth: 0 }]}
+		                        <IconButton
+		                            onPress={openDatePicker}
+		                            icon={<Calendar size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+		                            accessibilityLabel={t('community.createPost.editScheduledDate')}
+		                            variant="filled"
+		                            size="sm"
+		                            style={[styles.scheduleIconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}
+		                        />
+		                        <View style={styles.scheduleContent}>
+		                            <Text style={[styles.scheduleLabel, { color: colors.textSecondary }]}>
+		                                {t('community.createPost.scheduledPublication')}
+		                            </Text>
+		                            <View style={styles.scheduleDateTimeRow}>
+		                                <Chip
+		                                    label={scheduledDate.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' })}
+		                                    onPress={openDatePicker}
+		                                    leftIcon={<Calendar size={14} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+		                                    style={[styles.scheduleDateBtn, { backgroundColor: colors.gray100, borderWidth: 0 }]}
+		                                    textStyle={[styles.scheduleDateText, { color: colors.textPrimary }]}
+		                                />
+		                                <Chip
+		                                    label={scheduledDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+		                                    onPress={openTimePicker}
+		                                    leftIcon={<Clock size={14} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+		                                    style={[styles.scheduleDateBtn, { backgroundColor: colors.gray100, borderWidth: 0 }]}
 	                                    textStyle={[styles.scheduleDateText, { color: colors.textPrimary }]}
 	                                />
 	                            </View>
 	                        </View>
-	                        <IconButton
-	                            onPress={() => form.setValue('isScheduled', false)}
-	                            icon={<X size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
-	                            accessibilityLabel="Annuler la programmation"
-	                            variant="filled"
-	                            size="sm"
-	                            style={[styles.scheduleRemoveBtn, { backgroundColor: colors.gray100 }]}
+		                        <IconButton
+		                            onPress={() => form.setValue('isScheduled', false)}
+		                            icon={<X size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+		                            accessibilityLabel={t('community.createPost.cancelSchedule')}
+		                            variant="filled"
+		                            size="sm"
+		                            style={[styles.scheduleRemoveBtn, { backgroundColor: colors.gray100 }]}
 	                        />
 	                    </View>
 	                )}
@@ -783,12 +787,12 @@ export default function CreatePostScreen() {
                 <View style={[styles.toolbar, { borderTopColor: colors.borderColor, backgroundColor: colors.background }]}>
                     <View style={styles.toolbarLeft}>
                         {/* Add file button */}
-                        <IconButton
-                            onPress={showFilePicker}
-                            disabled={!canAddMore}
-                            icon={<Plus size={20} color={colors.textOnPrimary} strokeWidth={2.5} />}
-                            accessibilityLabel="Ajouter un fichier"
-                            variant="filled"
+	                        <IconButton
+	                            onPress={showFilePicker}
+	                            disabled={!canAddMore}
+	                            icon={<Plus size={20} color={colors.textOnPrimary} strokeWidth={2.5} />}
+	                            accessibilityLabel={t('community.createPost.addFileA11y')}
+	                            variant="filled"
                             style={[
                                 styles.iconButton,
                                 { backgroundColor: colors.primary, opacity: canAddMore ? 1 : 0.4 }
@@ -797,11 +801,11 @@ export default function CreatePostScreen() {
 
                         {/* Schedule button - hide in edit mode */}
                         {!isEditMode && (
-                            <IconButton
-                                onPress={toggleSchedule}
-                                icon={<Calendar size={18} color={isScheduled ? colors.textOnPrimary : colors.gray600} strokeWidth={2} />}
-                                accessibilityLabel="Programmer la publication"
-                                variant="filled"
+	                            <IconButton
+	                                onPress={toggleSchedule}
+	                                icon={<Calendar size={18} color={isScheduled ? colors.textOnPrimary : colors.gray600} strokeWidth={2} />}
+	                                accessibilityLabel={t('community.createPost.scheduleA11y')}
+	                                variant="filled"
                                 style={[
                                     styles.iconButton,
                                     { backgroundColor: isScheduled ? colors.primary : colors.gray200 }
@@ -822,12 +826,12 @@ export default function CreatePostScreen() {
                     <View style={styles.toolbarRight}>
                         {/* Draft button - hide in edit mode */}
 	                        {!isEditMode && (
-	                            <IconButton
-	                                onPress={handleSaveAsDraft}
-	                                disabled={(!content.trim() && attachments.length === 0) || isSubmitting || isSavingDraft}
-	                                icon={<Save size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
-	                                accessibilityLabel="Enregistrer en brouillon"
-	                                variant="outline"
+		                            <IconButton
+		                                onPress={handleSaveAsDraft}
+		                                disabled={(!content.trim() && attachments.length === 0) || isSubmitting || isSavingDraft}
+		                                icon={<Save size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
+		                                accessibilityLabel={t('common.saveDraft')}
+		                                variant="outline"
 	                                style={[
 	                                    styles.draftBtn,
 	                                    {
@@ -839,10 +843,10 @@ export default function CreatePostScreen() {
 	                        )}
 
                         {/* Publish/Update button */}
-                        <Button
-                            title={isEditMode ? 'Modifier' : getScheduleButtonLabel()}
-                            onPress={form.handleSubmit}
-                            loading={isSubmitting}
+	                        <Button
+	                            title={isEditMode ? t('common.edit') : getScheduleButtonLabel()}
+	                            onPress={form.handleSubmit}
+	                            loading={isSubmitting}
                             disabled={(!content.trim() && attachments.length === 0) || isSubmitting}
                             size="sm"
                         />
@@ -880,16 +884,16 @@ export default function CreatePostScreen() {
 	            {/* iOS Date Picker Confirm Button */}
 	            {Platform.OS === 'ios' && showDatePicker && (
 	                <View style={[styles.pickerConfirmContainer, { backgroundColor: colors.surface, borderTopColor: colors.borderColor }]}>
-	                    <Button
-	                        title="Annuler"
-	                        onPress={() => setShowDatePicker(false)}
+		                    <Button
+		                        title={t('common.cancel')}
+		                        onPress={() => setShowDatePicker(false)}
 	                        variant="outline"
 	                        style={[styles.pickerCancelBtn, { borderColor: colors.borderColor }]}
 	                        textStyle={[styles.pickerCancelText, { color: colors.gray500 }]}
 	                    />
-	                    <Button
-	                        title="Suivant"
-	                        onPress={() => {
+		                    <Button
+		                        title={t('common.next')}
+		                        onPress={() => {
 	                            setShowDatePicker(false);
 	                            setShowTimePicker(true);
 	                        }}
@@ -917,7 +921,7 @@ export default function CreatePostScreen() {
                                     const futureDate = new Date();
                                     futureDate.setMinutes(futureDate.getMinutes() + 5);
                                     form.setValue('scheduledDate', futureDate);
-                                    void alerts.alert('Heure ajustée', 'L\'heure a été ajustée car elle était dans le passé.');
+                                    void alerts.alert(t('community.createPost.timeAdjustedTitle'), t('community.createPost.timeAdjustedMessage'));
                                 } else {
                                     form.setValue('scheduledDate', selectedDate);
                                 }
@@ -932,25 +936,25 @@ export default function CreatePostScreen() {
 	            {/* iOS Time Picker Confirm Button */}
 	            {Platform.OS === 'ios' && showTimePicker && (
 	                <View style={[styles.pickerConfirmContainer, { backgroundColor: colors.surface, borderTopColor: colors.borderColor }]}>
-	                    <Button
-	                        title="Annuler"
-	                        onPress={() => setShowTimePicker(false)}
+		                    <Button
+		                        title={t('common.cancel')}
+		                        onPress={() => setShowTimePicker(false)}
 	                        variant="outline"
 	                        style={[styles.pickerCancelBtn, { borderColor: colors.borderColor }]}
 	                        textStyle={[styles.pickerCancelText, { color: colors.gray500 }]}
 	                    />
-	                    <Button
-	                        title="Confirmer"
-	                        onPress={() => {
+		                    <Button
+		                        title={t('common.confirm')}
+		                        onPress={() => {
 	                            setShowTimePicker(false);
 	                            // Validate time
-	                            if (scheduledDate <= new Date()) {
-	                                const futureDate = new Date();
-	                                futureDate.setMinutes(futureDate.getMinutes() + 5);
-	                                form.setValue('scheduledDate', futureDate);
-	                                void alerts.alert('Heure ajustée', 'L\'heure a été ajustée car elle était dans le passé.');
-	                            }
-	                        }}
+		                            if (scheduledDate <= new Date()) {
+		                                const futureDate = new Date();
+		                                futureDate.setMinutes(futureDate.getMinutes() + 5);
+		                                form.setValue('scheduledDate', futureDate);
+		                                void alerts.alert(t('community.createPost.timeAdjustedTitle'), t('community.createPost.timeAdjustedMessage'));
+		                            }
+		                        }}
 	                        variant="primary"
 	                        style={[styles.pickerConfirmBtn, { backgroundColor: colors.primary }]}
 	                        textStyle={[styles.pickerConfirmText, { color: colors.textOnPrimary }]}

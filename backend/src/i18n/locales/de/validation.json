@@ -1,0 +1,137 @@
+{
+  "validationFailed": "Validierung fehlgeschlagen",
+  "internalError": "Interner Validierungsfehler",
+  "required": "{{field}} ist erforderlich",
+  "minLength": "{{field}} muss mindestens {{min}} Zeichen enthalten",
+  "maxLength": "{{field}} darf nicht mehr als {{max}} Zeichen enthalten",
+  "invalidFormat": "Das Format von {{field}} ist ungueltig",
+  "invalidUrl": "Ungueltige URL",
+  "invalidDate": "Ungueltiges Datum",
+  "invalidEnum": "Ungueltiger Wert fuer {{field}}",
+  "numberMin": "{{field}} muss mindestens {{min}} sein",
+  "numberMax": "{{field}} darf nicht mehr als {{max}} sein",
+  "arrayMinItems": "{{field}} muss mindestens {{min}} Elemente enthalten",
+  "arrayMaxItems": "{{field}} darf nicht mehr als {{max}} Elemente enthalten",
+  "common": {
+    "invalidId": "Ungueltige ID",
+    "invalidOrgId": "Ungueltige Organisations-ID",
+    "countryCodeFormat": "Der Laendercode muss im Format ISO 3166-1 alpha-2 sein",
+    "currencyFormat": "Die Waehrung muss im Format ISO 4217 sein"
+  },
+  "auth": {
+    "invalidEmail": "Ungueltige E-Mail",
+    "emailTooLong": "E-Mail zu lang",
+    "codeLength": "Der Code muss 6 Ziffern enthalten",
+    "codeDigits": "Der Code muss aus 6 Ziffern bestehen",
+    "refreshTokenRequired": "Aktualisierungstoken erforderlich",
+    "invalidPhone": "Ungueltige Telefonnummer",
+    "invalidWhatsApp": "Ungueltige WhatsApp-Nummer"
+  },
+  "opportunity": {
+    "titleMinLength": "Der Titel muss mindestens 3 Zeichen enthalten",
+    "titleMaxLength": "Der Titel darf nicht mehr als 200 Zeichen enthalten",
+    "descriptionMinLength": "Die Beschreibung muss mindestens 10 Zeichen enthalten",
+    "descriptionMaxLength": "Die Beschreibung darf nicht mehr als 10000 Zeichen enthalten",
+    "summaryMaxLength": "Die Zusammenfassung darf nicht mehr als 5000 Zeichen enthalten",
+    "requirementsMaxLength": "Die Anforderungen duerfen nicht mehr als 10000 Zeichen enthalten",
+    "niceToHaveMaxLength": "Die Pluspunkte duerfen nicht mehr als 5000 Zeichen enthalten",
+    "questionMaxLength": "Die Frage darf nicht mehr als 500 Zeichen enthalten",
+    "maxQuestions": "Maximal 10 benutzerdefinierte Fragen",
+    "deadlineRequired": "Die Frist ist erforderlich",
+    "compensationRange": "Das Mindestgehalt darf nicht hoeher als das Hoechstgehalt sein",
+    "invalidType": "Der Typ muss JOB, INTERNSHIP, FREELANCE oder VOLUNTEERING sein",
+    "invalidStatus": "Der Status muss DRAFT, OPEN, CLOSED oder ARCHIVED sein",
+    "invalidLocationType": "Der Standorttyp muss REMOTE, ONSITE oder HYBRID sein",
+    "invalidExperienceLevel": "Das Erfahrungsniveau muss JUNIOR, INTERMEDIATE, SENIOR oder LEAD sein",
+    "invalidContractType": "Der Vertragstyp muss FULL_TIME, PART_TIME, CONTRACT oder TEMPORARY sein",
+    "salaryMinInvalid": "Das Mindestgehalt muss eine positive Zahl sein",
+    "salaryMaxInvalid": "Das Hoechstgehalt muss hoeher als das Mindestgehalt sein",
+    "maxSkills": "Maximal 20 Kompetenzen erlaubt",
+    "invalidApplicationDeadline": "Die Bewerbungsfrist muss ein gueltiges zukuenftiges Datum sein"
+  },
+  "application": {
+    "questionIdRequired": "Frage-ID erforderlich",
+    "answerMaxLength": "Die Antwort darf nicht mehr als 2000 Zeichen enthalten",
+    "invalidOpportunityId": "Ungueltige Opportunity-ID",
+    "coverLetterMaxLength": "Das Anschreiben darf nicht mehr als 5000 Zeichen enthalten",
+    "invalidStatus": "Ungueltiger Status",
+    "notesMaxLength": "Die Notizen duerfen nicht mehr als 10000 Zeichen enthalten",
+    "ratingMustBeInt": "Die Bewertung muss eine ganze Zahl sein",
+    "ratingMin": "Die Mindestbewertung ist 1",
+    "ratingMax": "Die Hoechstbewertung ist 5",
+    "invalidApplicationId": "Ungueltige Bewerbungs-ID",
+    "atLeastOne": "Mindestens eine Bewerbung ist erforderlich",
+    "maxBulk": "Maximal 100 Bewerbungen auf einmal",
+    "invalidRating": "Die Bewertung muss zwischen 1 und 5 liegen"
+  },
+  "onboarding": {
+    "firstNameRequired": "Vorname erforderlich",
+    "firstNameTooLong": "Vorname zu lang",
+    "lastNameRequired": "Nachname erforderlich",
+    "lastNameTooLong": "Nachname zu lang",
+    "bioTooLong": "Bio zu lang",
+    "phoneTooLong": "Telefonnummer zu lang",
+    "cityTooLong": "Stadt zu lang",
+    "regionTooLong": "Region zu lang",
+    "maxProfileTags": "Maximal 3 Profil-Tags",
+    "maxGoals": "Maximal 3 Ziele",
+    "maxSectors": "Maximal 5 Branchen"
+  },
+  "community": {
+    "nameMinLength": "Der Name muss mindestens 3 Zeichen enthalten",
+    "nameMaxLength": "Der Name darf nicht mehr als 100 Zeichen enthalten",
+    "descriptionMaxLength": "Die Beschreibung darf nicht mehr als 5000 Zeichen enthalten",
+    "joinReasonMaxLength": "Der Grund darf nicht mehr als 1000 Zeichen enthalten",
+    "invalidVisibility": "Die Sichtbarkeit muss PUBLIC oder PRIVATE sein",
+    "invalidMemberRole": "Die Rolle muss ADMIN oder MEMBER sein",
+    "priceInvalid": "Der Monatspreis muss eine positive Zahl sein",
+    "trialDaysInvalid": "Die Testtage muessen zwischen 0 und 90 liegen"
+  },
+  "organization": {
+    "nameMinLength": "Der Name muss mindestens 2 Zeichen enthalten",
+    "nameMaxLength": "Der Name darf nicht mehr als 200 Zeichen enthalten",
+    "descriptionMaxLength": "Die Beschreibung darf nicht mehr als 5000 Zeichen enthalten"
+  },
+  "space": {
+    "invalidSpaceId": "Ungueltige Space-ID",
+    "invalidTimeFormat": "Ungueltiges Zeitformat (HH:MM)",
+    "nameMinLength": "Der Space-Name muss mindestens 2 Zeichen enthalten",
+    "nameMaxLength": "Der Space-Name darf nicht mehr als 100 Zeichen enthalten",
+    "descriptionMaxLength": "Die Beschreibung darf nicht mehr als 5000 Zeichen enthalten",
+    "invalidVisibility": "Die Sichtbarkeit muss PUBLIC oder PRIVATE sein"
+  },
+  "kyc": {
+    "invalidDocumentType": "Ungueltiger Dokumenttyp",
+    "frontImageRequired": "Vorderseitenbild erforderlich"
+  },
+  "invitation": {
+    "emailOrTalentRequired": "E-Mail oder Talent-ID erforderlich"
+  },
+  "activity": {
+    "titleMinLength": "Der Titel muss mindestens 2 Zeichen enthalten",
+    "titleMaxLength": "Der Titel darf nicht mehr als 200 Zeichen enthalten",
+    "contentRequired": "Der Inhalt ist fuer Beitraege erforderlich",
+    "invalidType": "Der Typ muss POST, EVENT oder POLL sein",
+    "eventStartRequired": "Das Startdatum des Events ist erforderlich",
+    "eventEndAfterStart": "Das Enddatum muss nach dem Startdatum liegen",
+    "pollMinOptions": "Eine Umfrage muss mindestens 2 Optionen haben",
+    "pollMaxOptions": "Eine Umfrage darf nicht mehr als 10 Optionen haben",
+    "pollOptionMinLength": "Jede Option muss mindestens 1 Zeichen enthalten",
+    "pollExpiresRequired": "Das Ablaufdatum der Umfrage ist erforderlich"
+  },
+  "talent": {
+    "firstNameRequired": "Der Vorname ist erforderlich",
+    "lastNameRequired": "Der Nachname ist erforderlich",
+    "bioMaxLength": "Die Bio darf nicht mehr als 500 Zeichen enthalten",
+    "invalidExperienceLevel": "Ungueltiges Erfahrungsniveau"
+  },
+  "document": {
+    "titleMinLength": "Der Titel muss mindestens 2 Zeichen enthalten",
+    "titleMaxLength": "Der Titel darf nicht mehr als 200 Zeichen enthalten",
+    "invalidType": "Ungueltiger Dokumenttyp"
+  },
+  "email": {
+    "subjectRequired": "Der E-Mail-Betreff ist erforderlich",
+    "bodyRequired": "Der E-Mail-Inhalt ist erforderlich"
+  }
+}

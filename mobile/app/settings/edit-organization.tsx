@@ -22,10 +22,12 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../s
 import { Chip, IconButton, Input, Button, StepIndicator, LoadingShimmer } from '../../src/components/ui';
 import { FormTextArea } from '../../src/components/forms/FormTextArea';
 import { useTheme } from '../../src/hooks/useTheme';
+import { useI18n } from '../../src/contexts/I18nContext';
 import { useSpace } from '../../src/contexts/SpaceContext';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
 import {
-  ORGANIZATION_TYPE_LABELS,
+  ORGANIZATION_TYPES,
+  getOrganizationTypeLabel,
   OrganizationType,
 } from '../../src/types/models';
 import { organizationService, talentService, imageService } from '../../src/services';
@@ -39,9 +41,9 @@ type Step = 'info' | 'location';
 
 const MAX_ORG_TYPES = 3;
 
-const ORGANIZATION_TYPE_OPTIONS = Object.entries(ORGANIZATION_TYPE_LABELS).map(([id, label]) => ({
+const ORGANIZATION_TYPE_OPTIONS = Object.values(ORGANIZATION_TYPES).map((id) => ({
   id: id as OrganizationType,
-  label,
+  label: getOrganizationTypeLabel(id as OrganizationType),
 }));
 
 // Type for form values
@@ -64,6 +66,7 @@ export default function EditOrganizationScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { refreshOrganizations } = useSpace();
   const [currentStep, setCurrentStep] = useState<Step>('info');
@@ -88,7 +91,7 @@ export default function EditOrganizationScreen() {
     },
     onSubmit: async (values) => {
       if (!organizationId) {
-        void alerts.alert('Erreur', 'Aucune organisation à modifier.');
+        void alerts.alert(t('common.error'), t('organization.noOrgToEdit'));
         return;
       }
       await organizationService.update(organizationId, {
@@ -106,7 +109,7 @@ export default function EditOrganizationScreen() {
         contact_phone: values.contactPhone.trim() || undefined,
       });
       await refreshOrganizations();
-      void alerts.showAlert({ title: 'Succès', message: 'Les informations de l\'organisation ont été mises à jour.', buttons: [{ text: 'OK', onPress: () => router.back() }] });
+      void alerts.showAlert({ title: t('organization.updateSuccess'), message: t('organization.updateSuccessMessage'), buttons: [{ text: 'OK', onPress: () => router.back() }] });
     },
   });
 
@@ -193,7 +196,7 @@ export default function EditOrganizationScreen() {
       if (__DEV__) console.error('Error loading organization:', error);
       // Try to load user profile for default location
       await loadUserProfileDefaults();
-      void alerts.showAlert({ title: 'Erreur', message: 'Impossible de charger l\'organisation.', buttons: [
+      void alerts.showAlert({ title: t('common.error'), message: t('organization.loadError'), buttons: [
         { text: 'OK', onPress: () => router.back() }
       ] });
     } finally {
@@ -265,7 +268,7 @@ export default function EditOrganizationScreen() {
         form.setValue('logoUri', image.uri);
       }
     } catch (error) {
-      if (__DEV__) console.error('Erreur lors de la sélection du logo:', error);
+      if (__DEV__) console.error('Error selecting logo:', error);
     }
   };
 
@@ -331,7 +334,7 @@ export default function EditOrganizationScreen() {
         await form.handleSubmit();
       } catch (error: any) {
         if (__DEV__) console.error('Error saving organization:', error);
-        void alerts.showAlert({ title: 'Erreur', message: error?.error || 'Une erreur est survenue lors de la mise à jour.', buttons: [{ text: 'OK' }] });
+        void alerts.showAlert({ title: t('common.error'), message: error?.error || t('organization.updateError'), buttons: [{ text: 'OK' }] });
       }
     }
   };
@@ -352,8 +355,8 @@ export default function EditOrganizationScreen() {
   };
 
   const STEPS_DATA = [
-    { id: 'info', label: 'Infos' },
-    { id: 'location', label: 'Localisation' },
+    { id: 'info', label: t('organization.steps.info') },
+    { id: 'location', label: t('organization.steps.location') },
   ];
 
   const renderStepIndicator = () => (
@@ -363,7 +366,7 @@ export default function EditOrganizationScreen() {
   const renderInfoStep = () => (
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Infos de l'organisation</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('organization.orgInfo')}</Text>
       </View>
 
       <View style={styles.formFields}>
@@ -373,7 +376,7 @@ export default function EditOrganizationScreen() {
 	            style={[styles.logoContainer, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
 	            onPress={pickLogo}
 	            accessibilityRole="button"
-	            accessibilityLabel="Modifier le logo"
+	            accessibilityLabel={t('organization.editLogo')}
 	          >
 	            {logoUri ? (
 	              <Image source={{ uri: logoUri }} style={styles.logoImage} resizeMode="cover" />
@@ -382,14 +385,14 @@ export default function EditOrganizationScreen() {
 	            )}
 	          </Pressable>
 	          <Text style={[styles.logoHint, { color: colors.textSecondary }]}>
-	            Modifier le logo
+	            {t('organization.editLogo')}
 	          </Text>
 	        </View>
 
         {/* Nom */}
         <Input
-          label="Nom de l'organisation *"
-          placeholder="Ex: Etudesk"
+          label={t('organization.nameLabel')}
+          placeholder={t('organization.namePlaceholder')}
           value={name}
           onChangeText={(value) => form.setValue('name', value)}
           autoCapitalize="words"
@@ -398,7 +401,7 @@ export default function EditOrganizationScreen() {
         {/* Type - Multi-select (max 3) */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Type d'organisation * (max {MAX_ORG_TYPES})
+            {t('organization.typeLabel', { max: MAX_ORG_TYPES })}
           </Text>
           <View style={styles.tagsContainer}>
             {ORGANIZATION_TYPE_OPTIONS.map((type) => {
@@ -425,14 +428,14 @@ export default function EditOrganizationScreen() {
             })}
           </View>
           <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
-            {orgTypes.length}/{MAX_ORG_TYPES} sélectionnés
+            {t('organization.selected', { count: orgTypes.length, max: MAX_ORG_TYPES })}
           </Text>
         </View>
 
         {/* Secteurs */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Secteurs d'activité (max {MAX_SECTORS})
+            {t('organization.sectorsLabel', { max: MAX_SECTORS })}
           </Text>
           <View style={styles.tagsContainer}>
             {SECTOR_DATA.map((sector) => {
@@ -441,7 +444,7 @@ export default function EditOrganizationScreen() {
                 <Chip
                   key={sector.id}
                   onPress={() => toggleSector(sector.id)}
-                  label={sector.label}
+                  label={t(sector.labelKey)}
                   selected={isSelected}
                   leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   style={[
@@ -459,14 +462,14 @@ export default function EditOrganizationScreen() {
             })}
           </View>
           <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
-            {sectors.length}/{MAX_SECTORS} sélectionnés
+            {t('organization.selected', { count: sectors.length, max: MAX_SECTORS })}
           </Text>
         </View>
 
         {/* Description */}
         <FormTextArea
-          label="Description"
-          placeholder="Décrivez votre organisation en quelques mots..."
+          label={t('organization.descriptionLabel')}
+          placeholder={t('organization.descriptionPlaceholder')}
           value={description}
           onChangeText={(value) => form.setValue('description', value)}
           rows={4}
@@ -475,8 +478,8 @@ export default function EditOrganizationScreen() {
 
         {/* Contact - Site web */}
         <Input
-          label="Site web"
-          placeholder="https://www.exemple.com"
+          label={t('organization.websiteLabel')}
+          placeholder={t('organization.websitePlaceholder')}
           value={websiteUrl}
           onChangeText={(value) => form.setValue('websiteUrl', value)}
           keyboardType="url"
@@ -485,8 +488,8 @@ export default function EditOrganizationScreen() {
 
         {/* Contact - Email */}
         <Input
-          label="Email de contact"
-          placeholder="contact@exemple.com"
+          label={t('organization.contactEmailLabel')}
+          placeholder={t('organization.contactEmailPlaceholder')}
           value={contactEmail}
           onChangeText={(value) => form.setValue('contactEmail', value)}
           keyboardType="email-address"
@@ -495,8 +498,8 @@ export default function EditOrganizationScreen() {
 
         {/* Contact - Téléphone */}
         <Input
-          label="Téléphone"
-          placeholder="+225 00 00 00 00 00"
+          label={t('organization.phoneLabel')}
+          placeholder={t('organization.phonePlaceholder')}
           value={contactPhone}
           onChangeText={(value) => form.setValue('contactPhone', value)}
           keyboardType="phone-pad"
@@ -508,9 +511,9 @@ export default function EditOrganizationScreen() {
   const renderLocationStep = () => (
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Localisation</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('organization.locationTitle')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Où se trouve votre organisation ?
+          {t('organization.locationDescription')}
         </Text>
       </View>
 
@@ -526,7 +529,7 @@ export default function EditOrganizationScreen() {
 
         {/* Pays */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Pays *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('organization.countryLabel')}</Text>
           <ScrollView
             ref={countryScrollRef}
             horizontal
@@ -560,7 +563,7 @@ export default function EditOrganizationScreen() {
         {/* Région */}
         {availableRegions.length > 0 && (
           <View style={styles.fieldContainer}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Région</Text>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('organization.regionLabel')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -594,7 +597,7 @@ export default function EditOrganizationScreen() {
         {/* Ville */}
         {availableCities.length > 0 && (
           <View style={styles.fieldContainer}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Ville</Text>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('organization.cityLabel')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -643,10 +646,10 @@ export default function EditOrganizationScreen() {
         <IconButton
           onPress={handleBack}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
           style={styles.backButton}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Modifier l'organisation</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('organization.editOrganization')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -671,7 +674,7 @@ export default function EditOrganizationScreen() {
 
           <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
             <Button
-              title={currentStep === 'location' ? (form.state.isSubmitting ? 'Enregistrement...' : 'Enregistrer') : 'Continuer'}
+              title={currentStep === 'location' ? (form.state.isSubmitting ? t('common.savingParams') : t('common.save')) : t('common.continue')}
               onPress={handleNext}
               disabled={!canProceed() || form.state.isSubmitting}
               fullWidth

@@ -1,0 +1,12 @@
+{
+  "fetchError": "Error al obtener los favoritos",
+  "addedToBookmarks": "Agregado a favoritos",
+  "removedFromBookmarks": "Eliminado de favoritos",
+  "checkStatusError": "Error al verificar el favorito",
+  "addError": "Error al agregar a favoritos",
+  "removeError": "Error al eliminar de favoritos",
+  "opportunityNotFound": "Oportunidad no encontrada",
+  "spaceNotFound": "Espacio no encontrado",
+  "communityNotFound": "Comunidad no encontrada",
+  "error": "Error"
+}

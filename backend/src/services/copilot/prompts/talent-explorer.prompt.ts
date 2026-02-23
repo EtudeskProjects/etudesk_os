@@ -8,37 +8,7 @@ import { TalentContext } from '../types';
 import { getOntologyForExplore } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
 import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
-import { getActiveSkillBlock, getChartRulesBlock } from './prompt-shared';
-
-/** Get language-specific instructions for the prompt */
-function getLanguageInstructions(language?: 'fr' | 'en') {
-  if (language === 'en') {
-    return {
-      languageBlock: `# RESPONSE LANGUAGE — ABSOLUTE RULE
-
-You MUST respond in English. Every single word you write to the user MUST be in English.
-This system prompt is written in English for technical clarity — your responses are ALSO in English.
-This rule applies to ALL responses: analysis, summaries, confirmations, questions, everything.`,
-      elegance: '**Elegance**: Respond with care and precision, reflecting expertise and erudition.',
-      finalReminder: 'Respond in ENGLISH. Every word. No exceptions.',
-      cvLanguageRule: 'Generate the CV in English by default. Only use another language if the user explicitly requests it.',
-      analysisLanguageRule: 'Present the full analysis in English.',
-    };
-  }
-  // Default to French
-  return {
-    languageBlock: `# RESPONSE LANGUAGE — ABSOLUTE RULE
-
-You MUST respond in French. Every single word you write to the user MUST be in French.
-This system prompt is written in English for technical clarity — but your responses MUST ALWAYS be in French.
-NEVER respond in English. If you catch yourself writing English, STOP and rewrite in French.
-This rule applies to ALL responses: analysis, summaries, confirmations, questions, everything.`,
-    elegance: '**Elegance**: Respond with care and precision, reflecting a high level of erudition.',
-    finalReminder: 'Respond in FRENCH. Every word. No exceptions. The system prompt is in English but your output is ALWAYS in French.',
-    cvLanguageRule: 'Generate the CV in French by default. Only use another language if the user explicitly requests it.',
-    analysisLanguageRule: 'Present the full analysis in French.',
-  };
-}
+import { getActiveSkillBlock, getChartRulesBlock, getLanguageInstructions } from './prompt-shared';
 
 /** Build a dynamic Situation block personalized to the talent's profile */
 function buildSituationBlock(context: TalentContext): string {

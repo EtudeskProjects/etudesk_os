@@ -9,6 +9,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY } from '../../../constants/theme';
+import i18n from '../../../i18n';
 
 interface DiagramBlockProps {
   data: {
@@ -191,9 +192,9 @@ const MERMAID_THEME_DARK = {
 
 const buildMermaidHTML = (
   code: string,
-  opts: { backgroundColor: string; isDark: boolean; errorColor: string; textColor: string }
+  opts: { backgroundColor: string; isDark: boolean; errorColor: string; textColor: string; renderErrorLabel: string }
 ) => {
-  const { backgroundColor: bg, isDark, errorColor, textColor } = opts;
+  const { backgroundColor: bg, isDark, errorColor, textColor, renderErrorLabel } = opts;
   const themeVars = isDark ? MERMAID_THEME_DARK : MERMAID_THEME_LIGHT;
   const themeVarsJson = JSON.stringify(themeVars);
   // Only escape backticks and </script> — do NOT double-escape backslashes
@@ -272,7 +273,7 @@ const buildMermaidHTML = (
         }, 150);
       } catch (e) {
         document.getElementById('error').style.display = 'block';
-        document.getElementById('error').textContent = 'Erreur de rendu: ' + e.message;
+        document.getElementById('error').textContent = '${renderErrorLabel}' + e.message;
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'height', value: 120 }));
       }
     })();
@@ -318,6 +319,7 @@ export const DiagramBlock: React.FC<DiagramBlockProps> = ({ data }) => {
               isDark,
               errorColor: colors.error,
               textColor: colors.textPrimary,
+              renderErrorLabel: i18n.t('common.renderError'),
             }),
             baseUrl: 'https://cdn.jsdelivr.net',
           }}

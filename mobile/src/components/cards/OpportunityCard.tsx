@@ -16,10 +16,11 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { formatDeadline } from '../../utils/date';
 import { formatCompactNumber } from '../../utils/number';
 import type { Opportunity, ContractType } from '../../types/models';
-import { CONTRACT_TYPE_LABELS, LOCATION_TYPE_LABELS } from '../../types/models';
+import { getContractTypeLabel, getLocationTypeLabel } from '../../types/models';
 import {
   CardContainer,
   CardImage,
@@ -72,6 +73,7 @@ export const OpportunityCard = React.memo<OpportunityCardProps>(({
   statusOverlay,
 }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const deadline = opportunity.deadline ? formatDeadline(opportunity.deadline) : null;
 
   // Location label logic
@@ -79,9 +81,9 @@ export const OpportunityCard = React.memo<OpportunityCardProps>(({
   let locationLabel = '';
 
   if (opportunity.location_type === 'REMOTE') {
-    locationLabel = LOCATION_TYPE_LABELS.REMOTE || 'Remote';
+    locationLabel = getLocationTypeLabel('REMOTE') || 'Remote';
   } else if (opportunity.location_type === 'HYBRID') {
-    const hybridLabel = LOCATION_TYPE_LABELS.HYBRID || 'Hybride';
+    const hybridLabel = getLocationTypeLabel('HYBRID') || 'Hybride';
     if (location?.city && location?.country) {
       locationLabel = `${hybridLabel} • ${location.city}, ${location.country}`;
     } else if (location?.city) {
@@ -95,7 +97,7 @@ export const OpportunityCard = React.memo<OpportunityCardProps>(({
     } else if (location?.city) {
       locationLabel = location.city;
     } else {
-      locationLabel = LOCATION_TYPE_LABELS.ON_SITE || 'Sur site';
+      locationLabel = getLocationTypeLabel('ON_SITE') || 'Sur site';
     }
   } else {
     if (location?.city && location?.country) {
@@ -103,14 +105,14 @@ export const OpportunityCard = React.memo<OpportunityCardProps>(({
     } else if (location?.city) {
       locationLabel = location.city;
     } else {
-      locationLabel = LOCATION_TYPE_LABELS.REMOTE || 'Remote';
+      locationLabel = getLocationTypeLabel('REMOTE') || 'Remote';
     }
   }
 
   // Build actions
   const actions: CardAction[] = [];
   if (onEdit) {
-    actions.push({ Icon: Edit, color: colors.primary, onPress: onEdit, accessibilityLabel: 'Modifier' });
+    actions.push({ Icon: Edit, color: colors.primary, onPress: onEdit, accessibilityLabel: t('common.edit') });
   }
   if (showBookmark && onBookmarkToggle && !showMoreAction) {
     actions.push({
@@ -118,11 +120,11 @@ export const OpportunityCard = React.memo<OpportunityCardProps>(({
       color: isBookmarked ? colors.primary : colors.gray400,
       fill: isBookmarked ? colors.primary : undefined,
       onPress: onBookmarkToggle,
-      accessibilityLabel: isBookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris',
+      accessibilityLabel: isBookmarked ? t('common.removeFromFavorites') : t('common.addToFavorites'),
     });
   }
   if (showMoreAction && onDelete) {
-    actions.push({ Icon: Trash2, color: colors.error, onPress: onDelete, accessibilityLabel: 'Supprimer' });
+    actions.push({ Icon: Trash2, color: colors.error, onPress: onDelete, accessibilityLabel: t('common.delete') });
   }
 
   // Organization subtitle component
@@ -158,14 +160,14 @@ export const OpportunityCard = React.memo<OpportunityCardProps>(({
         <CardBadgeRow>
           {opportunity.contract_type && (
             <CardBadge
-              label={CONTRACT_TYPE_LABELS[opportunity.contract_type as ContractType] || opportunity.contract_type}
+              label={getContractTypeLabel(opportunity.contract_type) || opportunity.contract_type}
               backgroundColor={colors.primary}
               textColor={colors.textOnPrimary}
             />
           )}
           {showStatus && opportunity.status && (
             <CardBadge
-              label={opportunity.status === 'OPEN' ? 'Active' : 'En pause'}
+              label={opportunity.status === 'OPEN' ? 'Active' : t('common.paused')}
               backgroundColor={opportunity.status === 'OPEN' ? colors.success : colors.warning}
               textColor={colors.textOnPrimary}
             />
@@ -199,11 +201,11 @@ export const OpportunityCard = React.memo<OpportunityCardProps>(({
                 onPress={onViewCandidates}
                 disabled={!onViewCandidates}
                 accessibilityRole="button"
-                accessibilityLabel="Voir les candidatures"
+                accessibilityLabel={t('common.viewApplications')}
               >
                 <Users size={14} color={onViewCandidates ? colors.primary : colors.textSecondary} strokeWidth={ICON.strokeWidth} />
                 <Text style={[styles.detailText, { color: onViewCandidates ? colors.primary : colors.textSecondary }]}>
-                  {formatCompactNumber(opportunity.applications_count || 0)} {(opportunity.applications_count || 0) <= 1 ? 'candidature' : 'candidatures'}
+                  {formatCompactNumber(opportunity.applications_count || 0)} {(opportunity.applications_count || 0) <= 1 ? t('common.application') : t('common.applications')}
                 </Text>
               </Pressable>
               <View style={styles.detailItem}>

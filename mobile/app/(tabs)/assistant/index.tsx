@@ -150,7 +150,7 @@ export default function AssistantScreen() {
     explore: { bg: withOpacity(colors.primary, OPACITY[10]), text: colors.primary },
     study: { bg: withOpacity(colors.success, OPACITY[10]), text: colors.success },
   };
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { isOrganizationSpace, selectedOrg } = useSpace();
   const { user } = useAuth();
   const inputRef = useRef<any>(null);
@@ -327,24 +327,24 @@ export default function AssistantScreen() {
   const getFallbackSuggestions = useCallback((currentMode: Mode, orgSpace: boolean): string[] => {
     if (orgSpace) {
       return [
-        'Trouve-moi des talents disponibles dans ma ville.',
-        'Fais un résumé des candidatures des 7 derniers jours.',
-        'Aide-moi à rédiger une fiche de poste sur [intitulé].',
+        t('screens.assistant.orgSuggestion1'),
+        t('screens.assistant.orgSuggestion2'),
+        t('screens.assistant.orgSuggestion3'),
       ];
     }
     if (currentMode === 'study') {
       return [
-        "Évalue-moi sur l'une de mes lacunes.",
-        "Explique-moi le cycle de l'eau en diagramme.",
-        'Crée un exercice pratique sur les fonctions affines.',
+        t('screens.assistant.studySuggestion1'),
+        t('screens.assistant.studySuggestion2'),
+        t('screens.assistant.studySuggestion3'),
       ];
     }
     return [
-      'Trouve 3 offres adaptées à mon profil cette semaine.',
-      'Montre les communautés utiles pour mon objectif.',
-      'Analyse mon CV.',
+      t('screens.assistant.exploreSuggestion1'),
+      t('screens.assistant.exploreSuggestion2'),
+      t('screens.assistant.exploreSuggestion3'),
     ];
-  }, []);
+  }, [t]);
 
   const loadFloatingSuggestions = useCallback((forceShow: boolean = false) => {
     const next = getFallbackSuggestions(activeMode, isOrganizationSpace);
@@ -364,7 +364,7 @@ export default function AssistantScreen() {
     try {
       const response = await copilotService.getSession(id, isOrganizationSpace ? selectedOrg?.id : undefined);
       if (response.error || !response.data) {
-        throw new Error(response.error || 'Session non trouvée');
+        throw new Error(response.error || t('screens.assistant.sessionNotFound'));
       }
 
       const { session, messages: sessionMessages } = response.data;
@@ -432,7 +432,7 @@ export default function AssistantScreen() {
         });
       setMessages(converted);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur inconnue');
+      setError(err instanceof Error ? err.message : t('screens.assistant.unknownError'));
     } finally {
       setIsLoading(false);
     }
@@ -455,7 +455,7 @@ export default function AssistantScreen() {
     try {
       const remaining = MAX_ATTACHMENTS - attachments.length;
       if (remaining <= 0) {
-        void alerts.alert('Limite atteinte', `Vous pouvez ajouter jusqu'à ${MAX_ATTACHMENTS} pièces jointes.`);
+        void alerts.alert(t('screens.assistant.limitReached'), t('screens.assistant.maxAttachments', { max: MAX_ATTACHMENTS }));
         return;
       }
 
@@ -471,7 +471,7 @@ export default function AssistantScreen() {
 
         for (const file of selected) {
           if (file.size && file.size > MAX_FILE_SIZE) {
-            void alerts.alert('Fichier trop volumineux', `${file.name} dépasse la limite de 20 Mo.`);
+            void alerts.alert(t('screens.assistant.fileTooLarge'), t('screens.assistant.fileTooLargeMessage', { name: file.name }));
             continue;
           }
           validFiles.push({
@@ -488,7 +488,7 @@ export default function AssistantScreen() {
       }
     } catch (error) {
       if (__DEV__) console.error('Error picking file:', error);
-      void alerts.alert('Erreur', 'Impossible de sélectionner le fichier.');
+      void alerts.alert(t('common.error'), t('screens.assistant.fileSelectError'));
     }
   };
 
@@ -542,7 +542,7 @@ export default function AssistantScreen() {
         );
 
         if (!uploadRes.success || !uploadRes.data?.documents) {
-          throw new Error(uploadRes.error || "Erreur lors de l'upload des pièces jointes");
+          throw new Error(uploadRes.error || t('screens.assistant.uploadError'));
         }
 
         attachmentIds = uploadRes.data.documents.map((doc: any) => doc.id);
@@ -724,7 +724,7 @@ export default function AssistantScreen() {
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMsgId
-            ? { ...m, isStreaming: false, error: err.message || "Erreur lors de l'envoi" }
+            ? { ...m, isStreaming: false, error: err.message || t('screens.assistant.sendError') }
             : m
         )
       );
@@ -745,10 +745,10 @@ export default function AssistantScreen() {
             // Send as voice note — the backend will analyze it with Gemini
             startStreamWithVoiceNote(uploadResult.data.voiceNoteUrl, uploadResult.data.mimeType);
           } else {
-            void alerts.alert('Erreur', uploadResult.error || 'Impossible d\'envoyer la note vocale');
+            void alerts.alert(t('common.error'), uploadResult.error || t('screens.assistant.voiceNoteError'));
           }
         } catch (err: any) {
-          void alerts.alert('Erreur', err.message || 'Erreur d\'envoi');
+          void alerts.alert(t('common.error'), err.message || t('screens.assistant.sendErrorShort'));
         } finally {
           setIsTranscribing(false);
         }
@@ -761,7 +761,7 @@ export default function AssistantScreen() {
 
   // Send a voice note as a message (upload + stream with audio analysis)
   const startStreamWithVoiceNote = useCallback((voiceNoteUrl: string, mimeType: string) => {
-    startStream('\ud83c\udfa4 Note vocale', [], voiceNoteUrl, mimeType);
+    startStream(`\ud83c\udfa4 ${t('screens.assistant.voiceNote')}`, [], voiceNoteUrl, mimeType);
   }, [startStream]);
 
   // Auto-stop recording when reaching 30 seconds
@@ -836,14 +836,14 @@ export default function AssistantScreen() {
     const isLastUserMessage = userMessages.length > 0 && userMessages[userMessages.length - 1].id === messageId;
 
     if (isLastUserMessage) {
-      void alerts.showAlert({ title: 'Message', message: undefined, buttons: [
-          { text: 'Annuler', style: 'cancel' },
+      void alerts.showAlert({ title: t('screens.assistant.message'), message: undefined, buttons: [
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'Copier',
+            text: t('screens.assistant.copy'),
             onPress: () => Clipboard.setStringAsync(content),
           },
           {
-            text: 'Modifier et renvoyer',
+            text: t('screens.assistant.editResend'),
             onPress: () => {
               // Remove this user message and its following assistant response from local state
               const msgIndex = messages.findIndex((m) => m.id === messageId);
@@ -857,10 +857,10 @@ export default function AssistantScreen() {
           },
         ] });
     } else {
-      void alerts.showAlert({ title: 'Message', message: undefined, buttons: [
-          { text: 'Annuler', style: 'cancel' },
+      void alerts.showAlert({ title: t('screens.assistant.message'), message: undefined, buttons: [
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'Copier',
+            text: t('screens.assistant.copy'),
             onPress: () => Clipboard.setStringAsync(content),
           },
         ] });
@@ -901,38 +901,38 @@ export default function AssistantScreen() {
     const text = (assistantText || '').toLowerCase();
     if (text.includes('```confirmation')) {
       return [
-        'Ajuste ce draft avant confirmation',
-        'Rends la proposition plus concise',
-        "Valide et passe à l'action suivante",
+        t('screens.assistant.followUp.adjustDraft'),
+        t('screens.assistant.followUp.makeConcise'),
+        t('screens.assistant.followUp.validateNext'),
       ];
     }
     if (text.includes('```entity:document')) {
       return [
-        'Fais-moi un résumé exécutif en 5 points',
-        "Transforme ça en plan d'action 30 jours",
-        'Ajoute les risques + mitigations',
+        t('screens.assistant.followUp.execSummary'),
+        t('screens.assistant.followUp.actionPlan'),
+        t('screens.assistant.followUp.addRisks'),
       ];
     }
     if (isOrganizationSpace) {
       return [
-        'Priorise les 3 actions les plus urgentes',
-        'Donne-moi la prochaine étape opérationnelle',
-        'Affine la recommandation pour Abidjan',
+        t('screens.assistant.followUp.orgPrioritize'),
+        t('screens.assistant.followUp.orgNextStep'),
+        t('screens.assistant.followUp.orgRefine'),
       ];
     }
     if (activeMode === 'study') {
       return [
-        'Teste-moi avec un mini quiz',
-        'Donne un exercice pratique progressif',
-        'Réexplique le point le plus complexe simplement',
+        t('screens.assistant.followUp.studyQuiz'),
+        t('screens.assistant.followUp.studyExercise'),
+        t('screens.assistant.followUp.studySimplify'),
       ];
     }
     return [
-      'Donne-moi la prochaine étape concrète',
-      'Propose 3 options selon mon profil',
-      'Prépare un message prêt à envoyer',
+      t('screens.assistant.followUp.nextStep'),
+      t('screens.assistant.followUp.threeOptions'),
+      t('screens.assistant.followUp.prepareMessage'),
     ];
-  }, [activeMode, isOrganizationSpace]);
+  }, [activeMode, isOrganizationSpace, t]);
 
   const hasClearNextStep = useCallback((assistantText: string): boolean => {
     const raw = (assistantText || '').trim();
@@ -1006,11 +1006,11 @@ export default function AssistantScreen() {
     if (!match) return '';
     const ts = parseInt(match[1], 10);
     const diff = Date.now() - ts;
-    if (diff < 60_000) return "À l'instant";
+    if (diff < 60_000) return t('screens.gestion.justNow');
     if (diff < 3_600_000) return `Il y a ${Math.floor(diff / 60_000)} min`;
     if (diff < 86_400_000) return `Il y a ${Math.floor(diff / 3_600_000)}h`;
     const d = new Date(ts);
-    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString(locale || undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   };
 
   const formatAssistantError = (err: string): string => {
@@ -1027,7 +1027,7 @@ export default function AssistantScreen() {
       lower.startsWith('400 ');
 
     if (isInternal) {
-      return 'Je rencontre un souci temporaire. Réessaie dans quelques instants.';
+      return t('screens.assistant.tempIssue');
     }
 
     // Trim very long errors that would break the layout.
@@ -1046,15 +1046,15 @@ export default function AssistantScreen() {
       </View>
       {isOrganizationSpace ? (
         <Text style={[styles.greeting, { color: colors.textPrimary }]}>
-          <Text style={{ color: colors.primary, fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold }}>{selectedOrg?.name || 'Organisation'}</Text> — recrutement, talents, communautés ou espaces : que souhaitez-vous piloter ?
+          <Text style={{ color: colors.primary, fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold }}>{selectedOrg?.name || t('myReservations.detail.organizationFallback')}</Text> {t('screens.assistant.orgGreeting')}
         </Text>
       ) : activeMode === 'study' ? (
         <Text style={[styles.greeting, { color: colors.textPrimary }]}>
-          Prêt à apprendre, <Text style={{ color: colors.success, fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold }}>{firstName}</Text> ? Choisis un sujet et commence ta session.
+          {t('screens.assistant.studyGreeting', { name: firstName })}
         </Text>
       ) : (
         <Text style={[styles.greeting, { color: colors.textPrimary }]}>
-          Bienvenue <Text style={{ color: colors.primary, fontFamily: TYPOGRAPHY.fontFamily.bold, fontWeight: TYPOGRAPHY.fontWeight.bold }}>{firstName}</Text>. Comment puis-je éclairer votre chemin aujourd&apos;hui ?
+          {t('screens.assistant.exploreGreeting', { name: firstName })}
         </Text>
       )}
     </ScrollView>
@@ -1160,7 +1160,7 @@ export default function AssistantScreen() {
 	                  </Text>
 	                  {message.lastUserMessage && (
 	                    <Button
-	                      title="Réessayer"
+	                      title={t('screens.assistant.retry')}
 	                      onPress={() => handleRetry(message.id)}
 	                      variant="outline"
 	                      size="sm"
@@ -1230,11 +1230,11 @@ export default function AssistantScreen() {
 	  const renderHistoryPanel = () => (
 	    <View style={[styles.historyPanel, { backgroundColor: colors.background }]}>
 	      <View style={[styles.historyHeader, { borderBottomColor: colors.borderColor }]}>
-	        <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>Archives des sessions</Text>
+	        <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>{t('screens.assistant.sessionArchives')}</Text>
 	        <IconButton
 	          onPress={() => setShowHistory(false)}
 	          icon={<X size={20} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-	          accessibilityLabel="Fermer"
+	          accessibilityLabel={t('screens.explore.close')}
 	          size="sm"
 	          variant="ghost"
 	        />
@@ -1248,7 +1248,7 @@ export default function AssistantScreen() {
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <Text style={[styles.historyEmpty, { color: colors.textSecondary }]}>
-            Aucune conversation
+            {t('screens.assistant.noConversation')}
           </Text>
         }
         renderItem={({ item: session }) => (
@@ -1261,7 +1261,7 @@ export default function AssistantScreen() {
             ]}
             onPress={() => handleSelectSession(session)}
             selected={false}
-            accessibilityLabel={session.title || 'Session'}
+            accessibilityLabel={session.title || t('screens.assistant.untitledSession')}
           >
             <View style={styles.historyItemContent}>
               {(() => {
@@ -1280,10 +1280,10 @@ export default function AssistantScreen() {
               })()}
               <View style={styles.historyItemText}>
                 <Text style={[styles.historyItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {session.title || 'Session sans titre'}
+                  {session.title || t('screens.assistant.untitledSession')}
                 </Text>
                 <Text style={[styles.historyItemMeta, { color: colors.textSecondary }]}>
-                  {session.messageCount} messages · {formatRelativeTime(session.lastMessageAt || session.createdAt)}
+                  {session.messageCount} {t('gestion.memberDetails.tabMessages').toLowerCase()} · {formatRelativeTime(session.lastMessageAt || session.createdAt)}
                   {session.createdByName ? ` · ${session.createdByName}` : ''}
                 </Text>
               </View>
@@ -1291,7 +1291,7 @@ export default function AssistantScreen() {
             <IconButton
               onPress={() => handleDeleteSession(session.id)}
               icon={<Trash2 size={16} color={colors.textDisabled} />}
-              accessibilityLabel="Supprimer la conversation"
+              accessibilityLabel={t('screens.assistant.deleteConversation')}
               size="sm"
               variant="ghost"
               style={styles.historyItemDelete}
@@ -1317,13 +1317,13 @@ export default function AssistantScreen() {
                 <IconButton
                   onPress={handleOpenHistory}
                   icon={<History size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-                  accessibilityLabel="Historique"
+                  accessibilityLabel={t('screens.assistant.history')}
                   style={styles.headerButton}
                 />
                 <IconButton
                   onPress={handleNewConversation}
                   icon={<Plus size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-                  accessibilityLabel="Nouvelle conversation"
+                  accessibilityLabel={t('screens.assistant.newConversation')}
                   style={styles.headerButton}
                 />
               </View>
@@ -1338,7 +1338,7 @@ export default function AssistantScreen() {
               <IconButton
                 onPress={() => setError(null)}
                 icon={<X size={16} color={colors.error} />}
-                accessibilityLabel="Fermer l'erreur"
+                accessibilityLabel={t('screens.assistant.closeError')}
                 size="sm"
                 variant="ghost"
               />
@@ -1397,7 +1397,7 @@ export default function AssistantScreen() {
                       <>
                         <View style={[styles.recordingDot, { backgroundColor: colors.warning }]} />
                         <Text style={[styles.recordingText, { color: colors.textPrimary }]}>
-                          Préparation...
+                          {t('screens.assistant.preparing')}
                         </Text>
                       </>
                     ) : (
@@ -1458,7 +1458,7 @@ export default function AssistantScreen() {
 	                      <IconButton
 	                        onPress={() => removeAttachment(index)}
 	                        icon={<X size={10} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-	                        accessibilityLabel="Supprimer la pièce jointe"
+	                        accessibilityLabel={t('screens.assistant.removeAttachment')}
 	                        size="sm"
 	                        variant="ghost"
 	                        style={[styles.removeAttachmentButton, { backgroundColor: colors.primary }]}
@@ -1473,7 +1473,7 @@ export default function AssistantScreen() {
               <View style={styles.inputRow}>
                 <Input
                   ref={inputRef}
-                  placeholder={audioRecorder.state.isRecording ? 'Enregistrement en cours...' : t('assistant.inputPlaceholder')}
+                  placeholder={audioRecorder.state.isRecording ? t('screens.assistant.recording') : t('assistant.inputPlaceholder')}
                   value={inputText}
                   onChangeText={setInputText}
                   multiline
@@ -1497,7 +1497,7 @@ export default function AssistantScreen() {
                       strokeWidth={ICON.strokeWidth}
                     />
                   }
-                  accessibilityLabel="Ajouter une pièce jointe"
+                  accessibilityLabel={t('screens.assistant.addAttachment')}
                   size="sm"
                   variant="ghost"
                   style={styles.inputAction}
@@ -1539,7 +1539,7 @@ export default function AssistantScreen() {
 	                      />
 	                    )
 	                  }
-	                  accessibilityLabel={audioRecorder.state.isRecording ? "Arrêter l'enregistrement" : "Démarrer un enregistrement"}
+	                  accessibilityLabel={audioRecorder.state.isRecording ? t('screens.assistant.stopRecording') : t('screens.assistant.startRecording')}
 	                  size="sm"
 	                  variant="ghost"
 	                  style={[
@@ -1563,7 +1563,7 @@ export default function AssistantScreen() {
 	                      />
 	                    )
 	                  }
-	                  accessibilityLabel={isSending ? 'Arrêter la génération' : 'Envoyer'}
+	                  accessibilityLabel={isSending ? t('screens.assistant.stopGeneration') : t('screens.assistant.send')}
 	                  size="sm"
 	                  variant="ghost"
 	                  style={[

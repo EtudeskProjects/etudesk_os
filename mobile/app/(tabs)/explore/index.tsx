@@ -75,11 +75,11 @@ const getInitials = (name: string): string => {
 };
 
 // Helper to format location
-const formatLocation = (item: { city?: string; country?: string; locations?: { city?: string }[] }): string => {
+const formatLocation = (item: { city?: string; country?: string; locations?: { city?: string }[] }, fallback: string): string => {
   if ('locations' in item && item.locations?.[0]?.city) {
     return item.locations[0].city;
   }
-  return item.city || 'Non spécifié';
+  return item.city || fallback;
 };
 
 // Proximity scoring: 0 = same city, 1 = same region, 2 = same country, 3 = global
@@ -379,7 +379,7 @@ export default function ExploreScreen() {
 	            <IconButton
 	              onPress={() => setShowFilterModal(false)}
 	              icon={<X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-	              accessibilityLabel="Fermer"
+	              accessibilityLabel={t('common.close')}
 	              size="sm"
 	              variant="ghost"
 	            />
@@ -663,7 +663,7 @@ export default function ExploreScreen() {
 	            <IconButton
 	              onPress={() => handleSearchChange('')}
 	              icon={<X size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-	              accessibilityLabel="Effacer"
+	              accessibilityLabel={t('common.clear')}
 	              size="sm"
 	              variant="ghost"
 	              style={{ width: 28, height: 28 }}

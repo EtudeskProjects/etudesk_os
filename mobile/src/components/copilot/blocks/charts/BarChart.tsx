@@ -6,6 +6,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../../../constants/theme';
+import { getLabelDirect } from '../../../../utils/labels';
 
 interface BarChartData {
   label: string;
@@ -49,7 +50,7 @@ export const BarChart: React.FC<BarChartProps> = ({ title, data }) => {
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
         <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
-          Aucune donnée disponible
+          {getLabelDirect('noData')}
         </Text>
       </View>
     );

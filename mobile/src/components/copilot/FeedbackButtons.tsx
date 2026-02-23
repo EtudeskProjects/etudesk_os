@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { ThumbsUp, ThumbsDown } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { ICON, SPACING } from '../../constants/theme';
 import { copilotService } from '../../services/copilotService';
 
@@ -17,6 +18,7 @@ interface FeedbackButtonsProps {
 
 export const FeedbackButtons: React.FC<FeedbackButtonsProps> = ({ messageId, size = ICON.size.sm }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [rating, setRating] = useState<1 | 3 | null>(null);
 
   const handleRate = async (value: 1 | 3) => {
@@ -35,7 +37,7 @@ export const FeedbackButtons: React.FC<FeedbackButtonsProps> = ({ messageId, siz
         style={styles.button}
         onPress={() => handleRate(3)}
         accessibilityRole="button"
-        accessibilityLabel="Bonne réponse"
+        accessibilityLabel={t('common.goodAnswer')}
       >
         <ThumbsUp
           size={size}
@@ -48,7 +50,7 @@ export const FeedbackButtons: React.FC<FeedbackButtonsProps> = ({ messageId, siz
         style={styles.button}
         onPress={() => handleRate(1)}
         accessibilityRole="button"
-        accessibilityLabel="Mauvaise réponse"
+        accessibilityLabel={t('common.badAnswer')}
       >
         <ThumbsDown
           size={size}

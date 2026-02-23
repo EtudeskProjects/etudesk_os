@@ -468,7 +468,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                     selected={false}
                     onPress={handleLike}
                     style={[styles.engagementItem, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
-                    accessibilityLabel="J’aime"
+                    accessibilityLabel={t('common.like')}
                 >
                     <Animated.View style={{ transform: [{ scale: likeScaleAnim }] }}>
                         <Heart
@@ -491,7 +491,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                     selected={false}
                     onPress={handleCommentClick}
                     style={[styles.engagementItem, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
-                    accessibilityLabel="Commentaires"
+                    accessibilityLabel={t('common.comments')}
                 >
                     <MessageCircle
                         size={18}
@@ -511,7 +511,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                     selected={false}
                     onPress={handleBookmark}
                     style={[styles.engagementItem, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
-                    accessibilityLabel="Bookmarks"
+                    accessibilityLabel={t('common.favorites')}
                 >
                     <Animated.View style={{ transform: [{ scale: bookmarkScaleAnim }] }}>
                         <Bookmark

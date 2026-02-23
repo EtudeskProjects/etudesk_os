@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, ScrollView, Platform, Pressable } from 'react-n
 import * as Clipboard from 'expo-clipboard';
 import { Code, Copy, Check } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
+import { useI18n } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 
 
@@ -24,6 +25,7 @@ interface CodeBlockProps {
 
 export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -92,7 +94,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
           style={styles.copyButton}
           onPress={handleCopy}
           accessibilityRole="button"
-          accessibilityLabel="Copier le code"
+          accessibilityLabel={t('codeBlock.copyCode')}
         >
           {copied ? (
             <>
@@ -102,7 +104,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
                 strokeWidth={ICON.strokeWidth}
               />
               <Text style={[styles.copyButtonText, { color: colors.success }]}>
-                Copié
+                {t('codeBlock.copied')}
               </Text>
             </>
           ) : (
@@ -113,7 +115,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
                 strokeWidth={ICON.strokeWidth}
               />
               <Text style={[styles.copyButtonText, { color: colors.gray400 }]}>
-                Copier
+                {t('codeBlock.copy')}
               </Text>
             </>
           )}

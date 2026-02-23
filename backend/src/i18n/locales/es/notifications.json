@@ -1,0 +1,10 @@
+{
+  "registerError": "No se pudo registrar el token push",
+  "deactivateError": "No se pudo desactivar el token push",
+  "fetchError": "No se pudieron obtener las notificaciones",
+  "markReadError": "No se pudo marcar la notificación como leída",
+  "markAllReadError": "No se pudieron marcar todas las notificaciones",
+  "deleteError": "No se pudo eliminar la notificación",
+  "fetchPreferencesError": "No se pudieron obtener las preferencias",
+  "updatePreferencesError": "No se pudieron actualizar las preferencias"
+}

@@ -9,14 +9,15 @@
   "maxFilesPerRequest": "Maximum {{count}} fichiers par requête",
   "maxDocumentsExceeded": "Tu ne peux ajouter que {{remaining}} document(s) supplémentaire(s). Limite : {{max}}.",
   "invalidDocumentType": "Type de document invalide",
-  "uploadSuccess": "Document uploadé. Le traitement est en cours.",
-  "uploadMultipleSuccess": "{{count}} documents uploadés. Le traitement est en cours.",
+  "uploadSuccess": "Document uploadé avec succès. Traitement en cours.",
+  "uploadMultipleSuccess": "{{count}} documents uploadés avec succès. Traitement en cours.",
   "uploadError": "Erreur lors de l'upload du document",
-  "updateSuccess": "Document mis à jour",
+  "updateSuccess": "Document mis à jour avec succès",
   "updateError": "Erreur lors de la mise à jour du document",
-  "deleteSuccess": "Document supprimé",
+  "deleteSuccess": "Document supprimé avec succès",
   "deleteError": "Erreur lors de la suppression du document",
   "retrySuccess": "Nouvelle tentative d'extraction lancée",
   "retryError": "Erreur lors de la tentative d'extraction",
-  "fileTooLarge": "Fichier trop volumineux. Maximum : {{size}}MB"
+  "fileTooLarge": "Fichier trop volumineux. Maximum : {{size}}MB",
+  "fileTypeNotAllowed": "Type de fichier non autorisé: {{mimetype}}"
 }

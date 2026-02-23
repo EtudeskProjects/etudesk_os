@@ -4,6 +4,7 @@
  */
 
 import { api } from './api';
+import i18n from '../i18n';
 
 export interface TalentSkill {
   id: string;
@@ -22,18 +23,11 @@ export interface MergeReport {
   new_extracted: number;
 }
 
-export const PROFICIENCY_LABELS: Record<string, string> = {
-  BEGINNER: 'Débutant',
-  INTERMEDIATE: 'Intermédiaire',
-  EXPERT: 'Expert',
-  MASTER: 'Maître',
-};
+export const getProficiencyLabel = (key: string): string =>
+  i18n.t(`labels.proficiencyLevels.${key}`);
 
-export const SKILL_TYPE_LABELS: Record<string, string> = {
-  KNOWLEDGE: 'Savoir',
-  HARD_SKILL: 'Savoir-faire',
-  SOFT_SKILL: 'Savoir-être',
-};
+export const getSkillTypeLabel = (key: string): string =>
+  i18n.t(`labels.skillTypes.${key}`);
 
 export const PROFICIENCY_LEVELS = ['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'] as const;
 

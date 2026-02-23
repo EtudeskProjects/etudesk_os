@@ -12,6 +12,7 @@ import {
   upsertCommunityEmbedding,
   upsertSpaceEmbedding,
 } from '../../embedding.service';
+import { i18next } from '../../../i18n';
 import {
   validateApplyOpportunity,
   validateJoinCommunity,
@@ -37,9 +38,11 @@ export interface ActionResult {
 
 export async function handleConfirmation(
   talentId: string,
-  request: ActionRequest
+  request: ActionRequest,
+  language?: string
 ): Promise<ActionResult> {
   const { action, entityId, sessionId, data } = request;
+  const tr = (key: string, options?: Record<string, any>) => i18next.t(key, { lng: language, ...(options || {}) });
 
   // Resolve "self" entity_id to the talent's own ID
   const resolvedEntityId = entityId === 'self' ? talentId : entityId;
@@ -47,7 +50,7 @@ export async function handleConfirmation(
   try {
     switch (action) {
       case 'apply_opportunity': {
-        const validation = await validateApplyOpportunity(talentId, entityId);
+        const validation = await validateApplyOpportunity(talentId, entityId, language);
         if (!validation.valid) {
           return { success: false, message: validation.error! };
         }
@@ -59,7 +62,7 @@ export async function handleConfirmation(
           [talentId, entityId]
         );
 
-        const message = `Candidature soumise pour "${validation.data?.title}".`;
+        const message = tr('copilot:actionApplySuccess', { title: validation.data?.title });
         await saveActionMessage(sessionId, message);
 
         logger.info(`[action.handler] Talent ${talentId} applied to opportunity ${entityId}`);
@@ -67,7 +70,7 @@ export async function handleConfirmation(
       }
 
       case 'join_community': {
-        const validation = await validateJoinCommunity(talentId, entityId);
+        const validation = await validateJoinCommunity(talentId, entityId, language);
         if (!validation.valid) {
           return { success: false, message: validation.error! };
         }
@@ -79,7 +82,7 @@ export async function handleConfirmation(
           [talentId, entityId]
         );
 
-        const message = `Vous avez rejoint la communauté "${validation.data?.name}".`;
+        const message = tr('copilot:actionJoinCommunitySuccess', { name: validation.data?.name });
         await saveActionMessage(sessionId, message);
 
         logger.info(`[action.handler] Talent ${talentId} joined community ${entityId}`);
@@ -87,7 +90,7 @@ export async function handleConfirmation(
       }
 
       case 'book_space': {
-        const validation = await validateBookSpace(talentId, entityId, data);
+        const validation = await validateBookSpace(talentId, entityId, data, language);
         if (!validation.valid) {
           return { success: false, message: validation.error! };
         }
@@ -99,7 +102,7 @@ export async function handleConfirmation(
           [talentId, entityId, data?.startDatetime, data?.endDatetime, validation.data?.rate || 0]
         );
 
-        const message = `Réservation de "${validation.data?.name}" soumise.`;
+        const message = tr('copilot:actionBookSpaceSuccess', { name: validation.data?.name });
         await saveActionMessage(sessionId, message);
 
         logger.info(`[action.handler] Talent ${talentId} booked space ${entityId}`);
@@ -109,7 +112,7 @@ export async function handleConfirmation(
       case 'accept_invitation':
       case 'decline_invitation': {
         const accept = action === 'accept_invitation';
-        const validation = await validateRespondInvitation(talentId, entityId, accept);
+        const validation = await validateRespondInvitation(talentId, entityId, accept, language);
         if (!validation.valid) {
           return { success: false, message: validation.error! };
         }
@@ -155,7 +158,7 @@ export async function handleConfirmation(
           }
         }
 
-        const message = `Invitation ${accept ? 'acceptée' : 'déclinée'}.`;
+        const message = accept ? tr('copilot:actionInvitationAccepted') : tr('copilot:actionInvitationDeclined');
         await saveActionMessage(sessionId, message);
 
         logger.info(`[action.handler] Talent ${talentId} ${newStatus.toLowerCase()} invitation ${entityId}`);
@@ -164,7 +167,7 @@ export async function handleConfirmation(
 
       case 'publish_opportunity': {
         const orgId = data?.organization_id || entityId;
-        const validation = await validatePublishOpportunity(talentId, orgId, data);
+        const validation = await validatePublishOpportunity(talentId, orgId, data, language);
         if (!validation.valid) {
           return { success: false, message: validation.error! };
         }
@@ -214,7 +217,7 @@ export async function handleConfirmation(
           type: data!.type,
         }).catch(() => {});
 
-        const message = `Offre "${title}" publiée avec succès.`;
+        const message = tr('copilot:actionOpportunityPublished', { title });
         await saveActionMessage(sessionId, message);
 
         logger.info(`[action.handler] Talent ${talentId} published opportunity ${id} for org ${orgId}`);
@@ -223,7 +226,7 @@ export async function handleConfirmation(
 
       case 'create_community': {
         const orgId = data?.organization_id || entityId;
-        const validation = await validateCreateCommunity(talentId, orgId, data);
+        const validation = await validateCreateCommunity(talentId, orgId, data, language);
         if (!validation.valid) {
           return { success: false, message: validation.error! };
         }
@@ -287,7 +290,7 @@ export async function handleConfirmation(
           sectors: data!.sectors,
         }).catch(() => {});
 
-        const message = `Communauté "${name}" créée avec succès.`;
+        const message = tr('copilot:actionCommunityCreated', { name });
         await saveActionMessage(sessionId, message);
 
         logger.info(`[action.handler] Talent ${talentId} created community ${communityId} for org ${orgId}`);
@@ -296,7 +299,7 @@ export async function handleConfirmation(
 
       case 'create_space': {
         const orgId = data?.organization_id || entityId;
-        const validation = await validateCreateSpace(talentId, orgId, data);
+        const validation = await validateCreateSpace(talentId, orgId, data, language);
         if (!validation.valid) {
           return { success: false, message: validation.error! };
         }
@@ -348,7 +351,7 @@ export async function handleConfirmation(
           hourly_rate: data!.hourly_rate,
         }).catch(() => {});
 
-        const message = `Espace "${name}" créé avec succès.`;
+        const message = tr('copilot:actionSpaceCreated', { name });
         await saveActionMessage(sessionId, message);
 
         logger.info(`[action.handler] Talent ${talentId} created space ${id} for org ${orgId}`);
@@ -357,7 +360,7 @@ export async function handleConfirmation(
 
       case 'update_profile': {
         if (!data || Object.keys(data).length === 0) {
-          return { success: false, message: 'Aucune donnée de profil à mettre à jour.' };
+          return { success: false, message: tr('copilot:actionProfileNoData') };
         }
 
         // --- Strict constants ---
@@ -446,7 +449,7 @@ export async function handleConfirmation(
         }
 
         if (setClauses.length === 0) {
-          return { success: false, message: 'Aucun champ valide à mettre à jour.' };
+          return { success: false, message: tr('copilot:actionProfileNoValidField') };
         }
 
         setClauses.push(`updated_at = NOW()`);
@@ -461,7 +464,7 @@ export async function handleConfirmation(
         cache.deleteByPrefix(`ctx:${talentId}:`);
 
         const updatedFields = Object.keys(data).filter(k => ALLOWED_FIELDS[k]).join(', ');
-        const message = `Profil mis à jour (${updatedFields}).`;
+        const message = tr('copilot:actionProfileUpdated', { fields: updatedFields });
         await saveActionMessage(sessionId, message);
 
         logger.info(`[action.handler] Talent ${talentId} updated profile: ${updatedFields}`);
@@ -470,7 +473,7 @@ export async function handleConfirmation(
 
       case 'create_agenda_trigger': {
         if (!data || !data.title) {
-          return { success: false, message: 'Données manquantes pour le trigger (title requis).' };
+          return { success: false, message: tr('copilot:actionTriggerMissingData') };
         }
 
         const VALID_CODES = new Set([
@@ -486,7 +489,7 @@ export async function handleConfirmation(
         // Default dueAt to 7 days from now if not provided
         const dueAt = data.dueAt ? new Date(data.dueAt) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         if (isNaN(dueAt.getTime())) {
-          return { success: false, message: 'Date invalide pour le trigger.' };
+          return { success: false, message: tr('copilot:actionTriggerInvalidDate') };
         }
 
         const result = await pool.query(
@@ -504,7 +507,8 @@ export async function handleConfirmation(
           ]
         );
 
-        const message = `Trigger "${data.title}" créé pour le ${dueAt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}.`;
+        const dateLocale = (language || 'en').startsWith('fr') ? 'fr-FR' : 'en-GB';
+        const message = tr('copilot:actionTriggerCreated', { title: data.title, date: dueAt.toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' }) });
         await saveActionMessage(sessionId, message);
 
         logger.info(`[action.handler] Talent ${talentId} created agenda trigger ${result.rows[0].id}`);
@@ -513,7 +517,7 @@ export async function handleConfirmation(
 
       case 'update_agenda_trigger': {
         if (!data) {
-          return { success: false, message: 'Aucune donnée à mettre à jour.' };
+          return { success: false, message: tr('copilot:actionUpdateNoData') };
         }
 
         // Verify the trigger belongs to this talent
@@ -522,7 +526,7 @@ export async function handleConfirmation(
           [resolvedEntityId, talentId]
         );
         if (existing.rows.length === 0) {
-          return { success: false, message: 'Trigger introuvable ou non autorisé.' };
+          return { success: false, message: tr('copilot:actionTriggerNotFoundOrUnauthorized') };
         }
 
         const updates: string[] = [];
@@ -552,7 +556,7 @@ export async function handleConfirmation(
         }
 
         if (updates.length === 0) {
-          return { success: false, message: 'Aucun champ valide à mettre à jour.' };
+          return { success: false, message: tr('copilot:actionTriggerNoValidField') };
         }
 
         updates.push(`updated_at = NOW()`);
@@ -563,7 +567,7 @@ export async function handleConfirmation(
           vals
         );
 
-        const message = `Trigger mis à jour.`;
+        const message = tr('copilot:actionTriggerUpdated');
         await saveActionMessage(sessionId, message);
 
         logger.info(`[action.handler] Talent ${talentId} updated agenda trigger ${resolvedEntityId}`);
@@ -571,11 +575,11 @@ export async function handleConfirmation(
       }
 
       default:
-        return { success: false, message: `Action "${action}" non supportée.` };
+        return { success: false, message: tr('copilot:actionUnsupported', { action }) };
     }
   } catch (error: any) {
     logger.error(`[action.handler] Error (${action} ${entityId}): ${error.message}`);
-    return { success: false, message: 'Une erreur est survenue lors de l\'exécution de l\'action.' };
+    return { success: false, message: tr('copilot:actionError') };
   }
 }
 

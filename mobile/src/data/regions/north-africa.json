@@ -1,0 +1,680 @@
+{
+  "pays": [
+    {
+      "nom": "Maroc",
+      "code_iso": "MA",
+      "regions": [
+        {
+          "nom": "Casablanca-Settat",
+          "communes": ["Casablanca", "Mohammedia", "Settat", "El Jadida", "Berrechid", "Benslimane"]
+        },
+        {
+          "nom": "Rabat-Sale-Kenitra",
+          "communes": ["Rabat", "Sale", "Kenitra", "Temara", "Skhirat", "Khemisset"]
+        },
+        {
+          "nom": "Marrakech-Safi",
+          "communes": ["Marrakech", "Safi", "Essaouira", "El Kelaa des Sraghna", "Youssoufia"]
+        },
+        {
+          "nom": "Fes-Meknes",
+          "communes": ["Fes", "Meknes", "Taza", "Ifrane", "Sefrou", "Moulay Yacoub"]
+        },
+        {
+          "nom": "Tanger-Tetouan-Al Hoceima",
+          "communes": ["Tanger", "Tetouan", "Al Hoceima", "Larache", "Chefchaouen", "Fnideq"]
+        },
+        {
+          "nom": "Oriental",
+          "communes": ["Oujda", "Nador", "Berkane", "Taourirt", "Jerada"]
+        },
+        {
+          "nom": "Beni Mellal-Khenifra",
+          "communes": ["Beni Mellal", "Khenifra", "Khouribga", "Fquih Ben Salah", "Azilal"]
+        },
+        {
+          "nom": "Draa-Tafilalet",
+          "communes": ["Errachidia", "Ouarzazate", "Tinghir", "Midelt", "Zagora"]
+        },
+        {
+          "nom": "Souss-Massa",
+          "communes": ["Agadir", "Inezgane", "Tiznit", "Taroudant", "Ait Melloul"]
+        },
+        {
+          "nom": "Guelmim-Oued Noun",
+          "communes": ["Guelmim", "Tan-Tan", "Sidi Ifni", "Assa-Zag"]
+        },
+        {
+          "nom": "Laayoune-Sakia El Hamra",
+          "communes": ["Laayoune", "Boujdour", "Es-Semara", "Tarfaya"]
+        },
+        {
+          "nom": "Dakhla-Oued Ed-Dahab",
+          "communes": ["Dakhla", "Aousserd"]
+        }
+      ]
+    },
+    {
+      "nom": "Algerie",
+      "code_iso": "DZ",
+      "regions": [
+        {
+          "nom": "Alger",
+          "communes": ["Alger", "Bab El Oued", "Hussein Dey", "El Harrach", "Bir Mourad Rais"]
+        },
+        {
+          "nom": "Oran",
+          "communes": ["Oran", "Ain Turk", "Es Senia", "Arzew"]
+        },
+        {
+          "nom": "Constantine",
+          "communes": ["Constantine", "El Khroub", "Hamma Bouziane"]
+        },
+        {
+          "nom": "Annaba",
+          "communes": ["Annaba", "El Bouni", "El Hadjar"]
+        },
+        {
+          "nom": "Blida",
+          "communes": ["Blida", "Boufarik", "Bougara", "Mouzaia"]
+        },
+        {
+          "nom": "Setif",
+          "communes": ["Setif", "El Eulma", "Ain Arnat", "Ain Oulmene"]
+        },
+        {
+          "nom": "Batna",
+          "communes": ["Batna", "Barika", "Ain Touta", "N'Gaous"]
+        },
+        {
+          "nom": "Tlemcen",
+          "communes": ["Tlemcen", "Maghnia", "Remchi", "Ghazaouet"]
+        },
+        {
+          "nom": "Bejaia",
+          "communes": ["Bejaia", "Akbou", "El Kseur", "Souk El Tenine"]
+        },
+        {
+          "nom": "Tizi Ouzou",
+          "communes": ["Tizi Ouzou", "Draa Ben Khedda", "Azazga", "Larbaa Nath Irathen"]
+        },
+        {
+          "nom": "Biskra",
+          "communes": ["Biskra", "Tolga", "Ouled Djellal", "Sidi Okba"]
+        },
+        {
+          "nom": "Djelfa",
+          "communes": ["Djelfa", "Messaad", "Ain Oussera", "Hassi Bahbah"]
+        },
+        {
+          "nom": "Chlef",
+          "communes": ["Chlef", "Tenes", "Ain Defla"]
+        },
+        {
+          "nom": "Bouira",
+          "communes": ["Bouira", "Sour El Ghozlane", "Lakhdaria"]
+        },
+        {
+          "nom": "Medea",
+          "communes": ["Medea", "Berrouaghia", "Ksar El Boukhari"]
+        },
+        {
+          "nom": "Mostaganem",
+          "communes": ["Mostaganem", "Ain Tedeles"]
+        },
+        {
+          "nom": "M'sila",
+          "communes": ["M'sila", "Bou Saada", "Ain El Hadjel"]
+        },
+        {
+          "nom": "Mascara",
+          "communes": ["Mascara", "Sig", "Tighennif"]
+        },
+        {
+          "nom": "Bordj Bou Arreridj",
+          "communes": ["Bordj Bou Arreridj", "Ras El Oued"]
+        },
+        {
+          "nom": "Tiaret",
+          "communes": ["Tiaret", "Sougueur", "Frenda"]
+        },
+        {
+          "nom": "Skikda",
+          "communes": ["Skikda", "Collo", "Azzaba"]
+        },
+        {
+          "nom": "Jijel",
+          "communes": ["Jijel", "Taher", "El Milia"]
+        },
+        {
+          "nom": "Guelma",
+          "communes": ["Guelma", "Heliopolis", "Bouchegouf"]
+        },
+        {
+          "nom": "Saida",
+          "communes": ["Saida", "Ain El Hadjar"]
+        },
+        {
+          "nom": "Sidi Bel Abbes",
+          "communes": ["Sidi Bel Abbes", "Telagh"]
+        },
+        {
+          "nom": "Relizane",
+          "communes": ["Relizane", "Oued Rhiou"]
+        },
+        {
+          "nom": "Mila",
+          "communes": ["Mila", "Chelghoum Laid", "Ferdjioua"]
+        },
+        {
+          "nom": "Ain Defla",
+          "communes": ["Ain Defla", "Khemis Miliana", "Miliana"]
+        },
+        {
+          "nom": "Souk Ahras",
+          "communes": ["Souk Ahras", "Sedrata"]
+        },
+        {
+          "nom": "Tissemsilt",
+          "communes": ["Tissemsilt", "Theniet El Had"]
+        },
+        {
+          "nom": "Khenchela",
+          "communes": ["Khenchela", "Kais"]
+        },
+        {
+          "nom": "Oum El Bouaghi",
+          "communes": ["Oum El Bouaghi", "Ain Beida", "Ain M'lila"]
+        },
+        {
+          "nom": "Tebessa",
+          "communes": ["Tebessa", "Bir El Ater"]
+        },
+        {
+          "nom": "El Oued",
+          "communes": ["El Oued", "Bayadha", "Guemar"]
+        },
+        {
+          "nom": "Ghardaia",
+          "communes": ["Ghardaia", "Metlili", "Berriane", "El Meniaa"]
+        },
+        {
+          "nom": "Ouargla",
+          "communes": ["Ouargla", "Hassi Messaoud", "Touggourt", "Temacine"]
+        },
+        {
+          "nom": "Laghouat",
+          "communes": ["Laghouat", "Aflou", "Hassi R'Mel"]
+        },
+        {
+          "nom": "Bechar",
+          "communes": ["Bechar", "Kenadsa", "Abadla"]
+        },
+        {
+          "nom": "Naama",
+          "communes": ["Naama", "Mecheria", "Ain Sefra"]
+        },
+        {
+          "nom": "El Bayadh",
+          "communes": ["El Bayadh", "Bougtob"]
+        },
+        {
+          "nom": "Adrar",
+          "communes": ["Adrar", "Timimoun", "Reggane", "Aoulef"]
+        },
+        {
+          "nom": "Tamanrasset",
+          "communes": ["Tamanrasset", "In Salah", "In Guezzam"]
+        },
+        {
+          "nom": "Illizi",
+          "communes": ["Illizi", "Djanet", "In Amenas"]
+        },
+        {
+          "nom": "Tindouf",
+          "communes": ["Tindouf"]
+        },
+        {
+          "nom": "Tipaza",
+          "communes": ["Tipaza", "Cherchell", "Kolea", "Hadjout"]
+        },
+        {
+          "nom": "Boumerdes",
+          "communes": ["Boumerdes", "Bordj Menaiel", "Dellys", "Khemis El Khechna"]
+        },
+        {
+          "nom": "El Tarf",
+          "communes": ["El Tarf", "El Kala"]
+        },
+        {
+          "nom": "Ain Temouchent",
+          "communes": ["Ain Temouchent", "Beni Saf", "El Malah"]
+        },
+        {
+          "nom": "Touggourt",
+          "communes": ["Touggourt", "Temacine", "Megarine"]
+        },
+        {
+          "nom": "Djanet",
+          "communes": ["Djanet"]
+        },
+        {
+          "nom": "In Salah",
+          "communes": ["In Salah", "In Ghar"]
+        },
+        {
+          "nom": "In Guezzam",
+          "communes": ["In Guezzam", "Tin Zaouatine"]
+        },
+        {
+          "nom": "El Meghaier",
+          "communes": ["El Meghaier", "Djamaa", "Still"]
+        },
+        {
+          "nom": "El Meniaa",
+          "communes": ["El Meniaa", "Hassi El Gara"]
+        },
+        {
+          "nom": "Timimoun",
+          "communes": ["Timimoun", "Aougrout", "Charouine"]
+        },
+        {
+          "nom": "Bordj Badji Mokhtar",
+          "communes": ["Bordj Badji Mokhtar", "Timiaouine"]
+        },
+        {
+          "nom": "Beni Abbes",
+          "communes": ["Beni Abbes", "El Ouata", "Igli"]
+        }
+      ]
+    },
+    {
+      "nom": "Tunisie",
+      "code_iso": "TN",
+      "regions": [
+        {
+          "nom": "Tunis",
+          "communes": ["Tunis", "La Marsa", "Le Bardo", "Carthage"]
+        },
+        {
+          "nom": "Ariana",
+          "communes": ["Ariana", "Raoued", "La Soukra"]
+        },
+        {
+          "nom": "Ben Arous",
+          "communes": ["Ben Arous", "Hammam Lif", "Rades", "Ezzahra"]
+        },
+        {
+          "nom": "Manouba",
+          "communes": ["Manouba", "Den Den", "Oued Ellil"]
+        },
+        {
+          "nom": "Nabeul",
+          "communes": ["Nabeul", "Hammamet", "Kelibia", "Korba", "Dar Chaabane"]
+        },
+        {
+          "nom": "Zaghouan",
+          "communes": ["Zaghouan", "El Fahs", "Zriba"]
+        },
+        {
+          "nom": "Bizerte",
+          "communes": ["Bizerte", "Menzel Bourguiba", "Mateur", "Ras Jebel"]
+        },
+        {
+          "nom": "Beja",
+          "communes": ["Beja", "Medjez El Bab", "Testour", "Nefza"]
+        },
+        {
+          "nom": "Jendouba",
+          "communes": ["Jendouba", "Tabarka", "Bou Salem", "Ain Draham"]
+        },
+        {
+          "nom": "Le Kef",
+          "communes": ["Le Kef", "Dahmani", "Tajerouine"]
+        },
+        {
+          "nom": "Siliana",
+          "communes": ["Siliana", "Makthar", "Bou Arada"]
+        },
+        {
+          "nom": "Sousse",
+          "communes": ["Sousse", "M'saken", "Kalaa Kebira", "Hammam Sousse"]
+        },
+        {
+          "nom": "Monastir",
+          "communes": ["Monastir", "Moknine", "Jemmal", "Ksar Hellal"]
+        },
+        {
+          "nom": "Mahdia",
+          "communes": ["Mahdia", "Ksour Essaf", "El Jem", "Chebba"]
+        },
+        {
+          "nom": "Sfax",
+          "communes": ["Sfax", "Sakiet Ezzit", "Sakiet Eddaier", "Maharès"]
+        },
+        {
+          "nom": "Kairouan",
+          "communes": ["Kairouan", "Haffouz", "Sbikha", "Nasrallah"]
+        },
+        {
+          "nom": "Kasserine",
+          "communes": ["Kasserine", "Sbeitla", "Feriana", "Thala"]
+        },
+        {
+          "nom": "Sidi Bouzid",
+          "communes": ["Sidi Bouzid", "Regueb", "Menzel Bouzaiane"]
+        },
+        {
+          "nom": "Gabes",
+          "communes": ["Gabes", "El Hamma", "Mareth", "Ghannouch"]
+        },
+        {
+          "nom": "Medenine",
+          "communes": ["Medenine", "Zarzis", "Djerba", "Ben Gardane"]
+        },
+        {
+          "nom": "Tataouine",
+          "communes": ["Tataouine", "Ghomrassen", "Dehiba"]
+        },
+        {
+          "nom": "Gafsa",
+          "communes": ["Gafsa", "Metlaoui", "Redeyef", "Moulares"]
+        },
+        {
+          "nom": "Tozeur",
+          "communes": ["Tozeur", "Nefta", "Degache"]
+        },
+        {
+          "nom": "Kebili",
+          "communes": ["Kebili", "Douz", "Souk Lahad"]
+        }
+      ]
+    },
+    {
+      "nom": "Egypte",
+      "code_iso": "EG",
+      "regions": [
+        {
+          "nom": "Le Caire",
+          "communes": ["Le Caire", "Heliopolis", "Maadi", "Nasr City", "Zamalek"]
+        },
+        {
+          "nom": "Gizeh",
+          "communes": ["Gizeh", "6 Octobre", "Sheikh Zayed", "Fayoum"]
+        },
+        {
+          "nom": "Alexandrie",
+          "communes": ["Alexandrie", "Borg El Arab"]
+        },
+        {
+          "nom": "Qalyubia",
+          "communes": ["Banha", "Shubra El Kheima", "Qalyub", "El Khanka"]
+        },
+        {
+          "nom": "Port-Said",
+          "communes": ["Port-Said"]
+        },
+        {
+          "nom": "Suez",
+          "communes": ["Suez"]
+        },
+        {
+          "nom": "Ismailia",
+          "communes": ["Ismailia"]
+        },
+        {
+          "nom": "Dakahlia",
+          "communes": ["Mansourah", "Mit Ghamr", "Talkha", "Aga"]
+        },
+        {
+          "nom": "Sharqia",
+          "communes": ["Zagazig", "10th of Ramadan", "Bilbeis", "Abu Hammad"]
+        },
+        {
+          "nom": "Gharbia",
+          "communes": ["Tanta", "El Mahalla El Kubra", "Kafr El Zayat"]
+        },
+        {
+          "nom": "Monufia",
+          "communes": ["Shibin El Kom", "Menouf", "Sadat City"]
+        },
+        {
+          "nom": "Beheira",
+          "communes": ["Damanhour", "Kafr El Dawwar", "Rashid", "Edko"]
+        },
+        {
+          "nom": "Kafr El Sheikh",
+          "communes": ["Kafr El Sheikh", "Desouk", "Fuwwah"]
+        },
+        {
+          "nom": "Damiette",
+          "communes": ["Damiette", "Ras El Bar", "New Damietta"]
+        },
+        {
+          "nom": "Fayoum",
+          "communes": ["Fayoum", "Ibsheway", "Tamiya"]
+        },
+        {
+          "nom": "Beni Suef",
+          "communes": ["Beni Suef", "El Wasta", "Nasser"]
+        },
+        {
+          "nom": "Minya",
+          "communes": ["Minya", "Mallawi", "Abu Qurqas", "Samalut"]
+        },
+        {
+          "nom": "Assiout",
+          "communes": ["Assiout", "Dayrout", "Manfalut", "El Qusiya"]
+        },
+        {
+          "nom": "Sohag",
+          "communes": ["Sohag", "Akhmim", "Girga", "Tahta"]
+        },
+        {
+          "nom": "Qena",
+          "communes": ["Qena", "Nag Hammadi", "Qus"]
+        },
+        {
+          "nom": "Louxor",
+          "communes": ["Louxor"]
+        },
+        {
+          "nom": "Assouan",
+          "communes": ["Assouan", "Edfu", "Kom Ombo", "Daraw"]
+        },
+        {
+          "nom": "Mer Rouge",
+          "communes": ["Hurghada", "El Gouna", "Marsa Alam", "Safaga"]
+        },
+        {
+          "nom": "Nouvelle Vallee",
+          "communes": ["Kharga", "Dakhla", "Farafra"]
+        },
+        {
+          "nom": "Matrouh",
+          "communes": ["Marsa Matrouh", "Siwa", "El Alamein"]
+        },
+        {
+          "nom": "Sinai Nord",
+          "communes": ["El Arish", "Rafah", "Sheikh Zuweid"]
+        },
+        {
+          "nom": "Sinai Sud",
+          "communes": ["Sharm El Sheikh", "Dahab", "Taba", "Nuweiba", "Saint Catherine"]
+        }
+      ]
+    },
+    {
+      "nom": "Libye",
+      "code_iso": "LY",
+      "regions": [
+        {
+          "nom": "Tripoli",
+          "communes": ["Tripoli", "Tajura", "Ain Zara", "Janzour"]
+        },
+        {
+          "nom": "Benghazi",
+          "communes": ["Benghazi"]
+        },
+        {
+          "nom": "Misrata",
+          "communes": ["Misrata", "Zliten"]
+        },
+        {
+          "nom": "Zawiya",
+          "communes": ["Zawiya", "Sabratha", "Surman"]
+        },
+        {
+          "nom": "Al Khums",
+          "communes": ["Al Khums", "Leptis Magna"]
+        },
+        {
+          "nom": "Derna",
+          "communes": ["Derna"]
+        },
+        {
+          "nom": "Tobrouk",
+          "communes": ["Tobrouk"]
+        },
+        {
+          "nom": "Sabha",
+          "communes": ["Sabha"]
+        },
+        {
+          "nom": "Syrte",
+          "communes": ["Syrte"]
+        },
+        {
+          "nom": "Al Bayda",
+          "communes": ["Al Bayda"]
+        },
+        {
+          "nom": "Gharyan",
+          "communes": ["Gharyan"]
+        },
+        {
+          "nom": "Zintan",
+          "communes": ["Zintan"]
+        },
+        {
+          "nom": "Nalut",
+          "communes": ["Nalut", "Ghadames"]
+        },
+        {
+          "nom": "Ubari",
+          "communes": ["Ubari"]
+        },
+        {
+          "nom": "Murzuq",
+          "communes": ["Murzuq"]
+        },
+        {
+          "nom": "Al Kufra",
+          "communes": ["Al Kufra"]
+        },
+        {
+          "nom": "Ajdabiya",
+          "communes": ["Ajdabiya"]
+        },
+        {
+          "nom": "Al Marj",
+          "communes": ["Al Marj"]
+        },
+        {
+          "nom": "Bani Walid",
+          "communes": ["Bani Walid"]
+        },
+        {
+          "nom": "Tarhuna",
+          "communes": ["Tarhuna"]
+        },
+        {
+          "nom": "Ghat",
+          "communes": ["Ghat"]
+        },
+        {
+          "nom": "Wadi al Shati",
+          "communes": ["Brak"]
+        }
+      ]
+    },
+    {
+      "nom": "Soudan",
+      "code_iso": "SD",
+      "regions": [
+        {
+          "nom": "Khartoum",
+          "communes": ["Khartoum", "Omdurman", "Khartoum Nord", "Bahri"]
+        },
+        {
+          "nom": "Al Jazira",
+          "communes": ["Wad Madani", "El Managil", "El Hasahisa"]
+        },
+        {
+          "nom": "Nil Blanc",
+          "communes": ["Kosti", "Rabak", "Ed Dueim"]
+        },
+        {
+          "nom": "Nil Bleu",
+          "communes": ["Ed Damazin", "Roseires"]
+        },
+        {
+          "nom": "Sennar",
+          "communes": ["Sennar", "Sinja"]
+        },
+        {
+          "nom": "Gedaref",
+          "communes": ["Gedaref", "El Fau"]
+        },
+        {
+          "nom": "Kassala",
+          "communes": ["Kassala", "Halfa Al Gadida"]
+        },
+        {
+          "nom": "Mer Rouge",
+          "communes": ["Port-Soudan", "Suakin", "Tokar"]
+        },
+        {
+          "nom": "Nord",
+          "communes": ["Dongola", "Merowe", "Karima"]
+        },
+        {
+          "nom": "Fleuve Nil",
+          "communes": ["Atbara", "Ed Damer", "Shendi"]
+        },
+        {
+          "nom": "Kordofan du Nord",
+          "communes": ["El Obeid", "Sheikan", "Umm Ruwaba"]
+        },
+        {
+          "nom": "Kordofan du Sud",
+          "communes": ["Kadugli", "Dilling", "Abu Jubeiha"]
+        },
+        {
+          "nom": "Kordofan de l'Ouest",
+          "communes": ["En Nahud", "Abu Zabad"]
+        },
+        {
+          "nom": "Darfour du Nord",
+          "communes": ["El Fasher", "Kutum", "Kebkabiya"]
+        },
+        {
+          "nom": "Darfour du Sud",
+          "communes": ["Nyala", "Ed Daein"]
+        },
+        {
+          "nom": "Darfour de l'Ouest",
+          "communes": ["El Geneina", "Zalingei"]
+        },
+        {
+          "nom": "Darfour de l'Est",
+          "communes": ["Ed Daein", "Abu Karinka"]
+        },
+        {
+          "nom": "Darfour Central",
+          "communes": ["Zalingei", "Azum"]
+        }
+      ]
+    }
+  ]
+}

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
+import { useI18n } from '../../src/contexts/I18nContext';
 import { Button, IconButton, SelectCard } from '../../src/components/ui';
 
 
@@ -54,6 +55,7 @@ const ORGANIZATION_FAQS: FAQ[] = [
 export default function HelpScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabType>('talent');
 
   const faqs = activeTab === 'talent' ? TALENT_FAQS : ORGANIZATION_FAQS;
@@ -73,7 +75,7 @@ export default function HelpScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Aide</Text>
         <View style={styles.backButton} />
@@ -89,7 +91,7 @@ export default function HelpScreen() {
           ]}
           onPress={() => setActiveTab('talent')}
           selected={false}
-          accessibilityLabel="FAQ talents"
+          accessibilityLabel={t('common.faqTalents')}
         >
           <User
             size={ICON.size.sm}
@@ -112,7 +114,7 @@ export default function HelpScreen() {
           ]}
           onPress={() => setActiveTab('organization')}
           selected={false}
-          accessibilityLabel="FAQ organisations"
+          accessibilityLabel={t('common.faqOrganizations')}
         >
           <Building2
             size={ICON.size.sm}

@@ -1,0 +1,14 @@
+{
+  "tooManyRequests": "طلبات كثيرة جداً. أعد المحاولة بعد بضع دقائق.",
+  "tooManyLoginAttempts": "محاولات تسجيل دخول كثيرة جداً. أعد المحاولة بعد 15 دقيقة.",
+  "codeLimitReached": "تم بلوغ حد إرسال الرموز. أعد المحاولة بعد ساعة.",
+  "tooManyApplications": "لقد قدّمت ترشحات كثيرة جداً. أعد المحاولة لاحقاً.",
+  "tooManyOperations": "عمليات كثيرة جداً. أعد المحاولة بعد بضع دقائق.",
+  "tooManySearches": "عمليات بحث كثيرة جداً. انتظر لحظات.",
+  "tooManyMessages": "رسائل كثيرة جداً تم إرسالها. انتظر لحظات.",
+  "tooManyCopilotRequests": "طلبات المساعد كثيرة جداً. انتظر لحظات.",
+  "tooManyDemands": "طلبات كثيرة جداً. أعد المحاولة بعد ساعة.",
+  "webhookLimitExceeded": "طلبات webhook كثيرة جداً.",
+  "webhookRetryLimitExceeded": "طلبات webhook كثيرة جداً. أعد المحاولة.",
+  "exportLimitReached": "تم بلوغ حد التصدير. أعد المحاولة لاحقاً."
+}

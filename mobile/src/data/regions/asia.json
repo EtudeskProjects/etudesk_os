@@ -1,0 +1,1028 @@
+{
+  "pays": [
+    {
+      "nom": "Chine",
+      "code_iso": "CN",
+      "regions": [
+        {
+          "nom": "Pekin",
+          "communes": ["Pekin"]
+        },
+        {
+          "nom": "Shanghai",
+          "communes": ["Shanghai"]
+        },
+        {
+          "nom": "Guangdong",
+          "communes": ["Canton", "Shenzhen", "Dongguan", "Foshan", "Zhuhai", "Zhongshan"]
+        },
+        {
+          "nom": "Zhejiang",
+          "communes": ["Hangzhou", "Ningbo", "Wenzhou", "Shaoxing", "Jiaxing"]
+        },
+        {
+          "nom": "Jiangsu",
+          "communes": ["Nanjing", "Suzhou", "Wuxi", "Changzhou", "Nantong"]
+        },
+        {
+          "nom": "Shandong",
+          "communes": ["Jinan", "Qingdao", "Yantai", "Weifang", "Zibo"]
+        },
+        {
+          "nom": "Sichuan",
+          "communes": ["Chengdu", "Mianyang", "Deyang", "Leshan", "Nanchong"]
+        },
+        {
+          "nom": "Hubei",
+          "communes": ["Wuhan", "Yichang", "Xiangyang", "Jingzhou", "Huangshi"]
+        },
+        {
+          "nom": "Hunan",
+          "communes": ["Changsha", "Zhuzhou", "Xiangtan", "Hengyang", "Yueyang"]
+        },
+        {
+          "nom": "Henan",
+          "communes": ["Zhengzhou", "Luoyang", "Kaifeng", "Nanyang", "Xinxiang"]
+        },
+        {
+          "nom": "Hebei",
+          "communes": ["Shijiazhuang", "Tangshan", "Baoding", "Handan", "Langfang"]
+        },
+        {
+          "nom": "Fujian",
+          "communes": ["Fuzhou", "Xiamen", "Quanzhou", "Zhangzhou", "Putian"]
+        },
+        {
+          "nom": "Anhui",
+          "communes": ["Hefei", "Wuhu", "Bengbu", "Anqing", "Ma'anshan"]
+        },
+        {
+          "nom": "Liaoning",
+          "communes": ["Shenyang", "Dalian", "Anshan", "Fushun", "Jinzhou"]
+        },
+        {
+          "nom": "Jilin",
+          "communes": ["Changchun", "Jilin", "Siping", "Tonghua"]
+        },
+        {
+          "nom": "Heilongjiang",
+          "communes": ["Harbin", "Qiqihar", "Daqing", "Mudanjiang", "Jiamusi"]
+        },
+        {
+          "nom": "Shanxi",
+          "communes": ["Taiyuan", "Datong", "Changzhi", "Linfen", "Jinzhong"]
+        },
+        {
+          "nom": "Shaanxi",
+          "communes": ["Xi'an", "Xianyang", "Baoji", "Weinan", "Hanzhong"]
+        },
+        {
+          "nom": "Yunnan",
+          "communes": ["Kunming", "Qujing", "Dali", "Yuxi", "Lijiang"]
+        },
+        {
+          "nom": "Guizhou",
+          "communes": ["Guiyang", "Zunyi", "Anshun", "Liupanshui"]
+        },
+        {
+          "nom": "Gansu",
+          "communes": ["Lanzhou", "Tianshui", "Baiyin", "Jiuquan"]
+        },
+        {
+          "nom": "Jiangxi",
+          "communes": ["Nanchang", "Ganzhou", "Jiujiang", "Jingdezhen", "Shangrao"]
+        },
+        {
+          "nom": "Guangxi",
+          "communes": ["Nanning", "Liuzhou", "Guilin", "Beihai", "Yulin"]
+        },
+        {
+          "nom": "Mongolie-Interieure",
+          "communes": ["Hohhot", "Baotou", "Ordos", "Chifeng", "Tongliao"]
+        },
+        {
+          "nom": "Hainan",
+          "communes": ["Haikou", "Sanya", "Danzhou", "Wenchang"]
+        },
+        {
+          "nom": "Tianjin",
+          "communes": ["Tianjin"]
+        },
+        {
+          "nom": "Chongqing",
+          "communes": ["Chongqing"]
+        },
+        {
+          "nom": "Xinjiang",
+          "communes": ["Urumqi", "Kashgar", "Hotan", "Korla", "Aksu"]
+        },
+        {
+          "nom": "Tibet",
+          "communes": ["Lhassa", "Shigatse", "Chamdo", "Nyingchi"]
+        },
+        {
+          "nom": "Ningxia",
+          "communes": ["Yinchuan", "Shizuishan", "Wuzhong"]
+        },
+        {
+          "nom": "Qinghai",
+          "communes": ["Xining", "Haidong", "Golmud"]
+        },
+        {
+          "nom": "Hong Kong",
+          "communes": ["Hong Kong", "Kowloon", "Tsuen Wan", "Sha Tin"]
+        },
+        {
+          "nom": "Macao",
+          "communes": ["Macao"]
+        },
+        {
+          "nom": "Taiwan",
+          "communes": ["Taipei", "Kaohsiung", "Taichung", "Tainan", "Hsinchu"]
+        }
+      ]
+    },
+    {
+      "nom": "Inde",
+      "code_iso": "IN",
+      "regions": [
+        {
+          "nom": "Maharashtra",
+          "communes": ["Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad"]
+        },
+        {
+          "nom": "Delhi",
+          "communes": ["New Delhi", "Old Delhi", "Dwarka", "Rohini"]
+        },
+        {
+          "nom": "Karnataka",
+          "communes": ["Bangalore", "Mysore", "Hubli", "Mangalore", "Belgaum"]
+        },
+        {
+          "nom": "Tamil Nadu",
+          "communes": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem"]
+        },
+        {
+          "nom": "Uttar Pradesh",
+          "communes": ["Lucknow", "Kanpur", "Agra", "Varanasi", "Noida", "Allahabad"]
+        },
+        {
+          "nom": "West Bengal",
+          "communes": ["Kolkata", "Howrah", "Durgapur", "Asansol", "Siliguri"]
+        },
+        {
+          "nom": "Telangana",
+          "communes": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar"]
+        },
+        {
+          "nom": "Gujarat",
+          "communes": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar"]
+        },
+        {
+          "nom": "Rajasthan",
+          "communes": ["Jaipur", "Jodhpur", "Udaipur", "Kota", "Ajmer"]
+        },
+        {
+          "nom": "Kerala",
+          "communes": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur", "Kollam"]
+        },
+        {
+          "nom": "Madhya Pradesh",
+          "communes": ["Bhopal", "Indore", "Jabalpur", "Gwalior", "Ujjain"]
+        },
+        {
+          "nom": "Bihar",
+          "communes": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Darbhanga"]
+        },
+        {
+          "nom": "Punjab",
+          "communes": ["Chandigarh", "Ludhiana", "Amritsar", "Jalandhar", "Patiala"]
+        },
+        {
+          "nom": "Haryana",
+          "communes": ["Gurugram", "Faridabad", "Karnal", "Panipat", "Ambala"]
+        },
+        {
+          "nom": "Odisha",
+          "communes": ["Bhubaneswar", "Cuttack", "Rourkela", "Berhampur"]
+        },
+        {
+          "nom": "Andhra Pradesh",
+          "communes": ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati", "Amaravati"]
+        },
+        {
+          "nom": "Assam",
+          "communes": ["Guwahati", "Dibrugarh", "Silchar", "Jorhat"]
+        },
+        {
+          "nom": "Jharkhand",
+          "communes": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro"]
+        },
+        {
+          "nom": "Chhattisgarh",
+          "communes": ["Raipur", "Bhilai", "Durg", "Bilaspur"]
+        },
+        {
+          "nom": "Uttarakhand",
+          "communes": ["Dehradun", "Haridwar", "Rishikesh", "Haldwani"]
+        },
+        {
+          "nom": "Himachal Pradesh",
+          "communes": ["Shimla", "Dharamsala", "Manali", "Solan"]
+        },
+        {
+          "nom": "Jammu-et-Cachemire",
+          "communes": ["Srinagar", "Jammu"]
+        },
+        {
+          "nom": "Goa",
+          "communes": ["Panaji", "Margao", "Vasco da Gama"]
+        },
+        {
+          "nom": "Tripura",
+          "communes": ["Agartala"]
+        },
+        {
+          "nom": "Meghalaya",
+          "communes": ["Shillong"]
+        },
+        {
+          "nom": "Manipur",
+          "communes": ["Imphal"]
+        },
+        {
+          "nom": "Nagaland",
+          "communes": ["Kohima", "Dimapur"]
+        },
+        {
+          "nom": "Arunachal Pradesh",
+          "communes": ["Itanagar"]
+        },
+        {
+          "nom": "Mizoram",
+          "communes": ["Aizawl"]
+        },
+        {
+          "nom": "Sikkim",
+          "communes": ["Gangtok"]
+        },
+        {
+          "nom": "Chandigarh",
+          "communes": ["Chandigarh"]
+        },
+        {
+          "nom": "Pondicherry",
+          "communes": ["Pondicherry", "Karaikal"]
+        },
+        {
+          "nom": "Iles Andaman-et-Nicobar",
+          "communes": ["Port Blair"]
+        },
+        {
+          "nom": "Ladakh",
+          "communes": ["Leh", "Kargil"]
+        },
+        {
+          "nom": "Dadra et Nagar Haveli et Daman et Diu",
+          "communes": ["Daman", "Silvassa"]
+        },
+        {
+          "nom": "Lakshadweep",
+          "communes": ["Kavaratti"]
+        }
+      ]
+    },
+    {
+      "nom": "Japon",
+      "code_iso": "JP",
+      "regions": [
+        {
+          "nom": "Tokyo",
+          "communes": ["Tokyo", "Shibuya", "Shinjuku", "Minato", "Setagaya"]
+        },
+        {
+          "nom": "Osaka",
+          "communes": ["Osaka", "Sakai", "Higashiosaka", "Suita"]
+        },
+        {
+          "nom": "Kanagawa",
+          "communes": ["Yokohama", "Kawasaki", "Sagamihara", "Fujisawa"]
+        },
+        {
+          "nom": "Aichi",
+          "communes": ["Nagoya", "Toyota", "Okazaki", "Toyohashi"]
+        },
+        {
+          "nom": "Hokkaido",
+          "communes": ["Sapporo", "Asahikawa", "Hakodate", "Obihiro"]
+        },
+        {
+          "nom": "Fukuoka",
+          "communes": ["Fukuoka", "Kitakyushu", "Kurume"]
+        },
+        {
+          "nom": "Saitama",
+          "communes": ["Saitama", "Kawaguchi", "Kawagoe", "Tokorozawa"]
+        },
+        {
+          "nom": "Chiba",
+          "communes": ["Chiba", "Funabashi", "Matsudo", "Ichikawa"]
+        },
+        {
+          "nom": "Hyogo",
+          "communes": ["Kobe", "Himeji", "Nishinomiya", "Amagasaki"]
+        },
+        {
+          "nom": "Kyoto",
+          "communes": ["Kyoto", "Uji", "Kameoka"]
+        },
+        {
+          "nom": "Shizuoka",
+          "communes": ["Shizuoka", "Hamamatsu", "Numazu", "Fuji"]
+        },
+        {
+          "nom": "Hiroshima",
+          "communes": ["Hiroshima", "Fukuyama", "Kure"]
+        },
+        {
+          "nom": "Miyagi",
+          "communes": ["Sendai", "Ishinomaki", "Osaki"]
+        },
+        {
+          "nom": "Niigata",
+          "communes": ["Niigata", "Nagaoka", "Joetsu"]
+        },
+        {
+          "nom": "Nagano",
+          "communes": ["Nagano", "Matsumoto", "Ueda"]
+        },
+        {
+          "nom": "Ibaraki",
+          "communes": ["Mito", "Tsukuba", "Hitachi"]
+        },
+        {
+          "nom": "Tochigi",
+          "communes": ["Utsunomiya", "Oyama", "Tochigi"]
+        },
+        {
+          "nom": "Gunma",
+          "communes": ["Maebashi", "Takasaki", "Ota"]
+        },
+        {
+          "nom": "Nara",
+          "communes": ["Nara", "Kashihara"]
+        },
+        {
+          "nom": "Mie",
+          "communes": ["Tsu", "Yokkaichi", "Suzuka"]
+        },
+        {
+          "nom": "Kumamoto",
+          "communes": ["Kumamoto", "Yatsushiro"]
+        },
+        {
+          "nom": "Kagoshima",
+          "communes": ["Kagoshima", "Kirishima"]
+        },
+        {
+          "nom": "Okayama",
+          "communes": ["Okayama", "Kurashiki"]
+        },
+        {
+          "nom": "Gifu",
+          "communes": ["Gifu", "Ogaki"]
+        },
+        {
+          "nom": "Nagasaki",
+          "communes": ["Nagasaki", "Sasebo"]
+        },
+        {
+          "nom": "Oita",
+          "communes": ["Oita", "Beppu"]
+        },
+        {
+          "nom": "Miyazaki",
+          "communes": ["Miyazaki", "Miyakonojo"]
+        },
+        {
+          "nom": "Toyama",
+          "communes": ["Toyama", "Takaoka"]
+        },
+        {
+          "nom": "Ishikawa",
+          "communes": ["Kanazawa", "Hakusan"]
+        },
+        {
+          "nom": "Fukui",
+          "communes": ["Fukui", "Tsuruga"]
+        },
+        {
+          "nom": "Yamanashi",
+          "communes": ["Kofu"]
+        },
+        {
+          "nom": "Shiga",
+          "communes": ["Otsu", "Kusatsu"]
+        },
+        {
+          "nom": "Wakayama",
+          "communes": ["Wakayama"]
+        },
+        {
+          "nom": "Tottori",
+          "communes": ["Tottori", "Yonago"]
+        },
+        {
+          "nom": "Shimane",
+          "communes": ["Matsue", "Izumo"]
+        },
+        {
+          "nom": "Yamaguchi",
+          "communes": ["Shimonoseki", "Yamaguchi"]
+        },
+        {
+          "nom": "Tokushima",
+          "communes": ["Tokushima"]
+        },
+        {
+          "nom": "Kagawa",
+          "communes": ["Takamatsu", "Marugame"]
+        },
+        {
+          "nom": "Ehime",
+          "communes": ["Matsuyama", "Imabari"]
+        },
+        {
+          "nom": "Kochi",
+          "communes": ["Kochi"]
+        },
+        {
+          "nom": "Saga",
+          "communes": ["Saga", "Karatsu"]
+        },
+        {
+          "nom": "Yamagata",
+          "communes": ["Yamagata", "Tsuruoka"]
+        },
+        {
+          "nom": "Iwate",
+          "communes": ["Morioka", "Ichinoseki"]
+        },
+        {
+          "nom": "Akita",
+          "communes": ["Akita", "Yokote"]
+        },
+        {
+          "nom": "Fukushima",
+          "communes": ["Fukushima", "Koriyama", "Iwaki"]
+        },
+        {
+          "nom": "Aomori",
+          "communes": ["Aomori", "Hachinohe", "Hirosaki"]
+        },
+        {
+          "nom": "Okinawa",
+          "communes": ["Naha", "Okinawa", "Ginowan", "Urasoe"]
+        }
+      ]
+    },
+    {
+      "nom": "Coree du Sud",
+      "code_iso": "KR",
+      "regions": [
+        {
+          "nom": "Seoul",
+          "communes": ["Seoul", "Gangnam", "Jongno", "Mapo", "Songpa"]
+        },
+        {
+          "nom": "Busan",
+          "communes": ["Busan", "Haeundae", "Seo-gu"]
+        },
+        {
+          "nom": "Incheon",
+          "communes": ["Incheon", "Songdo"]
+        },
+        {
+          "nom": "Daegu",
+          "communes": ["Daegu"]
+        },
+        {
+          "nom": "Daejeon",
+          "communes": ["Daejeon"]
+        },
+        {
+          "nom": "Gwangju",
+          "communes": ["Gwangju"]
+        },
+        {
+          "nom": "Ulsan",
+          "communes": ["Ulsan"]
+        },
+        {
+          "nom": "Sejong",
+          "communes": ["Sejong"]
+        },
+        {
+          "nom": "Gyeonggi",
+          "communes": ["Suwon", "Seongnam", "Goyang", "Yongin", "Bucheon"]
+        },
+        {
+          "nom": "Gangwon",
+          "communes": ["Chuncheon", "Wonju", "Gangneung", "Sokcho"]
+        },
+        {
+          "nom": "Chungcheong du Nord",
+          "communes": ["Cheongju", "Chungju", "Jecheon"]
+        },
+        {
+          "nom": "Chungcheong du Sud",
+          "communes": ["Cheonan", "Asan", "Gongju", "Nonsan"]
+        },
+        {
+          "nom": "Jeolla du Nord",
+          "communes": ["Jeonju", "Gunsan", "Iksan"]
+        },
+        {
+          "nom": "Jeolla du Sud",
+          "communes": ["Mokpo", "Yeosu", "Suncheon", "Naju"]
+        },
+        {
+          "nom": "Gyeongsang du Nord",
+          "communes": ["Pohang", "Gumi", "Gyeongju", "Andong", "Gimcheon"]
+        },
+        {
+          "nom": "Gyeongsang du Sud",
+          "communes": ["Changwon", "Gimhae", "Jinju", "Yangsan", "Geoje"]
+        },
+        {
+          "nom": "Jeju",
+          "communes": ["Jeju", "Seogwipo"]
+        }
+      ]
+    },
+    {
+      "nom": "Singapour",
+      "code_iso": "SG",
+      "regions": [
+        {
+          "nom": "Region Centrale",
+          "communes": ["Singapour", "Orchard", "Marina Bay", "Jurong East", "Tampines"]
+        }
+      ]
+    },
+    {
+      "nom": "Malaisie",
+      "code_iso": "MY",
+      "regions": [
+        {
+          "nom": "Selangor",
+          "communes": ["Shah Alam", "Petaling Jaya", "Subang Jaya", "Klang"]
+        },
+        {
+          "nom": "Kuala Lumpur",
+          "communes": ["Kuala Lumpur"]
+        },
+        {
+          "nom": "Putrajaya",
+          "communes": ["Putrajaya"]
+        },
+        {
+          "nom": "Johor",
+          "communes": ["Johor Bahru", "Batu Pahat", "Muar", "Kluang", "Iskandar Puteri"]
+        },
+        {
+          "nom": "Penang",
+          "communes": ["George Town", "Butterworth", "Bukit Mertajam"]
+        },
+        {
+          "nom": "Perak",
+          "communes": ["Ipoh", "Taiping", "Lumut", "Teluk Intan"]
+        },
+        {
+          "nom": "Sabah",
+          "communes": ["Kota Kinabalu", "Sandakan", "Tawau"]
+        },
+        {
+          "nom": "Sarawak",
+          "communes": ["Kuching", "Miri", "Sibu", "Bintulu"]
+        },
+        {
+          "nom": "Kedah",
+          "communes": ["Alor Setar", "Sungai Petani", "Kulim", "Langkawi"]
+        },
+        {
+          "nom": "Pahang",
+          "communes": ["Kuantan", "Temerloh", "Bentong", "Cameron Highlands"]
+        },
+        {
+          "nom": "Negeri Sembilan",
+          "communes": ["Seremban", "Port Dickson"]
+        },
+        {
+          "nom": "Melaka",
+          "communes": ["Malacca", "Ayer Keroh"]
+        },
+        {
+          "nom": "Kelantan",
+          "communes": ["Kota Bharu", "Pasir Mas"]
+        },
+        {
+          "nom": "Terengganu",
+          "communes": ["Kuala Terengganu", "Dungun"]
+        },
+        {
+          "nom": "Perlis",
+          "communes": ["Kangar", "Arau"]
+        }
+      ]
+    },
+    {
+      "nom": "Indonesie",
+      "code_iso": "ID",
+      "regions": [
+        {
+          "nom": "Jakarta",
+          "communes": ["Jakarta", "Jakarta Sud", "Jakarta Ouest", "Jakarta Est"]
+        },
+        {
+          "nom": "Java Occidental",
+          "communes": ["Bandung", "Bekasi", "Depok", "Bogor", "Cirebon"]
+        },
+        {
+          "nom": "Java Central",
+          "communes": ["Semarang", "Surakarta", "Pekalongan", "Tegal", "Magelang"]
+        },
+        {
+          "nom": "Java Oriental",
+          "communes": ["Surabaya", "Malang", "Sidoarjo", "Kediri", "Jember"]
+        },
+        {
+          "nom": "Yogyakarta",
+          "communes": ["Yogyakarta", "Sleman", "Bantul"]
+        },
+        {
+          "nom": "Banten",
+          "communes": ["Tangerang", "Tangerang Selatan", "Serang", "Cilegon"]
+        },
+        {
+          "nom": "Bali",
+          "communes": ["Denpasar", "Badung", "Gianyar", "Ubud", "Singaraja"]
+        },
+        {
+          "nom": "Sumatra du Nord",
+          "communes": ["Medan", "Binjai", "Pematang Siantar", "Tebing Tinggi"]
+        },
+        {
+          "nom": "Sumatra Occidental",
+          "communes": ["Padang", "Bukittinggi", "Payakumbuh"]
+        },
+        {
+          "nom": "Sumatra du Sud",
+          "communes": ["Palembang", "Prabumulih", "Lubuklinggau"]
+        },
+        {
+          "nom": "Riau",
+          "communes": ["Pekanbaru", "Dumai"]
+        },
+        {
+          "nom": "Iles Riau",
+          "communes": ["Batam", "Tanjung Pinang"]
+        },
+        {
+          "nom": "Lampung",
+          "communes": ["Bandar Lampung", "Metro"]
+        },
+        {
+          "nom": "Jambi",
+          "communes": ["Jambi"]
+        },
+        {
+          "nom": "Bengkulu",
+          "communes": ["Bengkulu"]
+        },
+        {
+          "nom": "Bangka Belitung",
+          "communes": ["Pangkal Pinang"]
+        },
+        {
+          "nom": "Aceh",
+          "communes": ["Banda Aceh", "Lhokseumawe", "Langsa"]
+        },
+        {
+          "nom": "Kalimantan Oriental",
+          "communes": ["Balikpapan", "Samarinda", "Bontang"]
+        },
+        {
+          "nom": "Kalimantan du Sud",
+          "communes": ["Banjarmasin", "Banjarbaru"]
+        },
+        {
+          "nom": "Kalimantan Occidental",
+          "communes": ["Pontianak", "Singkawang"]
+        },
+        {
+          "nom": "Kalimantan Central",
+          "communes": ["Palangkaraya"]
+        },
+        {
+          "nom": "Kalimantan du Nord",
+          "communes": ["Tanjung Selor", "Tarakan"]
+        },
+        {
+          "nom": "Sulawesi du Sud",
+          "communes": ["Makassar", "Pare-Pare", "Palopo"]
+        },
+        {
+          "nom": "Sulawesi du Nord",
+          "communes": ["Manado", "Bitung", "Tomohon"]
+        },
+        {
+          "nom": "Sulawesi Central",
+          "communes": ["Palu"]
+        },
+        {
+          "nom": "Sulawesi du Sud-Est",
+          "communes": ["Kendari", "Bau-Bau"]
+        },
+        {
+          "nom": "Gorontalo",
+          "communes": ["Gorontalo"]
+        },
+        {
+          "nom": "Sulawesi Occidental",
+          "communes": ["Mamuju"]
+        },
+        {
+          "nom": "Nusa Tenggara Occidental",
+          "communes": ["Mataram", "Bima", "Sumbawa"]
+        },
+        {
+          "nom": "Nusa Tenggara Oriental",
+          "communes": ["Kupang", "Ende", "Maumere"]
+        },
+        {
+          "nom": "Moluques",
+          "communes": ["Ambon", "Tual"]
+        },
+        {
+          "nom": "Moluques du Nord",
+          "communes": ["Ternate", "Sofifi"]
+        },
+        {
+          "nom": "Papouasie",
+          "communes": ["Jayapura"]
+        },
+        {
+          "nom": "Papouasie Occidentale",
+          "communes": ["Manokwari", "Sorong"]
+        },
+        {
+          "nom": "Papouasie du Sud",
+          "communes": ["Merauke"]
+        },
+        {
+          "nom": "Papouasie Centrale",
+          "communes": ["Timika"]
+        },
+        {
+          "nom": "Papouasie des Hautes Terres",
+          "communes": ["Wamena"]
+        },
+        {
+          "nom": "Papouasie du Sud-Ouest",
+          "communes": ["Fakfak"]
+        }
+      ]
+    },
+    {
+      "nom": "Thailande",
+      "code_iso": "TH",
+      "regions": [
+        {
+          "nom": "Bangkok",
+          "communes": ["Bangkok"]
+        },
+        {
+          "nom": "Chiang Mai",
+          "communes": ["Chiang Mai", "Fang", "San Kamphaeng"]
+        },
+        {
+          "nom": "Chiang Rai",
+          "communes": ["Chiang Rai", "Mae Sai"]
+        },
+        {
+          "nom": "Phuket",
+          "communes": ["Phuket", "Patong"]
+        },
+        {
+          "nom": "Chon Buri",
+          "communes": ["Pattaya", "Chon Buri", "Si Racha", "Laem Chabang"]
+        },
+        {
+          "nom": "Nonthaburi",
+          "communes": ["Nonthaburi", "Pak Kret"]
+        },
+        {
+          "nom": "Samut Prakan",
+          "communes": ["Samut Prakan", "Bang Phli"]
+        },
+        {
+          "nom": "Pathum Thani",
+          "communes": ["Pathum Thani", "Rangsit"]
+        },
+        {
+          "nom": "Nakhon Ratchasima",
+          "communes": ["Nakhon Ratchasima", "Pak Chong"]
+        },
+        {
+          "nom": "Khon Kaen",
+          "communes": ["Khon Kaen"]
+        },
+        {
+          "nom": "Udon Thani",
+          "communes": ["Udon Thani"]
+        },
+        {
+          "nom": "Surat Thani",
+          "communes": ["Surat Thani", "Ko Samui"]
+        },
+        {
+          "nom": "Songkhla",
+          "communes": ["Hat Yai", "Songkhla"]
+        },
+        {
+          "nom": "Nakhon Si Thammarat",
+          "communes": ["Nakhon Si Thammarat"]
+        },
+        {
+          "nom": "Ayutthaya",
+          "communes": ["Ayutthaya"]
+        },
+        {
+          "nom": "Krabi",
+          "communes": ["Krabi"]
+        },
+        {
+          "nom": "Rayong",
+          "communes": ["Rayong"]
+        },
+        {
+          "nom": "Ubon Ratchathani",
+          "communes": ["Ubon Ratchathani"]
+        }
+      ]
+    },
+    {
+      "nom": "Vietnam",
+      "code_iso": "VN",
+      "regions": [
+        {
+          "nom": "Hanoi",
+          "communes": ["Hanoi"]
+        },
+        {
+          "nom": "Ho Chi Minh-Ville",
+          "communes": ["Ho Chi Minh-Ville"]
+        },
+        {
+          "nom": "Hai Phong",
+          "communes": ["Hai Phong"]
+        },
+        {
+          "nom": "Da Nang",
+          "communes": ["Da Nang"]
+        },
+        {
+          "nom": "Can Tho",
+          "communes": ["Can Tho"]
+        },
+        {
+          "nom": "Binh Duong",
+          "communes": ["Thu Dau Mot", "Di An", "Thuan An"]
+        },
+        {
+          "nom": "Dong Nai",
+          "communes": ["Bien Hoa", "Long Khanh"]
+        },
+        {
+          "nom": "Khanh Hoa",
+          "communes": ["Nha Trang", "Cam Ranh"]
+        },
+        {
+          "nom": "Quang Ninh",
+          "communes": ["Ha Long", "Cam Pha", "Uong Bi"]
+        },
+        {
+          "nom": "Thanh Hoa",
+          "communes": ["Thanh Hoa", "Sam Son"]
+        },
+        {
+          "nom": "Nghe An",
+          "communes": ["Vinh"]
+        },
+        {
+          "nom": "Thua Thien Hue",
+          "communes": ["Hue"]
+        },
+        {
+          "nom": "Quang Nam",
+          "communes": ["Tam Ky", "Hoi An"]
+        },
+        {
+          "nom": "Lam Dong",
+          "communes": ["Da Lat", "Bao Loc"]
+        },
+        {
+          "nom": "Ba Ria - Vung Tau",
+          "communes": ["Vung Tau", "Ba Ria"]
+        },
+        {
+          "nom": "Thai Nguyen",
+          "communes": ["Thai Nguyen"]
+        },
+        {
+          "nom": "Nam Dinh",
+          "communes": ["Nam Dinh"]
+        },
+        {
+          "nom": "Dak Lak",
+          "communes": ["Buon Ma Thuot"]
+        }
+      ]
+    },
+    {
+      "nom": "Philippines",
+      "code_iso": "PH",
+      "regions": [
+        {
+          "nom": "Region de la Capitale Nationale",
+          "communes": ["Manille", "Quezon City", "Makati", "Taguig", "Pasig"]
+        },
+        {
+          "nom": "Cordillera",
+          "communes": ["Baguio", "Tabuk"]
+        },
+        {
+          "nom": "Ilocos",
+          "communes": ["San Fernando", "Laoag", "Dagupan", "Vigan"]
+        },
+        {
+          "nom": "Vallee de Cagayan",
+          "communes": ["Tuguegarao", "Santiago", "Ilagan"]
+        },
+        {
+          "nom": "Luzon Centrale",
+          "communes": ["Angeles", "San Fernando", "Olongapo", "Tarlac", "Cabanatuan"]
+        },
+        {
+          "nom": "Calabarzon",
+          "communes": ["Antipolo", "Batangas", "Lucena", "Lipa", "Calamba"]
+        },
+        {
+          "nom": "Mimaropa",
+          "communes": ["Puerto Princesa", "Calapan"]
+        },
+        {
+          "nom": "Bicol",
+          "communes": ["Naga", "Legazpi", "Sorsogon"]
+        },
+        {
+          "nom": "Visayas Occidentales",
+          "communes": ["Iloilo", "Bacolod", "Roxas"]
+        },
+        {
+          "nom": "Visayas Centrales",
+          "communes": ["Cebu", "Mandaue", "Lapu-Lapu", "Talisay"]
+        },
+        {
+          "nom": "Visayas Orientales",
+          "communes": ["Tacloban", "Ormoc", "Catbalogan"]
+        },
+        {
+          "nom": "Peninsule de Zamboanga",
+          "communes": ["Zamboanga", "Pagadian", "Dipolog"]
+        },
+        {
+          "nom": "Mindanao du Nord",
+          "communes": ["Cagayan de Oro", "Iligan", "Malaybalay"]
+        },
+        {
+          "nom": "Region de Davao",
+          "communes": ["Davao", "Tagum", "Digos", "Panabo"]
+        },
+        {
+          "nom": "Soccsksargen",
+          "communes": ["General Santos", "Koronadal", "Kidapawan"]
+        },
+        {
+          "nom": "Caraga",
+          "communes": ["Butuan", "Surigao", "Bislig"]
+        },
+        {
+          "nom": "Region Autonome de Bangsamoro",
+          "communes": ["Cotabato", "Marawi", "Lamitan"]
+        }
+      ]
+    }
+  ]
+}

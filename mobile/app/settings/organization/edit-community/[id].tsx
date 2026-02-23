@@ -36,9 +36,9 @@ import { Input, Button, IconButton, Toggle, Chip, SelectCard, useToast, LoadingS
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
 import {
-  COMMUNITY_TYPE_DATA,
-  VISIBILITY_DATA,
-  COMMUNITY_TAG_DATA,
+  getCommunityTypeData,
+  getVisibilityData,
+  getCommunityTagData,
   MAX_COMMUNITY_TAGS,
   MAX_MEMBERSHIP_QUESTIONS,
 } from '../../../../src/constants/community';
@@ -46,16 +46,17 @@ import { SECTOR_DATA, MAX_SECTORS } from '../../../../src/constants/talent';
 import {
   CommunityType,
   Visibility,
-  COMMUNITY_TYPE_LABELS,
-  VISIBILITY_LABELS,
+  getCommunityTypeLabel,
+  getVisibilityLabel,
   Sector,
   ApplicationQuestion,
   CommunityStatus,
-  COMMUNITY_STATUS_LABELS,
+  getCommunityStatusLabel,
 } from '../../../../src/types/models';
 import { communityService, UpdateCommunityData, CreateCommunityData, imageService } from '../../../../src/services';
 import { getFullImageUrl } from '../../../../src/utils/image';
 import { useAlert } from '../../../../src/contexts/AlertContext';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
 import { FormTextArea } from '../../../../src/components/forms/FormTextArea';
 
@@ -80,20 +81,26 @@ type Step = 'info' | 'lieu' | 'conditions' | 'media' | 'preview';
 
 const STEPS: Step[] = ['info', 'lieu', 'conditions', 'media', 'preview'];
 const STEP_TITLES: Record<Step, string> = {
-  info: 'Infos',
-  lieu: 'Lieu',
-  conditions: 'Conditions',
-  media: 'Média',
-  preview: 'Aperçu',
+  info: 'community.form.steps.info',
+  lieu: 'community.form.steps.location',
+  conditions: 'community.form.steps.conditions',
+  media: 'community.form.steps.media',
+  preview: 'community.form.steps.preview',
 };
 
 export default function EditCommunityScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const alerts = useAlert();
   const { showToast } = useToast();
+
+  // Resolve getter functions to data arrays
+  const communityTypeData = getCommunityTypeData();
+  const visibilityData = getVisibilityData();
+  const communityTagData = getCommunityTagData();
 
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<Step>('info');
@@ -200,8 +207,8 @@ export default function EditCommunityScreen() {
     } catch (error: any) {
       await alerts.showAlert({
         type: 'error',
-        title: 'Erreur',
-        message: error.error || 'Impossible de charger la communauté.',
+        title: t('common.error'),
+        message: error.error || t('community.form.loadError'),
         buttons: [{ text: 'OK', onPress: () => router.back() }],
       });
     } finally {
@@ -211,7 +218,7 @@ export default function EditCommunityScreen() {
 
   const pickImage = async () => {
     if (images.length >= MAX_IMAGES) {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_IMAGES} images.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('community.form.maxImages', { count: MAX_IMAGES }) });
       return;
     }
 
@@ -225,7 +232,7 @@ export default function EditCommunityScreen() {
         setImages([...images, newImage]);
       }
     } catch (error) {
-      showToast({ type: 'error', title: 'Erreur', message: 'Une erreur est survenue lors de la sélection de l\'image.' });
+      showToast({ type: 'error', title: t('common.error'), message: t('community.form.imageSelectionError') });
     }
   };
 
@@ -240,7 +247,7 @@ export default function EditCommunityScreen() {
     } else if (selectedTags.length < MAX_COMMUNITY_TAGS) {
       setSelectedTags([...selectedTags, tagId]);
     } else {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez sélectionner au maximum ${MAX_COMMUNITY_TAGS} tags.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('community.form.maxTags', { count: MAX_COMMUNITY_TAGS }) });
     }
   };
 
@@ -250,7 +257,7 @@ export default function EditCommunityScreen() {
     } else if (selectedSectors.length < MAX_SECTORS) {
       setSelectedSectors([...selectedSectors, sectorId]);
     } else {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('community.form.maxSectors', { count: MAX_SECTORS }) });
     }
   };
 
@@ -317,7 +324,7 @@ export default function EditCommunityScreen() {
       }
     } catch (error: any) {
       if (__DEV__) console.error('Error generating community:', error);
-      showToast({ type: 'error', title: 'Erreur de génération', message: error?.error || 'Une erreur est survenue lors de la génération.' });
+      showToast({ type: 'error', title: t('common.generationErrorTitle'), message: error?.error || t('common.generationError') });
     } finally {
       setIsGenerating(false);
     }
@@ -326,7 +333,7 @@ export default function EditCommunityScreen() {
   // Question handlers
   const addQuestion = () => {
     if (applicationQuestions.length >= MAX_QUESTIONS) {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('community.form.maxQuestions', { count: MAX_QUESTIONS }) });
       return;
     }
     const newQuestion: ApplicationQuestion = {
@@ -378,7 +385,7 @@ export default function EditCommunityScreen() {
         uploadedImageUrls.push(uploaded.url);
       } catch (error) {
         if (__DEV__) console.error('Error uploading image:', error);
-        await alerts.error('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
+        await alerts.error(t('common.error'), t('community.form.uploadImageError'));
         return null;
       }
     }
@@ -416,12 +423,12 @@ export default function EditCommunityScreen() {
       await communityService.update(id!, data);
       await alerts.showAlert({
         type: 'success',
-        title: 'Modifications enregistrées',
-        message: 'La communauté a été mise à jour.',
+        title: t('community.form.updatedTitle'),
+        message: t('community.form.updatedMessage'),
         buttons: [{ text: 'OK', onPress: () => router.back() }],
       });
     } catch (error: any) {
-      await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de la mise à jour.');
+      await alerts.error(t('common.error'), error.error || t('community.form.updateError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -429,8 +436,8 @@ export default function EditCommunityScreen() {
 
   const handleDelete = async () => {
     const confirmed = await alerts.confirm(
-      'Supprimer la communauté',
-      `Êtes-vous sûr de vouloir supprimer "${name}" ? Cette action est irréversible.`
+      t('common.deleteTitle'),
+      t('community.form.deleteConfirm', { name })
     );
     if (!confirmed) return;
 
@@ -439,12 +446,12 @@ export default function EditCommunityScreen() {
       await communityService.delete(id!);
       await alerts.showAlert({
         type: 'success',
-        title: 'Supprimé',
-        message: 'La communauté a été supprimée.',
+        title: t('community.form.deletedTitle'),
+        message: t('community.form.deletedMessage'),
         buttons: [{ text: 'OK', onPress: () => router.back() }],
       });
     } catch (error: any) {
-      await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de la suppression.');
+      await alerts.error(t('common.error'), error.error || t('community.form.deleteError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -463,15 +470,18 @@ export default function EditCommunityScreen() {
 
   const getTagLabels = () => {
     return selectedTags.map((id) => {
-      const tag = COMMUNITY_TAG_DATA.find((t) => t.id === id);
+      const tag = communityTagData.find((t: { id: string; label: string }) => t.id === id);
       return tag?.label || id;
     });
   };
 
   const getSectorsLabel = (ids: Sector[]) => {
-    if (ids.length === 0) return 'Non défini';
+    if (ids.length === 0) return t('community.form.notDefined');
     return ids
-      .map((id) => SECTOR_DATA.find((s) => s.id === id)?.label || id)
+      .map((id) => {
+        const sector = SECTOR_DATA.find((s) => s.id === id);
+        return sector ? t(sector.labelKey) : id;
+      })
       .join(', ');
   };
 
@@ -503,7 +513,7 @@ export default function EditCommunityScreen() {
             <View style={[styles.stepDot, { backgroundColor: colors.gray200 }, (isCurrent || isCompleted) && { backgroundColor: colors.primary }]}>
               {isCompleted ? <Check size={12} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth + 0.5} /> : <Text style={[styles.stepNumber, { color: colors.gray600 }, isCurrent && { color: colors.textOnPrimary }]}>{index + 1}</Text>}
             </View>
-            <Text style={[styles.stepLabel, { color: colors.gray500 }, isCurrent && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold }]}>{STEP_TITLES[step]}</Text>
+            <Text style={[styles.stepLabel, { color: colors.gray500 }, isCurrent && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold }]}>{t(STEP_TITLES[step])}</Text>
           </View>
         );
       })}
@@ -514,16 +524,16 @@ export default function EditCommunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <Users size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Informations de base</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('community.form.baseInfoTitle')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Décrivez votre communauté
+          {t('community.form.describeCommunity')}
         </Text>
       </View>
       <View style={styles.formFields}>
         {/* Nom */}
         <Input
-          label="Nom de la communauté *"
-          placeholder="Ex: Développeurs Abidjan"
+          label={t('community.form.nameLabel')}
+          placeholder={t('community.form.namePlaceholder')}
           value={name}
           onChangeText={setName}
           autoCapitalize="words"
@@ -532,10 +542,10 @@ export default function EditCommunityScreen() {
         {/* Tags (replaces Categories) */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Tags ({selectedTags.length}/{MAX_COMMUNITY_TAGS})
+            {t('community.tags')} ({selectedTags.length}/{MAX_COMMUNITY_TAGS})
           </Text>
           <View style={styles.tagsContainer}>
-            {COMMUNITY_TAG_DATA.map((tag) => {
+            {communityTagData.map((tag: { id: string; label: string }) => {
               const isSelected = selectedTags.includes(tag.id);
               return (
                 <Chip
@@ -556,7 +566,7 @@ export default function EditCommunityScreen() {
         {canGenerate && (
           <View style={styles.generateButtonContainer}>
             <Button
-              title={isGenerating ? 'Suggestion...' : 'Suggérer'}
+              title={isGenerating ? t('community.form.suggesting') : t('community.form.suggest')}
               onPress={handleGenerate}
               loading={isGenerating}
               disabled={isGenerating}
@@ -570,7 +580,7 @@ export default function EditCommunityScreen() {
         {/* Secteurs d'activité - Multi-selection (5 max) */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Secteurs d'activité ({selectedSectors.length}/{MAX_SECTORS})
+            {t('community.industries')} ({selectedSectors.length}/{MAX_SECTORS})
           </Text>
           <View style={styles.tagsContainer}>
             {SECTOR_DATA.slice(0, 15).map((sector) => {
@@ -578,7 +588,7 @@ export default function EditCommunityScreen() {
               return (
                 <Chip
                   key={sector.id}
-                  label={sector.label}
+                  label={t(sector.labelKey)}
                   selected={isSelected}
                   leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   onPress={() => toggleSector(sector.id)}
@@ -592,8 +602,8 @@ export default function EditCommunityScreen() {
 
         {/* Description */}
         <FormTextArea
-          label="Description"
-          placeholder="Décrivez votre communauté, ses objectifs et sa mission..."
+          label={t('opportunity.description')}
+          placeholder={t('community.form.descriptionPlaceholder')}
           value={description}
           onChangeText={setDescription}
           rows={4}
@@ -607,18 +617,18 @@ export default function EditCommunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <MapPin size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Localisation</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('community.form.steps.location')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Où se déroulera la communauté ?
+          {t('community.form.locationDescription')}
         </Text>
       </View>
 
       <View style={styles.formFields}>
         {/* Mode de travail - 2 options horizontales avec icônes */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Type de communauté *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('community.form.communityTypeLabel')}</Text>
           <View style={styles.locationTypeRow}>
-            {COMMUNITY_TYPE_DATA.map((type) => {
+            {communityTypeData.map((type: { id: CommunityType; label: string; description: string }) => {
               const isSelected = communityType === type.id;
               const IconComponent = LOCATION_TYPE_ICONS[type.id];
               return (
@@ -654,7 +664,7 @@ export default function EditCommunityScreen() {
           <>
             {/* Pays */}
             <View style={styles.fieldContainer}>
-              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Pays *</Text>
+              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.country')} *</Text>
               <ScrollView
                 ref={countryScrollRef}
                 horizontal
@@ -693,7 +703,7 @@ export default function EditCommunityScreen() {
             {/* Région */}
             {availableRegions.length > 0 && (
               <View style={styles.fieldContainer}>
-                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Région</Text>
+                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.region')}</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -731,7 +741,7 @@ export default function EditCommunityScreen() {
             {/* Ville */}
             {availableCities.length > 0 && (
               <View style={styles.fieldContainer}>
-                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Ville</Text>
+                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.city')}</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -772,18 +782,18 @@ export default function EditCommunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <FileText size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Conditions</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('community.form.steps.conditions')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Visibilité, tarification, règles et questions
+          {t('community.form.conditionsDescription')}
         </Text>
       </View>
 
       <View style={styles.formFields}>
         {/* Visibilité - 2 options horizontales avec icônes */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Visibilité *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('community.form.visibilityLabel')}</Text>
           <View style={styles.locationTypeRow}>
-            {VISIBILITY_DATA.map((type) => {
+            {visibilityData.map((type: { id: Visibility; label: string; description: string }) => {
               const isSelected = visibility === type.id;
               const IconComponent = type.id === 'PUBLIC' ? Eye : Lock;
               return (
@@ -818,8 +828,8 @@ export default function EditCommunityScreen() {
 
         {/* Règles */}
         <FormTextArea
-          label="Règles de la communauté"
-          placeholder={'Ex: 1. Respectez les autres membres\n2. Pas de spam\n3. Restez courtois...'}
+          label={t('community.form.rulesLabel')}
+          placeholder={t('community.form.rulesPlaceholder')}
           value={rules}
           onChangeText={setRules}
           rows={5}
@@ -829,10 +839,10 @@ export default function EditCommunityScreen() {
         {/* Questions complémentaires */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Questions complémentaires ({applicationQuestions.length}/{MAX_QUESTIONS})
+            {t('community.form.additionalQuestionsCount', { count: applicationQuestions.length, max: MAX_QUESTIONS })}
           </Text>
           <Text style={[styles.fieldHint, { color: colors.gray500 }]}>
-            Posez des questions aux candidats (réponse courte, max {MAX_QUESTION_LENGTH} caractères)
+            {t('community.form.askCandidatesQuestions', { max: MAX_QUESTION_LENGTH })}
           </Text>
 
           {/* Questions List */}
@@ -843,19 +853,19 @@ export default function EditCommunityScreen() {
             >
               <View style={styles.questionHeader}>
                 <Text style={[styles.questionNumber, { color: colors.primary }]}>
-                  Question {index + 1}
+                  {t('community.form.questionN', { index: index + 1 })}
                 </Text>
                 <IconButton
                   onPress={() => removeQuestion(question.id)}
                   icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-                  accessibilityLabel="Supprimer la question"
+                  accessibilityLabel={t('community.form.removeQuestion')}
                   size="sm"
                   variant="ghost"
                 />
               </View>
 
               <FormTextArea
-                placeholder="Écrivez votre question..."
+                placeholder={t('community.form.questionPlaceholder')}
                 value={question.question}
                 onChangeText={(text) => updateQuestion(question.id, { question: text })}
                 maxLength={MAX_QUESTION_LENGTH}
@@ -866,7 +876,7 @@ export default function EditCommunityScreen() {
 
               <View style={styles.questionFooter}>
                 <View style={styles.requiredToggle}>
-                  <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>Obligatoire</Text>
+                  <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>{t('common.required')}</Text>
                   <Toggle
                     value={question.required}
                     onValueChange={(value) => updateQuestion(question.id, { required: value })}
@@ -880,7 +890,7 @@ export default function EditCommunityScreen() {
           {/* Add Question Button */}
           {applicationQuestions.length < MAX_QUESTIONS && (
             <Button
-              title="Ajouter une question"
+              title={t('community.form.addQuestion')}
               onPress={addQuestion}
               variant="outline"
               icon={<Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
@@ -897,9 +907,9 @@ export default function EditCommunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <ImageIcon size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Media</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('community.form.steps.media')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Ajoutez des visuels et documents
+          {t('community.form.mediaDescription')}
         </Text>
       </View>
 
@@ -907,10 +917,10 @@ export default function EditCommunityScreen() {
         {/* Images d'illustration - Max 5 */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700, textAlign: 'center' }]}>
-            Images d'illustration ({images.length}/{MAX_IMAGES})
+            {t('community.form.illustrationImages')} ({images.length}/{MAX_IMAGES})
           </Text>
           <Text style={[styles.fieldHint, { color: colors.gray500, textAlign: 'center' }]}>
-            Format recommandé: 16:9 - Maximum {MAX_IMAGES} images
+            {t('community.form.imagesFormatHint', { max: MAX_IMAGES })}
           </Text>
 
           {/* Zone d'upload centrée et full width */}
@@ -918,7 +928,7 @@ export default function EditCommunityScreen() {
             {/* Bouton ajouter image si pas encore 5 */}
             {images.length < MAX_IMAGES && (
               <Button
-                title="Ajouter une image"
+                title={t('community.form.addImage')}
                 onPress={pickImage}
                 variant="outline"
                 icon={<Upload size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
@@ -937,7 +947,7 @@ export default function EditCommunityScreen() {
                     <IconButton
                       onPress={() => removeImage(image.id)}
                       icon={<X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />}
-                      accessibilityLabel="Retirer l'image"
+                      accessibilityLabel={t('community.form.removeImage')}
                       size="sm"
                       variant="filled"
                       style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
@@ -957,9 +967,9 @@ export default function EditCommunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <Eye size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Aperçu</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('community.form.steps.preview')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Vérifiez toutes les informations avant enregistrement
+          {t('community.form.reviewBeforeSave')}
         </Text>
       </View>
 
@@ -967,12 +977,12 @@ export default function EditCommunityScreen() {
       <View style={[styles.statusCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
         <View style={styles.statusHeader}>
           <View>
-            <Text style={[styles.statusLabel, { color: colors.gray600 }]}>Statut de la communauté</Text>
+            <Text style={[styles.statusLabel, { color: colors.gray600 }]}>{t('community.form.communityStatus')}</Text>
             <View style={styles.statusBadgeContainer}>
               <View style={[styles.statusBadge, { backgroundColor: withOpacity(getStatusColor(), OPACITY[20]) }]}>
                 <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
                 <Text style={[styles.statusBadgeText, { color: getStatusColor() }]}>
-                  {COMMUNITY_STATUS_LABELS[status]}
+                  {getCommunityStatusLabel(status)}
                 </Text>
               </View>
             </View>
@@ -984,8 +994,8 @@ export default function EditCommunityScreen() {
           />
         </View>
         <Text style={[styles.statusHint, { color: colors.gray500 }]}>
-          {status === 'INACTIVE' ? 'Activez pour publier cette communauté et la rendre visible.' :
-           status === 'ACTIVE' ? 'La communauté est publiée et visible par les membres.' : ''}
+          {status === 'INACTIVE' ? t('community.form.statusHintInactive') :
+           status === 'ACTIVE' ? t('community.form.statusHintActive') : ''}
         </Text>
       </View>
 
@@ -1000,34 +1010,34 @@ export default function EditCommunityScreen() {
         ) : (
           <View style={[styles.previewNoImage, { backgroundColor: colors.gray100 }]}>
             <ImageIcon size={32} color={colors.gray400} />
-            <Text style={[styles.previewNoImageText, { color: colors.gray500 }]}>Aucune image</Text>
+            <Text style={[styles.previewNoImageText, { color: colors.gray500 }]}>{t('community.form.noImage')}</Text>
           </View>
         )}
 
         {/* Title & Type */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{name || 'Sans nom'}</Text>
+          <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{name || t('community.form.untitled')}</Text>
           <View style={styles.previewTags}>
             {communityType ? (
               <View style={[styles.previewTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.previewTagText, { color: colors.primary }]}>
-                  {COMMUNITY_TYPE_LABELS[communityType]}
+                  {getCommunityTypeLabel(communityType)}
                 </Text>
               </View>
             ) : (
               <View style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>Type non défini</Text>
+                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>{t('community.form.typeNotDefined')}</Text>
               </View>
             )}
             {visibility ? (
               <View style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
                 <Text style={[styles.previewTagText, { color: colors.gray700 }]}>
-                  {VISIBILITY_LABELS[visibility]}
+                  {getVisibilityLabel(visibility)}
                 </Text>
               </View>
             ) : (
               <View style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>Visibilité non définie</Text>
+                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>{t('community.form.visibilityNotDefined')}</Text>
               </View>
             )}
           </View>
@@ -1035,7 +1045,7 @@ export default function EditCommunityScreen() {
 
         {/* Tags */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Tags</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('community.tags')}</Text>
           {selectedTags.length > 0 ? (
             <View style={styles.previewTags}>
               {getTagLabels().map((label, idx) => (
@@ -1045,13 +1055,13 @@ export default function EditCommunityScreen() {
               ))}
             </View>
           ) : (
-            <Text style={[styles.previewText, { color: colors.gray500 }]}>Aucun tag sélectionné</Text>
+            <Text style={[styles.previewText, { color: colors.gray500 }]}>{t('community.form.noTagSelected')}</Text>
           )}
         </View>
 
         {/* Secteurs */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Secteurs d'activité</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('community.industries')}</Text>
           {selectedSectors.length > 0 ? (
             <View style={styles.previewTags}>
               {selectedSectors.map((sectorId) => {
@@ -1059,61 +1069,61 @@ export default function EditCommunityScreen() {
                 return (
                   <View key={sectorId} style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
                     <Text style={[styles.previewTagText, { color: colors.gray700 }]}>
-                      {sector?.label || sectorId}
+                      {sector ? t(sector.labelKey) : sectorId}
                     </Text>
                   </View>
                 );
               })}
             </View>
           ) : (
-            <Text style={[styles.previewText, { color: colors.gray500 }]}>Aucun secteur sélectionné</Text>
+            <Text style={[styles.previewText, { color: colors.gray500 }]}>{t('community.form.noSectorSelected')}</Text>
           )}
         </View>
 
         {/* Info Grid */}
         <View style={styles.previewGrid}>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Lieu</Text>
+            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('community.location')}</Text>
             <Text style={[styles.previewValue, { color: communityType === 'HYBRID' ? colors.textPrimary : colors.gray400 }]}>
               {communityType === 'HYBRID' 
-                ? [city, region, country].filter(Boolean).join(', ') || 'Non défini'
-                : communityType === 'ONLINE' ? 'En ligne' : 'Non défini'}
+                ? [city, region, country].filter(Boolean).join(', ') || t('community.form.notDefined')
+                : communityType === 'ONLINE' ? t('community.form.online') : t('community.form.notDefined')}
             </Text>
           </View>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Visibilité</Text>
+            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('community.form.visibilitySimple')}</Text>
             <Text style={[styles.previewValue, { color: visibility ? colors.textPrimary : colors.gray400 }]}>
-              {visibility ? VISIBILITY_LABELS[visibility] : 'Non définie'}
+              {visibility ? getVisibilityLabel(visibility) : t('community.form.notDefinedFeminine')}
             </Text>
           </View>
         </View>
 
         {/* Description */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Description</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('opportunity.description')}</Text>
           {description ? (
             <Text style={[styles.previewText, { color: colors.textSecondary }]}>{description}</Text>
           ) : (
-            <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucune description</Text>
+            <Text style={[styles.previewText, { color: colors.gray400 }]}>{t('community.form.noDescription')}</Text>
           )}
         </View>
 
         {/* Rules */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Règles</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('community.form.rulesSimple')}</Text>
           {rules ? (
             <Text style={[styles.previewText, { color: colors.textSecondary }]}>{rules}</Text>
           ) : (
-            <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucune règle définie</Text>
+            <Text style={[styles.previewText, { color: colors.gray400 }]}>{t('community.form.noRules')}</Text>
           )}
         </View>
 
         {/* Questions complémentaires */}
         <View style={[styles.previewSection, { backgroundColor: colors.gray50 }]}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Questions complémentaires</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('space.form.additionalQuestions')}</Text>
           <View style={styles.previewApplicationSettings}>
             <View style={styles.previewSettingRow}>
-              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Nombre de questions</Text>
+              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('space.form.questionsCountLabel')}</Text>
               <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
                 {applicationQuestions.filter(q => q.question.trim()).length}
               </Text>
@@ -1147,7 +1157,7 @@ export default function EditCommunityScreen() {
           <View style={styles.footerButtons}>
             {/* Bouton Retour */}
             <Button
-              title="Retour"
+              title={t('common.back')}
               onPress={handleBack}
               disabled={isSubmitting}
               variant="outline"
@@ -1160,14 +1170,14 @@ export default function EditCommunityScreen() {
               onPress={handleDelete}
               disabled={isSubmitting}
               icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-              accessibilityLabel="Supprimer la communauté"
+              accessibilityLabel={t('community.form.deleteA11y')}
               variant="outline"
               style={[styles.deleteButton, { borderColor: colors.error }]}
             />
             {/* Bouton Enregistrer */}
             <View style={styles.saveButtonContainer}>
               <Button
-                title="Enregistrer"
+                title={t('common.save')}
                 onPress={handleSave}
                 disabled={isSubmitting}
                 fullWidth
@@ -1184,7 +1194,7 @@ export default function EditCommunityScreen() {
           {/* Bouton Retour (sauf sur le premier step) */}
           {!isFirstStep && (
             <Button
-              title="Retour"
+              title={t('common.back')}
               onPress={handleBack}
               variant="outline"
               icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
@@ -1195,7 +1205,7 @@ export default function EditCommunityScreen() {
           {/* Bouton Continuer */}
           <View style={[styles.continueButton, !isFirstStep && { flex: 1 }]}>
             <Button
-              title="Continuer"
+              title={t('common.next')}
               onPress={handleNext}
               disabled={!canProceed()}
               fullWidth
@@ -1214,10 +1224,10 @@ export default function EditCommunityScreen() {
         <IconButton
           onPress={handleBack}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
           style={styles.backButton}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Modifier la communauté</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('community.form.editCommunityTitle')}</Text>
         <View style={styles.headerSpacer} />
       </View>
       <KeyboardAvoidingView style={styles.keyboardView} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>

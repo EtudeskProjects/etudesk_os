@@ -1,0 +1,19 @@
+{
+  "messageRequired": "El mensaje es requerido",
+  "messageTooLong": "El mensaje es demasiado largo (máx. 4000 caracteres)",
+  "processingError": "Error al procesar el mensaje",
+  "transcriptionError": "Error al transcribir el audio",
+  "uploadError": "Error al subir el archivo",
+  "sessionsError": "Error al obtener las sesiones",
+  "sessionCreateError": "Error al crear la sesión",
+  "sessionFetchError": "Error al obtener la sesión",
+  "sessionDeleteError": "Error al eliminar la sesión",
+  "sessionDeleted": "Sesión eliminada",
+  "sessionNotFound": "Sesión no encontrada",
+  "messagesError": "Error al obtener los mensajes",
+  "organizationRequired": "El ID de la organización es requerido para el modo Gestionar",
+  "notAuthenticated": "No autenticado",
+  "noAudioFile": "No se proporcionó ningún archivo de audio",
+  "invalidAudioFormat": "Formato de audio inválido o archivo corrupto",
+  "noFileProvided": "No se proporcionó ningún archivo"
+}

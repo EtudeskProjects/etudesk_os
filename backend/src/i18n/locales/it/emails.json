@@ -1,0 +1,69 @@
+{
+  "otp": {
+    "subject": "{{code}} - Il tuo codice di accesso",
+    "title": "Codice di accesso",
+    "yourCode": "Il tuo codice di accesso",
+    "validFor": "Valido {{minutes}} min",
+    "neverShare": "Non condividere mai questo codice con nessuno"
+  },
+  "welcome": {
+    "subject": "Benvenuto/a su Etudesk, {{name}}!",
+    "title": "Benvenuto/a su Etudesk!",
+    "greeting": "Ciao {{name}},",
+    "congratulations": "Il tuo profilo talent è ora attivo su Etudesk. Ecco cosa puoi fare:",
+    "feature1": "Scoprire lavori, stage e missioni freelance",
+    "feature2": "Unirti a comunità di professionisti",
+    "feature3": "Trovare spazi di coworking e incubatori",
+    "feature4": "Sviluppare la tua rete con un copilota IA",
+    "exploreButton": "Esplora Etudesk",
+    "copyright": "© {{year}} Etudesk. Tutti i diritti riservati."
+  },
+  "orgInvite": {
+    "subject": "{{inviter}} ti invita a unirti a {{organization}} su Etudesk",
+    "title": "Sei invitato/a!",
+    "inviterInvites": "{{inviter}} ti invita a unirti all'organizzazione",
+    "asRole": "come {{role}}",
+    "connectToAccept": "Accedi a Etudesk per accettare e iniziare a collaborare.",
+    "viewInvitation": "Vedi l'invito",
+    "expiresIn": "Questo invito scade tra 7 giorni.",
+    "copyright": "© {{year}} Etudesk. Tutti i diritti riservati.",
+    "roles": {
+      "OWNER": "Proprietario",
+      "ADMIN": "Amministratore",
+      "MANAGER": "Manager",
+      "MEMBER": "Membro",
+      "OBSERVER": "Osservatore"
+    }
+  },
+  "communityInvite": {
+    "subject": "{{inviter}} ti invita a unirti a {{community}}",
+    "title": "Sei invitato/a!",
+    "greeting": "Ciao {{name}},",
+    "inviterInvites": "{{inviter}} ti invita a unirti alla comunità",
+    "asRole": "come {{role}}",
+    "connectToAccept": "Accedi a Etudesk per accettare e unirti alla comunità.",
+    "viewInvitation": "Vedi l'invito",
+    "expiresIn": "Questo invito scade tra 7 giorni.",
+    "copyright": "© {{year}} Etudesk. Tutti i diritti riservati.",
+    "roles": {
+      "ADMIN": "Amministratore",
+      "MEMBER": "Membro"
+    }
+  },
+  "spaceInvite": {
+    "subject": "{{inviter}} ti invita a scoprire {{space}}",
+    "title": "Invito a uno spazio",
+    "greeting": "Ciao {{name}},",
+    "inviterInvites": "{{inviter}} ti invita a scoprire lo spazio",
+    "viewInvitation": "Vedi l'invito",
+    "expiresIn": "Questo invito scade tra 7 giorni."
+  },
+  "opportunityInvite": {
+    "subject": "{{inviter}} ti invita a candidarti — {{opportunity}}",
+    "title": "Invito a candidarsi",
+    "greeting": "Ciao {{name}},",
+    "inviterInvites": "{{inviter}} di {{organization}} ti invita a candidarti all'opportunità",
+    "viewOpportunity": "Vedi l'opportunità",
+    "expiresIn": "Questo invito scade tra 7 giorni."
+  }
+}

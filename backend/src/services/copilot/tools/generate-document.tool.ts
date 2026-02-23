@@ -15,6 +15,7 @@ import { uploadFile } from '../../storage.service';
 import { pool } from '../../database';
 import { processDocumentExtraction } from '../../documents/document.service';
 import { logger } from '../../../utils';
+import { i18next } from '../../../i18n';
 import { generateCVPDF, CVData } from './cv-pdf-generator';
 import { generateOrgDocumentPDF, isOrgDocumentContent, OrgDocumentData } from './org-document-pdf-generator';
 
@@ -71,7 +72,8 @@ function isCVContent(data: any): boolean {
  *   volunteer: [{ organization, position, startDate, endDate, summary }],
  *   awards: [{ title, awarder, date, summary }] }
  */
-function normalizeJsonResume(data: any): CVData {
+function normalizeJsonResume(data: any, language?: string): CVData {
+  const tr = (key: string) => i18next.t(key, { lng: language });
   const basics = data.basics || {};
   const nameParts = (basics.name || '').trim().split(/\s+/);
   const firstName = nameParts[0] || '';
@@ -145,9 +147,9 @@ function normalizeJsonResume(data: any): CVData {
   let other: CVData['other'] = undefined;
   if (Array.isArray(data.volunteer) && data.volunteer.length > 0) {
     other = [{
-      heading: 'Engagement & Benevolat',
+      heading: tr('copilot:docHeadingVolunteerEngagement'),
       content: data.volunteer.map((v: any) =>
-        `${v.position || ''} — ${v.organization || ''} (${v.startDate || ''}${v.endDate ? ' - ' + v.endDate : ' - Present'})${v.summary ? '\n' + v.summary : ''}`
+        `${v.position || ''} — ${v.organization || ''} (${v.startDate || ''}${v.endDate ? ' - ' + v.endDate : ' - ' + tr('copilot:docLabelPresent')})${v.summary ? '\n' + v.summary : ''}`
       ).join('\n\n'),
     }];
   }
@@ -174,11 +176,12 @@ function normalizeJsonResume(data: any): CVData {
  * Agent often sends: { personalInfo: { firstName, lastName, title, email, ... }, experience: [...], skills: [{category, items}], ... }
  * We need: { firstName, lastName, email, skills: [{name, type, level}], experiences: [{title, company, period, description}], ... }
  */
-function normalizeCVData(data: any): CVData {
+function normalizeCVData(data: any, language?: string): CVData {
+  const tr = (key: string) => i18next.t(key, { lng: language });
   // Wrapper format: { type: "cv", profile: { firstName, lastName, ... } }
   // Unwrap and recurse — the profile object may be canonical, alternate, or any other format
   if (data?.type === 'cv' && data?.profile && typeof data.profile === 'object') {
-    return normalizeCVData(data.profile);
+    return normalizeCVData(data.profile, language);
   }
 
   // Canonical-like format: has firstName + lastName at top level
@@ -192,7 +195,7 @@ function normalizeCVData(data: any): CVData {
         title: e.position || e.title || '',
         company: e.company || e.organization || '',
         location: e.location,
-        period: e.period || `${e.startDate || ''}${e.endDate ? ' - ' + e.endDate : e.current ? ' - Présent' : ''}`,
+        period: e.period || `${e.startDate || ''}${e.endDate ? ' - ' + e.endDate : e.current ? ' - ' + tr('copilot:docLabelPresent') : ''}`,
         description: Array.isArray(e.highlights) ? e.highlights.join('\n') : Array.isArray(e.bullets) ? e.bullets.join('\n') : (e.description || ''),
       }));
     }
@@ -253,7 +256,7 @@ function normalizeCVData(data: any): CVData {
     let other: CVData['other'] = undefined;
     if (Array.isArray(data.references) && data.references.length > 0) {
       other = [{
-        heading: 'Références',
+        heading: tr('copilot:docHeadingReferences'),
         content: data.references.map((r: any) =>
           `${r.name || ''}${r.title ? ' — ' + r.title : ''}${r.contact ? ' | ' + r.contact : ''}${r.phone ? ' | ' + r.phone : ''}${r.email ? ' | ' + r.email : ''}`
         ).join('\n'),
@@ -276,7 +279,7 @@ function normalizeCVData(data: any): CVData {
 
   // JSON Resume format: { basics: { name, label, email, phone, location, summary }, work, education, skills, languages, volunteer, awards }
   if (data.basics && typeof data.basics.name === 'string') {
-    return normalizeJsonResume(data);
+    return normalizeJsonResume(data, language);
   }
 
   const pi = data.personalInfo || data.personal || {};
@@ -318,7 +321,7 @@ function normalizeCVData(data: any): CVData {
       title: e.position || e.title || '',
       company: e.company || e.organization || '',
       location: e.location,
-      period: e.period || `${e.startDate || ''}${e.endDate ? ' - ' + e.endDate : e.current ? ' - Présent' : ''}`,
+      period: e.period || `${e.startDate || ''}${e.endDate ? ' - ' + e.endDate : e.current ? ' - ' + tr('copilot:docLabelPresent') : ''}`,
       description: Array.isArray(e.highlights) ? e.highlights.join('\n') : Array.isArray(e.bullets) ? e.bullets.join('\n') : (e.description || ''),
     }));
   }
@@ -359,9 +362,9 @@ function normalizeCVData(data: any): CVData {
   const volunteerData = data.volunteerWork || data.volunteer;
   if (Array.isArray(volunteerData) && volunteerData.length > 0) {
     otherSections = [{
-      heading: 'Bénévolat & Engagement',
+      heading: tr('copilot:docHeadingVolunteerEngagement'),
       content: volunteerData.map((v: any) =>
-        `${v.role || v.position || ''} — ${v.organization || ''} (${v.startDate || v.period || ''}${v.current ? ' - Présent' : v.endDate ? ' - ' + v.endDate : ''})`
+        `${v.role || v.position || ''} — ${v.organization || ''} (${v.startDate || v.period || ''}${v.current ? ' - ' + tr('copilot:docLabelPresent') : v.endDate ? ' - ' + v.endDate : ''})`
       ).join('\n'),
     }];
   }
@@ -369,7 +372,7 @@ function normalizeCVData(data: any): CVData {
   // References section (if provided)
   if (Array.isArray(data.references) && data.references.length > 0) {
     const refSection = {
-      heading: 'Références',
+      heading: tr('copilot:docHeadingReferences'),
       content: data.references.map((r: any) =>
         `${r.name || ''}${r.title ? ' — ' + r.title : ''}${r.phone ? ' | ' + r.phone : ''}${r.email ? ' | ' + r.email : ''}`
       ).join('\n'),
@@ -534,7 +537,8 @@ async function generateDOCX(title: string, data: any): Promise<Buffer> {
 /**
  * Generate an XLSX buffer from structured content
  */
-async function generateXLSX(title: string, data: any): Promise<Buffer> {
+async function generateXLSX(title: string, data: any, language?: string): Promise<Buffer> {
+  const tr = (key: string) => i18next.t(key, { lng: language });
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet(title.slice(0, 31)); // Excel sheet name max 31 chars
 
@@ -557,7 +561,7 @@ async function generateXLSX(title: string, data: any): Promise<Buffer> {
     });
   } else if (isSectionContent(data)) {
     // Convert sections to rows
-    sheet.addRow(['Section', 'Contenu']);
+    sheet.addRow([tr('copilot:docColumnSection'), tr('copilot:docColumnContent')]);
     sheet.getRow(1).font = { bold: true };
     for (const section of data.sections) {
       sheet.addRow([section.heading, section.body]);
@@ -567,7 +571,7 @@ async function generateXLSX(title: string, data: any): Promise<Buffer> {
     });
   } else {
     // Raw data
-    sheet.addRow(['Données']);
+    sheet.addRow([tr('copilot:docLabelData')]);
     sheet.addRow([JSON.stringify(data, null, 2)]);
   }
 
@@ -578,13 +582,14 @@ async function generateXLSX(title: string, data: any): Promise<Buffer> {
 /**
  * Generate a CSV string from structured content
  */
-function generateCSV(data: any): string {
+function generateCSV(data: any, language?: string): string {
+  const tr = (key: string) => i18next.t(key, { lng: language });
   if (isTableContent(data)) {
     return stringify([data.headers, ...data.rows]);
   }
   if (isSectionContent(data)) {
     const rows = data.sections.map((s) => [s.heading, s.body]);
-    return stringify([['Section', 'Contenu'], ...rows]);
+    return stringify([[tr('copilot:docColumnSection'), tr('copilot:docColumnContent')], ...rows]);
   }
   return stringify([[JSON.stringify(data)]]);
 }
@@ -635,7 +640,7 @@ const FORMAT_MIMETYPES: Record<string, string> = {
  * The generated document is auto-saved to the user's documents library
  * and triggers the extraction + skill merge pipeline.
  */
-export function createGenerateDocumentTool(talentId: string, avatarUrl?: string, organizationId?: string) {
+export function createGenerateDocumentTool(talentId: string, avatarUrl?: string, organizationId?: string, language?: string) {
   return defineTool({
     name: 'generate_document',
     description:
@@ -664,18 +669,19 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
       };
     },
     execute: async ({ format: rawFormat, title, contentJson, instructions }) => {
+      const tr = (key: string, options?: Record<string, any>) => i18next.t(key, { lng: language, ...(options || {}) });
       try {
         // Normalize format to uppercase (Claude native SDK may send lowercase)
         const format = typeof rawFormat === 'string' ? rawFormat.toUpperCase() : 'PDF';
         if (!FORMAT_EXTENSIONS[format]) {
-          return { success: false, error: `Format non supporté: ${rawFormat}. Formats valides: PDF, DOCX, XLS, CSV, TXT` };
+          return { success: false, error: tr('copilot:toolFormatUnsupported', { format: rawFormat }) };
         }
         // Accept contentJson as object or string
         let data: any;
         try {
           data = typeof contentJson === 'object' ? contentJson : JSON.parse(contentJson);
         } catch (parseErr) {
-          return { success: false, error: 'Invalid contentJson: failed to parse as JSON' };
+          return { success: false, error: tr('copilot:toolInvalidContentJson') };
         }
         const documentId = uuidv4();
         const extension = FORMAT_EXTENSIONS[format];
@@ -695,7 +701,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
             // Route CV-structured content to the specialized elegant generator
             if (isCVContent(data)) {
               isCV = true;
-              const cvData = normalizeCVData(data);
+              const cvData = normalizeCVData(data, language);
               // Inject user's avatar if available, not already provided, and not explicitly excluded
               if (avatarUrl && !cvData.avatarUrl && cvData.includePhoto !== false) {
                 cvData.avatarUrl = avatarUrl;
@@ -712,10 +718,10 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
             buffer = await generateDOCX(title, data);
             break;
           case 'XLS':
-            buffer = await generateXLSX(title, data);
+            buffer = await generateXLSX(title, data, language);
             break;
           case 'CSV': {
-            const csv = generateCSV(data);
+            const csv = generateCSV(data, language);
             buffer = Buffer.from(csv, 'utf-8');
             break;
           }
@@ -725,7 +731,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
             break;
           }
           default:
-            return { success: false, error: `Format non supporté: ${format}` };
+            return { success: false, error: tr('copilot:toolFormatUnsupported', { format }) };
         }
 
         // Upload to storage
@@ -818,7 +824,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
         logger.error(`[generate_document] Error: ${error.message}`);
         return {
           success: false,
-          error: `Erreur lors de la génération du document: ${error.message}`,
+          error: tr('copilot:toolDocumentGenerationError', { error: error.message }),
         };
       }
     },
@@ -844,16 +850,17 @@ export const generateDocumentTool = defineTool({
     instructions: z.string().optional().describe('Generation instructions describing the purpose and style of the document'),
   }),
   execute: async ({ format: rawFormat, title, contentJson, instructions }) => {
+    const tr = (key: string, options?: Record<string, any>) => i18next.t(key, options);
     try {
       const format = typeof rawFormat === 'string' ? rawFormat.toUpperCase() : 'PDF';
       if (!FORMAT_EXTENSIONS[format]) {
-        return { success: false, error: `Format non supporté: ${rawFormat}. Formats valides: PDF, DOCX, XLS, CSV, TXT` };
+        return { success: false, error: tr('copilot:toolFormatUnsupported', { format: rawFormat }) };
       }
       let data: any;
         try {
           data = typeof contentJson === 'object' ? contentJson : JSON.parse(contentJson);
         } catch (parseErr) {
-          return { success: false, error: 'Invalid contentJson: failed to parse as JSON' };
+          return { success: false, error: tr('copilot:toolInvalidContentJson') };
         }
       const timestamp = Date.now();
       const safeTitle = title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
@@ -885,7 +892,7 @@ export const generateDocumentTool = defineTool({
           break;
         }
         default:
-          return { success: false, error: `Format non supporté: ${format}` };
+          return { success: false, error: tr('copilot:toolFormatUnsupported', { format }) };
       }
 
       const downloadUrl = await uploadFile(buffer, storagePath, mimeType);
@@ -907,7 +914,7 @@ export const generateDocumentTool = defineTool({
       logger.error(`[generate_document] Error: ${error.message}`);
       return {
         success: false,
-        error: `Erreur lors de la génération du document: ${error.message}`,
+        error: tr('copilot:toolDocumentGenerationError', { error: error.message }),
       };
     }
   },

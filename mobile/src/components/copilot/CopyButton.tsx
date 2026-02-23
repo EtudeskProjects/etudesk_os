@@ -12,6 +12,7 @@ import { useI18n } from '../../contexts/I18nContext';
 import { ICON } from '../../constants/theme';
 import { api } from '../../services/api';
 import { formatNumberNoTrailingZeros } from '../../utils/number';
+import { getLabel } from '../../utils/labels';
 import { ShimmerPlaceholder } from '../ui';
 
 
@@ -30,19 +31,12 @@ const ENTITY_ENDPOINTS: Record<string, string> = {
   document: '/api/documents',
 };
 
-/** Entity type labels in French */
-const ENTITY_LABELS: Record<string, string> = {
-  opportunity: 'Opportunit\u00e9',
-  community: 'Communaut\u00e9',
-  space: 'Espace',
-  organization: 'Organisation',
-  talent: 'Talent',
-  document: 'Document',
-};
+/** Entity type labels (i18n) */
+const getEntityLabel = (type: string): string => getLabel('entityLabels', type);
 
 /** Format entity data into readable text */
 function formatEntity(type: string, data: Record<string, any>): string {
-  const label = ENTITY_LABELS[type] || type;
+  const label = getEntityLabel(type) || type;
   const parts: string[] = [];
 
   switch (type) {
@@ -147,13 +141,13 @@ async function enrichContent(content: string): Promise<string> {
   const fetches = await Promise.allSettled(
     replacements.map(async (r) => {
       const endpoint = ENTITY_ENDPOINTS[r.type];
-      if (!endpoint) return { ...r, text: `[${ENTITY_LABELS[r.type] || r.type}]` };
+      if (!endpoint) return { ...r, text: `[${getEntityLabel(r.type) || r.type}]` };
       try {
         const response = await api.get<any>(`${endpoint}/${r.id}`);
         const data = response.data || response;
         return { ...r, text: formatEntity(r.type, data) };
       } catch {
-        return { ...r, text: `[${ENTITY_LABELS[r.type] || r.type}]` };
+        return { ...r, text: `[${getEntityLabel(r.type) || r.type}]` };
       }
     })
   );

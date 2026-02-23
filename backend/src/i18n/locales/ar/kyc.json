@@ -1,0 +1,9 @@
+{
+  "fetchStatusError": "تعذّر جلب حالة التحقق من الهوية",
+  "invalidDocumentType": "نوع المستند غير صالح",
+  "frontImageRequired": "صورة الوجه الأمامي مطلوبة",
+  "alreadyVerified": "تم التحقق من هويتك بالفعل.",
+  "submitError": "تعذّر تقديم التحقق من الهوية",
+  "uploadUrlError": "تعذّر إنشاء رابط الرفع",
+  "fetchHistoryError": "تعذّر جلب سجل التحقق من الهوية"
+}

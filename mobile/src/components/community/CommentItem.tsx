@@ -8,6 +8,7 @@ import { SPACING, TYPOGRAPHY, BORDER, withOpacity, OPACITY } from '../../constan
 	import { RichTextContent } from './RichTextContent';
 	import { getFullImageUrl } from '../../utils/image';
 	import { Button, IconButton, ShimmerPlaceholder } from '../ui';
+import { useI18n } from '../../contexts/I18nContext';
 
 
 // Thread line constants - must match LAYOUT avatar sizes
@@ -46,6 +47,7 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
     onEdit,
 }) => {
     const { colors } = useTheme();
+    const { t } = useI18n();
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(comment.likes_count || 0);
     const [showAllReplies, setShowAllReplies] = useState(false);
@@ -67,7 +69,7 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
         onLike?.(comment.id);
     };
 
-    const authorName = comment.author?.display_name || 'Utilisateur';
+    const authorName = comment.author?.display_name || t('common.user');
     const avatarUrl = comment.author?.avatar_url ? getFullImageUrl(comment.author.avatar_url) : null;
 
     // Calculate avatar center for thread positioning
@@ -129,7 +131,7 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
                                 <View style={styles.sendingIndicator}>
                                     <ShimmerPlaceholder width={24} height={14} variant="bar" style={styles.spinner} />
                                     <Text style={[styles.sendingText, { color: colors.primary }]}>
-                                        Envoi...
+                                        {t('common.sending')}
                                     </Text>
                                 </View>
                             ) : (
@@ -143,7 +145,7 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
 	                            <IconButton
 	                                onPress={() => onMore?.(comment)}
 	                                icon={<MoreHorizontal size={16} color={colors.gray400} />}
-	                                accessibilityLabel="Options"
+	                                accessibilityLabel={t('common.options')}
 	                                size="sm"
 	                                variant="ghost"
 	                                style={{ width: 28, height: 28 }}
@@ -188,7 +190,7 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
                                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                 >
                                     <Text style={[styles.replyText, { color: colors.gray500 }]}>
-                                        Répondre
+                                        {t('common.reply')}
                                     </Text>
                                 </Pressable>
                             )}
@@ -202,7 +204,7 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
                                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                     >
                                         <Text style={[styles.replyText, { color: colors.gray500 }]}>
-                                            Modifier
+                                            {t('common.edit')}
                                         </Text>
                                     </Pressable>
                                 </>
@@ -246,7 +248,7 @@ export const CommentItem: React.FC<CommentItemProps> = React.memo(({
 	                                ]}
 	                            />
 	                            <Button
-	                                title={`Voir ${hiddenRepliesCount} autre${hiddenRepliesCount > 1 ? 's' : ''} réponse${hiddenRepliesCount > 1 ? 's' : ''}`}
+	                                title={t('common.showMoreReplies', { count: hiddenRepliesCount })}
 	                                onPress={() => setShowAllReplies(true)}
 	                                variant="ghost"
 	                                size="sm"

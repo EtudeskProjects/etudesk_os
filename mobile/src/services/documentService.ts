@@ -6,6 +6,7 @@
 import { api } from './api';
 import { LIGHT_COLORS } from '../constants/theme';
 import { formatNumberNoTrailingZeros } from '../utils/number';
+import i18n from '../i18n';
 
 
 export type DocumentType =
@@ -161,40 +162,18 @@ export interface ListDocumentsParams {
   offset?: number;
 }
 
-// --- Document Type Labels French ---
+// --- Document Labels (i18n) ---
 
-export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
-  CV: 'CV / Curriculum Vitae',
-  CERTIFICATE: 'Certificat',
-  DIPLOMA: 'Diplôme',
-  LICENSE: 'Licence professionnelle',
-  PORTFOLIO: 'Portfolio',
-  RECOMMENDATION_LETTER: 'Lettre de recommandation',
-  TRANSCRIPT: 'Bulletin scolaire / Relevé de notes',
-  PUBLICATION: 'Publication',
-  PATENT: 'Brevet',
-  ID_CARD: "Carte d'identité",
-  PASSPORT: 'Passeport',
-  DRIVER_LICENSE: 'Permis de conduire',
-  PROOF_OF_ADDRESS: 'Justificatif de domicile',
-  OTHER: 'Autre document',
-};
+import { getLabel } from '../utils/labels';
 
-export const DOCUMENT_CATEGORY_LABELS: Record<DocumentCategory, string> = {
-  PROFESSIONAL: 'Professionnel',
-  ACADEMIC: 'Académique',
-  IDENTITY: 'Identité',
-  OTHER: 'Autre',
-};
+export const getDocumentTypeLabel = (type: DocumentType): string =>
+  getLabel('documentTypes', type);
 
-export const DOCUMENT_STATUS_LABELS: Record<DocumentStatus, string> = {
-  PENDING: 'En attente',
-  PROCESSING: 'En cours de traitement',
-  PROCESSED: 'Traité',
-  FAILED: 'Échec',
-  VERIFIED: 'Vérifié',
-  REJECTED: 'Rejeté',
-};
+export const getDocumentCategoryLabel = (cat: DocumentCategory): string =>
+  getLabel('documentCategories', cat);
+
+export const getDocumentStatusLabel = (status: DocumentStatus): string =>
+  getLabel('documentStatuses', status);
 
 // --- Api Functions ---
 
@@ -309,7 +288,7 @@ async function uploadMultipleDocuments(
   options?: { documentType?: DocumentType; isPublic?: boolean }
 ): Promise<{ message: string; documents: TalentDocument[] }> {
   if (files.length > UPLOAD_LIMITS.MAX_FILES_PER_REQUEST) {
-    throw new Error(`Maximum ${UPLOAD_LIMITS.MAX_FILES_PER_REQUEST} fichiers par requête`);
+    throw new Error(i18n.t('errors.maxFilesPerRequest', { count: UPLOAD_LIMITS.MAX_FILES_PER_REQUEST }));
   }
 
   const formData = new FormData();

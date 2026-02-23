@@ -7,6 +7,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useTheme } from '../../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY } from '../../../../constants/theme';
+import { getLabelDirect } from '../../../../utils/labels';
 
 interface DonutSegment {
   label: string;
@@ -51,7 +52,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({ title, data, total_label
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
         <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textTertiary }}>
-          Aucune donnée disponible
+          {getLabelDirect('noData')}
         </Text>
       </View>
     );

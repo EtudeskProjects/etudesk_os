@@ -102,7 +102,7 @@ export function ChatInput({
         if (file.size && file.size > MAX_FILE_SIZE) {
           showToastGlobal({
             type: 'warning',
-            title: t('chat.fileTooLarge'),
+            title: t('common.fileTooLarge'),
             message: t('chat.fileSizeLimit', { size: formatFileSize(MAX_FILE_SIZE) }),
           });
           return;
@@ -110,7 +110,7 @@ export function ChatInput({
 
         // Check max attachments
         if (attachments.length >= 3) {
-          showToastGlobal({ type: 'warning', title: t('chat.limitReached'), message: t('chat.maxFiles') });
+          showToastGlobal({ type: 'warning', title: t('common.limitReached'), message: t('chat.maxFiles') });
           return;
         }
 

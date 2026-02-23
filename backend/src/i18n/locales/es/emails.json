@@ -1,0 +1,69 @@
+{
+  "otp": {
+    "subject": "{{code}} - Tu código de inicio de sesión",
+    "title": "Código de inicio de sesión",
+    "yourCode": "Tu código de inicio de sesión",
+    "validFor": "Válido {{minutes}} min",
+    "neverShare": "Nunca compartas este código con nadie"
+  },
+  "welcome": {
+    "subject": "¡Bienvenido(a) a Etudesk, {{name}}!",
+    "title": "¡Bienvenido(a) a Etudesk!",
+    "greeting": "Hola {{name}},",
+    "congratulations": "Tu perfil de talento ya está activo en Etudesk. Esto es lo que puedes hacer:",
+    "feature1": "Descubrir empleos, pasantías y misiones freelance",
+    "feature2": "Unirte a comunidades de profesionales",
+    "feature3": "Encontrar espacios de coworking e incubadoras",
+    "feature4": "Desarrollar tu red con un copiloto de IA",
+    "exploreButton": "Explorar Etudesk",
+    "copyright": "© {{year}} Etudesk. Todos los derechos reservados."
+  },
+  "orgInvite": {
+    "subject": "{{inviter}} te invita a unirte a {{organization}} en Etudesk",
+    "title": "¡Estás invitado(a)!",
+    "inviterInvites": "{{inviter}} te invita a unirte a la organización",
+    "asRole": "como {{role}}",
+    "connectToAccept": "Inicia sesión en Etudesk para aceptar y comenzar a colaborar.",
+    "viewInvitation": "Ver invitación",
+    "expiresIn": "Esta invitación expira en 7 días.",
+    "copyright": "© {{year}} Etudesk. Todos los derechos reservados.",
+    "roles": {
+      "OWNER": "Propietario",
+      "ADMIN": "Administrador",
+      "MANAGER": "Gerente",
+      "MEMBER": "Miembro",
+      "OBSERVER": "Observador"
+    }
+  },
+  "communityInvite": {
+    "subject": "{{inviter}} te invita a unirte a {{community}}",
+    "title": "¡Estás invitado(a)!",
+    "greeting": "Hola {{name}},",
+    "inviterInvites": "{{inviter}} te invita a unirte a la comunidad",
+    "asRole": "como {{role}}",
+    "connectToAccept": "Inicia sesión en Etudesk para aceptar y unirte a la comunidad.",
+    "viewInvitation": "Ver invitación",
+    "expiresIn": "Esta invitación expira en 7 días.",
+    "copyright": "© {{year}} Etudesk. Todos los derechos reservados.",
+    "roles": {
+      "ADMIN": "Administrador",
+      "MEMBER": "Miembro"
+    }
+  },
+  "spaceInvite": {
+    "subject": "{{inviter}} te invita a descubrir {{space}}",
+    "title": "Invitación a un espacio",
+    "greeting": "Hola {{name}},",
+    "inviterInvites": "{{inviter}} te invita a descubrir el espacio",
+    "viewInvitation": "Ver invitación",
+    "expiresIn": "Esta invitación expira en 7 días."
+  },
+  "opportunityInvite": {
+    "subject": "{{inviter}} te invita a postular — {{opportunity}}",
+    "title": "Invitación a postular",
+    "greeting": "Hola {{name}},",
+    "inviterInvites": "{{inviter}} de {{organization}} te invita a postular a la oportunidad",
+    "viewOpportunity": "Ver oportunidad",
+    "expiresIn": "Esta invitación expira en 7 días."
+  }
+}

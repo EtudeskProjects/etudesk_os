@@ -27,9 +27,9 @@ import { getFullImageUrl } from '../../../src/utils/image';
 import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import type { Organization, Opportunity } from '../../../src/types/models';
 import {
-  ORGANIZATION_TYPE_LABELS,
-  WORK_RHYTHM_LABELS,
-  LOCATION_TYPE_LABELS,
+  getOrganizationTypeLabel,
+  getWorkRhythmLabel,
+  getLocationTypeLabel,
 } from '../../../src/types/models';
 import { organizationService } from '../../../src/services/organizationService';
 import { opportunityService } from '../../../src/services/opportunityService';
@@ -287,7 +287,7 @@ export default function OrganizationDetailScreen() {
               {primaryType && (
                 <View style={[styles.typeBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                   <Text style={[styles.typeBadgeText, { color: colors.primary }]}>
-                    {ORGANIZATION_TYPE_LABELS[primaryType] || primaryType}
+                    {getOrganizationTypeLabel(primaryType) || primaryType}
                   </Text>
                 </View>
               )}
@@ -581,14 +581,14 @@ export default function OrganizationDetailScreen() {
 	                      {opportunity.work_rhythm && (
 	                        <View style={[styles.opportunityBadge, { backgroundColor: colors.gray100 }]}>
 	                          <Text style={[styles.opportunityBadgeText, { color: colors.textSecondary }]}>
-	                            {WORK_RHYTHM_LABELS[opportunity.work_rhythm] || opportunity.work_rhythm}
+	                            {getWorkRhythmLabel(opportunity.work_rhythm) || opportunity.work_rhythm}
 	                          </Text>
 	                        </View>
 	                      )}
 	                      {opportunity.location_type && (
 	                        <View style={[styles.opportunityBadge, { backgroundColor: colors.gray100 }]}>
 	                          <Text style={[styles.opportunityBadgeText, { color: colors.textSecondary }]}>
-	                            {LOCATION_TYPE_LABELS[opportunity.location_type] || opportunity.location_type}
+	                            {getLocationTypeLabel(opportunity.location_type) || opportunity.location_type}
 	                          </Text>
 	                        </View>
 	                      )}

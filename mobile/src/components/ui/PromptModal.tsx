@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SPACING, TYPOGRAPHY, BORDER } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { Button } from './Button';
 import { Input } from './Input';
 
@@ -40,14 +41,17 @@ export function PromptModal({
   message,
   placeholder,
   defaultValue,
-  confirmText = 'Confirmer',
-  cancelText = 'Annuler',
+  confirmText,
+  cancelText,
   multiline = false,
   keyboardType,
   onCancel,
   onConfirm,
 }: PromptModalProps) {
   const { colors } = useTheme();
+  const { t } = useI18n();
+  const resolvedConfirmText = confirmText ?? t('common.confirm');
+  const resolvedCancelText = cancelText ?? t('common.cancel');
   const [value, setValue] = useState(defaultValue || '');
 
   const fadeAnim = useMemo(() => new Animated.Value(0), []);
@@ -96,13 +100,13 @@ export function PromptModal({
 
                 <View style={styles.buttons}>
                   <Button
-                    title={cancelText}
+                    title={resolvedCancelText}
                     onPress={onCancel}
                     variant="secondary"
                     fullWidth
                   />
                   <Button
-                    title={confirmText}
+                    title={resolvedConfirmText}
                     onPress={() => onConfirm(value)}
                     variant="primary"
                     fullWidth

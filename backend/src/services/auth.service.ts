@@ -11,6 +11,7 @@ import { pool } from './database';
 import { deletePineconeVector } from './embedding.service';
 
 import { logger } from '../utils';
+import { i18next } from '../i18n';
 // JWT Configuration
 const getJwtSecret = (envVar: string, name: string): string => {
   const secret = process.env[envVar];
@@ -254,7 +255,7 @@ export async function refreshTokens(refreshToken: string): Promise<{ success: bo
   const validation = await validateSession(refreshToken);
 
   if (!validation.valid || !validation.userId) {
-    return { success: false, error: 'Session invalide ou expirée' };
+    return { success: false, error: i18next.t('auth:invalidSession') };
   }
 
   // Get user info
@@ -267,7 +268,7 @@ export async function refreshTokens(refreshToken: string): Promise<{ success: bo
   );
 
   if (userResult.rows.length === 0) {
-    return { success: false, error: 'Utilisateur non trouvé' };
+    return { success: false, error: i18next.t('auth:userNotFound') };
   }
 
   const user = userResult.rows[0];
@@ -388,7 +389,7 @@ export async function deleteAccount(userId: string): Promise<DeleteAccountResult
     );
     if (userRes.rows.length === 0) {
       await client.query('ROLLBACK');
-      return { success: false, code: 'USER_NOT_FOUND', error: 'User not found' };
+      return { success: false, code: 'USER_NOT_FOUND', error: i18next.t('auth:userNotFound') };
     }
     const talentId: string | null = userRes.rows[0].talent_id;
 
@@ -452,7 +453,7 @@ export async function deleteAccount(userId: string): Promise<DeleteAccountResult
       return {
         success: false,
         code: 'ORG_SOLE_ADMIN_WITH_MEMBERS',
-        error: 'You are the sole admin of organizations with other members. Transfer admin rights first.',
+        error: i18next.t('auth:orgSoleAdminWithMembers'),
         blockedOrganizations,
       };
     }
@@ -660,7 +661,7 @@ export async function deleteAccount(userId: string): Promise<DeleteAccountResult
   } catch (error) {
     await client.query('ROLLBACK');
     logger.error('❌ Failed to delete account:', error);
-    return { success: false, code: 'INTERNAL_ERROR', error: 'Internal error during account deletion' };
+    return { success: false, code: 'INTERNAL_ERROR', error: i18next.t('auth:accountDeleteInternalError') };
   } finally {
     client.release();
   }

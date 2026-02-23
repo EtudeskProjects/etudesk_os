@@ -191,7 +191,7 @@ export default function PreferencesScreen() {
 	                    <IconButton
 	                        onPress={() => router.back()}
 	                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                        accessibilityLabel="Retour"
+	                        accessibilityLabel={t('common.back')}
 	                    />
 	                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('preferences.title')}</Text>
 	                    <View style={styles.headerSpacer} />
@@ -210,7 +210,7 @@ export default function PreferencesScreen() {
 	                    <IconButton
 	                        onPress={() => router.back()}
 	                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                        accessibilityLabel="Retour"
+	                        accessibilityLabel={t('common.back')}
 	                    />
 	                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('preferences.title')}</Text>
 	                    <View style={styles.headerSpacer} />
@@ -236,7 +236,7 @@ export default function PreferencesScreen() {
 	                <IconButton
 	                    onPress={() => router.back()}
 	                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                    accessibilityLabel="Retour"
+	                    accessibilityLabel={t('common.back')}
 	                />
 	                <View style={styles.headerCenter}>
 	                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('preferences.title')}</Text>

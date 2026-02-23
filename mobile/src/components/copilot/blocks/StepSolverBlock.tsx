@@ -8,8 +8,10 @@ import { View, Text, StyleSheet, Pressable, LayoutAnimation, Platform, UIManager
 import { WebView } from 'react-native-webview';
 import { ChevronDown, ChevronRight, Eye } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
+import { useI18n } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 import { buildKaTeXHTML } from './MathBlock';
+import { getLabelDirect } from '../../../utils/labels';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -69,6 +71,7 @@ const InlineMath: React.FC<{ expression: string; bgColor: string; textColor: str
 
 export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const safeSteps = Array.isArray(data?.steps) ? data.steps : [];
   const totalSteps = safeSteps.length;
   const [revealedCount, setRevealedCount] = useState(Math.min(1, totalSteps)); // First step always visible
@@ -77,9 +80,9 @@ export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
   if (totalSteps === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{data?.title || 'Résolution'}</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{data?.title || t('stepSolver.defaultTitle')}</Text>
         <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
-          Aucune étape disponible
+          {getLabelDirect('noSteps')}
         </Text>
       </View>
     );
@@ -113,7 +116,7 @@ export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
         />
       </View>
       <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>
-        Étape {revealedCount} / {totalSteps}
+        {t('stepSolver.step', { current: revealedCount, total: totalSteps })}
       </Text>
 
       {/* Steps */}
@@ -173,14 +176,14 @@ export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
             style={[styles.nextButton, { backgroundColor: colors.primary }]}
             onPress={revealNext}
           >
-            <Text style={[styles.nextButtonText, { color: colors.white }]}>Étape suivante</Text>
+            <Text style={[styles.nextButtonText, { color: colors.white }]}>{t('stepSolver.nextStep')}</Text>
           </Pressable>
           <Pressable
             style={[styles.showAllButton, { borderColor: colors.borderColor }]}
             onPress={revealAll}
           >
             <Eye size={ICON.size.sm} color={colors.textSecondary} />
-            <Text style={[styles.showAllText, { color: colors.textSecondary }]}>Voir tout</Text>
+            <Text style={[styles.showAllText, { color: colors.textSecondary }]}>{t('stepSolver.showAll')}</Text>
           </Pressable>
         </View>
       )}

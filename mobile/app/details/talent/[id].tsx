@@ -33,8 +33,9 @@ import {
 } from 'lucide-react-native';
 	import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, COMPONENT } from '../../../src/constants/theme';
 	import { useTheme } from '../../../src/hooks/useTheme';
-	import { useSpace } from '../../../src/contexts/SpaceContext';
-	import { useAuth } from '../../../src/contexts/AuthContext';
+import { useSpace } from '../../../src/contexts/SpaceContext';
+import { useAuth } from '../../../src/contexts/AuthContext';
+import { useI18n } from '../../../src/contexts/I18nContext';
 	import { Button, FooterNav, Alert, IconButton, IconTile, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { RemoteImage } from '../../../src/components/ui/RemoteImage';
 import { formatRelativeTime } from '../../../src/utils/date';
@@ -58,8 +59,8 @@ const getInitials = (name: string): string => {
     .slice(0, 2);
 };
 
-const getLabelFromData = (id: string, data: Array<{ id: string; label: string }>): string => {
-  return data.find((item) => item.id === id)?.label || id;
+const getLabelKeyFromData = (id: string, data: Array<{ id: string; labelKey: string }>): string | null => {
+  return data.find((item) => item.id === id)?.labelKey || null;
 };
 
 // Skill type → base color + icon component (derive from current theme)
@@ -85,6 +86,7 @@ export default function TalentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { isOrganizationSpace, selectedOrgId, selectedOrg } = useSpace();
   const { user } = useAuth();
   const SKILL_TYPE_CONFIG = getSkillTypeConfig(colors);
@@ -144,10 +146,10 @@ export default function TalentDetailScreen() {
         if (res.data) {
           setTalent(res.data);
         } else {
-          setError('Talent introuvable');
+          setError(t('screens.talentDetail.notFound'));
         }
       } catch {
-        setError('Erreur lors du chargement du profil');
+        setError(t('screens.talentDetail.loadError'));
       } finally {
         setLoading(false);
       }
@@ -294,16 +296,16 @@ export default function TalentDetailScreen() {
         success = !!(res.data && res.data.sent > 0);
       }
       setInviteType(null);
-      const typeLabel = inviteType === 'opportunity' ? 'l\'opportunité' : inviteType === 'community' ? 'la communauté' : 'l\'espace';
+      const typeLabel = inviteType === 'opportunity' ? t('screens.talentDetail.invitationType.opportunity') : inviteType === 'community' ? t('screens.talentDetail.invitationType.community') : t('screens.talentDetail.invitationType.space');
       if (success) {
-        setAlertConfig({ type: 'success', title: 'Invitation envoyée', message: `${talent.display_name} a été invité(e) à rejoindre ${typeLabel}.` });
+        setAlertConfig({ type: 'success', title: t('screens.talentDetail.inviteSentTitle'), message: t('screens.talentDetail.inviteSentJoinMessage', { name: talent.display_name, type: typeLabel }) });
       } else {
-        setAlertConfig({ type: 'error', title: 'Échec', message: 'L\'invitation n\'a pas pu être envoyée.' });
+        setAlertConfig({ type: 'error', title: t('screens.talentDetail.inviteSendFailedTitle'), message: t('screens.talentDetail.inviteSendFailedMessage') });
       }
       setAlertVisible(true);
     } catch {
       setInviteType(null);
-      setAlertConfig({ type: 'error', title: 'Erreur', message: 'Impossible d\'envoyer l\'invitation.' });
+      setAlertConfig({ type: 'error', title: t('common.error'), message: t('screens.talentDetail.inviteGenericError') });
       setAlertVisible(true);
     } finally {
       setSending(false);
@@ -337,14 +339,14 @@ export default function TalentDetailScreen() {
       if (res.data && res.data.sent > 0) {
         setAlertConfig({
           type: 'success',
-          title: 'Invitation envoyée',
-          message: `${talent.display_name} a été invité(e) à postuler.`,
+          title: t('screens.talentDetail.inviteSentTitle'),
+          message: t('screens.talentDetail.inviteSentApplyMessage', { name: talent.display_name }),
         });
       } else {
         const errorMsg = res.data?.errors?.[0]?.error || 'Une erreur est survenue';
         setAlertConfig({
           type: 'error',
-          title: 'Échec de l\'invitation',
+          title: t('screens.talentDetail.inviteFailedTitle'),
           message: errorMsg,
         });
       }
@@ -353,8 +355,8 @@ export default function TalentDetailScreen() {
       setInviteModalVisible(false);
       setAlertConfig({
         type: 'error',
-        title: 'Erreur',
-        message: 'Impossible d\'envoyer l\'invitation. Veuillez réessayer.',
+        title: t('common.error'),
+        message: t('screens.talentDetail.inviteRetryError'),
       });
       setAlertVisible(true);
     } finally {
@@ -370,7 +372,7 @@ export default function TalentDetailScreen() {
 	          <IconButton
 	            onPress={() => router.back()}
 	            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	            accessibilityLabel="Retour"
+	            accessibilityLabel={t('common.back')}
 	            variant="filled"
 	            style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
 	          />
@@ -390,14 +392,14 @@ export default function TalentDetailScreen() {
 	          <IconButton
 	            onPress={() => router.back()}
 	            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	            accessibilityLabel="Retour"
+	            accessibilityLabel={t('common.back')}
 	            variant="filled"
 	            style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
 	          />
 	        </View>
         <View style={styles.centered}>
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>
-            {error || 'Talent introuvable'}
+            {error || t('screens.talentDetail.notFound')}
           </Text>
         </View>
       </SafeAreaView>
@@ -417,14 +419,14 @@ export default function TalentDetailScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
           variant="filled"
           style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
         />
         <IconButton
           onPress={() => {}}
           icon={<Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Partager"
+          accessibilityLabel={t('opportunity.share')}
           variant="filled"
           disabled
           style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
@@ -467,7 +469,7 @@ export default function TalentDetailScreen() {
                     style={[styles.profileTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}
                   >
                     <Text style={[styles.profileTagText, { color: colors.primary }]}>
-                      {getLabelFromData(tag, PROFILE_TAG_DATA)}
+                      {getLabelKeyFromData(tag, PROFILE_TAG_DATA) ? t(getLabelKeyFromData(tag, PROFILE_TAG_DATA)!) : tag}
                     </Text>
                   </View>
                 ))}
@@ -490,7 +492,7 @@ export default function TalentDetailScreen() {
                 <View style={styles.preferenceItem}>
                   <Wifi size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
                   <Text style={[styles.preferenceText, { color: colors.textSecondary }]}>
-                    Disponible en remote
+                    {t('screens.talentDetail.remoteReady')}
                   </Text>
                 </View>
               )}
@@ -498,7 +500,7 @@ export default function TalentDetailScreen() {
                 <View style={styles.preferenceItem}>
                   <Plane size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
                   <Text style={[styles.preferenceText, { color: colors.textSecondary }]}>
-                    Ouvert à la relocalisation
+                    {t('screens.talentDetail.relocationReady')}
                   </Text>
                 </View>
               )}
@@ -511,7 +513,7 @@ export default function TalentDetailScreen() {
               <View style={styles.infoCardRow}>
                 <Calendar size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                 <View style={styles.infoCardContent}>
-                  <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>Sur Etudesk depuis</Text>
+                  <Text style={[styles.infoCardLabel, { color: colors.textSecondary }]}>{t('screens.talentDetail.onEtudeskSince')}</Text>
                   <Text style={[styles.infoCardValue, { color: colors.textPrimary }]}>{createdAt}</Text>
                 </View>
               </View>
@@ -521,7 +523,7 @@ export default function TalentDetailScreen() {
           {/* Bio */}
           {talent.bio && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>À propos</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('screens.talentDetail.about')}</Text>
               <Text style={[styles.sectionText, { color: colors.textSecondary }]}>{talent.bio}</Text>
             </View>
           )}
@@ -530,7 +532,7 @@ export default function TalentDetailScreen() {
           {skills.length > 0 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Compétences ({skills.length})
+                {t('screens.talentDetail.skills', { count: skills.length })}
               </Text>
               <View style={styles.tagsContainer}>
                 {(showAllSkills ? skills : skills.slice(0, SKILLS_PREVIEW_COUNT)).map((skill, index) => {
@@ -555,7 +557,7 @@ export default function TalentDetailScreen() {
               </View>
 	              {skills.length > SKILLS_PREVIEW_COUNT && (
 	                <Button
-	                  title={showAllSkills ? 'Voir moins' : `Voir plus (+${skills.length - SKILLS_PREVIEW_COUNT})`}
+	                  title={showAllSkills ? t('screens.talentDetail.showLess') : t('screens.talentDetail.showMore', { count: skills.length - SKILLS_PREVIEW_COUNT })}
 	                  onPress={() => setShowAllSkills(!showAllSkills)}
 	                  variant="ghost"
 	                  size="sm"
@@ -574,12 +576,12 @@ export default function TalentDetailScreen() {
           {/* Sectors */}
           {talent.sectors && talent.sectors.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Secteurs d'intérêt</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('screens.talentDetail.sectorsOfInterest')}</Text>
               <View style={styles.tagsContainer}>
                 {talent.sectors.map((sector, index) => (
                   <View key={index} style={[styles.tag, { backgroundColor: colors.gray100 }]}>
                     <Text style={[styles.tagText, { color: colors.textSecondary }]}>
-                      {getLabelFromData(sector, SECTOR_DATA)}
+                      {getLabelKeyFromData(sector, SECTOR_DATA) ? t(getLabelKeyFromData(sector, SECTOR_DATA)!) : sector}
                     </Text>
                   </View>
                 ))}
@@ -590,12 +592,12 @@ export default function TalentDetailScreen() {
           {/* Goals */}
           {talent.goals && talent.goals.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Objectifs</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('screens.talentDetail.goals')}</Text>
               <View style={styles.tagsContainer}>
                 {talent.goals.map((goal, index) => (
                   <View key={index} style={[styles.tag, { backgroundColor: colors.gray100 }]}>
                     <Text style={[styles.tagText, { color: colors.textSecondary }]}>
-                      {getLabelFromData(goal, GOAL_DATA)}
+                      {getLabelKeyFromData(goal, GOAL_DATA) ? t(getLabelKeyFromData(goal, GOAL_DATA)!) : goal}
                     </Text>
                   </View>
                 ))}
@@ -606,7 +608,7 @@ export default function TalentDetailScreen() {
           {/* Languages */}
           {talent.languages && talent.languages.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Langues</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('screens.talentDetail.languages')}</Text>
               <View style={styles.tagsContainer}>
                 {talent.languages.map((lang: any, index: number) => {
                   const label = typeof lang === 'string' ? lang : lang.language;
@@ -623,21 +625,21 @@ export default function TalentDetailScreen() {
           {/* Interactions with organization */}
           {isOrganizationSpace && !loadingInteractions && (talentApplications.length > 0 || talentCommunities.length > 0 || talentBookings.length > 0) && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Interactions</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('screens.talentDetail.interactions')}</Text>
 
               {talentApplications.length > 0 && (
                 <View style={styles.interactionGroup}>
                   <View style={styles.interactionHeader}>
                     <Briefcase size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.interactionGroupTitle, { color: colors.textPrimary }]}>
-                      Candidatures ({talentApplications.length})
+                      {t('screens.talentDetail.applications', { count: talentApplications.length })}
                     </Text>
                   </View>
                   {talentApplications.map((app) => (
                     <View key={app.id} style={[styles.interactionItem, { backgroundColor: colors.gray100 }]}>
                       <View style={styles.interactionItemContent}>
                         <Text style={[styles.interactionItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                          {app.opportunity?.title || 'Opportunité'}
+                          {app.opportunity?.title || t('myApplications.detail.sections.opportunity')}
                         </Text>
                         {app.applied_at && (
                           <Text style={[styles.interactionItemDate, { color: colors.textTertiary }]}>
@@ -660,7 +662,7 @@ export default function TalentDetailScreen() {
                   <View style={styles.interactionHeader}>
                     <Users size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.interactionGroupTitle, { color: colors.textPrimary }]}>
-                      Communautés ({talentCommunities.length})
+                      {t('screens.talentDetail.communities', { count: talentCommunities.length })}
                     </Text>
                   </View>
                   {talentCommunities.map((comm: any) => (
@@ -677,7 +679,7 @@ export default function TalentDetailScreen() {
                       </View>
                       <View style={[styles.interactionBadge, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
                         <Text style={[styles.interactionBadgeText, { color: colors.success }]}>
-                          Membre
+                          {t('community.joined')}
                         </Text>
                       </View>
                     </View>
@@ -690,14 +692,14 @@ export default function TalentDetailScreen() {
                   <View style={styles.interactionHeader}>
                     <MapPin size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.interactionGroupTitle, { color: colors.textPrimary }]}>
-                      Réservations ({talentBookings.length})
+                      {t('screens.talentDetail.bookings', { count: talentBookings.length })}
                     </Text>
                   </View>
                   {talentBookings.map((booking: any) => (
                     <View key={booking.id} style={[styles.interactionItem, { backgroundColor: colors.gray100 }]}>
                       <View style={styles.interactionItemContent}>
                         <Text style={[styles.interactionItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                          {booking.space?.name || booking.space?.title || 'Espace'}
+                          {booking.space?.name || booking.space?.title || t('myReservations.detail.spaceFallback')}
                         </Text>
                         {(booking.start_date || booking.created_at) && (
                           <Text style={[styles.interactionItemDate, { color: colors.textTertiary }]}>
@@ -737,7 +739,7 @@ export default function TalentDetailScreen() {
         {isSelf && (
           <View style={styles.ctaContainer}>
             <Button
-              title="Modifier mon profil"
+              title={t('settings.editProfile')}
               onPress={() => router.push('/settings/profile' as any)}
               icon={<Edit3 size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
               fullWidth
@@ -758,7 +760,7 @@ export default function TalentDetailScreen() {
 	                  strokeWidth={ICON.strokeWidth}
 	                />
 	              }
-	              label="Favoris"
+	              label={t('common.favorites')}
 	              style={styles.actionBarButton}
 	              labelStyle={[styles.actionBarLabel, { color: isFavorite ? colors.error : colors.textSecondary }]}
 	            />
@@ -766,7 +768,7 @@ export default function TalentDetailScreen() {
 	            <IconTile
 	              onPress={() => setShowTagModal(true)}
 	              icon={<Tag size={20} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-	              label="Catégories"
+	              label={t('screens.talentDetail.categories')}
 	              style={styles.actionBarButton}
 	              labelStyle={[styles.actionBarLabel, { color: colors.textSecondary }]}
 	            />
@@ -774,7 +776,7 @@ export default function TalentDetailScreen() {
 	            <IconTile
 	              onPress={() => openInviteTypeModal('opportunity')}
 	              icon={<Send size={20} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-	              label="Inviter"
+	              label={t('organization.members.invite')}
 	              style={styles.actionBarButton}
 	              labelStyle={[styles.actionBarLabel, { color: colors.textSecondary }]}
 	            />
@@ -789,20 +791,20 @@ export default function TalentDetailScreen() {
           <Pressable style={styles.modalBackdrop} onPress={() => setShowTagModal(false)} />
 	          <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
 	            <View style={styles.modalHeader}>
-	              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Catégories</Text>
+	              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('screens.talentDetail.categories')}</Text>
 	              <IconButton
 	                onPress={() => setShowTagModal(false)}
 	                icon={<X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-	                accessibilityLabel="Fermer"
+	                accessibilityLabel={t('screens.explore.close')}
 	              />
 	            </View>
             {orgTags.length === 0 ? (
               <View style={styles.modalCentered}>
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                  Aucune catégorie créée
+                  {t('screens.talentDetail.noCategory')}
                 </Text>
                 <Text style={[styles.emptyText, { color: colors.gray400, marginTop: SPACING.xs }]}>
-                  Créez des tags depuis l'écran Mes Talents
+                  {t('screens.talentDetail.createTagsHint')}
                 </Text>
               </View>
             ) : (
@@ -814,7 +816,7 @@ export default function TalentDetailScreen() {
                     style={[styles.tagAssignRow, { borderBottomColor: colors.gray100 }]}
                     onPress={() => handleToggleTag(tag.id)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Basculer catégorie ${tag.name}`}
+                    accessibilityLabel={t('screens.talentDetail.toggleCategoryA11y', { name: tag.name })}
                   >
                     <View style={[styles.tagDot, { backgroundColor: tag.color }]} />
                     <Text style={[styles.tagAssignName, { color: colors.textPrimary }]}>{tag.name}</Text>
@@ -839,21 +841,21 @@ export default function TalentDetailScreen() {
 	          <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
 	            <View style={styles.modalHeader}>
 	              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-	                Inviter {talent.display_name}
+	                {t('screens.talentDetail.inviteTitle', { name: talent.display_name })}
 	              </Text>
 	              <IconButton
 	                onPress={() => setInviteType(null)}
 	                icon={<X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-	                accessibilityLabel="Fermer"
+	                accessibilityLabel={t('screens.explore.close')}
 	              />
 	            </View>
 
             {/* Type selector tabs */}
             <View style={styles.inviteTypeTabs}>
               {([
-                { key: 'opportunity' as const, label: 'Opportunités', icon: Briefcase },
-                { key: 'community' as const, label: 'Communautés', icon: Users },
-                { key: 'space' as const, label: 'Espaces', icon: MapPin },
+                { key: 'opportunity' as const, label: t('screens.gestion.opportunities'), icon: Briefcase },
+                { key: 'community' as const, label: t('screens.gestion.communities'), icon: Users },
+                { key: 'space' as const, label: t('screens.gestion.spaces'), icon: MapPin },
               ]).map(tab => {
                 const isActive = inviteType === tab.key;
                 const TabIcon = tab.icon;
@@ -890,7 +892,7 @@ export default function TalentDetailScreen() {
               return items.length === 0 ? (
                 <View style={styles.modalCentered}>
                   <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                    {inviteType === 'opportunity' ? 'Aucune opportunité ouverte' : inviteType === 'community' ? 'Aucune communauté' : 'Aucun espace'}
+                    {inviteType === 'opportunity' ? t('screens.talentDetail.noOpenOpportunity') : inviteType === 'community' ? t('screens.talentDetail.noCommunity') : t('screens.talentDetail.noSpace')}
                   </Text>
                 </View>
               ) : (
@@ -936,7 +938,7 @@ export default function TalentDetailScreen() {
 
             <View style={styles.modalFooter}>
               <Button
-                title="Confirmer l'invitation"
+                title={t('screens.talentDetail.confirmInvitation')}
                 onPress={handleSendTypedInvitation}
                 disabled={!selectedItemId || sending}
                 loading={sending}

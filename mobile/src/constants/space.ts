@@ -4,7 +4,8 @@
  * Synchronized with backend types
  */
 
-import { Visibility, VISIBILITY_LABELS } from '../types/models';
+import { Visibility, getVisibilityLabel } from '../types/models';
+import { getLabel } from '../utils/labels';
 
 // --- Space Types ---
 
@@ -34,24 +35,8 @@ export const SPACE_TYPES = {
 
 export type SpaceType = (typeof SPACE_TYPES)[keyof typeof SPACE_TYPES];
 
-export const SPACE_TYPE_LABELS: Record<SpaceType, string> = {
-  SALLE_COURS: 'Salle de cours',
-  SALLE_INFORMATIQUE: 'Salle informatique',
-  AMPHITHEATRE: 'Amphithéâtre',
-  SALLE_FORMATION: 'Salle de formation',
-  OPEN_SPACE: 'Open space',
-  BUREAU_PRIVE: 'Bureau privé',
-  POSTE_NOMADE: 'Poste nomade',
-  SALLE_REUNION: 'Salle de réunion',
-  SALLE_CONFERENCE: 'Salle de conférence',
-  CABINE_APPEL: 'Cabine d\'appel',
-  ATELIER: 'Atelier',
-  LABORATOIRE: 'Laboratoire',
-  STUDIO: 'Studio',
-  SALLE_EVENEMENT: 'Salle événementielle',
-  ROOFTOP: 'Rooftop',
-  TERRASSE: 'Terrasse',
-};
+export const getSpaceTypeLabel = (type: string): string =>
+  getLabel('spaceTypes', type);
 
 // Density: m2 per person for capacity calculation
 export const SPACE_TYPE_DENSITY: Record<SpaceType, number> = {
@@ -84,13 +69,8 @@ export const SPACE_CATEGORIES = {
 
 export type SpaceCategory = (typeof SPACE_CATEGORIES)[keyof typeof SPACE_CATEGORIES];
 
-export const SPACE_CATEGORY_LABELS: Record<SpaceCategory, string> = {
-  FORMATION: 'Formation',
-  TRAVAIL: 'Travail',
-  REUNION: 'Réunion',
-  ATELIER: 'Atelier',
-  EVENEMENT: 'Événement',
-};
+export const getSpaceCategoryLabel = (cat: string): string =>
+  getLabel('spaceCategories', cat);
 
 // Map space types to categories
 export const SPACE_TYPE_CATEGORIES: Record<SpaceType, SpaceCategory> = {
@@ -114,35 +94,37 @@ export const SPACE_TYPE_CATEGORIES: Record<SpaceType, SpaceCategory> = {
 
 // --- Space Type Data For Forms ---
 
-export const SPACE_TYPE_DATA: Array<{
+export function getSpaceTypeData(): Array<{
   id: SpaceType;
   label: string;
   icon: string;
   density: number;
   category: SpaceCategory;
-}> = [
-  // Formation
-  { id: 'SALLE_COURS', label: SPACE_TYPE_LABELS.SALLE_COURS, icon: 'book-open', density: 2, category: 'FORMATION' },
-  { id: 'SALLE_INFORMATIQUE', label: SPACE_TYPE_LABELS.SALLE_INFORMATIQUE, icon: 'monitor', density: 3, category: 'FORMATION' },
-  { id: 'AMPHITHEATRE', label: SPACE_TYPE_LABELS.AMPHITHEATRE, icon: 'tv', density: 0.8, category: 'FORMATION' },
-  { id: 'SALLE_FORMATION', label: SPACE_TYPE_LABELS.SALLE_FORMATION, icon: 'graduation-cap', density: 2.5, category: 'FORMATION' },
-  // Travail
-  { id: 'OPEN_SPACE', label: SPACE_TYPE_LABELS.OPEN_SPACE, icon: 'layout', density: 7, category: 'TRAVAIL' },
-  { id: 'BUREAU_PRIVE', label: SPACE_TYPE_LABELS.BUREAU_PRIVE, icon: 'square', density: 12, category: 'TRAVAIL' },
-  { id: 'POSTE_NOMADE', label: SPACE_TYPE_LABELS.POSTE_NOMADE, icon: 'laptop', density: 4, category: 'TRAVAIL' },
-  // Reunion
-  { id: 'SALLE_REUNION', label: SPACE_TYPE_LABELS.SALLE_REUNION, icon: 'users', density: 2.5, category: 'REUNION' },
-  { id: 'SALLE_CONFERENCE', label: SPACE_TYPE_LABELS.SALLE_CONFERENCE, icon: 'mic', density: 1.5, category: 'REUNION' },
-  { id: 'CABINE_APPEL', label: SPACE_TYPE_LABELS.CABINE_APPEL, icon: 'phone', density: 2, category: 'REUNION' },
-  // Atelier
-  { id: 'ATELIER', label: SPACE_TYPE_LABELS.ATELIER, icon: 'tool', density: 5, category: 'ATELIER' },
-  { id: 'LABORATOIRE', label: SPACE_TYPE_LABELS.LABORATOIRE, icon: 'flask-conical', density: 8, category: 'ATELIER' },
-  { id: 'STUDIO', label: SPACE_TYPE_LABELS.STUDIO, icon: 'camera', density: 6, category: 'ATELIER' },
-  // Evenement
-  { id: 'SALLE_EVENEMENT', label: SPACE_TYPE_LABELS.SALLE_EVENEMENT, icon: 'calendar', density: 1, category: 'EVENEMENT' },
-  { id: 'ROOFTOP', label: SPACE_TYPE_LABELS.ROOFTOP, icon: 'sun', density: 2, category: 'EVENEMENT' },
-  { id: 'TERRASSE', label: SPACE_TYPE_LABELS.TERRASSE, icon: 'sunset', density: 2, category: 'EVENEMENT' },
-];
+}> {
+  return [
+    // Formation
+    { id: 'SALLE_COURS', label: getSpaceTypeLabel('SALLE_COURS'), icon: 'book-open', density: 2, category: 'FORMATION' },
+    { id: 'SALLE_INFORMATIQUE', label: getSpaceTypeLabel('SALLE_INFORMATIQUE'), icon: 'monitor', density: 3, category: 'FORMATION' },
+    { id: 'AMPHITHEATRE', label: getSpaceTypeLabel('AMPHITHEATRE'), icon: 'tv', density: 0.8, category: 'FORMATION' },
+    { id: 'SALLE_FORMATION', label: getSpaceTypeLabel('SALLE_FORMATION'), icon: 'graduation-cap', density: 2.5, category: 'FORMATION' },
+    // Travail
+    { id: 'OPEN_SPACE', label: getSpaceTypeLabel('OPEN_SPACE'), icon: 'layout', density: 7, category: 'TRAVAIL' },
+    { id: 'BUREAU_PRIVE', label: getSpaceTypeLabel('BUREAU_PRIVE'), icon: 'square', density: 12, category: 'TRAVAIL' },
+    { id: 'POSTE_NOMADE', label: getSpaceTypeLabel('POSTE_NOMADE'), icon: 'laptop', density: 4, category: 'TRAVAIL' },
+    // Reunion
+    { id: 'SALLE_REUNION', label: getSpaceTypeLabel('SALLE_REUNION'), icon: 'users', density: 2.5, category: 'REUNION' },
+    { id: 'SALLE_CONFERENCE', label: getSpaceTypeLabel('SALLE_CONFERENCE'), icon: 'mic', density: 1.5, category: 'REUNION' },
+    { id: 'CABINE_APPEL', label: getSpaceTypeLabel('CABINE_APPEL'), icon: 'phone', density: 2, category: 'REUNION' },
+    // Atelier
+    { id: 'ATELIER', label: getSpaceTypeLabel('ATELIER'), icon: 'tool', density: 5, category: 'ATELIER' },
+    { id: 'LABORATOIRE', label: getSpaceTypeLabel('LABORATOIRE'), icon: 'flask-conical', density: 8, category: 'ATELIER' },
+    { id: 'STUDIO', label: getSpaceTypeLabel('STUDIO'), icon: 'camera', density: 6, category: 'ATELIER' },
+    // Evenement
+    { id: 'SALLE_EVENEMENT', label: getSpaceTypeLabel('SALLE_EVENEMENT'), icon: 'calendar', density: 1, category: 'EVENEMENT' },
+    { id: 'ROOFTOP', label: getSpaceTypeLabel('ROOFTOP'), icon: 'sun', density: 2, category: 'EVENEMENT' },
+    { id: 'TERRASSE', label: getSpaceTypeLabel('TERRASSE'), icon: 'sunset', density: 2, category: 'EVENEMENT' },
+  ];
+}
 
 // --- Status ---
 
@@ -154,11 +136,8 @@ export const SPACE_STATUS = {
 
 export type SpaceStatus = (typeof SPACE_STATUS)[keyof typeof SPACE_STATUS];
 
-export const SPACE_STATUS_LABELS: Record<SpaceStatus, string> = {
-  ACTIVE: 'Actif',
-  INACTIVE: 'Inactif',
-  MAINTENANCE: 'Maintenance',
-};
+export const getSpaceStatusLabel = (status: string): string =>
+  getLabel('spaceStatus', status);
 
 export const BOOKING_STATUS = {
   PENDING: 'PENDING',
@@ -170,13 +149,8 @@ export const BOOKING_STATUS = {
 
 export type BookingStatus = (typeof BOOKING_STATUS)[keyof typeof BOOKING_STATUS];
 
-export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
-  PENDING: 'En attente',
-  CONFIRMED: 'Confirmée',
-  CANCELLED: 'Annulée',
-  COMPLETED: 'Terminée',
-  NO_SHOW: 'Absent',
-};
+export const getBookingStatusLabel = (status: string): string =>
+  getLabel('bookingStatus', status);
 
 export const PAYMENT_STATUS = {
   PENDING: 'PENDING',
@@ -187,12 +161,8 @@ export const PAYMENT_STATUS = {
 
 export type PaymentStatus = (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
 
-export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  PENDING: 'En attente',
-  PARTIAL: 'Partiel',
-  PAID: 'Payé',
-  REFUNDED: 'Remboursé',
-};
+export const getPaymentStatusLabel = (status: string): string =>
+  getLabel('paymentStatus', status);
 
 // --- Pricing ---
 
@@ -205,19 +175,11 @@ export const PRICING_TYPES = {
 
 export type PricingType = (typeof PRICING_TYPES)[keyof typeof PRICING_TYPES];
 
-export const PRICING_TYPE_LABELS: Record<PricingType, string> = {
-  HOURLY: 'A l\'heure',
-  DAILY: 'A la journee',
-  WEEKLY: 'A la semaine',
-  MONTHLY: 'Au mois',
-};
+export const getSpacePricingTypeLabel = (type: string): string =>
+  getLabel('spacePricingTypes', type);
 
-export const PRICING_TYPE_UNITS: Record<PricingType, string> = {
-  HOURLY: '/heure',
-  DAILY: '/jour',
-  WEEKLY: '/semaine',
-  MONTHLY: '/mois',
-};
+export const getSpacePricingUnit = (type: string): string =>
+  getLabel('spacePricingUnits', type);
 
 // --- Equipment & Amenities ---
 
@@ -238,35 +200,25 @@ export const SPACE_EQUIPMENT = [
 
 export type SpaceEquipment = (typeof SPACE_EQUIPMENT)[number];
 
-export const SPACE_EQUIPMENT_LABELS: Record<SpaceEquipment, string> = {
-  VIDEOPROJECTOR: 'Vidéoprojecteur',
-  WHITEBOARD: 'Tableau blanc',
-  FLIPCHART: 'Paperboard',
-  SCREEN: 'Écran',
-  SOUND_SYSTEM: 'Système audio',
-  MICROPHONE: 'Microphone',
-  WEBCAM: 'Webcam',
-  TV_SCREEN: 'Écran TV',
-  VIDEO_CONFERENCE: 'Vidéoconférence',
-  COMPUTERS: 'Ordinateurs',
-  PRINTERS: 'Imprimantes',
-  PHONE: 'Téléphone',
-};
+export const getSpaceEquipmentLabel = (eq: string): string =>
+  getLabel('spaceEquipment', eq);
 
-export const SPACE_EQUIPMENT_DATA: Array<{ id: SpaceEquipment; label: string; icon: string }> = [
-  { id: 'VIDEOPROJECTOR', label: SPACE_EQUIPMENT_LABELS.VIDEOPROJECTOR, icon: 'projector' },
-  { id: 'WHITEBOARD', label: SPACE_EQUIPMENT_LABELS.WHITEBOARD, icon: 'square' },
-  { id: 'FLIPCHART', label: SPACE_EQUIPMENT_LABELS.FLIPCHART, icon: 'clipboard' },
-  { id: 'SCREEN', label: SPACE_EQUIPMENT_LABELS.SCREEN, icon: 'monitor' },
-  { id: 'SOUND_SYSTEM', label: SPACE_EQUIPMENT_LABELS.SOUND_SYSTEM, icon: 'speaker' },
-  { id: 'MICROPHONE', label: SPACE_EQUIPMENT_LABELS.MICROPHONE, icon: 'mic' },
-  { id: 'WEBCAM', label: SPACE_EQUIPMENT_LABELS.WEBCAM, icon: 'camera' },
-  { id: 'TV_SCREEN', label: SPACE_EQUIPMENT_LABELS.TV_SCREEN, icon: 'tv' },
-  { id: 'VIDEO_CONFERENCE', label: SPACE_EQUIPMENT_LABELS.VIDEO_CONFERENCE, icon: 'video' },
-  { id: 'COMPUTERS', label: SPACE_EQUIPMENT_LABELS.COMPUTERS, icon: 'laptop' },
-  { id: 'PRINTERS', label: SPACE_EQUIPMENT_LABELS.PRINTERS, icon: 'printer' },
-  { id: 'PHONE', label: SPACE_EQUIPMENT_LABELS.PHONE, icon: 'phone' },
-];
+export function getSpaceEquipmentData(): Array<{ id: SpaceEquipment; label: string; icon: string }> {
+  return [
+    { id: 'VIDEOPROJECTOR', label: getSpaceEquipmentLabel('VIDEOPROJECTOR'), icon: 'projector' },
+    { id: 'WHITEBOARD', label: getSpaceEquipmentLabel('WHITEBOARD'), icon: 'square' },
+    { id: 'FLIPCHART', label: getSpaceEquipmentLabel('FLIPCHART'), icon: 'clipboard' },
+    { id: 'SCREEN', label: getSpaceEquipmentLabel('SCREEN'), icon: 'monitor' },
+    { id: 'SOUND_SYSTEM', label: getSpaceEquipmentLabel('SOUND_SYSTEM'), icon: 'speaker' },
+    { id: 'MICROPHONE', label: getSpaceEquipmentLabel('MICROPHONE'), icon: 'mic' },
+    { id: 'WEBCAM', label: getSpaceEquipmentLabel('WEBCAM'), icon: 'camera' },
+    { id: 'TV_SCREEN', label: getSpaceEquipmentLabel('TV_SCREEN'), icon: 'tv' },
+    { id: 'VIDEO_CONFERENCE', label: getSpaceEquipmentLabel('VIDEO_CONFERENCE'), icon: 'video' },
+    { id: 'COMPUTERS', label: getSpaceEquipmentLabel('COMPUTERS'), icon: 'laptop' },
+    { id: 'PRINTERS', label: getSpaceEquipmentLabel('PRINTERS'), icon: 'printer' },
+    { id: 'PHONE', label: getSpaceEquipmentLabel('PHONE'), icon: 'phone' },
+  ];
+}
 
 export const SPACE_AMENITIES = [
   'WIFI',
@@ -285,35 +237,25 @@ export const SPACE_AMENITIES = [
 
 export type SpaceAmenity = (typeof SPACE_AMENITIES)[number];
 
-export const SPACE_AMENITY_LABELS: Record<SpaceAmenity, string> = {
-  WIFI: 'Wi-Fi',
-  AIR_CONDITIONING: 'Climatisation',
-  HEATING: 'Chauffage',
-  PARKING: 'Parking',
-  CAFETERIA: 'Cafétéria',
-  KITCHEN: 'Cuisine',
-  RESTROOMS: 'Sanitaires',
-  RECEPTION: 'Accueil',
-  SECURITY: 'Sécurité',
-  ELEVATOR: 'Ascenseur',
-  NATURAL_LIGHT: 'Lumière naturelle',
-  SOUNDPROOF: 'Insonorisation',
-};
+export const getSpaceAmenityLabel = (amenity: string): string =>
+  getLabel('spaceAmenities', amenity);
 
-export const SPACE_AMENITY_DATA: Array<{ id: SpaceAmenity; label: string; icon: string }> = [
-  { id: 'WIFI', label: SPACE_AMENITY_LABELS.WIFI, icon: 'wifi' },
-  { id: 'AIR_CONDITIONING', label: SPACE_AMENITY_LABELS.AIR_CONDITIONING, icon: 'thermometer' },
-  { id: 'HEATING', label: SPACE_AMENITY_LABELS.HEATING, icon: 'flame' },
-  { id: 'PARKING', label: SPACE_AMENITY_LABELS.PARKING, icon: 'car' },
-  { id: 'CAFETERIA', label: SPACE_AMENITY_LABELS.CAFETERIA, icon: 'coffee' },
-  { id: 'KITCHEN', label: SPACE_AMENITY_LABELS.KITCHEN, icon: 'utensils' },
-  { id: 'RESTROOMS', label: SPACE_AMENITY_LABELS.RESTROOMS, icon: 'droplet' },
-  { id: 'RECEPTION', label: SPACE_AMENITY_LABELS.RECEPTION, icon: 'user' },
-  { id: 'SECURITY', label: SPACE_AMENITY_LABELS.SECURITY, icon: 'shield' },
-  { id: 'ELEVATOR', label: SPACE_AMENITY_LABELS.ELEVATOR, icon: 'arrow-up' },
-  { id: 'NATURAL_LIGHT', label: SPACE_AMENITY_LABELS.NATURAL_LIGHT, icon: 'sun' },
-  { id: 'SOUNDPROOF', label: SPACE_AMENITY_LABELS.SOUNDPROOF, icon: 'volume-x' },
-];
+export function getSpaceAmenityData(): Array<{ id: SpaceAmenity; label: string; icon: string }> {
+  return [
+    { id: 'WIFI', label: getSpaceAmenityLabel('WIFI'), icon: 'wifi' },
+    { id: 'AIR_CONDITIONING', label: getSpaceAmenityLabel('AIR_CONDITIONING'), icon: 'thermometer' },
+    { id: 'HEATING', label: getSpaceAmenityLabel('HEATING'), icon: 'flame' },
+    { id: 'PARKING', label: getSpaceAmenityLabel('PARKING'), icon: 'car' },
+    { id: 'CAFETERIA', label: getSpaceAmenityLabel('CAFETERIA'), icon: 'coffee' },
+    { id: 'KITCHEN', label: getSpaceAmenityLabel('KITCHEN'), icon: 'utensils' },
+    { id: 'RESTROOMS', label: getSpaceAmenityLabel('RESTROOMS'), icon: 'droplet' },
+    { id: 'RECEPTION', label: getSpaceAmenityLabel('RECEPTION'), icon: 'user' },
+    { id: 'SECURITY', label: getSpaceAmenityLabel('SECURITY'), icon: 'shield' },
+    { id: 'ELEVATOR', label: getSpaceAmenityLabel('ELEVATOR'), icon: 'arrow-up' },
+    { id: 'NATURAL_LIGHT', label: getSpaceAmenityLabel('NATURAL_LIGHT'), icon: 'sun' },
+    { id: 'SOUNDPROOF', label: getSpaceAmenityLabel('SOUNDPROOF'), icon: 'volume-x' },
+  ];
+}
 
 // --- Accessibility ---
 
@@ -330,46 +272,40 @@ export const ACCESSIBILITY_FEATURES = [
 
 export type AccessibilityFeature = (typeof ACCESSIBILITY_FEATURES)[number];
 
-export const ACCESSIBILITY_FEATURE_LABELS: Record<AccessibilityFeature, string> = {
-  WHEELCHAIR_ACCESS: 'Acces fauteuil roulant',
-  ELEVATOR: 'Ascenseur accessible',
-  ACCESSIBLE_RESTROOM: 'Toilettes accessibles',
-  WIDE_DOORS: 'Portes larges (>90cm)',
-  TACTILE_GUIDANCE: 'Guidage tactile',
-  HEARING_LOOP: 'Boucle auditive',
-  HANDICAP_PARKING: 'Parking PMR',
-  BRAILLE_SIGNAGE: 'Signalisation braille',
-};
+export const getAccessibilityFeatureLabel = (feat: string): string =>
+  getLabel('spaceAccessibility', feat);
 
-export const ACCESSIBILITY_DATA: Array<{ id: AccessibilityFeature; label: string; icon: string }> = [
-  { id: 'WHEELCHAIR_ACCESS', label: ACCESSIBILITY_FEATURE_LABELS.WHEELCHAIR_ACCESS, icon: 'accessibility' },
-  { id: 'ELEVATOR', label: ACCESSIBILITY_FEATURE_LABELS.ELEVATOR, icon: 'arrow-up' },
-  { id: 'ACCESSIBLE_RESTROOM', label: ACCESSIBILITY_FEATURE_LABELS.ACCESSIBLE_RESTROOM, icon: 'droplet' },
-  { id: 'WIDE_DOORS', label: ACCESSIBILITY_FEATURE_LABELS.WIDE_DOORS, icon: 'maximize' },
-  { id: 'TACTILE_GUIDANCE', label: ACCESSIBILITY_FEATURE_LABELS.TACTILE_GUIDANCE, icon: 'navigation' },
-  { id: 'HEARING_LOOP', label: ACCESSIBILITY_FEATURE_LABELS.HEARING_LOOP, icon: 'headphones' },
-  { id: 'HANDICAP_PARKING', label: ACCESSIBILITY_FEATURE_LABELS.HANDICAP_PARKING, icon: 'car' },
-  { id: 'BRAILLE_SIGNAGE', label: ACCESSIBILITY_FEATURE_LABELS.BRAILLE_SIGNAGE, icon: 'eye-off' },
-];
+export function getAccessibilityData(): Array<{ id: AccessibilityFeature; label: string; icon: string }> {
+  return [
+    { id: 'WHEELCHAIR_ACCESS', label: getAccessibilityFeatureLabel('WHEELCHAIR_ACCESS'), icon: 'accessibility' },
+    { id: 'ELEVATOR', label: getAccessibilityFeatureLabel('ELEVATOR'), icon: 'arrow-up' },
+    { id: 'ACCESSIBLE_RESTROOM', label: getAccessibilityFeatureLabel('ACCESSIBLE_RESTROOM'), icon: 'droplet' },
+    { id: 'WIDE_DOORS', label: getAccessibilityFeatureLabel('WIDE_DOORS'), icon: 'maximize' },
+    { id: 'TACTILE_GUIDANCE', label: getAccessibilityFeatureLabel('TACTILE_GUIDANCE'), icon: 'navigation' },
+    { id: 'HEARING_LOOP', label: getAccessibilityFeatureLabel('HEARING_LOOP'), icon: 'headphones' },
+    { id: 'HANDICAP_PARKING', label: getAccessibilityFeatureLabel('HANDICAP_PARKING'), icon: 'car' },
+    { id: 'BRAILLE_SIGNAGE', label: getAccessibilityFeatureLabel('BRAILLE_SIGNAGE'), icon: 'eye-off' },
+  ];
+}
 
 // --- Weekdays ---
 
-export const WEEKDAYS = [
-  { id: 0, label: 'Dimanche', short: 'Dim' },
-  { id: 1, label: 'Lundi', short: 'Lun' },
-  { id: 2, label: 'Mardi', short: 'Mar' },
-  { id: 3, label: 'Mercredi', short: 'Mer' },
-  { id: 4, label: 'Jeudi', short: 'Jeu' },
-  { id: 5, label: 'Vendredi', short: 'Ven' },
-  { id: 6, label: 'Samedi', short: 'Sam' },
-] as const;
+export function getWeekdays(): Array<{ id: number; label: string; short: string }> {
+  return Array.from({ length: 7 }, (_, i) => ({
+    id: i,
+    label: getLabel('weekdays', String(i)),
+    short: getLabel('weekdaysShort', String(i)),
+  }));
+}
 
 // --- Visibility ---
 
-export const SPACE_VISIBILITY_DATA: Array<{ id: Visibility; label: string; description: string }> = [
-  { id: 'PUBLIC', label: VISIBILITY_LABELS.PUBLIC, description: 'Visible dans l\'exploration et la recherche' },
-  { id: 'PRIVATE', label: VISIBILITY_LABELS.PRIVATE, description: 'Seuls les membres de l\'organisation peuvent voir' },
-];
+export function getSpaceVisibilityData(): Array<{ id: Visibility; label: string; description: string }> {
+  return [
+    { id: 'PUBLIC', label: getVisibilityLabel('PUBLIC'), description: getLabel('opportunityVisibility', 'PUBLIC') },
+    { id: 'PRIVATE', label: getVisibilityLabel('PRIVATE'), description: getLabel('opportunityVisibility', 'PRIVATE') },
+  ];
+}
 
 // --- Utility Functions ---
 
@@ -392,23 +328,21 @@ export function formatPrice(amount: number): string {
  * Get day name from day number
  */
 export function getDayName(dayOfWeek: number): string {
-  const day = WEEKDAYS.find(d => d.id === dayOfWeek);
-  return day?.label || '';
+  return getLabel('weekdays', String(dayOfWeek));
 }
 
 /**
  * Get short day name from day number
  */
 export function getDayShortName(dayOfWeek: number): string {
-  const day = WEEKDAYS.find(d => d.id === dayOfWeek);
-  return day?.short || '';
+  return getLabel('weekdaysShort', String(dayOfWeek));
 }
 
 /**
  * Get space types by category
  */
 export function getSpaceTypesByCategory(category: SpaceCategory): SpaceType[] {
-  return SPACE_TYPE_DATA
+  return getSpaceTypeData()
     .filter(st => st.category === category)
     .map(st => st.id);
 }

@@ -1,0 +1,10 @@
+{
+  "registerError": "Push-Token konnte nicht registriert werden",
+  "deactivateError": "Push-Token konnte nicht deaktiviert werden",
+  "fetchError": "Benachrichtigungen konnten nicht abgerufen werden",
+  "markReadError": "Benachrichtigung konnte nicht als gelesen markiert werden",
+  "markAllReadError": "Benachrichtigungen konnten nicht alle markiert werden",
+  "deleteError": "Benachrichtigung konnte nicht geloescht werden",
+  "fetchPreferencesError": "Einstellungen konnten nicht abgerufen werden",
+  "updatePreferencesError": "Einstellungen konnten nicht aktualisiert werden"
+}

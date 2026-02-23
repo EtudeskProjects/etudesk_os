@@ -97,7 +97,7 @@ export default function BookmarksScreen() {
 
   const chips: Array<{ key: Category; label: string; count: number }> = [
     { key: 'communities', label: t('explore.categories.communities'), count: communities.length },
-    { key: 'spaces', label: t('explore.categories.spaces') || 'Espaces', count: spaces.length },
+    { key: 'spaces', label: t('explore.categories.spaces'), count: spaces.length },
     { key: 'opportunities', label: t('explore.categories.opportunities'), count: opportunities.length },
   ];
 
@@ -114,9 +114,9 @@ export default function BookmarksScreen() {
     }
   };
 
-  const emptySubtitle =
-    activeCategory === 'opportunities' ? "d'opportunités" :
-    activeCategory === 'spaces' ? "d'espaces" : 'de communautés';
+  const emptySubtitleType =
+    activeCategory === 'opportunities' ? t('bookmarks.typeOpportunities') :
+    activeCategory === 'spaces' ? t('bookmarks.typeSpaces') : t('bookmarks.typeCommunities');
 
   const activeItems = getActiveItems();
 
@@ -154,7 +154,7 @@ export default function BookmarksScreen() {
 
   return (
     <PageLayout
-      title="Mes favoris"
+      title={t('bookmarks.title')}
       onRefresh={handleRefresh}
       isRefreshing={isRefreshing}
       isLoading={isLoading}
@@ -163,8 +163,8 @@ export default function BookmarksScreen() {
       {activeItems.length === 0 ? (
         <EmptyState
           icon={BookmarkX}
-          title="Aucun favori"
-          subtitle={`Vous n'avez pas encore ajouté ${emptySubtitle} en favoris.`}
+          title={t('bookmarks.empty')}
+          subtitle={t('bookmarks.emptySubtitle', { type: emptySubtitleType })}
         />
       ) : (
         <>

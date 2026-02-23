@@ -1,0 +1,23 @@
+{
+  "created": "申请已提交",
+  "updated": "申请已更新",
+  "deleted": "申请已删除",
+  "deletedCanReapply": "申请已删除。你可以重新申请。",
+  "notFound": "申请未找到",
+  "alreadyApplied": "你已经申请过该机会了",
+  "withdrawn": "申请已撤回",
+  "statusUpdated": "状态已更新",
+  "notAuthorized": "你没有权限管理该申请",
+  "notAuthorizedOpportunity": "未授权访问该机会",
+  "accessDenied": "未授权访问",
+  "cannotWithdraw": "无法撤回已处理的申请",
+  "opportunityClosed": "该机会已不再接受申请",
+  "opportunityNotFound": "机会未找到",
+  "deadlinePassed": "申请截止日期已过",
+  "cannotApplyOwnOpportunity": "你不能申请自己发布的机会",
+  "ratingUpdated": "评分已更新",
+  "noteUpdated": "备注已更新",
+  "messageEmpty": "消息不能为空",
+  "organizationFirstMessage": "你不能主动发起对话。请等待组织联系你。",
+  "unableToGenerateRecommendation": "无法生成推荐"
+}

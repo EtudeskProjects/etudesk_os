@@ -56,8 +56,8 @@ export default function CreateProfileScreen() {
   // Form management with useForm hook
   const form = useForm<ProfileFormValues>({
     fields: {
-      firstName: { initialValue: '', required: true, requiredMessage: 'Le prénom est requis' },
-      lastName: { initialValue: '', required: true, requiredMessage: 'Le nom est requis' },
+      firstName: { initialValue: '', required: true, requiredMessage: t('auth.createProfile.firstNameRequired') },
+      lastName: { initialValue: '', required: true, requiredMessage: t('auth.createProfile.lastNameRequired') },
       gender: { initialValue: '' },
       country: { initialValue: 'CI' },
       region: { initialValue: '' },
@@ -89,7 +89,7 @@ export default function CreateProfileScreen() {
         completeOnboarding();
         router.replace('/auth/welcome');
       } else {
-        throw new Error('Échec de la création du profil');
+        throw new Error(t('auth.createProfile.profileCreationFailed'));
       }
     },
   });
@@ -223,19 +223,19 @@ export default function CreateProfileScreen() {
     const trimmedLastName = lastName.trim();
 
     if (!trimmedFirstName || trimmedFirstName.length < 2) {
-      void alerts.alert(t('common.error'), 'Le prénom est requis (minimum 2 caractères)');
+      void alerts.alert(t('common.error'), t('auth.createProfile.firstNameMinChars'));
       return;
     }
 
     if (!trimmedLastName || trimmedLastName.length < 2) {
-      void alerts.alert(t('common.error'), 'Le nom est requis (minimum 2 caractères)');
+      void alerts.alert(t('common.error'), t('auth.createProfile.lastNameMinChars'));
       return;
     }
 
     const displayName = `${trimmedFirstName} ${trimmedLastName}`.trim();
 
     if (!displayName || displayName.length < 3) {
-      void alerts.alert(t('common.error'), 'Le nom d\'affichage est requis');
+      void alerts.alert(t('common.error'), t('auth.createProfile.displayNameRequired'));
       return;
     }
 
@@ -252,10 +252,10 @@ export default function CreateProfileScreen() {
         return;
       }
 
-      let errorMessage = 'Une erreur est survenue lors de la création de votre profil.';
+      let errorMessage = t('common.genericError');
 
       if (error.status === 500) {
-        errorMessage = 'Erreur serveur (500). Veuillez réessayer plus tard ou contacter le support.';
+        errorMessage = t('auth.createProfile.serverError');
         if (__DEV__) console.error('[CreateProfile] Server error details:', {
           status: error.status,
           error: error.error,
@@ -285,7 +285,7 @@ export default function CreateProfileScreen() {
 	      <IconButton
 	        onPress={() => router.back()}
 	        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	        accessibilityLabel="Retour"
+	        accessibilityLabel={t('common.back')}
 	      />
 	      <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('auth.createProfile.title')}</Text>
 	      <View style={styles.headerSpacer} />
@@ -511,7 +511,7 @@ export default function CreateProfileScreen() {
                   onChangeValue={(e164) => form.setValue('phone', e164)}
                   defaultCountryCode={country}
                   editable={!isWhatsAppSignup}
-                  hint={isWhatsAppSignup ? 'Numéro vérifié via WhatsApp' : 'Optionnel'}
+                  hint={isWhatsAppSignup ? t('auth.createProfile.whatsappVerified') : t('common.optional')}
                 />
 
                 {/* Email */}
@@ -569,7 +569,7 @@ export default function CreateProfileScreen() {
             <Button
               title={
                 form.state.isSubmitting
-                  ? 'Création...'
+                  ? t('common.creating')
                   : t('auth.createProfile.complete')
               }
               onPress={handleSubmitProfile}

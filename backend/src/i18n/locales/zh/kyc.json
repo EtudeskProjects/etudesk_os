@@ -1,0 +1,9 @@
+{
+  "fetchStatusError": "无法获取 KYC 状态",
+  "invalidDocumentType": "证件类型无效",
+  "frontImageRequired": "需要正面照片",
+  "alreadyVerified": "你的身份已验证。",
+  "submitError": "无法提交 KYC 验证",
+  "uploadUrlError": "无法生成上传链接",
+  "fetchHistoryError": "无法获取 KYC 历史记录"
+}

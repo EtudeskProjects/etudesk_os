@@ -4,6 +4,7 @@
  */
 
 import { pool } from '../../database';
+import { i18next } from '../../../i18n';
 
 export interface ValidationResult {
   valid: boolean;
@@ -11,9 +12,14 @@ export interface ValidationResult {
   data?: Record<string, any>;
 }
 
+function tr(lng: string | undefined, key: string, options?: Record<string, any>): string {
+  return i18next.t(key, { lng, ...(options || {}) });
+}
+
 export async function validateApplyOpportunity(
   talentId: string,
-  opportunityId: string
+  opportunityId: string,
+  language?: string
 ): Promise<ValidationResult> {
   // KYC gate: require verified identity before applying
   const identityCheck = await pool.query(
@@ -21,7 +27,7 @@ export async function validateApplyOpportunity(
     [talentId]
   );
   if (identityCheck.rows.length === 0) {
-    return { valid: false, error: 'La vérification d\'identité est obligatoire pour postuler. Elle garantit que c\'est bien ta vraie identité qui est considérée dans les candidatures. Va dans Paramètres > Vérification d\'identité pour te vérifier.' };
+    return { valid: false, error: tr(language, 'copilot:validatorKycRequired') };
   }
 
   // Check opportunity exists and is open
@@ -30,13 +36,13 @@ export async function validateApplyOpportunity(
     [opportunityId]
   );
   if (opp.rows.length === 0) {
-    return { valid: false, error: "Cette opportunité n'existe pas ou a été supprimée." };
+    return { valid: false, error: tr(language, 'copilot:validatorOpportunityNotFound') };
   }
   if (opp.rows[0].status !== 'OPEN') {
-    return { valid: false, error: "Cette opportunité n'est plus ouverte aux candidatures." };
+    return { valid: false, error: tr(language, 'copilot:validatorOpportunityNotOpen') };
   }
   if (opp.rows[0].deadline && new Date(opp.rows[0].deadline) < new Date()) {
-    return { valid: false, error: 'La date limite de candidature est dépassée.' };
+    return { valid: false, error: tr(language, 'copilot:validatorDeadlinePassed') };
   }
 
   // Check not already applied
@@ -45,7 +51,7 @@ export async function validateApplyOpportunity(
     [talentId, opportunityId]
   );
   if (existing.rows.length > 0) {
-    return { valid: false, error: 'Vous avez déjà postulé à cette opportunité.' };
+    return { valid: false, error: tr(language, 'copilot:validatorAlreadyApplied') };
   }
 
   return { valid: true, data: { title: opp.rows[0].title } };
@@ -53,17 +59,18 @@ export async function validateApplyOpportunity(
 
 export async function validateJoinCommunity(
   talentId: string,
-  communityId: string
+  communityId: string,
+  language?: string
 ): Promise<ValidationResult> {
   const comm = await pool.query(
     `SELECT id, name, status FROM communities WHERE id = $1 AND deleted_at IS NULL`,
     [communityId]
   );
   if (comm.rows.length === 0) {
-    return { valid: false, error: "Cette communauté n'existe pas." };
+    return { valid: false, error: tr(language, 'copilot:validatorCommunityNotFound') };
   }
   if (comm.rows[0].status !== 'ACTIVE') {
-    return { valid: false, error: "Cette communauté n'est pas active." };
+    return { valid: false, error: tr(language, 'copilot:validatorCommunityNotActive') };
   }
 
   const existing = await pool.query(
@@ -71,7 +78,7 @@ export async function validateJoinCommunity(
     [talentId, communityId]
   );
   if (existing.rows.length > 0) {
-    return { valid: false, error: 'Vous êtes déjà membre de cette communauté.' };
+    return { valid: false, error: tr(language, 'copilot:validatorAlreadyMember') };
   }
 
   return { valid: true, data: { name: comm.rows[0].name } };
@@ -80,21 +87,22 @@ export async function validateJoinCommunity(
 export async function validateBookSpace(
   talentId: string,
   spaceId: string,
-  data?: { startDatetime?: string; endDatetime?: string }
+  data?: { startDatetime?: string; endDatetime?: string },
+  language?: string
 ): Promise<ValidationResult> {
   const space = await pool.query(
     `SELECT id, name, status, hourly_rate FROM spaces WHERE id = $1 AND deleted_at IS NULL`,
     [spaceId]
   );
   if (space.rows.length === 0) {
-    return { valid: false, error: "Cet espace n'existe pas." };
+    return { valid: false, error: tr(language, 'copilot:validatorSpaceNotFound') };
   }
   if (space.rows[0].status !== 'ACTIVE') {
-    return { valid: false, error: "Cet espace n'est pas disponible." };
+    return { valid: false, error: tr(language, 'copilot:validatorSpaceNotAvailable') };
   }
 
   if (!data?.startDatetime || !data?.endDatetime) {
-    return { valid: false, error: 'Les dates de réservation sont requises.' };
+    return { valid: false, error: tr(language, 'copilot:validatorBookingDatesRequired') };
   }
 
   // Check no conflict
@@ -105,7 +113,7 @@ export async function validateBookSpace(
     [spaceId, data.startDatetime, data.endDatetime]
   );
   if (conflict.rows.length > 0) {
-    return { valid: false, error: 'Ce créneau est déjà réservé.' };
+    return { valid: false, error: tr(language, 'copilot:validatorSlotTaken') };
   }
 
   return { valid: true, data: { name: space.rows[0].name, rate: space.rows[0].hourly_rate } };
@@ -114,7 +122,8 @@ export async function validateBookSpace(
 export async function validatePublishOpportunity(
   talentId: string,
   organizationId: string,
-  data?: Record<string, any>
+  data?: Record<string, any>,
+  language?: string
 ): Promise<ValidationResult> {
   // Verify talent is OWNER or ADMIN of the org
   const membership = await pool.query(
@@ -123,12 +132,12 @@ export async function validatePublishOpportunity(
     [talentId, organizationId]
   );
   if (membership.rows.length === 0) {
-    return { valid: false, error: "Vous n'avez pas les droits pour publier dans cette organisation." };
+    return { valid: false, error: tr(language, 'copilot:validatorNoPublishRights') };
   }
 
   // Validate required fields
   if (!data?.title || !data?.summary || !data?.contract_type) {
-    return { valid: false, error: 'Les champs titre, résumé et type de contrat sont requis.' };
+    return { valid: false, error: tr(language, 'copilot:validatorOpportunityFieldsRequired') };
   }
 
   return { valid: true, data: { role: membership.rows[0].role } };
@@ -137,7 +146,8 @@ export async function validatePublishOpportunity(
 export async function validateCreateCommunity(
   talentId: string,
   organizationId: string,
-  data?: Record<string, any>
+  data?: Record<string, any>,
+  language?: string
 ): Promise<ValidationResult> {
   // Verify talent is member of the org
   const membership = await pool.query(
@@ -146,11 +156,11 @@ export async function validateCreateCommunity(
     [talentId, organizationId]
   );
   if (membership.rows.length === 0) {
-    return { valid: false, error: "Vous n'êtes pas membre de cette organisation." };
+    return { valid: false, error: tr(language, 'copilot:validatorNotOrgMember') };
   }
 
   if (!data?.name || !data?.description) {
-    return { valid: false, error: 'Les champs nom et description sont requis.' };
+    return { valid: false, error: tr(language, 'copilot:validatorCommunityFieldsRequired') };
   }
 
   return { valid: true, data: { role: membership.rows[0].role } };
@@ -159,7 +169,8 @@ export async function validateCreateCommunity(
 export async function validateCreateSpace(
   talentId: string,
   organizationId: string,
-  data?: Record<string, any>
+  data?: Record<string, any>,
+  language?: string
 ): Promise<ValidationResult> {
   // Verify talent is OWNER or ADMIN of the org
   const membership = await pool.query(
@@ -168,11 +179,11 @@ export async function validateCreateSpace(
     [talentId, organizationId]
   );
   if (membership.rows.length === 0) {
-    return { valid: false, error: "Vous n'avez pas les droits pour créer un espace dans cette organisation." };
+    return { valid: false, error: tr(language, 'copilot:validatorNoSpaceRights') };
   }
 
   if (!data?.name || !data?.type || !data?.surface_m2) {
-    return { valid: false, error: 'Les champs nom, type et surface sont requis.' };
+    return { valid: false, error: tr(language, 'copilot:validatorSpaceFieldsRequired') };
   }
 
   return { valid: true, data: { role: membership.rows[0].role } };
@@ -181,7 +192,8 @@ export async function validateCreateSpace(
 export async function validateRespondInvitation(
   talentId: string,
   invitationId: string,
-  accept: boolean
+  accept: boolean,
+  language?: string
 ): Promise<ValidationResult> {
   // Check community invitations
   let result = await pool.query(
@@ -203,5 +215,5 @@ export async function validateRespondInvitation(
     return { valid: true, data: { type: 'organization', accept } };
   }
 
-  return { valid: false, error: 'Invitation non trouvée ou déjà traitée.' };
+  return { valid: false, error: tr(language, 'copilot:validatorInvitationNotFound') };
 }

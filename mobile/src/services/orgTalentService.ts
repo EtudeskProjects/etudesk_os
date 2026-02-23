@@ -52,14 +52,12 @@ export interface OrgTagDefinition {
   created_at: string;
 }
 
-// --- Labels ---
+// --- Labels (i18n) ---
 
-export const SOURCE_LABELS: Record<string, string> = {
-  APPLICATION: 'Candidature',
-  COMMUNITY: 'Communauté',
-  SPACE_BOOKING: 'Réservation',
-  MEMBER: 'Membre',
-};
+import { getLabel } from '../utils/labels';
+
+export const getSourceLabel = (source: string): string =>
+  getLabel('orgTalentSources', source);
 
 // --- API Functions ---
 

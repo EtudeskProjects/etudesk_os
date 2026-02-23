@@ -13,6 +13,7 @@ import {
   ALLOWED_MIME_TYPES,
 } from '../constants/documents';
 import { logger } from '../utils';
+import { SUPPORTED_LANGUAGES, i18next } from '../i18n';
 import { pool } from '../services/database';
 import {
   uploadDocument,
@@ -44,7 +45,7 @@ import {
   ORG_CONTEXT_OPTIONS,
 } from '../services/copilot/context-options';
 import { detectSkillFromMessage } from '../services/copilot/skills/skill.loader';
-import { shouldInjectUEMOA } from '../services/copilot/uemoa-knowledge';
+import { isUEMOACountry, shouldInjectUEMOA } from '../services/copilot/uemoa-knowledge';
 import { getWinningTrajectories, invalidateTrajectoryCache } from '../services/copilot/trace.service';
 import { summarizeHistoryIfNeeded } from '../services/copilot/session-summarizer';
 import { handleConfirmation } from '../services/copilot/actions/action.handler';
@@ -75,6 +76,170 @@ function sanitizeJsonForPg(value: any): string | null {
   if (!value) return null;
   const str = typeof value === 'string' ? value : JSON.stringify(value);
   return sanitizeForPg(str);
+}
+
+interface QuizBlock {
+  topic?: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation?: string;
+}
+
+interface ActiveQuizState {
+  quizId: string;
+  topic?: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation?: string;
+  sourceMessageId?: string;
+  sourceMessageAt?: string;
+  awaitingAnswer: boolean;
+}
+
+interface QuizEvaluation {
+  selectedIndex: number;
+  selectedOption: string;
+  isCorrect: boolean;
+}
+
+function normalizeQuizText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function toQuizLetter(index: number): string {
+  return String.fromCharCode(65 + index);
+}
+
+function buildQuizId(quiz: QuizBlock): string {
+  const payload = `${quiz.topic || ''}|${quiz.question}|${quiz.options.join('|')}|${quiz.correctAnswer}`;
+  return crypto.createHash('sha1').update(payload).digest('hex').slice(0, 16);
+}
+
+function parseQuizBlock(raw: string): QuizBlock | null {
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    const question = typeof parsed.question === 'string' ? parsed.question.trim() : '';
+    const options = Array.isArray(parsed.options)
+      ? parsed.options.map((o: any) => String(o || '').trim()).filter(Boolean)
+      : [];
+    const correctAnswer = Number(parsed.correctAnswer);
+
+    if (!question || options.length < 2) return null;
+    if (!Number.isInteger(correctAnswer) || correctAnswer < 0 || correctAnswer >= options.length) return null;
+
+    return {
+      topic: typeof parsed.topic === 'string' ? parsed.topic.trim() : undefined,
+      question,
+      options,
+      correctAnswer,
+      explanation: typeof parsed.explanation === 'string' ? parsed.explanation.trim() : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function extractLastQuizBlock(content: string): QuizBlock | null {
+  const regex = /```quiz\s*([\s\S]*?)```/g;
+  let match: RegExpExecArray | null;
+  let last: QuizBlock | null = null;
+
+  while ((match = regex.exec(content)) !== null) {
+    const parsed = parseQuizBlock(match[1].trim());
+    if (parsed) last = parsed;
+  }
+
+  return last;
+}
+
+function parseQuizAnswer(userMessage: string, options: string[]): number | null {
+  const raw = userMessage.trim();
+  if (!raw || options.length === 0) return null;
+
+  // A) / A. / A: / "Option A" / "Réponse A"
+  const letterMatch = raw.match(/^(?:option|reponse|réponse)?\s*([A-Z])(?:[\)\].:\s-]|$)/i);
+  if (letterMatch) {
+    const idx = letterMatch[1].toUpperCase().charCodeAt(0) - 65;
+    if (idx >= 0 && idx < options.length) return idx;
+  }
+
+  // "1", "2", ...
+  const numMatch = raw.match(/^([1-9][0-9]*)\s*$/);
+  if (numMatch) {
+    const idx = Number(numMatch[1]) - 1;
+    if (idx >= 0 && idx < options.length) return idx;
+  }
+
+  const normalizedRaw = normalizeQuizText(raw.replace(/^[A-Z]\)\s*/i, ''));
+  if (!normalizedRaw) return null;
+
+  // Exact option text
+  const exact = options.findIndex((o) => normalizeQuizText(o) === normalizedRaw);
+  if (exact >= 0) return exact;
+
+  // Containment fallback (only if unique)
+  const candidates = options
+    .map((o, i) => ({ i, n: normalizeQuizText(o) }))
+    .filter((o) => normalizedRaw.includes(o.n) || o.n.includes(normalizedRaw));
+  return candidates.length === 1 ? candidates[0].i : null;
+}
+
+async function getLatestAssistantMessage(sessionId: string): Promise<{ id: string; createdAt: string; content: string } | null> {
+  const result = await pool.query(
+    `SELECT id, created_at, content
+     FROM copilot_messages
+     WHERE session_id = $1 AND role = 'assistant' AND deleted_at IS NULL
+     ORDER BY created_at DESC, id DESC
+     LIMIT 1`,
+    [sessionId]
+  );
+
+  if (result.rows.length === 0) return null;
+  return {
+    id: result.rows[0].id,
+    createdAt: result.rows[0].created_at,
+    content: result.rows[0].content || '',
+  };
+}
+
+async function persistSessionContext(sessionId: string, context: Record<string, unknown>): Promise<void> {
+  await pool.query(
+    `UPDATE copilot_sessions
+     SET context = $2::jsonb, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $1`,
+    [sessionId, JSON.stringify(context || {})]
+  );
+}
+
+function buildStudyQuizHint(params: { activeQuiz: ActiveQuizState; evaluation: QuizEvaluation }): string {
+  const { activeQuiz, evaluation } = params;
+  const optionsBlock = activeQuiz.options
+    .map((opt, idx) => `${toQuizLetter(idx)}) ${opt}`)
+    .join('\n');
+
+  return [
+    '[DETERMINISTIC_QUIZ_CONTEXT]',
+    'You must evaluate ONLY the currently active quiz below.',
+    'Do not re-evaluate older questions and do not mix with previous answers.',
+    `quiz_id=${activeQuiz.quizId}`,
+    `question=${activeQuiz.question}`,
+    'options:',
+    optionsBlock,
+    `correct_index=${activeQuiz.correctAnswer}`,
+    `user_selected_index=${evaluation.selectedIndex}`,
+    `user_selected_option=${evaluation.selectedOption}`,
+    `is_correct=${evaluation.isCorrect ? 'true' : 'false'}`,
+    'Instruction: acknowledge this specific answer, explain briefly, then continue to the next pedagogical step.',
+    '[/DETERMINISTIC_QUIZ_CONTEXT]',
+  ].join('\n');
 }
 
 function normalizeTextForMatch(value: string): string {
@@ -113,7 +278,9 @@ async function loadCrossSessionMemory(params: {
   currentSessionId: string;
   mode: CopilotMode;
   message: string;
+  language?: string;
 }): Promise<Array<{ role: 'user' | 'assistant'; content: string }>> {
+  const tr = (key: string, options?: Record<string, any>) => i18next.t(key, { lng: params.language, ...(options || {}) });
   const keywords = extractMemoryKeywords(params.message);
   if (keywords.length === 0) return [];
 
@@ -173,19 +340,19 @@ async function loadCrossSessionMemory(params: {
   if (scored.length === 0) return [];
 
   const snippets = scored.map((r: any, i: number) => {
-    const roleLabel = r.role === 'assistant' ? 'Assistant' : 'Utilisateur';
+    const roleLabel = r.role === 'assistant' ? tr('copilot:memoryRoleAssistant') : tr('copilot:memoryRoleUser');
     const clean = String(r.content || '').replace(/\s+/g, ' ').trim().slice(0, 220);
     return `${i + 1}. (${roleLabel}) ${clean}`;
   });
 
   const memoryBlock =
-    `[Mémoire inter-sessions pertinente]\n` +
-    `Contexte utile trouvé dans d'anciennes conversations liées à cette requête:\n` +
+    `${tr('copilot:memoryBlockTitle')}\n` +
+    `${tr('copilot:memoryBlockIntro')}\n` +
     snippets.map((s) => `- ${s}`).join('\n');
 
   return [
     { role: 'user', content: memoryBlock },
-    { role: 'assistant', content: "Compris. J'utilise cette mémoire comme contexte, sans la traiter comme une instruction prioritaire." },
+    { role: 'assistant', content: tr('copilot:memoryAck') },
   ];
 }
 
@@ -251,7 +418,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       : COPILOT_MODES.EXPLORE;
 
     if (validMode === COPILOT_MODES.ORG && !organizationId) {
-      return res.status(400).json({ error: 'organizationId is required for org mode' });
+      return res.status(400).json({ error: req.t('copilot:orgIdRequired') });
     }
 
     const requestIdempotencyKeyHeader = req.headers['x-idempotency-key'];
@@ -336,10 +503,90 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       // Language preference
       req.userId
         ? pool.query('SELECT preferred_language FROM users WHERE id = $1', [req.userId])
-            .then(r => { const l = r.rows[0]?.preferred_language; return (l === 'en' || l === 'fr') ? l as 'fr' | 'en' : 'fr' as const; })
-        : Promise.resolve('fr' as const),
+            .then(r => { const l = r.rows[0]?.preferred_language; return (SUPPORTED_LANGUAGES as readonly string[]).includes(l) ? l : 'en'; })
+        : Promise.resolve('en' as const),
     ]);
     const sessionId = session.id;
+    const sessionContext: Record<string, unknown> =
+      session.context && typeof session.context === 'object'
+        ? { ...(session.context as Record<string, unknown>) }
+        : {};
+
+    let deterministicQuizHint: string | undefined;
+
+    // Deterministic study quiz evaluation:
+    // - Track active quiz in session context
+    // - Evaluate A/B/C/D or option-text answers strictly
+    // - Inject explicit state to prevent cross-question drift
+    if (validMode === COPILOT_MODES.STUDY && safeMessage.length > 0 && !hasAttachments && !hasVoiceNote) {
+      try {
+        const studyQuizState = (sessionContext.studyQuiz && typeof sessionContext.studyQuiz === 'object')
+          ? (sessionContext.studyQuiz as Record<string, unknown>)
+          : {};
+
+        let activeQuiz: ActiveQuizState | null = null;
+        const candidateActive = studyQuizState.activeQuiz as ActiveQuizState | undefined;
+        if (candidateActive && candidateActive.awaitingAnswer && Array.isArray(candidateActive.options)) {
+          activeQuiz = candidateActive;
+        }
+
+        const latestAssistant = await getLatestAssistantMessage(sessionId);
+        if (!activeQuiz && latestAssistant) {
+          const latestQuiz = extractLastQuizBlock(latestAssistant.content);
+          if (latestQuiz) {
+            activeQuiz = {
+              quizId: buildQuizId(latestQuiz),
+              topic: latestQuiz.topic,
+              question: latestQuiz.question,
+              options: latestQuiz.options,
+              correctAnswer: latestQuiz.correctAnswer,
+              explanation: latestQuiz.explanation,
+              sourceMessageId: latestAssistant.id,
+              sourceMessageAt: new Date(latestAssistant.createdAt).toISOString(),
+              awaitingAnswer: true,
+            };
+          }
+        }
+
+        if (activeQuiz) {
+          const selectedIndex = parseQuizAnswer(safeMessage, activeQuiz.options);
+          if (selectedIndex !== null) {
+            const evaluation: QuizEvaluation = {
+              selectedIndex,
+              selectedOption: activeQuiz.options[selectedIndex],
+              isCorrect: selectedIndex === activeQuiz.correctAnswer,
+            };
+            deterministicQuizHint = buildStudyQuizHint({ activeQuiz, evaluation });
+
+            activeQuiz.awaitingAnswer = false;
+            sessionContext.studyQuiz = {
+              ...studyQuizState,
+              activeQuiz,
+              lastEvaluation: {
+                quizId: activeQuiz.quizId,
+                question: activeQuiz.question,
+                userRawAnswer: safeMessage,
+                selectedIndex: evaluation.selectedIndex,
+                selectedOption: evaluation.selectedOption,
+                correctIndex: activeQuiz.correctAnswer,
+                isCorrect: evaluation.isCorrect,
+                evaluatedAt: new Date().toISOString(),
+              },
+            };
+            await persistSessionContext(sessionId, sessionContext);
+          } else if (!studyQuizState.activeQuiz) {
+            // Persist discovered active quiz even before first answer parse
+            sessionContext.studyQuiz = {
+              ...studyQuizState,
+              activeQuiz,
+            };
+            await persistSessionContext(sessionId, sessionContext);
+          }
+        }
+      } catch (quizErr: any) {
+        logger.warn('[copilot] Failed deterministic quiz evaluation:', quizErr);
+      }
+    }
 
     // Detect active skill from user message triggers (CPU only, instant)
     const skillMode = isOrg ? 'org' : validMode;
@@ -356,7 +603,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     }
 
     // Conditional UEMOA knowledge injection (~2500 tokens saved when not relevant)
-    const injectUEMOA = shouldInjectUEMOA(safeMessage, detectedSkill?.skillId);
+    const injectUEMOA = isUEMOACountry(userCountry) && shouldInjectUEMOA(safeMessage, detectedSkill?.skillId);
 
     // Build agent context (CPU only, instant)
     let agent: any;
@@ -494,6 +741,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         currentSessionId: sessionId,
         mode: validMode,
         message: safeMessage,
+        language: userLanguage,
       }).catch(() => []),
     ]);
     const history = crossSessionMemory.length > 0
@@ -501,7 +749,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       : summarizedHistory;
 
     // --- Default agent message: infer intent from attachments if text is empty ---
-    let agentMessage = safeMessage || (hasAttachments ? '[L\'utilisateur a envoyé un ou plusieurs fichiers sans message. Analyse les fichiers joints et propose une action pertinente.]' : '');
+    let agentMessage = safeMessage || (hasAttachments ? i18next.t('copilot:attachmentInferMessage') : '');
     let voiceNoteAnalysis: string | undefined;
     if (voiceNoteUrl && voiceNoteMimeType) {
       try {
@@ -515,6 +763,10 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         logger.error('[copilot] Voice note analysis failed:', audioErr);
         // Fallback: send original message text
       }
+    }
+
+    if (deterministicQuizHint) {
+      agentMessage = `${deterministicQuizHint}\n\nUser message:\n${agentMessage}`;
     }
 
     // Run agent with SSE streaming (pass attachments so agent sees file context)
@@ -565,6 +817,49 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         segments.length > 0 ? sanitizeJsonForPg(audioUrl ? [...segments, { type: 'audio', audioUrl }] : segments) : null,
       ]
     );
+
+    // Persist active study quiz block for deterministic next-turn evaluation
+    if (validMode === COPILOT_MODES.STUDY) {
+      try {
+        const latestQuiz = extractLastQuizBlock(finalOutput);
+        if (latestQuiz) {
+          const assistantMsgResult = await pool.query(
+            `SELECT id, created_at
+             FROM copilot_messages
+             WHERE session_id = $1 AND role = 'assistant' AND deleted_at IS NULL
+             ORDER BY created_at DESC, id DESC
+             LIMIT 1`,
+            [sessionId]
+          );
+          const assistantMessageId = assistantMsgResult.rows[0]?.id;
+          const assistantCreatedAt = assistantMsgResult.rows[0]?.created_at;
+          const studyQuizState = (sessionContext.studyQuiz && typeof sessionContext.studyQuiz === 'object')
+            ? (sessionContext.studyQuiz as Record<string, unknown>)
+            : {};
+
+          const nextActive: ActiveQuizState = {
+            quizId: buildQuizId(latestQuiz),
+            topic: latestQuiz.topic,
+            question: latestQuiz.question,
+            options: latestQuiz.options,
+            correctAnswer: latestQuiz.correctAnswer,
+            explanation: latestQuiz.explanation,
+            sourceMessageId: assistantMessageId,
+            sourceMessageAt: assistantCreatedAt ? new Date(assistantCreatedAt).toISOString() : new Date().toISOString(),
+            awaitingAnswer: true,
+          };
+
+          sessionContext.studyQuiz = {
+            ...studyQuizState,
+            activeQuiz: nextActive,
+            updatedAt: new Date().toISOString(),
+          };
+          await persistSessionContext(sessionId, sessionContext);
+        }
+      } catch (quizPersistErr: any) {
+        logger.warn('[copilot] Failed to persist study quiz context:', quizPersistErr);
+      }
+    }
 
     // Persist copilot trace (DPO analytics — non-blocking)
     const assistantMsgResult = await pool.query(
@@ -711,8 +1006,8 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
       suggestionsCache.set(cacheKey, { suggestions, timestamp: Date.now() });
     } catch {
       suggestions = mode === 'study'
-        ? ['Prépare-moi pour un entretien', 'Analyse mes compétences', 'Crée un quiz sur un sujet', 'Résume mon CV et conseille-moi']
-        : ['Offres qui matchent mon profil', 'Génère mon CV en PDF', 'Communautés dans mon secteur', 'Ajoute une compétence'];
+        ? req.t('copilot:suggestionsStudyFallback', { returnObjects: true }) as string[]
+        : req.t('copilot:suggestionsExploreFallback', { returnObjects: true }) as string[];
     }
 
     res.json({
@@ -724,7 +1019,7 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
     res.json({
       success: true,
       data: {
-        suggestions: ['Offres qui matchent mon profil', 'Génère mon CV en PDF', 'Communautés dans mon secteur', 'Analyse mes compétences'],
+        suggestions: req.t('copilot:suggestionsExploreFallback', { returnObjects: true }) as string[],
       },
     });
   }
@@ -748,7 +1043,7 @@ router.patch('/messages/:messageId/feedback', authMiddleware, async (req: AuthRe
     const { rating } = req.body;
 
     if (rating !== 1 && rating !== 3) {
-      return res.status(400).json({ error: 'rating must be 1 (thumbs down) or 3 (thumbs up)' });
+      return res.status(400).json({ error: req.t('copilot:feedbackRatingInvalid') });
     }
 
     // Verify the message belongs to the user's session
@@ -761,7 +1056,7 @@ router.patch('/messages/:messageId/feedback', authMiddleware, async (req: AuthRe
     );
 
     if (msgCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Message not found' });
+      return res.status(404).json({ error: req.t('copilot:feedbackMessageNotFound') });
     }
 
     const msg = msgCheck.rows[0];
@@ -772,10 +1067,10 @@ router.patch('/messages/:messageId/feedback', authMiddleware, async (req: AuthRe
         [msg.organization_id, talentId]
       );
       if (orgMember.rows.length === 0) {
-        return res.status(403).json({ error: 'Access denied' });
+        return res.status(403).json({ error: req.t('copilot:feedbackAccessDenied') });
       }
     } else if (msg.talent_id !== talentId) {
-      return res.status(403).json({ error: 'Access denied' });
+      return res.status(403).json({ error: req.t('copilot:feedbackAccessDenied') });
     }
 
     // Update the trace with user rating
@@ -805,7 +1100,7 @@ router.patch('/messages/:messageId/feedback', authMiddleware, async (req: AuthRe
     res.json({ success: true });
   } catch (error) {
     logger.error('Error saving feedback:', error);
-    res.status(500).json({ error: 'Failed to save feedback' });
+    res.status(500).json({ error: req.t('copilot:feedbackSaveFailed') });
   }
 });
 
@@ -826,10 +1121,10 @@ router.post('/confirm', authMiddleware, async (req: AuthRequest, res: Response) 
     const { action, entityId, sessionId, data } = req.body;
 
     if (!action || !entityId) {
-      return res.status(400).json({ error: 'action and entityId are required' });
+      return res.status(400).json({ error: req.t('copilot:confirmActionEntityRequired') });
     }
 
-    const result = await handleConfirmation(talentId, { action, entityId, sessionId, data });
+    const result = await handleConfirmation(talentId, { action, entityId, sessionId, data }, req.language);
 
     res.json({
       success: result.success,
@@ -857,7 +1152,7 @@ const voiceNoteUpload = multer({
     if (allowed.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error(`Type audio non supporté: ${file.mimetype}`));
+      cb(new Error(((req as any).t || (() => `Unsupported audio type: ${file.mimetype}`))('copilot:audioTypeNotSupported', { mimetype: file.mimetype })));
     }
   },
 });
@@ -899,7 +1194,7 @@ router.post(
       });
     } catch (error: any) {
       logger.error('Error uploading voice note:', error);
-      res.status(500).json({ error: 'Erreur lors de l\'upload de la note vocale' });
+      res.status(500).json({ error: req.t('copilot:voiceUploadError') });
     }
   }
 );
@@ -927,7 +1222,7 @@ const audioUpload = multer({
     if (AUDIO_MIME_TYPES.includes(file.mimetype as (typeof AUDIO_MIME_TYPES)[number])) {
       cb(null, true);
     } else {
-      cb(new Error(`Type audio non supporté: ${file.mimetype}. Formats acceptés: webm, mp4, m4a, mp3, wav`));
+      cb(new Error(((req as any).t || (() => `Unsupported audio type: ${file.mimetype}`))('copilot:audioTypeNotSupportedFormats', { mimetype: file.mimetype })));
     }
   },
 });
@@ -1009,7 +1304,7 @@ const copilotUpload = multer({
     if (ALLOWED_MIME_TYPES.includes(file.mimetype as (typeof ALLOWED_MIME_TYPES)[number])) {
       cb(null, true);
     } else {
-      cb(new Error(`Type de fichier non autorisé: ${file.mimetype}. Formats acceptés: PDF, JPEG, PNG, WebP, HEIC`));
+      cb(new Error(((req as any).t || (() => `File type not allowed: ${file.mimetype}`))('copilot:fileTypeNotAllowedFormats', { mimetype: file.mimetype })));
     }
   },
 });
@@ -1039,7 +1334,7 @@ router.post(
 
       if (files.length > DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST) {
         return res.status(400).json({
-          error: `Maximum ${DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST} fichiers par requête`,
+          error: req.t('documents:maxFilesPerRequest', { count: DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST }),
         });
       }
 
@@ -1055,7 +1350,7 @@ router.post(
 
       if (limitCheck.currentCount + files.length > limitCheck.maxCount) {
         return res.status(400).json({
-          error: `Vous ne pouvez ajouter que ${limitCheck.maxCount - limitCheck.currentCount} document(s) supplémentaire(s). Limite: ${limitCheck.maxCount}.`,
+          error: req.t('documents:maxDocumentsExceeded', { remaining: limitCheck.maxCount - limitCheck.currentCount, max: limitCheck.maxCount }),
         });
       }
 
@@ -1125,8 +1420,8 @@ router.post(
         data: {
           documents: uploadedDocuments,
           message: uploadedDocuments.length === 1
-            ? 'Document ajouté et en cours de traitement.'
-            : `${uploadedDocuments.length} documents ajoutés et en cours de traitement.`,
+            ? req.t('copilot:attachmentSuccess')
+            : req.t('copilot:attachmentMultipleSuccess', { count: uploadedDocuments.length }),
         },
       });
     } catch (error) {
@@ -1187,7 +1482,7 @@ router.post('/sessions', authMiddleware, async (req: AuthRequest, res: Response)
       : COPILOT_MODES.EXPLORE;
 
     if (validMode === COPILOT_MODES.ORG && !organizationId) {
-      return res.status(400).json({ error: 'organizationId is required for org mode' });
+      return res.status(400).json({ error: req.t('copilot:orgIdRequired') });
     }
 
     const session = await copilotService.createSession(talentId, validMode, organizationId);

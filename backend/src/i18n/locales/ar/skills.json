@@ -1,0 +1,11 @@
+{
+  "fetchError": "خطأ أثناء تحميل المهارات",
+  "invalidProficiencyLevel": "مستوى الكفاءة غير صالح",
+  "skillNameRequired": "skillName مطلوب",
+  "skillTypeRequired": "نوع المهارة مطلوب (KNOWLEDGE، HARD_SKILL، SOFT_SKILL)",
+  "addError": "خطأ أثناء إضافة المهارة",
+  "updateError": "خطأ أثناء التحديث",
+  "notFound": "المهارة غير موجودة",
+  "deleteError": "خطأ أثناء الحذف",
+  "mergeError": "خطأ أثناء دمج المهارات"
+}

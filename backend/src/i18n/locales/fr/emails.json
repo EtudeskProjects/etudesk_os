@@ -32,7 +32,7 @@
       "ADMIN": "Administrateur",
       "MANAGER": "Manager",
       "MEMBER": "Membre",
-      "OBSERVATEUR": "Observateur"
+      "OBSERVER": "Observateur"
     }
   },
   "communityInvite": {

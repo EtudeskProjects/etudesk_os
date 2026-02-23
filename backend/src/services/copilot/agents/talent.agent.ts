@@ -30,7 +30,7 @@ export function createTalentAgent(
   );
 
   // Create SQL tool with authenticated talentId (SECURITY: prevents IDOR)
-  const secureSqlTool = createSqlQueryTool(context.profile.id, authorizedOrgIds);
+  const secureSqlTool = createSqlQueryTool(context.profile.id, authorizedOrgIds, undefined, context.language);
 
   // Direct file reader tool (no sub-agent)
   const fileReaderTool = createFileReaderTool(context.profile.id);
@@ -44,7 +44,8 @@ export function createTalentAgent(
     const studySqlTool = createSqlQueryTool(
       context.profile.id,
       authorizedOrgIds,
-      ['my_profile', 'my_triggers', 'my_community_feed', 'my_community_members'] as const
+      ['my_profile', 'my_triggers', 'my_community_feed', 'my_community_members'] as const,
+      context.language
     );
     tools = [
       studySqlTool,
@@ -54,8 +55,8 @@ export function createTalentAgent(
       generateDiagramTool,
       fileReaderTool,
       webSearchAsTool,
-      createManageSkillsTool(context.profile.id),
-      createExecuteActionTool(context.profile.id),
+      createManageSkillsTool(context.profile.id, context.language),
+      createExecuteActionTool(context.profile.id, context.language),
     ];
     instructions = buildTalentStudyPrompt(context);
   } else {
@@ -63,10 +64,10 @@ export function createTalentAgent(
     tools = [
       smartSearchTool,
       secureSqlTool,
-      createGenerateDocumentTool(context.profile.id, context.profile.avatarUrl),
+      createGenerateDocumentTool(context.profile.id, context.profile.avatarUrl, undefined, context.language),
       fileReaderTool,
       webSearchAsTool,
-      createExecuteActionTool(context.profile.id),
+      createExecuteActionTool(context.profile.id, context.language),
     ];
     instructions = buildTalentExplorerPrompt(context);
   }

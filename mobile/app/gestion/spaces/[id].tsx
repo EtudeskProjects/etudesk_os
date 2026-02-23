@@ -174,7 +174,7 @@ export default function SpaceBookingsManagementScreen() {
 
 	    return (
 	      <SelectCard
-	        accessibilityLabel="Voir la réservation"
+	        accessibilityLabel={t('common.viewBooking')}
 	        style={[styles.bookingCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
 	        onPress={() => router.push(`/gestion/spaces/bookings/details/${item.id}` as any)}
 	      >
@@ -301,12 +301,12 @@ export default function SpaceBookingsManagementScreen() {
       <IconButton
         onPress={() => router.push(`/gestion/spaces/invitations/${id}` as any)}
         icon={<UserPlus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-        accessibilityLabel="Invitations"
+        accessibilityLabel={t('common.invitations')}
       />
       <IconButton
         onPress={() => router.push(`/settings/organization/edit-space/${id}` as any)}
         icon={<Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-        accessibilityLabel="Modifier"
+        accessibilityLabel={t('common.edit')}
       />
     </View>
   );

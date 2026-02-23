@@ -46,10 +46,42 @@ export const CRON_INTERVALS = {
 
 // --- Subscription / Payment ---
 
+export const SUPPORTED_CURRENCIES = ['XOF', 'USD'] as const;
+export type SupportedCurrency = typeof SUPPORTED_CURRENCIES[number];
+
+export const CURRENCY_CONFIG: Record<SupportedCurrency, {
+  minTalent: number;
+  minOrg: number;
+  label: string;
+  creditsPerUnit: number;
+  paystackCurrency: string;
+}> = {
+  XOF: { minTalent: 2000, minOrg: 10000, label: 'FCFA', creditsPerUnit: 0.01, paystackCurrency: 'XOF' },
+  USD: { minTalent: 5, minOrg: 20, label: 'USD', creditsPerUnit: 0.5, paystackCurrency: 'USD' },
+} as const;
+
+export const CREDIT_PACKS_USD = [
+  { name: 'Starter', amount: 5, credits: 25, bonus: 0 },
+  { name: 'Pro', amount: 15, credits: 85, bonus: 10 },
+  { name: 'Business', amount: 30, credits: 180, bonus: 20 },
+  { name: 'Enterprise', amount: 50, credits: 320, bonus: 28 },
+] as const;
+
+export const CREDIT_PACKS_XOF = [
+  { name: 'Starter', amount: 2000, credits: 20, bonus: 0 },
+  { name: 'Pro', amount: 5000, credits: 55, bonus: 10 },
+  { name: 'Business', amount: 10000, credits: 120, bonus: 20 },
+  { name: 'Enterprise', amount: 25000, credits: 320, bonus: 28 },
+] as const;
+
+export function isSupportedCurrency(value: unknown): value is SupportedCurrency {
+  return typeof value === 'string' && SUPPORTED_CURRENCIES.includes(value as SupportedCurrency);
+}
+
 export const SUBSCRIPTION = {
   MAX_RETRY_COUNT: 3,
   TRIAL_PERIOD_OPTIONS: [0, 1, 3, 7, 30] as const,
-  DEFAULT_CURRENCY: 'XOF',
+  DEFAULT_CURRENCY: 'XOF' as SupportedCurrency,
   NOTIFICATION_DAYS_BEFORE_EXPIRY: 7,
   OLD_NOTIFICATIONS_DAYS: 90,
 } as const;

@@ -47,7 +47,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 	import { applicationService, applicationMessageService } from '../../../../../src/services';
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import type { Application, ApplicationMessage, ApplicationStatus } from '../../../../../src/types/models';
-import { APPLICATION_STATUS_LABELS } from '../../../../../src/types/models';
+import { getApplicationStatusLabel } from '../../../../../src/types/models';
 import { useAlert } from '../../../../../src/contexts/AlertContext';
 
 // Status configuration - colors are set dynamically using theme colors
@@ -250,7 +250,7 @@ export default function ApplicationOrgDetailsScreen() {
       await applicationService.updateStatus(application.id, newStatus);
       setApplication((prev) => prev ? { ...prev, status: newStatus } : null);
       setShowStatusPicker(false);
-      void alerts.alert(t('common.success'), t('applicationDetail.statusUpdated', { status: APPLICATION_STATUS_LABELS[newStatus] }));
+      void alerts.alert(t('common.success'), t('applicationDetail.statusUpdated', { status: getApplicationStatusLabel(newStatus) }));
     } catch (error: any) {
       void alerts.alert(t('common.error'), error.error || t('applicationDetail.statusUpdateError'));
     }
@@ -831,13 +831,13 @@ export default function ApplicationOrgDetailsScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
         <View style={styles.headerContent}>
           <View style={[styles.statusBadge, { backgroundColor: withOpacity(statusConfig.color, OPACITY[15]) }]}>
             <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {APPLICATION_STATUS_LABELS[application.status]}
+              {getApplicationStatusLabel(application.status)}
             </Text>
           </View>
         </View>
@@ -890,7 +890,7 @@ export default function ApplicationOrgDetailsScreen() {
 	                <IconButton
 	                  onPress={() => setShowCVViewer(false)}
 	                  icon={<X size={24} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                  accessibilityLabel="Fermer"
+	                  accessibilityLabel={t('common.close')}
 	                  size="sm"
 	                  variant="ghost"
 	                  style={styles.cvModalCloseButton}

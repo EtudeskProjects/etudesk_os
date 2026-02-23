@@ -7,9 +7,9 @@
   "noFileProvided": "Aucun fichier fourni",
   "invalidDocType": "Type de document invalide",
   "uploadError": "Erreur lors de l'upload du document",
-  "updated": "Document mis à jour",
+  "updated": "Document mis à jour avec succès",
   "updateError": "Erreur lors de la mise à jour du document",
-  "deleted": "Document supprimé",
+  "deleted": "Document supprimé avec succès",
   "deleteError": "Erreur lors de la suppression du document",
   "extractionRestarted": "Extraction relancée"
 }

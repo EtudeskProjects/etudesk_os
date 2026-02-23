@@ -120,7 +120,7 @@ export const analyzeYoutubeVideoTool = defineTool({
       .string()
       .optional()
       .describe('Topic focus for relevance comparison'),
-    language: z.enum(['fr', 'en']).default('fr'),
+    language: z.enum(['fr', 'en', 'es', 'ar', 'it', 'de', 'zh']).default('fr'),
   }),
   execute: async ({ urls, focusTopics, language }) => {
     const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || '';

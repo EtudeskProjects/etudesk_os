@@ -28,13 +28,14 @@ import { formatRelativeTime } from '../../../../src/utils/date';
 import { getFullImageUrl } from '../../../../src/utils/image';
 import type { Community } from '../../../../src/types/models';
 import { useAlert } from '../../../../src/contexts/AlertContext';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 
 // Status configuration - colors will be resolved dynamically using theme
 const STATUS_CONFIG: Record<MemberStatus, { colorKey: 'warning' | 'success' | 'error' | 'gray500'; icon: typeof Clock; label: string }> = {
-  PENDING: { colorKey: 'warning', icon: Clock, label: 'En attente' },
-  ACTIVE: { colorKey: 'success', icon: CheckCircle2, label: 'Actif' },
-  REJECTED: { colorKey: 'error', icon: XCircle, label: 'Refusé' },
-  SUSPENDED: { colorKey: 'gray500', icon: UserX, label: 'Suspendu' },
+  PENDING: { colorKey: 'warning', icon: Clock, label: 'gestion.membersList.statusPending' },
+  ACTIVE: { colorKey: 'success', icon: CheckCircle2, label: 'gestion.membersList.statusActive' },
+  REJECTED: { colorKey: 'error', icon: XCircle, label: 'gestion.membersList.statusRejected' },
+  SUSPENDED: { colorKey: 'gray500', icon: UserX, label: 'gestion.membersList.statusSuspended' },
 };
 
 type FilterStatus = 'all' | MemberStatus;
@@ -43,6 +44,7 @@ export default function CommunityMembersScreen() {
   const { id: communityId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [community, setCommunity] = useState<Community | null>(null);
   const [members, setMembers] = useState<CommunityMember[]>([]);
@@ -72,7 +74,7 @@ export default function CommunityMembersScreen() {
       setStatusCounts(membersResponse.data?.statusCounts || {});
     } catch (error: any) {
       if (__DEV__) console.error('Error loading data:', error);
-      void alerts.alert('Erreur', error?.error || 'Impossible de charger les membres.');
+      void alerts.alert(t('common.error'), error?.error || t('gestion.members.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -102,15 +104,15 @@ export default function CommunityMembersScreen() {
       // Update counts
       handleRefresh();
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.members.statusUpdateError'));
     }
   };
 
   const handleAccept = (membershipId: string) => {
-    void alerts.showAlert({ title: 'Accepter la demande', message: 'Voulez-vous accepter cette demande d\'adhésion ?', buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('gestion.membersList.acceptRequestTitle'), message: t('gestion.membersList.acceptRequestConfirm'), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Accepter',
+          text: t('gestion.membersList.accept'),
           onPress: () => handleUpdateStatus(membershipId, 'ACTIVE'),
         },
       ] });
@@ -119,9 +121,9 @@ export default function CommunityMembersScreen() {
   const handleReject = (membershipId: string) => {
     void (async () => {
       const reason = await alerts.prompt(
-        'Refuser la demande',
-        'Indiquez une raison (optionnel) :',
-        { placeholder: 'Raison (optionnel)', confirmText: 'Refuser', cancelText: 'Annuler' }
+        t('gestion.membersList.rejectRequestTitle'),
+        t('gestion.membersList.rejectRequestMessage'),
+        { placeholder: t('gestion.membersList.rejectReasonPlaceholder'), confirmText: t('gestion.membersList.reject'), cancelText: t('common.cancel') }
       );
       if (reason === null) return;
       await handleUpdateStatus(membershipId, 'REJECTED', reason || undefined);
@@ -129,10 +131,10 @@ export default function CommunityMembersScreen() {
   };
 
   const handleDelete = (member: CommunityMember) => {
-    void alerts.showAlert({ title: 'Supprimer le membre', message: `Êtes-vous sûr de vouloir supprimer ${member.talent?.display_name || 'ce membre'} ? Cette action permettra à la personne de postuler à nouveau.`, buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('gestion.membersList.deleteTitle'), message: t('gestion.membersList.deleteConfirm', { name: member.talent?.display_name || t('gestion.memberDetails.thisMember') }), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -140,7 +142,7 @@ export default function CommunityMembersScreen() {
               setMembers((prev) => prev.filter((m) => m.id !== member.id));
               handleRefresh();
             } catch (error: any) {
-              void alerts.alert('Erreur', error.error || 'Impossible de supprimer le membre.');
+              void alerts.alert(t('common.error'), error.error || t('gestion.members.removeError'));
             }
           },
         },
@@ -186,8 +188,8 @@ export default function CommunityMembersScreen() {
     const talent = item.talent;
 
 	    return (
-	      <SelectCard
-	        accessibilityLabel="Voir le membre"
+		      <SelectCard
+		        accessibilityLabel={t('gestion.membersList.viewMember')}
 	        style={[styles.memberCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
 	        onPress={() => router.push(`/settings/organization/community-members/details/${item.id}` as any)}
 	      >
@@ -210,7 +212,7 @@ export default function CommunityMembersScreen() {
           <View style={styles.talentInfo}>
             <View style={styles.nameRow}>
               <Text style={[styles.talentName, { color: colors.textPrimary }]} numberOfLines={1}>
-                {talent?.display_name || `${talent?.first_name} ${talent?.last_name}` || 'Membre'}
+                {talent?.display_name || `${talent?.first_name} ${talent?.last_name}` || t('gestion.memberDetails.thisMember')}
               </Text>
               {item.rating && (
                 <View style={styles.ratingBadge}>
@@ -238,7 +240,7 @@ export default function CommunityMembersScreen() {
         {item.status === 'PENDING' && (
           <View style={styles.quickActions}>
             <Button
-              title="Accepter"
+              title={t('gestion.membersList.accept')}
               size="sm"
               variant="secondary"
               onPress={() => handleAccept(item.id)}
@@ -247,7 +249,7 @@ export default function CommunityMembersScreen() {
               icon={<CheckCircle2 size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />}
             />
             <Button
-              title="Refuser"
+              title={t('gestion.membersList.reject')}
               size="sm"
               variant="secondary"
               onPress={() => handleReject(item.id)}
@@ -262,16 +264,16 @@ export default function CommunityMembersScreen() {
 	  };
 
   const emptySubtitle = filter === 'all'
-    ? 'Cette communauté n\'a pas encore de membres.'
+    ? t('gestion.membersList.noMembersDesc')
     : filter === 'PENDING'
-      ? 'Aucune demande en attente.'
-      : 'Aucun membre avec ce statut.';
+      ? t('gestion.membersList.noPendingDesc')
+      : t('gestion.membersList.noResultsDesc');
 
   const filterChips = [
-    { key: 'all' as FilterStatus, label: 'Tous', count: localStatusCounts.all || 0 },
-    { key: 'PENDING' as FilterStatus, label: 'En attente', count: localStatusCounts['PENDING'] || 0 },
-    { key: 'ACTIVE' as FilterStatus, label: 'Actifs', count: localStatusCounts['ACTIVE'] || 0 },
-    { key: 'REJECTED' as FilterStatus, label: 'Refusés', count: localStatusCounts['REJECTED'] || 0 },
+    { key: 'all' as FilterStatus, label: t('gestion.membersList.filterAll'), count: localStatusCounts.all || 0 },
+    { key: 'PENDING' as FilterStatus, label: t('gestion.membersList.filterPending'), count: localStatusCounts['PENDING'] || 0 },
+    { key: 'ACTIVE' as FilterStatus, label: t('gestion.membersList.filterActive'), count: localStatusCounts['ACTIVE'] || 0 },
+    { key: 'REJECTED' as FilterStatus, label: t('gestion.membersList.filterRejected'), count: localStatusCounts['REJECTED'] || 0 },
   ];
 
   const headerContent = (
@@ -307,22 +309,22 @@ export default function CommunityMembersScreen() {
 
 	  const rightAction = (
 	    <View style={styles.headerActions}>
-	      <IconButton
-	        onPress={handleInvite}
-	        icon={<UserPlus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-	        accessibilityLabel="Inviter"
-	      />
-	      <IconButton
-	        onPress={handleEdit}
-	        icon={<Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-	        accessibilityLabel="Modifier"
-	      />
+		      <IconButton
+		        onPress={handleInvite}
+		        icon={<UserPlus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+		        accessibilityLabel={t('gestion.invitations.inviteMember')}
+		      />
+		      <IconButton
+		        onPress={handleEdit}
+		        icon={<Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
+		        accessibilityLabel={t('common.edit')}
+		      />
 	    </View>
 	  );
 
   return (
     <PageLayout
-      title="Gestion des adhésions"
+      title={t('gestion.membersList.managementTitle')}
       onRefresh={handleRefresh}
       isRefreshing={isRefreshing}
       isLoading={isLoading}
@@ -343,7 +345,7 @@ export default function CommunityMembersScreen() {
         ListEmptyComponent={
           <EmptyState
             icon={Inbox}
-            title={filter === 'all' ? 'Aucun membre' : 'Aucun résultat'}
+            title={filter === 'all' ? t('gestion.membersList.noMembers') : t('gestion.membersList.noResults')}
             subtitle={emptySubtitle}
           />
         }

@@ -41,24 +41,26 @@ import {
 } from '../../../../src/services/communityInvitationService';
 import { useAlert } from '../../../../src/contexts/AlertContext';
 import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 
 const STATUS_TABS: { key: InvitationStatus | 'ALL'; label: string }[] = [
-  { key: 'ALL', label: 'Toutes' },
-  { key: 'PENDING', label: 'En attente' },
-  { key: 'ACCEPTED', label: 'Acceptées' },
-  { key: 'DECLINED', label: 'Refusées' },
-  { key: 'EXPIRED', label: 'Expirées' },
+  { key: 'ALL', label: 'gestion.invitations.filterAll' },
+  { key: 'PENDING', label: 'gestion.invitations.filterPending' },
+  { key: 'ACCEPTED', label: 'gestion.invitations.statusAccepted' },
+  { key: 'DECLINED', label: 'gestion.invitations.statusDeclined' },
+  { key: 'EXPIRED', label: 'gestion.invitations.statusExpired' },
 ];
 
 const ROLE_OPTIONS: { key: InvitationRole; label: string }[] = [
-  { key: 'MEMBER', label: 'Membre' },
-  { key: 'ADMIN', label: 'Administrateur' },
+  { key: 'MEMBER', label: 'gestion.invitations.roleMember' },
+  { key: 'ADMIN', label: 'gestion.invitations.roleAdmin' },
 ];
 
 export default function CommunityInvitationsScreen() {
   const { communityId } = useLocalSearchParams<{ communityId: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [invitations, setInvitations] = useState<CommunityInvitation[]>([]);
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
@@ -106,7 +108,7 @@ export default function CommunityInvitationsScreen() {
 
   const handleSendInvitation = async () => {
     if (!inviteEmail || !inviteEmail.includes('@')) {
-      void alerts.alert('Erreur', 'Veuillez entrer une adresse email valide');
+      void alerts.alert(t('common.error'), t('gestion.invitations.invalidEmail'));
       return;
     }
 
@@ -123,16 +125,16 @@ export default function CommunityInvitationsScreen() {
 
       if (response.data) {
         if (response.data.sent > 0) {
-          void alerts.alert('Succès', `Invitation envoyée à ${inviteEmail}`);
+          void alerts.alert(t('common.success'), t('gestion.invitations.sentTo', { email: inviteEmail }));
           setShowInviteModal(false);
           resetInviteForm();
           fetchInvitations();
         } else if (response.data.errors.length > 0) {
-          void alerts.alert('Erreur', response.data.errors[0].error);
+          void alerts.alert(t('common.error'), response.data.errors[0].error);
         }
       }
     } catch (error: any) {
-      void alerts.alert('Erreur', error.message || 'Impossible d\'envoyer l\'invitation');
+      void alerts.alert(t('common.error'), error.message || t('gestion.invitations.sendError'));
     } finally {
       setIsSending(false);
     }
@@ -149,20 +151,20 @@ export default function CommunityInvitationsScreen() {
     setProcessingId(invitation.id);
     try {
       await communityInvitationService.resendInvitation(communityId!, invitation.id);
-      void alerts.alert('Succès', 'Invitation renvoyée');
+      void alerts.alert(t('common.success'), t('gestion.invitations.resendSuccess'));
       fetchInvitations();
     } catch (error: any) {
-      void alerts.alert('Erreur', error.message || 'Impossible de renvoyer l\'invitation');
+      void alerts.alert(t('common.error'), error.message || t('gestion.invitations.resendError'));
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleCancel = async (invitation: CommunityInvitation) => {
-    void alerts.showAlert({ title: 'Annuler l\'invitation', message: `Voulez-vous vraiment annuler l'invitation à ${invitation.invitee_email}?`, buttons: [
-        { text: 'Non', style: 'cancel' },
+    void alerts.showAlert({ title: t('gestion.invitations.cancelInvitation'), message: t('gestion.invitations.cancelInvitationMessage', { email: invitation.invitee_email }), buttons: [
+        { text: t('common.no'), style: 'cancel' },
         {
-          text: 'Oui, annuler',
+          text: t('gestion.invitations.cancelYes'),
           style: 'destructive',
           onPress: async () => {
             setProcessingId(invitation.id);
@@ -170,7 +172,7 @@ export default function CommunityInvitationsScreen() {
               await communityInvitationService.cancelInvitation(communityId!, invitation.id);
               setInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
             } catch (error: any) {
-              void alerts.alert('Erreur', error.message || 'Impossible d\'annuler l\'invitation');
+              void alerts.alert(t('common.error'), error.message || t('gestion.invitations.cancelError'));
             } finally {
               setProcessingId(null);
             }
@@ -209,15 +211,15 @@ export default function CommunityInvitationsScreen() {
   const getStatusLabel = (status: InvitationStatus) => {
     switch (status) {
       case 'PENDING':
-        return 'En attente';
+        return t('gestion.invitations.pending');
       case 'ACCEPTED':
-        return 'Acceptée';
+        return t('gestion.invitations.statusAccepted');
       case 'DECLINED':
-        return 'Refusée';
+        return t('gestion.invitations.statusDeclined');
       case 'EXPIRED':
-        return 'Expirée';
+        return t('gestion.invitations.statusExpired');
       case 'CANCELLED':
-        return 'Annulée';
+        return t('gestion.invitations.statusCancelled');
       default:
         return status;
     }
@@ -226,9 +228,9 @@ export default function CommunityInvitationsScreen() {
   const getRoleLabel = (role: InvitationRole) => {
     switch (role) {
       case 'ADMIN':
-        return 'Administrateur';
+        return t('gestion.invitations.roleAdmin');
       case 'MEMBER':
-        return 'Membre';
+        return t('gestion.invitations.roleMember');
       default:
         return role;
     }
@@ -250,14 +252,14 @@ export default function CommunityInvitationsScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Invitations</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('gestion.invitations.title')}</Text>
         <IconButton
           variant="filled"
           onPress={() => setShowInviteModal(true)}
           icon={<Plus size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Envoyer une invitation"
+          accessibilityLabel={t('gestion.invitations.sendInvitation')}
           style={{ backgroundColor: colors.primary }}
         />
       </View>
@@ -279,7 +281,7 @@ export default function CommunityInvitationsScreen() {
 	            <Chip
 	              key={tab.key}
 	              onPress={() => setActiveStatus(tab.key)}
-	              label={count > 0 ? `${tab.label} (${count})` : tab.label}
+	              label={count > 0 ? `${t(tab.label)} (${count})` : t(tab.label)}
 	              selected={isActive}
 	              style={[
 	                styles.tab,
@@ -299,13 +301,13 @@ export default function CommunityInvitationsScreen() {
         <View style={styles.emptyContainer}>
           <Mail size={48} color={colors.gray300} strokeWidth={1.5} />
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            Aucune invitation
+            {t('gestion.invitations.noInvitations')}
           </Text>
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            Envoyez des invitations pour ajouter des membres
+            {t('gestion.invitations.noInvitationsDesc')}
           </Text>
           <Button
-            title="Envoyer une invitation"
+            title={t('gestion.invitations.sendInvitation')}
             onPress={() => setShowInviteModal(true)}
             variant="primary"
             icon={<Plus size={18} color={colors.textOnPrimary} />}
@@ -358,14 +360,14 @@ export default function CommunityInvitationsScreen() {
                   <View style={styles.detailRow}>
                     <Clock size={14} color={colors.textSecondary} />
                     <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                      Envoyée le {formatDate(invitation.sent_at)}
+                      {t('gestion.invitations.sentOn', { date: formatDate(invitation.sent_at) })}
                     </Text>
                   </View>
                   {invitation.responded_at && (
                     <View style={styles.detailRow}>
                       <Check size={14} color={colors.textSecondary} />
                       <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                        Répondue le {formatDate(invitation.responded_at)}
+                        {t('gestion.invitations.respondedOn', { date: formatDate(invitation.responded_at) })}
                       </Text>
                     </View>
                   )}
@@ -374,7 +376,7 @@ export default function CommunityInvitationsScreen() {
 	                {invitation.status === 'PENDING' && (
 	                  <View style={[styles.cardActions, { borderTopColor: colors.borderColor }]}>
 	                    <Button
-	                      title="Renvoyer"
+	                      title={t('gestion.invitations.resend')}
 	                      onPress={() => handleResend(invitation)}
 	                      disabled={isProcessing}
 	                      loading={isProcessing}
@@ -386,7 +388,7 @@ export default function CommunityInvitationsScreen() {
 	                    />
 	
 	                    <Button
-	                      title="Annuler"
+	                      title={t('common.cancel')}
 	                      onPress={() => handleCancel(invitation)}
 	                      disabled={isProcessing}
 	                      variant="outline"
@@ -413,12 +415,12 @@ export default function CommunityInvitationsScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
 	            <View style={[styles.modalHeader, { borderBottomColor: colors.borderColor }]}>
 	              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-	                Inviter un membre
+	                {t('gestion.invitations.inviteMember')}
 	              </Text>
 	              <IconButton
 	                onPress={() => setShowInviteModal(false)}
 	                icon={<X size={24} color={colors.textSecondary} />}
-	                accessibilityLabel="Fermer"
+	                accessibilityLabel={t('common.close')}
 	                size="sm"
 	                variant="ghost"
 	              />
@@ -433,10 +435,10 @@ export default function CommunityInvitationsScreen() {
 	            >
               {/* Email */}
               <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>
-                Email <Text style={{ color: colors.error }}>*</Text>
+                {t('gestion.invitations.email')} <Text style={{ color: colors.error }}>*</Text>
               </Text>
 	              <Input
-	                placeholder="email@exemple.com"
+	                placeholder={t('gestion.invitations.emailPlaceholder')}
 	                value={inviteEmail}
 	                onChangeText={setInviteEmail}
 	                keyboardType="email-address"
@@ -447,9 +449,9 @@ export default function CommunityInvitationsScreen() {
 	              />
 
               {/* Name */}
-              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Nom (optionnel)</Text>
+              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>{t('gestion.invitations.nameOptional')}</Text>
 	              <Input
-	                placeholder="Prénom Nom"
+	                placeholder={t('gestion.invitations.namePlaceholder')}
 	                value={inviteName}
 	                onChangeText={setInviteName}
 	                inputContainerStyle={[{ backgroundColor: colors.gray100, borderColor: 'transparent', borderWidth: 0 }, styles.input]}
@@ -457,14 +459,14 @@ export default function CommunityInvitationsScreen() {
 	              />
 
               {/* Role */}
-	              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Rôle</Text>
+	              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>{t('gestion.invitations.role')}</Text>
 	              <View style={styles.roleOptions}>
 	                {ROLE_OPTIONS.map((option) => (
 	                  <RadioRow
 	                    key={option.key}
 	                    onPress={() => setInviteRole(option.key)}
 	                    selected={inviteRole === option.key}
-	                    title={option.label}
+	                    title={t(option.label)}
 	                    style={[
 	                      styles.roleOption,
 	                      {
@@ -482,9 +484,9 @@ export default function CommunityInvitationsScreen() {
 	              </View>
 
               {/* Message */}
-              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Message personnel (optionnel)</Text>
+              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>{t('gestion.invitations.personalMessage')}</Text>
 	              <FormTextArea
-	                placeholder="Ajoutez un message personnalisé..."
+	                placeholder={t('gestion.invitations.personalMessagePlaceholder')}
 	                value={inviteMessage}
 	                onChangeText={setInviteMessage}
 	                rows={3}
@@ -495,7 +497,7 @@ export default function CommunityInvitationsScreen() {
 
             <View style={[styles.modalFooter, { borderTopColor: colors.borderColor }]}>
               <Button
-                title="Annuler"
+                title={t('common.cancel')}
                 onPress={() => {
                   setShowInviteModal(false);
                   resetInviteForm();
@@ -504,7 +506,7 @@ export default function CommunityInvitationsScreen() {
                 style={{ flex: 1 }}
               />
               <Button
-                title="Envoyer"
+                title={t('gestion.invitations.send')}
                 onPress={handleSendInvitation}
                 variant="primary"
                 loading={isSending}

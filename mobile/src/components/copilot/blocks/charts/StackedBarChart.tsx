@@ -6,6 +6,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER } from '../../../../constants/theme';
+import { getLabelDirect } from '../../../../utils/labels';
 
 interface Segment {
   key: string;
@@ -46,7 +47,7 @@ export const StackedBarChart: React.FC<StackedBarChartProps> = ({ title, data })
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
         <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textTertiary }}>
-          Aucune donnée disponible
+          {getLabelDirect('noData')}
         </Text>
       </View>
     );

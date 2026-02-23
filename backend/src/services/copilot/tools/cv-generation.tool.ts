@@ -7,6 +7,7 @@ import { createFileReaderTool } from './file-read.tool';
 import { createGenerateDocumentTool } from './generate-document.tool';
 import { logger } from '../../../utils';
 import { MODEL_AGENT } from '../../ai/models';
+import { i18next } from '../../../i18n';
 
 const CV_GENERATION_INSTRUCTIONS = `
 # CV Generation Workflow
@@ -55,7 +56,7 @@ Return a professional summary of what you did and include the entity block for t
 /**
  * Executes the CV Generation sub-agent via Claude.
  */
-export function createCvGenerationTool(talentId: string, avatarUrl?: string): ToolDefinition {
+export function createCvGenerationTool(talentId: string, avatarUrl?: string, language?: string): ToolDefinition {
     return defineTool({
         name: 'generate_cv',
         description: 'Generates or updates a professional CV for the talent. Call this tool when the user asks to create, generate, or update their CV.',
@@ -70,9 +71,9 @@ export function createCvGenerationTool(talentId: string, avatarUrl?: string): To
             try {
                 const anthropic = getAnthropicClient();
 
-                const sqlTool = createSqlQueryTool(talentId);
+                const sqlTool = createSqlQueryTool(talentId, undefined, undefined, language);
                 const fileReaderTool = createFileReaderTool(talentId);
-                const genDocTool = createGenerateDocumentTool(talentId, avatarUrl);
+                const genDocTool = createGenerateDocumentTool(talentId, avatarUrl, undefined, language);
 
                 const availableTools = [sqlTool, fileReaderTool, genDocTool];
                 const tDefs = availableTools.map((t) => t.definition);
@@ -118,7 +119,7 @@ export function createCvGenerationTool(talentId: string, avatarUrl?: string): To
                                     toolResults.push({
                                         type: 'tool_result',
                                         tool_use_id: block.id,
-                                        content: JSON.stringify({ error: `Tool "${block.name}" not available` }),
+                                        content: JSON.stringify({ error: i18next.t('copilot:toolNotAvailable', { lng: language, tool: block.name }) }),
                                         is_error: true,
                                     });
                                 }
@@ -135,11 +136,11 @@ export function createCvGenerationTool(talentId: string, avatarUrl?: string): To
                     }
                 }
 
-                return { success: false, error: 'Sub-agent loop reached maximum iterations without completing.' };
+                return { success: false, error: i18next.t('copilot:toolSubAgentMaxIterations', { lng: language }) };
             } catch (error: any) {
                 if (error.name === 'AbortError' || abortController.signal.aborted) {
                     logger.warn(`[cv_generation] Timeout after ${CV_TIMEOUT_MS}ms for talent ${talentId}`);
-                    return { success: false, error: 'La génération du CV a pris trop de temps. Réessaie.' };
+                    return { success: false, error: i18next.t('copilot:toolCvTimeout', { lng: language }) };
                 }
                 logger.error(`[cv_generation] Fatal error: ${error.message}`);
                 return { success: false, error: error.message };

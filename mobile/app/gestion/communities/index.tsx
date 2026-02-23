@@ -20,6 +20,7 @@ import { Button, FooterNav, IconButton, Tap, LoadingShimmer } from '../../../src
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useAlert } from '../../../src/contexts/AlertContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { communityService } from '../../../src/services';
 import { Community } from '../../../src/types/models';
 
@@ -28,6 +29,7 @@ export default function CommunitiesListScreen() {
   const { colors } = useTheme();
   const { confirm, success } = useAlert();
   const { selectedOrg } = useSpace();
+  const { t } = useI18n();
 
   const [communities, setCommunities] = useState<Community[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,14 +73,14 @@ export default function CommunitiesListScreen() {
 
   const handleDelete = async (id: string, name: string) => {
     const confirmed = await confirm(
-      'Supprimer cette communauté ?',
-      `"${name}" sera supprimée définitivement.`
+      t('gestion.communities.deleteConfirm'),
+      t('gestion.communities.deleteMessage', { name })
     );
     if (confirmed) {
       try {
         await communityService.delete(id);
         setCommunities(prev => prev.filter(c => c.id !== id));
-        success('Supprimé', 'La communauté a été supprimée.');
+        success(t('gestion.communities.deleted'), t('gestion.communities.deletedMessage'));
       } catch (error) {
         if (__DEV__) console.error('Error deleting community:', error);
       }
@@ -115,17 +117,17 @@ export default function CommunitiesListScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
         <View style={styles.headerCenter}>
           <Users size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Communautés</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('gestion.communities.title')}</Text>
         </View>
         <IconButton
           variant="filled"
           onPress={() => router.push('/settings/organization/create-community' as any)}
           icon={<Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Créer une communauté"
+          accessibilityLabel={t('gestion.communities.create')}
           style={{ backgroundColor: colors.primary }}
         />
       </View>
@@ -156,13 +158,13 @@ export default function CommunitiesListScreen() {
                 <Users size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
               </View>
               <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-                Aucune communauté
+                {t('gestion.communities.noCommunities')}
               </Text>
               <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-                Créez votre première communauté pour rassembler des membres.
+                {t('gestion.communities.noCommunitiesDesc')}
               </Text>
               <Button
-                title="Créer une communauté"
+                title={t('gestion.communities.create')}
                 onPress={() => router.push('/settings/organization/create-community' as any)}
                 icon={<Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
               />

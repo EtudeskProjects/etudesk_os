@@ -9,37 +9,22 @@ import { getContextForPrompt } from '../context';
 import { getOntologyForStudy } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
 import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
-import { getActiveSkillBlock, getChartRulesBlock } from './prompt-shared';
+import { getActiveSkillBlock, getChartRulesBlock, getLanguageInstructions as getBaseLanguageInstructions, PromptLanguage } from './prompt-shared';
 
-/** Get language-specific instructions for the prompt */
-function getLanguageInstructions(language?: 'fr' | 'en') {
-   if (language === 'en') {
-      return {
-         languageBlock: `# RESPONSE LANGUAGE — ABSOLUTE RULE
+/** Get language-specific instructions for the study prompt (extends shared base) */
+function getLanguageInstructions(language?: PromptLanguage) {
+   const base = getBaseLanguageInstructions(language);
+   const isFrench = !language || language === 'fr';
 
-You MUST respond in English. Every single word you write to the user MUST be in English.
-This system prompt is written in English for technical clarity — your responses are ALSO in English.`,
-         noSkillsMessage: 'No skills declared.',
-         levelDefault: 'not specified',
-         coreBehavior: '**Connection**: ALWAYS connect new concepts to the learner\'s declared skills and career context. "React hooks" becomes "React hooks — essential for the frontend roles you\'re building toward". Never teach in a vacuum — contextualize everything.',
-         finalReminder: 'Respond in ENGLISH. Every word. No exceptions.',
-         redirectMessage: 'To explore opportunities, communities, or spaces, switch to Explore mode.',
-         confirmGenerate: 'I\'ll generate [description], OK?',
-      };
-   }
-   // Default to French
    return {
-      languageBlock: `# RESPONSE LANGUAGE — ABSOLUTE RULE
-
-You MUST respond in French. Every single word you write to the user MUST be in French.
-This system prompt is written in English for technical clarity — but your responses MUST ALWAYS be in French.
-NEVER respond in English. If you catch yourself writing English, STOP and rewrite in French.`,
-      noSkillsMessage: 'Aucune compétence déclarée.',
-      levelDefault: 'non défini',
+      ...base,
+      noSkillsMessage: isFrench ? 'Aucune compétence déclarée.' : 'No skills declared.',
+      levelDefault: isFrench ? 'non défini' : 'not specified',
       coreBehavior: '**Connection**: ALWAYS connect new concepts to the learner\'s declared skills and career context. "React hooks" becomes "React hooks — essential for the frontend roles you\'re building toward". Never teach in a vacuum — contextualize everything.',
-      finalReminder: 'Respond in FRENCH. Every word. No exceptions. The system prompt is in English but your output is ALWAYS in French.',
-      redirectMessage: 'Pour explorer les opportunités, communautés ou espaces, passe en mode Explorer.',
-      confirmGenerate: 'Je génère [description], OK ?',
+      redirectMessage: isFrench
+        ? 'Pour explorer les opportunités, communautés ou espaces, passe en mode Explorer.'
+        : 'To explore opportunities, communities, or spaces, switch to Explore mode.',
+      confirmGenerate: isFrench ? 'Je génère [description], OK ?' : 'I\'ll generate [description], OK?',
    };
 }
 

@@ -32,7 +32,7 @@ import { applicationService, opportunityService } from '../../../../src/services
 import { RankedApplication } from '../../../../src/services/applicationService';
 import { formatRelativeTime } from '../../../../src/utils/date';
 import type { ApplicationStatus, Opportunity } from '../../../../src/types/models';
-import { APPLICATION_STATUS_LABELS } from '../../../../src/types/models';
+import { getApplicationStatusLabel } from '../../../../src/types/models';
 import { useAlert } from '../../../../src/contexts/AlertContext';
 
 // Status configuration - Luxe Africain design system
@@ -252,7 +252,7 @@ export default function OpportunityApplicationsScreen() {
 
     return (
       <SelectCard
-        accessibilityLabel="Voir la candidature"
+        accessibilityLabel={t('common.viewApplication')}
         style={[styles.applicationCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
         onPress={() => router.push(`/gestion/opportunities/applications/details/${item.id}`)}
       >
@@ -301,7 +301,7 @@ export default function OpportunityApplicationsScreen() {
           <View style={[styles.statusBadge, { backgroundColor: statusConfig.bgColor }]}>
             <StatusIcon size={COMPONENT.pill.iconSize} color={statusConfig.color} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {APPLICATION_STATUS_LABELS[item.status]}
+              {getApplicationStatusLabel(item.status)}
             </Text>
           </View>
 
@@ -395,17 +395,17 @@ export default function OpportunityApplicationsScreen() {
       <IconButton
         onPress={handleEdit}
         icon={<Edit size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-        accessibilityLabel="Modifier"
+        accessibilityLabel={t('common.edit')}
       />
       <IconButton
         onPress={handleDelete}
         icon={<Trash2 size={20} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-        accessibilityLabel="Supprimer"
+        accessibilityLabel={t('common.delete')}
       />
       <IconButton
         onPress={handleExportCsv}
         icon={<Download size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-        accessibilityLabel="Exporter CSV"
+        accessibilityLabel={t('common.exportCsv')}
       />
     </View>
   );

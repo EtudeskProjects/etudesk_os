@@ -1,0 +1,12 @@
+{
+  "fetchError": "خطأ أثناء جلب المفضلات",
+  "addedToBookmarks": "تمت الإضافة إلى المفضلات",
+  "removedFromBookmarks": "تمت الإزالة من المفضلات",
+  "checkStatusError": "خطأ أثناء التحقق من المفضلة",
+  "addError": "خطأ أثناء الإضافة إلى المفضلات",
+  "removeError": "خطأ أثناء الإزالة من المفضلات",
+  "opportunityNotFound": "الفرصة غير موجودة",
+  "spaceNotFound": "المساحة غير موجودة",
+  "communityNotFound": "المجتمع غير موجود",
+  "error": "خطأ"
+}

@@ -102,7 +102,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
               style={styles.sourceButton}
               onPress={handleSourcePress}
               accessibilityRole="button"
-              accessibilityLabel="Ouvrir la source"
+              accessibilityLabel={t('common.openSource')}
             >
               <ExternalLink
                 size={ICON.size.xs}

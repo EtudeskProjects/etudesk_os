@@ -1,0 +1,592 @@
+{
+  "pays": [
+    {
+      "nom": "Etats-Unis",
+      "code_iso": "US",
+      "regions": [
+        {
+          "nom": "Alabama",
+          "communes": ["Birmingham", "Montgomery", "Huntsville", "Mobile", "Tuscaloosa"]
+        },
+        {
+          "nom": "Alaska",
+          "communes": ["Anchorage", "Fairbanks", "Juneau", "Sitka", "Ketchikan"]
+        },
+        {
+          "nom": "Arizona",
+          "communes": ["Phoenix", "Tucson", "Mesa", "Scottsdale", "Tempe"]
+        },
+        {
+          "nom": "Arkansas",
+          "communes": ["Little Rock", "Fort Smith", "Fayetteville", "Springdale", "Jonesboro"]
+        },
+        {
+          "nom": "Californie",
+          "communes": ["Los Angeles", "San Francisco", "San Diego", "San Jose", "Sacramento"]
+        },
+        {
+          "nom": "Colorado",
+          "communes": ["Denver", "Colorado Springs", "Aurora", "Fort Collins", "Boulder"]
+        },
+        {
+          "nom": "Connecticut",
+          "communes": ["Hartford", "New Haven", "Stamford", "Bridgeport", "Waterbury"]
+        },
+        {
+          "nom": "Delaware",
+          "communes": ["Wilmington", "Dover", "Newark", "Middletown", "Bear"]
+        },
+        {
+          "nom": "District de Columbia",
+          "communes": ["Washington D.C."]
+        },
+        {
+          "nom": "Floride",
+          "communes": ["Miami", "Orlando", "Tampa", "Jacksonville", "Fort Lauderdale"]
+        },
+        {
+          "nom": "Georgie",
+          "communes": ["Atlanta", "Savannah", "Augusta", "Columbus", "Macon"]
+        },
+        {
+          "nom": "Hawaii",
+          "communes": ["Honolulu", "Hilo", "Kailua", "Pearl City", "Waipahu"]
+        },
+        {
+          "nom": "Idaho",
+          "communes": ["Boise", "Meridian", "Nampa", "Idaho Falls", "Pocatello"]
+        },
+        {
+          "nom": "Illinois",
+          "communes": ["Chicago", "Aurora", "Naperville", "Rockford", "Springfield"]
+        },
+        {
+          "nom": "Indiana",
+          "communes": ["Indianapolis", "Fort Wayne", "Evansville", "South Bend", "Carmel"]
+        },
+        {
+          "nom": "Iowa",
+          "communes": ["Des Moines", "Cedar Rapids", "Davenport", "Sioux City", "Iowa City"]
+        },
+        {
+          "nom": "Kansas",
+          "communes": ["Wichita", "Overland Park", "Kansas City", "Topeka", "Olathe"]
+        },
+        {
+          "nom": "Kentucky",
+          "communes": ["Louisville", "Lexington", "Bowling Green", "Frankfort", "Owensboro"]
+        },
+        {
+          "nom": "Louisiane",
+          "communes": ["La Nouvelle-Orleans", "Baton Rouge", "Shreveport", "Lafayette", "Lake Charles"]
+        },
+        {
+          "nom": "Maine",
+          "communes": ["Portland", "Lewiston", "Bangor", "Augusta", "South Portland"]
+        },
+        {
+          "nom": "Maryland",
+          "communes": ["Baltimore", "Columbia", "Germantown", "Silver Spring", "Annapolis"]
+        },
+        {
+          "nom": "Massachusetts",
+          "communes": ["Boston", "Worcester", "Springfield", "Cambridge", "Lowell"]
+        },
+        {
+          "nom": "Michigan",
+          "communes": ["Detroit", "Grand Rapids", "Ann Arbor", "Lansing", "Flint"]
+        },
+        {
+          "nom": "Minnesota",
+          "communes": ["Minneapolis", "Saint Paul", "Rochester", "Duluth", "Bloomington"]
+        },
+        {
+          "nom": "Mississippi",
+          "communes": ["Jackson", "Gulfport", "Southaven", "Hattiesburg", "Biloxi"]
+        },
+        {
+          "nom": "Missouri",
+          "communes": ["Kansas City", "Saint Louis", "Springfield", "Columbia", "Jefferson City"]
+        },
+        {
+          "nom": "Montana",
+          "communes": ["Billings", "Missoula", "Great Falls", "Bozeman", "Helena"]
+        },
+        {
+          "nom": "Nebraska",
+          "communes": ["Omaha", "Lincoln", "Bellevue", "Grand Island", "Kearney"]
+        },
+        {
+          "nom": "Nevada",
+          "communes": ["Las Vegas", "Henderson", "Reno", "North Las Vegas", "Sparks"]
+        },
+        {
+          "nom": "New Hampshire",
+          "communes": ["Manchester", "Nashua", "Concord", "Dover", "Rochester"]
+        },
+        {
+          "nom": "New Jersey",
+          "communes": ["Newark", "Jersey City", "Trenton", "Paterson", "Elizabeth"]
+        },
+        {
+          "nom": "Nouveau-Mexique",
+          "communes": ["Albuquerque", "Las Cruces", "Santa Fe", "Rio Rancho", "Roswell"]
+        },
+        {
+          "nom": "New York",
+          "communes": ["New York City", "Buffalo", "Rochester", "Albany", "Syracuse"]
+        },
+        {
+          "nom": "Caroline du Nord",
+          "communes": ["Charlotte", "Raleigh", "Durham", "Greensboro", "Winston-Salem"]
+        },
+        {
+          "nom": "Dakota du Nord",
+          "communes": ["Fargo", "Bismarck", "Grand Forks", "Minot", "West Fargo"]
+        },
+        {
+          "nom": "Ohio",
+          "communes": ["Columbus", "Cleveland", "Cincinnati", "Toledo", "Akron"]
+        },
+        {
+          "nom": "Oklahoma",
+          "communes": ["Oklahoma City", "Tulsa", "Norman", "Broken Arrow", "Edmond"]
+        },
+        {
+          "nom": "Oregon",
+          "communes": ["Portland", "Salem", "Eugene", "Bend", "Medford"]
+        },
+        {
+          "nom": "Pennsylvanie",
+          "communes": ["Philadelphie", "Pittsburgh", "Allentown", "Erie", "Harrisburg"]
+        },
+        {
+          "nom": "Rhode Island",
+          "communes": ["Providence", "Cranston", "Warwick", "Pawtucket", "Newport"]
+        },
+        {
+          "nom": "Caroline du Sud",
+          "communes": ["Charleston", "Columbia", "Greenville", "Myrtle Beach", "Rock Hill"]
+        },
+        {
+          "nom": "Dakota du Sud",
+          "communes": ["Sioux Falls", "Rapid City", "Aberdeen", "Brookings", "Pierre"]
+        },
+        {
+          "nom": "Tennessee",
+          "communes": ["Nashville", "Memphis", "Knoxville", "Chattanooga", "Clarksville"]
+        },
+        {
+          "nom": "Texas",
+          "communes": ["Houston", "Dallas", "Austin", "San Antonio", "Fort Worth"]
+        },
+        {
+          "nom": "Utah",
+          "communes": ["Salt Lake City", "Provo", "West Valley City", "Ogden", "St. George"]
+        },
+        {
+          "nom": "Vermont",
+          "communes": ["Burlington", "South Burlington", "Rutland", "Montpelier", "Barre"]
+        },
+        {
+          "nom": "Virginie",
+          "communes": ["Virginia Beach", "Norfolk", "Richmond", "Arlington", "Alexandria"]
+        },
+        {
+          "nom": "Washington",
+          "communes": ["Seattle", "Spokane", "Tacoma", "Vancouver", "Bellevue"]
+        },
+        {
+          "nom": "Virginie-Occidentale",
+          "communes": ["Charleston", "Huntington", "Morgantown", "Parkersburg", "Wheeling"]
+        },
+        {
+          "nom": "Wisconsin",
+          "communes": ["Milwaukee", "Madison", "Green Bay", "Kenosha", "Racine"]
+        },
+        {
+          "nom": "Wyoming",
+          "communes": ["Cheyenne", "Casper", "Laramie", "Gillette", "Rock Springs"]
+        }
+      ]
+    },
+    {
+      "nom": "Canada",
+      "code_iso": "CA",
+      "regions": [
+        {
+          "nom": "Ontario",
+          "communes": ["Toronto", "Ottawa", "Mississauga", "Hamilton", "London"]
+        },
+        {
+          "nom": "Quebec",
+          "communes": ["Montreal", "Quebec", "Laval", "Gatineau", "Sherbrooke"]
+        },
+        {
+          "nom": "Colombie-Britannique",
+          "communes": ["Vancouver", "Victoria", "Surrey", "Burnaby", "Kelowna"]
+        },
+        {
+          "nom": "Alberta",
+          "communes": ["Calgary", "Edmonton", "Red Deer", "Lethbridge", "Fort McMurray"]
+        },
+        {
+          "nom": "Manitoba",
+          "communes": ["Winnipeg", "Brandon", "Steinbach", "Thompson", "Portage la Prairie"]
+        },
+        {
+          "nom": "Saskatchewan",
+          "communes": ["Saskatoon", "Regina", "Prince Albert", "Moose Jaw", "Swift Current"]
+        },
+        {
+          "nom": "Nouvelle-Ecosse",
+          "communes": ["Halifax", "Sydney", "Dartmouth", "Truro", "New Glasgow"]
+        },
+        {
+          "nom": "Nouveau-Brunswick",
+          "communes": ["Moncton", "Saint John", "Fredericton", "Dieppe", "Miramichi"]
+        },
+        {
+          "nom": "Terre-Neuve-et-Labrador",
+          "communes": ["St. John's", "Mount Pearl", "Corner Brook", "Conception Bay South"]
+        },
+        {
+          "nom": "Ile-du-Prince-Edouard",
+          "communes": ["Charlottetown", "Summerside", "Stratford"]
+        },
+        {
+          "nom": "Territoires du Nord-Ouest",
+          "communes": ["Yellowknife", "Hay River", "Inuvik"]
+        },
+        {
+          "nom": "Yukon",
+          "communes": ["Whitehorse", "Dawson City"]
+        },
+        {
+          "nom": "Nunavut",
+          "communes": ["Iqaluit", "Rankin Inlet", "Arviat"]
+        }
+      ]
+    },
+    {
+      "nom": "Bresil",
+      "code_iso": "BR",
+      "regions": [
+        {
+          "nom": "Sao Paulo",
+          "communes": ["Sao Paulo", "Campinas", "Santos", "Guarulhos", "Sorocaba"]
+        },
+        {
+          "nom": "Rio de Janeiro",
+          "communes": ["Rio de Janeiro", "Niteroi", "Petropolis", "Nova Iguacu", "Duque de Caxias"]
+        },
+        {
+          "nom": "Minas Gerais",
+          "communes": ["Belo Horizonte", "Uberlandia", "Contagem", "Juiz de Fora", "Betim"]
+        },
+        {
+          "nom": "Bahia",
+          "communes": ["Salvador", "Feira de Santana", "Vitoria da Conquista", "Camacari"]
+        },
+        {
+          "nom": "Parana",
+          "communes": ["Curitiba", "Londrina", "Maringa", "Ponta Grossa", "Foz do Iguacu"]
+        },
+        {
+          "nom": "Rio Grande do Sul",
+          "communes": ["Porto Alegre", "Caxias do Sul", "Pelotas", "Canoas", "Santa Maria"]
+        },
+        {
+          "nom": "Pernambuco",
+          "communes": ["Recife", "Jaboatao dos Guararapes", "Olinda", "Caruaru", "Petrolina"]
+        },
+        {
+          "nom": "Ceara",
+          "communes": ["Fortaleza", "Caucaia", "Juazeiro do Norte", "Maracanau", "Sobral"]
+        },
+        {
+          "nom": "Para",
+          "communes": ["Belem", "Ananindeua", "Santarem", "Maraba", "Castanhal"]
+        },
+        {
+          "nom": "Maranhao",
+          "communes": ["Sao Luis", "Imperatriz", "Timon", "Caxias"]
+        },
+        {
+          "nom": "Santa Catarina",
+          "communes": ["Florianopolis", "Joinville", "Blumenau", "Chapeco", "Criciuma"]
+        },
+        {
+          "nom": "Goias",
+          "communes": ["Goiania", "Aparecida de Goiania", "Anapolis", "Rio Verde"]
+        },
+        {
+          "nom": "Amazonas",
+          "communes": ["Manaus", "Parintins", "Itacoatiara", "Manacapuru"]
+        },
+        {
+          "nom": "Espirito Santo",
+          "communes": ["Vitoria", "Vila Velha", "Serra", "Cariacica"]
+        },
+        {
+          "nom": "Paraiba",
+          "communes": ["Joao Pessoa", "Campina Grande", "Santa Rita"]
+        },
+        {
+          "nom": "Rio Grande do Norte",
+          "communes": ["Natal", "Mossoro", "Parnamirim"]
+        },
+        {
+          "nom": "Alagoas",
+          "communes": ["Maceio", "Arapiraca"]
+        },
+        {
+          "nom": "Piaui",
+          "communes": ["Teresina", "Parnaiba"]
+        },
+        {
+          "nom": "Distrito Federal",
+          "communes": ["Brasilia", "Taguatinga", "Ceilandia"]
+        },
+        {
+          "nom": "Mato Grosso do Sul",
+          "communes": ["Campo Grande", "Dourados", "Tres Lagoas"]
+        },
+        {
+          "nom": "Mato Grosso",
+          "communes": ["Cuiaba", "Varzea Grande", "Rondonopolis", "Sinop"]
+        },
+        {
+          "nom": "Sergipe",
+          "communes": ["Aracaju", "Nossa Senhora do Socorro"]
+        },
+        {
+          "nom": "Rondonia",
+          "communes": ["Porto Velho", "Ji-Parana"]
+        },
+        {
+          "nom": "Tocantins",
+          "communes": ["Palmas", "Araguaina"]
+        },
+        {
+          "nom": "Acre",
+          "communes": ["Rio Branco", "Cruzeiro do Sul"]
+        },
+        {
+          "nom": "Amapa",
+          "communes": ["Macapa", "Santana"]
+        },
+        {
+          "nom": "Roraima",
+          "communes": ["Boa Vista"]
+        }
+      ]
+    },
+    {
+      "nom": "Mexique",
+      "code_iso": "MX",
+      "regions": [
+        {
+          "nom": "Ciudad de Mexico",
+          "communes": ["Mexico", "Coyoacan", "Tlalpan", "Iztapalapa", "Gustavo A. Madero"]
+        },
+        {
+          "nom": "Estado de Mexico",
+          "communes": ["Toluca", "Ecatepec", "Naucalpan", "Nezahualcoyotl", "Tlalnepantla"]
+        },
+        {
+          "nom": "Jalisco",
+          "communes": ["Guadalajara", "Zapopan", "Tlaquepaque", "Puerto Vallarta", "Tonala"]
+        },
+        {
+          "nom": "Nuevo Leon",
+          "communes": ["Monterrey", "San Nicolas", "Guadalupe", "Apodaca", "San Pedro Garza Garcia"]
+        },
+        {
+          "nom": "Puebla",
+          "communes": ["Puebla", "Tehuacan", "San Martin Texmelucan", "Atlixco"]
+        },
+        {
+          "nom": "Guanajuato",
+          "communes": ["Leon", "Irapuato", "Celaya", "Salamanca", "Guanajuato"]
+        },
+        {
+          "nom": "Chihuahua",
+          "communes": ["Chihuahua", "Ciudad Juarez", "Cuauhtemoc", "Delicias"]
+        },
+        {
+          "nom": "Veracruz",
+          "communes": ["Veracruz", "Xalapa", "Coatzacoalcos", "Cordoba", "Poza Rica"]
+        },
+        {
+          "nom": "Michoacan",
+          "communes": ["Morelia", "Uruapan", "Zamora", "Lazaro Cardenas"]
+        },
+        {
+          "nom": "Oaxaca",
+          "communes": ["Oaxaca de Juarez", "Salina Cruz", "Juchitan", "Tuxtepec"]
+        },
+        {
+          "nom": "Chiapas",
+          "communes": ["Tuxtla Gutierrez", "San Cristobal de las Casas", "Tapachula", "Comitan"]
+        },
+        {
+          "nom": "Sonora",
+          "communes": ["Hermosillo", "Ciudad Obregon", "Nogales", "Guaymas"]
+        },
+        {
+          "nom": "Tamaulipas",
+          "communes": ["Reynosa", "Matamoros", "Tampico", "Ciudad Victoria", "Nuevo Laredo"]
+        },
+        {
+          "nom": "Sinaloa",
+          "communes": ["Culiacan", "Mazatlan", "Los Mochis", "Guasave"]
+        },
+        {
+          "nom": "Baja California",
+          "communes": ["Tijuana", "Mexicali", "Ensenada", "Rosarito", "Tecate"]
+        },
+        {
+          "nom": "Baja California Sur",
+          "communes": ["La Paz", "Los Cabos", "Ciudad Constitucion"]
+        },
+        {
+          "nom": "Coahuila",
+          "communes": ["Saltillo", "Torreon", "Monclova", "Piedras Negras"]
+        },
+        {
+          "nom": "Guerrero",
+          "communes": ["Acapulco", "Chilpancingo", "Iguala", "Zihuatanejo"]
+        },
+        {
+          "nom": "Yucatan",
+          "communes": ["Merida", "Valladolid", "Tizimin", "Progreso"]
+        },
+        {
+          "nom": "Quintana Roo",
+          "communes": ["Cancun", "Playa del Carmen", "Chetumal", "Tulum", "Cozumel"]
+        },
+        {
+          "nom": "San Luis Potosi",
+          "communes": ["San Luis Potosi", "Ciudad Valles", "Soledad de Graciano Sanchez"]
+        },
+        {
+          "nom": "Tabasco",
+          "communes": ["Villahermosa", "Cardenas", "Comalcalco"]
+        },
+        {
+          "nom": "Hidalgo",
+          "communes": ["Pachuca", "Tulancingo", "Tula de Allende"]
+        },
+        {
+          "nom": "Queretaro",
+          "communes": ["Queretaro", "San Juan del Rio", "El Marques"]
+        },
+        {
+          "nom": "Morelos",
+          "communes": ["Cuernavaca", "Jiutepec", "Cuautla", "Temixco"]
+        },
+        {
+          "nom": "Durango",
+          "communes": ["Durango", "Gomez Palacio", "Lerdo"]
+        },
+        {
+          "nom": "Zacatecas",
+          "communes": ["Zacatecas", "Fresnillo", "Guadalupe"]
+        },
+        {
+          "nom": "Aguascalientes",
+          "communes": ["Aguascalientes", "Jesus Maria"]
+        },
+        {
+          "nom": "Nayarit",
+          "communes": ["Tepic", "Bahia de Banderas"]
+        },
+        {
+          "nom": "Tlaxcala",
+          "communes": ["Tlaxcala", "Apizaco", "Huamantla"]
+        },
+        {
+          "nom": "Colima",
+          "communes": ["Colima", "Manzanillo", "Tecoman"]
+        },
+        {
+          "nom": "Campeche",
+          "communes": ["Campeche", "Ciudad del Carmen", "Calkini"]
+        }
+      ]
+    },
+    {
+      "nom": "Haiti",
+      "code_iso": "HT",
+      "regions": [
+        {
+          "nom": "Ouest",
+          "communes": ["Port-au-Prince", "Carrefour", "Delmas", "Petionville", "Kenscoff"]
+        },
+        {
+          "nom": "Nord",
+          "communes": ["Cap-Haitien", "Milot", "Acul-du-Nord", "Limbe"]
+        },
+        {
+          "nom": "Artibonite",
+          "communes": ["Gonaives", "Saint-Marc", "Dessalines", "Gros-Morne"]
+        },
+        {
+          "nom": "Sud",
+          "communes": ["Les Cayes", "Camp-Perrin", "Aquin", "Port-Salut"]
+        },
+        {
+          "nom": "Sud-Est",
+          "communes": ["Jacmel", "Marigot", "Cayes-Jacmel", "Belle-Anse"]
+        },
+        {
+          "nom": "Nord-Est",
+          "communes": ["Fort-Liberte", "Ouanaminthe", "Trou-du-Nord"]
+        },
+        {
+          "nom": "Nord-Ouest",
+          "communes": ["Port-de-Paix", "Saint-Louis-du-Nord", "Mole-Saint-Nicolas"]
+        },
+        {
+          "nom": "Centre",
+          "communes": ["Hinche", "Mirebalais", "Lascahobas", "Thomonde"]
+        },
+        {
+          "nom": "Grand'Anse",
+          "communes": ["Jeremie", "Dame Marie", "Anse-d'Hainault"]
+        },
+        {
+          "nom": "Nippes",
+          "communes": ["Miragoane", "Anse-a-Veau", "Petite-Riviere-de-Nippes"]
+        }
+      ]
+    },
+    {
+      "nom": "France (Territoires d'outre-mer)",
+      "code_iso": "FR-OM",
+      "regions": [
+        {
+          "nom": "Guadeloupe",
+          "communes": ["Pointe-a-Pitre", "Les Abymes", "Basse-Terre", "Le Gosier", "Sainte-Anne"]
+        },
+        {
+          "nom": "Martinique",
+          "communes": ["Fort-de-France", "Le Lamentin", "Le Robert", "Schoelcher", "Sainte-Marie"]
+        },
+        {
+          "nom": "Guyane",
+          "communes": ["Cayenne", "Saint-Laurent-du-Maroni", "Kourou", "Matoury", "Remire-Montjoly"]
+        },
+        {
+          "nom": "Saint-Martin",
+          "communes": ["Marigot"]
+        },
+        {
+          "nom": "Saint-Barthelemy",
+          "communes": ["Gustavia"]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,358 @@
+{
+  "pays": [
+    {
+      "nom": "Emirats Arabes Unis",
+      "code_iso": "AE",
+      "regions": [
+        {
+          "nom": "Dubai",
+          "communes": ["Dubai", "Jebel Ali", "Deira", "Bur Dubai"]
+        },
+        {
+          "nom": "Abou Dabi",
+          "communes": ["Abou Dabi", "Al Ain", "Ruwais", "Madinat Zayed"]
+        },
+        {
+          "nom": "Sharjah",
+          "communes": ["Sharjah", "Khor Fakkan", "Kalba"]
+        },
+        {
+          "nom": "Ajman",
+          "communes": ["Ajman", "Masfout"]
+        },
+        {
+          "nom": "Ras Al Khaimah",
+          "communes": ["Ras Al Khaimah"]
+        },
+        {
+          "nom": "Fujairah",
+          "communes": ["Fujairah", "Dibba Al-Fujairah"]
+        },
+        {
+          "nom": "Umm Al Quwain",
+          "communes": ["Umm Al Quwain"]
+        }
+      ]
+    },
+    {
+      "nom": "Arabie Saoudite",
+      "code_iso": "SA",
+      "regions": [
+        {
+          "nom": "Riyad",
+          "communes": ["Riyad", "Kharj", "Diriyah", "Dawadmi"]
+        },
+        {
+          "nom": "La Mecque",
+          "communes": ["La Mecque", "Djeddah", "Taif", "Rabigh"]
+        },
+        {
+          "nom": "Medine",
+          "communes": ["Medine", "Yanbu", "Al Ula", "Badr"]
+        },
+        {
+          "nom": "Province Orientale",
+          "communes": ["Dammam", "Dhahran", "Al Khobar", "Jubail", "Hofuf"]
+        },
+        {
+          "nom": "Qassim",
+          "communes": ["Buraidah", "Unaizah", "Rass"]
+        },
+        {
+          "nom": "Asir",
+          "communes": ["Abha", "Khamis Mushait", "Bisha"]
+        },
+        {
+          "nom": "Tabuk",
+          "communes": ["Tabuk", "Umluj", "Haql"]
+        },
+        {
+          "nom": "Hail",
+          "communes": ["Hail"]
+        },
+        {
+          "nom": "Frontiere du Nord",
+          "communes": ["Arar", "Rafha", "Turaif"]
+        },
+        {
+          "nom": "Jazan",
+          "communes": ["Jazan", "Sabya", "Abu Arish"]
+        },
+        {
+          "nom": "Najran",
+          "communes": ["Najran", "Sharurah"]
+        },
+        {
+          "nom": "Al Baha",
+          "communes": ["Al Baha", "Baljurashi"]
+        },
+        {
+          "nom": "Al Jouf",
+          "communes": ["Sakaka", "Domat Al Jandal", "Qurayyat"]
+        }
+      ]
+    },
+    {
+      "nom": "Qatar",
+      "code_iso": "QA",
+      "regions": [
+        {
+          "nom": "Doha",
+          "communes": ["Doha", "West Bay", "The Pearl"]
+        },
+        {
+          "nom": "Al Rayyan",
+          "communes": ["Al Rayyan", "Education City"]
+        },
+        {
+          "nom": "Al Wakrah",
+          "communes": ["Al Wakrah"]
+        },
+        {
+          "nom": "Al Khor",
+          "communes": ["Al Khor"]
+        },
+        {
+          "nom": "Umm Salal",
+          "communes": ["Umm Salal Muhammad"]
+        },
+        {
+          "nom": "Al Daayen",
+          "communes": ["Lusail"]
+        },
+        {
+          "nom": "Al Shamal",
+          "communes": ["Madinat ash Shamal"]
+        },
+        {
+          "nom": "Al Shahaniya",
+          "communes": ["Al Shahaniya"]
+        }
+      ]
+    },
+    {
+      "nom": "Koweit",
+      "code_iso": "KW",
+      "regions": [
+        {
+          "nom": "Capitale",
+          "communes": ["Koweit City"]
+        },
+        {
+          "nom": "Hawalli",
+          "communes": ["Hawalli", "Salmiya", "Salwa"]
+        },
+        {
+          "nom": "Farwaniya",
+          "communes": ["Farwaniya", "Jleeb Al-Shuyoukh"]
+        },
+        {
+          "nom": "Ahmadi",
+          "communes": ["Ahmadi", "Fahaheel", "Mangaf"]
+        },
+        {
+          "nom": "Jahra",
+          "communes": ["Jahra"]
+        },
+        {
+          "nom": "Mubarak Al-Kabeer",
+          "communes": ["Mubarak Al-Kabeer"]
+        }
+      ]
+    },
+    {
+      "nom": "Bahrein",
+      "code_iso": "BH",
+      "regions": [
+        {
+          "nom": "Capitale",
+          "communes": ["Manama", "Juffair", "Adliya"]
+        },
+        {
+          "nom": "Muharraq",
+          "communes": ["Muharraq", "Arad"]
+        },
+        {
+          "nom": "Nord",
+          "communes": ["Hamad Town", "Budaiya", "Saar"]
+        },
+        {
+          "nom": "Sud",
+          "communes": ["Isa Town", "Riffa", "Awali"]
+        }
+      ]
+    },
+    {
+      "nom": "Oman",
+      "code_iso": "OM",
+      "regions": [
+        {
+          "nom": "Mascate",
+          "communes": ["Mascate", "Muttrah", "Seeb", "Bawshar", "Amerat"]
+        },
+        {
+          "nom": "Dhofar",
+          "communes": ["Salalah", "Taqah", "Mirbat"]
+        },
+        {
+          "nom": "Al Batinah Nord",
+          "communes": ["Sohar", "Shinas", "Saham", "Liwa"]
+        },
+        {
+          "nom": "Al Batinah Sud",
+          "communes": ["Rustaq", "Barka", "Musanaa"]
+        },
+        {
+          "nom": "Ad Dakhiliyah",
+          "communes": ["Nizwa", "Bahla", "Adam", "Izki"]
+        },
+        {
+          "nom": "Ash Sharqiyah Nord",
+          "communes": ["Ibra", "Al Mudhaibi", "Bidiyah"]
+        },
+        {
+          "nom": "Ash Sharqiyah Sud",
+          "communes": ["Sur", "Ja'alan Bani Bu Ali"]
+        },
+        {
+          "nom": "Al Dhahirah",
+          "communes": ["Ibri", "Yanqul"]
+        },
+        {
+          "nom": "Al Buraimi",
+          "communes": ["Al Buraimi"]
+        },
+        {
+          "nom": "Al Wusta",
+          "communes": ["Haima", "Duqm"]
+        },
+        {
+          "nom": "Musandam",
+          "communes": ["Khasab", "Bukha"]
+        }
+      ]
+    },
+    {
+      "nom": "Jordanie",
+      "code_iso": "JO",
+      "regions": [
+        {
+          "nom": "Amman",
+          "communes": ["Amman"]
+        },
+        {
+          "nom": "Irbid",
+          "communes": ["Irbid", "Ramtha"]
+        },
+        {
+          "nom": "Zarqa",
+          "communes": ["Zarqa", "Russeifa"]
+        },
+        {
+          "nom": "Balqa",
+          "communes": ["Salt"]
+        },
+        {
+          "nom": "Mafraq",
+          "communes": ["Mafraq"]
+        },
+        {
+          "nom": "Karak",
+          "communes": ["Karak"]
+        },
+        {
+          "nom": "Tafilah",
+          "communes": ["Tafilah"]
+        },
+        {
+          "nom": "Ma'an",
+          "communes": ["Ma'an", "Aqaba"]
+        },
+        {
+          "nom": "Aqaba",
+          "communes": ["Aqaba"]
+        },
+        {
+          "nom": "Jerash",
+          "communes": ["Jerash"]
+        },
+        {
+          "nom": "Ajloun",
+          "communes": ["Ajloun"]
+        },
+        {
+          "nom": "Madaba",
+          "communes": ["Madaba"]
+        }
+      ]
+    },
+    {
+      "nom": "Liban",
+      "code_iso": "LB",
+      "regions": [
+        {
+          "nom": "Beyrouth",
+          "communes": ["Beyrouth"]
+        },
+        {
+          "nom": "Mont-Liban",
+          "communes": ["Jounieh", "Byblos", "Baabda", "Aley", "Broummana"]
+        },
+        {
+          "nom": "Liban-Nord",
+          "communes": ["Tripoli", "Batroun", "Bcharre", "Zgharta"]
+        },
+        {
+          "nom": "Liban-Sud",
+          "communes": ["Sidon", "Tyr", "Nabatieh"]
+        },
+        {
+          "nom": "Bekaa",
+          "communes": ["Zahleh", "Baalbek", "Chtaura"]
+        },
+        {
+          "nom": "Nabatieh",
+          "communes": ["Nabatieh", "Bint Jbeil", "Marjayoun"]
+        },
+        {
+          "nom": "Akkar",
+          "communes": ["Halba", "Qoubaiyat"]
+        },
+        {
+          "nom": "Baalbek-Hermel",
+          "communes": ["Baalbek", "Hermel"]
+        }
+      ]
+    },
+    {
+      "nom": "Israel",
+      "code_iso": "IL",
+      "regions": [
+        {
+          "nom": "District de Tel-Aviv",
+          "communes": ["Tel-Aviv", "Ramat Gan", "Bnei Brak", "Holon", "Bat Yam"]
+        },
+        {
+          "nom": "District de Jerusalem",
+          "communes": ["Jerusalem", "Beit Shemesh"]
+        },
+        {
+          "nom": "District de Haifa",
+          "communes": ["Haifa", "Hadera", "Nesher"]
+        },
+        {
+          "nom": "District du Centre",
+          "communes": ["Rishon LeZion", "Petah Tikva", "Netanya", "Rehovot", "Herzliya"]
+        },
+        {
+          "nom": "District du Nord",
+          "communes": ["Nazareth", "Tiberiade", "Safed", "Acre", "Afula"]
+        },
+        {
+          "nom": "District du Sud",
+          "communes": ["Beer-Sheva", "Ashdod", "Ashkelon", "Eilat", "Arad"]
+        }
+      ]
+    }
+  ]
+}

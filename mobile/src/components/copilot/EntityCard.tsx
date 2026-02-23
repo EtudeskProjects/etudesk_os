@@ -217,10 +217,10 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
               const url = fileUrl.startsWith('http') ? fileUrl : `${API_CONFIG.BASE_URL}${fileUrl}`;
               if (__DEV__) console.error('[EntityCard] download error:', err, 'url:', url);
               Alert.alert(
-                'Erreur',
+                t('common.error'),
                 __DEV__
-                  ? `Téléchargement échoué: ${err?.message || err}\nURL: ${url}`
-                  : 'Impossible de télécharger le fichier.'
+                  ? `${t('common.downloadFailed')}${err?.message || err}\nURL: ${url}`
+                  : t('common.downloadError')
               );
             })
             .finally(() => setDownloading(false));

@@ -4,6 +4,7 @@ import * as Sharing from 'expo-sharing';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { API_CONFIG, STORAGE_KEYS } from '../constants/config';
+import i18n from '../i18n';
 
 interface DownloadDocumentInput {
   url: string;
@@ -77,15 +78,15 @@ export async function downloadAndOpenDocument({
       await Sharing.shareAsync(uri, {
         mimeType,
         UTI: mimeType === 'application/pdf' ? 'com.adobe.pdf' : undefined,
-        dialogTitle: 'Partager le document',
+        dialogTitle: i18n.t('errors.shareDocument'),
       });
       return;
     }
 
     if (await openRemoteDocument(uri)) return;
-    throw new Error('Aucune application disponible pour ouvrir le document');
+    throw new Error(i18n.t('errors.noAppAvailable'));
   } catch {
     const opened = await openRemoteDocument(absoluteUrl);
-    if (!opened) throw new Error('Impossible de télécharger ou ouvrir le document');
+    if (!opened) throw new Error(i18n.t('errors.downloadOrOpenFailed'));
   }
 }

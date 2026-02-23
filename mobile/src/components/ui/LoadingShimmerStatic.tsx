@@ -8,6 +8,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { SPACING, TYPOGRAPHY } from '../../constants/theme';
 import type { ThemeColors } from '../../constants/theme';
+import { useI18n } from '../../contexts/I18nContext';
 
 const BIOLOGICAL_CYCLE_MS = 3500;
 
@@ -20,8 +21,9 @@ interface LoadingShimmerStaticProps {
 
 export const LoadingShimmerStatic: React.FC<LoadingShimmerStaticProps> = ({
   colors,
-  label = 'Réfléchit…',
+  label,
 }) => {
+  const { t } = useI18n();
   const anim = useRef(new Animated.Value(0)).current;
   const baseColor = colors.gray200;
 
@@ -77,9 +79,7 @@ export const LoadingShimmerStatic: React.FC<LoadingShimmerStaticProps> = ({
           />
         ))}
       </View>
-      {label ? (
-        <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
-      ) : null}
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{label || t('common.thinking')}</Text>
     </View>
   );
 };

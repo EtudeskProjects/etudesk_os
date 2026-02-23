@@ -99,7 +99,7 @@ router.post('/my', async (req: AuthRequest, res: Response) => {
       [talentId]
     );
     if (countResult.rows[0].total >= 100) {
-      return res.status(400).json({ error: 'Limite de 100 compétences atteinte. Supprime ou modifie des compétences existantes avant d\'en ajouter.' });
+      return res.status(400).json({ error: req.t('skills:maxSkillsReached') });
     }
 
     const columns = ['talent_id', 'canonical_name', 'type', 'proficiency_level'];
@@ -195,7 +195,7 @@ router.patch('/my/:id/visibility', async (req: AuthRequest, res: Response) => {
 
     const { is_visible } = req.body;
     if (typeof is_visible !== 'boolean') {
-      return res.status(400).json({ error: 'is_visible must be a boolean' });
+      return res.status(400).json({ error: req.t('skills:isVisibleMustBeBoolean') });
     }
 
     const result = await pool.query(

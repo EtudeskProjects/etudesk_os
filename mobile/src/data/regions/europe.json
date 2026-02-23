@@ -1,0 +1,760 @@
+{
+  "pays": [
+    {
+      "nom": "France",
+      "code_iso": "FR",
+      "regions": [
+        {
+          "nom": "Ile-de-France",
+          "communes": ["Paris", "Boulogne-Billancourt", "Saint-Denis", "Versailles", "Nanterre", "Montreuil"]
+        },
+        {
+          "nom": "Auvergne-Rhone-Alpes",
+          "communes": ["Lyon", "Grenoble", "Saint-Etienne", "Clermont-Ferrand", "Annecy", "Valence"]
+        },
+        {
+          "nom": "Nouvelle-Aquitaine",
+          "communes": ["Bordeaux", "Limoges", "Poitiers", "La Rochelle", "Pau", "Angouleme"]
+        },
+        {
+          "nom": "Occitanie",
+          "communes": ["Toulouse", "Montpellier", "Nimes", "Perpignan", "Beziers", "Narbonne"]
+        },
+        {
+          "nom": "Provence-Alpes-Cote d'Azur",
+          "communes": ["Marseille", "Nice", "Toulon", "Aix-en-Provence", "Avignon", "Cannes"]
+        },
+        {
+          "nom": "Grand Est",
+          "communes": ["Strasbourg", "Reims", "Metz", "Mulhouse", "Nancy", "Colmar"]
+        },
+        {
+          "nom": "Hauts-de-France",
+          "communes": ["Lille", "Amiens", "Roubaix", "Tourcoing", "Dunkerque", "Calais"]
+        },
+        {
+          "nom": "Pays de la Loire",
+          "communes": ["Nantes", "Angers", "Le Mans", "Saint-Nazaire", "Laval"]
+        },
+        {
+          "nom": "Bretagne",
+          "communes": ["Rennes", "Brest", "Quimper", "Lorient", "Vannes", "Saint-Malo"]
+        },
+        {
+          "nom": "Normandie",
+          "communes": ["Rouen", "Caen", "Le Havre", "Evreux", "Cherbourg"]
+        },
+        {
+          "nom": "Centre-Val de Loire",
+          "communes": ["Tours", "Orleans", "Bourges", "Blois", "Chartres"]
+        },
+        {
+          "nom": "Bourgogne-Franche-Comte",
+          "communes": ["Dijon", "Besancon", "Belfort", "Chalon-sur-Saone", "Auxerre"]
+        },
+        {
+          "nom": "Corse",
+          "communes": ["Ajaccio", "Bastia", "Porto-Vecchio", "Corte"]
+        },
+        {
+          "nom": "La Reunion",
+          "communes": ["Saint-Denis", "Saint-Pierre", "Le Tampon", "Saint-Paul", "Saint-Louis"]
+        },
+        {
+          "nom": "Mayotte",
+          "communes": ["Mamoudzou", "Koungou", "Dzaoudzi", "Dembeni"]
+        },
+        {
+          "nom": "Guadeloupe",
+          "communes": ["Pointe-a-Pitre", "Les Abymes", "Basse-Terre", "Le Gosier"]
+        },
+        {
+          "nom": "Martinique",
+          "communes": ["Fort-de-France", "Le Lamentin", "Le Robert", "Schoelcher"]
+        },
+        {
+          "nom": "Guyane",
+          "communes": ["Cayenne", "Saint-Laurent-du-Maroni", "Kourou", "Matoury"]
+        }
+      ]
+    },
+    {
+      "nom": "Royaume-Uni",
+      "code_iso": "GB",
+      "regions": [
+        {
+          "nom": "Angleterre",
+          "communes": ["Londres", "Birmingham", "Manchester", "Liverpool", "Leeds", "Bristol"]
+        },
+        {
+          "nom": "Ecosse",
+          "communes": ["Edimbourg", "Glasgow", "Aberdeen", "Dundee", "Inverness"]
+        },
+        {
+          "nom": "Pays de Galles",
+          "communes": ["Cardiff", "Swansea", "Newport", "Bangor", "Wrexham"]
+        },
+        {
+          "nom": "Irlande du Nord",
+          "communes": ["Belfast", "Derry", "Lisburn", "Newry", "Bangor"]
+        }
+      ]
+    },
+    {
+      "nom": "Allemagne",
+      "code_iso": "DE",
+      "regions": [
+        {
+          "nom": "Bade-Wurtemberg",
+          "communes": ["Stuttgart", "Mannheim", "Karlsruhe", "Fribourg", "Heidelberg"]
+        },
+        {
+          "nom": "Baviere",
+          "communes": ["Munich", "Nuremberg", "Augsbourg", "Ratisbonne", "Wurtzbourg"]
+        },
+        {
+          "nom": "Berlin",
+          "communes": ["Berlin"]
+        },
+        {
+          "nom": "Brandebourg",
+          "communes": ["Potsdam", "Cottbus", "Francfort-sur-l'Oder"]
+        },
+        {
+          "nom": "Breme",
+          "communes": ["Breme", "Bremerhaven"]
+        },
+        {
+          "nom": "Hambourg",
+          "communes": ["Hambourg"]
+        },
+        {
+          "nom": "Hesse",
+          "communes": ["Francfort", "Wiesbaden", "Kassel", "Darmstadt", "Offenbach"]
+        },
+        {
+          "nom": "Mecklembourg-Pomeranie-Occidentale",
+          "communes": ["Rostock", "Schwerin", "Stralsund", "Greifswald"]
+        },
+        {
+          "nom": "Basse-Saxe",
+          "communes": ["Hanovre", "Brunswick", "Oldenbourg", "Osnabrueck", "Goettingen"]
+        },
+        {
+          "nom": "Rhenanie-du-Nord-Westphalie",
+          "communes": ["Cologne", "Dusseldorf", "Dortmund", "Essen", "Bonn"]
+        },
+        {
+          "nom": "Rhenanie-Palatinat",
+          "communes": ["Mayence", "Ludwigshafen", "Coblence", "Treves", "Kaiserslautern"]
+        },
+        {
+          "nom": "Sarre",
+          "communes": ["Sarrebruck"]
+        },
+        {
+          "nom": "Saxe",
+          "communes": ["Dresde", "Leipzig", "Chemnitz", "Zwickau"]
+        },
+        {
+          "nom": "Saxe-Anhalt",
+          "communes": ["Magdebourg", "Halle", "Dessau-Rosslau"]
+        },
+        {
+          "nom": "Schleswig-Holstein",
+          "communes": ["Kiel", "Lubeck", "Flensbourg"]
+        },
+        {
+          "nom": "Thuringe",
+          "communes": ["Erfurt", "Iena", "Weimar", "Gera"]
+        }
+      ]
+    },
+    {
+      "nom": "Espagne",
+      "code_iso": "ES",
+      "regions": [
+        {
+          "nom": "Communaute de Madrid",
+          "communes": ["Madrid", "Mostoles", "Alcala de Henares", "Getafe", "Leganes"]
+        },
+        {
+          "nom": "Catalogne",
+          "communes": ["Barcelone", "Hospitalet de Llobregat", "Terrassa", "Badalona", "Tarragone"]
+        },
+        {
+          "nom": "Andalousie",
+          "communes": ["Seville", "Malaga", "Cordoue", "Grenade", "Cadix", "Almeria"]
+        },
+        {
+          "nom": "Communaute valencienne",
+          "communes": ["Valence", "Alicante", "Elche", "Castellon de la Plana"]
+        },
+        {
+          "nom": "Galice",
+          "communes": ["Vigo", "La Corogne", "Ourense", "Saint-Jacques-de-Compostelle", "Lugo"]
+        },
+        {
+          "nom": "Pays basque",
+          "communes": ["Bilbao", "Vitoria-Gasteiz", "Saint-Sebastien", "Barakaldo"]
+        },
+        {
+          "nom": "Castille-et-Leon",
+          "communes": ["Valladolid", "Burgos", "Salamanque", "Leon", "Segovie"]
+        },
+        {
+          "nom": "Castille-La Manche",
+          "communes": ["Albacete", "Tolede", "Ciudad Real", "Talavera de la Reina"]
+        },
+        {
+          "nom": "Iles Canaries",
+          "communes": ["Las Palmas de Gran Canaria", "Santa Cruz de Tenerife", "La Laguna"]
+        },
+        {
+          "nom": "Aragon",
+          "communes": ["Saragosse", "Huesca", "Teruel"]
+        },
+        {
+          "nom": "Murcie",
+          "communes": ["Murcie", "Carthagene", "Lorca"]
+        },
+        {
+          "nom": "Iles Baleares",
+          "communes": ["Palma de Majorque", "Ibiza", "Manacor"]
+        },
+        {
+          "nom": "Estremadure",
+          "communes": ["Badajoz", "Caceres", "Merida", "Plasencia"]
+        },
+        {
+          "nom": "Asturies",
+          "communes": ["Oviedo", "Gijon", "Aviles"]
+        },
+        {
+          "nom": "Navarre",
+          "communes": ["Pampelune", "Tudela", "Baranuain"]
+        },
+        {
+          "nom": "Cantabrie",
+          "communes": ["Santander", "Torrelavega"]
+        },
+        {
+          "nom": "La Rioja",
+          "communes": ["Logrono", "Calahorra"]
+        }
+      ]
+    },
+    {
+      "nom": "Italie",
+      "code_iso": "IT",
+      "regions": [
+        {
+          "nom": "Lombardie",
+          "communes": ["Milan", "Bergame", "Brescia", "Monza", "Come"]
+        },
+        {
+          "nom": "Latium",
+          "communes": ["Rome", "Latina", "Frosinone", "Viterbe"]
+        },
+        {
+          "nom": "Campanie",
+          "communes": ["Naples", "Salerne", "Caserte", "Avellino"]
+        },
+        {
+          "nom": "Sicile",
+          "communes": ["Palerme", "Catane", "Messine", "Syracuse", "Raguse"]
+        },
+        {
+          "nom": "Venetie",
+          "communes": ["Venise", "Verone", "Padoue", "Vicence", "Trevise"]
+        },
+        {
+          "nom": "Piemont",
+          "communes": ["Turin", "Novare", "Alexandrie", "Asti", "Coni"]
+        },
+        {
+          "nom": "Emilie-Romagne",
+          "communes": ["Bologne", "Parme", "Modene", "Reggio d'Emilie", "Ravenne"]
+        },
+        {
+          "nom": "Toscane",
+          "communes": ["Florence", "Pise", "Livourne", "Sienne", "Arezzo"]
+        },
+        {
+          "nom": "Pouilles",
+          "communes": ["Bari", "Tarente", "Lecce", "Foggia", "Brindisi"]
+        },
+        {
+          "nom": "Calabre",
+          "communes": ["Reggio de Calabre", "Catanzaro", "Cosenza", "Crotone"]
+        },
+        {
+          "nom": "Sardaigne",
+          "communes": ["Cagliari", "Sassari", "Olbia", "Nuoro"]
+        },
+        {
+          "nom": "Ligurie",
+          "communes": ["Genes", "La Spezia", "Savone", "San Remo"]
+        },
+        {
+          "nom": "Marches",
+          "communes": ["Ancone", "Pesaro", "Fano", "Ascoli Piceno"]
+        },
+        {
+          "nom": "Abruzzes",
+          "communes": ["L'Aquila", "Pescara", "Chieti", "Teramo"]
+        },
+        {
+          "nom": "Frioul-Venetie Julienne",
+          "communes": ["Trieste", "Udine", "Pordenone"]
+        },
+        {
+          "nom": "Trentin-Haut-Adige",
+          "communes": ["Trente", "Bolzano"]
+        },
+        {
+          "nom": "Ombrie",
+          "communes": ["Perouse", "Terni"]
+        },
+        {
+          "nom": "Basilicate",
+          "communes": ["Potenza", "Matera"]
+        },
+        {
+          "nom": "Molise",
+          "communes": ["Campobasso", "Isernia"]
+        },
+        {
+          "nom": "Vallee d'Aoste",
+          "communes": ["Aoste"]
+        }
+      ]
+    },
+    {
+      "nom": "Belgique",
+      "code_iso": "BE",
+      "regions": [
+        {
+          "nom": "Region de Bruxelles-Capitale",
+          "communes": ["Bruxelles", "Ixelles", "Schaerbeek", "Anderlecht", "Molenbeek-Saint-Jean"]
+        },
+        {
+          "nom": "Region flamande",
+          "communes": ["Anvers", "Gand", "Bruges", "Louvain", "Malines", "Hasselt"]
+        },
+        {
+          "nom": "Region wallonne",
+          "communes": ["Liege", "Charleroi", "Namur", "Mons", "Tournai", "Verviers"]
+        }
+      ]
+    },
+    {
+      "nom": "Suisse",
+      "code_iso": "CH",
+      "regions": [
+        {
+          "nom": "Zurich",
+          "communes": ["Zurich", "Winterthour"]
+        },
+        {
+          "nom": "Berne",
+          "communes": ["Berne", "Bienne", "Thoune"]
+        },
+        {
+          "nom": "Lucerne",
+          "communes": ["Lucerne"]
+        },
+        {
+          "nom": "Uri",
+          "communes": ["Altdorf"]
+        },
+        {
+          "nom": "Schwyz",
+          "communes": ["Schwyz"]
+        },
+        {
+          "nom": "Obwald",
+          "communes": ["Sarnen"]
+        },
+        {
+          "nom": "Nidwald",
+          "communes": ["Stans"]
+        },
+        {
+          "nom": "Glaris",
+          "communes": ["Glaris"]
+        },
+        {
+          "nom": "Zoug",
+          "communes": ["Zoug"]
+        },
+        {
+          "nom": "Fribourg",
+          "communes": ["Fribourg", "Bulle"]
+        },
+        {
+          "nom": "Soleure",
+          "communes": ["Soleure", "Olten"]
+        },
+        {
+          "nom": "Bale-Ville",
+          "communes": ["Bale"]
+        },
+        {
+          "nom": "Bale-Campagne",
+          "communes": ["Liestal", "Reinach"]
+        },
+        {
+          "nom": "Schaffhouse",
+          "communes": ["Schaffhouse"]
+        },
+        {
+          "nom": "Appenzell Rhodes-Exterieures",
+          "communes": ["Herisau"]
+        },
+        {
+          "nom": "Appenzell Rhodes-Interieures",
+          "communes": ["Appenzell"]
+        },
+        {
+          "nom": "Saint-Gall",
+          "communes": ["Saint-Gall", "Rapperswil-Jona"]
+        },
+        {
+          "nom": "Grisons",
+          "communes": ["Coire", "Davos"]
+        },
+        {
+          "nom": "Argovie",
+          "communes": ["Aarau", "Baden", "Wettingen"]
+        },
+        {
+          "nom": "Thurgovie",
+          "communes": ["Frauenfeld", "Kreuzlingen"]
+        },
+        {
+          "nom": "Tessin",
+          "communes": ["Lugano", "Bellinzone", "Locarno"]
+        },
+        {
+          "nom": "Vaud",
+          "communes": ["Lausanne", "Yverdon-les-Bains", "Montreux", "Nyon"]
+        },
+        {
+          "nom": "Valais",
+          "communes": ["Sion", "Monthey", "Sierre", "Martigny"]
+        },
+        {
+          "nom": "Neuchatel",
+          "communes": ["Neuchatel", "La Chaux-de-Fonds"]
+        },
+        {
+          "nom": "Geneve",
+          "communes": ["Geneve", "Vernier", "Carouge", "Lancy"]
+        },
+        {
+          "nom": "Jura",
+          "communes": ["Delemont", "Porrentruy"]
+        }
+      ]
+    },
+    {
+      "nom": "Portugal",
+      "code_iso": "PT",
+      "regions": [
+        {
+          "nom": "Lisbonne",
+          "communes": ["Lisbonne", "Sintra", "Cascais", "Loures", "Amadora"]
+        },
+        {
+          "nom": "Porto",
+          "communes": ["Porto", "Vila Nova de Gaia", "Matosinhos", "Gondomar"]
+        },
+        {
+          "nom": "Braga",
+          "communes": ["Braga", "Guimaraes", "Vila Nova de Famalicao", "Barcelos"]
+        },
+        {
+          "nom": "Setubal",
+          "communes": ["Setubal", "Almada", "Seixal", "Barreiro"]
+        },
+        {
+          "nom": "Aveiro",
+          "communes": ["Aveiro", "Santa Maria da Feira", "Ovar"]
+        },
+        {
+          "nom": "Leiria",
+          "communes": ["Leiria", "Caldas da Rainha", "Pombal"]
+        },
+        {
+          "nom": "Faro",
+          "communes": ["Faro", "Portimao", "Albufeira", "Loulé", "Lagos"]
+        },
+        {
+          "nom": "Coimbra",
+          "communes": ["Coimbra", "Figueira da Foz"]
+        },
+        {
+          "nom": "Viseu",
+          "communes": ["Viseu", "Lamego"]
+        },
+        {
+          "nom": "Santarem",
+          "communes": ["Santarem", "Tomar", "Torres Novas"]
+        },
+        {
+          "nom": "Viana do Castelo",
+          "communes": ["Viana do Castelo"]
+        },
+        {
+          "nom": "Vila Real",
+          "communes": ["Vila Real", "Chaves"]
+        },
+        {
+          "nom": "Castelo Branco",
+          "communes": ["Castelo Branco", "Covilha"]
+        },
+        {
+          "nom": "Evora",
+          "communes": ["Evora"]
+        },
+        {
+          "nom": "Guarda",
+          "communes": ["Guarda"]
+        },
+        {
+          "nom": "Beja",
+          "communes": ["Beja"]
+        },
+        {
+          "nom": "Braganca",
+          "communes": ["Braganca", "Mirandela"]
+        },
+        {
+          "nom": "Portalegre",
+          "communes": ["Portalegre"]
+        }
+      ]
+    },
+    {
+      "nom": "Pays-Bas",
+      "code_iso": "NL",
+      "regions": [
+        {
+          "nom": "Hollande-Meridionale",
+          "communes": ["La Haye", "Rotterdam", "Leyde", "Dordrecht", "Delft"]
+        },
+        {
+          "nom": "Hollande-Septentrionale",
+          "communes": ["Amsterdam", "Haarlem", "Zaanstad", "Hilversum", "Alkmaar"]
+        },
+        {
+          "nom": "Utrecht",
+          "communes": ["Utrecht", "Amersfoort", "Veenendaal"]
+        },
+        {
+          "nom": "Brabant-Septentrional",
+          "communes": ["Eindhoven", "Tilburg", "Breda", "Bois-le-Duc", "Helmond"]
+        },
+        {
+          "nom": "Gueldre",
+          "communes": ["Arnhem", "Nimegue", "Apeldoorn", "Ede"]
+        },
+        {
+          "nom": "Overijssel",
+          "communes": ["Enschede", "Zwolle", "Deventer", "Almelo"]
+        },
+        {
+          "nom": "Limbourg",
+          "communes": ["Maastricht", "Venlo", "Heerlen", "Roermond"]
+        },
+        {
+          "nom": "Frise",
+          "communes": ["Leeuwarden", "Sneek", "Heerenveen"]
+        },
+        {
+          "nom": "Groningue",
+          "communes": ["Groningue"]
+        },
+        {
+          "nom": "Drenthe",
+          "communes": ["Assen", "Emmen", "Hoogeveen"]
+        },
+        {
+          "nom": "Flevoland",
+          "communes": ["Almere", "Lelystad"]
+        },
+        {
+          "nom": "Zelande",
+          "communes": ["Middelbourg", "Flessingue", "Terneuzen"]
+        }
+      ]
+    },
+    {
+      "nom": "Pologne",
+      "code_iso": "PL",
+      "regions": [
+        {
+          "nom": "Masovie",
+          "communes": ["Varsovie", "Radom", "Plock"]
+        },
+        {
+          "nom": "Petite-Pologne",
+          "communes": ["Cracovie", "Tarnow", "Nowy Sacz"]
+        },
+        {
+          "nom": "Silesie",
+          "communes": ["Katowice", "Czestochowa", "Sosnowiec", "Gliwice", "Bielsko-Biala"]
+        },
+        {
+          "nom": "Grande-Pologne",
+          "communes": ["Poznan", "Kalisz", "Konin"]
+        },
+        {
+          "nom": "Basse-Silesie",
+          "communes": ["Wroclaw", "Walbrzych", "Legnica"]
+        },
+        {
+          "nom": "Pomeranie",
+          "communes": ["Gdansk", "Gdynia", "Sopot", "Slupsk"]
+        },
+        {
+          "nom": "Cujavie-Pomeranie",
+          "communes": ["Bydgoszcz", "Torun"]
+        },
+        {
+          "nom": "Lodz",
+          "communes": ["Lodz", "Piotrkow Trybunalski"]
+        },
+        {
+          "nom": "Lublin",
+          "communes": ["Lublin", "Zamosc", "Chelm"]
+        },
+        {
+          "nom": "Warmie-Mazurie",
+          "communes": ["Olsztyn", "Elblag"]
+        },
+        {
+          "nom": "Podlachie",
+          "communes": ["Bialystok", "Suwalki"]
+        },
+        {
+          "nom": "Podcarpatique",
+          "communes": ["Rzeszow", "Przemysl", "Stalowa Wola"]
+        },
+        {
+          "nom": "Sainte-Croix",
+          "communes": ["Kielce", "Ostrowiec Swietokrzyski"]
+        },
+        {
+          "nom": "Opole",
+          "communes": ["Opole"]
+        },
+        {
+          "nom": "Lubusz",
+          "communes": ["Zielona Gora", "Gorzow Wielkopolski"]
+        },
+        {
+          "nom": "Pomeranie-Occidentale",
+          "communes": ["Szczecin", "Koszalin", "Stargard"]
+        }
+      ]
+    },
+    {
+      "nom": "Roumanie",
+      "code_iso": "RO",
+      "regions": [
+        {
+          "nom": "Bucarest",
+          "communes": ["Bucarest"]
+        },
+        {
+          "nom": "Cluj",
+          "communes": ["Cluj-Napoca", "Turda", "Dej"]
+        },
+        {
+          "nom": "Timis",
+          "communes": ["Timisoara", "Lugoj"]
+        },
+        {
+          "nom": "Iasi",
+          "communes": ["Iasi", "Pascani"]
+        },
+        {
+          "nom": "Constanta",
+          "communes": ["Constanta", "Mangalia", "Medgidia"]
+        },
+        {
+          "nom": "Brasov",
+          "communes": ["Brasov", "Fagaras", "Sacele"]
+        },
+        {
+          "nom": "Dolj",
+          "communes": ["Craiova", "Calafat"]
+        },
+        {
+          "nom": "Sibiu",
+          "communes": ["Sibiu", "Medias"]
+        }
+      ]
+    },
+    {
+      "nom": "Grece",
+      "code_iso": "GR",
+      "regions": [
+        {
+          "nom": "Attique",
+          "communes": ["Athenes", "Le Piree", "Peristeri", "Kallithea"]
+        },
+        {
+          "nom": "Macedoine Centrale",
+          "communes": ["Thessalonique", "Serres", "Katerini"]
+        },
+        {
+          "nom": "Crete",
+          "communes": ["Heraklion", "La Canee", "Rethymnon", "Agios Nikolaos"]
+        },
+        {
+          "nom": "Thessalie",
+          "communes": ["Larissa", "Volos", "Trikala", "Karditsa"]
+        },
+        {
+          "nom": "Macedoine Occidentale",
+          "communes": ["Kozani", "Ptolemaida", "Florina", "Kastoria"]
+        },
+        {
+          "nom": "Peloponnese",
+          "communes": ["Tripoli", "Kalamata", "Corinthe", "Argos", "Sparte"]
+        },
+        {
+          "nom": "Epire",
+          "communes": ["Ioannina", "Preveza", "Arta"]
+        },
+        {
+          "nom": "Grece Occidentale",
+          "communes": ["Patras", "Agrinio", "Pyrgos"]
+        },
+        {
+          "nom": "Grece Centrale",
+          "communes": ["Lamia", "Chalcis", "Thèbes", "Livadia"]
+        },
+        {
+          "nom": "Macedoine Orientale et Thrace",
+          "communes": ["Alexandroupoli", "Kavala", "Komotini", "Xanthi", "Drama"]
+        },
+        {
+          "nom": "Iles Ioniennes",
+          "communes": ["Corfou", "Argostoli", "Zante"]
+        },
+        {
+          "nom": "Egee Septentrionale",
+          "communes": ["Mytilene", "Chios", "Samos"]
+        },
+        {
+          "nom": "Egee Meridionale",
+          "communes": ["Ermoupoli", "Rhodes", "Kos"]
+        }
+      ]
+    }
+  ]
+}

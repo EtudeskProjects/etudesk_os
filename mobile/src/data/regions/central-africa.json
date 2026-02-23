@@ -1,0 +1,496 @@
+{
+  "pays": [
+    {
+      "nom": "Cameroun",
+      "code_iso": "CM",
+      "regions": [
+        {
+          "nom": "Centre",
+          "communes": ["Yaounde", "Mbalmayo", "Obala", "Nanga-Eboko", "Monatele"]
+        },
+        {
+          "nom": "Littoral",
+          "communes": ["Douala", "Nkongsamba", "Edea", "Loum", "Manjo"]
+        },
+        {
+          "nom": "Ouest",
+          "communes": ["Bafoussam", "Dschang", "Mbouda", "Foumban", "Bandjoun"]
+        },
+        {
+          "nom": "Nord-Ouest",
+          "communes": ["Bamenda", "Kumbo", "Nkambe", "Wum", "Ndop"]
+        },
+        {
+          "nom": "Sud-Ouest",
+          "communes": ["Buea", "Limbe", "Kumba", "Tiko", "Mamfe"]
+        },
+        {
+          "nom": "Nord",
+          "communes": ["Garoua", "Guider", "Pitoa", "Figuil", "Lagdo"]
+        },
+        {
+          "nom": "Adamaoua",
+          "communes": ["Ngaoundere", "Meiganga", "Tibati", "Banyo", "Tignere"]
+        },
+        {
+          "nom": "Extreme-Nord",
+          "communes": ["Maroua", "Mokolo", "Kousseri", "Yagoua", "Mora"]
+        },
+        {
+          "nom": "Est",
+          "communes": ["Bertoua", "Batouri", "Abong-Mbang", "Yokadouma", "Belabo"]
+        },
+        {
+          "nom": "Sud",
+          "communes": ["Ebolowa", "Kribi", "Sangmelima", "Ambam", "Lolodorf"]
+        }
+      ]
+    },
+    {
+      "nom": "Gabon",
+      "code_iso": "GA",
+      "regions": [
+        {
+          "nom": "Estuaire",
+          "communes": ["Libreville", "Owendo", "Akanda", "Ntoum", "Kango"]
+        },
+        {
+          "nom": "Haut-Ogooue",
+          "communes": ["Franceville", "Moanda", "Mounana", "Okondja", "Lekoni"]
+        },
+        {
+          "nom": "Moyen-Ogooue",
+          "communes": ["Lambarene", "Ndjole"]
+        },
+        {
+          "nom": "Ngounie",
+          "communes": ["Mouila", "Ndende", "Mimongo", "Fougamou", "Mbigou"]
+        },
+        {
+          "nom": "Nyanga",
+          "communes": ["Tchibanga", "Mayumba", "Moabi"]
+        },
+        {
+          "nom": "Ogooue-Ivindo",
+          "communes": ["Makokou", "Booue", "Mekambo", "Ovan"]
+        },
+        {
+          "nom": "Ogooue-Lolo",
+          "communes": ["Koulamoutou", "Lastoursville", "Pana"]
+        },
+        {
+          "nom": "Ogooue-Maritime",
+          "communes": ["Port-Gentil", "Gamba", "Omboue"]
+        },
+        {
+          "nom": "Woleu-Ntem",
+          "communes": ["Oyem", "Bitam", "Minvoul", "Mitzic", "Medouneu"]
+        }
+      ]
+    },
+    {
+      "nom": "Congo",
+      "code_iso": "CG",
+      "regions": [
+        {
+          "nom": "Brazzaville",
+          "communes": ["Brazzaville"]
+        },
+        {
+          "nom": "Pointe-Noire",
+          "communes": ["Pointe-Noire"]
+        },
+        {
+          "nom": "Bouenza",
+          "communes": ["Madingou", "Nkayi", "Loudima", "Mouyondzi"]
+        },
+        {
+          "nom": "Cuvette",
+          "communes": ["Owando", "Oyo", "Boundji", "Makoua"]
+        },
+        {
+          "nom": "Cuvette-Ouest",
+          "communes": ["Ewo", "Kelle", "Mbama"]
+        },
+        {
+          "nom": "Kouilou",
+          "communes": ["Loango", "Hinda", "Nzassi", "Madingo-Kayes"]
+        },
+        {
+          "nom": "Lekoumou",
+          "communes": ["Sibiti", "Zanaga", "Komono"]
+        },
+        {
+          "nom": "Likouala",
+          "communes": ["Impfondo", "Dongou", "Epena", "Betou"]
+        },
+        {
+          "nom": "Niari",
+          "communes": ["Dolisie", "Mossendjo", "Kibangou"]
+        },
+        {
+          "nom": "Plateaux",
+          "communes": ["Djambala", "Gamboma", "Lekana", "Mpouya"]
+        },
+        {
+          "nom": "Pool",
+          "communes": ["Kinkala", "Boko", "Mindouli", "Kindamba"]
+        },
+        {
+          "nom": "Sangha",
+          "communes": ["Ouesso", "Sembe", "Souanke", "Pikounda"]
+        }
+      ]
+    },
+    {
+      "nom": "Republique Democratique du Congo",
+      "code_iso": "CD",
+      "regions": [
+        {
+          "nom": "Kinshasa",
+          "communes": ["Kinshasa", "Gombe", "Ngaliema", "Limete", "Matete"]
+        },
+        {
+          "nom": "Kongo-Central",
+          "communes": ["Matadi", "Boma", "Mbanza-Ngungu", "Moanda", "Lukala"]
+        },
+        {
+          "nom": "Kwango",
+          "communes": ["Kenge", "Kahemba", "Feshi", "Kasongo-Lunda"]
+        },
+        {
+          "nom": "Kwilu",
+          "communes": ["Bandundu", "Kikwit", "Bulungu", "Idiofa"]
+        },
+        {
+          "nom": "Mai-Ndombe",
+          "communes": ["Inongo", "Kutu", "Nioki", "Bolobo"]
+        },
+        {
+          "nom": "Equateur",
+          "communes": ["Mbandaka", "Bikoro", "Bomongo", "Basankusu"]
+        },
+        {
+          "nom": "Mongala",
+          "communes": ["Lisala", "Bumba", "Bongandanga"]
+        },
+        {
+          "nom": "Nord-Ubangi",
+          "communes": ["Gbadolite", "Mobayi-Mbongo", "Yakoma"]
+        },
+        {
+          "nom": "Sud-Ubangi",
+          "communes": ["Gemena", "Libenge", "Zongo", "Budjala"]
+        },
+        {
+          "nom": "Tshuapa",
+          "communes": ["Boende", "Befale", "Ikela", "Monkoto"]
+        },
+        {
+          "nom": "Tshopo",
+          "communes": ["Kisangani", "Yangambi", "Isangi", "Basoko"]
+        },
+        {
+          "nom": "Bas-Uele",
+          "communes": ["Buta", "Aketi", "Ango"]
+        },
+        {
+          "nom": "Haut-Uele",
+          "communes": ["Isiro", "Dungu", "Faradje", "Watsa", "Niangara"]
+        },
+        {
+          "nom": "Ituri",
+          "communes": ["Bunia", "Mahagi", "Aru", "Mambasa", "Irumu"]
+        },
+        {
+          "nom": "Nord-Kivu",
+          "communes": ["Goma", "Beni", "Butembo", "Rutshuru", "Lubero"]
+        },
+        {
+          "nom": "Sud-Kivu",
+          "communes": ["Bukavu", "Uvira", "Kabare", "Walungu", "Baraka"]
+        },
+        {
+          "nom": "Maniema",
+          "communes": ["Kindu", "Kasongo", "Kabambare", "Pangi"]
+        },
+        {
+          "nom": "Haut-Katanga",
+          "communes": ["Lubumbashi", "Likasi", "Kipushi", "Kasumbalesa", "Kambove"]
+        },
+        {
+          "nom": "Lualaba",
+          "communes": ["Kolwezi", "Dilolo", "Mutshatsha", "Lubudi"]
+        },
+        {
+          "nom": "Haut-Lomami",
+          "communes": ["Kamina", "Kabongo", "Kaniama", "Bukama"]
+        },
+        {
+          "nom": "Tanganyika",
+          "communes": ["Kalemie", "Moba", "Kongolo", "Manono"]
+        },
+        {
+          "nom": "Lomami",
+          "communes": ["Kabinda", "Mwene-Ditu", "Ngandajika", "Lubao"]
+        },
+        {
+          "nom": "Kasai-Oriental",
+          "communes": ["Mbuji-Mayi", "Tshilenge", "Miabi", "Kabeya-Kamwanga"]
+        },
+        {
+          "nom": "Kasai-Central",
+          "communes": ["Kananga", "Luebo", "Ilebo", "Demba"]
+        },
+        {
+          "nom": "Kasai",
+          "communes": ["Tshikapa", "Luebo", "Ilebo", "Kamonia"]
+        },
+        {
+          "nom": "Sankuru",
+          "communes": ["Lodja", "Lusambo", "Kole", "Katako-Kombe"]
+        }
+      ]
+    },
+    {
+      "nom": "Tchad",
+      "code_iso": "TD",
+      "regions": [
+        {
+          "nom": "N'Djamena",
+          "communes": ["N'Djamena"]
+        },
+        {
+          "nom": "Logone Occidental",
+          "communes": ["Moundou", "Benoye", "Laokassy"]
+        },
+        {
+          "nom": "Logone Oriental",
+          "communes": ["Doba", "Gore", "Beboto"]
+        },
+        {
+          "nom": "Mayo-Kebbi Est",
+          "communes": ["Bongor", "Guelendeng", "Gounou Gaya"]
+        },
+        {
+          "nom": "Mayo-Kebbi Ouest",
+          "communes": ["Pala", "Lere", "Gagal"]
+        },
+        {
+          "nom": "Tandjile",
+          "communes": ["Lai", "Kelo", "Berem"]
+        },
+        {
+          "nom": "Mandoul",
+          "communes": ["Koumra", "Moissala", "Bedaya"]
+        },
+        {
+          "nom": "Moyen-Chari",
+          "communes": ["Sarh", "Kyabe", "Danamadji"]
+        },
+        {
+          "nom": "Salamat",
+          "communes": ["Am-Timan", "Haraze Mangueigne"]
+        },
+        {
+          "nom": "Guera",
+          "communes": ["Mongo", "Bitkine", "Mangalme"]
+        },
+        {
+          "nom": "Batha",
+          "communes": ["Ati", "Oum Hadjer", "Djeddah"]
+        },
+        {
+          "nom": "Hadjer-Lamis",
+          "communes": ["Massakory", "Massaguet", "Bokoro"]
+        },
+        {
+          "nom": "Chari-Baguirmi",
+          "communes": ["Massenya", "Bousso", "Dourbali"]
+        },
+        {
+          "nom": "Lac",
+          "communes": ["Bol", "Mao", "Bagasola"]
+        },
+        {
+          "nom": "Kanem",
+          "communes": ["Mao", "Mondo", "Rig Rig"]
+        },
+        {
+          "nom": "Barh El Gazel",
+          "communes": ["Moussoro", "Salal"]
+        },
+        {
+          "nom": "Borkou",
+          "communes": ["Faya-Largeau", "Fada"]
+        },
+        {
+          "nom": "Ennedi Est",
+          "communes": ["Abeche"]
+        },
+        {
+          "nom": "Ennedi Ouest",
+          "communes": ["Fada"]
+        },
+        {
+          "nom": "Ouaddai",
+          "communes": ["Abeche", "Biltine", "Adre"]
+        },
+        {
+          "nom": "Wadi Fira",
+          "communes": ["Biltine", "Iriba", "Guereda"]
+        },
+        {
+          "nom": "Sila",
+          "communes": ["Goz Beida", "Koukou-Angarana"]
+        },
+        {
+          "nom": "Tibesti",
+          "communes": ["Bardai", "Zouar", "Aouzou"]
+        }
+      ]
+    },
+    {
+      "nom": "Republique Centrafricaine",
+      "code_iso": "CF",
+      "regions": [
+        {
+          "nom": "Bangui",
+          "communes": ["Bangui"]
+        },
+        {
+          "nom": "Ombella-M'Poko",
+          "communes": ["Bimbo", "Damara", "Boali"]
+        },
+        {
+          "nom": "Lobaye",
+          "communes": ["Mbaiki", "Mongoumba", "Boda"]
+        },
+        {
+          "nom": "Nana-Mambere",
+          "communes": ["Bouar", "Baboua", "Baoro"]
+        },
+        {
+          "nom": "Mambere-Kadei",
+          "communes": ["Berberati", "Carnot", "Gamboula", "Nola"]
+        },
+        {
+          "nom": "Sangha-Mbaere",
+          "communes": ["Nola", "Bayanga", "Salo"]
+        },
+        {
+          "nom": "Ouham",
+          "communes": ["Bossangoa", "Bouca", "Batangafo"]
+        },
+        {
+          "nom": "Ouham-Pende",
+          "communes": ["Bozoum", "Paoua", "Bossemptele"]
+        },
+        {
+          "nom": "Kemo",
+          "communes": ["Sibut", "Dekoa", "Ndjoukou"]
+        },
+        {
+          "nom": "Nana-Grebizi",
+          "communes": ["Kaga-Bandoro", "Mbrès"]
+        },
+        {
+          "nom": "Ouaka",
+          "communes": ["Bambari", "Ippy", "Grimari"]
+        },
+        {
+          "nom": "Basse-Kotto",
+          "communes": ["Mobaye", "Kembe", "Alindao"]
+        },
+        {
+          "nom": "Mbomou",
+          "communes": ["Bangassou", "Rafai", "Gambo"]
+        },
+        {
+          "nom": "Haut-Mbomou",
+          "communes": ["Obo", "Zemio", "Djema"]
+        },
+        {
+          "nom": "Haute-Kotto",
+          "communes": ["Bria", "Yalinga", "Ouadda"]
+        },
+        {
+          "nom": "Bamingui-Bangoran",
+          "communes": ["Ndele", "Bamingui"]
+        }
+      ]
+    },
+    {
+      "nom": "Guinee Equatoriale",
+      "code_iso": "GQ",
+      "regions": [
+        {
+          "nom": "Litoral",
+          "communes": ["Bata", "Mbini", "Cogo"]
+        },
+        {
+          "nom": "Centro Sur",
+          "communes": ["Evinayong", "Niefang", "Akurenam"]
+        },
+        {
+          "nom": "Kie-Ntem",
+          "communes": ["Ebebiyin", "Mongomo", "Nsork"]
+        },
+        {
+          "nom": "Wele-Nzas",
+          "communes": ["Mongomo", "Akonibe", "Anisok"]
+        },
+        {
+          "nom": "Bioko Norte",
+          "communes": ["Malabo", "Rebola", "Basacato"]
+        },
+        {
+          "nom": "Bioko Sur",
+          "communes": ["Luba", "Riaba", "Batete"]
+        },
+        {
+          "nom": "Annobon",
+          "communes": ["San Antonio de Pale"]
+        },
+        {
+          "nom": "Djibloho",
+          "communes": ["Oyala", "Djibloho"]
+        }
+      ]
+    },
+    {
+      "nom": "Sao Tome-et-Principe",
+      "code_iso": "ST",
+      "regions": [
+        {
+          "nom": "Agua Grande",
+          "communes": ["Sao Tome"]
+        },
+        {
+          "nom": "Me-Zochi",
+          "communes": ["Trindade", "Sao Joao dos Angolares"]
+        },
+        {
+          "nom": "Cantagalo",
+          "communes": ["Santana"]
+        },
+        {
+          "nom": "Caue",
+          "communes": ["Sao Joao dos Angolares"]
+        },
+        {
+          "nom": "Lemba",
+          "communes": ["Neves"]
+        },
+        {
+          "nom": "Lobata",
+          "communes": ["Guadalupe"]
+        },
+        {
+          "nom": "Principe",
+          "communes": ["Santo Antonio"]
+        }
+      ]
+    }
+  ]
+}

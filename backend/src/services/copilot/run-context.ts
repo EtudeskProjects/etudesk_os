@@ -3,11 +3,13 @@
  * Typed context passed to the agent run for state tracking.
  */
 
+import { SupportedLanguage } from '../../i18n';
+
 export interface CopilotRunContext {
   talentId: string;
   mode: 'explore' | 'study' | 'org';
   sessionId: string;
-  language: 'fr' | 'en';
+  language: SupportedLanguage;
 
   // Mutable state tracked during the run
   skillsAdded: string[];
@@ -21,7 +23,7 @@ export function createCopilotRunContext(params: {
   talentId: string;
   mode: 'explore' | 'study' | 'org';
   sessionId: string;
-  language?: 'fr' | 'en';
+  language?: SupportedLanguage;
 }): CopilotRunContext {
   return {
     talentId: params.talentId,

@@ -28,10 +28,10 @@ import { communityService } from '../../../src/services';
 import type { Community } from '../../../src/types/models';
 
 const COMMUNITY_CATEGORIES = [
-    { id: 'all', label: 'Toutes', icon: LayoutGrid },
-    { id: 'tech', label: 'Technologie', icon: TrendingUp },
-    { id: 'business', label: 'Business', icon: Star },
-    { id: 'design', label: 'Design', icon: Users },
+    { id: 'all', labelKey: 'screens.communities.all', icon: LayoutGrid },
+    { id: 'tech', labelKey: 'screens.communities.technology', icon: TrendingUp },
+    { id: 'business', labelKey: 'screens.communities.business', icon: Star },
+    { id: 'design', labelKey: 'screens.communities.design', icon: Users },
 ];
 
 export default function CommunitiesScreen() {
@@ -81,7 +81,7 @@ export default function CommunitiesScreen() {
         const Icon = item.icon;
         return (
             <Chip
-                label={item.label}
+                label={t(item.labelKey)}
                 selected={isActive}
                 onPress={() => setActiveCategory(item.id)}
                 leftIcon={
@@ -118,11 +118,11 @@ export default function CommunitiesScreen() {
         <View style={styles.emptyContainer}>
             <Users size={48} color={colors.gray300} />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                {searchQuery ? 'Aucune communauté trouvée' : 'Aucune communauté disponible'}
+                {searchQuery ? t('screens.communities.noResults') : t('screens.communities.empty')}
             </Text>
             {searchQuery && (
                 <Text style={[styles.emptyHint, { color: colors.gray400 }]}>
-                    Essayez avec d'autres mots-clés
+                    {t('screens.communities.tryOtherKeywords')}
                 </Text>
             )}
         </View>
@@ -130,7 +130,7 @@ export default function CommunitiesScreen() {
 
     const renderLoading = () => (
         <View style={styles.loadingContainer}>
-            <LoadingShimmer variant="fullPage" label="Réfléchit…" />
+            <LoadingShimmer variant="fullPage" label={t('common.thinking')} />
         </View>
     );
 
@@ -140,14 +140,14 @@ export default function CommunitiesScreen() {
                 <IconButton
                     onPress={() => router.back()}
                     icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} />}
-                    accessibilityLabel="Retour"
+                    accessibilityLabel={t('common.back')}
                     style={styles.headerButton}
                 />
-                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Communautés</Text>
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('screens.communities.title')}</Text>
                 <IconButton
                     onPress={() => { }}
                     icon={<Plus size={ICON.size.md} color={colors.primary} />}
-                    accessibilityLabel="Créer une communauté (indisponible)"
+                    accessibilityLabel={t('screens.communities.createUnavailable')}
                     style={[styles.headerButton, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}
                     disabled
                 />
@@ -155,7 +155,7 @@ export default function CommunitiesScreen() {
 
             <View style={styles.searchSection}>
                 <Input
-                    placeholder="Trouver une communauté..."
+                    placeholder={t('screens.communities.searchPlaceholder')}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     containerStyle={{ width: '100%' }}
@@ -166,7 +166,7 @@ export default function CommunitiesScreen() {
                         <Pressable
                             onPress={() => setSearchQuery('')}
                             accessibilityRole="button"
-                            accessibilityLabel="Effacer la recherche"
+                            accessibilityLabel={t('screens.communities.clearSearch')}
                             hitSlop={10}
                         >
                             <X size={18} color={colors.textSecondary} />

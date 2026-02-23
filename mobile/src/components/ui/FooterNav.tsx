@@ -19,6 +19,7 @@ import {
 import { SPACING, ICON, BORDER } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { useSpace } from '../../contexts/SpaceContext';
+import { useI18n } from '../../contexts/I18nContext';
 import { Tap } from './Tap';
 
 type TabName = 'home' | 'gestion' | 'assistant' | 'explore' | 'settings';
@@ -27,20 +28,21 @@ interface FooterNavProps {
   activeTab?: TabName;
 }
 
-// Accessibility labels for each tab
-const TAB_ACCESSIBILITY: Record<TabName, { label: string; hint: string }> = {
-  home: { label: 'Accueil', hint: 'Aller à la page d\'accueil' },
-  gestion: { label: 'Gestion', hint: 'Aller à votre espace organisation' },
-  assistant: { label: 'Assistant', hint: 'Ouvrir l\'assistant IA' },
-  explore: { label: 'Explorer', hint: 'Parcourir les opportunités et communautés' },
-  settings: { label: 'Paramètres', hint: 'Accéder aux paramètres' },
-};
-
 export const FooterNav: React.FC<FooterNavProps> = ({ activeTab }) => {
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { isOrganizationSpace } = useSpace();
+  const { t } = useI18n();
+
+  // Accessibility labels for each tab (using i18n translations)
+  const TAB_ACCESSIBILITY: Record<TabName, { label: string; hint: string }> = {
+    home: { label: t('tabs.homeLabel'), hint: t('tabs.homeHint') },
+    gestion: { label: t('tabs.gestionLabel'), hint: t('tabs.gestionHint') },
+    assistant: { label: t('tabs.assistant'), hint: t('tabs.assistantHint') },
+    explore: { label: t('tabs.explore'), hint: t('tabs.exploreHint') },
+    settings: { label: t('tabs.settingsLabel'), hint: t('tabs.settingsHint') },
+  };
 
   const normalizedActiveTab: TabName | undefined =
     isOrganizationSpace && activeTab === 'home' ? 'gestion' : activeTab;

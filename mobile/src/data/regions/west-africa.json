@@ -1,0 +1,504 @@
+{
+  "pays": [
+    {
+      "nom": "Ghana",
+      "code_iso": "GH",
+      "regions": [
+        {
+          "nom": "Greater Accra",
+          "communes": ["Accra", "Tema", "Madina", "Ashaiman", "Teshie"]
+        },
+        {
+          "nom": "Ashanti",
+          "communes": ["Kumasi", "Obuasi", "Ejisu", "Mampong", "Konongo"]
+        },
+        {
+          "nom": "Western",
+          "communes": ["Sekondi-Takoradi", "Tarkwa", "Axim", "Prestea", "Shama"]
+        },
+        {
+          "nom": "Western North",
+          "communes": ["Sefwi Wiawso", "Bibiani", "Enchi", "Juaboso", "Akontombra"]
+        },
+        {
+          "nom": "Central",
+          "communes": ["Cape Coast", "Kasoa", "Winneba", "Mankessim", "Elmina"]
+        },
+        {
+          "nom": "Eastern",
+          "communes": ["Koforidua", "Nkawkaw", "Nsawam", "Akim Oda", "Suhum"]
+        },
+        {
+          "nom": "Volta",
+          "communes": ["Ho", "Keta", "Hohoe", "Anloga", "Kpando"]
+        },
+        {
+          "nom": "Oti",
+          "communes": ["Dambai", "Nkwanta", "Kadjebi", "Jasikan", "Krachi"]
+        },
+        {
+          "nom": "Northern",
+          "communes": ["Tamale", "Yendi", "Savelugu", "Damongo", "Tolon"]
+        },
+        {
+          "nom": "Savannah",
+          "communes": ["Damongo", "Salaga", "Bole", "Sawla", "Buipe"]
+        },
+        {
+          "nom": "North East",
+          "communes": ["Nalerigu", "Gambaga", "Walewale", "Bunkpurugu", "Chereponi"]
+        },
+        {
+          "nom": "Upper East",
+          "communes": ["Bolgatanga", "Navrongo", "Bawku", "Zebilla", "Paga"]
+        },
+        {
+          "nom": "Upper West",
+          "communes": ["Wa", "Tumu", "Lawra", "Nandom", "Jirapa"]
+        },
+        {
+          "nom": "Bono",
+          "communes": ["Sunyani", "Berekum", "Dormaa Ahenkro", "Wenchi", "Techiman"]
+        },
+        {
+          "nom": "Bono East",
+          "communes": ["Techiman", "Kintampo", "Nkoranza", "Atebubu", "Yeji"]
+        },
+        {
+          "nom": "Ahafo",
+          "communes": ["Goaso", "Bechem", "Duayaw-Nkwanta", "Hwidiem", "Kukuom"]
+        }
+      ]
+    },
+    {
+      "nom": "Nigeria",
+      "code_iso": "NG",
+      "regions": [
+        {
+          "nom": "Federal Capital Territory",
+          "communes": ["Abuja", "Gwagwalada", "Kuje", "Bwari", "Kwali"]
+        },
+        {
+          "nom": "Lagos",
+          "communes": ["Lagos", "Ikeja", "Lekki", "Victoria Island", "Epe"]
+        },
+        {
+          "nom": "Kano",
+          "communes": ["Kano", "Wudil", "Gwarzo", "Rano", "Bichi"]
+        },
+        {
+          "nom": "Rivers",
+          "communes": ["Port Harcourt", "Obio-Akpor", "Bonny", "Degema", "Okrika"]
+        },
+        {
+          "nom": "Oyo",
+          "communes": ["Ibadan", "Ogbomosho", "Oyo", "Iseyin", "Saki"]
+        },
+        {
+          "nom": "Kaduna",
+          "communes": ["Kaduna", "Zaria", "Kafanchan", "Kagoro", "Saminaka"]
+        },
+        {
+          "nom": "Ogun",
+          "communes": ["Abeokuta", "Sagamu", "Ijebu-Ode", "Ota", "Ilaro"]
+        },
+        {
+          "nom": "Anambra",
+          "communes": ["Awka", "Onitsha", "Nnewi", "Ekwulobia", "Ihiala"]
+        },
+        {
+          "nom": "Enugu",
+          "communes": ["Enugu", "Nsukka", "Agbani", "Oji River", "Udi"]
+        },
+        {
+          "nom": "Delta",
+          "communes": ["Asaba", "Warri", "Sapele", "Ughelli", "Agbor"]
+        },
+        {
+          "nom": "Edo",
+          "communes": ["Benin City", "Auchi", "Ekpoma", "Uromi", "Igarra"]
+        },
+        {
+          "nom": "Imo",
+          "communes": ["Owerri", "Orlu", "Okigwe", "Oguta", "Mbaise"]
+        },
+        {
+          "nom": "Abia",
+          "communes": ["Umuahia", "Aba", "Ohafia", "Arochukwu", "Bende"]
+        },
+        {
+          "nom": "Borno",
+          "communes": ["Maiduguri", "Biu", "Bama", "Dikwa", "Monguno"]
+        },
+        {
+          "nom": "Bauchi",
+          "communes": ["Bauchi", "Azare", "Misau", "Jama'are", "Katagum"]
+        },
+        {
+          "nom": "Katsina",
+          "communes": ["Katsina", "Daura", "Funtua", "Malumfashi", "Dutsinma"]
+        },
+        {
+          "nom": "Sokoto",
+          "communes": ["Sokoto", "Tambuwal", "Gwadabawa", "Wurno", "Illela"]
+        },
+        {
+          "nom": "Zamfara",
+          "communes": ["Gusau", "Kaura Namoda", "Talata Mafara", "Anka", "Maru"]
+        },
+        {
+          "nom": "Kebbi",
+          "communes": ["Birnin Kebbi", "Argungu", "Zuru", "Yauri", "Jega"]
+        },
+        {
+          "nom": "Niger",
+          "communes": ["Minna", "Bida", "Suleja", "Kontagora", "New Bussa"]
+        },
+        {
+          "nom": "Plateau",
+          "communes": ["Jos", "Bukuru", "Pankshin", "Shendam", "Langtang"]
+        },
+        {
+          "nom": "Adamawa",
+          "communes": ["Yola", "Jimeta", "Mubi", "Numan", "Ganye"]
+        },
+        {
+          "nom": "Taraba",
+          "communes": ["Jalingo", "Wukari", "Bali", "Takum", "Gembu"]
+        },
+        {
+          "nom": "Gombe",
+          "communes": ["Gombe", "Kumo", "Billiri", "Kaltungo", "Deba"]
+        },
+        {
+          "nom": "Yobe",
+          "communes": ["Damaturu", "Potiskum", "Gashua", "Nguru", "Geidam"]
+        },
+        {
+          "nom": "Benue",
+          "communes": ["Makurdi", "Gboko", "Otukpo", "Katsina-Ala", "Vandeikya"]
+        },
+        {
+          "nom": "Nasarawa",
+          "communes": ["Lafia", "Keffi", "Akwanga", "Nasarawa", "Doma"]
+        },
+        {
+          "nom": "Kogi",
+          "communes": ["Lokoja", "Okene", "Idah", "Kabba", "Ankpa"]
+        },
+        {
+          "nom": "Kwara",
+          "communes": ["Ilorin", "Offa", "Jebba", "Pategi", "Lafiagi"]
+        },
+        {
+          "nom": "Osun",
+          "communes": ["Osogbo", "Ile-Ife", "Ilesa", "Ede", "Ikire"]
+        },
+        {
+          "nom": "Ondo",
+          "communes": ["Akure", "Ondo", "Owo", "Ikare", "Ore"]
+        },
+        {
+          "nom": "Ekiti",
+          "communes": ["Ado-Ekiti", "Ikere-Ekiti", "Ijero-Ekiti", "Efon-Alaaye", "Ikole"]
+        },
+        {
+          "nom": "Cross River",
+          "communes": ["Calabar", "Ikom", "Ogoja", "Obudu", "Ugep"]
+        },
+        {
+          "nom": "Akwa Ibom",
+          "communes": ["Uyo", "Eket", "Ikot Ekpene", "Oron", "Abak"]
+        },
+        {
+          "nom": "Bayelsa",
+          "communes": ["Yenagoa", "Brass", "Ogbia", "Sagbama", "Ekeremor"]
+        },
+        {
+          "nom": "Ebonyi",
+          "communes": ["Abakaliki", "Afikpo", "Onueke", "Ishiagu", "Uburu"]
+        },
+        {
+          "nom": "Jigawa",
+          "communes": ["Dutse", "Hadejia", "Gumel", "Kazaure", "Birnin Kudu"]
+        }
+      ]
+    },
+    {
+      "nom": "Guinee",
+      "code_iso": "GN",
+      "regions": [
+        {
+          "nom": "Conakry",
+          "communes": ["Conakry", "Kaloum", "Dixinn", "Matam", "Ratoma"]
+        },
+        {
+          "nom": "Boke",
+          "communes": ["Boke", "Kamsar", "Gaoual", "Koundara", "Sangaredi"]
+        },
+        {
+          "nom": "Faranah",
+          "communes": ["Faranah", "Dabola", "Dinguiraye", "Kissidougou"]
+        },
+        {
+          "nom": "Kankan",
+          "communes": ["Kankan", "Siguiri", "Kerouane", "Mandiana", "Kouroussa"]
+        },
+        {
+          "nom": "Kindia",
+          "communes": ["Kindia", "Mamou", "Dalaba", "Pita", "Telimele"]
+        },
+        {
+          "nom": "Labe",
+          "communes": ["Labe", "Mali", "Lelouma", "Koubia", "Tougue"]
+        },
+        {
+          "nom": "Mamou",
+          "communes": ["Mamou", "Dalaba", "Pita"]
+        },
+        {
+          "nom": "Nzerekore",
+          "communes": ["Nzerekore", "Gueckedou", "Macenta", "Lola", "Yomou"]
+        }
+      ]
+    },
+    {
+      "nom": "Sierra Leone",
+      "code_iso": "SL",
+      "regions": [
+        {
+          "nom": "Zone Ouest",
+          "communes": ["Freetown", "Waterloo", "Goderich", "Hastings", "York"]
+        },
+        {
+          "nom": "Province du Nord",
+          "communes": ["Makeni", "Kabala", "Kambia", "Port Loko", "Lunsar"]
+        },
+        {
+          "nom": "Province du Nord-Ouest",
+          "communes": ["Port Loko", "Kambia", "Rokupr", "Lungi"]
+        },
+        {
+          "nom": "Province du Sud",
+          "communes": ["Bo", "Bonthe", "Moyamba", "Pujehun", "Mattru Jong"]
+        },
+        {
+          "nom": "Province de l'Est",
+          "communes": ["Kenema", "Koidu", "Kailahun", "Segbwema", "Pendembu"]
+        }
+      ]
+    },
+    {
+      "nom": "Liberia",
+      "code_iso": "LR",
+      "regions": [
+        {
+          "nom": "Montserrado",
+          "communes": ["Monrovia", "Paynesville", "Bensonville", "Careysburg"]
+        },
+        {
+          "nom": "Bong",
+          "communes": ["Gbarnga", "Suakoko", "Totota", "Palala"]
+        },
+        {
+          "nom": "Nimba",
+          "communes": ["Sanniquellie", "Ganta", "Saclepea", "Tapeta"]
+        },
+        {
+          "nom": "Grand Bassa",
+          "communes": ["Buchanan", "Cestos City", "Hartford"]
+        },
+        {
+          "nom": "Margibi",
+          "communes": ["Kakata", "Harbel", "Marshall", "Unification City"]
+        },
+        {
+          "nom": "Lofa",
+          "communes": ["Voinjama", "Zorzor", "Foya", "Kolahun"]
+        },
+        {
+          "nom": "Grand Cape Mount",
+          "communes": ["Robertsport", "Sinje", "Tewor"]
+        },
+        {
+          "nom": "Bomi",
+          "communes": ["Tubmanburg", "Suehn"]
+        },
+        {
+          "nom": "Grand Gedeh",
+          "communes": ["Zwedru", "Tchien"]
+        },
+        {
+          "nom": "River Cess",
+          "communes": ["Cestos City", "Timbo Creek"]
+        },
+        {
+          "nom": "Sinoe",
+          "communes": ["Greenville", "Juarzon"]
+        },
+        {
+          "nom": "Grand Kru",
+          "communes": ["Barclayville", "Sasstown"]
+        },
+        {
+          "nom": "Maryland",
+          "communes": ["Harper", "Pleebo"]
+        },
+        {
+          "nom": "River Gee",
+          "communes": ["Fish Town", "Webbo"]
+        },
+        {
+          "nom": "Gbarpolu",
+          "communes": ["Bopolu", "Gbarma"]
+        }
+      ]
+    },
+    {
+      "nom": "Cap-Vert",
+      "code_iso": "CV",
+      "regions": [
+        {
+          "nom": "Ile de Santiago",
+          "communes": ["Praia", "Assomada", "Tarrafal", "Sao Domingos", "Pedra Badejo", "Calheta de Sao Miguel", "Cidade Velha"]
+        },
+        {
+          "nom": "Ile de Sao Vicente",
+          "communes": ["Mindelo"]
+        },
+        {
+          "nom": "Ile de Santo Antao",
+          "communes": ["Porto Novo", "Ribeira Grande", "Paul"]
+        },
+        {
+          "nom": "Ile de Fogo",
+          "communes": ["Sao Filipe", "Mosteiros", "Santa Catarina do Fogo"]
+        },
+        {
+          "nom": "Ile de Sal",
+          "communes": ["Espargos", "Santa Maria"]
+        },
+        {
+          "nom": "Ile de Boa Vista",
+          "communes": ["Sal Rei"]
+        },
+        {
+          "nom": "Ile de Maio",
+          "communes": ["Vila do Maio"]
+        },
+        {
+          "nom": "Ile de Brava",
+          "communes": ["Nova Sintra"]
+        },
+        {
+          "nom": "Ile de Sao Nicolau",
+          "communes": ["Ribeira Brava", "Tarrafal de Sao Nicolau"]
+        }
+      ]
+    },
+    {
+      "nom": "Gambie",
+      "code_iso": "GM",
+      "regions": [
+        {
+          "nom": "Banjul",
+          "communes": ["Banjul"]
+        },
+        {
+          "nom": "Kanifing",
+          "communes": ["Serrekunda", "Bakau", "Fajara", "Kanifing"]
+        },
+        {
+          "nom": "Brikama",
+          "communes": ["Brikama", "Gunjur", "Sanyang", "Kartong"]
+        },
+        {
+          "nom": "Mansakonko",
+          "communes": ["Mansakonko", "Soma", "Farafenni"]
+        },
+        {
+          "nom": "Kerewan",
+          "communes": ["Kerewan", "Farafenni", "Ndungu Kebbeh"]
+        },
+        {
+          "nom": "Kuntaur",
+          "communes": ["Kuntaur", "Janjanbureh", "Bansang"]
+        },
+        {
+          "nom": "Janjanbureh",
+          "communes": ["Janjanbureh", "Bansang", "Basse"]
+        },
+        {
+          "nom": "Basse",
+          "communes": ["Basse Santa Su", "Fatoto", "Sabi"]
+        }
+      ]
+    },
+    {
+      "nom": "Mauritanie",
+      "code_iso": "MR",
+      "regions": [
+        {
+          "nom": "Nouakchott-Ouest",
+          "communes": ["Tevragh-Zeina", "Ksar"]
+        },
+        {
+          "nom": "Nouakchott-Nord",
+          "communes": ["Dar Naim", "Toujounine"]
+        },
+        {
+          "nom": "Nouakchott-Sud",
+          "communes": ["Arafat", "El Mina", "Riyad"]
+        },
+        {
+          "nom": "Hodh Ech Chargui",
+          "communes": ["Nema", "Amourj", "Bassikounou", "Djiguenni"]
+        },
+        {
+          "nom": "Hodh El Gharbi",
+          "communes": ["Aioun el Atrouss", "Tamchakett", "Kobenni", "Tintane"]
+        },
+        {
+          "nom": "Assaba",
+          "communes": ["Kiffa", "Guerou", "Kankossa", "Boumdeid"]
+        },
+        {
+          "nom": "Gorgol",
+          "communes": ["Kaedi", "Mbout", "Maghama", "Monguel"]
+        },
+        {
+          "nom": "Brakna",
+          "communes": ["Aleg", "Boghe", "Bababé", "Mbagne"]
+        },
+        {
+          "nom": "Trarza",
+          "communes": ["Rosso", "Boutilimit", "Mederdra", "Ouad Naga"]
+        },
+        {
+          "nom": "Adrar",
+          "communes": ["Atar", "Chinguetti", "Ouadane", "Aoujeft"]
+        },
+        {
+          "nom": "Dakhlet Nouadhibou",
+          "communes": ["Nouadhibou"]
+        },
+        {
+          "nom": "Tagant",
+          "communes": ["Tidjikja", "Moudjeria", "Tichitt"]
+        },
+        {
+          "nom": "Guidimaka",
+          "communes": ["Selibaby", "Ould Yenge", "Wompou"]
+        },
+        {
+          "nom": "Tiris Zemmour",
+          "communes": ["Zouerate", "F'Derik", "Bir Moghrein"]
+        },
+        {
+          "nom": "Inchiri",
+          "communes": ["Akjoujt"]
+        }
+      ]
+    }
+  ]
+}

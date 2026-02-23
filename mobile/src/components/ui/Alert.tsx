@@ -11,6 +11,7 @@ import {
 import { X } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { Button } from './Button';
 import { IconButton } from './IconButton';
 
@@ -44,6 +45,7 @@ export function Alert({
   dismissable = true,
 }: AlertProps) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
@@ -117,7 +119,7 @@ export function Alert({
                 <IconButton
                   onPress={onClose}
                   icon={<X size={ICON.size.md} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-                  accessibilityLabel="Fermer"
+                  accessibilityLabel={t('common.close')}
                   style={styles.closeButton}
                 />
               )}

@@ -20,12 +20,14 @@ import { useTheme } from '../../../src/hooks/useTheme';
 import { useAlert } from '../../../src/contexts/AlertContext';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { spaceService, Space } from '../../../src/services';
+import { useI18n } from '../../../src/contexts/I18nContext';
 
 export default function SpacesListScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { confirm, success } = useAlert();
   const { selectedOrg } = useSpace();
+  const { t } = useI18n();
 
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,14 +71,14 @@ export default function SpacesListScreen() {
 
   const handleDelete = async (id: string, name: string) => {
     const confirmed = await confirm(
-      'Supprimer cet espace ?',
-      `"${name}" sera supprime definitivement.`
+      t('gestion.spaces.deleteConfirm'),
+      t('gestion.spaces.deleteMessage', { name })
     );
     if (confirmed) {
       try {
         await spaceService.delete(id);
         setSpaces(prev => prev.filter(s => s.id !== id));
-        success('Supprime', 'L\'espace a ete supprime.');
+        success(t('common.deleted'), t('gestion.spaces.deleteSuccess'));
       } catch (error) {
         if (__DEV__) console.error('Error deleting space:', error);
       }
@@ -110,17 +112,17 @@ export default function SpacesListScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
         <View style={styles.headerCenter}>
           <MapPin size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Espaces</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('gestion.spaces.title')}</Text>
         </View>
         <IconButton
           variant="filled"
           onPress={() => router.push('/settings/organization/create-space' as any)}
           icon={<Plus size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Créer un espace"
+          accessibilityLabel={t('gestion.spaces.create')}
           style={{ backgroundColor: colors.primary }}
         />
       </View>
@@ -151,13 +153,13 @@ export default function SpacesListScreen() {
               <MapPin size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-              Aucun espace
+              {t('gestion.spaces.empty')}
             </Text>
             <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-              Creez votre premier espace reservable.
+              {t('gestion.spaces.emptySubtitle')}
             </Text>
             <Button
-              title="Créer un espace"
+              title={t('gestion.spaces.create')}
               onPress={() => router.push('/settings/organization/create-space' as any)}
               icon={<Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
             />

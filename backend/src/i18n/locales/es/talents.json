@@ -1,0 +1,7 @@
+{
+  "profileNotFound": "Perfil de talento no encontrado",
+  "fetchError": "Error al obtener el perfil de talento",
+  "fetchObjectError": "Error al obtener el objeto de talento",
+  "updateError": "Error al actualizar el perfil de talento",
+  "notFound": "Talento no encontrado"
+}

@@ -11,6 +11,7 @@ import {
 import { ChevronDown, Check, X } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { IconButton } from '../ui';
 
 
@@ -31,7 +32,7 @@ interface FormSelectProps {
 
 export function FormSelect({
   label,
-  placeholder = 'Sélectionner',
+  placeholder,
   options,
   value,
   onChange,
@@ -39,6 +40,7 @@ export function FormSelect({
   containerStyle,
 }: FormSelectProps) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedOption = options.find(o => o.value === value);
@@ -65,7 +67,7 @@ export function FormSelect({
             { color: selectedOption ? colors.textPrimary : colors.gray500 },
           ]}
         >
-          {selectedOption?.label || placeholder}
+          {selectedOption?.label || placeholder || t('common.select')}
         </Text>
         <ChevronDown size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
       </Pressable>
@@ -77,12 +79,12 @@ export function FormSelect({
           <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.borderColor }]}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                {label || 'Sélectionner'}
+                {label || t('common.select')}
               </Text>
               <IconButton
                 onPress={() => setIsOpen(false)}
                 icon={<X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-                accessibilityLabel="Fermer"
+                accessibilityLabel={t('common.close')}
                 style={{ backgroundColor: 'transparent' }}
               />
             </View>

@@ -1,0 +1,39 @@
+{
+  "profileCreated": "تم إنشاء الملف الشخصي بنجاح",
+  "profileCreationFailed": "خطأ أثناء إنشاء الملف الشخصي",
+  "talentProfileExists": "يوجد ملف شخصي للموهبة بالفعل لهذا المستخدم",
+  "phoneAlreadyUsed": "رقم الهاتف هذا مرتبط بالفعل بملف شخصي للموهبة",
+  "countryCodeInvalid": "رمز البلد يجب أن يكون بصيغة ISO 3166-1 alpha-2 (مثال: CI، FR، SN)",
+  "phoneMinLength": "رقم الهاتف مطلوب (8 أحرف كحد أدنى)",
+  "goalsMaximum": "الحد الأقصى 3 أهداف مسموح بها",
+  "invalidGoal": "هدف غير صالح: {{goal}}",
+  "invalidTag": "وسم غير صالح: {{tag}}",
+  "profileTagsMustBeArray": "profileTags يجب أن يكون مصفوفة",
+  "goalsMustBeArray": "goals يجب أن يكون مصفوفة",
+  "profileTags": {
+    "STUDENT": "طالب(ة)",
+    "PUPIL": "تلميذ(ة)",
+    "JOB_SEEKER": "باحث(ة) عن عمل",
+    "SALARIED": "موظف(ة)",
+    "ENTREPRENEUR": "رائد(ة) أعمال",
+    "CIVIL_SERVANT": "موظف(ة) حكومي",
+    "MANAGER": "مدير(ة)",
+    "CONSULTANT": "مستشار(ة)",
+    "INVESTOR": "مستثمر",
+    "CONTENT_CREATOR": "صانع(ة) محتوى",
+    "COACH": "مدرّب / معلّم",
+    "RETIRED": "متقاعد(ة)"
+  },
+  "goals": {
+    "LEARN_NEW_SKILLS": "تعلّم مهارات جديدة",
+    "PREPARE_EXAMS": "التحضير للامتحانات",
+    "FIND_JOB": "إيجاد وظيفة",
+    "ADVANCE_CAREER": "تطوير مسيرتي المهنية",
+    "RESEARCH_SUPPORT": "دعم البحث",
+    "IMPROVE_PRODUCTIVITY": "تحسين إنتاجيتي",
+    "COLLABORATIVE_LEARNING": "التعلّم التعاوني",
+    "TEACH_OR_MENTOR": "التعليم أو الإرشاد",
+    "BUILD_NETWORK_OR_VISIBILITY": "بناء شبكتي / زيادة الظهور",
+    "CONTRIBUTE_OR_GIVE_BACK": "المساهمة / ردّ الجميل"
+  }
+}

@@ -33,10 +33,11 @@ import { Button, IconButton, Input, SelectCard, StepIndicator, LoadingShimmer } 
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useAuth } from '../../../../src/contexts/AuthContext';
 import { useAlert } from '../../../../src/contexts/AlertContext';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
 import { communityService, talentService, kycService, MembershipAnswer } from '../../../../src/services';
 import type { Community, ApplicationQuestion, TalentObjectData } from '../../../../src/types/models';
-import { VISIBILITY_LABELS, COMMUNITY_TYPE_LABELS } from '../../../../src/types/models';
+// Getter functions available if needed: getVisibilityLabel, getCommunityTypeLabel from types/models
 import { getFullImageUrl } from '../../../../src/utils/image';
 
 type JoinStep = 'profile' | 'rules' | 'questions' | 'preview' | 'success';
@@ -44,11 +45,11 @@ type JoinStep = 'profile' | 'rules' | 'questions' | 'preview' | 'success';
 const STEPS: JoinStep[] = ['profile', 'rules', 'questions', 'preview', 'success'];
 
 const STEP_TITLES: Record<JoinStep, string> = {
-  profile: 'Mon profil',
-  rules: 'Règles',
-  questions: 'Questions',
-  preview: 'Aperçu',
-  success: 'Confirmation',
+  profile: 'community.joinFlow.steps.profile',
+  rules: 'community.joinFlow.steps.rules',
+  questions: 'community.joinFlow.steps.questions',
+  preview: 'community.joinFlow.steps.preview',
+  success: 'community.joinFlow.steps.confirmation',
 };
 
 const MAX_ANSWER_LENGTH = 200;
@@ -57,6 +58,7 @@ export default function JoinCommunityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { error: showError, success: showSuccess } = useAlert();
@@ -134,21 +136,21 @@ export default function JoinCommunityScreen() {
 
     setIsLoading(true);
     try {
-      // KYC gate: vérification d'identité obligatoire
+      // KYC gate: identity verification required
       try {
         const kycRes = await kycService.getStatus();
         if (!kycRes?.data || kycRes.data.status !== 'VERIFIED') {
-          void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant de rejoindre une communauté.', buttons: [
-              { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
-              { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
+          void alerts.showAlert({ title: t('screens.settings.kycRequiredTitle'), message: t('community.joinFlow.kycRequiredMessage'), buttons: [
+              { text: t('common.cancel'), style: 'cancel', onPress: () => router.back() },
+              { text: t('screens.settings.kycVerifyIdentity'), onPress: () => { router.back(); router.push('/settings/kyc'); } },
             ] });
           setIsLoading(false);
           return;
         }
       } catch {
-        void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant de rejoindre une communauté.', buttons: [
-            { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
-            { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
+        void alerts.showAlert({ title: t('screens.settings.kycRequiredTitle'), message: t('community.joinFlow.kycRequiredMessage'), buttons: [
+            { text: t('common.cancel'), style: 'cancel', onPress: () => router.back() },
+            { text: t('screens.settings.kycVerifyIdentity'), onPress: () => { router.back(); router.push('/settings/kyc'); } },
           ] });
         setIsLoading(false);
         return;
@@ -157,14 +159,14 @@ export default function JoinCommunityScreen() {
       // Check if already member
       const membershipResponse = await communityService.checkMembership(id);
       if (membershipResponse.data?.is_member) {
-        void alerts.showAlert({ title: 'Information', message: 'Vous êtes déjà membre de cette communauté.', buttons: [
-          { text: 'OK', onPress: () => router.back() }
+        void alerts.showAlert({ title: t('common.information'), message: t('community.alreadyMember'), buttons: [
+          { text: t('common.close'), onPress: () => router.back() }
         ] });
         return;
       }
       if (membershipResponse.data?.has_pending_request) {
-        void alerts.showAlert({ title: 'Demande en attente', message: 'Votre demande d\'adhésion est en cours de traitement.', buttons: [
-          { text: 'OK', onPress: () => router.back() }
+        void alerts.showAlert({ title: t('community.joinFlow.pendingTitle'), message: t('community.joinFlow.pendingMessage'), buttons: [
+          { text: t('common.close'), onPress: () => router.back() }
         ] });
         return;
       }
@@ -192,7 +194,7 @@ export default function JoinCommunityScreen() {
         setAnswers(initialAnswers);
       }
     } catch (error) {
-      void alerts.alert('Erreur', 'Impossible de charger les données.');
+      void alerts.alert(t('common.error'), t('common.genericError'));
       router.back();
     } finally {
       setIsLoading(false);
@@ -252,7 +254,7 @@ export default function JoinCommunityScreen() {
       }
     } catch (error: any) {
       showError(
-        'Erreur',
+        t('common.error'),
         error.error || 'Une erreur est survenue lors de l\'envoi de votre demande.'
       );
     } finally {
@@ -305,7 +307,7 @@ export default function JoinCommunityScreen() {
     // Create step objects for the indicator
     const stepsData = visibleSteps.map(step => ({
       id: step,
-      label: STEP_TITLES[step],
+      label: t(STEP_TITLES[step]),
     }));
 
     return <StepIndicator steps={stepsData} currentStepId={currentStep} />;
@@ -321,10 +323,10 @@ export default function JoinCommunityScreen() {
         <View style={styles.stepHeader}>
           <User size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-            Vérifiez votre profil
+            {t('community.joinFlow.profile.title')}
           </Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Ces informations seront partagées avec les administrateurs
+            {t('community.joinFlow.profile.description')}
           </Text>
         </View>
 
@@ -375,7 +377,7 @@ export default function JoinCommunityScreen() {
 
           {profile?.skills && profile.skills.length > 0 && (
             <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
-              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Compétences</Text>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>{t('profile.skills')}</Text>
               <View style={styles.profileTagsRow}>
                 {profile.skills.slice(0, 8).map((skill, i) => (
                   <View key={i} style={[styles.profileTag, { backgroundColor: withOpacity(colors.primary, OPACITY[12]) }]}>
@@ -420,9 +422,9 @@ export default function JoinCommunityScreen() {
             <View style={[styles.warningBox, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
               <AlertCircle size={20} color={colors.warning} strokeWidth={ICON.strokeWidth} />
               <View style={styles.warningContent}>
-                <Text style={[styles.warningTitle, { color: colors.warning }]}>Profil incomplet</Text>
+                <Text style={[styles.warningTitle, { color: colors.warning }]}>{t('community.joinFlow.profile.incompleteTitle')}</Text>
                 <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-                  Complétez votre profil (nom, prénom, email) pour continuer.
+                  {t('community.joinFlow.profile.incompleteDesc')}
                 </Text>
               </View>
             </View>
@@ -430,7 +432,7 @@ export default function JoinCommunityScreen() {
         </View>
 
         <Button
-          title="Modifier mon profil"
+          title={t('settings.editProfile')}
           onPress={() => router.push('/settings/edit-profile')}
           variant="outline"
           fullWidth
@@ -446,10 +448,10 @@ export default function JoinCommunityScreen() {
         <View style={styles.stepHeader}>
           <Shield size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-            Règles de la communauté
+            {t('community.joinFlow.rules.title')}
           </Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Lisez et acceptez les règles pour rejoindre
+            {t('community.joinFlow.rules.description')}
           </Text>
         </View>
 
@@ -468,7 +470,7 @@ export default function JoinCommunityScreen() {
           ]}
           onPress={() => setAcceptedRules(!acceptedRules)}
           selected={false}
-          accessibilityLabel="Accepter les règles"
+          accessibilityLabel={t('community.joinFlow.rules.acceptA11y')}
         >
           <View style={[
             styles.checkbox,
@@ -478,7 +480,7 @@ export default function JoinCommunityScreen() {
             {acceptedRules && <Check size={14} color={colors.textOnPrimary} strokeWidth={3} />}
           </View>
           <Text style={[styles.checkboxLabel, { color: colors.textPrimary }]}>
-            J'ai lu et j'accepte les règles de la communauté
+            {t('community.joinFlow.rules.acceptLabel')}
           </Text>
         </SelectCard>
       </View>
@@ -493,10 +495,10 @@ export default function JoinCommunityScreen() {
         <View style={styles.stepHeader}>
           <FileText size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-            Questions complémentaires
+            {t('community.joinFlow.questions.title')}
           </Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Répondez aux questions des administrateurs
+            {t('community.joinFlow.questions.description')}
           </Text>
         </View>
 
@@ -509,7 +511,7 @@ export default function JoinCommunityScreen() {
               </Text>
               <View style={[styles.answerInputContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
                 <Input
-                  placeholder="Votre réponse..."
+                  placeholder={t('common.yourAnswer')}
                   placeholderTextColor={colors.gray400}
                   value={answers[question.id] || ''}
                   onChangeText={(text) => updateAnswer(question.id, text)}
@@ -551,10 +553,10 @@ export default function JoinCommunityScreen() {
         <View style={styles.stepHeader}>
           <Eye size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-            Vérifiez votre demande
+            {t('community.joinFlow.preview.title')}
           </Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Avant de soumettre, vérifiez les informations
+            {t('community.joinFlow.preview.description')}
           </Text>
         </View>
 
@@ -562,7 +564,7 @@ export default function JoinCommunityScreen() {
           {/* Community Info */}
           <View style={[styles.previewSection, { backgroundColor: colors.gray50 }]}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-              Communauté
+              {t('myCommunities.detail.sections.community')}
             </Text>
             <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
               {community?.name}
@@ -575,7 +577,7 @@ export default function JoinCommunityScreen() {
           {/* Profile Preview */}
           <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.primary, OPACITY[8]) }]}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-              Votre profil
+              {t('community.joinFlow.preview.yourProfile')}
             </Text>
             <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
               {profile?.first_name} {profile?.last_name}
@@ -589,12 +591,12 @@ export default function JoinCommunityScreen() {
           {community?.rules && (
             <View style={styles.previewSection}>
               <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-                Règles
+                {t('community.joinFlow.preview.rules')}
               </Text>
               <View style={styles.previewRulesStatus}>
                 <CheckCircle2 size={18} color={colors.success} strokeWidth={ICON.strokeWidth} />
                 <Text style={[styles.previewRulesText, { color: colors.success }]}>
-                  Acceptées
+                  {t('community.joinFlow.preview.accepted')}
                 </Text>
               </View>
             </View>
@@ -604,7 +606,7 @@ export default function JoinCommunityScreen() {
           {questions.length > 0 && (
             <View style={styles.previewSection}>
               <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-                Vos réponses
+                {t('myCommunities.detail.sections.answers')}
               </Text>
               {questions.map((question) => (
                 <View key={question.id} style={styles.previewAnswer}>
@@ -630,20 +632,20 @@ export default function JoinCommunityScreen() {
           <CheckCircle2 size={64} color={colors.success} strokeWidth={ICON.strokeWidth} />
         </View>
         <Text style={[styles.successTitle, { color: colors.textPrimary }]}>
-          Demande envoyée !
+          {t('community.joinFlow.success.title')}
         </Text>
         <Text style={[styles.successDescription, { color: colors.textSecondary }]}>
-          Votre demande pour rejoindre "{community?.name}" a bien été envoyée. Les administrateurs vous contacteront pour valider votre adhésion.
+          {t('community.joinFlow.success.description', { name: community?.name })}
         </Text>
 
         <View style={styles.successActions}>
           <Button
-            title="Voir la communauté"
+            title={t('myCommunities.detail.viewCommunity')}
             onPress={() => router.replace(`/details/community/${id}`)}
             fullWidth
           />
           <Button
-            title="Continuer à explorer"
+            title={t('myCommunities.explore')}
             onPress={() => router.replace('/(tabs)/explore')}
             variant="ghost"
             fullWidth
@@ -667,7 +669,7 @@ export default function JoinCommunityScreen() {
         <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
           <View style={styles.footerButtons}>
             <Button
-              title="Retour"
+              title={t('common.back')}
               onPress={handleBack}
               disabled={isSubmitting}
               variant="outline"
@@ -677,7 +679,7 @@ export default function JoinCommunityScreen() {
             />
             <View style={styles.submitButton}>
               <Button
-                title={isSubmitting ? 'Envoi...' : 'Envoyer ma demande'}
+                title={isSubmitting ? t('common.sending') : t('community.joinFlow.submit')}
                 onPress={handleSubmit}
                 disabled={isSubmitting}
                 fullWidth
@@ -692,7 +694,7 @@ export default function JoinCommunityScreen() {
       <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
         <View style={styles.footerButtons}>
           <Button
-            title={isFirstStep ? 'Annuler' : 'Retour'}
+            title={isFirstStep ? t('common.cancel') : t('common.back')}
             onPress={handleBack}
             variant="outline"
             icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
@@ -701,7 +703,7 @@ export default function JoinCommunityScreen() {
           />
           <View style={styles.continueButton}>
             <Button
-              title="Continuer"
+              title={t('common.continue')}
               onPress={handleNext}
               disabled={!canProceed()}
               fullWidth
@@ -726,9 +728,9 @@ export default function JoinCommunityScreen() {
     return (
       <SafeAreaView style={[styles.errorContainer, { backgroundColor: colors.background }]}>
         <Text style={[styles.errorText, { color: colors.textPrimary }]}>
-          Communauté non trouvée
+          {t('community.notFound')}
         </Text>
-        <Button title="Retour" onPress={() => router.back()} />
+        <Button title={t('common.back')} onPress={() => router.back()} />
       </SafeAreaView>
     );
   }
@@ -740,13 +742,13 @@ export default function JoinCommunityScreen() {
         <IconButton
           onPress={handleBack}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
           size="sm"
           variant="ghost"
           style={styles.headerBackButton}
         />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-          Rejoindre {community.name}
+          {t('community.join')} {community.name}
         </Text>
         <View style={styles.headerSpacer} />
       </View>

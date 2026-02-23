@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useSpace } from '../../src/contexts/SpaceContext';
 import { PageLayout, EmptyState, IconButton } from '../../src/components/ui';
 import { api } from '../../src/services/api';
+import { useI18n } from '../../src/contexts/I18nContext';
 
 type EventType = 'event' | 'scheduled_post' | 'opportunity' | 'reservation' | 'application' | 'trigger';
 
@@ -40,11 +41,6 @@ interface CalendarEvent {
   community_name?: string;
 }
 
-const MONTHS = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-];
-
 const getEventColor = (type: EventType, colors: ThemeColors): string => {
   switch (type) {
     case 'event': return colors.primary;
@@ -57,22 +53,20 @@ const getEventColor = (type: EventType, colors: ThemeColors): string => {
   }
 };
 
-const formatDateLabel = (dateStr: string): string => {
+const formatDateLabel = (dateStr: string, t: (key: string) => string, daysShort: string[], monthsShort: string[]): string => {
   const date = new Date(dateStr);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const eventDay = new Date(date);
   eventDay.setHours(0, 0, 0, 0);
 
-  if (eventDay.getTime() === today.getTime()) return "Aujourd'hui";
+  if (eventDay.getTime() === today.getTime()) return t('calendar.today');
 
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  if (eventDay.getTime() === tomorrow.getTime()) return 'Demain';
+  if (eventDay.getTime() === tomorrow.getTime()) return t('calendar.tomorrow');
 
-  const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-  const months = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc'];
-  return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+  return `${daysShort[date.getDay()]} ${date.getDate()} ${monthsShort[date.getMonth()]}`;
 };
 
 const isToday = (dateStr: string): boolean => {
@@ -91,8 +85,29 @@ const formatTime = (dateStr: string): string => {
 export default function CalendarScreen() {
   const { colors, isDark } = useTheme();
   const { isOrganizationSpace, selectedOrg } = useSpace();
+  const { t } = useI18n();
   const router = useRouter();
   const now = new Date();
+
+  const MONTHS = useMemo(() => [
+    t('calendar.months.january'), t('calendar.months.february'), t('calendar.months.march'),
+    t('calendar.months.april'), t('calendar.months.may'), t('calendar.months.june'),
+    t('calendar.months.july'), t('calendar.months.august'), t('calendar.months.september'),
+    t('calendar.months.october'), t('calendar.months.november'), t('calendar.months.december'),
+  ], [t]);
+
+  const DAYS_SHORT = useMemo(() => [
+    t('calendar.daysShort.sun'), t('calendar.daysShort.mon'), t('calendar.daysShort.tue'),
+    t('calendar.daysShort.wed'), t('calendar.daysShort.thu'), t('calendar.daysShort.fri'),
+    t('calendar.daysShort.sat'),
+  ], [t]);
+
+  const MONTHS_SHORT = useMemo(() => [
+    t('calendar.monthsShort.jan'), t('calendar.monthsShort.feb'), t('calendar.monthsShort.mar'),
+    t('calendar.monthsShort.apr'), t('calendar.monthsShort.may'), t('calendar.monthsShort.jun'),
+    t('calendar.monthsShort.jul'), t('calendar.monthsShort.aug'), t('calendar.monthsShort.sep'),
+    t('calendar.monthsShort.oct'), t('calendar.monthsShort.nov'), t('calendar.monthsShort.dec'),
+  ], [t]);
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
   const [currentYear, setCurrentYear] = useState(now.getFullYear());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -276,10 +291,8 @@ export default function CalendarScreen() {
   };
 
   const formatReminderDate = (d: Date) => {
-    const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-    const months = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc'];
     const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} à ${time}`;
+    return `${DAYS_SHORT[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]} ${t('calendar.at')} ${time}`;
   };
 
   // --- Header ---
@@ -288,7 +301,7 @@ export default function CalendarScreen() {
       <IconButton
         onPress={handlePrevMonth}
         icon={<ChevronLeft size={20} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-        accessibilityLabel="Mois précédent"
+        accessibilityLabel={t('calendar.previousMonth')}
         size="sm"
         variant="ghost"
         style={styles.monthButton}
@@ -299,7 +312,7 @@ export default function CalendarScreen() {
       <IconButton
         onPress={handleNextMonth}
         icon={<ChevronRight size={20} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-        accessibilityLabel="Mois suivant"
+        accessibilityLabel={t('calendar.nextMonth')}
         size="sm"
         variant="ghost"
         style={styles.monthButton}
@@ -310,7 +323,7 @@ export default function CalendarScreen() {
   return (
     <View style={{ flex: 1 }}>
       <PageLayout
-        title="Agenda"
+        title={t('calendar.title')}
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
         isLoading={isLoading}
@@ -319,7 +332,7 @@ export default function CalendarScreen() {
         {sortedDates.map((date) => {
           const dateEvents = groupedEvents[date];
           const todayDate = isToday(date);
-          const label = formatDateLabel(date);
+          const label = formatDateLabel(date, t, DAYS_SHORT, MONTHS_SHORT);
 
           return (
             <View key={date} style={styles.dateSection}>
@@ -350,7 +363,7 @@ export default function CalendarScreen() {
                     ]}
                     onPress={() => handleEventPress(event)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Voir: ${event.title}`}
+                    accessibilityLabel={t('calendar.viewEvent', { title: event.title })}
                   >
                     <View style={[styles.eventDot, { backgroundColor: eventColor }]} />
                     <Text style={[styles.eventTitle, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -368,11 +381,11 @@ export default function CalendarScreen() {
         {sortedDates.length === 0 && (
           <EmptyState
             icon={CalendarIcon}
-            title={isOrganizationSpace ? `Agenda ${selectedOrg?.name || 'Organisation'}` : 'Aucun événement ce mois-ci'}
+            title={isOrganizationSpace ? t('calendar.emptyOrg', { name: selectedOrg?.name || 'Organisation' }) : t('calendar.title')}
             subtitle={
               isOrganizationSpace
-                ? "Candidatures, réservations, événements et relances de l'agent apparaîtront ici."
-                : 'Vos événements, publications programmées et opportunités apparaîtront ici'
+                ? t('calendar.emptyOrgSubtitle')
+                : t('calendar.emptyTalentSubtitle')
             }
           />
         )}
@@ -386,7 +399,7 @@ export default function CalendarScreen() {
         style={[styles.fab, { backgroundColor: colors.primary }]}
         onPress={openSheet}
         accessibilityRole="button"
-        accessibilityLabel="Créer un événement"
+        accessibilityLabel={t('calendar.createEvent')}
       >
         <Plus size={ICON.size.xl} color={colors.textOnPrimary} strokeWidth={2} />
       </Pressable>
@@ -406,7 +419,7 @@ export default function CalendarScreen() {
               {/* Header */}
               <View style={styles.sheetHeader}>
                 <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>
-                  {editingTriggerId ? 'Modifier l’événement' : 'Nouvel événement'}
+                  {editingTriggerId ? t('calendar.editEvent') : t('calendar.newEvent')}
                 </Text>
                 <Pressable onPress={closeSheet} hitSlop={8}>
                   <X size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
@@ -420,7 +433,7 @@ export default function CalendarScreen() {
                   backgroundColor: colors.backgroundSecondary,
                   borderColor: colors.borderColor,
                 }]}
-                placeholder="Titre"
+                placeholder={t('calendar.eventTitle')}
                 placeholderTextColor={colors.textTertiary}
                 value={reminderTitle}
                 onChangeText={setReminderTitle}
@@ -434,7 +447,7 @@ export default function CalendarScreen() {
                   backgroundColor: colors.backgroundSecondary,
                   borderColor: colors.borderColor,
                 }]}
-                placeholder="Description (optionnel)"
+                placeholder={t('calendar.eventDescription')}
                 placeholderTextColor={colors.textTertiary}
                 value={eventDescription}
                 onChangeText={setEventDescription}
@@ -481,7 +494,7 @@ export default function CalendarScreen() {
                   style={[styles.pickerDone, { borderTopColor: colors.gray200 }]}
                   onPress={() => { setShowDatePicker(false); setShowTimePicker(true); }}
                 >
-                  <Text style={[styles.pickerDoneText, { color: colors.primary }]}>Choisir l&apos;heure</Text>
+                  <Text style={[styles.pickerDoneText, { color: colors.primary }]}>{t('calendar.chooseTime')}</Text>
                 </Pressable>
               )}
 
@@ -507,7 +520,7 @@ export default function CalendarScreen() {
                   <ActivityIndicator size="small" color={colors.textOnPrimary} />
                 ) : (
                   <Text style={[styles.createButtonText, { color: colors.textOnPrimary }]}>
-                    {editingTriggerId ? 'Enregistrer' : 'Créer'}
+                    {editingTriggerId ? t('common.save') : t('common.create')}
                   </Text>
                 )}
               </Pressable>

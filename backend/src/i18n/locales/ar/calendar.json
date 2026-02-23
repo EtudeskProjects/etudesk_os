@@ -1,0 +1,10 @@
+{
+  "startEndDateRequired": "start_date و end_date مطلوبان",
+  "invalidDateFormat": "صيغة التاريخ غير صالحة",
+  "codeRequired": "code مطلوب",
+  "titleRequired": "title مطلوب",
+  "dueDateRequired": "due_at مطلوب",
+  "invalidDueDate": "due_at غير صالح",
+  "triggerNotFound": "المشغّل غير موجود",
+  "accessDenied": "تم رفض الوصول"
+}

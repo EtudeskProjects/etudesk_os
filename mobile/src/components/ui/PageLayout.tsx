@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, LAYOUT } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { ScrollToInputContext } from '../../contexts/ScrollToInputContext';
 import { IconButton } from './IconButton';
 import { LoadingShimmer } from './LoadingShimmer';
@@ -54,6 +55,7 @@ export function PageLayout({
 }: PageLayoutProps) {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const scrollRef = useRef<ScrollView>(null);
 
   const scrollToInput = useCallback((targetNodeHandle: number, extraOffset = 96) => {
@@ -74,7 +76,7 @@ export function PageLayout({
           <IconButton
             onPress={() => router.back()}
             icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel="Retour"
+            accessibilityLabel={t('common.back')}
           />
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{title}</Text>
           <View style={styles.headerSpacer} />
@@ -92,7 +94,7 @@ export function PageLayout({
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{title}</Text>
         {rightAction || <View style={styles.headerSpacer} />}

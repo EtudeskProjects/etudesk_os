@@ -7,8 +7,9 @@ import { defineTool } from './tool-helper';
 import { z } from 'zod';
 import { pool } from '../../database';
 import { logger } from '../../../utils';
+import { i18next } from '../../../i18n';
 
-export function createManageSkillsTool(authenticatedTalentId: string) {
+export function createManageSkillsTool(authenticatedTalentId: string, language?: string) {
   return defineTool({
     name: 'manage_skills',
     description:
@@ -46,6 +47,7 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
       };
     },
     execute: async ({ action: rawAction, skillName, proficiencyLevel: rawLevel, origin: rawOrigin, type: rawType }) => {
+      const tr = (key: string, options?: Record<string, any>) => i18next.t(key, { lng: language, ...(options || {}) });
       // Normalize enum values (Claude native SDK may send mixed case)
       const action = rawAction.toLowerCase() as 'add' | 'update';
       const proficiencyLevel = rawLevel.toUpperCase() as 'BEGINNER' | 'INTERMEDIATE' | 'EXPERT' | 'MASTER';
@@ -77,13 +79,13 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
                 logger.info(`[manage_skills] Auto-upgraded skill "${skillName}" from ${existing.rows[0].proficiency_level} to ${proficiencyLevel} for talent ${talentId}`);
                 return {
                   success: true,
-                  message: `Compétence "${skillName}" mise à jour de ${existing.rows[0].proficiency_level} à ${proficiencyLevel}.`,
+                  message: tr('copilot:toolSkillAutoUpgraded', { name: skillName, from: existing.rows[0].proficiency_level, to: proficiencyLevel }),
                   skill: { name: skillName, level: proficiencyLevel, origin, merged: true },
                 };
               }
               return {
                 success: false,
-                error: `La compétence "${skillName}" existe déjà (niveau: ${existing.rows[0].proficiency_level}). Utilise l'action "update" pour changer le niveau.`,
+                error: tr('copilot:toolSkillAlreadyExists', { name: skillName, level: existing.rows[0].proficiency_level }),
               };
             }
 
@@ -95,7 +97,7 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
             if (countResult.rows[0].total >= 100) {
               return {
                 success: false,
-                error: `Tu as atteint la limite de 100 compétences. Supprime ou modifie des compétences existantes depuis ton profil avant d'en ajouter de nouvelles.`,
+                error: tr('copilot:toolMaxSkillsReached'),
               };
             }
 
@@ -108,7 +110,7 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
             logger.info(`[manage_skills] Added skill "${skillName}" (${proficiencyLevel}) for talent ${talentId}`);
             return {
               success: true,
-              message: `Compétence "${skillName}" ajoutée avec le niveau ${proficiencyLevel}.`,
+              message: tr('copilot:toolSkillAdded', { name: skillName, level: proficiencyLevel }),
               skill: { name: skillName, level: proficiencyLevel, origin },
             };
           }
@@ -126,20 +128,20 @@ export function createManageSkillsTool(authenticatedTalentId: string) {
             if (result.rows.length === 0) {
               return {
                 success: false,
-                error: `La compétence "${skillName}" n'existe pas. Utilise l'action "add" pour l'ajouter.`,
+                error: tr('copilot:toolSkillNotFound', { name: skillName }),
               };
             }
 
             logger.info(`[manage_skills] Updated skill "${skillName}" to ${proficiencyLevel} for talent ${talentId}`);
             return {
               success: true,
-              message: `Compétence "${skillName}" mise à jour au niveau ${proficiencyLevel}.`,
+              message: tr('copilot:toolSkillLevelUpdated', { name: skillName, level: proficiencyLevel }),
               skill: result.rows[0],
             };
           }
 
           default:
-            return { success: false, error: `Action "${action}" non supportée` };
+            return { success: false, error: tr('copilot:toolActionUnsupported', { action }) };
         }
       } catch (error: any) {
         logger.error(`[manage_skills] Error (${action} ${skillName}): ${error.message}`);

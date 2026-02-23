@@ -28,6 +28,7 @@ import { CodePlaygroundBlock } from './blocks/CodePlaygroundBlock';
 import { CanvasBlock } from './blocks/CanvasBlock';
 import { AudioBlock } from './blocks/AudioBlock';
 import { downloadAndOpenDocument } from '../../utils/documentDownload';
+import i18n from '../../i18n';
 
 const MONO_FONT_FAMILY = Platform.select({
   ios: 'Menlo',
@@ -285,7 +286,7 @@ function renderInlineMarkdown(text: string, colors: any): React.ReactNode[] {
                 url: resolvedUrl,
                 filename: rawFilename,
               })
-                .catch(() => Alert.alert('Erreur', 'Impossible de télécharger le fichier.'));
+                .catch(() => Alert.alert(i18n.t('common.error'), i18n.t('common.downloadError')));
             } else {
               WebBrowser.openBrowserAsync(resolvedUrl).catch(() => {});
             }

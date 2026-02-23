@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, Pressable, TextInput, Platform } from 'react-na
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { Play, RotateCcw, CheckCircle2, XCircle } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
+import { useI18n } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 
 const MONO_FONT = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
@@ -23,7 +24,7 @@ interface CodePlaygroundBlockProps {
 }
 
 /** Build sandboxed HTML that executes JS and captures console.log output */
-function buildPlaygroundHTML(code: string, bgColor: string, textColor: string): string {
+function buildPlaygroundHTML(code: string, bgColor: string, textColor: string, timeoutMessage: string): string {
   const safeCode = code
     .replace(/\\/g, '\\\\')
     .replace(/`/g, '\\`')
@@ -61,7 +62,7 @@ function buildPlaygroundHTML(code: string, bgColor: string, textColor: string): 
       timeout = setTimeout(() => {
         window.ReactNativeWebView.postMessage(JSON.stringify({
           type: 'result',
-          output: logs.join('\\n') + '\\n[Timeout: execution exceeded 5s]',
+          output: logs.join('\\n') + '\\n${timeoutMessage}',
           error: true,
         }));
       }, 5000);
@@ -93,6 +94,7 @@ function buildPlaygroundHTML(code: string, bgColor: string, textColor: string): 
 
 export const CodePlaygroundBlock: React.FC<CodePlaygroundBlockProps> = ({ data }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [code, setCode] = useState(data.code);
   const [output, setOutput] = useState<string | null>(null);
   const [hasError, setHasError] = useState(false);
@@ -124,7 +126,7 @@ export const CodePlaygroundBlock: React.FC<CodePlaygroundBlockProps> = ({ data }
     try {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg.type === 'result') {
-        setOutput(msg.output || '(no output)');
+        setOutput(msg.output || t('codePlayground.noOutput'));
         setHasError(msg.error);
         setIsRunning(false);
       }
@@ -132,7 +134,7 @@ export const CodePlaygroundBlock: React.FC<CodePlaygroundBlockProps> = ({ data }
   }, []);
 
   const html = useMemo(
-    () => buildPlaygroundHTML(code, colors.surface, colors.textPrimary),
+    () => buildPlaygroundHTML(code, colors.surface, colors.textPrimary, t('codePlayground.timeout')),
     // Only rebuild when runKey changes (user presses Run)
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [runKey]
@@ -175,7 +177,7 @@ export const CodePlaygroundBlock: React.FC<CodePlaygroundBlockProps> = ({ data }
         >
           <Play size={ICON.size.sm} color={colors.white} />
           <Text style={[styles.runText, { color: colors.white }]}>
-            {isRunning ? 'Exécution...' : 'Run'}
+            {isRunning ? t('codePlayground.running') : 'Run'}
           </Text>
         </Pressable>
         {editable && code !== data.code && (
@@ -218,14 +220,14 @@ export const CodePlaygroundBlock: React.FC<CodePlaygroundBlockProps> = ({ data }
             <>
               <CheckCircle2 size={ICON.size.sm} color={colors.success} />
               <Text style={[styles.validationText, { color: colors.success }]}>
-                Résultat attendu : {data.expectedOutput}
+                {t('codePlayground.expectedOutput')}{data.expectedOutput}
               </Text>
             </>
           ) : (
             <>
               <XCircle size={ICON.size.sm} color={colors.error} />
               <Text style={[styles.validationText, { color: colors.error }]}>
-                Attendu : {data.expectedOutput}
+                {t('codePlayground.expected')}{data.expectedOutput}
               </Text>
             </>
           )}

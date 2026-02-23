@@ -28,6 +28,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../../src/constants/theme';
 import { useTheme } from '../../../../src/hooks/useTheme';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 import { Button, FooterNav, IconButton, Input, LoadingShimmer, ShimmerPlaceholder } from '../../../../src/components/ui';
 import { FormTextArea } from '../../../../src/components/forms/FormTextArea';
 import {
@@ -41,6 +42,7 @@ export default function SpaceInvitationsScreen() {
   const { spaceId } = useLocalSearchParams<{ spaceId: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [invitations, setInvitations] = useState<SpaceInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -197,14 +199,14 @@ export default function SpaceInvitationsScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Invitations</Text>
         <IconButton
           variant="filled"
           onPress={() => setShowInviteModal(true)}
           icon={<Plus size={20} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Envoyer une invitation"
+          accessibilityLabel={t('common.sendInvitation')}
           style={{ backgroundColor: colors.primary }}
         />
       </View>
@@ -321,7 +323,7 @@ export default function SpaceInvitationsScreen() {
               <IconButton
                 onPress={() => setShowInviteModal(false)}
                 icon={<X size={24} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-                accessibilityLabel="Fermer"
+                accessibilityLabel={t('common.close')}
                 size="sm"
                 variant="ghost"
               />

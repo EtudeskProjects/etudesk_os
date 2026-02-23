@@ -36,6 +36,7 @@ import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import type { MemberStatus, CommunityMemberDetails } from '../../../../../src/services/communityService';
 import type { MembershipMessage } from '../../../../../src/services/communityMembershipMessageService';
 import { useAlert } from '../../../../../src/contexts/AlertContext';
+import { useI18n } from '../../../../../src/contexts/I18nContext';
 
 // Status configuration - colors are set dynamically using theme colors
 const getStatusConfig = (colors: any): Record<MemberStatus, { color: string; icon: typeof Clock }> => ({
@@ -52,23 +53,23 @@ const getStatusFlow = (colors: any): Record<MemberStatus, {
   color: string;
 }> => ({
   PENDING: {
-    label: 'En attente',
-    description: 'Demande en cours de validation',
+    label: 'gestion.memberDetails.statusPending',
+    description: 'gestion.memberDetails.statusPendingDesc',
     color: colors.warning,
   },
   ACTIVE: {
-    label: 'Active',
-    description: 'Membre approuvé de la communauté',
+    label: 'gestion.memberDetails.statusActive',
+    description: 'gestion.memberDetails.statusActiveDesc',
     color: colors.success,
   },
   REJECTED: {
-    label: 'Refusée',
-    description: 'Demande non retenue',
+    label: 'gestion.memberDetails.statusRejected',
+    description: 'gestion.memberDetails.statusRejectedDesc',
     color: colors.error,
   },
   SUSPENDED: {
-    label: 'Suspendu',
-    description: 'Membre temporairement suspendu',
+    label: 'gestion.memberDetails.statusSuspended',
+    description: 'gestion.memberDetails.statusSuspendedDesc',
     color: colors.gray500,
   },
 });
@@ -79,6 +80,7 @@ export default function MemberDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
 
   const STATUS_CONFIG = getStatusConfig(colors);
@@ -138,7 +140,7 @@ export default function MemberDetailsScreen() {
       setInternalNotes(response.data?.internal_notes || '');
       setRating(response.data?.rating || 0);
     } catch (error) {
-      void alerts.alert('Erreur', 'Impossible de charger les détails du membre.');
+      void alerts.alert(t('common.error'), t('gestion.members.detailsLoadError'));
       router.back();
     } finally {
       setIsLoading(false);
@@ -188,7 +190,7 @@ export default function MemberDetailsScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.members.sendMessageError'));
       throw error;
     } finally {
       setIsSending(false);
@@ -202,9 +204,9 @@ export default function MemberDetailsScreen() {
       await communityService.updateMembershipStatus(membership.id, newStatus);
       setMembership((prev) => prev ? { ...prev, status: newStatus } : null);
       setShowStatusPicker(false);
-      void alerts.alert('Succès', `Statut mis à jour: ${STATUS_FLOW[newStatus].label}`);
+      void alerts.alert(t('common.success'), t('gestion.members.statusUpdated', { status: t(STATUS_FLOW[newStatus].label) }));
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.members.statusUpdateError'));
     }
   };
 
@@ -213,20 +215,20 @@ export default function MemberDetailsScreen() {
 
     const memberName = membership.talent?.first_name && membership.talent?.last_name
       ? `${membership.talent.first_name} ${membership.talent.last_name}`
-      : membership.talent?.display_name || 'ce membre';
+      : membership.talent?.display_name || t('gestion.memberDetails.thisMember');
 
-    void alerts.showAlert({ title: 'Supprimer le membre', message: `Êtes-vous sûr de vouloir supprimer ${memberName} ? Cette action est irréversible et permettra au membre de postuler à nouveau.`, buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('gestion.memberDetails.deleteTitle'), message: t('gestion.memberDetails.deleteConfirm', { name: memberName }), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await communityService.deleteMember(membership.id);
-              void alerts.alert('Succès', 'Membre supprimé.');
+              void alerts.alert(t('common.success'), t('gestion.members.removeSuccess'));
               router.back();
             } catch (error: any) {
-              void alerts.alert('Erreur', error.error || 'Impossible de supprimer le membre.');
+              void alerts.alert(t('common.error'), error.error || t('gestion.members.removeError'));
             }
           },
         },
@@ -239,9 +241,9 @@ export default function MemberDetailsScreen() {
     try {
       await communityService.updateMemberNotes(membership.id, internalNotes);
       setIsEditingNotes(false);
-      void alerts.alert('Succès', 'Notes enregistrées.');
+      void alerts.alert(t('common.success'), t('gestion.members.notesSaved'));
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible de sauvegarder les notes.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.members.notesSaveError'));
     }
   };
 
@@ -252,7 +254,7 @@ export default function MemberDetailsScreen() {
       await communityService.updateMemberRating(membership.id, newRating);
       setRating(newRating);
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour la note.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.members.ratingUpdateError'));
     }
   };
 
@@ -302,7 +304,7 @@ export default function MemberDetailsScreen() {
             </View>
           )}
           <Text style={[styles.profileName, { color: colors.textPrimary }]}>
-            {talent ? `${talent.first_name} ${talent.last_name}` : 'Membre'}
+            {talent ? `${talent.first_name} ${talent.last_name}` : t('common.member')}
           </Text>
           {talent?.headline && (
             <Text style={[styles.profileHeadline, { color: colors.gray500 }]}>
@@ -313,7 +315,7 @@ export default function MemberDetailsScreen() {
 
         {/* Talent Details */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Informations</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.information')}</Text>
 
           {(talent?.city || talent?.country) && (
             <View style={styles.infoRow}>
@@ -353,7 +355,7 @@ export default function MemberDetailsScreen() {
 
         {/* Rating */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Évaluation du membre</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.memberRating')}</Text>
           <View style={styles.ratingContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
               <IconButton
@@ -367,7 +369,7 @@ export default function MemberDetailsScreen() {
                     strokeWidth={ICON.strokeWidth}
                   />
                 }
-                accessibilityLabel={`Noter ${star} étoile${star > 1 ? 's' : ''}`}
+                accessibilityLabel={t('gestion.memberDetails.rateStars', { count: star })}
                 size="sm"
                 variant="ghost"
                 style={styles.ratingStarButton}
@@ -379,7 +381,7 @@ export default function MemberDetailsScreen() {
         {/* Status */}
         {membership?.status && (
           <View style={[styles.section, { borderColor: colors.gray200 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Statut de l'adhésion</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.membershipStatus')}</Text>
 
             <View style={[styles.currentStatusDisplay, { backgroundColor: withOpacity(STATUS_FLOW[membership.status as MemberStatus]?.color || colors.warning, OPACITY[10]) }]}>
               {(() => {
@@ -388,12 +390,12 @@ export default function MemberDetailsScreen() {
                 return <StatusIcon size={20} color={STATUS_FLOW[membership.status as MemberStatus]?.color || colors.warning} strokeWidth={ICON.strokeWidth} />;
               })()}
               <Text style={[styles.currentStatusDisplayText, { color: STATUS_FLOW[membership.status as MemberStatus]?.color || colors.warning }]}>
-                {STATUS_FLOW[membership.status as MemberStatus]?.label || membership.status}
+                {t(STATUS_FLOW[membership.status as MemberStatus]?.label || 'gestion.memberDetails.statusPending')}
               </Text>
             </View>
 
             <Button
-              title="Changer le statut"
+              title={t('gestion.memberDetails.changeStatus')}
               onPress={() => setShowStatusPicker(!showStatusPicker)}
               variant="secondary"
               iconPosition="right"
@@ -421,17 +423,17 @@ export default function MemberDetailsScreen() {
                         style={[styles.statusOption, { borderBottomColor: colors.gray200, backgroundColor: colors.surface }]}
                         onPress={() => handleUpdateStatus(status)}
                         selected={false}
-                        accessibilityLabel={`Définir statut ${flow.label}`}
+                        accessibilityLabel={t('gestion.memberDetails.setStatus', { status: t(flow.label) })}
                       >
                         <View style={[styles.statusOptionIcon, { backgroundColor: withOpacity(config.color, OPACITY[15]) }]}>
                           <Icon size={16} color={config.color} strokeWidth={ICON.strokeWidth} />
                         </View>
                         <View style={styles.statusOptionInfo}>
                           <Text style={[styles.statusOptionLabel, { color: colors.textPrimary }]}>
-                            {flow.label}
+                            {t(flow.label)}
                           </Text>
                           <Text style={[styles.statusOptionDesc, { color: colors.gray500 }]}>
-                            {flow.description}
+                            {t(flow.description)}
                           </Text>
                         </View>
                       </SelectCard>
@@ -445,7 +447,7 @@ export default function MemberDetailsScreen() {
         {/* Answers */}
         {membership?.answers && Array.isArray(membership.answers) && membership.answers.length > 0 && (
           <View style={[styles.section, { borderColor: colors.gray200 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Réponses aux questions</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.answers')}</Text>
             {membership.answers.map((answer: any, index: number) => (
               <View key={index} style={[styles.qaItem, index > 0 && { borderTopColor: colors.gray200, borderTopWidth: 1, paddingTop: SPACING.md, marginTop: SPACING.md }]}>
                 <Text style={[styles.qaQuestion, { color: colors.gray600 }]}>
@@ -461,7 +463,7 @@ export default function MemberDetailsScreen() {
 
         {/* Delete button */}
         <Button
-          title="Supprimer ce membre"
+          title={t('gestion.memberDetails.deleteMember')}
           onPress={handleDeleteMember}
           variant="outline"
           fullWidth
@@ -487,7 +489,7 @@ export default function MemberDetailsScreen() {
     const talent = membership?.talent;
     const talentName = talent?.first_name && talent?.last_name
       ? `${talent.first_name} ${talent.last_name}`
-      : 'Membre';
+      : t('common.member');
 
     return (
       <View style={styles.messagesContainer}>
@@ -510,10 +512,10 @@ export default function MemberDetailsScreen() {
             <View style={styles.noMessages}>
               <MessageCircle size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.noMessagesTitle, { color: colors.textPrimary }]}>
-                Pas encore de messages
+                {t('gestion.memberDetails.noMessages')}
               </Text>
               <Text style={[styles.noMessagesText, { color: colors.gray500 }]}>
-                Envoyez un message au membre pour démarrer la conversation.
+                {t('gestion.memberDetails.noMessagesHint')}
               </Text>
             </View>
           ) : (
@@ -534,7 +536,7 @@ export default function MemberDetailsScreen() {
         <ChatInput
           onSend={handleSendMessage}
           isSending={isSending}
-          placeholder="Écrivez votre message..."
+          placeholder={t('gestion.memberDetails.messagePlaceholder')}
           showDatetimeOption={true}
         />
       </View>
@@ -545,7 +547,7 @@ export default function MemberDetailsScreen() {
     <View style={styles.tabContent}>
         <View style={[styles.notesCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
           <View style={styles.notesHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Notes internes</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.internalNotes')}</Text>
             <IconButton
               onPress={() => isEditingNotes ? handleSaveNotes() : setIsEditingNotes(true)}
               size="sm"
@@ -554,11 +556,11 @@ export default function MemberDetailsScreen() {
                   ? <Save size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                   : <SquarePen size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
               }
-              accessibilityLabel={isEditingNotes ? 'Enregistrer' : 'Modifier'}
+              accessibilityLabel={isEditingNotes ? t('common.save') : t('common.edit')}
             />
           </View>
           <Input
-            placeholder="Ajoutez des notes internes sur ce membre..."
+            placeholder={t('gestion.memberDetails.notesPlaceholder')}
             placeholderTextColor={colors.gray400}
           value={internalNotes}
           onChangeText={setInternalNotes}
@@ -579,7 +581,7 @@ export default function MemberDetailsScreen() {
           }}
         />
         <Text style={[styles.notesHint, { color: colors.gray400 }]}>
-          Ces notes sont visibles uniquement par votre équipe.
+          {t('gestion.memberDetails.notesHint')}
         </Text>
       </View>
     </View>
@@ -597,7 +599,7 @@ export default function MemberDetailsScreen() {
     return (
       <SafeAreaView style={[styles.errorContainer, { backgroundColor: colors.background }]}>
         <Text style={[styles.errorText, { color: colors.textPrimary }]}>
-          Membre non trouvé
+          {t('gestion.memberDetails.notFound')}
         </Text>
       </SafeAreaView>
     );
@@ -613,13 +615,13 @@ export default function MemberDetailsScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
         <View style={styles.headerContent}>
           <View style={[styles.statusBadge, { backgroundColor: withOpacity(statusConfig.color, OPACITY[15]) }]}>
             <StatusIcon size={14} color={statusConfig.color} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {STATUS_FLOW[membership.status as MemberStatus]?.label || membership.status}
+              {t(STATUS_FLOW[membership.status as MemberStatus]?.label || 'gestion.memberDetails.statusPending')}
             </Text>
           </View>
         </View>
@@ -628,9 +630,9 @@ export default function MemberDetailsScreen() {
 
       {/* Tabs */}
       <View style={[styles.tabsContainer, { borderBottomColor: colors.gray200 }]}>
-        {renderTab('profile', 'Profil')}
-        {renderTab('messages', 'Messages')}
-        {renderTab('notes', 'Notes')}
+        {renderTab('profile', t('gestion.memberDetails.tabProfile'))}
+        {renderTab('messages', t('gestion.memberDetails.tabMessages'))}
+        {renderTab('notes', t('gestion.memberDetails.tabNotes'))}
       </View>
 
       {/* Content */}

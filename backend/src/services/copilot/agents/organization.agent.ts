@@ -40,7 +40,7 @@ const ORG_ALLOWED_INTENTS = [
 export function createOrgAgent(context: OrgContext): AgentConfig {
   // Create SQL tool with authenticated talentId, authorized orgs, and RESTRICTED intents
   // SECURITY: blocks my_profile, my_documents, my_skills, etc. — no access to admin's personal data
-  const secureSqlTool = createSqlQueryTool(context.talentId, [context.organizationId], ORG_ALLOWED_INTENTS);
+  const secureSqlTool = createSqlQueryTool(context.talentId, [context.organizationId], ORG_ALLOWED_INTENTS, context.language);
 
   const orgFileReaderTool = createOrgFileReaderTool(context.organizationId);
 
@@ -51,9 +51,9 @@ export function createOrgAgent(context: OrgContext): AgentConfig {
     tools: [
       smartSearchTool,
       secureSqlTool,
-      createGenerateDocumentTool(context.talentId, undefined, context.organizationId),
+      createGenerateDocumentTool(context.talentId, undefined, context.organizationId, context.language),
       webSearchAsTool,
-      createExecuteActionTool(context.talentId),
+      createExecuteActionTool(context.talentId, context.language),
       orgFileReaderTool,
     ],
   };

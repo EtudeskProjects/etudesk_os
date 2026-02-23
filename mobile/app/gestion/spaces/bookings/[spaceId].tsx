@@ -24,14 +24,15 @@ import { useTheme } from '../../../../src/hooks/useTheme';
 import { spaceService, spaceBookingService, Space, SpaceBookingDetails, BookingStatus } from '../../../../src/services';
 import { formatRelativeTime } from '../../../../src/utils/date';
 import { useAlert } from '../../../../src/contexts/AlertContext';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 
 // Status configuration
 const getStatusConfig = (colors: any): Record<BookingStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
-  PENDING: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]), label: 'En attente' },
-  CONFIRMED: { color: colors.info, icon: CheckCircle2, bgColor: withOpacity(colors.info, OPACITY[15]), label: 'Confirmée' },
-  COMPLETED: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]), label: 'Terminée' },
-  CANCELLED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]), label: 'Annulée' },
-  NO_SHOW: { color: colors.gray500, icon: AlertCircle, bgColor: withOpacity(colors.gray500, OPACITY[15]), label: 'Absent' },
+  PENDING: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]), label: 'gestion.bookingStatus.pending' },
+  CONFIRMED: { color: colors.info, icon: CheckCircle2, bgColor: withOpacity(colors.info, OPACITY[15]), label: 'gestion.bookingStatus.confirmed' },
+  COMPLETED: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]), label: 'gestion.bookingStatus.completed' },
+  CANCELLED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]), label: 'gestion.bookingStatus.cancelled' },
+  NO_SHOW: { color: colors.gray500, icon: AlertCircle, bgColor: withOpacity(colors.gray500, OPACITY[15]), label: 'gestion.bookingStatus.noShow' },
 });
 
 type FilterStatus = 'all' | BookingStatus;
@@ -40,6 +41,7 @@ export default function SpaceBookingsScreen() {
   const { spaceId } = useLocalSearchParams<{ spaceId: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [space, setSpace] = useState<Space | null>(null);
   const [bookings, setBookings] = useState<SpaceBookingDetails[]>([]);
@@ -76,7 +78,7 @@ export default function SpaceBookingsScreen() {
       setStatusCounts(counts);
     } catch (error) {
       if (__DEV__) console.error('Error loading data:', error);
-      void alerts.alert('Erreur', 'Impossible de charger les réservations.');
+      void alerts.alert(t('common.error'), t('gestion.bookings.loadError'));
     } finally {
       setIsLoading(false);
     }
@@ -111,25 +113,25 @@ export default function SpaceBookingsScreen() {
       );
       handleRefresh();
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible de confirmer la réservation.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.bookings.confirmError'));
     }
   };
 
   const handleCancelBooking = async (bookingId: string) => {
-    void alerts.showAlert({ title: 'Annuler la réservation', message: 'Êtes-vous sûr de vouloir annuler cette réservation ?', buttons: [
-        { text: 'Non', style: 'cancel' },
+    void alerts.showAlert({ title: t('gestion.bookings.cancelTitle'), message: t('gestion.bookings.cancelMessage'), buttons: [
+        { text: t('common.no'), style: 'cancel' },
         {
-          text: 'Oui, annuler',
+          text: t('gestion.bookings.cancelYes'),
           style: 'destructive',
           onPress: async () => {
             try {
-              await spaceBookingService.updateBookingStatus(bookingId, 'CANCELLED', 'Annulée par l\'organisation');
+              await spaceBookingService.updateBookingStatus(bookingId, 'CANCELLED', t('gestion.bookings.cancelledByOrganization'));
               setBookings((prev) =>
                 prev.map((b) => (b.id === bookingId ? { ...b, status: 'CANCELLED' as BookingStatus } : b))
               );
               handleRefresh();
             } catch (error: any) {
-              void alerts.alert('Erreur', error.error || 'Impossible d\'annuler la réservation.');
+              void alerts.alert(t('common.error'), error.error || t('gestion.bookings.cancelError'));
             }
           },
         },
@@ -157,7 +159,7 @@ export default function SpaceBookingsScreen() {
     const dateStr = start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
     const startTime = start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     const endTime = end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    return `${dateStr} - ${startTime} à ${endTime}`;
+    return `${dateStr} - ${startTime} ${t('gestion.bookings.to')} ${endTime}`;
   };
 
   const formatDuration = (startDatetime: string, endDatetime: string): string => {
@@ -180,14 +182,14 @@ export default function SpaceBookingsScreen() {
     const talentName = talent?.display_name ||
       (talent?.first_name && talent?.last_name
         ? `${talent.first_name} ${talent.last_name}`
-        : 'Client');
+        : t('gestion.bookings.client'));
 
     return (
       <SelectCard
         style={[styles.bookingCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
         onPress={() => router.push(`/gestion/spaces/bookings/details/${item.id}`)}
         selected={false}
-        accessibilityLabel={`Ouvrir la réservation de ${talentName}`}
+        accessibilityLabel={t('gestion.bookings.openBookingFor', { name: talentName })}
       >
         <View style={styles.cardHeader}>
           {talent?.avatar_url || talent?.profile_picture_url ? (
@@ -234,7 +236,7 @@ export default function SpaceBookingsScreen() {
           <View style={[styles.statusBadge, { backgroundColor: statusConfig.bgColor }]}>
             <StatusIcon size={COMPONENT.pill.iconSize} color={statusConfig.color} strokeWidth={COMPONENT.pill.iconStrokeWidth} />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {statusConfig.label}
+              {t(statusConfig.label)}
             </Text>
           </View>
 
@@ -246,7 +248,7 @@ export default function SpaceBookingsScreen() {
         {item.status === 'PENDING' && (
           <View style={[styles.quickActions, { borderTopColor: colors.borderColor }]}>
             <Button
-              title="Confirmer"
+              title={t('gestion.bookings.confirmBooking')}
               size="sm"
               variant="secondary"
               onPress={() => handleConfirmBooking(item.id)}
@@ -255,7 +257,7 @@ export default function SpaceBookingsScreen() {
               icon={<CheckCircle2 size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />}
             />
             <Button
-              title="Refuser"
+              title={t('gestion.bookings.cancelBooking')}
               size="sm"
               variant="secondary"
               onPress={() => handleCancelBooking(item.id)}
@@ -270,12 +272,12 @@ export default function SpaceBookingsScreen() {
   };
 
   const filterChips = [
-    { key: 'all' as FilterStatus, label: 'Toutes', count: statusCounts['all'] || 0 },
-    { key: 'PENDING' as FilterStatus, label: 'En attente', count: statusCounts['PENDING'] || 0 },
-    { key: 'CONFIRMED' as FilterStatus, label: 'Confirmées', count: statusCounts['CONFIRMED'] || 0 },
-    { key: 'COMPLETED' as FilterStatus, label: 'Terminées', count: statusCounts['COMPLETED'] || 0 },
-    { key: 'CANCELLED' as FilterStatus, label: 'Annulées', count: statusCounts['CANCELLED'] || 0 },
-    { key: 'NO_SHOW' as FilterStatus, label: 'Absents', count: statusCounts['NO_SHOW'] || 0 },
+    { key: 'all' as FilterStatus, label: t('gestion.filters.all'), count: statusCounts['all'] || 0 },
+    { key: 'PENDING' as FilterStatus, label: t('gestion.filters.pending'), count: statusCounts['PENDING'] || 0 },
+    { key: 'CONFIRMED' as FilterStatus, label: t('gestion.filters.confirmed'), count: statusCounts['CONFIRMED'] || 0 },
+    { key: 'COMPLETED' as FilterStatus, label: t('gestion.filters.completed'), count: statusCounts['COMPLETED'] || 0 },
+    { key: 'CANCELLED' as FilterStatus, label: t('gestion.filters.cancelled'), count: statusCounts['CANCELLED'] || 0 },
+    { key: 'NO_SHOW' as FilterStatus, label: t('gestion.filters.noShow'), count: statusCounts['NO_SHOW'] || 0 },
   ];
 
   const headerContent = (
@@ -303,12 +305,12 @@ export default function SpaceBookingsScreen() {
   );
 
   const emptySubtitle = filter === 'all'
-    ? 'Cet espace n\'a pas encore reçu de réservations.'
-    : 'Aucune réservation avec ce statut.';
+    ? t('gestion.bookings.noBookingsDesc')
+    : t('gestion.bookings.noResultsDesc');
 
   return (
     <PageLayout
-      title="Réservations"
+      title={t('gestion.bookingsList.title')}
       onRefresh={handleRefresh}
       isRefreshing={isRefreshing}
       isLoading={isLoading}
@@ -328,7 +330,7 @@ export default function SpaceBookingsScreen() {
         ListEmptyComponent={
           <EmptyState
             icon={Inbox}
-            title={filter === 'all' ? 'Aucune réservation' : 'Aucun résultat'}
+            title={filter === 'all' ? t('gestion.bookings.noBookings') : t('gestion.bookings.noResults')}
             subtitle={emptySubtitle}
           />
         }

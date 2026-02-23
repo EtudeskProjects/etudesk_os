@@ -1,0 +1,23 @@
+{
+  "authRequired": "Authentifizierung erforderlich",
+  "notOrgMember": "Du bist kein Mitglied dieser Organisation",
+  "favoritesAddError": "Fehler beim Hinzufuegen zu Favoriten",
+  "favoritesRemoved": "Talent aus Favoriten entfernt",
+  "favoritesRemoveError": "Fehler beim Entfernen aus Favoriten",
+  "tagsError": "Fehler beim Abrufen der Tags",
+  "tagNameRequired": "Der Tag-Name ist erforderlich",
+  "tagExists": "Ein Tag mit diesem Namen existiert bereits",
+  "tagCreateError": "Fehler beim Erstellen des Tags",
+  "tagNotFound": "Tag nicht gefunden",
+  "tagUpdateError": "Fehler beim Aktualisieren des Tags",
+  "tagDeleted": "Tag geloescht",
+  "tagDeleteError": "Fehler beim Loeschen des Tags",
+  "tagAssigned": "Tag zugewiesen",
+  "tagAssignError": "Fehler beim Zuweisen des Tags",
+  "tagRemoved": "Tag entfernt",
+  "tagRemoveError": "Fehler beim Entfernen des Tags",
+  "favoritesAdded": "Talent zu Favoriten hinzugefuegt",
+  "favoritesListError": "Fehler beim Abrufen der Favoriten",
+  "talentsListError": "Fehler beim Abrufen der Talente",
+  "talentsCountError": "Fehler beim Zaehlen der Talente"
+}

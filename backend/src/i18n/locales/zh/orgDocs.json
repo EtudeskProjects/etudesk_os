@@ -1,0 +1,15 @@
+{
+  "authRequired": "需要身份验证",
+  "notOrgMember": "你不是该组织的成员",
+  "fetchError": "获取文档时出错",
+  "statsError": "获取统计数据时出错",
+  "notFound": "文档未找到",
+  "noFileProvided": "未提供文件",
+  "invalidDocType": "文档类型无效",
+  "uploadError": "上传文档时出错",
+  "updated": "文档已成功更新",
+  "updateError": "更新文档时出错",
+  "deleted": "文档已成功删除",
+  "deleteError": "删除文档时出错",
+  "extractionRestarted": "提取已重新启动"
+}

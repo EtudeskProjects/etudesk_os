@@ -1,0 +1,137 @@
+{
+  "validationFailed": "فشل التحقق",
+  "internalError": "خطأ داخلي في التحقق",
+  "required": "{{field}} مطلوب",
+  "minLength": "{{field}} يجب أن يحتوي على {{min}} أحرف على الأقل",
+  "maxLength": "{{field}} يجب ألا يتجاوز {{max}} حرفاً",
+  "invalidFormat": "صيغة {{field}} غير صالحة",
+  "invalidUrl": "رابط غير صالح",
+  "invalidDate": "تاريخ غير صالح",
+  "invalidEnum": "قيمة غير صالحة لـ {{field}}",
+  "numberMin": "{{field}} يجب أن يكون {{min}} على الأقل",
+  "numberMax": "{{field}} يجب ألا يتجاوز {{max}}",
+  "arrayMinItems": "{{field}} يجب أن يحتوي على {{min}} عناصر على الأقل",
+  "arrayMaxItems": "{{field}} يجب ألا يحتوي على أكثر من {{max}} عناصر",
+  "common": {
+    "invalidId": "معرّف غير صالح",
+    "invalidOrgId": "معرّف المنظمة غير صالح",
+    "countryCodeFormat": "رمز البلد يجب أن يكون بصيغة ISO 3166-1 alpha-2",
+    "currencyFormat": "العملة يجب أن تكون بصيغة ISO 4217"
+  },
+  "auth": {
+    "invalidEmail": "بريد إلكتروني غير صالح",
+    "emailTooLong": "البريد الإلكتروني طويل جداً",
+    "codeLength": "الرمز يجب أن يحتوي على 6 أرقام",
+    "codeDigits": "الرمز يجب أن يتكون من 6 أرقام",
+    "refreshTokenRequired": "رمز التجديد مطلوب",
+    "invalidPhone": "رقم هاتف غير صالح",
+    "invalidWhatsApp": "رقم واتساب غير صالح"
+  },
+  "opportunity": {
+    "titleMinLength": "العنوان يجب أن يحتوي على 3 أحرف على الأقل",
+    "titleMaxLength": "العنوان يجب ألا يتجاوز 200 حرف",
+    "descriptionMinLength": "الوصف يجب أن يحتوي على 10 أحرف على الأقل",
+    "descriptionMaxLength": "الوصف يجب ألا يتجاوز 10000 حرف",
+    "summaryMaxLength": "الملخص يجب ألا يتجاوز 5000 حرف",
+    "requirementsMaxLength": "المتطلبات يجب ألا تتجاوز 10000 حرف",
+    "niceToHaveMaxLength": "المؤهلات المرغوبة يجب ألا تتجاوز 5000 حرف",
+    "questionMaxLength": "السؤال يجب ألا يتجاوز 500 حرف",
+    "maxQuestions": "الحد الأقصى 10 أسئلة مخصصة",
+    "deadlineRequired": "تاريخ الموعد النهائي إلزامي",
+    "compensationRange": "الحد الأدنى للراتب لا يمكن أن يكون أعلى من الحد الأقصى",
+    "invalidType": "النوع يجب أن يكون JOB أو INTERNSHIP أو FREELANCE أو VOLUNTEERING",
+    "invalidStatus": "الحالة يجب أن تكون DRAFT أو OPEN أو CLOSED أو ARCHIVED",
+    "invalidLocationType": "نوع الموقع يجب أن يكون REMOTE أو ONSITE أو HYBRID",
+    "invalidExperienceLevel": "مستوى الخبرة يجب أن يكون JUNIOR أو INTERMEDIATE أو SENIOR أو LEAD",
+    "invalidContractType": "نوع العقد يجب أن يكون FULL_TIME أو PART_TIME أو CONTRACT أو TEMPORARY",
+    "salaryMinInvalid": "الحد الأدنى للراتب يجب أن يكون رقماً موجباً",
+    "salaryMaxInvalid": "الحد الأقصى للراتب يجب أن يكون أعلى من الحد الأدنى",
+    "maxSkills": "الحد الأقصى 20 مهارة مسموح بها",
+    "invalidApplicationDeadline": "الموعد النهائي للتقديم يجب أن يكون تاريخاً مستقبلياً صالحاً"
+  },
+  "application": {
+    "questionIdRequired": "معرّف السؤال مطلوب",
+    "answerMaxLength": "الإجابة يجب ألا تتجاوز 2000 حرف",
+    "invalidOpportunityId": "معرّف الفرصة غير صالح",
+    "coverLetterMaxLength": "رسالة التحفيز يجب ألا تتجاوز 5000 حرف",
+    "invalidStatus": "حالة غير صالحة",
+    "notesMaxLength": "الملاحظات يجب ألا تتجاوز 10000 حرف",
+    "ratingMustBeInt": "التقييم يجب أن يكون عدداً صحيحاً",
+    "ratingMin": "الحد الأدنى للتقييم هو 1",
+    "ratingMax": "الحد الأقصى للتقييم هو 5",
+    "invalidApplicationId": "معرّف الترشح غير صالح",
+    "atLeastOne": "ترشح واحد على الأقل مطلوب",
+    "maxBulk": "الحد الأقصى 100 ترشح في المرة الواحدة",
+    "invalidRating": "التقييم يجب أن يكون بين 1 و 5"
+  },
+  "onboarding": {
+    "firstNameRequired": "الاسم الأول مطلوب",
+    "firstNameTooLong": "الاسم الأول طويل جداً",
+    "lastNameRequired": "اسم العائلة مطلوب",
+    "lastNameTooLong": "اسم العائلة طويل جداً",
+    "bioTooLong": "النبذة طويلة جداً",
+    "phoneTooLong": "رقم الهاتف طويل جداً",
+    "cityTooLong": "المدينة طويلة جداً",
+    "regionTooLong": "المنطقة طويلة جداً",
+    "maxProfileTags": "الحد الأقصى 3 وسوم للملف الشخصي",
+    "maxGoals": "الحد الأقصى 3 أهداف",
+    "maxSectors": "الحد الأقصى 5 قطاعات"
+  },
+  "community": {
+    "nameMinLength": "الاسم يجب أن يحتوي على 3 أحرف على الأقل",
+    "nameMaxLength": "الاسم يجب ألا يتجاوز 100 حرف",
+    "descriptionMaxLength": "الوصف يجب ألا يتجاوز 5000 حرف",
+    "joinReasonMaxLength": "السبب يجب ألا يتجاوز 1000 حرف",
+    "invalidVisibility": "الرؤية يجب أن تكون PUBLIC أو PRIVATE",
+    "invalidMemberRole": "الدور يجب أن يكون ADMIN أو MEMBER",
+    "priceInvalid": "السعر الشهري يجب أن يكون رقماً موجباً",
+    "trialDaysInvalid": "أيام التجربة يجب أن تكون بين 0 و 90"
+  },
+  "organization": {
+    "nameMinLength": "الاسم يجب أن يحتوي على حرفين على الأقل",
+    "nameMaxLength": "الاسم يجب ألا يتجاوز 200 حرف",
+    "descriptionMaxLength": "الوصف يجب ألا يتجاوز 5000 حرف"
+  },
+  "space": {
+    "invalidSpaceId": "معرّف المساحة غير صالح",
+    "invalidTimeFormat": "صيغة الوقت غير صالحة (HH:MM)",
+    "nameMinLength": "اسم المساحة يجب أن يحتوي على حرفين على الأقل",
+    "nameMaxLength": "اسم المساحة يجب ألا يتجاوز 100 حرف",
+    "descriptionMaxLength": "الوصف يجب ألا يتجاوز 5000 حرف",
+    "invalidVisibility": "الرؤية يجب أن تكون PUBLIC أو PRIVATE"
+  },
+  "kyc": {
+    "invalidDocumentType": "نوع المستند غير صالح",
+    "frontImageRequired": "صورة الوجه الأمامي مطلوبة"
+  },
+  "invitation": {
+    "emailOrTalentRequired": "البريد الإلكتروني أو معرّف الموهبة مطلوب"
+  },
+  "activity": {
+    "titleMinLength": "العنوان يجب أن يحتوي على حرفين على الأقل",
+    "titleMaxLength": "العنوان يجب ألا يتجاوز 200 حرف",
+    "contentRequired": "المحتوى مطلوب للمنشورات",
+    "invalidType": "النوع يجب أن يكون POST أو EVENT أو POLL",
+    "eventStartRequired": "تاريخ بداية الحدث مطلوب",
+    "eventEndAfterStart": "تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية",
+    "pollMinOptions": "الاستطلاع يجب أن يحتوي على خيارين على الأقل",
+    "pollMaxOptions": "الاستطلاع يجب ألا يتجاوز 10 خيارات",
+    "pollOptionMinLength": "كل خيار يجب أن يحتوي على حرف واحد على الأقل",
+    "pollExpiresRequired": "تاريخ انتهاء الاستطلاع مطلوب"
+  },
+  "talent": {
+    "firstNameRequired": "الاسم الأول مطلوب",
+    "lastNameRequired": "اسم العائلة مطلوب",
+    "bioMaxLength": "النبذة يجب ألا تتجاوز 500 حرف",
+    "invalidExperienceLevel": "مستوى الخبرة غير صالح"
+  },
+  "document": {
+    "titleMinLength": "العنوان يجب أن يحتوي على حرفين على الأقل",
+    "titleMaxLength": "العنوان يجب ألا يتجاوز 200 حرف",
+    "invalidType": "نوع المستند غير صالح"
+  },
+  "email": {
+    "subjectRequired": "موضوع البريد الإلكتروني مطلوب",
+    "bodyRequired": "محتوى البريد الإلكتروني مطلوب"
+  }
+}

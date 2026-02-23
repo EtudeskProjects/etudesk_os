@@ -1,0 +1,7 @@
+{
+  "profileNotFound": "Profilo talent non trovato",
+  "fetchError": "Recupero del profilo talent fallito",
+  "fetchObjectError": "Recupero dell'oggetto talent fallito",
+  "updateError": "Aggiornamento del profilo talent fallito",
+  "notFound": "Talent non trovato"
+}

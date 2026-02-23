@@ -9,6 +9,7 @@
 import { defineTool } from './tool-helper';
 import { z } from 'zod';
 import { pool } from '../../database';
+import { i18next } from '../../../i18n';
 
 import { logger } from '../../../utils';
 // Schema for intents
@@ -69,7 +70,8 @@ type SqlIntent = typeof SQL_INTENTS[number];
 export function createSqlQueryTool(
   authenticatedTalentId: string,
   authorizedOrgIds?: string[],
-  allowedIntents?: readonly SqlIntent[]
+  allowedIntents?: readonly SqlIntent[],
+  language?: string
 ) {
   // Anti-loop: cache results per intent+params to return cached data on repeat calls
   const resultCache = new Map<string, any>();
@@ -87,6 +89,7 @@ export function createSqlQueryTool(
       country: z.string().optional().describe('Country code filter (e.g., "CI" for Côte d\'Ivoire).'),
     }),
     execute: async ({ intent, paramsJson, params: paramsObj, query, country }) => {
+      const tr = (key: string, options?: Record<string, any>) => i18next.t(key, { lng: language, ...(options || {}) });
       // Merge params from multiple sources: paramsJson (string) or params (object)
       let params: Record<string, unknown> = {};
       if (paramsJson) {
@@ -113,7 +116,7 @@ export function createSqlQueryTool(
 
       // If allowedIntents is provided, reject disallowed intents
       if (allowedIntents && !allowedIntents.includes(intent)) {
-        return { error: `L'intent '${intent}' n'est pas disponible dans ce mode. Intents autorisés : ${allowedIntents.join(', ')}` };
+        return { error: tr('copilot:toolIntentNotAllowed', { intent, allowed: allowedIntents.join(', ') }) };
       }
 
       // SECURITY: Always use the authenticated talentId, never from params
@@ -129,7 +132,7 @@ export function createSqlQueryTool(
         }
         const orgId = params?.organizationId as string;
         if (!orgId) {
-          return { error: 'organizationId requis pour les requêtes organisation' };
+          return { error: tr('copilot:toolOrgIdRequired') };
         }
         // If authorizedOrgIds is provided, check authorization
         if (authorizedOrgIds && !authorizedOrgIds.includes(orgId)) {
@@ -140,7 +143,7 @@ export function createSqlQueryTool(
             [orgId, talentId]
           );
           if (memberCheck.rows.length === 0) {
-            return { error: 'Accès non autorisé à cette organisation' };
+            return { error: tr('copilot:toolOrgAccessDenied') };
           }
         }
       }
@@ -160,7 +163,7 @@ export function createSqlQueryTool(
              WHERE t.id = $1`,
               [talentId]
             );
-            return res.rows[0] || { error: 'Profil non trouvé' };
+            return res.rows[0] || { error: tr('copilot:toolProfileNotFound') };
           }
 
           case 'my_applications': {
@@ -278,8 +281,8 @@ export function createSqlQueryTool(
             const status = (params?.status as string) || 'PENDING';
             const from = params?.from ? new Date(String(params.from)) : null;
             const to = params?.to ? new Date(String(params.to)) : null;
-            if (from && isNaN(from.getTime())) return { error: 'from invalide (ISO datetime)' };
-            if (to && isNaN(to.getTime())) return { error: 'to invalide (ISO datetime)' };
+            if (from && isNaN(from.getTime())) return { error: tr('copilot:toolFromInvalid') };
+            if (to && isNaN(to.getTime())) return { error: tr('copilot:toolToInvalid') };
 
             const queryParams: any[] = [talentId, status];
             let idx = 3;
@@ -300,7 +303,7 @@ export function createSqlQueryTool(
           // --- Org ---
           case 'org_members': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const res = await pool.query(
               `SELECT om.role, om.created_at, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name, t.bio, t.avatar_url,
                     (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level, 'type', ts.type, 'origin', ts.origin, 'context', ts.context, 'updated_at', ts.updated_at))
@@ -316,7 +319,7 @@ export function createSqlQueryTool(
 
           case 'org_applications': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const res = await pool.query(
               `SELECT a.id, a.status, a.applied_at,
                     COALESCE(t.first_name || ' ' || t.last_name, t.email) as talent_name, t.bio,
@@ -338,7 +341,7 @@ export function createSqlQueryTool(
 
           case 'org_stats': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const res = await pool.query(
               `SELECT
               (SELECT COUNT(*) FROM organization_members WHERE organization_id = $1 AND status = 'ACTIVE') as member_count,
@@ -355,7 +358,7 @@ export function createSqlQueryTool(
 
           case 'org_opportunities': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const res = await pool.query(
               `SELECT o.id, o.title, o.type, o.status, o.slug,
                     (SELECT COUNT(*) FROM opportunity_applications WHERE opportunity_id = o.id) as applications_count, o.deadline
@@ -370,7 +373,7 @@ export function createSqlQueryTool(
 
           case 'org_communities': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const res = await pool.query(
               `SELECT c.id, c.name, c.slug, c.type, c.status,
                     (SELECT COUNT(*) FROM community_members cm WHERE cm.community_id = c.id AND cm.status = 'ACTIVE') as member_count
@@ -384,7 +387,7 @@ export function createSqlQueryTool(
 
           case 'org_spaces': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const res = await pool.query(
               `SELECT s.id, s.name, s.slug, s.type, s.capacity, s.status,
                     s.hourly_rate, s.city
@@ -398,7 +401,7 @@ export function createSqlQueryTool(
 
           case 'org_invitations': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const res = await pool.query(
               `SELECT i.id, 'organization' as type, i.status, i.created_at, i.email as invitee_email, i.role as target_name
              FROM organization_invitations i
@@ -411,13 +414,13 @@ export function createSqlQueryTool(
 
           case 'org_triggers': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const limit = (params?.limit as number) || 50;
             const status = (params?.status as string) || 'PENDING';
             const from = params?.from ? new Date(String(params.from)) : null;
             const to = params?.to ? new Date(String(params.to)) : null;
-            if (from && isNaN(from.getTime())) return { error: 'from invalide (ISO datetime)' };
-            if (to && isNaN(to.getTime())) return { error: 'to invalide (ISO datetime)' };
+            if (from && isNaN(from.getTime())) return { error: tr('copilot:toolFromInvalid') };
+            if (to && isNaN(to.getTime())) return { error: tr('copilot:toolToInvalid') };
 
             const queryParams: any[] = [orgId, status];
             let idx = 3;
@@ -439,7 +442,7 @@ export function createSqlQueryTool(
 
           case 'org_documents': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const limit = (params?.limit as number) || 20;
             const docType = params?.type as string;
             const category = params?.category as string;
@@ -464,7 +467,7 @@ export function createSqlQueryTool(
 
           case 'org_talents': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const limit = (params?.limit as number) || 20;
             const source = params?.source as string;
             const isFavorite = params?.isFavorite as boolean;
@@ -521,9 +524,9 @@ export function createSqlQueryTool(
 
           case 'org_talent_profile': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const targetTalentId = params?.talentId as string;
-            if (!targetTalentId) return { error: 'talentId requis pour voir le profil' };
+            if (!targetTalentId) return { error: tr('copilot:toolTalentIdRequired') };
             // Verify the talent has interacted with the org (UNION 4 sources)
             const interactionCheck = await pool.query(
               `SELECT 1 FROM (
@@ -545,7 +548,7 @@ export function createSqlQueryTool(
               [orgId, targetTalentId]
             );
             if (interactionCheck.rows.length === 0) {
-              return { error: 'Ce talent n\'a aucune interaction avec votre organisation' };
+              return { error: tr('copilot:toolNoInteraction') };
             }
             const profileRes = await pool.query(
               `SELECT t.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
@@ -567,7 +570,7 @@ export function createSqlQueryTool(
               ),
             ]);
             return {
-              profile: profileRes.rows[0] || { error: 'Profil non trouvé' },
+              profile: profileRes.rows[0] || { error: tr('copilot:toolProfileNotFound') },
               skills: skillsRes.rows,
               documents: docsRes.rows,
             };
@@ -575,9 +578,9 @@ export function createSqlQueryTool(
 
           case 'org_community_feed': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const communityId = params?.communityId as string;
-            if (!communityId) return { error: 'communityId requis' };
+            if (!communityId) return { error: tr('copilot:toolCommunityIdRequired') };
             const limit = (params?.limit as number) || 10;
             const activityType = params?.type as string;
             // Verify community belongs to this org
@@ -586,7 +589,7 @@ export function createSqlQueryTool(
               [communityId, orgId]
             );
             if (comCheck.rows.length === 0) {
-              return { error: 'Communauté non trouvée ou n\'appartient pas à votre organisation' };
+              return { error: tr('copilot:toolCommunityNotFoundOrg') };
             }
             let query = `
             SELECT ca.id, ca.type, ca.content, ca.metadata, ca.reactions_count, ca.comments_count,
@@ -606,9 +609,9 @@ export function createSqlQueryTool(
 
           case 'org_community_members': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const communityId = params?.communityId as string;
-            if (!communityId) return { error: 'communityId requis' };
+            if (!communityId) return { error: tr('copilot:toolCommunityIdRequired') };
             const limit = (params?.limit as number) || 20;
             const role = params?.role as string;
             // Verify community belongs to this org
@@ -617,7 +620,7 @@ export function createSqlQueryTool(
               [communityId, orgId]
             );
             if (comCheck.rows.length === 0) {
-              return { error: 'Communauté non trouvée ou n\'appartient pas à votre organisation' };
+              return { error: tr('copilot:toolCommunityNotFoundOrg') };
             }
             let query = `
             SELECT cm.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
@@ -637,7 +640,7 @@ export function createSqlQueryTool(
           // --- Org Analytics ---
           case 'org_skills_analytics': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const limit = (params?.limit as number) || 20;
             const skillType = params?.type as string;
             let query = `
@@ -664,7 +667,7 @@ export function createSqlQueryTool(
 
           case 'org_application_funnel': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const opportunityId = params?.opportunityId as string;
             let query = `
             SELECT o.title as opportunity_title,
@@ -688,7 +691,7 @@ export function createSqlQueryTool(
 
           case 'org_talent_cohorts': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const months = (params?.months as number) || 12;
             const res = await pool.query(
               `WITH org_talent_ids AS (
@@ -722,7 +725,7 @@ export function createSqlQueryTool(
 
           case 'org_geo_distribution': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const column = (params?.groupBy as string) === 'city' ? 'city' : 'country';
             const res = await pool.query(
               `WITH org_talent_ids AS (
@@ -734,19 +737,19 @@ export function createSqlQueryTool(
                 JOIN spaces s ON s.id = sb.space_id WHERE s.organization_id = $1 AND s.deleted_at IS NULL
                 UNION SELECT DISTINCT om.talent_id FROM organization_members om WHERE om.organization_id = $1
               )
-              SELECT COALESCE(t.${column}, 'Non renseigné') as label, COUNT(*) as value
+              SELECT COALESCE(t.${column}, $2::text) as label, COUNT(*) as value
               FROM org_talent_ids oti
               JOIN talents t ON oti.talent_id = t.id
               GROUP BY t.${column}
               ORDER BY value DESC LIMIT 15`,
-              [orgId]
+              [orgId, tr('copilot:toolGeoNotProvided')]
             );
             return { distribution: res.rows, chart_hint: 'donut' };
           }
 
           case 'org_community_engagement': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const communityId = params?.communityId as string;
             let query = `
             SELECT c.id, c.name,
@@ -766,7 +769,7 @@ export function createSqlQueryTool(
 
           case 'org_opportunity_performance': {
             const orgId = params?.organizationId as string;
-            if (!orgId) return { error: 'organizationId requis' };
+            if (!orgId) return { error: tr('copilot:toolOrgIdRequiredShort') };
             const limit = (params?.limit as number) || 10;
             const res = await pool.query(
               `SELECT o.title,
@@ -788,7 +791,7 @@ export function createSqlQueryTool(
           // --- Talent community ---
           case 'my_community_feed': {
             const communityId = params?.communityId as string;
-            if (!communityId) return { error: 'communityId requis' };
+            if (!communityId) return { error: tr('copilot:toolCommunityIdRequired') };
             const limit = (params?.limit as number) || 10;
             const activityType = params?.type as string;
             // Verify talent is member of this community
@@ -798,7 +801,7 @@ export function createSqlQueryTool(
               [communityId, talentId]
             );
             if (memberCheck.rows.length === 0) {
-              return { error: 'Tu n\'es pas membre de cette communauté' };
+              return { error: tr('copilot:toolNotCommunityMember') };
             }
             let query = `
             SELECT ca.id, ca.type, ca.content, ca.metadata, ca.reactions_count, ca.comments_count,
@@ -818,7 +821,7 @@ export function createSqlQueryTool(
 
           case 'my_community_members': {
             const communityId = params?.communityId as string;
-            if (!communityId) return { error: 'communityId requis' };
+            if (!communityId) return { error: tr('copilot:toolCommunityIdRequired') };
             const limit = (params?.limit as number) || 20;
             const role = params?.role as string;
             // Verify talent is member of this community
@@ -828,7 +831,7 @@ export function createSqlQueryTool(
               [communityId, talentId]
             );
             if (memberCheck.rows.length === 0) {
-              return { error: 'Tu n\'es pas membre de cette communauté' };
+              return { error: tr('copilot:toolNotCommunityMember') };
             }
             let query = `
             SELECT cm.id, COALESCE(t.first_name || ' ' || t.last_name, t.email) as display_name,
@@ -846,7 +849,7 @@ export function createSqlQueryTool(
           }
 
           default:
-            return { error: `Intent '${intent}' non implémenté. Contactez le développeur.` };
+            return { error: tr('copilot:toolIntentNotImplemented', { intent }) };
         }
       } catch (error: any) {
         logger.error(`SQL query error (${intent}):`, error);

@@ -1,0 +1,9 @@
+{
+  "fetchStatusError": "KYC-Status konnte nicht abgerufen werden",
+  "invalidDocumentType": "Ungueltiger Dokumenttyp",
+  "frontImageRequired": "Das Vorderseitenbild ist erforderlich",
+  "alreadyVerified": "Deine Identitaet ist bereits verifiziert.",
+  "submitError": "KYC-Verifizierung konnte nicht eingereicht werden",
+  "uploadUrlError": "Upload-URL konnte nicht generiert werden",
+  "fetchHistoryError": "KYC-Verlauf konnte nicht abgerufen werden"
+}

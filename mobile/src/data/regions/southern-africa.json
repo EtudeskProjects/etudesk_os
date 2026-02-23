@@ -1,0 +1,488 @@
+{
+  "pays": [
+    {
+      "nom": "Afrique du Sud",
+      "code_iso": "ZA",
+      "regions": [
+        {
+          "nom": "Gauteng",
+          "communes": ["Johannesburg", "Pretoria", "Soweto", "Sandton", "Midrand", "Centurion"]
+        },
+        {
+          "nom": "Cap-Occidental",
+          "communes": ["Le Cap", "Stellenbosch", "Paarl", "George", "Worcester", "Knysna"]
+        },
+        {
+          "nom": "KwaZulu-Natal",
+          "communes": ["Durban", "Pietermaritzburg", "Richards Bay", "Newcastle", "Ladysmith"]
+        },
+        {
+          "nom": "Cap-Oriental",
+          "communes": ["Port Elizabeth", "East London", "Mthatha", "Grahamstown", "Queenstown"]
+        },
+        {
+          "nom": "Etat-Libre",
+          "communes": ["Bloemfontein", "Welkom", "Kroonstad", "Bethlehem", "Sasolburg"]
+        },
+        {
+          "nom": "Mpumalanga",
+          "communes": ["Nelspruit", "Witbank", "Middelburg", "Secunda", "Ermelo"]
+        },
+        {
+          "nom": "Limpopo",
+          "communes": ["Polokwane", "Thohoyandou", "Tzaneen", "Mokopane", "Musina"]
+        },
+        {
+          "nom": "Nord-Ouest",
+          "communes": ["Mahikeng", "Rustenburg", "Potchefstroom", "Klerksdorp", "Brits"]
+        },
+        {
+          "nom": "Cap-du-Nord",
+          "communes": ["Kimberley", "Upington", "Springbok", "De Aar", "Kuruman"]
+        }
+      ]
+    },
+    {
+      "nom": "Botswana",
+      "code_iso": "BW",
+      "regions": [
+        {
+          "nom": "South-East",
+          "communes": ["Gaborone", "Tlokweng", "Mogoditshane"]
+        },
+        {
+          "nom": "North-East",
+          "communes": ["Francistown", "Tati Siding"]
+        },
+        {
+          "nom": "Central",
+          "communes": ["Serowe", "Palapye", "Mahalapye", "Selebi-Phikwe", "Bobonong"]
+        },
+        {
+          "nom": "North-West",
+          "communes": ["Maun", "Shakawe", "Nata", "Kasane"]
+        },
+        {
+          "nom": "Kweneng",
+          "communes": ["Molepolole", "Letlhakeng", "Thamaga"]
+        },
+        {
+          "nom": "Southern",
+          "communes": ["Kanye", "Lobatse", "Jwaneng"]
+        },
+        {
+          "nom": "Kgatleng",
+          "communes": ["Mochudi", "Pilanesberg"]
+        },
+        {
+          "nom": "Kgalagadi",
+          "communes": ["Tsabong", "Hukuntsi"]
+        },
+        {
+          "nom": "Ghanzi",
+          "communes": ["Ghanzi"]
+        },
+        {
+          "nom": "Chobe",
+          "communes": ["Kasane", "Pandamatenga"]
+        },
+        {
+          "nom": "Sowa Town",
+          "communes": ["Sowa Town"]
+        },
+        {
+          "nom": "Selibe Phikwe",
+          "communes": ["Selebi-Phikwe"]
+        },
+        {
+          "nom": "Orapa",
+          "communes": ["Orapa"]
+        },
+        {
+          "nom": "Lobatse",
+          "communes": ["Lobatse"]
+        },
+        {
+          "nom": "Francistown",
+          "communes": ["Francistown"]
+        },
+        {
+          "nom": "Gaborone",
+          "communes": ["Gaborone"]
+        }
+      ]
+    },
+    {
+      "nom": "Zimbabwe",
+      "code_iso": "ZW",
+      "regions": [
+        {
+          "nom": "Harare",
+          "communes": ["Harare", "Chitungwiza", "Epworth"]
+        },
+        {
+          "nom": "Bulawayo",
+          "communes": ["Bulawayo"]
+        },
+        {
+          "nom": "Manicaland",
+          "communes": ["Mutare", "Chipinge", "Rusape", "Nyanga"]
+        },
+        {
+          "nom": "Mashonaland Central",
+          "communes": ["Bindura", "Mount Darwin", "Shamva", "Mazowe"]
+        },
+        {
+          "nom": "Mashonaland East",
+          "communes": ["Marondera", "Ruwa", "Murewa", "Mutoko"]
+        },
+        {
+          "nom": "Mashonaland West",
+          "communes": ["Chinhoyi", "Karoi", "Kadoma", "Chegutu"]
+        },
+        {
+          "nom": "Masvingo",
+          "communes": ["Masvingo", "Chiredzi", "Triangle", "Gutu"]
+        },
+        {
+          "nom": "Matabeleland North",
+          "communes": ["Lupane", "Victoria Falls", "Hwange", "Binga"]
+        },
+        {
+          "nom": "Matabeleland South",
+          "communes": ["Gwanda", "Beitbridge", "Plumtree", "Esigodini"]
+        },
+        {
+          "nom": "Midlands",
+          "communes": ["Gweru", "Kwekwe", "Zvishavane", "Shurugwi", "Redcliff"]
+        }
+      ]
+    },
+    {
+      "nom": "Mozambique",
+      "code_iso": "MZ",
+      "regions": [
+        {
+          "nom": "Maputo Ville",
+          "communes": ["Maputo"]
+        },
+        {
+          "nom": "Maputo Province",
+          "communes": ["Matola", "Boane", "Marracuene", "Namaacha"]
+        },
+        {
+          "nom": "Gaza",
+          "communes": ["Xai-Xai", "Chokwe", "Chibuto", "Bilene"]
+        },
+        {
+          "nom": "Inhambane",
+          "communes": ["Inhambane", "Maxixe", "Vilankulo", "Tofo"]
+        },
+        {
+          "nom": "Sofala",
+          "communes": ["Beira", "Dondo", "Gorongosa", "Marromeu"]
+        },
+        {
+          "nom": "Manica",
+          "communes": ["Chimoio", "Gondola", "Manica", "Catandica"]
+        },
+        {
+          "nom": "Tete",
+          "communes": ["Tete", "Moatize", "Songo", "Cahora Bassa"]
+        },
+        {
+          "nom": "Zambezia",
+          "communes": ["Quelimane", "Mocuba", "Gurue", "Milange"]
+        },
+        {
+          "nom": "Nampula",
+          "communes": ["Nampula", "Nacala", "Angoche", "Ilha de Mocambique"]
+        },
+        {
+          "nom": "Niassa",
+          "communes": ["Lichinga", "Cuamba", "Mandimba", "Marrupa"]
+        },
+        {
+          "nom": "Cabo Delgado",
+          "communes": ["Pemba", "Montepuez", "Mocimboa da Praia", "Chiure"]
+        }
+      ]
+    },
+    {
+      "nom": "Madagascar",
+      "code_iso": "MG",
+      "regions": [
+        {
+          "nom": "Analamanga",
+          "communes": ["Antananarivo", "Antsirabe", "Ambatolampy"]
+        },
+        {
+          "nom": "Atsinanana",
+          "communes": ["Toamasina", "Brickaville", "Mahanoro"]
+        },
+        {
+          "nom": "Boeny",
+          "communes": ["Mahajanga", "Marovoay", "Ambato-Boeni"]
+        },
+        {
+          "nom": "Diana",
+          "communes": ["Antsiranana", "Nosy Be", "Ambanja"]
+        },
+        {
+          "nom": "Atsimo-Andrefana",
+          "communes": ["Toliara", "Sakaraha", "Morondava"]
+        },
+        {
+          "nom": "Vatovavy-Fitovinany",
+          "communes": ["Mananjary", "Manakara", "Ikongo"]
+        }
+      ]
+    },
+    {
+      "nom": "Maurice",
+      "code_iso": "MU",
+      "regions": [
+        {
+          "nom": "Port Louis",
+          "communes": ["Port Louis"]
+        },
+        {
+          "nom": "Plaines Wilhems",
+          "communes": ["Quatre Bornes", "Curepipe", "Vacoas-Phoenix", "Rose Hill", "Beau Bassin"]
+        },
+        {
+          "nom": "Moka",
+          "communes": ["Moka", "Quartier Militaire", "Saint Pierre"]
+        },
+        {
+          "nom": "Pamplemousses",
+          "communes": ["Pamplemousses", "Triolet", "Terre Rouge"]
+        },
+        {
+          "nom": "Riviere du Rempart",
+          "communes": ["Riviere du Rempart", "Goodlands", "Grand Baie"]
+        },
+        {
+          "nom": "Flacq",
+          "communes": ["Centre de Flacq", "Lalmatie", "Bel Air"]
+        },
+        {
+          "nom": "Grand Port",
+          "communes": ["Mahebourg", "Rose Belle", "Plaine Magnien"]
+        },
+        {
+          "nom": "Savanne",
+          "communes": ["Souillac", "Chemin Grenier", "Riviere des Anguilles"]
+        },
+        {
+          "nom": "Riviere Noire",
+          "communes": ["Flic en Flac", "Tamarin", "Bambous"]
+        }
+      ]
+    },
+    {
+      "nom": "Namibie",
+      "code_iso": "NA",
+      "regions": [
+        {
+          "nom": "Khomas",
+          "communes": ["Windhoek", "Katutura"]
+        },
+        {
+          "nom": "Erongo",
+          "communes": ["Walvis Bay", "Swakopmund", "Henties Bay", "Arandis"]
+        },
+        {
+          "nom": "Oshana",
+          "communes": ["Oshakati", "Ondangwa"]
+        },
+        {
+          "nom": "Omusati",
+          "communes": ["Outapi", "Okahao", "Ruacana"]
+        },
+        {
+          "nom": "Ohangwena",
+          "communes": ["Eenhana", "Helao Nafidi"]
+        },
+        {
+          "nom": "Oshikoto",
+          "communes": ["Tsumeb", "Omuthiya"]
+        },
+        {
+          "nom": "Otjozondjupa",
+          "communes": ["Otjiwarongo", "Grootfontein", "Okahandja"]
+        },
+        {
+          "nom": "Kavango Est",
+          "communes": ["Rundu"]
+        },
+        {
+          "nom": "Kavango Ouest",
+          "communes": ["Nkurenkuru"]
+        },
+        {
+          "nom": "Zambezi",
+          "communes": ["Katima Mulilo"]
+        },
+        {
+          "nom": "Kunene",
+          "communes": ["Opuwo", "Khorixas", "Outjo"]
+        },
+        {
+          "nom": "Omaheke",
+          "communes": ["Gobabis"]
+        },
+        {
+          "nom": "Hardap",
+          "communes": ["Mariental", "Rehoboth"]
+        },
+        {
+          "nom": "Karas",
+          "communes": ["Keetmanshoop", "Luderitz", "Karasburg"]
+        }
+      ]
+    },
+    {
+      "nom": "Zambie",
+      "code_iso": "ZM",
+      "regions": [
+        {
+          "nom": "Lusaka",
+          "communes": ["Lusaka", "Kafue", "Chongwe"]
+        },
+        {
+          "nom": "Copperbelt",
+          "communes": ["Ndola", "Kitwe", "Mufulira", "Luanshya", "Chingola"]
+        },
+        {
+          "nom": "Central",
+          "communes": ["Kabwe", "Kapiri Mposhi", "Mkushi"]
+        },
+        {
+          "nom": "Southern",
+          "communes": ["Livingstone", "Choma", "Mazabuka", "Monze"]
+        },
+        {
+          "nom": "Eastern",
+          "communes": ["Chipata", "Petauke", "Katete", "Lundazi"]
+        },
+        {
+          "nom": "Northern",
+          "communes": ["Kasama", "Mpulungu", "Mbala", "Luwingu"]
+        },
+        {
+          "nom": "Luapula",
+          "communes": ["Mansa", "Nchelenge", "Samfya"]
+        },
+        {
+          "nom": "North-Western",
+          "communes": ["Solwezi", "Kasempa", "Mwinilunga"]
+        },
+        {
+          "nom": "Western",
+          "communes": ["Mongu", "Senanga", "Kaoma"]
+        },
+        {
+          "nom": "Muchinga",
+          "communes": ["Chinsali", "Mpika", "Isoka", "Nakonde"]
+        }
+      ]
+    },
+    {
+      "nom": "Malawi",
+      "code_iso": "MW",
+      "regions": [
+        {
+          "nom": "Region du Sud",
+          "communes": ["Blantyre", "Zomba", "Mangochi", "Machinga", "Mulanje", "Thyolo"]
+        },
+        {
+          "nom": "Region du Centre",
+          "communes": ["Lilongwe", "Mzuzu", "Kasungu", "Dedza", "Salima", "Dowa"]
+        },
+        {
+          "nom": "Region du Nord",
+          "communes": ["Mzuzu", "Karonga", "Chitipa", "Nkhata Bay", "Rumphi"]
+        }
+      ]
+    },
+    {
+      "nom": "Angola",
+      "code_iso": "AO",
+      "regions": [
+        {
+          "nom": "Luanda",
+          "communes": ["Luanda", "Viana", "Cacuaco", "Cazenga", "Talatona"]
+        },
+        {
+          "nom": "Benguela",
+          "communes": ["Benguela", "Lobito", "Catumbela", "Balombo"]
+        },
+        {
+          "nom": "Huambo",
+          "communes": ["Huambo", "Caala", "Longonjo"]
+        },
+        {
+          "nom": "Huila",
+          "communes": ["Lubango", "Matala", "Caconda"]
+        },
+        {
+          "nom": "Cabinda",
+          "communes": ["Cabinda"]
+        },
+        {
+          "nom": "Lunda Norte",
+          "communes": ["Dundo", "Chitato"]
+        },
+        {
+          "nom": "Lunda Sul",
+          "communes": ["Saurimo"]
+        },
+        {
+          "nom": "Malanje",
+          "communes": ["Malanje", "Cacuso"]
+        },
+        {
+          "nom": "Moxico",
+          "communes": ["Luena"]
+        },
+        {
+          "nom": "Uige",
+          "communes": ["Uige", "Negage"]
+        },
+        {
+          "nom": "Zaire",
+          "communes": ["Mbanza Congo", "Soyo"]
+        },
+        {
+          "nom": "Kwanza Norte",
+          "communes": ["N'Dalatando", "Cambambe"]
+        },
+        {
+          "nom": "Kwanza Sul",
+          "communes": ["Sumbe", "Porto Amboim"]
+        },
+        {
+          "nom": "Bie",
+          "communes": ["Kuito", "Camacupa"]
+        },
+        {
+          "nom": "Namibe",
+          "communes": ["Namibe", "Tombwa"]
+        },
+        {
+          "nom": "Cunene",
+          "communes": ["Ondjiva", "Santa Clara"]
+        },
+        {
+          "nom": "Cuando Cubango",
+          "communes": ["Menongue"]
+        },
+        {
+          "nom": "Bengo",
+          "communes": ["Caxito", "Ambriz"]
+        }
+      ]
+    }
+  ]
+}

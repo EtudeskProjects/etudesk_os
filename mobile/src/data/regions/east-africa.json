@@ -1,0 +1,612 @@
+{
+  "pays": [
+    {
+      "nom": "Kenya",
+      "code_iso": "KE",
+      "regions": [
+        {
+          "nom": "Nairobi",
+          "communes": ["Nairobi"]
+        },
+        {
+          "nom": "Mombasa",
+          "communes": ["Mombasa"]
+        },
+        {
+          "nom": "Kisumu",
+          "communes": ["Kisumu"]
+        },
+        {
+          "nom": "Nakuru",
+          "communes": ["Nakuru", "Naivasha", "Gilgil"]
+        },
+        {
+          "nom": "Kiambu",
+          "communes": ["Thika", "Kiambu", "Ruiru", "Juja", "Limuru"]
+        },
+        {
+          "nom": "Machakos",
+          "communes": ["Machakos", "Athi River", "Kangundo"]
+        },
+        {
+          "nom": "Kajiado",
+          "communes": ["Kajiado", "Ngong", "Kitengela", "Ongata Rongai"]
+        },
+        {
+          "nom": "Uasin Gishu",
+          "communes": ["Eldoret", "Burnt Forest", "Turbo"]
+        },
+        {
+          "nom": "Kilifi",
+          "communes": ["Kilifi", "Malindi", "Watamu"]
+        },
+        {
+          "nom": "Kwale",
+          "communes": ["Kwale", "Ukunda", "Diani"]
+        },
+        {
+          "nom": "Meru",
+          "communes": ["Meru", "Maua", "Nkubu"]
+        },
+        {
+          "nom": "Nyeri",
+          "communes": ["Nyeri", "Karatina", "Othaya"]
+        },
+        {
+          "nom": "Nyandarua",
+          "communes": ["Ol Kalou", "Engineer", "Ndaragwa"]
+        },
+        {
+          "nom": "Kirinyaga",
+          "communes": ["Kerugoya", "Kutus", "Sagana"]
+        },
+        {
+          "nom": "Murang'a",
+          "communes": ["Murang'a", "Kenol", "Maragua"]
+        },
+        {
+          "nom": "Embu",
+          "communes": ["Embu", "Runyenjes"]
+        },
+        {
+          "nom": "Laikipia",
+          "communes": ["Nanyuki", "Nyahururu", "Rumuruti"]
+        },
+        {
+          "nom": "Nandi",
+          "communes": ["Kapsabet", "Nandi Hills"]
+        },
+        {
+          "nom": "Baringo",
+          "communes": ["Kabarnet", "Eldama Ravine", "Marigat"]
+        },
+        {
+          "nom": "Trans-Nzoia",
+          "communes": ["Kitale", "Endebess"]
+        },
+        {
+          "nom": "Bungoma",
+          "communes": ["Bungoma", "Webuye", "Kimilili"]
+        },
+        {
+          "nom": "Kakamega",
+          "communes": ["Kakamega", "Mumias", "Butere"]
+        },
+        {
+          "nom": "Vihiga",
+          "communes": ["Vihiga", "Mbale"]
+        },
+        {
+          "nom": "Busia",
+          "communes": ["Busia", "Malaba"]
+        },
+        {
+          "nom": "Siaya",
+          "communes": ["Siaya", "Bondo", "Ugunja"]
+        },
+        {
+          "nom": "Homa Bay",
+          "communes": ["Homa Bay", "Kendu Bay"]
+        },
+        {
+          "nom": "Migori",
+          "communes": ["Migori", "Rongo", "Awendo"]
+        },
+        {
+          "nom": "Kisii",
+          "communes": ["Kisii", "Ogembo"]
+        },
+        {
+          "nom": "Nyamira",
+          "communes": ["Nyamira", "Keroka"]
+        },
+        {
+          "nom": "Kericho",
+          "communes": ["Kericho", "Litein"]
+        },
+        {
+          "nom": "Bomet",
+          "communes": ["Bomet", "Sotik"]
+        },
+        {
+          "nom": "Narok",
+          "communes": ["Narok", "Kilgoris"]
+        },
+        {
+          "nom": "Samburu",
+          "communes": ["Maralal", "Archer's Post"]
+        },
+        {
+          "nom": "Turkana",
+          "communes": ["Lodwar", "Lokichoggio", "Kakuma"]
+        },
+        {
+          "nom": "West Pokot",
+          "communes": ["Kapenguria", "Makutano"]
+        },
+        {
+          "nom": "Elgeyo-Marakwet",
+          "communes": ["Iten", "Kapsowar"]
+        },
+        {
+          "nom": "Tharaka-Nithi",
+          "communes": ["Chuka", "Marimanti"]
+        },
+        {
+          "nom": "Isiolo",
+          "communes": ["Isiolo"]
+        },
+        {
+          "nom": "Marsabit",
+          "communes": ["Marsabit", "Moyale"]
+        },
+        {
+          "nom": "Mandera",
+          "communes": ["Mandera"]
+        },
+        {
+          "nom": "Wajir",
+          "communes": ["Wajir"]
+        },
+        {
+          "nom": "Garissa",
+          "communes": ["Garissa", "Dadaab"]
+        },
+        {
+          "nom": "Tana River",
+          "communes": ["Hola", "Garsen"]
+        },
+        {
+          "nom": "Lamu",
+          "communes": ["Lamu"]
+        },
+        {
+          "nom": "Taita-Taveta",
+          "communes": ["Voi", "Wundanyi", "Taveta"]
+        },
+        {
+          "nom": "Makueni",
+          "communes": ["Wote", "Makueni", "Sultan Hamud"]
+        },
+        {
+          "nom": "Kitui",
+          "communes": ["Kitui", "Mwingi"]
+        }
+      ]
+    },
+    {
+      "nom": "Tanzanie",
+      "code_iso": "TZ",
+      "regions": [
+        {
+          "nom": "Dar es Salaam",
+          "communes": ["Dar es Salaam", "Temeke", "Kinondoni", "Ilala"]
+        },
+        {
+          "nom": "Dodoma",
+          "communes": ["Dodoma", "Kondoa", "Mpwapwa"]
+        },
+        {
+          "nom": "Arusha",
+          "communes": ["Arusha", "Monduli", "Meru"]
+        },
+        {
+          "nom": "Kilimanjaro",
+          "communes": ["Moshi", "Hai", "Same", "Rombo"]
+        },
+        {
+          "nom": "Tanga",
+          "communes": ["Tanga", "Korogwe", "Lushoto", "Pangani"]
+        },
+        {
+          "nom": "Morogoro",
+          "communes": ["Morogoro", "Ifakara", "Kilosa", "Mahenge"]
+        },
+        {
+          "nom": "Pwani",
+          "communes": ["Kibaha", "Bagamoyo", "Kisarawe"]
+        },
+        {
+          "nom": "Lindi",
+          "communes": ["Lindi", "Kilwa", "Nachingwea"]
+        },
+        {
+          "nom": "Mtwara",
+          "communes": ["Mtwara", "Newala", "Masasi"]
+        },
+        {
+          "nom": "Ruvuma",
+          "communes": ["Songea", "Tunduru", "Mbinga"]
+        },
+        {
+          "nom": "Iringa",
+          "communes": ["Iringa", "Kilolo"]
+        },
+        {
+          "nom": "Njombe",
+          "communes": ["Njombe", "Makambako", "Ludewa"]
+        },
+        {
+          "nom": "Mbeya",
+          "communes": ["Mbeya", "Tukuyu", "Chunya"]
+        },
+        {
+          "nom": "Songwe",
+          "communes": ["Vwawa", "Tunduma", "Momba"]
+        },
+        {
+          "nom": "Rukwa",
+          "communes": ["Sumbawanga", "Kalambo", "Nkasi"]
+        },
+        {
+          "nom": "Katavi",
+          "communes": ["Mpanda", "Tanganyika"]
+        },
+        {
+          "nom": "Tabora",
+          "communes": ["Tabora", "Nzega", "Igunga", "Urambo"]
+        },
+        {
+          "nom": "Singida",
+          "communes": ["Singida", "Manyoni", "Iramba"]
+        },
+        {
+          "nom": "Kigoma",
+          "communes": ["Kigoma", "Kasulu", "Kibondo", "Ujiji"]
+        },
+        {
+          "nom": "Shinyanga",
+          "communes": ["Shinyanga", "Kahama"]
+        },
+        {
+          "nom": "Simiyu",
+          "communes": ["Bariadi", "Meatu", "Maswa"]
+        },
+        {
+          "nom": "Mwanza",
+          "communes": ["Mwanza", "Sengerema", "Geita"]
+        },
+        {
+          "nom": "Geita",
+          "communes": ["Geita", "Chato", "Bukombe"]
+        },
+        {
+          "nom": "Kagera",
+          "communes": ["Bukoba", "Muleba", "Ngara", "Biharamulo"]
+        },
+        {
+          "nom": "Mara",
+          "communes": ["Musoma", "Tarime", "Bunda", "Serengeti"]
+        },
+        {
+          "nom": "Manyara",
+          "communes": ["Babati", "Hanang", "Mbulu", "Simanjiro"]
+        },
+        {
+          "nom": "Zanzibar Ouest",
+          "communes": ["Zanzibar City", "Stone Town"]
+        },
+        {
+          "nom": "Zanzibar Nord",
+          "communes": ["Mkokotoni"]
+        },
+        {
+          "nom": "Zanzibar Sud",
+          "communes": ["Makunduchi"]
+        },
+        {
+          "nom": "Pemba Nord",
+          "communes": ["Wete"]
+        },
+        {
+          "nom": "Pemba Sud",
+          "communes": ["Chake Chake", "Mkoani"]
+        }
+      ]
+    },
+    {
+      "nom": "Ouganda",
+      "code_iso": "UG",
+      "regions": [
+        {
+          "nom": "Region Centrale",
+          "communes": ["Kampala", "Entebbe", "Mukono", "Wakiso", "Jinja", "Masaka"]
+        },
+        {
+          "nom": "Region Occidentale",
+          "communes": ["Mbarara", "Fort Portal", "Kabale", "Kasese", "Hoima", "Bushenyi"]
+        },
+        {
+          "nom": "Region Orientale",
+          "communes": ["Mbale", "Soroti", "Tororo", "Iganga", "Busia", "Jinja"]
+        },
+        {
+          "nom": "Region du Nord",
+          "communes": ["Gulu", "Lira", "Arua", "Kitgum", "Moroto", "Moyo"]
+        }
+      ]
+    },
+    {
+      "nom": "Rwanda",
+      "code_iso": "RW",
+      "regions": [
+        {
+          "nom": "Ville de Kigali",
+          "communes": ["Kigali", "Gasabo", "Kicukiro", "Nyarugenge"]
+        },
+        {
+          "nom": "Province du Sud",
+          "communes": ["Huye", "Butare", "Nyanza", "Gisagara", "Muhanga"]
+        },
+        {
+          "nom": "Province du Nord",
+          "communes": ["Musanze", "Ruhengeri", "Byumba", "Gicumbi"]
+        },
+        {
+          "nom": "Province de l'Est",
+          "communes": ["Rwamagana", "Kayonza", "Kibungo", "Nyagatare", "Bugesera"]
+        },
+        {
+          "nom": "Province de l'Ouest",
+          "communes": ["Karongi", "Kibuye", "Rusizi", "Cyangugu", "Rubavu", "Gisenyi"]
+        }
+      ]
+    },
+    {
+      "nom": "Ethiopie",
+      "code_iso": "ET",
+      "regions": [
+        {
+          "nom": "Addis-Abeba",
+          "communes": ["Addis-Abeba"]
+        },
+        {
+          "nom": "Oromia",
+          "communes": ["Adama", "Jimma", "Bishoftu", "Shashemene", "Nekemte", "Harar"]
+        },
+        {
+          "nom": "Amhara",
+          "communes": ["Bahir Dar", "Gondar", "Dessie", "Debre Birhan", "Debre Markos"]
+        },
+        {
+          "nom": "Tigre",
+          "communes": ["Mekelle", "Adigrat", "Axum", "Adwa", "Shire"]
+        },
+        {
+          "nom": "Region des Nations du Sud",
+          "communes": ["Hawassa", "Arba Minch", "Dilla", "Sodo", "Hosaena"]
+        },
+        {
+          "nom": "Somali",
+          "communes": ["Jijiga", "Degehabur", "Gode", "Kebri Dahar"]
+        },
+        {
+          "nom": "Afar",
+          "communes": ["Semera", "Asaita", "Dubti", "Logiya"]
+        },
+        {
+          "nom": "Benishangul-Gumuz",
+          "communes": ["Assosa", "Metekel", "Kamashi"]
+        },
+        {
+          "nom": "Gambela",
+          "communes": ["Gambela"]
+        },
+        {
+          "nom": "Dire Dawa",
+          "communes": ["Dire Dawa"]
+        },
+        {
+          "nom": "Sidama",
+          "communes": ["Hawassa", "Yirgalem", "Aleta Wendo"]
+        }
+      ]
+    },
+    {
+      "nom": "Djibouti",
+      "code_iso": "DJ",
+      "regions": [
+        {
+          "nom": "Ville de Djibouti",
+          "communes": ["Djibouti"]
+        },
+        {
+          "nom": "Ali Sabieh",
+          "communes": ["Ali Sabieh"]
+        },
+        {
+          "nom": "Dikhil",
+          "communes": ["Dikhil"]
+        },
+        {
+          "nom": "Tadjourah",
+          "communes": ["Tadjourah"]
+        },
+        {
+          "nom": "Obock",
+          "communes": ["Obock"]
+        },
+        {
+          "nom": "Arta",
+          "communes": ["Arta"]
+        }
+      ]
+    },
+    {
+      "nom": "Somalie",
+      "code_iso": "SO",
+      "regions": [
+        {
+          "nom": "Benadir",
+          "communes": ["Mogadiscio"]
+        },
+        {
+          "nom": "Woqooyi Galbeed",
+          "communes": ["Hargeisa"]
+        },
+        {
+          "nom": "Togdheer",
+          "communes": ["Burao"]
+        },
+        {
+          "nom": "Awdal",
+          "communes": ["Borama", "Zeila"]
+        },
+        {
+          "nom": "Sanaag",
+          "communes": ["Erigavo"]
+        },
+        {
+          "nom": "Sool",
+          "communes": ["Las Anod"]
+        },
+        {
+          "nom": "Nugaal",
+          "communes": ["Garowe"]
+        },
+        {
+          "nom": "Bari",
+          "communes": ["Bosaso", "Qardho"]
+        },
+        {
+          "nom": "Mudug",
+          "communes": ["Galkayo", "Hobyo"]
+        },
+        {
+          "nom": "Galgaduud",
+          "communes": ["Dhusamareb", "Abudwak"]
+        },
+        {
+          "nom": "Hiiraan",
+          "communes": ["Beledweyne"]
+        },
+        {
+          "nom": "Shabelle Moyen",
+          "communes": ["Jowhar"]
+        },
+        {
+          "nom": "Shabelle Bas",
+          "communes": ["Marka", "Brava"]
+        },
+        {
+          "nom": "Bay",
+          "communes": ["Baidoa"]
+        },
+        {
+          "nom": "Bakool",
+          "communes": ["Huddur"]
+        },
+        {
+          "nom": "Gedo",
+          "communes": ["Garbahaarrey", "Luuq", "Bardhere"]
+        },
+        {
+          "nom": "Juba Moyen",
+          "communes": ["Bu'aale"]
+        },
+        {
+          "nom": "Juba Bas",
+          "communes": ["Kismayo"]
+        }
+      ]
+    },
+    {
+      "nom": "Burundi",
+      "code_iso": "BI",
+      "regions": [
+        {
+          "nom": "Bujumbura Mairie",
+          "communes": ["Bujumbura"]
+        },
+        {
+          "nom": "Bujumbura Rural",
+          "communes": ["Isale", "Kabezi", "Kanyosha"]
+        },
+        {
+          "nom": "Gitega",
+          "communes": ["Gitega"]
+        },
+        {
+          "nom": "Ngozi",
+          "communes": ["Ngozi"]
+        },
+        {
+          "nom": "Kayanza",
+          "communes": ["Kayanza"]
+        },
+        {
+          "nom": "Muramvya",
+          "communes": ["Muramvya"]
+        },
+        {
+          "nom": "Mwaro",
+          "communes": ["Mwaro"]
+        },
+        {
+          "nom": "Kirundo",
+          "communes": ["Kirundo"]
+        },
+        {
+          "nom": "Muyinga",
+          "communes": ["Muyinga"]
+        },
+        {
+          "nom": "Cankuzo",
+          "communes": ["Cankuzo"]
+        },
+        {
+          "nom": "Ruyigi",
+          "communes": ["Ruyigi"]
+        },
+        {
+          "nom": "Rutana",
+          "communes": ["Rutana"]
+        },
+        {
+          "nom": "Makamba",
+          "communes": ["Makamba"]
+        },
+        {
+          "nom": "Bururi",
+          "communes": ["Bururi"]
+        },
+        {
+          "nom": "Rumonge",
+          "communes": ["Rumonge"]
+        },
+        {
+          "nom": "Cibitoke",
+          "communes": ["Cibitoke"]
+        },
+        {
+          "nom": "Bubanza",
+          "communes": ["Bubanza"]
+        },
+        {
+          "nom": "Karusi",
+          "communes": ["Karusi"]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "authRequired": "Autenticación requerida",
+  "notOrgMember": "No eres miembro de esta organización",
+  "fetchError": "Error al obtener los documentos",
+  "statsError": "Error al obtener las estadísticas",
+  "notFound": "Documento no encontrado",
+  "noFileProvided": "No se proporcionó ningún archivo",
+  "invalidDocType": "Tipo de documento inválido",
+  "uploadError": "Error al subir el documento",
+  "updated": "Documento actualizado correctamente",
+  "updateError": "Error al actualizar el documento",
+  "deleted": "Documento eliminado correctamente",
+  "deleteError": "Error al eliminar el documento",
+  "extractionRestarted": "Extracción reiniciada"
+}

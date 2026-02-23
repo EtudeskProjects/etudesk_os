@@ -181,9 +181,9 @@ export type {
   ListDocumentsParams,
 } from './documentService';
 export {
-  DOCUMENT_TYPE_LABELS,
-  DOCUMENT_CATEGORY_LABELS,
-  DOCUMENT_STATUS_LABELS,
+  getDocumentTypeLabel,
+  getDocumentCategoryLabel,
+  getDocumentStatusLabel,
   formatFileSize,
   getFileExtension,
   isAllowedFileType,
@@ -202,7 +202,7 @@ export type {
   OrgTalentListResponse,
   OrgTagDefinition,
 } from './orgTalentService';
-export { SOURCE_LABELS } from './orgTalentService';
+export { getSourceLabel } from './orgTalentService';
 
 export { orgDocumentService } from './orgDocumentService';
 export type {
@@ -216,9 +216,9 @@ export type {
   ListOrgDocumentsParams,
 } from './orgDocumentService';
 export {
-  ORG_DOCUMENT_TYPE_LABELS,
-  ORG_DOCUMENT_CATEGORY_LABELS,
-  ORG_DOCUMENT_STATUS_LABELS,
+  getOrgDocumentTypeLabel,
+  getOrgDocumentCategoryLabel,
+  getOrgDocumentStatusLabel,
   ORG_UPLOAD_LIMITS,
   formatFileSize as formatOrgFileSize,
   getOrgDocStatusColor,

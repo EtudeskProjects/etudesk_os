@@ -32,8 +32,9 @@ import { communityActivityService } from '../../../../src/services';
 import { CommunityActivity, ActivityComment, PollOption } from '../../../../src/types/activity';
 import { useAuth } from '../../../../src/contexts/AuthContext';
 import { getFullImageUrl } from '../../../../src/utils/image';
-	import { useAlert } from '../../../../src/contexts/AlertContext';
-	import { IconButton, LoadingShimmer, SelectCard } from '../../../../src/components/ui';
+		import { useAlert } from '../../../../src/contexts/AlertContext';
+		import { IconButton, LoadingShimmer, SelectCard } from '../../../../src/components/ui';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -49,7 +50,8 @@ export default function ActivityDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
     const { colors } = useTheme();
-    const { user } = useAuth();
+	    const { user } = useAuth();
+    const { t, locale } = useI18n();
 
     const [activity, setActivity] = useState<CommunityActivity | null>(null);
     const [comments, setComments] = useState<ActivityComment[]>([]);
@@ -113,7 +115,7 @@ export default function ActivityDetailScreen() {
             }
         } catch (error) {
             if (__DEV__) console.error(error);
-            void alerts.alert('Erreur', 'Impossible de charger l\'activité');
+            void alerts.alert(t('common.error'), t('community.activityDetail.loadError'));
         } finally {
             setIsLoading(false);
         }
@@ -192,9 +194,9 @@ export default function ActivityDetailScreen() {
                 is_voted_by_user: false
             })));
             if (__DEV__) console.error('Vote failed:', error);
-            void alerts.alert('Erreur', 'Impossible de voter');
+            void alerts.alert(t('common.error'), t('community.feed.voteError'));
         }
-    }, [userVotedOptionId, id]);
+    }, [alerts, id, t, userVotedOptionId]);
 
     // Calculate total votes for poll
     const totalVotes = pollOptions.reduce((sum, opt) => sum + opt.votes_count, 0);
@@ -233,19 +235,19 @@ export default function ActivityDetailScreen() {
             loadDetails();
         } catch (error) {
             if (__DEV__) console.error('Toggle pin failed:', error);
-            void alerts.alert('Erreur', 'Impossible de modifier l\'épingle');
+            void alerts.alert(t('common.error'), t('community.feed.pinError'));
         }
     };
 
     const handleDelete = () => {
-        void alerts.showAlert({ title: 'Supprimer', message: 'Êtes-vous sûr de vouloir supprimer cette activité ?', buttons: [
-                { text: 'Annuler', style: 'cancel' },
-                { text: 'Supprimer', style: 'destructive', onPress: async () => {
+        void alerts.showAlert({ title: t('community.feed.deleteTitle'), message: t('community.activityDetail.deleteMessage'), buttons: [
+                { text: t('common.cancel'), style: 'cancel' },
+                { text: t('common.delete'), style: 'destructive', onPress: async () => {
                     try {
                         await communityActivityService.deleteActivity(id!);
                         router.back();
                     } catch (e) {
-                        void alerts.alert('Erreur', 'Impossible de supprimer');
+                        void alerts.alert(t('common.error'), t('community.feed.deleteError'));
                     }
                 }}
             ] });
@@ -260,7 +262,7 @@ export default function ActivityDetailScreen() {
         // Pin option - available for author (they can pin their own content)
         if (isAuthor) {
             options.push({
-                text: isPinned ? 'Désépingler' : 'Épingler',
+                text: isPinned ? t('community.activity.unpin') : t('community.activity.pin'),
                 onPress: handlePin,
             });
         }
@@ -268,7 +270,7 @@ export default function ActivityDetailScreen() {
         // Edit option - only for author
         if (isAuthor) {
             options.push({
-                text: 'Modifier',
+                text: t('common.edit'),
                 onPress: handleEdit,
             });
         }
@@ -276,16 +278,16 @@ export default function ActivityDetailScreen() {
         // Delete option - for author
         if (isAuthor) {
             options.push({
-                text: 'Supprimer',
+                text: t('common.delete'),
                 style: 'destructive',
                 onPress: handleDelete,
             });
         }
 
         // Cancel option - always shown
-        options.push({ text: 'Annuler', style: 'cancel' });
+        options.push({ text: t('common.cancel'), style: 'cancel' });
 
-        void alerts.showAlert({ title: 'Options', message: undefined, buttons: options as any });
+        void alerts.showAlert({ title: t('community.comments.options'), message: undefined, buttons: options as any });
     };
 
     const handleCommentAdded = useCallback(() => {
@@ -305,9 +307,9 @@ export default function ActivityDetailScreen() {
 
     if (!activity) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+                    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
                 <View style={styles.loadingContainer}>
-                    <Text style={{ color: colors.textPrimary }}>Activité non trouvée</Text>
+                    <Text style={{ color: colors.textPrimary }}>{t('community.activityDetail.notFound')}</Text>
                 </View>
             </SafeAreaView>
         );
@@ -329,24 +331,24 @@ export default function ActivityDetailScreen() {
     const scheduledDate = isScheduled ? new Date(activity.scheduled_at!) : null;
 
     // Author info
-    const authorName = activity.author?.display_name || 'Utilisateur';
+    const authorName = activity.author?.display_name || t('screens.home.defaultUser');
     const avatarUrl = activity.author?.avatar_url ? getFullImageUrl(activity.author.avatar_url) : null;
 
     return (
 	            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
 	            {/* Header */}
 	            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-	                <IconButton
-	                    onPress={() => router.back()}
-	                    icon={<ArrowLeft size={20} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                    accessibilityLabel="Retour"
-	                    size="sm"
-	                    variant="filled"
-	                    style={[styles.backButton, { backgroundColor: colors.gray100 }]}
-	                />
-	                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Publication</Text>
-	                <View style={{ width: 40 }} />
-	            </View>
+		                <IconButton
+		                    onPress={() => router.back()}
+		                    icon={<ArrowLeft size={20} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+		                    accessibilityLabel={t('common.back')}
+		                    size="sm"
+		                    variant="filled"
+		                    style={[styles.backButton, { backgroundColor: colors.gray100 }]}
+		                />
+		                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('community.activityDetail.publication')}</Text>
+		                <View style={{ width: 40 }} />
+		            </View>
 
             <ScrollView
                 ref={scrollViewRef}
@@ -367,30 +369,33 @@ export default function ActivityDetailScreen() {
                                     </Text>
                                     {isScheduled && (
                                         <View style={[styles.scheduledBadge, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
-                                            <Clock size={10} color={colors.warning} />
-                                            <Text style={[styles.scheduledBadgeText, { color: colors.warning }]}>
-                                                Programmé
-                                            </Text>
-                                        </View>
-                                    )}
-                                </View>
-                                {isScheduled && scheduledDate ? (
-                                    <Text style={[styles.scheduledTime, { color: colors.warning }]}>
-                                        {scheduledDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à {scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                                    </Text>
-                                ) : (
-                                    <Timestamp date={activity.created_at} />
+	                                            <Clock size={10} color={colors.warning} />
+	                                            <Text style={[styles.scheduledBadgeText, { color: colors.warning }]}>
+	                                                {t('community.activity.scheduled')}
+	                                            </Text>
+	                                        </View>
+	                                    )}
+	                                </View>
+	                                {isScheduled && scheduledDate ? (
+	                                    <Text style={[styles.scheduledTime, { color: colors.warning }]}>
+	                                        {t('community.activityDetail.scheduledAt', {
+                                            date: scheduledDate.toLocaleDateString(locale, { day: 'numeric', month: 'short' }),
+                                            time: scheduledDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+                                        })}
+	                                    </Text>
+	                                ) : (
+	                                    <Timestamp date={activity.created_at} />
                                 )}
                             </View>
                         </View>
 
-	                        <IconButton
-	                            onPress={handleMore}
-	                            icon={<MoreHorizontal size={20} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
-	                            accessibilityLabel="Options"
-	                            size="sm"
-	                            variant="ghost"
-	                            style={styles.moreButton}
+		                        <IconButton
+		                            onPress={handleMore}
+		                            icon={<MoreHorizontal size={20} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
+		                            accessibilityLabel={t('community.comments.options')}
+		                            size="sm"
+		                            variant="ghost"
+		                            style={styles.moreButton}
 	                        />
 	                    </View>
 
@@ -406,13 +411,13 @@ export default function ActivityDetailScreen() {
                     </View>
 
                     {/* Poll Options */}
-                    {isPoll && pollOptions.length === 0 && (
-                        <View style={[styles.pollContainer, { paddingVertical: SPACING.sm }]}>
-                            <Text style={{ color: colors.textSecondary, fontSize: TYPOGRAPHY.fontSize.sm, textAlign: 'center' }}>
-                                Aucune option de sondage disponible
-                            </Text>
-                        </View>
-                    )}
+	                    {isPoll && pollOptions.length === 0 && (
+	                        <View style={[styles.pollContainer, { paddingVertical: SPACING.sm }]}>
+	                            <Text style={{ color: colors.textSecondary, fontSize: TYPOGRAPHY.fontSize.sm, textAlign: 'center' }}>
+	                                {t('community.activityDetail.noPollOptions')}
+	                            </Text>
+	                        </View>
+	                    )}
                     {isPoll && pollOptions.length > 0 && (
                         <View style={styles.pollContainer}>
                             {pollOptions.map((option) => {
@@ -473,11 +478,11 @@ export default function ActivityDetailScreen() {
 	                                    </SelectCard>
 	                                );
 	                            })}
-                            <Text style={[styles.pollVotesCount, { color: colors.textSecondary }]}>
-                                {totalVotes} vote{totalVotes > 1 ? 's' : ''}
-                            </Text>
-                        </View>
-                    )}
+	                            <Text style={[styles.pollVotesCount, { color: colors.textSecondary }]}>
+	                                {t('community.activity.votes', { count: totalVotes })}
+	                            </Text>
+	                        </View>
+	                    )}
 
                     {/* Event Details */}
                     {isEvent && eventStartDate && (
@@ -487,22 +492,22 @@ export default function ActivityDetailScreen() {
                                 <View style={[styles.eventIconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                                     <Calendar size={16} color={colors.primary} />
                                 </View>
-                                <View style={styles.eventInfo}>
-                                    <Text style={[styles.eventLabel, { color: colors.textSecondary }]}>Date</Text>
-                                    <Text style={[styles.eventValue, { color: colors.textPrimary }]}>
-                                        {eventStartDate.toLocaleDateString('fr-FR', {
-                                            weekday: 'long',
-                                            day: 'numeric',
-                                            month: 'long',
-                                            year: 'numeric'
-                                        })}
-                                    </Text>
-                                    <Text style={[styles.eventTime, { color: colors.primary }]}>
-                                        {eventStartDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                                        {eventEndDate && ` - ${eventEndDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}
-                                    </Text>
-                                </View>
-                            </View>
+	                                <View style={styles.eventInfo}>
+	                                    <Text style={[styles.eventLabel, { color: colors.textSecondary }]}>{t('community.activity.dateLabel')}</Text>
+	                                    <Text style={[styles.eventValue, { color: colors.textPrimary }]}>
+	                                        {eventStartDate.toLocaleDateString(locale, {
+	                                            weekday: 'long',
+	                                            day: 'numeric',
+	                                            month: 'long',
+	                                            year: 'numeric'
+	                                        })}
+	                                    </Text>
+	                                    <Text style={[styles.eventTime, { color: colors.primary }]}>
+	                                        {eventStartDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+	                                        {eventEndDate && ` - ${eventEndDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`}
+	                                    </Text>
+	                                </View>
+	                            </View>
 
                             {/* Location */}
                             <View style={styles.eventRow}>
@@ -512,18 +517,18 @@ export default function ActivityDetailScreen() {
                                     ) : (
                                         <MapPin size={16} color={colors.primary} />
                                     )}
-                                </View>
-                                <View style={styles.eventInfo}>
-                                    <Text style={[styles.eventLabel, { color: colors.textSecondary }]}>
-                                        {isOnlineEvent ? 'En ligne' : 'Lieu'}
-                                    </Text>
-                                    <Text style={[styles.eventValue, { color: colors.textPrimary }]}>
-                                        {isOnlineEvent
-                                            ? (meetingUrl ? 'Lien de réunion disponible' : 'Détails à venir')
-                                            : (eventLocation || 'Lieu à confirmer')
-                                        }
-                                    </Text>
-                                </View>
+	                                </View>
+	                                <View style={styles.eventInfo}>
+	                                    <Text style={[styles.eventLabel, { color: colors.textSecondary }]}>
+	                                        {isOnlineEvent ? t('community.activity.online') : t('community.activity.location')}
+	                                    </Text>
+	                                    <Text style={[styles.eventValue, { color: colors.textPrimary }]}>
+	                                        {isOnlineEvent
+	                                            ? (meetingUrl ? t('community.activity.meetingLinkAvailable') : t('community.activity.detailsComingSoon'))
+	                                            : (eventLocation || t('community.activity.locationTbc'))
+	                                        }
+	                                    </Text>
+	                                </View>
                             </View>
                         </View>
                     )}
@@ -569,12 +574,12 @@ export default function ActivityDetailScreen() {
 	                    {/* Engagement Bar */}
 	                    <View style={[styles.engagementBar, { borderTopColor: colors.borderColor }]}>
 	                        {/* Likes */}
-	                        <SelectCard
-	                            selected={false}
-	                            onPress={handleLike}
-	                            style={[styles.engagementItem, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
-	                            accessibilityLabel="J’aime"
-	                        >
+		                        <SelectCard
+		                            selected={false}
+		                            onPress={handleLike}
+		                            style={[styles.engagementItem, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
+		                            accessibilityLabel={t('community.activityDetail.likeA11y')}
+		                        >
 	                            <Animated.View style={{ transform: [{ scale: likeScaleAnim }] }}>
 	                                <Heart
 	                                    size={18}
@@ -583,13 +588,13 @@ export default function ActivityDetailScreen() {
                                     strokeWidth={ICON.strokeWidth}
                                 />
                             </Animated.View>
-                            <Text style={[
-                                styles.engagementText,
-                                { color: liked ? colors.error : colors.textSecondary }
-                            ]}>
-	                                {formatCount(likesCount)} j'aime
-	                            </Text>
-	                        </SelectCard>
+		                            <Text style={[
+		                                styles.engagementText,
+		                                { color: liked ? colors.error : colors.textSecondary }
+		                            ]}>
+		                                {t('community.activity.likes', { formattedCount: formatCount(likesCount), count: likesCount })}
+		                            </Text>
+		                        </SelectCard>
 
                         {/* Comments */}
                         <View style={styles.engagementItem}>
@@ -598,18 +603,18 @@ export default function ActivityDetailScreen() {
                                 color={colors.primary}
                                 strokeWidth={ICON.strokeWidth}
                             />
-                            <Text style={[styles.engagementText, { color: colors.primary }]}>
-                                {formatCount(commentsCount)} {commentsCount <= 1 ? 'commentaire' : 'commentaires'}
-                            </Text>
-                        </View>
+	                            <Text style={[styles.engagementText, { color: colors.primary }]}>
+	                                {t('community.activity.comments', { formattedCount: formatCount(commentsCount), count: commentsCount })}
+	                            </Text>
+	                        </View>
 
 	                        {/* Bookmarks */}
-	                        <SelectCard
-	                            selected={false}
-	                            onPress={handleBookmark}
-	                            style={[styles.engagementItem, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
-	                            accessibilityLabel="Bookmark"
-	                        >
+		                        <SelectCard
+		                            selected={false}
+		                            onPress={handleBookmark}
+		                            style={[styles.engagementItem, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
+		                            accessibilityLabel={t('community.activityDetail.bookmarkA11y')}
+		                        >
 	                            <Animated.View style={{ transform: [{ scale: bookmarkScaleAnim }] }}>
 	                                <Bookmark
                                     size={18}
@@ -618,13 +623,13 @@ export default function ActivityDetailScreen() {
                                     strokeWidth={ICON.strokeWidth}
                                 />
                             </Animated.View>
-                            <Text style={[
-                                styles.engagementText,
-                                { color: isBookmarked ? colors.primary : colors.textSecondary }
-                            ]}>
-	                                {formatCount(bookmarksCount)} {bookmarksCount <= 1 ? 'sauvegarde' : 'sauvegardes'}
-	                            </Text>
-	                        </SelectCard>
+		                            <Text style={[
+		                                styles.engagementText,
+		                                { color: isBookmarked ? colors.primary : colors.textSecondary }
+		                            ]}>
+		                                {t('community.activity.bookmarks', { formattedCount: formatCount(bookmarksCount), count: bookmarksCount })}
+		                            </Text>
+		                        </SelectCard>
 	                    </View>
 
                     {/* Comments Section - Inside the same card */}

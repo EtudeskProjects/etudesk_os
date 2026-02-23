@@ -1,12 +1,12 @@
 // Données pour les opportunités - synchronisées avec les modèles
 
 import {
-  OPPORTUNITY_TYPE_LABELS,
-  CONTRACT_TYPE_LABELS,
-  WORK_RHYTHM_LABELS,
-  LOCATION_TYPE_LABELS,
-  COMPENSATION_FREQUENCY_LABELS,
-  VISIBILITY_LABELS,
+  getOpportunityTypeLabel,
+  getContractTypeLabel,
+  getWorkRhythmLabel,
+  getLocationTypeLabel,
+  getCompensationFrequencyLabel,
+  getVisibilityLabel,
   OpportunityType,
   ContractType,
   WorkRhythm,
@@ -14,49 +14,61 @@ import {
   CompensationFrequency,
   Visibility,
 } from '../types/models';
+import { getLabel } from '../utils/labels';
 
 // --- Options FormatéEs Pour Les Formulaires ---
+// Functions instead of static arrays so labels resolve at render time (i18n-aware)
 
-export const OPPORTUNITY_TYPE_DATA: Array<{ id: OpportunityType; label: string }> = [
-  { id: 'EMPLOYMENT', label: OPPORTUNITY_TYPE_LABELS.EMPLOYMENT },
-  { id: 'INTERNSHIP', label: OPPORTUNITY_TYPE_LABELS.INTERNSHIP },
-  { id: 'ENTREPRENEURSHIP', label: OPPORTUNITY_TYPE_LABELS.ENTREPRENEURSHIP },
-  { id: 'ALTERNATION', label: OPPORTUNITY_TYPE_LABELS.ALTERNATION },
-  { id: 'FREELANCE', label: OPPORTUNITY_TYPE_LABELS.FREELANCE },
-  { id: 'VOLUNTEER', label: OPPORTUNITY_TYPE_LABELS.VOLUNTEER },
-];
+export function getOpportunityTypeData(): Array<{ id: OpportunityType; label: string }> {
+  return [
+    { id: 'EMPLOYMENT', label: getOpportunityTypeLabel('EMPLOYMENT') },
+    { id: 'INTERNSHIP', label: getOpportunityTypeLabel('INTERNSHIP') },
+    { id: 'ENTREPRENEURSHIP', label: getOpportunityTypeLabel('ENTREPRENEURSHIP') },
+    { id: 'ALTERNATION', label: getOpportunityTypeLabel('ALTERNATION') },
+    { id: 'FREELANCE', label: getOpportunityTypeLabel('FREELANCE') },
+    { id: 'VOLUNTEER', label: getOpportunityTypeLabel('VOLUNTEER') },
+  ];
+}
 
-export const CONTRACT_TYPE_DATA: Array<{ id: ContractType; label: string }> = [
-  { id: 'CDI', label: CONTRACT_TYPE_LABELS.CDI },
-  { id: 'CDD', label: CONTRACT_TYPE_LABELS.CDD },
-  { id: 'APPRENTICESHIP', label: CONTRACT_TYPE_LABELS.APPRENTICESHIP },
-  { id: 'INTERNSHIP', label: CONTRACT_TYPE_LABELS.INTERNSHIP },
-  { id: 'FREELANCE', label: CONTRACT_TYPE_LABELS.FREELANCE },
-  { id: 'SERVICE', label: CONTRACT_TYPE_LABELS.SERVICE },
-  { id: 'INTERIM', label: CONTRACT_TYPE_LABELS.INTERIM },
-];
+export function getContractTypeData(): Array<{ id: ContractType; label: string }> {
+  return [
+    { id: 'CDI', label: getContractTypeLabel('CDI') },
+    { id: 'CDD', label: getContractTypeLabel('CDD') },
+    { id: 'APPRENTICESHIP', label: getContractTypeLabel('APPRENTICESHIP') },
+    { id: 'INTERNSHIP', label: getContractTypeLabel('INTERNSHIP') },
+    { id: 'FREELANCE', label: getContractTypeLabel('FREELANCE') },
+    { id: 'SERVICE', label: getContractTypeLabel('SERVICE') },
+    { id: 'INTERIM', label: getContractTypeLabel('INTERIM') },
+  ];
+}
 
-export const WORK_RHYTHM_DATA: Array<{ id: WorkRhythm; label: string; description: string }> = [
-  { id: 'FULL_TIME', label: WORK_RHYTHM_LABELS.FULL_TIME, description: 'Engagement à temps complet' },
-  { id: 'PART_TIME', label: WORK_RHYTHM_LABELS.PART_TIME, description: 'Quelques heures par semaine' },
-  { id: 'FLEXIBLE', label: WORK_RHYTHM_LABELS.FLEXIBLE, description: 'Horaires adaptables' },
-  { id: 'OCCASIONAL', label: WORK_RHYTHM_LABELS.OCCASIONAL, description: 'Missions ponctuelles' },
-];
+export function getWorkRhythmData(): Array<{ id: WorkRhythm; label: string; description: string }> {
+  return [
+    { id: 'FULL_TIME', label: getWorkRhythmLabel('FULL_TIME'), description: getLabel('workRhythms', 'FULL_TIME') },
+    { id: 'PART_TIME', label: getWorkRhythmLabel('PART_TIME'), description: getLabel('workRhythms', 'PART_TIME') },
+    { id: 'FLEXIBLE', label: getWorkRhythmLabel('FLEXIBLE'), description: getLabel('workRhythms', 'FLEXIBLE') },
+    { id: 'OCCASIONAL', label: getWorkRhythmLabel('OCCASIONAL'), description: getLabel('workRhythms', 'OCCASIONAL') },
+  ];
+}
 
-export const LOCATION_TYPE_DATA: Array<{ id: LocationType; label: string; description: string }> = [
-  { id: 'ON_SITE', label: LOCATION_TYPE_LABELS.ON_SITE, description: 'Présence requise au bureau' },
-  { id: 'HYBRID', label: LOCATION_TYPE_LABELS.HYBRID, description: 'Mix bureau et télétravail' },
-  { id: 'REMOTE', label: LOCATION_TYPE_LABELS.REMOTE, description: 'Travail à distance uniquement' },
-];
+export function getLocationTypeData(): Array<{ id: LocationType; label: string; description: string }> {
+  return [
+    { id: 'ON_SITE', label: getLocationTypeLabel('ON_SITE'), description: getLabel('locationTypeDescriptions', 'ON_SITE') },
+    { id: 'HYBRID', label: getLocationTypeLabel('HYBRID'), description: getLabel('locationTypeDescriptions', 'HYBRID') },
+    { id: 'REMOTE', label: getLocationTypeLabel('REMOTE'), description: getLabel('locationTypeDescriptions', 'REMOTE') },
+  ];
+}
 
 // Note: COMPENSATION_TYPE_DATA removed - use only min/max/frequency/currency
 
-export const COMPENSATION_FREQUENCY_DATA: Array<{ id: CompensationFrequency; label: string }> = [
-  { id: 'MONTHLY', label: COMPENSATION_FREQUENCY_LABELS.MONTHLY },
-  { id: 'YEARLY', label: COMPENSATION_FREQUENCY_LABELS.YEARLY },
-  { id: 'HOURLY', label: COMPENSATION_FREQUENCY_LABELS.HOURLY },
-  { id: 'PROJECT', label: COMPENSATION_FREQUENCY_LABELS.PROJECT },
-];
+export function getCompensationFrequencyData(): Array<{ id: CompensationFrequency; label: string }> {
+  return [
+    { id: 'MONTHLY', label: getCompensationFrequencyLabel('MONTHLY') },
+    { id: 'YEARLY', label: getCompensationFrequencyLabel('YEARLY') },
+    { id: 'HOURLY', label: getCompensationFrequencyLabel('HOURLY') },
+    { id: 'PROJECT', label: getCompensationFrequencyLabel('PROJECT') },
+  ];
+}
 
 /**
  * Retourne le symbole d'affichage pour un code devise (optionnel).
@@ -72,10 +84,12 @@ export function getCurrencySymbol(code: string): string {
 
 // --- Visibility ---
 
-export const OPPORTUNITY_VISIBILITY_DATA: Array<{ id: Visibility; label: string; description: string }> = [
-  { id: 'PUBLIC', label: VISIBILITY_LABELS.PUBLIC, description: 'Visible dans l\'exploration et la recherche' },
-  { id: 'PRIVATE', label: VISIBILITY_LABELS.PRIVATE, description: 'Accessible uniquement via invitation' },
-];
+export function getOpportunityVisibilityData(): Array<{ id: Visibility; label: string; description: string }> {
+  return [
+    { id: 'PUBLIC', label: getVisibilityLabel('PUBLIC'), description: getLabel('opportunityVisibility', 'PUBLIC') },
+    { id: 'PRIVATE', label: getVisibilityLabel('PRIVATE'), description: getLabel('opportunityVisibility', 'PRIVATE') },
+  ];
+}
 
 // --- Utilitaire - GéNéRation De Slug ---
 
@@ -100,3 +114,4 @@ export const generateOpportunitySlug = (title: string): string => {
 
   return `${baseSlug}-${uniqueSuffix}`;
 };
+

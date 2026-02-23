@@ -1,0 +1,21 @@
+{
+  "noAccessToOrg": "你没有该组织的访问权限",
+  "insufficientRoleForBilling": "角色权限不足，无法管理该组织的账单",
+  "internalError": "账单内部错误",
+  "failedToLoadCatalog": "无法加载积分目录",
+  "scopeRequired": "scope 为必填项：TALENT 或 ORGANIZATION",
+  "talentAuthRequired": "需要人才身份验证",
+  "talentWalletAccessDenied": "拒绝访问该人才钱包",
+  "orgIdRequired": "scope 为 ORGANIZATION 时需要组织 ID",
+  "authRequired": "需要身份验证",
+  "ownerIdRequired": "owner_id 为必填项",
+  "invalidTalentOwnerId": "owner_id 人才无效",
+  "paystackRefRequired": "paystack_reference 为必填项",
+  "paymentNotFound": "支付未找到",
+  "paymentAccessDenied": "拒绝访问该支付",
+  "invoiceAccessDenied": "拒绝访问人才发票",
+  "invoiceNotFound": "发票未找到",
+  "insufficientCredits": "积分余额不足。请充值钱包后继续。",
+  "insufficientOrgCredits": "组织积分余额不足。请充值钱包后继续。",
+  "insufficientCreditsForPublication": "积分余额不足。请充值钱包后发布。"
+}

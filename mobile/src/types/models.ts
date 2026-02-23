@@ -2,6 +2,7 @@
 // Dernière mise à jour: 19 janvier 2026
 
 import { BRAND_COLORS, LIGHT_COLORS } from '../constants/theme';
+import { getLabel } from '../utils/labels';
 
 export type UUID = string;
 export type ISODate = string;
@@ -49,14 +50,8 @@ export const OPPORTUNITY_TYPES = {
 } as const;
 export type OpportunityType = (typeof OPPORTUNITY_TYPES)[keyof typeof OPPORTUNITY_TYPES];
 
-export const OPPORTUNITY_TYPE_LABELS: Record<OpportunityType, string> = {
-  EMPLOYMENT: 'Emploi',
-  INTERNSHIP: 'Stage',
-  ENTREPRENEURSHIP: 'Entrepreneuriat',
-  ALTERNATION: 'Alternance',
-  FREELANCE: 'Freelance',
-  VOLUNTEER: 'Bénévolat',
-};
+export const getOpportunityTypeLabel = (type: OpportunityType): string =>
+  getLabel('opportunityTypes', type);
 
 // Contract type (type de contrat)
 export const CONTRACT_TYPES = {
@@ -70,15 +65,8 @@ export const CONTRACT_TYPES = {
 } as const;
 export type ContractType = (typeof CONTRACT_TYPES)[keyof typeof CONTRACT_TYPES];
 
-export const CONTRACT_TYPE_LABELS: Record<ContractType, string> = {
-  CDI: 'CDI',
-  CDD: 'CDD',
-  APPRENTICESHIP: 'Apprentissage',
-  INTERNSHIP: 'Stage',
-  FREELANCE: 'Freelance',
-  SERVICE: 'Prestation',
-  INTERIM: 'Intérim',
-};
+export const getContractTypeLabel = (type: ContractType): string =>
+  getLabel('contractTypes', type);
 
 // Work rhythm (rythme de travail)
 export const WORK_RHYTHMS = {
@@ -89,12 +77,8 @@ export const WORK_RHYTHMS = {
 } as const;
 export type WorkRhythm = (typeof WORK_RHYTHMS)[keyof typeof WORK_RHYTHMS];
 
-export const WORK_RHYTHM_LABELS: Record<WorkRhythm, string> = {
-  FULL_TIME: 'Temps plein',
-  PART_TIME: 'Temps partiel',
-  FLEXIBLE: 'Flexible',
-  OCCASIONAL: 'Ponctuel',
-};
+export const getWorkRhythmLabel = (rhythm: WorkRhythm): string =>
+  getLabel('workRhythms', rhythm);
 
 
 export const LOCATION_TYPES = {
@@ -104,11 +88,8 @@ export const LOCATION_TYPES = {
 } as const;
 export type LocationType = (typeof LOCATION_TYPES)[keyof typeof LOCATION_TYPES];
 
-export const LOCATION_TYPE_LABELS: Record<LocationType, string> = {
-  ON_SITE: 'Sur site',
-  REMOTE: 'À distance',
-  HYBRID: 'Hybride',
-};
+export const getLocationTypeLabel = (type: LocationType): string =>
+  getLabel('locationTypes', type);
 
 
 export const COMPENSATION_FREQUENCIES = {
@@ -119,12 +100,8 @@ export const COMPENSATION_FREQUENCIES = {
 } as const;
 export type CompensationFrequency = (typeof COMPENSATION_FREQUENCIES)[keyof typeof COMPENSATION_FREQUENCIES];
 
-export const COMPENSATION_FREQUENCY_LABELS: Record<CompensationFrequency, string> = {
-  HOURLY: 'heure',
-  MONTHLY: 'mois',
-  YEARLY: 'an',
-  PROJECT: 'projet',
-};
+export const getCompensationFrequencyLabel = (freq: CompensationFrequency): string =>
+  getLabel('compensationFrequencies', freq);
 
 export const OPPORTUNITY_STATUS = {
   DRAFT: 'DRAFT',
@@ -135,13 +112,8 @@ export const OPPORTUNITY_STATUS = {
 } as const;
 export type OpportunityStatus = (typeof OPPORTUNITY_STATUS)[keyof typeof OPPORTUNITY_STATUS];
 
-export const OPPORTUNITY_STATUS_LABELS: Record<OpportunityStatus, string> = {
-  DRAFT: 'Brouillon',
-  OPEN: 'Publiée',
-  PAUSED: 'En pause',
-  FILLED: 'Pourvue',
-  EXPIRED: 'Expirée',
-};
+export const getOpportunityStatusLabel = (status: OpportunityStatus): string =>
+  getLabel('opportunityStatus', status);
 
 // --- Enums - Organization ---
 
@@ -162,21 +134,8 @@ export const ORGANIZATION_TYPES = {
 } as const;
 export type OrganizationType = (typeof ORGANIZATION_TYPES)[keyof typeof ORGANIZATION_TYPES];
 
-export const ORGANIZATION_TYPE_LABELS: Record<OrganizationType, string> = {
-  COMPANY: 'Entreprise',
-  STARTUP: 'Startup',
-  NGO: 'ONG',
-  ASSOCIATION: 'Association',
-  EDUCATIONAL_INSTITUTION: "Établissement d'enseignement",
-  PUBLIC_ADMINISTRATION: 'Administration publique',
-  TRAINING_CENTER: 'Cabinet de formation',
-  CONSULTING_FIRM: 'Cabinet de conseil',
-  RECRUITMENT_AGENCY: 'Cabinet de recrutement',
-  FINANCIAL_INSTITUTION: 'Institution financière',
-  RESEARCH_CENTER: 'Centre de recherche',
-  COOPERATIVE: 'Coopérative',
-  SOCIAL_ENTERPRISE: 'Entreprise sociale',
-};
+export const getOrganizationTypeLabel = (type: OrganizationType): string =>
+  getLabel('orgTypes', type);
 
 export const VERIFICATION_STATUS = {
   PENDING: 'PENDING',
@@ -186,12 +145,8 @@ export const VERIFICATION_STATUS = {
 } as const;
 export type VerificationStatus = (typeof VERIFICATION_STATUS)[keyof typeof VERIFICATION_STATUS];
 
-export const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {
-  PENDING: 'En cours de vérification',
-  VERIFIED: 'Vérifié',
-  REJECTED: 'Rejeté',
-  NOT_STARTED: 'Non démarré',
-};
+export const getVerificationStatusLabel = (status: VerificationStatus): string =>
+  getLabel('verificationStatus', status);
 
 // --- Enums - Space Espaces RéServables ---
 
@@ -221,24 +176,8 @@ export const SPACE_TYPES = {
 } as const;
 export type SpaceType = (typeof SPACE_TYPES)[keyof typeof SPACE_TYPES];
 
-export const SPACE_TYPE_LABELS: Record<SpaceType, string> = {
-  SALLE_COURS: 'Salle de cours',
-  SALLE_INFORMATIQUE: 'Salle informatique',
-  AMPHITHEATRE: 'Amphithéâtre',
-  SALLE_FORMATION: 'Salle de formation',
-  OPEN_SPACE: 'Open space',
-  BUREAU_PRIVE: 'Bureau privé',
-  POSTE_NOMADE: 'Poste nomade',
-  SALLE_REUNION: 'Salle de réunion',
-  SALLE_CONFERENCE: 'Salle de conférence',
-  CABINE_APPEL: 'Cabine d\'appel',
-  ATELIER: 'Atelier',
-  LABORATOIRE: 'Laboratoire',
-  STUDIO: 'Studio',
-  SALLE_EVENEMENT: 'Salle événementielle',
-  ROOFTOP: 'Rooftop',
-  TERRASSE: 'Terrasse',
-};
+export const getSpaceTypeLabel = (type: SpaceType): string =>
+  getLabel('spaceTypes', type);
 
 // Équipements de sécurité
 export const SAFETY_EQUIPMENT = {
@@ -254,17 +193,8 @@ export const SAFETY_EQUIPMENT = {
 } as const;
 export type SafetyEquipment = (typeof SAFETY_EQUIPMENT)[keyof typeof SAFETY_EQUIPMENT];
 
-export const SAFETY_EQUIPMENT_LABELS: Record<SafetyEquipment, string> = {
-  EXTINCTEUR: 'Extincteurs',
-  DETECTEUR_FUMEE: 'Détecteurs de fumée',
-  ALARME_INCENDIE: 'Alarme incendie',
-  SORTIE_SECOURS: 'Sorties de secours',
-  PLAN_EVACUATION: 'Plan d\'évacuation',
-  ECLAIRAGE_SECOURS: 'Éclairage de secours',
-  SPRINKLER: 'Sprinklers',
-  DESENFUMAGE: 'Désenfumage',
-  PORTE_COUPE_FEU: 'Portes coupe-feu',
-};
+export const getSafetyEquipmentLabel = (eq: SafetyEquipment): string =>
+  getLabel('safetyEquipment', eq);
 
 // Équipements d'accessibilité
 export const ACCESSIBILITY_FEATURES = {
@@ -279,16 +209,8 @@ export const ACCESSIBILITY_FEATURES = {
 } as const;
 export type AccessibilityFeature = (typeof ACCESSIBILITY_FEATURES)[keyof typeof ACCESSIBILITY_FEATURES];
 
-export const ACCESSIBILITY_FEATURE_LABELS: Record<AccessibilityFeature, string> = {
-  RAMPE_ACCES: 'Rampe d\'accès',
-  ASCENSEUR: 'Ascenseur adapté',
-  WC_ACCESSIBLE: 'Toilettes accessibles',
-  PORTES_LARGES: 'Portes larges (≥90cm)',
-  GUIDAGE_TACTILE: 'Guidage au sol',
-  BOUCLE_AUDITIVE: 'Boucle auditive',
-  PARKING_HANDICAPE: 'Places parking PMR',
-  SIGNALISATION_BRAILLE: 'Signalisation braille',
-};
+export const getAccessibilityFeatureLabel = (feat: AccessibilityFeature): string =>
+  getLabel('accessibilityFeatures', feat);
 
 // Types de tarification
 export const PRICING_TYPES = {
@@ -301,14 +223,8 @@ export const PRICING_TYPES = {
 } as const;
 export type PricingType = (typeof PRICING_TYPES)[keyof typeof PRICING_TYPES];
 
-export const PRICING_TYPE_LABELS: Record<PricingType, string> = {
-  FREE: 'Gratuit',
-  HOURLY: 'À l\'heure',
-  DAILY: 'À la journée',
-  MONTHLY: 'Abonnement mensuel',
-  YEARLY: 'Abonnement annuel',
-  CUSTOM: 'Sur devis',
-};
+export const getPricingTypeLabel = (type: PricingType): string =>
+  getLabel('pricingTypes', type);
 
 export const ACCESS_TYPES = {
   PUBLIC: 'PUBLIC',
@@ -317,11 +233,8 @@ export const ACCESS_TYPES = {
 } as const;
 export type AccessType = (typeof ACCESS_TYPES)[keyof typeof ACCESS_TYPES];
 
-export const ACCESS_TYPE_LABELS: Record<AccessType, string> = {
-  PUBLIC: 'Accès libre',
-  PRIVATE: 'Privé',
-  MEMBERSHIP: 'Adhésion requise',
-};
+export const getAccessTypeLabel = (type: AccessType): string =>
+  getLabel('accessTypes', type);
 
 // --- Enums - Community ---
 
@@ -332,11 +245,8 @@ export const COMMUNITY_TYPES = {
 } as const;
 export type CommunityType = (typeof COMMUNITY_TYPES)[keyof typeof COMMUNITY_TYPES];
 
-export const COMMUNITY_TYPE_LABELS: Record<CommunityType, string> = {
-  ONLINE: 'En ligne',
-  OFFLINE: 'Présentiel',
-  HYBRID: 'Hybride',
-};
+export const getCommunityTypeLabel = (type: CommunityType): string =>
+  getLabel('communityTypes', type);
 
 export const VISIBILITY = {
   PUBLIC: 'PUBLIC',
@@ -344,10 +254,8 @@ export const VISIBILITY = {
 } as const;
 export type Visibility = (typeof VISIBILITY)[keyof typeof VISIBILITY];
 
-export const VISIBILITY_LABELS: Record<Visibility, string> = {
-  PUBLIC: 'Publique',
-  PRIVATE: 'Privée',
-};
+export const getVisibilityLabel = (vis: Visibility): string =>
+  getLabel('visibility', vis);
 
 export const COMMUNITY_STATUS = {
   ACTIVE: 'ACTIVE',
@@ -356,11 +264,8 @@ export const COMMUNITY_STATUS = {
 } as const;
 export type CommunityStatus = (typeof COMMUNITY_STATUS)[keyof typeof COMMUNITY_STATUS];
 
-export const COMMUNITY_STATUS_LABELS: Record<CommunityStatus, string> = {
-  ACTIVE: 'Actif',
-  INACTIVE: 'Inactif',
-  ARCHIVED: 'Archivé',
-};
+export const getCommunityStatusLabel = (status: CommunityStatus): string =>
+  getLabel('communityStatus', status);
 
 // Sector type (used for filtering)
 export type Sector = string;
@@ -385,11 +290,8 @@ export const CALENDAR_EVENT_TYPES = {
 } as const;
 export type CalendarEventType = (typeof CALENDAR_EVENT_TYPES)[keyof typeof CALENDAR_EVENT_TYPES];
 
-export const CALENDAR_EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
-  INTERVIEW: 'Entretien',
-  BOOKING: 'Réservation',
-  DEADLINE: 'Date limite',
-};
+export const getCalendarEventTypeLabel = (type: CalendarEventType): string =>
+  getLabel('calendarEventTypes', type);
 
 // --- Enums - Payment ---
 
@@ -404,15 +306,8 @@ export const PAYMENT_PROVIDERS = {
 } as const;
 export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[keyof typeof PAYMENT_PROVIDERS];
 
-export const PAYMENT_PROVIDER_LABELS: Record<PaymentProvider, string> = {
-  ORANGE_MONEY: 'Orange Money',
-  MTN_MONEY: 'MTN Money',
-  MOOV_MONEY: 'Moov Money',
-  WAVE: 'Wave',
-  PUSH: 'Push',
-  DJAMO: 'Djamo',
-  CARD: 'Carte bancaire',
-};
+export const getPaymentProviderLabel = (provider: PaymentProvider): string =>
+  getLabel('paymentProviders', provider);
 
 export const PAYMENT_PROVIDER_COLORS: Record<PaymentProvider, string> = {
   ORANGE_MONEY: BRAND_COLORS.orangeMoney,
@@ -763,12 +658,8 @@ export const APPLICATION_STATUS = {
 } as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUS)[keyof typeof APPLICATION_STATUS];
 
-export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
-  SUBMITTED: 'Soumise',
-  IN_REVIEW: 'En cours d\'examen',
-  ACCEPTED: 'Acceptée',
-  REJECTED: 'Refusée',
-};
+export const getApplicationStatusLabel = (status: ApplicationStatus): string =>
+  getLabel('applicationStatus', status);
 
 export interface ApplicationAnswer {
   question_id: string;
@@ -835,11 +726,8 @@ export const MEMBER_STATUS = {
 } as const;
 export type MemberStatus = (typeof MEMBER_STATUS)[keyof typeof MEMBER_STATUS];
 
-export const MEMBER_STATUS_LABELS: Record<MemberStatus, string> = {
-  ACTIVE: 'Actif',
-  INVITED: 'Invitation envoyée',
-  INACTIVE: 'Inactif',
-};
+export const getMemberStatusLabel = (status: MemberStatus): string =>
+  getLabel('memberStatus', status);
 
 // --- Organization Roles Simplified - No Granular Permissions ---
 
@@ -848,22 +736,15 @@ export const ORGANIZATION_ROLES = {
   ADMIN: 'ADMIN',       // Can do everything except delete organization
   MANAGER: 'MANAGER',   // Can manage opportunities, communities, spaces (CRUD)
   MEMBER: 'MEMBER',     // Basic member access
+  OBSERVER: 'OBSERVER', // View only (read-only)
 } as const;
 export type OrganizationRole = (typeof ORGANIZATION_ROLES)[keyof typeof ORGANIZATION_ROLES];
 
-export const ORGANIZATION_ROLE_LABELS: Record<OrganizationRole, string> = {
-  OWNER: 'Propriétaire',
-  ADMIN: 'Administrateur',
-  MANAGER: 'Manager',
-  MEMBER: 'Membre',
-};
+export const getOrganizationRoleLabel = (role: OrganizationRole): string =>
+  getLabel('orgRoles', role);
 
-export const ORGANIZATION_ROLE_DESCRIPTIONS: Record<OrganizationRole, string> = {
-  OWNER: 'Contrôle total de l\'organisation',
-  ADMIN: 'Accès complet sauf suppression',
-  MANAGER: 'Gestion des contenus (opportunités, espaces, communautés)',
-  MEMBER: 'Accès membre de base',
-};
+export const getOrganizationRoleDescription = (role: OrganizationRole): string =>
+  getLabel('orgRoleDescriptions', role);
 
 // Role-based permission helpers
 export const canManageContent = (role: OrganizationRole): boolean =>
@@ -933,6 +814,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<OrganizationRole, string[]> = {
   ADMIN: [],
   MANAGER: [],
   MEMBER: [],
+  OBSERVER: [],
 };
 
 // --- Interfaces - Assistant / Chat Utilisé Dans Assistant.Tsx ---

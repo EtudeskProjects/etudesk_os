@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SPACING, TYPOGRAPHY, BORDER } from '../src/constants/theme';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useTheme } from '../src/hooks/useTheme';
+import { useI18n } from '../src/contexts/I18nContext';
 import { Button, LoadingShimmer } from '../src/components/ui';
 
 const { height, width } = Dimensions.get('window');
@@ -16,20 +17,20 @@ const SLIDES = [
   {
     id: 1,
     image: require('../assets/onboarding_1.jpg'),
-    title: 'Transforme tes compétences en carrière',
-    description: 'Construis un profil professionnel percutant et valorise ton expertise unique auprès des recruteurs.',
+    titleKey: 'onboarding.slide1Title',
+    descKey: 'onboarding.slide1Desc',
   },
   {
     id: 2,
     image: require('../assets/onboarding_2.jpg'),
-    title: 'Accède aux meilleures opportunités',
-    description: 'Découvre des offres d\'emploi parfaitement ciblées selon tes talents et ambitions.',
+    titleKey: 'onboarding.slide2Title',
+    descKey: 'onboarding.slide2Desc',
   },
   {
     id: 3,
     image: require('../assets/onboarding_3.jpg'),
-    title: 'Évolue avec l\'élite',
-    description: 'Rejoins une communauté dynamique de talents et d\'entreprises pour booster ton réseau professionnel.',
+    titleKey: 'onboarding.slide3Title',
+    descKey: 'onboarding.slide3Desc',
   },
 ];
 
@@ -37,6 +38,7 @@ export default function SplashScreen() {
   const router = useRouter();
   const { status, isLoading, needsOnboarding } = useAuth();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
@@ -148,8 +150,8 @@ export default function SplashScreen() {
             />
           </View>
 
-          <Text style={[styles.title, { color: colors.gray900 }]}>{slide.title}</Text>
-          <Text style={[styles.description, { color: colors.gray600 }]}>{slide.description}</Text>
+          <Text style={[styles.title, { color: colors.gray900 }]}>{t(slide.titleKey)}</Text>
+          <Text style={[styles.description, { color: colors.gray600 }]}>{t(slide.descKey)}</Text>
         </View>
 
         <View style={styles.pagination}>
@@ -166,7 +168,7 @@ export default function SplashScreen() {
         </View>
 
         <Button
-          title={isLastSlide ? 'Continuer' : 'Suivant'}
+          title={isLastSlide ? t('common.continue') : t('onboarding.next')}
           onPress={handleNext}
           size="lg"
           fullWidth

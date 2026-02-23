@@ -36,6 +36,7 @@ import { useTheme } from '../../../../src/hooks/useTheme';
 import { useForm } from '../../../../src/hooks/useForm';
 import { useAuth } from '../../../../src/contexts/AuthContext';
 import { useAlert } from '../../../../src/contexts/AlertContext';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
 import { opportunityService, applicationService, talentService, documentService, kycService } from '../../../../src/services';
 import type { Opportunity, ApplicationQuestion, ApplicationAnswer, TalentObjectData } from '../../../../src/types/models';
@@ -47,10 +48,10 @@ type ApplyStep = 'profile' | 'questions' | 'preview' | 'success';
 const STEPS: ApplyStep[] = ['profile', 'questions', 'preview', 'success'];
 
 const STEP_TITLES: Record<ApplyStep, string> = {
-  profile: 'Mon profil',
-  questions: 'Candidature',
-  preview: 'Aperçu',
-  success: 'Confirmation',
+  profile: 'opportunity.applyFlow.steps.profile',
+  questions: 'opportunity.applyFlow.steps.application',
+  preview: 'opportunity.applyFlow.steps.preview',
+  success: 'opportunity.applyFlow.steps.confirmation',
 };
 
 const MAX_ANSWER_LENGTH = 200;
@@ -77,6 +78,7 @@ export default function ApplyOpportunityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { error: showError } = useAlert();
@@ -147,7 +149,7 @@ export default function ApplyOpportunityScreen() {
             });
             cvUrl = uploadResult.document.file_url;
           } catch (uploadError) {
-            throw new Error('Erreur lors du téléchargement de votre CV. Veuillez réessayer.');
+            throw new Error(t('opportunity.applyFlow.errors.cvUpload'));
           }
         }
       }
@@ -181,21 +183,21 @@ export default function ApplyOpportunityScreen() {
 
     setIsLoading(true);
     try {
-      // KYC gate: vérification d'identité obligatoire
+      // KYC gate: identity verification required
       try {
         const kycRes = await kycService.getStatus();
         if (!kycRes?.data || kycRes.data.status !== 'VERIFIED') {
-          void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant de postuler.', buttons: [
-              { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
-              { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
+          void alerts.showAlert({ title: t('screens.settings.kycRequiredTitle'), message: t('opportunity.applyFlow.kycRequiredMessage'), buttons: [
+              { text: t('common.cancel'), style: 'cancel', onPress: () => router.back() },
+              { text: t('screens.settings.kycVerifyIdentity'), onPress: () => { router.back(); router.push('/settings/kyc'); } },
             ] });
           setIsLoading(false);
           return;
         }
       } catch {
-        void alerts.showAlert({ title: 'Vérification requise', message: 'Tu dois vérifier ton identité avant de postuler.', buttons: [
-            { text: 'Plus tard', style: 'cancel', onPress: () => router.back() },
-            { text: 'Vérifier', onPress: () => { router.back(); router.push('/settings/kyc'); } },
+        void alerts.showAlert({ title: t('screens.settings.kycRequiredTitle'), message: t('opportunity.applyFlow.kycRequiredMessage'), buttons: [
+            { text: t('common.cancel'), style: 'cancel', onPress: () => router.back() },
+            { text: t('screens.settings.kycVerifyIdentity'), onPress: () => { router.back(); router.push('/settings/kyc'); } },
           ] });
         setIsLoading(false);
         return;
@@ -208,7 +210,7 @@ export default function ApplyOpportunityScreen() {
       ]);
 
       if (!oppResponse?.data) {
-        void alerts.alert('Erreur', 'Impossible de charger cette opportunité.');
+        void alerts.alert(t('common.error'), t('opportunity.loadError'));
         router.back();
         return;
       }
@@ -237,7 +239,7 @@ export default function ApplyOpportunityScreen() {
       }
     } catch (error) {
       if (__DEV__) console.error('Error loading apply data:', error);
-      void alerts.alert('Erreur', 'Impossible de charger les données.');
+      void alerts.alert(t('common.error'), t('common.genericError'));
       router.back();
     } finally {
       setIsLoading(false);
@@ -256,7 +258,7 @@ export default function ApplyOpportunityScreen() {
         const maxSize = 20 * 1024 * 1024; // 20MB max
 
         if (doc.size && doc.size > maxSize) {
-          void alerts.alert('Fichier trop volumineux', 'Le CV ne doit pas dépasser 20 MB.');
+          void alerts.alert(t('common.fileTooLarge'), t('opportunity.applyFlow.cvMaxSize'));
           return;
         }
 
@@ -271,7 +273,7 @@ export default function ApplyOpportunityScreen() {
         form.setValue('selectedExistingCV', null);
       }
     } catch (error) {
-      void alerts.alert('Erreur', 'Une erreur est survenue lors de la sélection du fichier.');
+      void alerts.alert(t('common.error'), t('opportunity.form.documentSelectionError'));
     }
   };
 
@@ -335,15 +337,19 @@ export default function ApplyOpportunityScreen() {
     try {
       await form.handleSubmit();
     } catch (error: any) {
-      if (error.status === 403 && error.error?.includes('propre opportunité')) {
+      const normalizedError = String(error.error || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+      if (error.status === 403 && (normalizedError.includes('propre opportunite') || normalizedError.includes('own opportunity'))) {
         showError(
-          'Action non autorisée',
-          'Vous ne pouvez pas postuler à votre propre opportunité.'
+          t('opportunity.applyFlow.errors.unauthorizedAction'),
+          t('opportunity.applyFlow.errors.cannotApplyOwnOpportunity')
         );
       } else {
         showError(
-          'Erreur',
-          error.error || 'Une erreur est survenue lors de l\'envoi de votre candidature.'
+          t('common.error'),
+          error.error || t('opportunity.applyFlow.errors.submit')
         );
       }
     }
@@ -395,7 +401,7 @@ export default function ApplyOpportunityScreen() {
     // Create step objects for the indicator
     const stepsData = visibleSteps.map(step => ({
       id: step,
-      label: STEP_TITLES[step],
+      label: t(STEP_TITLES[step]),
     }));
 
     return <StepIndicator steps={stepsData} currentStepId={currentStep} />;
@@ -411,10 +417,10 @@ export default function ApplyOpportunityScreen() {
         <View style={styles.stepHeader}>
           <User size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-            Vérifiez votre profil
+            {t('opportunity.applyFlow.profile.title')}
           </Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Ces informations seront partagées avec le recruteur
+            {t('opportunity.applyFlow.profile.description')}
           </Text>
         </View>
 
@@ -468,7 +474,7 @@ export default function ApplyOpportunityScreen() {
           {/* Skills */}
           {profile?.skills && profile.skills.length > 0 && (
             <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
-              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Compétences</Text>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>{t('profile.skills')}</Text>
               <View style={styles.profileTagsRow}>
                 {profile.skills.slice(0, 8).map((skill, i) => (
                   <View key={i} style={[styles.profileTag, { backgroundColor: withOpacity(colors.primary, OPACITY[12]) }]}>
@@ -485,7 +491,7 @@ export default function ApplyOpportunityScreen() {
           {/* Sectors */}
           {profile?.sectors && profile.sectors.length > 0 && (
             <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
-              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Secteurs</Text>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>{t('organization.industries')}</Text>
               <View style={styles.profileTagsRow}>
                 {profile.sectors.map((s, i) => (
                   <View key={i} style={[styles.profileTag, { backgroundColor: colors.gray100 }]}>
@@ -516,9 +522,9 @@ export default function ApplyOpportunityScreen() {
             <View style={[styles.warningBox, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
               <AlertCircle size={20} color={colors.warning} strokeWidth={ICON.strokeWidth} />
               <View style={styles.warningContent}>
-                <Text style={[styles.warningTitle, { color: colors.warning }]}>Profil incomplet</Text>
+                <Text style={[styles.warningTitle, { color: colors.warning }]}>{t('opportunity.applyFlow.profile.incompleteTitle')}</Text>
                 <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-                  Complétez votre profil (nom, prénom, email) pour continuer.
+                  {t('opportunity.applyFlow.profile.incompleteDesc')}
                 </Text>
               </View>
             </View>
@@ -526,7 +532,7 @@ export default function ApplyOpportunityScreen() {
         </View>
 
         <Button
-          title="Modifier mon profil"
+          title={t('settings.editProfile')}
           onPress={() => router.push('/settings/edit-profile')}
           variant="outline"
           fullWidth
@@ -543,7 +549,7 @@ export default function ApplyOpportunityScreen() {
     return (
       <View style={styles.fieldContainer}>
         <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-          CV (PDF) {cvRequired ? '*' : '(optionnel)'}
+          {t('documents.types.cv')} (PDF) {cvRequired ? '*' : `(${t('common.optional')})`}
         </Text>
 
         {/* If CV is selected, show preview */}
@@ -557,13 +563,13 @@ export default function ApplyOpportunityScreen() {
                 {selectedCV.name}
               </Text>
               <Text style={[styles.cvSource, { color: colors.gray500 }]}>
-                {selectedCV.isFromDocuments ? 'Depuis mes documents' : 'Fichier uploadé'}
+                {selectedCV.isFromDocuments ? t('opportunity.applyFlow.cv.fromDocuments') : t('opportunity.applyFlow.cv.uploadedFile')}
               </Text>
             </View>
             <IconButton
               onPress={removeCV}
               icon={<X size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
-              accessibilityLabel="Retirer le CV"
+              accessibilityLabel={t('opportunity.applyFlow.cv.removeCv')}
               size="sm"
               variant="ghost"
               style={styles.removeCvButton}
@@ -575,7 +581,7 @@ export default function ApplyOpportunityScreen() {
             {hasExistingCV && (
               <>
                 <Text style={[styles.cvOptionsTitle, { color: colors.gray600 }]}>
-                  Choisir un CV existant
+                  {t('opportunity.applyFlow.cv.chooseExisting')}
                 </Text>
                 <View style={styles.existingCvsList}>
                   {existingCVs.map((cv) => (
@@ -591,19 +597,19 @@ export default function ApplyOpportunityScreen() {
                       ]}
                       onPress={() => selectExistingCV(cv)}
                       selected={false}
-                      accessibilityLabel={cv.title || cv.original_filename || 'CV'}
+                      accessibilityLabel={cv.title || cv.original_filename || t('documents.types.cv')}
                     >
                       <View style={[styles.existingCvIcon, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                         <FolderOpen size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                       </View>
                       <View style={styles.existingCvInfo}>
                         <Text style={[styles.existingCvName, { color: colors.textPrimary }]} numberOfLines={1}>
-                          {cv.title || cv.original_filename || 'CV'}
+                          {cv.title || cv.original_filename || t('documents.types.cv')}
                         </Text>
                         {cv.is_primary && (
                           <View style={[styles.primaryBadge, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
                             <Text style={[styles.primaryBadgeText, { color: colors.success }]}>
-                              Principal
+                              {t('opportunity.applyFlow.cv.primary')}
                             </Text>
                           </View>
                         )}
@@ -617,7 +623,7 @@ export default function ApplyOpportunityScreen() {
 
                 <View style={styles.orDivider}>
                   <View style={[styles.orLine, { backgroundColor: colors.gray200 }]} />
-                  <Text style={[styles.orText, { color: colors.gray500 }]}>ou</Text>
+                  <Text style={[styles.orText, { color: colors.gray500 }]}>{t('common.or')}</Text>
                   <View style={[styles.orLine, { backgroundColor: colors.gray200 }]} />
                 </View>
               </>
@@ -625,7 +631,7 @@ export default function ApplyOpportunityScreen() {
 
             {/* Upload New CV */}
             <Button
-              title={hasExistingCV ? 'Télécharger un autre CV' : 'Télécharger votre CV'}
+              title={hasExistingCV ? t('opportunity.applyFlow.cv.uploadAnother') : t('opportunity.applyFlow.cv.uploadYourCv')}
               onPress={pickCV}
               variant="outline"
               fullWidth
@@ -634,7 +640,7 @@ export default function ApplyOpportunityScreen() {
               textStyle={[styles.uploadText, { color: colors.primary }]}
             />
             <Text style={[styles.fieldHint, { color: colors.gray500 }]}>
-              Format PDF, maximum 5 MB
+              {t('opportunity.applyFlow.cv.formatHint')}
             </Text>
           </View>
         )}
@@ -651,10 +657,10 @@ export default function ApplyOpportunityScreen() {
         <View style={styles.stepHeader}>
           <Briefcase size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-            Informations complémentaires
+            {t('opportunity.applyFlow.questions.title')}
           </Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Complétez les informations demandées
+            {t('opportunity.applyFlow.questions.description')}
           </Text>
         </View>
 
@@ -671,7 +677,7 @@ export default function ApplyOpportunityScreen() {
           {questions.length > 0 && (
             <View style={styles.fieldContainer}>
               <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>
-                Questions du recruteur
+                {t('opportunity.applyFlow.questions.recruiterQuestions')}
               </Text>
 
               {questions.map((question) => (
@@ -682,7 +688,7 @@ export default function ApplyOpportunityScreen() {
                   </Text>
                   <View style={[styles.answerInputContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
                     <Input
-                      placeholder="Votre réponse..."
+                      placeholder={t('common.yourAnswer')}
                       placeholderTextColor={colors.gray400}
                       value={answers[question.id] || ''}
                       onChangeText={(text) => updateAnswer(question.id, text)}
@@ -719,10 +725,10 @@ export default function ApplyOpportunityScreen() {
             <View style={[styles.noRequirements, { backgroundColor: colors.gray50 }]}>
               <CheckCircle2 size={32} color={colors.success} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.noRequirementsText, { color: colors.textPrimary }]}>
-                Aucune information supplémentaire requise
+                {t('opportunity.applyFlow.questions.noExtraInfo')}
               </Text>
               <Text style={[styles.noRequirementsHint, { color: colors.gray500 }]}>
-                Vous pouvez passer à l'étape suivante
+                {t('opportunity.applyFlow.questions.canProceed')}
               </Text>
             </View>
           )}
@@ -740,10 +746,10 @@ export default function ApplyOpportunityScreen() {
         <View style={styles.stepHeader}>
           <Eye size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>
-            Vérifiez votre candidature
+            {t('opportunity.applyFlow.preview.title')}
           </Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Avant de soumettre, vérifiez les informations
+            {t('opportunity.applyFlow.preview.description')}
           </Text>
         </View>
 
@@ -751,7 +757,7 @@ export default function ApplyOpportunityScreen() {
           {/* Opportunity Info */}
           <View style={[styles.previewSection, { backgroundColor: colors.gray50 }]}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-              Opportunité
+              {t('myApplications.detail.sections.opportunity')}
             </Text>
             <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
               {opportunity?.title}
@@ -764,7 +770,7 @@ export default function ApplyOpportunityScreen() {
           {/* Profile Preview */}
           <View style={[styles.previewSection, { backgroundColor: withOpacity(colors.primary, OPACITY[8]) }]}>
             <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-              Votre profil
+              {t('opportunity.applyFlow.preview.yourProfile')}
             </Text>
             <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
               {profile?.first_name} {profile?.last_name}
@@ -793,13 +799,13 @@ export default function ApplyOpportunityScreen() {
                       {selectedCV.name}
                     </Text>
                     <Text style={[styles.previewCvSource, { color: colors.gray500 }]}>
-                      {selectedCV.isFromDocuments ? 'Depuis mes documents' : 'Fichier uploadé'}
+                      {selectedCV.isFromDocuments ? t('opportunity.applyFlow.cv.fromDocuments') : t('opportunity.applyFlow.cv.uploadedFile')}
                     </Text>
                   </View>
                 </View>
               ) : (
                 <Text style={[styles.previewMissing, { color: colors.error }]}>
-                  CV non fourni
+                  {t('opportunity.applyFlow.preview.cvMissing')}
                 </Text>
               )}
             </View>
@@ -809,7 +815,7 @@ export default function ApplyOpportunityScreen() {
           {questions.length > 0 && (
             <View style={styles.previewSection}>
               <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-                Vos réponses
+                {t('myApplications.detail.sections.answers')}
               </Text>
               {questions.map((question) => (
                 <View key={question.id} style={styles.previewAnswer}>
@@ -834,20 +840,20 @@ export default function ApplyOpportunityScreen() {
         <CheckCircle2 size={64} color={colors.success} strokeWidth={ICON.strokeWidth} />
       </View>
       <Text style={[styles.successTitle, { color: colors.textPrimary }]}>
-        Candidature envoyée !
+        {t('opportunity.applyFlow.success.title')}
       </Text>
       <Text style={[styles.successDescription, { color: colors.textSecondary }]}>
-        Votre candidature pour "{opportunity?.title}" a bien été envoyée. L'organisation vous contactera si votre profil correspond.
+        {t('opportunity.applyFlow.success.description', { title: opportunity?.title })}
       </Text>
 
       <View style={styles.successActions}>
         <Button
-          title="Voir mes candidatures"
+          title={t('management.myApplications')}
           onPress={() => router.replace('/settings/my-applications')}
           fullWidth
         />
         <Button
-          title="Continuer à explorer"
+          title={t('myApplications.explore')}
           onPress={() => router.replace('/(tabs)/explore')}
           variant="ghost"
           fullWidth
@@ -868,7 +874,7 @@ export default function ApplyOpportunityScreen() {
         <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
           <View style={styles.footerButtons}>
             <Button
-              title="Retour"
+              title={t('common.back')}
               onPress={handleBack}
               disabled={isSubmitting}
               variant="outline"
@@ -878,7 +884,7 @@ export default function ApplyOpportunityScreen() {
             />
             <View style={styles.submitButton}>
               <Button
-                title={isSubmitting ? 'Envoi...' : 'Envoyer ma candidature'}
+              title={isSubmitting ? t('common.sending') : t('opportunity.applyFlow.submit')}
                 onPress={handleSubmit}
                 disabled={isSubmitting}
                 fullWidth
@@ -893,7 +899,7 @@ export default function ApplyOpportunityScreen() {
       <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
         <View style={styles.footerButtons}>
           <Button
-            title={isFirstStep ? 'Annuler' : 'Retour'}
+            title={isFirstStep ? t('common.cancel') : t('common.back')}
             onPress={handleBack}
             variant="outline"
             icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
@@ -902,7 +908,7 @@ export default function ApplyOpportunityScreen() {
           />
           <View style={styles.continueButton}>
             <Button
-              title="Continuer"
+              title={t('common.continue')}
               onPress={handleNext}
               disabled={!canProceed()}
               fullWidth
@@ -927,9 +933,9 @@ export default function ApplyOpportunityScreen() {
     return (
       <SafeAreaView style={[styles.errorContainer, { backgroundColor: colors.background }]}>
         <Text style={[styles.errorText, { color: colors.textPrimary }]}>
-          Opportunité non trouvée
+          {t('opportunity.notFound')}
         </Text>
-        <Button title="Retour" onPress={() => router.back()} />
+        <Button title={t('common.back')} onPress={() => router.back()} />
       </SafeAreaView>
     );
   }
@@ -941,7 +947,7 @@ export default function ApplyOpportunityScreen() {
         <IconButton
           onPress={handleBack}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
           style={styles.headerBackButton}
         />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>

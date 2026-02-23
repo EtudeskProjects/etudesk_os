@@ -1,0 +1,69 @@
+{
+  "otp": {
+    "subject": "{{code}} - Dein Anmeldecode",
+    "title": "Anmeldecode",
+    "yourCode": "Dein Anmeldecode",
+    "validFor": "Gueltig fuer {{minutes}} Min.",
+    "neverShare": "Teile diesen Code niemals mit anderen"
+  },
+  "welcome": {
+    "subject": "Willkommen bei Etudesk, {{name}}!",
+    "title": "Willkommen bei Etudesk!",
+    "greeting": "Hallo {{name}},",
+    "congratulations": "Dein Talentprofil ist jetzt auf Etudesk aktiv. Hier ist, was du tun kannst:",
+    "feature1": "Jobs, Praktika und Freelance-Auftraege entdecken",
+    "feature2": "Berufsgemeinschaften beitreten",
+    "feature3": "Coworking-Spaces und Inkubatoren finden",
+    "feature4": "Dein Netzwerk mit einem KI-Copiloten ausbauen",
+    "exploreButton": "Etudesk erkunden",
+    "copyright": "\u00a9 {{year}} Etudesk. Alle Rechte vorbehalten."
+  },
+  "orgInvite": {
+    "subject": "{{inviter}} laedt dich ein, {{organization}} auf Etudesk beizutreten",
+    "title": "Du bist eingeladen!",
+    "inviterInvites": "{{inviter}} laedt dich ein, der Organisation beizutreten",
+    "asRole": "als {{role}}",
+    "connectToAccept": "Melde dich bei Etudesk an, um die Einladung anzunehmen und zusammenzuarbeiten.",
+    "viewInvitation": "Einladung ansehen",
+    "expiresIn": "Diese Einladung laeuft in 7 Tagen ab.",
+    "copyright": "\u00a9 {{year}} Etudesk. Alle Rechte vorbehalten.",
+    "roles": {
+      "OWNER": "Eigentuemer",
+      "ADMIN": "Administrator",
+      "MANAGER": "Manager",
+      "MEMBER": "Mitglied",
+      "OBSERVER": "Beobachter"
+    }
+  },
+  "communityInvite": {
+    "subject": "{{inviter}} laedt dich ein, {{community}} beizutreten",
+    "title": "Du bist eingeladen!",
+    "greeting": "Hallo {{name}},",
+    "inviterInvites": "{{inviter}} laedt dich ein, der Community beizutreten",
+    "asRole": "als {{role}}",
+    "connectToAccept": "Melde dich bei Etudesk an, um die Einladung anzunehmen und der Community beizutreten.",
+    "viewInvitation": "Einladung ansehen",
+    "expiresIn": "Diese Einladung laeuft in 7 Tagen ab.",
+    "copyright": "\u00a9 {{year}} Etudesk. Alle Rechte vorbehalten.",
+    "roles": {
+      "ADMIN": "Administrator",
+      "MEMBER": "Mitglied"
+    }
+  },
+  "spaceInvite": {
+    "subject": "{{inviter}} laedt dich ein, {{space}} zu entdecken",
+    "title": "Einladung zu einem Space",
+    "greeting": "Hallo {{name}},",
+    "inviterInvites": "{{inviter}} laedt dich ein, den Space zu entdecken",
+    "viewInvitation": "Einladung ansehen",
+    "expiresIn": "Diese Einladung laeuft in 7 Tagen ab."
+  },
+  "opportunityInvite": {
+    "subject": "{{inviter}} laedt dich ein, dich zu bewerben — {{opportunity}}",
+    "title": "Einladung zur Bewerbung",
+    "greeting": "Hallo {{name}},",
+    "inviterInvites": "{{inviter}} von {{organization}} laedt dich ein, dich auf die Opportunity zu bewerben",
+    "viewOpportunity": "Opportunity ansehen",
+    "expiresIn": "Diese Einladung laeuft in 7 Tagen ab."
+  }
+}

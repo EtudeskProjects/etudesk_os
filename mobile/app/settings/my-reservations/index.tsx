@@ -20,17 +20,18 @@ import { SpaceCard } from '../../../src/components/cards';
 import { spaceBookingService } from '../../../src/services';
 import type { SpaceBookingDetails } from '../../../src/services/spaceBookingService';
 import type { Space } from '../../../src/services/spaceService';
+import { useI18n } from '../../../src/contexts/I18nContext';
 
 // Booking status types
 type BookingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
 
 // Status configuration
 const getStatusConfig = (colors: any): Record<BookingStatus, { color: string; icon: typeof Clock; bgColor: string; label: string }> => ({
-  PENDING: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]), label: 'En attente' },
-  CONFIRMED: { color: colors.info, icon: CheckCircle2, bgColor: withOpacity(colors.info, OPACITY[15]), label: 'Confirmée' },
-  COMPLETED: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]), label: 'Terminée' },
-  CANCELLED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]), label: 'Annulée' },
-  NO_SHOW: { color: colors.gray500, icon: AlertCircle, bgColor: colors.gray200, label: 'Absent' },
+  PENDING: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]), label: 'gestion.bookingStatus.pending' },
+  CONFIRMED: { color: colors.info, icon: CheckCircle2, bgColor: withOpacity(colors.info, OPACITY[15]), label: 'gestion.bookingStatus.confirmed' },
+  COMPLETED: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]), label: 'gestion.bookingStatus.completed' },
+  CANCELLED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]), label: 'gestion.bookingStatus.cancelled' },
+  NO_SHOW: { color: colors.gray500, icon: AlertCircle, bgColor: colors.gray200, label: 'gestion.bookingStatus.noShow' },
 });
 
 type FilterStatus = 'all' | BookingStatus;
@@ -38,6 +39,7 @@ type FilterStatus = 'all' | BookingStatus;
 export default function MyReservationsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [bookings, setBookings] = useState<SpaceBookingDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -114,7 +116,7 @@ export default function MyReservationsScreen() {
         space={(item.space || {}) as Space}
         onPress={() => router.push(`/settings/my-reservations/${item.id}`)}
         statusOverlay={{
-          label: statusConfig?.label || item.status,
+          label: statusConfig?.label ? t(statusConfig.label) : item.status,
           color: statusConfig?.color || colors.gray500,
           bgColor: statusConfig?.bgColor || colors.gray100,
           icon: <StatusIcon size={12} color={statusConfig?.color || colors.gray500} strokeWidth={ICON.strokeWidth} />,
@@ -124,12 +126,12 @@ export default function MyReservationsScreen() {
   };
 
   const filterChips = [
-    { key: 'all' as FilterStatus, label: 'Toutes' },
-    { key: 'PENDING' as FilterStatus, label: 'En attente' },
-    { key: 'CONFIRMED' as FilterStatus, label: 'Confirmées' },
-    { key: 'COMPLETED' as FilterStatus, label: 'Terminées' },
-    { key: 'CANCELLED' as FilterStatus, label: 'Annulées' },
-    { key: 'NO_SHOW' as FilterStatus, label: 'Absents' },
+    { key: 'all' as FilterStatus, label: t('gestion.filters.all') },
+    { key: 'PENDING' as FilterStatus, label: t('gestion.filters.pending') },
+    { key: 'CONFIRMED' as FilterStatus, label: t('gestion.filters.confirmed') },
+    { key: 'COMPLETED' as FilterStatus, label: t('gestion.filters.completed') },
+    { key: 'CANCELLED' as FilterStatus, label: t('gestion.filters.cancelled') },
+    { key: 'NO_SHOW' as FilterStatus, label: t('gestion.filters.noShow') },
   ];
 
   const headerContent = (
@@ -147,7 +149,7 @@ export default function MyReservationsScreen() {
 
   return (
     <PageLayout
-      title="Mes réservations"
+      title={t('myReservations.title')}
       onRefresh={handleRefresh}
       isRefreshing={isRefreshing}
       isLoading={isLoading}
@@ -163,14 +165,14 @@ export default function MyReservationsScreen() {
         ListEmptyComponent={
           <EmptyState
             icon={CalendarDays}
-            title={filter === 'all' ? 'Aucune réservation' : 'Aucun résultat'}
+            title={filter === 'all' ? t('gestion.bookings.noBookings') : t('gestion.bookings.noResults')}
             subtitle={
               filter === 'all'
-                ? "Vous n'avez pas encore de réservations. Explorez les espaces disponibles."
-                : 'Aucune réservation avec ce statut.'
+                ? t('myReservations.empty.subtitle')
+                : t('gestion.bookings.noResultsDesc')
             }
             {...(filter === 'all' ? {
-              actionLabel: 'Explorer',
+              actionLabel: t('tabs.explore'),
               onAction: () => router.push('/(tabs)/explore?category=spaces'),
             } : {})}
           />

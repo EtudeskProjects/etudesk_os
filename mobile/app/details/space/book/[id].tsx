@@ -42,6 +42,7 @@ import {
 	import { Button, CheckboxRow, Chip, IconButton, Input, StepIndicator, LoadingShimmer } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
 import { useAuth } from '../../../../src/contexts/AuthContext';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 import { useAlert } from '../../../../src/contexts/AlertContext';
 import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
 import {
@@ -55,11 +56,11 @@ import {
 import type { TalentObjectData } from '../../../../src/types/models';
 import { getFullImageUrl } from '../../../../src/utils/image';
 import {
-  SPACE_TYPE_LABELS,
+  getSpaceTypeLabel,
   formatPrice,
-  WEEKDAYS,
-  PRICING_TYPE_LABELS,
-  PRICING_TYPE_UNITS,
+  getWeekdays,
+  getSpacePricingTypeLabel,
+  getSpacePricingUnit,
 } from '../../../../src/constants/space';
 import { formatNumberNoTrailingZeros } from '../../../../src/utils/number';
 
@@ -172,6 +173,7 @@ export default function BookSpaceScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { t } = useI18n();
   const { error: showError, success: showSuccess } = useAlert();
   const mainScrollRef = useRef<ScrollView>(null);
 
@@ -649,7 +651,7 @@ export default function BookSpaceScreen() {
 
           {profile?.skills && profile.skills.length > 0 && (
             <View style={[styles.profileTagsSection, { borderTopColor: colors.borderColor }]}>
-              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>Compétences</Text>
+              <Text style={[styles.profileTagsLabel, { color: colors.gray500 }]}>{t('common.skills')}</Text>
               <View style={styles.profileTagsRow}>
                 {profile.skills.slice(0, 8).map((skill, i) => (
                   <View key={i} style={[styles.profileTag, { backgroundColor: withOpacity(colors.primary, OPACITY[12]) }]}>
@@ -835,7 +837,7 @@ export default function BookSpaceScreen() {
             <IconButton
               onPress={handlePrevMonth}
               icon={<ChevronLeft size={24} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-              accessibilityLabel="Mois précédent"
+              accessibilityLabel={t('common.previousMonth')}
               size="sm"
               variant="ghost"
               style={styles.calendarNavButton}
@@ -846,7 +848,7 @@ export default function BookSpaceScreen() {
             <IconButton
               onPress={handleNextMonth}
               icon={<ChevronRight size={24} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-              accessibilityLabel="Mois suivant"
+              accessibilityLabel={t('common.nextMonth')}
               size="sm"
               variant="ghost"
               style={styles.calendarNavButton}
@@ -976,7 +978,7 @@ export default function BookSpaceScreen() {
 	                    strokeWidth={ICON.strokeWidth}
 	                  />
 	                }
-	                accessibilityLabel="Réduire la durée"
+	                accessibilityLabel={t('common.decreaseDuration')}
 	                variant="filled"
 	                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
 	              />
@@ -995,7 +997,7 @@ export default function BookSpaceScreen() {
 	                    strokeWidth={ICON.strokeWidth}
 	                  />
 	                }
-	                accessibilityLabel="Augmenter la durée"
+	                accessibilityLabel={t('common.increaseDuration')}
 	                variant="filled"
 	                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
 	              />
@@ -1023,7 +1025,7 @@ export default function BookSpaceScreen() {
 	                    strokeWidth={ICON.strokeWidth}
 	                  />
 	                }
-	                accessibilityLabel="Réduire le nombre de participants"
+	                accessibilityLabel={t('common.decreaseParticipants')}
 	                variant="filled"
 	                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
 	              />
@@ -1043,7 +1045,7 @@ export default function BookSpaceScreen() {
 	                    strokeWidth={ICON.strokeWidth}
 	                  />
 	                }
-	                accessibilityLabel="Augmenter le nombre de participants"
+	                accessibilityLabel={t('common.increaseParticipants')}
 	                variant="filled"
 	                style={[styles.counterButton, { backgroundColor: colors.gray100 }]}
 	              />
@@ -1574,7 +1576,7 @@ export default function BookSpaceScreen() {
         <IconButton
           onPress={handleBack}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
           size="sm"
           variant="ghost"
           style={styles.headerBackButton}

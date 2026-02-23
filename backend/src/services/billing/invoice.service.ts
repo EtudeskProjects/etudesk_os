@@ -5,7 +5,10 @@ import { BillingScope } from './credit.service';
 interface CreateInvoiceParams {
   scope: BillingScope;
   ownerId: string;
-  amountFcfa: number;
+  amount: number;
+  currency: string;
+  /** @deprecated Use amount + currency instead */
+  amountFcfa?: number;
   credits: number;
   paymentId?: string | null;
   description?: string;
@@ -49,7 +52,8 @@ export async function createPaidInvoice(
     const {
       scope,
       ownerId,
-      amountFcfa,
+      amount,
+      currency,
       credits,
       description,
       metadata,
@@ -57,26 +61,32 @@ export async function createPaidInvoice(
     } = params;
 
     const invoiceNumber = await nextInvoiceNumber(client);
+    const currencyLabel = currency === 'XOF' ? 'FCFA' : currency;
 
     const ownerColumns = scope === 'TALENT'
       ? { talentId: ownerId, organizationId: null }
       : { talentId: null, organizationId: ownerId };
 
+    // Store in both amount/subtotal and legacy _fcfa columns for backward compat
+    const amountFcfa = currency === 'XOF' ? amount : null;
+
     const invoiceInsert = await client.query(
       `INSERT INTO billing_invoices (
         invoice_number, scope, talent_id, organization_id,
-        status, currency, subtotal_fcfa, tax_fcfa, total_fcfa,
+        status, currency, amount, subtotal_fcfa, tax_fcfa, total_fcfa,
         issued_at, paid_at, metadata
       ) VALUES (
         $1, $2, $3, $4,
-        'PAID', 'FCFA', $5, 0, $5,
-        NOW(), $6, $7
+        'PAID', $5, $6, $7, 0, $7,
+        NOW(), $8, $9
       ) RETURNING id`,
       [
         invoiceNumber,
         scope,
         ownerColumns.talentId,
         ownerColumns.organizationId,
+        currency,
+        amount,
         amountFcfa,
         paidAt ? new Date(paidAt) : new Date(),
         JSON.stringify(metadata ?? {}),
@@ -87,13 +97,14 @@ export async function createPaidInvoice(
 
     await client.query(
       `INSERT INTO billing_invoice_items (
-        invoice_id, description, quantity, unit_price_fcfa, line_total_fcfa, credits, metadata
+        invoice_id, description, quantity, unit_price, unit_price_fcfa, line_total, line_total_fcfa, credits, metadata
       ) VALUES (
-        $1, $2, 1, $3, $3, $4, $5
+        $1, $2, 1, $3, $4, $3, $4, $5, $6
       )`,
       [
         invoiceId,
-        description ?? `Pack crédits ${scope === 'TALENT' ? 'Talent' : 'Organisation'} ${amountFcfa} FCFA`,
+        description ?? `Pack crédits ${scope === 'TALENT' ? 'Talent' : 'Organisation'} ${amount} ${currencyLabel}`,
+        amount,
         amountFcfa,
         credits,
         JSON.stringify({ paymentId: params.paymentId ?? null }),

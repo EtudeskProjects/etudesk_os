@@ -106,21 +106,21 @@ export function validateFile(file: UploadOrgDocumentInput['file']): {
   if (!isValidMimeType(file.mimetype)) {
     return {
       valid: false,
-      error: `Type de fichier non autorisé: ${file.mimetype}. Formats acceptés: PDF, JPEG, PNG, WebP, HEIC`,
+      error: `Unsupported file type: ${file.mimetype}. Allowed formats: PDF, JPEG, PNG, WebP, HEIC`,
     };
   }
 
   if (!isValidFileSize(file.size)) {
     return {
       valid: false,
-      error: `Fichier trop volumineux: ${Math.round(file.size / 1024 / 1024)}MB. Maximum: ${ORG_DOCUMENT_LIMITS.MAX_FILE_SIZE_MB}MB`,
+      error: `File too large: ${Math.round(file.size / 1024 / 1024)}MB. Maximum: ${ORG_DOCUMENT_LIMITS.MAX_FILE_SIZE_MB}MB`,
     };
   }
 
   if (!isValidExtension(file.originalname)) {
     return {
       valid: false,
-      error: `Extension de fichier non autorisée. Formats acceptés: PDF, JPEG, PNG, WebP, HEIC`,
+      error: `Unsupported file extension. Allowed formats: PDF, JPEG, PNG, WebP, HEIC`,
     };
   }
 
@@ -233,7 +233,7 @@ export async function processOrgDocumentExtraction(
     const isPdf = mimeType === 'application/pdf';
 
     if (!isImage && !isPdf) {
-      throw new Error(`Type de fichier non supporté: ${mimeType}`);
+      throw new Error(`Unsupported file type: ${mimeType}`);
     }
 
     const prompt = buildOrgExtractionPrompt(mimeType);
@@ -281,7 +281,7 @@ export async function processOrgDocumentExtraction(
 
     const content = completion.choices[0]?.message?.content?.trim();
     if (!content) {
-      throw new Error("Pas de réponse de l'API");
+      throw new Error("No response from the API");
     }
 
     const cleanedContent = content
@@ -336,8 +336,8 @@ export async function processOrgDocumentExtraction(
       await create({
         talentId: uploadedBy,
         type: 'SYSTEM',
-        title: 'Document organisation analysé',
-        body: `"${extractedData.title || docRow.rows[0]?.original_filename}" a été analysé avec succès`,
+        title: 'Organization document analyzed',
+        body: `"${extractedData.title || docRow.rows[0]?.original_filename}" was analyzed successfully`,
         referenceType: 'document',
         referenceId: documentId,
       });
@@ -368,8 +368,8 @@ export async function processOrgDocumentExtraction(
         await create({
           talentId: errorTalentId,
           type: 'SYSTEM',
-          title: "Échec d'analyse",
-          body: "L'analyse du document organisation a échoué. Vous pouvez réessayer.",
+          title: "Analysis failed",
+          body: "Organization document analysis failed. You can try again.",
           referenceType: 'document',
           referenceId: documentId,
         });
@@ -548,7 +548,7 @@ export async function retryOrgExtraction(documentId: string, organizationId: str
   if (!document) return false;
 
   if (document.status !== DOCUMENT_STATUS.FAILED) {
-    throw new Error('Seuls les documents en échec peuvent être réessayés');
+    throw new Error('Only failed documents can be retried');
   }
 
   await pool.query(

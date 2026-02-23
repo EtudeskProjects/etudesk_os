@@ -1,0 +1,137 @@
+{
+  "validationFailed": "Validazione fallita",
+  "internalError": "Errore di validazione interno",
+  "required": "{{field}} è richiesto",
+  "minLength": "{{field}} deve contenere almeno {{min}} caratteri",
+  "maxLength": "{{field}} non deve superare {{max}} caratteri",
+  "invalidFormat": "Il formato di {{field}} non è valido",
+  "invalidUrl": "URL non valido",
+  "invalidDate": "Data non valida",
+  "invalidEnum": "Valore non valido per {{field}}",
+  "numberMin": "{{field}} deve essere almeno {{min}}",
+  "numberMax": "{{field}} non deve superare {{max}}",
+  "arrayMinItems": "{{field}} deve contenere almeno {{min}} elementi",
+  "arrayMaxItems": "{{field}} non deve contenere più di {{max}} elementi",
+  "common": {
+    "invalidId": "ID non valido",
+    "invalidOrgId": "ID organizzazione non valido",
+    "countryCodeFormat": "Il codice paese deve essere nel formato ISO 3166-1 alpha-2",
+    "currencyFormat": "La valuta deve essere nel formato ISO 4217"
+  },
+  "auth": {
+    "invalidEmail": "Email non valida",
+    "emailTooLong": "Email troppo lunga",
+    "codeLength": "Il codice deve contenere 6 cifre",
+    "codeDigits": "Il codice deve essere composto da 6 cifre",
+    "refreshTokenRequired": "Token di aggiornamento richiesto",
+    "invalidPhone": "Numero di telefono non valido",
+    "invalidWhatsApp": "Numero WhatsApp non valido"
+  },
+  "opportunity": {
+    "titleMinLength": "Il titolo deve contenere almeno 3 caratteri",
+    "titleMaxLength": "Il titolo non deve superare 200 caratteri",
+    "descriptionMinLength": "La descrizione deve contenere almeno 10 caratteri",
+    "descriptionMaxLength": "La descrizione non deve superare 10000 caratteri",
+    "summaryMaxLength": "Il riepilogo non deve superare 5000 caratteri",
+    "requirementsMaxLength": "I requisiti non devono superare 10000 caratteri",
+    "niceToHaveMaxLength": "I plus non devono superare 5000 caratteri",
+    "questionMaxLength": "La domanda non deve superare 500 caratteri",
+    "maxQuestions": "Massimo 10 domande personalizzate",
+    "deadlineRequired": "La data di scadenza è obbligatoria",
+    "compensationRange": "Lo stipendio minimo non può essere superiore allo stipendio massimo",
+    "invalidType": "Il tipo deve essere JOB, INTERNSHIP, FREELANCE o VOLUNTEERING",
+    "invalidStatus": "Lo stato deve essere DRAFT, OPEN, CLOSED o ARCHIVED",
+    "invalidLocationType": "Il tipo di sede deve essere REMOTE, ONSITE o HYBRID",
+    "invalidExperienceLevel": "Il livello di esperienza deve essere JUNIOR, INTERMEDIATE, SENIOR o LEAD",
+    "invalidContractType": "Il tipo di contratto deve essere FULL_TIME, PART_TIME, CONTRACT o TEMPORARY",
+    "salaryMinInvalid": "Lo stipendio minimo deve essere un numero positivo",
+    "salaryMaxInvalid": "Lo stipendio massimo deve essere superiore allo stipendio minimo",
+    "maxSkills": "Massimo 20 competenze consentite",
+    "invalidApplicationDeadline": "La data di scadenza della candidatura deve essere una data futura valida"
+  },
+  "application": {
+    "questionIdRequired": "ID della domanda richiesto",
+    "answerMaxLength": "La risposta non deve superare 2000 caratteri",
+    "invalidOpportunityId": "ID opportunità non valido",
+    "coverLetterMaxLength": "La lettera di presentazione non deve superare 5000 caratteri",
+    "invalidStatus": "Stato non valido",
+    "notesMaxLength": "Le note non devono superare 10000 caratteri",
+    "ratingMustBeInt": "Il voto deve essere un numero intero",
+    "ratingMin": "Il voto minimo è 1",
+    "ratingMax": "Il voto massimo è 5",
+    "invalidApplicationId": "ID candidatura non valido",
+    "atLeastOne": "Almeno una candidatura è richiesta",
+    "maxBulk": "Massimo 100 candidature alla volta",
+    "invalidRating": "Il voto deve essere tra 1 e 5"
+  },
+  "onboarding": {
+    "firstNameRequired": "Nome richiesto",
+    "firstNameTooLong": "Nome troppo lungo",
+    "lastNameRequired": "Cognome richiesto",
+    "lastNameTooLong": "Cognome troppo lungo",
+    "bioTooLong": "Bio troppo lunga",
+    "phoneTooLong": "Numero di telefono troppo lungo",
+    "cityTooLong": "Città troppo lunga",
+    "regionTooLong": "Regione troppo lunga",
+    "maxProfileTags": "Massimo 3 tag del profilo",
+    "maxGoals": "Massimo 3 obiettivi",
+    "maxSectors": "Massimo 5 settori"
+  },
+  "community": {
+    "nameMinLength": "Il nome deve contenere almeno 3 caratteri",
+    "nameMaxLength": "Il nome non deve superare 100 caratteri",
+    "descriptionMaxLength": "La descrizione non deve superare 5000 caratteri",
+    "joinReasonMaxLength": "La motivazione non deve superare 1000 caratteri",
+    "invalidVisibility": "La visibilità deve essere PUBLIC o PRIVATE",
+    "invalidMemberRole": "Il ruolo deve essere ADMIN o MEMBER",
+    "priceInvalid": "Il prezzo mensile deve essere un numero positivo",
+    "trialDaysInvalid": "I giorni di prova devono essere tra 0 e 90"
+  },
+  "organization": {
+    "nameMinLength": "Il nome deve contenere almeno 2 caratteri",
+    "nameMaxLength": "Il nome non deve superare 200 caratteri",
+    "descriptionMaxLength": "La descrizione non deve superare 5000 caratteri"
+  },
+  "space": {
+    "invalidSpaceId": "ID spazio non valido",
+    "invalidTimeFormat": "Formato ora non valido (HH:MM)",
+    "nameMinLength": "Il nome dello spazio deve contenere almeno 2 caratteri",
+    "nameMaxLength": "Il nome dello spazio non deve superare 100 caratteri",
+    "descriptionMaxLength": "La descrizione non deve superare 5000 caratteri",
+    "invalidVisibility": "La visibilità deve essere PUBLIC o PRIVATE"
+  },
+  "kyc": {
+    "invalidDocumentType": "Tipo di documento non valido",
+    "frontImageRequired": "Immagine fronte richiesta"
+  },
+  "invitation": {
+    "emailOrTalentRequired": "Email o ID del talent richiesto"
+  },
+  "activity": {
+    "titleMinLength": "Il titolo deve contenere almeno 2 caratteri",
+    "titleMaxLength": "Il titolo non deve superare 200 caratteri",
+    "contentRequired": "Il contenuto è richiesto per le pubblicazioni",
+    "invalidType": "Il tipo deve essere POST, EVENT o POLL",
+    "eventStartRequired": "La data di inizio dell'evento è richiesta",
+    "eventEndAfterStart": "La data di fine deve essere successiva alla data di inizio",
+    "pollMinOptions": "Un sondaggio deve avere almeno 2 opzioni",
+    "pollMaxOptions": "Un sondaggio non deve superare 10 opzioni",
+    "pollOptionMinLength": "Ogni opzione deve contenere almeno 1 carattere",
+    "pollExpiresRequired": "La data di scadenza del sondaggio è richiesta"
+  },
+  "talent": {
+    "firstNameRequired": "Il nome è richiesto",
+    "lastNameRequired": "Il cognome è richiesto",
+    "bioMaxLength": "La bio non deve superare 500 caratteri",
+    "invalidExperienceLevel": "Livello di esperienza non valido"
+  },
+  "document": {
+    "titleMinLength": "Il titolo deve contenere almeno 2 caratteri",
+    "titleMaxLength": "Il titolo non deve superare 200 caratteri",
+    "invalidType": "Tipo di documento non valido"
+  },
+  "email": {
+    "subjectRequired": "L'oggetto dell'email è richiesto",
+    "bodyRequired": "Il contenuto dell'email è richiesto"
+  }
+}

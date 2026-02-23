@@ -192,9 +192,9 @@ export default function AccountScreen() {
     }] : []),
     {
       id: 'invitations',
-      label: 'Mes invitations',
+      label: t('screens.settings.myInvitations'),
       icon: Mail,
-      description: 'Gérer vos invitations reçues',
+      description: t('screens.settings.myInvitationsDesc'),
       onPress: () => router.push('/settings/invitations'),
     },
     {
@@ -202,7 +202,7 @@ export default function AccountScreen() {
       label: t('settings.menu.kyc'),
       icon: Shield,
       description: t('settings.menu.kycDesc'),
-      badge: isKYCVerified ? (language === 'fr' ? 'Vérifié' : 'Verified') : null,
+      badge: isKYCVerified ? t('screens.settings.kycVerified') : null,
       badgeColor: colors.success,
       onPress: () => router.push('/settings/kyc'),
     },
@@ -215,9 +215,9 @@ export default function AccountScreen() {
     },
     {
       id: 'credits-billing',
-      label: 'Crédits & facturation',
+      label: t('screens.settings.creditsBilling'),
       icon: Wallet,
-      description: 'Recharger, suivre le solde et vérifier les paiements',
+      description: t('screens.settings.creditsBillingDesc'),
       onPress: () => router.push('/settings/credits' as any),
     },
     {
@@ -236,17 +236,17 @@ export default function AccountScreen() {
     },
     {
       id: 'privacy',
-      label: language === 'fr' ? 'Politique de confidentialité' : 'Privacy Policy',
+      label: t('screens.settings.privacyPolicy'),
       icon: Scale,
-      description: language === 'fr' ? 'Consulter notre politique de confidentialité' : 'View our privacy policy',
+      description: t('screens.settings.privacyPolicyDesc'),
       onPress: () => Linking.openURL('https://etudesk.com/privacy'),
       external: true,
     },
     {
       id: 'legal-notice',
-      label: language === 'fr' ? 'Mentions légales' : 'Legal Notice',
+      label: t('screens.settings.legalNotice'),
       icon: Scale,
-      description: language === 'fr' ? 'Consulter nos mentions légales' : 'View our legal notice',
+      description: t('screens.settings.legalNoticeDesc'),
       onPress: () => Linking.openURL('https://etudesk.com/mentions-legales'),
       external: true,
     },
@@ -269,7 +269,7 @@ export default function AccountScreen() {
           style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
           onPress={handleProfilePress}
           selected={false}
-          accessibilityLabel={currentSpace === 'talent' ? 'Ouvrir mon profil' : 'Ouvrir le profil organisation'}
+          accessibilityLabel={currentSpace === 'talent' ? t('screens.settings.openProfile') : t('screens.settings.openOrgProfile')}
         >
           {currentSpace === 'talent' ? (
             <>
@@ -296,7 +296,7 @@ export default function AccountScreen() {
               )}
               <View style={styles.profileInfo}>
                 <Text style={[styles.profileName, { color: colors.textPrimary }]}>{selectedOrg?.name}</Text>
-                <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{selectedOrg?.type} • {selectedOrg?.role === 'ADMIN' ? 'Admin' : 'Membre'}</Text>
+                <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{selectedOrg?.type} • {selectedOrg?.role === 'ADMIN' ? t('screens.settings.admin') : t('screens.settings.member')}</Text>
               </View>
             </>
           )}
@@ -309,7 +309,7 @@ export default function AccountScreen() {
 
         {/* Space Switcher - Compact */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Espace actif</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('screens.settings.activeSpace')}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -324,7 +324,7 @@ export default function AccountScreen() {
               ]}
               onPress={() => handleSelectSpace('talent')}
               selected={false}
-              accessibilityLabel="Basculer sur l’espace talent"
+              accessibilityLabel={t('screens.settings.switchToTalent')}
             >
               {getFullImageUrl(user?.avatarUrl) ? (
                 <RemoteImage uri={user?.avatarUrl} style={styles.spaceChipImage} />
@@ -340,7 +340,7 @@ export default function AccountScreen() {
                 styles.spaceChipText,
                 { color: currentSpace === 'talent' ? colors.primary : colors.textPrimary }
               ]}>
-                Talent
+                {t('screens.settings.talent')}
               </Text>
             </SelectCard>
 
@@ -357,7 +357,7 @@ export default function AccountScreen() {
                   ]}
                   onPress={() => handleSelectSpace('organization', org.id)}
                   selected={false}
-                  accessibilityLabel={`Basculer sur l’espace organisation ${org.name}`}
+                  accessibilityLabel={t('screens.settings.switchToOrg', { name: org.name })}
                 >
                   {org.logoUrl ? (
                     <RemoteImage uri={org.logoUrl} style={styles.spaceChipImage} />
@@ -390,15 +390,15 @@ export default function AccountScreen() {
                 const isAdmin = user?.email && (ADMIN_EMAILS.includes(user.email.toLowerCase()) || user.email.endsWith('@etudesk.com'));
 
                 if (!isKYCVerified && !isAdmin) {
-                  const alertTitle = kycStatus === 'PENDING' ? 'Vérification en cours' : 'Vérification requise';
+                  const alertTitle = kycStatus === 'PENDING' ? t('screens.settings.kycPendingTitle') : t('screens.settings.kycRequiredTitle');
                   const alertMessage = kycStatus === 'PENDING'
-                    ? 'Votre vérificaton d\'identité est en cours de traitement. Vous pourrez créer une organisation dès qu\'elle sera validée.'
-                    : 'Vous devez vérifier votre identité (KYC) avant de créer une organisation.';
+                    ? t('screens.settings.kycPendingMessage')
+                    : t('screens.settings.kycRequiredMessage');
 
                   void alerts.showAlert({ title: alertTitle, message: alertMessage, buttons: [
-                      { text: 'Annuler', style: 'cancel' },
+                      { text: t('common.cancel'), style: 'cancel' },
                       {
-                        text: kycStatus === 'PENDING' ? 'Voir le statut' : 'Vérifier mon identité',
+                        text: kycStatus === 'PENDING' ? t('screens.settings.kycViewStatus') : t('screens.settings.kycVerifyIdentity'),
                         onPress: () => router.push('/settings/kyc')
                       },
                     ] });
@@ -407,13 +407,13 @@ export default function AccountScreen() {
                 router.push('/settings/create-organization');
               }}
               selected={false}
-              accessibilityLabel="Créer une organisation"
+              accessibilityLabel={t('screens.settings.createOrganization')}
             >
               <View style={[styles.spaceChipIcon, { backgroundColor: colors.gray200 }]}>
                 <Plus size={14} color={colors.gray600} strokeWidth={2} />
               </View>
               <Text style={[styles.spaceChipText, { color: colors.gray600 }]}>
-                Créer une organisation
+                {t('screens.settings.createOrganization')}
               </Text>
             </SelectCard>
           </ScrollView>
@@ -421,7 +421,7 @@ export default function AccountScreen() {
 
         {/* Menu Items */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Paramètres</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('screens.settings.settingsSection')}</Text>
 
           <View style={[styles.menuList, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
             {MENU_ITEMS.map((item, index) => {
@@ -476,10 +476,10 @@ export default function AccountScreen() {
 
         {/* Danger Zone */}
         <View style={[styles.section, styles.accountSection]}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Compte</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('screens.settings.accountSection')}</Text>
 
           <Button
-            title="Se déconnecter"
+            title={t('screens.settings.signOut')}
             onPress={handleLogout}
             variant="outline"
             fullWidth
@@ -489,7 +489,7 @@ export default function AccountScreen() {
           />
 
           <Button
-            title="Supprimer mon compte"
+            title={t('screens.settings.deleteMyAccount')}
             onPress={handleDeleteAccount}
             variant="outline"
             fullWidth
@@ -500,7 +500,7 @@ export default function AccountScreen() {
         </View>
 
         {/* Version */}
-        <Text style={[styles.version, { color: colors.textDisabled }]}>Etudesk v1.0.0</Text>
+        <Text style={[styles.version, { color: colors.textDisabled }]}>{t('screens.settings.version')}</Text>
       </ScrollView>
       <FooterNav activeTab="settings" />
     </SafeAreaView>

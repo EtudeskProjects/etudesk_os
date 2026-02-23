@@ -1,0 +1,10 @@
+{
+  "registerError": "Impossibile registrare il token push",
+  "deactivateError": "Impossibile disattivare il token push",
+  "fetchError": "Impossibile recuperare le notifiche",
+  "markReadError": "Impossibile contrassegnare la notifica come letta",
+  "markAllReadError": "Impossibile contrassegnare tutte le notifiche",
+  "deleteError": "Impossibile eliminare la notifica",
+  "fetchPreferencesError": "Impossibile recuperare le preferenze",
+  "updatePreferencesError": "Impossibile aggiornare le preferenze"
+}

@@ -1,0 +1,39 @@
+{
+  "profileCreated": "个人资料创建成功",
+  "profileCreationFailed": "创建个人资料时出错",
+  "talentProfileExists": "该用户已有人才档案",
+  "phoneAlreadyUsed": "该手机号已关联到其他人才档案",
+  "countryCodeInvalid": "国家代码必须为 ISO 3166-1 alpha-2 格式（如：CI、FR、SN）",
+  "phoneMinLength": "手机号为必填项（至少8个字符）",
+  "goalsMaximum": "最多允许3个目标",
+  "invalidGoal": "目标无效：{{goal}}",
+  "invalidTag": "标签无效：{{tag}}",
+  "profileTagsMustBeArray": "profileTags 必须是数组",
+  "goalsMustBeArray": "goals 必须是数组",
+  "profileTags": {
+    "STUDENT": "大学生",
+    "PUPIL": "中学生",
+    "JOB_SEEKER": "求职中",
+    "SALARIED": "职员",
+    "ENTREPRENEUR": "创业者",
+    "CIVIL_SERVANT": "公务员",
+    "MANAGER": "管理者",
+    "CONSULTANT": "顾问",
+    "INVESTOR": "投资人",
+    "CONTENT_CREATOR": "内容创作者",
+    "COACH": "教练 / 培训师",
+    "RETIRED": "退休人员"
+  },
+  "goals": {
+    "LEARN_NEW_SKILLS": "学习新技能",
+    "PREPARE_EXAMS": "备考",
+    "FIND_JOB": "找工作",
+    "ADVANCE_CAREER": "推进我的职业发展",
+    "RESEARCH_SUPPORT": "研究支持",
+    "IMPROVE_PRODUCTIVITY": "提高我的效率",
+    "COLLABORATIVE_LEARNING": "协作学习",
+    "TEACH_OR_MENTOR": "教学或指导",
+    "BUILD_NETWORK_OR_VISIBILITY": "拓展人脉 / 提升知名度",
+    "CONTRIBUTE_OR_GIVE_BACK": "贡献 / 回馈"
+  }
+}

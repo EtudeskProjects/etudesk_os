@@ -1,0 +1,23 @@
+{
+  "authRequired": "المصادقة مطلوبة",
+  "notOrgMember": "لست عضواً في هذه المنظمة",
+  "favoritesAddError": "خطأ أثناء الإضافة إلى المفضلات",
+  "favoritesRemoved": "تم إزالة الموهبة من المفضلات",
+  "favoritesRemoveError": "خطأ أثناء الإزالة من المفضلات",
+  "tagsError": "خطأ أثناء جلب الوسوم",
+  "tagNameRequired": "اسم الوسم مطلوب",
+  "tagExists": "يوجد وسم بهذا الاسم بالفعل",
+  "tagCreateError": "خطأ أثناء إنشاء الوسم",
+  "tagNotFound": "الوسم غير موجود",
+  "tagUpdateError": "خطأ أثناء تحديث الوسم",
+  "tagDeleted": "تم حذف الوسم",
+  "tagDeleteError": "خطأ أثناء حذف الوسم",
+  "tagAssigned": "تم تعيين الوسم",
+  "tagAssignError": "خطأ أثناء تعيين الوسم",
+  "tagRemoved": "تم إزالة الوسم",
+  "tagRemoveError": "خطأ أثناء إزالة الوسم",
+  "favoritesAdded": "تمت إضافة الموهبة إلى المفضلات",
+  "favoritesListError": "خطأ أثناء جلب المفضلات",
+  "talentsListError": "خطأ أثناء جلب المواهب",
+  "talentsCountError": "خطأ أثناء عدّ المواهب"
+}

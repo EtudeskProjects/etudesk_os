@@ -26,22 +26,23 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity, ThemeColors } 
 import { useTheme } from '../../src/hooks/useTheme';
 import { useNotifications, NotificationData } from '../../src/hooks/useNotifications';
 import { IconButton, LoadingShimmer } from '../../src/components/ui';
+import { useI18n } from '../../src/contexts/I18nContext';
 
 
-const formatRelativeTime = (dateString: string): string => {
+const formatRelativeTime = (dateString: string, t: (key: string, params?: Record<string, any>) => string): string => {
   try {
     const now = Date.now();
     const diff = now - new Date(dateString).getTime();
     const min = Math.floor(diff / 60000);
     const h = Math.floor(min / 60);
     const d = Math.floor(h / 24);
-    if (min < 1) return "à l'instant";
-    if (min < 60) return `il y a ${min} min`;
-    if (h < 24) return `il y a ${h}h`;
-    if (d === 1) return 'hier';
-    if (d < 7) return `il y a ${d}j`;
-    if (d < 30) return `il y a ${Math.floor(d / 7)} sem.`;
-    if (d < 365) return `il y a ${Math.floor(d / 30)} mois`;
+    if (min < 1) return t('common.time.justNow');
+    if (min < 60) return t('common.time.minutes', { count: min });
+    if (h < 24) return t('common.time.hours', { count: h });
+    if (d === 1) return t('common.time.yesterday');
+    if (d < 7) return t('common.time.days', { count: d });
+    if (d < 30) return t('common.time.weeks', { count: Math.floor(d / 7) });
+    if (d < 365) return t('common.time.months', { count: Math.floor(d / 30) });
     return new Date(dateString).toLocaleDateString('fr-FR');
   } catch {
     return '';
@@ -86,6 +87,7 @@ const getNotificationColor = (type: string, colors: ThemeColors): string => {
 export default function NotificationsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const {
     notifications,
     unreadCount,
@@ -153,9 +155,9 @@ export default function NotificationsScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Notifications</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('notifications.title')}</Text>
         <View style={styles.backButton} />
       </View>
 
@@ -213,14 +215,14 @@ export default function NotificationsScreen() {
                   <View style={styles.notificationMeta}>
                     <Clock size={12} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.notificationTime, { color: colors.gray400 }]}>
-                      {formatRelativeTime(notification.created_at)}
+                      {formatRelativeTime(notification.created_at, t)}
                     </Text>
                   </View>
                 </View>
                 <IconButton
                   onPress={() => deleteNotification(notification.id)}
                   icon={<Trash2 size={16} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
-                  accessibilityLabel="Supprimer la notification"
+                  accessibilityLabel={t('notifications.deleteNotification')}
                   style={styles.deleteButton}
                 />
               </Pressable>
@@ -235,10 +237,10 @@ export default function NotificationsScreen() {
                 <Bell size={ICON.size.xl} color={colors.gray300} strokeWidth={ICON.strokeWidth} />
               </View>
               <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-                Aucune notification
+                {t('notifications.empty')}
               </Text>
               <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-                Tu recevras des notifications sur les opportunités, candidatures et messages
+                {t('notifications.emptySubtitle')}
               </Text>
             </View>
           ) : null

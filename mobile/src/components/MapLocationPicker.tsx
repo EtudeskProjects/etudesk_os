@@ -358,7 +358,7 @@ export function MapLocationPicker({
           <IconButton
             onPress={onClose}
             icon={<X size={18} color={colors.textPrimary} strokeWidth={1.5} />}
-            accessibilityLabel="Fermer"
+            accessibilityLabel={t('common.close')}
             variant="outline"
             style={[styles.closeButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
           />
@@ -372,7 +372,7 @@ export function MapLocationPicker({
               ? <ShimmerPlaceholder width={20} height={14} variant="bar" />
               : <Navigation size={18} color={colors.primary} strokeWidth={1.5} />
           }
-          accessibilityLabel="Ma position"
+          accessibilityLabel={t('map.myLocation')}
           variant="outline"
           style={[styles.myLocationButton, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
         />

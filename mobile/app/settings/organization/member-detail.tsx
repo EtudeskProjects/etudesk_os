@@ -22,16 +22,15 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../.
 import { useTheme } from '../../../src/hooks/useTheme';
 import { useOrganizationMembers } from '../../../src/contexts/OrganizationMemberContext';
 import {
-  OrganizationMember,
   OrganizationRole,
   OrganizationPermission,
   ORGANIZATION_ROLES,
-  ORGANIZATION_ROLE_LABELS,
+  getOrganizationRoleLabel,
   PERMISSION_GROUPS,
-  PERMISSION_LABELS,
   DEFAULT_ROLE_PERMISSIONS,
 } from '../../../src/types/models';
 import { useAlert } from '../../../src/contexts/AlertContext';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { AccordionRow, Button, CheckboxRow, IconButton, RadioRow } from '../../../src/components/ui';
 
 
@@ -65,9 +64,9 @@ export default function MemberDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const {
     members,
-    currentUserMember,
     canManageMembers: canEditRoles,
     canManageMembers: canRemoveMembers,
     updateMemberRole: _updateMemberRole,
@@ -108,13 +107,13 @@ export default function MemberDetailScreen() {
           <IconButton
             onPress={() => router.back()}
             icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel="Retour"
+            accessibilityLabel={t('common.back')}
           />
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Membre</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('organization.members.memberDetail.memberTitle')}</Text>
           <View style={styles.backButton} />
         </View>
         <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Membre non trouvé</Text>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('organization.members.memberDetail.notFound')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -146,18 +145,18 @@ export default function MemberDetailScreen() {
     try {
       await updateMemberRole(member.id, selectedRole, permissions);
       router.back();
-    } catch (error) {
-      void alerts.alert('Erreur', 'Impossible de mettre à jour les permissions');
+    } catch {
+      void alerts.alert(t('common.error'), t('organization.members.memberDetail.updatePermissionsError'));
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleRemove = () => {
-    void alerts.showAlert({ title: 'Retirer le membre', message: `Voulez-vous vraiment retirer ${member.display_name} de l'organisation ?`, buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('common.deleteTitle'), message: t('organization.members.memberDetail.removeMessage', { name: member.display_name }), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Retirer',
+          text: t('common.deleteConfirm'),
           style: 'destructive',
           onPress: async () => {
             await removeMember(member.id);
@@ -168,7 +167,7 @@ export default function MemberDetailScreen() {
   };
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return t('organization.members.memberDetail.na');
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR', {
       day: 'numeric',
@@ -189,9 +188,9 @@ export default function MemberDetailScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Détails</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('organization.members.memberDetail.title')}</Text>
         <View style={styles.backButton} />
       </View>
 
@@ -218,7 +217,7 @@ export default function MemberDetailScreen() {
           <View style={[styles.roleBadge, { backgroundColor: withOpacity(roleColor, OPACITY[15]) }]}>
             <RoleIcon size={14} color={roleColor} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.roleText, { color: roleColor }]}>
-              {ORGANIZATION_ROLE_LABELS[member.role]}
+              {getOrganizationRoleLabel(member.role)}
             </Text>
           </View>
 
@@ -231,7 +230,7 @@ export default function MemberDetailScreen() {
             <View style={styles.contactItem}>
               <Calendar size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.contactText, { color: colors.textSecondary }]}>
-                Membre depuis {formatDate(member.joined_at)}
+                {t('organization.members.memberDetail.memberSince', { date: formatDate(member.joined_at) })}
               </Text>
             </View>
           </View>
@@ -240,7 +239,7 @@ export default function MemberDetailScreen() {
         {/* Role Selection */}
         {canEdit && (
           <>
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Rôle</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('organization.members.role')}</Text>
             <View style={[styles.roleList, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
               {availableRoles.map((role, index) => {
                 const isLast = index === availableRoles.length - 1;
@@ -250,15 +249,15 @@ export default function MemberDetailScreen() {
 
                 const desc =
                   role === ORGANIZATION_ROLES.ADMIN
-                    ? 'Accès complet sauf suppression'
+                    ? t('organization.members.memberDetail.roleDescriptions.admin')
                     : role === ORGANIZATION_ROLES.MANAGER
-                      ? 'Gestion des contenus'
-                      : 'Accès en lecture seule';
+                      ? t('organization.members.memberDetail.roleDescriptions.manager')
+                      : t('organization.members.memberDetail.roleDescriptions.member');
 
                 return (
                   <RadioRow
                     key={role}
-                    title={ORGANIZATION_ROLE_LABELS[role]}
+                    title={getOrganizationRoleLabel(role)}
                     description={desc}
                     selected={isSelected}
                     onPress={() => handleRoleChange(role)}
@@ -278,7 +277,7 @@ export default function MemberDetailScreen() {
             </View>
 
             {/* Permissions */}
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Permissions</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('organization.members.memberDetail.permissionsTitle')}</Text>
             <View style={[styles.permissionsList, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
               {Object.entries(PERMISSION_GROUPS).map(([key, group], groupIndex) => {
                 const isExpanded = expandedGroups.includes(key);
@@ -290,7 +289,7 @@ export default function MemberDetailScreen() {
                   <View key={key}>
                     <AccordionRow
                       title={group.label}
-                      subtitle={`${activeCount}/${groupPermissions.length} activées`}
+                      subtitle={t('organization.members.memberDetail.activePermissions', { activeCount, total: groupPermissions.length })}
                       expanded={isExpanded}
                       onPress={() => toggleGroup(key)}
                       style={[
@@ -309,7 +308,7 @@ export default function MemberDetailScreen() {
                       return (
                         <CheckboxRow
                           key={permission}
-                          label={PERMISSION_LABELS[permission]}
+                          label={permission}
                           checked={isEnabled}
                           onPress={() => togglePermission(permission)}
                           checkboxPosition="right"
@@ -337,7 +336,7 @@ export default function MemberDetailScreen() {
         {/* Remove Member Button */}
         {canRemoveMembers && !isOwner && (
           <Button
-            title="Retirer de l'organisation"
+            title={t('organization.members.memberDetail.removeButton')}
             onPress={handleRemove}
             variant="outline"
             fullWidth
@@ -352,7 +351,7 @@ export default function MemberDetailScreen() {
       {canEdit && hasChanges && (
         <View style={[styles.footer, { backgroundColor: colors.background }]}>
           <Button
-            title={isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+            title={isSaving ? t('common.savingParams') : t('organization.members.memberDetail.saveChanges')}
             onPress={handleSave}
             disabled={isSaving}
             fullWidth

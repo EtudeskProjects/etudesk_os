@@ -27,6 +27,7 @@ import { useTheme } from '../../../src/hooks/useTheme';
 import { Button, FooterNav, IconButton, LoadingShimmer, SelectCard } from '../../../src/components/ui';
 import { ChatMessage, ChatInput } from '../../../src/components/chat';
 import { useAuth } from '../../../src/contexts/AuthContext';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { communityService, communityMembershipMessageService } from '../../../src/services';
 import { formatRelativeTime } from '../../../src/utils/date';
 import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
@@ -63,6 +64,7 @@ export default function MyCommunityDetailsScreen() {
   const { id, tab } = useLocalSearchParams<{ id: string; tab?: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { user } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -265,7 +267,7 @@ export default function MyCommunityDetailsScreen() {
 
         {/* Community Info */}
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Communauté</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('common.community')}</Text>
           <Text style={[styles.communityTitle, { color: colors.textPrimary }]}>
             {community?.name}
           </Text>
@@ -328,7 +330,7 @@ export default function MyCommunityDetailsScreen() {
         {/* Your Answers */}
         {membership.answers && Array.isArray(membership.answers) && membership.answers.length > 0 && (
           <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Vos réponses</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('common.yourAnswers')}</Text>
             {membership.answers.map((answer: any, index: number) => (
               <View key={index} style={styles.answerItem}>
                 <Text style={[styles.answerQuestion, { color: colors.gray500 }]}>
@@ -469,7 +471,7 @@ export default function MyCommunityDetailsScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           {membership.community?.name || 'Communauté'}

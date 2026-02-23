@@ -1,0 +1,14 @@
+{
+  "tooManyRequests": "Troppe richieste. Riprova tra qualche minuto.",
+  "tooManyLoginAttempts": "Troppi tentativi di accesso. Riprova tra 15 minuti.",
+  "codeLimitReached": "Limite di invio codice raggiunto. Riprova tra 1 ora.",
+  "tooManyApplications": "Hai inviato troppe candidature. Riprova più tardi.",
+  "tooManyOperations": "Troppe operazioni. Riprova tra qualche minuto.",
+  "tooManySearches": "Troppe ricerche. Attendi qualche istante.",
+  "tooManyMessages": "Troppi messaggi inviati. Attendi qualche istante.",
+  "tooManyCopilotRequests": "Troppe richieste copilot. Attendi qualche istante.",
+  "tooManyDemands": "Troppe richieste. Riprova tra 1 ora.",
+  "webhookLimitExceeded": "Troppe richieste webhook.",
+  "webhookRetryLimitExceeded": "Troppe richieste webhook. Riprova.",
+  "exportLimitReached": "Limite di esportazione raggiunto. Riprova più tardi."
+}

@@ -100,7 +100,7 @@ export function validateFile(file: UploadDocumentInput['file']): {
   if (!isValidMimeType(file.mimetype)) {
     return {
       valid: false,
-      error: `Type de fichier non autorisé: ${file.mimetype}. Formats acceptés: PDF, JPEG, PNG, WebP, HEIC`,
+      error: `Unsupported file type: ${file.mimetype}. Allowed formats: PDF, JPEG, PNG, WebP, HEIC`,
     };
   }
 
@@ -108,7 +108,7 @@ export function validateFile(file: UploadDocumentInput['file']): {
   if (!isValidFileSize(file.size)) {
     return {
       valid: false,
-      error: `Fichier trop volumineux: ${Math.round(file.size / 1024 / 1024)}MB. Maximum: ${DOCUMENT_LIMITS.MAX_FILE_SIZE_MB}MB`,
+      error: `File too large: ${Math.round(file.size / 1024 / 1024)}MB. Maximum: ${DOCUMENT_LIMITS.MAX_FILE_SIZE_MB}MB`,
     };
   }
 
@@ -116,7 +116,7 @@ export function validateFile(file: UploadDocumentInput['file']): {
   if (!isValidExtension(file.originalname)) {
     return {
       valid: false,
-      error: `Extension de fichier non autorisée. Formats acceptés: PDF, JPEG, PNG, WebP, HEIC`,
+      error: `Unsupported file extension. Allowed formats: PDF, JPEG, PNG, WebP, HEIC`,
     };
   }
 
@@ -317,18 +317,18 @@ export async function processDocumentExtraction(
       );
 
       // Notify talent
-      const docTitle = generatedTitle || 'votre document';
+      const docTitle = generatedTitle || 'your document';
       if (talentId) {
         const notifBody = nameSkipped
-          ? `"${docTitle}" a été analysé, mais les compétences n'ont pas été ajoutées car le nom dans le document ne correspond pas à votre profil.`
+          ? `"${docTitle}" was analyzed, but skills were not added because the name in the document does not match your profile.`
           : skillsInDocument > 0
-            ? `${skillsInDocument} compétence${skillsInDocument > 1 ? 's' : ''} extraite${skillsInDocument > 1 ? 's' : ''} de "${docTitle}"`
-            : `"${docTitle}" a été analysé avec succès`;
+            ? `${skillsInDocument} skill${skillsInDocument > 1 ? 's' : ''} extracted from "${docTitle}"`
+            : `"${docTitle}" was analyzed successfully`;
 
         await create({
           talentId,
           type: 'SYSTEM',
-          title: nameSkipped ? 'Document analysé — compétences ignorées' : 'Document analysé',
+          title: nameSkipped ? 'Document analyzed - skills skipped' : 'Document analyzed',
           body: notifBody,
           referenceType: 'document',
           referenceId: documentId,
@@ -354,8 +354,8 @@ export async function processDocumentExtraction(
         await create({
           talentId: failedTalentId,
           type: 'SYSTEM',
-          title: "Échec d'analyse",
-          body: "L'analyse de votre document a échoué. Vous pouvez réessayer.",
+          title: "Analysis failed",
+          body: "Document analysis failed. You can try again.",
           referenceType: 'document',
           referenceId: documentId,
         });
@@ -385,8 +385,8 @@ export async function processDocumentExtraction(
         await create({
           talentId: errorTalentId,
           type: 'SYSTEM',
-          title: "Échec d'analyse",
-          body: "L'analyse de votre document a échoué. Vous pouvez réessayer.",
+          title: "Analysis failed",
+          body: "Document analysis failed. You can try again.",
           referenceType: 'document',
           referenceId: documentId,
         });
@@ -597,7 +597,7 @@ export async function retryExtraction(documentId: string, talentId: string): Pro
   }
 
   if (document.status !== DOCUMENT_STATUS.FAILED) {
-    throw new Error('Seuls les documents en échec peuvent être réessayés');
+    throw new Error('Only failed documents can be retried');
   }
 
   // Reset status

@@ -18,12 +18,14 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Button, IconButton, Input, LoadingShimmer, SelectCard } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
+import { useI18n } from '../../src/contexts/I18nContext';
 import { paymentService, PaymentMethod, PaymentProvider, PAYMENT_PROVIDERS } from '../../src/services/paymentService';
 import { useAlert } from '../../src/contexts/AlertContext';
 
 export default function PaymentMethodsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,13 +66,13 @@ export default function PaymentMethodsScreen() {
   const validatePhone = (phone: string): string | null => {
     const cleanPhone = phone.replace(/\s+/g, '');
     if (!cleanPhone) {
-      return 'Le numéro de téléphone est requis';
+      return t('payment.phoneRequired');
     }
     if (cleanPhone.length < 8) {
-      return 'Le numéro doit contenir au moins 8 chiffres';
+      return t('payment.phoneMinDigits');
     }
     if (!/^[\d+]+$/.test(cleanPhone)) {
-      return 'Le numéro ne doit contenir que des chiffres';
+      return t('payment.phoneDigitsOnly');
     }
     return null;
   };
@@ -93,7 +95,7 @@ export default function PaymentMethodsScreen() {
 
     // Validate provider
     if (!selectedProvider) {
-      setFormError('Veuillez sélectionner un opérateur');
+      setFormError(t('payment.selectProvider'));
       return;
     }
 
@@ -128,7 +130,7 @@ export default function PaymentMethodsScreen() {
         }
       }
     } catch (error) {
-      setFormError('Une erreur est survenue. Veuillez réessayer.');
+      setFormError(t('common.genericError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -136,9 +138,9 @@ export default function PaymentMethodsScreen() {
 
   const mapErrorMessage = (error: string): string => {
     const errorMap: Record<string, string> = {
-      'Invalid phone number': 'Numéro de téléphone invalide (min. 8 chiffres)',
-      'Invalid payment provider': 'Opérateur non reconnu',
-      'This payment method already exists': 'Ce moyen de paiement existe déjà',
+      'Invalid phone number': t('payment.invalidPhone'),
+      'Invalid payment provider': t('payment.invalidProvider'),
+      'This payment method already exists': t('payment.alreadyExists'),
     };
     return errorMap[error] || error;
   };
@@ -150,15 +152,15 @@ export default function PaymentMethodsScreen() {
         setPaymentMethods(response.data);
       }
     } catch (error) {
-      void alerts.alert('Erreur', 'Une erreur est survenue.');
+      void alerts.alert(t('common.error'), t('payment.errorOccurred'));
     }
   };
 
   const handleDelete = (id: string) => {
-    void alerts.showAlert({ title: 'Supprimer', message: 'Voulez-vous vraiment supprimer cette méthode de paiement ?', buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('payment.deleteTitle'), message: t('payment.deleteConfirm'), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -167,7 +169,7 @@ export default function PaymentMethodsScreen() {
                 setPaymentMethods(response.data);
               }
             } catch (error) {
-              void alerts.alert('Erreur', 'Une erreur est survenue.');
+              void alerts.alert(t('common.error'), t('payment.errorOccurred'));
             }
           },
         },
@@ -196,7 +198,7 @@ export default function PaymentMethodsScreen() {
   const renderAddForm = () => (
     <View style={[styles.addForm, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
       <Text style={[styles.formTitle, { color: colors.textPrimary }]}>
-        Ajouter une méthode de paiement
+        {t('payment.addMethod')}
       </Text>
 
       {/* Form-level error */}
@@ -206,7 +208,7 @@ export default function PaymentMethodsScreen() {
         </View>
       )}
 
-      <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Opérateur</Text>
+      <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('payment.provider')}</Text>
       <View style={styles.providersGrid}>
         {PAYMENT_PROVIDERS.map((provider) => (
           <SelectCard
@@ -241,8 +243,8 @@ export default function PaymentMethodsScreen() {
 
       <View style={styles.phoneInput}>
         <Input
-          label="Numéro de téléphone"
-          placeholder="+225 07 00 00 00 00"
+          label={t('payment.phoneLabel')}
+          placeholder={t('payment.phonePlaceholder')}
           value={phoneNumber}
           onChangeText={handlePhoneChange}
           keyboardType="phone-pad"
@@ -253,7 +255,7 @@ export default function PaymentMethodsScreen() {
 
       <View style={styles.formActions}>
         <Button
-          title="Annuler"
+          title={t('common.cancel')}
           onPress={handleCancelAdd}
           disabled={isSubmitting}
           variant="outline"
@@ -262,7 +264,7 @@ export default function PaymentMethodsScreen() {
         />
         <View style={styles.addButtonContainer}>
           <Button
-            title={isSubmitting ? 'Ajout...' : 'Ajouter'}
+            title={isSubmitting ? t('payment.adding') : t('common.add')}
             onPress={handleAddMethod}
             disabled={isSubmitting}
             loading={isSubmitting}
@@ -279,9 +281,9 @@ export default function PaymentMethodsScreen() {
           <IconButton
             onPress={() => router.back()}
             icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel="Retour"
+            accessibilityLabel={t('common.back')}
           />
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Moyens de paiement</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('payment.title')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.loadingContainer}>
@@ -298,9 +300,9 @@ export default function PaymentMethodsScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Moyens de paiement</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('payment.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -319,7 +321,7 @@ export default function PaymentMethodsScreen() {
         {/* Info */}
         <View style={[styles.infoCard, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
           <Text style={[styles.infoText, { color: colors.primary }]}>
-            Configure tes moyens de paiement pour recevoir tes revenus.
+            {t('payment.infoText')}
           </Text>
         </View>
 
@@ -327,7 +329,7 @@ export default function PaymentMethodsScreen() {
         {paymentMethods.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-              Mes méthodes de paiement
+              {t('payment.myMethods')}
             </Text>
             <View style={[styles.methodsList, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
               {paymentMethods.map((method, index) => {
@@ -343,7 +345,7 @@ export default function PaymentMethodsScreen() {
                     ]}
                     onPress={() => handleSetDefault(method.id)}
                     selected={false}
-                    accessibilityLabel={`Définir ${providerInfo?.label || ''} par défaut`}
+                    accessibilityLabel={t('payment.setDefault', { provider: providerInfo?.label || '' })}
                   >
                     <View style={[styles.methodIcon, { backgroundColor: providerInfo?.color }]}>
                       <Smartphone size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
@@ -358,13 +360,13 @@ export default function PaymentMethodsScreen() {
                     </View>
                     {method.isDefault && (
                       <View style={[styles.defaultBadge, { backgroundColor: withOpacity(colors.success, OPACITY[20]) }]}>
-                        <Text style={[styles.defaultBadgeText, { color: colors.success }]}>Par défaut</Text>
+                        <Text style={[styles.defaultBadgeText, { color: colors.success }]}>{t('payment.default')}</Text>
                       </View>
                     )}
                     <IconButton
                       onPress={() => handleDelete(method.id)}
                       icon={<Trash2 size={ICON.size.sm} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-                      accessibilityLabel="Supprimer"
+                      accessibilityLabel={t('common.delete')}
                       style={styles.deleteButton}
                     />
                   </SelectCard>
@@ -379,10 +381,10 @@ export default function PaymentMethodsScreen() {
           <View style={[styles.emptyState, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
             <Smartphone size={ICON.size.xxl} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.emptyStateTitle, { color: colors.textPrimary }]}>
-              Aucun moyen de paiement
+              {t('payment.noMethods')}
             </Text>
             <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
-              Ajoute un moyen de paiement pour recevoir tes revenus.
+              {t('payment.noMethodsHint')}
             </Text>
           </View>
         )}
@@ -392,7 +394,7 @@ export default function PaymentMethodsScreen() {
           renderAddForm()
         ) : (
           <Button
-            title="Ajouter une méthode de paiement"
+            title={t('payment.addMethod')}
             onPress={() => setIsAdding(true)}
             variant="outline"
             fullWidth

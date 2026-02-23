@@ -1,0 +1,21 @@
+{
+  "noAccessToOrg": "Du hast keinen Zugriff auf diese Organisation",
+  "insufficientRoleForBilling": "Unzureichende Rolle fuer die Abrechnungsverwaltung dieser Organisation",
+  "internalError": "Interner Abrechnungsfehler",
+  "failedToLoadCatalog": "Credit-Katalog konnte nicht geladen werden",
+  "scopeRequired": "scope erforderlich: TALENT oder ORGANIZATION",
+  "talentAuthRequired": "Talent-Authentifizierung erforderlich",
+  "talentWalletAccessDenied": "Zugriff auf dieses Talent-Wallet verweigert",
+  "orgIdRequired": "Organisations-ID erforderlich fuer scope ORGANIZATION",
+  "authRequired": "Authentifizierung erforderlich",
+  "ownerIdRequired": "owner_id erforderlich",
+  "invalidTalentOwnerId": "Ungueltige Talent-owner_id",
+  "paystackRefRequired": "paystack_reference erforderlich",
+  "paymentNotFound": "Zahlung nicht gefunden",
+  "paymentAccessDenied": "Zugriff auf diese Zahlung verweigert",
+  "invoiceAccessDenied": "Zugriff auf Talent-Rechnungen verweigert",
+  "invoiceNotFound": "Rechnung nicht gefunden",
+  "insufficientCredits": "Unzureichendes Credit-Guthaben. Lade dein Wallet auf, um fortzufahren.",
+  "insufficientOrgCredits": "Unzureichendes Organisations-Credit-Guthaben. Laden Sie das Wallet auf, um fortzufahren.",
+  "insufficientCreditsForPublication": "Unzureichendes Credit-Guthaben. Lade dein Wallet auf, um eine Veroeffentlichung zu planen."
+}

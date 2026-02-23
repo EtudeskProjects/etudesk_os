@@ -1,0 +1,23 @@
+{
+  "authRequired": "需要身份验证",
+  "notOrgMember": "你不是该组织的成员",
+  "favoritesAddError": "添加到收藏时出错",
+  "favoritesRemoved": "人才已从收藏中移除",
+  "favoritesRemoveError": "移除收藏时出错",
+  "tagsError": "获取标签时出错",
+  "tagNameRequired": "标签名称为必填项",
+  "tagExists": "已存在同名标签",
+  "tagCreateError": "创建标签时出错",
+  "tagNotFound": "标签未找到",
+  "tagUpdateError": "更新标签时出错",
+  "tagDeleted": "标签已删除",
+  "tagDeleteError": "删除标签时出错",
+  "tagAssigned": "标签已分配",
+  "tagAssignError": "分配标签时出错",
+  "tagRemoved": "标签已移除",
+  "tagRemoveError": "移除标签时出错",
+  "favoritesAdded": "人才已添加到收藏",
+  "favoritesListError": "获取收藏列表时出错",
+  "talentsListError": "获取人才列表时出错",
+  "talentsCountError": "统计人才数量时出错"
+}

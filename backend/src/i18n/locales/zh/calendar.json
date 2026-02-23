@@ -1,0 +1,10 @@
+{
+  "startEndDateRequired": "start_date 和 end_date 为必填项",
+  "invalidDateFormat": "日期格式无效",
+  "codeRequired": "code 为必填项",
+  "titleRequired": "title 为必填项",
+  "dueDateRequired": "due_at 为必填项",
+  "invalidDueDate": "due_at 无效",
+  "triggerNotFound": "触发器未找到",
+  "accessDenied": "访问被拒绝"
+}

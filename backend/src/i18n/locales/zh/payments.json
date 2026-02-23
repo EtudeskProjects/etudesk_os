@@ -1,0 +1,10 @@
+{
+  "fetchError": "获取支付方式失败",
+  "invalidProvider": "支付提供商无效",
+  "invalidPhone": "手机号无效",
+  "alreadyExists": "该支付方式已存在",
+  "addError": "添加支付方式失败",
+  "notFound": "支付方式未找到",
+  "setDefaultError": "设置默认支付方式失败",
+  "deleteError": "删除支付方式失败"
+}

@@ -38,12 +38,12 @@ import { useTheme } from '../../../src/hooks/useTheme';
 import { useForm } from '../../../src/hooks/useForm';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../src/constants/location';
 import {
-  SPACE_TYPE_DATA,
-  SPACE_EQUIPMENT_DATA,
-  SPACE_AMENITY_DATA,
-  ACCESSIBILITY_DATA,
-  SPACE_TYPE_LABELS,
-  SPACE_VISIBILITY_DATA,
+  getSpaceTypeData,
+  getSpaceEquipmentData,
+  getSpaceAmenityData,
+  getAccessibilityData,
+  getSpaceTypeLabel,
+  getSpaceVisibilityData,
   SpaceType,
   SpaceEquipment,
   SpaceAmenity,
@@ -55,6 +55,7 @@ import { Visibility, ApplicationQuestion } from '../../../src/types/models';
 import { SECTOR_DATA, MAX_SECTORS, Sector } from '../../../src/constants/talent';
 import { useSpace } from '../../../src/contexts/SpaceContext';
 import { useAlert } from '../../../src/contexts/AlertContext';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { ScrollToInputContext } from '../../../src/contexts/ScrollToInputContext';
 import { FormTextArea } from '../../../src/components/forms/FormTextArea';
 import { spaceService, CreateSpaceData, imageService, organizationService } from '../../../src/services';
@@ -63,13 +64,13 @@ type Step = 'info' | 'location' | 'capacity' | 'conditions' | 'media' | 'preview
 
 const STEPS: Step[] = ['info', 'location', 'capacity', 'conditions', 'media', 'preview'];
 
-const STEP_TITLES: Record<Step, string> = {
-  info: 'Infos',
-  location: 'Lieu',
-  capacity: 'Capacité',
-  conditions: 'Conditions',
-  media: 'Média',
-  preview: 'Aperçu',
+const STEP_TITLE_KEYS: Record<Step, string> = {
+  info: 'space.form.steps.info',
+  location: 'space.form.steps.location',
+  capacity: 'space.form.steps.capacity',
+  conditions: 'space.form.steps.conditions',
+  media: 'space.form.steps.media',
+  preview: 'space.form.steps.preview',
 };
 
 const MAX_IMAGES = 5;
@@ -78,13 +79,13 @@ const MAX_QUESTIONS = 5;
 const MAX_QUESTION_LENGTH = 200;
 
 const DAYS_OF_WEEK = [
-  { id: 1, label: 'Lundi', short: 'Lun' },
-  { id: 2, label: 'Mardi', short: 'Mar' },
-  { id: 3, label: 'Mercredi', short: 'Mer' },
-  { id: 4, label: 'Jeudi', short: 'Jeu' },
-  { id: 5, label: 'Vendredi', short: 'Ven' },
-  { id: 6, label: 'Samedi', short: 'Sam' },
-  { id: 0, label: 'Dimanche', short: 'Dim' },
+  { id: 1, labelKey: 'common.days.monday', shortKey: 'common.daysShort.mon' },
+  { id: 2, labelKey: 'common.days.tuesday', shortKey: 'common.daysShort.tue' },
+  { id: 3, labelKey: 'common.days.wednesday', shortKey: 'common.daysShort.wed' },
+  { id: 4, labelKey: 'common.days.thursday', shortKey: 'common.daysShort.thu' },
+  { id: 5, labelKey: 'common.days.friday', shortKey: 'common.daysShort.fri' },
+  { id: 6, labelKey: 'common.days.saturday', shortKey: 'common.daysShort.sat' },
+  { id: 0, labelKey: 'common.days.sunday', shortKey: 'common.daysShort.sun' },
 ];
 
 interface ImageItem {
@@ -154,10 +155,18 @@ const DEFAULT_AVAILABILITY: Record<number, DayAvailability> = {
 export default function CreateSpaceScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { selectedOrgId, selectedOrg } = useSpace();
   const alerts = useAlert();
   const { showToast } = useToast();
+
+  // Resolve getter data once per render
+  const SPACE_TYPE_DATA = getSpaceTypeData();
+  const SPACE_EQUIPMENT_DATA = getSpaceEquipmentData();
+  const SPACE_AMENITY_DATA = getSpaceAmenityData();
+  const ACCESSIBILITY_DATA = getAccessibilityData();
+  const SPACE_VISIBILITY_DATA = getSpaceVisibilityData();
 
   // Keep these states for step navigation and UI
   const [currentStep, setCurrentStep] = useState<Step>('info');
@@ -194,7 +203,7 @@ export default function CreateSpaceScreen() {
         );
         uploadedUrls.push(uploaded.url);
       } catch (error) {
-        await alerts.error('Erreur', 'Impossible d\'uploader une image.');
+        await alerts.error(t('common.error'), t('space.form.uploadImageError'));
         return null;
       }
     }
@@ -205,11 +214,11 @@ export default function CreateSpaceScreen() {
 
   // Convert availability state to backend format
   const buildAvailabilities = (availability: Record<number, DayAvailability>) => {
-    const availabilities: Array<{
+    const availabilities: {
       day_of_week: number;
       start_time: string;
       end_time: string;
-    }> = [];
+    }[] = [];
 
     Object.entries(availability).forEach(([dayId, dayAvail]) => {
       if (dayAvail.isOpen) {
@@ -295,7 +304,7 @@ export default function CreateSpaceScreen() {
     onSubmit: async (values) => {
       if (isSubmitting) return;
       if (!selectedOrgId) {
-        await alerts.error('Erreur', 'Aucune organisation sélectionnée.');
+        await alerts.error(t('common.error'), t('space.form.noOrganizationSelected'));
         return;
       }
 
@@ -312,12 +321,12 @@ export default function CreateSpaceScreen() {
 
         await alerts.showAlert({
           type: 'success',
-          title: 'Espace créé',
-          message: `"${values.name}" a été créé avec succès !`,
+          title: t('space.form.createdTitle'),
+          message: t('space.form.createdMessage', { name: values.name }),
           buttons: [{ text: 'OK', onPress: () => router.back() }],
         });
       } catch (error: any) {
-        await alerts.error('Erreur', error.error || 'Une erreur est survenue.');
+        await alerts.error(t('common.error'), error.error || t('common.genericError'));
       } finally {
         setIsSubmitting(false);
       }
@@ -482,8 +491,8 @@ export default function CreateSpaceScreen() {
       if (__DEV__) console.error(`[CreateSpace] AI Generation - Failed after ${duration}ms:`, error);
       showToast({
         type: 'error',
-        title: 'Erreur de génération',
-        message: error?.error || 'Une erreur est survenue lors de la génération.',
+        title: t('common.generationErrorTitle'),
+        message: error?.error || t('common.generationError'),
       });
     } finally {
       setIsGenerating(false);
@@ -493,7 +502,7 @@ export default function CreateSpaceScreen() {
   const pickImage = async () => {
     const currentImages = form.getValue('images');
     if (currentImages.length >= MAX_IMAGES) {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Maximum ${MAX_IMAGES} images.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('space.form.maxImagesShort', { count: MAX_IMAGES }) });
       return;
     }
     try {
@@ -502,7 +511,7 @@ export default function CreateSpaceScreen() {
         form.setValue('images', [...currentImages, { id: Date.now().toString(), uri: image.uri }]);
       }
     } catch (error) {
-      showToast({ type: 'error', title: 'Erreur', message: 'Impossible de sélectionner l\'image.' });
+      showToast({ type: 'error', title: t('common.error'), message: t('space.form.imageSelectionError') });
     }
   };
 
@@ -547,8 +556,8 @@ export default function CreateSpaceScreen() {
     } else {
       showToast({
         type: 'warning',
-        title: 'Limite atteinte',
-        message: `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.`,
+        title: t('common.limitReached'),
+        message: t('space.form.maxSectors', { count: MAX_SECTORS }),
       });
     }
   };
@@ -575,8 +584,8 @@ export default function CreateSpaceScreen() {
     if (current.length >= MAX_QUESTIONS) {
       showToast({
         type: 'warning',
-        title: 'Limite atteinte',
-        message: `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.`,
+        title: t('common.limitReached'),
+        message: t('space.form.maxQuestions', { count: MAX_QUESTIONS }),
       });
       return;
     }
@@ -684,7 +693,7 @@ export default function CreateSpaceScreen() {
   const renderStepIndicator = () => {
     const stepsData = STEPS.map((step) => ({
       id: step,
-      label: STEP_TITLES[step],
+      label: t(STEP_TITLE_KEYS[step]),
     }));
     return <StepIndicator steps={stepsData} currentStepId={currentStep} />;
   };
@@ -709,7 +718,7 @@ export default function CreateSpaceScreen() {
         />
 
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Type d'espace *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('space.form.spaceTypeLabel')}</Text>
           <View style={styles.tagsContainer}>
             {SPACE_TYPE_DATA.map((type) => {
               const isSelected = spaceType === type.id;
@@ -740,7 +749,7 @@ export default function CreateSpaceScreen() {
         {canGenerate && (
           <View style={styles.generateButtonContainer}>
             <Button
-              title="Suggérer"
+              title={t('community.form.suggest')}
               onPress={handleGenerate}
               disabled={isGenerating}
               loading={isGenerating}
@@ -759,7 +768,7 @@ export default function CreateSpaceScreen() {
         {/* Sectors Selection */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Secteurs d'activité ({selectedSectors.length}/{MAX_SECTORS})
+            {t('community.industries')} ({selectedSectors.length}/{MAX_SECTORS})
           </Text>
           <View style={styles.tagsContainer}>
             {SECTOR_DATA.map((sector) => {
@@ -789,7 +798,7 @@ export default function CreateSpaceScreen() {
 
         <FormTextArea
           label="Description"
-          placeholder="Décrivez l'espace, ses caractéristiques..."
+          placeholder={t('space.form.descriptionPlaceholder')}
           value={description}
           onChangeText={(val) => form.setValue('description', val)}
           rows={4}
@@ -805,7 +814,7 @@ export default function CreateSpaceScreen() {
         <MapPin size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
         <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Localisation</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Ou se trouve l'espace ?
+          {t('space.form.locationDescription')}
         </Text>
       </View>
 
@@ -916,7 +925,7 @@ export default function CreateSpaceScreen() {
 
         {/* Position sur la carte - Carte inline */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Position sur la carte</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('space.form.mapPosition')}</Text>
           <View style={[styles.inlineMapContainer, { borderColor: colors.borderColor }]}>
             <MapLocationPicker
               initialCoordinates={
@@ -943,9 +952,9 @@ export default function CreateSpaceScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <Ruler size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Capacités & Équipements</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('space.form.capacityEquipmentsTitle')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Surface, capacité et équipements
+          {t('space.form.capacityEquipmentsDescription')}
         </Text>
       </View>
 
@@ -953,8 +962,8 @@ export default function CreateSpaceScreen() {
         <View style={styles.rowFields}>
           <View style={styles.halfField}>
             <Input
-              label="Surface (m2) *"
-              placeholder="Ex: 25"
+              label={t('space.form.surfaceLabel')}
+              placeholder={t('space.form.surfacePlaceholder')}
               value={surfaceM2}
               onChangeText={(val) => form.setValue('surfaceM2', val)}
               keyboardType="numeric"
@@ -962,8 +971,8 @@ export default function CreateSpaceScreen() {
           </View>
           <View style={styles.halfField}>
             <Input
-              label="Capacité (Personnes) *"
-              placeholder="Ex: 10"
+              label={t('space.form.capacityPeopleLabel')}
+              placeholder={t('space.form.capacityPlaceholder')}
               value={capacity}
               onChangeText={(val) => form.setValue('capacity', val)}
               keyboardType="numeric"
@@ -974,16 +983,16 @@ export default function CreateSpaceScreen() {
 
         <View style={[styles.toggleContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
           <View style={styles.toggleInfo}>
-            <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>Calcul automatique</Text>
+            <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>{t('space.form.autoCalculation')}</Text>
             <Text style={[styles.toggleDescription, { color: colors.gray500 }]}>
-              Capacité calculée selon le type
+              {t('space.form.capacityCalculatedByType')}
             </Text>
           </View>
           <Toggle value={autoCapacity} onValueChange={(val) => form.setValue('autoCapacity', val)} />
         </View>
 
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Équipements techniques</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('space.form.technicalEquipment')}</Text>
           <View style={styles.tagsContainer}>
             {SPACE_EQUIPMENT_DATA.map((item) => {
               const isSelected = selectedEquipment.includes(item.id);
@@ -1011,7 +1020,7 @@ export default function CreateSpaceScreen() {
         </View>
 
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Services et commodites</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('space.form.servicesAmenities')}</Text>
           <View style={styles.tagsContainer}>
             {SPACE_AMENITY_DATA.map((item) => {
               const isSelected = selectedAmenities.includes(item.id);
@@ -1040,9 +1049,9 @@ export default function CreateSpaceScreen() {
 
         <View style={[styles.toggleContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
           <View style={styles.toggleInfo}>
-            <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>Accessible PMR</Text>
+            <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>{t('space.accessible')}</Text>
             <Text style={[styles.toggleDescription, { color: colors.gray500 }]}>
-              Accessible aux personnes a mobilite reduite
+              {t('space.form.accessibleDescription')}
             </Text>
           </View>
           <Toggle value={isAccessible} onValueChange={(val) => form.setValue('isAccessible', val)} />
@@ -1050,7 +1059,7 @@ export default function CreateSpaceScreen() {
 
         {isAccessible && (
           <View style={styles.fieldContainer}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Équipements d'accessibilite</Text>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('space.form.accessibilityEquipment')}</Text>
             <View style={styles.tagsContainer}>
               {ACCESSIBILITY_DATA.map((item) => {
                 const isSelected = selectedAccessibility.includes(item.id);
@@ -1085,21 +1094,21 @@ export default function CreateSpaceScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <FileText size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Conditions</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('space.form.steps.conditions')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Tarifs, disponibilites et regles
+          {t('space.form.conditionsDescription')}
         </Text>
       </View>
 
       <View style={styles.formFields}>
         {/* Pricing */}
-        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Tarification (FCFA)</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>{t('space.form.pricingFcfa')}</Text>
 
         <View style={styles.rowFields}>
           <View style={styles.halfField}>
             <Input
-              label="Tarif horaire *"
-              placeholder="Ex: 5000"
+              label={t('space.form.hourlyRateLabel')}
+              placeholder={t('space.form.hourlyRatePlaceholder')}
               value={hourlyRate}
               onChangeText={(val) => form.setValue('hourlyRate', val)}
               keyboardType="numeric"
@@ -1107,8 +1116,8 @@ export default function CreateSpaceScreen() {
           </View>
           <View style={styles.halfField}>
             <Input
-              label="Tarif journalier"
-              placeholder="Ex: 25000"
+              label={t('space.form.dailyRateLabel')}
+              placeholder={t('space.form.dailyRatePlaceholder')}
               value={dailyRate}
               onChangeText={(val) => form.setValue('dailyRate', val)}
               keyboardType="numeric"
@@ -1119,8 +1128,8 @@ export default function CreateSpaceScreen() {
         <View style={styles.rowFields}>
           <View style={styles.halfField}>
             <Input
-              label="Tarif hebdomadaire"
-              placeholder="Ex: 100000"
+              label={t('space.form.weeklyRateLabel')}
+              placeholder={t('space.form.weeklyRatePlaceholder')}
               value={weeklyRate}
               onChangeText={(val) => form.setValue('weeklyRate', val)}
               keyboardType="numeric"
@@ -1128,8 +1137,8 @@ export default function CreateSpaceScreen() {
           </View>
           <View style={styles.halfField}>
             <Input
-              label="Tarif mensuel"
-              placeholder="Ex: 350000"
+              label={t('space.form.monthlyRateLabel')}
+              placeholder={t('space.form.monthlyRatePlaceholder')}
               value={monthlyRate}
               onChangeText={(val) => form.setValue('monthlyRate', val)}
               keyboardType="numeric"
@@ -1138,8 +1147,8 @@ export default function CreateSpaceScreen() {
         </View>
 
         <Input
-          label="Mode d'encaissement"
-          placeholder="Ex: Espèces, Orange Money, Wave, Mobile Money..."
+          label={t('space.form.paymentCollectionMode')}
+          placeholder={t('space.form.paymentCollectionPlaceholder')}
           value={paymentCollectionInfo}
           onChangeText={(val) => form.setValue('paymentCollectionInfo', val)}
           multiline
@@ -1149,7 +1158,7 @@ export default function CreateSpaceScreen() {
         {/* Visibility */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Visibilité *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('space.form.visibilityLabel')}</Text>
           <View style={styles.locationTypeRow}>
             {SPACE_VISIBILITY_DATA.map((type) => {
               const isSelected = visibility === type.id;
@@ -1184,7 +1193,7 @@ export default function CreateSpaceScreen() {
 
         {/* Availability */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
-        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Disponibilités</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>{t('space.form.availability')}</Text>
 
         <View style={styles.availabilityContainer}>
           {DAYS_OF_WEEK.map((day) => {
@@ -1192,7 +1201,7 @@ export default function CreateSpaceScreen() {
             return (
               <View key={day.id} style={[styles.dayRow, { borderBottomColor: colors.gray100 }]}>
                 <CheckboxRow
-                  label={day.label}
+                  label={t(day.labelKey)}
                   checked={dayAvail.isOpen}
                   onPress={() => toggleDayAvailability(day.id)}
                   style={styles.dayToggle}
@@ -1231,7 +1240,7 @@ export default function CreateSpaceScreen() {
                     />
                   </View>
                 ) : (
-                  <Text style={[styles.closedText, { color: colors.gray400 }]}>Ferme</Text>
+                  <Text style={[styles.closedText, { color: colors.gray400 }]}>{t('space.form.closed')}</Text>
                 )}
               </View>
             );
@@ -1241,8 +1250,8 @@ export default function CreateSpaceScreen() {
         {/* Rules */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
         <FormTextArea
-          label="Règlement intérieur"
-          placeholder="Ex:\n• Respecter les horaires de réservation\n• Maintenir l'espace propre après utilisation\n• Ne pas fumer dans les locaux..."
+          label={t('space.form.rulesLabel')}
+          placeholder={t('space.form.rulesPlaceholder')}
           value={rules}
           onChangeText={(val) => form.setValue('rules', val)}
           rows={5}
@@ -1253,10 +1262,10 @@ export default function CreateSpaceScreen() {
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Questions supplémentaires ({questions.length}/{MAX_QUESTIONS})
+            {t('space.form.additionalQuestionsCount', { count: questions.length, max: MAX_QUESTIONS })}
           </Text>
           <Text style={[styles.fieldHint, { color: colors.gray500 }]}>
-            Posez des questions aux demandeurs (réponse courte, max {MAX_QUESTION_LENGTH} caractères)
+            {t('space.form.askApplicantsQuestions', { max: MAX_QUESTION_LENGTH })}
           </Text>
 
           {/* Questions List */}
@@ -1267,19 +1276,19 @@ export default function CreateSpaceScreen() {
             >
               <View style={styles.questionHeader}>
                 <Text style={[styles.questionNumber, { color: colors.primary }]}>
-                  Question {index + 1}
+                  {t('space.form.questionN', { index: index + 1 })}
                 </Text>
                 <IconButton
                   onPress={() => removeQuestion(question.id)}
                   icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-                  accessibilityLabel="Supprimer la question"
+                  accessibilityLabel={t('community.form.removeQuestion')}
                   size="sm"
                   variant="ghost"
                 />
               </View>
 
               <FormTextArea
-                placeholder="Écrivez votre question..."
+                placeholder={t('community.form.questionPlaceholder')}
                 value={question.question}
                 onChangeText={(text) => updateQuestion(question.id, { question: text })}
                 maxLength={MAX_QUESTION_LENGTH}
@@ -1290,7 +1299,7 @@ export default function CreateSpaceScreen() {
 
               <View style={styles.questionFooter}>
                 <View style={styles.requiredToggle}>
-                  <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>Obligatoire</Text>
+                  <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>{t('common.required')}</Text>
                   <Toggle
                     value={question.required}
                     onValueChange={(value) => updateQuestion(question.id, { required: value })}
@@ -1304,7 +1313,7 @@ export default function CreateSpaceScreen() {
           {/* Add Question Button */}
           {questions.length < MAX_QUESTIONS && (
             <Button
-              title="Ajouter une question"
+              title={t('community.form.addQuestion')}
               onPress={addQuestion}
               variant="outline"
               icon={<Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
@@ -1321,22 +1330,22 @@ export default function CreateSpaceScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <ImageIcon size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Photos</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('space.form.photos')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Ajoutez des photos de l'espace
+          {t('space.form.addSpacePhotos')}
         </Text>
       </View>
 
       <View style={styles.formFields}>
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700, textAlign: 'center' }]}>
-            Images ({images.length}/{MAX_IMAGES})
+            {t('space.form.imagesCount', { count: images.length, max: MAX_IMAGES })}
           </Text>
 
           <View style={styles.imageUploadContainer}>
             {images.length < MAX_IMAGES && (
               <Button
-                title="Ajouter une image"
+                title={t('community.form.addImage')}
                 onPress={pickImage}
                 variant="outline"
                 icon={<Upload size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
@@ -1354,7 +1363,7 @@ export default function CreateSpaceScreen() {
                     <IconButton
                       onPress={() => removeImage(image.id)}
                       icon={<X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />}
-                      accessibilityLabel="Retirer l'image"
+                      accessibilityLabel={t('community.form.removeImage')}
                       size="sm"
                       variant="filled"
                       style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
@@ -1372,15 +1381,15 @@ export default function CreateSpaceScreen() {
   const renderPreviewStep = () => {
     // Get visibility label
     const visibilityData = SPACE_VISIBILITY_DATA.find(v => v.id === visibility);
-    const visibilityLabel = visibilityData?.label || 'Public';
+    const visibilityLabel = visibilityData?.label || t('space.form.public');
 
     return (
       <View style={styles.stepContent}>
         <View style={styles.stepHeader}>
           <Eye size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-          <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Aperçu</Text>
+          <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('space.form.steps.preview')}</Text>
           <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-            Vérifiez toutes les informations avant publication
+            {t('space.form.reviewBeforePublish')}
           </Text>
         </View>
 
@@ -1394,17 +1403,17 @@ export default function CreateSpaceScreen() {
           ) : (
             <View style={[styles.previewNoImage, { backgroundColor: colors.gray100 }]}>
               <ImageIcon size={32} color={colors.gray400} />
-              <Text style={[styles.previewNoImageText, { color: colors.gray500 }]}>Aucune image</Text>
+              <Text style={[styles.previewNoImageText, { color: colors.gray500 }]}>{t('community.form.noImage')}</Text>
             </View>
           )}
 
           <View style={styles.previewSection}>
-            <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{name || 'Sans nom'}</Text>
+            <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{name || t('community.form.untitled')}</Text>
             <View style={styles.previewTags}>
               {spaceType && (
                 <View style={[styles.typeBadge, { backgroundColor: colors.primary }]}>
                   <Text style={[styles.typeBadgeText, { color: colors.textOnPrimary }]}>
-                    {SPACE_TYPE_LABELS[spaceType]}
+                    {getSpaceTypeLabel(spaceType)}
                   </Text>
                 </View>
               )}
@@ -1437,23 +1446,23 @@ export default function CreateSpaceScreen() {
           <View style={[styles.previewLocationRow, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
             <MapPin size={16} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.previewLocationText, { color: colors.textPrimary }]}>
-              {[address, city, region, country].filter(Boolean).join(', ') || 'Lieu non défini'}
+              {[address, city, region, country].filter(Boolean).join(', ') || t('space.form.locationNotDefined')}
             </Text>
           </View>
 
           <View style={styles.previewGrid}>
             {!hourlyRate && !dailyRate && !weeklyRate && !monthlyRate ? (
               <View style={[styles.previewGridItem, { borderColor: colors.gray100, flex: 1 }]}>
-                <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Tarification</Text>
+                <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('space.form.pricing')}</Text>
                 <Text style={[styles.previewValue, { color: colors.success, fontWeight: '600' }]}>
-                  Gratuit
+                  {t('common.free')}
                 </Text>
               </View>
             ) : (
               <>
                 {hourlyRate ? (
                   <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-                    <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Tarif horaire</Text>
+                    <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('space.form.hourlyRateLabel')}</Text>
                     <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
                       {formatPrice(parseInt(hourlyRate))}
                     </Text>
@@ -1461,7 +1470,7 @@ export default function CreateSpaceScreen() {
                 ) : null}
                 {dailyRate ? (
                   <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-                    <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Tarif journalier</Text>
+                    <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('space.form.dailyRateLabel')}</Text>
                     <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
                       {formatPrice(parseInt(dailyRate))}
                     </Text>
@@ -1469,7 +1478,7 @@ export default function CreateSpaceScreen() {
                 ) : null}
                 {weeklyRate ? (
                   <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-                    <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Tarif hebdomadaire</Text>
+                    <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('space.form.weeklyRateLabel')}</Text>
                     <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
                       {formatPrice(parseInt(weeklyRate))}
                     </Text>
@@ -1477,7 +1486,7 @@ export default function CreateSpaceScreen() {
                 ) : null}
                 {monthlyRate ? (
                   <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-                    <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Tarif mensuel</Text>
+                    <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('space.form.monthlyRateLabel')}</Text>
                     <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
                       {formatPrice(parseInt(monthlyRate))}
                     </Text>
@@ -1489,17 +1498,17 @@ export default function CreateSpaceScreen() {
 
           {paymentCollectionInfo && (
             <View style={styles.previewSection}>
-              <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Mode d'encaissement</Text>
+              <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('space.form.paymentCollectionMode')}</Text>
               <Text style={[styles.previewText, { color: colors.textSecondary }]}>{paymentCollectionInfo}</Text>
             </View>
           )}
 
           <View style={styles.previewSection}>
-            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Description</Text>
+            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('opportunity.description')}</Text>
             {description ? (
               <Text style={[styles.previewText, { color: colors.textSecondary }]}>{description}</Text>
             ) : (
-              <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucune description</Text>
+              <Text style={[styles.previewText, { color: colors.gray400 }]}>{t('community.form.noDescription')}</Text>
             )}
           </View>
 
@@ -1507,7 +1516,7 @@ export default function CreateSpaceScreen() {
           {selectedEquipment.length > 0 && (
             <View style={styles.previewSection}>
               <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-                Équipements ({selectedEquipment.length})
+                {t('space.form.equipmentCount', { count: selectedEquipment.length })}
               </Text>
               <View style={styles.previewTagsWrap}>
                 {selectedEquipment.map((equipId) => {
@@ -1526,7 +1535,7 @@ export default function CreateSpaceScreen() {
           {selectedAmenities.length > 0 && (
             <View style={styles.previewSection}>
               <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-                Commodités ({selectedAmenities.length})
+                {t('space.form.amenitiesCount', { count: selectedAmenities.length })}
               </Text>
               <View style={styles.previewTagsWrap}>
                 {selectedAmenities.map((amenityId) => {
@@ -1543,7 +1552,7 @@ export default function CreateSpaceScreen() {
 
           {/* Availability preview */}
           <View style={styles.previewSection}>
-            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Disponibilités</Text>
+            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('space.form.availability')}</Text>
             <View style={styles.availabilityPreview}>
               {DAYS_OF_WEEK.map((day) => {
                 const dayAvail = availability[day.id];
@@ -1559,10 +1568,10 @@ export default function CreateSpaceScreen() {
                     ]}
                   >
                     <Text style={[styles.availabilityPreviewDay, { color: dayAvail.isOpen ? colors.textPrimary : colors.gray400 }]}>
-                      {day.short}
+                      {t(day.shortKey)}
                     </Text>
                     <Text style={[styles.availabilityPreviewTime, { color: dayAvail.isOpen ? colors.primary : colors.gray400 }]}>
-                      {dayAvail.isOpen ? `${dayAvail.startTime}-${dayAvail.endTime}` : 'Fermé'}
+                      {dayAvail.isOpen ? `${dayAvail.startTime}-${dayAvail.endTime}` : t('space.form.closed')}
                     </Text>
                   </View>
                 );
@@ -1572,20 +1581,20 @@ export default function CreateSpaceScreen() {
 
           {/* Règlements intérieurs */}
           <View style={styles.previewSection}>
-            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Règlements intérieurs</Text>
+            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('space.form.rulesPlural')}</Text>
             {rules.trim() ? (
               <Text style={[styles.previewText, { color: colors.textSecondary }]}>{rules}</Text>
             ) : (
-              <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucun règlement défini</Text>
+              <Text style={[styles.previewText, { color: colors.gray400 }]}>{t('space.form.noRulesDefined')}</Text>
             )}
           </View>
 
           {/* Questions complémentaires */}
           <View style={[styles.previewSection, { backgroundColor: colors.gray50 }]}>
-            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Questions complémentaires</Text>
+            <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('space.form.additionalQuestions')}</Text>
             <View style={styles.previewApplicationSettings}>
               <View style={styles.previewSettingRow}>
-                <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Nombre de questions</Text>
+                <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('space.form.questionsCountLabel')}</Text>
                 <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
                   {questions.filter(q => q.question.trim()).length}
                 </Text>
@@ -1620,7 +1629,7 @@ export default function CreateSpaceScreen() {
         <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
           <View style={styles.footerButtons}>
             <Button
-              title="Retour"
+              title={t('common.back')}
               onPress={handleBack}
               disabled={isSubmitting}
               variant="outline"
@@ -1630,7 +1639,7 @@ export default function CreateSpaceScreen() {
             />
             <View style={styles.publishButton}>
               <Button
-                title={isSubmitting ? 'Publication...' : 'Publier'}
+                title={isSubmitting ? t('common.publishing') : t('common.publish')}
                 onPress={form.handleSubmit}
                 disabled={isSubmitting}
                 fullWidth
@@ -1646,7 +1655,7 @@ export default function CreateSpaceScreen() {
         <View style={styles.footerButtons}>
           {!isFirstStep && (
             <Button
-              title="Retour"
+              title={t('common.back')}
               onPress={handleBack}
               variant="outline"
               icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
@@ -1656,7 +1665,7 @@ export default function CreateSpaceScreen() {
           )}
           <View style={[styles.continueButton, !isFirstStep && { flex: 1 }]}>
             <Button
-              title="Continuer"
+              title={t('common.next')}
               onPress={handleNext}
               disabled={!canProceed()}
               fullWidth
@@ -1675,9 +1684,9 @@ export default function CreateSpaceScreen() {
 	        <IconButton
 	          onPress={() => router.back()}
 	          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	          accessibilityLabel="Retour"
+	          accessibilityLabel={t('common.back')}
 	        />
-	        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Nouvel espace</Text>
+		        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('space.form.newTitle')}</Text>
 	        <View style={styles.headerSpacer} />
 	      </View>
 

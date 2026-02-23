@@ -1,0 +1,21 @@
+{
+  "noAccessToOrg": "ليس لديك وصول إلى هذه المنظمة",
+  "insufficientRoleForBilling": "دور غير كافٍ لإدارة فواتير هذه المنظمة",
+  "internalError": "خطأ داخلي في الفوترة",
+  "failedToLoadCatalog": "تعذّر تحميل كتالوج الأرصدة",
+  "scopeRequired": "scope مطلوب: TALENT أو ORGANIZATION",
+  "talentAuthRequired": "مصادقة الموهبة مطلوبة",
+  "talentWalletAccessDenied": "تم رفض الوصول إلى محفظة الموهبة",
+  "orgIdRequired": "معرّف المنظمة مطلوب لنطاق ORGANIZATION",
+  "authRequired": "المصادقة مطلوبة",
+  "ownerIdRequired": "owner_id مطلوب",
+  "invalidTalentOwnerId": "owner_id الموهبة غير صالح",
+  "paystackRefRequired": "paystack_reference مطلوب",
+  "paymentNotFound": "الدفعة غير موجودة",
+  "paymentAccessDenied": "تم رفض الوصول إلى هذه الدفعة",
+  "invoiceAccessDenied": "تم رفض الوصول إلى فواتير الموهبة",
+  "invoiceNotFound": "الفاتورة غير موجودة",
+  "insufficientCredits": "رصيد الأرصدة غير كافٍ. أعد شحن محفظتك للمتابعة.",
+  "insufficientOrgCredits": "رصيد أرصدة المنظمة غير كافٍ. أعيدوا شحن المحفظة للمتابعة.",
+  "insufficientCreditsForPublication": "رصيد الأرصدة غير كافٍ. أعد شحن محفظتك لجدولة منشور."
+}

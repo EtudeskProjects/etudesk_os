@@ -7,9 +7,9 @@
   "noFileProvided": "No file provided",
   "invalidDocType": "Invalid document type",
   "uploadError": "Error uploading document",
-  "updated": "Document updated",
+  "updated": "Document updated successfully",
   "updateError": "Error updating document",
-  "deleted": "Document deleted",
+  "deleted": "Document deleted successfully",
   "deleteError": "Error deleting document",
   "extractionRestarted": "Extraction restarted"
 }

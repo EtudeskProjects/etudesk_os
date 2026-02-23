@@ -1,0 +1,7 @@
+{
+  "profileNotFound": "人才档案未找到",
+  "fetchError": "获取人才档案失败",
+  "fetchObjectError": "获取人才对象失败",
+  "updateError": "更新人才档案失败",
+  "notFound": "人才未找到"
+}

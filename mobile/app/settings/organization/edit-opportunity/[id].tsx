@@ -41,13 +41,13 @@ import { useTheme } from '../../../../src/hooks/useTheme';
 import { COUNTRIES, getRegionsByCountry, getCommunesByRegion } from '../../../../src/constants/location';
 import { SECTOR_DATA } from '../../../../src/constants/talent';
 import {
-  OPPORTUNITY_TYPE_DATA,
-  CONTRACT_TYPE_DATA,
-  WORK_RHYTHM_DATA,
-  LOCATION_TYPE_DATA,
-  COMPENSATION_FREQUENCY_DATA,
+  getOpportunityTypeData,
+  getContractTypeData,
+  getWorkRhythmData,
+  getLocationTypeData,
+  getCompensationFrequencyData,
   getCurrencySymbol,
-  OPPORTUNITY_VISIBILITY_DATA,
+  getOpportunityVisibilityData,
 } from '../../../../src/constants/opportunity';
 import {
   OpportunityType,
@@ -56,17 +56,18 @@ import {
   LocationType,
   CompensationFrequency,
   OpportunityStatus,
-  OPPORTUNITY_TYPE_LABELS,
-  CONTRACT_TYPE_LABELS,
-  WORK_RHYTHM_LABELS,
-  LOCATION_TYPE_LABELS,
-  COMPENSATION_FREQUENCY_LABELS,
-  OPPORTUNITY_STATUS_LABELS,
+  getOpportunityTypeLabel,
+  getContractTypeLabel,
+  getWorkRhythmLabel,
+  getLocationTypeLabel,
+  getCompensationFrequencyLabel,
+  getOpportunityStatusLabel,
   ApplicationQuestion,
   Visibility,
 } from '../../../../src/types/models';
 import { opportunityService, UpdateOpportunityData, imageService } from '../../../../src/services';
 import { useAlert } from '../../../../src/contexts/AlertContext';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 import { FormTextArea } from '../../../../src/components/forms/FormTextArea';
 import { uploadFile } from '../../../../src/services/fileService';
 import { getFullImageUrl } from '../../../../src/utils/image';
@@ -76,12 +77,12 @@ type Step = 'info' | 'lieu' | 'conditions' | 'media' | 'preview';
 
 const STEPS: Step[] = ['info', 'lieu', 'conditions', 'media', 'preview'];
 
-const STEP_TITLES: Record<Step, string> = {
-  info: 'Infos',
-  lieu: 'Lieu',
-  conditions: 'Conditions',
-  media: 'Média',
-  preview: 'Aperçu',
+const STEP_TITLE_KEYS: Record<Step, string> = {
+  info: 'opportunity.form.steps.info',
+  lieu: 'opportunity.form.steps.location',
+  conditions: 'opportunity.form.steps.conditions',
+  media: 'opportunity.form.steps.media',
+  preview: 'opportunity.form.steps.preview',
 };
 
 // Constants for limits
@@ -119,9 +120,18 @@ export default function EditOpportunityScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const alerts = useAlert();
   const { showToast } = useToast();
+
+  // Resolve getter functions to data arrays
+  const opportunityTypeData = getOpportunityTypeData();
+  const contractTypeData = getContractTypeData();
+  const workRhythmData = getWorkRhythmData();
+  const locationTypeData = getLocationTypeData();
+  const compensationFrequencyData = getCompensationFrequencyData();
+  const opportunityVisibilityData = getOpportunityVisibilityData();
 
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<Step>('info');
@@ -265,7 +275,7 @@ export default function EditOpportunityScreen() {
         })));
       }
     } catch (error: any) {
-      await alerts.error('Erreur', error.error || 'Impossible de charger l\'opportunité.');
+      await alerts.error(t('common.error'), error.error || t('opportunity.form.loadError'));
       router.back();
     } finally {
       setIsLoading(false);
@@ -274,7 +284,7 @@ export default function EditOpportunityScreen() {
 
   const pickImage = async () => {
     if (images.length >= MAX_IMAGES) {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_IMAGES} images.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('opportunity.form.maxImages', { count: MAX_IMAGES }) });
       return;
     }
 
@@ -289,7 +299,7 @@ export default function EditOpportunityScreen() {
         setImages([...images, newImage]);
       }
     } catch (error) {
-      showToast({ type: 'error', title: 'Erreur', message: 'Une erreur est survenue lors de la sélection de l\'image.' });
+      showToast({ type: 'error', title: t('common.error'), message: t('opportunity.form.imageSelectionError') });
     }
   };
 
@@ -300,7 +310,7 @@ export default function EditOpportunityScreen() {
   // Question handlers
   const addQuestion = () => {
     if (applicationQuestions.length >= MAX_QUESTIONS) {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_QUESTIONS} questions.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('opportunity.form.maxQuestions', { count: MAX_QUESTIONS }) });
       return;
     }
     const newQuestion: ApplicationQuestion = {
@@ -324,7 +334,7 @@ export default function EditOpportunityScreen() {
 
   const pickDocument = async () => {
     if (attachments.length >= MAX_ATTACHMENTS) {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez ajouter au maximum ${MAX_ATTACHMENTS} pièces jointes.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('opportunity.form.maxAttachments', { count: MAX_ATTACHMENTS }) });
       return;
     }
 
@@ -339,7 +349,7 @@ export default function EditOpportunityScreen() {
         const fileSize = doc.size || 0;
 
         if (fileSize > MAX_ATTACHMENT_SIZE_BYTES) {
-          showToast({ type: 'warning', title: 'Fichier trop volumineux', message: `Le fichier ne doit pas dépasser ${MAX_ATTACHMENT_SIZE_MB} MB.` });
+          showToast({ type: 'warning', title: t('common.fileTooLarge'), message: t('opportunity.form.fileTooLargeMessage', { size: MAX_ATTACHMENT_SIZE_MB }) });
           return;
         }
 
@@ -353,7 +363,7 @@ export default function EditOpportunityScreen() {
         setAttachments([...attachments, newAttachment]);
       }
     } catch (error) {
-      showToast({ type: 'error', title: 'Erreur', message: 'Une erreur est survenue lors de la sélection du document.' });
+      showToast({ type: 'error', title: t('common.error'), message: t('opportunity.form.documentSelectionError') });
     }
   };
 
@@ -368,7 +378,7 @@ export default function EditOpportunityScreen() {
     } else if (selectedSectors.length < MAX_SECTORS) {
       setSelectedSectors([...selectedSectors, sectorId]);
     } else {
-      showToast({ type: 'warning', title: 'Limite atteinte', message: `Vous pouvez sélectionner au maximum ${MAX_SECTORS} secteurs.` });
+      showToast({ type: 'warning', title: t('common.limitReached'), message: t('opportunity.form.maxSectors', { count: MAX_SECTORS }) });
     }
   };
 
@@ -421,8 +431,8 @@ export default function EditOpportunityScreen() {
       if (__DEV__) console.error('Error generating opportunity:', error);
       showToast({
         type: 'error',
-        title: 'Erreur de génération',
-        message: error?.error || 'Une erreur est survenue lors de la génération. Veuillez réessayer.',
+        title: t('common.generationErrorTitle'),
+        message: error?.error || t('common.generationError'),
       });
     } finally {
       setIsGenerating(false);
@@ -464,7 +474,7 @@ export default function EditOpportunityScreen() {
           uploadedImageUrls.push(uploaded.url);
         } catch (uploadError) {
           if (__DEV__) console.error('Error uploading image:', uploadError);
-          await alerts.error('Erreur', 'Impossible d\'uploader une image. Veuillez réessayer.');
+          await alerts.error(t('common.error'), t('opportunity.form.uploadImageError'));
           setIsSubmitting(false);
           return;
         }
@@ -489,7 +499,7 @@ export default function EditOpportunityScreen() {
           uploadedAttachments.push({ ...attachment, uri: uploaded.url });
         } catch (uploadError) {
           if (__DEV__) console.error('Error uploading attachment:', uploadError);
-          await alerts.error('Erreur', 'Impossible d\'uploader une pièce jointe. Veuillez réessayer.');
+          await alerts.error(t('common.error'), t('opportunity.form.uploadAttachmentError'));
           setIsSubmitting(false);
           return;
         }
@@ -537,12 +547,12 @@ export default function EditOpportunityScreen() {
       await opportunityService.update(id!, data);
       await alerts.showAlert({
         type: 'success',
-        title: 'Modifications enregistrées',
-        message: 'L\'opportunité a été mise à jour.',
+        title: t('opportunity.form.updatedTitle'),
+        message: t('opportunity.form.updatedMessage'),
         buttons: [{ text: 'OK', onPress: () => router.back() }],
       });
     } catch (error: any) {
-      await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de la mise à jour.');
+      await alerts.error(t('common.error'), error.error || t('opportunity.form.updateError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -551,8 +561,8 @@ export default function EditOpportunityScreen() {
   const handleDelete = () => {
     (async () => {
       const confirmed = await alerts.confirm(
-        'Supprimer l\'opportunité',
-        `Êtes-vous sûr de vouloir supprimer "${title}" ? Cette action est irréversible.`
+        t('common.deleteTitle'),
+        t('opportunity.form.deleteConfirm', { title })
       );
       if (!confirmed) return;
       setIsSubmitting(true);
@@ -560,12 +570,12 @@ export default function EditOpportunityScreen() {
         await opportunityService.delete(id!);
         await alerts.showAlert({
           type: 'success',
-          title: 'Supprimée',
-          message: 'L\'opportunité a été supprimée.',
+          title: t('opportunity.form.deletedTitle'),
+          message: t('opportunity.form.deletedMessage'),
           buttons: [{ text: 'OK', onPress: () => router.back() }],
         });
       } catch (error: any) {
-        await alerts.error('Erreur', error.error || 'Une erreur est survenue lors de la suppression.');
+        await alerts.error(t('common.error'), error.error || t('opportunity.form.deleteError'));
       } finally {
         setIsSubmitting(false);
       }
@@ -581,7 +591,7 @@ export default function EditOpportunityScreen() {
     }
   };
 
-  const formatDate = (date: Date | null) => date ? date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Non définie';
+  const formatDate = (date: Date | null) => date ? date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : t('community.form.notDefinedFeminine');
 
   const formatNumber = (num: string | number | null | undefined): string => {
     if (!num) return '';
@@ -597,9 +607,9 @@ export default function EditOpportunityScreen() {
   };
 
   const getLocationLabel = () => {
-    if (!locationType) return 'Non défini';
-    const locationLabel = LOCATION_TYPE_LABELS[locationType];
-    if (!locationLabel) return 'Non défini';
+    if (!locationType) return t('community.form.notDefined');
+    const locationLabel = getLocationTypeLabel(locationType);
+    if (!locationLabel) return t('community.form.notDefined');
     if (locationType === 'REMOTE') return locationLabel;
     const parts = [locationLabel];
     if (city) {
@@ -635,7 +645,7 @@ export default function EditOpportunityScreen() {
             <View style={[styles.stepDot, { backgroundColor: colors.gray200 }, (isCurrent || isCompleted) && { backgroundColor: colors.primary }]}>
               {isCompleted ? <Check size={12} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth + 0.5} /> : <Text style={[styles.stepNumber, { color: colors.gray600 }, isCurrent && { color: colors.textOnPrimary }]}>{index + 1}</Text>}
             </View>
-            <Text style={[styles.stepLabel, { color: colors.gray500 }, isCurrent && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold }]}>{STEP_TITLES[step]}</Text>
+            <Text style={[styles.stepLabel, { color: colors.gray500 }, isCurrent && { color: colors.primary, fontWeight: TYPOGRAPHY.fontWeight.semibold }]}>{t(STEP_TITLE_KEYS[step])}</Text>
           </View>
         );
       })}
@@ -646,16 +656,16 @@ export default function EditOpportunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <Briefcase size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Informations de base</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('opportunity.form.steps.info')}</Text>
       </View>
       <View style={styles.formFields}>
-        <Input label="Titre du poste *" placeholder="Ex: Developpeur Full Stack" value={title} onChangeText={setTitle} />
+        <Input label={t('opportunity.form.jobTitleLabel')} placeholder={t('opportunity.form.jobTitlePlaceholder')} value={title} onChangeText={setTitle} />
 
         {/* Type d'opportunite */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Type d'opportunite *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('opportunity.form.opportunityTypeLabel')}</Text>
           <View style={styles.tagsContainer}>
-            {OPPORTUNITY_TYPE_DATA.map((type) => {
+            {opportunityTypeData.map((type: { id: OpportunityType; label: string }) => {
               const isSelected = opportunityType === type.id;
               return (
                 <Chip
@@ -676,7 +686,7 @@ export default function EditOpportunityScreen() {
         {canGenerate && (
           <View style={styles.generateButtonContainer}>
             <Button
-              title={isGenerating ? 'Suggestion...' : 'Suggérer'}
+              title={isGenerating ? t('community.form.suggesting') : t('community.form.suggest')}
               onPress={handleGenerate}
               loading={isGenerating}
               disabled={isGenerating}
@@ -690,7 +700,7 @@ export default function EditOpportunityScreen() {
         {/* Secteurs d'activité - Multi-selection (5 max) */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Secteurs d'activité ({selectedSectors.length}/{MAX_SECTORS})
+            {t('community.industries')} ({selectedSectors.length}/{MAX_SECTORS})
           </Text>
           <View style={styles.tagsContainer}>
             {SECTOR_DATA.slice(0, 15).map((sector) => {
@@ -698,7 +708,7 @@ export default function EditOpportunityScreen() {
               return (
                 <Chip
                   key={sector.id}
-                  label={sector.label}
+                  label={t(sector.labelKey)}
                   selected={isSelected}
                   leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
                   onPress={() => toggleSector(sector.id)}
@@ -711,8 +721,8 @@ export default function EditOpportunityScreen() {
         </View>
 
         <FormTextArea
-          label="Description du poste"
-          placeholder="Décrivez les missions..."
+          label={t('opportunity.description')}
+          placeholder={t('opportunity.form.summaryPlaceholder')}
           value={summary}
           onChangeText={setSummary}
           rows={4}
@@ -720,8 +730,8 @@ export default function EditOpportunityScreen() {
         />
 
         <FormTextArea
-          label="Prérequis"
-          placeholder="Compétences requises..."
+          label={t('opportunity.requirements')}
+          placeholder={t('opportunity.form.requirementsPlaceholder')}
           value={requirements}
           onChangeText={setRequirements}
           rows={3}
@@ -729,8 +739,8 @@ export default function EditOpportunityScreen() {
         />
 
         <FormTextArea
-          label="Atouts appréciés"
-          placeholder="Compétences bonus..."
+          label={t('opportunity.niceToHave')}
+          placeholder={t('opportunity.form.niceToHavePlaceholder')}
           value={niceToHave}
           onChangeText={setNiceToHave}
           rows={2}
@@ -744,14 +754,14 @@ export default function EditOpportunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <MapPin size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Lieu de travail</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('opportunity.form.steps.location')}</Text>
       </View>
       <View style={styles.formFields}>
         {/* Mode de travail - 3 options horizontales avec icones */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Mode de travail *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('opportunity.form.workModeLabel')}</Text>
           <View style={styles.locationTypeRow}>
-            {LOCATION_TYPE_DATA.map((type) => {
+            {locationTypeData.map((type: { id: LocationType; label: string; description: string }) => {
               const isSelected = locationType === type.id;
               const IconComponent = LOCATION_TYPE_ICONS[type.id];
               return (
@@ -774,7 +784,7 @@ export default function EditOpportunityScreen() {
         {locationType && locationType !== 'REMOTE' && (
           <>
             <View style={styles.fieldContainer}>
-              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Pays *</Text>
+              <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.country')} *</Text>
 	              <ScrollView ref={countryScrollRef} horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
 	                {COUNTRIES.map((c) => {
 	                  const isSelected = country === c.id;
@@ -798,7 +808,7 @@ export default function EditOpportunityScreen() {
 
             {availableRegions.length > 0 && (
               <View style={styles.fieldContainer}>
-                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Region</Text>
+                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.region')}</Text>
 	                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
 	                  {availableRegions.map((r) => {
 	                    const isSelected = region === r.id;
@@ -823,7 +833,7 @@ export default function EditOpportunityScreen() {
 
             {availableCities.length > 0 && (
               <View style={styles.fieldContainer}>
-                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Ville</Text>
+                <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('auth.createProfile.city')}</Text>
 	                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} contentContainerStyle={styles.horizontalScrollContent}>
 	                  {availableCities.map((c) => {
 	                    const isSelected = city === c.id;
@@ -855,14 +865,14 @@ export default function EditOpportunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <FileText size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Conditions</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('opportunity.form.steps.conditions')}</Text>
       </View>
       <View style={styles.formFields}>
         {/* Type de contrat */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Type de contrat *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('opportunity.form.contractTypeLabel')}</Text>
           <View style={styles.tagsContainer}>
-            {CONTRACT_TYPE_DATA.map((type) => {
+            {contractTypeData.map((type: { id: ContractType; label: string }) => {
               const isSelected = contractType === type.id;
               return (
                 <Chip
@@ -881,9 +891,9 @@ export default function EditOpportunityScreen() {
 
         {/* Rythme de travail */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Rythme de travail</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('opportunity.form.workRhythmLabel')}</Text>
           <View style={styles.tagsContainer}>
-            {WORK_RHYTHM_DATA.map((rhythm) => {
+            {workRhythmData.map((rhythm: { id: WorkRhythm; label: string; description: string }) => {
               const isSelected = workRhythm === rhythm.id;
               return (
                 <Chip
@@ -902,7 +912,7 @@ export default function EditOpportunityScreen() {
 
         {/* Durée du contrat - Input libre */}
         <Input
-          label="Durée du contrat"
+          label={t('opportunity.duration')}
           placeholder="ex: 1 mois, 6 mois, CDI..."
           value={duration}
           onChangeText={setDuration}
@@ -912,7 +922,7 @@ export default function EditOpportunityScreen() {
 
         {/* Remuneration */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Rémunération</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('opportunity.salary')}</Text>
           <View style={styles.rowFields}>
             <View style={styles.halfField}>
               <Input label="Minimum" placeholder="150000" value={compensationMin} onChangeText={setCompensationMin} keyboardType="numeric" />
@@ -924,7 +934,7 @@ export default function EditOpportunityScreen() {
         </View>
 
         <Input
-          label="Devise (ex: XOF, EUR)"
+          label={t('opportunity.form.currencyLabel')}
           placeholder="XOF"
           value={currency}
           onChangeText={setCurrency}
@@ -933,9 +943,9 @@ export default function EditOpportunityScreen() {
         />
 
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Frequence</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('opportunity.form.frequencyLabel')}</Text>
           <View style={styles.tagsContainer}>
-            {COMPENSATION_FREQUENCY_DATA.map((freq) => {
+            {compensationFrequencyData.map((freq: { id: CompensationFrequency; label: string }) => {
               const isSelected = compensationFrequency === freq.id;
               return (
                 <Chip
@@ -955,9 +965,9 @@ export default function EditOpportunityScreen() {
         {/* Visibility */}
         <View style={[styles.separator, { backgroundColor: colors.gray200 }]} />
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Visibilité *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('opportunity.form.visibilityLabel')}</Text>
           <View style={styles.locationTypeRow}>
-            {OPPORTUNITY_VISIBILITY_DATA.map((type) => {
+            {opportunityVisibilityData.map((type: { id: Visibility; label: string; description: string }) => {
               const isSelected = visibility === type.id;
               const IconComponent = type.id === 'PUBLIC' ? Eye : type.id === 'PRIVATE' ? Lock : Eye;
               return (
@@ -993,9 +1003,9 @@ export default function EditOpportunityScreen() {
         {/* Dates */}
         <View style={styles.rowFields}>
           <View style={styles.halfField}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Date limite</Text>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('opportunity.deadline')}</Text>
             <Button
-              title={deadline ? formatDate(deadline) : 'Selectionner'}
+              title={deadline ? formatDate(deadline) : t('common.select')}
               onPress={() => setShowDeadlinePicker(true)}
               variant="outline"
               icon={<Calendar size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
@@ -1007,9 +1017,9 @@ export default function EditOpportunityScreen() {
             />
           </View>
           <View style={styles.halfField}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Date de début</Text>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('opportunity.startDate')}</Text>
             <Button
-              title={startDate ? formatDate(startDate) : 'Selectionner'}
+              title={startDate ? formatDate(startDate) : t('common.select')}
               onPress={() => setShowStartDatePicker(true)}
               variant="outline"
               icon={<Calendar size={ICON.size.sm} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
@@ -1035,7 +1045,7 @@ export default function EditOpportunityScreen() {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 if (selectedDate <= today) {
-                  showToast({ type: 'warning', title: 'Date invalide', message: 'La date limite doit être supérieure à aujourd\'hui.' });
+                  showToast({ type: 'warning', title: t('opportunity.form.invalidDateTitle'), message: t('opportunity.form.deadlineMustBeAfterToday') });
                   return;
                 }
                 setDeadline(selectedDate);
@@ -1059,7 +1069,7 @@ export default function EditOpportunityScreen() {
               setShowStartDatePicker(Platform.OS === 'ios');
               if (selectedDate) {
                 if (deadline && selectedDate <= deadline) {
-                  showToast({ type: 'warning', title: 'Date invalide', message: 'La date de début doit être supérieure à la date limite.' });
+                  showToast({ type: 'warning', title: t('opportunity.form.invalidDateTitle'), message: t('opportunity.form.startDateMustBeAfterDeadline') });
                   return;
                 }
                 setStartDate(selectedDate);
@@ -1073,16 +1083,16 @@ export default function EditOpportunityScreen() {
         <View style={[styles.sectionSeparator, { backgroundColor: colors.gray200 }]} />
 
         {/* Candidature Settings Section */}
-        <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Paramètres de candidature</Text>
+        <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('opportunity.form.applicationSettings')}</Text>
 
         {/* CV Required Toggle */}
         <View style={[styles.toggleContainer, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
           <View style={styles.toggleInfo}>
             <ClipboardList size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             <View style={styles.toggleTextContainer}>
-              <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>CV requis</Text>
+              <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>{t('opportunity.form.cvRequired')}</Text>
               <Text style={[styles.toggleDescription, { color: colors.gray500 }]}>
-                Les candidats devront joindre leur CV
+                {t('opportunity.form.cvRequiredHint')}
               </Text>
             </View>
           </View>
@@ -1095,10 +1105,10 @@ export default function EditOpportunityScreen() {
         {/* Complementary Questions */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Questions complémentaires ({applicationQuestions.length}/{MAX_QUESTIONS})
+            {t('opportunity.form.additionalQuestionsCount', { count: applicationQuestions.length, max: MAX_QUESTIONS })}
           </Text>
           <Text style={[styles.fieldHint, { color: colors.gray500 }]}>
-            Posez des questions aux candidats (réponse courte, max {MAX_QUESTION_LENGTH} caractères)
+            {t('opportunity.form.askCandidatesQuestions', { max: MAX_QUESTION_LENGTH })}
           </Text>
 
           {/* Questions List */}
@@ -1109,19 +1119,19 @@ export default function EditOpportunityScreen() {
             >
               <View style={styles.questionHeader}>
                 <Text style={[styles.questionNumber, { color: colors.primary }]}>
-                  Question {index + 1}
+                  {t('opportunity.form.questionN', { index: index + 1 })}
                 </Text>
                 <IconButton
                   onPress={() => removeQuestion(question.id)}
                   icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-                  accessibilityLabel="Supprimer la question"
+                  accessibilityLabel={t('community.form.removeQuestion')}
                   size="sm"
                   variant="ghost"
                 />
               </View>
 
               <FormTextArea
-                placeholder="Écrivez votre question..."
+                placeholder={t('community.form.questionPlaceholder')}
                 value={question.question}
                 onChangeText={(text) => updateQuestion(question.id, { question: text })}
                 maxLength={MAX_QUESTION_LENGTH}
@@ -1132,7 +1142,7 @@ export default function EditOpportunityScreen() {
 
               <View style={styles.questionFooter}>
                 <View style={styles.requiredToggle}>
-                  <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>Obligatoire</Text>
+                  <Text style={[styles.requiredLabel, { color: colors.gray600 }]}>{t('common.required')}</Text>
                   <Toggle
                     value={question.required}
                     onValueChange={(value) => updateQuestion(question.id, { required: value })}
@@ -1146,7 +1156,7 @@ export default function EditOpportunityScreen() {
           {/* Add Question Button */}
           {applicationQuestions.length < MAX_QUESTIONS && (
             <Button
-              title="Ajouter une question"
+              title={t('community.form.addQuestion')}
               onPress={addQuestion}
               variant="outline"
               icon={<Plus size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
@@ -1163,16 +1173,16 @@ export default function EditOpportunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <ImageIcon size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Media</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('opportunity.form.steps.media')}</Text>
       </View>
       <View style={styles.formFields}>
         {/* Images d'illustration - Max 5 */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700, textAlign: 'center' }]}>
-            Images d'illustration ({images.length}/{MAX_IMAGES})
+            {t('community.form.illustrationImages')} ({images.length}/{MAX_IMAGES})
           </Text>
           <Text style={[styles.fieldHint, { color: colors.gray500, textAlign: 'center' }]}>
-            Format recommandé: 16:9 - Maximum {MAX_IMAGES} images
+            {t('opportunity.form.imagesFormatHint', { max: MAX_IMAGES })}
           </Text>
 
           {/* Zone d'upload centrée et full width */}
@@ -1180,7 +1190,7 @@ export default function EditOpportunityScreen() {
             {/* Bouton ajouter image si pas encore 5 */}
             {images.length < MAX_IMAGES && (
               <Button
-                title="Ajouter une image"
+                title={t('community.form.addImage')}
                 onPress={pickImage}
                 variant="outline"
                 icon={<Upload size={32} color={colors.gray400} strokeWidth={ICON.strokeWidth} />}
@@ -1199,7 +1209,7 @@ export default function EditOpportunityScreen() {
                     <IconButton
                       onPress={() => removeImage(image.id)}
                       icon={<X size={14} color={colors.textOnPrimary} strokeWidth={2.5} />}
-                      accessibilityLabel="Retirer l'image"
+                      accessibilityLabel={t('community.form.removeImage')}
                       size="sm"
                       variant="filled"
                       style={[styles.removeImageBtn, { backgroundColor: colors.error }]}
@@ -1214,10 +1224,10 @@ export default function EditOpportunityScreen() {
         {/* Pieces jointes - Max 3 x 20MB */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Pieces jointes ({attachments.length}/{MAX_ATTACHMENTS})
+            {t('opportunity.attachments')} ({attachments.length}/{MAX_ATTACHMENTS})
           </Text>
           <Text style={[styles.fieldHint, { color: colors.gray500 }]}>
-            Fiche de poste, description detaillee, etc. (PDF, Word) - Max {MAX_ATTACHMENT_SIZE_MB}MB par fichier
+            {t('opportunity.form.attachmentHint', { size: MAX_ATTACHMENT_SIZE_MB })}
           </Text>
 
           {attachments.map((attachment) => (
@@ -1230,7 +1240,7 @@ export default function EditOpportunityScreen() {
               <IconButton
                 onPress={() => removeAttachment(attachment.id)}
                 icon={<X size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
-                accessibilityLabel="Retirer la pièce jointe"
+                accessibilityLabel={t('opportunity.form.removeAttachment')}
                 size="sm"
                 variant="ghost"
               />
@@ -1239,7 +1249,7 @@ export default function EditOpportunityScreen() {
 
           {attachments.length < MAX_ATTACHMENTS && (
             <Button
-              title="Ajouter un document"
+              title={t('opportunity.form.addDocument')}
               onPress={pickDocument}
               variant="outline"
               icon={<Plus size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
@@ -1281,9 +1291,9 @@ export default function EditOpportunityScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <Eye size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Aperçu</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('opportunity.form.steps.preview')}</Text>
         <Text style={[styles.toggleDescription, { color: colors.textSecondary }]}>
-          Vérifiez toutes les informations avant enregistrement
+          {t('opportunity.form.reviewBeforeSave')}
         </Text>
       </View>
 
@@ -1291,12 +1301,12 @@ export default function EditOpportunityScreen() {
       <View style={[styles.statusCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
         <View style={styles.statusHeader}>
           <View>
-            <Text style={[styles.statusLabel, { color: colors.gray600 }]}>Statut de l'offre</Text>
+            <Text style={[styles.statusLabel, { color: colors.gray600 }]}>{t('opportunity.form.offerStatus')}</Text>
             <View style={styles.statusBadgeContainer}>
               <View style={[styles.statusBadge, { backgroundColor: withOpacity(getStatusColor(), OPACITY[20]) }]}>
                 <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
                 <Text style={[styles.statusBadgeText, { color: getStatusColor() }]}>
-                  {OPPORTUNITY_STATUS_LABELS[status]}
+                  {getOpportunityStatusLabel(status)}
                 </Text>
               </View>
             </View>
@@ -1310,11 +1320,11 @@ export default function EditOpportunityScreen() {
           )}
         </View>
         <Text style={[styles.statusHint, { color: colors.gray500 }]}>
-          {status === 'DRAFT' ? 'Activez pour publier cette offre et la rendre visible.' :
-            status === 'OPEN' ? 'L\'offre est publiée et visible par les candidats.' :
-              status === 'PAUSED' ? 'L\'offre est en pause. Activez pour la republier.' :
-                status === 'FILLED' ? 'Cette offre a été pourvue.' :
-                  status === 'EXPIRED' ? 'Cette offre a expiré.' : ''}
+          {status === 'DRAFT' ? t('opportunity.form.statusHintDraft') :
+            status === 'OPEN' ? t('opportunity.form.statusHintOpen') :
+              status === 'PAUSED' ? t('opportunity.form.statusHintPaused') :
+                status === 'FILLED' ? t('opportunity.form.statusHintFilled') :
+                  status === 'EXPIRED' ? t('opportunity.form.statusHintExpired') : ''}
         </Text>
       </View>
 
@@ -1329,35 +1339,35 @@ export default function EditOpportunityScreen() {
         ) : (
           <View style={[styles.previewNoImage, { backgroundColor: colors.gray100 }]}>
             <ImageIcon size={32} color={colors.gray400} />
-            <Text style={[styles.previewNoImageText, { color: colors.gray500 }]}>Aucune image</Text>
+            <Text style={[styles.previewNoImageText, { color: colors.gray500 }]}>{t('community.form.noImage')}</Text>
           </View>
         )}
 
         {/* Title & Type */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{title || 'Sans titre'}</Text>
+          <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{title || t('opportunity.form.untitled')}</Text>
           <View style={styles.previewTags}>
             {opportunityType ? (
               <View style={[styles.previewTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-                <Text style={[styles.previewTagText, { color: colors.primary }]}>{OPPORTUNITY_TYPE_LABELS[opportunityType]}</Text>
+                <Text style={[styles.previewTagText, { color: colors.primary }]}>{getOpportunityTypeLabel(opportunityType)}</Text>
               </View>
             ) : (
               <View style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>Type non défini</Text>
+                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>{t('community.form.typeNotDefined')}</Text>
               </View>
             )}
             {contractType ? (
               <View style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                <Text style={[styles.previewTagText, { color: colors.gray700 }]}>{CONTRACT_TYPE_LABELS[contractType]}</Text>
+                <Text style={[styles.previewTagText, { color: colors.gray700 }]}>{getContractTypeLabel(contractType)}</Text>
               </View>
             ) : (
               <View style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>Contrat non défini</Text>
+                <Text style={[styles.previewTagText, { color: colors.gray500 }]}>{t('opportunity.form.contractNotDefined')}</Text>
               </View>
             )}
             {workRhythm && (
               <View style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                <Text style={[styles.previewTagText, { color: colors.gray700 }]}>{WORK_RHYTHM_LABELS[workRhythm]}</Text>
+                <Text style={[styles.previewTagText, { color: colors.gray700 }]}>{getWorkRhythmLabel(workRhythm)}</Text>
               </View>
             )}
           </View>
@@ -1365,39 +1375,39 @@ export default function EditOpportunityScreen() {
 
         {/* Secteurs */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Secteurs d'activité</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('community.industries')}</Text>
           {selectedSectors.length > 0 ? (
             <View style={styles.previewTags}>
               {selectedSectors.map((sectorId) => {
                 const sector = SECTOR_DATA.find((s) => s.id === sectorId);
                 return (
                   <View key={sectorId} style={[styles.previewTag, { backgroundColor: colors.gray100 }]}>
-                    <Text style={[styles.previewTagText, { color: colors.gray700 }]}>{sector?.label || sectorId}</Text>
+                    <Text style={[styles.previewTagText, { color: colors.gray700 }]}>{sector ? t(sector.labelKey) : sectorId}</Text>
                   </View>
                 );
               })}
             </View>
           ) : (
-            <Text style={[styles.previewText, { color: colors.gray500 }]}>Aucun secteur sélectionné</Text>
+            <Text style={[styles.previewText, { color: colors.gray500 }]}>{t('community.form.noSectorSelected')}</Text>
           )}
         </View>
 
         {/* Info Grid */}
         <View style={styles.previewGrid}>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Mode de travail</Text>
+            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('opportunity.form.workModeLabelNoStar')}</Text>
             <Text style={[styles.previewValue, { color: locationType ? colors.textPrimary : colors.gray400 }]}>{getLocationLabel()}</Text>
           </View>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Rythme de travail</Text>
-            <Text style={[styles.previewValue, { color: workRhythm ? colors.textPrimary : colors.gray400 }]}>{workRhythm ? WORK_RHYTHM_LABELS[workRhythm] : 'Non défini'}</Text>
+            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('opportunity.form.workRhythmLabel')}</Text>
+            <Text style={[styles.previewValue, { color: workRhythm ? colors.textPrimary : colors.gray400 }]}>{workRhythm ? getWorkRhythmLabel(workRhythm) : t('community.form.notDefined')}</Text>
           </View>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Durée du contrat</Text>
-            <Text style={[styles.previewValue, { color: duration.trim() ? colors.textPrimary : colors.gray400 }]}>{duration.trim() || 'Non définie'}</Text>
+            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('opportunity.duration')}</Text>
+            <Text style={[styles.previewValue, { color: duration.trim() ? colors.textPrimary : colors.gray400 }]}>{duration.trim() || t('community.form.notDefinedFeminine')}</Text>
           </View>
           <View style={[styles.previewGridItem, { borderColor: colors.gray100 }]}>
-            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Date limite</Text>
+            <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('opportunity.deadline')}</Text>
             <Text style={[styles.previewValue, { color: deadline ? colors.textPrimary : colors.gray400 }]}>{formatDate(deadline)}</Text>
           </View>
         </View>
@@ -1405,28 +1415,28 @@ export default function EditOpportunityScreen() {
         {/* Compensation */}
         <View style={[styles.previewSection, { backgroundColor: colors.gray50 }]}>
           <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>
-            Rémunération{compensationFrequency ? ` / ${COMPENSATION_FREQUENCY_LABELS[compensationFrequency]}` : ''}
+            {t('opportunity.salary')}{compensationFrequency ? ` / ${getCompensationFrequencyLabel(compensationFrequency)}` : ''}
           </Text>
           <View style={{ marginTop: SPACING.xs }}>
             <Text style={[styles.previewText, { color: colors.textPrimary, marginBottom: SPACING.xs }]}>
-              Min : {compensationMin ? `${formatNumber(compensationMin)} ${getCurrencySymbol(currency)}` : 'Non définie'}
+              {t('opportunity.form.min')}: {compensationMin ? `${formatNumber(compensationMin)} ${getCurrencySymbol(currency)}` : t('community.form.notDefinedFeminine')}
             </Text>
             <Text style={[styles.previewText, { color: colors.textPrimary }]}>
-              Max : {compensationMax ? `${formatNumber(compensationMax)} ${getCurrencySymbol(currency)}` : 'Non définie'}
+              {t('opportunity.form.max')}: {compensationMax ? `${formatNumber(compensationMax)} ${getCurrencySymbol(currency)}` : t('community.form.notDefinedFeminine')}
             </Text>
           </View>
         </View>
 
         {/* Dates */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Dates</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('opportunity.form.dates')}</Text>
           <View style={styles.previewDates}>
             <View>
-              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Date limite</Text>
+              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('opportunity.deadline')}</Text>
               <Text style={[styles.previewValue, { color: deadline ? colors.textPrimary : colors.gray400 }]}>{formatDate(deadline)}</Text>
             </View>
             <View>
-              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Date de début</Text>
+              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('opportunity.startDate')}</Text>
               <Text style={[styles.previewValue, { color: startDate ? colors.textPrimary : colors.gray400 }]}>{formatDate(startDate)}</Text>
             </View>
           </View>
@@ -1434,34 +1444,34 @@ export default function EditOpportunityScreen() {
 
         {/* Description */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Description du poste</Text>
-          {summary ? <Text style={[styles.previewText, { color: colors.textSecondary }]}>{summary}</Text> : <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucune description</Text>}
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('opportunity.description')}</Text>
+          {summary ? <Text style={[styles.previewText, { color: colors.textSecondary }]}>{summary}</Text> : <Text style={[styles.previewText, { color: colors.gray400 }]}>{t('community.form.noDescription')}</Text>}
         </View>
 
         {/* Prérequis */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Prérequis</Text>
-          {requirements ? <Text style={[styles.previewText, { color: colors.textSecondary }]}>{requirements}</Text> : <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucun prérequis défini</Text>}
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('opportunity.requirements')}</Text>
+          {requirements ? <Text style={[styles.previewText, { color: colors.textSecondary }]}>{requirements}</Text> : <Text style={[styles.previewText, { color: colors.gray400 }]}>{t('opportunity.form.noRequirements')}</Text>}
         </View>
 
         {/* Atouts appréciés */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Atouts appréciés</Text>
-          {niceToHave ? <Text style={[styles.previewText, { color: colors.textSecondary }]}>{niceToHave}</Text> : <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucun atout défini</Text>}
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('opportunity.niceToHave')}</Text>
+          {niceToHave ? <Text style={[styles.previewText, { color: colors.textSecondary }]}>{niceToHave}</Text> : <Text style={[styles.previewText, { color: colors.gray400 }]}>{t('opportunity.form.noNiceToHave')}</Text>}
         </View>
 
         {/* Paramètres de candidature */}
         <View style={[styles.previewSection, { backgroundColor: colors.gray50 }]}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Paramètres de candidature</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('opportunity.form.applicationSettings')}</Text>
           <View style={styles.previewApplicationSettings}>
             <View style={styles.previewSettingRow}>
-              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>CV requis</Text>
+              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('opportunity.form.cvRequired')}</Text>
               <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
-                {cvRequired ? 'Oui' : 'Non'}
+                {cvRequired ? t('common.yes') : t('common.no')}
               </Text>
             </View>
             <View style={styles.previewSettingRow}>
-              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>Questions complémentaires</Text>
+              <Text style={[styles.previewLabel, { color: colors.gray500 }]}>{t('space.form.additionalQuestions')}</Text>
               <Text style={[styles.previewValue, { color: colors.textPrimary }]}>
                 {applicationQuestions.filter(q => q.question.trim()).length}
               </Text>
@@ -1485,7 +1495,7 @@ export default function EditOpportunityScreen() {
 
         {/* Pièces jointes */}
         <View style={styles.previewSection}>
-          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>Pièces jointes</Text>
+          <Text style={[styles.previewSectionTitle, { color: colors.gray700 }]}>{t('opportunity.attachments')}</Text>
           {attachments.length > 0 ? (
             <View style={{ gap: SPACING.xs }}>
               {attachments.map((att) => (
@@ -1498,7 +1508,7 @@ export default function EditOpportunityScreen() {
               ))}
             </View>
           ) : (
-            <Text style={[styles.previewText, { color: colors.gray400 }]}>Aucune pièce jointe</Text>
+            <Text style={[styles.previewText, { color: colors.gray400 }]}>{t('opportunity.form.noAttachment')}</Text>
           )}
         </View>
       </View>
@@ -1513,7 +1523,7 @@ export default function EditOpportunityScreen() {
         <View style={[styles.footer, { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) }]}>
           <View style={styles.footerButtons}>
             <Button
-              title="Retour"
+              title={t('common.back')}
               onPress={handleBack}
               disabled={isSubmitting}
               variant="outline"
@@ -1525,12 +1535,12 @@ export default function EditOpportunityScreen() {
               onPress={handleDelete}
               disabled={isSubmitting}
               icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-              accessibilityLabel="Supprimer l'opportunite"
+              accessibilityLabel={t('opportunity.form.deleteA11y')}
               variant="outline"
               style={[styles.deleteButton, { borderColor: colors.error }]}
             />
             <View style={styles.saveButtonContainer}>
-              <Button title="Enregistrer" onPress={handleSave} disabled={isSubmitting} fullWidth />
+              <Button title={t('common.save')} onPress={handleSave} disabled={isSubmitting} fullWidth />
             </View>
           </View>
         </View>
@@ -1542,7 +1552,7 @@ export default function EditOpportunityScreen() {
         <View style={styles.footerButtons}>
           {!isFirstStep && (
             <Button
-              title="Retour"
+              title={t('common.back')}
               onPress={handleBack}
               variant="outline"
               icon={<ChevronLeft size={18} color={colors.gray600} strokeWidth={ICON.strokeWidth} />}
@@ -1551,7 +1561,7 @@ export default function EditOpportunityScreen() {
             />
           )}
           <View style={[styles.continueButton, !isFirstStep && { flex: 1 }]}>
-            <Button title="Continuer" onPress={handleNext} disabled={!canProceed()} fullWidth icon={<ChevronRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />} iconPosition="right" />
+            <Button title={t('common.next')} onPress={handleNext} disabled={!canProceed()} fullWidth icon={<ChevronRight size={ICON.size.md} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />} iconPosition="right" />
           </View>
         </View>
       </View>
@@ -1564,10 +1574,10 @@ export default function EditOpportunityScreen() {
         <IconButton
           onPress={handleBack}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
           style={styles.backButton}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Modifier l'opportunite</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('opportunity.form.editTitle')}</Text>
         <View style={styles.headerSpacer} />
       </View>
       <KeyboardAwareScrollView

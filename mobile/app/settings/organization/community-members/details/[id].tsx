@@ -42,21 +42,22 @@ import { communityService, CommunityMemberDetails, MemberStatus, communityMember
 import { formatRelativeTime, formatDate } from '../../../../../src/utils/date';
 import { getFullImageUrl } from '../../../../../src/utils/image';
 import { useAlert } from '../../../../../src/contexts/AlertContext';
+import { useI18n } from '../../../../../src/contexts/I18nContext';
 
 // Status configuration - colors resolved dynamically via colorKey
-const STATUS_CONFIG: Record<MemberStatus, { colorKey: 'warning' | 'success' | 'error' | 'gray500'; icon: typeof Clock; label: string }> = {
-  PENDING: { colorKey: 'warning', icon: Clock, label: 'En attente' },
-  ACTIVE: { colorKey: 'success', icon: CheckCircle2, label: 'Actif' },
-  REJECTED: { colorKey: 'error', icon: XCircle, label: 'Refusé' },
-  SUSPENDED: { colorKey: 'gray500', icon: UserX, label: 'Suspendu' },
+const STATUS_CONFIG: Record<MemberStatus, { colorKey: 'warning' | 'success' | 'error' | 'gray500'; icon: typeof Clock; labelKey: string }> = {
+  PENDING: { colorKey: 'warning', icon: Clock, labelKey: 'gestion.memberDetails.statusPending' },
+  ACTIVE: { colorKey: 'success', icon: CheckCircle2, labelKey: 'gestion.memberDetails.statusActive' },
+  REJECTED: { colorKey: 'error', icon: XCircle, labelKey: 'gestion.memberDetails.statusRejected' },
+  SUSPENDED: { colorKey: 'gray500', icon: UserX, labelKey: 'gestion.memberDetails.statusSuspended' },
 };
 
 // Status flow with descriptions - colors resolved dynamically via colorKey
-const STATUS_FLOW: Record<MemberStatus, { label: string; description: string; colorKey: 'warning' | 'success' | 'error' | 'gray500' }> = {
-  PENDING: { label: 'En attente', description: 'Demande en cours d\'examen', colorKey: 'warning' },
-  ACTIVE: { label: 'Actif', description: 'Membre actif de la communauté', colorKey: 'success' },
-  REJECTED: { label: 'Refusé', description: 'Demande refusée', colorKey: 'error' },
-  SUSPENDED: { label: 'Suspendu', description: 'Membre suspendu temporairement', colorKey: 'gray500' },
+const STATUS_FLOW: Record<MemberStatus, { labelKey: string; descriptionKey: string; colorKey: 'warning' | 'success' | 'error' | 'gray500' }> = {
+  PENDING: { labelKey: 'gestion.memberDetails.statusPending', descriptionKey: 'gestion.memberDetails.statusPendingDesc', colorKey: 'warning' },
+  ACTIVE: { labelKey: 'gestion.memberDetails.statusActive', descriptionKey: 'gestion.memberDetails.statusActiveDesc', colorKey: 'success' },
+  REJECTED: { labelKey: 'gestion.memberDetails.statusRejected', descriptionKey: 'gestion.memberDetails.statusRejectedDesc', colorKey: 'error' },
+  SUSPENDED: { labelKey: 'gestion.memberDetails.statusSuspended', descriptionKey: 'gestion.memberDetails.statusSuspendedDesc', colorKey: 'gray500' },
 };
 
 type Tab = 'profile' | 'answers' | 'messages' | 'notes';
@@ -65,6 +66,7 @@ export default function CommunityMemberDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [member, setMember] = useState<CommunityMemberDetails | null>(null);
@@ -133,7 +135,7 @@ export default function CommunityMemberDetailsScreen() {
       // Load permissions after member is loaded
       loadPermissions();
     } catch (error) {
-      void alerts.alert('Erreur', 'Impossible de charger les détails du membre.');
+      void alerts.alert(t('common.error'), t('gestion.members.detailsLoadError'));
       router.back();
     } finally {
       setIsLoading(false);
@@ -167,7 +169,7 @@ export default function CommunityMemberDetailsScreen() {
 
   const handleTogglePermission = async (key: keyof MemberPermissions) => {
     if (memberRole === 'ADMIN') {
-      void alerts.alert('Info', 'Les administrateurs ont toujours toutes les permissions.');
+      void alerts.alert(t('common.information'), t('gestion.memberDetails.adminHasAllPermissions'));
       return;
     }
 
@@ -182,10 +184,10 @@ export default function CommunityMemberDetailsScreen() {
       if (response.data) {
         setPermissions(response.data.permissions);
         setIsCustomPermissions(response.data.isCustom);
-        void alerts.alert('Succès', response.data.message || 'Permissions mises à jour.');
+        void alerts.alert(t('common.success'), response.data.message || t('gestion.memberDetails.permissionsUpdated'));
       }
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour les permissions.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.memberDetails.permissionsUpdateError'));
     } finally {
       setIsSavingPermissions(false);
     }
@@ -193,14 +195,14 @@ export default function CommunityMemberDetailsScreen() {
 
   const handleResetToDefaults = () => {
     if (memberRole === 'ADMIN') {
-      void alerts.alert('Info', 'Les administrateurs ont toujours toutes les permissions.');
+      void alerts.alert(t('common.information'), t('gestion.memberDetails.adminHasAllPermissions'));
       return;
     }
 
-    void alerts.showAlert({ title: 'Réinitialiser les permissions', message: 'Voulez-vous réinitialiser les permissions de ce membre aux valeurs par défaut de la communauté ?', buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('gestion.memberDetails.resetPermissionsTitle'), message: t('gestion.memberDetails.resetPermissionsConfirm'), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Réinitialiser',
+          text: t('gestion.memberDetails.resetPermissions'),
           onPress: async () => {
             setIsSavingPermissions(true);
             try {
@@ -208,10 +210,10 @@ export default function CommunityMemberDetailsScreen() {
               if (response.data) {
                 setPermissions(communityDefaults);
                 setIsCustomPermissions(false);
-                void alerts.alert('Succès', 'Permissions réinitialisées aux valeurs par défaut.');
+                void alerts.alert(t('common.success'), t('gestion.memberDetails.permissionsResetSuccess'));
               }
             } catch (error: any) {
-              void alerts.alert('Erreur', error.error || 'Impossible de réinitialiser les permissions.');
+              void alerts.alert(t('common.error'), error.error || t('gestion.memberDetails.permissionsResetError'));
             } finally {
               setIsSavingPermissions(false);
             }
@@ -263,7 +265,7 @@ export default function CommunityMemberDetailsScreen() {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible d\'envoyer le message.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.members.sendMessageError'));
       throw error;
     } finally {
       setIsSending(false);
@@ -277,27 +279,27 @@ export default function CommunityMemberDetailsScreen() {
       await communityService.updateMembershipStatus(member.id, newStatus, rejectionReason);
       setMember((prev) => prev ? { ...prev, status: newStatus } : null);
       setShowStatusPicker(false);
-      void alerts.alert('Succès', `Statut mis à jour: ${STATUS_FLOW[newStatus].label}`);
+      void alerts.alert(t('common.success'), t('gestion.members.statusUpdated', { status: t(STATUS_FLOW[newStatus].labelKey) }));
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour le statut.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.members.statusUpdateError'));
     }
   };
 
   const handleDeleteMember = () => {
     if (!member) return;
 
-    void alerts.showAlert({ title: 'Supprimer le membre', message: 'Êtes-vous sûr de vouloir supprimer ce membre ? Cette action permettra à la personne de postuler à nouveau.', buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('gestion.memberDetails.deleteTitle'), message: t('gestion.memberDetails.deleteConfirmSimple', { name: t('gestion.memberDetails.thisMember') }), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await communityService.deleteMember(member.id);
-              void alerts.alert('Succès', 'Membre supprimé.');
+              void alerts.alert(t('common.success'), t('gestion.members.removeSuccess'));
               router.back();
             } catch (error: any) {
-              void alerts.alert('Erreur', error.error || 'Impossible de supprimer le membre.');
+              void alerts.alert(t('common.error'), error.error || t('gestion.members.removeError'));
             }
           },
         },
@@ -310,9 +312,9 @@ export default function CommunityMemberDetailsScreen() {
     try {
       await communityService.updateMemberNotes(member.id, internalNotes);
       setIsEditingNotes(false);
-      void alerts.alert('Succès', 'Notes enregistrées.');
+      void alerts.alert(t('common.success'), t('gestion.members.notesSaved'));
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible de sauvegarder les notes.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.members.notesSaveError'));
     }
   };
 
@@ -323,7 +325,7 @@ export default function CommunityMemberDetailsScreen() {
       await communityService.updateMemberRating(member.id, newRating);
       setRating(newRating);
     } catch (error: any) {
-      void alerts.alert('Erreur', error.error || 'Impossible de mettre à jour la note.');
+      void alerts.alert(t('common.error'), error.error || t('gestion.members.ratingUpdateError'));
     }
   };
 
@@ -337,9 +339,9 @@ export default function CommunityMemberDetailsScreen() {
   };
 
   const tabs = [
-    { key: 'profile', label: 'Profil', icon: User },
-    { key: 'messages', label: 'Messages', icon: MessageCircle },
-    { key: 'notes', label: 'Notes', icon: SquarePen },
+    { key: 'profile', label: t('gestion.memberDetails.tabProfile'), icon: User },
+    { key: 'messages', label: t('gestion.memberDetails.tabMessages'), icon: MessageCircle },
+    { key: 'notes', label: t('gestion.memberDetails.tabNotes'), icon: SquarePen },
   ] as const;
 
   const renderProfileTab = () => {
@@ -362,7 +364,7 @@ export default function CommunityMemberDetailsScreen() {
             </View>
           )}
           <Text style={[styles.profileName, { color: colors.textPrimary }]}>
-            {talent?.display_name || `${talent?.first_name} ${talent?.last_name}` || 'Membre'}
+            {talent?.display_name || `${talent?.first_name} ${talent?.last_name}` || t('gestion.memberDetails.thisMember')}
           </Text>
           {talent?.headline && (
             <Text style={[styles.profileHeadline, { color: colors.gray500 }]}>
@@ -373,7 +375,7 @@ export default function CommunityMemberDetailsScreen() {
 
         {/* Talent Details */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Informations</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.information')}</Text>
 
           {/* Location */}
           {(talent?.city || talent?.country) && (
@@ -417,7 +419,7 @@ export default function CommunityMemberDetailsScreen() {
 
         {/* Rating */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
-	          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Évaluation du membre</Text>
+	          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.memberRating')}</Text>
 	          <View style={styles.ratingContainer}>
 	            {[1, 2, 3, 4, 5].map((star) => (
 	              <IconButton
@@ -431,7 +433,7 @@ export default function CommunityMemberDetailsScreen() {
 	                    strokeWidth={ICON.strokeWidth}
 	                  />
 	                }
-	                accessibilityLabel={`Noter ${star} sur 5`}
+	                accessibilityLabel={t('gestion.memberDetails.rateStars', { count: star })}
 	                variant="ghost"
 	                style={{ width: 44, height: 44, borderRadius: 22 }}
 	              />
@@ -444,13 +446,13 @@ export default function CommunityMemberDetailsScreen() {
           <View style={styles.sectionHeaderRow}>
             <View style={styles.sectionTitleRow}>
               <Shield size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-              <Text style={[styles.sectionTitle, { color: colors.gray700, marginBottom: 0 }]}>
-                Permissions
+                <Text style={[styles.sectionTitle, { color: colors.gray700, marginBottom: 0 }]}>
+                {t('gestion.memberDetails.permissions')}
               </Text>
             </View>
             {memberRole === 'ADMIN' && (
               <View style={[styles.adminBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
-                <Text style={[styles.adminBadgeText, { color: colors.primary }]}>Admin</Text>
+                <Text style={[styles.adminBadgeText, { color: colors.primary }]}>{t('gestion.memberDetails.admin')}</Text>
               </View>
             )}
           </View>
@@ -460,7 +462,7 @@ export default function CommunityMemberDetailsScreen() {
           ) : memberRole === 'ADMIN' ? (
             <View style={[styles.permissionInfo, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
               <Text style={[styles.permissionInfoText, { color: colors.primary }]}>
-                Les administrateurs ont toutes les permissions par défaut.
+                {t('gestion.memberDetails.adminHasAllPermissions')}
               </Text>
             </View>
           ) : (
@@ -475,10 +477,10 @@ export default function CommunityMemberDetailsScreen() {
                     </View>
                     <View>
                       <Text style={[styles.permissionLabel, { color: colors.textPrimary }]}>
-                        Créer des publications
+                        {t('gestion.memberDetails.canCreatePosts')}
                       </Text>
                       <Text style={[styles.permissionDesc, { color: colors.gray500 }]}>
-                        Peut publier du contenu
+                        {t('gestion.memberDetails.canCreatePostsDesc')}
                       </Text>
                     </View>
                   </View>
@@ -497,10 +499,10 @@ export default function CommunityMemberDetailsScreen() {
                     </View>
                     <View>
                       <Text style={[styles.permissionLabel, { color: colors.textPrimary }]}>
-                        Créer des événements
+                        {t('gestion.memberDetails.canCreateEvents')}
                       </Text>
                       <Text style={[styles.permissionDesc, { color: colors.gray500 }]}>
-                        Peut organiser des événements
+                        {t('gestion.memberDetails.canCreateEventsDesc')}
                       </Text>
                     </View>
                   </View>
@@ -519,10 +521,10 @@ export default function CommunityMemberDetailsScreen() {
                     </View>
                     <View>
                       <Text style={[styles.permissionLabel, { color: colors.textPrimary }]}>
-                        Créer des sondages
+                        {t('gestion.memberDetails.canCreatePolls')}
                       </Text>
                       <Text style={[styles.permissionDesc, { color: colors.gray500 }]}>
-                        Peut lancer des sondages
+                        {t('gestion.memberDetails.canCreatePollsDesc')}
                       </Text>
                     </View>
                   </View>
@@ -537,7 +539,7 @@ export default function CommunityMemberDetailsScreen() {
 	              {/* Custom permissions indicator and reset button */}
 	              {isCustomPermissions && (
 	                <Button
-	                  title="Permissions personnalisées • Réinitialiser aux valeurs par défaut"
+	                  title={t('gestion.memberDetails.customPermissionsReset')}
 	                  onPress={handleResetToDefaults}
 	                  disabled={isSavingPermissions}
 	                  variant="outline"
@@ -568,7 +570,7 @@ export default function CommunityMemberDetailsScreen() {
         {/* Answers to membership questions */}
         {member?.answers && member.answers.length > 0 && (
           <View style={[styles.section, { borderColor: colors.gray200 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Réponses à l'adhésion</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.answers')}</Text>
             {member.answers.map((answer, index) => (
               <View
                 key={index}
@@ -578,7 +580,7 @@ export default function CommunityMemberDetailsScreen() {
                 ]}
               >
                 <Text style={[styles.answerQuestion, { color: colors.gray600 }]}>
-                  {answer.question || `Question ${index + 1}`}
+                  {answer.question || t('community.form.questionN', { index: index + 1 })}
                 </Text>
                 <Text style={[styles.answerText, { color: colors.textPrimary }]}>
                   {answer.answer}
@@ -591,7 +593,7 @@ export default function CommunityMemberDetailsScreen() {
         {/* Current Status with Picker */}
         {member?.status && (
           <View style={[styles.section, { borderColor: colors.gray200 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Statut du membre</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.membershipStatus')}</Text>
 
             {/* Current status display */}
             <View style={[styles.currentStatusDisplay, { backgroundColor: withOpacity(colors[STATUS_FLOW[member.status]?.colorKey || 'warning'], OPACITY[10]) }]}>
@@ -601,13 +603,13 @@ export default function CommunityMemberDetailsScreen() {
                 return <StatusIcon size={20} color={colors[STATUS_FLOW[member.status]?.colorKey || 'warning']} strokeWidth={ICON.strokeWidth} />;
               })()}
               <Text style={[styles.currentStatusDisplayText, { color: colors[STATUS_FLOW[member.status]?.colorKey || 'warning'] }]}>
-                {STATUS_FLOW[member.status]?.label || member.status}
+                {STATUS_FLOW[member.status] ? t(STATUS_FLOW[member.status].labelKey) : member.status}
               </Text>
             </View>
 
             {/* Status picker */}
             <Button
-              title="Changer le statut"
+              title={t('gestion.memberDetails.changeStatus')}
               onPress={() => setShowStatusPicker(!showStatusPicker)}
               variant="outline"
               icon={
@@ -642,9 +644,9 @@ export default function CommunityMemberDetailsScreen() {
                           if (status === 'REJECTED') {
                             void (async () => {
                               const reason = await alerts.prompt(
-                                'Refuser le membre',
-                                'Indiquez une raison (optionnel) :',
-                                { placeholder: 'Raison (optionnel)', confirmText: 'Refuser', cancelText: 'Annuler' }
+                                t('gestion.memberDetails.rejectMemberTitle'),
+                                t('gestion.membersList.rejectRequestMessage'),
+                                { placeholder: t('gestion.membersList.rejectReasonPlaceholder'), confirmText: t('gestion.membersList.reject'), cancelText: t('common.cancel') }
                               );
                               if (reason === null) return;
                               await handleUpdateStatus(status, reason || undefined);
@@ -652,19 +654,19 @@ export default function CommunityMemberDetailsScreen() {
                           } else {
                             handleUpdateStatus(status);
 	                          }
-	                        }}
-	                        accessibilityRole="button"
-	                        accessibilityLabel={flow.label}
-	                      >
+		                        }}
+		                        accessibilityRole="button"
+		                        accessibilityLabel={t(flow.labelKey)}
+		                      >
                         <View style={[styles.statusOptionIcon, { backgroundColor: withOpacity(colors[config.colorKey], OPACITY[15]) }]}>
                           <Icon size={16} color={colors[config.colorKey]} strokeWidth={ICON.strokeWidth} />
                         </View>
-                        <View style={styles.statusOptionInfo}>
-                          <Text style={[styles.statusOptionLabel, { color: colors.textPrimary }]}>
-                            {flow.label}
-                          </Text>
+	                        <View style={styles.statusOptionInfo}>
+	                          <Text style={[styles.statusOptionLabel, { color: colors.textPrimary }]}>
+	                            {t(flow.labelKey)}
+	                          </Text>
                           <Text style={[styles.statusOptionDesc, { color: colors.gray500 }]}>
-                            {flow.description}
+                            {t(flow.descriptionKey)}
                           </Text>
                         </View>
 	                      </Pressable>
@@ -678,7 +680,7 @@ export default function CommunityMemberDetailsScreen() {
         {/* Rejection reason if rejected */}
         {member?.status === 'REJECTED' && member.rejection_reason && (
           <View style={[styles.section, { backgroundColor: withOpacity(colors.error, OPACITY[10]), borderColor: withOpacity(colors.error, OPACITY[30]) }]}>
-            <Text style={[styles.sectionTitle, { color: colors.error }]}>Raison du refus</Text>
+            <Text style={[styles.sectionTitle, { color: colors.error }]}>{t('gestion.memberDetails.rejectionReason')}</Text>
             <Text style={[styles.rejectionReason, { color: colors.textPrimary }]}>
               {member.rejection_reason}
             </Text>
@@ -687,16 +689,16 @@ export default function CommunityMemberDetailsScreen() {
 
         {/* Meta info */}
         <View style={[styles.section, { borderColor: colors.gray200 }]}>
-          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Informations de demande</Text>
+          <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.requestInfo')}</Text>
           <View style={styles.metaRow}>
-            <Text style={[styles.metaLabel, { color: colors.gray500 }]}>Date de demande:</Text>
+            <Text style={[styles.metaLabel, { color: colors.gray500 }]}>{t('gestion.memberDetails.requestDate')}</Text>
             <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
               {formatDate(member?.created_at!)}
             </Text>
           </View>
           {member?.joined_at && (
             <View style={styles.metaRow}>
-              <Text style={[styles.metaLabel, { color: colors.gray500 }]}>Membre depuis:</Text>
+              <Text style={[styles.metaLabel, { color: colors.gray500 }]}>{t('gestion.memberDetails.memberSince')}</Text>
               <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
                 {formatDate(member.joined_at)}
               </Text>
@@ -704,7 +706,7 @@ export default function CommunityMemberDetailsScreen() {
           )}
           {member?.accepted_rules && (
             <View style={styles.metaRow}>
-              <Text style={[styles.metaLabel, { color: colors.gray500 }]}>Règles acceptées:</Text>
+              <Text style={[styles.metaLabel, { color: colors.gray500 }]}>{t('gestion.memberDetails.rulesAccepted')}</Text>
               <CheckCircle2 size={16} color={colors.success} strokeWidth={ICON.strokeWidth} />
             </View>
           )}
@@ -712,7 +714,7 @@ export default function CommunityMemberDetailsScreen() {
 
         {/* Delete member */}
         <Button
-          title="Supprimer ce membre"
+          title={t('gestion.memberDetails.deleteMember')}
           onPress={handleDeleteMember}
           variant="outline"
           fullWidth
@@ -735,14 +737,14 @@ export default function CommunityMemberDetailsScreen() {
         {answers.length === 0 ? (
           <View style={styles.noContent}>
             <Text style={[styles.noContentText, { color: colors.gray500 }]}>
-              Aucune réponse fournie
+              {t('gestion.memberDetails.noAnswers')}
             </Text>
           </View>
         ) : (
           answers.map((answer, index) => (
             <View key={index} style={[styles.answerCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
               <Text style={[styles.answerQuestion, { color: colors.gray600 }]}>
-                {answer.question || `Question ${index + 1}`}
+                {answer.question || t('community.form.questionN', { index: index + 1 })}
               </Text>
               <Text style={[styles.answerText, { color: colors.textPrimary }]}>
                 {answer.answer}
@@ -754,7 +756,7 @@ export default function CommunityMemberDetailsScreen() {
         {/* Community rules if available */}
         {member?.community?.rules && (
           <View style={[styles.rulesCard, { backgroundColor: colors.gray50, borderColor: colors.gray200 }]}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Règles de la communauté</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.communityRules')}</Text>
             <Text style={[styles.rulesText, { color: colors.textSecondary }]}>
               {member.community.rules}
             </Text>
@@ -796,10 +798,10 @@ export default function CommunityMemberDetailsScreen() {
             <View style={styles.noMessages}>
               <MessageCircle size={48} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.noMessagesTitle, { color: colors.textPrimary }]}>
-                Démarrer la conversation
+                {t('gestion.memberDetails.startConversation')}
               </Text>
               <Text style={[styles.noMessagesText, { color: colors.gray500 }]}>
-                Envoyez un message au membre pour commencer à discuter.
+                {t('gestion.memberDetails.noMessagesHint')}
               </Text>
             </View>
           ) : (
@@ -808,7 +810,7 @@ export default function CommunityMemberDetailsScreen() {
                 key={message.id}
                 content={message.content}
                 isMe={message.sender_type === 'ORGANIZATION'}
-                senderName={message.sender_type === 'TALENT' ? (message.sender_name || member?.talent?.first_name || 'Membre') : undefined}
+                senderName={message.sender_type === 'TALENT' ? (message.sender_name || member?.talent?.first_name || t('gestion.memberDetails.thisMember')) : undefined}
                 createdAt={message.created_at}
                 proposedDatetime={message.proposed_datetime}
                 datetimeType={message.datetime_type as any}
@@ -822,7 +824,7 @@ export default function CommunityMemberDetailsScreen() {
         <ChatInput
           onSend={handleSendMessage}
           isSending={isSending}
-          placeholder="Écrivez votre message..."
+          placeholder={t('gestion.memberDetails.messagePlaceholder')}
           showDatetimeOption={true}
         />
       </View>
@@ -833,7 +835,7 @@ export default function CommunityMemberDetailsScreen() {
     <View style={styles.tabContent}>
         <View style={[styles.notesCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}>
           <View style={styles.notesHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>Notes internes</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray700 }]}>{t('gestion.memberDetails.internalNotes')}</Text>
             <IconButton
               onPress={() => isEditingNotes ? handleSaveNotes() : setIsEditingNotes(true)}
               size="sm"
@@ -842,11 +844,11 @@ export default function CommunityMemberDetailsScreen() {
                   ? <Save size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                   : <SquarePen size={20} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
               }
-              accessibilityLabel={isEditingNotes ? 'Enregistrer' : 'Modifier'}
+              accessibilityLabel={isEditingNotes ? t('common.save') : t('common.edit')}
             />
           </View>
           <Input
-            placeholder="Ajoutez des notes internes sur ce membre..."
+            placeholder={t('gestion.memberDetails.notesPlaceholder')}
             placeholderTextColor={colors.gray400}
           value={internalNotes}
           onChangeText={setInternalNotes}
@@ -867,7 +869,7 @@ export default function CommunityMemberDetailsScreen() {
           }}
         />
         <Text style={[styles.notesHint, { color: colors.gray400 }]}>
-          Ces notes sont visibles uniquement par votre équipe.
+          {t('gestion.memberDetails.notesHint')}
         </Text>
       </View>
     </View>
@@ -885,7 +887,7 @@ export default function CommunityMemberDetailsScreen() {
     return (
       <SafeAreaView style={[styles.errorContainer, { backgroundColor: colors.background }]}>
         <Text style={[styles.errorText, { color: colors.textPrimary }]}>
-          Membre non trouvé
+          {t('gestion.memberDetails.notFound')}
         </Text>
       </SafeAreaView>
     );
@@ -902,13 +904,13 @@ export default function CommunityMemberDetailsScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
         <View style={styles.headerContent}>
           <View style={[styles.statusBadge, { backgroundColor: withOpacity(statusColor, OPACITY[15]) }]}>
             <StatusIcon size={14} color={statusColor} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.statusText, { color: statusColor }]}>
-              {statusConfig.label}
+              {t(statusConfig.labelKey)}
             </Text>
           </View>
         </View>

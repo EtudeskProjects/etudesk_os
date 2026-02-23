@@ -249,8 +249,8 @@ export async function verifyKYCDocument(
 
   if (!process.env.OPENAI_API_KEY) {
     return errorResult(
-      ['Service de vérification non configuré'],
-      ['Service de vérification non disponible'],
+      ['Verification service not configured'],
+      ['Verification service unavailable'],
       null,
       'OPENAI_API_KEY not configured'
     );
@@ -259,8 +259,8 @@ export async function verifyKYCDocument(
   const talentObj = await buildTalentObject(talentId, true);
   if (!talentObj) {
     return errorResult(
-      ['Profil non trouvé'],
-      ['Profil utilisateur non trouvé'],
+      ['Profile not found'],
+      ['User profile not found'],
       null,
       'Talent profile not found'
     );
@@ -276,8 +276,8 @@ export async function verifyKYCDocument(
   const frontImage = await imageToBase64(frontImageUrl);
   if (!frontImage) {
     return errorResult(
-      ['Impossible de charger l\'image recto'],
-      ['Image recto non accessible'],
+      ['Unable to load front image'],
+      ['Front image not accessible'],
       talent.display_name,
       'Failed to load front image'
     );
@@ -286,14 +286,14 @@ export async function verifyKYCDocument(
   const backImage = backImageUrl ? await imageToBase64(backImageUrl) : null;
 
   const docTypeLabels: Record<DocumentType, string> = {
-    'ID_CARD': 'Carte d\'identité nationale',
-    'PASSPORT': 'Passeport',
-    'DRIVER_LICENSE': 'Permis de conduire',
-    'STUDENT_CARD': 'Carte scolaire / étudiante',
+    'ID_CARD': 'National ID card',
+    'PASSPORT': 'Passport',
+    'DRIVER_LICENSE': 'Driver license',
+    'STUDENT_CARD': 'Student card',
   };
 
   const profileName = [talentObj.first_name, talentObj.last_name].filter(Boolean).join(' ') || talentObj.display_name;
-  const talentContext = `Nom: ${profileName}\nPays: ${talentObj.country || 'Non renseigné'}`;
+  const talentContext = `Name: ${profileName}\nCountry: ${talentObj.country || 'Not specified'}`;
 
   const prompt = buildKYCVerificationPrompt(
     expectedDocType,
@@ -407,7 +407,7 @@ export async function verifyKYCDocument(
       extracted_name: extractedFullName,
       profile_name: profileFullName,
       mismatch_details: !nameComparison.match && extractedFullName
-        ? `Nom sur le document: "${extractedFullName}" vs Profil: "${profileFullName}"`
+        ? `Name on document: "${extractedFullName}" vs Profile: "${profileFullName}"`
         : undefined,
     };
 
@@ -417,32 +417,32 @@ export async function verifyKYCDocument(
 
     // Only reject for clearly invalid documents
     if (!analysis.is_valid_document) {
-      rejectionReasons.push('Le document ne semble pas être un document d\'identité valide');
+      rejectionReasons.push('The document does not appear to be a valid identity document');
     }
     if (!analysis.is_readable && analysis.document_quality === 'POOR') {
-      rejectionReasons.push('Image illisible — veuillez reprendre la photo');
+      rejectionReasons.push('Image unreadable — please retake the photo');
     }
 
     // Type mismatch is a warning, not a rejection (user may have selected wrong type)
     if (analysis.detected_document_type !== expectedDocType && analysis.detected_document_type !== 'UNKNOWN') {
-      warnings.push(`Type détecté: ${analysis.detected_document_type} (attendu: ${expectedDocType})`);
+      warnings.push(`Detected type: ${analysis.detected_document_type} (expected: ${expectedDocType})`);
     }
     if (analysis.document_quality === 'POOR' && analysis.is_readable) {
-      warnings.push('La qualité d\'image pourrait être améliorée');
+      warnings.push('Image quality could be improved');
     } else if (analysis.document_quality === 'ACCEPTABLE') {
-      warnings.push('La qualité d\'image pourrait être améliorée');
+      warnings.push('Image quality could be improved');
     }
     if (!analysis.has_photo && expectedDocType !== 'STUDENT_CARD') {
-      warnings.push('Photo d\'identité non détectée sur le document');
+      warnings.push('Identity photo not detected on document');
     }
     if (!nameComparison.match) {
       if (extractedFullName) {
-        warnings.push(`Nom sur le document: "${extractedFullName}" — vérifiez la correspondance avec votre profil`);
+        warnings.push(`Name on document: "${extractedFullName}" — please verify it matches your profile`);
       } else {
-        warnings.push('Impossible d\'extraire le nom du document');
+        warnings.push('Unable to extract name from document');
       }
     } else if (nameComparison.confidence < 80) {
-      warnings.push(`Correspondance du nom partielle (${nameComparison.confidence}%)`);
+      warnings.push(`Partial name match (${nameComparison.confidence}%)`);
     }
 
     // Issues from AI — only reject for fraud/expiry
@@ -485,8 +485,8 @@ export async function verifyKYCDocument(
   } catch (error) {
     logger.error('KYC verification error:', error);
     return errorResult(
-      ['Erreur lors de l\'analyse'],
-      ['Erreur technique lors de la vérification'],
+      ['Analysis error'],
+      ['Technical verification error'],
       talent?.display_name || null,
       error instanceof Error ? error.message : 'Verification failed'
     );
@@ -500,13 +500,13 @@ export async function quickDocumentCheck(
   frontImageUrl: string
 ): Promise<{ valid: boolean; document_type: DocumentType | 'UNKNOWN'; message: string }> {
   if (!process.env.OPENAI_API_KEY) {
-    return { valid: true, document_type: 'UNKNOWN', message: 'Vérification automatique non disponible' };
+    return { valid: true, document_type: 'UNKNOWN', message: 'Automatic verification unavailable' };
   }
 
   try {
     const frontImage = await imageToBase64(frontImageUrl);
     if (!frontImage) {
-      return { valid: false, document_type: 'UNKNOWN', message: 'Image non accessible' };
+      return { valid: false, document_type: 'UNKNOWN', message: 'Image not accessible' };
     }
 
     const openai = getOpenAIClient();
@@ -529,7 +529,7 @@ export async function quickDocumentCheck(
 
     const resultText = completion.choices[0]?.message?.content?.trim();
     if (!resultText) {
-      return { valid: true, document_type: 'UNKNOWN', message: 'Vérification temporairement indisponible' };
+      return { valid: true, document_type: 'UNKNOWN', message: 'Verification temporarily unavailable' };
     }
 
     try {
@@ -542,10 +542,10 @@ export async function quickDocumentCheck(
       };
     } catch (error) {
       logger.error('Error parsing quick check response:', error);
-      return { valid: true, document_type: 'UNKNOWN', message: 'Erreur lors de l\'analyse' };
+      return { valid: true, document_type: 'UNKNOWN', message: 'Analysis error' };
     }
   } catch (error) {
     logger.error('Quick document check error:', error);
-    return { valid: true, document_type: 'UNKNOWN', message: 'Vérification non effectuée' };
+    return { valid: true, document_type: 'UNKNOWN', message: 'Verification not performed' };
   }
 }

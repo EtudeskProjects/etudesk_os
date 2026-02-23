@@ -1,0 +1,22 @@
+{
+  "fetchError": "Error al obtener los documentos",
+  "fetchStatsError": "Error al obtener las estadísticas",
+  "notFound": "Documento no encontrado",
+  "fetchSingleError": "Error al obtener el documento",
+  "identityNotVerified": "Identidad no verificada",
+  "identityRequiredCode": "IDENTITY_REQUIRED",
+  "identityRequiredMessage": "Debes verificar tu identidad antes de agregar documentos. Ve a Configuración > Verificación de identidad.",
+  "maxFilesPerRequest": "Máximo {{count}} archivos por solicitud",
+  "maxDocumentsExceeded": "Solo puedes agregar {{remaining}} documento(s) adicional(es). Límite: {{max}}.",
+  "invalidDocumentType": "Tipo de documento inválido",
+  "uploadSuccess": "Documento subido correctamente. El procesamiento está en curso.",
+  "uploadMultipleSuccess": "{{count}} documentos subidos correctamente. El procesamiento está en curso.",
+  "uploadError": "Error al subir el documento",
+  "updateSuccess": "Documento actualizado correctamente",
+  "updateError": "Error al actualizar el documento",
+  "deleteSuccess": "Documento eliminado correctamente",
+  "deleteError": "Error al eliminar el documento",
+  "retrySuccess": "Nuevo intento de extracción iniciado",
+  "retryError": "Error al intentar la extracción",
+  "fileTooLarge": "Archivo demasiado grande. Máximo: {{size}}MB"
+}

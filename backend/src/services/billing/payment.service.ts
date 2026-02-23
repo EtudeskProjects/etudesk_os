@@ -3,13 +3,15 @@ import { pool } from '../database';
 import { logger } from '../../utils';
 import { BillingScope, WalletBalance, creditWallet } from './credit.service';
 import { createPaidInvoice } from './invoice.service';
+import { CURRENCY_CONFIG, SupportedCurrency, isSupportedCurrency } from '../../constants';
 
 interface InitCheckoutParams {
   scope: BillingScope;
   ownerId: string;
   actorTalentId: string;
   actorEmail: string;
-  amountFcfa: number;
+  amount: number;
+  currency: SupportedCurrency;
   idempotencyKey: string;
   metadata?: Record<string, unknown>;
 }
@@ -45,15 +47,15 @@ interface PaystackVerifyData {
 const PAYSTACK_BASE_URL = process.env.PAYSTACK_BASE_URL ?? 'https://api.paystack.co';
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY ?? '';
 const PAYSTACK_CALLBACK_URL = process.env.PAYSTACK_CALLBACK_URL;
-const PAYSTACK_CURRENCY = process.env.PAYSTACK_CURRENCY ?? 'XOF';
-const CREDITS_PER_100_FCFA = Number(process.env.CREDITS_PER_100_FCFA ?? 1);
 
-function minAmountForScope(scope: BillingScope): number {
-  return scope === 'TALENT' ? 2000 : 10000;
+function minAmountForScope(scope: BillingScope, currency: SupportedCurrency): number {
+  const config = CURRENCY_CONFIG[currency];
+  return scope === 'TALENT' ? config.minTalent : config.minOrg;
 }
 
-function creditsForAmount(amountFcfa: number): number {
-  const rawCredits = (amountFcfa / 100) * CREDITS_PER_100_FCFA;
+function creditsForAmount(amount: number, currency: SupportedCurrency): number {
+  const config = CURRENCY_CONFIG[currency];
+  const rawCredits = amount * config.creditsPerUnit;
   return Number(rawCredits.toFixed(2));
 }
 
@@ -152,18 +154,19 @@ export async function initCheckout(params: InitCheckoutParams): Promise<any> {
     ownerId,
     actorTalentId,
     actorEmail,
-    amountFcfa,
+    amount,
+    currency,
     idempotencyKey,
     metadata,
   } = params;
 
-  if (!Number.isFinite(amountFcfa) || amountFcfa <= 0) {
-    throw new Error('Invalid amount_fcfa');
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error('Invalid amount');
   }
 
-  const minAmount = minAmountForScope(scope);
-  if (amountFcfa < minAmount) {
-    throw new Error(`Minimum amount is ${minAmount} FCFA for ${scope}`);
+  const minAmount = minAmountForScope(scope, currency);
+  if (amount < minAmount) {
+    throw new Error(`Minimum amount is ${minAmount} ${currency} for ${scope}`);
   }
 
   if (!idempotencyKey || idempotencyKey.length < 8) {
@@ -180,28 +183,34 @@ export async function initCheckout(params: InitCheckoutParams): Promise<any> {
   }
 
   const { email: checkoutEmail, whatsappPhone } = await resolveCheckoutEmail(actorEmail, actorTalentId);
-  const creditsToCredit = creditsForAmount(amountFcfa);
+  const creditsToCredit = creditsForAmount(amount, currency);
   const reference = createPaystackReference(scope);
+  const currencyConfig = CURRENCY_CONFIG[currency];
 
   const ownerColumns = scope === 'TALENT'
     ? { talentId: ownerId, organizationId: null }
     : { talentId: null, organizationId: ownerId };
 
+  // Store amount in both amount and amount_fcfa (backward compat)
+  const amountFcfa = currency === 'XOF' ? amount : null;
+
   const paymentInsert = await pool.query(
     `INSERT INTO billing_payments (
       scope, talent_id, organization_id, provider, status,
-      amount_fcfa, currency, credits_to_credit, paystack_reference,
+      amount, amount_fcfa, currency, credits_to_credit, paystack_reference,
       idempotency_key, metadata, created_by
     ) VALUES (
       $1, $2, $3, 'PAYSTACK', 'INITIATED',
-      $4, 'FCFA', $5, $6,
-      $7, $8, $9
+      $4, $5, $6, $7, $8,
+      $9, $10, $11
     ) RETURNING *`,
     [
       scope,
       ownerColumns.talentId,
       ownerColumns.organizationId,
+      amount,
       amountFcfa,
+      currency,
       creditsToCredit,
       reference,
       idempotencyKey,
@@ -236,14 +245,15 @@ export async function initCheckout(params: InitCheckoutParams): Promise<any> {
 
   const paystackPayload: Record<string, unknown> = {
     email: checkoutEmail,
-    amount: toMinorUnits(amountFcfa),
+    amount: toMinorUnits(amount),
     reference,
-    currency: PAYSTACK_CURRENCY,
+    currency: currencyConfig.paystackCurrency,
     metadata: {
       scope,
       ownerId,
       actorTalentId,
       etudeskPaymentId: payment.id,
+      originalCurrency: currency,
       ...(whatsappPhone ? { whatsappPhone } : {}),
       ...metadata,
     },
@@ -386,7 +396,8 @@ async function applySuccessfulPayment(
       {
         scope: payment.scope,
         ownerId,
-        amountFcfa: Number(payment.amount_fcfa),
+        amount: Number(payment.amount),
+        currency: payment.currency || 'XOF',
         credits: Number(payment.credits_to_credit),
         paymentId,
         metadata: {
@@ -404,7 +415,8 @@ async function applySuccessfulPayment(
         ownerId,
         credits: Number(payment.credits_to_credit),
         sourceType: 'PURCHASE',
-        amountFcfa: Number(payment.amount_fcfa),
+        amount: Number(payment.amount),
+        currency: payment.currency || 'XOF',
         paymentId,
         invoiceId: invoice.invoiceId,
         idempotencyKey: `payment_credit_${paymentId}`,

@@ -1,7 +1,7 @@
 {
-  "created": "Candidature soumise",
-  "updated": "Candidature mise à jour",
-  "deleted": "Candidature supprimée",
+  "created": "Candidature soumise avec succès",
+  "updated": "Candidature mise à jour avec succès",
+  "deleted": "Candidature supprimée avec succès",
   "deletedCanReapply": "Candidature supprimée. Tu peux postuler à nouveau.",
   "notFound": "Candidature non trouvée",
   "alreadyApplied": "Tu as déjà postulé à cette opportunité",

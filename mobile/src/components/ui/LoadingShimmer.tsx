@@ -1,29 +1,31 @@
 /**
  * LoadingShimmer
  * Full-page or inline loading indicator with shimmer effect
- * Default label: "Réfléchit…" when content is empty
+ * Default label: t('common.thinking') when content is empty
  */
 
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { ShimmerPlaceholder } from './ShimmerPlaceholder';
 import { SPACING, TYPOGRAPHY } from '../../constants/theme';
 
 interface LoadingShimmerProps {
   /** 'fullPage' = centered block with bars + label, 'inline' = compact 1-2 bars */
   variant?: 'fullPage' | 'inline';
-  /** Label shown below shimmer. Default: "Réfléchit…" */
+  /** Label shown below shimmer. Default: t('common.thinking') */
   label?: string;
   style?: ViewStyle;
 }
 
 export const LoadingShimmer: React.FC<LoadingShimmerProps> = ({
   variant = 'fullPage',
-  label = 'Réfléchit…',
+  label,
   style,
 }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   if (variant === 'inline') {
     return (
@@ -42,9 +44,7 @@ export const LoadingShimmer: React.FC<LoadingShimmerProps> = ({
         <ShimmerPlaceholder width={220} height={48} variant="block" />
         <ShimmerPlaceholder width={180} height={48} variant="block" />
       </View>
-      {label ? (
-        <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
-      ) : null}
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{label || t('common.thinking')}</Text>
     </View>
   );
 };

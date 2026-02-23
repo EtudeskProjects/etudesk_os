@@ -1,0 +1,1743 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "thinking": "思考中…",
+    "member": "成员",
+    "members": "成员",
+    "online": "在线",
+    "error": "错误",
+    "success": "成功",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "confirm": "确认",
+    "back": "返回",
+    "next": "下一步",
+    "previous": "上一步",
+    "done": "完成",
+    "close": "关闭",
+    "search": "搜索...",
+    "seeMore": "查看更多",
+    "seeAll": "查看全部",
+    "noResults": "没有结果",
+    "retry": "重试",
+    "yes": "是",
+    "no": "否",
+    "or": "或",
+    "and": "和",
+    "optional": "可选",
+    "required": "必填",
+    "free": "免费",
+    "manage": "管理",
+    "candidate": "候选人",
+    "user": "用户",
+    "notSpecified": "未指定",
+    "copied": "已复制！",
+    "information": "信息",
+    "places": "席位",
+    "place": "席位",
+    "copy": "复制",
+    "validate": "提交",
+    "validateOrder": "确认订单",
+    "reply": "回复",
+    "sending": "发送中...",
+    "application": "申请",
+    "applications": "申请",
+    "viewApplications": "查看申请",
+    "addToFavorites": "添加到收藏",
+    "removeFromFavorites": "取消收藏",
+    "expired": "已过期",
+    "paused": "已暂停",
+    "processing": "处理中...",
+    "actionDone": "操作已完成。",
+    "actionCancelled": "操作已取消。",
+    "actionExpired": "操作已过期",
+    "connectionError": "连接错误。",
+    "genericError": "发生了一个错误。",
+    "renderError": "渲染错误：",
+    "downloadFailed": "下载失败：",
+    "downloadError": "无法下载文件。",
+    "noData": "暂无数据",
+    "noSteps": "暂无步骤",
+    "deadline": "截止日期",
+    "soughtProfile": "期望的候选人",
+    "countryCode": "国家代码",
+    "searchCountry": "搜索国家...",
+    "favorites": "收藏",
+    "allCountries": "所有国家",
+    "showMoreReplies": "显示 {{count}} 条更多回复",
+    "select": "选择",
+    "perHour": "时",
+    "perDay": "天",
+    "perWeek": "周",
+    "perMonth": "月",
+    "continue": "继续",
+    "limitReached": "已达上限",
+    "fileTooLarge": "文件太大",
+    "deleteTitle": "删除申请"
+  },
+  "auth": {
+    "login": {
+      "title": "登录",
+      "subtitle": "机会、社区和空间——一切尽在这里",
+      "continueWith": "继续使用",
+      "emailPlaceholder": "邮箱地址",
+      "passwordPlaceholder": "密码",
+      "forgotPassword": "忘记密码？",
+      "noAccount": "还没有账号？",
+      "signUp": "创建账号",
+      "orContinueWith": "或继续使用",
+      "termsPrefix": "继续即表示你同意我们的"
+    },
+    "welcome": {
+      "congrats": "你来了！",
+      "title": "你的个人资料已就绪",
+      "subtitle": "欢迎来到 Etudesk —— 你的职业旅程从这里开始",
+      "getStarted": "开始吧！",
+      "whatYouCanDo": "你可以做什么",
+      "features": {
+        "explore": {
+          "title": "发现机会",
+          "description": "适合你的工作、实习、任务和培训"
+        },
+        "connect": {
+          "title": "加入社区",
+          "description": "与你所在领域的专业人士交流"
+        },
+        "assistant": {
+          "title": "你的 AI 助手",
+          "description": "职业建议、简历、面试准备等"
+        }
+      }
+    },
+    "createProfile": {
+      "title": "创建我的资料",
+      "tellUsAboutYou": "介绍一下你自己",
+      "step1Title": "你是谁？",
+      "step2Title": "你在哪里？",
+      "step3Title": "你对什么感兴趣？",
+      "step4Title": "你的照片",
+      "firstName": "名",
+      "lastName": "姓",
+      "email": "邮箱",
+      "phone": "电话",
+      "birthDate": "出生日期",
+      "selectDate": "选择日期",
+      "gender": "性别",
+      "yourProfile": "你的资料",
+      "bio": "个人介绍",
+      "bioPlaceholder": "例如：拥有2年经验的Web开发者，热衷于金融科技。正在寻找全职工作。",
+      "country": "国家",
+      "region": "地区 / 省份",
+      "city": "城市 / 区",
+      "commune": "区",
+      "useMyLocation": "使用我的位置",
+      "locating": "定位中...",
+      "selectInterests": "选择你的兴趣",
+      "addPhoto": "添加照片",
+      "photoHint": "有照片的资料获得的浏览量多5倍",
+      "complete": "创建我的资料",
+      "workPreferences": "工作偏好",
+      "remoteAvailable": "可远程工作",
+      "remoteAvailableDesc": "我可以远程办公",
+      "willingToRelocate": "愿意搬迁",
+      "willingToRelocateDesc": "为了好机会我可以换城市",
+      "yourSectors": "你的领域",
+      "sectorsHint": "最多选择 {{max}} 个行业",
+      "selected": "已选 {{count}}/{{max}}",
+      "yourGoals": "你的目标",
+      "goalsHint": "选择你的目标（最多 {{max}} 个）",
+      "permissionRequired": "需要授权",
+      "photoPermissionMessage": "请授权访问你的照片以继续。",
+      "photoError": "无法选择图片，请重试。"
+    },
+    "emailLogin": {
+      "title": "邮箱登录",
+      "subtitle": "输入你的邮箱地址以接收验证码",
+      "emailLabel": "邮箱地址",
+      "sendCode": "接收验证码",
+      "infoText": "你将收到一个6位数验证码用于登录",
+      "sendError": "无法发送验证码，请检查你的邮箱。"
+    },
+    "verifyOtp": {
+      "title": "验证你的邮箱",
+      "subtitle": "输入发送至以下地址的验证码",
+      "verify": "验证",
+      "resendCode": "重新发送验证码",
+      "resendIn": "{{seconds}}秒后重新发送",
+      "incompleteCode": "请输入6位数字",
+      "invalidCode": "验证码错误，请检查后重试。",
+      "verifyError": "验证出错，请重试。",
+      "codeSent": "新验证码已发送！",
+      "verified": "邮箱已验证！",
+      "redirecting": "登录中...",
+      "titleWhatsApp": "验证你的 WhatsApp",
+      "subtitleWhatsApp": "输入发送至以下号码的验证码"
+    },
+    "whatsappLogin": {
+      "title": "WhatsApp 登录",
+      "subtitle": "输入你的号码以在 WhatsApp 上接收验证码",
+      "phoneLabel": "WhatsApp 号码",
+      "sendCode": "接收验证码",
+      "infoText": "你将在 WhatsApp 上收到一个6位数验证码",
+      "sendError": "无法发送 WhatsApp 验证码，请检查你的号码。"
+    }
+  },
+  "tabs": {
+    "assistant": "助手",
+    "explore": "探索",
+    "ecosystem": "首页",
+    "management": "动态",
+    "settings": "我的"
+  },
+  "assistant": {
+    "title": "助手",
+    "greeting": "你好！我能帮你什么？",
+    "inputPlaceholder": "提出问题或描述你在找什么...",
+    "suggestions": "建议",
+    "modes": {
+      "explore": "探索",
+      "study": "学习",
+      "org": "管理"
+    },
+    "prompts": {
+      "explore": {
+        "opportunities": "有哪些适合我的机会？",
+        "spaces": "哪里可以找到共享办公空间？",
+        "communities": "我的领域有哪些社区可以加入？"
+      },
+      "study": {
+        "skills": "如何提升我的技能？",
+        "plan": "帮我制定一个学习计划",
+        "certifications": "哪些认证对我有用？",
+        "basics": "给我讲讲数字营销的基础知识"
+      },
+      "org": {
+        "candidates": "给我看最新收到的申请",
+        "stats": "我的组织有哪些数据统计？",
+        "outreach": "帮我写一条联系人才的消息",
+        "jobDescription": "帮我生成一份开发者的职位描述"
+      }
+    }
+  },
+  "explore": {
+    "title": "探索",
+    "categories": {
+      "opportunities": "机会",
+      "spaces": "空间",
+      "communities": "社区"
+    },
+    "filters": "筛选",
+    "sortBy": "排序",
+    "sortOptions": {
+      "relevance": "相关性",
+      "relevanceDesc": "最适合你的",
+      "proximity": "距离",
+      "proximityDesc": "离你最近的",
+      "recent": "最新",
+      "recentDesc": "最新发布",
+      "popularity": "热门",
+      "popularityDesc": "浏览量最多的"
+    },
+    "noResultsSearch": "没有找到「{{query}}」的结果",
+    "resultsCount": {
+      "one": "{{count}} 个结果",
+      "other": "{{count}} 个结果"
+    },
+    "remote": "远程",
+    "members": "成员",
+    "create": "创建",
+    "whatToCreate": "你想为 {{name}} 创建什么？",
+    "opportunity": "机会",
+    "space": "空间",
+    "community": "社区"
+  },
+  "ecosystem": {
+    "title": "首页",
+    "weeklyInsight": "{{name}}，太棒了！本周掌握了 {{skills}} 项技能，完成了 {{modules}} 个模块。",
+    "train": "去学习",
+    "notifications": "通知",
+    "agenda": "日程",
+    "documents": "文档",
+    "skills": "技能",
+    "talent": "人才",
+    "relations": {
+      "applications": "申请",
+      "member": "成员",
+      "frequents": "常去",
+      "connected": "已连接",
+      "owns": "拥有"
+    },
+    "status": {
+      "active": "进行中",
+      "pending": "等待中",
+      "completed": "已完成",
+      "saved": "已保存"
+    },
+    "nodes": {
+      "opportunities": "机会",
+      "communities": "社区",
+      "spaces": "空间",
+      "documents": "文档"
+    }
+  },
+  "management": {
+    "title": "我的动态",
+    "offers": "职位",
+    "overview": "概览",
+    "recentActivity": "最近动态",
+    "noOrganization": "未选择组织",
+    "selectOrganization": "请选择一个组织以开始。",
+    "goToSettings": "前往设置",
+    "myApplications": "我的申请",
+    "myBookings": "我的预订",
+    "myCommunities": "我的社区",
+    "empty": {
+      "applications": "暂无申请",
+      "applicationsHint": "探索机会并投递申请",
+      "bookings": "暂无预订",
+      "bookingsHint": "发现可用的空间",
+      "communities": "暂无社区",
+      "communitiesHint": "加入你所在领域的社区"
+    }
+  },
+  "settings": {
+    "title": "我的资料",
+    "profile": "资料",
+    "editProfile": "编辑资料",
+    "viewProfile": "查看资料",
+    "spaces": {
+      "title": "空间",
+      "talent": "人才空间",
+      "organization": "组织"
+    },
+    "menu": {
+      "team": "我的团队",
+      "teamDesc": "管理成员",
+      "kyc": "身份验证",
+      "kycDesc": "验证我的身份",
+      "payment": "支付",
+      "paymentDesc": "Mobile Money、银行卡",
+      "preferences": "偏好设置",
+      "preferencesDesc": "语言、主题、通知",
+      "help": "帮助",
+      "helpDesc": "常见问题",
+      "legal": "法律声明",
+      "legalDesc": "使用条款"
+    },
+    "logout": "退出登录",
+    "logoutConfirm": "你确定要退出登录吗？",
+    "deleteAccount": "删除我的账号",
+    "deleteAccountMessage": "此操作不可撤销。你的所有数据将被永久删除。",
+    "deleteAccountConfirmTitle": "确认",
+    "deleteAccountConfirmMessage": "你真的确定要删除你的账号吗？",
+    "deleteAccountConfirm": "确认删除",
+    "deleteAccountBlockedTitle": "需要转让权限",
+    "deleteAccountBlockedMessage": "你是以下组织的唯一管理员：\n\n{{orgList}}\n\n请在删除账号前转让管理权限。",
+    "deleteAccountBlockedMembers": "{{count}} 名成员",
+    "deleteAccountManageTeam": "管理团队",
+    "deleteAccountError": "无法删除账号",
+    "deleteAccountGenericError": "发生了一个错误",
+    "version": "版本"
+  },
+  "preferences": {
+    "title": "偏好设置",
+    "display": "显示",
+    "theme": "主题",
+    "themes": {
+      "light": "浅色",
+      "dark": "深色",
+      "system": "跟随系统"
+    },
+    "language": "语言",
+    "notificationChannels": "渠道",
+    "notificationTypes": "通知类型",
+    "applications": "申请",
+    "applicationsDesc": "跟踪你的申请",
+    "reminders": "提醒",
+    "remindersDesc": "活动和截止日期",
+    "privacy": "隐私",
+    "publicProfile": "公开资料",
+    "publicProfileDesc": "所有人都可以看到你的资料",
+    "showEmail": "显示我的邮箱",
+    "showEmailDesc": "在你的资料上可见",
+    "showPhone": "显示我的电话",
+    "showPhoneDesc": "在你的资料上可见",
+    "loadError": "无法加载偏好设置",
+    "retry": "重试",
+    "notifications": {
+      "title": "通知",
+      "push": "Push 通知",
+      "pushDesc": "在手机上接收提醒",
+      "email": "邮箱通知",
+      "emailDesc": "通过邮箱接收摘要",
+      "opportunities": "新机会",
+      "opportunitiesDesc": "当有适合你的职位时",
+      "messages": "消息",
+      "messagesDesc": "当你收到消息时"
+    }
+  },
+  "profile": {
+    "title": "我的资料",
+    "personalInfo": "个人信息",
+    "location": "位置",
+    "interests": "兴趣",
+    "photo": "头像",
+    "changePhoto": "更换照片",
+    "saved": "资料已保存！"
+  },
+  "organization": {
+    "title": "组织",
+    "create": "创建组织",
+    "edit": "编辑",
+    "name": "组织名称",
+    "type": "类型",
+    "size": "规模",
+    "description": "描述",
+    "website": "网站",
+    "logo": "Logo",
+    "changeLogo": "更换 Logo",
+    "location": "位置",
+    "industries": "所属行业",
+    "saved": "组织已保存！",
+    "members": {
+      "title": "团队",
+      "members": "成员",
+      "invitations": "邀请",
+      "invite": "邀请",
+      "inviteMember": "邀请成员",
+      "email": "邮箱地址",
+      "role": "角色",
+      "roles": {
+        "owner": "所有者",
+        "admin": "管理员",
+        "manager": "负责人",
+        "member": "成员"
+      },
+      "status": {
+        "active": "活跃",
+        "pending": "等待中",
+        "expired": "已过期"
+      },
+      "actions": {
+        "changeRole": "更改角色",
+        "remove": "移出团队",
+        "resend": "重新发送邀请",
+        "cancel": "取消"
+      },
+      "empty": {
+        "members": "暂无成员",
+        "invitations": "暂无邀请"
+      },
+      "inviteSent": "邀请已发送！",
+      "memberRemoved": "成员已移除",
+      "roleUpdated": "角色已更改"
+    }
+  },
+  "organizationDetail": {
+    "loadError": "无法加载该组织",
+    "notFound": "未找到组织",
+    "about": "关于",
+    "sectors": "所属行业",
+    "goals": "目标",
+    "website": "网站",
+    "email": "邮箱",
+    "phone": "电话",
+    "onEtudeskSince": "加入 Etudesk 时间",
+    "culture": "企业文化",
+    "communities": "社区",
+    "noCommunities": "暂无社区",
+    "spaces": "培训空间",
+    "noSpaces": "暂无空间",
+    "openOpportunities": "开放的机会",
+    "noOpportunities": "暂无机会",
+    "contact": "联系"
+  },
+  "kyc": {
+    "title": "身份验证",
+    "subtitle": "验证你的身份以解锁所有功能（5分钟）",
+    "status": {
+      "notStarted": "未开始",
+      "pending": "审核中",
+      "verified": "已验证",
+      "rejected": "已拒绝"
+    },
+    "steps": {
+      "identity": "身份证件",
+      "selfie": "自拍照",
+      "address": "地址证明"
+    },
+    "start": "验证我的身份",
+    "uploadDocument": "上传"
+  },
+  "payment": {
+    "title": "支付方式",
+    "addMethod": "添加支付方式",
+    "methods": {
+      "card": "银行卡",
+      "mobileMoney": "Mobile Money",
+      "bankTransfer": "银行转账"
+    },
+    "empty": "暂未添加支付方式",
+    "default": "默认",
+    "setDefault": "设为默认",
+    "remove": "删除",
+    "mobileMoneyProviders": {
+      "orange": "Orange Money",
+      "mtn": "MTN Money",
+      "wave": "Wave",
+      "moov": "Moov Money"
+    }
+  },
+  "help": {
+    "title": "帮助",
+    "faq": "常见问题",
+    "contact": "联系客服",
+    "email": "邮箱",
+    "phone": "电话",
+    "chat": "WhatsApp"
+  },
+  "legal": {
+    "title": "法律信息",
+    "terms": "使用条款",
+    "termsDesc": "用户协议和使用规则",
+    "privacy": "隐私政策",
+    "privacyDesc": "数据保护",
+    "legalNotice": "法律声明",
+    "legalNoticeDesc": "发布者、托管、RCCM",
+    "footer": "这些文件可在 etudesk.com 上查阅，受科特迪瓦法律管辖。"
+  },
+  "notifications": {
+    "title": "通知",
+    "empty": "没有新通知！",
+    "markAllRead": "全部标为已读",
+    "types": {
+      "application": "申请",
+      "message": "消息",
+      "system": "系统"
+    }
+  },
+  "calendar": {
+    "title": "日程",
+    "today": "今天",
+    "upcoming": "即将到来",
+    "past": "已过去",
+    "noEvents": "暂无安排",
+    "eventTypes": {
+      "interview": "面试",
+      "deadline": "截止日期",
+      "booking": "预订",
+      "application": "申请",
+      "trigger": "提醒",
+      "scheduledPost": "定时发布",
+      "event": "活动",
+      "opportunity": "机会"
+    }
+  },
+  "documents": {
+    "title": "文档",
+    "upload": "添加文档",
+    "types": {
+      "cv": "CV",
+      "certificate": "证书 / 学历",
+      "portfolio": "作品集",
+      "other": "其他"
+    },
+    "empty": "暂未添加文档",
+    "skills": "技能"
+  },
+  "opportunity": {
+    "apply": "申请",
+    "viewApplication": "查看我的申请",
+    "applied": "申请已提交",
+    "save": "收藏",
+    "saved": "已收藏",
+    "share": "分享",
+    "deadline": "截止日期",
+    "postedAt": "发布于",
+    "description": "描述",
+    "requirements": "要求",
+    "benefits": "福利",
+    "views": "浏览量",
+    "applications": "申请数",
+    "location": "地点",
+    "salary": "薪酬",
+    "startDate": "开始日期",
+    "duration": "时长",
+    "niceToHave": "加分项",
+    "aboutOrg": "关于 {{name}}",
+    "types": {
+      "employment": "就业",
+      "internship": "实习",
+      "consultancy": "咨询",
+      "volunteer": "志愿者",
+      "gig": "短期任务",
+      "apprenticeship": "学徒",
+      "fellowship": "奖学金 / Fellowship"
+    },
+    "workTypes": {
+      "fullTime": "全职",
+      "partTime": "兼职",
+      "contract": "合同制",
+      "freelance": "自由职业",
+      "internship": "实习",
+      "apprenticeship": "交替培训"
+    },
+    "locationTypes": {
+      "onSite": "现场",
+      "remote": "远程",
+      "hybrid": "混合"
+    },
+    "notFound": "未找到该机会",
+    "loadError": "无法加载该机会",
+    "linkCopied": "链接已复制到剪贴板。",
+    "attachments": "附件",
+    "manage": "管理机会",
+    "openError": "无法打开此文件",
+    "loadingPdf": "PDF 加载中...",
+    "loadingVideo": "视频加载中...",
+    "videoNotSupported": "你的浏览器不支持视频播放。",
+    "unsupportedFile": "无法预览此文件，请下载后打开。"
+  },
+  "space": {
+    "book": "预订",
+    "visit": "参观",
+    "about": "关于",
+    "amenities": "设施",
+    "pricing": "价格",
+    "location": "地址",
+    "accessTypes": {
+      "public": "免费开放",
+      "membership": "会员制",
+      "private": "私密"
+    },
+    "types": {
+      "coworking": "共享办公",
+      "incubator": "孵化器",
+      "accelerator": "加速器",
+      "lab": "创客空间 / 实验室",
+      "hub": "创新中心"
+    },
+    "capacity": "容量",
+    "surface": "面积",
+    "address": "地址",
+    "accessible": "无障碍通道",
+    "access": "准入",
+    "hourly": "按小时",
+    "daily": "按天",
+    "weekly": "按周",
+    "monthly": "按月",
+    "status": {
+      "active": "运营中",
+      "inactive": "已停用",
+      "maintenance": "维护中"
+    },
+    "manage": "管理空间",
+    "bookSpace": "预订空间",
+    "notFound": "未找到空间",
+    "notFoundDesc": "该空间不存在或已被删除。",
+    "loadError": "无法加载该空间",
+    "loading": "空间加载中..."
+  },
+  "community": {
+    "join": "加入",
+    "joined": "已加入",
+    "leave": "退出",
+    "about": "关于",
+    "members": "成员",
+    "events": "活动",
+    "discussions": "讨论",
+    "types": {
+      "online": "线上",
+      "offline": "线下",
+      "hybrid": "混合"
+    },
+    "feed": {
+      "all": "全部",
+      "posts": "帖子",
+      "events": "活动",
+      "polls": "投票",
+      "voteError": "无法投票",
+      "pinError": "错误",
+      "deleteTitle": "删除",
+      "deleteMessage": "确定删除此帖子？",
+      "deleteError": "无法删除",
+      "subscribersOnly": "仅限订阅者",
+      "expiredSubscription": "你的订阅已过期。请续订以访问内容。",
+      "subscribePrompt": "访问「{{name}}」的独家内容。",
+      "perMonth": "/月",
+      "renew": "续订",
+      "subscribe": "订阅",
+      "loadMore": "查看更多",
+      "noActivity": "暂无新动态"
+    },
+    "comments": {
+      "title": "评论",
+      "viewMore": {
+        "one": "查看 {{count}} 条更多评论",
+        "other": "查看 {{count}} 条更多评论"
+      },
+      "noComments": "快来发表第一条评论吧！",
+      "replyTo": "回复 {{name}}",
+      "replyPlaceholder": "你的回复...",
+      "addPlaceholder": "写一条评论...",
+      "deleteTitle": "删除",
+      "deleteMessage": "确定删除此评论？",
+      "deleteError": "无法删除",
+      "report": "举报",
+      "options": "选项",
+      "publishError": "无法发布"
+    },
+    "paywall": {
+      "expiredTitle": "订阅已过期",
+      "cancelledTitle": "订阅已取消",
+      "subscribersOnly": "独家内容",
+      "renewDescription": "续订以重新获得访问权限。",
+      "subscribeDescription": "访问该社区的所有独家内容。",
+      "monthlySubscription": "月度订阅",
+      "perMonth": "/月",
+      "trialDays": "{{days}} 天免费试用",
+      "benefitPosts": "独家帖子",
+      "benefitEvents": "活动和工作坊",
+      "benefitPolls": "投票、讨论和社交",
+      "startTrial": "免费试用",
+      "renewSubscription": "续订",
+      "subscribeNow": "立即订阅",
+      "later": "稍后再说",
+      "trialActivated": "试用已激活！",
+      "paymentInProgress": "支付进行中",
+      "paymentMessage": "完成支付后返回此页面。"
+    },
+    "activity": {
+      "unpin": "取消置顶",
+      "pin": "置顶",
+      "scheduled": "已定时",
+      "pollLoading": "加载中...",
+      "votes": {
+        "one": "{{count}} 票",
+        "other": "{{count}} 票"
+      },
+      "dateLabel": "日期",
+      "online": "线上",
+      "location": "地点",
+      "meetingLinkAvailable": "会议链接可用",
+      "detailsComingSoon": "详情即将公布",
+      "locationTbc": "地点待确认",
+      "likes": "{{formattedCount}} 赞",
+      "comments": {
+        "one": "{{formattedCount}} 条评论",
+        "other": "{{formattedCount}} 条评论"
+      },
+      "bookmarks": {
+        "one": "{{formattedCount}} 次收藏",
+        "other": "{{formattedCount}} 次收藏"
+      }
+    },
+    "manage": "管理社区",
+    "joinCommunity": "加入",
+    "tags": "标签",
+    "notFound": "未找到社区",
+    "loadError": "无法加载该社区",
+    "viewActivity": "查看动态",
+    "memberCount": "{{count}} 名成员",
+    "presentation": "介绍",
+    "activities": "动态",
+    "location": "地点",
+    "createdAt": "创建于",
+    "memberSince": "加入时间",
+    "noMembers": "暂无成员",
+    "noMembersSubtext": "第一批成员将显示在这里",
+    "cancelRequest": "取消我的申请",
+    "cancelRequestTitle": "取消申请",
+    "cancelRequestConfirm": "你要取消加入申请吗？",
+    "cancelRequestYes": "是的，取消",
+    "requestCancelled": "你的申请已取消。",
+    "cancelRequestError": "无法取消申请。",
+    "alreadyMember": "你已经是该社区的成员了。"
+  },
+  "date": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "tomorrow": "明天",
+    "daysAgo": "{{days}} 天前",
+    "hoursAgo": "{{hours}} 小时前",
+    "minutesAgo": "{{minutes}} 分钟前",
+    "justNow": "刚刚",
+    "inDays": "{{days}} 天后",
+    "expired": "已过期",
+    "months": {
+      "january": "一月",
+      "february": "二月",
+      "march": "三月",
+      "april": "四月",
+      "may": "五月",
+      "june": "六月",
+      "july": "七月",
+      "august": "八月",
+      "september": "九月",
+      "october": "十月",
+      "november": "十一月",
+      "december": "十二月"
+    },
+    "monthsShort": {
+      "january": "1月",
+      "february": "2月",
+      "march": "3月",
+      "april": "4月",
+      "may": "5月",
+      "june": "6月",
+      "july": "7月",
+      "august": "8月",
+      "september": "9月",
+      "october": "10月",
+      "november": "11月",
+      "december": "12月"
+    }
+  },
+  "chat": {
+    "datetimeTypes": {
+      "interviewProposal": "面试邀约",
+      "meetingRequest": "会议请求",
+      "availability": "可用时间"
+    },
+    "calendarPermission": "请授权访问日历以添加活动。",
+    "noCalendar": "没有可用的日历。",
+    "appointment": "约会",
+    "eventAdded": "活动已添加到你的日历。",
+    "eventAddError": "无法添加活动。",
+    "proposedSlot": "建议时段",
+    "writeMessage": "输入消息...",
+    "fileSizeLimit": "最大：{{size}}",
+    "maxFiles": "最多3个文件。",
+    "fileSelectError": "无法选择文件。",
+    "proposal": "提议：{{date}} {{time}}",
+    "proposeDate": "提议日期"
+  },
+  "input": {
+    "errorHint": "错误：{{error}}",
+    "hidePassword": "隐藏",
+    "showPassword": "显示",
+    "togglePasswordHint": "显示或隐藏密码"
+  },
+  "errorBoundary": {
+    "errorReportTitle": "Etudesk 错误报告",
+    "title": "发生了一个错误",
+    "subtitle": "出了点问题。请重试或联系客服。",
+    "unknownError": "未知错误",
+    "technicalDetails": "技术详情",
+    "stackTrace": "Stack Trace：",
+    "componentStack": "Component Stack：",
+    "shareError": "分享错误",
+    "loadError": "加载错误",
+    "pageLoadError": "该页面无法加载。"
+  },
+  "geolocation": {
+    "servicesDisabled": "定位已关闭",
+    "enableServices": "请在手机设置中开启定位服务。",
+    "settings": "设置",
+    "permissionDenied": "访问被拒绝",
+    "permissionMessage": "Etudesk 需要访问你的位置。",
+    "addressError": "无法确定你的地址",
+    "unsupportedCountry": "国家不可用",
+    "unsupportedCountryMessage": "{{country}} 暂不可用。请手动选择你的位置。",
+    "timeout": "定位超时，请重试。",
+    "genericError": "获取位置时出错。",
+    "errorTitle": "定位错误",
+    "errorMessage": "无法获取你的位置。请重试或手动选择。"
+  },
+  "audioRecorder": {
+    "permissionRequired": "需要授权",
+    "micPermissionMessage": "请授权访问麦克风以进行录音。",
+    "startError": "无法开始录音",
+    "stopError": "停止时出错"
+  },
+  "statusBadge": {
+    "pending": "待处理",
+    "active": "活跃成员",
+    "rejected": "已拒绝",
+    "suspended": "已暂停",
+    "archived": "已归档"
+  },
+  "stepSolver": {
+    "step": "步骤 {{current}} / {{total}}",
+    "nextStep": "下一步",
+    "showAll": "查看全部"
+  },
+  "createOffer": {
+    "title": "创建报价",
+    "subtitle": "选择要发布的报价类型",
+    "opportunity": "机会",
+    "opportunityDesc": "职位、实习、自由职业任务",
+    "space": "空间",
+    "spaceDesc": "会议室、培训、共享办公",
+    "community": "社区",
+    "communityDesc": "小组、网络、协会"
+  },
+  "map": {
+    "permissionDenied": "访问被拒绝",
+    "permissionMessage": "请授权访问你的位置。",
+    "locationError": "定位错误",
+    "locationErrorMessage": "无法获取你的位置。",
+    "loadingMap": "地图加载中...",
+    "selectedPosition": "已选位置",
+    "tapToSelect": "点击地图选择位置",
+    "myLocation": "我的位置"
+  },
+  "copilotImage": {
+    "openLinkError": "无法打开链接",
+    "openLinkErrorMessage": "发生了一个错误。",
+    "loadError": "图片不可用"
+  },
+  "imageService": {
+    "permissionRequired": "需要授权",
+    "photoPermission": "请授权访问你的照片。",
+    "cameraPermission": "请授权访问相机。",
+    "optimizeError": "优化时出错",
+    "pickError": "无法选择图片。",
+    "captureError": "无法拍摄照片。",
+    "chooseImage": "添加图片",
+    "chooseImageMessage": "你想如何添加图片？",
+    "takePhoto": "拍摄照片",
+    "fromGallery": "从相册选择",
+    "uploadError": "上传时出错"
+  },
+  "copilotService": {
+    "connectionError": "连接错误",
+    "httpError": "错误 {{status}}",
+    "transcriptionError": "转录错误",
+    "audioTranscriptionError": "无法转录音频",
+    "uploadError": "上传文件时出错"
+  },
+  "copilotContext": {
+    "attachmentUploadError": "上传附件时出错",
+    "sendError": "无法发送消息",
+    "sessionNotFound": "未找到会话",
+    "unknownError": "未知错误",
+    "loadSessionsError": "无法加载会话"
+  },
+  "otpService": {
+    "sendError": "无法发送验证码"
+  },
+  "errors": {
+    "network": "请检查你的网络连接",
+    "unauthorized": "未授权访问",
+    "notFound": "未找到",
+    "validation": "数据无效",
+    "required": "必填项",
+    "invalidEmail": "邮箱无效",
+    "invalidPhone": "号码无效",
+    "photoSelection": "照片选择错误",
+    "location": "定位错误",
+    "networkError": "网络错误，请检查你的连接。",
+    "timeout": "请求超时，请重试。",
+    "noConnection": "无网络连接。",
+    "sessionExpired": "你的会话已过期，请重新登录。",
+    "sessionExpiredAlt": "会话已过期",
+    "serverError": "服务器错误，请稍后重试。",
+    "resourceNotFound": "未找到资源。",
+    "validationError": "验证错误，请检查数据。",
+    "permissionDenied": "你没有权限执行此操作。",
+    "unknownError": "发生了未知错误。",
+    "fieldRequired": "此字段为必填项。",
+    "voiceNoteUpload": "发送语音备注时出错。",
+    "shareDocument": "分享文档时出错。",
+    "noAppAvailable": "没有可用于此操作的应用。",
+    "downloadOrOpenFailed": "下载或打开文件时出错。",
+    "maxFilesPerRequest": "已达到每次请求的最大文件数。"
+  },
+  "alert": {
+    "ok": "好的",
+    "cancel": "取消",
+    "confirm": "确认",
+    "yes": "是",
+    "no": "否",
+    "close": "关闭",
+    "delete": "删除",
+    "deleteConfirm": "确认删除？",
+    "deleteSuccess": "已删除！",
+    "saveSuccess": "已保存！",
+    "updateSuccess": "已更新！",
+    "actionSuccess": "操作成功",
+    "actionError": "发生了一个错误",
+    "networkError": "请检查你的网络连接。",
+    "sessionExpired": "会话已过期",
+    "sessionExpiredMessage": "请重新登录以继续。",
+    "permissionDenied": "访问被拒绝",
+    "permissionDeniedMessage": "你没有执行此操作的权限。"
+  },
+  "copilot": {
+    "quiz": {
+      "correctAnswer": "回答正确！",
+      "wrongAnswer": "回答错误",
+      "alreadyAnswered": "已回答过此问题"
+    },
+    "flashcard": {
+      "easy": "简单",
+      "medium": "中等",
+      "hard": "困难",
+      "flipCard": "翻转卡片",
+      "answer": "答案",
+      "question": "问题",
+      "tapToReveal": "点击查看",
+      "tapToReturn": "点击返回"
+    },
+    "tool": {
+      "searchPlatform": "搜索中…",
+      "searchOpportunities": "搜索机会中…",
+      "searchCommunities": "搜索社区中…",
+      "searchSpaces": "搜索空间中…",
+      "searchTalents": "搜索人才中…",
+      "searchOrganizations": "搜索组织中…",
+      "dataQuery": "分析数据中…",
+      "myProfile": "加载你的资料中…",
+      "myApplications": "加载你的申请中…",
+      "myReservations": "加载你的预订中…",
+      "myInvitations": "加载你的邀请中…",
+      "myCommunities": "加载你的社区中…",
+      "myBookmarks": "加载你的收藏中…",
+      "myDocuments": "加载你的文档中…",
+      "mySkills": "加载你的技能中…",
+      "orgMembers": "加载成员中…",
+      "orgApplications": "加载申请中…",
+      "orgStats": "加载统计数据中…",
+      "orgOpportunities": "加载机会中…",
+      "orgCommunities": "加载社区中…",
+      "orgSpaces": "加载空间中…",
+      "orgRevenue": "加载收入中…",
+      "orgInvitations": "加载邀请中…",
+      "advSearchOpportunities": "高级搜索中…",
+      "advSearchCommunities": "高级搜索中…",
+      "advSearchSpaces": "高级搜索中…",
+      "advSearchOrganizations": "高级搜索中…",
+      "advSearchTalents": "高级搜索中…",
+      "submitApplication": "提交你的申请中…",
+      "joinRequest": "提交加入申请中…",
+      "spaceBooking": "预订中…",
+      "createActivity": "创建中…",
+      "respondInvitation": "回复中…",
+      "updateApplication": "更新中…",
+      "videoSearch": "搜索视频中…",
+      "webSearch": "网络搜索中…",
+      "generateDoc": "生成文档中…",
+      "generatePrefix": "生成：{{title}}",
+      "generateImage": "生成图片中…",
+      "createDiagram": "创建图表中…",
+      "readDocument": "读取文档中…",
+      "readPrefix": "读取：{{name}}",
+      "addSkillPrefix": "添加：{{skill}}",
+      "updateSkillPrefix": "更新：{{skill}}",
+      "updateSkills": "更新技能中…",
+      "applyInProgress": "申请中…",
+      "joinInProgress": "加入中…",
+      "bookingInProgress": "预订中…",
+      "acceptInvitation": "接受中…",
+      "declineInvitation": "拒绝中…",
+      "executeAction": "操作中…"
+    },
+    "suggestions": {
+      "orgExplore": [
+        "本月的申请",
+        "搜索开发者资料",
+        "我的职位统计",
+        "生成职位描述"
+      ],
+      "orgStudy": [
+        "评估收到的候选人",
+        "如何撰写招聘信息？",
+        "总结这份文档",
+        "行业就业趋势"
+      ],
+      "talentStudy": [
+        "帮我准备面试",
+        "分析我的技能",
+        "创建一个主题测验",
+        "总结我的简历并给我建议"
+      ],
+      "talentExplore": [
+        "匹配我的职位",
+        "生成我的PDF简历",
+        "我所在领域的社区",
+        "添加一项技能"
+      ]
+    },
+    "entity": {
+      "opportunity": "机会",
+      "community": "社区",
+      "space": "空间",
+      "organization": "组织",
+      "talent": "人才",
+      "document": "文档",
+      "viewDetails": "查看详情",
+      "memberCount": "{{count}} 名成员",
+      "capacityCount": "{{count}} 个席位",
+      "hourlyRate": "{{rate}} FCFA/小时"
+    }
+  },
+  "applicationDetail": {
+    "status": {
+      "submitted": "已提交",
+      "submittedDesc": "申请已收到",
+      "inReview": "审核中",
+      "inReviewDesc": "申请正在评估中",
+      "accepted": "已录用",
+      "acceptedDesc": "申请已通过",
+      "rejected": "已拒绝",
+      "rejectedDesc": "申请未通过"
+    },
+    "match": {
+      "excellent": "优秀",
+      "good": "良好",
+      "average": "一般",
+      "low": "较低"
+    },
+    "loadError": "无法加载申请详情。",
+    "statusUpdated": "状态已更新：{{status}}",
+    "statusUpdateError": "无法更新状态。",
+    "deleteTitle": "删除申请",
+    "deleteConfirm": "你确定要删除此申请吗？此操作不可撤销。",
+    "deleteSuccess": "申请已删除。",
+    "deleteError": "无法删除申请。",
+    "notesSaved": "备注已保存。",
+    "notesSaveError": "无法保存备注。",
+    "ratingUpdateError": "无法更新评分。",
+    "sendMessageError": "无法发送消息。",
+    "cvDialogTitle": "候选人 CV",
+    "cvFileNotFound": "文件未找到",
+    "cvFileNotFoundDesc": "该 CV 在此设备上不再可用。",
+    "sharingUnavailable": "不可用",
+    "sharingUnavailableDesc": "此设备不支持文件分享。",
+    "cvOpenError": "无法打开 CV。",
+    "information": "信息",
+    "candidateRating": "候选人评分",
+    "recommendation": "推荐",
+    "analyzing": "分析中...",
+    "recommendationAuto": "推荐将自动生成。",
+    "applicationStatus": "申请状态",
+    "changeStatus": "更改状态",
+    "additionalInfo": "补充信息",
+    "candidateCV": "候选人 CV",
+    "cvDisplayUnavailable": "显示不可用",
+    "cvDisplayHint": "请使用下方按钮打开 CV 查看。",
+    "loadingCV": "CV 加载中...",
+    "openCV": "打开 CV",
+    "additionalQuestions": "补充问题",
+    "noAnswer": "未提供回答",
+    "candidateAccepted": "该候选人已被录用！",
+    "deleteApplication": "删除此申请",
+    "internalNotes": "内部备注",
+    "notesPlaceholder": "添加关于此候选人的内部备注...",
+    "notesHint": "这些备注仅你的团队可见。",
+    "noMessages": "暂无消息",
+    "noMessagesHint": "给候选人发送消息以开始对话。",
+    "writeMessage": "输入消息...",
+    "notFound": "未找到申请",
+    "tabProfile": "资料",
+    "tabMessages": "消息",
+    "tabNotes": "备注"
+  },
+  "gestion": {
+    "bookingStatus": {
+      "pending": "等待中",
+      "confirmed": "已确认",
+      "cancelled": "已取消",
+      "completed": "已完成",
+      "noShow": "缺席"
+    },
+    "memberStatus": {
+      "pending": "等待中",
+      "active": "活跃",
+      "banned": "已封禁",
+      "removed": "已移除"
+    },
+    "applicationStatus": {
+      "submitted": "已提交",
+      "inReview": "审核中",
+      "accepted": "已录用",
+      "rejected": "已拒绝"
+    },
+    "filters": {
+      "all": "全部",
+      "pending": "等待中",
+      "confirmed": "已确认",
+      "cancelled": "已取消",
+      "completed": "已完成",
+      "active": "活跃"
+    },
+    "bookings": {
+      "loadError": "无法加载预订。",
+      "statusUpdateError": "无法更新状态。",
+      "confirmTitle": "确认预订",
+      "confirmMessage": "你要确认此预订吗？",
+      "cancelTitle": "取消预订",
+      "cancelMessage": "你要取消此预订吗？",
+      "cancelYes": "是的，取消",
+      "confirmBooking": "确认",
+      "cancelBooking": "取消",
+      "noBookings": "暂无预订",
+      "noBookingsDesc": "该空间暂无预订。",
+      "noResults": "没有结果",
+      "noResultsDesc": "没有该状态的预订。",
+      "detailsLoadError": "无法加载预订详情。",
+      "deleteTitle": "删除预订",
+      "deleteConfirm": "你确定要删除此预订吗？此操作不可撤销。",
+      "deleteError": "无法删除预订。",
+      "notesSaved": "备注已保存。",
+      "notesSaveError": "无法保存备注。",
+      "sendMessageError": "无法发送消息。",
+      "confirmError": "无法确认预订。",
+      "cancelError": "无法取消预订。"
+    },
+    "applications": {
+      "loadError": "无法加载申请。",
+      "statusUpdateError": "无法更新状态。",
+      "exportSuccess": "CSV 文件已下载。",
+      "exportError": "无法导出为 CSV。",
+      "deleteConfirm": "你确定要删除此申请吗？此操作不可撤销。",
+      "deleteError": "删除时发生了一个错误。",
+      "noApplications": "暂无申请",
+      "noApplicationsDesc": "该机会暂无申请。",
+      "noResults": "没有结果",
+      "noResultsDesc": "没有该状态的申请。"
+    },
+    "members": {
+      "loadError": "无法加载成员。",
+      "statusUpdateError": "无法更新状态。",
+      "removeConfirm": "你要将此成员移出社区吗？",
+      "removeSuccess": "成员已移除。",
+      "removeError": "无法移除成员。",
+      "statusUpdated": "状态已更新：{{status}}",
+      "detailsLoadError": "无法加载成员详情。",
+      "sendMessageError": "无法发送消息。",
+      "notesSaved": "备注已保存。",
+      "notesSaveError": "无法保存备注。",
+      "ratingUpdateError": "无法更新评分。"
+    },
+    "invitations": {
+      "invalidEmail": "请输入有效的邮箱地址",
+      "sendError": "无法发送邀请",
+      "resendSuccess": "邀请已重新发送",
+      "resendError": "无法重新发送邀请",
+      "cancelError": "无法取消邀请",
+      "sentTo": "邀请已发送至 {{email}}",
+      "filterAll": "全部",
+      "filterPending": "等待中",
+      "pending": "等待中"
+    }
+  },
+  "labels": {
+    "orgTypes": {
+      "COMPANY": "企业",
+      "STARTUP": "初创企业",
+      "NGO": "非政府组织",
+      "ASSOCIATION": "协会",
+      "EDUCATIONAL_INSTITUTION": "教育机构",
+      "PUBLIC_ADMINISTRATION": "公共管理",
+      "TRAINING_CENTER": "培训中心",
+      "CONSULTING_FIRM": "咨询公司",
+      "RECRUITMENT_AGENCY": "招聘机构",
+      "FINANCIAL_INSTITUTION": "金融机构",
+      "RESEARCH_CENTER": "研究中心",
+      "COOPERATIVE": "合作社",
+      "SOCIAL_ENTERPRISE": "社会企业"
+    },
+    "verificationStatus": {
+      "PENDING": "验证中",
+      "VERIFIED": "已验证",
+      "REJECTED": "已拒绝",
+      "NOT_STARTED": "未开始"
+    },
+    "spaceTypes": {
+      "SALLE_COURS": "教室",
+      "SALLE_INFORMATIQUE": "电脑室",
+      "AMPHITHEATRE": "阶梯教室",
+      "SALLE_FORMATION": "培训室",
+      "OPEN_SPACE": "开放办公区",
+      "BUREAU_PRIVE": "私人办公室",
+      "POSTE_NOMADE": "灵活工位",
+      "SALLE_REUNION": "会议室",
+      "SALLE_CONFERENCE": "大会议室",
+      "CABINE_APPEL": "电话间",
+      "ATELIER": "工作坊",
+      "LABORATOIRE": "实验室",
+      "STUDIO": "工作室",
+      "SALLE_EVENEMENT": "活动大厅",
+      "ROOFTOP": "屋顶",
+      "TERRASSE": "露台"
+    },
+    "safetyEquipment": {
+      "EXTINCTEUR": "灭火器",
+      "DETECTEUR_FUMEE": "烟雾探测器",
+      "ALARME_INCENDIE": "火灾报警器",
+      "SORTIE_SECOURS": "紧急出口",
+      "PLAN_EVACUATION": "疏散方案",
+      "ECLAIRAGE_SECOURS": "应急照明",
+      "SPRINKLER": "喷淋系统",
+      "DESENFUMAGE": "排烟系统",
+      "PORTE_COUPE_FEU": "防火门"
+    },
+    "accessibilityFeatures": {
+      "RAMPE_ACCES": "无障碍坡道",
+      "ASCENSEUR": "无障碍电梯",
+      "WC_ACCESSIBLE": "无障碍卫生间",
+      "PORTES_LARGES": "宽门（≥90cm）",
+      "GUIDAGE_TACTILE": "触觉引导",
+      "BOUCLE_AUDITIVE": "助听回路",
+      "PARKING_HANDICAPE": "残疾人停车位",
+      "SIGNALISATION_BRAILLE": "盲文标识"
+    },
+    "pricingTypes": {
+      "FREE": "免费",
+      "HOURLY": "按小时",
+      "DAILY": "按天",
+      "MONTHLY": "月度订阅",
+      "YEARLY": "年度订阅",
+      "CUSTOM": "定制报价"
+    },
+    "accessTypes": {
+      "PUBLIC": "开放准入",
+      "PRIVATE": "私密",
+      "MEMBERSHIP": "需要会员资格"
+    },
+    "communityTypes": {
+      "ONLINE": "线上",
+      "OFFLINE": "线下",
+      "HYBRID": "混合"
+    },
+    "visibility": {
+      "PUBLIC": "公开",
+      "PRIVATE": "私密"
+    },
+    "communityStatus": {
+      "ACTIVE": "活跃",
+      "INACTIVE": "不活跃",
+      "ARCHIVED": "已归档"
+    },
+    "calendarEventTypes": {
+      "INTERVIEW": "面试",
+      "BOOKING": "预订",
+      "DEADLINE": "截止日期"
+    },
+    "paymentProviders": {
+      "ORANGE_MONEY": "Orange Money",
+      "MTN_MONEY": "MTN Money",
+      "MOOV_MONEY": "Moov Money",
+      "WAVE": "Wave",
+      "PUSH": "Push",
+      "DJAMO": "Djamo",
+      "CARD": "银行卡"
+    },
+    "orgRoles": {
+      "OWNER": "所有者",
+      "ADMIN": "管理员",
+      "MANAGER": "负责人",
+      "MEMBER": "成员",
+      "OBSERVER": "观察员"
+    },
+    "orgRoleDescriptions": {
+      "OWNER": "对组织的完全控制",
+      "ADMIN": "完全访问权限（不含删除）",
+      "MANAGER": "内容管理（机会、空间、社区）",
+      "MEMBER": "基本成员权限",
+      "OBSERVER": "仅查看（只读）"
+    },
+    "sectors": {
+      "DIGITAL": "数字与科技",
+      "FINANCE": "金融与银行",
+      "COMMERCE": "商业与零售",
+      "HEALTH": "医疗健康",
+      "EDUCATION": "教育与培训",
+      "INDUSTRY": "工业",
+      "CONSTRUCTION": "建筑",
+      "ENERGY": "能源",
+      "ENVIRONMENT": "环境",
+      "AGRICULTURE": "农业与食品",
+      "TRANSPORT": "交通与物流",
+      "TOURISM": "旅游与酒店",
+      "MEDIA": "媒体与传播",
+      "PROFESSIONAL_SERVICES": "专业服务",
+      "RESEARCH": "研究与创新",
+      "PUBLIC": "公共部门",
+      "SECURITY": "安全",
+      "SOCIAL_IMPACT": "社会影响与非政府组织",
+      "PERSONAL_SERVICES": "个人服务",
+      "CRAFTS": "手工艺",
+      "RESOURCES": "自然资源"
+    },
+    "profileTags": {
+      "STUDENT": "大学生",
+      "PUPIL": "中学生",
+      "JOB_SEEKER": "求职者",
+      "SALARIED": "上班族",
+      "ENTREPRENEUR": "创业者",
+      "CIVIL_SERVANT": "公务员",
+      "MANAGER": "管理者",
+      "CONSULTANT": "顾问",
+      "INVESTOR": "投资人",
+      "CONTENT_CREATOR": "内容创作者",
+      "COACH": "教练 / 培训师",
+      "RETIRED": "退休人员"
+    },
+    "goals": {
+      "LEARN_NEW_SKILLS": "学习新技能",
+      "PREPARE_EXAMS": "备考",
+      "FIND_JOB": "找工作",
+      "ADVANCE_CAREER": "职业晋升",
+      "RESEARCH_SUPPORT": "研究支持",
+      "IMPROVE_PRODUCTIVITY": "提高生产力",
+      "COLLABORATIVE_LEARNING": "协作学习",
+      "TEACH_OR_MENTOR": "教学或指导",
+      "BUILD_NETWORK_OR_VISIBILITY": "建立人脉 / 提高知名度",
+      "CONTRIBUTE_OR_GIVE_BACK": "贡献 / 回馈"
+    },
+    "genders": {
+      "M": "男",
+      "F": "女"
+    },
+    "documentTypes": {
+      "CV": "简历",
+      "NATIONAL_ID": "身份证",
+      "PASSPORT": "护照",
+      "DIPLOMA": "学位证书",
+      "CERTIFICATE": "证书",
+      "RECOMMENDATION_LETTER": "推荐信",
+      "COVER_LETTER": "求职信",
+      "TRANSCRIPT": "成绩单",
+      "DRIVER_LICENSE": "驾驶证",
+      "PROOF_OF_ADDRESS": "地址证明",
+      "PORTFOLIO": "作品集",
+      "OTHER": "其他"
+    },
+    "proficiencyLevels": {
+      "BEGINNER": "初级",
+      "INTERMEDIATE": "中级",
+      "EXPERT": "专家",
+      "MASTER": "大师"
+    },
+    "skillTypes": {
+      "KNOWLEDGE": "知识",
+      "HARD_SKILL": "专业技能",
+      "SOFT_SKILL": "软技能"
+    },
+    "orgDocumentTypes": {
+      "POLICY": "内部政策",
+      "CONTRACT": "合同",
+      "REPORT": "报告",
+      "BROCHURE": "宣传册",
+      "PRESENTATION": "演示文稿",
+      "CHARTER": "章程",
+      "LEGAL": "法律文件",
+      "OTHER": "其他文件"
+    },
+    "orgDocumentCategories": {
+      "ADMINISTRATIVE": "行政",
+      "COMMERCIAL": "商务",
+      "LEGAL": "法律",
+      "OTHER": "其他"
+    },
+    "orgDocumentStatuses": {
+      "PENDING": "等待中",
+      "PROCESSING": "处理中",
+      "PROCESSED": "已处理",
+      "FAILED": "失败",
+      "VERIFIED": "已验证",
+      "REJECTED": "已拒绝"
+    },
+    "orgTalentSources": {
+      "APPLICATION": "申请",
+      "COMMUNITY": "社区",
+      "SPACE_BOOKING": "预订",
+      "MEMBER": "成员"
+    },
+    "workRhythms": {
+      "FULL_TIME": "全职投入",
+      "PART_TIME": "每周几小时",
+      "FLEXIBLE": "弹性时间",
+      "OCCASIONAL": "偶尔任务"
+    },
+    "locationTypeDescriptions": {
+      "ON_SITE": "需要到办公室",
+      "HYBRID": "办公室与远程混合",
+      "REMOTE": "仅远程办公"
+    },
+    "opportunityVisibility": {
+      "PUBLIC": "在探索和搜索中可见",
+      "PRIVATE": "仅通过邀请访问"
+    },
+    "communityVisibilityDescriptions": {
+      "PUBLIC": "所有人都可以查看和加入",
+      "PRIVATE": "仅成员可查看内容"
+    },
+    "statusBadges": {
+      "PENDING": "等待中",
+      "ACTIVE": "活跃成员",
+      "REJECTED": "已拒绝",
+      "SUSPENDED": "已暂停",
+      "ARCHIVED": "已归档"
+    },
+    "noData": "暂无数据",
+    "defaultUser": "用户",
+    "select": "选择",
+    "resolution": "分辨率",
+    "noSteps": "暂无步骤",
+    "copyCode": "复制代码",
+    "goodAnswer": "好的回答",
+    "badAnswer": "不好的回答",
+    "enable": "启用",
+    "disable": "禁用",
+    "shareDocument": "分享文档",
+    "voiceNoteUploadError": "语音备忘录上传失败",
+    "confirmationLabels": {
+      "contractTypes": {
+        "CDI": "长期合同",
+        "CDD": "定期合同",
+        "STAGE": "实习",
+        "FREELANCE": "自由职业",
+        "ALTERNANCE": "工学交替",
+        "INTERIM": "临时工",
+        "BENEVOLAT": "志愿者"
+      },
+      "workRhythms": {
+        "FULL_TIME": "全职",
+        "PART_TIME": "兼职",
+        "FLEXIBLE": "弹性"
+      },
+      "locationTypes": {
+        "ON_SITE": "现场",
+        "REMOTE": "远程",
+        "HYBRID": "混合"
+      },
+      "communityCategories": {
+        "PROFESSIONAL": "专业",
+        "ACADEMIC": "学术",
+        "SOCIAL": "社交",
+        "INDUSTRY": "行业",
+        "ALUMNI": "校友",
+        "RESEARCH": "研究"
+      },
+      "joinPolicies": {
+        "OPEN": "开放",
+        "APPROVAL_REQUIRED": "需要审批",
+        "INVITE_ONLY": "仅限邀请"
+      },
+      "spaceCategories": {
+        "COWORKING": "共享办公",
+        "MEETING_ROOM": "会议室",
+        "CONFERENCE": "大会议室",
+        "OFFICE": "办公室",
+        "EVENT": "活动",
+        "WORKSHOP": "工作坊",
+        "STUDIO": "工作室",
+        "CLASSROOM": "教室",
+        "LAB": "实验室",
+        "LIBRARY": "图书馆",
+        "OTHER": "其他"
+      }
+    },
+    "createOfferOptions": {
+      "opportunity": {
+        "label": "机会",
+        "description": "工作、实习、自由职业任务"
+      },
+      "space": {
+        "label": "空间",
+        "description": "会议室、培训室、共享办公"
+      },
+      "community": {
+        "label": "社区",
+        "description": "群组、网络、协会"
+      }
+    },
+    "opportunityTypes": {
+      "EMPLOYMENT": "就业",
+      "INTERNSHIP": "实习",
+      "ENTREPRENEURSHIP": "创业",
+      "ALTERNATION": "工学交替",
+      "FREELANCE": "自由职业",
+      "VOLUNTEER": "志愿者"
+    },
+    "contractTypes": {
+      "CDI": "长期合同",
+      "CDD": "定期合同",
+      "APPRENTICESHIP": "学徒",
+      "INTERNSHIP": "实习",
+      "FREELANCE": "自由职业",
+      "SERVICE": "服务合同",
+      "INTERIM": "临时工"
+    },
+    "locationTypes": {
+      "ON_SITE": "现场",
+      "REMOTE": "远程",
+      "HYBRID": "混合"
+    },
+    "compensationFrequencies": {
+      "HOURLY": "小时",
+      "MONTHLY": "月",
+      "YEARLY": "年",
+      "PROJECT": "项目"
+    },
+    "opportunityStatus": {
+      "DRAFT": "草稿",
+      "OPEN": "已发布",
+      "PAUSED": "已暂停",
+      "FILLED": "已招满",
+      "EXPIRED": "已过期"
+    },
+    "applicationStatus": {
+      "SUBMITTED": "已提交",
+      "IN_REVIEW": "审核中",
+      "ACCEPTED": "已录用",
+      "REJECTED": "已拒绝"
+    },
+    "memberStatus": {
+      "ACTIVE": "活跃",
+      "INVITED": "邀请已发送",
+      "INACTIVE": "不活跃"
+    },
+    "spaceCategories": {
+      "FORMATION": "培训",
+      "TRAVAIL": "办公",
+      "REUNION": "会议",
+      "ATELIER": "工作坊",
+      "EVENEMENT": "活动"
+    },
+    "spaceStatus": {
+      "ACTIVE": "运营中",
+      "INACTIVE": "已停用",
+      "MAINTENANCE": "维护中"
+    },
+    "bookingStatus": {
+      "PENDING": "等待中",
+      "CONFIRMED": "已确认",
+      "CANCELLED": "已取消",
+      "COMPLETED": "已完成",
+      "NO_SHOW": "缺席"
+    },
+    "paymentStatus": {
+      "PENDING": "等待中",
+      "PARTIAL": "部分支付",
+      "PAID": "已支付",
+      "REFUNDED": "已退款"
+    },
+    "spacePricingTypes": {
+      "HOURLY": "按小时",
+      "DAILY": "按天",
+      "WEEKLY": "按周",
+      "MONTHLY": "按月"
+    },
+    "spacePricingUnits": {
+      "HOURLY": "/小时",
+      "DAILY": "/天",
+      "WEEKLY": "/周",
+      "MONTHLY": "/月"
+    },
+    "spaceEquipment": {
+      "VIDEOPROJECTOR": "投影仪",
+      "WHITEBOARD": "白板",
+      "FLIPCHART": "翻转图表",
+      "SCREEN": "屏幕",
+      "SOUND_SYSTEM": "音响系统",
+      "MICROPHONE": "麦克风",
+      "WEBCAM": "摄像头",
+      "TV_SCREEN": "电视屏幕",
+      "VIDEO_CONFERENCE": "视频会议",
+      "COMPUTERS": "电脑",
+      "PRINTERS": "打印机",
+      "PHONE": "电话"
+    },
+    "spaceAmenities": {
+      "WIFI": "Wi-Fi",
+      "AIR_CONDITIONING": "空调",
+      "HEATING": "暖气",
+      "PARKING": "停车场",
+      "CAFETERIA": "食堂",
+      "KITCHEN": "厨房",
+      "RESTROOMS": "卫生间",
+      "RECEPTION": "前台",
+      "SECURITY": "安保",
+      "ELEVATOR": "电梯",
+      "NATURAL_LIGHT": "自然采光",
+      "SOUNDPROOF": "隔音"
+    },
+    "spaceAccessibility": {
+      "WHEELCHAIR_ACCESS": "轮椅通道",
+      "ELEVATOR": "无障碍电梯",
+      "ACCESSIBLE_RESTROOM": "无障碍卫生间",
+      "WIDE_DOORS": "宽门（>90cm）",
+      "TACTILE_GUIDANCE": "触觉引导",
+      "HEARING_LOOP": "助听回路",
+      "HANDICAP_PARKING": "残疾人停车位",
+      "BRAILLE_SIGNAGE": "盲文标识"
+    },
+    "communityTags": {
+      "PROFESSIONAL": "专业人士",
+      "STUDENT": "学生",
+      "ENTREPRENEUR": "创业者",
+      "TECH": "科技与创新",
+      "CREATIVE": "创意与艺术",
+      "SOCIAL_IMPACT": "社会影响",
+      "ALUMNI": "校友",
+      "WOMEN": "女性",
+      "YOUTH": "青年",
+      "CLUB_ASSOCIATION": "俱乐部 / 协会"
+    },
+    "weekdays": {
+      "0": "星期日",
+      "1": "星期一",
+      "2": "星期二",
+      "3": "星期三",
+      "4": "星期四",
+      "5": "星期五",
+      "6": "星期六"
+    },
+    "weekdaysShort": {
+      "0": "日",
+      "1": "一",
+      "2": "二",
+      "3": "三",
+      "4": "四",
+      "5": "五",
+      "6": "六"
+    },
+    "entityLabels": {
+      "opportunity": "机会",
+      "community": "社区",
+      "space": "空间",
+      "organization": "组织",
+      "talent": "人才",
+      "document": "文档"
+    },
+    "documentCategories": {
+      "PROFESSIONAL": "职业",
+      "ACADEMIC": "学术",
+      "IDENTITY": "身份",
+      "OTHER": "其他"
+    },
+    "documentStatuses": {
+      "PENDING": "等待中",
+      "PROCESSING": "处理中",
+      "PROCESSED": "已处理",
+      "FAILED": "失败",
+      "VERIFIED": "已验证",
+      "REJECTED": "已拒绝"
+    },
+    "profileFields": {
+      "bio": "简介",
+      "city": "城市",
+      "country": "国家",
+      "goals": "目标",
+      "sectors": "行业领域",
+      "remote_ready": "远程办公",
+      "willing_to_relocate": "愿意搬迁",
+      "profile_tags": "标签"
+    },
+    "membershipQuestions": {
+      "motivation": "你为什么想加入这个社区？",
+      "contribution": "你计划如何为社区做贡献？",
+      "background": "你的职业背景是什么？",
+      "referral": "你是怎么知道我们的？",
+      "expectations": "你对这个社区有什么期望？"
+    }
+  }
+}

@@ -16,6 +16,7 @@ import {
 import { X } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../contexts/AuthContext';
+import { useI18n } from '../../contexts/I18nContext';
 import { CopilotMode } from '../../services/copilotService';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, withOpacity } from '../../constants/theme';
 import { IconButton } from '../ui';
@@ -40,6 +41,7 @@ export function SuggestionsTooltip({
 }: SuggestionsTooltipProps) {
     const { colors } = useTheme();
     const { user } = useAuth();
+    const { t } = useI18n();
     const isOrg = !!user?.organizationMemberships && user.organizationMemberships.length > 0;
 
     const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -49,14 +51,14 @@ export function SuggestionsTooltip({
     const getDefaultSuggestions = useCallback(() => {
         if (mode === 'study') {
             return isOrg
-                ? ['Évalue les candidats reçus', 'Comment rédiger une offre ?', 'Résume ce document', 'Tendances emploi du secteur']
-                : ['Prépare-moi pour un entretien', 'Analyse mes compétences', 'Crée un quiz sur un sujet', 'Résume mon CV et conseille-moi'];
+                ? (t('copilot.suggestions.orgStudy') as unknown as string[])
+                : (t('copilot.suggestions.talentStudy') as unknown as string[]);
         } else {
             return isOrg
-                ? ['Candidatures de ce mois', 'Trouve des profils développeurs', 'Stats de mes offres', 'Génère une fiche de poste']
-                : ['Offres qui matchent mon profil', 'Génère mon CV en PDF', 'Communautés dans mon secteur', 'Ajoute une compétence'];
+                ? (t('copilot.suggestions.orgExplore') as unknown as string[])
+                : (t('copilot.suggestions.talentExplore') as unknown as string[]);
         }
-    }, [mode, isOrg]);
+    }, [mode, isOrg, t]);
 
     // Initial load: show defaults when visible
     useEffect(() => {
@@ -122,7 +124,7 @@ export function SuggestionsTooltip({
                         <IconButton
                             onPress={onClose}
                             icon={<X size={16} color={colors.textSecondary} />}
-                            accessibilityLabel="Fermer"
+                            accessibilityLabel={t('common.close')}
                             size="sm"
                             variant="ghost"
                             style={styles.closeButton}

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../constants/theme';
 import { useTheme } from '../hooks/useTheme';
+import { useI18n } from '../contexts/I18nContext';
 import { IconButton, SelectCard } from './ui';
 
 
@@ -32,6 +33,7 @@ interface CreateOfferModalProps {
 export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, onClose }) => {
     const router = useRouter();
     const { colors } = useTheme();
+    const { t } = useI18n();
 
     // Animation values
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -77,24 +79,24 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, o
     const CREATE_OPTIONS = [
         {
             id: 'opportunity',
-            label: 'Opportunité',
-            description: 'Emploi, stage, mission freelance',
+            label: t('createOffer.opportunity'),
+            description: t('createOffer.opportunityDesc'),
             icon: Briefcase,
             color: colors.primary,
             route: '/settings/organization/create-opportunity' as const,
         },
         {
             id: 'space',
-            label: 'Espace',
-            description: 'Salle de reunion, formation, coworking',
+            label: t('createOffer.space'),
+            description: t('createOffer.spaceDesc'),
             icon: MapPin,
             color: colors.warning,
             route: '/settings/organization/create-space' as const,
         },
         {
             id: 'community',
-            label: 'Communauté',
-            description: 'Groupe, réseau, association',
+            label: t('createOffer.community'),
+            description: t('createOffer.communityDesc'),
             icon: Users,
             color: colors.success,
             route: '/settings/organization/create-community' as const,
@@ -125,15 +127,15 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({ isVisible, o
                     <View style={[styles.modalHandle, { backgroundColor: colors.gray300 }]} />
                     <View style={styles.modalHeader}>
                         <View>
-                            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Créer une offre</Text>
+                            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('createOffer.title')}</Text>
                             <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-                                Choisissez le type d'offre à publier
+                                {t('createOffer.subtitle')}
                             </Text>
                         </View>
                         <IconButton
                             onPress={handleClose}
                             icon={<X size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-                            accessibilityLabel="Fermer"
+                            accessibilityLabel={t('common.close')}
                             style={[styles.closeButton, { backgroundColor: colors.gray100 }]}
                         />
                     </View>

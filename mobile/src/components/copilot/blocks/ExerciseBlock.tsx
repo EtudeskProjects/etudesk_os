@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { CheckCircle2, XCircle, ArrowUp, ArrowDown, Shuffle } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
+import { useI18n } from '../../../contexts/I18nContext';
 
 // --- Types ---
 
@@ -48,6 +49,7 @@ const FillGapExercise: React.FC<{ data: FillGapData; onAnswer?: (answer: string)
   onAnswer,
 }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [selections, setSelections] = useState<Record<string, string | null>>({});
   const [validated, setValidated] = useState(false);
   const [activeGapId, setActiveGapId] = useState<string | null>(null);
@@ -168,7 +170,7 @@ const FillGapExercise: React.FC<{ data: FillGapData; onAnswer?: (answer: string)
           style={[styles.validateButton, { backgroundColor: colors.primary }]}
           onPress={handleValidate}
         >
-          <Text style={[styles.validateText, { color: colors.white }]}>Valider</Text>
+          <Text style={[styles.validateText, { color: colors.white }]}>{t('common.validate')}</Text>
         </Pressable>
       )}
 
@@ -193,6 +195,7 @@ const MatchingExercise: React.FC<{ data: MatchingData; onAnswer?: (answer: strin
   onAnswer,
 }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [selectedLeft, setSelectedLeft] = useState<number | null>(null);
   const [matches, setMatches] = useState<Record<number, number>>({}); // leftIdx → rightIdx
   const [validated, setValidated] = useState(false);
@@ -376,7 +379,7 @@ const MatchingExercise: React.FC<{ data: MatchingData; onAnswer?: (answer: strin
           style={[styles.validateButton, { backgroundColor: colors.primary }]}
           onPress={handleValidate}
         >
-          <Text style={[styles.validateText, { color: colors.white }]}>Valider</Text>
+          <Text style={[styles.validateText, { color: colors.white }]}>{t('common.validate')}</Text>
         </Pressable>
       )}
 
@@ -397,6 +400,7 @@ const OrderingExercise: React.FC<{ data: OrderingData; onAnswer?: (answer: strin
   onAnswer,
 }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [order, setOrder] = useState(() => {
     // Shuffle initial order
     const indices = data.items.map((_, i) => i);
@@ -503,7 +507,7 @@ const OrderingExercise: React.FC<{ data: OrderingData; onAnswer?: (answer: strin
           style={[styles.validateButton, { backgroundColor: colors.primary }]}
           onPress={handleValidate}
         >
-          <Text style={[styles.validateText, { color: colors.white }]}>Valider l'ordre</Text>
+          <Text style={[styles.validateText, { color: colors.white }]}>{t('common.validateOrder')}</Text>
         </Pressable>
       )}
 
@@ -524,6 +528,7 @@ const ExplanationBox: React.FC<{ correct: boolean; explanation: string }> = ({
   explanation,
 }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   return (
     <View
       style={[
@@ -550,7 +555,7 @@ const ExplanationBox: React.FC<{ correct: boolean; explanation: string }> = ({
             { color: correct ? colors.success : colors.error },
           ]}
         >
-          {correct ? 'Parfait !' : 'Pas tout à fait'}
+          {correct ? t('exercise.correct') : t('exercise.incorrect')}
         </Text>
       </View>
       <Text style={[styles.explanationText, { color: colors.textSecondary }]}>
@@ -564,6 +569,7 @@ const ExplanationBox: React.FC<{ correct: boolean; explanation: string }> = ({
 
 export const ExerciseBlock: React.FC<ExerciseBlockProps> = ({ data, onAnswer }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const renderExercise = () => {
     switch (data.type) {
@@ -576,7 +582,7 @@ export const ExerciseBlock: React.FC<ExerciseBlockProps> = ({ data, onAnswer }) 
       default:
         return (
           <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
-            Type d'exercice non supporté : {String((data as any)?.type || 'inconnu')}
+            {t('exercise.unsupportedType')}{String((data as any)?.type || 'inconnu')}
           </Text>
         );
     }
@@ -586,7 +592,7 @@ export const ExerciseBlock: React.FC<ExerciseBlockProps> = ({ data, onAnswer }) 
     <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
       <View style={styles.header}>
         <Shuffle size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.headerText, { color: colors.primary }]}>Exercice interactif</Text>
+        <Text style={[styles.headerText, { color: colors.primary }]}>{t('exercise.title')}</Text>
       </View>
       {renderExercise()}
     </View>

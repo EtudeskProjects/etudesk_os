@@ -5,7 +5,9 @@
   "skillTypeRequired": "Skill type is required (KNOWLEDGE, HARD_SKILL, SOFT_SKILL)",
   "addError": "Error adding skill",
   "updateError": "Error updating skill",
+  "isVisibleMustBeBoolean": "is_visible must be a boolean",
   "notFound": "Skill not found",
   "deleteError": "Error deleting skill",
-  "mergeError": "Error merging skills"
+  "mergeError": "Error merging skills",
+  "maxSkillsReached": "100 skills limit reached. Remove or modify existing skills before adding new ones."
 }

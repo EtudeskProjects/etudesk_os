@@ -13,8 +13,8 @@ import Backend from 'i18next-fs-backend';
 import i18nextMiddleware from 'i18next-http-middleware';
 import path from 'path';
 
-const SUPPORTED_LANGUAGES = ['fr', 'en'] as const;
-const FALLBACK_LANGUAGE = 'fr';
+const SUPPORTED_LANGUAGES = ['fr', 'en', 'es', 'ar', 'it', 'de', 'zh'] as const;
+const FALLBACK_LANGUAGE = 'en';
 
 const NAMESPACES = [
   'common',

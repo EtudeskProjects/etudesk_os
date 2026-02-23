@@ -1,0 +1,23 @@
+{
+  "created": "Postulación enviada",
+  "updated": "Postulación actualizada",
+  "deleted": "Postulación eliminada",
+  "deletedCanReapply": "Postulación eliminada. Puedes postular de nuevo.",
+  "notFound": "Postulación no encontrada",
+  "alreadyApplied": "Ya postulaste a esta oportunidad",
+  "withdrawn": "Postulación retirada",
+  "statusUpdated": "Estado actualizado",
+  "notAuthorized": "No estás autorizado para gestionar esta postulación",
+  "notAuthorizedOpportunity": "Acceso no autorizado a esta oportunidad",
+  "accessDenied": "Acceso no autorizado",
+  "cannotWithdraw": "No se puede retirar una postulación ya procesada",
+  "opportunityClosed": "Esta oportunidad ya no acepta postulaciones",
+  "opportunityNotFound": "Oportunidad no encontrada",
+  "deadlinePassed": "La fecha límite de postulación ha pasado",
+  "cannotApplyOwnOpportunity": "No puedes postular a tu propia oportunidad",
+  "ratingUpdated": "Calificación actualizada",
+  "noteUpdated": "Comentario actualizado",
+  "messageEmpty": "El mensaje no puede estar vacío",
+  "organizationFirstMessage": "No puedes iniciar la conversación. Espera a que la organización te contacte.",
+  "unableToGenerateRecommendation": "No se pudo generar una recomendación"
+}

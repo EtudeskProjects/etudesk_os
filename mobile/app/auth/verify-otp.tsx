@@ -169,7 +169,7 @@ export default function VerifyOTPScreen() {
           <IconButton
             onPress={() => router.back()}
             icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel="Retour"
+            accessibilityLabel={t('common.back')}
             size="sm"
             variant="filled"
             style={[styles.backButton, { backgroundColor: colors.surface }]}
@@ -256,7 +256,7 @@ export default function VerifyOTPScreen() {
               void handleResendOTP();
             }}
             selected={false}
-            accessibilityLabel="Renvoyer le code"
+            accessibilityLabel={t('common.resendCode')}
           >
             <Text
               style={[

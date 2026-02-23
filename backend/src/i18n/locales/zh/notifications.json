@@ -1,0 +1,10 @@
+{
+  "registerError": "无法注册推送令牌",
+  "deactivateError": "无法停用推送令牌",
+  "fetchError": "无法获取通知",
+  "markReadError": "无法将通知标记为已读",
+  "markAllReadError": "无法标记所有通知",
+  "deleteError": "无法删除通知",
+  "fetchPreferencesError": "无法获取偏好设置",
+  "updatePreferencesError": "无法更新偏好设置"
+}

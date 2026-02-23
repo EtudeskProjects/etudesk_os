@@ -9,7 +9,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
-  Mail,
   Crown,
   Shield,
   Users,
@@ -25,11 +24,11 @@ import { useOrganizationMembers } from '../../../src/contexts/OrganizationMember
 import {
   OrganizationRole,
   ORGANIZATION_ROLES,
-  ORGANIZATION_ROLE_LABELS,
-  PERMISSION_LABELS,
+  getOrganizationRoleLabel,
 } from '../../../src/types/models';
 import { useAlert } from '../../../src/contexts/AlertContext';
-import { Button, IconButton, Tap } from '../../../src/components/ui';
+import { useI18n } from '../../../src/contexts/I18nContext';
+import { Button, IconButton } from '../../../src/components/ui';
 
 
 const getRoleIcon = (role: OrganizationRole) => {
@@ -62,6 +61,7 @@ export default function InvitationDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { invitations, cancelInvitation, resendInvitation } = useOrganizationMembers();
 
   const invitation = invitations.find(i => i.id === id);
@@ -76,13 +76,13 @@ export default function InvitationDetailScreen() {
           <IconButton
             onPress={() => router.back()}
             icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel="Retour"
+            accessibilityLabel={t('common.back')}
           />
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Invitation</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('organization.members.invitationDetail.title')}</Text>
           <View style={styles.backButton} />
         </View>
         <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Invitation non trouvée</Text>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('organization.members.invitationDetail.notFound')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -106,27 +106,27 @@ export default function InvitationDetailScreen() {
     setIsResending(true);
     try {
       await resendInvitation(invitation.id);
-      void alerts.alert('Succès', 'L\'invitation a été renvoyée avec une nouvelle date d\'expiration');
-    } catch (error) {
-      void alerts.alert('Erreur', 'Impossible de renvoyer l\'invitation');
+      void alerts.alert(t('common.success'), t('organization.members.invitationDetail.resendSuccess'));
+    } catch {
+      void alerts.alert(t('common.error'), t('organization.members.invitationDetail.resendError'));
     } finally {
       setIsResending(false);
     }
   };
 
   const handleCancel = () => {
-    void alerts.showAlert({ title: 'Annuler l\'invitation', message: `Voulez-vous vraiment annuler l'invitation envoyée à ${invitation.email} ?`, buttons: [
-        { text: 'Non', style: 'cancel' },
+    void alerts.showAlert({ title: t('organization.members.invitationDetail.cancelTitle'), message: t('organization.members.invitationDetail.cancelMessage', { email: invitation.email }), buttons: [
+        { text: t('common.no'), style: 'cancel' },
         {
-          text: 'Oui, annuler',
+          text: t('organization.members.invitationDetail.cancelConfirm'),
           style: 'destructive',
           onPress: async () => {
             setIsCancelling(true);
             try {
               await cancelInvitation(invitation.id);
               router.back();
-            } catch (error) {
-              void alerts.alert('Erreur', 'Impossible d\'annuler l\'invitation');
+            } catch {
+              void alerts.alert(t('common.error'), t('organization.members.invitationDetail.cancelError'));
             } finally {
               setIsCancelling(false);
             }
@@ -145,9 +145,9 @@ export default function InvitationDetailScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Invitation</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('organization.members.invitationDetail.title')}</Text>
         <View style={styles.backButton} />
       </View>
 
@@ -167,7 +167,7 @@ export default function InvitationDetailScreen() {
           <View style={[styles.roleBadge, { backgroundColor: withOpacity(roleColor, OPACITY[15]) }]}>
             <RoleIcon size={14} color={roleColor} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.roleText, { color: roleColor }]}>
-              {ORGANIZATION_ROLE_LABELS[invitation.role]}
+              {getOrganizationRoleLabel(invitation.role)}
             </Text>
           </View>
 
@@ -179,32 +179,32 @@ export default function InvitationDetailScreen() {
             <Clock size={14} color={isExpired ? colors.error : colors.warning} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.statusText, { color: isExpired ? colors.error : colors.warning }]}>
               {isExpired
-                ? 'Expirée'
+                ? t('organization.members.invitationDetail.expired')
                 : daysRemaining > 1
-                  ? `Expire dans ${daysRemaining} jours`
+                  ? t('organization.members.invitationDetail.expiresInDays', { count: daysRemaining })
                   : daysRemaining === 1
-                    ? 'Expire demain'
-                    : 'Expire aujourd\'hui'}
+                    ? t('organization.members.invitationDetail.expiresTomorrow')
+                    : t('organization.members.invitationDetail.expiresToday')}
             </Text>
           </View>
 
           {/* Meta Info */}
           <View style={styles.metaInfo}>
             <View style={styles.metaItem}>
-              <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Envoyée le</Text>
+              <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('organization.members.invitationDetail.sentOn')}</Text>
               <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
                 {formatDate(invitation.created_at)}
               </Text>
             </View>
             <View style={styles.metaItem}>
-              <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Expire le</Text>
+              <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('organization.members.invitationDetail.expiresOn')}</Text>
               <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
                 {formatDate(invitation.expires_at)}
               </Text>
             </View>
             {invitation.invited_by_name && (
               <View style={styles.metaItem}>
-                <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>Invité par</Text>
+                <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('organization.members.invitationDetail.invitedBy')}</Text>
                 <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
                   {invitation.invited_by_name}
                 </Text>
@@ -214,7 +214,7 @@ export default function InvitationDetailScreen() {
         </View>
 
         {/* Permissions */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Permissions accordées</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('organization.members.invitationDetail.permissionsGranted')}</Text>
         <View style={[styles.permissionsList, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
           {(invitation.permissions || []).map((permission: any, index: number) => {
             const isLast = index === (invitation.permissions || []).length - 1;
@@ -229,7 +229,7 @@ export default function InvitationDetailScreen() {
                 ]}
               >
                 <Text style={[styles.permissionLabel, { color: colors.textPrimary }]}>
-                  {PERMISSION_LABELS[permission]}
+                  {permission}
                 </Text>
               </View>
             );
@@ -239,7 +239,7 @@ export default function InvitationDetailScreen() {
         {/* Actions */}
         <View style={styles.actions}>
           <Button
-            title={isResending ? 'Envoi...' : "Renvoyer l'invitation"}
+            title={isResending ? t('common.sending') : t('organization.members.invitationDetail.resendButton')}
             onPress={handleResend}
             disabled={isResending}
             fullWidth
@@ -249,7 +249,7 @@ export default function InvitationDetailScreen() {
           />
 
           <Button
-            title={isCancelling ? 'Annulation...' : "Annuler l'invitation"}
+            title={isCancelling ? t('organization.members.invitationDetail.cancelling') : t('organization.members.invitationDetail.cancelButton')}
             onPress={handleCancel}
             disabled={isCancelling}
             variant="outline"

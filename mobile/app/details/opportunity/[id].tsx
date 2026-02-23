@@ -36,12 +36,12 @@ import { getFileType, getFullFileUrl } from '../../../src/utils/file';
 import { RemoteImage } from '../../../src/components/ui/RemoteImage';
 import type { Opportunity, OpportunityAttachment } from '../../../src/types/models';
 import {
-  OPPORTUNITY_TYPE_LABELS,
-  CONTRACT_TYPE_LABELS,
-  WORK_RHYTHM_LABELS,
-  LOCATION_TYPE_LABELS,
-  ORGANIZATION_TYPE_LABELS,
-  COMPENSATION_FREQUENCY_LABELS,
+  getOpportunityTypeLabel,
+  getContractTypeLabel,
+  getWorkRhythmLabel,
+  getLocationTypeLabel,
+  getOrganizationTypeLabel,
+  getCompensationFrequencyLabel,
 } from '../../../src/types/models';
 import { getCurrencySymbol } from '../../../src/constants/opportunity';
 import { opportunityService, bookmarkService } from '../../../src/services';
@@ -65,9 +65,8 @@ const formatSalary = (min?: number, max?: number, currency?: string, frequency?:
   const currencyCode = currency || 'XOF';
   const currencySymbol = getCurrencySymbol(currencyCode);
   
-  const freqLabel = frequency && COMPENSATION_FREQUENCY_LABELS[frequency as keyof typeof COMPENSATION_FREQUENCY_LABELS]
-    ? ` ${COMPENSATION_FREQUENCY_LABELS[frequency as keyof typeof COMPENSATION_FREQUENCY_LABELS]}`
-    : '';
+  const freqLabelText = frequency ? getCompensationFrequencyLabel(frequency as any) : '';
+  const freqLabel = freqLabelText ? ` ${freqLabelText}` : '';
   
   // Format numbers without decimals (.00)
   const formatNumber = (num: number): string => {
@@ -81,13 +80,13 @@ const formatSalary = (min?: number, max?: number, currency?: string, frequency?:
   return `${formatNumber(min || max || 0)} ${currencySymbol}${freqLabel}`;
 };
 
-const formatLocation = (opportunity: Opportunity): string => {
+const formatLocation = (opportunity: Opportunity, t?: (key: string) => string): string => {
   const location = opportunity.locations?.[0];
   
   if (opportunity.location_type === 'REMOTE') {
-    return LOCATION_TYPE_LABELS.REMOTE || 'Remote';
+    return getLocationTypeLabel('REMOTE') || 'Remote';
   } else if (opportunity.location_type === 'HYBRID') {
-    const hybridLabel = LOCATION_TYPE_LABELS.HYBRID || 'Hybride';
+    const hybridLabel = getLocationTypeLabel('HYBRID') || (t ? t('common.hybrid') : 'Hybride');
     if (location?.city && location?.country) {
       return `${hybridLabel} • ${location.city}, ${location.country}`;
     } else if (location?.city) {
@@ -100,7 +99,7 @@ const formatLocation = (opportunity: Opportunity): string => {
     } else if (location?.city) {
       return location.city;
     }
-    return LOCATION_TYPE_LABELS.ON_SITE || 'Sur site';
+    return getLocationTypeLabel('ON_SITE') || 'Sur site';
   } else {
     // Fallback: try to use location if available
     if (location?.city && location?.country) {
@@ -266,7 +265,7 @@ export default function OpportunityDetailScreen() {
 	        <IconButton
 	          onPress={() => router.back()}
 	          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	          accessibilityLabel="Retour"
+	          accessibilityLabel={t('common.back')}
 	          variant="filled"
 	          style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
 	        />
@@ -274,7 +273,7 @@ export default function OpportunityDetailScreen() {
 	          <IconButton
 	            onPress={() => {}}
 	            icon={<Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	            accessibilityLabel="Partager"
+	            accessibilityLabel={t('common.share')}
 	            variant="filled"
 	            disabled
 	            style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
@@ -288,7 +287,7 @@ export default function OpportunityDetailScreen() {
 	                <Bookmark size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
 	              )
 	            }
-	            accessibilityLabel={isBookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+	            accessibilityLabel={isBookmarked ? t('common.removeFromFavorites') : t('common.addToFavorites')}
 	            variant="filled"
 	            style={[
 	              styles.headerButton,
@@ -318,7 +317,7 @@ export default function OpportunityDetailScreen() {
               style={[styles.orgCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
               onPress={() => router.push(`/details/organization/${opportunity.organization!.id}`)}
               selected={false}
-              accessibilityLabel={`Voir ${opportunity.organization.name}`}
+              accessibilityLabel={t('common.viewOrganization', { name: opportunity.organization.name })}
             >
               {opportunity.organization.logo_url ? (
                 <RemoteImage uri={opportunity.organization.logo_url} style={styles.orgLogo} />
@@ -342,7 +341,7 @@ export default function OpportunityDetailScreen() {
                   {opportunity.organization.type && (
                     <View style={[styles.orgTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                       <Text style={[styles.orgTagText, { color: colors.primary }]}>
-                        {ORGANIZATION_TYPE_LABELS[opportunity.organization.type] || opportunity.organization.type}
+                        {getOrganizationTypeLabel(opportunity.organization.type) || opportunity.organization.type}
                       </Text>
                     </View>
                   )}
@@ -372,7 +371,7 @@ export default function OpportunityDetailScreen() {
                 void alerts.alert(t('common.copied'), t('opportunity.linkCopied'));
               }}
               selected={false}
-              accessibilityLabel="Copier le lien"
+              accessibilityLabel={t('common.copyLink')}
             >
               <Link size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.slugText, { color: colors.gray400 }]}>
@@ -386,28 +385,28 @@ export default function OpportunityDetailScreen() {
             {opportunity.type && (
               <View style={[styles.tag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.tagText, { color: colors.primary }]}>
-                  {OPPORTUNITY_TYPE_LABELS[opportunity.type] || opportunity.type}
+                  {getOpportunityTypeLabel(opportunity.type) || opportunity.type}
                 </Text>
               </View>
             )}
             {opportunity.contract_type && (
               <View style={[styles.tag, { backgroundColor: colors.gray100 }]}>
                 <Text style={[styles.tagText, { color: colors.textSecondary }]}>
-                  {CONTRACT_TYPE_LABELS[opportunity.contract_type] || opportunity.contract_type}
+                  {getContractTypeLabel(opportunity.contract_type) || opportunity.contract_type}
                 </Text>
               </View>
             )}
             {opportunity.work_rhythm && (
               <View style={[styles.tag, { backgroundColor: colors.gray100 }]}>
                 <Text style={[styles.tagText, { color: colors.textSecondary }]}>
-                  {WORK_RHYTHM_LABELS[opportunity.work_rhythm] || opportunity.work_rhythm}
+                  {getWorkRhythmLabel(opportunity.work_rhythm) || opportunity.work_rhythm}
                 </Text>
               </View>
             )}
             {opportunity.location_type && (
               <View style={[styles.tag, { backgroundColor: colors.gray100 }]}>
                 <Text style={[styles.tagText, { color: colors.textSecondary }]}>
-                  {LOCATION_TYPE_LABELS[opportunity.location_type] || opportunity.location_type}
+                  {getLocationTypeLabel(opportunity.location_type) || opportunity.location_type}
                 </Text>
               </View>
             )}
@@ -455,7 +454,7 @@ export default function OpportunityDetailScreen() {
                 <View>
                   <Text style={[styles.metaLabel, { color: colors.textSecondary }]}>{t('opportunity.location')}</Text>
                   <Text style={[styles.metaValue, { color: colors.textPrimary }]}>
-                    {formatLocation(opportunity)}
+                    {formatLocation(opportunity, t)}
                   </Text>
                 </View>
               </View>
@@ -552,7 +551,7 @@ export default function OpportunityDetailScreen() {
 	                      <IconButton
 	                        onPress={() => handleDownloadAttachment(attachment)}
 	                        icon={<Download size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-	                        accessibilityLabel="Télécharger"
+	                        accessibilityLabel={t('common.download')}
 	                        variant="outline"
 	                        size="sm"
 	                        style={[styles.attachmentDownloadButton, { borderColor: colors.primary }]}
@@ -705,14 +704,14 @@ export default function OpportunityDetailScreen() {
 	                <IconButton
 	                  onPress={() => handleDownloadAttachment(selectedAttachment)}
 	                  icon={<Download size={20} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-	                  accessibilityLabel="Télécharger"
+	                  accessibilityLabel={t('common.download')}
 	                  variant="filled"
 	                  style={[styles.attachmentModalDownloadButton, { backgroundColor: colors.gray100 }]}
 	                />
 	                <IconButton
 	                  onPress={() => setShowAttachmentModal(false)}
 	                  icon={<X size={24} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                  accessibilityLabel="Fermer"
+	                  accessibilityLabel={t('common.close')}
 	                  style={styles.attachmentModalCloseButton}
 	                />
 	              </View>

@@ -1,0 +1,19 @@
+{
+  "messageRequired": "消息为必填项",
+  "messageTooLong": "消息太长（最多4000个字符）",
+  "processingError": "处理消息时出错",
+  "transcriptionError": "音频转写时出错",
+  "uploadError": "上传文件时出错",
+  "sessionsError": "获取会话列表时出错",
+  "sessionCreateError": "创建会话时出错",
+  "sessionFetchError": "获取会话时出错",
+  "sessionDeleteError": "删除会话时出错",
+  "sessionDeleted": "会话已删除",
+  "sessionNotFound": "会话未找到",
+  "messagesError": "获取消息时出错",
+  "organizationRequired": "管理模式需要提供组织 ID",
+  "notAuthenticated": "未认证",
+  "noAudioFile": "未提供音频文件",
+  "invalidAudioFormat": "音频格式无效或文件已损坏",
+  "noFileProvided": "未提供文件"
+}

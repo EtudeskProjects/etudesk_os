@@ -1,0 +1,11 @@
+{
+  "fetchError": "加载技能时出错",
+  "invalidProficiencyLevel": "技能水平无效",
+  "skillNameRequired": "skillName 为必填项",
+  "skillTypeRequired": "技能类型为必填项（KNOWLEDGE、HARD_SKILL、SOFT_SKILL）",
+  "addError": "添加技能时出错",
+  "updateError": "更新时出错",
+  "notFound": "技能未找到",
+  "deleteError": "删除时出错",
+  "mergeError": "合并技能时出错"
+}

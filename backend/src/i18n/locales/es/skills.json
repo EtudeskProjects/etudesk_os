@@ -1,0 +1,11 @@
+{
+  "fetchError": "Error al cargar las competencias",
+  "invalidProficiencyLevel": "Nivel de competencia inválido",
+  "skillNameRequired": "skillName requerido",
+  "skillTypeRequired": "El tipo de competencia es requerido (KNOWLEDGE, HARD_SKILL, SOFT_SKILL)",
+  "addError": "Error al agregar la competencia",
+  "updateError": "Error al actualizar",
+  "notFound": "Competencia no encontrada",
+  "deleteError": "Error al eliminar",
+  "mergeError": "Error al fusionar las competencias"
+}

@@ -16,7 +16,8 @@ import { i18next } from '../i18n';
 import { logger } from '../utils';
 
 
-export type EmailLanguage = 'fr' | 'en';
+// Email templates currently support fr/en — extend as templates are translated
+export type EmailLanguage = 'en' | 'fr';
 export type EmailProvider = 'smtp' | 'resend';
 
 export interface SendEmailOptions {
@@ -80,7 +81,7 @@ const BRAND_BG_SECONDARY = '#F5F3F0';
 const LOGO_URL = EMAIL_LOGO_URL;
 
 // Helper to get translation function for a specific language
-function getT(language: EmailLanguage = 'fr') {
+function getT(language: EmailLanguage = 'en') {
   return (key: string, options?: Record<string, string | number>) => {
     return i18next.t(key, { lng: language, ...options });
   };
@@ -145,7 +146,7 @@ export const EmailTemplates = {
   /**
    * OTP Login Email Template - Minimalist Design
    */
-  otpLogin: (code: string, expiresInMinutes: number = 10, language: EmailLanguage = 'fr'): { subject: string; html: string; text: string } => {
+  otpLogin: (code: string, expiresInMinutes: number = 10, language: EmailLanguage = 'en'): { subject: string; html: string; text: string } => {
     const t = getT(language);
     const lang = language === 'en' ? 'en' : 'fr';
 
@@ -228,7 +229,7 @@ ${t('emails:otp.neverShare')}.
   /**
    * Welcome Email Template (after onboarding)
    */
-  welcome: (displayName: string, language: EmailLanguage = 'fr'): { subject: string; html: string; text: string } => {
+  welcome: (displayName: string, language: EmailLanguage = 'en'): { subject: string; html: string; text: string } => {
     const t = getT(language);
     const lang = language === 'en' ? 'en' : 'fr';
     const year = new Date().getFullYear();
@@ -323,7 +324,7 @@ ${t('emails:welcome.copyright', { year })}
 /**
  * Send OTP login email
  */
-export async function sendOTPEmail(email: string, code: string, language: EmailLanguage = 'fr'): Promise<{ success: boolean; error?: string }> {
+export async function sendOTPEmail(email: string, code: string, language: EmailLanguage = 'en'): Promise<{ success: boolean; error?: string }> {
   const template = EmailTemplates.otpLogin(code, 10, language);
   return sendEmail({
     to: email,
@@ -334,7 +335,7 @@ export async function sendOTPEmail(email: string, code: string, language: EmailL
 /**
  * Send welcome email after onboarding
  */
-export async function sendWelcomeEmail(email: string, displayName: string, language: EmailLanguage = 'fr'): Promise<{ success: boolean; error?: string }> {
+export async function sendWelcomeEmail(email: string, displayName: string, language: EmailLanguage = 'en'): Promise<{ success: boolean; error?: string }> {
   const template = EmailTemplates.welcome(displayName, language);
   return sendEmail({
     to: email,
@@ -351,11 +352,12 @@ export async function sendOrganizationInviteEmail(
   inviterName: string,
   role: string,
   token: string,
-  language: EmailLanguage = 'fr'
+  language: EmailLanguage = 'en'
 ): Promise<{ success: boolean; error?: string }> {
   const t = getT(language);
   const lang = language === 'en' ? 'en' : 'fr';
-  const roleLabel = t(`emails:orgInvite.roles.${role}`) || role;
+  const roleKey = role === 'OBSERVATEUR' ? 'OBSERVER' : role;
+  const roleLabel = t(`emails:orgInvite.roles.${roleKey}`) || role;
   const inviteLink = `${APP_URL}/invitation/${token}`;
   const year = new Date().getFullYear();
 
@@ -465,7 +467,7 @@ export async function sendCommunityInviteEmail(
   role: string,
   message: string | null,
   invitationToken: string | null,
-  language: EmailLanguage = 'fr'
+  language: EmailLanguage = 'en'
 ): Promise<{ success: boolean; error?: string }> {
   const t = getT(language);
   const lang = language === 'en' ? 'en' : 'fr';
@@ -596,7 +598,7 @@ export async function sendSpaceInviteEmail(
   inviterName: string,
   message: string | null,
   invitationToken: string,
-  language: EmailLanguage = 'fr'
+  language: EmailLanguage = 'en'
 ): Promise<{ success: boolean; error?: string }> {
   const t = getT(language);
   const lang = language === 'en' ? 'en' : 'fr';
@@ -658,7 +660,7 @@ export async function sendOpportunityInviteEmail(
   inviterName: string,
   message: string | null,
   invitationToken: string,
-  language: EmailLanguage = 'fr'
+  language: EmailLanguage = 'en'
 ): Promise<{ success: boolean; error?: string }> {
   const t = getT(language);
   const lang = language === 'en' ? 'en' : 'fr';

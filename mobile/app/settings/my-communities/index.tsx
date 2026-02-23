@@ -20,6 +20,7 @@ import {
 } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { Chip, PageLayout, EmptyState, SelectCard } from '../../../src/components/ui';
 import { CommunityCard } from '../../../src/components/cards';
 import { communityService, communityActivityService } from '../../../src/services';
@@ -28,11 +29,11 @@ import { getFullImageUrl } from '../../../src/utils/image';
 import { toNumberOrNull } from '../../../src/utils/number';
 import type { Community } from '../../../src/types/models';
 
-const getMemberStatusConfig = (colors: any) => ({
-  PENDING: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]), label: 'En attente' },
-  ACTIVE: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]), label: 'Active' },
-  REJECTED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]), label: 'Refusée' },
-  SUSPENDED: { color: colors.gray500, icon: XCircle, bgColor: withOpacity(colors.gray500, OPACITY[15]), label: 'Suspendu' },
+const getMemberStatusConfig = (colors: any, t: (key: string) => string) => ({
+  PENDING: { color: colors.warning, icon: Clock, bgColor: withOpacity(colors.warning, OPACITY[15]), label: t('myCommunities.status.pending') },
+  ACTIVE: { color: colors.success, icon: CheckCircle2, bgColor: withOpacity(colors.success, OPACITY[15]), label: t('myCommunities.status.active') },
+  REJECTED: { color: colors.error, icon: XCircle, bgColor: withOpacity(colors.error, OPACITY[15]), label: t('myCommunities.status.rejected') },
+  SUSPENDED: { color: colors.gray500, icon: XCircle, bgColor: withOpacity(colors.gray500, OPACITY[15]), label: t('myCommunities.status.suspended') },
 });
 
 type Tab = 'memberships' | 'bookmarks';
@@ -82,20 +83,21 @@ const getActivityIcon = (type: string) => {
   }
 };
 
-const getActivityLabel = (type: string) => {
+const getActivityLabel = (type: string, t: (key: string) => string) => {
   switch (type) {
     case 'EVENT':
-      return 'Événement';
+      return t('myCommunities.activityTypes.event');
     case 'POLL':
-      return 'Sondage';
+      return t('myCommunities.activityTypes.poll');
     default:
-      return 'Publication';
+      return t('myCommunities.activityTypes.post');
   }
 };
 
 export default function MyCommunitiesScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [activeTab, setActiveTab] = useState<Tab>('memberships');
   const [memberFilter, setMemberFilter] = useState<MemberFilterStatus>('all');
@@ -144,8 +146,8 @@ export default function MyCommunitiesScreen() {
   }, [loadData]);
 
   const chips = [
-    { key: 'memberships' as Tab, label: memberships.length <= 1 ? 'Adhésion' : 'Adhésions', count: memberships.length },
-    { key: 'bookmarks' as Tab, label: bookmarkedActivities.length <= 1 ? 'Sauvegarde' : 'Sauvegardes', count: bookmarkedActivities.length },
+    { key: 'memberships' as Tab, label: memberships.length <= 1 ? t('myCommunities.tabs.memberships') : t('myCommunities.tabs.membershipsPlural'), count: memberships.length },
+    { key: 'bookmarks' as Tab, label: bookmarkedActivities.length <= 1 ? t('myCommunities.tabs.bookmarks') : t('myCommunities.tabs.bookmarksPlural'), count: bookmarkedActivities.length },
   ];
 
   const filteredMemberships = memberships.filter((m) => {
@@ -163,11 +165,11 @@ export default function MyCommunitiesScreen() {
   const memberStatusCounts = getMemberStatusCounts();
 
   const memberFilterChips: { key: MemberFilterStatus; label: string }[] = [
-    { key: 'all', label: 'Toutes' },
-    { key: 'PENDING', label: 'En attente' },
-    { key: 'ACTIVE', label: 'Actives' },
-    { key: 'REJECTED', label: 'Refusées' },
-    { key: 'SUSPENDED', label: 'Suspendues' },
+    { key: 'all', label: t('myCommunities.filters.all') },
+    { key: 'PENDING', label: t('myCommunities.filters.pending') },
+    { key: 'ACTIVE', label: t('myCommunities.filters.active') },
+    { key: 'REJECTED', label: t('myCommunities.filters.rejected') },
+    { key: 'SUSPENDED', label: t('myCommunities.filters.suspended') },
   ];
 
   const renderMembershipItem = (membership: Membership) => {
@@ -184,7 +186,7 @@ export default function MyCommunitiesScreen() {
       type: membership.community.type as any,
     } as Community;
 
-    const statusConfig = getMemberStatusConfig(colors)[membership.status] || getMemberStatusConfig(colors).PENDING;
+    const statusConfig = getMemberStatusConfig(colors, t)[membership.status] || getMemberStatusConfig(colors, t).PENDING;
     const StatusIcon = statusConfig.icon;
 
     return (
@@ -216,7 +218,7 @@ export default function MyCommunitiesScreen() {
         style={[styles.bookmarkCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
         onPress={() => router.push(`/details/community/activity/${activity.id}`)}
         selected={false}
-        accessibilityLabel={activity.title || 'Ouvrir la publication'}
+        accessibilityLabel={activity.title || t('myCommunities.openPublication')}
       >
         {authorAvatarUrl ? (
           <Image
@@ -236,7 +238,7 @@ export default function MyCommunitiesScreen() {
             <View style={[styles.activityTypeBadge, { backgroundColor: colors.gray100 }]}>
               <ActivityIcon size={10} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
               <Text style={[styles.activityTypeText, { color: colors.textSecondary }]}>
-                {getActivityLabel(activity.type)}
+                {getActivityLabel(activity.type, t)}
               </Text>
             </View>
             {activity.community && (
@@ -323,7 +325,7 @@ export default function MyCommunitiesScreen() {
 
   return (
     <PageLayout
-      title="Mes communautés"
+      title={t('myCommunities.title')}
       onRefresh={handleRefresh}
       isRefreshing={isRefreshing}
       isLoading={isLoading}
@@ -340,14 +342,14 @@ export default function MyCommunitiesScreen() {
           ListEmptyComponent={
             <EmptyState
               icon={Users}
-              title={memberFilter === 'all' ? 'Aucune communauté' : 'Aucun résultat'}
+              title={memberFilter === 'all' ? t('myCommunities.empty.membershipsTitle') : t('myCommunities.empty.membershipsFilteredTitle')}
               subtitle={
                 memberFilter === 'all'
-                  ? 'Rejoignez des communautés pour les voir ici'
-                  : 'Aucune adhésion avec ce statut.'
+                  ? t('myCommunities.empty.membershipsSubtitle')
+                  : t('myCommunities.empty.membershipsFilteredSubtitle')
               }
               {...(memberFilter === 'all' ? {
-                actionLabel: 'Explorer',
+                actionLabel: t('myCommunities.explore'),
                 onAction: () => router.push('/(tabs)/explore?category=communities'),
               } : {})}
             />
@@ -363,8 +365,8 @@ export default function MyCommunitiesScreen() {
           ListEmptyComponent={
             <EmptyState
               icon={Bookmark}
-              title="Aucune sauvegarde"
-              subtitle="Sauvegardez des publications, événements ou sondages pour les retrouver ici"
+              title={t('myCommunities.empty.bookmarksTitle')}
+              subtitle={t('myCommunities.empty.bookmarksSubtitle')}
             />
           }
         />

@@ -15,8 +15,6 @@
   "common": {
     "invalidId": "Invalid ID",
     "invalidOrgId": "Invalid organization ID",
-    "invalidUrl": "Invalid URL",
-    "invalidDate": "Invalid date",
     "countryCodeFormat": "Country code must be in ISO 3166-1 alpha-2 format",
     "currencyFormat": "Currency must be in ISO 4217 format"
   },

@@ -1,0 +1,23 @@
+{
+  "created": "تم تقديم الترشح",
+  "updated": "تم تحديث الترشح",
+  "deleted": "تم حذف الترشح",
+  "deletedCanReapply": "تم حذف الترشح. يمكنك التقديم مجدداً.",
+  "notFound": "الترشح غير موجود",
+  "alreadyApplied": "لقد تقدّمت لهذه الفرصة بالفعل",
+  "withdrawn": "تم سحب الترشح",
+  "statusUpdated": "تم تحديث الحالة",
+  "notAuthorized": "لست مخوّلاً لإدارة هذا الترشح",
+  "notAuthorizedOpportunity": "وصول غير مصرّح لهذه الفرصة",
+  "accessDenied": "وصول غير مصرّح",
+  "cannotWithdraw": "لا يمكن سحب ترشح تمت معالجته بالفعل",
+  "opportunityClosed": "هذه الفرصة لم تعد تقبل ترشحات",
+  "opportunityNotFound": "الفرصة غير موجودة",
+  "deadlinePassed": "انتهى الموعد النهائي للتقديم",
+  "cannotApplyOwnOpportunity": "لا يمكنك التقديم لفرصتك الخاصة",
+  "ratingUpdated": "تم تحديث التقييم",
+  "noteUpdated": "تم تحديث التعليق",
+  "messageEmpty": "لا يمكن أن تكون الرسالة فارغة",
+  "organizationFirstMessage": "لا يمكنك بدء المحادثة. انتظر حتى تتواصل المنظمة معك.",
+  "unableToGenerateRecommendation": "تعذّر إنشاء التوصية"
+}

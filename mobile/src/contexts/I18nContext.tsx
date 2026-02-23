@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
-import i18n, { Language } from '../i18n';
+import i18n, { Language, SUPPORTED_LANGUAGES, setLanguage as setI18nLanguage } from '../i18n';
 import { STORAGE_KEYS } from '../constants/config';
 import { api } from '../services/api';
 
@@ -18,8 +18,10 @@ interface I18nProviderProps {
   children: ReactNode;
 }
 
+const supportedSet: ReadonlySet<string> = new Set(SUPPORTED_LANGUAGES);
+
 function isValidLanguage(value: string): value is Language {
-  return value === 'fr' || value === 'en';
+  return supportedSet.has(value);
 }
 
 // Get device language using expo-localization
@@ -28,7 +30,7 @@ function getDeviceLanguage(): Language {
     const locales = getLocales();
     if (locales?.length > 0) {
       const lang = locales[0].languageCode ?? 'fr';
-      return lang === 'en' ? 'en' : 'fr';
+      if (isValidLanguage(lang)) return lang;
     }
   } catch {
     // Fallback to French
@@ -50,7 +52,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
           const stored = await AsyncStorage.getItem(STORAGE_KEYS.LANGUAGE);
           if (stored && isValidLanguage(stored)) {
             setLanguageState(stored);
-            i18n.locale = stored;
+            setI18nLanguage(stored);
           }
         }
         // If user never explicitly chose, device language (from getDeviceLanguage) is used
@@ -60,14 +62,9 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
     })();
   }, []);
 
-  // Update i18n locale when language changes
-  useEffect(() => {
-    i18n.locale = language;
-  }, [language]);
-
   const setLanguage = useCallback(async (lang: Language) => {
     setLanguageState(lang);
-    i18n.locale = lang;
+    setI18nLanguage(lang);
     // Mark as explicit user choice + persist
     AsyncStorage.setItem(LANGUAGE_USER_CHOSEN_KEY, 'true').catch(() => {});
     AsyncStorage.setItem(STORAGE_KEYS.LANGUAGE, lang).catch(() => {});

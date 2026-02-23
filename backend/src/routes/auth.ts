@@ -5,6 +5,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { SUPPORTED_LANGUAGES } from '../i18n';
 import { createOTP, createWhatsAppOTP, verifyOTP, verifyOTPByChannel, resolveOrCreateUserForGoogle } from '../services/otp.service';
 import { sendOTPEmail } from '../services/email.service';
 import { sendWhatsAppOtp, formatPhoneToE164 } from '../services/whatsapp.service';
@@ -508,7 +509,7 @@ router.put('/language', authMiddleware, async (req: AuthRequest, res: Response) 
   try {
     const { language } = req.body;
 
-    if (!language || !['fr', 'en'].includes(language)) {
+    if (!language || !(SUPPORTED_LANGUAGES as readonly string[]).includes(language)) {
       return res.status(400).json({
         success: false,
         error: req.t('auth:invalidLanguage'),

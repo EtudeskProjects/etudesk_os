@@ -12,6 +12,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
+import i18n from '../i18n';
 
 // Validation rule type
 export type ValidationRule<T> = (value: T, formValues: Record<string, any>) => string | null;
@@ -152,7 +153,7 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>): U
       const isEmpty = value === '' || value === null || value === undefined ||
         (Array.isArray(value) && value.length === 0);
       if (isEmpty) {
-        return fieldConfig.requiredMessage || 'Ce champ est requis';
+        return fieldConfig.requiredMessage || i18n.t('errors.fieldRequired');
       }
     }
 
@@ -216,7 +217,7 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>): U
             const isEmpty = value === '' || value === null || value === undefined ||
               (Array.isArray(value) && value.length === 0);
             if (isEmpty) {
-              return fieldConfig.requiredMessage || 'Ce champ est requis';
+              return fieldConfig.requiredMessage || i18n.t('errors.fieldRequired');
             }
           }
 

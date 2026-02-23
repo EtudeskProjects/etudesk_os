@@ -55,19 +55,16 @@ export function shouldInjectUEMOA(message: string, activeSkillId?: string): bool
 
 /**
  * Get the UEMOA knowledge block for injection into prompts.
- * Returns block if: (1) user is in a UEMOA country AND shouldInject is true, OR (2) country is empty but language is French AND shouldInject is true.
+ * Returns block only if the user is in a UEMOA country and shouldInject is true.
  * ~2500 tokens — high ROI reference data: SMIG 8 pays, salary grids 20 sectors × 3 countries, cotisations sociales CI/SN/ML, droit du travail. Eliminates web_search for salary/legal benchmarks.
  * When shouldInject is false (default), skips injection to save ~2500 tokens on irrelevant requests.
  */
-export function getUEMOAKnowledgeBlock(userCountry?: string, language?: 'fr' | 'en', shouldInject: boolean = true): string {
+export function getUEMOAKnowledgeBlock(userCountry?: string, _language?: string, shouldInject: boolean = true): string {
   if (!shouldInject) return '';
   const inUEMOA = isUEMOACountry(userCountry);
-  const fallbackFr = !userCountry?.trim() && language === 'fr';
-  if (!inUEMOA && !fallbackFr) return '';
+  if (!inUEMOA) return '';
 
-  const locationLabel = inUEMOA
-    ? (UEMOA_COUNTRY_NAMES[userCountry?.trim().toUpperCase() || ''] || userCountry || 'Zone UEMOA')
-    : 'Zone UEMOA francophone (pays non précisé)';
+  const locationLabel = UEMOA_COUNTRY_NAMES[userCountry?.trim().toUpperCase() || ''] || userCountry || 'Zone UEMOA';
 
   return `
 # UEMOA Reference Data (${locationLabel})

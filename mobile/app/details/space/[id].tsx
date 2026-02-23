@@ -69,15 +69,15 @@ import { spaceService, Space, bookmarkService } from '../../../src/services';
 import { getFullImageUrl } from '../../../src/utils/image';
 import { formatNumberNoTrailingZeros } from '../../../src/utils/number';
 import {
-  SPACE_TYPE_LABELS,
-  SPACE_AMENITY_LABELS,
-  SPACE_EQUIPMENT_LABELS,
-  ACCESSIBILITY_FEATURE_LABELS,
-  SPACE_STATUS_LABELS,
+  getSpaceTypeLabel,
+  getSpaceAmenityLabel,
+  getSpaceEquipmentLabel,
+  getAccessibilityFeatureLabel,
+  getSpaceStatusLabel,
   formatPrice,
-  WEEKDAYS,
+  getWeekdays,
 } from '../../../src/constants/space';
-import { ORGANIZATION_TYPE_LABELS } from '../../../src/types/models';
+import { getOrganizationTypeLabel } from '../../../src/types/models';
 import { useAlert } from '../../../src/contexts/AlertContext';
 
 // Fallback image for spaces without images
@@ -224,7 +224,7 @@ export default function SpaceDetailScreen() {
     if (!space) return;
     try {
       await RNShare.share({
-        message: `Decouvrez cet espace: ${space.name}\n\nhttps://etudesk.com/spaces/${space.slug}`,
+        message: t('space.shareMessage', { name: space.name }) + `\n\nhttps://etudesk.com/spaces/${space.slug}`,
         title: space.name,
       });
     } catch (error) {
@@ -267,10 +267,10 @@ export default function SpaceDetailScreen() {
   // Get best price display
   const getBestPrice = (): { amount: number; unit: string; isFree: boolean } | null => {
     if (!space) return null;
-    if (space.hourly_rate && space.hourly_rate > 0) return { amount: space.hourly_rate, unit: '/heure', isFree: false };
-    if (space.daily_rate && space.daily_rate > 0) return { amount: space.daily_rate, unit: '/jour', isFree: false };
-    if (space.weekly_rate && space.weekly_rate > 0) return { amount: space.weekly_rate, unit: '/semaine', isFree: false };
-    if (space.monthly_rate && space.monthly_rate > 0) return { amount: space.monthly_rate, unit: '/mois', isFree: false };
+    if (space.hourly_rate && space.hourly_rate > 0) return { amount: space.hourly_rate, unit: t('space.pricingHourly'), isFree: false };
+    if (space.daily_rate && space.daily_rate > 0) return { amount: space.daily_rate, unit: t('space.pricingDaily'), isFree: false };
+    if (space.weekly_rate && space.weekly_rate > 0) return { amount: space.weekly_rate, unit: t('space.pricingWeekly'), isFree: false };
+    if (space.monthly_rate && space.monthly_rate > 0) return { amount: space.monthly_rate, unit: t('space.pricingMonthly'), isFree: false };
     return { amount: 0, unit: '', isFree: true };
   };
 
@@ -326,7 +326,7 @@ export default function SpaceDetailScreen() {
             {t('space.notFoundDesc')}
           </Text>
           <Button
-            title="Retour"
+            title={t('common.back')}
             onPress={() => router.back()}
             variant="primary"
             style={[styles.errorButton, { backgroundColor: colors.primary }]}
@@ -354,7 +354,7 @@ export default function SpaceDetailScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
           variant="filled"
           style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
         />
@@ -362,7 +362,7 @@ export default function SpaceDetailScreen() {
           <IconButton
             onPress={handleShare}
             icon={<Share size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel="Partager"
+            accessibilityLabel={t('common.share')}
             variant="filled"
             style={[styles.headerButton, { backgroundColor: colors.gray100, width: 44, height: 44 }]}
           />
@@ -375,7 +375,7 @@ export default function SpaceDetailScreen() {
                 <Bookmark size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />
               )
             }
-            accessibilityLabel={isBookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            accessibilityLabel={isBookmarked ? t('common.removeFromFavorites') : t('common.addToFavorites')}
             variant="filled"
             style={[
               styles.headerButton,
@@ -402,7 +402,7 @@ export default function SpaceDetailScreen() {
               selected={false}
               style={[styles.orgCard, { backgroundColor: colors.surface, borderColor: colors.borderColor, borderWidth: 0 }]}
               onPress={() => router.push(`/details/organization/${space.organization!.id}`)}
-              accessibilityLabel={space.organization.name}
+              accessibilityLabel={t('common.viewOrganization', { name: space.organization.name })}
             >
               {space.organization.logo_url ? (
                 <Image
@@ -429,7 +429,7 @@ export default function SpaceDetailScreen() {
                   {(space.organization as any).type && (
                     <View style={[styles.orgTag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                       <Text style={[styles.orgTagText, { color: colors.primary }]}>
-                        {(ORGANIZATION_TYPE_LABELS as Record<string, string>)[(space.organization as any).type] || (space.organization as any).type}
+                        {getOrganizationTypeLabel((space.organization as any).type) || (space.organization as any).type}
                       </Text>
                     </View>
                   )}
@@ -454,7 +454,7 @@ export default function SpaceDetailScreen() {
             {space.type && (
               <View style={[styles.tag, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                 <Text style={[styles.tagText, { color: colors.primary }]}>
-                  {SPACE_TYPE_LABELS[space.type as keyof typeof SPACE_TYPE_LABELS] || space.type}
+                  {getSpaceTypeLabel(space.type) || space.type}
                 </Text>
               </View>
             )}
@@ -582,7 +582,7 @@ export default function SpaceDetailScreen() {
           {/* Description Section */}
           {space.description && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>A propos</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('common.about')}</Text>
               <Text style={[styles.sectionText, { color: colors.textSecondary }]}>
                 {shouldTruncateDescription && !isDescriptionExpanded
                   ? space.description.slice(0, DESCRIPTION_LIMIT) + '...'
@@ -590,7 +590,7 @@ export default function SpaceDetailScreen() {
               </Text>
               {shouldTruncateDescription && (
                 <Button
-                  title={isDescriptionExpanded ? 'Voir moins' : 'Voir plus'}
+                  title={isDescriptionExpanded ? t('common.seeLess') : t('common.seeMore')}
                   onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
                   variant="ghost"
                   size="sm"
@@ -612,7 +612,7 @@ export default function SpaceDetailScreen() {
           {/* Equipment Section */}
           {space.equipment && space.equipment.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Equipements</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('space.equipment')}</Text>
               <View style={styles.itemsGrid}>
                 {space.equipment.map((item, index) => {
                   const IconComponent = EQUIPMENT_ICONS[item] || CheckCircle;
@@ -620,7 +620,7 @@ export default function SpaceDetailScreen() {
                     <View key={index} style={[styles.gridItem, { backgroundColor: colors.gray50 }]}>
                       <IconComponent size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                       <Text style={[styles.gridItemText, { color: colors.textSecondary }]}>
-                        {SPACE_EQUIPMENT_LABELS[item as keyof typeof SPACE_EQUIPMENT_LABELS] || item}
+                        {getSpaceEquipmentLabel(item) || item}
                       </Text>
                     </View>
                   );
@@ -632,7 +632,7 @@ export default function SpaceDetailScreen() {
           {/* Amenities Section */}
           {space.amenities && space.amenities.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Services & Commodites</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('space.servicesAmenities')}</Text>
               <View style={styles.itemsGrid}>
                 {space.amenities.map((amenity, index) => {
                   const IconComponent = AMENITY_ICONS[amenity] || CheckCircle;
@@ -640,7 +640,7 @@ export default function SpaceDetailScreen() {
                     <View key={index} style={[styles.gridItem, { backgroundColor: colors.gray50 }]}>
                       <IconComponent size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                       <Text style={[styles.gridItemText, { color: colors.textSecondary }]}>
-                        {SPACE_AMENITY_LABELS[amenity as keyof typeof SPACE_AMENITY_LABELS] || amenity}
+                        {getSpaceAmenityLabel(amenity) || amenity}
                       </Text>
                     </View>
                   );
@@ -652,7 +652,7 @@ export default function SpaceDetailScreen() {
           {/* Accessibility Section */}
           {space.is_accessible && space.accessibility_features && space.accessibility_features.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Accessibilite PMR</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('space.pmrAccessibility')}</Text>
               <View style={styles.itemsGrid}>
                 {space.accessibility_features.map((feature, index) => {
                   const IconComponent = ACCESSIBILITY_ICONS[feature] || CheckCircle;
@@ -660,7 +660,7 @@ export default function SpaceDetailScreen() {
                     <View key={index} style={[styles.gridItem, { backgroundColor: withOpacity(colors.success, OPACITY[10]) }]}>
                       <IconComponent size={ICON.size.sm} color={colors.success} strokeWidth={ICON.strokeWidth} />
                       <Text style={[styles.gridItemText, { color: colors.success }]}>
-                        {ACCESSIBILITY_FEATURE_LABELS[feature as keyof typeof ACCESSIBILITY_FEATURE_LABELS] || feature}
+                        {getAccessibilityFeatureLabel(feature) || feature}
                       </Text>
                     </View>
                   );
@@ -677,9 +677,9 @@ export default function SpaceDetailScreen() {
           {/* Availability Section */}
           {space.availabilities && space.availabilities.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Disponibilites</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('space.availability')}</Text>
               <View style={[styles.availabilityCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-                {WEEKDAYS.map((day) => {
+                {getWeekdays().map((day) => {
                   const availability = space.availabilities?.find(a => a.day_of_week === day.id && a.is_active);
                   const isOpen = !!availability;
                   return (
@@ -691,7 +691,7 @@ export default function SpaceDetailScreen() {
                         </Text>
                       ) : (
                         <Text style={[styles.availabilityTime, { color: colors.textDisabled }]}>
-                          Ferme
+                          {t('space.closed')}
                         </Text>
                       )}
                     </View>
@@ -704,30 +704,30 @@ export default function SpaceDetailScreen() {
           {/* Booking Rules Section */}
           {space.is_bookable && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Regles de reservation</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('space.bookingRules')}</Text>
               <View style={[styles.rulesCard, { backgroundColor: colors.gray50 }]}>
                 {space.min_booking_hours !== undefined && (
                   <View style={styles.ruleRow}>
-                    <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>Duree minimum</Text>
+                    <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>{t('space.minDuration')}</Text>
                     <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>{formatNumberNoTrailingZeros(space.min_booking_hours)}h</Text>
                   </View>
                 )}
                 {space.max_booking_hours !== undefined && (
                   <View style={styles.ruleRow}>
-                    <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>Duree maximum</Text>
+                    <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>{t('space.maxDuration')}</Text>
                     <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>{formatNumberNoTrailingZeros(space.max_booking_hours)}h</Text>
                   </View>
                 )}
                 {space.advance_booking_days !== undefined && (
                   <View style={styles.ruleRow}>
-                    <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>Reservation a l'avance</Text>
-                    <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>Jusqu'a {formatNumberNoTrailingZeros(space.advance_booking_days, 0)} jours</Text>
+                    <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>{t('space.advanceBooking')}</Text>
+                    <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>{t('space.advanceBookingDays', { days: formatNumberNoTrailingZeros(space.advance_booking_days, 0) })}</Text>
                   </View>
                 )}
                 {space.cancellation_hours !== undefined && (
                   <View style={styles.ruleRow}>
-                    <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>Annulation gratuite</Text>
-                    <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>{formatNumberNoTrailingZeros(space.cancellation_hours)}h avant</Text>
+                    <Text style={[styles.ruleLabel, { color: colors.textSecondary }]}>{t('space.freeCancellation')}</Text>
+                    <Text style={[styles.ruleValue, { color: colors.textPrimary }]}>{t('space.cancellationBefore', { hours: formatNumberNoTrailingZeros(space.cancellation_hours) })}</Text>
                   </View>
                 )}
               </View>
@@ -737,7 +737,7 @@ export default function SpaceDetailScreen() {
           {/* Contact Section */}
           {(space.contact_name || space.contact_phone || space.contact_email) && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Contact</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('common.contact')}</Text>
               <View style={[styles.contactCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
                 {space.contact_name && (
                   <View style={styles.contactRow}>
@@ -750,7 +750,7 @@ export default function SpaceDetailScreen() {
                     selected={false}
                     onPress={handleCallPhone}
                     style={[styles.contactRow, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
-                    accessibilityLabel="Appeler"
+                    accessibilityLabel={t('common.call')}
                   >
                     <Phone size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.contactText, styles.contactLink, { color: colors.primary }]}>
@@ -763,7 +763,7 @@ export default function SpaceDetailScreen() {
                     selected={false}
                     onPress={handleSendEmail}
                     style={[styles.contactRow, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
-                    accessibilityLabel="Envoyer un email"
+                    accessibilityLabel={t('common.sendEmail')}
                   >
                     <Mail size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.contactText, styles.contactLink, { color: colors.primary }]}>
@@ -776,11 +776,11 @@ export default function SpaceDetailScreen() {
                     selected={false}
                     onPress={handleOpenMaps}
                     style={[styles.contactRow, { borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }]}
-                    accessibilityLabel="Voir sur la carte"
+                    accessibilityLabel={t('common.viewOnMap')}
                   >
                     <Navigation size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
                     <Text style={[styles.contactText, styles.contactLink, { color: colors.primary }]}>
-                      Voir sur la carte
+                      {t('common.viewOnMap')}
                     </Text>
                   </SelectCard>
                 )}

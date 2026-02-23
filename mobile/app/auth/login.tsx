@@ -113,7 +113,7 @@ export default function LoginScreen() {
             style={[styles.authButton, styles.authButtonWhatsApp]}
             onPress={handleWhatsAppLogin}
             selected={false}
-            accessibilityLabel="Continuer avec WhatsApp"
+            accessibilityLabel={t('common.continueWith') + ' WhatsApp'}
           >
             <Image
               source={require('../../assets/whatsapp_icon.png')}
@@ -127,7 +127,7 @@ export default function LoginScreen() {
             style={[styles.authButton, styles.authButtonEmail, { backgroundColor: colors.primary, borderColor: colors.primary }]}
             onPress={handleEmailLogin}
             selected={false}
-            accessibilityLabel="Continuer avec Email"
+            accessibilityLabel={t('common.continueWith') + ' Email'}
           >
             <AtSign
               size={ICON.size.lg}

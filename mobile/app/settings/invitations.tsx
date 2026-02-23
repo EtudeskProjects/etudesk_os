@@ -43,10 +43,11 @@ import {
   spaceInvitationService,
   SpaceInvitation
 } from '../../src/services/spaceInvitationService';
-import { ORGANIZATION_ROLE_LABELS } from '../../src/types/models';
+import { getOrganizationRoleLabel } from '../../src/types/models';
 import { getFullImageUrl } from '../../src/utils/image';
 import { formatNumberNoTrailingZeros } from '../../src/utils/number';
 import { useAlert } from '../../src/contexts/AlertContext';
+import { useI18n } from '../../src/contexts/I18nContext';
 
 type TabType = 'organizations' | 'offers';
 
@@ -58,6 +59,7 @@ type OfferInvitation =
 export default function InvitationsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [activeTab, setActiveTab] = useState<TabType>('offers');
 
@@ -133,21 +135,21 @@ export default function InvitationsScreen() {
     try {
       const response = await invitationService.acceptInvitation(invitation.id);
       if (response.success) {
-        void alerts.showAlert({ title: 'Invitation acceptee', message: `Vous etes maintenant membre de ${invitation.organization_name}`, buttons: [{ text: 'OK' }] });
+        void alerts.showAlert({ title: t('settings.invitationsPage.invitationAccepted'), message: t('settings.invitationsPage.nowMemberOf', { name: invitation.organization_name }), buttons: [{ text: 'OK' }] });
         setOrgInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
       }
     } catch (error: any) {
-      void alerts.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
+      void alerts.alert(t('common.error'), error.message || t('settings.invitationsPage.acceptError'));
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleDeclineOrg = async (invitation: ReceivedInvitation) => {
-    void alerts.showAlert({ title: 'Refuser l\'invitation', message: `Voulez-vous vraiment refuser l'invitation de ${invitation.organization_name}?`, buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('settings.invitationsPage.declineInvitation'), message: t('settings.invitationsPage.declineOrgConfirm', { name: invitation.organization_name }), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Refuser',
+          text: t('gestion.membersList.reject'),
           style: 'destructive',
           onPress: async () => {
             setProcessingId(invitation.id);
@@ -155,7 +157,7 @@ export default function InvitationsScreen() {
               await invitationService.declineInvitation(invitation.id);
               setOrgInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
             } catch (error: any) {
-              void alerts.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
+              void alerts.alert(t('common.error'), error.message || t('settings.invitationsPage.declineError'));
             } finally {
               setProcessingId(null);
             }
@@ -170,9 +172,9 @@ export default function InvitationsScreen() {
     try {
       const response = await communityInvitationService.acceptInvitation(invitation.id);
       if (response.data?.success) {
-        void alerts.showAlert({ title: 'Bienvenue !', message: response.data.message || `Vous avez rejoint la communaute !`, buttons: [
+        void alerts.showAlert({ title: t('settings.invitationsPage.welcomeTitle'), message: response.data.message || t('settings.invitationsPage.joinedCommunity'), buttons: [
             {
-              text: 'Voir la communaute',
+              text: t('settings.invitationsPage.viewCommunity'),
               onPress: () => router.push(`/details/community/${response.data?.community_id}` as any),
             },
             { text: 'OK' },
@@ -180,17 +182,17 @@ export default function InvitationsScreen() {
         setCommunityInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
       }
     } catch (error: any) {
-      void alerts.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
+      void alerts.alert(t('common.error'), error.message || t('settings.invitationsPage.acceptError'));
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleDeclineCommunity = async (invitation: CommunityInvitation) => {
-    void alerts.showAlert({ title: 'Refuser l\'invitation', message: `Voulez-vous vraiment refuser l'invitation a rejoindre "${invitation.community_name}"?`, buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('settings.invitationsPage.declineInvitation'), message: t('settings.invitationsPage.declineCommunityConfirm', { name: invitation.community_name }), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Refuser',
+          text: t('gestion.membersList.reject'),
           style: 'destructive',
           onPress: async () => {
             setProcessingId(invitation.id);
@@ -198,7 +200,7 @@ export default function InvitationsScreen() {
               await communityInvitationService.declineInvitation(invitation.id);
               setCommunityInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
             } catch (error: any) {
-              void alerts.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
+              void alerts.alert(t('common.error'), error.message || t('settings.invitationsPage.declineError'));
             } finally {
               setProcessingId(null);
             }
@@ -213,9 +215,9 @@ export default function InvitationsScreen() {
     try {
       const response = await opportunityInvitationService.acceptInvitation(invitation.id);
       if (response.data?.success) {
-        void alerts.showAlert({ title: 'Invitation acceptee', message: response.data.message || `Vous pouvez maintenant voir cette opportunite !`, buttons: [
+        void alerts.showAlert({ title: t('settings.invitationsPage.invitationAccepted'), message: response.data.message || t('settings.invitationsPage.canNowViewOpportunity'), buttons: [
             {
-              text: 'Voir l\'opportunite',
+              text: t('settings.invitationsPage.viewOpportunity'),
               onPress: () => router.push(`/details/opportunity/${response.data?.opportunity_id}` as any),
             },
             { text: 'OK' },
@@ -223,17 +225,17 @@ export default function InvitationsScreen() {
         setOpportunityInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
       }
     } catch (error: any) {
-      void alerts.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
+      void alerts.alert(t('common.error'), error.message || t('settings.invitationsPage.acceptError'));
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleDeclineOpportunity = async (invitation: OpportunityInvitation) => {
-    void alerts.showAlert({ title: 'Refuser l\'invitation', message: `Voulez-vous vraiment refuser l'invitation pour "${invitation.opportunity_title}"?`, buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('settings.invitationsPage.declineInvitation'), message: t('settings.invitationsPage.declineOpportunityConfirm', { name: invitation.opportunity_title }), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Refuser',
+          text: t('gestion.membersList.reject'),
           style: 'destructive',
           onPress: async () => {
             setProcessingId(invitation.id);
@@ -241,7 +243,7 @@ export default function InvitationsScreen() {
               await opportunityInvitationService.declineInvitation(invitation.id);
               setOpportunityInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
             } catch (error: any) {
-              void alerts.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
+              void alerts.alert(t('common.error'), error.message || t('settings.invitationsPage.declineError'));
             } finally {
               setProcessingId(null);
             }
@@ -256,9 +258,9 @@ export default function InvitationsScreen() {
     try {
       const response = await spaceInvitationService.acceptInvitation(invitation.id);
       if (response.data?.success) {
-        void alerts.showAlert({ title: 'Invitation acceptee', message: response.data.message || `Vous pouvez maintenant reserver cet espace !`, buttons: [
+        void alerts.showAlert({ title: t('settings.invitationsPage.invitationAccepted'), message: response.data.message || t('settings.invitationsPage.canNowBookSpace'), buttons: [
             {
-              text: 'Voir l\'espace',
+              text: t('settings.invitationsPage.viewSpace'),
               onPress: () => router.push(`/details/space/${response.data?.space_id}` as any),
             },
             { text: 'OK' },
@@ -266,17 +268,17 @@ export default function InvitationsScreen() {
         setSpaceInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
       }
     } catch (error: any) {
-      void alerts.alert('Erreur', error.message || 'Impossible d\'accepter l\'invitation');
+      void alerts.alert(t('common.error'), error.message || t('settings.invitationsPage.acceptError'));
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleDeclineSpace = async (invitation: SpaceInvitation) => {
-    void alerts.showAlert({ title: 'Refuser l\'invitation', message: `Voulez-vous vraiment refuser l'invitation pour "${invitation.space_name}"?`, buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('settings.invitationsPage.declineInvitation'), message: t('settings.invitationsPage.declineSpaceConfirm', { name: invitation.space_name }), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Refuser',
+          text: t('gestion.membersList.reject'),
           style: 'destructive',
           onPress: async () => {
             setProcessingId(invitation.id);
@@ -284,7 +286,7 @@ export default function InvitationsScreen() {
               await spaceInvitationService.declineInvitation(invitation.id);
               setSpaceInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
             } catch (error: any) {
-              void alerts.alert('Erreur', error.message || 'Impossible de refuser l\'invitation');
+              void alerts.alert(t('common.error'), error.message || t('settings.invitationsPage.declineError'));
             } finally {
               setProcessingId(null);
             }
@@ -293,35 +295,26 @@ export default function InvitationsScreen() {
       ] });
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
   const getExpiresIn = (dateString: string) => {
     const expires = new Date(dateString);
     const now = new Date();
     const diffDays = Math.ceil((expires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays <= 0) return 'Expiree';
-    if (diffDays === 1) return 'Expire demain';
-    return `Expire dans ${diffDays} jours`;
+    if (diffDays <= 0) return t('organization.members.invitationDetail.expired');
+    if (diffDays === 1) return t('organization.members.invitationDetail.expiresTomorrow');
+    return t('organization.members.invitationDetail.expiresInDays', { count: diffDays });
   };
 
   const isLoading = activeTab === 'organizations' ? orgLoading : offersLoading;
   const totalOffersCount = allOfferInvitations.length;
 
   const chips = [
-    { key: 'offers' as TabType, label: 'Offres', count: totalOffersCount },
-    { key: 'organizations' as TabType, label: 'Organisations', count: orgInvitations.length },
+    { key: 'offers' as TabType, label: t('settings.invitationsPage.offersTab'), count: totalOffersCount },
+    { key: 'organizations' as TabType, label: t('settings.invitationsPage.organizationsTab'), count: orgInvitations.length },
   ];
 
   const renderOrgInvitationCard = (invitation: ReceivedInvitation) => {
     const isProcessing = processingId === invitation.id;
-    const roleLabel = ORGANIZATION_ROLE_LABELS[invitation.role] || invitation.role;
+    const roleLabel = getOrganizationRoleLabel(invitation.role) || invitation.role;
 
     return (
       <View
@@ -351,7 +344,7 @@ export default function InvitationsScreen() {
           </View>
           <View style={[styles.typeBadge, { backgroundColor: withOpacity(colors.info, OPACITY[15]) }]}>
             <Building2 size={12} color={colors.info} />
-            <Text style={[styles.typeBadgeText, { color: colors.info }]}>Organisation</Text>
+            <Text style={[styles.typeBadgeText, { color: colors.info }]}>{t('settings.invitationsPage.organizationType')}</Text>
           </View>
         </View>
 
@@ -359,14 +352,14 @@ export default function InvitationsScreen() {
           <View style={styles.detailRow}>
             <Users size={16} color={colors.gray500} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.detailText, { color: colors.textPrimary }]}>
-              Role: <Text style={{ fontWeight: '600' }}>{roleLabel}</Text>
+              {t('settings.invitationsPage.role')}: <Text style={{ fontWeight: '600' }}>{roleLabel}</Text>
             </Text>
           </View>
 
           {invitation.invited_by_name && (
             <View style={styles.detailRow}>
               <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                Invite par {invitation.invited_by_name}
+                {t('settings.invitationsPage.invitedBy')} {invitation.invited_by_name}
               </Text>
             </View>
           )}
@@ -380,8 +373,8 @@ export default function InvitationsScreen() {
         </View>
 
 	        <View style={styles.actions}>
-	          <Button
-	            title="Refuser"
+		          <Button
+		            title={t('gestion.membersList.reject')}
 	            onPress={() => handleDeclineOrg(invitation)}
 	            disabled={isProcessing}
 	            variant="outline"
@@ -390,8 +383,8 @@ export default function InvitationsScreen() {
 	            textStyle={[styles.declineText, { color: colors.error }]}
 	          />
 
-	          <Button
-	            title="Accepter"
+		          <Button
+		            title={t('gestion.membersList.accept')}
 	            onPress={() => handleAcceptOrg(invitation)}
 	            disabled={isProcessing}
 	            loading={isProcessing}
@@ -432,15 +425,15 @@ export default function InvitationsScreen() {
               <Text style={[styles.cardName, { color: colors.textPrimary }]} numberOfLines={1}>
                 {inv.community_name}
               </Text>
-              {inv.organization?.name && (
-                <Text style={[styles.cardSubtext, { color: colors.textSecondary }]}>
-                  par {inv.organization.name}
-                </Text>
-              )}
+	              {inv.organization?.name && (
+	                <Text style={[styles.cardSubtext, { color: colors.textSecondary }]}>
+	                  {t('settings.invitationsPage.by')} {inv.organization.name}
+	                </Text>
+	              )}
             </View>
             <View style={[styles.typeBadge, { backgroundColor: withOpacity(colors.success, OPACITY[15]) }]}>
               <Users size={12} color={colors.success} />
-              <Text style={[styles.typeBadgeText, { color: colors.success }]}>Communaute</Text>
+              <Text style={[styles.typeBadgeText, { color: colors.success }]}>{t('settings.invitationsPage.communityType')}</Text>
             </View>
           </View>
 
@@ -453,7 +446,7 @@ export default function InvitationsScreen() {
           {inv.message && (
             <View style={[styles.messageBox, { backgroundColor: colors.gray100 }]}>
               <Text style={[styles.messageLabel, { color: colors.textSecondary }]}>
-                Message de {inv.invited_by_name}:
+                {t('settings.invitationsPage.messageFrom', { name: inv.invited_by_name })}
               </Text>
               <Text style={[styles.messageText, { color: colors.textPrimary }]}>
                 "{inv.message}"
@@ -470,7 +463,7 @@ export default function InvitationsScreen() {
                   <Globe size={14} color={colors.success} strokeWidth={ICON.strokeWidth} />
                 )}
                 <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                  {isPrivate ? 'Privee' : 'Publique'}
+                  {isPrivate ? t('settings.invitationsPage.private') : t('settings.invitationsPage.public')}
                 </Text>
               </View>
 
@@ -478,7 +471,7 @@ export default function InvitationsScreen() {
                 <View style={styles.detailRow}>
                   <Users size={14} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
                   <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                    {formatNumberNoTrailingZeros(inv.members_count, 0)} membres
+                    {formatNumberNoTrailingZeros(inv.members_count, 0)} {t('common.members')}
                   </Text>
                 </View>
               )}
@@ -494,8 +487,8 @@ export default function InvitationsScreen() {
           </View>
 
 	          <View style={styles.actions}>
-	            <Button
-	              title="Refuser"
+		            <Button
+		              title={t('gestion.membersList.reject')}
 	              onPress={() => handleDeclineCommunity(inv)}
 	              disabled={isProcessing}
 	              variant="outline"
@@ -504,8 +497,8 @@ export default function InvitationsScreen() {
 	              textStyle={[styles.declineText, { color: colors.error }]}
 	            />
 
-	            <Button
-	              title="Accepter"
+		            <Button
+		              title={t('gestion.membersList.accept')}
 	              onPress={() => handleAcceptCommunity(inv)}
 	              disabled={isProcessing}
 	              loading={isProcessing}
@@ -542,15 +535,15 @@ export default function InvitationsScreen() {
               <Text style={[styles.cardName, { color: colors.textPrimary }]} numberOfLines={1}>
                 {inv.opportunity_title}
               </Text>
-              {inv.organization?.name && (
-                <Text style={[styles.cardSubtext, { color: colors.textSecondary }]}>
-                  par {inv.organization.name}
-                </Text>
-              )}
+	              {inv.organization?.name && (
+	                <Text style={[styles.cardSubtext, { color: colors.textSecondary }]}>
+	                  {t('settings.invitationsPage.by')} {inv.organization.name}
+	                </Text>
+	              )}
             </View>
             <View style={[styles.typeBadge, { backgroundColor: withOpacity(colors.warning, OPACITY[15]) }]}>
               <Briefcase size={12} color={colors.warning} />
-              <Text style={[styles.typeBadgeText, { color: colors.warning }]}>Opportunite</Text>
+              <Text style={[styles.typeBadgeText, { color: colors.warning }]}>{t('settings.invitationsPage.opportunityType')}</Text>
             </View>
           </View>
 
@@ -563,7 +556,7 @@ export default function InvitationsScreen() {
           {inv.message && (
             <View style={[styles.messageBox, { backgroundColor: colors.gray100 }]}>
               <Text style={[styles.messageLabel, { color: colors.textSecondary }]}>
-                Message de {inv.invited_by_name}:
+                {t('settings.invitationsPage.messageFrom', { name: inv.invited_by_name })}
               </Text>
               <Text style={[styles.messageText, { color: colors.textPrimary }]}>
                 "{inv.message}"
@@ -601,8 +594,8 @@ export default function InvitationsScreen() {
           </View>
 
 	          <View style={styles.actions}>
-	            <Button
-	              title="Refuser"
+		            <Button
+		              title={t('gestion.membersList.reject')}
 	              onPress={() => handleDeclineOpportunity(inv)}
 	              disabled={isProcessing}
 	              variant="outline"
@@ -611,8 +604,8 @@ export default function InvitationsScreen() {
 	              textStyle={[styles.declineText, { color: colors.error }]}
 	            />
 
-	            <Button
-	              title="Accepter"
+		            <Button
+		              title={t('gestion.membersList.accept')}
 	              onPress={() => handleAcceptOpportunity(inv)}
 	              disabled={isProcessing}
 	              loading={isProcessing}
@@ -649,15 +642,15 @@ export default function InvitationsScreen() {
               <Text style={[styles.cardName, { color: colors.textPrimary }]} numberOfLines={1}>
                 {inv.space_name}
               </Text>
-              {inv.organization?.name && (
-                <Text style={[styles.cardSubtext, { color: colors.textSecondary }]}>
-                  par {inv.organization.name}
-                </Text>
-              )}
+	              {inv.organization?.name && (
+	                <Text style={[styles.cardSubtext, { color: colors.textSecondary }]}>
+	                  {t('settings.invitationsPage.by')} {inv.organization.name}
+	                </Text>
+	              )}
             </View>
             <View style={[styles.typeBadge, { backgroundColor: withOpacity(colors.info, OPACITY[15]) }]}>
               <MapPin size={12} color={colors.info} />
-              <Text style={[styles.typeBadgeText, { color: colors.info }]}>Espace</Text>
+              <Text style={[styles.typeBadgeText, { color: colors.info }]}>{t('settings.invitationsPage.spaceType')}</Text>
             </View>
           </View>
 
@@ -670,7 +663,7 @@ export default function InvitationsScreen() {
           {inv.message && (
             <View style={[styles.messageBox, { backgroundColor: colors.gray100 }]}>
               <Text style={[styles.messageLabel, { color: colors.textSecondary }]}>
-                Message de {inv.invited_by_name}:
+                {t('settings.invitationsPage.messageFrom', { name: inv.invited_by_name })}
               </Text>
               <Text style={[styles.messageText, { color: colors.textPrimary }]}>
                 "{inv.message}"
@@ -717,8 +710,8 @@ export default function InvitationsScreen() {
           </View>
 
 	          <View style={styles.actions}>
-	            <Button
-	              title="Refuser"
+		            <Button
+		              title={t('gestion.membersList.reject')}
 	              onPress={() => handleDeclineSpace(inv)}
 	              disabled={isProcessing}
 	              variant="outline"
@@ -727,8 +720,8 @@ export default function InvitationsScreen() {
 	              textStyle={[styles.declineText, { color: colors.error }]}
 	            />
 
-	            <Button
-	              title="Accepter"
+		            <Button
+		              title={t('gestion.membersList.accept')}
 	              onPress={() => handleAcceptSpace(inv)}
 	              disabled={isProcessing}
 	              loading={isProcessing}
@@ -781,7 +774,7 @@ export default function InvitationsScreen() {
 
   return (
     <PageLayout
-      title="Invitations"
+      title={t('gestion.invitations.title')}
       onRefresh={handleRefresh}
       isRefreshing={isRefreshing}
       isLoading={isLoading}
@@ -790,19 +783,19 @@ export default function InvitationsScreen() {
       {isEmpty ? (
         <EmptyState
           icon={Mail}
-          title="Aucune invitation"
+          title={t('gestion.invitations.noInvitations')}
           subtitle={
             activeTab === 'offers'
-              ? "Vous n'avez pas d'invitation pour des offres."
-              : "Vous n'avez pas d'invitation à rejoindre une organisation."
+              ? t('settings.invitationsPage.noOffersInvitations')
+              : t('settings.invitationsPage.noOrganizationInvitations')
           }
         />
       ) : (
         <>
           <Text style={[styles.sectionInfo, { color: colors.textSecondary }]}>
             {activeTab === 'organizations'
-              ? `${orgInvitations.length} invitation${orgInvitations.length > 1 ? 's' : ''} en attente`
-              : `${totalOffersCount} invitation${totalOffersCount > 1 ? 's' : ''} en attente`
+              ? t('settings.invitationsPage.pendingCount', { count: orgInvitations.length })
+              : t('settings.invitationsPage.pendingCount', { count: totalOffersCount })
             }
           </Text>
 

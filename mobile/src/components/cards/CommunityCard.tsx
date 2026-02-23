@@ -20,7 +20,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useI18n } from '../../contexts/I18nContext';
 import { formatCompactNumber } from '../../utils/number';
 import type { Community } from '../../types/models';
-import { COMMUNITY_TYPE_LABELS, VISIBILITY_LABELS } from '../../types/models';
+import { getCommunityTypeLabel, getVisibilityLabel } from '../../types/models';
 import {
   CardContainer,
   CardImage,
@@ -85,12 +85,12 @@ export const CommunityCard: React.FC<CommunityCardProps> = React.memo(({
 
   const getTypeText = () => {
     if (!community.type) return getVisibilityText();
-    return COMMUNITY_TYPE_LABELS[community.type as keyof typeof COMMUNITY_TYPE_LABELS] || getVisibilityText();
+    return getCommunityTypeLabel(community.type) || getVisibilityText();
   };
 
   const getVisibilityText = () => {
     const accessType = community.access_type || 'PUBLIC';
-    return VISIBILITY_LABELS[accessType as keyof typeof VISIBILITY_LABELS] || accessType;
+    return getVisibilityLabel(accessType as any) || accessType;
   };
 
   const isPrivateCommunity = () => {
@@ -148,7 +148,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = React.memo(({
         <CardBadgeRow>
           {community.type && (
             <CardBadge
-              label={COMMUNITY_TYPE_LABELS[community.type as keyof typeof COMMUNITY_TYPE_LABELS] || community.type}
+              label={getCommunityTypeLabel(community.type) || community.type}
               backgroundColor={colors.primary}
               textColor={colors.textOnPrimary}
             />

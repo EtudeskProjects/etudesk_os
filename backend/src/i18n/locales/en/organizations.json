@@ -10,7 +10,7 @@
   "memberRoleUpdated": "Member role updated",
   "cannotRemoveSelf": "You cannot remove yourself from the organization",
   "ownerCannotLeave": "The organization owner cannot leave",
-  "inviteSent": "Invitation sent",
+  "inviteSent": "Invitation sent successfully",
   "inviteNotFound": "Invitation not found",
   "authRequired": "Authentication required",
   "notMember": "You are not a member of this organization",

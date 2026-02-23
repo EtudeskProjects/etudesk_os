@@ -16,15 +16,15 @@ const router = Router();
 // OWNER: Full control (implicit)
 // ADMIN: Can do everything except delete organization
 // MANAGER: Can manage opportunities, communities, spaces (CRUD)
-// OBSERVATEUR: Can only view (read-only)
-const VALID_ROLES = ['OWNER', 'ADMIN', 'MANAGER', 'OBSERVATEUR'];
+// OBSERVER: Can only view (read-only)
+const VALID_ROLES = ['OWNER', 'ADMIN', 'MANAGER', 'OBSERVER'];
 
 // Role hierarchy for permission checks
 const ROLE_HIERARCHY: Record<string, number> = {
   OWNER: 4,
   ADMIN: 3,
   MANAGER: 2,
-  OBSERVATEUR: 1,
+  OBSERVER: 1,
 };
 
 // Helper to check if role can perform action
@@ -76,7 +76,7 @@ router.get('/:orgId/members', authMiddleware, async (req: AuthRequest, res: Resp
           WHEN 'OWNER' THEN 1
           WHEN 'ADMIN' THEN 2
           WHEN 'MANAGER' THEN 3
-          WHEN 'OBSERVATEUR' THEN 4
+          WHEN 'OBSERVER' THEN 4
         END,
         om.joined_at ASC
     `, [orgId]);
@@ -167,7 +167,7 @@ router.post('/:orgId/invitations', authMiddleware, async (req: AuthRequest, res:
     }
 
     // Cannot invite with higher role than yourself
-    const inviteRole = role || 'OBSERVATEUR';
+    const inviteRole = role || 'OBSERVER';
     if (ROLE_HIERARCHY[inviteRole] >= ROLE_HIERARCHY[currentRole]) {
       return res.status(403).json({ error: req.t('organizations:cannotInviteHigherRole') });
     }

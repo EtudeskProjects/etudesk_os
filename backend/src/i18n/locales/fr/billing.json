@@ -5,7 +5,7 @@
   "failedToLoadCatalog": "Impossible de charger le catalogue crédits",
   "scopeRequired": "scope requis: TALENT ou ORGANIZATION",
   "talentAuthRequired": "Authentification talent requise",
-  "talentWalletAccessDenied": "Accès refusé à ce wallet talent",
+  "talentWalletAccessDenied": "Accès refusé à ce portefeuille de crédits talent",
   "orgIdRequired": "id organisation requis pour scope ORGANIZATION",
   "authRequired": "Authentification requise",
   "ownerIdRequired": "owner_id requis",
@@ -15,7 +15,7 @@
   "paymentAccessDenied": "Accès refusé à ce paiement",
   "invoiceAccessDenied": "Accès refusé aux factures talent",
   "invoiceNotFound": "Facture introuvable",
-  "insufficientCredits": "Solde crédits insuffisant. Recharge ton wallet pour continuer.",
-  "insufficientOrgCredits": "Solde crédits organisation insuffisant. Rechargez le wallet pour continuer.",
-  "insufficientCreditsForPublication": "Solde crédits insuffisant. Recharge ton wallet pour programmer une publication."
+  "insufficientCredits": "Solde de crédits insuffisant. Recharge ton portefeuille de crédits pour continuer.",
+  "insufficientOrgCredits": "Solde de crédits organisation insuffisant. Recharge le portefeuille de crédits pour continuer.",
+  "insufficientCreditsForPublication": "Solde de crédits insuffisant. Recharge ton portefeuille de crédits pour programmer une publication."
 }

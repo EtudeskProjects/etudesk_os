@@ -6,6 +6,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '../../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, OPACITY, withOpacity } from '../../../../constants/theme';
+import { getLabelDirect } from '../../../../utils/labels';
 
 interface TableChartProps {
   title: string;
@@ -29,7 +30,7 @@ export const TableChart: React.FC<TableChartProps> = ({ title, columns, rows }) 
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
         <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
-          Aucune donnée disponible
+          {getLabelDirect('noData')}
         </Text>
       </View>
     );

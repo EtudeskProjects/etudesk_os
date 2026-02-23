@@ -10,11 +10,13 @@ import { Button, IconButton, Input, SelectCard, Toggle } from '../../../../src/c
 import { communityActivityService } from '../../../../src/services';
 import { useAlert } from '../../../../src/contexts/AlertContext';
 import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 
 export default function CreatePollScreen() {
     const { id, activityId } = useLocalSearchParams<{ id: string; activityId?: string }>();
     const router = useRouter();
     const { colors, isDark } = useTheme();
+    const { t, locale } = useI18n();
 
     // Edit mode - when activityId is provided, we're editing an existing poll
     const isEditMode = !!activityId;
@@ -105,15 +107,15 @@ export default function CreatePollScreen() {
     // Handle back button with confirmation
     const handleBack = useCallback(() => {
         if (hasUnsavedChanges && !isSubmitting) {
-            void alerts.showAlert({ title: 'Modifications non sauvegardées', message: 'Voulez-vous quitter sans sauvegarder ?', buttons: [
-                    { text: 'Continuer', style: 'cancel' },
-                    { text: 'Quitter', style: 'destructive', onPress: () => router.back() },
+            void alerts.showAlert({ title: t('common.unsavedChanges.title'), message: t('common.unsavedChanges.message'), buttons: [
+                    { text: t('common.continueEditing'), style: 'cancel' },
+                    { text: t('common.leave'), style: 'destructive', onPress: () => router.back() },
                 ] });
             return true;
         }
         router.back();
         return true;
-    }, [hasUnsavedChanges, isSubmitting, router]);
+    }, [alerts, hasUnsavedChanges, isSubmitting, router, t]);
 
     // Android back button handler
     useEffect(() => {
@@ -135,7 +137,7 @@ export default function CreatePollScreen() {
 
     const addOption = () => {
         if (options.length >= 10) {
-            void alerts.alert('Limite atteinte', 'Vous ne pouvez pas ajouter plus de 10 options.');
+            void alerts.alert(t('common.limitReached'), t('community.createPoll.maxOptionsError'));
             return;
         }
         setOptions([...options, '']);
@@ -143,7 +145,7 @@ export default function CreatePollScreen() {
 
     const removeOption = (index: number) => {
         if (options.length <= 2) {
-            void alerts.alert('Attention', 'Un sondage doit avoir au moins 2 options.');
+            void alerts.alert(t('community.createPoll.warningTitle'), t('community.createPoll.minOptionsError'));
             return;
         }
         const newOptions = [...options];
@@ -162,7 +164,7 @@ export default function CreatePollScreen() {
 
     const handleSaveAsDraft = async () => {
         if (!question.trim()) {
-            void alerts.alert('Erreur', 'Veuillez ajouter une question pour sauvegarder.');
+            void alerts.alert(t('common.error'), t('community.createPoll.questionRequiredDraft'));
             return;
         }
 
@@ -194,12 +196,12 @@ export default function CreatePollScreen() {
             }
 
             setHasUnsavedChanges(false);
-            void alerts.showAlert({ title: 'Succès', message: 'Brouillon sauvegardé !', buttons: [
-                { text: 'OK', onPress: () => router.back() }
+            void alerts.showAlert({ title: t('common.success'), message: t('common.draftSaved'), buttons: [
+                { text: t('community.createPoll.ok'), onPress: () => router.back() }
             ] });
         } catch (error: any) {
-            const message = error?.response?.data?.error || error?.message || 'Impossible de sauvegarder le brouillon.';
-            void alerts.alert('Erreur', message);
+            const message = error?.response?.data?.error || error?.message || t('common.saveDraftError');
+            void alerts.alert(t('common.error'), message);
         } finally {
             setIsSubmitting(false);
         }
@@ -207,13 +209,13 @@ export default function CreatePollScreen() {
 
     const handleSubmit = async () => {
         if (!question.trim()) {
-            void alerts.alert('Erreur', 'Veuillez entrer une question.');
+            void alerts.alert(t('common.error'), t('community.createPoll.questionRequiredSubmit'));
             return;
         }
 
         const validOptions = options.filter(opt => opt.trim().length > 0);
         if (validOptions.length < 2) {
-            void alerts.alert('Erreur', 'Veuillez remplir au moins 2 options.');
+            void alerts.alert(t('common.error'), t('community.createPoll.atLeastTwoOptions'));
             return;
         }
 
@@ -252,13 +254,13 @@ export default function CreatePollScreen() {
             }
 
             setHasUnsavedChanges(false);
-            void alerts.showAlert({ title: 'Succès', message: isEditMode ? 'Votre sondage a été modifié !' : 'Votre sondage a été créé !', buttons: [
-                { text: 'OK', onPress: () => router.back() }
+            void alerts.showAlert({ title: t('common.success'), message: isEditMode ? t('community.createPoll.updatedSuccess') : t('community.createPoll.createdSuccess'), buttons: [
+                { text: t('community.createPoll.ok'), onPress: () => router.back() }
             ] });
         } catch (error: any) {
             if (__DEV__) console.error('Failed to save poll:', error);
-            const message = error?.response?.data?.error || error?.message || 'Impossible de sauvegarder le sondage.';
-            void alerts.alert('Erreur', message);
+            const message = error?.response?.data?.error || error?.message || t('common.saveError');
+            void alerts.alert(t('common.error'), message);
         } finally {
             setIsSubmitting(false);
         }
@@ -268,17 +270,17 @@ export default function CreatePollScreen() {
 	        return (
 	            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-	                    <IconButton
-	                        onPress={() => router.back()}
-	                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                        accessibilityLabel="Retour"
-	                        style={styles.headerButton}
-	                    />
-	                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Sondage</Text>
-	                    <View style={{ width: 44 }} />
-	                </View>
-	                <View style={styles.loadingContainer}>
-	                    <Text style={{ color: colors.textSecondary }}>Chargement...</Text>
+                    <IconButton
+                        onPress={() => router.back()}
+                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+                        accessibilityLabel={t('common.back')}
+                        style={styles.headerButton}
+                    />
+                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('community.createPoll.poll')}</Text>
+                    <View style={{ width: 44 }} />
+                </View>
+                <View style={styles.loadingContainer}>
+                    <Text style={{ color: colors.textSecondary }}>{t('common.loading')}</Text>
                 </View>
             </SafeAreaView>
         );
@@ -287,23 +289,23 @@ export default function CreatePollScreen() {
 	    return (
 	        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-	                <IconButton
-	                    onPress={handleBack}
-	                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                    accessibilityLabel="Retour"
-	                    style={styles.headerButton}
-	                />
-	                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-	                    {isEditMode ? 'Modifier le sondage' : hasDraft ? 'Brouillon' : 'Nouveau sondage'}
-	                </Text>
-	                <View style={{ width: 44 }} />
-	            </View>
+                <IconButton
+                    onPress={handleBack}
+                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+                    accessibilityLabel={t('common.back')}
+                    style={styles.headerButton}
+                />
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+                    {isEditMode ? t('community.createPoll.editPoll') : hasDraft ? t('common.draft') : t('community.createPoll.newPoll')}
+                </Text>
+                <View style={{ width: 44 }} />
+            </View>
 
             {!isEditMode && hasDraft && (
                 <View style={[styles.draftBanner, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                     <SquarePen size={14} color={colors.primary} />
                     <Text style={[styles.draftBannerText, { color: colors.primary }]}>
-                        Modifications non publiées
+                        {t('common.unpublishedChanges')}
                     </Text>
                 </View>
             )}
@@ -321,11 +323,11 @@ export default function CreatePollScreen() {
 	                keyboardShouldPersistTaps="handled"
 	                keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
 	            >
-	                <View style={styles.section}>
-	                    <Text style={[styles.label, { color: colors.textSecondary }]}>Question</Text>
+                <View style={styles.section}>
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>{t('community.createPoll.questionLabel')}</Text>
 		                    <Input
 		                        multiline
-		                        placeholder="Posez votre question ici..."
+		                        placeholder={t('community.createPoll.questionPlaceholder')}
 		                        placeholderTextColor={colors.gray500}
 		                        value={question}
 		                        onChangeText={setQuestion}
@@ -339,14 +341,14 @@ export default function CreatePollScreen() {
 	                </View>
 
                 <View style={styles.section}>
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>Options</Text>
-	                    {options.map((option, index) => (
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>{t('community.createPoll.optionsLabel')}</Text>
+		                    {options.map((option, index) => (
 	                        <View key={index} style={styles.optionRow}>
 	                            <View style={[styles.optionInputContainer, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}>
 	                                <Text style={[styles.optionIndex, { color: colors.textSecondary }]}>{index + 1}.</Text>
-		                                <Input
-		                                    placeholder={`Option ${index + 1}`}
-		                                    placeholderTextColor={colors.gray400}
+			                                <Input
+			                                    placeholder={t('community.createPoll.optionPlaceholder', { index: index + 1 })}
+			                                    placeholderTextColor={colors.gray400}
 		                                    value={option}
 		                                    onChangeText={(text) => handleOptionChange(text, index)}
 		                                    inputContainerStyle={{
@@ -364,20 +366,20 @@ export default function CreatePollScreen() {
 	                                />
 	                            </View>
 	                            {options.length > 2 && (
-	                                <IconButton
-	                                    onPress={() => removeOption(index)}
-	                                    icon={<Trash2 size={20} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-	                                    accessibilityLabel="Supprimer l’option"
-	                                    variant="ghost"
-	                                    size="md"
-	                                    style={styles.removeButton}
+		                                <IconButton
+		                                    onPress={() => removeOption(index)}
+		                                    icon={<Trash2 size={20} color={colors.error} strokeWidth={ICON.strokeWidth} />}
+		                                    accessibilityLabel={t('community.createPoll.removeOptionA11y')}
+		                                    variant="ghost"
+		                                    size="md"
+		                                    style={styles.removeButton}
 	                                />
                             )}
                         </View>
                     ))}
 
                     <Button
-                        title="Ajouter une option"
+                        title={t('community.createPoll.addOption')}
                         onPress={addOption}
                         variant="outline"
                         icon={<Plus size={20} color={colors.primary} />}
@@ -389,52 +391,52 @@ export default function CreatePollScreen() {
                 <View style={styles.settingsSection}>
                     <View style={styles.settingRow}>
                         <View style={styles.settingInfo}>
-                            <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Choix multiple</Text>
-                            <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>Autoriser les participants à voter pour plusieurs options</Text>
+                            <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>{t('community.createPoll.multipleChoiceTitle')}</Text>
+                            <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>{t('community.createPoll.multipleChoiceDesc')}</Text>
                         </View>
                         <Toggle value={multipleChoice} onValueChange={setMultipleChoice} />
                     </View>
 
                     <View style={[styles.settingRow, { marginTop: SPACING.lg }]}>
                         <View style={styles.settingInfo}>
-                            <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Afficher les résultats</Text>
-                            <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>Les votants peuvent voir les résultats avant la fin</Text>
+                            <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>{t('community.createPoll.showResultsTitle')}</Text>
+                            <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>{t('community.createPoll.showResultsDesc')}</Text>
                         </View>
                         <Toggle value={showResults} onValueChange={setShowResults} />
                     </View>
 
                     <View style={[styles.settingRow, { marginTop: SPACING.lg }]}>
                         <View style={styles.settingInfo}>
-                            <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Définir une durée</Text>
-                            <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>Le sondage se termine automatiquement</Text>
+                            <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>{t('community.createPoll.setDurationTitle')}</Text>
+                            <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>{t('community.createPoll.setDurationDesc')}</Text>
                         </View>
                         <Toggle value={hasDuration} onValueChange={setHasDuration} />
                     </View>
 
                     {hasDuration && (
                         <View style={styles.dateSection}>
-                            <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>Se termine le</Text>
+                            <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>{t('community.createPoll.endsOn')}</Text>
                             <View style={styles.dateRow}>
                                 <SelectCard
                                     style={[styles.dateButton, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}
                                     onPress={() => setShowDatePicker(true)}
                                     selected={false}
-                                    accessibilityLabel="Choisir la date de fin"
+                                    accessibilityLabel={t('community.createPoll.chooseEndDate')}
                                 >
                                     <Calendar size={18} color={colors.primary} />
                                     <Text style={{ color: colors.textPrimary }}>
-                                        {pollEndDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        {pollEndDate.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </Text>
                                 </SelectCard>
                                 <SelectCard
                                     style={[styles.dateButton, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}
                                     onPress={() => setShowTimePicker(true)}
                                     selected={false}
-                                    accessibilityLabel="Choisir l’heure de fin"
+                                    accessibilityLabel={t('community.createPoll.chooseEndTime')}
                                 >
                                     <Clock size={18} color={colors.primary} />
                                     <Text style={{ color: colors.textPrimary }}>
-                                        {pollEndDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                        {pollEndDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                                     </Text>
                                 </SelectCard>
                             </View>
@@ -450,7 +452,7 @@ export default function CreatePollScreen() {
                         onPress={handleSaveAsDraft}
                         disabled={!question.trim() || isSubmitting}
                         icon={<Save size={18} color={colors.gray500} strokeWidth={ICON.strokeWidth} />}
-                        accessibilityLabel="Sauvegarder en brouillon"
+                        accessibilityLabel={t('common.saveDraft')}
                         variant="outline"
                         size="md"
                         style={[styles.draftBtn, { borderColor: colors.borderColor }]}
@@ -458,7 +460,7 @@ export default function CreatePollScreen() {
                 )}
                 <View style={styles.submitBtnContainer}>
                     <Button
-                        title={isEditMode ? "Modifier le sondage" : hasDraft ? "Publier le sondage" : "Créer le sondage"}
+                        title={isEditMode ? t('community.createPoll.editPoll') : hasDraft ? t('community.createPoll.publishPoll') : t('community.createPoll.createPoll')}
                         onPress={handleSubmit}
                         loading={isSubmitting}
                         fullWidth

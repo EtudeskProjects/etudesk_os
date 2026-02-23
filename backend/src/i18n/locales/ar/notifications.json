@@ -1,0 +1,10 @@
+{
+  "registerError": "تعذّر تسجيل رمز الإشعارات",
+  "deactivateError": "تعذّر إلغاء تفعيل رمز الإشعارات",
+  "fetchError": "تعذّر جلب الإشعارات",
+  "markReadError": "تعذّر تحديد الإشعار كمقروء",
+  "markAllReadError": "تعذّر تحديد جميع الإشعارات كمقروءة",
+  "deleteError": "تعذّر حذف الإشعار",
+  "fetchPreferencesError": "تعذّر جلب التفضيلات",
+  "updatePreferencesError": "تعذّر تحديث التفضيلات"
+}

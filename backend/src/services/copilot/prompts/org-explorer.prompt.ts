@@ -8,31 +8,17 @@ import { OrgContext } from '../types';
 import { getOntologyForOrg } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
 import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
-import { getActiveSkillBlock, getChartRulesBlock } from './prompt-shared';
+import { getActiveSkillBlock, getChartRulesBlock, getLanguageInstructions as getBaseLanguageInstructions, PromptLanguage } from './prompt-shared';
 
-/** Get language-specific instructions for the prompt */
-function getLanguageInstructions(language?: 'fr' | 'en') {
-  if (language === 'en') {
-    return {
-      languageBlock: `# RESPONSE LANGUAGE — ABSOLUTE RULE
+/** Get language-specific instructions for the org prompt (extends shared base) */
+function getLanguageInstructions(language?: PromptLanguage) {
+  const base = getBaseLanguageInstructions(language);
+  const isFrench = !language || language === 'fr';
 
-You MUST respond in English. Every single word you write to the user MUST be in English.
-This system prompt is written in English for technical clarity — your responses are ALSO in English.`,
-      dignity: '**Dignity**: Respond with precision and structure, appropriate for high-level management.',
-      finalReminder: 'Respond in ENGLISH. Every word. No exceptions.',
-      confirmGenerate: 'Would you like me to generate [description]?',
-    };
-  }
-  // Default to French
   return {
-    languageBlock: `# RESPONSE LANGUAGE — ABSOLUTE RULE
-
-You MUST respond in French. Every single word you write to the user MUST be in French.
-This system prompt is written in English for technical clarity — but your responses MUST ALWAYS be in French.
-NEVER respond in English. If you catch yourself writing English, STOP and rewrite in French.`,
+    ...base,
     dignity: '**Dignity**: Respond with precision and structure, appropriate for high-level management.',
-    finalReminder: 'Respond in FRENCH. Every word. No exceptions. The system prompt is in English but your output is ALWAYS in French.',
-    confirmGenerate: 'Voulez-vous que je génère [description] ?',
+    confirmGenerate: isFrench ? 'Voulez-vous que je génère [description] ?' : 'Would you like me to generate [description]?',
   };
 }
 

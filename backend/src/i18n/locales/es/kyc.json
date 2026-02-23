@@ -1,0 +1,9 @@
+{
+  "fetchStatusError": "No se pudo obtener el estado KYC",
+  "invalidDocumentType": "Tipo de documento inválido",
+  "frontImageRequired": "La imagen frontal es requerida",
+  "alreadyVerified": "Tu identidad ya está verificada.",
+  "submitError": "No se pudo enviar la verificación KYC",
+  "uploadUrlError": "No se pudo generar la URL de subida",
+  "fetchHistoryError": "No se pudo obtener el historial KYC"
+}

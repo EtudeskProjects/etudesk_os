@@ -20,6 +20,7 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Button, IconButton, LoadingShimmer, SelectCard } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
+import { useI18n } from '../../src/contexts/I18nContext';
 import { kycService, KYCDocumentType, imageService } from '../../src/services';
 import { getFullImageUrl } from '../../src/utils/image';
 import { useAlert } from '../../src/contexts/AlertContext';
@@ -27,16 +28,17 @@ import { useAlert } from '../../src/contexts/AlertContext';
 type VerificationStatus = 'none' | 'verified' | 'rejected';
 type DocumentType = 'id_card' | 'passport' | 'driver_license' | 'student_card';
 
-const DOCUMENT_TYPES = [
-  { id: 'id_card' as DocumentType, label: "Carte d'identité" },
-  { id: 'passport' as DocumentType, label: 'Passeport' },
-  { id: 'driver_license' as DocumentType, label: 'Permis de conduire' },
-  { id: 'student_card' as DocumentType, label: 'Carte scolaire / étudiante' },
-];
-
 export default function KYCScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
+
+  const DOCUMENT_TYPES = [
+    { id: 'id_card' as DocumentType, label: t('kyc.docTypes.id_card') },
+    { id: 'passport' as DocumentType, label: t('kyc.docTypes.passport') },
+    { id: 'driver_license' as DocumentType, label: t('kyc.docTypes.driver_license') },
+    { id: 'student_card' as DocumentType, label: t('kyc.docTypes.student_card') },
+  ];
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,7 +115,7 @@ export default function KYCScreen() {
 
   const handleSubmit = async () => {
     if (!selectedDocType || !frontImage) {
-      void alerts.alert('Erreur', 'Sélectionne un type de document et ajoute le recto.');
+      void alerts.alert(t('common.error'), t('kyc.selectDocAndFront'));
       return;
     }
 
@@ -140,13 +142,13 @@ export default function KYCScreen() {
       await loadKYCStatus();
 
       if (result.data?.status === 'VERIFIED') {
-        void alerts.alert('Vérifié', 'Ton identité a été vérifiée avec succès.');
+        void alerts.alert(t('kyc.verified'), t('kyc.verifiedMessage'));
       } else {
-        void alerts.showAlert({ title: 'Non vérifié', message: result.data?.rejection_reason || 'Le document n\'a pas pu être vérifié. Réessaie avec une meilleure photo.', buttons: [{ text: 'OK' }] });
+        void alerts.showAlert({ title: t('kyc.notVerified'), message: result.data?.rejection_reason || t('kyc.notVerifiedMessage'), buttons: [{ text: 'OK' }] });
       }
     } catch (error: any) {
       if (__DEV__) console.error('Error submitting KYC:', error);
-      void alerts.alert('Erreur', error?.error || 'Erreur lors de la soumission.');
+      void alerts.alert(t('common.error'), error?.error || t('kyc.submissionError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -155,10 +157,10 @@ export default function KYCScreen() {
   const getDocTypeLabel = (docType: DocumentType | null): string => {
     if (!docType) return '';
     const labels: Record<DocumentType, string> = {
-      'id_card': "Carte d'identité",
-      'passport': 'Passeport',
-      'driver_license': 'Permis de conduire',
-      'student_card': 'Carte scolaire / étudiante',
+      'id_card': t('kyc.docTypes.id_card'),
+      'passport': t('kyc.docTypes.passport'),
+      'driver_license': t('kyc.docTypes.driver_license'),
+      'student_card': t('kyc.docTypes.student_card'),
     };
     return labels[docType] || '';
   };
@@ -169,18 +171,18 @@ export default function KYCScreen() {
     return (
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-          Document soumis ({getDocTypeLabel(submittedDocType)})
+          {t('kyc.submittedDoc', { type: getDocTypeLabel(submittedDocType) })}
         </Text>
 
         <View style={[styles.imagesRow]}>
           <View style={[styles.submittedImageCard, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}>
-            <Text style={[styles.submittedImageLabel, { color: colors.textSecondary }]}>Recto</Text>
+            <Text style={[styles.submittedImageLabel, { color: colors.textSecondary }]}>{t('kyc.front')}</Text>
             <Image source={{ uri: getFullImageUrl(submittedFrontImage) }} style={[styles.submittedImage, { backgroundColor: colors.gray100 }]} />
           </View>
 
           {submittedBackImage && (
             <View style={[styles.submittedImageCard, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}>
-              <Text style={[styles.submittedImageLabel, { color: colors.textSecondary }]}>Verso</Text>
+              <Text style={[styles.submittedImageLabel, { color: colors.textSecondary }]}>{t('kyc.back')}</Text>
               <Image source={{ uri: getFullImageUrl(submittedBackImage) }} style={[styles.submittedImage, { backgroundColor: colors.gray100 }]} />
             </View>
           )}
@@ -195,9 +197,9 @@ export default function KYCScreen() {
         <View style={[styles.statusCard, { backgroundColor: withOpacity(colors.success, OPACITY[15]), borderColor: colors.success }]}>
           <Check size={ICON.size.lg} color={colors.success} strokeWidth={ICON.strokeWidth} />
           <View style={styles.statusContent}>
-            <Text style={[styles.statusTitle, { color: colors.success }]}>Identité vérifiée</Text>
+            <Text style={[styles.statusTitle, { color: colors.success }]}>{t('kyc.identityVerified')}</Text>
             <Text style={[styles.statusDescription, { color: colors.textSecondary }]}>
-              Tu peux maintenant créer une organisation, publier des offres et recevoir des paiements.
+              {t('kyc.verifiedDescription')}
             </Text>
           </View>
         </View>
@@ -209,7 +211,7 @@ export default function KYCScreen() {
         <View style={[styles.statusCard, { backgroundColor: withOpacity(colors.error, OPACITY[15]), borderColor: colors.error }]}>
           <XCircle size={ICON.size.lg} color={colors.error} strokeWidth={ICON.strokeWidth} />
           <View style={styles.statusContent}>
-            <Text style={[styles.statusTitle, { color: colors.error }]}>Vérification échouée</Text>
+            <Text style={[styles.statusTitle, { color: colors.error }]}>{t('kyc.verificationFailed')}</Text>
             {rejectionReason && (
               <Text style={[styles.statusDescription, { color: colors.textSecondary }]}>
                 {rejectionReason}
@@ -240,9 +242,9 @@ export default function KYCScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Vérification d'identité</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('kyc.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -256,7 +258,7 @@ export default function KYCScreen() {
           <View style={[styles.infoCard, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
             <Shield size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.infoText, { color: colors.primary }]}>
-              La vérification est requise pour créer une organisation, publier des offres et recevoir des paiements.
+              {t('kyc.infoText')}
             </Text>
           </View>
         )}
@@ -271,7 +273,7 @@ export default function KYCScreen() {
         {(verificationStatus === 'none' || verificationStatus === 'rejected') && (
           <>
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Type de document</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('kyc.docType')}</Text>
               <View style={[styles.optionsList, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
                 {DOCUMENT_TYPES.map((docType, index) => (
                   <SelectCard
@@ -307,14 +309,14 @@ export default function KYCScreen() {
             {/* Document Upload */}
             {selectedDocType && (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Photos du document</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('kyc.docPhotos')}</Text>
 
                 {/* Front */}
                 <SelectCard
                   style={[styles.uploadCard, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}
                   onPress={() => handleCapture('front')}
                   selected={false}
-                  accessibilityLabel="Ajouter la photo recto"
+                  accessibilityLabel={t('kyc.addFrontPhoto')}
                 >
                   {frontImage ? (
                     <>
@@ -326,7 +328,7 @@ export default function KYCScreen() {
                   ) : (
                     <View style={styles.uploadPlaceholder}>
                       <Camera size={ICON.size.xl} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                      <Text style={[styles.uploadLabel, { color: colors.textPrimary }]}>Recto</Text>
+                      <Text style={[styles.uploadLabel, { color: colors.textPrimary }]}>{t('kyc.front')}</Text>
                     </View>
                   )}
                 </SelectCard>
@@ -336,7 +338,7 @@ export default function KYCScreen() {
                   style={[styles.uploadCard, { borderColor: colors.borderColor, backgroundColor: colors.surface }]}
                   onPress={() => handleCapture('back')}
                   selected={false}
-                  accessibilityLabel="Ajouter la photo verso"
+                  accessibilityLabel={t('kyc.addBackPhoto')}
                 >
                   {backImage ? (
                     <>
@@ -348,7 +350,7 @@ export default function KYCScreen() {
                   ) : (
                     <View style={styles.uploadPlaceholder}>
                       <Camera size={ICON.size.xl} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
-                      <Text style={[styles.uploadLabel, { color: colors.textPrimary }]}>Verso (optionnel)</Text>
+                      <Text style={[styles.uploadLabel, { color: colors.textPrimary }]}>{t('kyc.backOptional')}</Text>
                     </View>
                   )}
                 </SelectCard>
@@ -362,7 +364,7 @@ export default function KYCScreen() {
       {(verificationStatus === 'none' || verificationStatus === 'rejected') && selectedDocType && frontImage && (
         <View style={[styles.footer, { backgroundColor: colors.background }]}>
           <Button
-            title={isSubmitting ? "Vérification..." : "Vérifier mon identité"}
+            title={isSubmitting ? t('kyc.verifying') : t('kyc.verifyIdentity')}
             onPress={handleSubmit}
             fullWidth
             disabled={isSubmitting}

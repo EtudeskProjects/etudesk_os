@@ -8,6 +8,7 @@ import { defineTool } from './tool-helper';
 import { z } from 'zod';
 import { pool } from '../../database';
 import { logger } from '../../../utils';
+import { i18next } from '../../../i18n';
 
 const ACTION_TYPES = [
   'apply_opportunity',
@@ -67,7 +68,7 @@ async function resolveOpportunityStartDateForFollowUp(data: Record<string, any>)
   return null;
 }
 
-export function createExecuteActionTool(authenticatedTalentId: string) {
+export function createExecuteActionTool(authenticatedTalentId: string, language?: string) {
   return defineTool({
     name: 'execute_action',
     description:
@@ -91,6 +92,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
     },
     execute: async ({ action, entityId, dataJson }) => {
       const talentId = authenticatedTalentId;
+      const tr = (key: string, options?: Record<string, any>) => i18next.t(key, { lng: language, ...(options || {}) });
       // Accept dataJson as object or string (Claude native SDK may send objects)
       const data = typeof dataJson === 'object' && dataJson !== null
         ? dataJson
@@ -108,17 +110,17 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
             let metadata = (data.metadata && typeof data.metadata === 'object') ? { ...(data.metadata as Record<string, any>) } : {};
 
             if (!code || code.length < 2) {
-              return { success: false, error: 'code requis (ex: FOLLOW_UP, REMINDER, RESEARCH, ACTION)' };
+              return { success: false, error: tr('copilot:toolCodeRequired') };
             }
             if (!title || title.length < 2) {
-              return { success: false, error: 'title requis' };
+              return { success: false, error: tr('copilot:toolTitleRequired') };
             }
             if (!dueAtRaw) {
-              return { success: false, error: 'dueAt requis (ISO datetime)' };
+              return { success: false, error: tr('copilot:toolDueAtRequired') };
             }
             let dueAt = new Date(String(dueAtRaw));
             if (isNaN(dueAt.getTime())) {
-              return { success: false, error: 'dueAt invalide' };
+              return { success: false, error: tr('copilot:toolDueAtInvalid') };
             }
 
             // FOLLOW_UP must account for opportunity start_date when available.
@@ -145,7 +147,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
                 [String(organizationId), talentId]
               );
               if (membership.rows.length === 0) {
-                return { success: false, error: 'Accès non autorisé à cette organisation' };
+                return { success: false, error: tr('copilot:toolOrgAccessDenied') };
               }
 
               const result = await pool.query(
@@ -155,7 +157,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
                 [String(organizationId), code, title, description, dueAt.toISOString(), priority, JSON.stringify(metadata), talentId]
               );
 
-              return { success: true, message: 'Trigger organisation cree', triggerId: result.rows[0].id };
+              return { success: true, message: tr('copilot:toolOrgTriggerCreated'), triggerId: result.rows[0].id };
             }
 
             const result = await pool.query(
@@ -165,17 +167,17 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
               [talentId, code, title, description, dueAt.toISOString(), priority, JSON.stringify(metadata), talentId]
             );
 
-            return { success: true, message: 'Trigger talent cree', triggerId: result.rows[0].id };
+            return { success: true, message: tr('copilot:toolTalentTriggerCreated'), triggerId: result.rows[0].id };
           }
 
           case 'update_agenda_trigger': {
-            if (!entityId) return { success: false, error: 'entityId (triggerId) requis' };
+            if (!entityId) return { success: false, error: tr('copilot:toolEntityIdRequired') };
 
             const nextStatus = (data.status === 'PENDING' || data.status === 'DONE' || data.status === 'CANCELED') ? data.status : null;
             const dueAtRaw = data.dueAt || data.due_at;
             const nextDueAt = dueAtRaw ? new Date(String(dueAtRaw)) : null;
             if (nextDueAt && isNaN(nextDueAt.getTime())) {
-              return { success: false, error: 'dueAt invalide' };
+              return { success: false, error: tr('copilot:toolDueAtInvalid') };
             }
             const metadata = (data.metadata && typeof data.metadata === 'object') ? data.metadata : null;
 
@@ -185,12 +187,12 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
               [entityId]
             );
             if (existing.rows.length === 0) {
-              return { success: false, error: 'Trigger introuvable' };
+              return { success: false, error: tr('copilot:toolTriggerNotFound') };
             }
             const row = existing.rows[0];
             if (row.scope === 'TALENT') {
               if (String(row.talent_id) !== String(talentId)) {
-                return { success: false, error: 'Accès refusé' };
+                return { success: false, error: tr('copilot:toolAccessDenied') };
               }
             } else {
               const membership = await pool.query(
@@ -198,7 +200,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
                 [String(row.organization_id), talentId]
               );
               if (membership.rows.length === 0) {
-                return { success: false, error: 'Accès non autorisé à cette organisation' };
+                return { success: false, error: tr('copilot:toolOrgAccessDenied') };
               }
             }
 
@@ -216,7 +218,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
               [entityId, nextStatus, nextDueAt ? nextDueAt.toISOString() : null, metadata ? JSON.stringify(metadata) : null]
             );
 
-            return { success: true, message: 'Trigger mis a jour', data: result.rows[0] };
+            return { success: true, message: tr('copilot:toolTriggerUpdated'), data: result.rows[0] };
           }
 
           case 'apply_opportunity': {
@@ -226,13 +228,13 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
               [entityId]
             );
             if (opp.rows.length === 0) {
-              return { success: false, error: "Cette opportunité n'existe pas ou a été supprimée." };
+              return { success: false, error: tr('copilot:toolOpportunityNotFound') };
             }
             if (opp.rows[0].status !== 'OPEN') {
-              return { success: false, error: "Cette opportunité n'est plus ouverte aux candidatures." };
+              return { success: false, error: tr('copilot:toolOpportunityNotOpen') };
             }
             if (opp.rows[0].deadline && new Date(opp.rows[0].deadline) < new Date()) {
-              return { success: false, error: 'La date limite de candidature est dépassée.' };
+              return { success: false, error: tr('copilot:toolDeadlinePassed') };
             }
 
             // Check not already applied
@@ -241,7 +243,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
               [talentId, entityId]
             );
             if (existing.rows.length > 0) {
-              return { success: false, error: 'Tu as déjà postulé à cette opportunité.' };
+              return { success: false, error: tr('copilot:toolAlreadyApplied') };
             }
 
             // Apply
@@ -255,7 +257,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
             logger.info(`[execute_action] Talent ${talentId} applied to opportunity ${entityId}`);
             return {
               success: true,
-              message: `Candidature soumise pour "${opp.rows[0].title}".`,
+              message: tr('copilot:toolApplicationSuccess', { title: opp.rows[0].title }),
               applicationId: result.rows[0].id,
             };
           }
@@ -267,10 +269,10 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
               [entityId]
             );
             if (comm.rows.length === 0) {
-              return { success: false, error: "Cette communauté n'existe pas." };
+              return { success: false, error: tr('copilot:toolCommunityNotFound') };
             }
             if (comm.rows[0].status !== 'ACTIVE') {
-              return { success: false, error: "Cette communauté n'est pas active." };
+              return { success: false, error: tr('copilot:toolCommunityNotActive') };
             }
 
             // Check not already member
@@ -279,7 +281,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
               [talentId, entityId]
             );
             if (existing.rows.length > 0) {
-              return { success: false, error: 'Tu es déjà membre de cette communauté.' };
+              return { success: false, error: tr('copilot:toolAlreadyMember') };
             }
 
             // Join
@@ -293,7 +295,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
             logger.info(`[execute_action] Talent ${talentId} joined community ${entityId}`);
             return {
               success: true,
-              message: `Tu as rejoint la communauté "${comm.rows[0].name}".`,
+              message: tr('copilot:toolJoinCommunitySuccess', { name: comm.rows[0].name }),
               membershipId: result.rows[0].id,
             };
           }
@@ -305,16 +307,16 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
               [entityId]
             );
             if (space.rows.length === 0) {
-              return { success: false, error: "Cet espace n'existe pas." };
+              return { success: false, error: tr('copilot:toolSpaceNotFound') };
             }
             if (space.rows[0].status !== 'ACTIVE') {
-              return { success: false, error: "Cet espace n'est pas disponible." };
+              return { success: false, error: tr('copilot:toolSpaceNotAvailable') };
             }
 
             const startDatetime = data.startDatetime || data.start_datetime;
             const endDatetime = data.endDatetime || data.end_datetime;
             if (!startDatetime || !endDatetime) {
-              return { success: false, error: 'Les dates de début et de fin sont requises (startDatetime, endDatetime).' };
+              return { success: false, error: tr('copilot:toolBookingDatesRequired') };
             }
 
             // Check no conflict
@@ -325,7 +327,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
               [entityId, startDatetime, endDatetime]
             );
             if (conflict.rows.length > 0) {
-              return { success: false, error: 'Ce créneau est déjà réservé.' };
+              return { success: false, error: tr('copilot:toolSlotTaken') };
             }
 
             // Calculate duration and total amount
@@ -347,7 +349,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
             logger.info(`[execute_action] Talent ${talentId} booked space ${entityId}`);
             return {
               success: true,
-              message: `Réservation de "${space.rows[0].name}" soumise (${durationHours}h — ${totalAmount} FCFA).`,
+              message: tr('copilot:toolBookingSuccess', { name: space.rows[0].name, hours: durationHours, amount: totalAmount }),
               bookingId: result.rows[0].id,
             };
           }
@@ -375,7 +377,7 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
                 );
               }
               logger.info(`[execute_action] Talent ${talentId} ${newStatus.toLowerCase()} community invitation ${entityId}`);
-              return { success: true, message: `Invitation ${newStatus === 'ACCEPTED' ? 'acceptée' : 'déclinée'}.` };
+              return { success: true, message: newStatus === 'ACCEPTED' ? tr('copilot:toolInvitationAccepted') : tr('copilot:toolInvitationDeclined') };
             }
 
             // Try organization invitations
@@ -396,14 +398,14 @@ export function createExecuteActionTool(authenticatedTalentId: string) {
                 );
               }
               logger.info(`[execute_action] Talent ${talentId} ${newStatus.toLowerCase()} org invitation ${entityId}`);
-              return { success: true, message: `Invitation ${newStatus === 'ACCEPTED' ? 'acceptée' : 'déclinée'}.` };
+              return { success: true, message: newStatus === 'ACCEPTED' ? tr('copilot:toolInvitationAccepted') : tr('copilot:toolInvitationDeclined') };
             }
 
-            return { success: false, error: "Invitation non trouvée ou déjà traitée." };
+            return { success: false, error: tr('copilot:toolInvitationNotFound') };
           }
 
           default:
-            return { success: false, error: `Action "${action}" non supportée.` };
+            return { success: false, error: tr('copilot:toolActionUnsupported', { action }) };
         }
       } catch (error: any) {
         logger.error(`[execute_action] Error (${action} ${entityId}): ${error.message}`);

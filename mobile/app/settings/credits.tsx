@@ -19,14 +19,15 @@ import { billingService, BillingScope, BillingBalance, BillingInvoice } from '..
 import { BORDER, ICON, OPACITY, SPACING, TYPOGRAPHY, withOpacity } from '../../src/constants/theme';
 import { useAlert } from '../../src/contexts/AlertContext';
 import { formatNumberNoTrailingZeros } from '../../src/utils/number';
+import { useI18n } from '../../src/contexts/I18nContext';
 
-function parseError(error: any): string {
-  if (!error) return 'Une erreur est survenue';
-  return String(error?.error || error?.message || 'Une erreur est survenue');
+function parseError(error: any, fallback: string): string {
+  if (!error) return fallback;
+  return String(error?.error || error?.message || fallback);
 }
 
-function formatFcfa(value: number): string {
-  return new Intl.NumberFormat('fr-FR').format(value);
+function formatFcfa(value: number, locale: string): string {
+  return new Intl.NumberFormat(locale).format(value);
 }
 
 function formatCredits(value: number): string {
@@ -36,7 +37,9 @@ function formatCredits(value: number): string {
 export default function CreditsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t, locale } = useI18n();
   const { currentSpace, selectedOrgId, selectedOrg } = useSpace();
+  const alerts = useAlert();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,7 +55,7 @@ export default function CreditsScreen() {
       return {
         scope: 'ORGANIZATION' as BillingScope,
         ownerId: selectedOrgId,
-        label: selectedOrg?.name || 'Organisation',
+        label: selectedOrg?.name || t('settings.creditsScreen.organizationLabel'),
         minAmount: 10000,
       };
     }
@@ -60,10 +63,10 @@ export default function CreditsScreen() {
     return {
       scope: 'TALENT' as BillingScope,
       ownerId: undefined,
-      label: 'Mon compte Talent',
+      label: t('settings.creditsScreen.myTalentAccount'),
       minAmount: 2000,
     };
-  }, [currentSpace, selectedOrgId, selectedOrg?.name]);
+  }, [currentSpace, selectedOrgId, selectedOrg?.name, t]);
 
   const quickPacks = useMemo(
     () => [scopeConfig.minAmount, scopeConfig.minAmount * 2, scopeConfig.minAmount * 5],
@@ -87,13 +90,12 @@ export default function CreditsScreen() {
         setInvoices(invoicesRes.data);
       }
     } catch (error) {
-      void alerts.alert('Erreur', parseError(error));
+      void alerts.alert(t('common.error'), parseError(error, t('settings.creditsScreen.genericError')));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [scopeConfig.ownerId, scopeConfig.scope]);
-  const alerts = useAlert();
+  }, [alerts, scopeConfig.ownerId, scopeConfig.scope, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -110,18 +112,18 @@ export default function CreditsScreen() {
     const amount = Number(amountInput.replace(/\s+/g, ''));
 
     if (!Number.isFinite(amount) || amount <= 0) {
-      void alerts.alert('Montant invalide', 'Entre un montant valide.');
+      void alerts.alert(t('settings.creditsScreen.invalidAmountTitle'), t('settings.creditsScreen.invalidAmountMessage'));
       return;
     }
 
     if (amount < scopeConfig.minAmount) {
-      void alerts.alert('Montant trop faible', `Minimum ${formatFcfa(scopeConfig.minAmount)} FCFA.`);
+      void alerts.alert(t('settings.creditsScreen.amountTooLowTitle'), t('settings.creditsScreen.amountTooLowMessage', { min: formatFcfa(scopeConfig.minAmount, locale) }));
       return;
     }
 
     const ownerId = scopeConfig.ownerId || balance?.owner_id;
     if (!ownerId) {
-      void alerts.alert('Chargement', 'Le wallet est en cours de chargement. Réessaie dans quelques secondes.');
+      void alerts.alert(t('common.loading'), t('settings.creditsScreen.walletLoading'));
       return;
     }
 
@@ -138,7 +140,7 @@ export default function CreditsScreen() {
 
       const payload = response.data;
       if (!payload) {
-        void alerts.alert('Erreur', 'Réponse paiement invalide');
+        void alerts.alert(t('common.error'), t('settings.creditsScreen.invalidPaymentResponse'));
         return;
       }
 
@@ -146,9 +148,9 @@ export default function CreditsScreen() {
         await Linking.openURL(payload.checkout_url);
       }
 
-      void alerts.alert('Paiement démarré', 'Finalise le paiement puis reviens ici. Ton solde se mettra à jour automatiquement.');
+      void alerts.alert(t('settings.creditsScreen.paymentStartedTitle'), t('settings.creditsScreen.paymentStartedMessage'));
     } catch (error) {
-      void alerts.alert('Paiement', parseError(error));
+      void alerts.alert(t('settings.creditsScreen.paymentTitle'), parseError(error, t('settings.creditsScreen.genericError')));
     } finally {
       setSubmitting(false);
     }
@@ -158,15 +160,15 @@ export default function CreditsScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	        <View style={styles.header}>
-	          <IconButton
-	            onPress={() => router.back()}
-	            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	            accessibilityLabel="Retour"
-	            style={styles.headerButton}
-	          />
-	          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Crédits & Facturation</Text>
-	          <View style={styles.headerButton} />
-	        </View>
+		          <IconButton
+		            onPress={() => router.back()}
+		            icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+		            accessibilityLabel={t('common.back')}
+		            style={styles.headerButton}
+		          />
+		          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('settings.creditsBilling')}</Text>
+		          <View style={styles.headerButton} />
+		        </View>
         <View style={styles.loadingContainer}>
           <LoadingShimmer variant="fullPage" />
         </View>
@@ -177,20 +179,20 @@ export default function CreditsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	      <View style={styles.header}>
-	        <IconButton
-	          onPress={() => router.back()}
-	          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	          accessibilityLabel="Retour"
-	          style={styles.headerButton}
-	        />
-	        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Crédits & Facturation</Text>
-	        <IconButton
-	          onPress={handleRefresh}
-	          icon={<RefreshCcw size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	          accessibilityLabel="Rafraichir"
-	          style={styles.headerButton}
-	        />
-	      </View>
+		        <IconButton
+		          onPress={() => router.back()}
+		          icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+		          accessibilityLabel={t('common.back')}
+		          style={styles.headerButton}
+		        />
+		        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('settings.creditsBilling')}</Text>
+		        <IconButton
+		          onPress={handleRefresh}
+		          icon={<RefreshCcw size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+		          accessibilityLabel={t('settings.creditsScreen.refreshA11y')}
+		          style={styles.headerButton}
+		        />
+		      </View>
 
       <ScrollView
         style={styles.scrollView}
@@ -198,35 +200,35 @@ export default function CreditsScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
-        <View style={[styles.scopeCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}> 
-          <Text style={[styles.scopeLabel, { color: colors.textSecondary }]}>Espace facturé</Text>
-          <Text style={[styles.scopeValue, { color: colors.textPrimary }]}>{scopeConfig.label}</Text>
-        </View>
+	        <View style={[styles.scopeCard, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}> 
+	          <Text style={[styles.scopeLabel, { color: colors.textSecondary }]}>{t('settings.creditsScreen.billedSpace')}</Text>
+	          <Text style={[styles.scopeValue, { color: colors.textPrimary }]}>{scopeConfig.label}</Text>
+	        </View>
 
         <View style={[styles.balanceCard, { backgroundColor: colors.primary }]}> 
           <View style={styles.balanceRow}>
-            <Coins size={ICON.size.lg} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.balanceTitle, { color: colors.textOnPrimary }]}>Solde crédits</Text>
-          </View>
+	            <Coins size={ICON.size.lg} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />
+	            <Text style={[styles.balanceTitle, { color: colors.textOnPrimary }]}>{t('settings.creditsScreen.balanceCredits')}</Text>
+	          </View>
           <Text style={[styles.balanceValue, { color: colors.textOnPrimary }]}>
             {formatCredits(balance?.balance_credits || 0)}
           </Text>
-          <Text style={[styles.balanceHint, { color: withOpacity(colors.textOnPrimary, OPACITY[80]) }]}> 
-            Dernière mise à jour: {balance?.updated_at ? new Date(balance.updated_at).toLocaleString('fr-FR') : '—'}
-          </Text>
-        </View>
+	          <Text style={[styles.balanceHint, { color: withOpacity(colors.textOnPrimary, OPACITY[80]) }]}> 
+	            {t('settings.creditsScreen.lastUpdated')}: {balance?.updated_at ? new Date(balance.updated_at).toLocaleString(locale) : '—'}
+	          </Text>
+	        </View>
 
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}> 
           <View style={styles.sectionTitleRow}>
-            <CreditCard size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recharger</Text>
-          </View>
+	            <CreditCard size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+	            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('settings.creditsScreen.topUp')}</Text>
+	          </View>
 
-          <Input
-            label={`Montant (min ${formatFcfa(scopeConfig.minAmount)} FCFA)`}
-            value={amountInput}
-            onChangeText={setAmountInput}
-            placeholder={String(scopeConfig.minAmount)}
+	          <Input
+	            label={t('settings.creditsScreen.amountLabel', { min: formatFcfa(scopeConfig.minAmount, locale) })}
+	            value={amountInput}
+	            onChangeText={setAmountInput}
+	            placeholder={String(scopeConfig.minAmount)}
             keyboardType="number-pad"
           />
 
@@ -240,42 +242,42 @@ export default function CreditsScreen() {
 	                  submitting && { opacity: 0.6 },
 	                ]}
 	                onPress={() => setAmountInput(String(amount))}
-	                disabled={submitting}
-	                accessibilityRole="button"
-	                accessibilityLabel={`Choisir ${formatFcfa(amount)} FCFA`}
-	              >
-	                <Text style={[styles.quickPackText, { color: colors.textPrimary }]}>{formatFcfa(amount)} FCFA</Text>
-	              </Pressable>
-	            ))}
+		                disabled={submitting}
+		                accessibilityRole="button"
+		                accessibilityLabel={t('settings.creditsScreen.chooseAmountA11y', { amount: formatFcfa(amount, locale) })}
+		              >
+		                <Text style={[styles.quickPackText, { color: colors.textPrimary }]}>{formatFcfa(amount, locale)} FCFA</Text>
+		              </Pressable>
+		            ))}
+		        </View>
+
+	          <Button
+	            title={submitting ? t('settings.creditsScreen.initializing') : t('settings.creditsScreen.payNow')}
+	            onPress={handleCheckout}
+	            loading={submitting}
+	            disabled={submitting}
+	          />
+
+	          <Text style={[styles.paymentMethodsText, { color: colors.textSecondary }]}>
+	            {t('settings.creditsScreen.availableMethods')}
+	          </Text>
 	        </View>
-
-          <Button
-            title={submitting ? 'Initialisation...' : 'Payer maintenant'}
-            onPress={handleCheckout}
-            loading={submitting}
-            disabled={submitting}
-          />
-
-          <Text style={[styles.paymentMethodsText, { color: colors.textSecondary }]}>
-            Méthodes disponibles: Mobile Money, Wave, Carte de crédit
-          </Text>
-        </View>
 
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}> 
           <View style={styles.sectionTitleRow}>
-            <Receipt size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Dernières factures</Text>
-          </View>
+	            <Receipt size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+	            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('settings.creditsScreen.latestInvoices')}</Text>
+	          </View>
 
-          {invoices.length === 0 ? (
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Aucune facture pour le moment.</Text>
-          ) : (
+	          {invoices.length === 0 ? (
+	            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('settings.creditsScreen.noInvoices')}</Text>
+	          ) : (
             invoices.map((invoice) => (
               <View key={invoice.id} style={[styles.listItem, { borderBottomColor: colors.borderColor }]}>
                 <Text style={[styles.listItemTitle, { color: colors.textPrimary }]}>{invoice.invoice_number}</Text>
-                <Text style={[styles.listItemMeta, { color: colors.textSecondary }]}>
-                  {formatFcfa(Number(invoice.total_fcfa || 0))} FCFA • {invoice.status}
-                </Text>
+	                <Text style={[styles.listItemMeta, { color: colors.textSecondary }]}>
+	                  {formatFcfa(Number(invoice.total_fcfa || 0), locale)} FCFA • {invoice.status}
+	                </Text>
               </View>
             ))
           )}

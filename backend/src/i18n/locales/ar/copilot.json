@@ -1,0 +1,19 @@
+{
+  "messageRequired": "الرسالة مطلوبة",
+  "messageTooLong": "الرسالة طويلة جداً (الحد الأقصى 4000 حرف)",
+  "processingError": "خطأ أثناء معالجة الرسالة",
+  "transcriptionError": "خطأ أثناء نسخ الصوت",
+  "uploadError": "خطأ أثناء رفع الملف",
+  "sessionsError": "خطأ أثناء جلب الجلسات",
+  "sessionCreateError": "خطأ أثناء إنشاء الجلسة",
+  "sessionFetchError": "خطأ أثناء جلب الجلسة",
+  "sessionDeleteError": "خطأ أثناء حذف الجلسة",
+  "sessionDeleted": "تم حذف الجلسة",
+  "sessionNotFound": "الجلسة غير موجودة",
+  "messagesError": "خطأ أثناء جلب الرسائل",
+  "organizationRequired": "معرّف المنظمة مطلوب لوضع الإدارة",
+  "notAuthenticated": "غير مصادق",
+  "noAudioFile": "لم يتم تقديم ملف صوتي",
+  "invalidAudioFormat": "صيغة الصوت غير صالحة أو الملف تالف",
+  "noFileProvided": "لم يتم تقديم أي ملف"
+}

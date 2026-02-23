@@ -1,0 +1,10 @@
+{
+  "fetchError": "Zahlungsmethoden konnten nicht abgerufen werden",
+  "invalidProvider": "Ungueltiger Zahlungsanbieter",
+  "invalidPhone": "Ungueltige Telefonnummer",
+  "alreadyExists": "Diese Zahlungsmethode existiert bereits",
+  "addError": "Zahlungsmethode konnte nicht hinzugefuegt werden",
+  "notFound": "Zahlungsmethode nicht gefunden",
+  "setDefaultError": "Standard-Zahlungsmethode konnte nicht festgelegt werden",
+  "deleteError": "Zahlungsmethode konnte nicht geloescht werden"
+}

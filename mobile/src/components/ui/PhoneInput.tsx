@@ -11,6 +11,7 @@ import {
 import { ChevronDown, Search, X } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, LAYOUT, BORDER, ICON } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { Tap } from './Tap';
 import {
   PhoneCountry,
@@ -40,6 +41,7 @@ export function PhoneInput({
   editable = true,
 }: PhoneInputProps) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -186,7 +188,7 @@ export function PhoneInput({
           {/* Modal header */}
           <View style={[styles.modalHeader, { borderBottomColor: colors.gray200 }]}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              Indicatif pays
+              {t('common.countryCode')}
             </Text>
             <Tap
               onPress={() => { setModalVisible(false); setSearchQuery(''); }}
@@ -205,7 +207,7 @@ export function PhoneInput({
               style={[styles.searchInput, { color: colors.textPrimary }]}
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Rechercher un pays..."
+              placeholder={t('common.searchCountry')}
               placeholderTextColor={colors.gray500}
               autoCorrect={false}
               autoCapitalize="none"
@@ -224,7 +226,7 @@ export function PhoneInput({
           {/* Favorites section (only when not searching) */}
           {!searchQuery.trim() && (
             <View style={styles.favoritesSection}>
-              <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>Favoris</Text>
+              <Text style={[styles.sectionTitle, { color: colors.gray500 }]}>{t('common.favorites')}</Text>
               {FAVORITE_COUNTRIES.map((c) => (
                 <Tap
                   key={c.code}
@@ -244,7 +246,7 @@ export function PhoneInput({
                 </Tap>
               ))}
               <Text style={[styles.sectionTitle, { color: colors.gray500, marginTop: SPACING.md }]}>
-                Tous les pays
+                {t('common.allCountries')}
               </Text>
             </View>
           )}

@@ -62,7 +62,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function EcosystemScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { user } = useAuth();
   const { isOrganizationSpace } = useSpace();
 
@@ -94,16 +94,16 @@ export default function EcosystemScreen() {
   // Get greeting based on time of day
   const getGreeting = (): { text: string; icon: typeof Sun } => {
     const hour = new Date().getHours();
-    if (hour < 12) return { text: 'Bonjour', icon: Sun };
-    if (hour < 18) return { text: 'Bon après-midi', icon: CloudSun };
-    return { text: 'Bonsoir', icon: Moon };
+    if (hour < 12) return { text: t('screens.home.greeting'), icon: Sun };
+    if (hour < 18) return { text: t('screens.home.goodAfternoon'), icon: CloudSun };
+    return { text: t('screens.home.goodEvening'), icon: Moon };
   };
 
   const greeting = getGreeting();
 
   // Get first name, truncated to 10 characters
   const getDisplayName = () => {
-    const raw = user?.firstName || user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Utilisateur';
+    const raw = user?.firstName || user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || t('screens.home.defaultUser');
     return raw.length > 10 ? raw.slice(0, 10) + '...' : raw;
   };
 
@@ -120,7 +120,7 @@ export default function EcosystemScreen() {
   const talentQuickActions = [
     {
       id: 'skills',
-      label: 'Mes compétences',
+      label: t('screens.home.mySkills'),
       icon: Gem,
       route: '/settings/skills',
       count: quickActionCounts.talent.skills,
@@ -128,7 +128,7 @@ export default function EcosystemScreen() {
     },
     {
       id: 'documents',
-      label: 'Mes documents',
+      label: t('screens.home.myDocuments'),
       icon: FolderOpen,
       route: '/settings/documents',
       count: quickActionCounts.talent.documents,
@@ -136,7 +136,7 @@ export default function EcosystemScreen() {
     },
     {
       id: 'communities',
-      label: 'Mes communautés',
+      label: t('screens.home.myCommunities'),
       icon: Users,
       route: '/settings/my-communities',
       count: quickActionCounts.talent.communities,
@@ -144,7 +144,7 @@ export default function EcosystemScreen() {
     },
     {
       id: 'reservations',
-      label: 'Mes réservations',
+      label: t('screens.home.myBookings'),
       icon: MapPin,
       route: '/settings/my-reservations',
       count: quickActionCounts.talent.reservations,
@@ -152,7 +152,7 @@ export default function EcosystemScreen() {
     },
     {
       id: 'applications',
-      label: 'Mes candidatures',
+      label: t('screens.home.myApplications'),
       icon: Briefcase,
       route: '/settings/my-applications',
       count: quickActionCounts.talent.applications,
@@ -160,7 +160,7 @@ export default function EcosystemScreen() {
     },
     {
       id: 'profile',
-      label: 'Mon Profil',
+      label: t('screens.home.myProfile'),
       icon: User,
       route: '/settings/edit-profile',
       count: undefined,
@@ -217,20 +217,20 @@ export default function EcosystemScreen() {
     const now = Date.now();
     const diff = now - new Date(dateStr).getTime();
     const min = Math.floor(diff / 60000);
-    if (min < 1) return "À l'instant";
-    if (min < 60) return `${min} min`;
+    if (min < 1) return t('common.time.justNow');
+    if (min < 60) return t('common.time.minutes', { count: min });
     const h = Math.floor(min / 60);
-    if (h < 24) return `${h}h`;
+    if (h < 24) return t('common.time.hours', { count: h });
     const d = Math.floor(h / 24);
-    if (d < 7) return `${d}j`;
-    return `${Math.floor(d / 7)} sem.`;
+    if (d < 7) return t('common.time.days', { count: d });
+    return t('common.time.weeks', { count: Math.floor(d / 7) });
   };
 
   // Truncate objective to 200 characters for "Voir plus"
   const OBJECTIVE_TRUNCATE_LENGTH = 200;
   const getDisplayedObjective = (): string => {
     if (!dailyObjective?.objective) {
-      return 'Explorez les opportunités qui vous correspondent et renforcez votre profil.';
+      return t('screens.home.defaultObjective');
     }
     if (isObjectiveExpanded || dailyObjective.objective.length <= OBJECTIVE_TRUNCATE_LENGTH) {
       return dailyObjective.objective;
@@ -384,10 +384,10 @@ const renderTalentContent = () => (
     {/* Greeting */}
     <View style={styles.greetingSection}>
       <Text style={[styles.greetingText, { color: colors.textPrimary }]}>
-        Bonjour {getDisplayName()} 👋
+        {greeting.text} {getDisplayName()} 👋
       </Text>
       <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-        {new Date().toLocaleDateString('fr-FR', {
+        {new Date().toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
           weekday: 'long',
           day: 'numeric',
           month: 'long'
@@ -401,16 +401,16 @@ const renderTalentContent = () => (
         style={[styles.creditBanner, { backgroundColor: colors.surface, borderWidth: 0, borderColor: 'transparent' }]}
         onPress={() => router.push('/settings/credits' as any)}
         selected={false}
-        accessibilityLabel="Ouvrir crédits et facturation"
+        accessibilityLabel={t('screens.home.openCredits')}
       >
         <View style={styles.creditBannerLeft}>
           <Coins size={16} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.creditBannerText, { color: colors.textPrimary }]}>
-            {creditBalance} crédits
+            {creditBalance} {t('screens.home.credits')}
           </Text>
         </View>
         <Text style={[styles.creditBannerLink, { color: colors.primary }]}>
-          Recharger
+          {t('screens.home.topUp')}
         </Text>
       </SelectCard>
     )}
@@ -419,7 +419,7 @@ const renderTalentContent = () => (
     <View style={[styles.insightContainer, { backgroundColor: CARD_THEMES.space.bg }]}>
       <View style={styles.insightHeader}>
         <Target size={16} color={CARD_THEMES.space.icon} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.insightLabel, { color: CARD_THEMES.space.text }]}>Objectif du jour</Text>
+        <Text style={[styles.insightLabel, { color: CARD_THEMES.space.text }]}>{t('screens.home.dailyObjective')}</Text>
       </View>
       <Text style={[styles.insightText, { color: colors.textPrimary }]}>
         {getDisplayedObjective()}
@@ -428,7 +428,7 @@ const renderTalentContent = () => (
             style={[styles.seeMoreLink, { color: colors.primary }]}
             onPress={() => setIsObjectiveExpanded(true)}
           >
-            {' '}Voir plus
+            {' '}{t('common.seeMore')}
           </Text>
         )}
       </Text>
@@ -436,7 +436,7 @@ const renderTalentContent = () => (
 
     {/* Train Button */}
     <Button
-      title="Se former"
+      title={t('screens.home.train')}
       onPress={() => router.push({ pathname: '/(tabs)/assistant', params: { mode: 'study', focusInput: 'true' } })}
       variant="primary"
       fullWidth
@@ -448,7 +448,7 @@ const renderTalentContent = () => (
     {/* Quick Actions Grid */}
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Accès rapide</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('screens.home.quickAccess')}</Text>
       </View>
       <View style={styles.quickActionsGrid}>
         {quickActions.map((action) => {
@@ -484,10 +484,10 @@ const renderTalentContent = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <View style={styles.sectionTitleRow}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Notifications</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('screens.home.notifications')}</Text>
         </View>
         <Button
-          title="Voir tout"
+          title={t('screens.home.seeAll')}
           onPress={() => router.push('/settings/notifications')}
           variant="ghost"
           size="sm"
@@ -501,10 +501,10 @@ const renderTalentContent = () => (
           <View style={styles.emptyState}>
             <Bell size={40} color={colors.gray300} strokeWidth={ICON.strokeWidth} />
             <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
-              Aucune notification
+              {t('screens.home.noNotifications')}
             </Text>
             <Text style={[styles.emptyStateSubtext, { color: colors.gray400 }]}>
-              Vous êtes à jour !
+              {t('screens.home.upToDate')}
             </Text>
           </View>
         ) : (
@@ -553,7 +553,7 @@ const renderTalentContent = () => (
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('ecosystem.agenda')}</Text>
         </View>
         <Button
-          title="Voir tout"
+          title={t('screens.home.seeAll')}
           onPress={() => router.push('/settings/calendar' as any)}
           variant="ghost"
           size="sm"
@@ -578,10 +578,10 @@ const renderTalentContent = () => (
           </View>
           <View style={styles.listItemContent}>
             <Text style={[styles.listItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-              Voir mon agenda
+              {t('screens.home.viewAgenda')}
             </Text>
             <Text style={[styles.listItemSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-              Candidatures, réservations, événements et rappels
+              {t('screens.home.agendaSubtitle')}
             </Text>
           </View>
           <ChevronRight size={ICON.size.sm} color={colors.gray400} strokeWidth={ICON.strokeWidth} />

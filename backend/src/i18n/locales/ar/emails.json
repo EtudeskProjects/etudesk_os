@@ -1,0 +1,69 @@
+{
+  "otp": {
+    "subject": "{{code}} - رمز تسجيل الدخول",
+    "title": "رمز تسجيل الدخول",
+    "yourCode": "رمز تسجيل الدخول الخاص بك",
+    "validFor": "صالح لمدة {{minutes}} دقيقة",
+    "neverShare": "لا تشارك هذا الرمز مع أي شخص أبداً"
+  },
+  "welcome": {
+    "subject": "مرحباً بك في Etudesk، {{name}}!",
+    "title": "مرحباً بك في Etudesk!",
+    "greeting": "مرحباً {{name}}،",
+    "congratulations": "ملفك الشخصي للموهبة أصبح نشطاً الآن على Etudesk. إليك ما يمكنك فعله:",
+    "feature1": "اكتشاف وظائف وتدريبات ومهام حرة",
+    "feature2": "الانضمام إلى مجتمعات المهنيين",
+    "feature3": "إيجاد مساحات عمل مشتركة وحاضنات أعمال",
+    "feature4": "تطوير شبكتك مع مساعد ذكاء اصطناعي",
+    "exploreButton": "استكشف Etudesk",
+    "copyright": "© {{year}} Etudesk. جميع الحقوق محفوظة."
+  },
+  "orgInvite": {
+    "subject": "{{inviter}} يدعوك للانضمام إلى {{organization}} على Etudesk",
+    "title": "لقد تمت دعوتك!",
+    "inviterInvites": "{{inviter}} يدعوك للانضمام إلى المنظمة",
+    "asRole": "بصفة {{role}}",
+    "connectToAccept": "سجّل الدخول إلى Etudesk للقبول وبدء التعاون.",
+    "viewInvitation": "عرض الدعوة",
+    "expiresIn": "تنتهي صلاحية هذه الدعوة خلال 7 أيام.",
+    "copyright": "© {{year}} Etudesk. جميع الحقوق محفوظة.",
+    "roles": {
+      "OWNER": "مالك",
+      "ADMIN": "مسؤول",
+      "MANAGER": "مدير",
+      "MEMBER": "عضو",
+      "OBSERVER": "مراقب"
+    }
+  },
+  "communityInvite": {
+    "subject": "{{inviter}} يدعوك للانضمام إلى {{community}}",
+    "title": "لقد تمت دعوتك!",
+    "greeting": "مرحباً {{name}}،",
+    "inviterInvites": "{{inviter}} يدعوك للانضمام إلى المجتمع",
+    "asRole": "بصفة {{role}}",
+    "connectToAccept": "سجّل الدخول إلى Etudesk للقبول والانضمام إلى المجتمع.",
+    "viewInvitation": "عرض الدعوة",
+    "expiresIn": "تنتهي صلاحية هذه الدعوة خلال 7 أيام.",
+    "copyright": "© {{year}} Etudesk. جميع الحقوق محفوظة.",
+    "roles": {
+      "ADMIN": "مسؤول",
+      "MEMBER": "عضو"
+    }
+  },
+  "spaceInvite": {
+    "subject": "{{inviter}} يدعوك لاكتشاف {{space}}",
+    "title": "دعوة إلى مساحة",
+    "greeting": "مرحباً {{name}}،",
+    "inviterInvites": "{{inviter}} يدعوك لاكتشاف المساحة",
+    "viewInvitation": "عرض الدعوة",
+    "expiresIn": "تنتهي صلاحية هذه الدعوة خلال 7 أيام."
+  },
+  "opportunityInvite": {
+    "subject": "{{inviter}} يدعوك للتقديم — {{opportunity}}",
+    "title": "دعوة للتقديم",
+    "greeting": "مرحباً {{name}}،",
+    "inviterInvites": "{{inviter}} من {{organization}} يدعوك للتقديم على الفرصة",
+    "viewOpportunity": "عرض الفرصة",
+    "expiresIn": "تنتهي صلاحية هذه الدعوة خلال 7 أيام."
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "profileCreated": "Profil erfolgreich erstellt",
+  "profileCreationFailed": "Fehler bei der Profilerstellung",
+  "talentProfileExists": "Es existiert bereits ein Talentprofil fuer diesen Benutzer",
+  "phoneAlreadyUsed": "Diese Telefonnummer ist bereits mit einem Talentprofil verknuepft",
+  "countryCodeInvalid": "Der Laendercode muss im Format ISO 3166-1 alpha-2 sein (z.B.: CI, FR, SN)",
+  "phoneMinLength": "Die Telefonnummer ist erforderlich (mindestens 8 Zeichen)",
+  "goalsMaximum": "Maximal 3 Ziele erlaubt",
+  "invalidGoal": "Ungueltiges Ziel: {{goal}}",
+  "invalidTag": "Ungueltiger Tag: {{tag}}",
+  "profileTagsMustBeArray": "profileTags muss ein Array sein",
+  "goalsMustBeArray": "goals muss ein Array sein",
+  "profileTags": {
+    "STUDENT": "Student(in)",
+    "PUPIL": "Schueler(in)",
+    "JOB_SEEKER": "Arbeitssuchend",
+    "SALARIED": "Angestellt",
+    "ENTREPRENEUR": "Unternehmer(in)",
+    "CIVIL_SERVANT": "Beamte(r)",
+    "MANAGER": "Manager(in)",
+    "CONSULTANT": "Berater(in)",
+    "INVESTOR": "Investor(in)",
+    "CONTENT_CREATOR": "Content Creator",
+    "COACH": "Coach / Trainer(in)",
+    "RETIRED": "Im Ruhestand"
+  },
+  "goals": {
+    "LEARN_NEW_SKILLS": "Neue Kompetenzen erlernen",
+    "PREPARE_EXAMS": "Pruefungen vorbereiten",
+    "FIND_JOB": "Einen Job finden",
+    "ADVANCE_CAREER": "Meine Karriere vorantreiben",
+    "RESEARCH_SUPPORT": "Forschungsunterstuetzung",
+    "IMPROVE_PRODUCTIVITY": "Meine Produktivitaet verbessern",
+    "COLLABORATIVE_LEARNING": "Gemeinsames Lernen",
+    "TEACH_OR_MENTOR": "Lehren oder mentoren",
+    "BUILD_NETWORK_OR_VISIBILITY": "Mein Netzwerk / meine Sichtbarkeit ausbauen",
+    "CONTRIBUTE_OR_GIVE_BACK": "Beitragen / Zurueckgeben"
+  }
+}

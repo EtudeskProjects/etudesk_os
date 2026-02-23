@@ -33,6 +33,7 @@ import {
 } from '../../src/constants/talent';
 import { COUNTRIES, GENDERS, getRegionsByCountry, getCommunesByRegion } from '../../src/constants/location';
 import { useTheme } from '../../src/hooks/useTheme';
+import { useI18n } from '../../src/contexts/I18nContext';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { talentService, imageService } from '../../src/services';
 import { getFullImageUrl } from '../../src/utils/image';
@@ -63,6 +64,7 @@ type Step = 'info' | 'sectors' | 'goals';
 export default function EditProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { refreshUser } = useAuth();
   const insets = useSafeAreaInsets();
 
@@ -117,7 +119,7 @@ export default function EditProfileScreen() {
         goals: values.selectedGoals,
       });
       await refreshUser();
-      void alerts.showAlert({ title: 'Succes', message: 'Ton profil a ete mis a jour.', buttons: [
+      void alerts.showAlert({ title: t('profile.updateSuccess'), message: t('profile.updateSuccessMessage'), buttons: [
         { text: 'OK', onPress: () => router.back() }
       ] });
     },
@@ -213,7 +215,7 @@ export default function EditProfileScreen() {
         form.setValue('avatarUri', uploaded.url);
       }
     } catch (error) {
-      if (__DEV__) console.error('Erreur lors de la selection de l\'image:', error);
+      if (__DEV__) console.error('Error selecting image:', error);
     }
   };
 
@@ -253,7 +255,7 @@ export default function EditProfileScreen() {
         form.setValue('bio', response.data.bio);
       }
     } catch (error: any) {
-      void alerts.alert('Erreur', error?.error || 'Impossible de generer la bio.');
+      void alerts.alert(t('common.error'), error?.error || t('profile.bioGenerateError'));
     } finally {
       setIsGeneratingBio(false);
     }
@@ -286,15 +288,15 @@ export default function EditProfileScreen() {
   };
 
   const STEPS_DATA = [
-    { id: 'info', label: 'Infos' },
-    { id: 'sectors', label: 'Secteurs' },
-    { id: 'goals', label: 'Objectifs' },
+    { id: 'info', label: t('profile.steps.info') },
+    { id: 'sectors', label: t('profile.steps.sectors') },
+    { id: 'goals', label: t('profile.steps.goals') },
   ];
 
   const renderInfoStep = () => (
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Tes informations</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('profile.yourInfo')}</Text>
       </View>
 
       <View style={styles.formFields}>
@@ -304,7 +306,7 @@ export default function EditProfileScreen() {
 	            style={[styles.photoContainer, { backgroundColor: colors.gray100, borderColor: colors.borderColor }]}
 	            onPress={pickImage}
 	            accessibilityRole="button"
-	            accessibilityLabel="Changer la photo de profil"
+	            accessibilityLabel={t('profile.changeProfilePhoto')}
 	          >
 	            {avatarUri ? (
 	              <Image source={{ uri: getFullImageUrl(avatarUri) || avatarUri }} style={styles.photoImage} resizeMode="cover" />
@@ -315,7 +317,7 @@ export default function EditProfileScreen() {
 	            )}
 	          </Pressable>
 	          <Text style={[styles.photoHint, { color: colors.textSecondary }]}>
-	            Appuie pour changer ta photo
+	            {t('profile.tapChangePhoto')}
 	          </Text>
 	        </View>
 
@@ -323,7 +325,7 @@ export default function EditProfileScreen() {
         <View style={styles.rowFields}>
           <View style={styles.halfField}>
             <Input
-              label="Prenom"
+              label={t('profile.firstName')}
               placeholder=""
               value={firstName}
               onChangeText={(text) => form.setValue('firstName', text)}
@@ -332,7 +334,7 @@ export default function EditProfileScreen() {
           </View>
           <View style={styles.halfField}>
             <Input
-              label="Nom"
+              label={t('profile.lastName')}
               placeholder=""
               value={lastName}
               onChangeText={(text) => form.setValue('lastName', text)}
@@ -343,7 +345,7 @@ export default function EditProfileScreen() {
 
         {/* Genre */}
 	        <View style={styles.fieldContainer}>
-	          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Genre</Text>
+	          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('profile.gender')}</Text>
 	          <View style={styles.optionsRow}>
 	            {GENDERS.map((g) => (
 	              <Chip
@@ -369,7 +371,7 @@ export default function EditProfileScreen() {
         {/* Profil Tags */}
         <View style={styles.fieldContainer}>
           <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>
-            Ton profil ({selectedTags.length}/{MAX_PROFILE_TAGS})
+            {t('profile.yourProfileTags', { count: selectedTags.length, max: MAX_PROFILE_TAGS })}
           </Text>
 	          <View style={styles.tagsContainer}>
 	            {PROFILE_TAG_DATA.map((tag) => {
@@ -377,7 +379,7 @@ export default function EditProfileScreen() {
 	              return (
 	                <Chip
 	                  key={tag.id}
-	                  label={tag.label}
+	                  label={t(tag.labelKey)}
 	                  selected={isSelected}
 	                  leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
 	                  onPress={() => toggleTag(tag.id)}
@@ -400,8 +402,8 @@ export default function EditProfileScreen() {
         {/* Bio */}
         <View style={styles.fieldContainer}>
           <FormTextArea
-            label="Bio"
-            placeholder="Décris-toi en quelques mots..."
+            label={t('profile.bio')}
+            placeholder={t('profile.bioPlaceholder')}
             value={bio}
             onChangeText={(text) => form.setValue('bio', text.slice(0, 300))}
             rows={4}
@@ -409,7 +411,7 @@ export default function EditProfileScreen() {
 	          />
 	          <View style={styles.generateButtonContainer}>
 	            <Button
-	              title={isGeneratingBio ? 'Suggestion...' : 'Suggérer'}
+	              title={isGeneratingBio ? t('profile.suggesting') : t('profile.suggest')}
 	              onPress={handleGenerateBio}
 	              loading={isGeneratingBio}
 	              disabled={isGeneratingBio}
@@ -429,7 +431,7 @@ export default function EditProfileScreen() {
 
         {/* Pays */}
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Pays</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('profile.country')}</Text>
           <ScrollView
             ref={countryScrollRef}
             horizontal
@@ -465,7 +467,7 @@ export default function EditProfileScreen() {
         {/* Région */}
         {availableRegions.length > 0 && (
           <View style={styles.fieldContainer}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Région</Text>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('profile.region')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -500,7 +502,7 @@ export default function EditProfileScreen() {
         {/* Commune */}
         {availableCommunes.length > 0 && (
           <View style={styles.fieldContainer}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Commune / Ville</Text>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('profile.commune')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -534,8 +536,8 @@ export default function EditProfileScreen() {
 
         {/* Telephone */}
         <Input
-          label="Telephone"
-          placeholder="+225 07 00 00 00 00"
+          label={t('profile.phone')}
+          placeholder={t('profile.phonePlaceholder')}
           value={phone}
           onChangeText={(text) => form.setValue('phone', text)}
           keyboardType="phone-pad"
@@ -543,7 +545,7 @@ export default function EditProfileScreen() {
 
         {/* Email */}
         <Input
-          label="Email"
+          label={t('profile.email')}
           placeholder="ton@email.com"
           value={email}
           onChangeText={(text) => form.setValue('email', text)}
@@ -554,15 +556,15 @@ export default function EditProfileScreen() {
         {/* Préférences de travail */}
         <View style={[styles.preferencesSection, { borderTopColor: colors.gray200 }]}>
           <Text style={[styles.preferencesSectionTitle, { color: colors.gray700 }]}>
-            Préférences de travail
+            {t('profile.workPreferences')}
           </Text>
 
           <View style={styles.preferenceItem}>
             <View style={styles.preferenceInfo}>
               <Laptop size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
               <View style={styles.preferenceTextContainer}>
-                <Text style={[styles.preferenceLabel, { color: colors.textPrimary }]}>Disponible en remote</Text>
-                <Text style={[styles.preferenceDescription, { color: colors.gray500 }]}>Je peux travailler à distance</Text>
+                <Text style={[styles.preferenceLabel, { color: colors.textPrimary }]}>{t('profile.remoteAvailable')}</Text>
+                <Text style={[styles.preferenceDescription, { color: colors.gray500 }]}>{t('profile.remoteDesc')}</Text>
               </View>
             </View>
             <Toggle
@@ -575,8 +577,8 @@ export default function EditProfileScreen() {
             <View style={styles.preferenceInfo}>
               <Plane size={ICON.size.md} color={colors.gray600} strokeWidth={ICON.strokeWidth} />
               <View style={styles.preferenceTextContainer}>
-                <Text style={[styles.preferenceLabel, { color: colors.textPrimary }]}>Ouvert à la relocalisation</Text>
-                <Text style={[styles.preferenceDescription, { color: colors.gray500 }]}>Je peux déménager pour une opportunité</Text>
+                <Text style={[styles.preferenceLabel, { color: colors.textPrimary }]}>{t('profile.relocateAvailable')}</Text>
+                <Text style={[styles.preferenceDescription, { color: colors.gray500 }]}>{t('profile.relocateDesc')}</Text>
               </View>
             </View>
             <Toggle
@@ -592,9 +594,9 @@ export default function EditProfileScreen() {
   const renderSectorsStep = () => (
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Tes secteurs d'activité</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('profile.yourSectors')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Choisis jusqu'à {MAX_SECTORS} secteurs qui t'intéressent
+          {t('profile.chooseSectors', { max: MAX_SECTORS })}
         </Text>
       </View>
 
@@ -604,7 +606,7 @@ export default function EditProfileScreen() {
           return (
             <Chip
               key={sector.id}
-              label={sector.label}
+              label={t(sector.labelKey)}
               selected={isSelected}
               leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
               onPress={() => toggleSector(sector.id)}
@@ -624,7 +626,7 @@ export default function EditProfileScreen() {
       </View>
 
       <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
-        {selectedSectors.length}/{MAX_SECTORS} sélectionnés
+        {t('profile.selected', { count: selectedSectors.length, max: MAX_SECTORS })}
       </Text>
     </View>
   );
@@ -632,9 +634,9 @@ export default function EditProfileScreen() {
   const renderGoalsStep = () => (
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Tes objectifs</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('profile.yourGoals')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Choisis jusqu'à {MAX_GOALS} objectifs
+          {t('profile.chooseGoals', { max: MAX_GOALS })}
         </Text>
       </View>
 
@@ -644,7 +646,7 @@ export default function EditProfileScreen() {
           return (
             <Chip
               key={goal.id}
-              label={goal.label}
+              label={t(goal.labelKey)}
               selected={isSelected}
               leftIcon={isSelected ? <Check size={14} color={colors.primary} strokeWidth={2.5} /> : undefined}
               onPress={() => toggleGoal(goal.id)}
@@ -664,7 +666,7 @@ export default function EditProfileScreen() {
       </View>
 
       <Text style={[styles.selectionHint, { color: colors.gray500 }]}>
-        {selectedGoals.length}/{MAX_GOALS} sélectionnés
+        {t('profile.selected', { count: selectedGoals.length, max: MAX_GOALS })}
       </Text>
     </View>
   );
@@ -686,9 +688,9 @@ export default function EditProfileScreen() {
         <IconButton
           onPress={handleBack}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Modifier le profil</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('profile.editProfile')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -716,7 +718,7 @@ export default function EditProfileScreen() {
             <View style={styles.footerButtons}>
               {currentStep !== 'info' && (
                 <Button
-                  title="Précédent"
+                  title={t('common.previous')}
                   onPress={handleBack}
                   variant="outline"
                   icon={<ArrowLeft size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
@@ -727,10 +729,10 @@ export default function EditProfileScreen() {
               <Button
                 title={
                   form.state.isSubmitting
-                    ? 'Enregistrement...'
+                    ? t('common.savingParams')
                     : currentStep === 'goals'
-                      ? 'Enregistrer'
-                      : 'Suivant'
+                      ? t('common.save')
+                      : t('common.next')
                 }
                 onPress={handleNext}
                 disabled={form.state.isSubmitting}

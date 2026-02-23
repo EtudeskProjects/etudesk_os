@@ -5,7 +5,7 @@
   "failedToLoadCatalog": "Failed to load credits catalog",
   "scopeRequired": "scope required: TALENT or ORGANIZATION",
   "talentAuthRequired": "Talent authentication required",
-  "talentWalletAccessDenied": "Access denied to this talent wallet",
+  "talentWalletAccessDenied": "Access denied to this talent credit wallet",
   "orgIdRequired": "organization id required for ORGANIZATION scope",
   "authRequired": "Authentication required",
   "ownerIdRequired": "owner_id required",
@@ -15,7 +15,7 @@
   "paymentAccessDenied": "Access denied to this payment",
   "invoiceAccessDenied": "Access denied to talent invoices",
   "invoiceNotFound": "Invoice not found",
-  "insufficientCredits": "Insufficient credits. Top up your wallet to continue.",
-  "insufficientOrgCredits": "Insufficient organization credits. Top up the wallet to continue.",
-  "insufficientCreditsForPublication": "Insufficient credits. Top up your wallet to schedule a publication."
+  "insufficientCredits": "Insufficient credits. Top up your credit wallet to continue.",
+  "insufficientOrgCredits": "Insufficient organization credits. Top up the credit wallet to continue.",
+  "insufficientCreditsForPublication": "Insufficient credits. Top up your credit wallet to schedule a publication."
 }

@@ -33,13 +33,14 @@ import {
   orgDocumentService,
   OrgDocument,
   OrgDocumentStatus,
-  ORG_DOCUMENT_TYPE_LABELS,
-  ORG_DOCUMENT_STATUS_LABELS,
+  getOrgDocumentTypeLabel,
+  getOrgDocumentStatusLabel,
   getOrgDocStatusColor,
   formatOrgFileSize,
   ORG_UPLOAD_LIMITS,
 } from '../../../src/services';
 import { useAlert } from '../../../src/contexts/AlertContext';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { downloadAndOpenDocument } from '../../../src/utils/documentDownload';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -48,6 +49,7 @@ export default function OrgDocumentsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { selectedOrg } = useSpace();
+  const { t } = useI18n();
 
   const [documents, setDocuments] = useState<OrgDocument[]>([]);
   const [total, setTotal] = useState(0);
@@ -141,7 +143,7 @@ export default function OrgDocumentsScreen() {
     try {
       // Check quota before opening picker
       if (documents.length >= ORG_UPLOAD_LIMITS.MAX_DOCUMENTS_PER_ORG) {
-        void alerts.alert('Limite atteinte', `Votre organisation a atteint la limite de ${ORG_UPLOAD_LIMITS.MAX_DOCUMENTS_PER_ORG} documents.`);
+        void alerts.alert(t('common.limitReached'), t('documents.limitReachedMessage', { max: ORG_UPLOAD_LIMITS.MAX_DOCUMENTS_PER_ORG }));
         return;
       }
 
@@ -159,7 +161,7 @@ export default function OrgDocumentsScreen() {
 
       for (const file of assets) {
         if (file.size && file.size > ORG_UPLOAD_LIMITS.MAX_FILE_SIZE_BYTES) {
-          void alerts.alert('Fichier trop volumineux', `"${file.name}" dépasse la taille maximale de ${ORG_UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB`);
+          void alerts.alert(t('common.fileTooLarge'), t('documents.fileTooLargeMessage', { name: file.name, max: ORG_UPLOAD_LIMITS.MAX_FILE_SIZE_MB }));
           return;
         }
       }
@@ -177,14 +179,14 @@ export default function OrgDocumentsScreen() {
       }
 
       const msg = assets.length === 1
-        ? 'Document uploadé. Le traitement est en cours.'
-        : `${assets.length} documents uploadés. Le traitement est en cours.`;
-      void alerts.alert('Succès', msg);
+        ? t('documents.uploadSuccess')
+        : t('documents.uploadSuccessMultiple', { count: assets.length });
+      void alerts.alert(t('common.success'), msg);
       await loadDocuments();
       startPolling();
     } catch (error: any) {
       if (__DEV__) console.error('Error uploading document:', error);
-      void alerts.alert('Erreur', error?.message || "Erreur lors de l'upload");
+      void alerts.alert(t('common.error'), error?.message || t('documents.uploadError'));
     } finally {
       setIsUploading(false);
     }
@@ -198,23 +200,23 @@ export default function OrgDocumentsScreen() {
         mimeType: doc.mime_type,
       });
     } catch (error) {
-      void alerts.alert('Erreur', 'Impossible de télécharger le document');
+      void alerts.alert(t('common.error'), t('documents.downloadError'));
     }
   };
 
   const handleDelete = (doc: OrgDocument) => {
     if (!selectedOrg?.id) return;
-    void alerts.showAlert({ title: 'Supprimer le document', message: `Veux-tu vraiment supprimer "${doc.title || doc.original_filename}" ?`, buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('documents.deleteConfirm'), message: t('documents.deleteConfirmMessage', { name: doc.title || doc.original_filename }), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await orgDocumentService.deleteDocument(selectedOrg!.id, doc.id);
               await loadDocuments();
             } catch (error) {
-              void alerts.alert('Erreur', 'Impossible de supprimer le document');
+              void alerts.alert(t('common.error'), t('documents.deleteError'));
             }
           },
         },
@@ -225,11 +227,11 @@ export default function OrgDocumentsScreen() {
     if (!selectedOrg?.id) return;
     try {
       await orgDocumentService.retryExtraction(selectedOrg.id, doc.id);
-      void alerts.alert('Succès', "Nouvelle tentative d'extraction lancée");
+      void alerts.alert(t('common.success'), t('documents.retryExtraction'));
       await loadDocuments();
       startPolling();
     } catch (error) {
-      void alerts.alert('Erreur', "Impossible de relancer l'extraction");
+      void alerts.alert(t('common.error'), t('documents.retryExtractionError'));
     }
   };
 
@@ -260,13 +262,13 @@ export default function OrgDocumentsScreen() {
     const diffW = Math.floor(diffD / 7);
     const diffM = Math.floor(diffD / 30);
 
-    if (diffMin < 1) return "À l'instant";
-    if (diffMin < 60) return `Il y a ${diffMin} min`;
-    if (diffH < 24) return `Il y a ${diffH}h`;
-    if (diffD < 7) return `Il y a ${diffD}j`;
-    if (diffW < 5) return `Il y a ${diffW} sem.`;
-    if (diffM < 12) return `Il y a ${diffM} mois`;
-    return `Il y a ${Math.floor(diffD / 365)} an${Math.floor(diffD / 365) > 1 ? 's' : ''}`;
+    if (diffMin < 1) return t('common.time.justNow');
+    if (diffMin < 60) return t('common.time.minutes', { count: diffMin });
+    if (diffH < 24) return t('common.time.hours', { count: diffH });
+    if (diffD < 7) return t('common.time.days', { count: diffD });
+    if (diffW < 5) return t('common.time.weeks', { count: diffW });
+    if (diffM < 12) return t('common.time.months', { count: diffM });
+    return t('common.time.years', { count: Math.floor(diffD / 365) });
   };
 
   const renderDocument = (doc: OrgDocument) => {
@@ -288,12 +290,12 @@ export default function OrgDocumentsScreen() {
           <IconButton
             onPress={() => handleDownload(doc)}
             icon={<Download size={18} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel="Télécharger"
+            accessibilityLabel={t('common.download')}
           />
           <IconButton
             onPress={() => handleDelete(doc)}
             icon={<Trash2 size={18} color={colors.error} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel="Supprimer"
+            accessibilityLabel={t('common.delete')}
           />
         </View>
 
@@ -303,7 +305,7 @@ export default function OrgDocumentsScreen() {
             style={[styles.thumbnail, { backgroundColor: colors.gray100, borderWidth: 0, borderColor: 'transparent' }]}
             onPress={() => setPreviewDoc(doc)}
             selected={false}
-            accessibilityLabel="Prévisualiser"
+            accessibilityLabel={t('common.preview')}
           >
             {isImage ? (
               <Image source={{ uri: fileUrl }} style={styles.thumbnailImage} resizeMode="cover" />
@@ -317,7 +319,7 @@ export default function OrgDocumentsScreen() {
             <SelectCard
               onPress={() => setPreviewDoc(doc)}
               selected={false}
-              accessibilityLabel="Prévisualiser"
+              accessibilityLabel={t('common.preview')}
               style={{ borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }}
             >
               <Text style={[styles.documentTitle, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -326,7 +328,7 @@ export default function OrgDocumentsScreen() {
             </SelectCard>
 
             <Text style={[styles.documentMeta, { color: colors.textSecondary }]}>
-              {ORG_DOCUMENT_TYPE_LABELS[doc.document_type]} · {formatOrgFileSize(doc.file_size)}
+              {getOrgDocumentTypeLabel(doc.document_type)} · {formatOrgFileSize(doc.file_size)}
             </Text>
 
             {/* Status row */}
@@ -338,12 +340,12 @@ export default function OrgDocumentsScreen() {
                   <StatusIcon size={12} color={statusColor} strokeWidth={ICON.strokeWidth} />
                 )}
                 <Text style={[styles.tagText, { color: statusColor }]}>
-                  {ORG_DOCUMENT_STATUS_LABELS[doc.status as OrgDocumentStatus] || doc.status}
+                  {getOrgDocumentStatusLabel(doc.status as OrgDocumentStatus) || doc.status}
                 </Text>
               </View>
               {doc.status === 'FAILED' && (
                 <Chip
-                  label="Réessayer"
+                  label={t('common.retry')}
                   onPress={() => handleRetry(doc)}
                   leftIcon={<RotateCcw size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
                   style={[styles.tag, { backgroundColor: withOpacity(colors.primary, OPACITY[20]), borderColor: colors.primary }]}
@@ -380,7 +382,7 @@ export default function OrgDocumentsScreen() {
           <SelectCard
             onPress={() => setExpandedDocs((prev) => ({ ...prev, [doc.id]: !prev[doc.id] }))}
             selected={false}
-            accessibilityLabel={isExpanded ? 'Réduire le résumé' : 'Déployer le résumé'}
+            accessibilityLabel={isExpanded ? t('documents.collapseSummary') : t('documents.expandSummary')}
             style={{ borderWidth: 0, backgroundColor: 'transparent', borderColor: 'transparent' }}
           >
             <Text
@@ -391,7 +393,7 @@ export default function OrgDocumentsScreen() {
             </Text>
             {summaryText.length > 100 && (
               <Text style={[styles.seeMore, { color: colors.primary }]}>
-                {isExpanded ? 'Voir moins' : 'Voir plus'}
+                {isExpanded ? t('common.seeLess') : t('common.seeMore')}
               </Text>
             )}
           </SelectCard>
@@ -403,7 +405,7 @@ export default function OrgDocumentsScreen() {
   return (
     <>
       <PageLayout
-        title={`Mes Documents (${total})`}
+        title={t('documents.title', { count: total })}
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
         isLoading={isLoading}
@@ -411,17 +413,17 @@ export default function OrgDocumentsScreen() {
         {documents.length === 0 ? (
           <EmptyState
             icon={FolderOpen}
-            title="Aucun document"
-            subtitle="Uploadez vos documents d'organisation pour les analyser automatiquement."
-            actionLabel="Ajouter un document"
+            title={t('documents.emptyTitle')}
+            subtitle={t('documents.emptySubtitle')}
+            actionLabel={t('documents.upload')}
             onAction={handleUpload}
-            tip="Astuce : l'assistant a accès à tous les documents chargés ici et peut également en sauvegarder depuis une conversation."
+            tip={t('documents.tip')}
           />
         ) : (
           <>
             <View style={styles.uploadSection}>
               <Button
-                title={isUploading ? 'Upload en cours...' : 'Ajouter un document'}
+                title={isUploading ? t('documents.uploading') : t('documents.upload')}
                 onPress={handleUpload}
                 fullWidth
                 disabled={isUploading}
@@ -430,7 +432,7 @@ export default function OrgDocumentsScreen() {
                 iconPosition="left"
               />
               <Text style={[styles.uploadHint, { color: colors.textDisabled }]}>
-                PDF et images (JPEG, PNG, WebP, HEIC) · Max {ORG_UPLOAD_LIMITS.MAX_FILES_PER_REQUEST} fichiers, {ORG_UPLOAD_LIMITS.MAX_FILE_SIZE_MB} MB chacun · {ORG_UPLOAD_LIMITS.MAX_DOCUMENTS_PER_ORG} documents max
+                {t('documents.uploadHint', { maxFiles: ORG_UPLOAD_LIMITS.MAX_FILES_PER_REQUEST, maxSize: ORG_UPLOAD_LIMITS.MAX_FILE_SIZE_MB, maxDocs: ORG_UPLOAD_LIMITS.MAX_DOCUMENTS_PER_ORG })}
               </Text>
             </View>
             {documents.map(renderDocument)}
@@ -449,7 +451,7 @@ export default function OrgDocumentsScreen() {
               <IconButton
                 onPress={() => setPreviewDoc(null)}
                 icon={<X size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-                accessibilityLabel="Fermer"
+                accessibilityLabel={t('common.close')}
                 size="sm"
                 variant="ghost"
               />

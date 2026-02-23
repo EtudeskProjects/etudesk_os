@@ -25,11 +25,11 @@ import { useSpace } from '../../../src/contexts/SpaceContext';
 import {
   OrganizationRole,
   ORGANIZATION_ROLES,
-  ORGANIZATION_ROLE_LABELS,
-  canManageMembers as canManageMembersCheck,
+  getOrganizationRoleLabel,
 } from '../../../src/types/models';
 import { organizationService } from '../../../src/services';
 import { useAlert } from '../../../src/contexts/AlertContext';
+import { useI18n } from '../../../src/contexts/I18nContext';
 import { Button, Chip, IconButton, SelectCard } from '../../../src/components/ui';
 
 
@@ -51,11 +51,11 @@ const getRoleColor = (role: OrganizationRole, colors: any) => {
 export default function MembersScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { selectedOrg, refreshOrganizations, setSpace } = useSpace();
   const {
     members,
     invitations,
-    isLoading,
     canInviteMembers,
     canManageMembers,
     refreshMembers,
@@ -84,16 +84,16 @@ export default function MembersScreen() {
 
   const handleDeleteOrganization = () => {
     if (!selectedOrg) return;
-    void alerts.showAlert({ title: 'Supprimer l\'organisation', message: `Êtes-vous sûr de vouloir supprimer "${selectedOrg.name}" ?`, buttons: [
-        { text: 'Annuler', style: 'cancel' },
+    void alerts.showAlert({ title: t('organization.members.manage.deleteOrgTitle'), message: t('organization.members.manage.deleteOrgMessage', { name: selectedOrg.name }), buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
-            void alerts.showAlert({ title: 'Confirmer la suppression', message: 'Cette action est irréversible. Tous les membres et données seront supprimés.', buttons: [
-                { text: 'Annuler', style: 'cancel' },
+            void alerts.showAlert({ title: t('organization.members.manage.confirmDeleteTitle'), message: t('organization.members.manage.confirmDeleteMessage'), buttons: [
+                { text: t('common.cancel'), style: 'cancel' },
                 {
-                  text: 'Supprimer définitivement',
+                  text: t('organization.members.manage.deletePermanently'),
                   style: 'destructive',
                   onPress: async () => {
                     try {
@@ -102,7 +102,7 @@ export default function MembersScreen() {
                       setSpace('talent');
                       router.replace('/(tabs)/settings');
                     } catch (error: any) {
-                      await alerts.error('Erreur', error?.error || 'Impossible de supprimer l\'organisation.');
+                      await alerts.error(t('common.error'), error?.error || t('organization.members.manage.deleteOrgError'));
                     }
                   },
                 },
@@ -128,14 +128,14 @@ export default function MembersScreen() {
         <IconButton
           onPress={() => router.back()}
           icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-          accessibilityLabel="Retour"
+          accessibilityLabel={t('common.back')}
         />
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Gestion de l'organisation</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('organization.members.manage.title')}</Text>
         {canInviteMembers ? (
           <IconButton
             onPress={handleInvite}
             icon={<Plus size={ICON.size.md} color={colors.primary} strokeWidth={ICON.strokeWidth} />}
-            accessibilityLabel="Inviter un membre"
+            accessibilityLabel={t('organization.members.inviteMember')}
           />
         ) : (
           <View style={styles.backButton} />
@@ -145,7 +145,7 @@ export default function MembersScreen() {
       {/* Tabs */}
       <View style={[styles.tabsContainer, { backgroundColor: colors.gray100 }]}>
         <Chip
-          label={`Membres (${members.length})`}
+          label={t('organization.members.manage.membersTab', { count: members.length })}
           selected={activeTab === 'members'}
           onPress={() => setActiveTab('members')}
           leftIcon={
@@ -169,7 +169,7 @@ export default function MembersScreen() {
         />
 
         <Chip
-          label={`Invitations (${invitations.length})`}
+          label={t('organization.members.manage.invitationsTab', { count: invitations.length })}
           selected={activeTab === 'invitations'}
           onPress={() => setActiveTab('invitations')}
           leftIcon={
@@ -224,7 +224,7 @@ export default function MembersScreen() {
                     ]}
                     onPress={() => handleMemberPress(member.id)}
                     selected={false}
-                    accessibilityLabel={`Ouvrir ${member.display_name}`}
+                    accessibilityLabel={t('organization.members.manage.openMemberA11y', { name: member.display_name })}
                   >
                     {/* Avatar */}
                     {member.avatar_url ? (
@@ -250,7 +250,7 @@ export default function MembersScreen() {
                       <View style={styles.memberMeta}>
                         <View style={[styles.roleBadge, { backgroundColor: withOpacity(roleColor, OPACITY[15]) }]}>
                           <Text style={[styles.roleText, { color: roleColor }]}>
-                            {ORGANIZATION_ROLE_LABELS[member.role]}
+                            {getOrganizationRoleLabel(member.role)}
                           </Text>
                         </View>
                       </View>
@@ -274,14 +274,14 @@ export default function MembersScreen() {
                   <Mail size={ICON.size.xl} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
                 </View>
                 <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-                  Aucune invitation en attente
+                  {t('organization.members.manage.emptyInvitationsTitle')}
                 </Text>
                 <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-                  Invitez des membres pour collaborer dans votre organisation.
+                  {t('organization.members.manage.emptyInvitationsSubtitle')}
                 </Text>
                 {canInviteMembers && (
                   <Button
-                    title="Inviter un membre"
+                    title={t('organization.members.inviteMember')}
                     onPress={handleInvite}
                     fullWidth
                     icon={<Plus size={ICON.size.sm} color={colors.textOnPrimary} strokeWidth={ICON.strokeWidth} />}
@@ -310,7 +310,7 @@ export default function MembersScreen() {
                         params: { id: invitation.id },
                       })}
                       selected={false}
-                      accessibilityLabel={`Ouvrir invitation ${invitation.email}`}
+                      accessibilityLabel={t('organization.members.manage.openInvitationA11y', { email: invitation.email })}
                     >
                       {/* Avatar Placeholder */}
                       <View style={[styles.avatarPlaceholder, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
@@ -325,14 +325,14 @@ export default function MembersScreen() {
                         <View style={styles.memberMeta}>
                           <View style={[styles.roleBadge, { backgroundColor: withOpacity(roleColor, OPACITY[15]) }]}>
                             <Text style={[styles.roleText, { color: roleColor }]}>
-                              {ORGANIZATION_ROLE_LABELS[invitation.role]}
+                              {getOrganizationRoleLabel(invitation.role)}
                             </Text>
                           </View>
                         </View>
                         <View style={styles.invitationMeta}>
                           <Clock size={12} color={colors.gray400} strokeWidth={ICON.strokeWidth} />
                           <Text style={[styles.invitationDate, { color: colors.gray400 }]}>
-                            Expire le {formatDate(invitation.expires_at)}
+                            {t('organization.members.manage.expiresOn', { date: formatDate(invitation.expires_at) })}
                           </Text>
                         </View>
                       </View>
@@ -350,7 +350,7 @@ export default function MembersScreen() {
         {/* Delete Organization Button - Owner only */}
         {selectedOrg?.role === 'OWNER' && (
           <Button
-            title="Supprimer l'organisation"
+            title={t('organization.members.manage.deleteOrgButton')}
             onPress={handleDeleteOrganization}
             variant="outline"
             fullWidth

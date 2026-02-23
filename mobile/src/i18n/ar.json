@@ -1,0 +1,1743 @@
+{
+  "common": {
+    "loading": "جاري التحميل...",
+    "thinking": "يفكر…",
+    "member": "عضو",
+    "members": "أعضاء",
+    "online": "متصل",
+    "error": "خطأ",
+    "success": "نجاح",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة",
+    "confirm": "تأكيد",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "done": "تم",
+    "close": "إغلاق",
+    "search": "بحث...",
+    "seeMore": "عرض المزيد",
+    "seeAll": "عرض الكل",
+    "noResults": "لا توجد نتائج",
+    "retry": "إعادة المحاولة",
+    "yes": "نعم",
+    "no": "لا",
+    "or": "أو",
+    "and": "و",
+    "optional": "اختياري",
+    "required": "مطلوب",
+    "free": "مجاني",
+    "manage": "إدارة",
+    "candidate": "مرشح",
+    "user": "مستخدم",
+    "notSpecified": "غير محدد",
+    "copied": "تم النسخ!",
+    "information": "معلومات",
+    "places": "أماكن",
+    "place": "مكان",
+    "copy": "نسخ",
+    "validate": "إرسال",
+    "validateOrder": "تأكيد الطلب",
+    "reply": "رد",
+    "sending": "جاري الإرسال...",
+    "application": "ترشيح",
+    "applications": "ترشيحات",
+    "viewApplications": "عرض الترشيحات",
+    "addToFavorites": "إضافة إلى المفضلة",
+    "removeFromFavorites": "إزالة من المفضلة",
+    "expired": "منتهي الصلاحية",
+    "paused": "متوقف",
+    "processing": "جاري المعالجة...",
+    "actionDone": "تم تنفيذ الإجراء.",
+    "actionCancelled": "تم إلغاء الإجراء.",
+    "actionExpired": "انتهت صلاحية الإجراء",
+    "connectionError": "خطأ في الاتصال.",
+    "genericError": "حدث خطأ.",
+    "renderError": "خطأ في العرض: ",
+    "downloadFailed": "فشل التنزيل: ",
+    "downloadError": "تعذر تنزيل الملف.",
+    "noData": "لا توجد بيانات متاحة",
+    "noSteps": "لا توجد خطوات متاحة",
+    "deadline": "الموعد النهائي",
+    "soughtProfile": "الملف المطلوب",
+    "countryCode": "رمز البلد",
+    "searchCountry": "ابحث عن بلد...",
+    "favorites": "المفضلة",
+    "allCountries": "جميع البلدان",
+    "showMoreReplies": "عرض {{count}} رد(ود) إضافي(ة)",
+    "select": "اختيار",
+    "perHour": "س",
+    "perDay": "ي",
+    "perWeek": "أ",
+    "perMonth": "ش",
+    "continue": "متابعة",
+    "limitReached": "تم بلوغ الحد الأقصى",
+    "fileTooLarge": "الملف كبير جدا",
+    "deleteTitle": "حذف الترشيح"
+  },
+  "auth": {
+    "login": {
+      "title": "تسجيل الدخول",
+      "subtitle": "فرص، مجتمعات ومساحات — كل شيء هنا",
+      "continueWith": "المتابعة عبر",
+      "emailPlaceholder": "البريد الإلكتروني",
+      "passwordPlaceholder": "كلمة المرور",
+      "forgotPassword": "نسيت كلمة المرور؟",
+      "noAccount": "ليس لديك حساب بعد؟",
+      "signUp": "إنشاء حساب",
+      "orContinueWith": "أو المتابعة عبر",
+      "termsPrefix": "بالمتابعة، أنت توافق على"
+    },
+    "welcome": {
+      "congrats": "مبروك!",
+      "title": "ملفك الشخصي جاهز",
+      "subtitle": "مرحبا بك في Etudesk — مسيرتك المهنية تبدأ هنا",
+      "getStarted": "هيا نبدأ!",
+      "whatYouCanDo": "ما يمكنك فعله",
+      "features": {
+        "explore": {
+          "title": "اعثر على فرص",
+          "description": "وظائف، تدريبات، مهمات وتكوينات تناسب ملفك الشخصي"
+        },
+        "connect": {
+          "title": "انضم إلى مجتمعات",
+          "description": "تواصل مع محترفين في مجالك"
+        },
+        "assistant": {
+          "title": "مساعد ذكاء اصطناعي لك",
+          "description": "نصائح مهنية، CV، تحضير للمقابلات والمزيد"
+        }
+      }
+    },
+    "createProfile": {
+      "title": "إنشاء ملفي الشخصي",
+      "tellUsAboutYou": "حدثنا عن نفسك",
+      "step1Title": "من أنت؟",
+      "step2Title": "أين تتواجد؟",
+      "step3Title": "ما الذي يهمك؟",
+      "step4Title": "صورتك",
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "birthDate": "تاريخ الميلاد",
+      "selectDate": "اختر تاريخا",
+      "gender": "الجنس",
+      "yourProfile": "ملفك الشخصي",
+      "bio": "نبذة تعريفية",
+      "bioPlaceholder": "مثال: مطور ويب بخبرة سنتين، شغوف بالتكنولوجيا المالية. أبحث عن وظيفة دائمة في أبيدجان.",
+      "country": "البلد",
+      "region": "المنطقة / الإقليم",
+      "city": "المدينة / البلدية",
+      "commune": "البلدية",
+      "useMyLocation": "استخدام موقعي",
+      "locating": "جاري تحديد الموقع...",
+      "selectInterests": "اختر اهتماماتك",
+      "addPhoto": "إضافة صورة",
+      "photoHint": "الملفات الشخصية التي تحتوي على صورة تحصل على 5 أضعاف المشاهدات",
+      "complete": "إنشاء ملفي الشخصي",
+      "workPreferences": "تفضيلات العمل",
+      "remoteAvailable": "متاح للعمل عن بعد",
+      "remoteAvailableDesc": "يمكنني العمل عن بعد",
+      "willingToRelocate": "مستعد للانتقال",
+      "willingToRelocateDesc": "يمكنني تغيير المدينة من أجل فرصة جيدة",
+      "yourSectors": "مجالاتك",
+      "sectorsHint": "اختر حتى {{max}} مجالات",
+      "selected": "{{count}}/{{max}} محدد",
+      "yourGoals": "أهدافك",
+      "goalsHint": "حدد أهدافك (بحد أقصى {{max}})",
+      "permissionRequired": "إذن مطلوب",
+      "photoPermissionMessage": "اسمح بالوصول إلى صورك للمتابعة.",
+      "photoError": "تعذر اختيار الصورة. حاول مرة أخرى."
+    },
+    "emailLogin": {
+      "title": "تسجيل الدخول بالبريد الإلكتروني",
+      "subtitle": "أدخل بريدك الإلكتروني لتلقي رمز التحقق",
+      "emailLabel": "البريد الإلكتروني",
+      "sendCode": "إرسال الرمز",
+      "infoText": "ستتلقى رمزا مكونا من 6 أرقام لتسجيل الدخول",
+      "sendError": "تعذر إرسال الرمز. تحقق من بريدك الإلكتروني."
+    },
+    "verifyOtp": {
+      "title": "تحقق من بريدك الإلكتروني",
+      "subtitle": "أدخل الرمز المرسل إلى",
+      "verify": "تحقق",
+      "resendCode": "إعادة إرسال الرمز",
+      "resendIn": "إعادة الإرسال خلال {{seconds}} ثانية",
+      "incompleteCode": "أدخل الأرقام الستة",
+      "invalidCode": "رمز غير صحيح. تحقق وحاول مرة أخرى.",
+      "verifyError": "خطأ في التحقق. حاول مرة أخرى.",
+      "codeSent": "تم إرسال رمز جديد!",
+      "verified": "تم التحقق من البريد الإلكتروني!",
+      "redirecting": "جاري تسجيل الدخول...",
+      "titleWhatsApp": "تحقق من WhatsApp",
+      "subtitleWhatsApp": "أدخل الرمز المرسل إلى الرقم"
+    },
+    "whatsappLogin": {
+      "title": "تسجيل الدخول عبر WhatsApp",
+      "subtitle": "أدخل رقمك لتلقي رمز على WhatsApp",
+      "phoneLabel": "رقم WhatsApp",
+      "sendCode": "إرسال الرمز",
+      "infoText": "ستتلقى رمزا مكونا من 6 أرقام على WhatsApp",
+      "sendError": "تعذر إرسال رمز WhatsApp. تحقق من رقمك."
+    }
+  },
+  "tabs": {
+    "assistant": "المساعد",
+    "explore": "استكشاف",
+    "ecosystem": "الرئيسية",
+    "management": "النشاط",
+    "settings": "الملف الشخصي"
+  },
+  "assistant": {
+    "title": "المساعد",
+    "greeting": "مرحبا! كيف يمكنني مساعدتك؟",
+    "inputPlaceholder": "اطرح سؤالا أو صف ما تبحث عنه...",
+    "suggestions": "اقتراحات",
+    "modes": {
+      "explore": "استكشاف",
+      "study": "دراسة",
+      "org": "إدارة"
+    },
+    "prompts": {
+      "explore": {
+        "opportunities": "ما الفرص التي تناسب ملفي الشخصي؟",
+        "spaces": "أين أجد مساحة عمل مشتركة؟",
+        "communities": "ما المجتمعات التي يمكنني الانضمام إليها في مجالي؟"
+      },
+      "study": {
+        "skills": "كيف أطور مهاراتي؟",
+        "plan": "أنشئ لي خطة تعلم",
+        "certifications": "ما الشهادات المفيدة لي؟",
+        "basics": "اشرح لي أساسيات التسويق الرقمي"
+      },
+      "org": {
+        "candidates": "أرني آخر الترشيحات المستلمة",
+        "stats": "ما إحصائيات مؤسستي؟",
+        "outreach": "اكتب رسالة للتواصل مع موهبة",
+        "jobDescription": "أنشئ بطاقة وظيفية لمطور"
+      }
+    }
+  },
+  "explore": {
+    "title": "استكشاف",
+    "categories": {
+      "opportunities": "فرص",
+      "spaces": "مساحات",
+      "communities": "مجتمعات"
+    },
+    "filters": "تصفية",
+    "sortBy": "ترتيب حسب",
+    "sortOptions": {
+      "relevance": "الملاءمة",
+      "relevanceDesc": "الأكثر ملاءمة لملفك الشخصي",
+      "proximity": "القرب",
+      "proximityDesc": "الأقرب إليك",
+      "recent": "الأحدث",
+      "recentDesc": "آخر المنشورات",
+      "popularity": "الأكثر شعبية",
+      "popularityDesc": "الأكثر مشاهدة"
+    },
+    "noResultsSearch": "لا توجد نتائج لـ «{{query}}»",
+    "resultsCount": {
+      "one": "{{count}} نتيجة",
+      "other": "{{count}} نتائج"
+    },
+    "remote": "عن بعد",
+    "members": "أعضاء",
+    "create": "إنشاء",
+    "whatToCreate": "ماذا تريد إنشاءه لـ {{name}}؟",
+    "opportunity": "فرصة",
+    "space": "مساحة",
+    "community": "مجتمع"
+  },
+  "ecosystem": {
+    "title": "الرئيسية",
+    "weeklyInsight": "{{name}}، أحسنت! {{skills}} مهارات مكتسبة، {{modules}} وحدات مكتملة هذا الأسبوع.",
+    "train": "التدريب",
+    "notifications": "الإشعارات",
+    "agenda": "الأجندة",
+    "documents": "المستندات",
+    "skills": "مهارات",
+    "talent": "موهبة",
+    "relations": {
+      "applications": "ترشيحات",
+      "member": "عضو",
+      "frequents": "يتردد على",
+      "connected": "متصل",
+      "owns": "يملك"
+    },
+    "status": {
+      "active": "جاري",
+      "pending": "قيد الانتظار",
+      "completed": "مكتمل",
+      "saved": "محفوظ"
+    },
+    "nodes": {
+      "opportunities": "فرص",
+      "communities": "مجتمعات",
+      "spaces": "مساحات",
+      "documents": "مستندات"
+    }
+  },
+  "management": {
+    "title": "نشاطي",
+    "offers": "عروض",
+    "overview": "نظرة عامة",
+    "recentActivity": "النشاط الأخير",
+    "noOrganization": "لم يتم اختيار مؤسسة",
+    "selectOrganization": "اختر مؤسسة للبدء.",
+    "goToSettings": "الذهاب إلى الإعدادات",
+    "myApplications": "ترشيحاتي",
+    "myBookings": "حجوزاتي",
+    "myCommunities": "مجتمعاتي",
+    "empty": {
+      "applications": "لا توجد ترشيحات بعد",
+      "applicationsHint": "استكشف الفرص لتقديم ترشيحك",
+      "bookings": "لا توجد حجوزات بعد",
+      "bookingsHint": "اكتشف المساحات المتاحة",
+      "communities": "لا توجد مجتمعات بعد",
+      "communitiesHint": "انضم إلى مجتمع في مجالك"
+    }
+  },
+  "settings": {
+    "title": "ملفي الشخصي",
+    "profile": "الملف الشخصي",
+    "editProfile": "تعديل ملفي الشخصي",
+    "viewProfile": "عرض ملفي الشخصي",
+    "spaces": {
+      "title": "المساحات",
+      "talent": "مساحة المواهب",
+      "organization": "المؤسسة"
+    },
+    "menu": {
+      "team": "فريقي",
+      "teamDesc": "إدارة الأعضاء",
+      "kyc": "التحقق من الهوية",
+      "kycDesc": "تحقق من هويتي",
+      "payment": "الدفع",
+      "paymentDesc": "Mobile Money، بطاقة بنكية",
+      "preferences": "التفضيلات",
+      "preferencesDesc": "اللغة، المظهر، الإشعارات",
+      "help": "المساعدة",
+      "helpDesc": "الأسئلة الشائعة",
+      "legal": "المعلومات القانونية",
+      "legalDesc": "شروط الاستخدام"
+    },
+    "logout": "تسجيل الخروج",
+    "logoutConfirm": "هل تريد فعلا تسجيل الخروج؟",
+    "deleteAccount": "حذف حسابي",
+    "deleteAccountMessage": "هذا الإجراء لا رجعة فيه. سيتم حذف جميع بياناتك نهائيا.",
+    "deleteAccountConfirmTitle": "تأكيد",
+    "deleteAccountConfirmMessage": "هل أنت متأكد فعلا من رغبتك في حذف حسابك؟",
+    "deleteAccountConfirm": "تأكيد الحذف",
+    "deleteAccountBlockedTitle": "نقل مطلوب",
+    "deleteAccountBlockedMessage": "أنت المسؤول الوحيد عن المؤسسات التالية:\n\n{{orgList}}\n\nانقل حقوق الإدارة قبل حذف حسابك.",
+    "deleteAccountBlockedMembers": "{{count}} أعضاء",
+    "deleteAccountManageTeam": "إدارة الفريق",
+    "deleteAccountError": "تعذر حذف الحساب",
+    "deleteAccountGenericError": "حدث خطأ",
+    "version": "الإصدار"
+  },
+  "preferences": {
+    "title": "التفضيلات",
+    "display": "العرض",
+    "theme": "المظهر",
+    "themes": {
+      "light": "فاتح",
+      "dark": "داكن",
+      "system": "تلقائي"
+    },
+    "language": "اللغة",
+    "notificationChannels": "القنوات",
+    "notificationTypes": "أنواع الإشعارات",
+    "applications": "الترشيحات",
+    "applicationsDesc": "متابعة ترشيحاتك",
+    "reminders": "التذكيرات",
+    "remindersDesc": "الأحداث والمواعيد النهائية",
+    "privacy": "الخصوصية",
+    "publicProfile": "ملف شخصي مرئي",
+    "publicProfileDesc": "يمكن للجميع رؤية ملفك الشخصي",
+    "showEmail": "عرض بريدي الإلكتروني",
+    "showEmailDesc": "مرئي في ملفك الشخصي",
+    "showPhone": "عرض رقم هاتفي",
+    "showPhoneDesc": "مرئي في ملفك الشخصي",
+    "loadError": "تعذر تحميل التفضيلات",
+    "retry": "إعادة المحاولة",
+    "notifications": {
+      "title": "الإشعارات",
+      "push": "إشعارات Push",
+      "pushDesc": "تلقي تنبيهات على هاتفك",
+      "email": "إشعارات بالبريد الإلكتروني",
+      "emailDesc": "تلقي ملخصات عبر البريد الإلكتروني",
+      "opportunities": "فرص جديدة",
+      "opportunitiesDesc": "عندما يتطابق عرض مع ملفك الشخصي",
+      "messages": "الرسائل",
+      "messagesDesc": "عندما تتلقى رسالة"
+    }
+  },
+  "profile": {
+    "title": "ملفي الشخصي",
+    "personalInfo": "المعلومات الشخصية",
+    "location": "الموقع",
+    "interests": "الاهتمامات",
+    "photo": "صورة الملف الشخصي",
+    "changePhoto": "تغيير الصورة",
+    "saved": "تم حفظ الملف الشخصي!"
+  },
+  "organization": {
+    "title": "المؤسسة",
+    "create": "إنشاء مؤسسة",
+    "edit": "تعديل",
+    "name": "اسم المؤسسة",
+    "type": "النوع",
+    "size": "الحجم",
+    "description": "الوصف",
+    "website": "الموقع الإلكتروني",
+    "logo": "الشعار",
+    "changeLogo": "تغيير الشعار",
+    "location": "الموقع",
+    "industries": "قطاعات النشاط",
+    "saved": "تم حفظ المؤسسة!",
+    "members": {
+      "title": "الفريق",
+      "members": "الأعضاء",
+      "invitations": "الدعوات",
+      "invite": "دعوة",
+      "inviteMember": "دعوة شخص",
+      "email": "البريد الإلكتروني",
+      "role": "الدور",
+      "roles": {
+        "owner": "مالك",
+        "admin": "مسؤول",
+        "manager": "مدير",
+        "member": "عضو"
+      },
+      "status": {
+        "active": "نشط",
+        "pending": "قيد الانتظار",
+        "expired": "منتهية الصلاحية"
+      },
+      "actions": {
+        "changeRole": "تغيير الدور",
+        "remove": "إزالة من الفريق",
+        "resend": "إعادة إرسال الدعوة",
+        "cancel": "إلغاء"
+      },
+      "empty": {
+        "members": "لا يوجد أعضاء",
+        "invitations": "لا توجد دعوات"
+      },
+      "inviteSent": "تم إرسال الدعوة!",
+      "memberRemoved": "تمت إزالة العضو",
+      "roleUpdated": "تم تغيير الدور"
+    }
+  },
+  "organizationDetail": {
+    "loadError": "تعذر تحميل هذه المؤسسة",
+    "notFound": "المؤسسة غير موجودة",
+    "about": "حول",
+    "sectors": "قطاعات النشاط",
+    "goals": "الأهداف",
+    "website": "الموقع الإلكتروني",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "onEtudeskSince": "على Etudesk منذ",
+    "culture": "ثقافة المؤسسة",
+    "communities": "المجتمعات",
+    "noCommunities": "لا توجد مجتمعات حاليا",
+    "spaces": "مساحات التدريب",
+    "noSpaces": "لا توجد مساحات حاليا",
+    "openOpportunities": "فرص مفتوحة",
+    "noOpportunities": "لا توجد فرص حاليا",
+    "contact": "تواصل"
+  },
+  "kyc": {
+    "title": "التحقق من الهوية",
+    "subtitle": "تحقق من هويتك لفتح جميع الميزات (5 دقائق)",
+    "status": {
+      "notStarted": "لم يبدأ",
+      "pending": "جاري المعالجة",
+      "verified": "تم التحقق",
+      "rejected": "مرفوض"
+    },
+    "steps": {
+      "identity": "وثيقة الهوية",
+      "selfie": "صورة سيلفي",
+      "address": "إثبات العنوان"
+    },
+    "start": "تحقق من هويتي",
+    "uploadDocument": "رفع"
+  },
+  "payment": {
+    "title": "وسائل الدفع",
+    "addMethod": "إضافة وسيلة دفع",
+    "methods": {
+      "card": "بطاقة بنكية",
+      "mobileMoney": "Mobile Money",
+      "bankTransfer": "تحويل بنكي"
+    },
+    "empty": "لم تتم إضافة وسيلة دفع",
+    "default": "افتراضي",
+    "setDefault": "تعيين كافتراضي",
+    "remove": "حذف",
+    "mobileMoneyProviders": {
+      "orange": "Orange Money",
+      "mtn": "MTN Money",
+      "wave": "Wave",
+      "moov": "Moov Money"
+    }
+  },
+  "help": {
+    "title": "المساعدة",
+    "faq": "الأسئلة الشائعة",
+    "contact": "الاتصال بالدعم",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "chat": "WhatsApp"
+  },
+  "legal": {
+    "title": "المعلومات القانونية",
+    "terms": "شروط الاستخدام",
+    "termsDesc": "الشروط العامة وقواعد الاستخدام",
+    "privacy": "سياسة الخصوصية",
+    "privacyDesc": "حماية بياناتك",
+    "legalNotice": "إشعار قانوني",
+    "legalNoticeDesc": "الناشر، الاستضافة، السجل التجاري",
+    "footer": "هذه المستندات متاحة على etudesk.com وتخضع للقانون الإيفواري."
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "empty": "أنت على اطلاع بكل جديد!",
+    "markAllRead": "تحديد الكل كمقروء",
+    "types": {
+      "application": "ترشيح",
+      "message": "رسالة",
+      "system": "نظام"
+    }
+  },
+  "calendar": {
+    "title": "الأجندة",
+    "today": "اليوم",
+    "upcoming": "قادم",
+    "past": "سابق",
+    "noEvents": "لا توجد أحداث مجدولة حاليا",
+    "eventTypes": {
+      "interview": "مقابلة",
+      "deadline": "موعد نهائي",
+      "booking": "حجز",
+      "application": "ترشيح",
+      "trigger": "تذكير",
+      "scheduledPost": "منشور مجدول",
+      "event": "حدث",
+      "opportunity": "فرصة"
+    }
+  },
+  "documents": {
+    "title": "المستندات",
+    "upload": "إضافة مستند",
+    "types": {
+      "cv": "CV",
+      "certificate": "شهادة / دبلوم",
+      "portfolio": "معرض أعمال",
+      "other": "أخرى"
+    },
+    "empty": "لم تتم إضافة مستندات",
+    "skills": "مهارات"
+  },
+  "opportunity": {
+    "apply": "تقديم ترشيح",
+    "viewApplication": "عرض ترشيحي",
+    "applied": "تم إرسال الترشيح",
+    "save": "حفظ",
+    "saved": "محفوظ",
+    "share": "مشاركة",
+    "deadline": "الموعد النهائي",
+    "postedAt": "نشر في",
+    "description": "الوصف",
+    "requirements": "الملف المطلوب",
+    "benefits": "المزايا",
+    "views": "مشاهدات",
+    "applications": "الترشيحات",
+    "location": "الموقع",
+    "salary": "الأجر",
+    "startDate": "البداية",
+    "duration": "المدة",
+    "niceToHave": "مؤهلات إضافية",
+    "aboutOrg": "حول {{name}}",
+    "types": {
+      "employment": "وظيفة",
+      "internship": "تدريب",
+      "consultancy": "استشارات",
+      "volunteer": "تطوع",
+      "gig": "مهمة مؤقتة",
+      "apprenticeship": "تعلم مهني",
+      "fellowship": "منحة / زمالة"
+    },
+    "workTypes": {
+      "fullTime": "دوام كامل",
+      "partTime": "دوام جزئي",
+      "contract": "عقد محدد المدة",
+      "freelance": "عمل حر",
+      "internship": "تدريب",
+      "apprenticeship": "تناوب"
+    },
+    "locationTypes": {
+      "onSite": "حضوري",
+      "remote": "عن بعد",
+      "hybrid": "هجين"
+    },
+    "notFound": "الفرصة غير موجودة",
+    "loadError": "تعذر تحميل هذه الفرصة",
+    "linkCopied": "تم نسخ الرابط إلى الحافظة.",
+    "attachments": "المرفقات",
+    "manage": "إدارة الفرصة",
+    "openError": "تعذر فتح هذا الملف",
+    "loadingPdf": "جاري تحميل PDF...",
+    "loadingVideo": "جاري تحميل الفيديو...",
+    "videoNotSupported": "متصفحك لا يدعم تشغيل الفيديو.",
+    "unsupportedFile": "لا يمكن معاينة هذا الملف. قم بتنزيله لفتحه."
+  },
+  "space": {
+    "book": "حجز",
+    "visit": "زيارة",
+    "about": "حول",
+    "amenities": "التجهيزات",
+    "pricing": "الأسعار",
+    "location": "العنوان",
+    "accessTypes": {
+      "public": "وصول مفتوح",
+      "membership": "باشتراك",
+      "private": "خاص"
+    },
+    "types": {
+      "coworking": "مساحة عمل مشتركة",
+      "incubator": "حاضنة",
+      "accelerator": "مسرعة",
+      "lab": "مختبر",
+      "hub": "مركز"
+    },
+    "capacity": "السعة",
+    "surface": "المساحة",
+    "address": "العنوان",
+    "accessible": "ملائم لذوي الاحتياجات الخاصة",
+    "access": "الوصول",
+    "hourly": "بالساعة",
+    "daily": "باليوم",
+    "weekly": "بالأسبوع",
+    "monthly": "بالشهر",
+    "status": {
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "maintenance": "صيانة"
+    },
+    "manage": "إدارة المساحة",
+    "bookSpace": "حجز المساحة",
+    "notFound": "المساحة غير موجودة",
+    "notFoundDesc": "هذه المساحة غير موجودة أو تم حذفها.",
+    "loadError": "تعذر تحميل هذه المساحة",
+    "loading": "جاري تحميل المساحة..."
+  },
+  "community": {
+    "join": "انضمام",
+    "joined": "عضو",
+    "leave": "مغادرة",
+    "about": "حول",
+    "members": "الأعضاء",
+    "events": "الأحداث",
+    "discussions": "النقاشات",
+    "types": {
+      "online": "عبر الإنترنت",
+      "offline": "حضوري",
+      "hybrid": "هجين"
+    },
+    "feed": {
+      "all": "الكل",
+      "posts": "المنشورات",
+      "events": "الأحداث",
+      "polls": "الاستطلاعات",
+      "voteError": "تعذر التصويت",
+      "pinError": "خطأ",
+      "deleteTitle": "حذف",
+      "deleteMessage": "حذف هذا المنشور؟",
+      "deleteError": "تعذر الحذف",
+      "subscribersOnly": "للمشتركين فقط",
+      "expiredSubscription": "انتهى اشتراكك. جدد للوصول إلى المحتوى.",
+      "subscribePrompt": "الوصول إلى المحتوى الحصري لـ «{{name}}».",
+      "perMonth": "/شهر",
+      "renew": "تجديد",
+      "subscribe": "اشتراك",
+      "loadMore": "عرض المزيد",
+      "noActivity": "لا جديد حاليا"
+    },
+    "comments": {
+      "title": "التعليقات",
+      "viewMore": {
+        "one": "عرض {{count}} تعليق إضافي",
+        "other": "عرض {{count}} تعليقات إضافية"
+      },
+      "noComments": "كن أول من يعلق!",
+      "replyTo": "الرد على {{name}}",
+      "replyPlaceholder": "ردك...",
+      "addPlaceholder": "اكتب تعليقا...",
+      "deleteTitle": "حذف",
+      "deleteMessage": "حذف هذا التعليق؟",
+      "deleteError": "تعذر الحذف",
+      "report": "إبلاغ",
+      "options": "خيارات",
+      "publishError": "تعذر النشر"
+    },
+    "paywall": {
+      "expiredTitle": "انتهى الاشتراك",
+      "cancelledTitle": "تم إلغاء الاشتراك",
+      "subscribersOnly": "محتوى حصري",
+      "renewDescription": "جدد اشتراكك لاستعادة الوصول.",
+      "subscribeDescription": "الوصول إلى كل المحتوى الحصري لهذا المجتمع.",
+      "monthlySubscription": "اشتراك شهري",
+      "perMonth": "/شهر",
+      "trialDays": "{{days}} أيام تجريبية مجانية",
+      "benefitPosts": "منشورات حصرية",
+      "benefitEvents": "أحداث وورشات عمل",
+      "benefitPolls": "استطلاعات، نقاشات وتواصل مهني",
+      "startTrial": "جرب مجانا",
+      "renewSubscription": "تجديد",
+      "subscribeNow": "اشترك الآن",
+      "later": "لاحقا",
+      "trialActivated": "تم تفعيل الفترة التجريبية!",
+      "paymentInProgress": "الدفع جاري",
+      "paymentMessage": "أكمل الدفع ثم عد هنا."
+    },
+    "activity": {
+      "unpin": "إلغاء التثبيت",
+      "pin": "تثبيت",
+      "scheduled": "مجدول",
+      "pollLoading": "جاري التحميل...",
+      "votes": {
+        "one": "{{count}} صوت",
+        "other": "{{count}} أصوات"
+      },
+      "dateLabel": "التاريخ",
+      "online": "عبر الإنترنت",
+      "location": "الموقع",
+      "meetingLinkAvailable": "رابط الاجتماع متاح",
+      "detailsComingSoon": "التفاصيل قريبا",
+      "locationTbc": "الموقع سيتم تأكيده",
+      "likes": "{{formattedCount}} إعجاب",
+      "comments": {
+        "one": "{{formattedCount}} تعليق",
+        "other": "{{formattedCount}} تعليقات"
+      },
+      "bookmarks": {
+        "one": "{{formattedCount}} حفظ",
+        "other": "{{formattedCount}} محفوظات"
+      }
+    },
+    "manage": "إدارة المجتمع",
+    "joinCommunity": "انضمام",
+    "tags": "الوسوم",
+    "notFound": "المجتمع غير موجود",
+    "loadError": "تعذر تحميل هذا المجتمع",
+    "viewActivity": "عرض الأخبار",
+    "memberCount": "{{count}} أعضاء",
+    "presentation": "تقديم",
+    "activities": "الأنشطة",
+    "location": "الموقع",
+    "createdAt": "أنشئ في",
+    "memberSince": "عضو منذ",
+    "noMembers": "لا يوجد أعضاء حاليا",
+    "noMembersSubtext": "سيظهر الأعضاء الأوائل هنا",
+    "cancelRequest": "إلغاء طلبي",
+    "cancelRequestTitle": "إلغاء الطلب",
+    "cancelRequestConfirm": "هل تريد إلغاء طلب الانضمام؟",
+    "cancelRequestYes": "نعم، إلغاء",
+    "requestCancelled": "تم إلغاء طلبك.",
+    "cancelRequestError": "تعذر إلغاء الطلب.",
+    "alreadyMember": "أنت بالفعل عضو في هذا المجتمع."
+  },
+  "date": {
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "tomorrow": "غدا",
+    "daysAgo": "منذ {{days}} أيام",
+    "hoursAgo": "منذ {{hours}} ساعة",
+    "minutesAgo": "منذ {{minutes}} دقيقة",
+    "justNow": "الآن",
+    "inDays": "خلال {{days}} أيام",
+    "expired": "منتهي الصلاحية",
+    "months": {
+      "january": "يناير",
+      "february": "فبراير",
+      "march": "مارس",
+      "april": "أبريل",
+      "may": "مايو",
+      "june": "يونيو",
+      "july": "يوليو",
+      "august": "أغسطس",
+      "september": "سبتمبر",
+      "october": "أكتوبر",
+      "november": "نوفمبر",
+      "december": "ديسمبر"
+    },
+    "monthsShort": {
+      "january": "ينا",
+      "february": "فبر",
+      "march": "مار",
+      "april": "أبر",
+      "may": "ماي",
+      "june": "يون",
+      "july": "يول",
+      "august": "أغس",
+      "september": "سبت",
+      "october": "أكت",
+      "november": "نوف",
+      "december": "ديس"
+    }
+  },
+  "chat": {
+    "datetimeTypes": {
+      "interviewProposal": "اقتراح مقابلة",
+      "meetingRequest": "طلب موعد",
+      "availability": "التوفر"
+    },
+    "calendarPermission": "اسمح بالوصول إلى التقويم لإضافة الحدث.",
+    "noCalendar": "لا يوجد تقويم متاح.",
+    "appointment": "موعد",
+    "eventAdded": "تمت إضافة الحدث إلى تقويمك.",
+    "eventAddError": "تعذر إضافة الحدث.",
+    "proposedSlot": "الموعد المقترح",
+    "writeMessage": "اكتب رسالتك...",
+    "fileSizeLimit": "الحد الأقصى: {{size}}",
+    "maxFiles": "3 ملفات كحد أقصى.",
+    "fileSelectError": "تعذر اختيار الملف.",
+    "proposal": "اقتراح: {{date}} في {{time}}",
+    "proposeDate": "اقتراح موعد"
+  },
+  "input": {
+    "errorHint": "خطأ: {{error}}",
+    "hidePassword": "إخفاء",
+    "showPassword": "إظهار",
+    "togglePasswordHint": "إظهار أو إخفاء كلمة المرور"
+  },
+  "errorBoundary": {
+    "errorReportTitle": "تقرير خطأ Etudesk",
+    "title": "حدث خطأ",
+    "subtitle": "حدث خلل ما. حاول مرة أخرى أو تواصل مع الدعم.",
+    "unknownError": "خطأ غير معروف",
+    "technicalDetails": "التفاصيل التقنية",
+    "stackTrace": "Stack Trace:",
+    "componentStack": "Component Stack:",
+    "shareError": "مشاركة الخطأ",
+    "loadError": "خطأ في التحميل",
+    "pageLoadError": "تعذر تحميل هذه الصفحة."
+  },
+  "geolocation": {
+    "servicesDisabled": "الموقع معطل",
+    "enableServices": "فعل خدمة الموقع في إعدادات هاتفك.",
+    "settings": "الإعدادات",
+    "permissionDenied": "تم رفض الوصول",
+    "permissionMessage": "يحتاج Etudesk إلى الوصول إلى موقعك.",
+    "addressError": "تعذر تحديد عنوانك",
+    "unsupportedCountry": "بلد غير متاح",
+    "unsupportedCountryMessage": "{{country}} غير متاح بعد. حدد موقعك يدويا.",
+    "timeout": "استغرق تحديد الموقع وقتا طويلا. حاول مرة أخرى.",
+    "genericError": "خطأ أثناء تحديد موقعك.",
+    "errorTitle": "خطأ في الموقع",
+    "errorMessage": "تعذر تحديد موقعك. حاول مرة أخرى أو حدد يدويا."
+  },
+  "audioRecorder": {
+    "permissionRequired": "إذن مطلوب",
+    "micPermissionMessage": "اسمح بالوصول إلى الميكروفون للتسجيل.",
+    "startError": "تعذر بدء التسجيل",
+    "stopError": "خطأ أثناء إيقاف التسجيل"
+  },
+  "statusBadge": {
+    "pending": "قيد الانتظار",
+    "active": "عضو نشط",
+    "rejected": "مرفوض",
+    "suspended": "معلق",
+    "archived": "مؤرشف"
+  },
+  "stepSolver": {
+    "step": "الخطوة {{current}} / {{total}}",
+    "nextStep": "الخطوة التالية",
+    "showAll": "عرض الكل"
+  },
+  "createOffer": {
+    "title": "إنشاء عرض",
+    "subtitle": "اختر نوع العرض الذي تريد نشره",
+    "opportunity": "فرصة",
+    "opportunityDesc": "وظيفة، تدريب، مهمة حرة",
+    "space": "مساحة",
+    "spaceDesc": "قاعة اجتماعات، تدريب، عمل مشترك",
+    "community": "مجتمع",
+    "communityDesc": "مجموعة، شبكة، جمعية"
+  },
+  "map": {
+    "permissionDenied": "تم رفض الوصول",
+    "permissionMessage": "اسمح بالوصول إلى موقعك.",
+    "locationError": "خطأ في الموقع",
+    "locationErrorMessage": "تعذر تحديد موقعك.",
+    "loadingMap": "جاري تحميل الخريطة...",
+    "selectedPosition": "الموقع المحدد",
+    "tapToSelect": "انقر على الخريطة لاختيار موقع",
+    "myLocation": "موقعي"
+  },
+  "copilotImage": {
+    "openLinkError": "تعذر فتح الرابط",
+    "openLinkErrorMessage": "حدث خطأ.",
+    "loadError": "الصورة غير متاحة"
+  },
+  "imageService": {
+    "permissionRequired": "إذن مطلوب",
+    "photoPermission": "اسمح بالوصول إلى صورك.",
+    "cameraPermission": "اسمح بالوصول إلى الكاميرا.",
+    "optimizeError": "خطأ أثناء تحسين الصورة",
+    "pickError": "تعذر اختيار الصورة.",
+    "captureError": "تعذر التقاط الصورة.",
+    "chooseImage": "إضافة صورة",
+    "chooseImageMessage": "كيف تريد إضافة صورتك؟",
+    "takePhoto": "التقاط صورة",
+    "fromGallery": "اختيار من المعرض",
+    "uploadError": "خطأ أثناء الرفع"
+  },
+  "copilotService": {
+    "connectionError": "خطأ في الاتصال",
+    "httpError": "خطأ {{status}}",
+    "transcriptionError": "خطأ في النسخ",
+    "audioTranscriptionError": "تعذر نسخ الصوت",
+    "uploadError": "خطأ أثناء رفع الملفات"
+  },
+  "copilotContext": {
+    "attachmentUploadError": "خطأ أثناء رفع المرفقات",
+    "sendError": "تعذر إرسال الرسالة",
+    "sessionNotFound": "الجلسة غير موجودة",
+    "unknownError": "خطأ غير معروف",
+    "loadSessionsError": "تعذر تحميل الجلسات"
+  },
+  "otpService": {
+    "sendError": "تعذر إرسال الرمز"
+  },
+  "errors": {
+    "network": "تحقق من اتصالك بالإنترنت",
+    "unauthorized": "وصول غير مصرح به",
+    "notFound": "غير موجود",
+    "validation": "بيانات غير صالحة",
+    "required": "حقل مطلوب",
+    "invalidEmail": "بريد إلكتروني غير صالح",
+    "invalidPhone": "رقم غير صالح",
+    "photoSelection": "خطأ في اختيار الصورة",
+    "location": "خطأ في الموقع",
+    "networkError": "خطأ في الشبكة. تحقق من اتصالك.",
+    "timeout": "استغرق الطلب وقتا طويلا. حاول مرة أخرى.",
+    "noConnection": "لا يوجد اتصال بالإنترنت.",
+    "sessionExpired": "انتهت صلاحية جلستك. سجل الدخول مرة أخرى.",
+    "sessionExpiredAlt": "انتهت صلاحية الجلسة",
+    "serverError": "خطأ في الخادم. حاول لاحقا.",
+    "resourceNotFound": "المورد غير موجود.",
+    "validationError": "خطأ في التحقق. تحقق من البيانات.",
+    "permissionDenied": "ليس لديك صلاحية لتنفيذ هذا الإجراء.",
+    "unknownError": "حدث خطأ غير معروف.",
+    "fieldRequired": "هذا الحقل مطلوب.",
+    "voiceNoteUpload": "خطأ أثناء إرسال الملاحظة الصوتية.",
+    "shareDocument": "خطأ أثناء مشاركة المستند.",
+    "noAppAvailable": "لا يوجد تطبيق متاح لهذا الإجراء.",
+    "downloadOrOpenFailed": "خطأ أثناء تنزيل أو فتح الملف.",
+    "maxFilesPerRequest": "لقد بلغت الحد الأقصى لعدد الملفات لكل طلب."
+  },
+  "alert": {
+    "ok": "حسنا",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا",
+    "close": "إغلاق",
+    "delete": "حذف",
+    "deleteConfirm": "تأكيد الحذف؟",
+    "deleteSuccess": "تم الحذف!",
+    "saveSuccess": "تم الحفظ!",
+    "updateSuccess": "تم التعديل!",
+    "actionSuccess": "تم تنفيذ الإجراء",
+    "actionError": "حدث خطأ",
+    "networkError": "تحقق من اتصالك بالإنترنت.",
+    "sessionExpired": "انتهت الجلسة",
+    "sessionExpiredMessage": "أعد تسجيل الدخول للمتابعة.",
+    "permissionDenied": "تم رفض الوصول",
+    "permissionDeniedMessage": "ليس لديك الصلاحيات لهذا الإجراء."
+  },
+  "copilot": {
+    "quiz": {
+      "correctAnswer": "إجابة صحيحة!",
+      "wrongAnswer": "إجابة خاطئة",
+      "alreadyAnswered": "تمت الإجابة على هذا السؤال"
+    },
+    "flashcard": {
+      "easy": "سهل",
+      "medium": "متوسط",
+      "hard": "صعب",
+      "flipCard": "اقلب البطاقة",
+      "answer": "الإجابة",
+      "question": "السؤال",
+      "tapToReveal": "انقر للكشف",
+      "tapToReturn": "انقر للعودة"
+    },
+    "tool": {
+      "searchPlatform": "جاري البحث…",
+      "searchOpportunities": "البحث عن فرص…",
+      "searchCommunities": "البحث عن مجتمعات…",
+      "searchSpaces": "البحث عن مساحات…",
+      "searchTalents": "البحث عن مواهب…",
+      "searchOrganizations": "البحث عن مؤسسات…",
+      "dataQuery": "تحليل البيانات…",
+      "myProfile": "جاري تحميل ملفك الشخصي…",
+      "myApplications": "جاري تحميل ترشيحاتك…",
+      "myReservations": "جاري تحميل حجوزاتك…",
+      "myInvitations": "جاري تحميل دعواتك…",
+      "myCommunities": "جاري تحميل مجتمعاتك…",
+      "myBookmarks": "جاري تحميل مفضلاتك…",
+      "myDocuments": "جاري تحميل مستنداتك…",
+      "mySkills": "جاري تحميل مهاراتك…",
+      "orgMembers": "جاري تحميل الأعضاء…",
+      "orgApplications": "جاري تحميل الترشيحات…",
+      "orgStats": "جاري تحميل الإحصائيات…",
+      "orgOpportunities": "جاري تحميل الفرص…",
+      "orgCommunities": "جاري تحميل المجتمعات…",
+      "orgSpaces": "جاري تحميل المساحات…",
+      "orgRevenue": "جاري تحميل الإيرادات…",
+      "orgInvitations": "جاري تحميل الدعوات…",
+      "advSearchOpportunities": "بحث متقدم…",
+      "advSearchCommunities": "بحث متقدم…",
+      "advSearchSpaces": "بحث متقدم…",
+      "advSearchOrganizations": "بحث متقدم…",
+      "advSearchTalents": "بحث متقدم…",
+      "submitApplication": "جاري إرسال ترشيحك…",
+      "joinRequest": "طلب انضمام…",
+      "spaceBooking": "جاري الحجز…",
+      "createActivity": "جاري الإنشاء…",
+      "respondInvitation": "جاري الرد…",
+      "updateApplication": "جاري التحديث…",
+      "videoSearch": "البحث عن فيديوهات…",
+      "webSearch": "البحث على الويب…",
+      "generateDoc": "جاري إنشاء المستند…",
+      "generatePrefix": "إنشاء: {{title}}",
+      "generateImage": "جاري إنشاء الصورة…",
+      "createDiagram": "جاري إنشاء المخطط…",
+      "readDocument": "جاري قراءة المستند…",
+      "readPrefix": "قراءة: {{name}}",
+      "addSkillPrefix": "إضافة: {{skill}}",
+      "updateSkillPrefix": "تحديث: {{skill}}",
+      "updateSkills": "جاري تحديث المهارات…",
+      "applyInProgress": "جاري تقديم الترشيح…",
+      "joinInProgress": "جاري الانضمام…",
+      "bookingInProgress": "جاري الحجز…",
+      "acceptInvitation": "جاري القبول…",
+      "declineInvitation": "جاري الرفض…",
+      "executeAction": "جاري التنفيذ…"
+    },
+    "suggestions": {
+      "orgExplore": [
+        "ترشيحات هذا الشهر",
+        "البحث عن ملفات مطورين",
+        "إحصائيات عروضي",
+        "إنشاء بطاقة وظيفية"
+      ],
+      "orgStudy": [
+        "تقييم المرشحين المستلمين",
+        "كيف أكتب عرض عمل؟",
+        "تلخيص هذا المستند",
+        "اتجاهات التوظيف في القطاع"
+      ],
+      "talentStudy": [
+        "حضرني لمقابلة عمل",
+        "تحليل مهاراتي",
+        "إنشاء اختبار حول موضوع",
+        "تلخيص سيرتي الذاتية ونصحني"
+      ],
+      "talentExplore": [
+        "عروض تتناسب مع ملفي",
+        "إنشاء سيرتي الذاتية PDF",
+        "مجتمعات في مجالي",
+        "إضافة مهارة"
+      ]
+    },
+    "entity": {
+      "opportunity": "فرصة",
+      "community": "مجتمع",
+      "space": "مساحة",
+      "organization": "مؤسسة",
+      "talent": "موهبة",
+      "document": "مستند",
+      "viewDetails": "عرض التفاصيل",
+      "memberCount": "{{count}} أعضاء",
+      "capacityCount": "{{count}} أماكن",
+      "hourlyRate": "{{rate}} FCFA/س"
+    }
+  },
+  "applicationDetail": {
+    "status": {
+      "submitted": "مقدم",
+      "submittedDesc": "تم استلام الترشيح",
+      "inReview": "قيد المراجعة",
+      "inReviewDesc": "الترشيح قيد التقييم",
+      "accepted": "مقبول",
+      "acceptedDesc": "تم قبول الترشيح",
+      "rejected": "مرفوض",
+      "rejectedDesc": "لم يتم قبول الترشيح"
+    },
+    "match": {
+      "excellent": "ممتاز",
+      "good": "جيد",
+      "average": "متوسط",
+      "low": "ضعيف"
+    },
+    "loadError": "تعذر تحميل تفاصيل الترشيح.",
+    "statusUpdated": "تم تحديث الحالة: {{status}}",
+    "statusUpdateError": "تعذر تحديث الحالة.",
+    "deleteTitle": "حذف الترشيح",
+    "deleteConfirm": "هل تريد فعلا حذف هذا الترشيح؟ هذا الإجراء لا رجعة فيه.",
+    "deleteSuccess": "تم حذف الترشيح.",
+    "deleteError": "تعذر حذف الترشيح.",
+    "notesSaved": "تم حفظ الملاحظات.",
+    "notesSaveError": "تعذر حفظ الملاحظات.",
+    "ratingUpdateError": "تعذر تحديث التقييم.",
+    "sendMessageError": "تعذر إرسال الرسالة.",
+    "cvDialogTitle": "CV المرشح",
+    "cvFileNotFound": "الملف غير موجود",
+    "cvFileNotFoundDesc": "CV لم يعد متاحا على هذا الجهاز.",
+    "sharingUnavailable": "غير متاح",
+    "sharingUnavailableDesc": "مشاركة الملفات غير متاحة على هذا الجهاز.",
+    "cvOpenError": "تعذر فتح CV.",
+    "information": "معلومات",
+    "candidateRating": "تقييم المرشح",
+    "recommendation": "توصية",
+    "analyzing": "جاري التحليل...",
+    "recommendationAuto": "سيتم إنشاء التوصية تلقائيا.",
+    "applicationStatus": "حالة الترشيح",
+    "changeStatus": "تغيير الحالة",
+    "additionalInfo": "معلومات إضافية",
+    "candidateCV": "CV المرشح",
+    "cvDisplayUnavailable": "العرض غير متاح",
+    "cvDisplayHint": "افتح CV بالزر أدناه للاطلاع عليه.",
+    "loadingCV": "جاري تحميل CV...",
+    "openCV": "فتح CV",
+    "additionalQuestions": "أسئلة إضافية",
+    "noAnswer": "لم يتم تقديم إجابة",
+    "candidateAccepted": "تم قبول هذا المرشح!",
+    "deleteApplication": "حذف هذا الترشيح",
+    "internalNotes": "ملاحظات داخلية",
+    "notesPlaceholder": "أضف ملاحظات داخلية حول هذا المرشح...",
+    "notesHint": "هذه الملاحظات مرئية فقط لفريقك.",
+    "noMessages": "لا توجد رسائل بعد",
+    "noMessagesHint": "أرسل رسالة للمرشح لبدء المحادثة.",
+    "writeMessage": "اكتب رسالتك...",
+    "notFound": "الترشيح غير موجود",
+    "tabProfile": "الملف الشخصي",
+    "tabMessages": "الرسائل",
+    "tabNotes": "الملاحظات"
+  },
+  "gestion": {
+    "bookingStatus": {
+      "pending": "قيد الانتظار",
+      "confirmed": "مؤكد",
+      "cancelled": "ملغى",
+      "completed": "مكتمل",
+      "noShow": "غائب"
+    },
+    "memberStatus": {
+      "pending": "قيد الانتظار",
+      "active": "نشط",
+      "banned": "محظور",
+      "removed": "محذوف"
+    },
+    "applicationStatus": {
+      "submitted": "مقدم",
+      "inReview": "قيد المراجعة",
+      "accepted": "مقبول",
+      "rejected": "مرفوض"
+    },
+    "filters": {
+      "all": "الكل",
+      "pending": "قيد الانتظار",
+      "confirmed": "مؤكدة",
+      "cancelled": "ملغاة",
+      "completed": "مكتملة",
+      "active": "نشطون"
+    },
+    "bookings": {
+      "loadError": "تعذر تحميل الحجوزات.",
+      "statusUpdateError": "تعذر تحديث الحالة.",
+      "confirmTitle": "تأكيد الحجز",
+      "confirmMessage": "هل تريد تأكيد هذا الحجز؟",
+      "cancelTitle": "إلغاء الحجز",
+      "cancelMessage": "هل تريد إلغاء هذا الحجز؟",
+      "cancelYes": "نعم، إلغاء",
+      "confirmBooking": "تأكيد",
+      "cancelBooking": "إلغاء",
+      "noBookings": "لا توجد حجوزات",
+      "noBookingsDesc": "هذه المساحة ليس لديها حجوزات بعد.",
+      "noResults": "لا توجد نتائج",
+      "noResultsDesc": "لا توجد حجوزات بهذه الحالة.",
+      "detailsLoadError": "تعذر تحميل تفاصيل الحجز.",
+      "deleteTitle": "حذف الحجز",
+      "deleteConfirm": "هل تريد فعلا حذف هذا الحجز؟ هذا الإجراء لا رجعة فيه.",
+      "deleteError": "تعذر حذف الحجز.",
+      "notesSaved": "تم حفظ الملاحظات.",
+      "notesSaveError": "تعذر حفظ الملاحظات.",
+      "sendMessageError": "تعذر إرسال الرسالة.",
+      "confirmError": "تعذر تأكيد الحجز.",
+      "cancelError": "تعذر إلغاء الحجز."
+    },
+    "applications": {
+      "loadError": "تعذر تحميل الترشيحات.",
+      "statusUpdateError": "تعذر تحديث الحالة.",
+      "exportSuccess": "تم تنزيل ملف CSV.",
+      "exportError": "تعذر التصدير إلى CSV.",
+      "deleteConfirm": "هل تريد فعلا حذف هذا الترشيح؟ هذا الإجراء لا رجعة فيه.",
+      "deleteError": "حدث خطأ أثناء الحذف.",
+      "noApplications": "لا توجد ترشيحات",
+      "noApplicationsDesc": "هذه الفرصة ليس لديها ترشيحات بعد.",
+      "noResults": "لا توجد نتائج",
+      "noResultsDesc": "لا توجد ترشيحات بهذه الحالة."
+    },
+    "members": {
+      "loadError": "تعذر تحميل الأعضاء.",
+      "statusUpdateError": "تعذر تحديث الحالة.",
+      "removeConfirm": "هل تريد إزالة هذا العضو من المجتمع؟",
+      "removeSuccess": "تمت إزالة العضو.",
+      "removeError": "تعذر إزالة العضو.",
+      "statusUpdated": "تم تحديث الحالة: {{status}}",
+      "detailsLoadError": "تعذر تحميل تفاصيل العضو.",
+      "sendMessageError": "تعذر إرسال الرسالة.",
+      "notesSaved": "تم حفظ الملاحظات.",
+      "notesSaveError": "تعذر حفظ الملاحظات.",
+      "ratingUpdateError": "تعذر تحديث التقييم."
+    },
+    "invitations": {
+      "invalidEmail": "أدخل عنوان بريد إلكتروني صالح",
+      "sendError": "تعذر إرسال الدعوة",
+      "resendSuccess": "تمت إعادة إرسال الدعوة",
+      "resendError": "تعذر إعادة إرسال الدعوة",
+      "cancelError": "تعذر إلغاء الدعوة",
+      "sentTo": "تم إرسال الدعوة إلى {{email}}",
+      "filterAll": "الكل",
+      "filterPending": "قيد الانتظار",
+      "pending": "قيد الانتظار"
+    }
+  },
+  "labels": {
+    "orgTypes": {
+      "COMPANY": "شركة",
+      "STARTUP": "شركة ناشئة",
+      "NGO": "منظمة غير حكومية",
+      "ASSOCIATION": "جمعية",
+      "EDUCATIONAL_INSTITUTION": "مؤسسة تعليمية",
+      "PUBLIC_ADMINISTRATION": "إدارة عامة",
+      "TRAINING_CENTER": "مركز تدريب",
+      "CONSULTING_FIRM": "شركة استشارات",
+      "RECRUITMENT_AGENCY": "وكالة توظيف",
+      "FINANCIAL_INSTITUTION": "مؤسسة مالية",
+      "RESEARCH_CENTER": "مركز بحث",
+      "COOPERATIVE": "تعاونية",
+      "SOCIAL_ENTERPRISE": "مؤسسة اجتماعية"
+    },
+    "verificationStatus": {
+      "PENDING": "التحقق جاري",
+      "VERIFIED": "تم التحقق",
+      "REJECTED": "مرفوض",
+      "NOT_STARTED": "لم يبدأ"
+    },
+    "spaceTypes": {
+      "SALLE_COURS": "قاعة دراسية",
+      "SALLE_INFORMATIQUE": "قاعة حاسوب",
+      "AMPHITHEATRE": "مدرج",
+      "SALLE_FORMATION": "قاعة تدريب",
+      "OPEN_SPACE": "مساحة مفتوحة",
+      "BUREAU_PRIVE": "مكتب خاص",
+      "POSTE_NOMADE": "مكتب مشترك",
+      "SALLE_REUNION": "قاعة اجتماعات",
+      "SALLE_CONFERENCE": "قاعة مؤتمرات",
+      "CABINE_APPEL": "كابينة هاتف",
+      "ATELIER": "ورشة عمل",
+      "LABORATOIRE": "مختبر",
+      "STUDIO": "استوديو",
+      "SALLE_EVENEMENT": "قاعة فعاليات",
+      "ROOFTOP": "سطح",
+      "TERRASSE": "شرفة"
+    },
+    "safetyEquipment": {
+      "EXTINCTEUR": "طفايات حريق",
+      "DETECTEUR_FUMEE": "كاشفات دخان",
+      "ALARME_INCENDIE": "إنذار حريق",
+      "SORTIE_SECOURS": "مخارج طوارئ",
+      "PLAN_EVACUATION": "خطة إخلاء",
+      "ECLAIRAGE_SECOURS": "إضاءة طوارئ",
+      "SPRINKLER": "رشاشات مياه",
+      "DESENFUMAGE": "نظام شفط الدخان",
+      "PORTE_COUPE_FEU": "أبواب مقاومة للحريق"
+    },
+    "accessibilityFeatures": {
+      "RAMPE_ACCES": "منحدر وصول",
+      "ASCENSEUR": "مصعد مجهز",
+      "WC_ACCESSIBLE": "دورات مياه مجهزة",
+      "PORTES_LARGES": "أبواب واسعة (≥90سم)",
+      "GUIDAGE_TACTILE": "توجيه لمسي",
+      "BOUCLE_AUDITIVE": "حلقة سمعية",
+      "PARKING_HANDICAPE": "موقف لذوي الاحتياجات الخاصة",
+      "SIGNALISATION_BRAILLE": "لافتات بطريقة برايل"
+    },
+    "pricingTypes": {
+      "FREE": "مجاني",
+      "HOURLY": "بالساعة",
+      "DAILY": "باليوم",
+      "MONTHLY": "اشتراك شهري",
+      "YEARLY": "اشتراك سنوي",
+      "CUSTOM": "عرض مخصص"
+    },
+    "accessTypes": {
+      "PUBLIC": "وصول مفتوح",
+      "PRIVATE": "خاص",
+      "MEMBERSHIP": "عضوية مطلوبة"
+    },
+    "communityTypes": {
+      "ONLINE": "عبر الإنترنت",
+      "OFFLINE": "حضوري",
+      "HYBRID": "هجين"
+    },
+    "visibility": {
+      "PUBLIC": "عام",
+      "PRIVATE": "خاص"
+    },
+    "communityStatus": {
+      "ACTIVE": "نشط",
+      "INACTIVE": "غير نشط",
+      "ARCHIVED": "مؤرشف"
+    },
+    "calendarEventTypes": {
+      "INTERVIEW": "مقابلة",
+      "BOOKING": "حجز",
+      "DEADLINE": "موعد نهائي"
+    },
+    "paymentProviders": {
+      "ORANGE_MONEY": "Orange Money",
+      "MTN_MONEY": "MTN Money",
+      "MOOV_MONEY": "Moov Money",
+      "WAVE": "Wave",
+      "PUSH": "Push",
+      "DJAMO": "Djamo",
+      "CARD": "بطاقة بنكية"
+    },
+    "orgRoles": {
+      "OWNER": "مالك",
+      "ADMIN": "مسؤول",
+      "MANAGER": "مدير",
+      "MEMBER": "عضو",
+      "OBSERVER": "مراقب"
+    },
+    "orgRoleDescriptions": {
+      "OWNER": "تحكم كامل في المؤسسة",
+      "ADMIN": "وصول كامل ما عدا الحذف",
+      "MANAGER": "إدارة المحتوى (فرص، مساحات، مجتمعات)",
+      "MEMBER": "وصول عضو أساسي",
+      "OBSERVER": "عرض فقط (للقراءة)"
+    },
+    "sectors": {
+      "DIGITAL": "الرقمية والتكنولوجيا",
+      "FINANCE": "المالية والبنوك",
+      "COMMERCE": "التجارة والتجزئة",
+      "HEALTH": "الصحة",
+      "EDUCATION": "التعليم والتدريب",
+      "INDUSTRY": "الصناعة",
+      "CONSTRUCTION": "البناء",
+      "ENERGY": "الطاقة",
+      "ENVIRONMENT": "البيئة",
+      "AGRICULTURE": "الزراعة والغذاء",
+      "TRANSPORT": "النقل والخدمات اللوجستية",
+      "TOURISM": "السياحة والضيافة",
+      "MEDIA": "الإعلام والاتصال",
+      "PROFESSIONAL_SERVICES": "الخدمات المهنية",
+      "RESEARCH": "البحث والابتكار",
+      "PUBLIC": "القطاع العام",
+      "SECURITY": "الأمن",
+      "SOCIAL_IMPACT": "الأثر الاجتماعي والمنظمات غير الحكومية",
+      "PERSONAL_SERVICES": "الخدمات الشخصية",
+      "CRAFTS": "الحرف اليدوية",
+      "RESOURCES": "الموارد الطبيعية"
+    },
+    "profileTags": {
+      "STUDENT": "طالب",
+      "PUPIL": "تلميذ",
+      "JOB_SEEKER": "باحث عن عمل",
+      "SALARIED": "موظف",
+      "ENTREPRENEUR": "رائد أعمال",
+      "CIVIL_SERVANT": "موظف حكومي",
+      "MANAGER": "مدير",
+      "CONSULTANT": "مستشار",
+      "INVESTOR": "مستثمر",
+      "CONTENT_CREATOR": "صانع محتوى",
+      "COACH": "مدرب / معلم",
+      "RETIRED": "متقاعد"
+    },
+    "goals": {
+      "LEARN_NEW_SKILLS": "تعلم مهارات جديدة",
+      "PREPARE_EXAMS": "التحضير للامتحانات",
+      "FIND_JOB": "إيجاد وظيفة",
+      "ADVANCE_CAREER": "تطوير مسيرتي المهنية",
+      "RESEARCH_SUPPORT": "دعم البحث",
+      "IMPROVE_PRODUCTIVITY": "تحسين إنتاجيتي",
+      "COLLABORATIVE_LEARNING": "التعلم التعاوني",
+      "TEACH_OR_MENTOR": "التعليم أو الإرشاد",
+      "BUILD_NETWORK_OR_VISIBILITY": "بناء شبكتي / ظهوري",
+      "CONTRIBUTE_OR_GIVE_BACK": "المساهمة / رد الجميل"
+    },
+    "genders": {
+      "M": "ذكر",
+      "F": "أنثى"
+    },
+    "documentTypes": {
+      "CV": "سيرة ذاتية",
+      "NATIONAL_ID": "بطاقة هوية وطنية",
+      "PASSPORT": "جواز سفر",
+      "DIPLOMA": "شهادة جامعية",
+      "CERTIFICATE": "شهادة",
+      "RECOMMENDATION_LETTER": "خطاب توصية",
+      "COVER_LETTER": "خطاب تقديم",
+      "TRANSCRIPT": "كشف درجات",
+      "DRIVER_LICENSE": "رخصة قيادة",
+      "PROOF_OF_ADDRESS": "إثبات عنوان",
+      "PORTFOLIO": "معرض أعمال",
+      "OTHER": "أخرى"
+    },
+    "proficiencyLevels": {
+      "BEGINNER": "مبتدئ",
+      "INTERMEDIATE": "متوسط",
+      "EXPERT": "خبير",
+      "MASTER": "متمرس"
+    },
+    "skillTypes": {
+      "KNOWLEDGE": "معرفة",
+      "HARD_SKILL": "مهارة تقنية",
+      "SOFT_SKILL": "مهارة شخصية"
+    },
+    "orgDocumentTypes": {
+      "POLICY": "سياسة داخلية",
+      "CONTRACT": "عقد",
+      "REPORT": "تقرير",
+      "BROCHURE": "كتيب",
+      "PRESENTATION": "عرض تقديمي",
+      "CHARTER": "ميثاق",
+      "LEGAL": "مستند قانوني",
+      "OTHER": "مستند آخر"
+    },
+    "orgDocumentCategories": {
+      "ADMINISTRATIVE": "إداري",
+      "COMMERCIAL": "تجاري",
+      "LEGAL": "قانوني",
+      "OTHER": "أخرى"
+    },
+    "orgDocumentStatuses": {
+      "PENDING": "قيد الانتظار",
+      "PROCESSING": "قيد المعالجة",
+      "PROCESSED": "تمت المعالجة",
+      "FAILED": "فشل",
+      "VERIFIED": "تم التحقق",
+      "REJECTED": "مرفوض"
+    },
+    "orgTalentSources": {
+      "APPLICATION": "ترشيح",
+      "COMMUNITY": "مجتمع",
+      "SPACE_BOOKING": "حجز",
+      "MEMBER": "عضو"
+    },
+    "workRhythms": {
+      "FULL_TIME": "التزام بدوام كامل",
+      "PART_TIME": "بضع ساعات أسبوعيا",
+      "FLEXIBLE": "جدول مرن",
+      "OCCASIONAL": "مهام عرضية"
+    },
+    "locationTypeDescriptions": {
+      "ON_SITE": "الحضور إلى المكتب مطلوب",
+      "HYBRID": "مزيج من المكتب والعمل عن بعد",
+      "REMOTE": "عمل عن بعد فقط"
+    },
+    "opportunityVisibility": {
+      "PUBLIC": "مرئي في الاستكشاف والبحث",
+      "PRIVATE": "متاح فقط عبر الدعوة"
+    },
+    "communityVisibilityDescriptions": {
+      "PUBLIC": "يمكن للجميع الرؤية والانضمام",
+      "PRIVATE": "الأعضاء فقط يمكنهم رؤية المحتوى"
+    },
+    "statusBadges": {
+      "PENDING": "قيد الانتظار",
+      "ACTIVE": "عضو نشط",
+      "REJECTED": "مرفوض",
+      "SUSPENDED": "معلق",
+      "ARCHIVED": "مؤرشف"
+    },
+    "noData": "لا توجد بيانات متاحة",
+    "defaultUser": "مستخدم",
+    "select": "اختيار",
+    "resolution": "الدقة",
+    "noSteps": "لا توجد خطوات متاحة",
+    "copyCode": "نسخ الكود",
+    "goodAnswer": "إجابة جيدة",
+    "badAnswer": "إجابة سيئة",
+    "enable": "تفعيل",
+    "disable": "تعطيل",
+    "shareDocument": "مشاركة المستند",
+    "voiceNoteUploadError": "خطأ في رفع الملاحظة الصوتية",
+    "confirmationLabels": {
+      "contractTypes": {
+        "CDI": "دائم",
+        "CDD": "محدد المدة",
+        "STAGE": "تدريب",
+        "FREELANCE": "عمل حر",
+        "ALTERNANCE": "تناوب",
+        "INTERIM": "مؤقت",
+        "BENEVOLAT": "تطوع"
+      },
+      "workRhythms": {
+        "FULL_TIME": "دوام كامل",
+        "PART_TIME": "دوام جزئي",
+        "FLEXIBLE": "مرن"
+      },
+      "locationTypes": {
+        "ON_SITE": "حضوري",
+        "REMOTE": "عن بعد",
+        "HYBRID": "هجين"
+      },
+      "communityCategories": {
+        "PROFESSIONAL": "مهني",
+        "ACADEMIC": "أكاديمي",
+        "SOCIAL": "اجتماعي",
+        "INDUSTRY": "صناعي",
+        "ALUMNI": "خريجين",
+        "RESEARCH": "بحث"
+      },
+      "joinPolicies": {
+        "OPEN": "مفتوح",
+        "APPROVAL_REQUIRED": "موافقة مطلوبة",
+        "INVITE_ONLY": "بدعوة فقط"
+      },
+      "spaceCategories": {
+        "COWORKING": "مساحة عمل مشتركة",
+        "MEETING_ROOM": "قاعة اجتماعات",
+        "CONFERENCE": "مؤتمر",
+        "OFFICE": "مكتب",
+        "EVENT": "فعاليات",
+        "WORKSHOP": "ورشة عمل",
+        "STUDIO": "استوديو",
+        "CLASSROOM": "فصل دراسي",
+        "LAB": "مختبر",
+        "LIBRARY": "مكتبة",
+        "OTHER": "أخرى"
+      }
+    },
+    "createOfferOptions": {
+      "opportunity": {
+        "label": "فرصة",
+        "description": "وظيفة، تدريب، مهمة حرة"
+      },
+      "space": {
+        "label": "مساحة",
+        "description": "قاعة اجتماعات، تدريب، عمل مشترك"
+      },
+      "community": {
+        "label": "مجتمع",
+        "description": "مجموعة، شبكة، جمعية"
+      }
+    },
+    "opportunityTypes": {
+      "EMPLOYMENT": "وظيفة",
+      "INTERNSHIP": "تدريب",
+      "ENTREPRENEURSHIP": "ريادة أعمال",
+      "ALTERNATION": "تناوب دراسي",
+      "FREELANCE": "عمل حر",
+      "VOLUNTEER": "تطوع"
+    },
+    "contractTypes": {
+      "CDI": "دائم",
+      "CDD": "محدد المدة",
+      "APPRENTICESHIP": "تعلم مهني",
+      "INTERNSHIP": "تدريب",
+      "FREELANCE": "عمل حر",
+      "SERVICE": "عقد خدمات",
+      "INTERIM": "مؤقت"
+    },
+    "locationTypes": {
+      "ON_SITE": "حضوري",
+      "REMOTE": "عن بعد",
+      "HYBRID": "هجين"
+    },
+    "compensationFrequencies": {
+      "HOURLY": "ساعة",
+      "MONTHLY": "شهر",
+      "YEARLY": "سنة",
+      "PROJECT": "مشروع"
+    },
+    "opportunityStatus": {
+      "DRAFT": "مسودة",
+      "OPEN": "منشور",
+      "PAUSED": "متوقف",
+      "FILLED": "تم شغله",
+      "EXPIRED": "منتهي الصلاحية"
+    },
+    "applicationStatus": {
+      "SUBMITTED": "مقدم",
+      "IN_REVIEW": "قيد المراجعة",
+      "ACCEPTED": "مقبول",
+      "REJECTED": "مرفوض"
+    },
+    "memberStatus": {
+      "ACTIVE": "نشط",
+      "INVITED": "تم إرسال الدعوة",
+      "INACTIVE": "غير نشط"
+    },
+    "spaceCategories": {
+      "FORMATION": "تدريب",
+      "TRAVAIL": "عمل",
+      "REUNION": "اجتماع",
+      "ATELIER": "ورشة عمل",
+      "EVENEMENT": "فعالية"
+    },
+    "spaceStatus": {
+      "ACTIVE": "نشط",
+      "INACTIVE": "غير نشط",
+      "MAINTENANCE": "صيانة"
+    },
+    "bookingStatus": {
+      "PENDING": "قيد الانتظار",
+      "CONFIRMED": "مؤكد",
+      "CANCELLED": "ملغى",
+      "COMPLETED": "مكتمل",
+      "NO_SHOW": "غائب"
+    },
+    "paymentStatus": {
+      "PENDING": "قيد الانتظار",
+      "PARTIAL": "جزئي",
+      "PAID": "مدفوع",
+      "REFUNDED": "مسترد"
+    },
+    "spacePricingTypes": {
+      "HOURLY": "بالساعة",
+      "DAILY": "باليوم",
+      "WEEKLY": "بالأسبوع",
+      "MONTHLY": "بالشهر"
+    },
+    "spacePricingUnits": {
+      "HOURLY": "/ساعة",
+      "DAILY": "/يوم",
+      "WEEKLY": "/أسبوع",
+      "MONTHLY": "/شهر"
+    },
+    "spaceEquipment": {
+      "VIDEOPROJECTOR": "جهاز عرض",
+      "WHITEBOARD": "سبورة بيضاء",
+      "FLIPCHART": "لوح قلاب",
+      "SCREEN": "شاشة",
+      "SOUND_SYSTEM": "نظام صوتي",
+      "MICROPHONE": "ميكروفون",
+      "WEBCAM": "كاميرا ويب",
+      "TV_SCREEN": "شاشة تلفزيون",
+      "VIDEO_CONFERENCE": "مؤتمرات فيديو",
+      "COMPUTERS": "حواسيب",
+      "PRINTERS": "طابعات",
+      "PHONE": "هاتف"
+    },
+    "spaceAmenities": {
+      "WIFI": "Wi-Fi",
+      "AIR_CONDITIONING": "تكييف",
+      "HEATING": "تدفئة",
+      "PARKING": "موقف سيارات",
+      "CAFETERIA": "كافتيريا",
+      "KITCHEN": "مطبخ",
+      "RESTROOMS": "دورات مياه",
+      "RECEPTION": "استقبال",
+      "SECURITY": "أمن",
+      "ELEVATOR": "مصعد",
+      "NATURAL_LIGHT": "إضاءة طبيعية",
+      "SOUNDPROOF": "عزل صوتي"
+    },
+    "spaceAccessibility": {
+      "WHEELCHAIR_ACCESS": "وصول الكراسي المتحركة",
+      "ELEVATOR": "مصعد مجهز",
+      "ACCESSIBLE_RESTROOM": "دورات مياه مجهزة",
+      "WIDE_DOORS": "أبواب واسعة (>90سم)",
+      "TACTILE_GUIDANCE": "توجيه لمسي",
+      "HEARING_LOOP": "حلقة سمعية",
+      "HANDICAP_PARKING": "موقف لذوي الاحتياجات الخاصة",
+      "BRAILLE_SIGNAGE": "لافتات بطريقة برايل"
+    },
+    "communityTags": {
+      "PROFESSIONAL": "محترفون",
+      "STUDENT": "طلاب",
+      "ENTREPRENEUR": "رواد أعمال",
+      "TECH": "تكنولوجيا وابتكار",
+      "CREATIVE": "مبدعون وفنانون",
+      "SOCIAL_IMPACT": "أثر اجتماعي",
+      "ALUMNI": "خريجون",
+      "WOMEN": "نساء",
+      "YOUTH": "شباب",
+      "CLUB_ASSOCIATION": "نادي / جمعية"
+    },
+    "weekdays": {
+      "0": "الأحد",
+      "1": "الإثنين",
+      "2": "الثلاثاء",
+      "3": "الأربعاء",
+      "4": "الخميس",
+      "5": "الجمعة",
+      "6": "السبت"
+    },
+    "weekdaysShort": {
+      "0": "أحد",
+      "1": "إثن",
+      "2": "ثلا",
+      "3": "أرب",
+      "4": "خمي",
+      "5": "جمع",
+      "6": "سبت"
+    },
+    "entityLabels": {
+      "opportunity": "فرصة",
+      "community": "مجتمع",
+      "space": "مساحة",
+      "organization": "مؤسسة",
+      "talent": "موهبة",
+      "document": "مستند"
+    },
+    "documentCategories": {
+      "PROFESSIONAL": "مهني",
+      "ACADEMIC": "أكاديمي",
+      "IDENTITY": "هوية",
+      "OTHER": "أخرى"
+    },
+    "documentStatuses": {
+      "PENDING": "قيد الانتظار",
+      "PROCESSING": "قيد المعالجة",
+      "PROCESSED": "تمت المعالجة",
+      "FAILED": "فشل",
+      "VERIFIED": "تم التحقق",
+      "REJECTED": "مرفوض"
+    },
+    "profileFields": {
+      "bio": "نبذة",
+      "city": "المدينة",
+      "country": "البلد",
+      "goals": "الأهداف",
+      "sectors": "قطاعات النشاط",
+      "remote_ready": "العمل عن بعد",
+      "willing_to_relocate": "مستعد للانتقال",
+      "profile_tags": "الوسوم"
+    },
+    "membershipQuestions": {
+      "motivation": "لماذا تريد الانضمام إلى هذا المجتمع؟",
+      "contribution": "كيف تخطط للمساهمة في المجتمع؟",
+      "background": "ما هي خلفيتك المهنية؟",
+      "referral": "كيف سمعت عنا؟",
+      "expectations": "ما هي توقعاتك من هذا المجتمع؟"
+    }
+  }
+}

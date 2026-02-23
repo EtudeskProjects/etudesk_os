@@ -1,0 +1,23 @@
+{
+  "authRequired": "Autenticación requerida",
+  "notOrgMember": "No eres miembro de esta organización",
+  "favoritesAddError": "Error al agregar a favoritos",
+  "favoritesRemoved": "Talento eliminado de favoritos",
+  "favoritesRemoveError": "Error al eliminar de favoritos",
+  "tagsError": "Error al obtener las etiquetas",
+  "tagNameRequired": "El nombre de la etiqueta es requerido",
+  "tagExists": "Ya existe una etiqueta con este nombre",
+  "tagCreateError": "Error al crear la etiqueta",
+  "tagNotFound": "Etiqueta no encontrada",
+  "tagUpdateError": "Error al actualizar la etiqueta",
+  "tagDeleted": "Etiqueta eliminada",
+  "tagDeleteError": "Error al eliminar la etiqueta",
+  "tagAssigned": "Etiqueta asignada",
+  "tagAssignError": "Error al asignar la etiqueta",
+  "tagRemoved": "Etiqueta retirada",
+  "tagRemoveError": "Error al retirar la etiqueta",
+  "favoritesAdded": "Talento agregado a favoritos",
+  "favoritesListError": "Error al obtener los favoritos",
+  "talentsListError": "Error al obtener los talentos",
+  "talentsCountError": "Error al contar los talentos"
+}

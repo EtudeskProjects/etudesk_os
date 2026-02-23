@@ -1,0 +1,69 @@
+{
+  "otp": {
+    "subject": "{{code}} - 你的登录验证码",
+    "title": "登录验证码",
+    "yourCode": "你的登录验证码",
+    "validFor": "有效期 {{minutes}} 分钟",
+    "neverShare": "请不要将此验证码分享给任何人"
+  },
+  "welcome": {
+    "subject": "欢迎来到 Etudesk，{{name}}！",
+    "title": "欢迎来到 Etudesk！",
+    "greeting": "你好 {{name}}，",
+    "congratulations": "你的人才档案已在 Etudesk 上激活。以下是你可以做的：",
+    "feature1": "发现工作、实习和自由职业机会",
+    "feature2": "加入专业社区",
+    "feature3": "寻找共享办公空间和孵化器",
+    "feature4": "通过 AI 助手拓展人脉",
+    "exploreButton": "探索 Etudesk",
+    "copyright": "© {{year}} Etudesk. 保留所有权利。"
+  },
+  "orgInvite": {
+    "subject": "{{inviter}} 邀请你加入 Etudesk 上的 {{organization}}",
+    "title": "你收到了邀请！",
+    "inviterInvites": "{{inviter}} 邀请你加入组织",
+    "asRole": "担任 {{role}}",
+    "connectToAccept": "登录 Etudesk 接受邀请并开始协作。",
+    "viewInvitation": "查看邀请",
+    "expiresIn": "此邀请将在7天后过期。",
+    "copyright": "© {{year}} Etudesk. 保留所有权利。",
+    "roles": {
+      "OWNER": "所有者",
+      "ADMIN": "管理员",
+      "MANAGER": "经理",
+      "MEMBER": "成员",
+      "OBSERVER": "观察员"
+    }
+  },
+  "communityInvite": {
+    "subject": "{{inviter}} 邀请你加入 {{community}}",
+    "title": "你收到了邀请！",
+    "greeting": "你好 {{name}}，",
+    "inviterInvites": "{{inviter}} 邀请你加入社区",
+    "asRole": "担任 {{role}}",
+    "connectToAccept": "登录 Etudesk 接受邀请并加入社区。",
+    "viewInvitation": "查看邀请",
+    "expiresIn": "此邀请将在7天后过期。",
+    "copyright": "© {{year}} Etudesk. 保留所有权利。",
+    "roles": {
+      "ADMIN": "管理员",
+      "MEMBER": "成员"
+    }
+  },
+  "spaceInvite": {
+    "subject": "{{inviter}} 邀请你了解 {{space}}",
+    "title": "空间邀请",
+    "greeting": "你好 {{name}}，",
+    "inviterInvites": "{{inviter}} 邀请你了解空间",
+    "viewInvitation": "查看邀请",
+    "expiresIn": "此邀请将在7天后过期。"
+  },
+  "opportunityInvite": {
+    "subject": "{{inviter}} 邀请你申请 — {{opportunity}}",
+    "title": "申请邀请",
+    "greeting": "你好 {{name}}，",
+    "inviterInvites": "{{organization}} 的 {{inviter}} 邀请你申请该机会",
+    "viewOpportunity": "查看机会",
+    "expiresIn": "此邀请将在7天后过期。"
+  }
+}

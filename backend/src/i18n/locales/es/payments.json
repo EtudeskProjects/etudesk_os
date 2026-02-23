@@ -1,0 +1,10 @@
+{
+  "fetchError": "Error al obtener los métodos de pago",
+  "invalidProvider": "Proveedor de pago inválido",
+  "invalidPhone": "Número de teléfono inválido",
+  "alreadyExists": "Este método de pago ya existe",
+  "addError": "Error al agregar el método de pago",
+  "notFound": "Método de pago no encontrado",
+  "setDefaultError": "Error al establecer el método de pago predeterminado",
+  "deleteError": "Error al eliminar el método de pago"
+}

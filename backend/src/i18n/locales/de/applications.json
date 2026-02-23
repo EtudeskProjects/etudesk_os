@@ -1,0 +1,23 @@
+{
+  "created": "Bewerbung eingereicht",
+  "updated": "Bewerbung aktualisiert",
+  "deleted": "Bewerbung geloescht",
+  "deletedCanReapply": "Bewerbung geloescht. Du kannst dich erneut bewerben.",
+  "notFound": "Bewerbung nicht gefunden",
+  "alreadyApplied": "Du hast dich bereits auf diese Opportunity beworben",
+  "withdrawn": "Bewerbung zurueckgezogen",
+  "statusUpdated": "Status aktualisiert",
+  "notAuthorized": "Du bist nicht berechtigt, diese Bewerbung zu verwalten",
+  "notAuthorizedOpportunity": "Zugriff auf diese Opportunity nicht autorisiert",
+  "accessDenied": "Zugriff nicht autorisiert",
+  "cannotWithdraw": "Eine bereits bearbeitete Bewerbung kann nicht zurueckgezogen werden",
+  "opportunityClosed": "Diese Opportunity nimmt keine Bewerbungen mehr an",
+  "opportunityNotFound": "Opportunity nicht gefunden",
+  "deadlinePassed": "Die Bewerbungsfrist ist abgelaufen",
+  "cannotApplyOwnOpportunity": "Du kannst dich nicht auf deine eigene Opportunity bewerben",
+  "ratingUpdated": "Bewertung aktualisiert",
+  "noteUpdated": "Kommentar aktualisiert",
+  "messageEmpty": "Die Nachricht darf nicht leer sein",
+  "organizationFirstMessage": "Du kannst das Gespraech nicht starten. Warte, bis die Organisation dich kontaktiert.",
+  "unableToGenerateRecommendation": "Empfehlung konnte nicht generiert werden"
+}

@@ -1,0 +1,10 @@
+{
+  "fetchError": "Recupero dei metodi di pagamento fallito",
+  "invalidProvider": "Fornitore di pagamento non valido",
+  "invalidPhone": "Numero di telefono non valido",
+  "alreadyExists": "Questo metodo di pagamento esiste già",
+  "addError": "Aggiunta del metodo di pagamento fallita",
+  "notFound": "Metodo di pagamento non trovato",
+  "setDefaultError": "Impostazione del metodo di pagamento predefinito fallita",
+  "deleteError": "Eliminazione del metodo di pagamento fallita"
+}

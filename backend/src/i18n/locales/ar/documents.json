@@ -1,0 +1,22 @@
+{
+  "fetchError": "خطأ أثناء جلب المستندات",
+  "fetchStatsError": "خطأ أثناء جلب الإحصائيات",
+  "notFound": "المستند غير موجود",
+  "fetchSingleError": "خطأ أثناء جلب المستند",
+  "identityNotVerified": "الهوية غير موثّقة",
+  "identityRequiredCode": "IDENTITY_REQUIRED",
+  "identityRequiredMessage": "يجب التحقق من هويتك قبل إضافة مستندات. انتقل إلى الإعدادات > التحقق من الهوية.",
+  "maxFilesPerRequest": "الحد الأقصى {{count}} ملفات لكل طلب",
+  "maxDocumentsExceeded": "يمكنك إضافة {{remaining}} مستند(مستندات) إضافية فقط. الحد: {{max}}.",
+  "invalidDocumentType": "نوع المستند غير صالح",
+  "uploadSuccess": "تم رفع المستند بنجاح. المعالجة جارية.",
+  "uploadMultipleSuccess": "تم رفع {{count}} مستندات بنجاح. المعالجة جارية.",
+  "uploadError": "خطأ أثناء رفع المستند",
+  "updateSuccess": "تم تحديث المستند بنجاح",
+  "updateError": "خطأ أثناء تحديث المستند",
+  "deleteSuccess": "تم حذف المستند بنجاح",
+  "deleteError": "خطأ أثناء حذف المستند",
+  "retrySuccess": "تم إطلاق محاولة استخراج جديدة",
+  "retryError": "خطأ أثناء محاولة الاستخراج",
+  "fileTooLarge": "الملف كبير جداً. الحد الأقصى: {{size}} ميغابايت"
+}

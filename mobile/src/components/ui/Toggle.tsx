@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { BORDER, LAYOUT, OPACITY, COMPONENT, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { Tap } from './Tap';
 
 interface ToggleProps {
@@ -30,6 +31,7 @@ export function Toggle({
   accessibilityHint,
 }: ToggleProps) {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const activeColor = color || colors.primary;
   // Use design system tokens instead of hardcoded values
   const { trackWidth, trackHeight, thumbSize } = COMPONENT.toggle[size];
@@ -60,7 +62,7 @@ export function Toggle({
       accessible={true}
       accessibilityRole="switch"
       accessibilityLabel={accessibilityLabel}
-      accessibilityHint={accessibilityHint || (value ? 'Désactiver' : 'Activer')}
+      accessibilityHint={accessibilityHint || (value ? t('common.disable') : t('common.enable'))}
       accessibilityState={{
         checked: value,
         disabled: disabled,

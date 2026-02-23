@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { Alert, AlertType, AlertButton } from '../components/ui/Alert';
 import { PromptModal, PromptModalOptions } from '../components/ui/PromptModal';
+import i18n from '../i18n';
 
 interface AlertOptions {
   type?: AlertType;
@@ -165,12 +166,12 @@ export function AlertProvider({ children }: AlertProviderProps) {
         dismissable: false,
         buttons: [
           {
-            text: 'Annuler',
+            text: i18n.t('common.cancel'),
             style: 'cancel',
             onPress: () => resolve(false),
           },
           {
-            text: 'Confirmer',
+            text: i18n.t('common.confirm'),
             onPress: () => resolve(true),
           },
         ],

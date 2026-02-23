@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { TYPOGRAPHY, SPACING, BORDER, ICON, OPACITY, COMPONENT, ThemeColors } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
+import { useI18n } from '../../contexts/I18nContext';
 import { Clock, CheckCircle2, XCircle, Archive, AlertCircle } from 'lucide-react-native';
 
 export type MemberStatus = 'PENDING' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED' | 'ARCHIVED';
@@ -13,36 +14,36 @@ interface StatusBadgeProps {
 }
 
 // Status configuration using theme color keys
-const getStatusConfig = (colors: ThemeColors) => ({
+const getStatusConfig = (colors: ThemeColors, t: (key: string) => string) => ({
     PENDING: {
         color: colors.statusPending,
         icon: Clock,
         bgColor: colors.warningLight,
-        label: 'En attente'
+        label: t('statusBadge.pending'),
     },
     ACTIVE: {
         color: colors.statusActive,
         icon: CheckCircle2,
         bgColor: colors.successLight,
-        label: 'Membre actif'
+        label: t('statusBadge.active'),
     },
     REJECTED: {
         color: colors.statusRejected,
         icon: XCircle,
         bgColor: colors.errorLight,
-        label: 'Refusée'
+        label: t('statusBadge.rejected'),
     },
     SUSPENDED: {
         color: colors.statusSuspended,
         icon: AlertCircle,
         bgColor: colors.infoLight,
-        label: 'Suspendu'
+        label: t('statusBadge.suspended'),
     },
     ARCHIVED: {
         color: colors.statusArchived,
         icon: Archive,
         bgColor: colors.gray100,
-        label: 'Archivé'
+        label: t('statusBadge.archived'),
     },
 });
 
@@ -52,7 +53,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     size = 'md'
 }) => {
     const { colors } = useTheme();
-    const STATUS_CONFIG = getStatusConfig(colors);
+    const { t } = useI18n();
+    const STATUS_CONFIG = getStatusConfig(colors, t);
     const config = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
     const StatusIcon = config.icon;
 

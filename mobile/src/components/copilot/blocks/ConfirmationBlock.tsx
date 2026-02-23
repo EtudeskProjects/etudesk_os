@@ -22,9 +22,12 @@ import {
   Maximize2,
 } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
+import { useI18n } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
 import { copilotService } from '../../../services/copilotService';
 import { formatNumberNoTrailingZeros } from '../../../utils/number';
+import { getLabel } from '../../../utils/labels';
+import i18n from '../../../i18n';
 import { Button, ShimmerPlaceholder } from '../../ui';
 
 /** Storage key for persisting confirmation action results */
@@ -51,30 +54,13 @@ interface ConfirmationBlockProps {
 
 type BlockState = 'idle' | 'loading' | 'success' | 'error';
 
-// --- Human-Readable Mappings ---
-const CONTRACT_LABELS: Record<string, string> = {
-  CDI: 'CDI', CDD: 'CDD', STAGE: 'Stage', FREELANCE: 'Freelance',
-  ALTERNANCE: 'Alternance', INTERIM: 'Intérim', BENEVOLAT: 'Bénévolat',
-};
-const RHYTHM_LABELS: Record<string, string> = {
-  FULL_TIME: 'Temps plein', PART_TIME: 'Temps partiel', FLEXIBLE: 'Flexible',
-};
-const LOCATION_LABELS: Record<string, string> = {
-  ON_SITE: 'Sur site', REMOTE: 'À distance', HYBRID: 'Hybride',
-};
-const COMMUNITY_TYPE_LABELS: Record<string, string> = {
-  PROFESSIONAL: 'Professionnel', ACADEMIC: 'Académique', SOCIAL: 'Social',
-  INDUSTRY: 'Industrie', ALUMNI: 'Alumni', RESEARCH: 'Recherche',
-};
-const ACCESS_LABELS: Record<string, string> = {
-  OPEN: 'Ouvert', APPROVAL_REQUIRED: 'Sur approbation', INVITE_ONLY: 'Sur invitation',
-};
-const SPACE_TYPE_LABELS: Record<string, string> = {
-  COWORKING: 'Coworking', MEETING_ROOM: 'Salle de réunion', CONFERENCE: 'Conférence',
-  OFFICE: 'Bureau', EVENT_SPACE: 'Événementiel', WORKSHOP: 'Atelier',
-  STUDIO: 'Studio', CLASSROOM: 'Salle de cours', LAB: 'Laboratoire',
-  LIBRARY: 'Bibliothèque', OTHER: 'Autre',
-};
+// --- Human-Readable Mappings (i18n) ---
+const getContractLabel = (key: string) => getLabel('confirmationLabels.contractTypes', key);
+const getRhythmLabel = (key: string) => getLabel('confirmationLabels.workRhythms', key);
+const getLocationLabel = (key: string) => getLabel('confirmationLabels.locationTypes', key);
+const getCommunityTypeLabel = (key: string) => getLabel('confirmationLabels.communityCategories', key);
+const getAccessLabel = (key: string) => getLabel('confirmationLabels.joinPolicies', key);
+const getSpaceTypeLabel = (key: string) => getLabel('confirmationLabels.spaceCategories', key);
 
 function formatCurrency(amount: number): string {
   if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1).replace('.0', '')}M`;
@@ -84,9 +70,9 @@ function formatCurrency(amount: number): string {
 
 // --- Preview Renderers ---
 function OpportunityPreview({ data, colors }: { data: Record<string, any>; colors: any }) {
-  const contract = CONTRACT_LABELS[data.contract_type] || data.contract_type;
-  const rhythm = RHYTHM_LABELS[data.work_rhythm] || null;
-  const locationType = LOCATION_LABELS[data.location_type] || null;
+  const contract = getContractLabel(data.contract_type) || data.contract_type;
+  const rhythm = data.work_rhythm ? getRhythmLabel(data.work_rhythm) : null;
+  const locationType = data.location_type ? getLocationLabel(data.location_type) : null;
   const location = data.locations?.[0];
   const locationStr = location ? `${location.city || ''}${location.country ? ', ' + location.country : ''}`.trim() : null;
   const hasCompensation = data.compensation_min || data.compensation_max;
@@ -115,7 +101,7 @@ function OpportunityPreview({ data, colors }: { data: Record<string, any>; color
         />
       )}
       {data.deadline && (
-        <DetailRow icon={Calendar} text={`Deadline : ${new Date(data.deadline).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`} colors={colors} />
+        <DetailRow icon={Calendar} text={`${i18n.t('common.deadline')} : ${new Date(data.deadline).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`} colors={colors} />
       )}
 
       {/* Summary */}
@@ -128,7 +114,7 @@ function OpportunityPreview({ data, colors }: { data: Record<string, any>; color
       {/* Requirements */}
       {data.requirements && (
         <View style={[styles.previewSection, { borderTopColor: colors.borderColor }]}>
-          <Text style={[styles.previewSectionLabel, { color: colors.textSecondary }]}>Profil recherché</Text>
+          <Text style={[styles.previewSectionLabel, { color: colors.textSecondary }]}>{i18n.t('common.soughtProfile')}</Text>
           <Text style={[styles.previewSectionText, { color: colors.textPrimary }]} numberOfLines={3}>
             {data.requirements}
           </Text>
@@ -149,8 +135,8 @@ function OpportunityPreview({ data, colors }: { data: Record<string, any>; color
 }
 
 function CommunityPreview({ data, colors }: { data: Record<string, any>; colors: any }) {
-  const type = COMMUNITY_TYPE_LABELS[data.type] || data.type || 'Professionnel';
-  const access = ACCESS_LABELS[data.access_type] || data.access_type || 'Ouvert';
+  const type = getCommunityTypeLabel(data.type) || data.type;
+  const access = getAccessLabel(data.access_type) || data.access_type;
 
   return (
     <View style={styles.previewBody}>
@@ -184,7 +170,7 @@ function CommunityPreview({ data, colors }: { data: Record<string, any>; colors:
 }
 
 function SpacePreview({ data, colors }: { data: Record<string, any>; colors: any }) {
-  const type = SPACE_TYPE_LABELS[data.type] || data.type;
+  const type = getSpaceTypeLabel(data.type) || data.type;
   const locationStr = data.city ? `${data.city}${data.country ? ', ' + data.country : ''}` : null;
 
   return (
@@ -250,58 +236,42 @@ function DetailRow({ icon: Icon, text, colors }: { icon: any; text: string; colo
 }
 
 function ProfileUpdatePreview({ data, colors }: { data: Record<string, any>; colors: any }) {
-  const FIELD_LABELS: Record<string, string> = {
-    bio: 'Bio',
-    city: 'Ville',
-    country: 'Pays',
-    goals: 'Objectifs',
-    sectors: 'Secteurs d\'activité',
-    remote_ready: 'Travail à distance',
-    willing_to_relocate: 'Prêt à déménager',
-    profile_tags: 'Tags',
-  };
+  const getFieldLabel = (key: string) => getLabel('profileFields', key);
 
-  const ENUM_LABELS: Record<string, string> = {
-    LEARN_NEW_SKILLS: 'Apprendre', PREPARE_EXAMS: 'Préparer des examens',
-    FIND_JOB: 'Trouver un emploi', ADVANCE_CAREER: 'Évoluer dans ma carrière',
-    RESEARCH_SUPPORT: 'Recherche', IMPROVE_PRODUCTIVITY: 'Productivité',
-    COLLABORATIVE_LEARNING: 'Apprentissage collaboratif', TEACH_OR_MENTOR: 'Enseigner / Mentorer',
-    BUILD_NETWORK_OR_VISIBILITY: 'Réseau & Visibilité', CONTRIBUTE_OR_GIVE_BACK: 'Contribuer',
-    STUDENT: 'Étudiant', PUPIL: 'Élève', JOB_SEEKER: 'En recherche d\'emploi',
-    SALARIED: 'Salarié', ENTREPRENEUR: 'Entrepreneur', CIVIL_SERVANT: 'Fonctionnaire',
-    MANAGER: 'Manager', CONSULTANT: 'Consultant', INVESTOR: 'Investisseur',
-    CONTENT_CREATOR: 'Créateur de contenu', COACH: 'Coach', RETIRED: 'Retraité',
-    // Sectors
-    AGRICULTURE: 'Agriculture', RESOURCES: 'Ressources naturelles', ENERGY: 'Énergie',
-    ENVIRONMENT: 'Environnement', INDUSTRY: 'Industrie', CONSTRUCTION: 'Construction',
-    TRANSPORT: 'Transport & Logistique', COMMERCE: 'Commerce', FINANCE: 'Finance & Banque',
-    DIGITAL: 'Numérique & Tech', MEDIA: 'Médias & Communication', TOURISM: 'Tourisme & Hôtellerie',
-    HEALTH: 'Santé', EDUCATION: 'Éducation & Formation', PROFESSIONAL_SERVICES: 'Services professionnels',
-    RESEARCH: 'Recherche', PUBLIC: 'Secteur public', SECURITY: 'Sécurité & Défense',
-    SOCIAL_IMPACT: 'Impact social', PERSONAL_SERVICES: 'Services à la personne', CRAFTS: 'Artisanat',
+  const PROFILE_FIELD_KEYS = ['bio', 'city', 'country', 'goals', 'sectors', 'remote_ready', 'willing_to_relocate', 'profile_tags'];
+
+  /** Resolve enum value: try goals, profileTags, sectors in order */
+  const resolveEnum = (v: string): string => {
+    const goal = getLabel('goals', v);
+    if (goal !== v) return goal;
+    const tag = getLabel('profileTags', v);
+    if (tag !== v) return tag;
+    const sector = getLabel('sectors', v);
+    if (sector !== v) return sector;
+    return v;
   };
 
   const formatValue = (value: any): string => {
-    if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
-    if (Array.isArray(value)) return value.map(v => ENUM_LABELS[v] || v).join(', ');
+    if (typeof value === 'boolean') return value ? getLabel('common', 'yes') : getLabel('common', 'no');
+    if (Array.isArray(value)) return value.map(v => resolveEnum(v)).join(', ');
     return String(value);
   };
 
-  const entries = Object.entries(data).filter(([key]) => FIELD_LABELS[key]);
+  const entries = Object.entries(data).filter(([key]) => PROFILE_FIELD_KEYS.includes(key));
 
   return (
     <View style={styles.previewBody}>
       {entries.map(([key, value]) => (
         <View key={key} style={styles.profileUpdateRow}>
           <Text style={[styles.profileUpdateLabel, { color: colors.textSecondary }]}>
-            {FIELD_LABELS[key]}
+            {getFieldLabel(key)}
           </Text>
           {Array.isArray(value) ? (
             <View style={styles.profileTagsWrap}>
               {value.map((v: string, i: number) => (
                 <View key={i} style={[styles.profileTagChip, { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: colors.primary }]}>
                   <Text style={[styles.profileTagChipText, { color: colors.primary }]}>
-                    {ENUM_LABELS[v] || v}
+                    {resolveEnum(v) || v}
                   </Text>
                 </View>
               ))}
@@ -342,6 +312,7 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
   interactive = true,
 }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [state, setState] = useState<BlockState>('idle');
   const [resultMessage, setResultMessage] = useState('');
   const [loaded, setLoaded] = useState(false);
@@ -362,8 +333,8 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
     }).catch(() => setLoaded(true));
   }, [storageKey]);
 
-  const confirmLabel = data.confirm_label || 'Confirmer';
-  const cancelLabel = data.cancel_label || 'Annuler';
+  const confirmLabel = data.confirm_label || t('common.confirm');
+  const cancelLabel = data.cancel_label || t('common.cancel');
   const hasPreview = renderPreview(data.action, data.data, colors) !== null;
 
   /** Persist resolved state so it survives conversation reload */
@@ -388,19 +359,19 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
       );
 
       if (response.success && response.data) {
-        persistState('success', response.data.message || 'Action effectuée.');
+        persistState('success', response.data.message || t('common.actionDone'));
       } else {
         setState('error');
-        setResultMessage(response.data?.message || response.error || 'Une erreur est survenue.');
+        setResultMessage(response.data?.message || response.error || t('common.genericError'));
       }
     } catch (err: any) {
       setState('error');
-      setResultMessage(err.message || 'Erreur de connexion.');
+      setResultMessage(err.message || t('common.connectionError'));
     }
   };
 
   const handleCancel = () => {
-    persistState('success', 'Action annulée.');
+    persistState('success', t('common.actionCancelled'));
   };
 
   const handleRetry = () => {
@@ -455,7 +426,7 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
       {/* Not interactive hint */}
       {!interactive && state === 'idle' && (
         <Text style={[styles.hintText, { color: colors.textDisabled }]}>
-          Action expirée
+          {t('common.actionExpired')}
         </Text>
       )}
 
@@ -464,7 +435,7 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
         <View style={styles.statusRow}>
           <ShimmerPlaceholder width={24} height={14} variant="bar" />
           <Text style={[styles.statusText, { color: colors.textSecondary }]}>
-            Traitement en cours...
+            {t('common.processing')}
           </Text>
         </View>
       )}
@@ -489,7 +460,7 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
             </Text>
           </View>
           <Button
-            title="Réessayer"
+            title={t('common.retry')}
             onPress={handleRetry}
             variant="outline"
             icon={<RefreshCw size={12} color={colors.error} strokeWidth={ICON.strokeWidth} />}

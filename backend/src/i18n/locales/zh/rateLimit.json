@@ -1,0 +1,14 @@
+{
+  "tooManyRequests": "请求过于频繁，请几分钟后再试。",
+  "tooManyLoginAttempts": "登录尝试次数过多，请15分钟后再试。",
+  "codeLimitReached": "验证码发送次数已达上限，请1小时后再试。",
+  "tooManyApplications": "你提交的申请太多了，请稍后再试。",
+  "tooManyOperations": "操作过于频繁，请几分钟后再试。",
+  "tooManySearches": "搜索太频繁了，请稍等一下。",
+  "tooManyMessages": "消息发送太频繁了，请稍等一下。",
+  "tooManyCopilotRequests": "Copilot 请求太频繁了，请稍等一下。",
+  "tooManyDemands": "请求太多了，请1小时后再试。",
+  "webhookLimitExceeded": "Webhook 请求过多。",
+  "webhookRetryLimitExceeded": "Webhook 请求过多，请重试。",
+  "exportLimitReached": "导出次数已达上限，请稍后再试。"
+}

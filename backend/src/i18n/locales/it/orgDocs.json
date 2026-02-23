@@ -1,0 +1,15 @@
+{
+  "authRequired": "Autenticazione richiesta",
+  "notOrgMember": "Non sei membro di questa organizzazione",
+  "fetchError": "Errore durante il recupero dei documenti",
+  "statsError": "Errore durante il recupero delle statistiche",
+  "notFound": "Documento non trovato",
+  "noFileProvided": "Nessun file fornito",
+  "invalidDocType": "Tipo di documento non valido",
+  "uploadError": "Errore durante il caricamento del documento",
+  "updated": "Documento aggiornato con successo",
+  "updateError": "Errore durante l'aggiornamento del documento",
+  "deleted": "Documento eliminato con successo",
+  "deleteError": "Errore durante l'eliminazione del documento",
+  "extractionRestarted": "Estrazione riavviata"
+}

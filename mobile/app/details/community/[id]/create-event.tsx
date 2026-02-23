@@ -10,11 +10,13 @@ import { Button, IconButton, Input, Toggle } from '../../../../src/components/ui
 import { communityActivityService } from '../../../../src/services';
 import { useAlert } from '../../../../src/contexts/AlertContext';
 import { ScrollToInputContext } from '../../../../src/contexts/ScrollToInputContext';
+import { useI18n } from '../../../../src/contexts/I18nContext';
 
 export default function CreateEventScreen() {
     const { id, activityId } = useLocalSearchParams<{ id: string; activityId?: string }>();
     const router = useRouter();
     const { colors, isDark } = useTheme();
+    const { t, locale } = useI18n();
 
     // Edit mode - when activityId is provided, we're editing an existing event
     const isEditMode = !!activityId;
@@ -108,15 +110,15 @@ export default function CreateEventScreen() {
     // Handle back button with confirmation
     const handleBack = useCallback(() => {
         if (hasUnsavedChanges && !isSubmitting) {
-            void alerts.showAlert({ title: 'Modifications non sauvegardées', message: 'Voulez-vous quitter sans sauvegarder ?', buttons: [
-                    { text: 'Continuer', style: 'cancel' },
-                    { text: 'Quitter', style: 'destructive', onPress: () => router.back() },
+            void alerts.showAlert({ title: t('common.unsavedChanges.title'), message: t('common.unsavedChanges.message'), buttons: [
+                    { text: t('common.continueEditing'), style: 'cancel' },
+                    { text: t('common.leave'), style: 'destructive', onPress: () => router.back() },
                 ] });
             return true;
         }
         router.back();
         return true;
-    }, [hasUnsavedChanges, isSubmitting, router]);
+    }, [alerts, hasUnsavedChanges, isSubmitting, router, t]);
 
     // Android back button handler
     useEffect(() => {
@@ -154,7 +156,7 @@ export default function CreateEventScreen() {
             }
         } else {
             if (selectedDate < startDate) {
-                void alerts.alert("Erreur", "La date de fin ne peut pas être avant la date de début");
+                void alerts.alert(t('common.error'), t('community.createEvent.endBeforeStartError'));
                 return;
             }
             setEndDate(selectedDate);
@@ -180,7 +182,7 @@ export default function CreateEventScreen() {
 
     const handleSaveAsDraft = async () => {
         if (!title.trim()) {
-            void alerts.alert('Erreur', 'Veuillez ajouter un titre pour sauvegarder.');
+            void alerts.alert(t('common.error'), t('community.createEvent.titleRequiredDraft'));
             return;
         }
 
@@ -210,12 +212,12 @@ export default function CreateEventScreen() {
             }
 
             setHasUnsavedChanges(false);
-            void alerts.showAlert({ title: 'Succès', message: 'Brouillon sauvegardé !', buttons: [
-                { text: 'OK', onPress: () => router.back() }
+            void alerts.showAlert({ title: t('common.success'), message: t('common.draftSaved'), buttons: [
+                { text: t('community.createEvent.ok'), onPress: () => router.back() }
             ] });
         } catch (error: any) {
-            const message = error?.response?.data?.error || error?.message || 'Impossible de sauvegarder le brouillon.';
-            void alerts.alert('Erreur', message);
+            const message = error?.response?.data?.error || error?.message || t('common.saveDraftError');
+            void alerts.alert(t('common.error'), message);
         } finally {
             setIsSubmitting(false);
         }
@@ -223,7 +225,7 @@ export default function CreateEventScreen() {
 
     const handleSubmit = async () => {
         if (!title.trim() || (!isOnline && !location.trim())) {
-            void alerts.alert('Erreur', 'Veuillez remplir tous les champs obligatoires.');
+            void alerts.alert(t('common.error'), t('community.createEvent.requiredFields'));
             return;
         }
 
@@ -259,41 +261,41 @@ export default function CreateEventScreen() {
             }
 
             setHasUnsavedChanges(false);
-            void alerts.showAlert({ title: 'Succès', message: isEditMode ? 'Votre événement a été modifié !' : 'Votre événement a été créé !', buttons: [
-                { text: 'OK', onPress: () => router.back() }
+            void alerts.showAlert({ title: t('common.success'), message: isEditMode ? t('community.createEvent.updatedSuccess') : t('community.createEvent.createdSuccess'), buttons: [
+                { text: t('community.createEvent.ok'), onPress: () => router.back() }
             ] });
         } catch (error: any) {
             if (__DEV__) console.error('Failed to save event:', error);
-            const message = error?.response?.data?.error || error?.message || 'Impossible de sauvegarder l\'événement.';
-            void alerts.alert('Erreur', message);
+            const message = error?.response?.data?.error || error?.message || t('common.saveError');
+            void alerts.alert(t('common.error'), message);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const formatDate = (date: Date) => {
-        return date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        return date.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     };
 
     const formatTime = (date: Date) => {
-        return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     };
 
 	    if (isLoadingDraft) {
 	        return (
 	            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	                <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-	                    <IconButton
-	                        onPress={() => router.back()}
-	                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                        accessibilityLabel="Retour"
-	                        style={styles.headerButton}
-	                    />
-	                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Événement</Text>
-	                    <View style={{ width: 44 }} />
-	                </View>
-	                <View style={styles.loadingContainer}>
-                    <Text style={{ color: colors.textSecondary }}>Chargement...</Text>
+                    <IconButton
+                        onPress={() => router.back()}
+                        icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+                        accessibilityLabel={t('common.back')}
+                        style={styles.headerButton}
+                    />
+                    <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('community.createEvent.event')}</Text>
+                    <View style={{ width: 44 }} />
+                </View>
+                <View style={styles.loadingContainer}>
+                    <Text style={{ color: colors.textSecondary }}>{t('common.loading')}</Text>
                 </View>
             </SafeAreaView>
         );
@@ -302,23 +304,23 @@ export default function CreateEventScreen() {
 	    return (
 	        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
 	            <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
-	                <IconButton
-	                    onPress={handleBack}
-	                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
-	                    accessibilityLabel="Retour"
-	                    style={styles.headerButton}
-	                />
-	                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-	                    {isEditMode ? 'Modifier l\'événement' : hasDraft ? 'Brouillon' : 'Créer un événement'}
-	                </Text>
-	                <View style={{ width: 44 }} />
-	            </View>
+                <IconButton
+                    onPress={handleBack}
+                    icon={<ArrowLeft size={ICON.size.md} color={colors.textPrimary} strokeWidth={ICON.strokeWidth} />}
+                    accessibilityLabel={t('common.back')}
+                    style={styles.headerButton}
+                />
+                <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+                    {isEditMode ? t('community.createEvent.editEvent') : hasDraft ? t('common.draft') : t('community.createEvent.createEvent')}
+                </Text>
+                <View style={{ width: 44 }} />
+            </View>
 
             {!isEditMode && hasDraft && (
                 <View style={[styles.draftBanner, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
                     <SquarePen size={14} color={colors.primary} />
                     <Text style={[styles.draftBannerText, { color: colors.primary }]}>
-                        Modifications non publiées
+                        {t('common.unpublishedChanges')}
                     </Text>
                 </View>
             )}
@@ -337,16 +339,16 @@ export default function CreateEventScreen() {
                 keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
             >
                 <Input
-                    label="Titre de l'événement"
-                    placeholder="Ex: Conférence sur l'IA"
+                    label={t('community.createEvent.eventTitleLabel')}
+                    placeholder={t('community.createEvent.eventTitlePlaceholder')}
                     value={title}
                     onChangeText={setTitle}
                     containerStyle={styles.inputContainer}
                 />
 
                 <Input
-                    label="Lieu"
-                    placeholder="Ex: Paris ou Lien Zoom"
+                    label={t('community.createEvent.locationLabel')}
+                    placeholder={t('community.createEvent.locationPlaceholder')}
                     value={location}
                     onChangeText={setLocation}
                     leftIcon={<MapPin size={20} color={colors.gray500} />}
@@ -354,17 +356,17 @@ export default function CreateEventScreen() {
                 />
 
                 <View style={styles.row}>
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>En ligne</Text>
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>{t('common.online')}</Text>
                     <Toggle value={isOnline} onValueChange={setIsOnline} />
                 </View>
 
                 {/* Date Selection */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Date et heure</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('community.createEvent.dateTime')}</Text>
 
 	                    <View style={styles.dateRow}>
-	                        <View style={styles.dateCol}>
-	                            <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>Début</Text>
+		                        <View style={styles.dateCol}>
+		                            <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>{t('community.createEvent.start')}</Text>
 	                            <Button
 	                                title={formatDate(startDate)}
 	                                onPress={() => openPicker('start', 'date')}
@@ -385,8 +387,8 @@ export default function CreateEventScreen() {
 	                            />
 	                        </View>
 	
-	                        <View style={styles.dateCol}>
-	                            <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>Fin</Text>
+		                        <View style={styles.dateCol}>
+		                            <Text style={[styles.dateLabel, { color: colors.textSecondary }]}>{t('community.createEvent.end')}</Text>
 	                            <Button
 	                                title={formatDate(endDate)}
 	                                onPress={() => openPicker('end', 'date')}
@@ -410,10 +412,10 @@ export default function CreateEventScreen() {
 	                </View>
 
                 <View style={styles.inputContainer}>
-                    <Text style={[styles.label, { color: colors.textSecondary }]}>Description</Text>
+                    <Text style={[styles.label, { color: colors.textSecondary }]}>{t('community.createEvent.description')}</Text>
                     <Input
                         multiline
-                        placeholder="Détails de l'événement..."
+                        placeholder={t('community.createEvent.descriptionPlaceholder')}
                         placeholderTextColor={colors.gray500}
                         value={description}
                         onChangeText={setDescription}
@@ -426,20 +428,20 @@ export default function CreateEventScreen() {
             </ScrollView>
 
 	            <View style={[styles.footer, { borderTopColor: colors.borderColor }]}>
-	                {!isEditMode && (
-	                    <IconButton
-	                        onPress={handleSaveAsDraft}
-	                        icon={<Save size={18} color={colors.gray500} />}
-	                        accessibilityLabel="Enregistrer comme brouillon"
-	                        variant="outline"
-	                        size="lg"
-	                        disabled={!title.trim() || isSubmitting}
+                {!isEditMode && (
+                    <IconButton
+                        onPress={handleSaveAsDraft}
+                        icon={<Save size={18} color={colors.gray500} />}
+                        accessibilityLabel={t('common.saveDraft')}
+                        variant="outline"
+                        size="lg"
+                        disabled={!title.trim() || isSubmitting}
 	                        style={[styles.draftBtn, { borderColor: colors.borderColor }]}
 	                    />
 	                )}
 	                <View style={styles.submitBtnContainer}>
-	                    <Button
-	                        title={isEditMode ? "Modifier l'événement" : hasDraft ? "Publier l'événement" : "Créer l'événement"}
+                    <Button
+                        title={isEditMode ? t('community.createEvent.editEvent') : hasDraft ? t('community.createEvent.publishEvent') : t('community.createEvent.createEvent')}
                         onPress={handleSubmit}
                         loading={isSubmitting}
                         fullWidth
@@ -460,15 +462,15 @@ export default function CreateEventScreen() {
 	                    <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
 	                        <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
 	                            <View style={[styles.modalHeader, { borderBottomColor: colors.borderColor }]}>
-	                                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-	                                    {pickerMode === 'date' ? 'Sélectionner une date' : 'Sélectionner une heure'}
-	                                </Text>
-	                                <IconButton
-	                                    onPress={() => setShowPicker(false)}
-	                                    icon={<X size={20} color={colors.textSecondary} />}
-	                                    accessibilityLabel="Fermer"
-	                                    size="sm"
-	                                />
+                                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                                    {pickerMode === 'date' ? t('community.createEvent.selectDate') : t('community.createEvent.selectTime')}
+                                </Text>
+                                <IconButton
+                                    onPress={() => setShowPicker(false)}
+                                    icon={<X size={20} color={colors.textSecondary} />}
+                                    accessibilityLabel={t('common.close')}
+                                    size="sm"
+                                />
 	                            </View>
 	                            <DateTimePicker
 	                                value={tempDate}
@@ -481,17 +483,17 @@ export default function CreateEventScreen() {
                                 style={styles.picker}
 	                            />
 	                            <View style={styles.modalButtons}>
-	                                <Button
-	                                    title="Annuler"
-	                                    onPress={() => setShowPicker(false)}
-	                                    variant="secondary"
-	                                    style={{ flex: 1 }}
-	                                />
-	                                <Button
-	                                    title="Confirmer"
-	                                    onPress={() => confirmDateSelection()}
-	                                    variant="primary"
-	                                    style={{ flex: 1 }}
+                                <Button
+                                    title={t('common.cancel')}
+                                    onPress={() => setShowPicker(false)}
+                                    variant="secondary"
+                                    style={{ flex: 1 }}
+                                />
+                                <Button
+                                    title={t('common.confirm')}
+                                    onPress={() => confirmDateSelection()}
+                                    variant="primary"
+                                    style={{ flex: 1 }}
 	                                />
 	                            </View>
 	                        </View>

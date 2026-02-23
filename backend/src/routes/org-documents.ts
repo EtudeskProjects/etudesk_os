@@ -48,7 +48,7 @@ const upload = multer({
     if (ALLOWED_MIME_TYPES.includes(file.mimetype as (typeof ALLOWED_MIME_TYPES)[number])) {
       cb(null, true);
     } else {
-      cb(new Error(`Type de fichier non autorisé: ${file.mimetype}`));
+      cb(new Error(((_req as any).t || (() => `File type not allowed: ${file.mimetype}`))('documents:fileTypeNotAllowed', { mimetype: file.mimetype })));
     }
   },
 });
@@ -185,7 +185,7 @@ router.post(
 
       if (files.length > ORG_DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST) {
         return res.status(400).json({
-          error: `Maximum ${ORG_DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST} fichiers par requête`,
+          error: req.t('documents:maxFilesPerRequest', { count: ORG_DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST }),
         });
       }
 
@@ -196,7 +196,7 @@ router.post(
 
       if (limitCheck.currentCount + files.length > limitCheck.maxCount) {
         return res.status(400).json({
-          error: `Vous ne pouvez ajouter que ${limitCheck.maxCount - limitCheck.currentCount} document(s) supplémentaire(s). Limite: ${limitCheck.maxCount}.`,
+          error: req.t('documents:maxDocumentsExceeded', { remaining: limitCheck.maxCount - limitCheck.currentCount, max: limitCheck.maxCount }),
         });
       }
 
@@ -271,8 +271,8 @@ router.post(
       }
 
       const message = uploadedDocuments.length === 1
-        ? 'Document uploadé avec succès. Le traitement est en cours.'
-        : `${uploadedDocuments.length} documents uploadés avec succès. Le traitement est en cours.`;
+        ? req.t('documents:uploadSuccess')
+        : req.t('documents:uploadMultipleSuccess', { count: uploadedDocuments.length });
 
       return res.status(201).json({
         message,
@@ -369,16 +369,16 @@ router.post('/:id/retry', authMiddleware, async (req: AuthRequest, res: Response
 
 // --- Multer Error Handling ---
 
-router.use((error: Error, _req: Request, res: Response, next: Function) => {
+router.use((error: Error, req: Request, res: Response, next: Function) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
-        error: `Fichier trop volumineux. Maximum: ${ORG_DOCUMENT_LIMITS.MAX_FILE_SIZE_MB}MB`,
+        error: (req as any).t('documents:fileTooLarge', { size: ORG_DOCUMENT_LIMITS.MAX_FILE_SIZE_MB }),
       });
     }
     if (error.code === 'LIMIT_FILE_COUNT') {
       return res.status(400).json({
-        error: `Maximum ${ORG_DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST} fichiers par requête`,
+        error: (req as any).t('documents:maxFilesPerRequest', { count: ORG_DOCUMENT_LIMITS.MAX_FILES_PER_REQUEST }),
       });
     }
     return res.status(400).json({ error: error.message });
