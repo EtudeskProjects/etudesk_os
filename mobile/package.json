@@ -14,6 +14,7 @@
     "@react-native-community/datetimepicker": "8.4.4",
     "@types/react": "~19.1.10",
     "expo": "~54.0.33",
+    "expo-asset": "~12.0.12",
     "expo-audio": "~1.1.1",
     "expo-auth-session": "~7.0.10",
     "expo-calendar": "~15.0.8",

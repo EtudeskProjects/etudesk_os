@@ -60,7 +60,8 @@
       ],
       "expo-localization",
       "expo-audio",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

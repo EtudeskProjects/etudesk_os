@@ -1,5 +1,14 @@
 // Données de localisation — UEMOA (communes.json) + mondial (countries.json + regions/)
 import communesData from '../data/communes.json';
+import americasData from '../data/regions/americas.json';
+import asiaData from '../data/regions/asia.json';
+import centralAfricaData from '../data/regions/central-africa.json';
+import eastAfricaData from '../data/regions/east-africa.json';
+import europeData from '../data/regions/europe.json';
+import middleEastData from '../data/regions/middle-east.json';
+import northAfricaData from '../data/regions/north-africa.json';
+import southernAfricaData from '../data/regions/southern-africa.json';
+import westAfricaData from '../data/regions/west-africa.json';
 
 // Types
 export interface Country {
@@ -149,18 +158,26 @@ const _zoneCache: Record<string, CommunesPays[]> = {
   uemoa: uemoaData.pays,
 };
 
+const REGION_ZONE_DATA: Record<string, CommunesData> = {
+  americas: americasData as CommunesData,
+  asia: asiaData as CommunesData,
+  'central-africa': centralAfricaData as CommunesData,
+  'east-africa': eastAfricaData as CommunesData,
+  europe: europeData as CommunesData,
+  'middle-east': middleEastData as CommunesData,
+  'north-africa': northAfricaData as CommunesData,
+  'southern-africa': southernAfricaData as CommunesData,
+  'west-africa': westAfricaData as CommunesData,
+};
+
 function loadZoneData(zone: string): CommunesPays[] {
   if (_zoneCache[zone]) return _zoneCache[zone];
 
-  try {
-    // Dynamic require for zone files
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const zoneData = require(`../data/regions/${zone}.json`) as CommunesData;
-    _zoneCache[zone] = zoneData.pays;
-    return zoneData.pays;
-  } catch {
-    return [];
-  }
+  const zoneData = REGION_ZONE_DATA[zone];
+  if (!zoneData) return [];
+
+  _zoneCache[zone] = zoneData.pays;
+  return zoneData.pays;
 }
 
 function findCountryInZone(countryCode: string): CommunesPays | null {
