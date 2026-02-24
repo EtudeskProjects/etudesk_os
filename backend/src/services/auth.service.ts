@@ -52,6 +52,7 @@ export interface AuthTokens {
 export interface UserProfile {
   id: string;
   email: string;
+  phone: string | null;
   emailVerified: boolean;
   talentId: string | null;
   hasTalentProfile: boolean;
@@ -296,7 +297,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     const result = await pool.query(
       `SELECT
          u.id,
-         u.email,
+         COALESCE(NULLIF(t.email, ''), u.email) as email,
          u.email_verified,
          u.talent_id,
          u.created_at,
@@ -306,6 +307,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
          t.first_name,
          t.last_name,
          t.gender,
+         t.phone as talent_phone,
          COALESCE(NULLIF(CONCAT_WS(' ', t.first_name, t.last_name), ''), u.email) as talent_display_name,
          t.avatar_url as talent_avatar_url
        FROM users u
@@ -323,6 +325,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     return {
       id: row.id,
       email: row.email,
+      phone: row.talent_phone || null,
       emailVerified: row.email_verified,
       talentId: row.talent_id,
       hasTalentProfile: !!row.talent_id,
