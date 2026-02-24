@@ -15,6 +15,7 @@ import {
 } from '../../services/opportunity-generation.service';
 import { onOpportunityUpdate, deletePineconeVector } from '../../services/embedding.service';
 import { autoModerationService } from '../../services/auto-moderation.service';
+import { resolveTalentLanguage } from '../../services/language-preference.service';
 import {
   handleRouteError,
   createNotFoundError,
@@ -95,7 +96,8 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
       throw createForbiddenError(req.t('opportunities:notMemberOrg'));
     }
 
-    const input: GenerationInput = { title, type, organization_id, existing_data };
+    const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const input: GenerationInput = { title, type, organization_id, existing_data, language };
     const result = await generateOpportunitySuggestion(input);
 
     if (!result.success) {

@@ -11,9 +11,10 @@ import { onTalentProfileUpdate } from '../services/embedding.service';
 import { autoModerationService } from '../services/auto-moderation.service';
 import { MODEL_SUGGESTION } from '../services/ai/models';
 import { getGeminiClient } from '../services/ai/provider';
-import { BIO_GEN_SYSTEM_PROMPT } from '../services/ai/prompts/bio-gen.prompt';
+import { buildBioGenSystemPrompt } from '../services/ai/prompts/bio-gen.prompt';
 import { buildTalentObject, talentObjectToText } from '../services/ai/talent-object';
 import { normalizeCountryCode } from '../constants/countries';
+import { getLanguageDisplayName, resolveTalentLanguage } from '../services/language-preference.service';
 
 import { logger } from '../utils';
 import { cache } from '../utils/cache';
@@ -273,12 +274,14 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
       return res.status(400).json({ error: req.t('common:notEnoughInfoForBio') });
     }
 
+    const language = await resolveTalentLanguage({ talentId: req.talentId, userId: req.userId });
+    const languageName = getLanguageDisplayName(language);
     const openai = getGeminiClient();
     const completion = await openai.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [
-        { role: 'system', content: BIO_GEN_SYSTEM_PROMPT },
-        { role: 'user', content: `Génère une bio pour ce profil :\n${contextText}` },
+        { role: 'system', content: buildBioGenSystemPrompt(languageName) },
+        { role: 'user', content: `Generate a professional bio for this profile in ${languageName}:\n${contextText}` },
       ],
     });
 

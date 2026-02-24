@@ -11,6 +11,7 @@ interface SpacePromptContext {
   orgDescription: string;
   orgLocation: string;
   sectorsList: string;
+  languageName: string;
 }
 
 export function buildSpaceGenPrompt(ctx: SpacePromptContext): string {
@@ -48,7 +49,7 @@ Espace demandé : "${ctx.spaceName}" de type ${ctx.spaceTypeLabel}
 2. Équipements : VIDEOPROJECTOR, WHITEBOARD, SCREEN, MICROPHONE, SPEAKER, COMPUTER, PRINTER, WEBCAM, WIFI, AIR_CONDITIONING, HEATING
 3. Commodités : WIFI, PARKING, CAFETERIA, RESTROOM, ELEVATOR, SECURITY
 4. Tarifs en XOF, adaptés au type d'espace et à la localisation
-5. Contenu en français, concis et professionnel
+5. Content in ${ctx.languageName}, concise and professional
 6. Règlements avec "• " comme puce, séparés par \\n (max 1000 caractères)
 </rules>`;
 }
@@ -56,5 +57,13 @@ Espace demandé : "${ctx.spaceName}" de type ${ctx.spaceTypeLabel}
 export const SPACE_GEN_SYSTEM_PROMPT = `<role>Expert en gestion d'espaces réservables</role>
 <rules>
 1. Réponds toujours en JSON valide
-2. Contenu en français, concis et professionnel
+2. Content in English, concise and professional
 </rules>`;
+
+export function buildSpaceGenSystemPrompt(languageName: string): string {
+  return `<role>Expert en gestion d'espaces réservables</role>
+<rules>
+1. Réponds toujours en JSON valide
+2. Content in ${languageName}, concise and professional
+</rules>`;
+}

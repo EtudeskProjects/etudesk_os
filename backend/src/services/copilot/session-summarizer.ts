@@ -7,13 +7,16 @@
 import { getAnthropicClient } from '../ai/provider';
 import { MODEL_FAST } from '../ai/models';
 import { logger } from '../../utils';
+import { SupportedLanguage } from '../../i18n';
+import { getLanguageDisplayName } from '../language-preference.service';
 
 const SUMMARY_THRESHOLD = 6; // Summarize when history exceeds this count
 const KEEP_RECENT = 3; // Keep last N messages verbatim
 
-const SYSTEM_PROMPT = `You are a conversation summarizer for a talent/employment platform.
+function buildSystemPrompt(languageName: string): string {
+  return `You are a conversation summarizer for a talent/employment platform.
 
-Summarize the conversation in French. Focus on:
+Summarize the conversation in ${languageName}. Focus on:
 - What the user asked for (topics, entities mentioned)
 - What tools were used and what results were found
 - Any actions taken (skills added, applications made)
@@ -27,13 +30,15 @@ ALSO capture (critical for conversation continuity):
 
 Keep the summary very concise (max 150 words). Use short bullet points (one line each).
 Start with "[Résumé]" header. Omit greetings and pleasantries.`;
+}
 
 /**
  * Summarizes conversation history if it exceeds the threshold.
  * Returns the processed history (summary + recent messages).
  */
 export async function summarizeHistoryIfNeeded(
-  history: Array<{ role: string; content: string }>
+  history: Array<{ role: string; content: string }>,
+  language: SupportedLanguage = 'en'
 ): Promise<Array<{ role: string; content: string }>> {
   if (history.length <= SUMMARY_THRESHOLD) {
     return history;
@@ -50,10 +55,11 @@ export async function summarizeHistoryIfNeeded(
       .join('\n\n');
 
     const client = getAnthropicClient();
+    const languageName = getLanguageDisplayName(language);
     const response = await client.messages.create({
       model: MODEL_FAST,
       max_tokens: 512,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(languageName),
       messages: [{ role: 'user', content: conversationText }],
     });
 
@@ -70,7 +76,7 @@ export async function summarizeHistoryIfNeeded(
     // Return: summary as system context + recent messages
     return [
       { role: 'user', content: summary },
-      { role: 'assistant', content: 'Compris, je prends en compte le contexte précédent.' },
+      { role: 'assistant', content: language === 'fr' ? 'Compris, je prends en compte le contexte précédent.' : 'Understood, I will keep the previous context in mind.' },
       ...recentMessages,
     ];
   } catch (error: any) {

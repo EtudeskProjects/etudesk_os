@@ -9,6 +9,7 @@ import { dailyObjectiveService } from '../services/daily-objective.service';
 import { debitWalletForAction } from '../services/billing/credit.service';
 import { pool } from '../services/database';
 import { handleRouteError } from '../utils';
+import { resolveTalentLanguage } from '../services/language-preference.service';
 
 const router = Router();
 
@@ -43,7 +44,8 @@ router.get('/talent', authMiddleware, async (req: AuthRequest, res: Response) =>
       throw debitError;
     }
 
-    const objective = await dailyObjectiveService.getTalentDailyObjective(talentId);
+    const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const objective = await dailyObjectiveService.getTalentDailyObjective(talentId, language);
     res.json({ data: objective });
   } catch (error) {
     handleRouteError(res, error, 'Error fetching talent daily objective');
@@ -102,7 +104,8 @@ router.get('/organization/:orgId', authMiddleware, async (req: AuthRequest, res:
       throw debitError;
     }
 
-    const objective = await dailyObjectiveService.getOrganizationDailyObjective(orgId);
+    const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const objective = await dailyObjectiveService.getOrganizationDailyObjective(orgId, language);
     res.json({ data: objective });
   } catch (error) {
     handleRouteError(res, error, 'Error fetching organization daily objective');

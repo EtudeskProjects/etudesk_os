@@ -13,7 +13,7 @@ import {
   ALLOWED_MIME_TYPES,
 } from '../constants/documents';
 import { logger } from '../utils';
-import { SUPPORTED_LANGUAGES, i18next } from '../i18n';
+import { i18next } from '../i18n';
 import { pool } from '../services/database';
 import {
   uploadDocument,
@@ -52,6 +52,7 @@ import { handleConfirmation } from '../services/copilot/actions/action.handler';
 import { copilotChatLimiter, copilotGeneralLimiter } from '../middleware/rateLimit.middleware';
 import { debitWalletForAction } from '../services/billing/credit.service';
 import { cache } from '../utils/cache';
+import { getLanguageDisplayName, resolveTalentLanguage } from '../services/language-preference.service';
 
 const router = Router();
 const MEMORY_MAX_SESSIONS = 12;
@@ -501,10 +502,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       // Context loading (cached 5 min per talent+mode)
       cache.getOrSet(ctxCacheKey, () => loadTalentContext(talentId, contextOptions), 5 * 60 * 1000),
       // Language preference
-      req.userId
-        ? pool.query('SELECT preferred_language FROM users WHERE id = $1', [req.userId])
-            .then(r => { const l = r.rows[0]?.preferred_language; return (SUPPORTED_LANGUAGES as readonly string[]).includes(l) ? l : 'en'; })
-        : Promise.resolve('en' as const),
+      resolveTalentLanguage({ talentId, userId: req.userId }),
     ]);
     const sessionId = session.id;
     const sessionContext: Record<string, unknown> =
@@ -734,7 +732,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       content: r.content,
     }));
     const [summarizedHistory, crossSessionMemory] = await Promise.all([
-      summarizeHistoryIfNeeded(rawHistory),
+      summarizeHistoryIfNeeded(rawHistory, userLanguage),
       loadCrossSessionMemory({
         talentId,
         organizationId,
@@ -900,7 +898,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     // Generate title for first message (non-blocking)
     const messageCount = historyRes.rows.length;
     if (messageCount <= 2) {
-      generateSessionTitle(safeMessage).then((title) => {
+      generateSessionTitle(safeMessage, userLanguage).then((title) => {
         copilotService.updateSessionTitle(sessionId, title).catch(() => { });
       });
     }
@@ -958,6 +956,9 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
       });
     }
 
+    const userLanguage = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const languageName = getLanguageDisplayName(userLanguage);
+
     // 2. Cache miss — lightweight parallel data fetch (NO loadTalentContext)
     const { pool: dbPool } = await import('../services/database');
 
@@ -987,13 +988,13 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
     const { buildIntentSuggestionsPrompt } = await import('../services/ai/prompts/session-utils.prompt');
     const { geminiProvider } = await import('../services/ai/provider');
 
-    const systemPrompt = buildIntentSuggestionsPrompt(mode, historyRows, talentContext);
+    const systemPrompt = buildIntentSuggestionsPrompt(mode, historyRows, talentContext, languageName);
     const agent = createIntentSuggestionsAgent(systemPrompt);
     const geminiRunner = new Runner({ modelProvider: geminiProvider });
 
     let suggestions: string[] = [];
     try {
-      const result = await geminiRunner.run(agent, 'Génère les 4 suggestions.');
+      const result = await geminiRunner.run(agent, `Generate 4 suggestions in ${languageName}.`);
       const text = result.finalOutput?.trim() || '[]';
       suggestions = JSON.parse(text);
 
@@ -1124,7 +1125,8 @@ router.post('/confirm', authMiddleware, async (req: AuthRequest, res: Response) 
       return res.status(400).json({ error: req.t('copilot:confirmActionEntityRequired') });
     }
 
-    const result = await handleConfirmation(talentId, { action, entityId, sessionId, data }, req.language);
+    const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const result = await handleConfirmation(talentId, { action, entityId, sessionId, data }, language);
 
     res.json({
       success: result.success,
@@ -1259,10 +1261,11 @@ router.post(
 
       // gpt-4o-mini-transcribe: better accuracy, lower WER, better French support
       // response_format must be 'json' for gpt-4o-mini-transcribe (text not supported)
+      const language = await resolveTalentLanguage({ talentId, userId: req.userId });
       const result = await openai.audio.transcriptions.create({
         file: audioFile,
         model: MODEL_STT,
-        language: 'fr',
+        language,
       });
 
       const transcription = typeof result === 'string' ? result : (result as any).text || '';

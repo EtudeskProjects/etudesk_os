@@ -14,6 +14,7 @@ import {
 } from '../../services/community-generation.service';
 import { handleRouteError, createNotFoundError, createForbiddenError, logger } from '../../utils';
 import { upsertCommunityEmbedding, deletePineconeVector } from '../../services/embedding.service';
+import { resolveTalentLanguage } from '../../services/language-preference.service';
 
 const router = Router();
 
@@ -49,7 +50,8 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
       throw createForbiddenError(req.t('communities:notOrgMember'));
     }
 
-    const input: GenerationInput = { name, organization_id, existing_data };
+    const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const input: GenerationInput = { name, organization_id, existing_data, language };
     const result = await generateCommunitySuggestion(input);
 
     if (!result.success) {

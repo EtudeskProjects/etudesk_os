@@ -8,6 +8,8 @@ import { pool } from './database';
 import { createRecommendationAgent } from './ai/agent-factory';
 import { buildRecommendationPrompt } from './ai/prompts/recommendation.prompt';
 import { openaiProvider } from './ai/provider';
+import { getLanguageDisplayName, resolveTalentLanguage } from './language-preference.service';
+import { SupportedLanguage } from '../i18n';
 
 import { logger } from '../utils';
 // --- In-Memory Cache For Recommendations ---
@@ -19,6 +21,7 @@ const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 export interface ApplicationForRecommendation {
   id: string;
   talent: {
+    id?: string;
     display_name?: string;
     first_name?: string;
     last_name?: string;
@@ -76,6 +79,10 @@ export async function generateRecommendation(
 
   const { talent, opportunity, matchCategory } = application;
   const candidateName = talent.first_name || talent.display_name?.split(' ')[0] || 'Ce candidat';
+  const language: SupportedLanguage = talent.id
+    ? await resolveTalentLanguage({ talentId: talent.id })
+    : 'en';
+  const languageName = getLanguageDisplayName(language);
 
   const prompt = buildRecommendationPrompt({
     candidateName,
@@ -87,6 +94,7 @@ export async function generateRecommendation(
     workRhythm: opportunity.work_rhythm || 'Non spécifié',
     locationType: opportunity.location_type || 'Non spécifié',
     matchCategory: matchCategory || 'average',
+    languageName,
   });
 
   try {
@@ -122,7 +130,7 @@ export async function generateRecommendation(
   } catch (error) {
     logger.error('Error generating recommendation:', error);
     // Return a fallback recommendation based on match category
-    return generateFallbackRecommendation(talent, matchCategory);
+    return generateFallbackRecommendation(talent, matchCategory, language);
   }
 }
 
@@ -131,10 +139,25 @@ export async function generateRecommendation(
  */
 function generateFallbackRecommendation(
   talent: ApplicationForRecommendation['talent'],
-  matchCategory?: string
+  matchCategory?: string,
+  language: SupportedLanguage = 'en'
 ): string {
-  const name = talent.first_name || talent.display_name?.split(' ')[0] || 'Ce candidat';
-  const role = talent.current_role || 'professionnel';
+  const name = talent.first_name || talent.display_name?.split(' ')[0] || (language === 'fr' ? 'Ce candidat' : 'This candidate');
+  const role = talent.current_role || (language === 'fr' ? 'professionnel' : 'professional');
+
+  if (language !== 'fr') {
+    switch (matchCategory) {
+      case 'excellent':
+        return `${name}, ${role}, shows a profile strongly aligned with the role. Interview highly recommended.`;
+      case 'good':
+        return `${name} has solid ${role} experience and matches key expectations. An interview would confirm motivation and fit.`;
+      case 'average':
+        return `${name} presents an interesting profile with some gaps to verify. Consider an interview if priorities allow.`;
+      case 'low':
+      default:
+        return `${name} does not fully match the target profile. Skills require deeper validation.`;
+    }
+  }
 
   switch (matchCategory) {
     case 'excellent':
@@ -164,6 +187,7 @@ export async function getApplicationRecommendation(applicationId: string): Promi
         a.ai_recommendation,
         json_build_object(
           'display_name', COALESCE(t.first_name || ' ' || t.last_name, t.email),
+          'id', t.id,
           'first_name', t.first_name,
           'last_name', t.last_name,
           'skills', (SELECT ARRAY_AGG(canonical_name) FROM talent_skills WHERE talent_id = t.id),

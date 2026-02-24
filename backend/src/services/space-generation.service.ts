@@ -11,7 +11,9 @@ import {
   SECTORS,
 } from '../types/models';
 import { SpaceType, SPACE_TYPES } from '../types/space.types';
-import { SPACE_GEN_SYSTEM_PROMPT, buildSpaceGenPrompt } from './ai/prompts/space-gen.prompt';
+import { buildSpaceGenPrompt, buildSpaceGenSystemPrompt } from './ai/prompts/space-gen.prompt';
+import { FALLBACK_LANGUAGE, SupportedLanguage } from '../i18n';
+import { getLanguageDisplayName } from './language-preference.service';
 
 import { logger } from '../utils';
 
@@ -19,6 +21,7 @@ export interface GenerationInput {
   name: string;
   type: SpaceType;
   organization_id: string;
+  language?: SupportedLanguage;
   // Optional existing form data for context
   existing_data?: Partial<GeneratedSpace>;
 }
@@ -101,6 +104,8 @@ export async function generateSpaceSuggestion(
   }
 
   // Build prompt
+  const language = input.language || FALLBACK_LANGUAGE;
+  const languageName = getLanguageDisplayName(language);
   const spaceTypeLabel = input.type.replace(/_/g, ' ').toLowerCase();
   const orgLocation = [organization.headquarters_city, organization.headquarters_region, organization.headquarters_country].filter(Boolean).join(', ') || 'Non spécifié';
   const prompt = buildSpaceGenPrompt({
@@ -112,6 +117,7 @@ export async function generateSpaceSuggestion(
     orgDescription: organization.description || '',
     orgLocation,
     sectorsList: Object.values(SECTORS).join(','),
+    languageName,
   });
 
   try {
@@ -122,7 +128,7 @@ export async function generateSpaceSuggestion(
     const completion = await openai.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [
-        { role: 'system', content: SPACE_GEN_SYSTEM_PROMPT },
+        { role: 'system', content: buildSpaceGenSystemPrompt(languageName) },
         { role: 'user', content: prompt },
       ],
       response_format: { type: 'json_object' },

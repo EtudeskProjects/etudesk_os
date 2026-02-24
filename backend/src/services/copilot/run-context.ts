@@ -29,7 +29,7 @@ export function createCopilotRunContext(params: {
     talentId: params.talentId,
     mode: params.mode,
     sessionId: params.sessionId,
-    language: params.language || 'fr',
+    language: params.language || 'en',
     skillsAdded: [],
     actionsPerformed: [],
   };

@@ -13,7 +13,7 @@ export const youtubeSearchTool = defineTool({
   description:
     'Search YouTube for educational videos. Study mode only. Returns up to 5 results. Present ONLY THE SINGLE BEST video as ONE youtube block — never multiple youtube blocks. Do NOT call analyze_youtube_video after this.',
   parameters: z.object({
-    query: z.string().describe('Search query in French. Append "Afrique francophone" for regional topics (business, marketing, droit, finance). Examples: "marketing digital Afrique francophone", "tutoriel React hooks en francais"'),
+    query: z.string().describe('Search query in natural language. Include region/context when relevant. Example: "digital marketing training Côte d\'Ivoire"'),
     maxResults: z.number().min(1).max(5).default(5).describe('Max results (always 5).'),
   }),
   execute: async ({ query, maxResults }) => {
@@ -28,7 +28,6 @@ export const youtubeSearchTool = defineTool({
       url.searchParams.set('q', query);
       url.searchParams.set('maxResults', maxResults.toString());
       url.searchParams.set('type', 'video');
-      url.searchParams.set('relevanceLanguage', 'fr');
       url.searchParams.set('key', YOUTUBE_API_KEY);
 
       const response = await fetch(url.toString());

@@ -12,9 +12,11 @@ interface RecommendationPromptContext {
   workRhythm: string;
   locationType: string;
   matchCategory: string;
+  languageName?: string;
 }
 
 export function buildRecommendationPrompt(ctx: RecommendationPromptContext): string {
+  const languageName = ctx.languageName || 'English';
   return `<role>Recruteur expert en Afrique francophone</role>
 
 <context>
@@ -38,7 +40,7 @@ Catégorie de match : ${ctx.matchCategory}
 3. Mentionne 1-2 points forts spécifiques
 4. Termine par une recommandation claire (entretien recommandé / à considérer / profil à approfondir)
 5. Sois direct et professionnel
-6. Écris en français
+6. Write in ${languageName}
 </rules>
 
 <examples>
@@ -55,7 +57,7 @@ BAD:
 
 export const RECOMMENDATION_SYSTEM_PROMPT = `<role>Recruteur expert</role>
 <rules>
-1. Génère des recommandations concises en français
+1. Generate concise recommendations in English
 2. Maximum 30 mots
 </rules>
 
@@ -68,3 +70,11 @@ BAD:
 - "Aminata a un bon profil. A considerer."
 - "Le candidat semble qualifie pour le poste."
 </examples>`;
+
+export function buildRecommendationSystemPrompt(languageName: string): string {
+  return `<role>Recruteur expert</role>
+<rules>
+1. Generate concise recommendations in ${languageName}
+2. Maximum 30 words
+</rules>`;
+}

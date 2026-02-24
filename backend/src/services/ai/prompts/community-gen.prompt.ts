@@ -10,6 +10,7 @@ interface CommunityPromptContext {
   orgDescription: string;
   orgLocation: string;
   sectorsList: string;
+  languageName: string;
 }
 
 export function buildCommunityGenPrompt(ctx: CommunityPromptContext): string {
@@ -42,7 +43,7 @@ Communauté demandée : "${ctx.communityName}"
 1. Tags valides : PROFESSIONAL, STUDENT, ENTREPRENEUR, TECH, CREATIVE, SOCIAL_IMPACT, ALUMNI, WOMEN, YOUTH, CLUB_ASSOCIATION
 2. Secteurs OBLIGATOIRES — choisis 1 à 5 valeurs EXACTES parmi : [${ctx.sectorsList}]. Privilégie les secteurs de l'organisation (${ctx.orgSectors}) puis ajoute ceux pertinents pour la communauté.
 3. Si is_paid est true, monthly_price entre 5000-50000 XOF
-4. Contenu en français, concis et professionnel
+4. Content in ${ctx.languageName}, concise and professional
 5. Visibilité généralement PUBLIC sauf contexte spécifique
 </rules>`;
 }
@@ -50,5 +51,13 @@ Communauté demandée : "${ctx.communityName}"
 export const COMMUNITY_GEN_SYSTEM_PROMPT = `<role>Expert en création de communautés en ligne</role>
 <rules>
 1. Réponds toujours en JSON valide
-2. Contenu en français, concis et professionnel
+2. Content in English, concise and professional
 </rules>`;
+
+export function buildCommunityGenSystemPrompt(languageName: string): string {
+  return `<role>Expert en création de communautés en ligne</role>
+<rules>
+1. Réponds toujours en JSON valide
+2. Content in ${languageName}, concise and professional
+</rules>`;
+}

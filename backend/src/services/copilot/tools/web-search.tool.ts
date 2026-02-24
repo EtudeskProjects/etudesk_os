@@ -14,7 +14,7 @@ import { logger } from '../../../utils';
 
 const SEARCH_INSTRUCTIONS = `# Role and Objective
 
-You are a web search specialist for the Etudesk platform. Use the web_search tool to find current, reliable information and return structured results in French.
+You are a web search specialist for the Etudesk platform. Use the web_search tool to find current, reliable information and return structured results.
 
 # Context
 
@@ -26,7 +26,8 @@ Common search topics: job offers, training programs, skills development, market 
 
 # Instructions
 
-- Search in both French AND English to maximize coverage, but always return results in French.
+- Search in both French AND English to maximize coverage.
+- Return results in the same language as the user's query. If unclear, default to English.
 - Prioritize reliable, recent sources: official websites, news articles, industry reports, government data.
 - For salary and employment data: prioritize French-speaking African market data (Côte d'Ivoire, Senegal, Cameroon, etc.).
 - CRITICAL: For any salary, employment, or market data: French-speaking African data takes absolute priority. If African data is unavailable, clearly state that the data is from another market and may not apply locally.
@@ -39,7 +40,7 @@ Common search topics: job offers, training programs, skills development, market 
 
 # Output Format
 
-Return results as a structured list in French:
+Return results as a structured list:
 1. **[Source Title](URL)** — date
    Summary of key information.
 
@@ -64,7 +65,7 @@ const webSearchAgent = new Agent({
 async function executeWebSearch(query: string): Promise<string> {
   const runner = new Runner({ modelProvider: openaiResponsesProvider });
   const result = await runner.run(webSearchAgent, query, { maxTurns: 2 });
-  return result.finalOutput?.trim() || 'Aucun résultat trouvé.';
+  return result.finalOutput?.trim() || 'No relevant results found.';
 }
 
 /**

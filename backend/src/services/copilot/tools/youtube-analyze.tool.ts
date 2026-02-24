@@ -120,7 +120,7 @@ export const analyzeYoutubeVideoTool = defineTool({
       .string()
       .optional()
       .describe('Topic focus for relevance comparison'),
-    language: z.enum(['fr', 'en', 'es', 'ar', 'it', 'de', 'zh']).default('fr'),
+    language: z.enum(['fr', 'en', 'es', 'ar', 'it', 'de', 'zh']).default('en'),
   }),
   execute: async ({ urls, focusTopics, language }) => {
     const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || '';
@@ -141,7 +141,16 @@ export const analyzeYoutubeVideoTool = defineTool({
       videos.push({ url, videoId });
     }
 
-    const lang = language === 'en' ? 'English' : 'French';
+    const languageNames: Record<string, string> = {
+      fr: 'French',
+      en: 'English',
+      es: 'Spanish',
+      ar: 'Arabic',
+      it: 'Italian',
+      de: 'German',
+      zh: 'Chinese (Simplified)',
+    };
+    const lang = languageNames[language] || 'English';
     const needsScore = videos.length > 1;
 
     try {
@@ -181,7 +190,9 @@ export const analyzeYoutubeVideoTool = defineTool({
 
       const selectionReason =
         analyses.length > 1
-          ? `Sélectionnée parmi ${analyses.length} vidéos analysées (score: ${best.quality_score || 'N/A'}/10).`
+          ? (language === 'fr'
+              ? `Sélectionnée parmi ${analyses.length} vidéos analysées (score: ${best.quality_score || 'N/A'}/10).`
+              : `Selected from ${analyses.length} analyzed videos (score: ${best.quality_score || 'N/A'}/10).`)
           : undefined;
 
       return {

@@ -75,8 +75,9 @@ const LANGUAGE_NAMES: Record<string, string> = {
 
 /** Get language-specific instructions for any supported language */
 export function getLanguageInstructions(language?: PromptLanguage) {
-  const langName = LANGUAGE_NAMES[language || 'fr'] || 'French';
-  const isFrench = !language || language === 'fr';
+  const normalized = language || 'en';
+  const langName = LANGUAGE_NAMES[normalized] || 'English';
+  const isFrench = normalized === 'fr';
 
   if (isFrench) {
     return {

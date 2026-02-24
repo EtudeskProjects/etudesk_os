@@ -3,16 +3,17 @@
  * For session title generation and prompt suggestions
  */
 
-export const SESSION_TITLE_SYSTEM_PROMPT = `<role>Conservateur de titres de sessions érudites</role>
+export function buildSessionTitleSystemPrompt(languageName: string = 'English'): string {
+  return `<role>Conservateur de titres de sessions érudites</role>
 
-<task>Attribuez un titre distingué et évocateur (3-6 mots max) en français à cette conversation, reflétant son essence stratégique.</task>
+<task>Attribuez un titre distingué et évocateur (3-6 mots max) en ${languageName} à cette conversation, reflétant son essence stratégique.</task>
 
 <rules>
 1. Pas de guillemets
 2. Pas de ponctuation finale
 3. 3 à 6 mots maximum
 4. Langage soutenu et précis
-5. En français
+5. En ${languageName}
 </rules>
 
 <examples>
@@ -22,8 +23,11 @@ export const SESSION_TITLE_SYSTEM_PROMPT = `<role>Conservateur de titres de sess
 - Analyse candidatures Q1
 - Exploration communautes tech Abidjan
 </examples>`;
+}
 
-export function buildSuggestionsSystemPrompt(mode: string, contextSummary: string): string {
+export const SESSION_TITLE_SYSTEM_PROMPT = buildSessionTitleSystemPrompt('English');
+
+export function buildSuggestionsSystemPrompt(mode: string, contextSummary: string, languageName: string = 'English'): string {
   const modeLabel = mode === 'study' ? "d'étude" : "d'exploration";
   return `<role>Assistant ${modeLabel}</role>
 
@@ -31,7 +35,7 @@ export function buildSuggestionsSystemPrompt(mode: string, contextSummary: strin
 ${contextSummary}
 </context>
 
-<task>Génère exactement 3 suggestions de prompts courts en français.</task>
+<task>Génère exactement 3 suggestions de prompts courts en ${languageName}.</task>
 
 <output_format>
 ["suggestion 1", "suggestion 2", "suggestion 3"]
@@ -41,7 +45,7 @@ ${contextSummary}
 1. Retourne un JSON array de 3 strings
 2. Rien d'autre que le JSON array
 3. Suggestions courtes et pertinentes
-4. En français
+4. En ${languageName}
 </rules>`;
 }
 
@@ -52,7 +56,8 @@ ${contextSummary}
 export function buildIntentSuggestionsPrompt(
   mode: string,
   conversationHistory: Array<{ role: string; content: string }>,
-  talentContext?: { firstName?: string; goals?: string[]; sectors?: string[] }
+  talentContext?: { firstName?: string; goals?: string[]; sectors?: string[] },
+  languageName: string = 'English'
 ): string {
   // Format recent history (last 4 messages max)
   const recentHistory = conversationHistory.slice(-4);
@@ -87,7 +92,8 @@ export function buildIntentSuggestionsPrompt(
 - Rechercher des organisations ou entreprises
 - Preparer un entretien pour une offre specifique`;
 
-  return `Tu es un assistant qui predit les 4 prochaines questions qu'un utilisateur pourrait poser sur une plateforme de carriere et formation en Afrique.
+  return `You MUST return all suggestions in ${languageName}.
+Tu es un assistant qui predit les 4 prochaines questions qu'un utilisateur pourrait poser sur une plateforme de carriere et formation en Afrique.
 
 <capacites_plateforme>
 ${capabilities}
@@ -103,4 +109,3 @@ ${mode === 'study'
     ? 'Exemple: ["Prepare-moi pour un entretien", "Evalue mes competences en Python", "Cree un quiz sur le marketing digital", "Resume mon CV et conseille-moi"]'
     : 'Exemple: ["Offres de stage en marketing a Abidjan", "Genere mon CV en PDF", "Communautes tech dans mon secteur", "Ajoute React a mes competences"]'}`;
 }
-

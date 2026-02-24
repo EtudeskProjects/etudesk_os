@@ -14,7 +14,7 @@ import { getActiveSkillBlock, getChartRulesBlock, getLanguageInstructions as get
 /** Get language-specific instructions for the study prompt (extends shared base) */
 function getLanguageInstructions(language?: PromptLanguage) {
    const base = getBaseLanguageInstructions(language);
-   const isFrench = !language || language === 'fr';
+   const isFrench = language === 'fr';
 
    return {
       ...base,

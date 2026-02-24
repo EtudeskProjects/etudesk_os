@@ -14,6 +14,8 @@ import { generateToolSummary } from './tool-summary';
 import { sanitizeOutput } from '../guardrails/output.guardrail';
 import { getFileBuffer } from '../../storage.service';
 import { logger } from '../../../utils';
+import { SupportedLanguage } from '../../../i18n';
+import { getLanguageDisplayName } from '../../language-preference.service';
 
 const MAX_TURNS = 15;
 const MAX_TOOL_CALLS = 20;
@@ -652,11 +654,12 @@ function stableStringify(value: any): string {
 /**
  * Generate a session title using Anthropic Haiku
  */
-export async function generateSessionTitle(message: string): Promise<string> {
+export async function generateSessionTitle(message: string, language: SupportedLanguage = 'en'): Promise<string> {
   try {
     const { MODEL_FAST } = await import('../../ai/models');
     const client = getAnthropicClient();
-    const { SESSION_TITLE_SYSTEM_PROMPT } = await import('../../ai/prompts/session-utils.prompt');
+    const { buildSessionTitleSystemPrompt } = await import('../../ai/prompts/session-utils.prompt');
+    const languageName = getLanguageDisplayName(language);
 
     const response = await client.messages.create({
       model: MODEL_FAST,
@@ -664,7 +667,7 @@ export async function generateSessionTitle(message: string): Promise<string> {
       system: [
         {
           type: 'text' as const,
-          text: SESSION_TITLE_SYSTEM_PROMPT,
+          text: buildSessionTitleSystemPrompt(languageName),
           cache_control: { type: 'ephemeral' as const },
         },
       ],
@@ -686,7 +689,8 @@ export async function generateSessionTitle(message: string): Promise<string> {
  */
 export async function generateSuggestions(
   mode: string,
-  contextSummary: string
+  contextSummary: string,
+  language: SupportedLanguage = 'en'
 ): Promise<string[]> {
   try {
     const { buildSuggestionsSystemPrompt } = await import('../../ai/prompts/session-utils.prompt');
@@ -694,10 +698,10 @@ export async function generateSuggestions(
     const { Runner } = await import('@openai/agents');
     const { geminiProvider } = await import('../../ai/provider');
 
-    const systemPrompt = buildSuggestionsSystemPrompt(mode, contextSummary);
+    const systemPrompt = buildSuggestionsSystemPrompt(mode, contextSummary, getLanguageDisplayName(language));
     const agent = createSuggestionsAgent(systemPrompt);
     const geminiRunner = new Runner({ modelProvider: geminiProvider });
-    const result = await geminiRunner.run(agent, 'Génère les suggestions.');
+    const result = await geminiRunner.run(agent, `Generate the suggestions in ${getLanguageDisplayName(language)}.`);
     const text = result.finalOutput?.trim() || '[]';
     return JSON.parse(text);
   } catch {

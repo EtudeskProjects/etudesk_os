@@ -14,13 +14,16 @@ import {
   VISIBILITY,
   SECTORS,
 } from '../types/models';
-import { COMMUNITY_GEN_SYSTEM_PROMPT, buildCommunityGenPrompt } from './ai/prompts/community-gen.prompt';
+import { buildCommunityGenPrompt, buildCommunityGenSystemPrompt } from './ai/prompts/community-gen.prompt';
+import { FALLBACK_LANGUAGE, SupportedLanguage } from '../i18n';
+import { getLanguageDisplayName } from './language-preference.service';
 
 import { logger } from '../utils';
 
 export interface GenerationInput {
   name: string;
   organization_id: string;
+  language?: SupportedLanguage;
   // Optional existing form data for context
   existing_data?: Partial<GeneratedCommunity>;
 }
@@ -95,6 +98,8 @@ export async function generateCommunitySuggestion(
   }
 
   // Build prompt
+  const language = input.language || FALLBACK_LANGUAGE;
+  const languageName = getLanguageDisplayName(language);
   const orgLocation = [organization.headquarters_city, organization.headquarters_region, organization.headquarters_country].filter(Boolean).join(', ') || 'Non spécifié';
   const prompt = buildCommunityGenPrompt({
     communityName: input.name,
@@ -104,6 +109,7 @@ export async function generateCommunitySuggestion(
     orgDescription: organization.description || '',
     orgLocation,
     sectorsList: Object.values(SECTORS).join(','),
+    languageName,
   });
 
   try {
@@ -114,7 +120,7 @@ export async function generateCommunitySuggestion(
     const completion = await openai.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [
-        { role: 'system', content: COMMUNITY_GEN_SYSTEM_PROMPT },
+        { role: 'system', content: buildCommunityGenSystemPrompt(languageName) },
         { role: 'user', content: prompt },
       ],
       response_format: { type: 'json_object' },

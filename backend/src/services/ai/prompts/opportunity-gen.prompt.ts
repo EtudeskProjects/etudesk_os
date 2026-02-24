@@ -12,6 +12,7 @@ interface OpportunityPromptContext {
   orgLocation: string;
   existingDataContext: string;
   schemaJson: string;
+  languageName: string;
 }
 
 export function buildOpportunityGenPrompt(ctx: OpportunityPromptContext): string {
@@ -39,7 +40,7 @@ ${ctx.schemaJson}
 5. sectors : 2-5 secteurs pertinents (OBLIGATOIRE)
 6. deadline_days : Stage 14-21j, Emploi 30-45j, Consultation 21-30j
 7. Questions de candidature : 2-3 questions courtes et pertinentes
-8. Contenu en français, concis et professionnel
+8. Content in ${ctx.languageName}, concise and professional
 9. Génère TOUJOURS compensation_min ET compensation_max
 </rules>
 
@@ -55,5 +56,13 @@ Salaires XOF/mois :
 export const OPPORTUNITY_GEN_SYSTEM_PROMPT = `<role>Expert en recrutement</role>
 <rules>
 1. Réponds toujours en JSON valide
-2. Contenu en français, concis et professionnel
+2. Content in English, concise and professional
 </rules>`;
+
+export function buildOpportunityGenSystemPrompt(languageName: string): string {
+  return `<role>Expert en recrutement</role>
+<rules>
+1. Réponds toujours en JSON valide
+2. Content in ${languageName}, concise and professional
+</rules>`;
+}

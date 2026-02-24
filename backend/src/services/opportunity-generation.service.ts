@@ -23,7 +23,9 @@ import {
   SECTORS,
   OpportunityLocation,
 } from '../types/models';
-import { OPPORTUNITY_GEN_SYSTEM_PROMPT, buildOpportunityGenPrompt } from './ai/prompts/opportunity-gen.prompt';
+import { buildOpportunityGenPrompt, buildOpportunityGenSystemPrompt } from './ai/prompts/opportunity-gen.prompt';
+import { FALLBACK_LANGUAGE, SupportedLanguage } from '../i18n';
+import { getLanguageDisplayName } from './language-preference.service';
 
 import { logger } from '../utils';
 
@@ -31,6 +33,7 @@ export interface GenerationInput {
   title: string;
   type: OpportunityType;
   organization_id: string;
+  language?: SupportedLanguage;
   // Optional existing form data for context
   existing_data?: Partial<GeneratedOpportunity>;
 }
@@ -232,6 +235,9 @@ export async function generateOpportunitySuggestion(
     ? `\nDonnées existantes : ${JSON.stringify(input.existing_data, null, 2)}`
     : '';
 
+  const language = input.language || FALLBACK_LANGUAGE;
+  const languageName = getLanguageDisplayName(language);
+
   const prompt = buildOpportunityGenPrompt({
     title: input.title,
     typeLabel: opportunityTypeLabels[input.type],
@@ -242,6 +248,7 @@ export async function generateOpportunitySuggestion(
     orgLocation: [organization.headquarters_city, organization.headquarters_region, organization.headquarters_country].filter(Boolean).join(', ') || 'Non spécifié',
     existingDataContext,
     schemaJson: JSON.stringify(OPPORTUNITY_SCHEMA, null, 2),
+    languageName,
   });
 
   try {
@@ -249,7 +256,7 @@ export async function generateOpportunitySuggestion(
     const completion = await openai.chat.completions.create({
       model: MODEL_SUGGESTION,
       messages: [
-        { role: 'system', content: OPPORTUNITY_GEN_SYSTEM_PROMPT },
+        { role: 'system', content: buildOpportunityGenSystemPrompt(languageName) },
         { role: 'user', content: prompt },
       ],
       response_format: { type: 'json_object' },

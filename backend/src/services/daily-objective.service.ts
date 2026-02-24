@@ -8,6 +8,8 @@ import { MODEL_SUGGESTION } from './ai/models';
 import { getGeminiClient } from './ai/provider';
 import { pool } from './database';
 import { logger } from '../utils';
+import { SupportedLanguage } from '../i18n';
+import { getLanguageDisplayName } from './language-preference.service';
 
 const openai = getGeminiClient();
 
@@ -162,10 +164,16 @@ async function getTalentContext(talentId: string): Promise<TalentContext> {
   };
 }
 
-async function generateTalentObjective(context: TalentContext, previousObjective: string | null): Promise<string> {
+async function generateTalentObjective(
+  context: TalentContext,
+  previousObjective: string | null,
+  language: SupportedLanguage = 'en'
+): Promise<string> {
   const today = new Date();
-  const dayOfWeek = today.toLocaleDateString('fr-FR', { weekday: 'long' });
-  const dateStr = today.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+  const locale = language === 'fr' ? 'fr-FR' : 'en-GB';
+  const languageName = getLanguageDisplayName(language);
+  const dayOfWeek = today.toLocaleDateString(locale, { weekday: 'long' });
+  const dateStr = today.toLocaleDateString(locale, { day: 'numeric', month: 'long' });
 
   const previousContext = previousObjective
     ? `\nOBJECTIF PRÉCÉDENT (pour continuité, propose quelque chose de différent):\n"${previousObjective.slice(0, 200)}..."\n`
@@ -201,7 +209,8 @@ async function generateTalentObjective(context: TalentContext, previousObjective
     .slice(0, 3)
     .join(', ') || 'gestion de projet, communication professionnelle';
 
-  const prompt = `Tu es un coach carrière proactif sur Etudesk. Génère un objectif du jour CONCRET et ACTIONNABLE.
+  const prompt = `You MUST output ONLY in ${languageName}.
+Tu es un coach carrière proactif sur Etudesk. Génère un objectif du jour CONCRET et ACTIONNABLE.
 
 PROFIL DU TALENT:
 - Prénom: ${context.profile?.first_name || 'Talent'}
@@ -256,11 +265,16 @@ Génère l'objectif (500 caractères max):`;
     return objective;
   } catch (error) {
     logger.error('[DailyObjective] Error generating talent objective:', error);
-    return `Explore les opportunités disponibles sur Etudesk et postule à celle qui correspond le mieux à ton profil.`;
+    return language === 'fr'
+      ? `Explore les opportunités disponibles sur Etudesk et postule à celle qui correspond le mieux à ton profil.`
+      : `Explore available opportunities on Etudesk and apply to the one that best matches your profile.`;
   }
 }
 
-export async function getTalentDailyObjective(talentId: string): Promise<DailyObjective> {
+export async function getTalentDailyObjective(
+  talentId: string,
+  language: SupportedLanguage = 'en'
+): Promise<DailyObjective> {
   // Check cache
   const cacheResult = await pool.query(`
     SELECT objective, generated_at, expires_at
@@ -288,7 +302,7 @@ export async function getTalentDailyObjective(talentId: string): Promise<DailyOb
 
   // Generate new objective
   const context = await getTalentContext(talentId);
-  const objective = await generateTalentObjective(context, previousObjective);
+  const objective = await generateTalentObjective(context, previousObjective, language);
 
   const now = new Date();
   const expiresAt = new Date(now.getTime() + CACHE_DURATION_MS);
@@ -429,10 +443,16 @@ async function getOrganizationContext(organizationId: string): Promise<Organizat
   };
 }
 
-async function generateOrganizationObjective(context: OrganizationContext, previousObjective: string | null): Promise<string> {
+async function generateOrganizationObjective(
+  context: OrganizationContext,
+  previousObjective: string | null,
+  language: SupportedLanguage = 'en'
+): Promise<string> {
   const today = new Date();
-  const dayOfWeek = today.toLocaleDateString('fr-FR', { weekday: 'long' });
-  const dateStr = today.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+  const locale = language === 'fr' ? 'fr-FR' : 'en-GB';
+  const languageName = getLanguageDisplayName(language);
+  const dayOfWeek = today.toLocaleDateString(locale, { weekday: 'long' });
+  const dateStr = today.toLocaleDateString(locale, { day: 'numeric', month: 'long' });
 
   const openOpportunities = context.recentOpportunities.filter(o => o.status === 'OPEN').length;
   const pendingApplications = context.recentApplications.filter(a => a.status === 'SUBMITTED').length;
@@ -479,7 +499,8 @@ async function generateOrganizationObjective(context: OrganizationContext, previ
     .map((s: string) => sectorNames[s] || s)
     .join(' et ') || 'votre secteur';
 
-  const prompt = `Tu es un conseiller stratégique Etudesk. Génère un objectif CONCRET et ACTIONNABLE pour cette organisation.
+  const prompt = `You MUST output ONLY in ${languageName}.
+Tu es un conseiller stratégique Etudesk. Génère un objectif CONCRET et ACTIONNABLE pour cette organisation.
 
 ORGANISATION: ${context.profile?.name || 'Organisation'}
 SECTEURS: ${orgSectors}
@@ -535,11 +556,16 @@ Génère l'objectif (500 caractères max):`;
     return objective;
   } catch (error) {
     logger.error('[DailyObjective] Error generating org objective:', error);
-    return `Consultez vos candidatures en attente et engagez votre communauté pour renforcer votre marque employeur.`;
+    return language === 'fr'
+      ? `Consultez vos candidatures en attente et engagez votre communauté pour renforcer votre marque employeur.`
+      : `Review pending applications and engage your community to strengthen your employer brand.`;
   }
 }
 
-export async function getOrganizationDailyObjective(organizationId: string): Promise<DailyObjective> {
+export async function getOrganizationDailyObjective(
+  organizationId: string,
+  language: SupportedLanguage = 'en'
+): Promise<DailyObjective> {
   // Check cache
   const cacheResult = await pool.query(`
     SELECT objective, generated_at, expires_at
@@ -567,7 +593,7 @@ export async function getOrganizationDailyObjective(organizationId: string): Pro
 
   // Generate new objective
   const context = await getOrganizationContext(organizationId);
-  const objective = await generateOrganizationObjective(context, previousObjective);
+  const objective = await generateOrganizationObjective(context, previousObjective, language);
 
   const now = new Date();
   const expiresAt = new Date(now.getTime() + CACHE_DURATION_MS);
