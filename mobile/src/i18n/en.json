@@ -1513,6 +1513,7 @@
     "activity": {
       "unpin": "Unpin",
       "pin": "Pin",
+      "pinned": "Pinned",
       "scheduled": "Scheduled",
       "pollLoading": "Loading...",
       "votes": {

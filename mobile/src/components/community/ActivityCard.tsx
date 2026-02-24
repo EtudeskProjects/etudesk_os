@@ -25,6 +25,7 @@ import {
     MapPin,
     Video,
     Check,
+    Pin,
 } from 'lucide-react-native';
 	import { CommentSection } from './CommentSection';
 	import { RichTextContent } from './RichTextContent';
@@ -259,6 +260,14 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
 	                            <Text style={[styles.authorName, { color: colors.textPrimary }]}>
 	                                {authorName}
                             </Text>
+                            {isPinned && (
+                                <View style={[styles.scheduledBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
+                                    <Pin size={10} color={colors.primary} />
+                                    <Text style={[styles.scheduledBadgeText, { color: colors.primary }]}>
+                                        {t('community.activity.pinned')}
+                                    </Text>
+                                </View>
+                            )}
                             {isScheduled && (
                                 <View style={[styles.scheduledBadge, { backgroundColor: colors.warningLight }]}>
                                     <Clock size={10} color={colors.warning} />

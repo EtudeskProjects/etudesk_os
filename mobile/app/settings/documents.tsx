@@ -263,13 +263,25 @@ export default function DocumentsScreen() {
     const diffM = Math.floor(diffD / 30);
 
     if (diffMin < 1) return t('settings.documentsScreen.justNow');
-    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'always' });
-    if (diffMin < 60) return rtf.format(-diffMin, 'minute');
-    if (diffH < 24) return rtf.format(-diffH, 'hour');
-    if (diffD < 7) return rtf.format(-diffD, 'day');
-    if (diffW < 5) return rtf.format(-diffW, 'week');
-    if (diffM < 12) return rtf.format(-diffM, 'month');
-    return rtf.format(-Math.floor(diffD / 365), 'year');
+
+    // Intl.RelativeTimeFormat not available on Hermes (Expo Go)
+    if (typeof Intl !== 'undefined' && Intl.RelativeTimeFormat) {
+      const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'always' });
+      if (diffMin < 60) return rtf.format(-diffMin, 'minute');
+      if (diffH < 24) return rtf.format(-diffH, 'hour');
+      if (diffD < 7) return rtf.format(-diffD, 'day');
+      if (diffW < 5) return rtf.format(-diffW, 'week');
+      if (diffM < 12) return rtf.format(-diffM, 'month');
+      return rtf.format(-Math.floor(diffD / 365), 'year');
+    }
+
+    // Fallback without Intl.RelativeTimeFormat
+    if (diffMin < 60) return `${diffMin}min`;
+    if (diffH < 24) return `${diffH}h`;
+    if (diffD < 7) return `${diffD}d`;
+    if (diffW < 5) return `${diffW}w`;
+    if (diffM < 12) return `${diffM}mo`;
+    return `${Math.floor(diffD / 365)}y`;
   };
 
   const renderDocument = (doc: TalentDocument) => {

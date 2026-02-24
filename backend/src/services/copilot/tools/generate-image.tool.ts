@@ -1,7 +1,6 @@
 /**
  * Generate Image Tool — AI image generation via OpenAI gpt-image-1
- * Generates an image and saves locally for persistent access.
- * Made asynchronous to prevent blocking the agent loop.
+ * Generates an image synchronously and returns the URL for display.
  */
 
 import { defineTool } from './tool-helper';
@@ -16,7 +15,7 @@ const openai = getImageClient();
 export const generateImageTool = defineTool({
   name: 'generate_image',
   description:
-    'Generate an image from a text description. The generation is slow (60s), so this tool responds immediately with status "processing" and a job_id. You MUST output a placeholder image block using this job_id: ```image\n{"id":"job_id_here","status":"processing"}\n```. Use AFTER explaining a concept, as supplementary visual material.',
+    'Generate an image from a text description. This tool takes ~20-60s to complete. After calling it, output the result as an image block: ```image\n{"url":"<returned_url>","alt":"<description>","caption":"<caption>"}\n```. Use AFTER explaining a concept, as supplementary visual material.',
   parameters: z.object({
     prompt: z
       .string()
@@ -42,41 +41,39 @@ export const generateImageTool = defineTool({
     };
   },
   execute: async ({ prompt, size: rawSize, quality: rawQuality }) => {
-    const jobId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     const size = rawSize.toLowerCase() as '1024x1024' | '1536x1024' | '1024x1536';
     const quality = rawQuality.toLowerCase() as 'low' | 'medium' | 'high';
 
-    // Background execution
-    (async () => {
-      try {
-        const response = await openai.images.generate({
-          model: MODEL_IMAGE,
-          prompt,
-          size,
-          quality,
-        });
+    try {
+      const response = await openai.images.generate({
+        model: MODEL_IMAGE,
+        prompt,
+        size,
+        quality,
+      });
 
-        const imageData = response.data?.[0];
-        const b64 = imageData?.b64_json;
-        if (!b64) return;
-
-        const imageBuffer = Buffer.from(b64, 'base64');
-        const filename = `image-${Date.now()}.png`;
-        const storagePath = `generated/${filename}`;
-
-        await uploadFile(imageBuffer, storagePath, 'image/png');
-        logger.info(`[generate_image] Background job ${jobId} completed: ${filename} (${imageBuffer.length} bytes)`);
-      } catch (err: any) {
-        logger.error(`[generate_image] Background job ${jobId} failed: ${err.message}`);
+      const imageData = response.data?.[0];
+      const b64 = imageData?.b64_json;
+      if (!b64) {
+        return { success: false, error: 'No image data returned' };
       }
-    })();
 
-    // Immediate return
-    return {
-      success: true,
-      status: 'processing',
-      job_id: jobId,
-      message: 'Image generation is processing in the background. Please output the image block placeholder.',
-    };
+      const imageBuffer = Buffer.from(b64, 'base64');
+      const filename = `image-${Date.now()}.png`;
+      const storagePath = `generated/${filename}`;
+
+      const url = await uploadFile(imageBuffer, storagePath, 'image/png');
+      logger.info(`[generate_image] Completed: ${filename} (${imageBuffer.length} bytes)`);
+
+      return {
+        success: true,
+        url,
+        alt: prompt.slice(0, 120),
+        caption: `Generated image`,
+      };
+    } catch (err: any) {
+      logger.error(`[generate_image] Failed: ${err.message}`);
+      return { success: false, error: err.message };
+    }
   },
 });
