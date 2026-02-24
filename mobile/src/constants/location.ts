@@ -75,7 +75,6 @@ export const getCountries = (): Country[] => {
 
   try {
     // Try loading global countries dataset
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const countriesJson = require('../data/countries.json') as CountriesData;
     const uemoaCountries: Country[] = [];
     const otherCountries: Country[] = [];
@@ -116,13 +115,8 @@ export const getCountries = (): Country[] => {
   return _globalCountries;
 };
 
-// Legacy compat: static COUNTRIES array (UEMOA only, used by existing code)
-export const COUNTRIES: Country[] = uemoaData.pays
-  .map((pays) => ({
-    id: pays.code_iso,
-    label: pays.nom,
-  }))
-  .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
+// Legacy compat: expose the global list so existing screens get all countries.
+export const COUNTRIES: Country[] = getCountries();
 
 // ── Zone-based region loading ────────────────────────────────────────────────
 
