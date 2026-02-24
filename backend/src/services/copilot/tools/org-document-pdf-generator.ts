@@ -214,7 +214,8 @@ export async function generateOrgDocumentPDF(title: string, data: OrgDocumentDat
       }
 
       // --- FOOTER on every page ---
-      const totalPages = doc.bufferedPageRange().count;
+      const range = doc.bufferedPageRange();
+      const totalPages = range.count;
       for (let i = 0; i < totalPages; i++) {
         doc.switchToPage(i);
 
@@ -223,18 +224,21 @@ export async function generateOrgDocumentPDF(title: string, data: OrgDocumentDat
           .lineTo(PAGE.width - PAGE.marginX, footerY)
           .lineWidth(0.3).strokeColor(C.borderLight).stroke();
 
-        // Org name + Etudesk branding
+        // Use doc.page.write via _fragment helper to avoid auto-pagination
+        // Position cursor exactly and write with lineBreak: false + height: FOOTER_HEIGHT
         doc.fontSize(6.5).font(F.oblique).fillColor(C.textTertiary);
         doc.text(`${data.organizationName} — Etudesk`, PAGE.marginX, footerY + 8, {
-          width: CONTENT_WIDTH,
+          width: CONTENT_WIDTH / 2,
+          height: FOOTER_HEIGHT,
           align: 'left',
           lineBreak: false,
         });
 
         if (totalPages > 1) {
           doc.fontSize(6.5).font(F.regular).fillColor(C.textTertiary);
-          doc.text(`${i + 1} / ${totalPages}`, PAGE.marginX, footerY + 8, {
-            width: CONTENT_WIDTH,
+          doc.text(`${i + 1} / ${totalPages}`, PAGE.marginX + CONTENT_WIDTH / 2, footerY + 8, {
+            width: CONTENT_WIDTH / 2,
+            height: FOOTER_HEIGHT,
             align: 'right',
             lineBreak: false,
           });
