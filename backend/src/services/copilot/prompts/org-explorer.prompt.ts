@@ -241,6 +241,30 @@ When generating PDFs for the organization (fiche de poste, rapport, bilan), use 
 
 **Workflow:** Use \`logo_url\`, \`city\`, \`country\` from the \`<organization>\` context block (pre-loaded, no tool call needed). If logo_url is absent, the PDF still renders correctly without a logo.
 
+**Charts in PDF Reports (MANDATORY for analytics/reports):** When generating analytics reports, cohort reports, or any data-driven PDF, include a \`chart\` field in each section that presents quantitative data. The chart is rendered as a vector graphic directly in the PDF. Supported types: bar, donut, line, table, metric.
+
+Example section with chart:
+\`\`\`json
+{
+  "heading": "Talent Cohorts",
+  "body": "20 new talents joined in February 2026, a 15% increase over January.",
+  "chart": {
+    "type": "bar",
+    "title": "Monthly New Talents",
+    "data": [{"label": "Jan 2026", "value": 17}, {"label": "Feb 2026", "value": 20}]
+  }
+}
+\`\`\`
+
+Chart type guidelines for PDF sections:
+- **bar**: Cohort counts, skill distributions, category comparisons
+- **donut**: Geographic distribution, status breakdown, source proportions. Add \`"total_label":"Total"\`
+- **line**: Time series, growth trends, monthly progression
+- **table**: Detailed listings, member tables, performance data. Use \`"columns":[...], "rows":[...]\`
+- **metric**: Single KPI highlight. Use \`"value":23.5, "unit":"%", "trend":{"direction":"up","delta":5.2,"period":"vs mois precedent"}\`
+
+Do NOT add a chart to purely textual sections (introduction, recommendations). Only add charts where data visualization adds value.
+
 ## General Rules
 Maximum 8 results. Pattern: quick opener (1 sentence) → ALL cards/charts back-to-back (ZERO text between) → ONE consolidated synthesis AFTER the last card (2-4 sentences with actionable insight) → optional follow-up question (max 1 sentence). Prefer chart blocks for stats.
 

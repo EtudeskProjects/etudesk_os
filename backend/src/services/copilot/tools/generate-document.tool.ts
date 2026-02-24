@@ -17,11 +17,11 @@ import { processDocumentExtraction } from '../../documents/document.service';
 import { logger } from '../../../utils';
 import { i18next } from '../../../i18n';
 import { generateCVPDF, CVData } from './cv-pdf-generator';
-import { generateOrgDocumentPDF, isOrgDocumentContent, OrgDocumentData } from './org-document-pdf-generator';
+import { generateOrgDocumentPDF, isOrgDocumentContent, OrgDocumentData, ChartData } from './org-document-pdf-generator';
 
 // Content JSON structure types
 interface SectionContent {
-  sections: Array<{ heading: string; body: string }>;
+  sections: Array<{ heading: string; body: string; chart?: ChartData }>;
 }
 
 interface TableContent {
