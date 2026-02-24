@@ -570,7 +570,7 @@
       "code_iso": "CI",
       "regions": [
         {
-          "nom": "District Autonome d'Abidjan",
+          "nom": "Abidjan",
           "communes": [
             "Abobo",
             "Adjamé",
@@ -590,7 +590,7 @@
           ]
         },
         {
-          "nom": "District Autonome de Yamoussoukro",
+          "nom": "Yamoussoukro",
           "communes": [
             "Yamoussoukro"
           ]
