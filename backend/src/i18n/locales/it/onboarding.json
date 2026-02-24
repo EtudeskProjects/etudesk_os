@@ -2,6 +2,7 @@
   "profileCreated": "Profilo creato con successo",
   "profileCreationFailed": "Errore durante la creazione del profilo",
   "talentProfileExists": "Un profilo talent esiste già per questo utente",
+  "emailAlreadyUsed": "Questa email è già associata a un profilo talent",
   "phoneAlreadyUsed": "Questo numero di telefono è già associato a un profilo talent",
   "countryCodeInvalid": "Il codice paese deve essere nel formato ISO 3166-1 alpha-2 (es: CI, FR, SN)",
   "phoneMinLength": "Il numero di telefono è richiesto (minimo 8 caratteri)",

@@ -2,6 +2,7 @@
   "profileCreated": "تم إنشاء الملف الشخصي بنجاح",
   "profileCreationFailed": "خطأ أثناء إنشاء الملف الشخصي",
   "talentProfileExists": "يوجد ملف شخصي للموهبة بالفعل لهذا المستخدم",
+  "emailAlreadyUsed": "هذا البريد الإلكتروني مرتبط بالفعل بملف شخصي للموهبة",
   "phoneAlreadyUsed": "رقم الهاتف هذا مرتبط بالفعل بملف شخصي للموهبة",
   "countryCodeInvalid": "رمز البلد يجب أن يكون بصيغة ISO 3166-1 alpha-2 (مثال: CI، FR، SN)",
   "phoneMinLength": "رقم الهاتف مطلوب (8 أحرف كحد أدنى)",

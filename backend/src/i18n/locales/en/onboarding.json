@@ -2,6 +2,7 @@
   "profileCreated": "Profile created successfully",
   "profileCreationFailed": "Error creating profile",
   "talentProfileExists": "A talent profile already exists for this user",
+  "emailAlreadyUsed": "This email is already associated with a talent profile",
   "phoneAlreadyUsed": "This phone number is already associated with a talent profile",
   "countryCodeInvalid": "Country code must be in ISO 3166-1 alpha-2 format (e.g., CI, FR, SN)",
   "phoneMinLength": "Phone number is required (minimum 8 characters)",

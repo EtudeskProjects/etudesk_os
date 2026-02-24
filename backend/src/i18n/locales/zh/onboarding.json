@@ -2,6 +2,7 @@
   "profileCreated": "个人资料创建成功",
   "profileCreationFailed": "创建个人资料时出错",
   "talentProfileExists": "该用户已有人才档案",
+  "emailAlreadyUsed": "该邮箱已关联到其他人才档案",
   "phoneAlreadyUsed": "该手机号已关联到其他人才档案",
   "countryCodeInvalid": "国家代码必须为 ISO 3166-1 alpha-2 格式（如：CI、FR、SN）",
   "phoneMinLength": "手机号为必填项（至少8个字符）",

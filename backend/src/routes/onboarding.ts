@@ -88,6 +88,23 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
         });
       }
 
+      // Check if email is already used by another talent
+      const finalEmailCheck = data.email?.trim() || talentEmail;
+      if (finalEmailCheck) {
+        const emailCheckResult = await client.query(
+          `SELECT id FROM talents WHERE email = $1 AND deleted_at IS NULL`,
+          [finalEmailCheck]
+        );
+
+        if (emailCheckResult.rows.length > 0) {
+          return res.status(400).json({
+            success: false,
+            error: req.t('onboarding:emailAlreadyUsed'),
+            field: 'email',
+          });
+        }
+      }
+
       // Check if phone number is already used by another talent (only if phone provided)
       if (data.phone?.trim()) {
         const phoneCheckResult = await client.query(
