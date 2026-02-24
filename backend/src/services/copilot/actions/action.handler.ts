@@ -202,7 +202,7 @@ export async function handleConfirmation(
 
         // Insert poster
         await pool.query(
-          `INSERT INTO opportunity_posters (opportunity_id, talent_id, role) VALUES ($1, $2, 'AUTHOR')`,
+          `INSERT INTO opportunity_posters (opportunity_id, poster_talent_id, role) VALUES ($1, $2, 'AUTHOR')`,
           [id, talentId]
         );
 
