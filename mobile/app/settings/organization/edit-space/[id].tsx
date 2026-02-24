@@ -690,16 +690,16 @@ export default function EditSpaceScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <MapPin size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Informations</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('space.form.infoTitle')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
-          Decrivez votre espace reservable
+          {t('space.form.infoDescription')}
         </Text>
       </View>
 
       <View style={styles.formFields}>
         <Input
-          label="Nom de l'espace *"
-          placeholder="Ex: Salle de reunion Cocody"
+          label={t('space.form.spaceNameLabel')}
+          placeholder={t('space.form.spaceNamePlaceholder')}
           value={name}
           onChangeText={setName}
           autoCapitalize="words"
@@ -785,7 +785,7 @@ export default function EditSpaceScreen() {
         </View>
 
         <FormTextArea
-          label="Description"
+          label={t('space.form.descriptionLabel')}
           placeholder={t('space.form.descriptionPlaceholder')}
           value={description}
           onChangeText={setDescription}
@@ -800,7 +800,7 @@ export default function EditSpaceScreen() {
     <View style={styles.stepContent}>
       <View style={styles.stepHeader}>
         <MapPin size={32} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>Localisation</Text>
+        <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{t('space.form.locationStep')}</Text>
         <Text style={[styles.stepDescription, { color: colors.textSecondary }]}>
           {t('space.form.locationDescription')}
         </Text>
@@ -808,14 +808,14 @@ export default function EditSpaceScreen() {
 
       <View style={styles.formFields}>
         <Input
-          label="Adresse"
-          placeholder="Ex: 123 Boulevard Latrille"
+          label={t('space.form.addressLabel')}
+          placeholder={t('space.form.addressPlaceholder')}
           value={address}
           onChangeText={setAddress}
         />
 
         <View style={styles.fieldContainer}>
-          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Pays *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('space.form.countryLabel')}</Text>
           <ScrollView
             ref={countryScrollRef}
             horizontal
@@ -852,7 +852,7 @@ export default function EditSpaceScreen() {
 
         {availableRegions.length > 0 && (
           <View style={styles.fieldContainer}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Region</Text>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('space.form.regionLabel')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScrollContent}>
               {availableRegions.map((r) => {
                 const isSelected = region === r.id;
@@ -884,7 +884,7 @@ export default function EditSpaceScreen() {
 
         {availableCities.length > 0 && (
           <View style={styles.fieldContainer}>
-            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>Ville</Text>
+            <Text style={[styles.fieldLabel, { color: colors.gray700 }]}>{t('space.form.cityLabel')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScrollContent}>
               {availableCities.map((c) => {
                 const isSelected = city === c.id;

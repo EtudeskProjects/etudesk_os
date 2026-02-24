@@ -1172,6 +1172,12 @@
       "contractTypeLabel": "Type de contrat *",
       "workRhythmLabel": "Rythme de travail",
       "currencyLabel": "Devise (ex: XOF, EUR)",
+      "currencyPlaceholder": "XOF",
+      "durationPlaceholder": "ex: 1 mois, 6 mois, CDI...",
+      "minLabel": "Minimum",
+      "maxLabel": "Maximum",
+      "minPlaceholder": "150000",
+      "maxPlaceholder": "300000",
       "frequencyLabel": "Fréquence",
       "visibilityLabel": "Visibilité *",
       "applicationSettings": "Paramètres de candidature",
@@ -1279,9 +1285,22 @@
       "maxQuestions": "Tu peux ajouter au maximum {{count}} questions.",
       "imageSelectionError": "Impossible de sélectionner l'image.",
       "noRulesDefined": "Aucun règlement défini",
+      "infoTitle": "Informations",
+      "infoDescription": "Décrivez votre espace réservable",
+      "spaceNameLabel": "Nom de l'espace *",
+      "spaceNamePlaceholder": "Ex: Salle de réunion Cocody",
       "spaceTypeLabel": "Type d'espace *",
+      "descriptionLabel": "Description",
       "descriptionPlaceholder": "Décrivez l'espace, ses caractéristiques...",
+      "locationStep": "Localisation",
       "locationDescription": "Où se trouve l'espace ?",
+      "addressLabel": "Adresse",
+      "addressPlaceholder": "Ex: 123 Boulevard Latrille",
+      "countryLabel": "Pays *",
+      "regionLabel": "Région",
+      "cityLabel": "Ville",
+      "startTimePlaceholder": "08:00",
+      "endTimePlaceholder": "18:00",
       "accessibilityEquipment": "Équipements d'accessibilité",
       "addSpacePhotos": "Ajoutez des photos de l'espace",
       "paymentCollectionMode": "Mode d'encaissement",
@@ -1683,8 +1702,21 @@
     "hoursAgo": "Il y a {{hours}}h",
     "minutesAgo": "Il y a {{minutes}} min",
     "justNow": "À l'instant",
+    "weeksAgo": "Il y a {{weeks}} semaines",
+    "monthsAgo": "Il y a {{months}} mois",
+    "yearsAgo": "Il y a {{years}} ans",
     "inDays": "Dans {{days}} jours",
+    "inWeeks": "Dans {{weeks}} semaines",
+    "inMonths": "Dans {{months}} mois",
     "expired": "Expiré",
+    "compact": {
+      "justNow": "maintenant",
+      "minutes": "{{minutes}} min",
+      "hours": "{{hours}}h",
+      "days": "{{days}}j",
+      "weeks": "{{weeks}} sem",
+      "date": "{{date}}"
+    },
     "months": {
       "january": "janvier",
       "february": "février",
@@ -2663,6 +2695,113 @@
     }
   },
   "labels": {
+    "orgTypes": {
+      "COMPANY": "Entreprise",
+      "STARTUP": "Startup",
+      "NGO": "ONG",
+      "ASSOCIATION": "Association",
+      "EDUCATIONAL_INSTITUTION": "Établissement d'enseignement",
+      "PUBLIC_ADMINISTRATION": "Administration publique",
+      "TRAINING_CENTER": "Centre de formation",
+      "CONSULTING_FIRM": "Cabinet de conseil",
+      "RECRUITMENT_AGENCY": "Agence de recrutement",
+      "FINANCIAL_INSTITUTION": "Institution financière",
+      "RESEARCH_CENTER": "Centre de recherche",
+      "COOPERATIVE": "Coopérative",
+      "SOCIAL_ENTERPRISE": "Entreprise sociale"
+    },
+    "verificationStatus": {
+      "PENDING": "Vérification en cours",
+      "VERIFIED": "Vérifié",
+      "REJECTED": "Rejeté",
+      "NOT_STARTED": "Non commencé"
+    },
+    "spaceTypes": {
+      "SALLE_COURS": "Salle de cours",
+      "SALLE_INFORMATIQUE": "Salle informatique",
+      "AMPHITHEATRE": "Amphithéâtre",
+      "SALLE_FORMATION": "Salle de formation",
+      "OPEN_SPACE": "Open space",
+      "BUREAU_PRIVE": "Bureau privé",
+      "POSTE_NOMADE": "Poste nomade",
+      "SALLE_REUNION": "Salle de réunion",
+      "SALLE_CONFERENCE": "Salle de conférence",
+      "CABINE_APPEL": "Cabine d'appel",
+      "ATELIER": "Atelier",
+      "LABORATOIRE": "Laboratoire",
+      "STUDIO": "Studio",
+      "SALLE_EVENEMENT": "Salle événementielle",
+      "ROOFTOP": "Rooftop",
+      "TERRASSE": "Terrasse"
+    },
+    "safetyEquipment": {
+      "EXTINCTEUR": "Extincteurs",
+      "DETECTEUR_FUMEE": "Détecteurs de fumée",
+      "ALARME_INCENDIE": "Alarme incendie",
+      "SORTIE_SECOURS": "Sorties de secours",
+      "PLAN_EVACUATION": "Plan d'évacuation",
+      "ECLAIRAGE_SECOURS": "Éclairage de secours",
+      "SPRINKLER": "Sprinklers",
+      "DESENFUMAGE": "Désenfumage",
+      "PORTE_COUPE_FEU": "Portes coupe-feu"
+    },
+    "accessibilityFeatures": {
+      "RAMPE_ACCES": "Rampe d'accès",
+      "ASCENSEUR": "Ascenseur accessible",
+      "WC_ACCESSIBLE": "WC accessibles",
+      "PORTES_LARGES": "Portes larges (≥90cm)",
+      "GUIDAGE_TACTILE": "Guidage tactile",
+      "BOUCLE_AUDITIVE": "Boucle auditive",
+      "PARKING_HANDICAPE": "Parking PMR",
+      "SIGNALISATION_BRAILLE": "Signalisation braille"
+    },
+    "pricingTypes": {
+      "FREE": "Gratuit",
+      "HOURLY": "À l'heure",
+      "DAILY": "À la journée",
+      "MONTHLY": "Abonnement mensuel",
+      "YEARLY": "Abonnement annuel",
+      "CUSTOM": "Offre personnalisée"
+    },
+    "accessTypes": {
+      "PUBLIC": "Accès libre",
+      "PRIVATE": "Privé",
+      "MEMBERSHIP": "Adhésion requise"
+    },
+    "communityTypes": {
+      "ONLINE": "En ligne",
+      "OFFLINE": "En présentiel",
+      "HYBRID": "Hybride",
+      "LEARNING": "Apprentissage",
+      "PROFESSIONAL": "Professionnel",
+      "SOCIAL": "Social",
+      "INDUSTRY": "Industrie",
+      "ALUMNI": "Alumni",
+      "RESEARCH": "Recherche"
+    },
+    "visibility": {
+      "PUBLIC": "Public",
+      "PRIVATE": "Privé"
+    },
+    "communityStatus": {
+      "ACTIVE": "Actif",
+      "INACTIVE": "Inactif",
+      "ARCHIVED": "Archivé"
+    },
+    "calendarEventTypes": {
+      "INTERVIEW": "Entretien",
+      "BOOKING": "Réservation",
+      "DEADLINE": "Date limite"
+    },
+    "paymentProviders": {
+      "ORANGE_MONEY": "Orange Money",
+      "MTN_MONEY": "MTN Money",
+      "MOOV_MONEY": "Moov Money",
+      "WAVE": "Wave",
+      "PUSH": "Push",
+      "DJAMO": "Djamo",
+      "CARD": "Carte bancaire"
+    },
     "orgRoles": {
       "OWNER": "Propriétaire",
       "ADMIN": "Administrateur",
@@ -2725,6 +2864,354 @@
       "TEACH_OR_MENTOR": "Enseigner ou mentorer",
       "BUILD_NETWORK_OR_VISIBILITY": "Développer mon réseau / visibilité",
       "CONTRIBUTE_OR_GIVE_BACK": "Contribuer / Redonner"
+    },
+    "genders": {
+      "M": "Homme",
+      "F": "Femme"
+    },
+    "documentTypes": {
+      "CV": "CV",
+      "NATIONAL_ID": "Carte d'identité nationale",
+      "PASSPORT": "Passeport",
+      "DIPLOMA": "Diplôme",
+      "CERTIFICATE": "Certificat",
+      "RECOMMENDATION_LETTER": "Lettre de recommandation",
+      "COVER_LETTER": "Lettre de motivation",
+      "TRANSCRIPT": "Relevé de notes",
+      "DRIVER_LICENSE": "Permis de conduire",
+      "PROOF_OF_ADDRESS": "Justificatif de domicile",
+      "PORTFOLIO": "Portfolio",
+      "OTHER": "Autre"
+    },
+    "proficiencyLevels": {
+      "BEGINNER": "Débutant",
+      "INTERMEDIATE": "Intermédiaire",
+      "EXPERT": "Expert",
+      "MASTER": "Maître"
+    },
+    "skillTypes": {
+      "KNOWLEDGE": "Connaissance",
+      "HARD_SKILL": "Compétence technique",
+      "SOFT_SKILL": "Compétence comportementale"
+    },
+    "orgDocumentTypes": {
+      "POLICY": "Politique interne",
+      "CONTRACT": "Contrat",
+      "REPORT": "Rapport",
+      "BROCHURE": "Brochure",
+      "PRESENTATION": "Présentation",
+      "CHARTER": "Charte",
+      "LEGAL": "Document juridique",
+      "OTHER": "Autre document"
+    },
+    "orgDocumentCategories": {
+      "ADMINISTRATIVE": "Administratif",
+      "COMMERCIAL": "Commercial",
+      "LEGAL": "Juridique",
+      "OTHER": "Autre"
+    },
+    "orgDocumentStatuses": {
+      "PENDING": "En attente",
+      "PROCESSING": "En cours de traitement",
+      "PROCESSED": "Traité",
+      "FAILED": "Échoué",
+      "VERIFIED": "Vérifié",
+      "REJECTED": "Rejeté"
+    },
+    "orgTalentSources": {
+      "APPLICATION": "Candidature",
+      "COMMUNITY": "Communauté",
+      "SPACE_BOOKING": "Réservation",
+      "MEMBER": "Membre"
+    },
+    "opportunityTypes": {
+      "EMPLOYMENT": "Emploi",
+      "INTERNSHIP": "Stage",
+      "ENTREPRENEURSHIP": "Entrepreneuriat",
+      "ALTERNATION": "Alternance",
+      "FREELANCE": "Freelance",
+      "VOLUNTEER": "Bénévolat"
+    },
+    "contractTypes": {
+      "CDI": "CDI",
+      "CDD": "CDD",
+      "APPRENTICESHIP": "Apprentissage",
+      "INTERNSHIP": "Stage",
+      "FREELANCE": "Freelance",
+      "SERVICE": "Prestation de service",
+      "INTERIM": "Intérim"
+    },
+    "locationTypes": {
+      "ON_SITE": "Sur site",
+      "REMOTE": "À distance",
+      "HYBRID": "Hybride"
+    },
+    "workRhythms": {
+      "FULL_TIME": "Temps plein",
+      "PART_TIME": "Temps partiel",
+      "FLEXIBLE": "Flexible",
+      "OCCASIONAL": "Occasionnel"
+    },
+    "locationTypeDescriptions": {
+      "ON_SITE": "Présence au bureau requise",
+      "HYBRID": "Mix bureau et télétravail",
+      "REMOTE": "100% à distance"
+    },
+    "opportunityVisibility": {
+      "PUBLIC": "Visible dans l'exploration et la recherche",
+      "PRIVATE": "Disponible uniquement sur invitation"
+    },
+    "communityVisibilityDescriptions": {
+      "PUBLIC": "Tout le monde peut voir et rejoindre",
+      "PRIVATE": "Seuls les membres peuvent voir le contenu"
+    },
+    "compensationFrequencies": {
+      "HOURLY": "Heure",
+      "MONTHLY": "Mois",
+      "YEARLY": "Année",
+      "PROJECT": "Projet"
+    },
+    "opportunityStatus": {
+      "DRAFT": "Brouillon",
+      "OPEN": "Publiée",
+      "PAUSED": "En pause",
+      "FILLED": "Pourvue",
+      "EXPIRED": "Expirée"
+    },
+    "applicationStatus": {
+      "SUBMITTED": "Soumise",
+      "IN_REVIEW": "En cours d'examen",
+      "ACCEPTED": "Acceptée",
+      "REJECTED": "Refusée"
+    },
+    "memberStatus": {
+      "ACTIVE": "Actif",
+      "INVITED": "Invité",
+      "INACTIVE": "Inactif"
+    },
+    "statusBadges": {
+      "PENDING": "En attente",
+      "ACTIVE": "Membre actif",
+      "REJECTED": "Rejeté",
+      "SUSPENDED": "Suspendu",
+      "ARCHIVED": "Archivé"
+    },
+    "spaceCategories": {
+      "FORMATION": "Formation",
+      "TRAVAIL": "Travail",
+      "REUNION": "Réunion",
+      "ATELIER": "Atelier",
+      "EVENEMENT": "Événement"
+    },
+    "spaceStatus": {
+      "ACTIVE": "Actif",
+      "INACTIVE": "Inactif",
+      "MAINTENANCE": "Maintenance"
+    },
+    "bookingStatus": {
+      "PENDING": "En attente",
+      "CONFIRMED": "Confirmée",
+      "CANCELLED": "Annulée",
+      "COMPLETED": "Terminée",
+      "NO_SHOW": "Absent"
+    },
+    "paymentStatus": {
+      "PENDING": "En attente",
+      "PARTIAL": "Partiel",
+      "PAID": "Payé",
+      "REFUNDED": "Remboursé"
+    },
+    "spacePricingTypes": {
+      "HOURLY": "À l'heure",
+      "DAILY": "À la journée",
+      "WEEKLY": "À la semaine",
+      "MONTHLY": "Au mois"
+    },
+    "spacePricingUnits": {
+      "HOURLY": "/heure",
+      "DAILY": "/jour",
+      "WEEKLY": "/semaine",
+      "MONTHLY": "/mois"
+    },
+    "spaceEquipment": {
+      "VIDEOPROJECTOR": "Vidéoprojecteur",
+      "WHITEBOARD": "Tableau blanc",
+      "FLIPCHART": "Paperboard",
+      "SCREEN": "Écran",
+      "SOUND_SYSTEM": "Système audio",
+      "MICROPHONE": "Microphone",
+      "WEBCAM": "Webcam",
+      "TV_SCREEN": "Écran TV",
+      "VIDEO_CONFERENCE": "Visioconférence",
+      "COMPUTERS": "Ordinateurs",
+      "PRINTERS": "Imprimantes",
+      "PHONE": "Téléphone"
+    },
+    "spaceAmenities": {
+      "WIFI": "Wi-Fi",
+      "AIR_CONDITIONING": "Climatisation",
+      "HEATING": "Chauffage",
+      "PARKING": "Parking",
+      "CAFETERIA": "Cafétéria",
+      "KITCHEN": "Cuisine",
+      "RESTROOMS": "Sanitaires",
+      "RECEPTION": "Accueil",
+      "SECURITY": "Sécurité",
+      "ELEVATOR": "Ascenseur",
+      "NATURAL_LIGHT": "Lumière naturelle",
+      "SOUNDPROOF": "Insonorisation"
+    },
+    "spaceAccessibility": {
+      "WHEELCHAIR_ACCESS": "Accès fauteuil roulant",
+      "ELEVATOR": "Ascenseur accessible",
+      "ACCESSIBLE_RESTROOM": "Sanitaires accessibles",
+      "WIDE_DOORS": "Portes larges (>90cm)",
+      "TACTILE_GUIDANCE": "Guidage tactile",
+      "HEARING_LOOP": "Boucle auditive",
+      "HANDICAP_PARKING": "Parking PMR",
+      "BRAILLE_SIGNAGE": "Signalétique braille"
+    },
+    "communityTags": {
+      "PROFESSIONAL": "Professionnels",
+      "STUDENT": "Étudiants",
+      "ENTREPRENEUR": "Entrepreneurs",
+      "TECH": "Tech & Innovation",
+      "CREATIVE": "Créatifs & Artistes",
+      "SOCIAL_IMPACT": "Impact social",
+      "ALUMNI": "Alumni",
+      "WOMEN": "Femmes",
+      "YOUTH": "Jeunes",
+      "CLUB_ASSOCIATION": "Club / Association"
+    },
+    "weekdays": {
+      "0": "Dimanche",
+      "1": "Lundi",
+      "2": "Mardi",
+      "3": "Mercredi",
+      "4": "Jeudi",
+      "5": "Vendredi",
+      "6": "Samedi"
+    },
+    "weekdaysShort": {
+      "0": "Dim",
+      "1": "Lun",
+      "2": "Mar",
+      "3": "Mer",
+      "4": "Jeu",
+      "5": "Ven",
+      "6": "Sam"
+    },
+    "entityLabels": {
+      "opportunity": "Opportunité",
+      "community": "Communauté",
+      "space": "Espace",
+      "organization": "Organisation",
+      "talent": "Talent",
+      "document": "Document"
+    },
+    "documentCategories": {
+      "PROFESSIONAL": "Professionnel",
+      "ACADEMIC": "Académique",
+      "IDENTITY": "Identité",
+      "OTHER": "Autre"
+    },
+    "documentStatuses": {
+      "PENDING": "En attente",
+      "PROCESSING": "En cours de traitement",
+      "PROCESSED": "Traité",
+      "FAILED": "Échoué",
+      "VERIFIED": "Vérifié",
+      "REJECTED": "Rejeté"
+    },
+    "profileFields": {
+      "bio": "Bio",
+      "city": "Ville",
+      "country": "Pays",
+      "goals": "Objectifs",
+      "sectors": "Secteurs d'activité",
+      "remote_ready": "Télétravail",
+      "willing_to_relocate": "Prêt à déménager",
+      "profile_tags": "Tags"
+    },
+    "membershipQuestions": {
+      "motivation": "Pourquoi souhaites-tu rejoindre cette communauté ?",
+      "contribution": "Comment comptes-tu contribuer à la communauté ?",
+      "background": "Quel est ton parcours professionnel ?",
+      "referral": "Comment as-tu entendu parler de nous ?",
+      "expectations": "Quelles sont tes attentes vis-à-vis de cette communauté ?"
+    },
+    "noData": "Aucune donnée disponible",
+    "defaultUser": "Utilisateur",
+    "select": "Sélectionner",
+    "resolution": "Résolution",
+    "noSteps": "Aucune étape disponible",
+    "copyCode": "Copier le code",
+    "goodAnswer": "Bonne réponse",
+    "badAnswer": "Mauvaise réponse",
+    "enable": "Activer",
+    "disable": "Désactiver",
+    "shareDocument": "Partager le document",
+    "voiceNoteUploadError": "Erreur d'envoi de la note vocale",
+    "confirmationLabels": {
+      "contractTypes": {
+        "CDI": "CDI",
+        "CDD": "CDD",
+        "STAGE": "Stage",
+        "FREELANCE": "Freelance",
+        "ALTERNANCE": "Alternance",
+        "INTERIM": "Intérim",
+        "BENEVOLAT": "Bénévolat"
+      },
+      "workRhythms": {
+        "FULL_TIME": "Temps plein",
+        "PART_TIME": "Temps partiel",
+        "FLEXIBLE": "Flexible"
+      },
+      "locationTypes": {
+        "ON_SITE": "Sur site",
+        "REMOTE": "À distance",
+        "HYBRID": "Hybride"
+      },
+      "communityCategories": {
+        "PROFESSIONAL": "Professionnel",
+        "ACADEMIC": "Académique",
+        "SOCIAL": "Social",
+        "INDUSTRY": "Industrie",
+        "ALUMNI": "Alumni",
+        "RESEARCH": "Recherche"
+      },
+      "joinPolicies": {
+        "OPEN": "Ouvert",
+        "APPROVAL_REQUIRED": "Approbation requise",
+        "INVITE_ONLY": "Sur invitation uniquement"
+      },
+      "spaceCategories": {
+        "COWORKING": "Espace de coworking",
+        "MEETING_ROOM": "Salle de réunion",
+        "CONFERENCE": "Conférence",
+        "OFFICE": "Bureau",
+        "EVENT": "Événements",
+        "WORKSHOP": "Atelier",
+        "STUDIO": "Studio",
+        "CLASSROOM": "Salle de classe",
+        "LAB": "Laboratoire",
+        "LIBRARY": "Bibliothèque",
+        "OTHER": "Autre"
+      }
+    },
+    "createOfferOptions": {
+      "opportunity": {
+        "label": "Opportunité",
+        "description": "Emploi, stage, mission freelance"
+      },
+      "space": {
+        "label": "Espace",
+        "description": "Salle de réunion, formation, coworking"
+      },
+      "community": {
+        "label": "Communauté",
+        "description": "Groupe, réseau, association"
+      }
     }
   },
   "myApplications": {

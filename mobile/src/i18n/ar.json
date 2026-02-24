@@ -765,8 +765,21 @@
     "hoursAgo": "منذ {{hours}} ساعة",
     "minutesAgo": "منذ {{minutes}} دقيقة",
     "justNow": "الآن",
+    "weeksAgo": "منذ {{weeks}} أسابيع",
+    "monthsAgo": "منذ {{months}} أشهر",
+    "yearsAgo": "منذ {{years}} سنوات",
     "inDays": "خلال {{days}} أيام",
+    "inWeeks": "خلال {{weeks}} أسابيع",
+    "inMonths": "خلال {{months}} أشهر",
     "expired": "منتهي الصلاحية",
+    "compact": {
+      "justNow": "الآن",
+      "minutes": "{{minutes}}د",
+      "hours": "{{hours}}س",
+      "days": "{{days}}ي",
+      "weeks": "{{weeks}}أس",
+      "date": "{{date}}"
+    },
     "months": {
       "january": "يناير",
       "february": "فبراير",
@@ -1303,7 +1316,13 @@
     "communityTypes": {
       "ONLINE": "عبر الإنترنت",
       "OFFLINE": "حضوري",
-      "HYBRID": "هجين"
+      "HYBRID": "هجين",
+      "LEARNING": "تعليمي",
+      "PROFESSIONAL": "مهني",
+      "SOCIAL": "اجتماعي",
+      "INDUSTRY": "صناعي",
+      "ALUMNI": "خريجين",
+      "RESEARCH": "بحث"
     },
     "visibility": {
       "PUBLIC": "عام",

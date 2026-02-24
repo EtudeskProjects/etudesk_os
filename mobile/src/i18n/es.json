@@ -765,8 +765,21 @@
     "hoursAgo": "Hace {{hours}}h",
     "minutesAgo": "Hace {{minutes}} min",
     "justNow": "Ahora mismo",
+    "weeksAgo": "Hace {{weeks}} semanas",
+    "monthsAgo": "Hace {{months}} meses",
+    "yearsAgo": "Hace {{years}} años",
     "inDays": "En {{days}} días",
+    "inWeeks": "En {{weeks}} semanas",
+    "inMonths": "En {{months}} meses",
     "expired": "Expirado",
+    "compact": {
+      "justNow": "ahora",
+      "minutes": "{{minutes}} min",
+      "hours": "{{hours}}h",
+      "days": "{{days}}d",
+      "weeks": "{{weeks}} sem",
+      "date": "{{date}}"
+    },
     "months": {
       "january": "enero",
       "february": "febrero",
@@ -1303,7 +1316,13 @@
     "communityTypes": {
       "ONLINE": "En línea",
       "OFFLINE": "Presencial",
-      "HYBRID": "Híbrido"
+      "HYBRID": "Híbrido",
+      "LEARNING": "Aprendizaje",
+      "PROFESSIONAL": "Profesional",
+      "SOCIAL": "Social",
+      "INDUSTRY": "Industria",
+      "ALUMNI": "Alumni",
+      "RESEARCH": "Investigación"
     },
     "visibility": {
       "PUBLIC": "Público",

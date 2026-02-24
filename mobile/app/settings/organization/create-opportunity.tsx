@@ -1017,7 +1017,7 @@ export default function CreateOpportunityScreen() {
         {/* Durée du contrat - Input libre */}
         <Input
           label={t('opportunity.duration')}
-          placeholder="ex: 1 mois, 6 mois, CDI..."
+          placeholder={t('opportunity.form.durationPlaceholder')}
           value={duration}
           onChangeText={(value) => form.setValue('duration', value)}
         />
@@ -1030,8 +1030,8 @@ export default function CreateOpportunityScreen() {
           <View style={styles.rowFields}>
             <View style={styles.halfField}>
               <Input
-                label="Minimum"
-                placeholder="150000"
+                label={t('opportunity.form.minLabel')}
+                placeholder={t('opportunity.form.minPlaceholder')}
                 value={compensationMin}
                 onChangeText={(value) => form.setValue('compensationMin', value)}
                 keyboardType="numeric"
@@ -1039,8 +1039,8 @@ export default function CreateOpportunityScreen() {
             </View>
             <View style={styles.halfField}>
               <Input
-                label="Maximum"
-                placeholder="300000"
+                label={t('opportunity.form.maxLabel')}
+                placeholder={t('opportunity.form.maxPlaceholder')}
                 value={compensationMax}
                 onChangeText={(value) => form.setValue('compensationMax', value)}
                 keyboardType="numeric"
@@ -1051,7 +1051,7 @@ export default function CreateOpportunityScreen() {
 
         <Input
           label={t('opportunity.form.currencyLabel')}
-          placeholder="XOF"
+          placeholder={t('opportunity.form.currencyPlaceholder')}
           value={currency}
           onChangeText={(v) => form.setValue('currency', v || 'XOF')}
           maxLength={10}

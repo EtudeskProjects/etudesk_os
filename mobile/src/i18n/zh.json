@@ -765,8 +765,21 @@
     "hoursAgo": "{{hours}} 小时前",
     "minutesAgo": "{{minutes}} 分钟前",
     "justNow": "刚刚",
+    "weeksAgo": "{{weeks}}周前",
+    "monthsAgo": "{{months}}个月前",
+    "yearsAgo": "{{years}}年前",
     "inDays": "{{days}} 天后",
+    "inWeeks": "{{weeks}}周后",
+    "inMonths": "{{months}}个月后",
     "expired": "已过期",
+    "compact": {
+      "justNow": "刚刚",
+      "minutes": "{{minutes}}分钟",
+      "hours": "{{hours}}小时",
+      "days": "{{days}}天",
+      "weeks": "{{weeks}}周",
+      "date": "{{date}}"
+    },
     "months": {
       "january": "一月",
       "february": "二月",
@@ -1303,7 +1316,13 @@
     "communityTypes": {
       "ONLINE": "线上",
       "OFFLINE": "线下",
-      "HYBRID": "混合"
+      "HYBRID": "混合",
+      "LEARNING": "学习",
+      "PROFESSIONAL": "专业",
+      "SOCIAL": "社交",
+      "INDUSTRY": "行业",
+      "ALUMNI": "校友",
+      "RESEARCH": "研究"
     },
     "visibility": {
       "PUBLIC": "公开",

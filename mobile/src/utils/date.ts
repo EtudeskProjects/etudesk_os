@@ -55,23 +55,14 @@ export function formatRelativeTime(date: string | Date, locale?: Language): stri
   }
 
   if (diffWeeks < 4) {
-    if (currentLocale === 'fr') {
-      return diffWeeks === 1 ? 'Il y a 1 semaine' : `Il y a ${diffWeeks} semaines`;
-    }
-    return diffWeeks === 1 ? '1 week ago' : `${diffWeeks} weeks ago`;
+    return t('date.weeksAgo', { weeks: diffWeeks });
   }
 
   if (diffMonths < 12) {
-    if (currentLocale === 'fr') {
-      return diffMonths === 1 ? 'Il y a 1 mois' : `Il y a ${diffMonths} mois`;
-    }
-    return diffMonths === 1 ? '1 month ago' : `${diffMonths} months ago`;
+    return t('date.monthsAgo', { months: diffMonths });
   }
 
-  if (currentLocale === 'fr') {
-    return diffYears === 1 ? 'Il y a 1 an' : `Il y a ${diffYears} ans`;
-  }
-  return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`;
+  return t('date.yearsAgo', { years: diffYears });
 }
 
 /**
@@ -109,17 +100,11 @@ export function formatDeadline(deadline: string | Date, locale?: Language): { te
 
   if (diffDays <= 30) {
     const weeks = Math.floor(diffDays / 7);
-    if (currentLocale === 'fr') {
-      return { text: weeks === 1 ? 'Dans 1 semaine' : `Dans ${weeks} semaines`, isUrgent: false };
-    }
-    return { text: weeks === 1 ? 'In 1 week' : `In ${weeks} weeks`, isUrgent: false };
+    return { text: t('date.inWeeks', { weeks }), isUrgent: false };
   }
 
   const months = Math.floor(diffDays / 30);
-  if (currentLocale === 'fr') {
-    return { text: months === 1 ? 'Dans 1 mois' : `Dans ${months} mois`, isUrgent: false };
-  }
-  return { text: months === 1 ? 'In 1 month' : `In ${months} months`, isUrgent: false };
+  return { text: t('date.inMonths', { months }), isUrgent: false };
 }
 
 /**

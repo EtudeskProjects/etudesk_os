@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, StyleSheet } from 'react-native';
 import { TYPOGRAPHY } from '../../../constants/theme';
 import { useTheme } from '../../../hooks/useTheme';
+import i18n from '../../../i18n';
 
 interface TimestampProps {
     date: string | Date;
@@ -14,31 +15,32 @@ export const formatRelativeTime = (dateInput: string | Date): string => {
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
     if (diffInSeconds < 60) {
-        return 'À l\'instant';
+        return i18n.t('date.compact.justNow');
     }
 
     const diffInMinutes = Math.floor(diffInSeconds / 60);
     if (diffInMinutes < 60) {
-        return `${diffInMinutes}min`;
+        return i18n.t('date.compact.minutes', { minutes: diffInMinutes });
     }
 
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) {
-        return `${diffInHours}h`;
+        return i18n.t('date.compact.hours', { hours: diffInHours });
     }
 
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) {
-        return `${diffInDays}j`;
+        return i18n.t('date.compact.days', { days: diffInDays });
     }
 
     const diffInWeeks = Math.floor(diffInDays / 7);
     if (diffInWeeks < 4) {
-        return `${diffInWeeks}sem`;
+        return i18n.t('date.compact.weeks', { weeks: diffInWeeks });
     }
 
-    // Format as date
-    return date.toLocaleDateString('fr-FR', {
+    // Format as short date
+    const localeCode = i18n.locale === 'en' ? 'en-US' : `${i18n.locale}-${i18n.locale.toUpperCase()}`;
+    return date.toLocaleDateString(localeCode, {
         day: 'numeric',
         month: 'short',
     });

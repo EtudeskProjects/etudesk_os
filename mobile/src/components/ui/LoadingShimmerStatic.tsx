@@ -8,7 +8,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { SPACING, TYPOGRAPHY } from '../../constants/theme';
 import type { ThemeColors } from '../../constants/theme';
-import { useI18n } from '../../contexts/I18nContext';
+import i18n from '../../i18n';
 
 const BIOLOGICAL_CYCLE_MS = 3500;
 
@@ -23,7 +23,6 @@ export const LoadingShimmerStatic: React.FC<LoadingShimmerStaticProps> = ({
   colors,
   label,
 }) => {
-  const { t } = useI18n();
   const anim = useRef(new Animated.Value(0)).current;
   const baseColor = colors.gray200;
 
@@ -79,7 +78,7 @@ export const LoadingShimmerStatic: React.FC<LoadingShimmerStaticProps> = ({
           />
         ))}
       </View>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>{label || t('common.thinking')}</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{label || i18n.t('common.thinking')}</Text>
     </View>
   );
 };
