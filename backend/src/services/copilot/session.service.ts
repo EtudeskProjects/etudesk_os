@@ -191,14 +191,47 @@ export async function listSessions(
   }));
 }
 
-export async function deleteSession(sessionId: string, talentId: string): Promise<boolean> {
-  const result = await pool.query(
-    `UPDATE copilot_sessions
-     SET deleted_at = CURRENT_TIMESTAMP
-     WHERE id = $1 AND talent_id = $2 AND deleted_at IS NULL
-     RETURNING id`,
-    [sessionId, talentId]
-  );
+export async function deleteSession(
+  sessionId: string,
+  talentId: string,
+  organizationId?: string
+): Promise<boolean> {
+  let result;
+
+  if (organizationId) {
+    // Org sessions are shared across members. Deletion is allowed for:
+    // 1) session creator, or
+    // 2) active member with elevated management role.
+    result = await pool.query(
+      `UPDATE copilot_sessions cs
+       SET deleted_at = CURRENT_TIMESTAMP
+       WHERE cs.id = $1
+         AND cs.organization_id = $2
+         AND cs.deleted_at IS NULL
+         AND (
+           cs.talent_id = $3
+           OR EXISTS (
+             SELECT 1
+             FROM organization_members om
+             WHERE om.organization_id = $2
+               AND om.talent_id = $3
+               AND om.status = 'ACTIVE'
+               AND om.role IN ('OWNER', 'ADMIN', 'MANAGER', 'SUB_ADMIN')
+           )
+         )
+       RETURNING cs.id`,
+      [sessionId, organizationId, talentId]
+    );
+  } else {
+    result = await pool.query(
+      `UPDATE copilot_sessions
+       SET deleted_at = CURRENT_TIMESTAMP
+       WHERE id = $1 AND talent_id = $2 AND organization_id IS NULL AND deleted_at IS NULL
+       RETURNING id`,
+      [sessionId, talentId]
+    );
+  }
+
   return result.rows.length > 0;
 }
 

@@ -1049,15 +1049,26 @@ CREATE TABLE notifications (
     talent_id UUID NOT NULL REFERENCES talents(id) ON DELETE CASCADE,
     type VARCHAR(50) NOT NULL CHECK (type IN (
         'APPLICATION_STATUS_CHANGED', 'NEW_MESSAGE', 'NEW_APPLICATION',
-        'INTERVIEW_SCHEDULED', 'INTERVIEW_REMINDER', 'INVITATION_RECEIVED', 'SYSTEM'
+        'INTERVIEW_SCHEDULED', 'INTERVIEW_REMINDER', 'INVITATION_RECEIVED', 'SYSTEM',
+        'OPPORTUNITY', 'APPLICATION', 'MESSAGE', 'SPACE', 'REMINDER', 'MEMBERSHIP', 'BOOKING',
+        'MENTION', 'COMMENT_REPLY', 'NEW_ACTIVITY',
+        'EVENT_REMINDER_1D', 'EVENT_REMINDER_1H', 'EVENT_REMINDER',
+        'BOOKING_REMINDER', 'OPPORTUNITY_REMINDER', 'APPLICATION_REMINDER',
+        'MEMBERSHIP_APPROVED', 'MEMBERSHIP_REJECTED'
     )),
     title VARCHAR(255) NOT NULL,
     body TEXT NOT NULL,
     reference_type VARCHAR(50),
     reference_id UUID,
+    community_id UUID REFERENCES communities(id) ON DELETE CASCADE,
+    activity_id UUID REFERENCES community_activities(id) ON DELETE CASCADE,
+    comment_id UUID REFERENCES community_activity_comments(id) ON DELETE CASCADE,
+    actor_id UUID REFERENCES talents(id) ON DELETE SET NULL,
     data JSONB DEFAULT '{}'::jsonb,
     is_read BOOLEAN DEFAULT FALSE,
     read_at TIMESTAMP WITH TIME ZONE,
+    scheduled_for TIMESTAMP WITH TIME ZONE,
+    sent_at TIMESTAMP WITH TIME ZONE,
     email_sent BOOLEAN DEFAULT FALSE,
     email_sent_at TIMESTAMP WITH TIME ZONE,
     push_sent BOOLEAN DEFAULT FALSE,
@@ -1071,6 +1082,11 @@ CREATE INDEX idx_notifications_is_read ON notifications(is_read) WHERE is_read =
 CREATE INDEX idx_notifications_created_at ON notifications(created_at DESC);
 CREATE INDEX idx_notifications_reference ON notifications(reference_type, reference_id);
 CREATE INDEX idx_notifications_talent_unread ON notifications(talent_id, is_read, created_at DESC) WHERE is_read = false;
+CREATE INDEX idx_notifications_community_id ON notifications(community_id);
+CREATE INDEX idx_notifications_activity_id ON notifications(activity_id);
+CREATE INDEX idx_notifications_actor_id ON notifications(actor_id);
+CREATE INDEX idx_notifications_read_at_unread ON notifications(talent_id, created_at DESC) WHERE read_at IS NULL;
+CREATE INDEX idx_notifications_schedule_pending ON notifications(scheduled_for, sent_at);
 
 CREATE TABLE push_tokens (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

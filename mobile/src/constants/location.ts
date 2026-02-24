@@ -1,5 +1,6 @@
 // Données de localisation — UEMOA (communes.json) + mondial (countries.json + regions/)
 import communesData from '../data/communes.json';
+import countriesData from '../data/countries.json';
 import americasData from '../data/regions/americas.json';
 import asiaData from '../data/regions/asia.json';
 import centralAfricaData from '../data/regions/central-africa.json';
@@ -69,48 +70,37 @@ const UEMOA_CODES = new Set(['BJ', 'BF', 'CI', 'GW', 'ML', 'NE', 'SN', 'TG']);
 // Cache for global countries list
 let _globalCountries: Country[] | null = null;
 
-/** Get all countries (lazy-loaded from countries.json if available, fallback to UEMOA) */
+/** Get all countries (always from bundled countries.json, with UEMOA priority) */
 export const getCountries = (): Country[] => {
   if (_globalCountries) return _globalCountries;
 
-  try {
-    // Try loading global countries dataset
-    const countriesJson = require('../data/countries.json') as CountriesData;
-    const uemoaCountries: Country[] = [];
-    const otherCountries: Country[] = [];
+  const countriesJson = countriesData as CountriesData;
+  const uemoaCountries: Country[] = [];
+  const otherCountries: Country[] = [];
 
-    for (const c of countriesJson.countries) {
-      const entry: Country = {
-        id: c.code,
-        label: `${c.flag} ${c.name}`,
-        zone: c.zone,
-        currency: c.currency,
-      };
-      if (UEMOA_CODES.has(c.code)) {
-        uemoaCountries.push(entry);
-      } else {
-        otherCountries.push(entry);
-      }
+  for (const c of countriesJson.countries) {
+    const entry: Country = {
+      id: c.code,
+      label: `${c.flag} ${c.name}`,
+      zone: c.zone,
+      currency: c.currency,
+    };
+    if (UEMOA_CODES.has(c.code)) {
+      uemoaCountries.push(entry);
+    } else {
+      otherCountries.push(entry);
     }
-
-    // UEMOA first (CI at top), then rest alphabetically
-    uemoaCountries.sort((a, b) => {
-      if (a.id === 'CI') return -1;
-      if (b.id === 'CI') return 1;
-      return a.label.localeCompare(b.label, 'fr');
-    });
-    otherCountries.sort((a, b) => a.label.localeCompare(b.label, 'fr'));
-
-    _globalCountries = [...uemoaCountries, ...otherCountries];
-  } catch {
-    // Fallback to UEMOA-only from communes.json
-    _globalCountries = uemoaData.pays
-      .map((pays) => ({
-        id: pays.code_iso,
-        label: pays.nom,
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label, 'fr'));
   }
+
+  // UEMOA first (CI at top), then rest alphabetically
+  uemoaCountries.sort((a, b) => {
+    if (a.id === 'CI') return -1;
+    if (b.id === 'CI') return 1;
+    return a.label.localeCompare(b.label, 'fr');
+  });
+  otherCountries.sort((a, b) => a.label.localeCompare(b.label, 'fr'));
+
+  _globalCountries = [...uemoaCountries, ...otherCountries];
 
   return _globalCountries;
 };

@@ -383,6 +383,17 @@ async function getOrganizationBillingOwner(organizationId: string, talentId: str
   return organizationId;
 }
 
+async function isActiveOrganizationMember(organizationId: string, talentId: string): Promise<boolean> {
+  const result = await pool.query(
+    `SELECT 1
+     FROM organization_members
+     WHERE organization_id = $1 AND talent_id = $2 AND status = 'ACTIVE'
+     LIMIT 1`,
+    [organizationId, talentId]
+  );
+  return result.rows.length > 0;
+}
+
 // --- Chat Endpoint — Sse Streaming ---
 
 /**
@@ -1488,6 +1499,14 @@ router.post('/sessions', authMiddleware, async (req: AuthRequest, res: Response)
       return res.status(400).json({ error: req.t('copilot:orgIdRequired') });
     }
 
+    // Prevent creating org-scoped sessions for organizations where the caller is not an active member.
+    if (validMode === COPILOT_MODES.ORG && organizationId) {
+      const hasMembership = await isActiveOrganizationMember(organizationId, talentId);
+      if (!hasMembership) {
+        return res.status(403).json({ error: req.t('organizations:notMember') });
+      }
+    }
+
     const session = await copilotService.createSession(talentId, validMode, organizationId);
 
     res.json({
@@ -1546,8 +1565,9 @@ router.delete('/sessions/:id', authMiddleware, async (req: AuthRequest, res: Res
     }
 
     const sessionId = req.params.id;
+    const organizationId = req.query.organizationId as string | undefined;
 
-    const deleted = await copilotService.deleteSession(sessionId, talentId);
+    const deleted = await copilotService.deleteSession(sessionId, talentId, organizationId);
     if (!deleted) {
       return res.status(404).json({ error: req.t('copilot:sessionNotFound') });
     }

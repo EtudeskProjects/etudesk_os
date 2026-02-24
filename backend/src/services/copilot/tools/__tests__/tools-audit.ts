@@ -16,13 +16,17 @@ import { createManageSkillsTool } from '../manage-skills.tool';
 import { createExecuteActionTool } from '../execute-action.tool';
 import { generateToolSummary } from '../../stream/tool-summary';
 
-// Test constants
+// Test constants (resolved dynamically from DB at runtime)
 const TALENT_ID = '689f7929-7c13-4103-b119-09a806836347'; // Lamine
-const ORG_ID = '6a80d332-9d56-489c-8314-b65746b4cd78';
-const DOCUMENT_ID = '483bdc16-fba3-4a10-aa4e-79b716595fcc';
-const OPPORTUNITY_ID = 'c0000001-0002-4000-c000-000000000002';
-const COMMUNITY_ID = 'e0000001-0002-4000-e000-000000000002';
-const SPACE_ID = 'f0000001-0002-4000-f000-000000000002';
+
+interface FixtureIds {
+  talentId: string;
+  orgId: string | null;
+  documentId: string | null;
+  opportunityId: string | null;
+  communityId: string | null;
+  spaceId: string | null;
+}
 
 interface TestResult {
   tool: string;
@@ -50,7 +54,8 @@ async function runTest(
   test: string,
   params: any,
   toolObj: any,
-  summaryArgs?: { toolName: string; args?: Record<string, unknown> }
+  summaryArgs?: { toolName: string; args?: Record<string, unknown> },
+  options?: { expectSuccess?: boolean }
 ): Promise<void> {
   const start = Date.now();
   try {
@@ -58,6 +63,21 @@ async function runTest(
     const duration = Date.now() - start;
     const sArgs = summaryArgs || { toolName: tool };
     const summary = generateToolSummary(sArgs.toolName, output, false, sArgs.args || params);
+    const expectSuccess = options?.expectSuccess ?? true;
+    const isBusinessFailure =
+      expectSuccess &&
+      output &&
+      typeof output === 'object' &&
+      'success' in output &&
+      (output as any).success === false;
+
+    if (isBusinessFailure) {
+      const errMsg = String((output as any).error || (output as any).message || 'Tool returned success=false');
+      results.push({ tool, test, input: params, output, summary, duration, status: 'FAIL', error: errMsg });
+      console.log(`  ✗ ${test} (${duration}ms) → ERROR: ${errMsg.slice(0, 150)}`);
+      return;
+    }
+
     results.push({ tool, test, input: params, output, summary, duration, status: 'PASS' });
     console.log(`  ✓ ${test} (${duration}ms) → summary: "${summary}"`);
   } catch (err: any) {
@@ -68,10 +88,87 @@ async function runTest(
   }
 }
 
+async function resolveFixtureIds(): Promise<FixtureIds> {
+  const talentRes = await pool.query(
+    `SELECT id
+     FROM talents
+     WHERE deleted_at IS NULL
+       AND id = $1
+     LIMIT 1`,
+    [TALENT_ID]
+  );
+  let activeTalentId = talentRes.rows[0]?.id as string | undefined;
+  if (!activeTalentId) {
+    const fallbackTalentRes = await pool.query(
+      `SELECT id
+       FROM talents
+       WHERE deleted_at IS NULL
+       ORDER BY created_at DESC
+       LIMIT 1`
+    );
+    activeTalentId = fallbackTalentRes.rows[0]?.id;
+  }
+  if (!activeTalentId) {
+    throw new Error('No active talent found for tools audit.');
+  }
+
+  const [orgRes, docRes, oppRes, commRes, spaceRes] = await Promise.all([
+    pool.query(
+      `SELECT om.organization_id
+       FROM organization_members om
+       WHERE om.talent_id = $1 AND om.status = 'ACTIVE'
+       ORDER BY om.created_at DESC
+       LIMIT 1`,
+      [activeTalentId]
+    ),
+    pool.query(
+      `SELECT id
+       FROM talent_documents
+       WHERE talent_id = $1 AND deleted_at IS NULL
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [activeTalentId]
+    ),
+    pool.query(
+      `SELECT o.id
+       FROM opportunities o
+       WHERE o.status = 'OPEN' AND o.deleted_at IS NULL
+       ORDER BY o.created_at DESC
+       LIMIT 1`
+    ),
+    pool.query(
+      `SELECT c.id
+       FROM communities c
+       WHERE c.status = 'ACTIVE' AND c.deleted_at IS NULL
+       ORDER BY c.created_at DESC
+       LIMIT 1`
+    ),
+    pool.query(
+      `SELECT s.id
+       FROM spaces s
+       WHERE s.status = 'ACTIVE' AND s.deleted_at IS NULL
+       ORDER BY s.created_at DESC
+       LIMIT 1`
+    ),
+  ]);
+
+  return {
+    talentId: activeTalentId,
+    orgId: orgRes.rows[0]?.organization_id || null,
+    documentId: docRes.rows[0]?.id || null,
+    opportunityId: oppRes.rows[0]?.id || null,
+    communityId: commRes.rows[0]?.id || null,
+    spaceId: spaceRes.rows[0]?.id || null,
+  };
+}
+
 (async function main() {
   console.log('\n╔══════════════════════════════════════════════════════╗');
   console.log('║         ETUDESK COPILOT TOOLS — AUDIT RÉEL          ║');
   console.log('╚══════════════════════════════════════════════════════╝\n');
+
+  const fixtures = await resolveFixtureIds();
+  console.log(`ℹ Talent audit utilisé: ${fixtures.talentId}`);
 
   // ═══════════════════════════════════════════
   // 1. VECTOR_QUERY
@@ -134,7 +231,8 @@ async function runTest(
   // ═══════════════════════════════════════════
   console.log('┌─ 2. sql_query ─────────────────────────────────────');
 
-  const sqlTool = createSqlQueryTool(TALENT_ID, [ORG_ID]);
+  const authorizedOrgIds = fixtures.orgId ? [fixtures.orgId] : undefined;
+  const sqlTool = createSqlQueryTool(fixtures.talentId, authorizedOrgIds);
 
   // Personal intents
   const myIntents = ['my_profile', 'my_applications', 'my_communities', 'my_skills', 'my_documents', 'my_bookmarks', 'my_reservations', 'my_invitations'];
@@ -149,19 +247,29 @@ async function runTest(
   // Org intents
   const orgIntents = ['org_stats', 'org_members', 'org_opportunities', 'org_communities', 'org_spaces', 'org_invitations'];
   for (const intent of orgIntents) {
+    if (!fixtures.orgId) {
+      results.push({ tool: 'sql_query', test: `${intent} (SKIP — no org membership)`, input: { intent }, output: { note: 'SKIPPED' }, summary: 'Skipped', duration: 0, status: 'SKIP' });
+      console.log(`  ⊘ ${intent} (SKIP — no org membership)`);
+      continue;
+    }
     await runTest('sql_query', intent,
-      { intent, paramsJson: JSON.stringify({ organizationId: ORG_ID }) },
+      { intent, paramsJson: JSON.stringify({ organizationId: fixtures.orgId }) },
       sqlTool,
       { toolName: 'sql_query', args: { intent } }
     );
   }
 
   // org_applications
-  await runTest('sql_query', 'org_applications',
-    { intent: 'org_applications', paramsJson: JSON.stringify({ organizationId: ORG_ID }) },
-    sqlTool,
-    { toolName: 'sql_query', args: { intent: 'org_applications' } }
-  );
+  if (fixtures.orgId) {
+    await runTest('sql_query', 'org_applications',
+      { intent: 'org_applications', paramsJson: JSON.stringify({ organizationId: fixtures.orgId }) },
+      sqlTool,
+      { toolName: 'sql_query', args: { intent: 'org_applications' } }
+    );
+  } else {
+    results.push({ tool: 'sql_query', test: 'org_applications (SKIP — no org membership)', input: { intent: 'org_applications' }, output: { note: 'SKIPPED' }, summary: 'Skipped', duration: 0, status: 'SKIP' });
+    console.log('  ⊘ org_applications (SKIP — no org membership)');
+  }
 
   // Edge: org intent without orgId
   await runTest('sql_query', 'org_stats sans organizationId (edge)',
@@ -171,7 +279,7 @@ async function runTest(
   );
 
   // Edge: restricted intent in study mode
-  const studySqlTool = createSqlQueryTool(TALENT_ID, [ORG_ID], ['my_profile', 'my_skills', 'my_documents'] as any);
+  const studySqlTool = createSqlQueryTool(fixtures.talentId, authorizedOrgIds, ['my_profile', 'my_skills', 'my_documents'] as any);
   await runTest('sql_query', 'Intent bloqué en mode study (edge)',
     { intent: 'my_applications', paramsJson: '{}' },
     studySqlTool,
@@ -210,7 +318,7 @@ async function runTest(
   // ═══════════════════════════════════════════
   console.log('┌─ 4. generate_document ─────────────────────────────');
 
-  const genDocTool = createGenerateDocumentTool(TALENT_ID);
+  const genDocTool = createGenerateDocumentTool(fixtures.talentId);
 
   await runTest('generate_document', 'PDF Sections (rapport)',
     { format: 'PDF', title: 'Rapport de Competences', contentJson: '{"sections":[{"heading":"Profil","body":"Développeur fullstack avec 5 ans d\'expérience."},{"heading":"Compétences clés","body":"React, Node.js et PostgreSQL."}]}', instructions: 'Rapport de compétences professionnel' },
@@ -291,7 +399,8 @@ async function runTest(
   await runTest('generate_diagram', 'Code Mermaid invalide (edge)',
     { title: 'Test invalide', diagramType: 'flowchart', mermaidCode: 'sequenceDiagram\n    A -> B' },
     generateDiagramTool,
-    { toolName: 'generate_diagram' }
+    { toolName: 'generate_diagram' },
+    { expectSuccess: false }
   );
 
   await runTest('generate_diagram', 'Sanitize <br/> tags (edge)',
@@ -307,7 +416,7 @@ async function runTest(
   // ═══════════════════════════════════════════
   console.log('┌─ 7. manage_skills ─────────────────────────────────');
 
-  const skillsTool = createManageSkillsTool(TALENT_ID);
+  const skillsTool = createManageSkillsTool(fixtures.talentId);
 
   await runTest('manage_skills', 'Ajouter compétence Rust',
     { action: 'add', skillName: 'Rust_Audit_Test', proficiencyLevel: 'BEGINNER', origin: 'inferred' },
@@ -330,11 +439,12 @@ async function runTest(
   await runTest('manage_skills', 'Update inexistant (edge)',
     { action: 'update', skillName: 'CompetenceQuiExistePas_9999', proficiencyLevel: 'EXPERT', origin: 'declared' },
     skillsTool,
-    { toolName: 'manage_skills', args: { action: 'update', skillName: 'CompetenceQuiExistePas_9999', proficiencyLevel: 'EXPERT', origin: 'declared', is_visible: true } }
+    { toolName: 'manage_skills', args: { action: 'update', skillName: 'CompetenceQuiExistePas_9999', proficiencyLevel: 'EXPERT', origin: 'declared', is_visible: true } },
+    { expectSuccess: false }
   );
 
   // Cleanup
-  await pool.query(`DELETE FROM talent_skills WHERE talent_id = $1 AND canonical_name = 'Rust_Audit_Test'`, [TALENT_ID]);
+  await pool.query(`DELETE FROM talent_skills WHERE talent_id = $1 AND canonical_name = 'Rust_Audit_Test'`, [fixtures.talentId]);
   console.log('  🧹 Cleaned up Rust_Audit_Test');
   console.log('');
 
@@ -343,61 +453,110 @@ async function runTest(
   // ═══════════════════════════════════════════
   console.log('┌─ 8. execute_action ────────────────────────────────');
 
-  const actionTool = createExecuteActionTool(TALENT_ID);
+  const actionTool = createExecuteActionTool(fixtures.talentId);
 
-  await runTest('execute_action', 'apply_opportunity',
-    { action: 'apply_opportunity', entityId: OPPORTUNITY_ID, dataJson: '' },
-    actionTool,
-    { toolName: 'execute_action', args: { action: 'apply_opportunity' } }
-  );
+  if (fixtures.opportunityId) {
+    const alreadyApplied = await pool.query(
+      `SELECT 1
+       FROM opportunity_applications
+       WHERE talent_id = $1 AND opportunity_id = $2
+       LIMIT 1`,
+      [fixtures.talentId, fixtures.opportunityId]
+    );
+    if (alreadyApplied.rows.length > 0) {
+      results.push({ tool: 'execute_action', test: 'apply_opportunity (SKIP — already applied)', input: { action: 'apply_opportunity' }, output: { note: 'SKIPPED' }, summary: 'Skipped', duration: 0, status: 'SKIP' });
+      console.log('  ⊘ apply_opportunity (SKIP — already applied)');
+    } else {
+      await runTest('execute_action', 'apply_opportunity',
+        { action: 'apply_opportunity', entityId: fixtures.opportunityId, dataJson: '' },
+        actionTool,
+        { toolName: 'execute_action', args: { action: 'apply_opportunity' } }
+      );
+    }
+  } else {
+    results.push({ tool: 'execute_action', test: 'apply_opportunity (SKIP — no opportunity)', input: { action: 'apply_opportunity' }, output: { note: 'SKIPPED' }, summary: 'Skipped', duration: 0, status: 'SKIP' });
+    console.log('  ⊘ apply_opportunity (SKIP — no opportunity)');
+  }
 
-  await runTest('execute_action', 'join_community',
-    { action: 'join_community', entityId: COMMUNITY_ID, dataJson: '' },
-    actionTool,
-    { toolName: 'execute_action', args: { action: 'join_community' } }
-  );
+  if (fixtures.communityId) {
+    const alreadyMember = await pool.query(
+      `SELECT 1
+       FROM community_members
+       WHERE talent_id = $1 AND community_id = $2 AND status = 'ACTIVE'
+       LIMIT 1`,
+      [fixtures.talentId, fixtures.communityId]
+    );
+    if (alreadyMember.rows.length > 0) {
+      results.push({ tool: 'execute_action', test: 'join_community (SKIP — already member)', input: { action: 'join_community' }, output: { note: 'SKIPPED' }, summary: 'Skipped', duration: 0, status: 'SKIP' });
+      console.log('  ⊘ join_community (SKIP — already member)');
+    } else {
+      await runTest('execute_action', 'join_community',
+        { action: 'join_community', entityId: fixtures.communityId, dataJson: '' },
+        actionTool,
+        { toolName: 'execute_action', args: { action: 'join_community' } }
+      );
+    }
+  } else {
+    results.push({ tool: 'execute_action', test: 'join_community (SKIP — no community)', input: { action: 'join_community' }, output: { note: 'SKIPPED' }, summary: 'Skipped', duration: 0, status: 'SKIP' });
+    console.log('  ⊘ join_community (SKIP — no community)');
+  }
 
-  await runTest('execute_action', 'book_space sans dates (edge)',
-    { action: 'book_space', entityId: SPACE_ID, dataJson: '' },
-    actionTool,
-    { toolName: 'execute_action', args: { action: 'book_space' } }
-  );
+  if (fixtures.spaceId) {
+    await runTest('execute_action', 'book_space sans dates (edge)',
+      { action: 'book_space', entityId: fixtures.spaceId, dataJson: '' },
+      actionTool,
+      { toolName: 'execute_action', args: { action: 'book_space' } },
+      { expectSuccess: false }
+    );
 
-  await runTest('execute_action', 'book_space avec dates',
-    { action: 'book_space', entityId: SPACE_ID, dataJson: '{"startDatetime":"2026-03-01T09:00:00Z","endDatetime":"2026-03-01T12:00:00Z"}' },
-    actionTool,
-    { toolName: 'execute_action', args: { action: 'book_space' } }
-  );
+    await runTest('execute_action', 'book_space avec dates',
+      { action: 'book_space', entityId: fixtures.spaceId, dataJson: '{"startDatetime":"2026-03-01T09:00:00Z","endDatetime":"2026-03-01T12:00:00Z"}' },
+      actionTool,
+      { toolName: 'execute_action', args: { action: 'book_space' } }
+    );
+  } else {
+    results.push({ tool: 'execute_action', test: 'book_space (SKIP — no active space)', input: { action: 'book_space' }, output: { note: 'SKIPPED' }, summary: 'Skipped', duration: 0, status: 'SKIP' });
+    console.log('  ⊘ book_space (SKIP — no active space)');
+  }
 
   await runTest('execute_action', 'accept_invitation inexistante (edge)',
     { action: 'accept_invitation', entityId: '00000000-0000-4000-0000-000000000000', dataJson: '' },
     actionTool,
-    { toolName: 'execute_action', args: { action: 'accept_invitation' } }
+    { toolName: 'execute_action', args: { action: 'accept_invitation' } },
+    { expectSuccess: false }
   );
 
   // Cleanup
-  await pool.query(`DELETE FROM space_bookings WHERE talent_id = $1 AND space_id = $2 AND start_datetime = '2026-03-01T09:00:00Z'`, [TALENT_ID, SPACE_ID]);
-  console.log('  🧹 Cleaned up test bookings');
+  if (fixtures.spaceId) {
+    await pool.query(`DELETE FROM space_bookings WHERE talent_id = $1 AND space_id = $2 AND start_datetime = '2026-03-01T09:00:00Z'`, [fixtures.talentId, fixtures.spaceId]);
+    console.log('  🧹 Cleaned up test bookings');
+  }
   console.log('');
 
   // ═══════════════════════════════════════════
   // 9. FILE_READER
   // ═══════════════════════════════════════════
   console.log('┌─ 9. file_reader (read_document) ──────────────────');
+  if (!fixtures.documentId) {
+    results.push({ tool: 'file_reader', test: 'Document check (SKIP — no talent document)', input: {}, output: { note: 'SKIPPED' }, summary: 'Skipped', duration: 0, status: 'SKIP' });
+    console.log('  ⊘ Aucun document talent — skip');
+    console.log('');
+  } else {
   const docCheck = await pool.query(
     `SELECT id, title, mime_type, file_url FROM talent_documents WHERE id = $1 AND talent_id = $2 AND deleted_at IS NULL`,
-    [DOCUMENT_ID, TALENT_ID]
+    [fixtures.documentId, fixtures.talentId]
   );
   if (docCheck.rows.length > 0) {
     const doc = docCheck.rows[0];
     console.log(`  ℹ Document: ${doc.title} (${doc.mime_type})`);
-    results.push({ tool: 'file_reader', test: 'Document accessible', input: { documentId: DOCUMENT_ID }, output: { exists: true, title: doc.title, mimeType: doc.mime_type }, summary: `Lu · ${doc.title}`, duration: 0, status: 'PASS' });
+    results.push({ tool: 'file_reader', test: 'Document accessible', input: { documentId: fixtures.documentId }, output: { exists: true, title: doc.title, mimeType: doc.mime_type }, summary: `Lu · ${doc.title}`, duration: 0, status: 'PASS' });
     console.log(`  ✓ Document accessible`);
   } else {
-    results.push({ tool: 'file_reader', test: 'Document check', input: { documentId: DOCUMENT_ID }, output: null, summary: 'Not found', duration: 0, status: 'FAIL' });
+    results.push({ tool: 'file_reader', test: 'Document check', input: { documentId: fixtures.documentId }, output: null, summary: 'Not found', duration: 0, status: 'FAIL' });
     console.log(`  ✗ Document non trouvé`);
   }
   console.log('');
+  }
 
   // ═══════════════════════════════════════════
   // 10. WEB_SEARCH

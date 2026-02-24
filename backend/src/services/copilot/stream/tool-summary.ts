@@ -60,6 +60,12 @@ export function generateToolSummary(
   isError: boolean,
   args?: Record<string, unknown>
 ): string {
+  const outputObj = (output && typeof output === 'object') ? (output as any) : null;
+  if (!isError && outputObj && outputObj.success === false) {
+    const msg = outputObj.error || outputObj.message || 'Action non réalisée';
+    return `Erreur: ${String(msg).slice(0, 100)}`;
+  }
+
   if (isError) {
     const msg = typeof output === 'string'
       ? output

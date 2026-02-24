@@ -15,16 +15,18 @@ export function createManageSkillsTool(authenticatedTalentId: string, language?:
     description:
       'Add or update skills for the authenticated talent. Use after the user demonstrates mastery (passes quizzes, completes exercises) or when analyzing documents. Always ask for confirmation before modifying skills.',
     parameters: z.object({
-      action: z.string().describe('The action to perform: "add" or "update"'),
+      action: z.enum(['add', 'update']).describe('The action to perform: "add" or "update"'),
       skillName: z.string().describe('The canonical name of the skill (e.g., "React", "Python", "Data Analysis")'),
       proficiencyLevel: z
-        .string()
+        .enum(['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'])
         .describe('Proficiency level: BEGINNER (knows basics), INTERMEDIATE (can apply independently), EXPERT (deep mastery), MASTER (can teach and innovate).'),
       origin: z
-        .string()
+        .enum(['declared', 'inferred', 'extracted'])
+        .default('inferred')
         .describe('How the skill was identified: "declared" (user claims it), "inferred" (detected from conversation/quiz), "extracted" (from CV/certificates/documents).'),
       type: z
-        .string()
+        .enum(['HARD_SKILL', 'SOFT_SKILL', 'KNOWLEDGE'])
+        .default('HARD_SKILL')
         .describe('Skill category: HARD_SKILL (technical/domain), SOFT_SKILL (interpersonal), KNOWLEDGE (theoretical).'),
     }),
     normalize: (raw) => {
@@ -44,6 +46,8 @@ export function createManageSkillsTool(authenticatedTalentId: string, language?:
         ...raw,
         skillName: raw.skillName || raw.name || raw.skill_name,
         proficiencyLevel: raw.proficiencyLevel || raw.level || raw.proficiency_level,
+        origin: raw.origin || 'inferred',
+        type: raw.type || 'HARD_SKILL',
       };
     },
     execute: async ({ action: rawAction, skillName, proficiencyLevel: rawLevel, origin: rawOrigin, type: rawType }) => {
