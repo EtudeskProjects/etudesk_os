@@ -4,7 +4,8 @@ import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { WebView } from 'react-native-webview';
+let WebView: any = null;
+try { WebView = require('react-native-webview').WebView; } catch { /* unavailable */ }
 import {
   ArrowLeft,
   MapPin,

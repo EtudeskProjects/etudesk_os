@@ -9,7 +9,8 @@ import {
   Platform,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-import { WebView } from 'react-native-webview';
+let WebView: any = null;
+try { WebView = require('react-native-webview').WebView; } catch { /* unavailable */ }
 import { useRouter, useFocusEffect } from 'expo-router';
 import {
   Upload,

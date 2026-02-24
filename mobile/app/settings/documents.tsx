@@ -14,7 +14,12 @@ import {
   Platform,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-import { WebView } from 'react-native-webview';
+let WebView: any = null;
+try {
+  WebView = require('react-native-webview').WebView;
+} catch {
+  // WebView not available — preview will use Linking.openURL fallback
+}
 import { useRouter } from 'expo-router';
 	import {
 	  Upload,
@@ -467,7 +472,7 @@ export default function DocumentsScreen() {
                     style={styles.previewImage}
                     resizeMode="contain"
                   />
-                ) : (
+                ) : WebView ? (
                   <WebView
                     source={{ uri: Platform.OS === 'android'
                       ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(getFullFileUrl(previewDoc))}`
@@ -476,6 +481,10 @@ export default function DocumentsScreen() {
                     style={styles.previewWebView}
                     startInLoadingState
                   />
+                ) : (
+                  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ color: colors.textSecondary }}>{t('common.previewUnavailable')}</Text>
+                  </View>
                 )}
               </View>
             )}

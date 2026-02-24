@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { WebView } from 'react-native-webview';
+let WebView: any = null;
+try { WebView = require('react-native-webview').WebView; } catch { /* unavailable */ }
 import * as Linking from 'expo-linking';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
