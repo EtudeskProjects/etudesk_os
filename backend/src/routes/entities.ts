@@ -155,22 +155,44 @@ router.get('/batch', authMiddleware, async (req: AuthRequest, res: Response) => 
       );
     }
 
-    // Documents
+    // Documents (talent_documents + organization_documents)
     if (grouped.document?.length) {
       queries.push(
-        pool.query(
-          `SELECT id, title, original_filename, document_type, file_url, category
-           FROM talent_documents WHERE id = ANY($1) AND talent_id = $2`,
-          [grouped.document, req.talentId]
-        ).then(r => {
-          for (const row of r.rows) {
+        (async () => {
+          // 1. Try talent_documents first
+          const talentDocs = await pool.query(
+            `SELECT id, title, original_filename, document_type, file_url, category, mime_type
+             FROM talent_documents WHERE id = ANY($1) AND talent_id = $2`,
+            [grouped.document, req.talentId]
+          );
+          for (const row of talentDocs.rows) {
             results[`document:${row.id}`] = {
               ...row,
               title: row.title || row.original_filename,
               subtitle: row.document_type || row.category,
             };
           }
-        })
+
+          // 2. Check organization_documents for any IDs not found in talent_documents
+          const foundIds = new Set(talentDocs.rows.map((r: any) => r.id));
+          const missingIds = grouped.document!.filter(id => !foundIds.has(id));
+          if (missingIds.length > 0) {
+            const orgDocs = await pool.query(
+              `SELECT od.id, od.title, od.original_filename, od.document_type, od.file_url, od.category, od.mime_type
+               FROM organization_documents od
+               JOIN organization_members om ON om.organization_id = od.organization_id AND om.talent_id = $2
+               WHERE od.id = ANY($1) AND od.deleted_at IS NULL`,
+              [missingIds, req.talentId]
+            );
+            for (const row of orgDocs.rows) {
+              results[`document:${row.id}`] = {
+                ...row,
+                title: row.title || row.original_filename,
+                subtitle: row.document_type || row.category,
+              };
+            }
+          }
+        })()
       );
     }
 
