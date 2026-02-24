@@ -359,7 +359,7 @@ export default function CreateProfileScreen() {
 	                  {GENDERS.map((g) => (
 	                    <Chip
 	                      key={g.id}
-	                      label={g.label}
+	                      label={t(`labels.genders.${g.id}`)}
 	                      selected={gender === g.id}
 	                      onPress={() => form.setValue('gender', g.id)}
 	                      style={[
