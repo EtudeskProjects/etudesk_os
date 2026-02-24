@@ -423,12 +423,7 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
         </View>
       )}
 
-      {/* Not interactive hint */}
-      {!interactive && state === 'idle' && (
-        <Text style={[styles.hintText, { color: colors.textDisabled }]}>
-          {t('common.actionExpired')}
-        </Text>
-      )}
+      {/* Not interactive: no hint needed — absence of buttons is sufficient */}
 
       {/* Loading */}
       {state === 'loading' && (
