@@ -72,7 +72,9 @@ export async function authMiddleware(
   if (!req.talentId && req.userId) {
     try {
       const result = await pool.query(
-        'SELECT talent_id FROM users WHERE id = $1 AND deleted_at IS NULL',
+        `SELECT u.talent_id FROM users u
+         JOIN talents t ON u.talent_id = t.id AND t.deleted_at IS NULL
+         WHERE u.id = $1 AND u.deleted_at IS NULL`,
         [req.userId]
       );
       if (result.rows.length > 0 && result.rows[0].talent_id) {
@@ -80,6 +82,21 @@ export async function authMiddleware(
       }
     } catch (error) {
       logger.error('Error looking up talentId:', error);
+    }
+  }
+
+  // If talentId comes from token, verify talent is not deleted
+  if (req.talentId) {
+    try {
+      const talentCheck = await pool.query(
+        'SELECT 1 FROM talents WHERE id = $1 AND deleted_at IS NULL',
+        [req.talentId]
+      );
+      if (talentCheck.rows.length === 0) {
+        req.talentId = undefined;
+      }
+    } catch (error) {
+      logger.error('Error validating talentId:', error);
     }
   }
 

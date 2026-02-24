@@ -164,24 +164,13 @@ router.put('/:id', authMiddleware, validate(updateOrganizationSchema), async (re
       throw createForbiddenError('Authentication required');
     }
 
-    // Check permissions
+    // Check permissions — only OWNER or ADMIN can edit organization details
     const memberCheck = await pool.query(`
-      SELECT role, permissions FROM organization_members
-      WHERE organization_id = $1 AND talent_id = $2
+      SELECT role FROM organization_members
+      WHERE organization_id = $1 AND talent_id = $2 AND role IN ('OWNER', 'ADMIN')
     `, [id, req.talentId]);
 
-    const ownerCheck = await pool.query(`
-      SELECT id FROM organizations
-      WHERE id = $1 AND created_by = $2 AND deleted_at IS NULL
-    `, [id, req.talentId]);
-
-    const hasEditPermission = memberCheck.rows.length > 0 && (
-      memberCheck.rows[0].role === 'OWNER' ||
-      memberCheck.rows[0].role === 'ADMIN' ||
-      memberCheck.rows[0].permissions?.includes('organization:edit')
-    );
-
-    if (ownerCheck.rows.length === 0 && !hasEditPermission) {
+    if (memberCheck.rows.length === 0) {
       throw createForbiddenError('You do not have permission to edit this organization');
     }
 

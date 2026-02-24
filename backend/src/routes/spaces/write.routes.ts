@@ -21,6 +21,7 @@ import {
 } from '../../types/space.types';
 import { generateSpaceSuggestion } from '../../services/space-generation.service';
 import { upsertSpaceEmbedding, deletePineconeVector } from '../../services/embedding.service';
+import { resolveTalentLanguage } from '../../services/language-preference.service';
 
 const router = Router();
 
@@ -64,7 +65,8 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
       throw createForbiddenError(req.t('spaces:notOrgMember'));
     }
 
-    const input = { name, type, organization_id, existing_data };
+    const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const input = { name, type, organization_id, existing_data, language };
     const result = await generateSpaceSuggestion(input);
 
     if (!result.success) {
@@ -384,6 +386,24 @@ router.put('/:id/availabilities', authMiddleware, async (req: AuthRequest, res: 
     const { id } = req.params;
     const { availabilities } = req.body;
 
+    // Authorization: must be org member (OWNER/ADMIN/MANAGER)
+    const spaceCheck = await pool.query(
+      `SELECT organization_id FROM spaces WHERE id = $1 AND deleted_at IS NULL`,
+      [id]
+    );
+    if (spaceCheck.rows.length === 0) {
+      throw createNotFoundError('Space');
+    }
+    if (spaceCheck.rows[0].organization_id) {
+      const memberCheck = await pool.query(
+        `SELECT role FROM organization_members WHERE organization_id = $1 AND talent_id = $2 AND role IN ('OWNER', 'ADMIN', 'MANAGER')`,
+        [spaceCheck.rows[0].organization_id, req.talentId]
+      );
+      if (memberCheck.rows.length === 0) {
+        throw createForbiddenError('Not authorized to manage this space');
+      }
+    }
+
     // Delete existing and insert new
     await pool.query(`DELETE FROM space_availabilities WHERE space_id = $1`, [id]);
 
@@ -426,6 +446,24 @@ router.post('/:id/unavailabilities', authMiddleware, async (req: AuthRequest, re
     const { id } = req.params;
     const { start_datetime, end_datetime, reason, notes } = req.body;
     const talentId = req.talentId;
+
+    // Authorization: must be org member (OWNER/ADMIN/MANAGER)
+    const spaceCheck = await pool.query(
+      `SELECT organization_id FROM spaces WHERE id = $1 AND deleted_at IS NULL`,
+      [id]
+    );
+    if (spaceCheck.rows.length === 0) {
+      throw createNotFoundError('Space');
+    }
+    if (spaceCheck.rows[0].organization_id) {
+      const memberCheck = await pool.query(
+        `SELECT role FROM organization_members WHERE organization_id = $1 AND talent_id = $2 AND role IN ('OWNER', 'ADMIN', 'MANAGER')`,
+        [spaceCheck.rows[0].organization_id, talentId]
+      );
+      if (memberCheck.rows.length === 0) {
+        throw createForbiddenError('Not authorized to manage this space');
+      }
+    }
 
     const result = await pool.query(
       `

@@ -110,7 +110,7 @@ export async function createOTP(
       [email.toLowerCase(), OTP_CONFIG.cooldownMinutes.toString()]
     );
 
-    if (parseInt(failedAttempts.rows[0].count, 10) >= 3) {
+    if (parseInt(failedAttempts.rows[0].count, 10) >= 1) {
       return {
         success: false,
         error: 'TOO_MANY_FAILED_ATTEMPTS',

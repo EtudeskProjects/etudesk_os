@@ -202,6 +202,9 @@ v1Router.use('/auth/request-otp', otpLimiter);
 v1Router.use('/auth/verify-otp', authLimiter);
 v1Router.use('/auth/request-whatsapp-otp', otpLimiter);
 v1Router.use('/auth/verify-whatsapp-otp', authLimiter);
+v1Router.use('/auth/refresh', authLimiter);
+v1Router.use('/auth/google', authLimiter);
+v1Router.use('/auth/delete-account', authLimiter);
 v1Router.use('/auth', authRouter);
 v1Router.use('/onboarding', onboardingRouter);
 
