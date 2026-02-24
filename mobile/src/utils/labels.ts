@@ -17,8 +17,8 @@ import i18n from '../i18n';
 export function getLabel(category: string, key: string): string {
   const fullKey = `labels.${category}.${key}`;
   const result = i18n.t(fullKey);
-  // i18n-js returns "[missing ...]" or the key path when translation is missing
-  if (result.includes('missing') || result.includes(fullKey)) return key;
+  // i18n-js v4 returns '[missing "en.labels.xxx.YYY" translation]' when key is missing
+  if (result.startsWith('[missing') || result.includes(fullKey)) return key;
   return result;
 }
 

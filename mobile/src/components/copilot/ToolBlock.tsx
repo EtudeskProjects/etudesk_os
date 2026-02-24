@@ -58,6 +58,11 @@ function truncate(str: string, max: number): string {
   return str.length > max ? str.slice(0, max - 1) + '\u2026' : str;
 }
 
+/** Decode URL-encoded strings (e.g. %20 → space) for display */
+function decodeDisplay(str: string): string {
+  try { return decodeURIComponent(str); } catch { return str; }
+}
+
 /**
  * Generate a contextual bold title describing what the tool is doing.
  * Uses i18n t() for all user-facing strings.
@@ -132,17 +137,18 @@ function getToolTitle(t: (key: string, params?: Record<string, string>) => strin
     case 'file_reader': {
       const res = result as any;
       if (res?.document?.title) {
-        return t('copilot.tool.readPrefix', { name: truncate(res.document.title, 45) });
+        return t('copilot.tool.readPrefix', { name: truncate(decodeDisplay(res.document.title), 45) });
       }
       const input = args?.input as string | undefined;
       if (input) {
-        const nameMatch = input.match(/(?:document|fichier|file|cv|CV)\s*[:—-]?\s*([^\n\[\]()]+)/i);
+        const decodedInput = decodeDisplay(input);
+        const nameMatch = decodedInput.match(/(?:document|fichier|file|cv|CV)\s*[:—-]?\s*([^\n\[\]()]+)/i);
         if (nameMatch) return t('copilot.tool.readPrefix', { name: truncate(nameMatch[1].trim(), 45) });
-        const fileMatch = input.match(/([A-Za-z0-9_\-. ]+\.(?:pdf|docx?|xlsx?|csv|txt|png|jpg|jpeg))/i);
+        const fileMatch = decodedInput.match(/([A-Za-z0-9_\-. ]+\.(?:pdf|docx?|xlsx?|csv|txt|png|jpg|jpeg))/i);
         if (fileMatch) return t('copilot.tool.readPrefix', { name: truncate(fileMatch[1], 45) });
       }
       const name = (args?.fileName || args?.name || args?.file) as string | undefined;
-      if (name) return t('copilot.tool.readPrefix', { name: truncate(name, 45) });
+      if (name) return t('copilot.tool.readPrefix', { name: truncate(decodeDisplay(name), 45) });
       return t('copilot.tool.readDocument');
     }
 
@@ -325,7 +331,7 @@ export const ToolBlock: React.FC<ToolBlockProps> = ({ tool, onRetry }) => {
         <View style={styles.summaryRow}>
           <ArrowRight size={10} color={colors.success} />
           <Text style={[styles.summaryText, { color: colors.textSecondary }]} numberOfLines={2}>
-            {tool.summary}
+            {decodeDisplay(tool.summary)}
           </Text>
         </View>
       ) : null}
