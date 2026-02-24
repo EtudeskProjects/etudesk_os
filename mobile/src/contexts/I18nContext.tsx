@@ -44,18 +44,25 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(getDeviceLanguage());
 
   // Load stored language on mount — only if user explicitly chose it
+  // Then sync current language to backend so copilot responds in the right language
   useEffect(() => {
     (async () => {
       try {
+        let resolvedLang = language; // device language by default
         const userChose = await AsyncStorage.getItem(LANGUAGE_USER_CHOSEN_KEY);
         if (userChose === 'true') {
           const stored = await AsyncStorage.getItem(STORAGE_KEYS.LANGUAGE);
           if (stored && isValidLanguage(stored)) {
+            resolvedLang = stored;
             setLanguageState(stored);
             setI18nLanguage(stored);
           }
         }
-        // If user never explicitly chose, device language (from getDeviceLanguage) is used
+        // Sync language to backend on startup (covers new users + device language changes)
+        const isAuthenticated = await api.isAuthenticated();
+        if (isAuthenticated) {
+          api.put('/api/auth/language', { language: resolvedLang }).catch(() => {});
+        }
       } catch {
         // ignore
       }

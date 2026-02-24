@@ -15,7 +15,7 @@ export default function WelcomeScreen() {
   const { t } = useI18n();
 
   const handleStart = () => {
-    router.replace({ pathname: '/(tabs)/assistant', params: { mode: 'explore', prompt: "C'est parti !" } });
+    router.replace({ pathname: '/(tabs)/assistant', params: { mode: 'explore', prompt: t('auth.welcome.getStarted') } });
   };
 
   const features = [
