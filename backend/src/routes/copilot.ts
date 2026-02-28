@@ -1054,6 +1054,12 @@ router.patch('/messages/:messageId/feedback', authMiddleware, async (req: AuthRe
     const { messageId } = req.params;
     const { rating } = req.body;
 
+    // Validate messageId is a valid UUID before querying
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(messageId)) {
+      return res.status(400).json({ error: 'Invalid message ID format' });
+    }
+
     if (rating !== 1 && rating !== 3) {
       return res.status(400).json({ error: req.t('copilot:feedbackRatingInvalid') });
     }

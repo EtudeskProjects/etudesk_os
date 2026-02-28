@@ -458,10 +458,11 @@ export async function generateOrgDocumentPDF(title: string, data: OrgDocumentDat
       const headerStartY = y;
       let logoLoaded = false;
 
-      // Try to load and render org logo
-      if (data.logoUrl) {
+      // Try to load and render org logo (skip mobile-local file URIs)
+      const logoUrl = data.logoUrl && !data.logoUrl.startsWith('file:///') ? data.logoUrl : null;
+      if (logoUrl) {
         try {
-          const logoBuffer = await getFileBuffer(data.logoUrl);
+          const logoBuffer = await getFileBuffer(logoUrl);
           if (logoBuffer && logoBuffer.length > 0) {
             const logoHeight = 48;
             const logoWidth = 48;
