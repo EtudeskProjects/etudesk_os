@@ -156,7 +156,7 @@ emploi,formation,carriere,IA,competences,CV,recrutement,Afrique,UEMOA,talents
 | Test account password | 999999 |
 | Contact name | Mohamed Lamine Barro |
 | Contact phone | +2250574631148 |
-| Contact email | etudesksas@gmail.com |
+| Contact email | hello@etudesk.org |
 | Notes | Etudesk is an AI-powered career and training copilot for French-speaking Africa. The app allows talents to track their skills, explore job opportunities, and learn with an AI assistant. Organizations can manage their talent pool and publish opportunities. Test account has sample data pre-loaded. |
 | Attachment | etudesk_os_fr.mp4 |
 | Release mode | Automatically release after App Review, no earlier than Feb 17, 2026 6:00 PM |
@@ -347,7 +347,7 @@ emploi,formation,carriere,IA,competences,CV,recrutement,Afrique,UEMOA,talents
 - Garanties : clauses contractuelles types, chiffrement en transit et au repos
 
 ### Contact DPO
-- Email : hello@etudesk.org ou etudesksas@gmail.com
+- Email : hello@etudesk.org
 - Adresse : Etudesk SAS, Abidjan, Cote d'Ivoire
 
 ---
