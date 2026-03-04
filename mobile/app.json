@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.etudesk.mobile"
+      "bundleIdentifier": "com.etudesk.app"
     },
     "android": {
       "adaptiveIcon": {

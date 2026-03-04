@@ -9,6 +9,7 @@ type SelectCardProps = {
   selected?: boolean;
   disabled?: boolean;
   onPress: () => void;
+  onLongPress?: () => void;
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
@@ -20,6 +21,7 @@ export function SelectCard({
   selected = false,
   disabled = false,
   onPress,
+  onLongPress,
   children,
   style,
   accessibilityLabel,
@@ -32,6 +34,7 @@ export function SelectCard({
   return (
     <Tap
       onPress={onPress}
+      onLongPress={onLongPress}
       disabled={disabled}
       activeOpacity={0.7}
       style={[styles.base, { backgroundColor, borderColor }, style]}

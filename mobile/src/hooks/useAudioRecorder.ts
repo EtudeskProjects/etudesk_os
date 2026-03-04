@@ -1,6 +1,6 @@
 /**
  * useAudioRecorder Hook
- * Manages audio recording with expo-audio, limited to 30 seconds
+ * Manages audio recording with expo-audio, limited to 3 minutes
  * Designed for voice-to-text input in the Copilot
  */
 
@@ -14,8 +14,8 @@ import {
 import { useTranslation } from '../contexts/I18nContext';
 import { alertsGlobal } from '../contexts/AlertContext';
 
-// Recording limit in seconds
-const MAX_RECORDING_DURATION_SECONDS = 30;
+// Recording limit in seconds (3 minutes)
+const MAX_RECORDING_DURATION_SECONDS = 180;
 const MAX_RECORDING_DURATION_MS = MAX_RECORDING_DURATION_SECONDS * 1000;
 
 export interface AudioRecorderState {

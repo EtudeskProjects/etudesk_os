@@ -13,6 +13,10 @@ import {
   Animated,
   Easing,
   AppState,
+  Alert,
+  TextInput,
+  Modal,
+  SectionList,
 } from 'react-native';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import * as Clipboard from 'expo-clipboard';
@@ -33,6 +37,10 @@ import {
   Trash2,
   Square,
   RefreshCw,
+  Pin,
+  PinOff,
+  Pencil,
+  List,
 } from 'lucide-react-native';
 import { useAudioRecorder } from '../../../src/hooks/useAudioRecorder';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
@@ -104,6 +112,9 @@ export default function AssistantScreen() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<'all' | 'explore' | 'study'>('all');
+  const [renamingSession, setRenamingSession] = useState<SessionSummary | null>(null);
+  const [renameText, setRenameText] = useState('');
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [floatingSuggestions, setFloatingSuggestions] = useState<string[]>([]);
@@ -764,7 +775,7 @@ export default function AssistantScreen() {
     startStream(`\ud83c\udfa4 ${t('screens.assistant.voiceNote')}`, [], voiceNoteUrl, mimeType);
   }, [startStream]);
 
-  // Auto-stop recording when reaching 30 seconds
+  // Auto-stop recording when reaching max duration
   useEffect(() => {
     if (audioRecorder.remainingTime === 0 && audioRecorder.state.isRecording) {
       handleMicPress(); // This will stop and transcribe
@@ -890,6 +901,49 @@ export default function AssistantScreen() {
     } catch (err) {
       if (__DEV__) console.error('Failed to delete session:', err);
     }
+  };
+
+  // Rename session
+  const handleRenameSession = async () => {
+    if (!renamingSession || !renameText.trim()) {
+      setRenamingSession(null);
+      return;
+    }
+    try {
+      await copilotService.renameSession(renamingSession.id, renameText.trim());
+      setSessions((prev) =>
+        prev.map((s) => s.id === renamingSession.id ? { ...s, title: renameText.trim() } : s)
+      );
+    } catch (err) {
+      if (__DEV__) console.error('Failed to rename session:', err);
+    } finally {
+      setRenamingSession(null);
+      setRenameText('');
+    }
+  };
+
+  // Pin/unpin session
+  const handleTogglePin = async (session: SessionSummary) => {
+    const newPinned = !session.isPinned;
+    // Optimistic update
+    setSessions((prev) =>
+      prev.map((s) => s.id === session.id ? { ...s, isPinned: newPinned } : s)
+    );
+    try {
+      await copilotService.togglePinSession(session.id, newPinned);
+    } catch (err) {
+      // Revert on error
+      setSessions((prev) =>
+        prev.map((s) => s.id === session.id ? { ...s, isPinned: !newPinned } : s)
+      );
+      if (__DEV__) console.error('Failed to toggle pin:', err);
+    }
+  };
+
+  // Open rename modal
+  const handleStartRename = (session: SessionSummary) => {
+    setRenameText(session.title || '');
+    setRenamingSession(session);
   };
 
   const currentMode = MODES.find((m) => m.id === activeMode);
@@ -1227,31 +1281,34 @@ export default function AssistantScreen() {
     />
   );
 
-	  const renderHistoryPanel = () => (
-	    <View style={[styles.historyPanel, { backgroundColor: colors.background }]}>
-	      <View style={[styles.historyHeader, { borderBottomColor: colors.borderColor }]}>
-	        <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>{t('screens.assistant.sessionArchives')}</Text>
-	        <IconButton
-	          onPress={() => setShowHistory(false)}
-	          icon={<X size={20} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
-	          accessibilityLabel={t('screens.explore.close')}
-	          size="sm"
-	          variant="ghost"
-	        />
-	      </View>
+	  const renderHistoryPanel = () => {
+      // Filter sessions by mode
+      const filteredSessions = historyFilter === 'all'
+        ? sessions
+        : sessions.filter((s) => s.mode === historyFilter);
 
-      <FlatList
-        style={styles.historyList}
-        data={sessions}
-        keyExtractor={(s) => s.id}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        ListEmptyComponent={
-          <Text style={[styles.historyEmpty, { color: colors.textSecondary }]}>
-            {t('screens.assistant.noConversation')}
-          </Text>
-        }
-        renderItem={({ item: session }) => (
+      // Separate pinned and unpinned
+      const pinnedSessions = filteredSessions.filter((s) => s.isPinned);
+      const unpinnedSessions = filteredSessions.filter((s) => !s.isPinned);
+
+      // Build section data
+      const sections: { title: string; data: SessionSummary[] }[] = [];
+      if (pinnedSessions.length > 0) {
+        sections.push({ title: t('screens.assistant.pinnedSessions'), data: pinnedSessions });
+      }
+      sections.push({ title: '', data: unpinnedSessions });
+
+      const filterTabs = [
+        { key: 'all', label: t('screens.assistant.filterAll') },
+        { key: 'explore', label: t('screens.assistant.filterDiscover') },
+        ...(!isOrganizationSpace ? [{ key: 'study', label: t('screens.assistant.filterStudy') }] : []),
+      ];
+
+      const renderSessionItem = (session: SessionSummary) => {
+        const sessionMode = (session.mode as Mode) || 'explore';
+        const SessionModeIcon = MODE_ICONS[sessionMode] || Compass;
+
+        return (
           <SelectCard
             style={[
               styles.historyItem,
@@ -1260,47 +1317,173 @@ export default function AssistantScreen() {
               { borderWidth: 0, borderColor: 'transparent', borderRadius: 0 },
             ]}
             onPress={() => handleSelectSession(session)}
+            onLongPress={() => handleStartRename(session)}
             selected={false}
             accessibilityLabel={session.title || t('screens.assistant.untitledSession')}
           >
             <View style={styles.historyItemContent}>
-              {(() => {
-                const sessionMode = (session.mode as Mode) || 'explore';
-                const SessionModeIcon = MODE_ICONS[sessionMode] || Compass;
-                return (
-                  <View
-                    style={[
-                      styles.historyModeBadge,
-                      { backgroundColor: modeColors[sessionMode]?.bg || colors.surface },
-                    ]}
-                  >
-                    <SessionModeIcon size={14} color={modeColors[sessionMode]?.text || colors.textSecondary} />
-                  </View>
-                );
-              })()}
+              <View
+                style={[
+                  styles.historyModeBadge,
+                  { backgroundColor: modeColors[sessionMode]?.bg || colors.surface },
+                ]}
+              >
+                <SessionModeIcon size={14} color={modeColors[sessionMode]?.text || colors.textSecondary} />
+              </View>
               <View style={styles.historyItemText}>
-                <Text style={[styles.historyItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {session.title || t('screens.assistant.untitledSession')}
-                </Text>
+                <View style={styles.historyItemTitleRow}>
+                  <Text style={[styles.historyItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {session.title || t('screens.assistant.untitledSession')}
+                  </Text>
+                  {session.isPinned && (
+                    <Pin size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  )}
+                </View>
                 <Text style={[styles.historyItemMeta, { color: colors.textSecondary }]}>
                   {session.messageCount} {t('gestion.memberDetails.tabMessages').toLowerCase()} · {formatRelativeTime(session.lastMessageAt || session.createdAt)}
                   {session.createdByName ? ` · ${session.createdByName}` : ''}
                 </Text>
               </View>
             </View>
+            <View style={styles.historyItemActions}>
+              <IconButton
+                onPress={() => handleTogglePin(session)}
+                icon={session.isPinned
+                  ? <PinOff size={14} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  : <Pin size={14} color={colors.textDisabled} strokeWidth={ICON.strokeWidth} />
+                }
+                accessibilityLabel={session.isPinned ? t('screens.assistant.unpinConversation') : t('screens.assistant.pinConversation')}
+                size="sm"
+                variant="ghost"
+              />
+              <IconButton
+                onPress={() => handleStartRename(session)}
+                icon={<Pencil size={14} color={colors.textDisabled} strokeWidth={ICON.strokeWidth} />}
+                accessibilityLabel={t('screens.assistant.renameConversation')}
+                size="sm"
+                variant="ghost"
+              />
+              <IconButton
+                onPress={() => handleDeleteSession(session.id)}
+                icon={<Trash2 size={14} color={colors.textDisabled} strokeWidth={ICON.strokeWidth} />}
+                accessibilityLabel={t('screens.assistant.deleteConversation')}
+                size="sm"
+                variant="ghost"
+              />
+            </View>
+          </SelectCard>
+        );
+      };
+
+      return (
+        <View style={[styles.historyPanel, { backgroundColor: colors.background }]}>
+          <View style={[styles.historyHeader, { borderBottomColor: colors.borderColor }]}>
+            <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>{t('screens.assistant.sessionArchives')}</Text>
             <IconButton
-              onPress={() => handleDeleteSession(session.id)}
-              icon={<Trash2 size={16} color={colors.textDisabled} />}
-              accessibilityLabel={t('screens.assistant.deleteConversation')}
+              onPress={() => setShowHistory(false)}
+              icon={<X size={20} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+              accessibilityLabel={t('screens.explore.close')}
               size="sm"
               variant="ghost"
-              style={styles.historyItemDelete}
             />
-          </SelectCard>
-        )}
-      />
-    </View>
-  );
+          </View>
+
+          {/* Mode filter tabs */}
+          <View style={[styles.historyFilterRow, { borderBottomColor: colors.borderColor }]}>
+            {filterTabs.map((tab) => (
+              <Pressable
+                key={tab.key}
+                onPress={() => setHistoryFilter(tab.key as 'all' | 'explore' | 'study')}
+                style={[
+                  styles.historyFilterTab,
+                  historyFilter === tab.key && { backgroundColor: colors.primary },
+                ]}
+              >
+                <Text style={[
+                  styles.historyFilterTabText,
+                  { color: historyFilter === tab.key ? colors.textOnPrimary : colors.textSecondary },
+                ]}>
+                  {tab.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <SectionList
+            style={styles.historyList}
+            sections={sections}
+            keyExtractor={(s) => s.id}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            stickySectionHeadersEnabled={false}
+            renderSectionHeader={({ section }) =>
+              section.title ? (
+                <View style={[styles.historySectionHeader, { borderBottomColor: colors.borderColor }]}>
+                  <Pin size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+                  <Text style={[styles.historySectionTitle, { color: colors.primary }]}>
+                    {section.title}
+                  </Text>
+                </View>
+              ) : null
+            }
+            ListEmptyComponent={
+              <Text style={[styles.historyEmpty, { color: colors.textSecondary }]}>
+                {t('screens.assistant.noConversation')}
+              </Text>
+            }
+            renderItem={({ item }) => renderSessionItem(item)}
+          />
+
+          {/* Rename Modal */}
+          <Modal
+            visible={!!renamingSession}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setRenamingSession(null)}
+          >
+            <Pressable
+              style={styles.renameModalOverlay}
+              onPress={() => setRenamingSession(null)}
+            >
+              <Pressable
+                style={[styles.renameModalContent, { backgroundColor: colors.background }]}
+                onPress={() => {}}
+              >
+                <Text style={[styles.renameModalTitle, { color: colors.textPrimary }]}>
+                  {t('screens.assistant.renameSessionTitle')}
+                </Text>
+                <TextInput
+                  style={[styles.renameInput, { color: colors.textPrimary, borderColor: colors.borderColor, backgroundColor: colors.surface }]}
+                  value={renameText}
+                  onChangeText={setRenameText}
+                  placeholder={t('screens.assistant.renameSessionPlaceholder')}
+                  placeholderTextColor={colors.textDisabled}
+                  autoFocus
+                  maxLength={100}
+                  onSubmitEditing={handleRenameSession}
+                  returnKeyType="done"
+                />
+                <View style={styles.renameModalActions}>
+                  <Button
+                    title={t('common.cancel')}
+                    onPress={() => setRenamingSession(null)}
+                    variant="secondary"
+                    size="sm"
+                  />
+                  <Button
+                    title={t('common.save')}
+                    onPress={handleRenameSession}
+                    variant="primary"
+                    size="sm"
+                    disabled={!renameText.trim()}
+                  />
+                </View>
+              </Pressable>
+            </Pressable>
+          </Modal>
+        </View>
+      );
+    };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={keyboardVisible ? ['top'] : ['top', 'bottom']}>
@@ -1404,7 +1587,7 @@ export default function AssistantScreen() {
                       <>
                         <Animated.View style={[styles.recordingDot, { backgroundColor: colors.error, opacity: recordingPulse, transform: [{ scale: recordingPulse.interpolate({ inputRange: [0.3, 1], outputRange: [0.8, 1.2] }) }] }]} />
                         <Text style={[styles.recordingText, { color: colors.textPrimary }]}>
-                          {formatDuration(audioRecorder.state.duration)} / 0:30
+                          {formatDuration(audioRecorder.state.duration)} / 3:00
                         </Text>
                         <View style={[styles.recordingProgress, { backgroundColor: withOpacity(colors.black, OPACITY[10]) }]}>
                           <View
@@ -1513,6 +1696,7 @@ export default function AssistantScreen() {
 	                    setError(null);
 	                    setSessionId(null);
 	                    setMessages([]);
+	                    setInputText('');
 	                    setActiveMode(nextMode);
 	                  }}
 	                  disabled={MODES.length === 1}
@@ -1978,6 +2162,88 @@ const styles = StyleSheet.create({
 
   historyItemDelete: {
     padding: SPACING.sm,
+  },
+
+  historyItemTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+
+  historyItemActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  historyFilterRow: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    gap: SPACING.sm,
+    borderBottomWidth: 1,
+  },
+
+  historyFilterTab: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER.radius.full,
+  },
+
+  historyFilterTabText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
+
+  historySectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: 1,
+  },
+
+  historySectionTitle: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  renameModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
+
+  renameModalContent: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: BORDER.radius.lg,
+    padding: SPACING.xl,
+    gap: SPACING.md,
+  },
+
+  renameModalTitle: {
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+
+  renameInput: {
+    borderWidth: 1,
+    borderRadius: BORDER.radius.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+
+  renameModalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: SPACING.sm,
   },
 
   // Audio Recording UI

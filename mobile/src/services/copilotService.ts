@@ -87,6 +87,7 @@ export interface SessionSummary {
   lastMessageAt?: string;
   createdAt: string;
   messageCount: number;
+  isPinned?: boolean;
 }
 
 // API Response types
@@ -152,6 +153,20 @@ class CopilotService {
    */
   async deleteSession(sessionId: string): Promise<ApiResponse<{ message: string }>> {
     return api.delete(`/api/copilot/sessions/${sessionId}`);
+  }
+
+  /**
+   * Rename a session
+   */
+  async renameSession(sessionId: string, title: string): Promise<ApiResponse<{ session: CopilotSession }>> {
+    return api.patch(`/api/copilot/sessions/${sessionId}`, { title });
+  }
+
+  /**
+   * Pin/unpin a session
+   */
+  async togglePinSession(sessionId: string, isPinned: boolean): Promise<ApiResponse<{ session: CopilotSession }>> {
+    return api.patch(`/api/copilot/sessions/${sessionId}`, { isPinned });
   }
 
   /**
