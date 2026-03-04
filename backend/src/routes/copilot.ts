@@ -1591,6 +1591,54 @@ router.delete('/sessions/:id', authMiddleware, async (req: AuthRequest, res: Res
 });
 
 /**
+ * PATCH /api/copilot/sessions/:id - Update session (rename, pin/unpin)
+ * Body: { title?: string, isPinned?: boolean }
+ * Query: { organizationId?: string }
+ * Returns: { session: CopilotSession }
+ */
+router.patch('/sessions/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const talentId = req.talentId;
+    if (!talentId) {
+      return res.status(401).json({ error: req.t('copilot:notAuthenticated') });
+    }
+
+    const sessionId = req.params.id;
+    const organizationId = req.query.organizationId as string | undefined;
+    const { title, isPinned } = req.body;
+
+    // Validate at least one field is provided
+    if (title === undefined && isPinned === undefined) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    // Validate title length
+    if (title !== undefined && (typeof title !== 'string' || title.trim().length === 0 || title.trim().length > 255)) {
+      return res.status(400).json({ error: 'Title must be between 1 and 255 characters' });
+    }
+
+    const updates: { title?: string; isPinned?: boolean } = {};
+    if (title !== undefined) updates.title = title.trim();
+    if (isPinned !== undefined) updates.isPinned = !!isPinned;
+
+    const session = await copilotService.updateSession(sessionId, talentId, updates, organizationId);
+    if (!session) {
+      return res.status(404).json({ error: req.t('copilot:sessionNotFound') });
+    }
+
+    res.json({
+      success: true,
+      data: { session },
+    });
+  } catch (error) {
+    logger.error('Error updating copilot session:', error);
+    res.status(500).json({
+      error: req.t('copilot:sessionUpdateError'),
+    });
+  }
+});
+
+/**
  * GET /api/copilot/sessions/:id/messages - Get session messages
  * Query: { limit?: number }
  * Returns: { messages: CopilotMessage[] }

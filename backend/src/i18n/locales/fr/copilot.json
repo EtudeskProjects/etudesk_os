@@ -8,6 +8,7 @@
   "sessionCreateError": "Erreur lors de la création de la session",
   "sessionFetchError": "Erreur lors de la récupération de la session",
   "sessionDeleteError": "Erreur lors de la suppression de la session",
+  "sessionUpdateError": "Erreur lors de la mise à jour de la session",
   "sessionDeleted": "Session supprimée",
   "sessionNotFound": "Session non trouvée",
   "messagesError": "Erreur lors de la récupération des messages",

@@ -143,6 +143,7 @@ export async function listSessions(
   lastMessageAt?: string;
   createdAt: string;
   messageCount: number;
+  isPinned: boolean;
 }>> {
   let result;
 
@@ -151,6 +152,7 @@ export async function listSessions(
     result = await pool.query(
       `SELECT
          cs.id, cs.title, cs.mode, cs.organization_id, cs.last_message_at, cs.created_at,
+         cs.is_pinned,
          COALESCE(t.first_name || ' ' || t.last_name, t.email) as created_by_name,
          (SELECT COUNT(*) FROM copilot_messages cm WHERE cm.session_id = cs.id AND cm.deleted_at IS NULL) as message_count
        FROM copilot_sessions cs
@@ -161,7 +163,7 @@ export async function listSessions(
            SELECT 1 FROM organization_members om
            WHERE om.organization_id = $2 AND om.talent_id = $1 AND om.status = 'ACTIVE'
          )
-       ORDER BY cs.last_message_at DESC NULLS LAST, cs.created_at DESC
+       ORDER BY cs.is_pinned DESC, cs.last_message_at DESC NULLS LAST, cs.created_at DESC
        LIMIT $3`,
       [talentId, organizationId, limit]
     );
@@ -170,10 +172,11 @@ export async function listSessions(
     result = await pool.query(
       `SELECT
          cs.id, cs.title, cs.mode, cs.organization_id, cs.last_message_at, cs.created_at,
+         cs.is_pinned,
          (SELECT COUNT(*) FROM copilot_messages cm WHERE cm.session_id = cs.id AND cm.deleted_at IS NULL) as message_count
        FROM copilot_sessions cs
        WHERE cs.talent_id = $1 AND cs.organization_id IS NULL AND cs.deleted_at IS NULL
-       ORDER BY cs.last_message_at DESC NULLS LAST, cs.created_at DESC
+       ORDER BY cs.is_pinned DESC, cs.last_message_at DESC NULLS LAST, cs.created_at DESC
        LIMIT $2`,
       [talentId, limit]
     );
@@ -188,6 +191,7 @@ export async function listSessions(
     lastMessageAt: row.last_message_at,
     createdAt: row.created_at,
     messageCount: parseInt(row.message_count) || 0,
+    isPinned: row.is_pinned ?? false,
   }));
 }
 
@@ -243,6 +247,95 @@ export async function updateSessionTitle(sessionId: string, title: string): Prom
 }
 
 /**
+ * Update session fields (title, isPinned).
+ * Respects ownership for personal sessions and membership for org sessions.
+ * Returns updated session or null if not found / not authorized.
+ */
+export async function updateSession(
+  sessionId: string,
+  talentId: string,
+  updates: { title?: string; isPinned?: boolean },
+  organizationId?: string
+): Promise<CopilotSession | null> {
+  // Build dynamic SET clause
+  const setClauses: string[] = ['updated_at = CURRENT_TIMESTAMP'];
+  const values: any[] = [];
+  let paramIndex = 1;
+
+  if (updates.title !== undefined) {
+    setClauses.push(`title = $${paramIndex}`);
+    values.push(updates.title);
+    paramIndex++;
+  }
+
+  if (updates.isPinned !== undefined) {
+    setClauses.push(`is_pinned = $${paramIndex}`);
+    values.push(updates.isPinned);
+    paramIndex++;
+  }
+
+  // Add sessionId
+  const sessionIdParam = paramIndex++;
+  values.push(sessionId);
+
+  let query: string;
+
+  if (organizationId) {
+    const orgIdParam = paramIndex++;
+    const talentIdParam = paramIndex++;
+    values.push(organizationId, talentId);
+
+    query = `
+      UPDATE copilot_sessions cs
+      SET ${setClauses.join(', ')}
+      WHERE cs.id = $${sessionIdParam}
+        AND cs.organization_id = $${orgIdParam}
+        AND cs.deleted_at IS NULL
+        AND (
+          cs.talent_id = $${talentIdParam}
+          OR EXISTS (
+            SELECT 1 FROM organization_members om
+            WHERE om.organization_id = $${orgIdParam}
+              AND om.talent_id = $${talentIdParam}
+              AND om.status = 'ACTIVE'
+              AND om.role IN ('OWNER', 'ADMIN', 'MANAGER', 'SUB_ADMIN')
+          )
+        )
+      RETURNING cs.id, cs.talent_id, cs.organization_id, cs.mode, cs.title, cs.context,
+                cs.last_message_at, cs.created_at, cs.updated_at, cs.is_pinned`;
+  } else {
+    const talentIdParam = paramIndex++;
+    values.push(talentId);
+
+    query = `
+      UPDATE copilot_sessions
+      SET ${setClauses.join(', ')}
+      WHERE id = $${sessionIdParam}
+        AND talent_id = $${talentIdParam}
+        AND organization_id IS NULL
+        AND deleted_at IS NULL
+      RETURNING id, talent_id, organization_id, mode, title, context,
+                last_message_at, created_at, updated_at, is_pinned`;
+  }
+
+  const result = await pool.query(query, values);
+  if (result.rows.length === 0) return null;
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    talentId: row.talent_id,
+    organizationId: row.organization_id || undefined,
+    mode: row.mode as CopilotMode,
+    title: row.title,
+    context: row.context || {},
+    lastMessageAt: row.last_message_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+/**
  * Get messages for a session.
  * JOINs with talents to include sender_name and sender_avatar_url for user messages.
  */
@@ -287,5 +380,6 @@ export const copilotService = {
   listSessions,
   deleteSession,
   updateSessionTitle,
+  updateSession,
   getSessionMessages,
 };

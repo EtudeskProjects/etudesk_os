@@ -49,6 +49,7 @@ export {
   listSessions,
   deleteSession,
   updateSessionTitle,
+  updateSession,
   getSessionMessages,
   COPILOT_MODES,
   type CopilotMode,

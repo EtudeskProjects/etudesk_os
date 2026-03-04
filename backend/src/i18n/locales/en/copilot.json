@@ -8,6 +8,7 @@
   "sessionCreateError": "Error creating session",
   "sessionFetchError": "Error fetching session",
   "sessionDeleteError": "Error deleting session",
+  "sessionUpdateError": "Error updating session",
   "sessionDeleted": "Session deleted",
   "sessionNotFound": "Session not found",
   "messagesError": "Error fetching messages",
