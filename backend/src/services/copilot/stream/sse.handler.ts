@@ -674,9 +674,14 @@ export async function generateSessionTitle(message: string, language: SupportedL
       messages: [{ role: 'user', content: message }],
     });
 
-    const title = response.content[0]?.type === 'text'
+    const raw = response.content[0]?.type === 'text'
       ? response.content[0].text.trim()
       : message.slice(0, 50);
+    // Strip any markdown formatting (**, *, #, quotes)
+    const title = (raw || message.slice(0, 50))
+      .replace(/[*#`"]/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
     return title || message.slice(0, 50);
   } catch {
     const words = message.replace(/[?!.,]/g, '').trim().split(/\s+/);

@@ -1445,9 +1445,9 @@ export default function AssistantScreen() {
               style={styles.renameModalOverlay}
               onPress={() => setRenamingSession(null)}
             >
-              <Pressable
+              <View
                 style={[styles.renameModalContent, { backgroundColor: colors.background }]}
-                onPress={() => {}}
+                onStartShouldSetResponder={() => true}
               >
                 <Text style={[styles.renameModalTitle, { color: colors.textPrimary }]}>
                   {t('screens.assistant.renameSessionTitle')}
@@ -1462,6 +1462,7 @@ export default function AssistantScreen() {
                   maxLength={100}
                   onSubmitEditing={handleRenameSession}
                   returnKeyType="done"
+                  selectTextOnFocus
                 />
                 <View style={styles.renameModalActions}>
                   <Button
@@ -1478,7 +1479,7 @@ export default function AssistantScreen() {
                     disabled={!renameText.trim()}
                   />
                 </View>
-              </Pressable>
+              </View>
             </Pressable>
           </Modal>
         </View>

@@ -14,6 +14,8 @@ export function buildSessionTitleSystemPrompt(languageName: string = 'English'):
 3. 3 à 6 mots maximum
 4. Langage soutenu et précis
 5. En ${languageName}
+6. JAMAIS de formatage markdown (pas de **, *, #, ##, -, etc.)
+7. Texte brut uniquement
 </rules>
 
 <examples>
