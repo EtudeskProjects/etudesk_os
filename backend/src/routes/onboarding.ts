@@ -147,6 +147,16 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
 
       // If user provided a real email during onboarding, use it (overrides placeholder)
       const finalEmail = data.email?.trim() || talentEmail;
+      const finalPhone = data.phone?.trim() || null;
+
+      // DB constraint: at least one of email or phone is required
+      if (!finalEmail && !finalPhone) {
+        return res.status(400).json({
+          success: false,
+          error: req.t('onboarding:emailOrPhoneRequired'),
+          code: 'EMAIL_OR_PHONE_REQUIRED',
+        });
+      }
 
       // Try to insert with all columns, fallback to basic columns if some don't exist
       try {
