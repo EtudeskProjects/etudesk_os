@@ -767,7 +767,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         const audioBase64 = audioBuffer.toString('base64');
         const audioMode = validMode === COPILOT_MODES.STUDY ? 'study' : (validMode === COPILOT_MODES.ORG ? 'org' : 'explore');
         voiceNoteAnalysis = await analyzeAudio(audioBase64, voiceNoteMimeType, audioMode as 'study' | 'explore' | 'org');
-        agentMessage = voiceNoteAnalysis;
+        agentMessage = safeMessage
+          ? `${safeMessage}\n\n${voiceNoteAnalysis}`
+          : voiceNoteAnalysis;
       } catch (audioErr: any) {
         logger.error('[copilot] Voice note analysis failed:', audioErr);
         // Fallback: send original message text

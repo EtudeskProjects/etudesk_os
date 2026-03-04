@@ -39,10 +39,12 @@ import {
   RefreshCw,
   Pin,
   PinOff,
-  Pencil,
   List,
+  Play,
+  Pause,
 } from 'lucide-react-native';
 import { useAudioRecorder } from '../../../src/hooks/useAudioRecorder';
+import { useAudioPlayerHook } from '../../../src/hooks/useAudioPlayer';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../../src/constants/theme';
 import { useTheme } from '../../../src/hooks/useTheme';
 	import { useI18n } from '../../../src/contexts/I18nContext';
@@ -117,6 +119,7 @@ export default function AssistantScreen() {
   const [renameText, setRenameText] = useState('');
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [attachments, setAttachments] = useState<any[]>([]);
+  const [pendingVoiceNote, setPendingVoiceNote] = useState<{ uri: string; duration: number } | null>(null);
   const [floatingSuggestions, setFloatingSuggestions] = useState<string[]>([]);
   const [hideFloatingSuggestions, setHideFloatingSuggestions] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -127,6 +130,9 @@ export default function AssistantScreen() {
 
   // Audio recording hook
   const audioRecorder = useAudioRecorder();
+
+  // Audio player for voice note preview
+  const voicePreviewPlayer = useAudioPlayerHook(pendingVoiceNote?.uri ?? null);
 
   // Pulse animation for recording dot
   const recordingPulse = useRef(new Animated.Value(1)).current;
@@ -745,30 +751,23 @@ export default function AssistantScreen() {
   // Audio recording handlers
   const handleMicPress = useCallback(async () => {
     if (audioRecorder.state.isRecording) {
-      // Stop recording and send as voice note
+      // Stop recording and save as pending voice note for preview
+      const duration = audioRecorder.state.duration;
       const audioUri = await audioRecorder.stopRecording();
       if (audioUri) {
-        setIsTranscribing(true);
-        try {
-          // Upload voice note to server
-          const uploadResult = await copilotService.sendVoiceNote(audioUri, 'audio/m4a');
-          if (uploadResult.success && uploadResult.data?.voiceNoteUrl) {
-            // Send as voice note — the backend will analyze it with Gemini
-            startStreamWithVoiceNote(uploadResult.data.voiceNoteUrl, uploadResult.data.mimeType);
-          } else {
-            void alerts.alert(t('common.error'), uploadResult.error || t('screens.assistant.voiceNoteError'));
-          }
-        } catch (err: any) {
-          void alerts.alert(t('common.error'), err.message || t('screens.assistant.sendErrorShort'));
-        } finally {
-          setIsTranscribing(false);
-        }
+        setPendingVoiceNote({ uri: audioUri, duration });
       }
     } else {
       // Start recording
       await audioRecorder.startRecording();
     }
   }, [audioRecorder]);
+
+  // Clear pending voice note (stop playback first)
+  const clearPendingVoiceNote = useCallback(() => {
+    voicePreviewPlayer.stop();
+    setPendingVoiceNote(null);
+  }, [voicePreviewPlayer]);
 
   // Send a voice note as a message (upload + stream with audio analysis)
   const startStreamWithVoiceNote = useCallback((voiceNoteUrl: string, mimeType: string) => {
@@ -790,13 +789,40 @@ export default function AssistantScreen() {
   };
 
   // Send message from input
-  const handleSend = () => {
-    if ((!inputText.trim() && attachments.length === 0) || isSending) return;
+  const handleSend = async () => {
+    const hasText = inputText.trim().length > 0;
+    const hasAttachments = attachments.length > 0;
+    const hasVoiceNote = !!pendingVoiceNote;
+    if ((!hasText && !hasAttachments && !hasVoiceNote) || isSending) return;
+
     const text = inputText.trim().replace(/\n{2,}/g, '\n').replace(/^\n+|\n+$/g, '');
     const currentAttachments = [...attachments];
+    const voiceNote = pendingVoiceNote;
+
     setInputText('');
     setAttachments([]);
-    startStream(text, currentAttachments);
+    voicePreviewPlayer.stop();
+    setPendingVoiceNote(null);
+
+    if (voiceNote) {
+      // Upload voice note first, then stream with optional text
+      setIsTranscribing(true);
+      try {
+        const uploadResult = await copilotService.sendVoiceNote(voiceNote.uri, 'audio/m4a');
+        if (uploadResult.success && uploadResult.data?.voiceNoteUrl) {
+          const messageText = text || `\ud83c\udfa4 ${t('screens.assistant.voiceNote')}`;
+          startStream(messageText, currentAttachments, uploadResult.data.voiceNoteUrl, uploadResult.data.mimeType);
+        } else {
+          void alerts.alert(t('common.error'), uploadResult.error || t('screens.assistant.voiceNoteError'));
+        }
+      } catch (err: any) {
+        void alerts.alert(t('common.error'), err.message || t('screens.assistant.sendErrorShort'));
+      } finally {
+        setIsTranscribing(false);
+      }
+    } else {
+      startStream(text, currentAttachments);
+    }
   };
 
   // Auto-submit quiz answer (tapping an option sends it as a message)
@@ -827,6 +853,8 @@ export default function AssistantScreen() {
     setMessages([]);
     setError(null);
     setIsSending(false);
+    voicePreviewPlayer.stop();
+    setPendingVoiceNote(null);
   };
 
   // Retry a failed message
@@ -1146,9 +1174,10 @@ export default function AssistantScreen() {
                 onLongPress={() => handleUserMessageLongPress(message.id, message.content)}
                 delayLongPress={400}
               >
-                {message.voiceNoteUrl ? (
+                {message.voiceNoteUrl && (
                   <VoiceNotePlayer url={message.voiceNoteUrl} />
-                ) : message.content ? (
+                )}
+                {message.content && !(message.voiceNoteUrl && message.content === `\ud83c\udfa4 ${t('screens.assistant.voiceNote')}`) ? (
                   <Text style={[styles.userMessageText, { color: colors.textOnPrimary }]}>
                     {message.content}
                   </Text>
@@ -1287,16 +1316,11 @@ export default function AssistantScreen() {
         ? sessions
         : sessions.filter((s) => s.mode === historyFilter);
 
-      // Separate pinned and unpinned
+      // Build section data — pinned first, then unpinned, no section headers
       const pinnedSessions = filteredSessions.filter((s) => s.isPinned);
       const unpinnedSessions = filteredSessions.filter((s) => !s.isPinned);
-
-      // Build section data
       const sections: { title: string; data: SessionSummary[] }[] = [];
-      if (pinnedSessions.length > 0) {
-        sections.push({ title: t('screens.assistant.pinnedSessions'), data: pinnedSessions });
-      }
-      sections.push({ title: '', data: unpinnedSessions });
+      sections.push({ title: '', data: [...pinnedSessions, ...unpinnedSessions] });
 
       const filterTabs = [
         { key: 'all', label: t('screens.assistant.filterAll') },
@@ -1331,14 +1355,9 @@ export default function AssistantScreen() {
                 <SessionModeIcon size={14} color={modeColors[sessionMode]?.text || colors.textSecondary} />
               </View>
               <View style={styles.historyItemText}>
-                <View style={styles.historyItemTitleRow}>
-                  <Text style={[styles.historyItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {session.title || t('screens.assistant.untitledSession')}
-                  </Text>
-                  {session.isPinned && (
-                    <Pin size={12} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-                  )}
-                </View>
+                <Text style={[styles.historyItemTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {session.title || t('screens.assistant.untitledSession')}
+                </Text>
                 <Text style={[styles.historyItemMeta, { color: colors.textSecondary }]}>
                   {session.messageCount} {t('gestion.memberDetails.tabMessages').toLowerCase()} · {formatRelativeTime(session.lastMessageAt || session.createdAt)}
                   {session.createdByName ? ` · ${session.createdByName}` : ''}
@@ -1353,13 +1372,6 @@ export default function AssistantScreen() {
                   : <Pin size={14} color={colors.textDisabled} strokeWidth={ICON.strokeWidth} />
                 }
                 accessibilityLabel={session.isPinned ? t('screens.assistant.unpinConversation') : t('screens.assistant.pinConversation')}
-                size="sm"
-                variant="ghost"
-              />
-              <IconButton
-                onPress={() => handleStartRename(session)}
-                icon={<Pencil size={14} color={colors.textDisabled} strokeWidth={ICON.strokeWidth} />}
-                accessibilityLabel={t('screens.assistant.renameConversation')}
                 size="sm"
                 variant="ghost"
               />
@@ -1462,7 +1474,6 @@ export default function AssistantScreen() {
                   maxLength={100}
                   onSubmitEditing={handleRenameSession}
                   returnKeyType="done"
-                  selectTextOnFocus
                 />
                 <View style={styles.renameModalActions}>
                   <Button
@@ -1653,6 +1664,38 @@ export default function AssistantScreen() {
 	                </ScrollView>
 	              )}
 
+              {/* Voice Note Preview */}
+              {pendingVoiceNote && !audioRecorder.state.isRecording && !isTranscribing && (
+                <View style={[styles.voiceNotePreview, { backgroundColor: withOpacity(colors.primary, OPACITY[10]), borderColor: withOpacity(colors.primary, OPACITY[30]) }]}>
+                  <Pressable
+                    onPress={() => voicePreviewPlayer.state.isPlaying ? voicePreviewPlayer.pause() : voicePreviewPlayer.play()}
+                    style={[styles.voiceNotePlayBtn, { backgroundColor: colors.primary }]}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  >
+                    {voicePreviewPlayer.state.isPlaying ? (
+                      <Pause size={12} color={colors.textOnPrimary} fill={colors.textOnPrimary} />
+                    ) : (
+                      <Play size={12} color={colors.textOnPrimary} fill={colors.textOnPrimary} />
+                    )}
+                  </Pressable>
+                  <View style={styles.voiceNoteProgressWrap}>
+                    <View style={[styles.voiceNoteProgressBg, { backgroundColor: withOpacity(colors.primary, OPACITY[20]) }]}>
+                      <View style={[styles.voiceNoteProgressBar, { backgroundColor: colors.primary, width: `${(voicePreviewPlayer.state.progress || 0) * 100}%` }]} />
+                    </View>
+                  </View>
+                  <Text style={[styles.voiceNoteDuration, { color: colors.primary }]}>
+                    {formatDuration(voicePreviewPlayer.state.isPlaying ? Math.round(voicePreviewPlayer.state.currentTime) : pendingVoiceNote.duration)}
+                  </Text>
+                  <Pressable
+                    onPress={clearPendingVoiceNote}
+                    style={[styles.voiceNoteRemoveBtn, { backgroundColor: withOpacity(colors.textSecondary, OPACITY[20]) }]}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  >
+                    <X size={10} color={colors.textSecondary} strokeWidth={3} />
+                  </Pressable>
+                </View>
+              )}
+
               {/* TextInput */}
               <View style={styles.inputRow}>
                 <Input
@@ -1662,7 +1705,7 @@ export default function AssistantScreen() {
                   onChangeText={setInputText}
                   multiline
                   maxLength={2000}
-                  editable={!isSending && !audioRecorder.state.isRecording && !isTranscribing}
+                  editable={!isSending && !audioRecorder.state.isRecording && !isTranscribing && !audioRecorder.state.isPreparing}
                   containerStyle={{ flex: 1 }}
                   inputContainerStyle={{ backgroundColor: 'transparent', borderColor: 'transparent', borderWidth: 0, height: undefined, minHeight: 32, maxHeight: 100, paddingVertical: 0 }}
                   inputStyle={{ color: colors.textPrimary, paddingHorizontal: 0, paddingVertical: 4, fontSize: TYPOGRAPHY.fontSize.md, minHeight: 32, maxHeight: 100 }}
@@ -1712,14 +1755,14 @@ export default function AssistantScreen() {
 
 	                <IconButton
 	                  onPress={handleMicPress}
-	                  disabled={isSending || audioRecorder.state.isPreparing || isTranscribing}
+	                  disabled={isSending || audioRecorder.state.isPreparing || isTranscribing || !!pendingVoiceNote}
 	                  icon={
 	                    audioRecorder.state.isRecording ? (
 	                      <MicOff size={ICON.size.md} color={colors.error} strokeWidth={ICON.strokeWidth} />
 	                    ) : (
 	                      <Mic
 	                        size={ICON.size.md}
-	                        color={isSending || isTranscribing ? colors.gray300 : colors.gray500}
+	                        color={isSending || isTranscribing || pendingVoiceNote ? colors.gray300 : colors.gray500}
 	                        strokeWidth={ICON.strokeWidth}
 	                      />
 	                    )
@@ -1736,14 +1779,14 @@ export default function AssistantScreen() {
 
 	                <IconButton
 	                  onPress={isSending ? handleStop : handleSend}
-	                  disabled={!isSending && ((!inputText.trim() && attachments.length === 0) || audioRecorder.state.isRecording)}
+	                  disabled={!isSending && ((!inputText.trim() && attachments.length === 0 && !pendingVoiceNote) || audioRecorder.state.isRecording)}
 	                  icon={
 	                    isSending ? (
 	                      <Square size={ICON.size.sm} color={colors.textOnPrimary} fill={colors.textOnPrimary} strokeWidth={0} />
 	                    ) : (
 	                      <SendHorizontal
 	                        size={ICON.size.md}
-	                        color={(inputText.trim() || attachments.length > 0) && !audioRecorder.state.isRecording ? colors.textOnPrimary : colors.gray400}
+	                        color={(inputText.trim() || attachments.length > 0 || pendingVoiceNote) && !audioRecorder.state.isRecording ? colors.textOnPrimary : colors.gray400}
 	                        strokeWidth={ICON.strokeWidth}
 	                      />
 	                    )
@@ -1756,7 +1799,7 @@ export default function AssistantScreen() {
 	                    isSending
 	                      ? { backgroundColor: colors.textPrimary }
 	                      : { backgroundColor: colors.primary },
-	                    !isSending && ((!inputText.trim() && attachments.length === 0) || audioRecorder.state.isRecording) && { backgroundColor: colors.gray200 },
+	                    !isSending && ((!inputText.trim() && attachments.length === 0 && !pendingVoiceNote) || audioRecorder.state.isRecording) && { backgroundColor: colors.gray200 },
 	                  ]}
 	                />
 	              </View>
@@ -2321,6 +2364,48 @@ const styles = StyleSheet.create({
 
   micButtonRecording: {
     borderRadius: BORDER.radius.sm,
+  },
+  voiceNotePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER.radius.sm,
+    borderWidth: 1,
+    marginBottom: 2,
+    gap: SPACING.sm,
+  },
+  voiceNotePlayBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voiceNoteProgressWrap: {
+    flex: 1,
+  },
+  voiceNoteProgressBg: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  voiceNoteProgressBar: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  voiceNoteDuration: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    minWidth: 30,
+    textAlign: 'center',
+  },
+  voiceNoteRemoveBtn: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   attachmentPreviewContainer: {
     flexDirection: 'row',
