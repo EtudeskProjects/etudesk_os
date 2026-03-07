@@ -4,6 +4,9 @@
 ALTER TABLE users
   ADD COLUMN IF NOT EXISTS phone VARCHAR(30);
 
+ALTER TABLE users
+  ALTER COLUMN email DROP NOT NULL;
+
 -- Backfill legacy placeholder-email WhatsApp users into the real phone column.
 UPDATE users
 SET
@@ -17,9 +20,6 @@ SET
   updated_at = NOW()
 WHERE email LIKE 'wa_%@etudesk.local'
   AND deleted_at IS NULL;
-
-ALTER TABLE users
-  ALTER COLUMN email DROP NOT NULL;
 
 -- Replace absolute email uniqueness with active-row partial uniqueness.
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key;
