@@ -9,6 +9,26 @@ import { getOntologyForOrg } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
 import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
 import { getActiveSkillBlock, getChartRulesBlock, getLanguageInstructions as getBaseLanguageInstructions, PromptLanguage } from './prompt-shared';
+import { toTOON } from '../../ai/toon';
+
+const ORG_DOCUMENT_CONTENT_CONTRACT = {
+  organizationName: 'Acme Corp',
+  organizationCity: 'Abidjan',
+  organizationCountry: "Côte d'Ivoire",
+  logoUrl: '<logo_url from org_stats>',
+  documentDate: '2026-02-14',
+  sections: [{ heading: 'Section Title', body: 'Content with\\n- bullet points' }],
+};
+
+const ORG_DOCUMENT_CHART_SECTION_CONTRACT = {
+  heading: 'Talent Cohorts',
+  body: '20 new talents joined in February 2026, a 15% increase over January.',
+  chart: {
+    type: 'bar',
+    title: 'Monthly New Talents',
+    data: [{ label: 'Jan 2026', value: 17 }, { label: 'Feb 2026', value: 20 }],
+  },
+};
 
 /** Get language-specific instructions for the org prompt (extends shared base) */
 function getLanguageInstructions(language?: PromptLanguage) {
@@ -236,7 +256,7 @@ Confirmation blocks are executed by the FRONTEND when the user taps the Confirm 
 When generating PDFs for the organization (fiche de poste, rapport, bilan), use the **Org Document format** in contentJson. This produces a branded PDF with the organization's logo in the header:
 
 \`\`\`
-{"organizationName":"Acme Corp","organizationCity":"Abidjan","organizationCountry":"Côte d'Ivoire","logoUrl":"<logo_url from org_stats>","documentDate":"2026-02-14","sections":[{"heading":"Section Title","body":"Content with\\n- bullet points"}]}
+${toTOON(ORG_DOCUMENT_CONTENT_CONTRACT)}
 \`\`\`
 
 **Workflow:** Use \`logo_url\`, \`city\`, \`country\` from the \`<organization>\` context block (pre-loaded, no tool call needed). If logo_url is absent, the PDF still renders correctly without a logo.
@@ -244,16 +264,8 @@ When generating PDFs for the organization (fiche de poste, rapport, bilan), use 
 **Charts in PDF Reports (MANDATORY for analytics/reports):** When generating analytics reports, cohort reports, or any data-driven PDF, include a \`chart\` field in each section that presents quantitative data. The chart is rendered as a vector graphic directly in the PDF. Supported types: bar, donut, line, table, metric.
 
 Example section with chart:
-\`\`\`json
-{
-  "heading": "Talent Cohorts",
-  "body": "20 new talents joined in February 2026, a 15% increase over January.",
-  "chart": {
-    "type": "bar",
-    "title": "Monthly New Talents",
-    "data": [{"label": "Jan 2026", "value": 17}, {"label": "Feb 2026", "value": 20}]
-  }
-}
+\`\`\`
+${toTOON(ORG_DOCUMENT_CHART_SECTION_CONTRACT)}
 \`\`\`
 
 Chart type guidelines for PDF sections:

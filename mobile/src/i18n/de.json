@@ -76,7 +76,8 @@
     "continue": "Weiter",
     "limitReached": "Limit erreicht",
     "fileTooLarge": "Datei zu groß",
-    "deleteTitle": "Bewerbung löschen"
+    "deleteTitle": "Bewerbung löschen",
+    "invalidToken": "Ungültige oder abgelaufene Sitzung. Bitte melden Sie sich erneut an."
   },
   "auth": {
     "login": {

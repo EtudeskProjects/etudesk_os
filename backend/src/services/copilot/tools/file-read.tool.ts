@@ -13,6 +13,74 @@ import { pool } from '../../database';
 import { getFileBuffer } from '../../storage.service';
 import { logger } from '../../../utils';
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_EXTRACT_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+function extractDocumentId(rawValue: string): { cleanId: string | null; extracted: boolean } {
+  const trimmed = rawValue.trim();
+  if (UUID_REGEX.test(trimmed)) {
+    return { cleanId: trimmed, extracted: false };
+  }
+
+  const firstUuid = trimmed.match(UUID_EXTRACT_REGEX)?.[0] || null;
+  if (firstUuid) {
+    return { cleanId: firstUuid, extracted: true };
+  }
+
+  return { cleanId: null, extracted: false };
+}
+
+function salvagePdfText(buffer: Buffer): string | null {
+  const latin1 = buffer.toString('latin1');
+  const chunks = latin1
+    .match(/[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ,.;:!?@%()'"\-_/+\n\r]{5,}/g)
+    ?.map((chunk) => chunk.replace(/\s+/g, ' ').trim())
+    .filter((chunk) => {
+      const lower = chunk.toLowerCase();
+      return (
+        chunk.length >= 12 &&
+        !lower.startsWith('obj') &&
+        !lower.startsWith('endobj') &&
+        !lower.includes('/type') &&
+        !lower.includes('/filter') &&
+        !lower.includes('xref') &&
+        !lower.includes('stream') &&
+        !lower.includes('endstream')
+      );
+    }) || [];
+
+  const uniqueChunks = [...new Set(chunks)];
+  const text = uniqueChunks.join('\n').trim();
+  return text.length >= 80 ? text.slice(0, 12000) : null;
+}
+
+async function parsePdfContent(buffer: Buffer, documentId: string): Promise<{ content: string; pageCount?: number; salvaged?: boolean }> {
+  try {
+    const pdfData = await pdfParse(buffer);
+    return {
+      content: pdfData.text || '[PDF vide — aucun texte extrait]',
+      pageCount: pdfData.numpages,
+    };
+  } catch (error: any) {
+    const message = error?.message || 'Unknown PDF parse error';
+    const isRecoverable =
+      /bad xref entry|xref|invalid pdf structure|unexpected server response|formaterror/i.test(message);
+
+    if (isRecoverable) {
+      const salvaged = salvagePdfText(buffer);
+      if (salvaged) {
+        logger.warn(`[file_reader] PDF salvage mode for ${documentId}: ${message}`);
+        return {
+          content: `${salvaged}\n\n[Extraction partielle: PDF structure corrompue, texte récupéré en mode dégradé.]`,
+          salvaged: true,
+        };
+      }
+    }
+
+    throw error;
+  }
+}
+
 /**
  * Shared document reading logic — used by both talent and org tools
  */
@@ -21,13 +89,11 @@ async function readDocumentFromDB(
   query: string,
   params: any[]
 ): Promise<{ success: boolean; document?: any; content?: string; error?: string }> {
-  // Validate UUID format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const cleanId = documentId.trim();
-  if (!uuidRegex.test(cleanId)) {
+  const { cleanId } = extractDocumentId(documentId);
+  if (!cleanId) {
     return {
       success: false,
-      error: `Invalid documentId "${documentId.slice(0, 50)}". Pass exactly ONE UUID (e.g. "d6f62a32-db50-43bf-985f-e4a5708a2124"). Do NOT pass multiple IDs separated by commas.`,
+      error: `Invalid documentId "${documentId.slice(0, 50)}". Pass exactly ONE UUID from context or attachments.`,
     };
   }
 
@@ -56,11 +122,18 @@ async function readDocumentFromDB(
 
   // PDFs
   if (mimeType === 'application/pdf') {
-    const pdfData = await pdfParse(buffer);
+    const pdfData = await parsePdfContent(buffer, cleanId);
     return {
       success: true,
-      document: { id: doc.id, title: doc.title || doc.original_filename, type: doc.document_type, mimeType, pageCount: pdfData.numpages },
-      content: pdfData.text || '[PDF vide — aucun texte extrait]',
+      document: {
+        id: doc.id,
+        title: doc.title || doc.original_filename,
+        type: doc.document_type,
+        mimeType,
+        pageCount: pdfData.pageCount,
+        extractionMode: pdfData.salvaged ? 'salvaged' : 'parsed',
+      },
+      content: pdfData.content,
     };
   }
 
@@ -97,9 +170,25 @@ export function createFileReaderTool(talentId: string) {
     parameters: z.object({
       documentId: z.string().describe('ONE single UUID of the document to read.'),
     }),
+    normalize: (raw) => {
+      if (typeof raw.documentId === 'string') {
+        const extracted = extractDocumentId(raw.documentId);
+        if (extracted.cleanId) {
+          return { ...raw, documentId: extracted.cleanId };
+        }
+      }
+      return raw;
+    },
     execute: async ({ documentId }) => {
       try {
-        const cleanId = documentId.trim();
+        const { cleanId, extracted } = extractDocumentId(documentId);
+        if (!cleanId) {
+          logger.warn(`[file_reader] Invalid input without UUID: ${documentId.slice(0, 80)}`);
+          return {
+            success: false,
+            error: 'Missing valid documentId. Re-run sql_query or use the document UUID from context/attachments.',
+          };
+        }
 
         // Deduplication: return cached result on repeat calls (same data, not an error)
         if (readCache.has(cleanId)) {
@@ -114,9 +203,12 @@ export function createFileReaderTool(talentId: string) {
           };
         }
 
-        logger.info(`[file_reader] Reading document ${documentId} for talent ${talentId}`);
+        if (extracted) {
+          logger.warn(`[file_reader] Extracted UUID ${cleanId} from non-canonical input "${documentId.slice(0, 80)}"`);
+        }
+        logger.info(`[file_reader] Reading document ${cleanId} for talent ${talentId}`);
         const result = await readDocumentFromDB(
-          documentId,
+          cleanId,
           `SELECT id, title, original_filename, mime_type, file_url, document_type, description
            FROM talent_documents
            WHERE id = $1 AND talent_id = $2 AND deleted_at IS NULL`,
@@ -153,14 +245,36 @@ export function createOrgFileReaderTool(orgId: string) {
     parameters: z.object({
       documentId: z.string().describe('The UUID of the document to read. Get this from sql_query org_documents, org_talent_profile, or org_applications results.'),
     }),
+    normalize: (raw) => {
+      if (typeof raw.documentId === 'string') {
+        const extracted = extractDocumentId(raw.documentId);
+        if (extracted.cleanId) {
+          return { ...raw, documentId: extracted.cleanId };
+        }
+      }
+      return raw;
+    },
     execute: async ({ documentId }) => {
       try {
+        const { cleanId, extracted } = extractDocumentId(documentId);
+        if (!cleanId) {
+          logger.warn(`[file_reader] Invalid org input without UUID: ${documentId.slice(0, 80)}`);
+          return {
+            success: false,
+            error: 'Missing valid documentId. Use the UUID returned by sql_query.',
+          };
+        }
+
+        if (extracted) {
+          logger.warn(`[file_reader] Extracted org UUID ${cleanId} from non-canonical input "${documentId.slice(0, 80)}"`);
+        }
+
         // 1. Try organization_documents first
         let result = await pool.query(
           `SELECT id, title, original_filename, mime_type, file_url, document_type, description
            FROM organization_documents
            WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-          [documentId, orgId]
+          [cleanId, orgId]
         );
 
         // 2. Fallback: try talent_documents IF the talent has a verified interaction with this org
@@ -181,7 +295,7 @@ export function createOrgFileReaderTool(orgId: string) {
                  SELECT 1 FROM organization_members om
                  WHERE om.talent_id = td.talent_id AND om.organization_id = $2
                )`,
-            [documentId, orgId]
+            [cleanId, orgId]
           );
         }
 
@@ -219,7 +333,7 @@ export function createOrgFileReaderTool(orgId: string) {
         // For PDFs, extract text with pdf-parse
         if (mimeType === 'application/pdf') {
           try {
-            const pdfData = await pdfParse(buffer);
+            const pdfData = await parsePdfContent(buffer, cleanId);
             return {
               success: true,
               document: {
@@ -227,12 +341,13 @@ export function createOrgFileReaderTool(orgId: string) {
                 title: doc.title || doc.original_filename,
                 type: doc.document_type,
                 mimeType,
-                pageCount: pdfData.numpages,
+                pageCount: pdfData.pageCount,
+                extractionMode: pdfData.salvaged ? 'salvaged' : 'parsed',
               },
-              content: pdfData.text || '[PDF vide — aucun texte extrait]',
+              content: pdfData.content,
             };
           } catch (pdfErr: any) {
-            logger.error(`[read_document] PDF parse error for ${documentId}: ${pdfErr.message}`);
+            logger.error(`[read_document] PDF parse error for ${cleanId}: ${pdfErr.message}`);
             return {
               success: false,
               error: `Failed to extract text from PDF: ${pdfErr.message}`,

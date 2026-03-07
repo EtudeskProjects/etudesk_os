@@ -1,18 +1,24 @@
-import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Sparkles, Search, Users, MessageCircle, ArrowRight } from 'lucide-react-native';
+import { Sparkles, Search, Users, MessageCircle, ArrowRight, Globe } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
-import { Button } from '../../src/components/ui';
+import { Button, SelectCard } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
+import type { Language } from '../../src/i18n';
 
 const { height } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, language, setLanguage } = useI18n();
+
+  const languageOptions: { id: Language; label: string; flag: string }[] = [
+    { id: 'fr', label: 'Français', flag: 'FR' },
+    { id: 'en', label: 'English', flag: 'EN' },
+  ];
 
   const handleStart = () => {
     router.replace({ pathname: '/(tabs)/assistant', params: { mode: 'explore', prompt: t('auth.welcome.getStarted') } });
@@ -41,6 +47,36 @@ export default function WelcomeScreen() {
       <View style={styles.content}>
         {/* Header with celebration */}
         <View style={styles.header}>
+          <View style={styles.languageSection}>
+            <View style={styles.languageHeader}>
+              <Globe
+                size={ICON.size.sm}
+                color={colors.textSecondary}
+                strokeWidth={ICON.strokeWidth}
+              />
+              <Text style={[styles.languageTitle, { color: colors.textPrimary }]}>
+                {t('auth.welcome.languageTitle')}
+              </Text>
+            </View>
+            <Text style={[styles.languageSubtitle, { color: colors.textSecondary }]}>
+              {t('auth.welcome.languageSubtitle')}
+            </Text>
+            <View style={styles.languageOptions}>
+              {languageOptions.map((option) => (
+                <SelectCard
+                  key={option.id}
+                  selected={language === option.id}
+                  onPress={() => setLanguage(option.id)}
+                  style={styles.languageCard}
+                  accessibilityLabel={`${t('auth.welcome.languageTitle')} ${option.label}`}
+                >
+                  <Text style={[styles.languageFlag, { color: colors.primary }]}>{option.flag}</Text>
+                  <Text style={[styles.languageLabel, { color: colors.textPrimary }]}>{option.label}</Text>
+                </SelectCard>
+              ))}
+            </View>
+          </View>
+
           <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
             <Sparkles
               size={ICON.size.xl * 1.5}
@@ -113,8 +149,57 @@ const styles = StyleSheet.create({
 
   header: {
     alignItems: 'center',
-    paddingTop: height * 0.06,
+    paddingTop: height * 0.03,
     marginBottom: SPACING.xl,
+  },
+
+  languageSection: {
+    width: '100%',
+    marginBottom: SPACING.xl,
+  },
+
+  languageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
+
+  languageTitle: {
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+  },
+
+  languageSubtitle: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    lineHeight: TYPOGRAPHY.fontSize.sm * TYPOGRAPHY.lineHeight.relaxed,
+    marginBottom: SPACING.md,
+  },
+
+  languageOptions: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+  },
+
+  languageCard: {
+    flex: 1,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 72,
+  },
+
+  languageFlag: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    marginBottom: SPACING.xs,
+    letterSpacing: 1,
+  },
+
+  languageLabel: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
   iconContainer: {

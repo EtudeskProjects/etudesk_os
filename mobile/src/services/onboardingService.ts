@@ -7,7 +7,6 @@ import { api, ApiResponse } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from './logService';
 import { STORAGE_KEYS } from '../constants/config';
-import type { Talent } from '../types/models';
 
 const LOG_SOURCE = 'Onboarding';
 
@@ -40,8 +39,8 @@ export interface OnboardingStatus {
 }
 
 export interface OnboardingOptions {
-  profileTags: Array<{ value: string; label: string }>;
-  goals: Array<{ value: string; label: string }>;
+  profileTags: { value: string; label: string }[];
+  goals: { value: string; label: string }[];
 }
 
 export interface OnboardingResult {
@@ -88,103 +87,29 @@ async function complete(data: OnboardingData): Promise<ApiResponse<OnboardingRes
 
   logger.debug(LOG_SOURCE, 'Sending data to API', { fields: Object.keys(cleanedData) });
 
-  try {
-    // Try the dedicated onboarding endpoint first
-    const response = await api.post<OnboardingResult>('/api/onboarding/complete', cleanedData);
+  const response = await api.post<OnboardingResult>('/api/onboarding/complete', cleanedData);
+  const tokens = response.data?.tokens;
+  const talent = response.data?.talent;
 
-    // Backend returns flat structure: { success, talent, tokens }
-    // We need to handle both flat and nested structures
-    const tokens = (response as any).tokens || response.data?.tokens;
-    const talent = (response as any).talent || response.data?.talent;
-
-    // Store new tokens if provided and non-empty
-    if (tokens?.accessToken && tokens?.refreshToken) {
-      await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
-      await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
-    }
-
-    // Update user info in storage
-    if (talent) {
-      const existingUser = await AsyncStorage.getItem(STORAGE_KEYS.USER);
-      const user = existingUser ? JSON.parse(existingUser) : {};
-      user.talentId = talent.id;
-      user.hasTalentProfile = true;
-      user.onboardingComplete = true;
-      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-      logger.info(LOG_SOURCE, 'User profile updated in storage', { talentId: user.talentId });
-    }
-
-    // Return normalized response
-    return {
-      data: { talent, tokens },
-      success: true,
-    } as ApiResponse<OnboardingResult>;
-  } catch (error: any) {
-    logger.warn(LOG_SOURCE, 'Primary endpoint failed, trying fallback', { status: error.status });
-
-    // If 500 or 404, try the fallback endpoint (direct talent creation)
-    if (error.status === 500 || error.status === 404) {
-      logger.info(LOG_SOURCE, 'Using fallback endpoint: /api/talents');
-
-      // Fallback endpoint might expect snake_case
-      const fallbackData = {
-        first_name: data.firstName,
-        last_name: data.lastName,
-        bio: data.bio,
-        phone: data.phone,
-        email: data.email,
-        city: data.city,
-        region: data.region,
-        country: data.country,
-        profile_tags: data.profileTags,
-        goals: data.goals,
-        sectors: data.sectors,
-        gender: data.gender,
-        remote_ready: data.remoteReady,
-        willing_to_relocate: data.willingToRelocate,
-        avatar_url: data.avatarUrl,
-      };
-      const cleanedFallbackData = Object.fromEntries(
-        Object.entries(fallbackData).filter(([_, v]) => v !== undefined)
-      );
-
-      const fallbackResponse = await api.post<Talent>('/api/talents', cleanedFallbackData);
-
-      if (fallbackResponse.data) {
-        // Update user info in storage
-        const existingUser = await AsyncStorage.getItem(STORAGE_KEYS.USER);
-        const user = existingUser ? JSON.parse(existingUser) : {};
-        user.talentId = fallbackResponse.data.id;
-        user.hasTalentProfile = true;
-        user.onboardingComplete = true;
-        user.displayName = fallbackResponse.data.display_name;
-        user.firstName = fallbackResponse.data.first_name;
-        user.lastName = fallbackResponse.data.last_name;
-        await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-        logger.info(LOG_SOURCE, 'User profile created via fallback', { talentId: user.talentId });
-
-        // Return in expected format
-        return {
-          data: {
-            talent: {
-              id: fallbackResponse.data.id,
-              slug: fallbackResponse.data.slug || '',
-              displayName: fallbackResponse.data.display_name || '',
-              email: fallbackResponse.data.email || '',
-            },
-            tokens: {
-              accessToken: '',
-              refreshToken: '',
-              expiresIn: 0,
-            },
-          },
-        } as ApiResponse<OnboardingResult>;
-      }
-    }
-
-    // Re-throw if neither worked
-    throw error;
+  if (!talent || !tokens?.accessToken || !tokens?.refreshToken) {
+    throw new Error('Invalid onboarding response');
   }
+
+  await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
+  await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
+
+  const existingUser = await AsyncStorage.getItem(STORAGE_KEYS.USER);
+  const user = existingUser ? JSON.parse(existingUser) : {};
+  user.talentId = talent.id;
+  user.hasTalentProfile = true;
+  user.onboardingComplete = true;
+  await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+  logger.info(LOG_SOURCE, 'User profile updated in storage', { talentId: user.talentId });
+
+  return {
+    data: { talent, tokens },
+    success: true,
+  } as ApiResponse<OnboardingResult>;
 }
 
 /**
@@ -208,9 +133,16 @@ async function needsOnboarding(): Promise<boolean> {
   try {
     const response = await getStatus();
     return !response.data?.onboarding?.isComplete;
-  } catch (error) {
-    // If we can't check status, assume onboarding is needed
-    return true;
+  } catch (error: any) {
+    logger.warn(LOG_SOURCE, 'Unable to determine onboarding status', { error: error?.message });
+    const existingUser = await AsyncStorage.getItem(STORAGE_KEYS.USER);
+    if (existingUser) {
+      const user = JSON.parse(existingUser);
+      if (typeof user.onboardingComplete === 'boolean') {
+        return !user.onboardingComplete;
+      }
+    }
+    return false;
   }
 }
 

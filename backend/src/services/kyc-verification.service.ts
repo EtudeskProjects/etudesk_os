@@ -10,6 +10,7 @@ import { MODEL_SEARCH } from './ai/models';
 import { getOpenAIClient } from './ai/provider';
 import { buildKYCVerificationPrompt, buildQuickCheckPrompt, KYC_SYSTEM_PROMPT } from './ai/prompts/kyc.prompt';
 import { buildTalentObject } from './ai/talent-object';
+import { toTOON } from './ai/toon';
 
 import { logger } from '../utils';
 
@@ -299,7 +300,7 @@ export async function verifyKYCDocument(
     expectedDocType,
     docTypeLabels[expectedDocType],
     !!backImage,
-    JSON.stringify(DOCUMENT_ANALYSIS_SCHEMA, null, 2),
+    toTOON(DOCUMENT_ANALYSIS_SCHEMA),
     talentContext
   );
 

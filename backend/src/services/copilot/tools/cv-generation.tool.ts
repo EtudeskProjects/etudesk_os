@@ -8,6 +8,24 @@ import { createGenerateDocumentTool } from './generate-document.tool';
 import { logger } from '../../../utils';
 import { MODEL_AGENT } from '../../ai/models';
 import { i18next } from '../../../i18n';
+import { toTOON } from '../../ai/toon';
+
+const CV_CONTENT_CONTRACT = {
+  firstName: 'Prénom',
+  lastName: 'Nom',
+  email: 'email',
+  phone: 'phone',
+  city: 'Dakar',
+  country: 'Senegal',
+  bio: 'Résumé professionnel.',
+  skills: [{ name: 'Compétence', type: 'hard', level: 'expert' }],
+  languages: [{ language: 'Français', level: 'native' }],
+  interests: ['Interet 1'],
+  goals: ['Objectif 1'],
+  experiences: [{ title: 'Poste', company: 'Entreprise', location: 'Ville', period: '2022-Present', description: 'Desc' }],
+  education: [{ degree: 'Diplôme', institution: 'Ecole', location: 'Ville', period: '2020', description: 'Desc' }],
+  certifications: [{ name: 'Certif', issuer: 'Org', date: '2023' }],
+};
 
 const CV_GENERATION_INSTRUCTIONS = `
 # CV Generation Workflow
@@ -24,27 +42,12 @@ You are the CV Generation sub-agent. Follow these steps precisely to produce an 
 5. If no existing CV, rely on profile data only.
 
 ## Step 3: Generate the CV (PDF by default)
-6. Call \`generate_document\` with format "PDF" and the **CV JSON format** for contentJson. 
+6. Call \`generate_document\` with format "PDF" and the **CV canonical object format** for contentJson. 
 
-**CRITICAL: Use the CV JSON format (NOT the sections format) for CV generation.**
+**CRITICAL: Use the CV canonical object format (NOT the sections format) for CV generation.**
 
-The contentJson MUST be a JSON string with this structure:
-{
-  "firstName": "Prénom",
-  "lastName": "Nom",
-  "email": "email",
-  "phone": "phone",
-  "city": "Dakar",
-  "country": "Senegal",
-  "bio": "Résumé professionnel.",
-  "skills": [{"name": "Compétence", "type": "hard", "level": "expert"}],
-  "languages": [{"language": "Français", "level": "native"}],
-  "interests": ["Interet 1"],
-  "goals": ["Objectif 1"],
-  "experiences": [{"title": "Poste", "company": "Entreprise", "location": "Ville", "period": "2022-Present", "description": "Desc"}],
-  "education": [{"degree": "Diplôme", "institution": "Ecole", "location": "Ville", "period": "2020", "description": "Desc"}],
-  "certifications": [{"name": "Certif", "issuer": "Org", "date": "2023"}]
-}
+Pass \`contentJson\` as an object (or JSON string) with this structure:
+${toTOON(CV_CONTENT_CONTRACT)}
 
 ## Output rule
 Return a professional summary of what you did and include the entity block for the generated document like this:

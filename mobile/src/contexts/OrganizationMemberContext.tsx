@@ -47,13 +47,6 @@ export function OrganizationMemberProvider({ children }: OrganizationMemberProvi
   const [invitations, setInvitations] = useState<OrganizationInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load members when organization changes
-  useEffect(() => {
-    if (selectedOrgId && isOrganizationSpace) {
-      refreshMembers();
-    }
-  }, [selectedOrgId, isOrganizationSpace]);
-
   // Current user member - match by user_id from auth
   const currentUserMember = useMemo(() => {
     if (!isOrganizationSpace || !selectedOrgId || !user?.id) return null;
@@ -62,9 +55,7 @@ export function OrganizationMemberProvider({ children }: OrganizationMemberProvi
     if (memberByUserId) return memberByUserId;
     // Fallback: try to match by email if user_id not found
     const memberByEmail = members.find(m => m.organization_id === selectedOrgId && m.email === user.email);
-    if (memberByEmail) return memberByEmail;
-    // Last fallback for dev: first OWNER (remove in production)
-    return members.find(m => m.organization_id === selectedOrgId && m.role === 'OWNER') || null;
+    return memberByEmail || null;
   }, [members, selectedOrgId, isOrganizationSpace, user]);
 
   // Role-based permission checks
@@ -175,6 +166,13 @@ export function OrganizationMemberProvider({ children }: OrganizationMemberProvi
       setIsLoading(false);
     }
   }, [selectedOrgId]);
+
+  // Load members when organization changes
+  useEffect(() => {
+    if (selectedOrgId && isOrganizationSpace) {
+      refreshMembers();
+    }
+  }, [selectedOrgId, isOrganizationSpace, refreshMembers]);
 
   const contextValue = useMemo(() => ({
     members: members.filter(m => m.organization_id === selectedOrgId),

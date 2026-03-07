@@ -843,7 +843,7 @@ export default function ApplyOpportunityScreen() {
         {t('opportunity.applyFlow.success.title')}
       </Text>
       <Text style={[styles.successDescription, { color: colors.textSecondary }]}>
-        {t('opportunity.applyFlow.success.description', { title: opportunity?.title })}
+        {t('opportunity.applyFlow.success.description', { title: opportunity?.title ?? '' })}
       </Text>
 
       <View style={styles.successActions}>

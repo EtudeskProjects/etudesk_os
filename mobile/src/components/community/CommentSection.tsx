@@ -6,9 +6,6 @@ import {
     Pressable,
     Keyboard,
     Platform,
-    Modal,
-    Dimensions,
-    KeyboardAvoidingView,
     ActionSheetIOS,
     type TextInput as RNTextInput,
 } from 'react-native';
@@ -17,19 +14,20 @@ import { ActivityComment } from '../../types/activity';
 import { communityActivityService } from '../../services';
 import { useAuth } from '../../contexts/AuthContext';
 import { CommentItem } from './CommentItem';
-import { SPACING, TYPOGRAPHY, BORDER, withOpacity, OPACITY } from '../../constants/theme';
+import { CommentComposer } from './CommentComposer';
+import {
+    addReplyToComment,
+    deleteCommentFromTree,
+    OptimisticComment,
+    removeOptimisticComment,
+    replaceOptimisticComment,
+} from './commentTreeUtils';
+import { SPACING, TYPOGRAPHY, BORDER } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 	import { useTranslation } from '../../contexts/I18nContext';
-	import { Send, X, ChevronDown } from 'lucide-react-native';
+	import { ChevronDown } from 'lucide-react-native';
 	import { alertsGlobal } from '../../contexts/AlertContext';
-	import { showToastGlobal } from '../ui';
-	import { IconButton, Input, LoadingShimmer, ShimmerPlaceholder } from '../ui';
-
-// Extended comment type for optimistic updates
-interface OptimisticComment extends ActivityComment {
-    _optimistic?: boolean;
-    _tempId?: string;
-}
+	import { showToastGlobal, LoadingShimmer } from '../ui';
 
 const MAX_VISIBLE_COMMENTS = 3;
 
@@ -70,22 +68,18 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
 
     // Keyboard handling
     const [isInputFocused, setIsInputFocused] = useState(false);
-    const [keyboardHeight, setKeyboardHeight] = useState(0);
     // Track if we're in the middle of submitting to avoid closing modal prematurely
     const isSubmittingRef = useRef(false);
 
     useEffect(() => {
         const keyboardWillShow = Keyboard.addListener(
             Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-            (e) => {
-                setKeyboardHeight(e.endCoordinates.height);
-            }
+            () => {}
         );
 
         const keyboardWillHide = Keyboard.addListener(
             Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
             () => {
-                setKeyboardHeight(0);
                 // Add a small delay to allow button press to register before closing modal
                 // This prevents the modal from closing when user taps the send button
                 setTimeout(() => {
@@ -209,25 +203,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             _tempId: tempId,
         };
 
-        // Helper function to recursively add reply to nested comments
-        const addReplyToComment = (comments: OptimisticComment[], targetId: string, newReply: OptimisticComment): OptimisticComment[] => {
-            return comments.map(comment => {
-                if (comment.id === targetId) {
-                    return {
-                        ...comment,
-                        replies: [newReply, ...(comment.replies || [])],
-                    };
-                }
-                if (comment.replies && comment.replies.length > 0) {
-                    return {
-                        ...comment,
-                        replies: addReplyToComment(comment.replies as OptimisticComment[], targetId, newReply),
-                    };
-                }
-                return comment;
-            });
-        };
-
         // Optimistic update: add comment immediately
         if (parentId) {
             // For replies, recursively find parent and add reply
@@ -255,46 +230,11 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
             const realComment = (response as any).data || response;
 
             if (realComment && realComment.id) {
-                // Helper function to recursively replace optimistic comment with real one
-                const replaceOptimisticComment = (comments: OptimisticComment[], targetTempId: string, replacement: ActivityComment): OptimisticComment[] => {
-                    return comments.map(comment => {
-                        if (comment._tempId === targetTempId) {
-                            return {
-                                ...replacement,
-                                _optimistic: undefined,
-                                _tempId: undefined,
-                            } as OptimisticComment;
-                        }
-                        if (comment.replies && comment.replies.length > 0) {
-                            return {
-                                ...comment,
-                                replies: replaceOptimisticComment(comment.replies as OptimisticComment[], targetTempId, replacement),
-                            };
-                        }
-                        return comment;
-                    });
-                };
-
                 // Replace optimistic comment with real one from server
                 setComments(prev => replaceOptimisticComment(prev, tempId, realComment));
             }
         } catch (error: any) {
             if (__DEV__) console.error('[CommentSection] Failed to post comment:', error);
-
-            // Helper function to recursively remove optimistic comment on error
-            const removeOptimisticComment = (comments: OptimisticComment[], targetTempId: string): OptimisticComment[] => {
-                return comments
-                    .filter(comment => comment._tempId !== targetTempId)
-                    .map(comment => {
-                        if (comment.replies && comment.replies.length > 0) {
-                            return {
-                                ...comment,
-                                replies: removeOptimisticComment(comment.replies as OptimisticComment[], targetTempId),
-                            };
-                        }
-                        return comment;
-                    });
-            };
 
             // Remove optimistic comment on error
             setComments(prev => removeOptimisticComment(prev, tempId));
@@ -326,21 +266,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     const handleLikeComment = async (commentId: string) => {
         // Optimistic update handled in CommentItem
         // Call API here if needed
-    };
-
-    // Helper function to recursively delete a comment from the tree
-    const deleteCommentFromTree = (comments: OptimisticComment[], targetId: string): OptimisticComment[] => {
-        return comments
-            .filter(comment => comment.id !== targetId)
-            .map(comment => {
-                if (comment.replies && comment.replies.length > 0) {
-                    return {
-                        ...comment,
-                        replies: deleteCommentFromTree(comment.replies as OptimisticComment[], targetId),
-                    };
-                }
-                return comment;
-            });
     };
 
     const handleDeleteComment = async (comment: ActivityComment) => {
@@ -496,154 +421,21 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                 </View>
             )}
 
-            {/* Input Area - Inline when keyboard hidden */}
-            {!isInputFocused && (
-                <View style={styles.inputSection}>
-                    {/* Reply indicator with message preview */}
-	                    {replyingTo && (
-	                        <View style={[styles.replyIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
-	                            <View style={styles.replyContent}>
-	                                <Text style={[styles.replyIndicatorText, { color: colors.primary }]} numberOfLines={1}>
-	                                    {t('community.comments.replyTo', { name: replyingTo.author?.display_name || '' })}
-	                                </Text>
-                                <Text style={[styles.replyMessagePreview, { color: colors.textSecondary }]} numberOfLines={1}>
-	                                    {replyingTo.content}
-	                                </Text>
-	                            </View>
-	                            <IconButton
-	                                onPress={cancelReply}
-	                                icon={<X size={16} color={colors.primary} />}
-	                                accessibilityLabel={t('common.cancel')}
-	                                size="sm"
-	                                variant="ghost"
-	                                style={{ width: 28, height: 28 }}
-	                            />
-	                        </View>
-	                    )}
-
-                    {/* Input pill - tap to open modal */}
-                    <Pressable
-                        style={[styles.inlineInputPill, { backgroundColor: colors.gray100 }]}
-                        onPress={() => {
-                            setIsInputFocused(true);
-                            setTimeout(() => inputRef.current?.focus(), 100);
-                        }}
-                    >
-                        <Text style={[styles.inputPlaceholder, { color: colors.gray400 }]}>
-                            {replyingTo ? t('community.comments.replyPlaceholder') : t('community.comments.addPlaceholder')}
-                        </Text>
-                        <View style={[styles.inlineSendButton, { backgroundColor: colors.gray300 }]}>
-                            <Send size={16} color={colors.textOnPrimary} />
-                        </View>
-                    </Pressable>
-                </View>
-            )}
-
-            {/* Modal for input when keyboard is visible */}
-            <Modal
-                visible={isInputFocused}
-                transparent
-                animationType="none"
-                onRequestClose={() => {
-                    Keyboard.dismiss();
-                    setIsInputFocused(false);
-                }}
-            >
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={styles.modalContainer}
-                >
-                    {/* Backdrop */}
-                    <Pressable
-                        style={[styles.modalBackdrop, { backgroundColor: colors.overlayLight }]}
-                        onPress={() => {
-                            Keyboard.dismiss();
-                            setIsInputFocused(false);
-                        }}
-                    />
-
-                    {/* Input area at bottom */}
-                    <View
-                        style={[
-                            styles.modalInputContainer,
-                            {
-                                backgroundColor: colors.surface,
-                                borderTopColor: withOpacity(colors.textPrimary, OPACITY[8]),
-                                paddingBottom: Math.max(SPACING.sm, insets.bottom),
-                            },
-                        ]}
-                    >
-                        {/* Reply indicator with message preview */}
-	                        {replyingTo && (
-	                            <View style={[styles.replyIndicator, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
-	                                <View style={styles.replyContent}>
-                                    <Text style={[styles.replyIndicatorText, { color: colors.primary }]} numberOfLines={1}>
-                                        {t('community.comments.replyTo', { name: replyingTo.author?.display_name || '' })}
-                                    </Text>
-                                    <Text style={[styles.replyMessagePreview, { color: colors.textSecondary }]} numberOfLines={1}>
-	                                    {replyingTo.content}
-	                                </Text>
-	                            </View>
-	                                <IconButton
-	                                    onPress={cancelReply}
-	                                    icon={<X size={16} color={colors.primary} />}
-	                                    accessibilityLabel={t('common.cancel')}
-	                                    size="sm"
-	                                    variant="ghost"
-	                                    style={{ width: 28, height: 28 }}
-	                                />
-	                            </View>
-	                        )}
-
-                        {/* Input with button inside */}
-                        <View style={[
-                            styles.modalInputPill,
-                            { backgroundColor: colors.gray100 }
-                        ]}>
-                            <Input
-                                ref={inputRef as any}
-                                value={commentText}
-                                onChangeText={setCommentText}
-                                placeholder={replyingTo ? t('community.comments.replyPlaceholder') : t('community.comments.addPlaceholder')}
-                                multiline
-                                maxLength={1000}
-                                autoFocus
-                                blurOnSubmit={false}
-                                containerStyle={{ flex: 1 }}
-                                inputContainerStyle={{ backgroundColor: 'transparent', borderColor: 'transparent', height: undefined, minHeight: 44, alignItems: 'flex-start' }}
-                                inputStyle={[styles.modalInput, { color: colors.textPrimary }]}
-	                            />
-	                            {/* Send button inside input */}
-	                            <IconButton
-	                                onPress={() => {
-	                                    if (!commentText.trim() || submitting) return;
-	                                    isSubmittingRef.current = true;
-	                                    handleSubmit();
-	                                }}
-	                                disabled={!commentText.trim() || submitting}
-	                                icon={
-	                                    submitting ? (
-	                                        <ShimmerPlaceholder width={20} height={14} variant="bar" />
-	                                    ) : (
-	                                        <Send size={16} color={colors.textOnPrimary} />
-	                                    )
-	                                }
-	                                accessibilityLabel={t('chat.send')}
-	                                size="sm"
-	                                variant="ghost"
-	                                style={[
-	                                    styles.modalSendButton,
-	                                    {
-	                                        backgroundColor: commentText.trim() && !submitting
-	                                            ? colors.primary
-	                                            : colors.gray300,
-	                                    },
-	                                ]}
-	                            />
-	                        </View>
-	                    </View>
-	                </KeyboardAvoidingView>
-	            </Modal>
+            <CommentComposer
+                colors={colors}
+                commentText={commentText}
+                insets={insets}
+                inputRef={inputRef}
+                isInputFocused={isInputFocused}
+                isSubmittingRef={isSubmittingRef}
+                replyingTo={replyingTo}
+                setCommentText={setCommentText}
+                setIsInputFocused={setIsInputFocused}
+                submitting={submitting}
+                t={t}
+                onCancelReply={cancelReply}
+                onSubmit={handleSubmit}
+            />
         </View>
     );
 };

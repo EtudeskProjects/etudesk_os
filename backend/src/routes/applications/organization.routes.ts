@@ -457,7 +457,7 @@ router.put('/bulk/status', authMiddleware, validate(bulkUpdateStatusSchema), asy
     const accessibleIds = accessibleResult.rows.map(r => r.id);
 
     if (accessibleIds.length === 0) {
-      return res.json({ success: true, updated: 0, failed: application_ids.length });
+      return res.json({ success: true, updated: 0, failed: application_ids.length, data: { updated: 0, failed: application_ids.length } });
     }
 
     const updateResult = await pool.query(
@@ -468,7 +468,7 @@ router.put('/bulk/status', authMiddleware, validate(bulkUpdateStatusSchema), asy
     const updated = updateResult.rowCount || 0;
     const failed = application_ids.length - updated;
 
-    res.json({ success: true, updated, failed });
+    res.json({ success: true, updated, failed, data: { updated, failed } });
   } catch (error) {
     handleRouteError(res, error, 'Error bulk updating status');
   }
@@ -498,7 +498,7 @@ router.delete('/:id/organization', authMiddleware, async (req: AuthRequest, res:
     await pool.query('DELETE FROM application_messages WHERE application_id = $1', [id]);
     await pool.query('DELETE FROM opportunity_applications WHERE id = $1', [id]);
 
-    res.json({ success: true, message: req.t('applications:deleted') });
+    res.json({ success: true, message: req.t('applications:deleted'), data: { success: true, message: req.t('applications:deleted') } });
   } catch (error) {
     handleRouteError(res, error, 'Error deleting application (org)');
   }

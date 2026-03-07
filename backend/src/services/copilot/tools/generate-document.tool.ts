@@ -18,6 +18,7 @@ import { logger } from '../../../utils';
 import { i18next } from '../../../i18n';
 import { generateCVPDF, CVData } from './cv-pdf-generator';
 import { generateOrgDocumentPDF, isOrgDocumentContent, OrgDocumentData, ChartData } from './org-document-pdf-generator';
+import { toTOON } from '../../ai/toon';
 
 // Content JSON structure types
 interface SectionContent {
@@ -28,6 +29,38 @@ interface TableContent {
   headers: string[];
   rows: string[][];
 }
+
+const CV_CONTENT_CONTRACT = {
+  firstName: 'John',
+  lastName: 'Doe',
+  email: 'john@example.com',
+  phone: '+221...',
+  city: 'Dakar',
+  country: 'Senegal',
+  bio: 'Profile summary...',
+  skills: [{ name: 'Python', type: 'hard', level: 'expert' }],
+  languages: [{ language: 'Francais', level: 'native' }],
+  interests: ['AI', 'Fintech'],
+  goals: ['Lead developer'],
+  experiences: [{ title: 'Dev Senior', company: 'Wave', location: 'Dakar', period: '2022 - Present', description: 'Led team of 5...' }],
+  education: [{ degree: 'Master Informatique', institution: 'ESP Dakar', location: 'Dakar', period: '2018 - 2020', description: 'Specialisation IA' }],
+  certifications: [{ name: 'AWS Solutions Architect', issuer: 'Amazon', date: '2023' }],
+  references: [{ name: 'M. Dupont', title: 'CEO, Acme', phone: '+221...' }],
+};
+
+const ORG_DOCUMENT_CONTRACT = {
+  organizationName: 'Acme Corp',
+  sections: [{ heading: 'Section title', body: 'Section body' }],
+};
+
+const SECTIONS_CONTRACT = {
+  sections: [{ heading: 'Section title', body: 'Section content text' }],
+};
+
+const TABLE_CONTRACT = {
+  headers: ['Column A', 'Column B'],
+  rows: [['row1a', 'row1b'], ['row2a', 'row2b']],
+};
 
 function isSectionContent(data: any): data is SectionContent {
   return data && Array.isArray(data.sections);
@@ -641,6 +674,22 @@ const FORMAT_MIMETYPES: Record<string, string> = {
  * and triggers the extraction + skill merge pipeline.
  */
 export function createGenerateDocumentTool(talentId: string, avatarUrl?: string, organizationId?: string, language?: string) {
+  const contentJsonDescription = [
+    'Content as JSON object or JSON string.',
+    'STRICT CV/resume canonical contract (root fields only, no wrappers):',
+    toTOON(CV_CONTENT_CONTRACT),
+    'IMPORTANT CV RULES: (a) Use "bio" not "summary", "experiences" not "experience", "institution" not "school", "period" not "startDate/endDate", "description" not "bullets", "language" not "name" in languages.',
+    '(b) Use ONLY real data from sql_query/file_reader — NEVER invent or modify personal info. If email is null in profile (WhatsApp signup), OMIT the email field. If no LinkedIn in source data, OMIT it. NEVER fabricate emails, URLs, certifications, or dates.',
+    '(c) Do NOT wrap in {type:"cv", profile:{...}} — put fields at root level.',
+    'Other supported contracts:',
+    'Org document:',
+    toTOON(ORG_DOCUMENT_CONTRACT),
+    'Sections:',
+    toTOON(SECTIONS_CONTRACT),
+    'Table:',
+    toTOON(TABLE_CONTRACT),
+  ].join('\n');
+
   return defineTool({
     name: 'generate_document',
     description:
@@ -653,9 +702,7 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
       title: z.string().describe('Document title displayed at the top of the generated file'),
       contentJson: z
         .union([z.string(), z.record(z.string(), z.unknown())])
-        .describe(
-          'Content as JSON object. STRICT FORMAT for CV/resume — use EXACTLY these field names (no wrappers, no nesting): {"firstName":"John","lastName":"Doe","email":"john@example.com","phone":"+221...","city":"Dakar","country":"Senegal","bio":"Profile summary...","skills":[{"name":"Python","type":"hard","level":"expert"}],"languages":[{"language":"Francais","level":"native"}],"interests":["AI","Fintech"],"goals":["Lead developer"],"experiences":[{"title":"Dev Senior","company":"Wave","location":"Dakar","period":"2022 - Present","description":"Led team of 5..."}],"education":[{"degree":"Master Informatique","institution":"ESP Dakar","location":"Dakar","period":"2018 - 2020","description":"Specialisation IA"}],"certifications":[{"name":"AWS Solutions Architect","issuer":"Amazon","date":"2023"}],"references":[{"name":"M. Dupont","title":"CEO, Acme","phone":"+221..."}]}. IMPORTANT CV RULES: (a) Use "bio" not "summary", "experiences" not "experience", "institution" not "school", "period" not "startDate/endDate", "description" not "bullets", "language" not "name" in languages. (b) Use ONLY real data from sql_query/file_reader — NEVER invent or modify personal info. If email is null in profile (WhatsApp signup), OMIT the email field. If no LinkedIn in source data, OMIT it. NEVER fabricate emails, URLs, certifications, or dates. (c) Do NOT wrap in {type:"cv", profile:{...}} — put fields at root level. Other formats: (2) Org document: {"organizationName":"...","sections":[{"heading":"...","body":"..."}]} (3) Sections: {"sections":[...]} (4) Table: {"headers":[...],"rows":[...]}'
-        ),
+        .describe(contentJsonDescription),
       instructions: z.string().optional().describe('Generation instructions describing the purpose and style of the document'),
     }),
     normalize: (raw) => {
@@ -844,9 +891,13 @@ export const generateDocumentTool = defineTool({
     title: z.string().describe('Document title displayed at the top of the generated file'),
     contentJson: z
       .union([z.string(), z.record(z.string(), z.unknown())])
-      .describe(
-        'Content as JSON string or object. Two formats supported: (1) Sections: {"sections":[{"heading":"Section Title","body":"Section content text"}]} — for CVs, letters, reports. (2) Table: {"headers":["Column A","Column B"],"rows":[["row1a","row1b"],["row2a","row2b"]]} — for data exports, spreadsheets.'
-      ),
+      .describe([
+        'Content as JSON string or object.',
+        'Sections contract:',
+        toTOON(SECTIONS_CONTRACT),
+        'Table contract:',
+        toTOON(TABLE_CONTRACT),
+      ].join('\n')),
     instructions: z.string().optional().describe('Generation instructions describing the purpose and style of the document'),
   }),
   execute: async ({ format: rawFormat, title, contentJson, instructions }) => {

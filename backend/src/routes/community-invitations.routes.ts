@@ -13,6 +13,10 @@ import { sendCommunityInviteEmail } from '../services/email.service';
 import { logger } from '../utils';
 const router = Router();
 
+function actionData(message: string, extra: Record<string, unknown> = {}) {
+  return { success: true, message, data: { success: true, message, ...extra } };
+}
+
 // ============================================================================
 // INVITATION MANAGEMENT (for community admins)
 // ============================================================================
@@ -281,7 +285,7 @@ router.delete('/:communityId/invitations/:invitationId', authMiddleware, async (
       return res.status(404).json({ error: req.t('communities:inviteNotFound') });
     }
 
-    res.json({ success: true, message: req.t('communities:invitationCancelled') });
+    res.json(actionData(req.t('communities:invitationCancelled')));
   } catch (error: any) {
     logger.error('Error cancelling invitation:', error);
     res.status(500).json({ error: req.t('communities:errorCancellingInvitation') });
@@ -356,7 +360,7 @@ router.post('/:communityId/invitations/:invitationId/resend', authMiddleware, as
       // Don't fail the resend if email fails
     }
 
-    res.json({ success: true, message: req.t('communities:invitationResent') });
+    res.json(actionData(req.t('communities:invitationResent')));
   } catch (error: any) {
     logger.error('Error resending invitation:', error);
     res.status(500).json({ error: req.t('communities:errorResendingInvitation') });
@@ -502,7 +506,7 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
       if (memberStatus === 'ACTIVE') {
         // Already a member, just DELETE the invitation
         await pool.query('DELETE FROM community_invitations WHERE id = $1', [invitationId]);
-        return res.json({ success: true, message: req.t('communities:alreadyMemberMessage') });
+        return res.json(actionData(req.t('communities:alreadyMemberMessage')));
       }
       // Update existing membership to active
       await pool.query(`
@@ -522,11 +526,9 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
     // DELETE the invitation from DB (access granted)
     await pool.query('DELETE FROM community_invitations WHERE id = $1', [invitationId]);
 
-    res.json({
-      success: true,
-      message: req.t('communities:welcomeToCommunity', { name: inv.community_name }),
+    res.json(actionData(req.t('communities:welcomeToCommunity', { name: inv.community_name }), {
       community_id: inv.community_id,
-    });
+    }));
   } catch (error: any) {
     logger.error('Error accepting invitation:', error);
     res.status(500).json({ error: req.t('communities:errorAcceptingInvitation') });
@@ -564,7 +566,7 @@ router.post('/:invitationId/decline', authMiddleware, async (req: AuthRequest, r
       return res.status(404).json({ error: req.t('communities:inviteNotFound') });
     }
 
-    res.json({ success: true, message: req.t('communities:inviteDeclined') });
+    res.json(actionData(req.t('communities:inviteDeclined')));
   } catch (error: any) {
     logger.error('Error declining invitation:', error);
     res.status(500).json({ error: req.t('communities:errorDecliningInvitation') });
@@ -621,6 +623,14 @@ router.get('/token/:token', async (req: Request, res: Response) => {
         role: inv.role,
         expires_at: inv.expires_at,
       },
+      id: inv.id,
+      community_name: inv.community_name,
+      community_description: inv.community_description,
+      cover_image_url: inv.cover_image_url,
+      invited_by_name: inv.invited_by_name,
+      message: inv.message,
+      role: inv.role,
+      expires_at: inv.expires_at,
     });
   } catch (error: any) {
     logger.error('Error verifying invitation token:', error);

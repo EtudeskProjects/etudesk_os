@@ -76,7 +76,8 @@
     "continue": "متابعة",
     "limitReached": "تم بلوغ الحد الأقصى",
     "fileTooLarge": "الملف كبير جدا",
-    "deleteTitle": "حذف الترشيح"
+    "deleteTitle": "حذف الترشيح",
+    "invalidToken": "جلسة غير صالحة أو منتهية. يرجى تسجيل الدخول مرة أخرى."
   },
   "auth": {
     "login": {

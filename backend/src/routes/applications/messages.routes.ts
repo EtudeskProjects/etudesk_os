@@ -157,7 +157,7 @@ router.put('/:id/messages/read-all', authMiddleware, async (req: AuthRequest, re
       WHERE application_id = $1 AND sender_type = $2 AND read_at IS NULL
     `, [id, otherSenderType]);
 
-    res.json({ success: true, marked: result.rowCount });
+    res.json({ success: true, marked: result.rowCount, data: { success: true, marked: result.rowCount } });
   } catch (error) {
     handleRouteError(res, error, 'Error marking messages as read');
   }

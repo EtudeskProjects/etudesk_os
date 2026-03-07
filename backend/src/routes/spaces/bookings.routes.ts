@@ -11,6 +11,7 @@ import {
   getPaginationParams,
   handleRouteError,
   createNotFoundError,
+  createForbiddenError,
   logger,
 } from '../../utils';
 import { CreateBookingInput, calculateBookingPrice } from '../../types/space.types';
@@ -19,14 +20,99 @@ const router = Router();
 
 type QueryParam = string | number | boolean | null | Date;
 
+async function getOrganizationMemberRole(orgId: string, talentId?: string | null): Promise<string | null> {
+  if (!talentId) return null;
+
+  const result = await pool.query(
+    `SELECT role
+     FROM organization_members
+     WHERE organization_id = $1 AND talent_id = $2 AND status = 'ACTIVE'
+     LIMIT 1`,
+    [orgId, talentId]
+  );
+
+  return result.rows[0]?.role || null;
+}
+
+async function getSpaceOrganizationId(spaceId: string): Promise<string | null> {
+  const result = await pool.query(
+    `SELECT organization_id
+     FROM spaces
+     WHERE id = $1 AND deleted_at IS NULL
+     LIMIT 1`,
+    [spaceId]
+  );
+
+  return result.rows[0]?.organization_id || null;
+}
+
+async function getBookingAccessContext(bookingId: string): Promise<{ organizationId: string; talentId: string | null } | null> {
+  const result = await pool.query(
+    `SELECT organization_id, talent_id
+     FROM space_bookings
+     WHERE id = $1
+     LIMIT 1`,
+    [bookingId]
+  );
+
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  return {
+    organizationId: result.rows[0].organization_id,
+    talentId: result.rows[0].talent_id,
+  };
+}
+
+async function assertOrgBookingAccess(orgId: string, talentId?: string | null): Promise<void> {
+  const role = await getOrganizationMemberRole(orgId, talentId);
+  if (!role) {
+    throw createForbiddenError('Access denied');
+  }
+}
+
+async function assertBookingAccess(
+  bookingId: string,
+  talentId: string | null | undefined,
+  options: { allowOwner?: boolean; allowOrgMember?: boolean; requireOrgManager?: boolean } = {}
+): Promise<{ organizationId: string; talentId: string | null }> {
+  const context = await getBookingAccessContext(bookingId);
+  if (!context) {
+    throw createNotFoundError('Booking');
+  }
+
+  const role = await getOrganizationMemberRole(context.organizationId, talentId);
+  const isOwner = !!talentId && context.talentId === talentId;
+  const isOrgMember = !!role;
+  const isOrgManager = role ? ['OWNER', 'ADMIN', 'MANAGER'].includes(role) : false;
+
+  const allowed =
+    (options.allowOwner && isOwner) ||
+    (options.allowOrgMember && isOrgMember && (!options.requireOrgManager || isOrgManager));
+
+  if (!allowed) {
+    throw createForbiddenError('Access denied');
+  }
+
+  return context;
+}
+
 /**
  * GET /api/spaces/:id/bookings - Get bookings for a space
  */
-router.get('/:id/bookings', async (req: Request, res: Response) => {
+router.get('/:id/bookings', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { status, from_date, to_date } = req.query;
     const pagination = getPaginationParams(req);
+    const spaceOrgId = await getSpaceOrganizationId(id);
+
+    if (!spaceOrgId) {
+      throw createNotFoundError('Space');
+    }
+
+    await assertOrgBookingAccess(spaceOrgId, req.talentId);
 
     let query = `
       SELECT sb.*,
@@ -255,6 +341,8 @@ router.get('/bookings/organization/:orgId', authMiddleware, async (req: AuthRequ
     const { status, space_id } = req.query;
     const pagination = getPaginationParams(req);
 
+    await assertOrgBookingAccess(orgId, req.talentId);
+
     // Build count query
     let countQuery = `SELECT COUNT(*) as total FROM space_bookings sb WHERE sb.organization_id = $1`;
     const countParams: QueryParam[] = [orgId];
@@ -347,6 +435,8 @@ router.get('/bookings/:id', authMiddleware, async (req: AuthRequest, res: Respon
   try {
     const { id } = req.params;
 
+    await assertBookingAccess(id, req.talentId, { allowOwner: true, allowOrgMember: true });
+
     const result = await pool.query(`
       SELECT sb.*,
         s.name as space_name,
@@ -420,6 +510,8 @@ router.post('/bookings/:id/confirm', authMiddleware, async (req: AuthRequest, re
     const { id } = req.params;
     const talentId = req.talentId;
 
+    await assertBookingAccess(id, talentId, { allowOrgMember: true, requireOrgManager: true });
+
     const result = await pool.query(
       `
       UPDATE space_bookings
@@ -453,6 +545,8 @@ router.post('/bookings/:id/cancel', authMiddleware, async (req: AuthRequest, res
     const talentId = req.talentId;
     const { reason } = req.body;
 
+    await assertBookingAccess(id, talentId, { allowOwner: true, allowOrgMember: true, requireOrgManager: true });
+
     const result = await pool.query(
       `
       UPDATE space_bookings
@@ -482,6 +576,8 @@ router.post('/bookings/:id/complete', authMiddleware, async (req: AuthRequest, r
     const { id } = req.params;
     const { rating, review } = req.body;
 
+    await assertBookingAccess(id, req.talentId, { allowOwner: true });
+
     const result = await pool.query(
       `
       UPDATE space_bookings
@@ -510,6 +606,8 @@ router.put('/bookings/:id/status', authMiddleware, async (req: AuthRequest, res:
     const { id } = req.params;
     const { status, reason } = req.body;
 
+    await assertBookingAccess(id, req.talentId, { allowOrgMember: true, requireOrgManager: true });
+
     const result = await pool.query(`
       UPDATE space_bookings
       SET status = $2, cancellation_reason = $3, updated_at = NOW()
@@ -534,6 +632,8 @@ router.put('/bookings/:id/notes', authMiddleware, async (req: AuthRequest, res: 
   try {
     const { id } = req.params;
     const { internal_notes } = req.body;
+
+    await assertBookingAccess(id, req.talentId, { allowOrgMember: true, requireOrgManager: true });
 
     const result = await pool.query(`
       UPDATE space_bookings
@@ -561,6 +661,8 @@ router.put('/bookings/:id/rating', authMiddleware, async (req: AuthRequest, res:
     const { rating, review } = req.body;
     const talentId = req.talentId;
 
+    await assertBookingAccess(id, talentId, { allowOwner: true });
+
     const result = await pool.query(
       `UPDATE space_bookings SET rating = $1, review = $2, updated_at = NOW()
        WHERE id = $3 AND talent_id = $4
@@ -585,6 +687,8 @@ router.post('/bookings/:id/no-show', authMiddleware, async (req: AuthRequest, re
   try {
     const { id } = req.params;
 
+    await assertBookingAccess(id, req.talentId, { allowOrgMember: true, requireOrgManager: true });
+
     const result = await pool.query(`
       UPDATE space_bookings
       SET status = 'NO_SHOW', updated_at = NOW()
@@ -608,6 +712,8 @@ router.post('/bookings/:id/no-show', authMiddleware, async (req: AuthRequest, re
 router.delete('/bookings/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+
+    await assertBookingAccess(id, req.talentId, { allowOwner: true, allowOrgMember: true, requireOrgManager: true });
 
     const result = await pool.query(`
       DELETE FROM space_bookings WHERE id = $1 RETURNING id

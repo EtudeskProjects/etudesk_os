@@ -189,7 +189,7 @@ export default function InvitationsScreen() {
   };
 
   const handleDeclineCommunity = async (invitation: CommunityInvitation) => {
-    void alerts.showAlert({ title: t('settings.invitationsPage.declineInvitation'), message: t('settings.invitationsPage.declineCommunityConfirm', { name: invitation.community_name }), buttons: [
+    void alerts.showAlert({ title: t('settings.invitationsPage.declineInvitation'), message: t('settings.invitationsPage.declineCommunityConfirm', { name: invitation.community_name ?? '' }), buttons: [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('gestion.membersList.reject'),
@@ -232,7 +232,7 @@ export default function InvitationsScreen() {
   };
 
   const handleDeclineOpportunity = async (invitation: OpportunityInvitation) => {
-    void alerts.showAlert({ title: t('settings.invitationsPage.declineInvitation'), message: t('settings.invitationsPage.declineOpportunityConfirm', { name: invitation.opportunity_title }), buttons: [
+    void alerts.showAlert({ title: t('settings.invitationsPage.declineInvitation'), message: t('settings.invitationsPage.declineOpportunityConfirm', { name: invitation.opportunity_title ?? '' }), buttons: [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('gestion.membersList.reject'),
@@ -275,7 +275,7 @@ export default function InvitationsScreen() {
   };
 
   const handleDeclineSpace = async (invitation: SpaceInvitation) => {
-    void alerts.showAlert({ title: t('settings.invitationsPage.declineInvitation'), message: t('settings.invitationsPage.declineSpaceConfirm', { name: invitation.space_name }), buttons: [
+    void alerts.showAlert({ title: t('settings.invitationsPage.declineInvitation'), message: t('settings.invitationsPage.declineSpaceConfirm', { name: invitation.space_name ?? '' }), buttons: [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('gestion.membersList.reject'),
@@ -446,7 +446,7 @@ export default function InvitationsScreen() {
           {inv.message && (
             <View style={[styles.messageBox, { backgroundColor: colors.gray100 }]}>
               <Text style={[styles.messageLabel, { color: colors.textSecondary }]}>
-                {t('settings.invitationsPage.messageFrom', { name: inv.invited_by_name })}
+                {t('settings.invitationsPage.messageFrom', { name: inv.invited_by_name ?? '' })}
               </Text>
               <Text style={[styles.messageText, { color: colors.textPrimary }]}>
                 "{inv.message}"
@@ -556,7 +556,7 @@ export default function InvitationsScreen() {
           {inv.message && (
             <View style={[styles.messageBox, { backgroundColor: colors.gray100 }]}>
               <Text style={[styles.messageLabel, { color: colors.textSecondary }]}>
-                {t('settings.invitationsPage.messageFrom', { name: inv.invited_by_name })}
+                {t('settings.invitationsPage.messageFrom', { name: inv.invited_by_name ?? '' })}
               </Text>
               <Text style={[styles.messageText, { color: colors.textPrimary }]}>
                 "{inv.message}"
@@ -663,7 +663,7 @@ export default function InvitationsScreen() {
           {inv.message && (
             <View style={[styles.messageBox, { backgroundColor: colors.gray100 }]}>
               <Text style={[styles.messageLabel, { color: colors.textSecondary }]}>
-                {t('settings.invitationsPage.messageFrom', { name: inv.invited_by_name })}
+                {t('settings.invitationsPage.messageFrom', { name: inv.invited_by_name ?? '' })}
               </Text>
               <Text style={[styles.messageText, { color: colors.textPrimary }]}>
                 "{inv.message}"

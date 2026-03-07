@@ -2,6 +2,24 @@
  * Space Generation Prompt — XML Scaffolding
  */
 
+import { toTOON } from '../toon';
+
+const SPACE_OUTPUT_CONTRACT = {
+  suggested_name: 'Nom amélioré (max 60 caractères)',
+  description: 'Description 300-500 caractères, caractéristiques et usage',
+  sectors: ['1-5 secteurs parmi la liste'],
+  equipment: ['Équipements pertinents'],
+  amenities: ['Services/commodités'],
+  surface_m2: 0,
+  capacity: 0,
+  rules: "3-5 points avec '• ' comme puce, séparés par \\n",
+  hourly_rate: 0,
+  daily_rate: 0,
+  weekly_rate: 0,
+  monthly_rate: 0,
+  questions: ['2-4 questions pour réservations'],
+};
+
 interface SpacePromptContext {
   spaceName: string;
   spaceTypeLabel: string;
@@ -27,21 +45,9 @@ Espace demandé : "${ctx.spaceName}" de type ${ctx.spaceTypeLabel}
 <task>Génère des suggestions complètes pour cet espace réservable.</task>
 
 <output_format>
-{
-  "suggested_name": "Nom amélioré (max 60 caractères)",
-  "description": "Description 300-500 caractères, caractéristiques et usage",
-  "sectors": ["1-5 secteurs parmi la liste"],
-  "equipment": ["Équipements pertinents"],
-  "amenities": ["Services/commodités"],
-  "surface_m2": 0,
-  "capacity": 0,
-  "rules": "3-5 points avec '• ' comme puce, séparés par \\n",
-  "hourly_rate": 0,
-  "daily_rate": 0,
-  "weekly_rate": 0,
-  "monthly_rate": 0,
-  "questions": ["2-4 questions pour réservations"]
-}
+Retourne un JSON valide.
+Contrat compact (TOON) :
+${toTOON(SPACE_OUTPUT_CONTRACT)}
 </output_format>
 
 <rules>

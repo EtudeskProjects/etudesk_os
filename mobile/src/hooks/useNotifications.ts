@@ -11,6 +11,7 @@ import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { getNotificationRoute } from './notifications/notificationNavigation';
 
 // Configure foreground notifications
 Notifications.setNotificationHandler({
@@ -100,68 +101,6 @@ export function useNotifications() {
     }
   }, []);
 
-  // Init push notifications
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    (async () => {
-      const token = await registerForPushNotifications();
-      if (token) {
-        setExpoPushToken(token);
-        await sendTokenToBackend(token);
-      }
-    })();
-
-    const sub1 = Notifications.addNotificationReceivedListener(() => {
-      fetchNotifications();
-    });
-    const sub2 = Notifications.addNotificationResponseReceivedListener((response) => {
-      fetchNotifications();
-      // Navigate based on notification data
-      const data = response.notification.request.content.data || {};
-      const type = data.type as string | undefined;
-      const screen = data.screen as string | undefined;
-      try {
-        if (type === 'MESSAGE' || screen?.includes('messages')) {
-          if (data.applicationId) {
-            router.push(`/settings/my-applications/${data.applicationId}?tab=messages`);
-          } else if (data.membershipId) {
-            router.push(`/settings/my-communities/${data.membershipId}?tab=messages`);
-          } else if (data.bookingId) {
-            router.push(`/settings/my-reservations/${data.bookingId}?tab=messages`);
-          }
-        } else if (type === 'APPLICATION' && data.applicationId) {
-          router.push(`/settings/my-applications/${data.applicationId}`);
-        } else if (type === 'MEMBERSHIP' && data.membershipId) {
-          router.push(`/settings/my-communities/${data.membershipId}`);
-        } else if (type === 'BOOKING' && data.bookingId) {
-          router.push(`/settings/my-reservations/${data.bookingId}`);
-        } else if (type === 'OPPORTUNITY' && data.opportunityId) {
-          router.push(`/details/opportunity/${data.opportunityId}`);
-        } else if (type === 'SPACE' && data.spaceId) {
-          router.push(`/details/space/${data.spaceId}`);
-        } else if ((type === 'EVENT_REMINDER' || type === 'EVENT_REMINDER_1D' || type === 'EVENT_REMINDER_1H' || type === 'NEW_ACTIVITY' || type === 'MENTION' || type === 'COMMENT_REPLY') && data.communityId) {
-          router.push(`/details/community/${data.communityId}`);
-        } else if (type === 'BOOKING_REMINDER' && data.bookingId) {
-          router.push(`/settings/my-reservations/${data.bookingId}`);
-        } else if (type === 'OPPORTUNITY_REMINDER' && data.opportunityId) {
-          router.push(`/details/opportunity/${data.opportunityId}`);
-        } else if (type === 'APPLICATION_REMINDER' && data.applicationId) {
-          router.push(`/settings/my-applications/${data.applicationId}`);
-        } else if ((type === 'MEMBERSHIP_APPROVED' || type === 'MEMBERSHIP_REJECTED') && data.communityId) {
-          router.push(`/details/community/${data.communityId}`);
-        }
-      } catch (e) {
-        // Navigation may fail if router not ready
-      }
-    });
-
-    return () => {
-      sub1.remove();
-      sub2.remove();
-    };
-  }, [isAuthenticated]);
-
   // Fetch notifications
   const fetchNotifications = useCallback(async (options?: { limit?: number; offset?: number }) => {
     if (!isAuthenticated) return;
@@ -238,6 +177,40 @@ export function useNotifications() {
     }
   }, [isAuthenticated]);
 
+  // Init push notifications
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    (async () => {
+      const token = await registerForPushNotifications();
+      if (token) {
+        setExpoPushToken(token);
+        await sendTokenToBackend(token);
+      }
+    })();
+
+    const sub1 = Notifications.addNotificationReceivedListener(() => {
+      fetchNotifications();
+    });
+    const sub2 = Notifications.addNotificationResponseReceivedListener((response) => {
+      fetchNotifications();
+      const data = response.notification.request.content.data || {};
+      try {
+        const route = getNotificationRoute(data as any);
+        if (route) {
+          router.push(route as any);
+        }
+      } catch {
+        // Navigation may fail if router not ready
+      }
+    });
+
+    return () => {
+      sub1.remove();
+      sub2.remove();
+    };
+  }, [fetchNotifications, isAuthenticated, registerForPushNotifications, sendTokenToBackend]);
+
   // Update preferences
   const updatePreferences = useCallback(async (newPrefs: Partial<NotificationPreferences>) => {
     try {
@@ -268,7 +241,7 @@ export function useNotifications() {
       fetchNotifications();
       fetchPreferences();
     }
-  }, [isAuthenticated]);
+  }, [fetchNotifications, fetchPreferences, isAuthenticated]);
 
   return {
     expoPushToken,

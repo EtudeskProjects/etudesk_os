@@ -6,6 +6,7 @@
 import { api } from './api';
 import { LIGHT_COLORS } from '../constants/theme';
 import { formatNumberNoTrailingZeros } from '../utils/number';
+import { getLabel } from '../utils/labels';
 
 // --- Types ---
 
@@ -102,10 +103,6 @@ export interface ListOrgDocumentsParams {
   limit?: number;
   offset?: number;
 }
-
-// --- Labels (i18n) ---
-
-import { getLabel } from '../utils/labels';
 
 export const getOrgDocumentTypeLabel = (type: OrgDocumentType): string =>
   getLabel('orgDocumentTypes', type);
@@ -210,17 +207,22 @@ async function updateDocument(
     `/api/organizations/${orgId}/documents/${documentId}`,
     body
   );
-  if (!response.data) {
-    throw new Error(response.error || 'Failed to update document');
+  const result = response as any;
+  const document = result.document || result.data?.document;
+  if (!document) {
+    throw new Error(result.error || 'Failed to update document');
   }
-  return response.data;
+  return {
+    message: result.message || result.data?.message || '',
+    document,
+  };
 }
 
 async function deleteDocument(orgId: string, documentId: string): Promise<{ message: string }> {
   const response = await api.delete<{ message: string }>(
     `/api/organizations/${orgId}/documents/${documentId}`
   );
-  return response.data;
+  return response.data || (response as any);
 }
 
 async function retryExtraction(orgId: string, documentId: string): Promise<{ message: string }> {
@@ -228,7 +230,7 @@ async function retryExtraction(orgId: string, documentId: string): Promise<{ mes
     `/api/organizations/${orgId}/documents/${documentId}/retry`,
     {}
   );
-  return response.data;
+  return response.data || (response as any);
 }
 
 // --- Helpers ---

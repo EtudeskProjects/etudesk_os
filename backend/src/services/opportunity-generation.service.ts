@@ -24,6 +24,7 @@ import {
   OpportunityLocation,
 } from '../types/models';
 import { buildOpportunityGenPrompt, buildOpportunityGenSystemPrompt } from './ai/prompts/opportunity-gen.prompt';
+import { toTOON } from './ai/toon';
 import { FALLBACK_LANGUAGE, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
 
@@ -232,7 +233,7 @@ export async function generateOpportunitySuggestion(
   };
 
   const existingDataContext = input.existing_data
-    ? `\nDonnées existantes : ${JSON.stringify(input.existing_data, null, 2)}`
+    ? `\nDonnées existantes (format TOON) :\n${toTOON(input.existing_data)}`
     : '';
 
   const language = input.language || FALLBACK_LANGUAGE;
@@ -247,7 +248,7 @@ export async function generateOpportunitySuggestion(
     orgSectors: organization.sectors?.join(', ') || 'Non spécifié',
     orgLocation: [organization.headquarters_city, organization.headquarters_region, organization.headquarters_country].filter(Boolean).join(', ') || 'Non spécifié',
     existingDataContext,
-    schemaJson: JSON.stringify(OPPORTUNITY_SCHEMA, null, 2),
+    schemaJson: toTOON(OPPORTUNITY_SCHEMA),
     languageName,
   });
 

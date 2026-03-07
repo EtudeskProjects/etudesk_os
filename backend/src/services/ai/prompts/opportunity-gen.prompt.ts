@@ -28,7 +28,8 @@ Opportunité : "${ctx.title}" — ${ctx.typeLabel} (${ctx.type})${ctx.existingDa
 <task>Génère des données CONCISES pour cette opportunité.</task>
 
 <output_format>
-Respecte ce schéma JSON :
+Retourne un JSON valide.
+Contrat de sortie compact (TOON) :
 ${ctx.schemaJson}
 </output_format>
 

@@ -4,6 +4,7 @@
  */
 
 import { api } from './api';
+import { getApiUrl } from '../constants/config';
 
 export interface UploadedFile {
   url: string;
@@ -36,9 +37,9 @@ export async function uploadFile({
   formData.append('category', category);
 
   let token = await api.getToken();
-  const baseUrl = api.getBaseUrl();
+  const uploadUrl = getApiUrl('/files/upload');
 
-  let response = await fetch(`${baseUrl}/api/files/upload`, {
+  let response = await fetch(uploadUrl, {
     method: 'POST',
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -57,7 +58,7 @@ export async function uploadFile({
       } as any);
       retryFormData.append('category', category);
 
-      response = await fetch(`${baseUrl}/api/files/upload`, {
+      response = await fetch(uploadUrl, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

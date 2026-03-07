@@ -3,6 +3,11 @@
  * For session title generation and prompt suggestions
  */
 
+import { toTOON } from '../toon';
+
+const SUGGESTIONS_OUTPUT_CONTRACT = ['suggestion 1', 'suggestion 2', 'suggestion 3'];
+const INTENT_SUGGESTIONS_OUTPUT_CONTRACT = ['suggestion 1', 'suggestion 2', 'suggestion 3', 'suggestion 4'];
+
 export function buildSessionTitleSystemPrompt(languageName: string = 'English'): string {
   return `<role>Conservateur de titres de sessions érudites</role>
 
@@ -40,7 +45,9 @@ ${contextSummary}
 <task>Génère exactement 3 suggestions de prompts courts en ${languageName}.</task>
 
 <output_format>
-["suggestion 1", "suggestion 2", "suggestion 3"]
+Retourne un JSON array valide.
+Contrat compact (TOON) :
+${toTOON(SUGGESTIONS_OUTPUT_CONTRACT)}
 </output_format>
 
 <rules>
@@ -106,7 +113,9 @@ ${historyText ? `\n<derniers_messages>\n${historyText}\n</derniers_messages>` : 
 Genere exactement 4 suggestions courtes (max 45 caracteres) que l'utilisateur taperait. Chaque suggestion doit etre une action concrete liee aux capacites de la plateforme.
 ${historyText ? "Base-toi sur le contexte de la conversation pour proposer la suite logique." : "Propose des actions de decouverte variees et utiles."}
 
-Retourne UNIQUEMENT un JSON array de 4 strings, rien d'autre.
+Retourne UNIQUEMENT un JSON array valide de 4 strings, rien d'autre.
+Contrat compact (TOON) :
+${toTOON(INTENT_SUGGESTIONS_OUTPUT_CONTRACT)}
 ${mode === 'study'
     ? 'Exemple: ["Prepare-moi pour un entretien", "Evalue mes competences en Python", "Cree un quiz sur le marketing digital", "Resume mon CV et conseille-moi"]'
     : 'Exemple: ["Offres de stage en marketing a Abidjan", "Genere mon CV en PDF", "Communautes tech dans mon secteur", "Ajoute React a mes competences"]'}`;

@@ -76,7 +76,8 @@
     "continue": "Continuar",
     "limitReached": "Límite alcanzado",
     "fileTooLarge": "Archivo demasiado grande",
-    "deleteTitle": "Eliminar la candidatura"
+    "deleteTitle": "Eliminar la candidatura",
+    "invalidToken": "Sesión inválida o expirada. Por favor, inicie sesión de nuevo."
   },
   "auth": {
     "login": {

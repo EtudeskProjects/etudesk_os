@@ -16,6 +16,47 @@ import { SpaceFilters } from '../../types/space.types';
 const router = Router();
 
 type QueryParam = string | number | boolean | null | Date;
+type SpaceSchemaCapabilities = {
+  hasVisibilityColumn: boolean;
+  hasSpaceInvitationsTable: boolean;
+};
+
+let schemaCapabilitiesPromise: Promise<SpaceSchemaCapabilities> | null = null;
+
+async function getSchemaCapabilities(): Promise<SpaceSchemaCapabilities> {
+  if (!schemaCapabilitiesPromise) {
+    schemaCapabilitiesPromise = (async () => {
+      let hasVisibilityColumn = false;
+      let hasSpaceInvitationsTable = false;
+
+      try {
+        const [columnCheck, tableCheck] = await Promise.all([
+          pool.query(
+            `SELECT 1 FROM information_schema.columns
+             WHERE table_name = 'spaces' AND column_name = 'visibility'`
+          ),
+          pool.query(
+            `SELECT 1 FROM information_schema.tables
+             WHERE table_name = 'space_invitations'`
+          ),
+        ]);
+
+        hasVisibilityColumn = columnCheck.rows.length > 0;
+        hasSpaceInvitationsTable = tableCheck.rows.length > 0;
+      } catch (error) {
+        schemaCapabilitiesPromise = null;
+        logger.warn('Failed to inspect space schema capabilities', { error: String(error) });
+      }
+
+      return {
+        hasVisibilityColumn,
+        hasSpaceInvitationsTable,
+      };
+    })();
+  }
+
+  return schemaCapabilitiesPromise;
+}
 
 /**
  * GET /api/spaces - List spaces with filters
@@ -35,29 +76,7 @@ router.get('/', optionalAuthMiddleware, async (req: AuthRequest, res: Response) 
     const pagination = getPaginationParams(req);
     const talentId = req.talentId;
 
-    // Check if visibility column exists
-    let hasVisibilityColumn = false;
-    try {
-      const columnCheck = await pool.query(
-        `SELECT 1 FROM information_schema.columns
-         WHERE table_name = 'spaces' AND column_name = 'visibility'`
-      );
-      hasVisibilityColumn = columnCheck.rows.length > 0;
-    } catch (checkError) {
-      logger.warn('Failed to check visibility column', { error: String(checkError) });
-    }
-
-    // Check if space_invitations table exists
-    let hasSpaceInvitationsTable = false;
-    try {
-      const tableCheck = await pool.query(
-        `SELECT 1 FROM information_schema.tables
-         WHERE table_name = 'space_invitations'`
-      );
-      hasSpaceInvitationsTable = tableCheck.rows.length > 0;
-    } catch (checkError) {
-      logger.warn('Failed to check space_invitations table', { error: String(checkError) });
-    }
+    const { hasVisibilityColumn, hasSpaceInvitationsTable } = await getSchemaCapabilities();
 
     // Get user profile for matching
     let userProfile: any = null;

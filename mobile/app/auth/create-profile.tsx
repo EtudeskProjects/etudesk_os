@@ -18,7 +18,7 @@ import {
   Plane,
   Camera,
 	} from 'lucide-react-native';
-	import { SPACING, TYPOGRAPHY, ICON, LAYOUT, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
+import { SPACING, TYPOGRAPHY, ICON, BORDER } from '../../src/constants/theme';
 	import { Chip, IconButton, Input, Button, Toggle, PhoneInput } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
@@ -131,37 +131,36 @@ export default function CreateProfileScreen() {
   // Track if user signed up via WhatsApp (phone becomes mandatory + locked)
   const [isWhatsAppSignup, setIsWhatsAppSignup] = useState(false);
 
+  const loadAuthData = useCallback(async () => {
+    try {
+      const user = await otpService.getUser();
+      if (user) {
+        if (user.hasTalentProfile === true || user.onboardingComplete === true || user.talentId) {
+          completeOnboarding();
+          router.replace('/(tabs)/home');
+          return;
+        }
+
+        if (user.email && !user.email.includes('@etudesk.local')) {
+          form.setValues({ email: user.email });
+        }
+
+        if (user.phone) {
+          form.setValues({ phone: user.phone });
+        }
+
+        if (user.authMethod === 'whatsapp') {
+          setIsWhatsAppSignup(true);
+        }
+      }
+    } catch {
+    }
+  }, [completeOnboarding, form, router]);
+
   // Pre-fill email/phone from authentication and check if user needs onboarding
   useEffect(() => {
-    const loadAuthData = async () => {
-      try {
-        const user = await otpService.getUser();
-        if (user) {
-          // Check if user already has a profile - redirect to main app
-          if (user.hasTalentProfile === true || user.onboardingComplete === true || user.talentId) {
-            completeOnboarding();
-            router.replace('/(tabs)/home');
-            return;
-          }
-
-          // Pre-fill email if user logged in with email
-          if (user.email && !user.email.includes('@etudesk.local')) {
-            form.setValues({ email: user.email });
-          }
-          // Pre-fill phone if user logged in with WhatsApp/phone
-          if (user.phone) {
-            form.setValues({ phone: user.phone });
-          }
-          // Mark WhatsApp signup — phone becomes mandatory and locked
-          if (user.authMethod === 'whatsapp') {
-            setIsWhatsAppSignup(true);
-          }
-        }
-      } catch (error) {
-      }
-    };
-    loadAuthData();
-  }, []);
+    void loadAuthData();
+  }, [loadAuthData]);
 
   // Generic scroll function for chips
   const scrollToChip = (
@@ -186,7 +185,7 @@ export default function CreateProfileScreen() {
       }, 150);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [country]);
 
   // Handle chip layout to track positions
   const handleChipLayout = (

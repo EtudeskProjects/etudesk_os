@@ -69,7 +69,7 @@ export interface CreateCommunityData {
   created_by?: string;
 }
 
-export interface UpdateCommunityData extends Partial<CreateCommunityData> {}
+export type UpdateCommunityData = Partial<CreateCommunityData>;
 
 export interface GenerateCommunityInput {
   name: string;
@@ -85,6 +85,29 @@ export interface GeneratedCommunityData {
   rules?: string;
   visibility?: Visibility;
   application_questions?: string[];
+}
+
+interface CommunityMembershipRecord {
+  id: string;
+  community_id?: string;
+  community: Community;
+  role: 'ADMIN' | 'MEMBER';
+  status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'SUSPENDED';
+  joined_at: string;
+}
+
+interface MembershipPagination {
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+}
+
+interface MembershipsResponseShape {
+  data?: CommunityMembershipRecord[];
+  memberships?: CommunityMembershipRecord[];
+  pagination?: MembershipPagination;
+  count?: number;
 }
 
 class CommunityService {
@@ -160,24 +183,17 @@ class CommunityService {
    * Backend returns paginated payload; we normalize to { data: { memberships, pagination }, count }.
    */
   async getMyMemberships(filters?: { status?: 'ACTIVE' | 'PENDING' | 'REJECTED'; limit?: number; offset?: number }): Promise<ApiResponse<{
-    memberships: Array<{
-      id: string;
-      community_id?: string;
-      community: Community;
-      role: 'ADMIN' | 'MEMBER';
-      status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'SUSPENDED';
-      joined_at: string;
-    }>;
-    pagination?: { total: number; limit: number; offset: number; hasMore: boolean };
+    memberships: CommunityMembershipRecord[];
+    pagination?: MembershipPagination;
   }>> {
-    const res = await api.get<any>('/api/communities/memberships/me', filters);
-    const rawData = res?.data as any;
+    const res = await api.get<MembershipsResponseShape | CommunityMembershipRecord[]>('/api/communities/memberships/me', filters);
+    const rawData = res?.data;
     const list = Array.isArray(rawData)
       ? rawData
-      : rawData?.data ?? rawData?.memberships ?? (res as any)?.memberships ?? [];
-    const pagination = (res as any)?.pagination ?? rawData?.pagination;
+      : rawData?.data ?? rawData?.memberships ?? [];
+    const pagination = Array.isArray(rawData) ? undefined : rawData?.pagination;
     const totalFromPagination = pagination?.total;
-    const totalFromCount = (res as any)?.count ?? rawData?.count;
+    const totalFromCount = Array.isArray(rawData) ? undefined : rawData?.count;
     const normalizedCount = typeof totalFromPagination === 'number'
       ? totalFromPagination
       : (typeof totalFromCount === 'number' ? totalFromCount : undefined);
@@ -188,7 +204,7 @@ class CommunityService {
         ...(pagination && { pagination }),
       },
       ...(typeof normalizedCount === 'number' ? { count: normalizedCount } : {}),
-    } as any;
+    };
   }
 
   /**

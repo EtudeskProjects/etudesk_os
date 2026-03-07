@@ -170,7 +170,8 @@
     "limitReached": "Limit reached",
     "fileTooLarge": "File too large",
     "deleteTitle": "Delete opportunity",
-    "deleteConfirm": "Remove"
+    "deleteConfirm": "Remove",
+    "invalidToken": "Invalid or expired session. Please log in again."
   },
   "auth": {
     "login": {
@@ -189,6 +190,8 @@
       "congrats": "You're in!",
       "title": "Your profile is ready",
       "subtitle": "Welcome to Etudesk — your career journey starts here",
+      "languageTitle": "Choose your language",
+      "languageSubtitle": "Start in the language that fits you. You can change it later.",
       "getStarted": "Let's go!",
       "whatYouCanDo": "What you can do",
       "features": {

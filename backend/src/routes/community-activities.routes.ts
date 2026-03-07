@@ -51,6 +51,13 @@ const upload = multer({
     },
 });
 
+function wrapData<T extends Record<string, any>>(payload: T) {
+    return {
+        ...payload,
+        data: payload,
+    };
+}
+
 // GET /api/communities/:communityId/activities
 router.get('/:communityId/activities', authMiddleware, communityMemberMiddleware, async (req: any, res: Response) => {
     try {
@@ -162,7 +169,7 @@ router.post('/:communityId/activities', authMiddleware, upload.array('attachment
 
         logger.info(`[Activities] Created activity: ${activity.id}, moderation_status: ${activity.moderation_status}, is_draft: ${activity.is_draft}`);
 
-        res.status(201).json(activity);
+        res.status(201).json(wrapData(activity));
     } catch (error: any) {
         logger.error('Error creating activity:', error);
         res.status(500).json({ error: error.message });
@@ -192,7 +199,7 @@ router.post('/activities/:activityId/reaction', authMiddleware, async (req: any,
 
         const isLiked = await communityActivityService.toggleLike(activityId, userId);
 
-        res.json({ success: true, isLiked });
+        res.json({ success: true, isLiked, data: { isLiked } });
     } catch (error: any) {
         logger.error('Error toggling like:', error);
         res.status(500).json({ error: error.message });
@@ -207,7 +214,7 @@ router.post('/activities/:activityId/like', authMiddleware, async (req: any, res
 
         const isLiked = await communityActivityService.toggleLike(activityId, userId);
 
-        res.json({ success: true, isLiked });
+        res.json({ success: true, isLiked, data: { isLiked } });
     } catch (error: any) {
         logger.error('Error toggling like:', error);
         res.status(500).json({ error: error.message });
@@ -229,7 +236,7 @@ router.post('/activities/:activityId/comments', authMiddleware, async (req: any,
             mentions
         });
 
-        res.status(201).json(comment);
+        res.status(201).json(wrapData(comment));
     } catch (error: any) {
         logger.error('Error adding comment:', error);
         res.status(500).json({ error: error.message });
@@ -263,7 +270,7 @@ router.delete('/activities/:activityId/comments/:commentId', authMiddleware, asy
 
         await communityActivityService.deleteComment(commentId, userId);
 
-        res.json({ success: true });
+        res.json({ success: true, data: { success: true } });
     } catch (error: any) {
         logger.error('Error deleting comment:', error);
         res.status(400).json({ error: error.message });
@@ -294,7 +301,7 @@ router.post('/activities/:activityId/bookmark', authMiddleware, async (req: any,
 
         const isBookmarked = await communityActivityService.toggleBookmark(activityId, userId);
 
-        res.json({ success: true, isBookmarked });
+        res.json({ success: true, isBookmarked, data: { success: true, isBookmarked } });
     } catch (error: any) {
         logger.error('Error toggling bookmark:', error);
         res.status(500).json({ error: error.message });
@@ -309,7 +316,7 @@ router.delete('/activities/:activityId/bookmark', authMiddleware, async (req: an
 
         await communityActivityService.toggleBookmark(activityId, userId);
 
-        res.json({ success: true, isBookmarked: false });
+        res.json({ success: true, isBookmarked: false, data: { success: true, isBookmarked: false } });
     } catch (error: any) {
         logger.error('Error removing bookmark:', error);
         res.status(500).json({ error: error.message });
@@ -325,7 +332,8 @@ router.get('/activities/:activityId/bookmark', authMiddleware, async (req: any, 
         // Check bookmark status via activity details
         const { activity } = await communityActivityService.getActivityDetails(activityId, userId);
 
-        res.json({ isBookmarked: activity.is_bookmarked || false });
+        const isBookmarked = activity.is_bookmarked || false;
+        res.json({ isBookmarked, data: { isBookmarked } });
     } catch (error: any) {
         logger.error('Error checking bookmark status:', error);
         res.status(500).json({ error: error.message });
@@ -338,7 +346,7 @@ router.delete('/activities/:activityId', authMiddleware, async (req: any, res: R
         const { activityId } = req.params;
         const userId = req.talentId || req.userId;
         await communityActivityService.deleteActivity(activityId, userId);
-        res.json({ success: true });
+        res.json({ success: true, data: { success: true } });
     } catch (error: any) {
         logger.error('Error deleting activity:', error);
         res.status(500).json({ error: error.message });
@@ -351,7 +359,7 @@ router.post('/activities/:activityId/pin', authMiddleware, async (req: any, res:
         const { activityId } = req.params;
         const userId = req.talentId || req.userId;
         const isPinned = await communityActivityService.togglePin(activityId, userId);
-        res.json({ success: true, isPinned });
+        res.json({ success: true, isPinned, data: { success: true, isPinned } });
     } catch (error: any) {
         logger.error('Error pinning activity:', error);
         res.status(500).json({ error: error.message });
@@ -364,7 +372,7 @@ router.get('/activities/:activityId', authMiddleware, async (req: any, res: Resp
         const { activityId } = req.params;
         const userId = req.talentId || req.userId;
         const details = await communityActivityService.getActivityDetails(activityId, userId);
-        res.json(details);
+        res.json({ ...details, data: details });
     } catch (error: any) {
         logger.error('Error getting activity details:', error);
         res.status(500).json({ error: error.message });

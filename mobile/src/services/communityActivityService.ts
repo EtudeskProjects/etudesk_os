@@ -4,7 +4,24 @@ import { CommunityActivity, CreateActivityData, ActivityComment } from '../types
 // Longer timeout for file uploads (2 minutes)
 const UPLOAD_TIMEOUT = 120000;
 
+interface UploadAttachment {
+  uri: string;
+  type?: string;
+  name?: string;
+}
+
+interface FeedPayload {
+  data?: CommunityActivity[];
+  nextCursor?: string | null;
+}
+
 class CommunityActivityService {
+  private normalizeResponseData<T>(response: ApiResponse<T> | T): T {
+    const candidate = response as ApiResponse<T>;
+    return (candidate && typeof candidate === 'object' && 'data' in candidate
+      ? candidate.data
+      : response) as T;
+  }
 
   /**
    * Get community feed
@@ -14,10 +31,14 @@ class CommunityActivityService {
     limit: number = 20,
     cursor?: string
   ): Promise<{ data: CommunityActivity[], nextCursor: string | null }> {
-    const params: any = { limit };
+    const params: { limit: number; cursor?: string } = { limit };
     if (cursor) params.cursor = cursor;
-    const response = await api.get<any>(`/api/communities/${communityId}/activities`, params);
-    return { data: response.data?.data ?? response.data ?? [], nextCursor: response.data?.nextCursor ?? null };
+    const response = await api.get<FeedPayload | CommunityActivity[]>(`/api/communities/${communityId}/activities`, params);
+    const payload = response.data;
+    return {
+      data: Array.isArray(payload) ? payload : payload?.data ?? [],
+      nextCursor: Array.isArray(payload) ? null : payload?.nextCursor ?? null,
+    };
   }
 
   /**
@@ -41,13 +62,13 @@ class CommunityActivityService {
 
     // Handle attachments for React Native
     if (data.attachments && data.attachments.length > 0) {
-      data.attachments.forEach((file: any, index: number) => {
+      data.attachments.forEach((file: UploadAttachment, index: number) => {
         // React Native requires { uri, type, name } format for file uploads
         formData.append('attachments', {
           uri: file.uri,
           type: file.type || 'application/octet-stream',
           name: file.name || `file-${index}`,
-        } as any);
+        } as never);
       });
     }
 
@@ -94,8 +115,8 @@ class CommunityActivityService {
    * Get activity details with comments
    */
   async getActivityDetails(activityId: string): Promise<{ activity: CommunityActivity; comments: ActivityComment[] }> {
-    const response = await api.get(`/api/communities/activities/${activityId}`);
-    return response as unknown as { activity: CommunityActivity; comments: ActivityComment[] };
+    const response = await api.get<{ activity: CommunityActivity; comments: ActivityComment[] }>(`/api/communities/activities/${activityId}`);
+    return this.normalizeResponseData(response);
   }
 
   /**
@@ -115,7 +136,7 @@ class CommunityActivityService {
   /**
    * Get my bookmarked activities
    */
-  async getMyBookmarks(): Promise<ApiResponse<any[]>> {
+  async getMyBookmarks(): Promise<ApiResponse<CommunityActivity[]>> {
     return api.get('/api/communities/activities/bookmarks');
   }
 
@@ -188,12 +209,12 @@ class CommunityActivityService {
 
     // Handle attachments for React Native
     if (data.attachments && data.attachments.length > 0) {
-      data.attachments.forEach((file: any, index: number) => {
+      data.attachments.forEach((file: UploadAttachment, index: number) => {
         formData.append('attachments', {
           uri: file.uri,
           type: file.type || 'application/octet-stream',
           name: file.name || `file-${index}`,
-        } as any);
+        } as never);
       });
     }
 

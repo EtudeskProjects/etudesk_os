@@ -635,7 +635,7 @@ export default function JoinCommunityScreen() {
           {t('community.joinFlow.success.title')}
         </Text>
         <Text style={[styles.successDescription, { color: colors.textSecondary }]}>
-          {t('community.joinFlow.success.description', { name: community?.name })}
+          {t('community.joinFlow.success.description', { name: community?.name ?? '' })}
         </Text>
 
         <View style={styles.successActions}>

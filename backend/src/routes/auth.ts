@@ -36,6 +36,13 @@ import {
 
 const router = Router();
 
+function wrapData<T extends Record<string, any>>(payload: T) {
+  return {
+    ...payload,
+    data: payload,
+  };
+}
+
 /**
  * POST /auth/request-otp
  *
@@ -77,11 +84,11 @@ router.post('/request-otp', validate(requestOtpSchema), async (req: Request, res
       });
     }
 
-    return res.json({
+    return res.json(wrapData({
       success: true,
       message: req.t('auth:otpSent'),
       expiresAt: otpResult.expiresAt,
-    });
+    }));
   } catch (error) {
     logger.error('❌ Request OTP error:', error);
     return res.status(500).json({
@@ -130,11 +137,11 @@ router.post('/request-whatsapp-otp', validate(requestWhatsAppOtpSchema), async (
       });
     }
 
-    return res.json({
+    return res.json(wrapData({
       success: true,
       message: req.t('auth:otpWhatsAppSent'),
       expiresAt: otpResult.expiresAt,
-    });
+    }));
   } catch (error) {
     logger.error('❌ Request WhatsApp OTP error:', error);
     return res.status(500).json({
@@ -183,7 +190,7 @@ router.post('/verify-otp', validate(verifyOtpSchema), auditLog('AUTH_VERIFY_OTP'
     // Get user profile
     const profile = await getUserProfile(verifyResult.userId!);
 
-    return res.json({
+    return res.json(wrapData({
       success: true,
       message: verifyResult.isNewUser ? req.t('auth:accountCreated') : req.t('auth:loginSuccess'),
       tokens: {
@@ -194,7 +201,7 @@ router.post('/verify-otp', validate(verifyOtpSchema), auditLog('AUTH_VERIFY_OTP'
       user: profile,
       isNewUser: verifyResult.isNewUser,
       needsOnboarding: needsOnboard,
-    });
+    }));
   } catch (error) {
     logger.error('❌ Verify OTP error:', error);
     return res.status(500).json({
@@ -237,7 +244,7 @@ router.post('/verify-whatsapp-otp', validate(verifyWhatsAppOtpSchema), auditLog(
     const needsOnboard = verifyResult.isNewUser || await needsOnboarding(verifyResult.userId!);
     const profile = await getUserProfile(verifyResult.userId!);
 
-    return res.json({
+    return res.json(wrapData({
       success: true,
       message: verifyResult.isNewUser ? req.t('auth:accountCreated') : req.t('auth:loginSuccess'),
       tokens: {
@@ -249,7 +256,7 @@ router.post('/verify-whatsapp-otp', validate(verifyWhatsAppOtpSchema), auditLog(
       isNewUser: verifyResult.isNewUser,
       needsOnboarding: needsOnboard,
       authMethod: 'whatsapp',
-    });
+    }));
   } catch (error) {
     logger.error('❌ Verify WhatsApp OTP error:', error);
     return res.status(500).json({
@@ -325,7 +332,7 @@ router.post('/google', validate(googleAuthSchema), auditLog('AUTH_GOOGLE'), asyn
     // Get user profile
     const profile = await getUserProfile(result.userId);
 
-    return res.json({
+    return res.json(wrapData({
       success: true,
       message: result.isNewUser ? req.t('auth:accountCreated') : req.t('auth:loginSuccess'),
       tokens: {
@@ -336,7 +343,7 @@ router.post('/google', validate(googleAuthSchema), auditLog('AUTH_GOOGLE'), asyn
       user: profile,
       isNewUser: result.isNewUser,
       needsOnboarding: needsOnboard,
-    });
+    }));
   } catch (error) {
     logger.error('❌ Google auth error:', error);
     return res.status(500).json({
@@ -364,10 +371,10 @@ router.post('/refresh', validate(refreshTokenSchema), async (req: Request, res: 
       });
     }
 
-    return res.json({
+    return res.json(wrapData({
       success: true,
       tokens: result.tokens,
-    });
+    }));
   } catch (error) {
     logger.error('❌ Refresh token error:', error);
     return res.status(500).json({
@@ -396,10 +403,11 @@ router.post('/logout', authMiddleware, auditLog('AUTH_LOGOUT'), async (req: Auth
     if (allDevices) {
       // Revoke all sessions for this user
       const count = await revokeAllSessions(req.userId!, 'USER_LOGOUT_ALL');
-      return res.json({
+      return res.json(wrapData({
         success: true,
         message: req.t('auth:logoutAllDevices', { count }),
-      });
+        count,
+      }));
     }
 
     if (refreshToken) {
@@ -410,10 +418,10 @@ router.post('/logout', authMiddleware, auditLog('AUTH_LOGOUT'), async (req: Auth
       }
     }
 
-    return res.json({
+    return res.json(wrapData({
       success: true,
       message: req.t('auth:logoutSuccess'),
-    });
+    }));
   } catch (error) {
     logger.error('❌ Logout error:', error);
     return res.status(500).json({
@@ -441,11 +449,11 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
 
     const needsOnboard = await needsOnboarding(req.userId!);
 
-    return res.json({
+    return res.json(wrapData({
       success: true,
       user: profile,
       needsOnboarding: needsOnboard,
-    });
+    }));
   } catch (error) {
     logger.error('❌ Get profile error:', error);
     return res.status(500).json({
@@ -487,10 +495,10 @@ router.delete('/delete-account', authMiddleware, auditLog('AUTH_DELETE_ACCOUNT')
       });
     }
 
-    return res.json({
+    return res.json(wrapData({
       success: true,
       message: req.t('auth:accountDeleted'),
-    });
+    }));
   } catch (error) {
     logger.error('Delete account error:', error);
     return res.status(500).json({
@@ -529,11 +537,11 @@ router.put('/language', authMiddleware, async (req: AuthRequest, res: Response) 
       );
     }
 
-    return res.json({
+    return res.json(wrapData({
       success: true,
       message: req.t('auth:languageUpdated'),
       language,
-    });
+    }));
   } catch (error) {
     logger.error('❌ Update language error:', error);
     return res.status(500).json({

@@ -8,11 +8,12 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as FileSystem from 'expo-file-system';
+import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as Notifications from 'expo-notifications';
+import { api } from './api';
 import { logger } from './logService';
 import { clearPersistentCache } from './persistentCache';
-import { API_CONFIG, STORAGE_KEYS, getApiUrl } from '../constants/config';
+import { STORAGE_KEYS } from '../constants/config';
 import i18n from '../i18n';
 
 const LOG_SOURCE = 'OTP';
@@ -26,30 +27,17 @@ const OTP_LENGTH = 6;
  */
 async function sendOTP(email: string): Promise<void> {
   try {
-    const response = await fetch(getApiUrl('/auth/request-otp'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: email.toLowerCase(),
-      }),
+    await api.publicPost<{ success?: boolean; error?: string }>('/auth/request-otp', {
+      email: email.toLowerCase(),
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      logger.apiError(LOG_SOURCE, response.status, data.error || 'Failed to send OTP', '/api/auth/request-otp');
-      throw new Error(data.error || i18n.t('otpService.sendError'));
-    }
 
     logger.info(LOG_SOURCE, `OTP sent to ${email}`);
     if (__DEV__) {
       logger.debug(LOG_SOURCE, 'Check Mailhog at http://localhost:8025');
     }
-  } catch (error) {
+  } catch (error: any) {
     logger.error(LOG_SOURCE, 'Failed to send OTP', error, { email });
-    throw error;
+    throw new Error(error?.error || i18n.t('otpService.sendError'));
   }
 }
 
@@ -58,25 +46,12 @@ async function sendOTP(email: string): Promise<void> {
  */
 async function sendWhatsAppOTP(phone: string): Promise<void> {
   try {
-    const response = await fetch(getApiUrl('/auth/request-whatsapp-otp'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ phone }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      logger.apiError(LOG_SOURCE, response.status, data.error || 'Failed to send WhatsApp OTP', '/api/auth/request-whatsapp-otp');
-      throw new Error(data.error || i18n.t('otpService.sendError'));
-    }
+    await api.publicPost<{ success?: boolean; error?: string }>('/auth/request-whatsapp-otp', { phone });
 
     logger.info(LOG_SOURCE, 'WhatsApp OTP sent', { phone });
-  } catch (error) {
+  } catch (error: any) {
     logger.error(LOG_SOURCE, 'Failed to send WhatsApp OTP', error, { phone });
-    throw error;
+    throw new Error(error?.error || i18n.t('otpService.sendError'));
   }
 }
 
@@ -86,7 +61,35 @@ async function sendWhatsAppOTP(phone: string): Promise<void> {
 interface VerifyOTPResult {
   success: boolean;
   needsOnboarding: boolean;
-  user?: any;
+  user?: AuthUser;
+}
+
+interface AuthUser {
+  id?: string;
+  email?: string | null;
+  phone?: string | null;
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
+  hasTalentProfile?: boolean;
+  onboardingComplete?: boolean;
+  talentId?: string;
+  authMethod?: string;
+  [key: string]: unknown;
+}
+
+interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+interface AuthSessionPayload {
+  success?: boolean;
+  needsOnboarding?: boolean;
+  user?: AuthUser;
+  tokens?: AuthTokens;
+  authMethod?: string;
+  error?: string;
 }
 
 /**
@@ -95,21 +98,13 @@ interface VerifyOTPResult {
  */
 async function verifyOTP(email: string, code: string): Promise<VerifyOTPResult> {
   try {
-    const response = await fetch(getApiUrl('/auth/verify-otp'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: email.toLowerCase(),
-        code: code,
-      }),
+    const { ok, status, data } = await api.rawRequest<AuthSessionPayload>('POST', '/auth/verify-otp', {
+      email: email.toLowerCase(),
+      code,
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      logger.apiError(LOG_SOURCE, response.status, data.error || 'OTP verification failed', '/api/auth/verify-otp');
+    if (!ok) {
+      logger.apiError(LOG_SOURCE, status, data.error || 'OTP verification failed', '/api/auth/verify-otp');
       return { success: false, needsOnboarding: false };
     }
 
@@ -144,18 +139,10 @@ async function verifyOTP(email: string, code: string): Promise<VerifyOTPResult> 
  */
 async function verifyWhatsAppOTP(phone: string, code: string): Promise<VerifyOTPResult> {
   try {
-    const response = await fetch(getApiUrl('/auth/verify-whatsapp-otp'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ phone, code }),
-    });
+    const { ok, status, data } = await api.rawRequest<AuthSessionPayload>('POST', '/auth/verify-whatsapp-otp', { phone, code });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      logger.apiError(LOG_SOURCE, response.status, data.error || 'WhatsApp OTP verification failed', '/api/auth/verify-whatsapp-otp');
+    if (!ok) {
+      logger.apiError(LOG_SOURCE, status, data.error || 'WhatsApp OTP verification failed', '/api/auth/verify-whatsapp-otp');
       return { success: false, needsOnboarding: false };
     }
 
@@ -184,58 +171,43 @@ async function verifyWhatsAppOTP(phone: string, code: string): Promise<VerifyOTP
   }
 }
 
-async function storeAuthSession(data: any): Promise<boolean> {
-  if (!data.tokens.accessToken || !data.tokens.refreshToken) {
+async function storeAuthSession(data: AuthSessionPayload): Promise<boolean> {
+  if (!data.tokens?.accessToken || !data.tokens?.refreshToken) {
     logger.error(LOG_SOURCE, 'Invalid tokens received from server', {
-      hasAccessToken: !!data.tokens.accessToken,
-      hasRefreshToken: !!data.tokens.refreshToken,
+      hasAccessToken: !!data.tokens?.accessToken,
+      hasRefreshToken: !!data.tokens?.refreshToken,
     });
     return false;
   }
 
-  await AsyncStorage.multiRemove([
-    STORAGE_KEYS.ACCESS_TOKEN,
-    STORAGE_KEYS.REFRESH_TOKEN,
-    STORAGE_KEYS.USER,
-  ]);
+  const stored = await api.persistAuthSession({
+    tokens: data.tokens,
+    user: data.user,
+    needsOnboarding: data.needsOnboarding,
+    authMethod: data.authMethod,
+  });
 
-  await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.tokens.accessToken);
-  await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.tokens.refreshToken);
-
-  const storedRefresh = await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-  if (!storedRefresh) {
-    logger.error(LOG_SOURCE, 'Failed to store refresh token');
-    return false;
-  }
-  logger.debug(LOG_SOURCE, 'Tokens stored successfully');
-
-  if (data.user) {
-    const userWithOnboarding = {
-      ...data.user,
-      needsOnboarding: data.needsOnboarding ?? false,
-      hasTalentProfile: !data.needsOnboarding,
-      onboardingComplete: !data.needsOnboarding,
-      authMethod: data.authMethod || undefined,
-    };
-    await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userWithOnboarding));
+  if (stored) {
+    logger.debug(LOG_SOURCE, 'Auth session stored successfully');
+  } else {
+    logger.error(LOG_SOURCE, 'Failed to persist auth session');
   }
 
-  return true;
+  return stored;
 }
 
 /**
  * Get stored access token
  */
 async function getAccessToken(): Promise<string | null> {
-  return AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+  return api.getToken();
 }
 
 /**
  * Get stored user info
  */
-async function getUser(): Promise<any | null> {
-  const userStr = await AsyncStorage.getItem(STORAGE_KEYS.USER);
-  return userStr ? JSON.parse(userStr) : null;
+async function getUser(): Promise<AuthUser | null> {
+  return api.getUser();
 }
 
 /**
@@ -243,19 +215,12 @@ async function getUser(): Promise<any | null> {
  */
 async function logout(allDevices: boolean = false): Promise<void> {
   try {
-    const accessToken = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    const accessToken = await api.getToken();
     const refreshToken = await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
-    if (accessToken) {
+    if (accessToken && refreshToken) {
       // Call backend logout endpoint
-      await fetch(getApiUrl('/auth/logout'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ refreshToken, allDevices }),
-      });
+      await api.post('/auth/logout', { refreshToken, allDevices });
     }
   } catch (error) {
     logger.warn(LOG_SOURCE, 'Logout API call failed (continuing with local logout)', { error });
@@ -284,70 +249,25 @@ async function isAuthenticated(): Promise<boolean> {
  * Get current user profile from backend
  * Also updates local storage with latest data
  */
-async function getCurrentUser(): Promise<any | null> {
+async function getCurrentUser(): Promise<AuthUser | null> {
   try {
-    const accessToken = await getAccessToken();
-    if (!accessToken) return null;
+    const token = await api.getToken();
+    if (!token) return null;
 
-    let response = await fetch(getApiUrl('/auth/me'), {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
+    const response = await api.get<{ user?: Record<string, unknown> }>('/auth/me');
+    const user = response.data?.user ?? null;
 
-    // On 401, try refreshing the token before giving up
-    if (response.status === 401) {
-      const refreshToken = await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-      if (refreshToken) {
-        logger.info(LOG_SOURCE, 'Token expired, attempting refresh');
-        const refreshResponse = await fetch(getApiUrl('/auth/refresh'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken }),
-        });
-
-        if (refreshResponse.ok) {
-          const refreshData = await refreshResponse.json();
-          if (refreshData.success && refreshData.tokens) {
-            await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, refreshData.tokens.accessToken);
-            await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshData.tokens.refreshToken);
-            logger.info(LOG_SOURCE, 'Token refreshed in getCurrentUser');
-
-            // Retry with new token
-            response = await fetch(getApiUrl('/auth/me'), {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${refreshData.tokens.accessToken}`,
-              },
-            });
-          }
-        }
-      }
-
-      // If still 401 after refresh attempt, return null but don't logout
-      // (let the main API layer handle session expiry)
-      if (response.status === 401) {
-        logger.warn(LOG_SOURCE, 'Token expired and refresh failed, returning null');
-        return null;
-      }
+    if (user) {
+      await api.storeUser(user);
+      logger.debug(LOG_SOURCE, 'User profile refreshed', { userId: user.id });
     }
 
-    if (!response.ok) {
-      logger.apiError(LOG_SOURCE, response.status, 'Failed to get current user', '/api/auth/me');
+    return user;
+  } catch (error: any) {
+    if (error?.status === 401) {
+      logger.warn(LOG_SOURCE, 'Token expired and refresh failed, returning null');
       return null;
     }
-
-    const data = await response.json();
-    if (data.success && data.user) {
-      // Update local storage with fresh data
-      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
-      logger.debug(LOG_SOURCE, 'User profile refreshed', { userId: data.user.id });
-      return data.user;
-    }
-
-    return null;
-  } catch (error) {
     logger.error(LOG_SOURCE, 'Get current user error', error);
     return null;
   }
@@ -358,18 +278,10 @@ async function getCurrentUser(): Promise<any | null> {
  */
 async function signInWithGoogle(idToken: string): Promise<VerifyOTPResult> {
   try {
-    const response = await fetch(getApiUrl('/auth/google'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ idToken }),
-    });
+    const { ok, status, data } = await api.rawRequest<AuthSessionPayload>('POST', '/auth/google', { idToken });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      logger.apiError(LOG_SOURCE, response.status, data.error || 'Google auth failed', '/api/auth/google');
+    if (!ok) {
+      logger.apiError(LOG_SOURCE, status, data.error || 'Google auth failed', '/api/auth/google');
       return { success: false, needsOnboarding: false };
     }
 
@@ -404,28 +316,24 @@ async function deleteAccount(): Promise<{
   success: boolean;
   error?: string;
   status?: number;
-  blockedOrganizations?: Array<{ id: string; name: string; memberCount: number }>;
+  blockedOrganizations?: { id: string; name: string; memberCount: number }[];
 }> {
   try {
-    const accessToken = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    const accessToken = await api.getToken();
     if (!accessToken) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    const response = await fetch(getApiUrl('/auth/delete-account'), {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
+    const { ok, status, data } = await api.rawRequest<{
+      error?: string;
+      blockedOrganizations?: { id: string; name: string; memberCount: number }[];
+    }>('DELETE', '/auth/delete-account', undefined, { authenticated: true });
 
-    const data = await response.json();
-
-    if (!response.ok) {
+    if (!ok) {
       return {
         success: false,
         error: data.error || 'Failed to delete account',
-        status: response.status,
+        status,
         blockedOrganizations: data.blockedOrganizations,
       };
     }
@@ -433,8 +341,8 @@ async function deleteAccount(): Promise<{
     // Clear ALL local data
     await AsyncStorage.multiRemove(Object.values(STORAGE_KEYS));
     await clearPersistentCache().catch(() => {});
-    if (FileSystem.cacheDirectory) {
-      await FileSystem.deleteAsync(FileSystem.cacheDirectory, { idempotent: true }).catch(() => {});
+    if (LegacyFileSystem.cacheDirectory) {
+      await LegacyFileSystem.deleteAsync(LegacyFileSystem.cacheDirectory, { idempotent: true }).catch(() => {});
     }
     await Notifications.setBadgeCountAsync(0).catch(() => {});
 

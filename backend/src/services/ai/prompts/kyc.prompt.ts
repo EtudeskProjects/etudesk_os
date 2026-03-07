@@ -3,6 +3,14 @@
  * Model: gpt-5-mini (vision) | Output: JSON schema
  */
 
+import { toTOON } from '../toon';
+
+const QUICK_CHECK_OUTPUT = {
+  is_document: true,
+  type: 'ID_CARD|PASSPORT|DRIVER_LICENSE|STUDENT_CARD|UNKNOWN',
+  message: 'string',
+};
+
 export function buildKYCVerificationPrompt(
   expectedDocType: string,
   docTypeLabel: string,
@@ -19,7 +27,8 @@ export function buildKYCVerificationPrompt(
 Document attendu : ${docTypeLabel} (${expectedDocType})
 Images : ${hasBackImage ? 'recto + verso (image 1 = recto, image 2 = verso)' : 'recto uniquement'}
 ${contextBlock}
-Analyse l'image et réponds en JSON avec ce schéma :
+Analyse l'image et retourne un JSON valide.
+Schéma compact (TOON) :
 ${schemaJson}
 
 Consignes :
@@ -39,7 +48,9 @@ export function buildQuickCheckPrompt(): string {
 <task>Détermine si cette image est un document d'identité valide.</task>
 
 <output_format>
-{"is_document": boolean, "type": "ID_CARD|PASSPORT|DRIVER_LICENSE|STUDENT_CARD|UNKNOWN", "message": "string"}
+Retourne un JSON valide.
+Contrat compact (TOON) :
+${toTOON(QUICK_CHECK_OUTPUT)}
 </output_format>
 
 <rules>

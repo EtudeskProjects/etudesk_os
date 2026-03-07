@@ -170,7 +170,8 @@
     "limitReached": "Limite atteinte",
     "fileTooLarge": "Fichier trop volumineux",
     "deleteTitle": "Supprimer l'opportunité",
-    "deleteConfirm": "Retirer"
+    "deleteConfirm": "Retirer",
+    "invalidToken": "Session invalide ou expirée. Veuillez vous reconnecter."
   },
   "auth": {
     "login": {
@@ -189,6 +190,8 @@
       "congrats": "Tu y es !",
       "title": "Ton profil est prêt",
       "subtitle": "Bienvenue sur Etudesk — ton espace carrière commence ici",
+      "languageTitle": "Choisis ta langue",
+      "languageSubtitle": "Tu peux démarrer dans la langue qui te convient. Tu pourras la changer plus tard.",
       "getStarted": "C'est parti !",
       "whatYouCanDo": "Ce que tu peux faire",
       "features": {

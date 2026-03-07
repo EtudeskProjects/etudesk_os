@@ -4,22 +4,28 @@
  * Dedicated to organizational documents — NO skill extraction
  */
 
+import { toTOON } from '../toon';
+
+const ORG_EXTRACTION_OUTPUT_CONTRACT = {
+  detected_type: 'POLICY | CONTRACT | REPORT | BROCHURE | PRESENTATION | CHARTER | LEGAL | OTHER',
+  detected_category: 'ADMINISTRATIVE | COMMERCIAL | LEGAL | OTHER',
+  confidence_score: '0.0-1.0',
+  title: 'Titre du document',
+  issuer: 'Émetteur/Organisation',
+  issue_date: 'YYYY-MM-DD',
+  expiry_date: 'YYYY-MM-DD',
+  description: 'Brève description du contenu',
+  tags: ['tag1', 'tag2'],
+  summary: 'Résumé en une ou deux phrases',
+};
+
 export function buildOrgExtractionPrompt(mimeType: string): string {
-  return `Analyse ce document d'organisation (${mimeType}) et extrais les informations en JSON.
+  return `Analyse ce document d'organisation (${mimeType}) et extrais les informations.
 
 Format de sortie :
-{
-  "detected_type": "POLICY | CONTRACT | REPORT | BROCHURE | PRESENTATION | CHARTER | LEGAL | OTHER",
-  "detected_category": "ADMINISTRATIVE | COMMERCIAL | LEGAL | OTHER",
-  "confidence_score": 0.0-1.0,
-  "title": "Titre du document",
-  "issuer": "Émetteur/Organisation",
-  "issue_date": "YYYY-MM-DD",
-  "expiry_date": "YYYY-MM-DD",
-  "description": "Brève description du contenu",
-  "tags": ["tag1", "tag2"],
-  "summary": "Résumé en une ou deux phrases"
-}
+Retourne un JSON valide.
+Contrat compact (TOON) :
+${toTOON(ORG_EXTRACTION_OUTPUT_CONTRACT)}
 
 Règles :
 - detected_type doit être l'un des 8 types listés

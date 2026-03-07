@@ -135,6 +135,12 @@ router.get('/types', (_req: Request, res: Response) => {
   }));
 
   return res.json({
+    data: {
+      types,
+      maxDocuments: ORG_DOCUMENT_LIMITS.MAX_DOCUMENTS_PER_ORG,
+      maxFileSizeMB: ORG_DOCUMENT_LIMITS.MAX_FILE_SIZE_MB,
+      allowedMimeTypes: ALLOWED_MIME_TYPES,
+    },
     types,
     maxDocuments: ORG_DOCUMENT_LIMITS.MAX_DOCUMENTS_PER_ORG,
     maxFileSizeMB: ORG_DOCUMENT_LIMITS.MAX_FILE_SIZE_MB,
@@ -275,6 +281,11 @@ router.post(
         : req.t('documents:uploadMultipleSuccess', { count: uploadedDocuments.length });
 
       return res.status(201).json({
+        data: {
+          message,
+          document: uploadedDocuments.length === 1 ? uploadedDocuments[0] : undefined,
+          documents: uploadedDocuments,
+        },
         message,
         document: uploadedDocuments.length === 1 ? uploadedDocuments[0] : undefined,
         documents: uploadedDocuments,
@@ -316,7 +327,11 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res: Response) => 
 
     if (!document) return res.status(404).json({ error: req.t('orgDocs:notFound') });
 
-    return res.json({ message: req.t('orgDocs:updated'), document });
+    return res.json({
+      data: { message: req.t('orgDocs:updated'), document },
+      message: req.t('orgDocs:updated'),
+      document,
+    });
   } catch (error) {
     logger.error('Error updating org document:', error);
     return res.status(500).json({ error: req.t('orgDocs:updateError') });
@@ -337,7 +352,7 @@ router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) =>
     const deleted = await deleteOrgDocument(id, orgId);
     if (!deleted) return res.status(404).json({ error: req.t('orgDocs:notFound') });
 
-    return res.json({ message: req.t('orgDocs:deleted') });
+    return res.json({ data: { message: req.t('orgDocs:deleted') }, message: req.t('orgDocs:deleted') });
   } catch (error) {
     logger.error('Error deleting org document:', error);
     return res.status(500).json({ error: req.t('orgDocs:deleteError') });
@@ -358,7 +373,10 @@ router.post('/:id/retry', authMiddleware, async (req: AuthRequest, res: Response
     const success = await retryOrgExtraction(id, orgId);
     if (!success) return res.status(404).json({ error: req.t('orgDocs:notFound') });
 
-    return res.json({ message: req.t('orgDocs:extractionRestarted') });
+    return res.json({
+      data: { message: req.t('orgDocs:extractionRestarted') },
+      message: req.t('orgDocs:extractionRestarted'),
+    });
   } catch (error) {
     logger.error('Error retrying org extraction:', error);
     return res.status(500).json({

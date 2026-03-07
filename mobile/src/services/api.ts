@@ -32,6 +32,7 @@ interface ApiResponse<T> {
   pagination?: { total: number; limit: number; offset: number; hasMore: boolean };
   error?: string;
   success?: boolean;
+  message?: string;
 }
 
 interface ApiError {
@@ -46,13 +47,31 @@ interface RequestOptions {
   headers?: Record<string, string>;
 }
 
+interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+interface AuthSessionPayload {
+  tokens: AuthTokens;
+  user?: Record<string, unknown> | null;
+  needsOnboarding?: boolean;
+  authMethod?: string;
+}
+
+type RawApiResult<T> = {
+  ok: boolean;
+  status: number;
+  data: T;
+};
+
 class ApiService {
   private baseUrl: string;
   private timeout: number;
   
   // Token refresh management - prevents race conditions
   private isRefreshing: boolean = false;
-  private refreshSubscribers: Array<(success: boolean) => void> = [];
+  private refreshSubscribers: ((success: boolean) => void)[] = [];
 
   constructor() {
     this.baseUrl = API_BASE_URL;
@@ -92,9 +111,51 @@ class ApiService {
   /**
    * Store new tokens
    */
-  private async storeTokens(accessToken: string, refreshToken: string): Promise<void> {
+  async storeTokens(accessToken: string, refreshToken: string): Promise<void> {
     await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
     await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+  }
+
+  async getUser<T = Record<string, unknown>>(): Promise<T | null> {
+    try {
+      const user = await AsyncStorage.getItem(STORAGE_KEYS.USER);
+      return user ? JSON.parse(user) as T : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async storeUser(user: Record<string, unknown>): Promise<void> {
+    await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+  }
+
+  async persistAuthSession(session: AuthSessionPayload): Promise<boolean> {
+    const { tokens, user, needsOnboarding, authMethod } = session;
+
+    if (!tokens?.accessToken || !tokens?.refreshToken) {
+      return false;
+    }
+
+    await this.clearAuth();
+    await this.storeTokens(tokens.accessToken, tokens.refreshToken);
+
+    const storedRefresh = await this.getRefreshToken();
+    if (!storedRefresh) {
+      return false;
+    }
+
+    if (user) {
+      const normalizedUser = {
+        ...user,
+        needsOnboarding: needsOnboarding ?? false,
+        hasTalentProfile: !(needsOnboarding ?? false),
+        onboardingComplete: !(needsOnboarding ?? false),
+        authMethod: authMethod || undefined,
+      };
+      await this.storeUser(normalizedUser);
+    }
+
+    return true;
   }
 
   /**
@@ -167,7 +228,12 @@ class ApiService {
         return false;
       }
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      const hasJsonBody = contentType.includes('application/json');
+      const rawText = response.status === 204 ? '' : await response.text();
+      const data = rawText
+        ? (hasJsonBody ? JSON.parse(rawText) : { data: rawText })
+        : {};
       if (data.success && data.tokens) {
         await this.storeTokens(data.tokens.accessToken, data.tokens.refreshToken);
         logger.info(LOG_SOURCE, 'Token refresh successful');
@@ -255,7 +321,12 @@ class ApiService {
         }
       }
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type') || '';
+      const hasJsonBody = contentType.includes('application/json');
+      const rawText = response.status === 204 ? '' : await response.text();
+      const data = rawText
+        ? (hasJsonBody ? JSON.parse(rawText) : { data: rawText })
+        : {};
 
       if (!response.ok) {
         logger.apiError(LOG_SOURCE, response.status, data.error || 'Request failed', endpoint, data);
@@ -343,6 +414,55 @@ class ApiService {
     options?: RequestOptions
   ): Promise<ApiResponse<T>> {
     return this.request<T>('DELETE', endpoint, body, undefined, true, options);
+  }
+
+  async publicPost<T>(endpoint: string, body: unknown, options?: RequestOptions): Promise<ApiResponse<T>> {
+    return this.request<T>('POST', endpoint, body, options?.headers, false, options);
+  }
+
+  async rawRequest<T>(
+    method: string,
+    endpoint: string,
+    body?: unknown,
+    options?: RequestOptions & { authenticated?: boolean }
+  ): Promise<RawApiResult<T>> {
+    const controller = new AbortController();
+    const timeoutMs = options?.timeout ?? this.timeout;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const accessToken = options?.authenticated ? await this.getAccessToken() : null;
+      const config: RequestInit = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept-Language': i18n.locale,
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          ...options?.headers,
+        },
+        signal: controller.signal,
+      };
+
+      if (body !== undefined && method !== 'GET') {
+        config.body = JSON.stringify(body);
+      }
+
+      const response = await fetch(buildApiUrl(endpoint), config);
+      const contentType = response.headers.get('content-type') || '';
+      const hasJsonBody = contentType.includes('application/json');
+      const rawText = response.status === 204 ? '' : await response.text();
+      const data = rawText
+        ? (hasJsonBody ? JSON.parse(rawText) : rawText)
+        : {};
+
+      return {
+        ok: response.ok,
+        status: response.status,
+        data: data as T,
+      };
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   /**

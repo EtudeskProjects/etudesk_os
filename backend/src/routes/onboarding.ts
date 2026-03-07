@@ -68,6 +68,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
       );
 
       if (userResult.rows.length === 0) {
+        await client.query('ROLLBACK');
         return res.status(404).json({
           success: false,
           error: req.t('auth:userNotFound'),
@@ -81,6 +82,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
       const talentEmail = isPlaceholderEmail ? null : user.email;
 
       if (user.talent_id) {
+        await client.query('ROLLBACK');
         return res.status(400).json({
           success: false,
           error: req.t('onboarding:talentProfileExists'),
@@ -97,6 +99,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
         );
 
         if (emailCheckResult.rows.length > 0) {
+          await client.query('ROLLBACK');
           return res.status(400).json({
             success: false,
             error: req.t('onboarding:emailAlreadyUsed'),
@@ -113,6 +116,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
         );
 
         if (phoneCheckResult.rows.length > 0) {
+          await client.query('ROLLBACK');
           return res.status(400).json({
             success: false,
             error: req.t('onboarding:phoneAlreadyUsed'),
@@ -151,6 +155,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
 
       // DB constraint: at least one of email or phone is required
       if (!finalEmail && !finalPhone) {
+        await client.query('ROLLBACK');
         return res.status(400).json({
           success: false,
           error: req.t('onboarding:emailOrPhoneRequired'),

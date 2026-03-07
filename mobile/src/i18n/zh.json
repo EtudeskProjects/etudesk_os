@@ -76,7 +76,8 @@
     "continue": "继续",
     "limitReached": "已达上限",
     "fileTooLarge": "文件太大",
-    "deleteTitle": "删除申请"
+    "deleteTitle": "删除申请",
+    "invalidToken": "会话无效或已过期。请重新登录。"
   },
   "auth": {
     "login": {

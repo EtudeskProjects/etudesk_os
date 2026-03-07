@@ -6,8 +6,10 @@
 
 import { api } from './api';
 
+export type BatchedEntity = Record<string, unknown>;
+
 interface PendingRequest {
-  resolve: (data: Record<string, any> | null) => void;
+  resolve: (data: BatchedEntity | null) => void;
   reject: (error: Error) => void;
 }
 
@@ -37,8 +39,8 @@ async function flush() {
 
   try {
     const itemsParam = keys.join(',');
-    const response = await api.get<any>(`/entities/batch?items=${encodeURIComponent(itemsParam)}`);
-    const data = response.data || response;
+    const response = await api.get<Record<string, BatchedEntity>>(`/entities/batch?items=${encodeURIComponent(itemsParam)}`);
+    const data = response.data || {};
 
     for (const [key, callbacks] of batch) {
       const entity = data[key] || null;
@@ -61,7 +63,7 @@ async function flush() {
  * @param id Entity UUID
  * @returns Entity data or null if not found
  */
-export function fetchEntityBatched(type: string, id: string): Promise<Record<string, any> | null> {
+export function fetchEntityBatched(type: string, id: string): Promise<BatchedEntity | null> {
   const key = `${type}:${id}`;
 
   return new Promise((resolve, reject) => {

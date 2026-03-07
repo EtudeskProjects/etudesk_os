@@ -14,6 +14,10 @@ import { sendOpportunityInviteEmail } from '../services/email.service';
 import { logger } from '../utils';
 const router = Router();
 
+function actionData(message: string, extra: Record<string, unknown> = {}) {
+  return { success: true, message, data: { success: true, message, ...extra } };
+}
+
 // ============================================================================
 // INVITATION MANAGEMENT (for opportunity admins)
 // ============================================================================
@@ -230,7 +234,7 @@ router.delete('/:opportunityId/invitations/:invitationId', authMiddleware, async
       return res.status(404).json({ error: req.t('opportunities:inviteNotFound') });
     }
 
-    res.json({ success: true, message: req.t('opportunities:inviteCancelled') });
+    res.json(actionData(req.t('opportunities:inviteCancelled')));
   } catch (error: any) {
     logger.error('Error cancelling opportunity invitation:', error);
     res.status(500).json({ error: req.t('opportunities:errorCancellingInvite') });
@@ -289,7 +293,7 @@ router.post('/:opportunityId/invitations/:invitationId/resend', authMiddleware, 
       inv.invitation_token
     ).catch(() => {});
 
-    res.json({ success: true, message: req.t('opportunities:inviteResent') });
+    res.json(actionData(req.t('opportunities:inviteResent')));
   } catch (error: any) {
     logger.error('Error resending opportunity invitation:', error);
     res.status(500).json({ error: req.t('opportunities:errorResendingInvite') });
@@ -415,11 +419,9 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
     // DELETE the invitation from DB (access granted)
     await pool.query('DELETE FROM opportunity_invitations WHERE id = $1', [invitationId]);
 
-    res.json({
-      success: true,
-      message: req.t('opportunities:inviteAccepted', { title: inv.opportunity_title }),
+    res.json(actionData(req.t('opportunities:inviteAccepted', { title: inv.opportunity_title }), {
       opportunity_id: inv.opportunity_id,
-    });
+    }));
   } catch (error: any) {
     logger.error('Error accepting opportunity invitation:', error);
     res.status(500).json({ error: req.t('opportunities:errorAcceptingInvite') });
@@ -457,7 +459,7 @@ router.post('/:invitationId/decline', authMiddleware, async (req: AuthRequest, r
       return res.status(404).json({ error: req.t('opportunities:inviteNotFound') });
     }
 
-    res.json({ success: true, message: req.t('opportunities:inviteDeclined') });
+    res.json(actionData(req.t('opportunities:inviteDeclined')));
   } catch (error: any) {
     logger.error('Error declining opportunity invitation:', error);
     res.status(500).json({ error: req.t('opportunities:errorDecliningInvite') });
@@ -507,6 +509,14 @@ router.get('/token/:token', async (req: Request, res: Response) => {
         message: inv.message,
         expires_at: inv.expires_at,
       },
+      id: inv.id,
+      opportunity_id: inv.opportunity_id,
+      opportunity_title: inv.opportunity_title,
+      opportunity_summary: inv.opportunity_summary,
+      cover_image_url: inv.cover_image_url,
+      invited_by_name: inv.invited_by_name,
+      message: inv.message,
+      expires_at: inv.expires_at,
     });
   } catch (error: any) {
     logger.error('Error verifying opportunity invitation token:', error);

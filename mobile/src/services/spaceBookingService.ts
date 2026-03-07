@@ -4,6 +4,7 @@
  */
 
 import { api, ApiResponse } from './api';
+import { getApiUrl } from '../constants/config';
 import {
   SpaceBooking,
   BookingStatus,
@@ -157,8 +158,7 @@ class SpaceBookingService {
    * Get CSV export URL for bookings (for direct download)
    */
   getExportCsvUrl(spaceId: string, options?: BookingFilters): string {
-    const baseUrl = api.getBaseUrl();
-    let url = `${baseUrl}/api/spaces/${spaceId}/bookings/export-csv`;
+    let url = getApiUrl(`/spaces/${spaceId}/bookings/export-csv`);
     const params = new URLSearchParams();
     if (options?.status) params.append('status', options.status);
     if (options?.start_date) params.append('start_date', options.start_date);

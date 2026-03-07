@@ -14,6 +14,10 @@ import { sendSpaceInviteEmail } from '../services/email.service';
 import { logger } from '../utils';
 const router = Router();
 
+function actionData(message: string, extra: Record<string, unknown> = {}) {
+  return { success: true, message, data: { success: true, message, ...extra } };
+}
+
 // ============================================================================
 // INVITATION MANAGEMENT (for space admins)
 // ============================================================================
@@ -209,7 +213,7 @@ router.delete('/:spaceId/invitations/:invitationId', authMiddleware, async (req:
       return res.status(404).json({ error: req.t('spaces:inviteNotFound') });
     }
 
-    res.json({ success: true, message: req.t('spaces:invitationCancelled') });
+    res.json(actionData(req.t('spaces:invitationCancelled')));
   } catch (error: any) {
     logger.error('Error cancelling space invitation:', error);
     res.status(500).json({ error: req.t('spaces:cancelInvitationError') });
@@ -265,7 +269,7 @@ router.post('/:spaceId/invitations/:invitationId/resend', authMiddleware, async 
       inv.invitation_token
     ).catch(() => {});
 
-    res.json({ success: true, message: req.t('spaces:invitationResent') });
+    res.json(actionData(req.t('spaces:invitationResent')));
   } catch (error: any) {
     logger.error('Error resending space invitation:', error);
     res.status(500).json({ error: req.t('spaces:resendInvitationError') });
@@ -392,11 +396,9 @@ router.post('/:invitationId/accept', authMiddleware, async (req: AuthRequest, re
     // DELETE the invitation from DB (access granted)
     await pool.query('DELETE FROM space_invitations WHERE id = $1', [invitationId]);
 
-    res.json({
-      success: true,
-      message: req.t('spaces:invitationAcceptedFor', { spaceName: inv.space_name }),
+    res.json(actionData(req.t('spaces:invitationAcceptedFor', { spaceName: inv.space_name }), {
       space_id: inv.space_id,
-    });
+    }));
   } catch (error: any) {
     logger.error('Error accepting space invitation:', error);
     res.status(500).json({ error: req.t('spaces:acceptInvitationError') });
@@ -434,7 +436,7 @@ router.post('/:invitationId/decline', authMiddleware, async (req: AuthRequest, r
       return res.status(404).json({ error: req.t('spaces:inviteNotFound') });
     }
 
-    res.json({ success: true, message: req.t('spaces:inviteDeclined') });
+    res.json(actionData(req.t('spaces:inviteDeclined')));
   } catch (error: any) {
     logger.error('Error declining space invitation:', error);
     res.status(500).json({ error: req.t('spaces:acceptInvitationError') });
@@ -490,6 +492,17 @@ router.get('/token/:token', async (req: Request, res: Response) => {
         message: inv.message,
         expires_at: inv.expires_at,
       },
+      id: inv.id,
+      space_id: inv.space_id,
+      space_name: inv.space_name,
+      space_description: inv.space_description,
+      cover_image_url: inv.cover_image_url,
+      space_type: inv.space_type,
+      hourly_rate: inv.hourly_rate,
+      daily_rate: inv.daily_rate,
+      invited_by_name: inv.invited_by_name,
+      message: inv.message,
+      expires_at: inv.expires_at,
     });
   } catch (error: any) {
     logger.error('Error verifying space invitation token:', error);

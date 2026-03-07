@@ -9,6 +9,24 @@ import { getOntologyForExplore } from '../ontology.cache';
 import { getSkillsForMode } from '../skills/skill.loader';
 import { getUEMOAKnowledgeBlock } from '../uemoa-knowledge';
 import { getActiveSkillBlock, getChartRulesBlock, getLanguageInstructions } from './prompt-shared';
+import { toTOON } from '../../ai/toon';
+
+const CV_CONTENT_CONTRACT = {
+  firstName: '...',
+  lastName: '...',
+  email: '...',
+  phone: '...',
+  city: '...',
+  country: '...',
+  bio: 'Profile summary...',
+  skills: [{ name: '...', level: 'EXPERT' }],
+  languages: [{ language: 'Français', level: 'native' }],
+  experiences: [{ title: '...', company: '...', location: '...', period: '2022 - Present', description: '• bullet1\\n• bullet2' }],
+  education: [{ degree: '...', institution: '...', period: '2018 - 2020' }],
+  certifications: [{ name: '...', issuer: '...', date: '2023' }],
+  references: [{ name: '...', title: '...', phone: '...' }],
+  interests: ['...'],
+};
 
 /** Build a dynamic Situation block personalized to the talent's profile */
 function buildSituationBlock(context: TalentContext): string {
@@ -266,18 +284,9 @@ When the user asks to generate, improve, or regenerate a CV:
 - **If a field is empty/unknown, OMIT it — do not fabricate. An incomplete but honest CV is infinitely better than a fabricated one.**
 
 **Step 3 — Use EXACT canonical format (NO wrappers):**
-\`\`\`json
-{
-  "firstName": "...", "lastName": "...", "email": "...", "phone": "...",
-  "city": "...", "country": "...", "bio": "Profile summary...",
-  "skills": [{"name": "...", "level": "EXPERT"}],
-  "languages": [{"language": "Français", "level": "native"}],
-  "experiences": [{"title": "...", "company": "...", "location": "...", "period": "2022 - Present", "description": "• bullet1\\n• bullet2"}],
-  "education": [{"degree": "...", "institution": "...", "period": "2018 - 2020"}],
-  "certifications": [{"name": "...", "issuer": "...", "date": "2023"}],
-  "references": [{"name": "...", "title": "...", "phone": "..."}],
-  "interests": ["..."]
-}
+Pass \`contentJson\` as an object (or JSON string) with these exact root fields. Compact contract (TOON):
+\`\`\`
+${toTOON(CV_CONTENT_CONTRACT)}
 \`\`\`
 
 **BANNED:** \`{type:"cv", profile:{...}}\` wrapper, \`{personalInfo:{...}}\` wrapper, \`experience\` (singular), \`school\` (use \`institution\`), \`summary\` (use \`bio\`), \`startDate/endDate\` (use \`period\`), \`bullets\` (use \`description\`), \`{name, level}\` in languages (use \`{language, level}\`).
