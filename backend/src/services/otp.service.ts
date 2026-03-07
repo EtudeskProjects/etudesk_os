@@ -208,7 +208,7 @@ export async function createWhatsAppOTP(
 export interface VerifyOTPResult {
   success: boolean;
   userId?: string;
-  email?: string;
+  email?: string | null;
   isNewUser?: boolean;
   error?: string;
   attemptsRemaining?: number;
@@ -220,11 +220,6 @@ function normalizeIdentifier(identifier: string, channel: OTPChannel): string | 
   }
 
   return formatPhoneToE164(identifier);
-}
-
-function buildPlaceholderEmailForPhone(phone: string): string {
-  const digits = phone.replace(/[^\d]/g, '');
-  return `wa_${digits}@etudesk.local`;
 }
 
 function getPhoneDigitsCandidates(phoneE164: string): string[] {
@@ -244,7 +239,7 @@ function getPhoneDigitsCandidates(phoneE164: string): string[] {
   return Array.from(set);
 }
 
-async function findExistingTalentByPhoneDigits(client: any, phoneE164: string): Promise<{ talentId: string; talentEmail: string } | null> {
+async function findExistingTalentByPhoneDigits(client: any, phoneE164: string): Promise<{ talentId: string; talentEmail: string | null } | null> {
   const candidates = getPhoneDigitsCandidates(phoneE164);
   const res = await client.query(
     `SELECT id, email
@@ -258,12 +253,11 @@ async function findExistingTalentByPhoneDigits(client: any, phoneE164: string): 
   );
 
   if (!res.rows.length) return null;
-  return { talentId: res.rows[0].id, talentEmail: res.rows[0].email };
+  return { talentId: res.rows[0].id, talentEmail: res.rows[0].email ?? null };
 }
 
-async function findExistingUserByWhatsAppPhone(client: any, phoneE164: string): Promise<{ userId: string; email: string } | null> {
+async function findExistingUserByWhatsAppPhone(client: any, phoneE164: string): Promise<{ userId: string; email: string | null } | null> {
   const candidates = getPhoneDigitsCandidates(phoneE164);
-  const placeholderEmail = buildPlaceholderEmailForPhone(phoneE164);
 
   const res = await client.query(
     `SELECT u.id, u.email
@@ -271,12 +265,13 @@ async function findExistingUserByWhatsAppPhone(client: any, phoneE164: string): 
      LEFT JOIN talents t ON t.id = u.talent_id
      WHERE u.deleted_at IS NULL
        AND (
+         (u.phone IS NOT NULL AND regexp_replace(u.phone, '[^0-9]', '', 'g') = ANY($1::text[]))
+         OR
          (t.deleted_at IS NULL AND t.phone IS NOT NULL AND regexp_replace(t.phone, '[^0-9]', '', 'g') = ANY($1::text[]))
-         OR u.email = $2
        )
      ORDER BY (u.talent_id IS NOT NULL) DESC, u.created_at DESC
      LIMIT 1`,
-    [candidates, placeholderEmail]
+    [candidates]
   );
 
   if (!res.rows.length) return null;
@@ -286,7 +281,7 @@ async function findExistingUserByWhatsAppPhone(client: any, phoneE164: string): 
 async function resolveOrCreateUserForWhatsAppPhone(
   client: any,
   phoneE164: string
-): Promise<{ userId: string; email: string; isNewUser: boolean }> {
+): Promise<{ userId: string; email: string | null; isNewUser: boolean }> {
   // 1) Existing user found by linked talent phone or placeholder email
   const existingUser = await findExistingUserByWhatsAppPhone(client, phoneE164);
   if (existingUser) {
@@ -301,7 +296,7 @@ async function resolveOrCreateUserForWhatsAppPhone(
       [talent.talentId]
     );
     if (byTalentId.rows.length) {
-      return { userId: byTalentId.rows[0].id, email: byTalentId.rows[0].email, isNewUser: false };
+      return { userId: byTalentId.rows[0].id, email: byTalentId.rows[0].email ?? talent.talentEmail ?? null, isNewUser: false };
     }
 
     const byTalentEmail = await client.query(
@@ -316,25 +311,24 @@ async function resolveOrCreateUserForWhatsAppPhone(
       return { userId: u.id, email: u.email, isNewUser: false };
     }
 
-    // Create user using the talent email and link to the existing talent.
+    // Create user using the best known identifiers and link to the existing talent.
     const created = await client.query(
-      `INSERT INTO users (email, email_verified, email_verified_at, talent_id)
-       VALUES ($1, TRUE, NOW(), $2)
+      `INSERT INTO users (email, phone, email_verified, email_verified_at, talent_id)
+       VALUES ($1, $2, TRUE, NOW(), $3)
        RETURNING id, email`,
-      [talent.talentEmail, talent.talentId]
+      [talent.talentEmail, phoneE164, talent.talentId]
     );
-    return { userId: created.rows[0].id, email: created.rows[0].email, isNewUser: false };
+    return { userId: created.rows[0].id, email: created.rows[0].email ?? talent.talentEmail ?? null, isNewUser: false };
   }
 
   // 3) No talent exists -> create a minimal user (onboarding will create talent later).
-  const placeholderEmail = buildPlaceholderEmailForPhone(phoneE164);
   const created = await client.query(
-    `INSERT INTO users (email, email_verified, email_verified_at)
-     VALUES ($1, TRUE, NOW())
+    `INSERT INTO users (phone, email_verified, email_verified_at)
+     VALUES ($1, FALSE, NULL)
      RETURNING id, email`,
-    [placeholderEmail]
+    [phoneE164]
   );
-  return { userId: created.rows[0].id, email: created.rows[0].email, isNewUser: true };
+  return { userId: created.rows[0].id, email: created.rows[0].email ?? null, isNewUser: true };
 }
 
 /**
@@ -518,9 +512,7 @@ export async function verifyOTPByChannel(
     // Check if user exists
     let userId = otp.user_id;
     let isNewUser = false;
-    let userEmail = channel === 'email'
-      ? normalizedIdentifier
-      : buildPlaceholderEmailForPhone(normalizedIdentifier);
+    let userEmail: string | null = channel === 'email' ? normalizedIdentifier : null;
 
     if (!userId) {
       if (channel === 'email') {
@@ -534,7 +526,7 @@ export async function verifyOTPByChannel(
           userEmail = existingUser.rows[0].email;
         } else {
           const newUserResult = await client.query(
-            `INSERT INTO users (email, email_verified, email_verified_at)
+          `INSERT INTO users (email, email_verified, email_verified_at)
              VALUES ($1, TRUE, NOW())
              RETURNING id`,
             [normalizedIdentifier]
@@ -552,15 +544,26 @@ export async function verifyOTPByChannel(
     }
 
     // Update user's email verification and last login
-    await client.query(
-      `UPDATE users
-       SET email_verified = TRUE,
-           email_verified_at = COALESCE(email_verified_at, NOW()),
-           last_login_at = NOW(),
-           login_count = login_count + 1
-       WHERE id = $1`,
-      [userId]
-    );
+    if (channel === 'email') {
+      await client.query(
+        `UPDATE users
+         SET email_verified = TRUE,
+             email_verified_at = COALESCE(email_verified_at, NOW()),
+             last_login_at = NOW(),
+             login_count = login_count + 1
+         WHERE id = $1`,
+        [userId]
+      );
+    } else {
+      await client.query(
+        `UPDATE users
+         SET phone = COALESCE(phone, $2),
+             last_login_at = NOW(),
+             login_count = login_count + 1
+         WHERE id = $1`,
+        [userId, normalizedIdentifier]
+      );
+    }
 
     await client.query('COMMIT');
 

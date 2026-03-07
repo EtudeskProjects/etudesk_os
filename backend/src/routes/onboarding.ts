@@ -77,9 +77,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
 
       const user = userResult.rows[0];
 
-      // Don't propagate placeholder emails (wa_XXX@etudesk.local) to talent profile
-      const isPlaceholderEmail = user.email?.endsWith('@etudesk.local');
-      const talentEmail = isPlaceholderEmail ? null : user.email;
+      const talentEmail = user.email || null;
 
       if (user.talent_id) {
         await client.query('ROLLBACK');
@@ -264,7 +262,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
       });
 
       // Generate new tokens with talent_id
-      const tokens = generateTokens(req.userId!, user.email, talentId);
+      const tokens = generateTokens(req.userId!, user.email || null, talentId);
 
       return res.status(201).json({
         data: {

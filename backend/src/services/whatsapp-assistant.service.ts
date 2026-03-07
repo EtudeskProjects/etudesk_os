@@ -38,12 +38,12 @@ type SupportPriority = 'low' | 'medium' | 'high' | 'critical';
 
 type DbUserByTalent = {
   id: string;
-  email: string;
+  email: string | null;
 };
 
 type DbUserByEmail = {
   id: string;
-  email: string;
+  email: string | null;
   talent_id: string | null;
 };
 
@@ -54,11 +54,6 @@ type DbTalent = {
   first_name: string | null;
   last_name: string | null;
 };
-
-function buildPlaceholderEmailForPhone(phoneE164: string): string {
-  const digits = phoneE164.replace(/[^\d]/g, '');
-  return `wa_${digits}@etudesk.local`;
-}
 
 function getPhoneDigitsCandidates(phoneE164: string): string[] {
   const digits = phoneE164.replace(/[^\d]/g, '');
@@ -95,12 +90,11 @@ async function resolveLinkedAccountContext(phoneE164: string): Promise<LinkedAcc
   const client = await pool.connect();
   try {
     const candidates = getPhoneDigitsCandidates(phoneE164);
-    const placeholderEmail = buildPlaceholderEmailForPhone(phoneE164);
 
-    // 1) Fast path: existing user already linked to a talent matched by phone OR placeholder WA user
+    // 1) Fast path: existing user already linked to a talent matched by phone or stored directly on users.phone
     const userMatch = await client.query<{
       user_id: string;
-      user_email: string;
+      user_email: string | null;
       talent_id: string | null;
       talent_phone: string | null;
       first_name: string | null;
@@ -116,12 +110,13 @@ async function resolveLinkedAccountContext(phoneE164: string): Promise<LinkedAcc
        LEFT JOIN talents t ON t.id = u.talent_id AND t.deleted_at IS NULL
        WHERE u.deleted_at IS NULL
          AND (
+           (u.phone IS NOT NULL AND regexp_replace(u.phone, '[^0-9]', '', 'g') = ANY($1::text[]))
+           OR
            (t.phone IS NOT NULL AND regexp_replace(t.phone, '[^0-9]', '', 'g') = ANY($1::text[]))
-           OR u.email = $2
          )
        ORDER BY (u.talent_id IS NOT NULL) DESC, u.created_at DESC
        LIMIT 1`,
-      [candidates, placeholderEmail]
+      [candidates]
     );
 
     if (userMatch.rows.length > 0) {

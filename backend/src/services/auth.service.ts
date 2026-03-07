@@ -38,7 +38,7 @@ const JWT_CONFIG = {
 
 export interface TokenPayload {
   userId: string;
-  email: string;
+  email: string | null;
   talentId?: string;
   type: 'access' | 'refresh';
 }
@@ -51,7 +51,7 @@ export interface AuthTokens {
 
 export interface UserProfile {
   id: string;
-  email: string;
+  email: string | null;
   phone: string | null;
   emailVerified: boolean;
   talentId: string | null;
@@ -76,7 +76,7 @@ export interface UserProfile {
 /**
  * Generate access and refresh tokens
  */
-export function generateTokens(userId: string, email: string, talentId?: string): AuthTokens {
+export function generateTokens(userId: string, email: string | null, talentId?: string): AuthTokens {
   const accessPayload: TokenPayload = {
     userId,
     email,
@@ -261,7 +261,7 @@ export async function refreshTokens(refreshToken: string): Promise<{ success: bo
 
   // Get user info
   const userResult = await pool.query(
-    `SELECT u.id, u.email, u.talent_id, t.slug as talent_slug
+     `SELECT u.id, u.email, u.talent_id, t.slug as talent_slug
      FROM users u
      LEFT JOIN talents t ON u.talent_id = t.id
      WHERE u.id = $1 AND u.deleted_at IS NULL`,
@@ -297,8 +297,9 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     const result = await pool.query(
       `SELECT
          u.id,
-         COALESCE(NULLIF(t.email, ''), u.email) as email,
+         COALESCE(NULLIF(t.email, ''), NULLIF(u.email, '')) as email,
          u.email_verified,
+         u.phone as user_phone,
          u.talent_id,
          u.created_at,
          u.last_login_at,
@@ -308,7 +309,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
          t.last_name,
          t.gender,
          t.phone as talent_phone,
-         COALESCE(NULLIF(CONCAT_WS(' ', t.first_name, t.last_name), ''), u.email) as talent_display_name,
+         COALESCE(NULLIF(CONCAT_WS(' ', t.first_name, t.last_name), ''), NULLIF(t.email, ''), NULLIF(u.email, ''), NULLIF(u.phone, '')) as talent_display_name,
          t.avatar_url as talent_avatar_url
        FROM users u
        LEFT JOIN talents t ON u.talent_id = t.id AND t.deleted_at IS NULL
@@ -325,7 +326,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     return {
       id: row.id,
       email: row.email,
-      phone: row.talent_phone || null,
+      phone: row.talent_phone || row.user_phone || null,
       emailVerified: row.email_verified,
       talentId: row.talent_id,
       hasTalentProfile: !!row.talent_id,

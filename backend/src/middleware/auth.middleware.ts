@@ -11,7 +11,7 @@ import { pool } from '../services/database';
 import { logger } from '../utils';
 export interface AuthRequest extends Request {
   userId?: string;
-  userEmail?: string;
+  userEmail?: string | null;
   talentId?: string;
   tokenPayload?: TokenPayload;
 }
@@ -184,7 +184,7 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'admin@etudesk.com').split(','
 /**
  * Check if user is an admin
  */
-export function isAdmin(email: string | undefined): boolean {
+export function isAdmin(email: string | null | undefined): boolean {
   if (!email) return false;
   return ADMIN_EMAILS.includes(email.toLowerCase());
 }

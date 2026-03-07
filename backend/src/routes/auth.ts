@@ -172,7 +172,7 @@ router.post('/verify-otp', validate(verifyOtpSchema), auditLog('AUTH_VERIFY_OTP'
     }
 
     // Generate tokens
-    const tokens = generateTokens(verifyResult.userId!, verifyResult.email!);
+    const tokens = generateTokens(verifyResult.userId!, verifyResult.email ?? null);
 
     // Create session
     const ipAddress = req.ip || req.socket.remoteAddress;
@@ -230,7 +230,7 @@ router.post('/verify-whatsapp-otp', validate(verifyWhatsAppOtpSchema), auditLog(
       });
     }
 
-    const tokens = generateTokens(verifyResult.userId!, verifyResult.email!);
+    const tokens = generateTokens(verifyResult.userId!, verifyResult.email ?? null);
 
     const ipAddress = req.ip || req.socket.remoteAddress;
     const userAgent = req.headers['user-agent'];
