@@ -150,7 +150,7 @@ const LOCATION_TYPE_ICONS: Record<LocationType, React.ComponentType<any>> = {
 export default function CreateOpportunityScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
   const { selectedOrgId, selectedOrg } = useSpace();
   const alerts = useAlert();
@@ -640,7 +640,7 @@ export default function CreateOpportunityScreen() {
 
   const formatDate = (date: Date | null) => {
     if (!date) return t('community.form.notDefinedFeminine');
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    return date.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
   const formatNumber = (num: string | number | null | undefined): string => {

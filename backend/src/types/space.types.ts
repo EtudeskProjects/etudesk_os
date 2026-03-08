@@ -486,7 +486,7 @@ export function calculateBookingPrice(
 }
 
 export function formatPrice(amount: number): string {
-  return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+  return new Intl.NumberFormat('en-US').format(amount) + ' FCFA';
 }
 
 export function getDayName(dayOfWeek: number): string {

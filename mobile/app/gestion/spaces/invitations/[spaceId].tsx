@@ -42,7 +42,7 @@ export default function SpaceInvitationsScreen() {
   const { spaceId } = useLocalSearchParams<{ spaceId: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [invitations, setInvitations] = useState<SpaceInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -165,7 +165,7 @@ export default function SpaceInvitationsScreen() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
+    return new Date(dateString).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

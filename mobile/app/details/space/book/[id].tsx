@@ -38,6 +38,7 @@ import {
 	Info,
 	FileText,
 } from 'lucide-react-native';
+import { getCurrentLocale } from '../../../../src/i18n';
 	import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../../../src/constants/theme';
 	import { Button, CheckboxRow, Chip, IconButton, Input, StepIndicator, LoadingShimmer } from '../../../../src/components/ui';
 import { useTheme } from '../../../../src/hooks/useTheme';
@@ -124,7 +125,7 @@ const formatDateDisplay = (date: Date): string => {
     month: 'long',
     day: 'numeric',
   };
-  return date.toLocaleDateString('fr-FR', options);
+  return date.toLocaleDateString(getCurrentLocale(), options);
 };
 
 // Format datetime for API
@@ -173,7 +174,7 @@ export default function BookSpaceScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { error: showError, success: showSuccess } = useAlert();
   const mainScrollRef = useRef<ScrollView>(null);
 

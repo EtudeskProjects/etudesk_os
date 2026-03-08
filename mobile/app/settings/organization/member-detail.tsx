@@ -64,7 +64,7 @@ export default function MemberDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const {
     members,
     canManageMembers: canEditRoles,
@@ -169,7 +169,7 @@ export default function MemberDetailScreen() {
   const formatDate = (dateString?: string) => {
     if (!dateString) return t('organization.members.memberDetail.na');
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
+    return date.toLocaleDateString(locale, {
       day: 'numeric',
       month: 'long',
       year: 'numeric',

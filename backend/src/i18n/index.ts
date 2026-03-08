@@ -79,3 +79,24 @@ export { i18next };
 
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 export { SUPPORTED_LANGUAGES, FALLBACK_LANGUAGE };
+
+export function getLocaleForLanguage(language: SupportedLanguage): string {
+  const locales: Record<SupportedLanguage, string> = {
+    fr: 'fr-FR',
+    en: 'en-US',
+    es: 'es-ES',
+    ar: 'ar',
+    it: 'it-IT',
+    de: 'de-DE',
+    zh: 'zh-CN',
+  };
+
+  return locales[language] || 'en-US';
+}
+
+export function normalizeLanguage(value: unknown, fallback: SupportedLanguage = FALLBACK_LANGUAGE): SupportedLanguage {
+  const lang = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return (SUPPORTED_LANGUAGES as readonly string[]).includes(lang)
+    ? (lang as SupportedLanguage)
+    : fallback;
+}

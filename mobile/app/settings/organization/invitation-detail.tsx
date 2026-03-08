@@ -61,7 +61,7 @@ export default function InvitationDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { invitations, cancelInvitation, resendInvitation } = useOrganizationMembers();
 
   const invitation = invitations.find(i => i.id === id);
@@ -90,7 +90,7 @@ export default function InvitationDetailScreen() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
+    return date.toLocaleDateString(locale, {
       day: 'numeric',
       month: 'long',
       year: 'numeric',

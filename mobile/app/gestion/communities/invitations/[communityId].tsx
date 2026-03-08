@@ -60,7 +60,7 @@ export default function CommunityInvitationsScreen() {
   const { communityId } = useLocalSearchParams<{ communityId: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [invitations, setInvitations] = useState<CommunityInvitation[]>([]);
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
@@ -182,7 +182,7 @@ export default function CommunityInvitationsScreen() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
+    return new Date(dateString).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

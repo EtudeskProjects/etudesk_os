@@ -62,7 +62,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function EcosystemScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { t, language } = useI18n();
+  const { t, locale } = useI18n();
   const { user } = useAuth();
   const { isOrganizationSpace } = useSpace();
 
@@ -387,7 +387,7 @@ const renderTalentContent = () => (
         {greeting.text} {getDisplayName()} 👋
       </Text>
       <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-        {new Date().toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+        {new Date().toLocaleDateString(locale, {
           weekday: 'long',
           day: 'numeric',
           month: 'long'

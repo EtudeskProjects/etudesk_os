@@ -28,6 +28,7 @@ import { copilotService } from '../../../services/copilotService';
 import { formatNumberNoTrailingZeros } from '../../../utils/number';
 import { getLabel } from '../../../utils/labels';
 import i18n from '../../../i18n';
+import { getCurrentLocale } from '../../../i18n';
 import { Button, ShimmerPlaceholder } from '../../ui';
 
 /** Storage key for persisting confirmation action results */
@@ -101,7 +102,7 @@ function OpportunityPreview({ data, colors }: { data: Record<string, any>; color
         />
       )}
       {data.deadline && (
-        <DetailRow icon={Calendar} text={`${i18n.t('common.deadline')} : ${new Date(data.deadline).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`} colors={colors} />
+        <DetailRow icon={Calendar} text={`${i18n.t('common.deadline')} : ${new Date(data.deadline).toLocaleDateString(getCurrentLocale(), { day: 'numeric', month: 'short', year: 'numeric' })}`} colors={colors} />
       )}
 
       {/* Summary */}
@@ -312,7 +313,7 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
   interactive = true,
 }) => {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [state, setState] = useState<BlockState>('idle');
   const [resultMessage, setResultMessage] = useState('');
   const [loaded, setLoaded] = useState(false);

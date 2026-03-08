@@ -43,7 +43,7 @@ export default function SpaceBookingsManagementScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [space, setSpace] = useState<Space | null>(null);
   const [bookings, setBookings] = useState<SpaceBooking[]>([]);
@@ -156,9 +156,9 @@ export default function SpaceBookingsManagementScreen() {
   const formatBookingDate = (startDate: string, endDate: string): string => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const dateStr = start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    const startTime = start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const endTime = end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = start.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+    const startTime = start.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    const endTime = end.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     return `${dateStr} - ${startTime} à ${endTime}`;
   };
 

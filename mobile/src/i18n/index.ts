@@ -11,6 +11,17 @@ import zh from './zh.json';
 
 const SUPPORTED_LANGUAGES = ['fr', 'en', 'es', 'ar', 'it', 'de', 'zh'] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
+export const DEFAULT_LANGUAGE: Language = 'en';
+
+export const LANGUAGE_OPTIONS: readonly { id: Language; label: string; flag: string }[] = [
+  { id: 'en', label: 'English', flag: 'EN' },
+  { id: 'fr', label: 'Français', flag: 'FR' },
+  { id: 'es', label: 'Español', flag: 'ES' },
+  { id: 'de', label: 'Deutsch', flag: 'DE' },
+  { id: 'it', label: 'Italiano', flag: 'IT' },
+  { id: 'ar', label: 'العربية', flag: 'AR' },
+  { id: 'zh', label: '中文', flag: 'ZH' },
+] as const;
 
 const RTL_LANGUAGES: ReadonlySet<string> = new Set(['ar']);
 
@@ -26,30 +37,58 @@ const i18n = new I18n({
 });
 
 // Set default locale (English as fallback for missing translations)
-i18n.defaultLocale = 'en';
+i18n.defaultLocale = DEFAULT_LANGUAGE;
 i18n.enableFallback = true;
 
+export function isValidLanguage(value: string): value is Language {
+  return (SUPPORTED_LANGUAGES as readonly string[]).includes(value);
+}
+
 // Get device language using expo-localization (works reliably on iOS + Android)
-function getDeviceLocale(): Language {
+export function getDeviceLanguage(): Language {
   try {
     const locales = getLocales();
     if (locales?.length > 0) {
-      const lang = locales[0].languageCode ?? 'en';
-      if ((SUPPORTED_LANGUAGES as readonly string[]).includes(lang)) {
-        return lang as Language;
-      }
+      const lang = locales[0].languageCode ?? DEFAULT_LANGUAGE;
+      if (isValidLanguage(lang)) return lang;
     }
   } catch {
     // Fallback to English
   }
-  return 'en';
+  return DEFAULT_LANGUAGE;
 }
 
-const detectedLocale = getDeviceLocale();
-i18n.locale = detectedLocale;
+export function getLocaleForLanguage(language: Language): string {
+  const localeMap: Record<Language, string> = {
+    en: 'en-US',
+    fr: 'fr-FR',
+    es: 'es-ES',
+    ar: 'ar',
+    it: 'it-IT',
+    de: 'de-DE',
+    zh: 'zh-CN',
+  };
+  return localeMap[language];
+}
+
+export function normalizeLanguage(value: unknown): Language {
+  const lang = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return isValidLanguage(lang) ? lang : DEFAULT_LANGUAGE;
+}
+
+export function getCurrentLanguage(): Language {
+  return normalizeLanguage(i18n.locale);
+}
+
+export function getCurrentLocale(): string {
+  return getLocaleForLanguage(getCurrentLanguage());
+}
+
+const initialLanguage = DEFAULT_LANGUAGE;
+i18n.locale = initialLanguage;
 
 // Apply RTL layout for Arabic
-const isRTL = RTL_LANGUAGES.has(detectedLocale);
+const isRTL = RTL_LANGUAGES.has(initialLanguage);
 if (I18nManager.isRTL !== isRTL) {
   I18nManager.allowRTL(isRTL);
   I18nManager.forceRTL(isRTL);

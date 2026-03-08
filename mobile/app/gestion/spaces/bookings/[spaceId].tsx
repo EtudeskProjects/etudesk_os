@@ -41,7 +41,7 @@ export default function SpaceBookingsScreen() {
   const { spaceId } = useLocalSearchParams<{ spaceId: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [space, setSpace] = useState<Space | null>(null);
   const [bookings, setBookings] = useState<SpaceBookingDetails[]>([]);
@@ -156,9 +156,9 @@ export default function SpaceBookingsScreen() {
   const formatBookingTime = (startDatetime: string, endDatetime: string): string => {
     const start = new Date(startDatetime);
     const end = new Date(endDatetime);
-    const dateStr = start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    const startTime = start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const endTime = end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = start.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+    const startTime = start.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    const endTime = end.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     return `${dateStr} - ${startTime} ${t('gestion.bookings.to')} ${endTime}`;
   };
 
@@ -172,7 +172,7 @@ export default function SpaceBookingsScreen() {
   };
 
   const formatPrice = (amount: number): string => {
-    return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+    return new Intl.NumberFormat(locale).format(amount) + ' FCFA';
   };
 
   const renderBookingItem = ({ item }: { item: SpaceBookingDetails }) => {

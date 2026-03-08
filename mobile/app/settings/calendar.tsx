@@ -23,6 +23,7 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, ThemeColors } from '../../sr
 import { useTheme } from '../../src/hooks/useTheme';
 import { useSpace } from '../../src/contexts/SpaceContext';
 import { PageLayout, EmptyState, IconButton } from '../../src/components/ui';
+import { getCurrentLocale } from '../../src/i18n';
 import { api } from '../../src/services/api';
 import { useI18n } from '../../src/contexts/I18nContext';
 
@@ -79,13 +80,13 @@ const isToday = (dateStr: string): boolean => {
 
 const formatTime = (dateStr: string): string => {
   const date = new Date(dateStr);
-  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString(getCurrentLocale(), { hour: '2-digit', minute: '2-digit' });
 };
 
 export default function CalendarScreen() {
   const { colors, isDark } = useTheme();
   const { isOrganizationSpace, selectedOrg } = useSpace();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const now = new Date();
 
@@ -291,7 +292,7 @@ export default function CalendarScreen() {
   };
 
   const formatReminderDate = (d: Date) => {
-    const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const time = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     return `${DAYS_SHORT[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]} ${t('calendar.at')} ${time}`;
   };
 

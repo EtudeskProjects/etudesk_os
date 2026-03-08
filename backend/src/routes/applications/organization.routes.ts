@@ -21,6 +21,7 @@ import {
   createForbiddenError,
   logger,
 } from '../../utils';
+import { getLocaleForLanguage, normalizeLanguage } from '../../i18n';
 import { rankApplications } from '../../services/matching.service';
 import { getApplicationRecommendation } from '../../services/recommendation.service';
 import * as notificationService from '../../services/notification.service';
@@ -214,6 +215,17 @@ router.get('/opportunity/:opportunityId/export-csv', authMiddleware, validate(op
       return str;
     };
 
+    let userLanguage = normalizeLanguage('en');
+    if (req.userId) {
+      const userLanguageResult = await pool.query(
+        'SELECT preferred_language FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1',
+        [req.userId]
+      );
+      userLanguage = normalizeLanguage(userLanguageResult.rows[0]?.preferred_language);
+    }
+
+    const locale = getLocaleForLanguage(userLanguage);
+
     const rows = filteredApps.map(app => {
       const talent = app.talent || {};
       return [
@@ -228,7 +240,7 @@ router.get('/opportunity/:opportunityId/export-csv', authMiddleware, validate(op
         escapeCSV(app.matchScore ? Math.round(app.matchScore) : ''),
         escapeCSV(STATUS_LABELS[app.status] || app.status),
         escapeCSV(app.star_rating || ''),
-        escapeCSV(app.applied_at ? new Date(app.applied_at).toLocaleDateString('fr-FR') : ''),
+        escapeCSV(app.applied_at ? new Date(app.applied_at).toLocaleDateString(locale) : ''),
         escapeCSV(app.cv_url || '')
       ].join(',');
     });

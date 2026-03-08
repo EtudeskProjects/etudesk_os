@@ -14,6 +14,7 @@ import { CommunityActivity, ActivityComment, PollOption } from '../../types/acti
 import { SPACING, TYPOGRAPHY, BORDER, ICON, withOpacity, OPACITY } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../contexts/I18nContext';
+import { getLocaleForLanguage } from '../../i18n';
 import { alertsGlobal } from '../../contexts/AlertContext';
 import {
     Heart,
@@ -73,7 +74,8 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
     onVote,
 }) => {
     const { colors } = useTheme();
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
+    const locale = getLocaleForLanguage(language);
 
     // State - Initialize from activity data
     const [liked, setLiked] = useState<boolean>(activity.is_liked || false);
@@ -279,7 +281,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                         </View>
                         {isScheduled && scheduledDate ? (
                             <Text style={[styles.scheduledTime, { color: colors.warning }]}>
-                                {scheduledDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à {scheduledDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                {scheduledDate.toLocaleDateString(locale, { day: 'numeric', month: 'short' })} à {scheduledDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                             </Text>
 	                        ) : (
 	                            <Timestamp date={activity.created_at} />
@@ -393,7 +395,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                         <View style={styles.eventInfo}>
                             <Text style={[styles.eventLabel, { color: colors.textSecondary }]}>{t('community.activity.dateLabel')}</Text>
                             <Text style={[styles.eventValue, { color: colors.textPrimary }]}>
-                                {eventStartDate.toLocaleDateString('fr-FR', {
+                                {eventStartDate.toLocaleDateString(locale, {
                                     weekday: 'long',
                                     day: 'numeric',
                                     month: 'long',
@@ -401,8 +403,8 @@ export const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
                                 })}
                             </Text>
                             <Text style={[styles.eventTime, { color: colors.primary }]}>
-                                {eventStartDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                                {eventEndDate && ` - ${eventEndDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}
+                                {eventStartDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+                                {eventEndDate && ` - ${eventEndDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`}
                             </Text>
                         </View>
                     </View>

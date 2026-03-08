@@ -27,6 +27,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useNotifications, NotificationData } from '../../src/hooks/useNotifications';
 import { IconButton, LoadingShimmer } from '../../src/components/ui';
 import { useI18n } from '../../src/contexts/I18nContext';
+import { getCurrentLocale } from '../../src/i18n';
 
 
 const formatRelativeTime = (dateString: string, t: (key: string, params?: Record<string, any>) => string): string => {
@@ -43,7 +44,7 @@ const formatRelativeTime = (dateString: string, t: (key: string, params?: Record
     if (d < 7) return t('common.time.days', { count: d });
     if (d < 30) return t('common.time.weeks', { count: Math.floor(d / 7) });
     if (d < 365) return t('common.time.months', { count: Math.floor(d / 30) });
-    return new Date(dateString).toLocaleDateString('fr-FR');
+    return new Date(dateString).toLocaleDateString(getCurrentLocale());
   } catch {
     return '';
   }
@@ -87,7 +88,7 @@ const getNotificationColor = (type: string, colors: ThemeColors): string => {
 export default function NotificationsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const {
     notifications,
     unreadCount,

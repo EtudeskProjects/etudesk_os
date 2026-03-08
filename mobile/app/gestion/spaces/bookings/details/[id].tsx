@@ -88,7 +88,7 @@ export default function BookingDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
 
   const STATUS_CONFIG = getStatusConfig(colors);
@@ -256,7 +256,7 @@ export default function BookingDetailsScreen() {
   };
 
   const formatBookingDate = (datetime: string): string => {
-    return new Date(datetime).toLocaleDateString('fr-FR', {
+    return new Date(datetime).toLocaleDateString(locale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -267,8 +267,8 @@ export default function BookingDetailsScreen() {
   const formatBookingTime = (startDatetime: string, endDatetime: string): string => {
     const start = new Date(startDatetime);
     const end = new Date(endDatetime);
-    const startTime = start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const endTime = end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const startTime = start.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    const endTime = end.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     return `${startTime} - ${endTime}`;
   };
 
@@ -282,7 +282,7 @@ export default function BookingDetailsScreen() {
   };
 
   const formatPrice = (amount: number): string => {
-    return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+    return new Intl.NumberFormat(locale).format(amount) + ' FCFA';
   };
 
   const renderTab = (tab: Tab, label: string) => {

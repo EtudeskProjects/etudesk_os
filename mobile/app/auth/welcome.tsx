@@ -6,7 +6,7 @@ import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../s
 import { Button, SelectCard } from '../../src/components/ui';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
-import type { Language } from '../../src/i18n';
+import { LANGUAGE_OPTIONS } from '../../src/i18n';
 
 const { height } = Dimensions.get('window');
 
@@ -14,11 +14,6 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t, language, setLanguage } = useI18n();
-
-  const languageOptions: { id: Language; label: string; flag: string }[] = [
-    { id: 'fr', label: 'Français', flag: 'FR' },
-    { id: 'en', label: 'English', flag: 'EN' },
-  ];
 
   const handleStart = () => {
     router.replace({ pathname: '/(tabs)/assistant', params: { mode: 'explore', prompt: t('auth.welcome.getStarted') } });
@@ -62,7 +57,7 @@ export default function WelcomeScreen() {
               {t('auth.welcome.languageSubtitle')}
             </Text>
             <View style={styles.languageOptions}>
-              {languageOptions.map((option) => (
+              {LANGUAGE_OPTIONS.map((option) => (
                 <SelectCard
                   key={option.id}
                   selected={language === option.id}

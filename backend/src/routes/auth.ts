@@ -525,17 +525,10 @@ router.put('/language', authMiddleware, async (req: AuthRequest, res: Response) 
     }
 
     const { pool } = await import('../services/database');
-    // Sync language on both users and talents tables
     await pool.query(
       'UPDATE users SET preferred_language = $1, updated_at = NOW() WHERE id = $2',
       [language, req.userId]
     );
-    if (req.talentId) {
-      await pool.query(
-        'UPDATE talents SET preferred_language = $1, updated_at = NOW() WHERE id = $2',
-        [language, req.talentId]
-      );
-    }
 
     return res.json(wrapData({
       success: true,

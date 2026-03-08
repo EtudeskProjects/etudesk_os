@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getLocales } from 'expo-localization';
-import i18n, { Language, SUPPORTED_LANGUAGES, setLanguage as setI18nLanguage } from '../i18n';
+import i18n, {
+  DEFAULT_LANGUAGE,
+  Language,
+  getLocaleForLanguage,
+  isValidLanguage,
+  setLanguage as setI18nLanguage,
+} from '../i18n';
 import { STORAGE_KEYS } from '../constants/config';
 import { api } from '../services/api';
 
@@ -18,50 +23,25 @@ interface I18nProviderProps {
   children: ReactNode;
 }
 
-const supportedSet: ReadonlySet<string> = new Set(SUPPORTED_LANGUAGES);
-
-function isValidLanguage(value: string): value is Language {
-  return supportedSet.has(value);
-}
-
-// Get device language using expo-localization
-function getDeviceLanguage(): Language {
-  try {
-    const locales = getLocales();
-    if (locales?.length > 0) {
-      const lang = locales[0].languageCode ?? 'fr';
-      if (isValidLanguage(lang)) return lang;
-    }
-  } catch {
-    // Fallback to French
-  }
-  return 'fr';
-}
-
-const LANGUAGE_USER_CHOSEN_KEY = 'app_language_user_chosen';
-
 export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>(getDeviceLanguage());
+  const [language, setLanguageState] = useState<Language>(DEFAULT_LANGUAGE);
 
-  // Load stored language on mount — only if user explicitly chose it
-  // Then sync current language to backend so copilot responds in the right language
+  // Load persisted language if present, otherwise use the global default.
+  // Then sync the resolved value to the backend.
   useEffect(() => {
     (async () => {
       try {
-        let resolvedLang = language; // device language by default
-        const userChose = await AsyncStorage.getItem(LANGUAGE_USER_CHOSEN_KEY);
-        if (userChose === 'true') {
-          const stored = await AsyncStorage.getItem(STORAGE_KEYS.LANGUAGE);
-          if (stored && isValidLanguage(stored)) {
-            resolvedLang = stored;
-            setLanguageState(stored);
-            setI18nLanguage(stored);
-          }
-        }
-        // Sync language to backend on startup (covers new users + device language changes)
+        const stored = await AsyncStorage.getItem(STORAGE_KEYS.LANGUAGE);
+        const resolvedLang = stored && isValidLanguage(stored)
+          ? stored
+          : DEFAULT_LANGUAGE;
+
+        setLanguageState(resolvedLang);
+        setI18nLanguage(resolvedLang);
+
         const isAuthenticated = await api.isAuthenticated();
         if (isAuthenticated) {
-          api.put('/api/auth/language', { language: resolvedLang }).catch(() => {});
+          await api.put('/api/auth/language', { language: resolvedLang });
         }
       } catch {
         // ignore
@@ -72,18 +52,15 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   const setLanguage = useCallback(async (lang: Language) => {
     setLanguageState(lang);
     setI18nLanguage(lang);
-    // Mark as explicit user choice + persist
-    AsyncStorage.setItem(LANGUAGE_USER_CHOSEN_KEY, 'true').catch(() => {});
-    AsyncStorage.setItem(STORAGE_KEYS.LANGUAGE, lang).catch(() => {});
+    await AsyncStorage.setItem(STORAGE_KEYS.LANGUAGE, lang).catch(() => {});
 
-    // Sync language preference to backend (fire-and-forget)
     try {
       const isAuthenticated = await api.isAuthenticated();
       if (isAuthenticated) {
-        api.put('/api/auth/language', { language: lang }).catch(() => {});
+        await api.put('/api/auth/language', { language: lang });
       }
     } catch {
-      // Ignore sync errors - local preference is the source of truth
+      // Local state remains applied; next authenticated app start will resync.
     }
   }, []);
 
@@ -101,7 +78,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
     language,
     setLanguage,
     t,
-    locale: language,
+    locale: getLocaleForLanguage(language),
   };
 
   return (

@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Dimensions, Image, ScrollView, NativeSyntheticEvent, NativeScrollEvent, Modal, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SPACING, TYPOGRAPHY, BORDER } from '../src/constants/theme';
+import { Globe, X } from 'lucide-react-native';
+import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../src/constants/theme';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useTheme } from '../src/hooks/useTheme';
 import { useI18n } from '../src/contexts/I18nContext';
-import { Button, LoadingShimmer } from '../src/components/ui';
+import { Button, IconButton, LoadingShimmer, SelectCard } from '../src/components/ui';
+import { LANGUAGE_OPTIONS } from '../src/i18n';
 
 const { height, width } = Dimensions.get('window');
 
@@ -38,11 +40,13 @@ export default function SplashScreen() {
   const router = useRouter();
   const { status, isLoading, needsOnboarding } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, language, setLanguage } = useI18n();
   const insets = useSafeAreaInsets();
+  const slidesRef = useRef<ScrollView>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   // Check if onboarding has been seen before
   useEffect(() => {
@@ -72,13 +76,13 @@ export default function SplashScreen() {
     }
 
     // Otherwise, show onboarding slides
-  }, [status, isLoading, needsOnboarding, checkingOnboarding, hasSeenOnboarding]);
+  }, [status, isLoading, needsOnboarding, checkingOnboarding, hasSeenOnboarding, router]);
 
   const checkOnboardingSeen = async () => {
     try {
       const seen = await AsyncStorage.getItem(STORAGE_KEY_ONBOARDING_SEEN);
       setHasSeenOnboarding(seen === 'true');
-    } catch (error) {
+    } catch {
     } finally {
       setCheckingOnboarding(false);
     }
@@ -87,17 +91,26 @@ export default function SplashScreen() {
   const markOnboardingSeen = async () => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY_ONBOARDING_SEEN, 'true');
-    } catch (error) {
+    } catch {
     }
   };
 
   const handleNext = async () => {
     if (currentSlide < SLIDES.length - 1) {
-      setCurrentSlide(currentSlide + 1);
+      const nextSlide = currentSlide + 1;
+      slidesRef.current?.scrollTo({ x: nextSlide * width, animated: true });
+      setCurrentSlide(nextSlide);
     } else {
       // Mark onboarding as seen and go to login
       await markOnboardingSeen();
       router.replace('/auth/login');
+    }
+  };
+
+  const handleSlideScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const nextSlide = Math.round(event.nativeEvent.contentOffset.x / width);
+    if (nextSlide !== currentSlide) {
+      setCurrentSlide(nextSlide);
     }
   };
 
@@ -129,9 +142,7 @@ export default function SplashScreen() {
   }
 
   // Show onboarding slides
-  const slide = SLIDES[currentSlide];
   const isLastSlide = currentSlide === SLIDES.length - 1;
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View
@@ -141,18 +152,46 @@ export default function SplashScreen() {
           { paddingBottom: Math.max(SPACING.xxxl, insets.bottom + SPACING.xl) },
         ]}
       >
-        <View style={styles.slideContent}>
-          <View style={styles.imageContainer}>
-            <Image
-              source={slide.image}
-              style={styles.image}
-              resizeMode="cover"
-            />
-          </View>
-
-          <Text style={[styles.title, { color: colors.gray900 }]}>{t(slide.titleKey)}</Text>
-          <Text style={[styles.description, { color: colors.gray600 }]}>{t(slide.descKey)}</Text>
+        <View style={styles.topBar}>
+          <View style={styles.topBarSpacer} />
+          <Pressable
+            onPress={() => setShowLanguageModal(true)}
+            style={[styles.languageTrigger, { borderColor: colors.gray200, backgroundColor: colors.surface }]}
+            accessibilityRole="button"
+            accessibilityLabel={t('auth.welcome.languageTitle')}
+          >
+            <Globe size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+            <Text style={[styles.languageTriggerText, { color: colors.gray900 }]}>
+              {LANGUAGE_OPTIONS.find((option) => option.id === language)?.flag || language.toUpperCase()}
+            </Text>
+          </Pressable>
         </View>
+
+        <ScrollView
+          ref={slidesRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          bounces={false}
+          onMomentumScrollEnd={handleSlideScrollEnd}
+          style={styles.slidesWrapper}
+          contentContainerStyle={styles.slidesContent}
+        >
+          {SLIDES.map((slide) => (
+            <View key={slide.id} style={styles.slideContent}>
+              <View style={styles.imageContainer}>
+                <Image
+                  source={slide.image}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+              </View>
+
+              <Text style={[styles.title, { color: colors.gray900 }]}>{t(slide.titleKey)}</Text>
+              <Text style={[styles.description, { color: colors.gray600 }]}>{t(slide.descKey)}</Text>
+            </View>
+          ))}
+        </ScrollView>
 
         <View style={styles.pagination}>
           {SLIDES.map((_, index) => (
@@ -175,6 +214,56 @@ export default function SplashScreen() {
           style={styles.button}
         />
       </View>
+
+      <Modal
+        visible={showLanguageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLanguageModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowLanguageModal(false)}>
+          <Pressable
+            style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
+            onPress={(event) => event.stopPropagation()}
+          >
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={[styles.modalTitle, { color: colors.gray900 }]}>
+                  {t('auth.welcome.languageTitle')}
+                </Text>
+                <Text style={[styles.modalSubtitle, { color: colors.gray600 }]}>
+                  {t('auth.welcome.languageSubtitle')}
+                </Text>
+              </View>
+              <IconButton
+                onPress={() => setShowLanguageModal(false)}
+                icon={<X size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+                accessibilityLabel={t('common.close')}
+                variant="ghost"
+                size="sm"
+              />
+            </View>
+
+            <View style={styles.modalLanguageOptions}>
+              {LANGUAGE_OPTIONS.map((option) => (
+                <SelectCard
+                  key={option.id}
+                  selected={language === option.id}
+                  onPress={() => {
+                    setLanguage(option.id);
+                    setShowLanguageModal(false);
+                  }}
+                  style={styles.modalLanguageCard}
+                  accessibilityLabel={`${t('auth.welcome.languageTitle')} ${option.label}`}
+                >
+                  <Text style={[styles.languageFlag, { color: colors.primary }]}>{option.flag}</Text>
+                  <Text style={[styles.languageLabel, { color: colors.gray900 }]}>{option.label}</Text>
+                </SelectCard>
+              ))}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -198,15 +287,112 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: SPACING.lg,
-    paddingTop: height * 0.05,
+    paddingTop: height * 0.03,
     paddingBottom: SPACING.xxl,
+  },
+
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.lg,
+  },
+
+  topBarSpacer: {
+    width: 44,
+  },
+
+  languageTrigger: {
+    minHeight: 44,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER.radius.full,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+
+  languageTriggerText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    letterSpacing: 0.5,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    padding: SPACING.lg,
+  },
+
+  modalCard: {
+    borderRadius: BORDER.radius.xl,
+    borderWidth: 1,
+    padding: SPACING.lg,
+    gap: SPACING.lg,
+  },
+
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+  },
+
+  modalTitle: {
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    marginBottom: SPACING.xs,
+  },
+
+  modalSubtitle: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    lineHeight: TYPOGRAPHY.fontSize.sm * TYPOGRAPHY.lineHeight.relaxed,
+  },
+
+  modalLanguageOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.md,
+  },
+
+  modalLanguageCard: {
+    width: '30%',
+    minWidth: 92,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 72,
+  },
+
+  languageFlag: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    marginBottom: SPACING.xs,
+    letterSpacing: 1,
+  },
+
+  languageLabel: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
   slideContent: {
     flex: 1,
+    width,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: SPACING.sm,
+  },
+
+  slidesWrapper: {
+    flex: 1,
+    marginHorizontal: -SPACING.lg,
+  },
+
+  slidesContent: {
+    alignItems: 'stretch',
   },
 
   imageContainer: {

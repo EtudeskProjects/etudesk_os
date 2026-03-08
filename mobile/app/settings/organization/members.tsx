@@ -51,7 +51,7 @@ const getRoleColor = (role: OrganizationRole, colors: any) => {
 export default function MembersScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { selectedOrg, refreshOrganizations, setSpace } = useSpace();
   const {
     members,
@@ -114,7 +114,7 @@ export default function MembersScreen() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
+    return date.toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

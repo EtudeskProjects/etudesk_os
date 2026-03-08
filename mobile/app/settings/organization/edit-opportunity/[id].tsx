@@ -120,7 +120,7 @@ export default function EditOpportunityScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors, isDark } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const insets = useSafeAreaInsets();
   const alerts = useAlert();
   const { showToast } = useToast();
@@ -591,7 +591,7 @@ export default function EditOpportunityScreen() {
     }
   };
 
-  const formatDate = (date: Date | null) => date ? date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : t('community.form.notDefinedFeminine');
+  const formatDate = (date: Date | null) => date ? date.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) : t('community.form.notDefinedFeminine');
 
   const formatNumber = (num: string | number | null | undefined): string => {
     if (!num) return '';

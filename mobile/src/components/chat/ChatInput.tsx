@@ -28,6 +28,7 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER, LAYOUT, OPACITY, withOpacity } from '../../constants/theme';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../contexts/I18nContext';
+import { getLocaleForLanguage } from '../../i18n';
 import { formatNumberNoTrailingZeros } from '../../utils/number';
 	import { formatDate, formatTime } from '../../utils/date';
 	import { showToastGlobal } from '../ui';
@@ -71,7 +72,8 @@ export function ChatInput({
   showDatetimeOption = true,
 }: ChatInputProps) {
   const { colors, isDark } = useTheme();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const locale = getLocaleForLanguage(language);
   const insets = useSafeAreaInsets();
   const inputRef = useRef<any>(null);
 
@@ -269,7 +271,7 @@ export function ChatInput({
             display="spinner"
             onChange={handleDateChange}
             minimumDate={new Date()}
-            locale="fr-FR"
+            locale={locale}
             themeVariant={isDark ? 'dark' : 'light'}
             textColor={colors.textPrimary}
           />

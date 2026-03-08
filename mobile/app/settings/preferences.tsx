@@ -28,7 +28,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { useNotifications, NotificationPreferences } from '../../src/hooks/useNotifications';
     import { Button, IconButton, Toggle, LoadingShimmer, ShimmerPlaceholder } from '../../src/components/ui';
-import { Language } from '../../src/i18n';
+import { LANGUAGE_OPTIONS, Language } from '../../src/i18n';
 import type { ThemePreference } from '../../src/contexts/ThemeContext';
 
 
@@ -144,11 +144,6 @@ export default function PreferencesScreen() {
         { id: 'light', labelKey: 'preferences.themes.light', icon: Sun },
         { id: 'dark', labelKey: 'preferences.themes.dark', icon: Moon },
         { id: 'system', labelKey: 'preferences.themes.system', icon: Monitor },
-    ];
-
-    const LANGUAGE_OPTIONS: { id: Language; label: string; flag: string }[] = [
-        { id: 'fr', label: 'Français', flag: '🇫🇷' },
-        { id: 'en', label: 'English', flag: '🇬🇧' },
     ];
 
     const renderSection = (title: string, children: React.ReactNode) => (

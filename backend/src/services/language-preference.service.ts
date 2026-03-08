@@ -1,4 +1,4 @@
-import { FALLBACK_LANGUAGE, SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n';
+import { FALLBACK_LANGUAGE, normalizeLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n';
 import { pool } from './database';
 
 function toSupportedLanguage(value: unknown): SupportedLanguage | null {
@@ -6,10 +6,6 @@ function toSupportedLanguage(value: unknown): SupportedLanguage | null {
   return (SUPPORTED_LANGUAGES as readonly string[]).includes(lang)
     ? (lang as SupportedLanguage)
     : null;
-}
-
-export function normalizeLanguage(value: unknown, fallback: SupportedLanguage = FALLBACK_LANGUAGE): SupportedLanguage {
-  return toSupportedLanguage(value) || fallback;
 }
 
 export function getLanguageDisplayName(language: SupportedLanguage): string {
@@ -28,8 +24,8 @@ export function getLanguageDisplayName(language: SupportedLanguage): string {
 /**
  * Resolve the default language for a talent's AI generations.
  * Priority:
- * 1) Any user linked to this talent with a valid preferred_language
- * 2) Current user preferred_language (if provided)
+ * 1) Current user preferred_language (if provided)
+ * 2) Any user linked to this talent with a valid preferred_language
  * 3) Global fallback language (en)
  */
 export async function resolveTalentLanguage(params: {
@@ -37,20 +33,6 @@ export async function resolveTalentLanguage(params: {
   userId?: string | null;
 }): Promise<SupportedLanguage> {
   const { talentId, userId } = params;
-
-  if (talentId) {
-    const byTalent = await pool.query(
-      `SELECT preferred_language
-       FROM users
-       WHERE talent_id = $1
-         AND deleted_at IS NULL
-       ORDER BY updated_at DESC NULLS LAST, created_at ASC
-       LIMIT 1`,
-      [talentId]
-    );
-    const lang = toSupportedLanguage(byTalent.rows[0]?.preferred_language);
-    if (lang) return lang;
-  }
 
   if (userId) {
     const byUser = await pool.query(
@@ -62,6 +44,20 @@ export async function resolveTalentLanguage(params: {
       [userId]
     );
     const lang = toSupportedLanguage(byUser.rows[0]?.preferred_language);
+    if (lang) return lang;
+  }
+
+  if (talentId) {
+    const byTalent = await pool.query(
+      `SELECT preferred_language
+       FROM users
+       WHERE talent_id = $1
+         AND deleted_at IS NULL
+       ORDER BY updated_at DESC NULLS LAST, created_at DESC
+       LIMIT 1`,
+      [talentId]
+    );
+    const lang = toSupportedLanguage(byTalent.rows[0]?.preferred_language);
     if (lang) return lang;
   }
 

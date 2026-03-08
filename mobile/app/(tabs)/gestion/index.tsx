@@ -99,7 +99,7 @@ export default function GestionScreen() {
     community: { bg: colors.cardCommunity, icon: colors.cardCommunityAccent, text: colors.cardCommunityText },
     space: { bg: colors.cardSpace, icon: colors.cardSpaceAccent, text: colors.cardSpaceText },
   };
-  const { t, language } = useI18n();
+  const { t, locale } = useI18n();
   const { selectedOrg, isOrganizationSpace } = useSpace();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -488,7 +488,7 @@ export default function GestionScreen() {
                 {greeting.text}, {selectedOrg.name} 👋
               </Text>
               <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-                {new Date().toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+                {new Date().toLocaleDateString(locale, {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long'

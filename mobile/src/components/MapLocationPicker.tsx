@@ -42,10 +42,11 @@ interface MapLocationPickerProps {
 // Reverse geocode using Nominatim (OpenStreetMap)
 const reverseGeocode = async (
   latitude: number,
-  longitude: number
+  longitude: number,
+  language: string
 ): Promise<Partial<LocationResult>> => {
   try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=fr`;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=${language}`;
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Etudesk Mobile App',
@@ -210,7 +211,7 @@ export function MapLocationPicker({
   inline = false,
 }: MapLocationPickerProps) {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const webViewRef = useRef<WebView>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
@@ -300,7 +301,7 @@ export function MapLocationPicker({
         };
 
         // Reverse geocode
-        const geoResult = await reverseGeocode(coords.latitude, coords.longitude);
+        const geoResult = await reverseGeocode(coords.latitude, coords.longitude, language);
         const locationResult: LocationResult = {
           coordinates: coords,
           ...geoResult,

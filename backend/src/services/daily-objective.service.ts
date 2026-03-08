@@ -8,7 +8,7 @@ import { MODEL_SUGGESTION } from './ai/models';
 import { getGeminiClient } from './ai/provider';
 import { pool } from './database';
 import { logger } from '../utils';
-import { SupportedLanguage } from '../i18n';
+import { getLocaleForLanguage, SupportedLanguage } from '../i18n';
 import { getLanguageDisplayName } from './language-preference.service';
 
 const openai = getGeminiClient();
@@ -170,7 +170,7 @@ async function generateTalentObjective(
   language: SupportedLanguage = 'en'
 ): Promise<string> {
   const today = new Date();
-  const locale = language === 'fr' ? 'fr-FR' : 'en-GB';
+  const locale = getLocaleForLanguage(language);
   const languageName = getLanguageDisplayName(language);
   const dayOfWeek = today.toLocaleDateString(locale, { weekday: 'long' });
   const dateStr = today.toLocaleDateString(locale, { day: 'numeric', month: 'long' });
@@ -449,7 +449,7 @@ async function generateOrganizationObjective(
   language: SupportedLanguage = 'en'
 ): Promise<string> {
   const today = new Date();
-  const locale = language === 'fr' ? 'fr-FR' : 'en-GB';
+  const locale = getLocaleForLanguage(language);
   const languageName = getLanguageDisplayName(language);
   const dayOfWeek = today.toLocaleDateString(locale, { weekday: 'long' });
   const dateStr = today.toLocaleDateString(locale, { day: 'numeric', month: 'long' });
