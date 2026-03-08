@@ -149,7 +149,10 @@ export default function SplashScreen() {
         style={[
           styles.content,
           // Android gesture/3-button bars often report 0 inset; keep a generous bottom gutter.
-          { paddingBottom: Math.max(SPACING.xxxl, insets.bottom + SPACING.xl) },
+          {
+            paddingTop: Math.max(SPACING.md, insets.top + SPACING.xs),
+            paddingBottom: Math.max(SPACING.xxxl, insets.bottom + SPACING.xl),
+          },
         ]}
       >
         <View style={styles.topBar}>
@@ -286,7 +289,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.sm,
+    paddingTop: 0,
     paddingBottom: SPACING.xxl,
   },
 
