@@ -153,7 +153,6 @@ export default function SplashScreen() {
         ]}
       >
         <View style={styles.topBar}>
-          <View style={styles.topBarSpacer} />
           <Pressable
             onPress={() => setShowLanguageModal(true)}
             style={[styles.languageTrigger, { borderColor: colors.gray200, backgroundColor: colors.surface }]}
@@ -287,24 +286,21 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: SPACING.lg,
-    paddingTop: height * 0.03,
+    paddingTop: SPACING.sm,
     paddingBottom: SPACING.xxl,
   },
 
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.lg,
-  },
-
-  topBarSpacer: {
-    width: 44,
+    justifyContent: 'flex-end',
+    marginBottom: SPACING.sm,
   },
 
   languageTrigger: {
-    minHeight: 44,
-    paddingHorizontal: SPACING.md,
+    minHeight: 40,
+    paddingHorizontal: SPACING.sm + 2,
+    paddingVertical: 2,
     borderRadius: BORDER.radius.full,
     borderWidth: 1,
     flexDirection: 'row',
@@ -322,14 +318,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.35)',
     justifyContent: 'center',
-    padding: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.xl,
   },
 
   modalCard: {
     borderRadius: BORDER.radius.xl,
     borderWidth: 1,
-    padding: SPACING.lg,
-    gap: SPACING.lg,
+    padding: SPACING.md,
+    gap: SPACING.md,
   },
 
   modalHeader: {
@@ -340,30 +337,29 @@ const styles = StyleSheet.create({
   },
 
   modalTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.bold,
-    marginBottom: SPACING.xs,
+    marginBottom: 4,
   },
 
   modalSubtitle: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    lineHeight: TYPOGRAPHY.fontSize.sm * TYPOGRAPHY.lineHeight.relaxed,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    lineHeight: TYPOGRAPHY.fontSize.xs * TYPOGRAPHY.lineHeight.relaxed,
   },
 
   modalLanguageOptions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.md,
+    justifyContent: 'center',
+    gap: SPACING.sm,
   },
 
   modalLanguageCard: {
-    width: '30%',
-    minWidth: 92,
-    paddingVertical: SPACING.md,
+    width: '47%',
+    paddingVertical: SPACING.sm + 2,
     paddingHorizontal: SPACING.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 72,
+    minHeight: 60,
   },
 
   languageFlag: {
@@ -382,7 +378,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: SPACING.sm,
   },
 
@@ -397,8 +393,8 @@ const styles = StyleSheet.create({
 
   imageContainer: {
     width: width * 0.85,
-    height: height * 0.5,
-    marginBottom: SPACING.xl,
+    height: height * 0.47,
+    marginBottom: SPACING.lg,
     borderRadius: BORDER.radius.xl,
     overflow: 'hidden',
   },
@@ -426,7 +422,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: SPACING.sm,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
   },
 
   dot: {

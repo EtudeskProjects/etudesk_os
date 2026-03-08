@@ -100,3 +100,38 @@ export function normalizeLanguage(value: unknown, fallback: SupportedLanguage = 
     ? (lang as SupportedLanguage)
     : fallback;
 }
+
+export function resolveLanguageFromHeader(
+  headerValue: unknown,
+  fallback: SupportedLanguage = FALLBACK_LANGUAGE
+): SupportedLanguage {
+  const rawHeader = Array.isArray(headerValue)
+    ? headerValue.join(',')
+    : typeof headerValue === 'string'
+      ? headerValue
+      : '';
+
+  if (!rawHeader) {
+    return fallback;
+  }
+
+  const candidates = rawHeader
+    .split(',')
+    .map((value) => value.split(';')[0]?.trim().toLowerCase())
+    .filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    const exactMatch = normalizeLanguage(candidate, fallback);
+    if (exactMatch !== fallback || candidate === fallback) {
+      return exactMatch;
+    }
+
+    const baseLanguage = candidate.split('-')[0];
+    const normalizedBase = normalizeLanguage(baseLanguage, fallback);
+    if (normalizedBase !== fallback || baseLanguage === fallback) {
+      return normalizedBase;
+    }
+  }
+
+  return fallback;
+}

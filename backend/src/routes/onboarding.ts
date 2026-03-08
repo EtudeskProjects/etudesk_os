@@ -16,7 +16,13 @@ import { autoModerationService } from '../services/auto-moderation.service';
 import { creditWallet } from '../services/billing/credit.service';
 
 import { logger } from '../utils';
+import { normalizeLanguage } from '../i18n';
+import type { EmailLanguage } from '../services/email.service';
 const router = Router();
+
+function toEmailLanguage(language: string): EmailLanguage {
+  return language === 'fr' ? 'fr' : 'en';
+}
 
 // Valid profile tags (used by GET /options)
 const VALID_PROFILE_TAGS = [
@@ -63,7 +69,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
 
       // Check if user already has a talent profile
       const userResult = await client.query(
-        `SELECT talent_id, email FROM users WHERE id = $1 AND deleted_at IS NULL`,
+        `SELECT talent_id, email, preferred_language FROM users WHERE id = $1 AND deleted_at IS NULL`,
         [req.userId]
       );
 
@@ -251,7 +257,7 @@ router.post('/complete', authMiddleware, validate(onboardingSchema), async (req:
       // Send welcome email (async, don't wait) — skip for WhatsApp-only users
       const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ') || 'Talent';
       if (finalEmail) {
-        sendWelcomeEmail(finalEmail, fullName).catch(err => {
+        sendWelcomeEmail(finalEmail, fullName, toEmailLanguage(normalizeLanguage(user.preferred_language))).catch(err => {
           logger.error('❌ Failed to send welcome email:', err);
         });
       }

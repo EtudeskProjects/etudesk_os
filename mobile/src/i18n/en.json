@@ -256,7 +256,14 @@
       "displayNameRequired": "Display name is required",
       "profileCreationFailed": "Profile creation failed",
       "serverError": "Server error (500). Please try again later or contact support.",
-      "whatsappVerified": "Number verified via WhatsApp"
+      "whatsappVerified": "Number verified via WhatsApp",
+      "deleteAccountCta": "Delete this account",
+      "deleteAccountTitle": "Delete this account",
+      "deleteAccountMessage": "This account is still being created. If you delete it, your email or WhatsApp number will become available again immediately.",
+      "deleteAccountConfirmTitle": "Confirmation",
+      "deleteAccountConfirmMessage": "Are you sure you want to permanently delete this account that is still being created?",
+      "deleteAccountConfirm": "Delete permanently",
+      "deleteAccountError": "Failed to delete this account"
     },
     "emailLogin": {
       "title": "Sign in with email",

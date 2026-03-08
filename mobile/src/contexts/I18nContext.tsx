@@ -26,8 +26,25 @@ interface I18nProviderProps {
 export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(DEFAULT_LANGUAGE);
 
+  const applyLanguage = useCallback(async (lang: Language) => {
+    setLanguageState(lang);
+    setI18nLanguage(lang);
+    await AsyncStorage.setItem(STORAGE_KEYS.LANGUAGE, lang).catch(() => {});
+  }, []);
+
+  const syncStoredUserLanguage = useCallback(async (lang: Language) => {
+    const existingUser = await api.getUser<Record<string, unknown>>();
+    if (!existingUser) {
+      return;
+    }
+
+    await api.storeUser({
+      ...existingUser,
+      preferredLanguage: lang,
+    });
+  }, []);
+
   // Load persisted language if present, otherwise use the global default.
-  // Then sync the resolved value to the backend.
   useEffect(() => {
     (async () => {
       try {
@@ -36,43 +53,52 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
           ? stored
           : DEFAULT_LANGUAGE;
 
-        setLanguageState(resolvedLang);
-        setI18nLanguage(resolvedLang);
+        await applyLanguage(resolvedLang);
+      } catch {
+        // ignore
+      }
+    })();
+  }, [applyLanguage]);
 
-        const isAuthenticated = await api.isAuthenticated();
-        if (isAuthenticated) {
-          await api.put('/api/auth/language', { language: resolvedLang });
+  const setLanguage = useCallback(async (lang: Language) => {
+    const normalizedLanguage = isValidLanguage(lang) ? lang : DEFAULT_LANGUAGE;
+    const isAuthenticated = await api.isAuthenticated();
+
+    if (isAuthenticated) {
+      await api.put('/api/auth/language', { language: normalizedLanguage });
+      await syncStoredUserLanguage(normalizedLanguage);
+    }
+
+    await applyLanguage(normalizedLanguage);
+  }, [applyLanguage, syncStoredUserLanguage]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!(await api.isAuthenticated())) {
+          return;
+        }
+
+        const user = await api.getUser<Record<string, unknown>>();
+        const preferredLanguage = user?.preferredLanguage;
+        if (typeof preferredLanguage === 'string' && isValidLanguage(preferredLanguage) && preferredLanguage !== language) {
+          await applyLanguage(preferredLanguage);
         }
       } catch {
         // ignore
       }
     })();
-  }, []);
-
-  const setLanguage = useCallback(async (lang: Language) => {
-    setLanguageState(lang);
-    setI18nLanguage(lang);
-    await AsyncStorage.setItem(STORAGE_KEYS.LANGUAGE, lang).catch(() => {});
-
-    try {
-      const isAuthenticated = await api.isAuthenticated();
-      if (isAuthenticated) {
-        await api.put('/api/auth/language', { language: lang });
-      }
-    } catch {
-      // Local state remains applied; next authenticated app start will resync.
-    }
-  }, []);
+  }, [applyLanguage, language]);
 
   // Translation function with interpolation support
   const t = useCallback((key: string, options?: Record<string, string | number>): string => {
     try {
       return i18n.t(key, options);
-    } catch (error) {
+    } catch {
       if (__DEV__) console.warn(`Translation missing for key: ${key}`);
       return key;
     }
-  }, [language]); // Re-create when language changes
+  }, []);
 
   const value: I18nContextType = {
     language,

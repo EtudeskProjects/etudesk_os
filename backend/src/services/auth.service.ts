@@ -53,6 +53,7 @@ export interface UserProfile {
   id: string;
   email: string | null;
   phone: string | null;
+  preferredLanguage: string | null;
   emailVerified: boolean;
   talentId: string | null;
   hasTalentProfile: boolean;
@@ -298,6 +299,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
       `SELECT
          u.id,
          COALESCE(NULLIF(t.email, ''), NULLIF(u.email, '')) as email,
+         u.preferred_language,
          u.email_verified,
          u.phone as user_phone,
          u.talent_id,
@@ -327,6 +329,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
       id: row.id,
       email: row.email,
       phone: row.talent_phone || row.user_phone || null,
+      preferredLanguage: row.preferred_language || null,
       emailVerified: row.email_verified,
       talentId: row.talent_id,
       hasTalentProfile: !!row.talent_id,
@@ -634,11 +637,14 @@ export async function deleteAccount(userId: string): Promise<DeleteAccountResult
         `UPDATE talents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`,
         [talentId]
       );
+      await client.query(
+        `UPDATE users SET deleted_at = NOW(), is_active = false WHERE id = $1`,
+        [userId]
+      );
+    } else {
+      // Accounts still in onboarding must be removed physically so email/phone become reusable immediately.
+      await client.query(`DELETE FROM users WHERE id = $1`, [userId]);
     }
-    await client.query(
-      `UPDATE users SET deleted_at = NOW(), is_active = false WHERE id = $1`,
-      [userId]
-    );
 
     await client.query('COMMIT');
     logger.info(`Account deleted for user ${userId} (talent: ${talentId})`);

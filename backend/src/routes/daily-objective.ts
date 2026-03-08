@@ -44,7 +44,7 @@ router.get('/talent', authMiddleware, async (req: AuthRequest, res: Response) =>
       throw debitError;
     }
 
-    const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const language = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
     const objective = await dailyObjectiveService.getTalentDailyObjective(talentId, language);
     res.json({ data: objective });
   } catch (error) {
@@ -104,7 +104,7 @@ router.get('/organization/:orgId', authMiddleware, async (req: AuthRequest, res:
       throw debitError;
     }
 
-    const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const language = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
     const objective = await dailyObjectiveService.getOrganizationDailyObjective(orgId, language);
     res.json({ data: objective });
   } catch (error) {

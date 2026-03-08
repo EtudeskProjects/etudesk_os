@@ -274,7 +274,7 @@ router.post('/generate-bio', authMiddleware, async (req: AuthRequest, res: Respo
       return res.status(400).json({ error: req.t('common:notEnoughInfoForBio') });
     }
 
-    const language = await resolveTalentLanguage({ talentId: req.talentId, userId: req.userId });
+    const language = await resolveTalentLanguage({ talentId: req.talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
     const languageName = getLanguageDisplayName(language);
     const openai = getGeminiClient();
     const completion = await openai.chat.completions.create({

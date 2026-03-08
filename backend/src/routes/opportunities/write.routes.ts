@@ -96,7 +96,7 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
       throw createForbiddenError(req.t('opportunities:notMemberOrg'));
     }
 
-    const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const language = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
     const input: GenerationInput = { title, type, organization_id, existing_data, language };
     const result = await generateOpportunitySuggestion(input);
 

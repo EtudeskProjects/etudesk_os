@@ -16,11 +16,6 @@ export const DEFAULT_LANGUAGE: Language = 'en';
 export const LANGUAGE_OPTIONS: readonly { id: Language; label: string; flag: string }[] = [
   { id: 'en', label: 'English', flag: 'EN' },
   { id: 'fr', label: 'Français', flag: 'FR' },
-  { id: 'es', label: 'Español', flag: 'ES' },
-  { id: 'de', label: 'Deutsch', flag: 'DE' },
-  { id: 'it', label: 'Italiano', flag: 'IT' },
-  { id: 'ar', label: 'العربية', flag: 'AR' },
-  { id: 'zh', label: '中文', flag: 'ZH' },
 ] as const;
 
 const RTL_LANGUAGES: ReadonlySet<string> = new Set(['ar']);

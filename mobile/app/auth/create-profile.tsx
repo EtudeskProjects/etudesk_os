@@ -50,7 +50,7 @@ export default function CreateProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const { completeOnboarding } = useAuth();
+  const { completeOnboarding, signOut } = useAuth();
   const insets = useSafeAreaInsets();
 
   // Form management with useForm hook
@@ -270,6 +270,52 @@ export default function CreateProfileScreen() {
     }
   };
 
+  const handleDeleteAccount = () => {
+    void alerts.showAlert({
+      title: t('auth.createProfile.deleteAccountTitle'),
+      message: t('auth.createProfile.deleteAccountMessage'),
+      buttons: [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => {
+            void alerts.showAlert({
+              title: t('auth.createProfile.deleteAccountConfirmTitle'),
+              message: t('auth.createProfile.deleteAccountConfirmMessage'),
+              buttons: [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                  text: t('auth.createProfile.deleteAccountConfirm'),
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      const result = await otpService.deleteAccount();
+                      if (!result.success) {
+                        void alerts.alert(
+                          t('common.error'),
+                          result.error || t('auth.createProfile.deleteAccountError')
+                        );
+                        return;
+                      }
+
+                      await signOut();
+                    } catch {
+                      void alerts.alert(
+                        t('common.error'),
+                        t('auth.createProfile.deleteAccountError')
+                      );
+                    }
+                  },
+                },
+              ],
+            });
+          },
+        },
+      ],
+    });
+  };
+
   const canProceed = () => {
     const baseValid = firstName.trim().length >= 2 && lastName.trim().length >= 2 && country.length > 0;
     // WhatsApp signup requires phone
@@ -287,7 +333,15 @@ export default function CreateProfileScreen() {
 	        accessibilityLabel={t('common.back')}
 	      />
 	      <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('auth.createProfile.title')}</Text>
-	      <View style={styles.headerSpacer} />
+	      <Pressable
+          onPress={handleDeleteAccount}
+          accessibilityRole="button"
+          accessibilityLabel={t('auth.createProfile.deleteAccountCta')}
+        >
+          <Text style={[styles.deleteHeaderButton, { color: colors.gray600 }]}>
+            {t('auth.createProfile.deleteAccountCta')}
+          </Text>
+        </Pressable>
 	    </View>
 
       <KeyboardAvoidingView
@@ -565,6 +619,16 @@ export default function CreateProfileScreen() {
               { backgroundColor: colors.background, paddingBottom: Math.max(SPACING.lg, insets.bottom + SPACING.md) },
             ]}
           >
+            <Pressable
+              onPress={handleDeleteAccount}
+              accessibilityRole="button"
+              accessibilityLabel={t('auth.createProfile.deleteAccountCta')}
+              style={styles.deleteFooterAction}
+            >
+              <Text style={[styles.deleteFooterText, { color: colors.gray600 }]}>
+                {t('auth.createProfile.deleteAccountCta')}
+              </Text>
+            </Pressable>
             <Button
               title={
                 form.state.isSubmitting
@@ -611,8 +675,11 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.fontWeight.semibold,
   },
 
-  headerSpacer: {
-    width: 40,
+  deleteHeaderButton: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    textAlign: 'right',
+    maxWidth: 112,
   },
 
   keyboardView: {
@@ -627,6 +694,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.md,
     paddingBottom: SPACING.xl,
+  },
+
+  deleteFooterAction: {
+    alignSelf: 'center',
+    marginBottom: SPACING.md,
+    paddingVertical: SPACING.xs,
+  },
+
+  deleteFooterText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
+    textDecorationLine: 'underline',
   },
 
   stepContent: {

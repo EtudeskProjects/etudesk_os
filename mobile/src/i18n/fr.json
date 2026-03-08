@@ -256,7 +256,14 @@
       "displayNameRequired": "Le nom d'affichage est requis",
       "profileCreationFailed": "Échec de la création du profil",
       "serverError": "Erreur serveur (500). Réessaie plus tard ou contacte le support.",
-      "whatsappVerified": "Numéro vérifié via WhatsApp"
+      "whatsappVerified": "Numéro vérifié via WhatsApp",
+      "deleteAccountCta": "Supprimer ce compte",
+      "deleteAccountTitle": "Supprimer ce compte",
+      "deleteAccountMessage": "Ce compte est encore en cours de création. Si tu le supprimes, ton email ou ton numéro WhatsApp redeviendra disponible immédiatement.",
+      "deleteAccountConfirmTitle": "Confirmation",
+      "deleteAccountConfirmMessage": "Es-tu vraiment sûr de vouloir supprimer définitivement ce compte en cours de création ?",
+      "deleteAccountConfirm": "Supprimer définitivement",
+      "deleteAccountError": "Impossible de supprimer ce compte"
     },
     "emailLogin": {
       "title": "Connexion par email",

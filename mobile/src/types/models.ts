@@ -13,6 +13,7 @@ export type ISOTimestamp = string;
 export interface User {
   id: UUID;
   email: string;
+  preferredLanguage?: string | null;
   emailVerified?: boolean;
   phone?: string;
   phoneVerified?: boolean;
@@ -28,10 +29,10 @@ export interface User {
   // Onboarding status
   onboardingComplete?: boolean;
   // Organization memberships
-  organizationMemberships?: Array<{
+  organizationMemberships?: {
     organizationId: UUID;
     role: 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER';
-  }>;
+  }[];
   // Timestamps
   createdAt?: ISOTimestamp;
   updatedAt?: ISOTimestamp;

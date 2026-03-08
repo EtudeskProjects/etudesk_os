@@ -50,7 +50,7 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
       throw createForbiddenError(req.t('communities:notOrgMember'));
     }
 
-    const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const language = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
     const input: GenerationInput = { name, organization_id, existing_data, language };
     const result = await generateCommunitySuggestion(input);
 

@@ -5,9 +5,10 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { SUPPORTED_LANGUAGES } from '../i18n';
+import { normalizeLanguage, resolveLanguageFromHeader, SUPPORTED_LANGUAGES } from '../i18n';
 import { createOTP, createWhatsAppOTP, verifyOTP, verifyOTPByChannel, resolveOrCreateUserForGoogle } from '../services/otp.service';
 import { sendOTPEmail } from '../services/email.service';
+import type { EmailLanguage } from '../services/email.service';
 import { sendWhatsAppOtp, formatPhoneToE164 } from '../services/whatsapp.service';
 import {
   generateTokens,
@@ -35,6 +36,10 @@ import {
 } from '../middleware/validation.middleware';
 
 const router = Router();
+
+function toEmailLanguage(language: string): EmailLanguage {
+  return language === 'fr' ? 'fr' : 'en';
+}
 
 function wrapData<T extends Record<string, any>>(payload: T) {
   return {
@@ -74,7 +79,8 @@ router.post('/request-otp', validate(requestOtpSchema), async (req: Request, res
     }
 
     // Send OTP via email
-    const emailResult = await sendOTPEmail(email, otpResult.code!);
+    const requestLanguage = resolveLanguageFromHeader(req.headers['accept-language']);
+    const emailResult = await sendOTPEmail(email, otpResult.code!, toEmailLanguage(requestLanguage));
 
     if (!emailResult.success) {
       logger.error('❌ Failed to send OTP email:', emailResult.error);
@@ -515,9 +521,9 @@ router.delete('/delete-account', authMiddleware, auditLog('AUTH_DELETE_ACCOUNT')
  */
 router.put('/language', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { language } = req.body;
+    const language = normalizeLanguage(req.body?.language);
 
-    if (!language || !(SUPPORTED_LANGUAGES as readonly string[]).includes(language)) {
+    if (!(SUPPORTED_LANGUAGES as readonly string[]).includes(language)) {
       return res.status(400).json({
         success: false,
         error: req.t('auth:invalidLanguage'),

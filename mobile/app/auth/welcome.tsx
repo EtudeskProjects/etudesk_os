@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Sparkles, Search, Users, MessageCircle, ArrowRight, Globe } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { Button, SelectCard } from '../../src/components/ui';
+import { useAuth } from '../../src/contexts/AuthContext';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { LANGUAGE_OPTIONS } from '../../src/i18n';
@@ -14,9 +15,11 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { t, language, setLanguage } = useI18n();
+  const { finishWelcome } = useAuth();
 
   const handleStart = () => {
-    router.replace({ pathname: '/(tabs)/assistant', params: { mode: 'explore', prompt: t('auth.welcome.getStarted') } });
+    finishWelcome();
+    router.replace({ pathname: '/(tabs)/assistant', params: { mode: 'explore', prompt: "C'est parti !" } });
   };
 
   const features = [

@@ -11,6 +11,8 @@ import { otpService } from '../services/otpService';
 import { onboardingService } from '../services/onboardingService';
 import { notificationService } from '../services/notificationService';
 import { logger } from '../services/logService';
+import { STORAGE_KEYS as APP_STORAGE_KEYS } from '../constants/config';
+import { isValidLanguage, setLanguage as setI18nLanguage } from '../i18n';
 
 const LOG_SOURCE = 'Auth';
 
@@ -22,6 +24,7 @@ export interface AuthState {
   user: User | null;
   isLoading: boolean;
   needsOnboarding: boolean;
+  mustShowWelcome: boolean;
 }
 
 interface AuthContextType extends AuthState {
@@ -32,6 +35,7 @@ interface AuthContextType extends AuthState {
   signOut: (allDevices?: boolean) => Promise<void>;
   refreshUser: () => Promise<void>;
   completeOnboarding: () => void;
+  finishWelcome: () => void;
   // Helpers
   hasOrganizationAccess: (orgId: string) => boolean;
   getUserOrganizationRole: (orgId: string) => string | null;
@@ -40,7 +44,18 @@ interface AuthContextType extends AuthState {
 // Storage keys
 const STORAGE_KEYS = {
   ONBOARDING_SHOWN: 'onboarding_shown',
+  POST_ONBOARDING_WELCOME_PENDING: 'post_onboarding_welcome_pending',
 };
+
+async function syncAppLanguageFromUser(user: User | null): Promise<void> {
+  const preferredLanguage = user?.preferredLanguage;
+  if (!preferredLanguage || !isValidLanguage(preferredLanguage)) {
+    return;
+  }
+
+  await AsyncStorage.setItem(APP_STORAGE_KEYS.LANGUAGE, preferredLanguage).catch(() => {});
+  setI18nLanguage(preferredLanguage);
+}
 
 // --- Context ---
 
@@ -58,6 +73,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user: null,
     isLoading: true,
     needsOnboarding: false,
+    mustShowWelcome: false,
   });
 
   const router = useRouter();
@@ -90,6 +106,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (!inAuthGroup || segments[1] !== 'create-profile') {
           router.replace('/auth/create-profile');
         }
+      } else if (state.mustShowWelcome) {
+        if (!isWelcomePage) {
+          router.replace('/auth/welcome');
+        }
       } else {
         // Fully authenticated with profile
         // Allow welcome page to be shown after onboarding
@@ -101,7 +121,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       }
     }
-  }, [state.status, state.needsOnboarding, segments]);
+  }, [router, state.mustShowWelcome, state.status, state.needsOnboarding, segments]);
 
   // CHECK AUTH STATE
   const checkAuthState = async () => {
@@ -118,6 +138,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           user: null,
           isLoading: false,
           needsOnboarding: false,
+          mustShowWelcome: false,
         });
         return;
       }
@@ -141,6 +162,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             user: null,
             isLoading: false,
             needsOnboarding: false,
+            mustShowWelcome: false,
           });
           return;
         }
@@ -154,6 +176,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             user: null,
             isLoading: false,
             needsOnboarding: false,
+            mustShowWelcome: false,
           });
           return;
         }
@@ -169,6 +192,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           user: null,
           isLoading: false,
           needsOnboarding: false,
+          mustShowWelcome: false,
         });
         return;
       }
@@ -198,21 +222,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
             needsOnboarding = false;
             logger.debug(LOG_SOURCE, 'API returned unclear status, assuming complete');
           }
-        } catch (error) {
+        } catch {
           // API failed - assume complete to avoid loops (better UX)
           needsOnboarding = false;
           logger.warn(LOG_SOURCE, 'Could not fetch onboarding status, assuming complete');
         }
       }
 
+      const mustShowWelcome = needsOnboarding
+        ? false
+        : (await AsyncStorage.getItem(STORAGE_KEYS.POST_ONBOARDING_WELCOME_PENDING)) === 'true';
+
+      await syncAppLanguageFromUser(user as User);
+
       setState({
         status: 'authenticated',
         user: user as User,
         isLoading: false,
         needsOnboarding,
+        mustShowWelcome,
       });
 
-      logger.info(LOG_SOURCE, 'Auth state initialized', { status: 'authenticated', needsOnboarding, userId: user.id });
+      logger.info(LOG_SOURCE, 'Auth state initialized', { status: 'authenticated', needsOnboarding, mustShowWelcome, userId: user.id });
     } catch (error) {
       logger.error(LOG_SOURCE, 'Error checking auth state', error);
       setState({
@@ -220,6 +251,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user: null,
         isLoading: false,
         needsOnboarding: false,
+        mustShowWelcome: false,
       });
     }
   };
@@ -301,6 +333,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user: null,
         isLoading: false,
         needsOnboarding: false,
+        mustShowWelcome: false,
       });
       router.replace('/auth/login');
     }
@@ -319,14 +352,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // COMPLETE ONBOARDING
   const completeOnboarding = useCallback(() => {
+    void AsyncStorage.setItem(STORAGE_KEYS.POST_ONBOARDING_WELCOME_PENDING, 'true').catch(() => {});
     setState(prev => ({
       ...prev,
       needsOnboarding: false,
+      mustShowWelcome: true,
       user: prev.user ? { ...prev.user, hasTalentProfile: true, onboardingComplete: true } : null,
     }));
     // Proactively refresh user data from server to get full profile (firstName, lastName, etc.)
     refreshUser();
   }, [refreshUser]);
+
+  const finishWelcome = useCallback(() => {
+    void AsyncStorage.removeItem(STORAGE_KEYS.POST_ONBOARDING_WELCOME_PENDING).catch(() => {});
+    setState(prev => ({
+      ...prev,
+      mustShowWelcome: false,
+    }));
+  }, []);
 
   // ORGANIZATION HELPERS
   const hasOrganizationAccess = useCallback((orgId: string): boolean => {
@@ -349,6 +392,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signOut,
     refreshUser,
     completeOnboarding,
+    finishWelcome,
     hasOrganizationAccess,
     getUserOrganizationRole,
   };

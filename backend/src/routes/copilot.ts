@@ -513,7 +513,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       // Context loading (cached 5 min per talent+mode)
       cache.getOrSet(ctxCacheKey, () => loadTalentContext(talentId, contextOptions), 5 * 60 * 1000),
       // Language preference
-      resolveTalentLanguage({ talentId, userId: req.userId }),
+      resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] }),
     ]);
     const sessionId = session.id;
     const sessionContext: Record<string, unknown> =
@@ -969,7 +969,7 @@ router.get('/suggestions', copilotGeneralLimiter, authMiddleware, async (req: Au
       });
     }
 
-    const userLanguage = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const userLanguage = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
     const languageName = getLanguageDisplayName(userLanguage);
 
     // 2. Cache miss — lightweight parallel data fetch (NO loadTalentContext)
@@ -1144,7 +1144,7 @@ router.post('/confirm', authMiddleware, async (req: AuthRequest, res: Response) 
       return res.status(400).json({ error: req.t('copilot:confirmActionEntityRequired') });
     }
 
-    const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const language = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
     const result = await handleConfirmation(talentId, { action, entityId, sessionId, data }, language);
 
     res.json({
@@ -1280,7 +1280,7 @@ router.post(
 
       // gpt-4o-mini-transcribe: better accuracy, lower WER, better French support
       // response_format must be 'json' for gpt-4o-mini-transcribe (text not supported)
-      const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+      const language = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
       const result = await openai.audio.transcriptions.create({
         file: audioFile,
         model: MODEL_STT,

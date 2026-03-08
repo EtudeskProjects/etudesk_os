@@ -65,7 +65,7 @@ router.post('/generate', authMiddleware, async (req: AuthRequest, res: Response)
       throw createForbiddenError(req.t('spaces:notOrgMember'));
     }
 
-    const language = await resolveTalentLanguage({ talentId, userId: req.userId });
+    const language = await resolveTalentLanguage({ talentId, userId: req.userId, acceptLanguageHeader: req.headers['accept-language'] });
     const input = { name, type, organization_id, existing_data, language };
     const result = await generateSpaceSuggestion(input);
 
