@@ -683,7 +683,8 @@ export async function generateSessionTitle(message: string, language: SupportedL
       .replace(/\s{2,}/g, ' ')
       .trim();
     return title || message.slice(0, 50);
-  } catch {
+  } catch (error) {
+    logger.warn('[copilot] Session title generation fell back to deterministic mode', { error });
     const words = message.replace(/[?!.,]/g, '').trim().split(/\s+/);
     return words.slice(0, 5).join(' ') + (words.length > 5 ? '...' : '');
   }

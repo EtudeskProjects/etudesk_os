@@ -219,6 +219,7 @@ export default function AssistantScreen() {
   // Track AppState for foreground reload
   const appStateRef = useRef(AppState.currentState);
   const isSendingRef = useRef(false);
+  const shouldResumeSessionRef = useRef(false);
 
   // Keep isSendingRef in sync with isSending state
   useEffect(() => {
@@ -248,13 +249,21 @@ export default function AssistantScreen() {
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       const wasBackground = appStateRef.current.match(/inactive|background/);
+
+      if (nextAppState.match(/inactive|background/) && isSendingRef.current && sessionId) {
+        shouldResumeSessionRef.current = true;
+      }
+
       appStateRef.current = nextAppState;
 
-      if (wasBackground && nextAppState === 'active' && isSendingRef.current && sessionId) {
-        // Stream was likely interrupted — abort, reload session, clean up
+      if (wasBackground && nextAppState === 'active' && shouldResumeSessionRef.current && sessionId) {
+        // The stream may have completed server-side while the app was backgrounded.
+        // Always reload the persisted session when coming back.
+        shouldResumeSessionRef.current = false;
         abortControllerRef.current?.abort();
         abortControllerRef.current = null;
         setIsSending(false);
+        setError(null);
         deactivateKeepAwake('copilot-stream');
         loadSession(sessionId);
       }

@@ -55,6 +55,41 @@ import { cache } from '../utils/cache';
 import { getLanguageDisplayName, resolveTalentLanguage } from '../services/language-preference.service';
 
 const router = Router();
+
+function buildDeterministicSessionTitle(
+  message: string,
+  language: string,
+  hasAttachments: boolean
+): string | null {
+  const normalized = message.trim().toLowerCase();
+
+  if (!normalized && hasAttachments) {
+    return language === 'fr' ? 'Analyse de document' : 'Document analysis';
+  }
+
+  const onboardingTriggers = new Set([
+    "c'est parti",
+    "c'est parti !",
+    'lets go',
+    "let's go",
+    'get started',
+    'start onboarding',
+  ]);
+  if (onboardingTriggers.has(normalized)) {
+    return language === 'fr' ? 'Onboarding Etudesk' : 'Etudesk onboarding';
+  }
+
+  const genericReplies = new Set(['oui', 'yes', 'ok', 'okay', 'daccord', "d'accord"]);
+  if (genericReplies.has(normalized)) {
+    return null;
+  }
+
+  if (normalized.startsWith('[') && normalized.endsWith(']')) {
+    return language === 'fr' ? 'Analyse de document' : 'Document analysis';
+  }
+
+  return null;
+}
 const MEMORY_MAX_SESSIONS = 12;
 const MEMORY_MAX_MESSAGES = 120;
 const MEMORY_MAX_SNIPPETS = 6;
@@ -911,7 +946,12 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     // Generate title for first message (non-blocking)
     const messageCount = historyRes.rows.length;
     if (messageCount <= 2) {
-      generateSessionTitle(safeMessage, userLanguage).then((title) => {
+      const deterministicTitle = buildDeterministicSessionTitle(safeMessage, userLanguage, hasAttachments);
+      const titlePromise = deterministicTitle
+        ? Promise.resolve(deterministicTitle)
+        : generateSessionTitle(safeMessage, userLanguage);
+
+      titlePromise.then((title) => {
         copilotService.updateSessionTitle(sessionId, title).catch(() => { });
       });
     }

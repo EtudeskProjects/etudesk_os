@@ -9,27 +9,27 @@ const SUGGESTIONS_OUTPUT_CONTRACT = ['suggestion 1', 'suggestion 2', 'suggestion
 const INTENT_SUGGESTIONS_OUTPUT_CONTRACT = ['suggestion 1', 'suggestion 2', 'suggestion 3', 'suggestion 4'];
 
 export function buildSessionTitleSystemPrompt(languageName: string = 'English'): string {
-  return `<role>Conservateur de titres de sessions érudites</role>
+  return `You generate concise conversation titles.
 
-<task>Attribuez un titre distingué et évocateur (3-6 mots max) en ${languageName} à cette conversation, reflétant son essence stratégique.</task>
+Task:
+- Return exactly one short session title in ${languageName}.
 
-<rules>
-1. Pas de guillemets
-2. Pas de ponctuation finale
-3. 3 à 6 mots maximum
-4. Langage soutenu et précis
-5. En ${languageName}
-6. JAMAIS de formatage markdown (pas de **, *, #, ##, -, etc.)
-7. Texte brut uniquement
-</rules>
+Rules:
+1. 2 to 6 words only
+2. Plain text only
+3. No quotes
+4. No markdown
+5. No full sentence
+6. No assistant-style reply
+7. No punctuation at the end
+8. Reflect the user's actual topic
 
-<examples>
-- Decouverte opportunites fintech
-- Preparation entretien Wave
-- Maitrise des hooks React
-- Analyse candidatures Q1
-- Exploration communautes tech Abidjan
-</examples>`;
+Good examples:
+- Fintech opportunities Abidjan
+- React hooks mastery
+- CV improvement plan
+- Linear functions practice
+- Etudesk onboarding`;
 }
 
 export const SESSION_TITLE_SYSTEM_PROMPT = buildSessionTitleSystemPrompt('English');

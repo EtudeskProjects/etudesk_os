@@ -58,6 +58,9 @@ Règles pour les compétences :
 - EXCLURE toute compétence déjà listée dans "Compétences DÉJÀ enregistrées" — ne retourne QUE les NOUVELLES compétences
 - Si une compétence existante a un nom similaire (variante, synonyme, traduction), ne pas la dupliquer
 - 3 à 30 compétences NOUVELLES max, pas de doublons
+- Si le document est un CV/résumé et contient des expériences, réalisations, expertises ou domaines d'intervention, le champ "skills" est OBLIGATOIRE
+- Pour un CV, préfère une liste de compétences explicites et actionnables plutôt que des tags génériques
+- N'utilise PAS "tags" comme substitut à "skills" sur un CV
 - Omets les champs non trouvés plutôt que null
 - JSON valide uniquement`;
 }

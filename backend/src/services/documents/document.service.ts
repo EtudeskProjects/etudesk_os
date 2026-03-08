@@ -14,6 +14,7 @@ import { extractAndSaveSkills } from './skill-extraction.service';
 import { mergeExtractedSkills } from '../skills/skill-merge.service';
 import { create } from '../notification.service';
 import { logger } from '../../utils';
+import { SKILL_TYPES } from '../../constants/skills';
 import {
   DocumentType,
   DocumentStatus,
@@ -261,13 +262,17 @@ export async function processDocumentExtraction(
       // Use AI-extracted title, fallback to generated summary
       const generatedTitle = data.title || generateDocumentSummary(data);
 
-      // Extract and save skills if present
-      const skillsInDocument = data.skills?.length ?? 0;
+      const fallbackSkills = buildFallbackSkills(data);
+      const normalizedSkills =
+        data.skills && data.skills.length > 0
+          ? data.skills
+          : fallbackSkills;
+      const skillsInDocument = normalizedSkills.length;
       let skillsAdded = 0;
       let nameSkipped = false;
 
       // Garde-fou : vérifier que le document appartient bien au talent
-      if (data.skills && data.skills.length > 0 && talentId) {
+      if (normalizedSkills.length > 0 && talentId) {
         let ownerMatch = true; // par défaut on laisse passer
 
         if (data.full_name) {
@@ -286,7 +291,7 @@ export async function processDocumentExtraction(
         }
 
         if (ownerMatch) {
-          const skillResult = await extractAndSaveSkills(talentId, documentId, data.skills);
+          const skillResult = await extractAndSaveSkills(talentId, documentId, normalizedSkills);
           skillsAdded = skillResult.added;
           await mergeExtractedSkills(talentId);
         } else {
@@ -395,6 +400,61 @@ export async function processDocumentExtraction(
       logger.error(`Failed to send error notification for document ${documentId}:`, notifError);
     }
   }
+}
+
+function buildFallbackSkills(data: {
+  detected_type?: DocumentType;
+  skills?: Array<{ name: string; type: 'KNOWLEDGE' | 'HARD_SKILL' | 'SOFT_SKILL'; proficiency_hint?: string; context?: string }>;
+  tags?: string[];
+  languages?: string[];
+  field_of_study?: string;
+}): Array<{ name: string; type: 'KNOWLEDGE' | 'HARD_SKILL' | 'SOFT_SKILL'; proficiency_hint?: string; context?: string }> {
+  if (data.detected_type !== DOCUMENT_TYPES.CV || (data.skills?.length ?? 0) > 0) {
+    return [];
+  }
+
+  const ignoredTags = new Set([
+    'cv',
+    'resume',
+    'curriculum vitae',
+    'français',
+    'francais',
+    'english',
+    'anglais',
+  ]);
+
+  const candidates = new Set<string>();
+  for (const tag of data.tags || []) {
+    const normalized = tag?.trim();
+    if (!normalized) continue;
+    const lower = normalized.toLowerCase();
+    if (ignoredTags.has(lower)) continue;
+    if (lower.length < 3) continue;
+    candidates.add(normalized);
+  }
+
+  if (data.field_of_study?.trim()) {
+    candidates.add(data.field_of_study.trim());
+  }
+
+  for (const lang of data.languages || []) {
+    const normalized = lang?.trim();
+    if (!normalized) continue;
+    const lower = normalized.toLowerCase();
+    if (ignoredTags.has(lower)) continue;
+    candidates.add(normalized);
+  }
+
+  return Array.from(candidates)
+    .slice(0, 8)
+    .map((name) => ({
+      name,
+      type: name.toLowerCase().includes('leadership') || name.toLowerCase().includes('communication')
+        ? SKILL_TYPES.SOFT_SKILL
+        : SKILL_TYPES.KNOWLEDGE,
+      proficiency_hint: 'EXPERT',
+      context: 'Derived from CV content when explicit skills were not returned by extraction.',
+    }));
 }
 
 /**
