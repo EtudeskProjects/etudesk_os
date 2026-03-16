@@ -162,11 +162,20 @@ curl -X POST http://localhost:3000/api/v1/copilot/chat \
   -d '{"message":"Bonjour","mode":"explore"}'
 ```
 
+## Repository
+
+| Champ | Valeur |
+|-------|--------|
+| Organisation | EtudeskProjects |
+| Repo | etudesk_os |
+| URL | https://github.com/EtudeskProjects/etudesk_os.git |
+| Branch prod | deploy/production |
+
 ## Deploiement
 
 ```bash
 # Depuis la machine locale
-cd /Users/laminebarro/Projects/ETUDESK/Etudesk_SAS/produit/etudesk_os
+cd /Users/laminebarro/LAMINEBARRO/BUSINESS/ETUDESK/Etudesk_SAS/PRODUCTS/etudesk_os
 git push origin deploy/production
 
 # Sur le VPS

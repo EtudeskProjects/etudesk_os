@@ -1,7 +1,7 @@
 # Plateformes Digitales
 
 > Centraliser tous les acces sur hello@etudesk.org (compte entreprise)
-> Derniere mise a jour : 23 fevrier 2026
+> Derniere mise a jour : 16 mars 2026
 
 ---
 
@@ -17,18 +17,17 @@
 
 | Plateforme | URL | Usage | Acces |
 |------------|-----|-------|-------|
-| OpenAI | https://platform.openai.com | Embeddings, Whisper, GPT-Image, Web Search | [ ] |
-| Anthropic | https://console.anthropic.com | Claude (agents copilot: Sonnet 4.6, guardrails: Haiku 4.5) | [ ] |
-| Google AI Studio | https://aistudio.google.com | Gemini (suggestions) | [ ] |
-| Pinecone | https://app.pinecone.io | Base vectorielle (index: etudesk) | [ ] |
-| Brave Search | https://api.search.brave.com | Recherche web (copilot) | [ ] |
+| Anthropic | https://console.anthropic.com | Claude (agents copilot: Sonnet 4.6, guardrails/summaries: Haiku 4.5) | [ ] |
+| OpenAI | https://platform.openai.com | Vision, embeddings, gpt-image-1, STT/TTS, web search (Responses API), recommendations, moderation | [ ] |
+| Google AI Studio | https://aistudio.google.com | Gemini 2.5 Flash Lite (suggestions, objectifs, bio, assistant WhatsApp) | [ ] |
+| Pinecone | https://app.pinecone.io | Base vectorielle (index: etudesk, 1536-dim, cosine) | [ ] |
 | YouTube Data API | https://console.cloud.google.com | Recherche videos (copilot Study) | [ ] |
 
 ## Infrastructure & Hebergement
 
 | Plateforme | URL | Usage | Acces |
 |------------|-----|-------|-------|
-| GitHub | https://github.com | Repos code (etudesk_os) | [ ] |
+| GitHub | https://github.com/EtudeskProjects/etudesk_os | Repo code (org: EtudeskProjects) | [ ] |
 | LWS | https://www.lws.fr | VPS production (backend + DB) | [ ] |
 | Cloudflare | https://dash.cloudflare.com | DNS + CDN + SSL | [ ] |
 | Resend | https://resend.com | Emails transactionnels (OTP, invitations) | [ ] |

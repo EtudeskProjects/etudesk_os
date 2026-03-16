@@ -1,6 +1,6 @@
 # Etudesk - Documentation Technique Complète
 
-> **Version:** 2.0.0 | **Date:** 14 Février 2026 | **Branche:** deploy/production
+> **Version:** 2.1.0 | **Date:** 16 Mars 2026 | **Branche:** deploy/production
 
 ---
 
@@ -55,7 +55,7 @@ Démocratiser l'accès aux opportunités professionnelles en Afrique de l'Ouest 
 ### Architecture monorepo
 
 ```
-etudesk-vf/
+etudesk_os/                          # https://github.com/EtudeskProjects/etudesk_os
 ├── backend/          # API Node.js + Express + TypeScript
 ├── mobile/           # React Native (Expo) — app principale
 ├── web/              # Next.js 15 — site vitrine / landing
@@ -458,8 +458,8 @@ Barème crédits (extrait):
 ┌─────────┼─────────────────┼─────────────────┼───────────────────────┐
 │         ▼                 ▼                 ▼                       │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐           │
-│  │ Paystack │  │  Resend  │  │Anthropic │  │  Brave   │           │
-│  │ Payments │  │  Email   │  │  Claude  │  │  Search  │           │
+│  │ Paystack │  │  Resend  │  │Anthropic │  │  OpenAI  │           │
+│  │ Payments │  │  Email   │  │  Claude  │  │WebSearch │           │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘           │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐                        │
 │  │  Google  │  │  OpenAI  │  │ YouTube  │                        │
@@ -536,7 +536,7 @@ Barème crédits (extrait):
 | **Anthropic Claude** | Agents IA principaux (Sonnet, Haiku) |
 | **Google Gemini** | Suggestions formulaires (Flash Lite) |
 | **OpenAI** | Images, STT, embeddings, web search, vision |
-| **Brave Search** | Recherche web (copilote) |
+| **OpenAI Web Search** | Recherche web (copilote, via OpenAI Responses API) |
 | **YouTube API** | Recherche de vidéos éducatives |
 | **Expo Push** | Notifications push (iOS/Android) |
 | **UltraMsg** | WhatsApp (notifications) |
@@ -650,7 +650,7 @@ backend/src/
 
 ## 9. Base de données PostgreSQL
 
-### Tables principales (15+ tables)
+### Tables principales (44 tables)
 
 #### Authentification & Utilisateurs
 | Table | Description |
@@ -1243,7 +1243,7 @@ mobile/app/
 
 | Service | Usage |
 |---------|-------|
-| Brave Search | Recherche web pour copilote |
+| OpenAI Web Search | Recherche web pour copilote (via OpenAI Responses API) |
 | YouTube API v3 | Vidéos éducatives (Study mode) |
 
 ### Communication
@@ -1375,7 +1375,7 @@ Un utilisateur Talent (30 crédits/jour) parraine 3 amis qui souscrivent :
 | `docs/ONTOLOGY.md` | Ontologie complète (entités, relations, enums, règles métier) |
 | `docs/COPILOT_ARCHITECTURE.md` | Architecture agents, tools, boucle agentic, SSE |
 | `docs/COPILOT_PERIMETER.md` | 3 modes, 17 skills, exemples d'usage |
-| `docs/COPILOT_TOOLS.md` | 12 tools avec parametres et retours |
+| `docs/COPILOT_TOOLS.md` | 12 tools avec paramètres et retours |
 | `docs/AI_MODELS.md` | Architecture multi-provider (Anthropic + Gemini + OpenAI) |
 | `docs/COPILOT_SKILLS_GUIDE.md` | Guide creation et maintenance skills |
 | `docs/copilot-calibration-audit.md` | 14 tests calibration (100% pass) |

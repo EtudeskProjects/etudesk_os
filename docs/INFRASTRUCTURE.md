@@ -1,6 +1,6 @@
 # Infrastructure Etudesk OS — Budget Recurrent
 
-> Derniere mise a jour : 13 fevrier 2026
+> Derniere mise a jour : 16 mars 2026
 > Taux de change : 1 USD = 555 FCFA | 1 EUR = 656 FCFA
 
 ---
@@ -15,31 +15,52 @@
 | Autres tools | Divers | Outils internes, licences | — | 100 000 |
 | **Sous-total fixe** | | | | **159 760** |
 
-## 2. Couts Variables Mensuels (AI)
+## 2. Couts Variables Mensuels (AI — Architecture multi-provider)
+
+3 providers simultanes — chaque provider est utilise pour ses forces.
 
 | Service | Plan | Modeles | Estimation | FCFA / mois |
 |---------|------|---------|------------|------------:|
-| OpenAI API | Pay-as-you-go | GPT-5, GPT-5-mini, GPT-4.1-nano, Embeddings, Whisper, GPT-Image | Phase lancement (< 500 users) | 55 500 — 165 000 |
-| | | | Phase croissance (500-5000 users) | 165 000 — 555 000 |
+| Anthropic API | Pay-as-you-go | claude-sonnet-4-6, claude-haiku-4-5 | Phase lancement (< 500 users) | 55 500 — 110 000 |
+| OpenAI API | Pay-as-you-go | gpt-4.1-mini, gpt-4.1-nano, embeddings, gpt-image-1, STT/TTS | Phase lancement (< 500 users) | 16 650 — 55 500 |
+| Google Gemini API | Pay-as-you-go | gemini-2.5-flash-lite | Phase lancement (< 500 users) | 2 775 — 5 550 |
+| **Total AI** | | | Phase lancement (< 500 users) | **74 925 — 171 050** |
+| | | | Phase croissance (500-5000 users) | 171 050 — 555 000 |
 
-**Detail tarifs OpenAI (par 1M tokens) :**
+**Detail tarifs par provider :**
+
+### Anthropic (agents principaux + guardrails)
 
 | Modele | Input | Output | Usage Etudesk |
 |--------|------:|-------:|---------------|
-| GPT-5 (MODEL_T1) | 0,69 FCFA/1K tokens | 5,55 FCFA/1K tokens | Agents principaux (Explorer, Study, Org) |
-| GPT-5-mini (MODEL_T2) | 0,14 FCFA/1K tokens | 1,11 FCFA/1K tokens | Sub-agents (FileReader, WebSearch) |
-| GPT-4.1-nano (MODEL_T3) | 0,03 FCFA/1K tokens | 0,22 FCFA/1K tokens | Guardrails, classification, resumes |
-| text-embedding-3-small | 0,01 FCFA/1K tokens | — | Embeddings Pinecone |
-| GPT-Image-1 | 11 — 105 FCFA/image | — | Generation d'images (Study) |
-| Whisper-1 | 3,33 FCFA/minute | — | Transcription audio |
+| claude-sonnet-4-6 (MODEL_AGENT) | 1,67 FCFA/1K tokens | 8,33 FCFA/1K tokens | Agents principaux (TalentAgent, OrgAgent) |
+| claude-haiku-4-5 (MODEL_FAST) | 0,44 FCFA/1K tokens | 2,22 FCFA/1K tokens | Guardrails, titres, summaries, session compression |
+
+### OpenAI (vision, embeddings, images, STT, web search, recommendations)
+
+| Modele | Input | Output | Usage Etudesk |
+|--------|------:|-------:|---------------|
+| gpt-4.1-mini (MODEL_SEARCH) | 0,22 FCFA/1K tokens | 0,89 FCFA/1K tokens | Web search, vision/extraction documents, KYC |
+| gpt-4.1-nano (MODEL_MATCH) | 0,06 FCFA/1K tokens | 0,22 FCFA/1K tokens | Recommendations candidats |
+| text-embedding-3-small (MODEL_EMBEDDING) | 0,01 FCFA/1K tokens | — | Embeddings Pinecone |
+| gpt-image-1 (MODEL_IMAGE) | 11 — 105 FCFA/image | — | Generation d'images (Study) |
+| gpt-4o-mini-transcribe (MODEL_STT) | 3,33 FCFA/minute | — | Transcription audio |
+| gpt-4o-mini-tts (MODEL_TTS) | variable | — | Text-to-speech |
+| omni-moderation-latest | gratuit | — | Auto-moderation contenu |
+
+### Google Gemini (suggestions, formulaires)
+
+| Modele | Input | Output | Usage Etudesk |
+|--------|------:|-------:|---------------|
+| gemini-2.5-flash-lite (MODEL_SUGGESTION) | ~0,01 FCFA/1K tokens | ~0,04 FCFA/1K tokens | Suggestions, objectifs quotidiens, bio, assistant WhatsApp |
 
 **Cout moyen par utilisateur/mois :**
 
 | Profil | Requetes/mois | Cout/utilisateur |
 |--------|--------------|------------------:|
-| Leger (Discover) | ~50 | 360 — 390 FCFA |
-| Moyen (Talent) | ~200 | 1 440 — 1 555 FCFA |
-| Intensif (Pro) | ~500 | 3 600 — 3 885 FCFA |
+| Leger (Discover) | ~50 | 400 — 450 FCFA |
+| Moyen (Talent) | ~200 | 1 600 — 1 800 FCFA |
+| Intensif (Pro) | ~500 | 4 000 — 4 500 FCFA |
 
 ## 3. Services Gratuits (Plans Starter/Free)
 
@@ -69,17 +90,17 @@
 | Categorie | FCFA / mois |
 |-----------|------------:|
 | Fixes mensuels | 159 760 |
-| AI API (estimation basse) | 55 500 |
+| AI API (estimation basse, 3 providers) | 74 925 |
 | Annuels amortis | 5 412 |
 | Services gratuits | 0 |
-| **TOTAL MENSUEL** | **220 672** |
+| **TOTAL MENSUEL** | **240 097** |
 
 ### Phase Croissance (500 — 5 000 utilisateurs actifs)
 
 | Categorie | FCFA / mois |
 |-----------|------------:|
 | Fixes mensuels | 159 760 |
-| AI API (estimation moyenne) | 277 500 |
+| AI API (estimation moyenne, 3 providers) | 277 500 |
 | Upgrades services (Pinecone Standard + Resend Pro) | 38 850 |
 | Annuels amortis | 5 412 |
 | **TOTAL MENSUEL** | **481 522** |
@@ -90,7 +111,7 @@
 
 | Scenario | FCFA / an |
 |----------|----------:|
-| Lancement (< 500 users) | ~2 650 000 |
+| Lancement (< 500 users) | ~2 880 000 |
 | Croissance (500-5000 users) | ~5 780 000 |
 
 ---
