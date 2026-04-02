@@ -56,31 +56,22 @@
 | Developer Account ID | 5706324467393602295 |
 | Account Type | Organization |
 | Developer Name | ETUDESK |
-| Organisation | ETUDESK |
+| Email compte | hello@etudesk.org |
 | Adresse | Abidjan Cocody Ii Plateaux Residences Aghien, Bloc A Villa 8, Abidjan, Cote d'Ivoire (CI) |
 | Website | https://etudesk.com/ |
-| Contact Name | Mohamed Lamine Barro |
-| Contact Email (Google) | lamine.barro@etudesk.org |
-| Contact Phone (Google) | +2250574631148 |
-| Developer Email (public) | lamine.barro@etudesk.org |
-| Developer Phone (public) | +2250584401313 |
-| Associated developer accounts | Aucun |
-| Statut | Compte cree, verification identite en cours |
+| Statut | **ACTIF** |
 
 ### Apple Developer Program
 
 | Champ | Valeur |
 |-------|--------|
 | URL | https://developer.apple.com |
-| Enrollment ID | 9FU4GSGGX3 |
+| Team | ETUDESK (82VPZK32J5) |
 | D-U-N-S | 851758402 |
 | Email | hello@etudesk.org |
-| Work Email | lamine.barro@etudesk.org |
 | Legal Entity | ETUDESK |
 | Adresse | Abidjan Cocody Ii Plateaux Residences Aghien, Bloc A Villa 8, Abidjan, Cote d'Ivoire |
-| Statut | Demande d'inscription recue le 20/02/2026, verification autorite en cours |
-| Historique D&B | DUNS mis a jour/confirme (Case 34265776) avant l'email Apple d'enrollment |
-| Dernier email Apple | "Your program enrollment has been received" (20/02/2026, 20:01) |
+| Statut | **ACTIF** — Agreement signe le 02/04/2026 |
 
 ### Expo
 

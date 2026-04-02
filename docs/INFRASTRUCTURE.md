@@ -77,8 +77,8 @@
 | Service | Detail | Prix original | FCFA / an | FCFA / mois (amorti) |
 |---------|--------|---------------|----------:|---------------------:|
 | Vename | Nom de domaine etudesk.com | — | 10 000 | 833 |
-| App Store | Compte developpeur Apple (hello@etudesk.org, Organisation ETUDESK) | 99 USD/an | 54 945 | 4 579 | **ACTIF** — paye 13/02/2026, Enrollment 9FU4GSGGX3, D-U-N-S 851758402 |
-| Play Store | Compte developpeur Google (Organisation ETUDESK) | 25 USD (unique) | 13 875 | — | **ACTIF** — paye 13/02/2026, Developer ID 5706324467393602295 |
+| App Store | Compte developpeur Apple (hello@etudesk.org, Organisation ETUDESK, Team 82VPZK32J5) | 99 USD/an | 54 945 | 4 579 |
+| Play Store | Compte developpeur Google (hello@etudesk.org, Organisation ETUDESK) | 25 USD (unique) | 13 875 | — |
 | **Sous-total annuel** | | | **78 820** | **5 412** |
 
 ---
