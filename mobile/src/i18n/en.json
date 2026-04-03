@@ -12,6 +12,8 @@
     "delete": "Delete",
     "edit": "Edit",
     "add": "Add",
+    "remove": "Remove",
+    "more": "More",
     "confirm": "Confirm",
     "back": "Back",
     "next": "Next",
@@ -1767,6 +1769,10 @@
     "noCalendar": "No calendar available.",
     "appointment": "Appointment",
     "eventAdded": "Event added to your calendar.",
+    "addAttachment": "Add attachment",
+    "send": "Send",
+    "downloadError": "Download failed",
+    "addToCalendar": "Add to calendar",
     "eventAddError": "Unable to add event.",
     "proposedSlot": "Proposed slot",
     "writeMessage": "Write your message...",
@@ -1919,7 +1925,8 @@
     "httpError": "Error {{status}}",
     "transcriptionError": "Transcription error",
     "audioTranscriptionError": "Unable to transcribe audio",
-    "uploadError": "File upload error"
+    "uploadError": "File upload error",
+    "sessionRefreshed": "Session refreshed"
   },
   "copilotContext": {
     "attachmentUploadError": "Attachment upload error",
@@ -2619,6 +2626,7 @@
       "voiceNoteError": "Unable to send voice note",
       "sendErrorShort": "Send error",
       "recording": "Recording...",
+      "processingVoiceNote": "Processing voice note...",
       "preparing": "Preparing...",
       "addAttachment": "Add attachment",
       "stopRecording": "Stop recording",

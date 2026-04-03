@@ -12,6 +12,8 @@
     "delete": "Supprimer",
     "edit": "Modifier",
     "add": "Ajouter",
+    "remove": "Supprimer",
+    "more": "Plus",
     "confirm": "Confirmer",
     "back": "Retour",
     "next": "Suivant",
@@ -1767,6 +1769,10 @@
     "noCalendar": "Aucun calendrier disponible.",
     "appointment": "Rendez-vous",
     "eventAdded": "Événement ajouté à ton calendrier.",
+    "addAttachment": "Ajouter une pièce jointe",
+    "send": "Envoyer",
+    "downloadError": "Échec du téléchargement",
+    "addToCalendar": "Ajouter au calendrier",
     "eventAddError": "Impossible d'ajouter l'événement.",
     "proposedSlot": "Créneau proposé",
     "writeMessage": "Écris ton message...",
@@ -1919,7 +1925,8 @@
     "httpError": "Erreur {{status}}",
     "transcriptionError": "Erreur de transcription",
     "audioTranscriptionError": "Impossible de transcrire l'audio",
-    "uploadError": "Erreur lors de l'envoi des fichiers"
+    "uploadError": "Erreur lors de l'envoi des fichiers",
+    "sessionRefreshed": "Session rafraîchie"
   },
   "copilotContext": {
     "attachmentUploadError": "Erreur lors de l'envoi des pièces jointes",
@@ -2619,6 +2626,7 @@
       "voiceNoteError": "Impossible d'envoyer la note vocale",
       "sendErrorShort": "Erreur d'envoi",
       "recording": "Enregistrement en cours...",
+      "processingVoiceNote": "Traitement de la note vocale...",
       "preparing": "Préparation...",
       "addAttachment": "Ajouter une pièce jointe",
       "stopRecording": "Arrêter l'enregistrement",

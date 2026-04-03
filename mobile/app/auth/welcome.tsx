@@ -1,13 +1,14 @@
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Pressable, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Sparkles, Search, Users, MessageCircle, ArrowRight, Globe } from 'lucide-react-native';
+import { Sparkles, Search, Users, MessageCircle, ArrowRight, Globe, X } from 'lucide-react-native';
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
-import { Button, SelectCard } from '../../src/components/ui';
+import { Button, IconButton, SelectCard } from '../../src/components/ui';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
 import { LANGUAGE_OPTIONS } from '../../src/i18n';
+import { useState } from 'react';
 
 const { height } = Dimensions.get('window');
 
@@ -16,10 +17,11 @@ export default function WelcomeScreen() {
   const { colors } = useTheme();
   const { t, language, setLanguage } = useI18n();
   const { finishWelcome } = useAuth();
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   const handleStart = () => {
     finishWelcome();
-    router.replace({ pathname: '/(tabs)/assistant', params: { mode: 'explore', prompt: "C'est parti !" } });
+    router.replace({ pathname: '/(tabs)/assistant', params: { mode: 'explore', prompt: t('auth.welcome.getStarted') } });
   };
 
   const features = [
@@ -43,38 +45,23 @@ export default function WelcomeScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       <View style={styles.content}>
+        {/* Top bar with discreet language toggle */}
+        <View style={styles.topBar}>
+          <Pressable
+            onPress={() => setShowLanguageModal(true)}
+            style={[styles.languageTrigger, { borderColor: colors.gray200, backgroundColor: colors.surface }]}
+            accessibilityRole="button"
+            accessibilityLabel={t('auth.welcome.languageTitle')}
+          >
+            <Globe size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />
+            <Text style={[styles.languageTriggerText, { color: colors.gray900 }]}>
+              {LANGUAGE_OPTIONS.find((option) => option.id === language)?.flag || language.toUpperCase()}
+            </Text>
+          </Pressable>
+        </View>
+
         {/* Header with celebration */}
         <View style={styles.header}>
-          <View style={styles.languageSection}>
-            <View style={styles.languageHeader}>
-              <Globe
-                size={ICON.size.sm}
-                color={colors.textSecondary}
-                strokeWidth={ICON.strokeWidth}
-              />
-              <Text style={[styles.languageTitle, { color: colors.textPrimary }]}>
-                {t('auth.welcome.languageTitle')}
-              </Text>
-            </View>
-            <Text style={[styles.languageSubtitle, { color: colors.textSecondary }]}>
-              {t('auth.welcome.languageSubtitle')}
-            </Text>
-            <View style={styles.languageOptions}>
-              {LANGUAGE_OPTIONS.map((option) => (
-                <SelectCard
-                  key={option.id}
-                  selected={language === option.id}
-                  onPress={() => setLanguage(option.id)}
-                  style={styles.languageCard}
-                  accessibilityLabel={`${t('auth.welcome.languageTitle')} ${option.label}`}
-                >
-                  <Text style={[styles.languageFlag, { color: colors.primary }]}>{option.flag}</Text>
-                  <Text style={[styles.languageLabel, { color: colors.textPrimary }]}>{option.label}</Text>
-                </SelectCard>
-              ))}
-            </View>
-          </View>
-
           <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.primary, OPACITY[15]) }]}>
             <Sparkles
               size={ICON.size.xl * 1.5}
@@ -131,6 +118,51 @@ export default function WelcomeScreen() {
           />
         </View>
       </View>
+
+      {/* Language modal */}
+      <Modal visible={showLanguageModal} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setShowLanguageModal(false)}>
+          <Pressable
+            style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.gray200 }]}
+            onPress={(event) => event.stopPropagation()}
+          >
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={[styles.modalTitle, { color: colors.gray900 }]}>
+                  {t('auth.welcome.languageTitle')}
+                </Text>
+                <Text style={[styles.modalSubtitle, { color: colors.gray600 }]}>
+                  {t('auth.welcome.languageSubtitle')}
+                </Text>
+              </View>
+              <IconButton
+                onPress={() => setShowLanguageModal(false)}
+                icon={<X size={ICON.size.sm} color={colors.textSecondary} strokeWidth={ICON.strokeWidth} />}
+                accessibilityLabel={t('common.close')}
+                variant="ghost"
+                size="sm"
+              />
+            </View>
+            <View style={styles.modalLanguageOptions}>
+              {LANGUAGE_OPTIONS.map((option) => (
+                <SelectCard
+                  key={option.id}
+                  selected={language === option.id}
+                  onPress={() => {
+                    setLanguage(option.id);
+                    setShowLanguageModal(false);
+                  }}
+                  style={styles.modalLanguageCard}
+                  accessibilityLabel={`${t('auth.welcome.languageTitle')} ${option.label}`}
+                >
+                  <Text style={[styles.languageFlag, { color: colors.primary }]}>{option.flag}</Text>
+                  <Text style={[styles.languageLabel, { color: colors.textPrimary }]}>{option.label}</Text>
+                </SelectCard>
+              ))}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -145,59 +177,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
   },
 
-  header: {
+  topBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: height * 0.03,
-    marginBottom: SPACING.xl,
+    justifyContent: 'flex-end',
+    marginBottom: SPACING.sm,
   },
 
-  languageSection: {
-    width: '100%',
-    marginBottom: SPACING.xl,
-  },
-
-  languageHeader: {
+  languageTrigger: {
+    minHeight: 40,
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
-    marginBottom: SPACING.xs,
-  },
-
-  languageTitle: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold,
-  },
-
-  languageSubtitle: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    lineHeight: TYPOGRAPHY.fontSize.sm * TYPOGRAPHY.lineHeight.relaxed,
-    marginBottom: SPACING.md,
-  },
-
-  languageOptions: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-  },
-
-  languageCard: {
-    flex: 1,
-    paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 72,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER.radius.full,
+    borderWidth: 1,
   },
 
-  languageFlag: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    marginBottom: SPACING.xs,
-    letterSpacing: 1,
-  },
-
-  languageLabel: {
+  languageTriggerText: {
     fontSize: TYPOGRAPHY.fontSize.sm,
     fontWeight: TYPOGRAPHY.fontWeight.medium,
+  },
+
+  header: {
+    alignItems: 'center',
+    paddingTop: height * 0.01,
+    marginBottom: SPACING.xl,
   },
 
   iconContainer: {
@@ -272,5 +278,63 @@ const styles = StyleSheet.create({
 
   footer: {
     paddingVertical: SPACING.xl,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    padding: SPACING.lg,
+  },
+
+  modalCard: {
+    width: '100%',
+    borderRadius: BORDER.radius.lg,
+    padding: SPACING.lg,
+    borderWidth: 1,
+  },
+
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.lg,
+  },
+
+  modalTitle: {
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.semibold,
+    marginBottom: SPACING.xs,
+  },
+
+  modalSubtitle: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+  },
+
+  modalLanguageOptions: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+  },
+
+  modalLanguageCard: {
+    flex: 1,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 72,
+  },
+
+  languageFlag: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    marginBottom: SPACING.xs,
+    letterSpacing: 1,
+  },
+
+  languageLabel: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 });
