@@ -25,7 +25,7 @@
     "production": {
       "ios": {
         "appleId": "hello@etudesk.org",
-        "ascAppId": "6759287937"
+        "ascAppId": "6761573837"
       },
       "android": {
         "serviceAccountKeyPath": "./google-play-service-account.json",

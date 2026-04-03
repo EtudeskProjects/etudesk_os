@@ -358,7 +358,7 @@
 				CODE_SIGN_ENTITLEMENTS = Etudesk/Etudesk.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 7M7A4S83B9;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -378,7 +378,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.etudesk.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.etudesk.os;
 				PRODUCT_NAME = Etudesk;
 				SWIFT_OBJC_BRIDGING_HEADER = "Etudesk/Etudesk-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -397,7 +397,7 @@
 				CODE_SIGN_ENTITLEMENTS = Etudesk/Etudesk.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 7M7A4S83B9;
 				INFOPLIST_FILE = Etudesk/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -412,7 +412,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.etudesk.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.etudesk.os;
 				PRODUCT_NAME = Etudesk;
 				SWIFT_OBJC_BRIDGING_HEADER = "Etudesk/Etudesk-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
