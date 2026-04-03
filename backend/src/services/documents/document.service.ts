@@ -263,10 +263,25 @@ export async function processDocumentExtraction(
       const generatedTitle = data.title || generateDocumentSummary(data);
 
       const fallbackSkills = buildFallbackSkills(data);
-      const normalizedSkills =
+      const rawSkills =
         data.skills && data.skills.length > 0
           ? data.skills
           : fallbackSkills;
+      // Normalize skills: handle both object format and pipe-delimited string format
+      const normalizedSkills = rawSkills.map((s: any) => {
+        if (typeof s === 'string') {
+          // Parse "name | TYPE | LEVEL | context" format
+          const parts = s.split('|').map((p: string) => p.trim());
+          return {
+            name: parts[0] || '',
+            type: (parts[1] || 'HARD_SKILL').toUpperCase(),
+            proficiency_hint: parts[2] || 'INTERMEDIATE',
+            context: parts[3] || undefined,
+          };
+        }
+        // Ensure type is uppercase for object format
+        return { ...s, type: s.type ? s.type.toUpperCase() : 'HARD_SKILL' };
+      });
       const skillsInDocument = normalizedSkills.length;
       let skillsAdded = 0;
       let nameSkipped = false;
@@ -326,8 +341,8 @@ export async function processDocumentExtraction(
       if (talentId) {
         const notifBody = nameSkipped
           ? `"${docTitle}" was analyzed, but skills were not added because the name in the document does not match your profile.`
-          : skillsInDocument > 0
-            ? `${skillsInDocument} skill${skillsInDocument > 1 ? 's' : ''} extracted from "${docTitle}"`
+          : skillsAdded > 0
+            ? `${skillsAdded} skill${skillsAdded > 1 ? 's' : ''} extracted from "${docTitle}"`
             : `"${docTitle}" was analyzed successfully`;
 
         await create({
