@@ -3,11 +3,17 @@ import './globals.css';
 import { ThemeProvider } from '../contexts/ThemeContext';
 
 export const metadata: Metadata = {
-  title: 'Etudesk',
-  description: 'Etudesk - Votre assistant intelligent',
+  title: 'Etudesk - Opportunites, Communautes, Espaces en Afrique de l\'Ouest',
+  description: 'Etudesk connecte les talents aux opportunites, communautes et espaces de travail en Afrique de l\'Ouest. Disponible sur iOS et Android.',
   icons: {
     icon: '/images/etudesk_squared_icon.png',
     apple: '/images/etudesk_squared_icon.png',
+  },
+  openGraph: {
+    title: 'Etudesk - Ton talent merite une plateforme a sa hauteur',
+    description: 'Opportunites, communautes, espaces de travail — un assistant intelligent pour tout relier. Disponible sur App Store et Google Play.',
+    type: 'website',
+    siteName: 'Etudesk',
   },
 };
 

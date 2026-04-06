@@ -39,6 +39,9 @@ import communityNotificationsRouter from './routes/community-notifications.route
 import ecosystemRouter from './routes/ecosystem.routes';
 import entitiesRouter from './routes/entities';
 import bootstrapRouter from './routes/bootstrap';
+import shortLinksRouter from './routes/short-links';
+import linkRedirectRouter from './routes/link-redirect';
+import backofficeRouter from './routes/backoffice';
 import { verifyEmailConnection } from './services/email.service';
 import { cleanupExpiredOTPs } from './services/otp.service';
 import { apiLimiter, authLimiter, otpLimiter, writeLimiter } from './middleware/rateLimit.middleware';
@@ -244,8 +247,17 @@ v1Router.use('/waitlist', waitlistRouter);
 // WhatsApp — versioned under /api/v1/whatsapp
 v1Router.use('/whatsapp', whatsappRouter);
 
+// Short Links CRUD (admin — protected by auth)
+v1Router.use('/short-links', shortLinksRouter);
+
+// Backoffice (non-indexed, token-protected)
+v1Router.use('/backoffice', backofficeRouter);
+
 // Mount versioned API — source unique /api/v1
 app.use('/api/v1', v1Router);
+
+// Public redirect route: /link/:slug (outside /api/v1, no auth)
+app.use('/link', linkRedirectRouter);
 
 // 404 handler
 app.use((req, res) => {
