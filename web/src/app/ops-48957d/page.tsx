@@ -38,6 +38,11 @@ export default function BackofficePage() {
   const [links, setLinks] = useState<any[]>([]);
   const [logs, setLogs] = useState('');
 
+  // Link CRUD
+  const [linkForm, setLinkForm] = useState({ slug: '', target_url: '', label: '' });
+  const [editingLink, setEditingLink] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ slug: '', target_url: '', label: '' });
+
   const api = useCallback(async (path: string) => {
     const res = await fetch(`/api/v1/backoffice${path}`, {
       headers: { 'Authorization': `Bearer ${token}` },
@@ -46,6 +51,51 @@ export default function BackofficePage() {
     if (!data.success && res.status === 403) throw new Error('Acces refuse');
     return data;
   }, [token]);
+
+  const apiMutate = useCallback(async (path: string, method: string, body?: any) => {
+    const res = await fetch(`/api/v1/backoffice${path}`, {
+      method,
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return res.json();
+  }, [token]);
+
+  const createLink = async () => {
+    if (!linkForm.target_url) return;
+    const r = await apiMutate('/short-links', 'POST', linkForm);
+    if (r.success) {
+      setLinks(prev => [r.data, ...prev]);
+      setLinkForm({ slug: '', target_url: '', label: '' });
+    } else {
+      setError(r.error || 'Erreur creation');
+    }
+  };
+
+  const updateLink = async (id: string) => {
+    const r = await apiMutate(`/short-links/${id}`, 'PATCH', editForm);
+    if (r.success) {
+      setLinks(prev => prev.map(l => l.id === id ? { ...l, ...r.data } : l));
+      setEditingLink(null);
+    } else {
+      setError(r.error || 'Erreur modification');
+    }
+  };
+
+  const deleteLink = async (id: string) => {
+    const r = await apiMutate(`/short-links/${id}`, 'DELETE');
+    if (r.success) setLinks(prev => prev.filter(l => l.id !== id));
+  };
+
+  const toggleLink = async (id: string, active: boolean) => {
+    const r = await apiMutate(`/short-links/${id}`, 'PATCH', { is_active: !active });
+    if (r.success) setLinks(prev => prev.map(l => l.id === id ? { ...l, is_active: !active } : l));
+  };
+
+  const startEdit = (l: any) => {
+    setEditingLink(l.id);
+    setEditForm({ slug: l.slug, target_url: l.target_url, label: l.label || '' });
+  };
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -230,21 +280,70 @@ export default function BackofficePage() {
               <Kpi label="Liens" value={fmt(d?.short_links.total_links || 0)} accent="#3B2416" />
               <Kpi label="Clics totaux" value={fmt(d?.short_links.total_clicks || 0)} accent="#4A6741" />
             </div>
-            {links.length === 0 ? (
-              <p style={S.empty}>Aucun lien cree. Utilisez l'API POST /api/v1/short-links pour en creer.</p>
-            ) : (
-              <Table
-                cols={['Slug', 'Destination', 'Label', 'Clics', 'Actif', 'Date']}
-                rows={links.map(l => [
-                  l.slug,
-                  (l.target_url || '').substring(0, 50) + ((l.target_url || '').length > 50 ? '...' : ''),
-                  l.label || '—',
-                  String(l.total_clicks || l.clicks || 0),
-                  l.is_active ? 'Oui' : 'Non',
-                  fmtDate(l.created_at),
-                ])}
-              />
-            )}
+
+            {/* Create form */}
+            <div style={S.formCard}>
+              <h3 style={S.formTitle}>Nouveau lien</h3>
+              <div style={S.formRow}>
+                <input style={S.formInput} placeholder="Slug (optionnel)" value={linkForm.slug} onChange={e => setLinkForm(p => ({ ...p, slug: e.target.value }))} />
+                <input style={{ ...S.formInput, flex: 2 }} placeholder="URL de destination *" value={linkForm.target_url} onChange={e => setLinkForm(p => ({ ...p, target_url: e.target.value }))} />
+                <input style={S.formInput} placeholder="Label" value={linkForm.label} onChange={e => setLinkForm(p => ({ ...p, label: e.target.value }))} />
+                <button style={S.btnSm} onClick={createLink}>Creer</button>
+              </div>
+            </div>
+
+            {/* Links list */}
+            <div style={S.tableWrap}>
+              <table style={S.table}>
+                <thead>
+                  <tr>
+                    <th style={S.th}>Slug</th>
+                    <th style={S.th}>Destination</th>
+                    <th style={S.th}>Label</th>
+                    <th style={S.th}>Clics</th>
+                    <th style={S.th}>Actif</th>
+                    <th style={S.th}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {links.length === 0 ? (
+                    <tr><td colSpan={6} style={{ ...S.td, textAlign: 'center', color: '#918A7E' }}>Aucun lien</td></tr>
+                  ) : links.map(l => editingLink === l.id ? (
+                    <tr key={l.id} style={{ background: '#FAF9F7' }}>
+                      <td style={S.td}><input style={S.cellInput} value={editForm.slug} onChange={e => setEditForm(p => ({ ...p, slug: e.target.value }))} /></td>
+                      <td style={S.td}><input style={{ ...S.cellInput, width: '100%' }} value={editForm.target_url} onChange={e => setEditForm(p => ({ ...p, target_url: e.target.value }))} /></td>
+                      <td style={S.td}><input style={S.cellInput} value={editForm.label} onChange={e => setEditForm(p => ({ ...p, label: e.target.value }))} /></td>
+                      <td style={S.tdMuted}>{l.total_clicks || l.clicks || 0}</td>
+                      <td style={S.td}>{l.is_active ? 'Oui' : 'Non'}</td>
+                      <td style={S.td}>
+                        <span style={S.actions}>
+                          <button style={S.actBtn} onClick={() => updateLink(l.id)}>Sauver</button>
+                          <button style={S.actBtnMuted} onClick={() => setEditingLink(null)}>Annuler</button>
+                        </span>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={l.id}>
+                      <td style={S.td}><code style={S.code}>/link/{l.slug}</code></td>
+                      <td style={S.td} title={l.target_url}>{(l.target_url || '').substring(0, 45)}{(l.target_url || '').length > 45 ? '...' : ''}</td>
+                      <td style={S.td}>{l.label || '—'}</td>
+                      <td style={S.td}>{fmt(l.total_clicks || l.clicks || 0)}</td>
+                      <td style={S.td}>
+                        <button style={{ ...S.toggleBtn, background: l.is_active ? '#E8EFE6' : '#F5EBE8', color: l.is_active ? '#4A6741' : '#8B4A3C' }} onClick={() => toggleLink(l.id, l.is_active)}>
+                          {l.is_active ? 'Actif' : 'Inactif'}
+                        </button>
+                      </td>
+                      <td style={S.td}>
+                        <span style={S.actions}>
+                          <button style={S.actBtn} onClick={() => startEdit(l)}>Modifier</button>
+                          <button style={S.actBtnDanger} onClick={() => { if (confirm(`Supprimer /link/${l.slug} ?`)) deleteLink(l.id); }}>Supprimer</button>
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -344,6 +443,21 @@ const S: Record<string, React.CSSProperties> = {
   th: { textAlign: 'left', padding: '0.6rem 0.9rem', fontWeight: 600, color: '#6E675C', borderBottom: '1px solid #EBE8E4', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.03em' },
   td: { padding: '0.55rem 0.9rem', borderBottom: '1px solid #F5F3F0', color: '#1F1C18' },
   tdMuted: { padding: '0.55rem 0.9rem', borderBottom: '1px solid #F5F3F0', color: '#918A7E', fontSize: '0.75rem' },
+
+  // Forms
+  formCard: { background: '#fff', border: '1px solid #EBE8E4', borderRadius: 10, padding: '1rem 1.1rem', marginBottom: 16 },
+  formTitle: { fontSize: '0.75rem', fontWeight: 600, color: '#6E675C', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 10px' },
+  formRow: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
+  formInput: { flex: 1, minWidth: 120, padding: '0.5rem 0.7rem', border: '1px solid #EBE8E4', borderRadius: 6, fontSize: '0.8rem', fontFamily: "'Outfit', sans-serif", outline: 'none', background: '#FAF9F7' },
+  cellInput: { padding: '0.35rem 0.5rem', border: '1px solid #D9D5CF', borderRadius: 4, fontSize: '0.8rem', fontFamily: "'Outfit', sans-serif", outline: 'none', width: 100 },
+
+  // Actions
+  actions: { display: 'flex', gap: 6 },
+  actBtn: { padding: '3px 8px', background: '#3B2416', color: '#fff', border: 'none', borderRadius: 4, fontSize: '0.65rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit', sans-serif" },
+  actBtnMuted: { padding: '3px 8px', background: '#EBE8E4', color: '#6E675C', border: 'none', borderRadius: 4, fontSize: '0.65rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit', sans-serif" },
+  actBtnDanger: { padding: '3px 8px', background: '#F5EBE8', color: '#8B4A3C', border: 'none', borderRadius: 4, fontSize: '0.65rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit', sans-serif" },
+  toggleBtn: { padding: '2px 8px', border: 'none', borderRadius: 4, fontSize: '0.65rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit', sans-serif" },
+  code: { fontSize: '0.75rem', background: '#F5F3F0', padding: '2px 6px', borderRadius: 3, fontFamily: "'SF Mono', 'Fira Code', monospace" },
 
   // Misc
   empty: { color: '#918A7E', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' },

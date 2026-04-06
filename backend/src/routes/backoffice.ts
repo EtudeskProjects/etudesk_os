@@ -237,6 +237,76 @@ router.get('/short-links', async (_req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/v1/backoffice/short-links
+ */
+router.post('/short-links', async (req: Request, res: Response) => {
+  try {
+    const { slug, target_url, label } = req.body;
+    if (!target_url) return res.status(400).json({ error: 'target_url requis' });
+
+    const finalSlug = slug || require('crypto').randomBytes(4).toString('base64url');
+
+    const existing = await pool.query('SELECT id FROM short_links WHERE slug = $1', [finalSlug]);
+    if (existing.rows.length > 0) return res.status(409).json({ error: `Slug "${finalSlug}" deja pris` });
+
+    const result = await pool.query(
+      `INSERT INTO short_links (slug, target_url, label, created_by) VALUES ($1, $2, $3, 'admin') RETURNING *`,
+      [finalSlug, target_url, label || null],
+    );
+    res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    logger.error('Backoffice create link error', error);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+/**
+ * PATCH /api/v1/backoffice/short-links/:id
+ */
+router.patch('/short-links/:id', async (req: Request, res: Response) => {
+  try {
+    const { target_url, label, is_active, slug } = req.body;
+    const fields: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    if (target_url !== undefined) { fields.push(`target_url = $${idx++}`); values.push(target_url); }
+    if (label !== undefined) { fields.push(`label = $${idx++}`); values.push(label); }
+    if (is_active !== undefined) { fields.push(`is_active = $${idx++}`); values.push(is_active); }
+    if (slug !== undefined) { fields.push(`slug = $${idx++}`); values.push(slug); }
+
+    if (fields.length === 0) return res.status(400).json({ error: 'Rien a modifier' });
+
+    fields.push(`updated_at = NOW()`);
+    values.push(req.params.id);
+
+    const result = await pool.query(
+      `UPDATE short_links SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values,
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Lien introuvable' });
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    logger.error('Backoffice update link error', error);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+/**
+ * DELETE /api/v1/backoffice/short-links/:id
+ */
+router.delete('/short-links/:id', async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query('DELETE FROM short_links WHERE id = $1 RETURNING id', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Lien introuvable' });
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Backoffice delete link error', error);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+/**
  * GET /api/v1/backoffice/logs
  */
 router.get('/logs', async (req: Request, res: Response) => {
