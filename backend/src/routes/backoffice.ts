@@ -196,4 +196,64 @@ router.get('/copilot/usage', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/v1/backoffice/organizations
+ */
+router.get('/organizations', async (req: Request, res: Response) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+    const result = await pool.query(
+      `SELECT o.id, o.name, o.slug, o.industry, o.country, o.created_at,
+              (SELECT COUNT(*) FROM organization_members om WHERE om.organization_id = o.id) AS member_count
+       FROM organizations o
+       WHERE o.deleted_at IS NULL
+       ORDER BY o.created_at DESC
+       LIMIT $1`,
+      [limit],
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    logger.error('Backoffice orgs error', error);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+/**
+ * GET /api/v1/backoffice/short-links
+ */
+router.get('/short-links', async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT sl.*,
+              (SELECT COUNT(*) FROM short_link_clicks WHERE link_id = sl.id) AS total_clicks
+       FROM short_links sl
+       ORDER BY sl.created_at DESC`,
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    logger.error('Backoffice short links error', error);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+/**
+ * GET /api/v1/backoffice/logs
+ */
+router.get('/logs', async (req: Request, res: Response) => {
+  try {
+    const lines = Math.min(parseInt(req.query.lines as string) || 50, 200);
+    const { execFileSync } = require('child_process');
+    let logs = '';
+    try {
+      logs = execFileSync('pm2', ['logs', 'etudesk-api', '--lines', String(lines), '--nostream', '--err'], { timeout: 5000 }).toString();
+    } catch {
+      logs = 'Unable to read PM2 logs';
+    }
+    res.json({ success: true, data: logs });
+  } catch (error) {
+    logger.error('Backoffice logs error', error);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
 export default router;
