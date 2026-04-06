@@ -32,21 +32,11 @@ interface RecentUser {
   last_name: string;
 }
 
-interface WaitlistEntry {
-  id: string;
-  type: string;
-  country: string;
-  contact_type: string;
-  contact_value: string;
-  created_at: string;
-}
-
 export default function BackofficePage() {
   const [token, setToken] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
-  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
@@ -57,10 +47,9 @@ export default function BackofficePage() {
     try {
       const headers = { 'Authorization': `Bearer ${secret}` };
 
-      const [statsRes, usersRes, waitlistRes] = await Promise.all([
+      const [statsRes, usersRes] = await Promise.all([
         fetch(`${VPS_API}/api/v1/backoffice/stats`, { headers }).then(r => r.json()),
         fetch(`${VPS_API}/api/v1/backoffice/users?limit=20`, { headers }).then(r => r.json()),
-        fetch(`${VPS_API}/api/v1/backoffice/waitlist?limit=50`, { headers }).then(r => r.json()),
       ]);
 
       if (!statsRes.success) throw new Error('Acces refuse');
@@ -82,7 +71,6 @@ export default function BackofficePage() {
         signups_week: d.users.signups_this_week,
       });
       setRecentUsers(usersRes.data || []);
-      setWaitlist(waitlistRes.data || []);
       setLastRefresh(new Date());
       setAuthenticated(true);
     } catch (err: any) {
@@ -156,7 +144,6 @@ export default function BackofficePage() {
               <KpiCard label="Users" value={fmt(stats.users)} sub={`+${stats.signups_today} aujourd'hui / +${stats.signups_week} cette semaine`} color="#3B2416" />
               <KpiCard label="Talents" value={fmt(stats.talents)} color="#4A6741" />
               <KpiCard label="Organisations" value={fmt(stats.organizations)} color="#6B5E52" />
-              <KpiCard label="Waitlist" value={fmt(stats.waitlist)} color="#A67C52" />
               <KpiCard label="Communautes" value={fmt(stats.communities)} color="#4A6741" />
               <KpiCard label="Opportunites" value={fmt(stats.opportunities)} color="#6B5E52" />
             </div>
@@ -199,32 +186,6 @@ export default function BackofficePage() {
             </div>
           </section>
 
-          {/* Waitlist */}
-          <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>Waitlist ({fmt(stats.waitlist)})</h2>
-            <div style={styles.tableWrap}>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>Type</th>
-                    <th style={styles.th}>Pays</th>
-                    <th style={styles.th}>Contact</th>
-                    <th style={styles.th}>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {waitlist.map(w => (
-                    <tr key={w.id}>
-                      <td style={styles.td}><span style={{...styles.badge, background: w.type === 'TALENT' ? '#E8EFE6' : '#F7F0E8', color: w.type === 'TALENT' ? '#4A6741' : '#A67C52'}}>{w.type}</span></td>
-                      <td style={styles.td}>{w.country}</td>
-                      <td style={styles.td}>{w.contact_value}</td>
-                      <td style={styles.tdMuted}>{fmtDate(w.created_at)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
         </>
       )}
     </main>

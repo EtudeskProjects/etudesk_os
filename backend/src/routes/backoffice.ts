@@ -196,35 +196,4 @@ router.get('/copilot/usage', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/v1/backoffice/waitlist
- * Waitlist entries
- */
-router.get('/waitlist', async (req: Request, res: Response) => {
-  try {
-    const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
-
-    const result = await pool.query(
-      `SELECT * FROM waitlist ORDER BY created_at DESC LIMIT $1`,
-      [limit],
-    );
-
-    const stats = await pool.query(
-      `SELECT type, country, contact_type, COUNT(*) AS count
-       FROM waitlist
-       GROUP BY type, country, contact_type
-       ORDER BY count DESC`,
-    );
-
-    res.json({
-      success: true,
-      data: result.rows,
-      stats: stats.rows,
-    });
-  } catch (error) {
-    logger.error('Backoffice waitlist error', error);
-    res.status(500).json({ error: 'Internal error' });
-  }
-});
-
 export default router;
