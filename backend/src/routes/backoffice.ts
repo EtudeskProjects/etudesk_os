@@ -203,7 +203,7 @@ router.get('/organizations', async (req: Request, res: Response) => {
   try {
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
     const result = await pool.query(
-      `SELECT o.id, o.name, o.slug, o.industry, o.country, o.created_at,
+      `SELECT o.id, o.name, o.slug, o.sectors, o.headquarters_country AS country, o.created_at,
               (SELECT COUNT(*) FROM organization_members om WHERE om.organization_id = o.id) AS member_count
        FROM organizations o
        WHERE o.deleted_at IS NULL

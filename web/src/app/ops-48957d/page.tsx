@@ -237,10 +237,10 @@ export default function BackofficePage() {
             <Kpi label="Total organisations" value={fmt(d?.users.organizations || 0)} accent="#6B5E52" />
             <div style={{ marginTop: 24 }}>
               <Table
-                cols={['Nom', 'Secteur', 'Pays', 'Membres', 'Date']}
+                cols={['Nom', 'Secteurs', 'Pays', 'Membres', 'Date']}
                 rows={orgs.map(o => [
                   o.name || '—',
-                  o.industry || '—',
+                  Array.isArray(o.sectors) ? o.sectors.join(', ') : (o.sectors || '—'),
                   o.country || '—',
                   String(o.member_count || 0),
                   fmtDate(o.created_at),
