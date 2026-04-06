@@ -148,7 +148,6 @@ export default function Home() {
           <source src="/images/hero-bg.mp4" type="video/mp4" />
         </video>
         <div className="hero-overlay" />
-        <p className="tagline">{t.tagline}</p>
         <span className="badge">{t.badge}</span>
         <h1>{t.title}</h1>
         <p className="subtitle">{t.subtitle}</p>
