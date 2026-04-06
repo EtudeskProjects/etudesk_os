@@ -2,7 +2,7 @@
   "expo": {
     "name": "Etudesk",
     "slug": "etudesk",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "scheme": "etudesk",
     "icon": "./assets/etudesk_squared_icon.png",
