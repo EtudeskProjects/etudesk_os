@@ -43,6 +43,7 @@ export default function BackofficePage() {
   const [editingLink, setEditingLink] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ slug: '', target_url: '', label: '' });
   const [copied, setCopied] = useState(false);
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
   const api = useCallback(async (path: string) => {
     const res = await fetch(`/api/v1/backoffice${path}`, {
@@ -325,7 +326,11 @@ export default function BackofficePage() {
                     </tr>
                   ) : (
                     <tr key={l.id}>
-                      <td style={S.td}><code style={S.code}>/link/{l.slug}</code></td>
+                      <td style={S.td}>
+                        <code style={{ ...S.code, cursor: 'pointer' }} onClick={() => { navigator.clipboard.writeText(`https://etudesk.com/link/${l.slug}`); setCopiedSlug(l.id); setTimeout(() => setCopiedSlug(null), 1500); }}>
+                          {copiedSlug === l.id ? 'Copie !' : `/link/${l.slug}`}
+                        </code>
+                      </td>
                       <td style={S.td} title={l.target_url}>{(l.target_url || '').substring(0, 45)}{(l.target_url || '').length > 45 ? '...' : ''}</td>
                       <td style={S.td}>{l.label || '—'}</td>
                       <td style={S.td}>{fmt(l.total_clicks || l.clicks || 0)}</td>
