@@ -241,7 +241,7 @@ export default function BackofficePage() {
           <div style={t.content}>
             <Kpi s={t} label="Total organisations" value={fmt(d?.users.organizations || 0)} accent="#6B5E52" />
             <div style={{ marginTop: 24 }}>
-              <Table
+              <Table s={t}
                 cols={['Nom', 'Secteurs', 'Pays', 'Membres', 'Date']}
                 rows={orgs.map(o => [
                   o.name || '—',
