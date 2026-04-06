@@ -36,6 +36,8 @@ import { downloadAndOpenDocument, downloadAndShareDocument } from '../../utils/d
 import { getCurrentLocale } from '../../i18n';
 import { getLabel } from '../../utils/labels';
 import { getNotificationRoute } from '../../hooks/notifications/notificationNavigation';
+import { MapEntityCard } from './MapEntityCard';
+import { buildExternalMapUrl, getPrimaryMapPoint } from '../../utils/mapEntity';
 
 
 interface EntityCardProps {
@@ -92,13 +94,6 @@ function formatRelativeTime(value?: string | null): string | undefined {
   if (hours < 24) return `${hours} h`;
   if (days < 7) return `${days} j`;
   return date.toLocaleDateString(getCurrentLocale(), { day: 'numeric', month: 'short' });
-}
-
-function getMapCoordinates(raw: Record<string, any>): { lat: number; lng: number } | null {
-  const lat = toNumber(raw.latitude ?? raw.lat ?? raw.coordinates?.latitude ?? raw.coordinates?.lat);
-  const lng = toNumber(raw.longitude ?? raw.lng ?? raw.coordinates?.longitude ?? raw.coordinates?.lng);
-  if (lat === null || lng === null) return null;
-  return { lat, lng };
 }
 
 function pushUniqueMetaItem(params: {
@@ -210,7 +205,7 @@ function normalizeEntity(type: string, raw: Record<string, any>): Record<string,
         ...raw,
         title: raw.title || raw.label || raw.name || raw.address,
         subtitle: raw.subtitle || raw.address || raw.description || [raw.city, raw.country].filter(Boolean).join(', '),
-        coordinates: getMapCoordinates(raw),
+        coordinates: getPrimaryMapPoint(raw),
         mapUrl: raw.mapUrl || raw.url,
       };
     default:
@@ -341,15 +336,7 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
 
   const handlePress = () => {
     if (type === 'maps') {
-      const coords = getMapCoordinates(data);
-      const mapUrl =
-        data.mapUrl ||
-        data.url ||
-        (coords
-          ? `https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lng}`
-          : data.address || data.location || data.title
-            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([data.address || data.location || data.title, data.city, data.country].filter(Boolean).join(', '))}`
-            : null);
+      const mapUrl = buildExternalMapUrl(data);
       if (mapUrl) {
         void Linking.openURL(mapUrl);
       }
@@ -577,15 +564,7 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
     });
   }
   if (type === 'maps') {
-    const coords = getMapCoordinates(data);
-    if (coords) {
-      pushUniqueMetaItem({
-        items: metaItems,
-        seen: seenMeta,
-        blocked: blockedMeta,
-        item: { text: `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` },
-      });
-    }
+    metaItems.length = 0;
   }
 
   const isRound = type === 'talent' || type === 'organization';
@@ -742,6 +721,17 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
       </View>
     </>
   );
+
+  if (type === 'maps') {
+    return (
+      <MapEntityCard
+        data={data}
+        title={title}
+        subtitle={subtitle}
+        onPress={handlePress}
+      />
+    );
+  }
 
   if (isDocument) {
     return (

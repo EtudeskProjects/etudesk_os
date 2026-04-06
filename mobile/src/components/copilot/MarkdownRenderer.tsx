@@ -29,6 +29,7 @@ import { CanvasBlock } from './blocks/CanvasBlock';
 import { AudioBlock } from './blocks/AudioBlock';
 import { downloadAndOpenDocument } from '../../utils/documentDownload';
 import i18n from '../../i18n';
+import { hasMapEntityPayload } from '../../utils/mapEntity';
 
 const MONO_FONT_FAMILY = Platform.select({
   ios: 'Menlo',
@@ -112,19 +113,7 @@ function parseBlocks(content: string): Block[] {
       const hasValidId = data && (
         data.id ||
         (entityType === 'document' && (data.file_url || data.downloadUrl)) ||
-        (
-          entityType === 'maps' &&
-          (
-            data.url ||
-            data.mapUrl ||
-            data.address ||
-            data.location ||
-            data.latitude ||
-            data.lat ||
-            data.coordinates?.latitude ||
-            data.coordinates?.lat
-          )
-        )
+        (entityType === 'maps' && hasMapEntityPayload(data))
       );
       if (hasValidId) {
         blocks.push({ type: 'entity', content: body, meta: entityType, data });

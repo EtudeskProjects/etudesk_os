@@ -10,6 +10,10 @@ export const API_CONFIG = {
   TIMEOUT: 30000,
 };
 
+export const MAPBOX_CONFIG = {
+  ACCESS_TOKEN: process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || '',
+};
+
 /** Build full API URL for fetch calls */
 export function getApiUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`;

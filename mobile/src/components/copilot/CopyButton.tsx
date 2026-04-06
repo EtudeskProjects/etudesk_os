@@ -13,6 +13,7 @@ import { ICON } from '../../constants/theme';
 import { api } from '../../services/api';
 import { formatNumberNoTrailingZeros } from '../../utils/number';
 import { getLabel } from '../../utils/labels';
+import { getMapPoints, hasMapEntityPayload } from '../../utils/mapEntity';
 import { ShimmerPlaceholder } from '../ui';
 import { getCurrentLocale } from '../../i18n';
 
@@ -133,11 +134,10 @@ function formatEntity(type: string, data: Record<string, any>): string {
     case 'maps': {
       const label = data.title || data.label || data.name || '';
       const address = data.address || data.location;
-      const lat = data.latitude ?? data.lat ?? data.coordinates?.latitude ?? data.coordinates?.lat;
-      const lng = data.longitude ?? data.lng ?? data.coordinates?.longitude ?? data.coordinates?.lng;
+      const point = getMapPoints(data)[0];
       parts.push(label);
       if (address) parts.push(address);
-      if (lat !== undefined && lng !== undefined) parts.push(`${lat}, ${lng}`);
+      if (point) parts.push(`${point.lat}, ${point.lng}`);
       break;
     }
     default: {
@@ -167,7 +167,7 @@ async function enrichContent(content: string): Promise<string> {
     const entityType = tag.startsWith('entity:') ? tag.replace('entity:', '') : tag;
     try {
       const parsed = JSON.parse(body);
-      if (parsed?.id || entityType === 'maps') {
+      if (parsed?.id || (entityType === 'maps' && hasMapEntityPayload(parsed))) {
         replacements.push({ full: match[0], type: entityType, id: parsed?.id, data: parsed });
       }
     } catch {
