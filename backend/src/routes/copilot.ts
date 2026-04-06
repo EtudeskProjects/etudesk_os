@@ -255,6 +255,27 @@ async function persistSessionContext(sessionId: string, context: Record<string, 
   );
 }
 
+function extractLastConfirmationBlock(content: string): { rawBlock: string; confirmLabel?: string } | null {
+  const regex = /```confirmation\s*([\s\S]*?)```/g;
+  let match: RegExpExecArray | null;
+  let last: { rawBlock: string; confirmLabel?: string } | null = null;
+
+  while ((match = regex.exec(content)) !== null) {
+    const raw = match[1].trim();
+    try {
+      const parsed = JSON.parse(raw);
+      last = {
+        rawBlock: `\`\`\`confirmation\n${raw}\n\`\`\``,
+        confirmLabel: typeof parsed?.confirm_label === 'string' ? parsed.confirm_label.trim() : undefined,
+      };
+    } catch {
+      // Ignore malformed confirmation blocks
+    }
+  }
+
+  return last;
+}
+
 function buildStudyQuizHint(params: { activeQuiz: ActiveQuizState; evaluation: QuizEvaluation }): string {
   const { activeQuiz, evaluation } = params;
   const optionsBlock = activeQuiz.options
@@ -282,7 +303,51 @@ function normalizeTextForMatch(value: string): string {
   return value
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isGenericVoicePlaceholder(message: string): boolean {
+  const normalized = normalizeTextForMatch(message);
+  return [
+    '',
+    'note vocale',
+    'message vocal',
+    'message vocal enregistre',
+    'voice note',
+    'audio message',
+    'vocal',
+  ].includes(normalized);
+}
+
+function buildStoredUserMessage(message: string, voiceNoteAnalysis?: string): string {
+  if (!voiceNoteAnalysis) return message;
+  return isGenericVoicePlaceholder(message)
+    ? voiceNoteAnalysis
+    : `${message}\n\n${voiceNoteAnalysis}`;
+}
+
+function userReportsMissingConfirmationBlock(message: string): boolean {
+  const normalized = normalizeTextForMatch(message);
+  if (!normalized) return false;
+
+  const patterns = [
+    /\bn\s*(?:e|')?\s*voi?s?\s+(?:aucun|pas de|pas le|pas)\s+(?:bloc|block|bloque|bloke|bouton|button)\b/,
+    /\b(?:can(?:not| t)|cant|do not|dont)\s+see\s+(?:the\s+)?(?:block|button)\b/,
+    /\b(?:ou|where)\s+(?:est|is)\s+(?:le\s+|the\s+)?(?:bloc|block|bouton|button)\b/,
+  ];
+
+  return patterns.some((pattern) => pattern.test(normalized));
+}
+
+function buildConfirmationReplayResponse(block: { rawBlock: string; confirmLabel?: string }, language?: string): string {
+  const label = block.confirmLabel || (language === 'fr' ? 'Confirmer' : 'Confirm');
+  if (language === 'fr') {
+    return `Je remets le bloc ici. Appuie sur **${label}** pour valider.\n\n${block.rawBlock}`;
+  }
+  return `I am showing the block again here. Tap **${label}** to confirm.\n\n${block.rawBlock}`;
 }
 
 function extractMemoryKeywords(message: string): string[] {
@@ -802,9 +867,19 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         const audioBase64 = audioBuffer.toString('base64');
         const audioMode = validMode === COPILOT_MODES.STUDY ? 'study' : (validMode === COPILOT_MODES.ORG ? 'org' : 'explore');
         voiceNoteAnalysis = await analyzeAudio(audioBase64, voiceNoteMimeType, audioMode as 'study' | 'explore' | 'org');
-        agentMessage = safeMessage
-          ? `${safeMessage}\n\n${voiceNoteAnalysis}`
-          : voiceNoteAnalysis;
+        agentMessage = buildStoredUserMessage(safeMessage, voiceNoteAnalysis);
+        await pool.query(
+          `UPDATE copilot_messages
+           SET content = $1
+           WHERE id = (
+             SELECT id
+             FROM copilot_messages
+             WHERE session_id = $2 AND role = 'user' AND deleted_at IS NULL
+             ORDER BY created_at DESC, id DESC
+             LIMIT 1
+           )`,
+          [sanitizeForPg(agentMessage), sessionId]
+        );
       } catch (audioErr: any) {
         logger.error('[copilot] Voice note analysis failed:', audioErr);
         // Fallback: send original message text
@@ -813,6 +888,74 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
 
     if (deterministicQuizHint) {
       agentMessage = `${deterministicQuizHint}\n\nUser message:\n${agentMessage}`;
+    }
+
+    const latestAssistantBeforeCurrent = !hasVoiceNote && !hasAttachments && safeMessage
+      ? await getLatestAssistantMessage(sessionId)
+      : null;
+    const confirmationToReplay =
+      latestAssistantBeforeCurrent && userReportsMissingConfirmationBlock(safeMessage)
+        ? extractLastConfirmationBlock(latestAssistantBeforeCurrent.content || '')
+        : null;
+
+    if (confirmationToReplay) {
+      const finalOutput = buildConfirmationReplayResponse(confirmationToReplay, userLanguage);
+
+      const insertAssistantResult = await pool.query(
+        `INSERT INTO copilot_messages (session_id, role, content, tool_calls, output_data)
+         VALUES ($1, 'assistant', $2, $3, $4)
+         RETURNING id`,
+        [sessionId, sanitizeForPg(finalOutput), null, null]
+      );
+      const assistantMessageId = insertAssistantResult.rows[0]?.id || null;
+
+      pool.query(
+        `INSERT INTO copilot_traces
+          (session_id, message_id, talent_id, organization_id, mode, skill_id,
+           turn_count, tool_count, tool_names, tool_errors, duration_ms, output_chars,
+           has_tool_error, hit_loop_detection, hit_turn_limit, guardrail_blocked,
+           input_tokens, output_tokens, cache_read_tokens)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+        [
+          sessionId,
+          assistantMessageId,
+          talentId,
+          organizationId || null,
+          validMode,
+          detectedSkill?.skillId || null,
+          0,
+          0,
+          [],
+          0,
+          0,
+          finalOutput.length,
+          false,
+          false,
+          false,
+          false,
+          0,
+          0,
+          0,
+        ]
+      ).catch((err) => logger.error('[copilot] Failed to persist replay trace:', err));
+
+      const messageCount = historyRes.rows.length;
+      if (messageCount <= 2) {
+        const deterministicTitle = buildDeterministicSessionTitle(safeMessage, userLanguage, hasAttachments);
+        const titlePromise = deterministicTitle
+          ? Promise.resolve(deterministicTitle)
+          : generateSessionTitle(safeMessage, userLanguage);
+
+        titlePromise.then((title) => {
+          copilotService.updateSessionTitle(sessionId, title).catch(() => { });
+        });
+      }
+
+      sendSSE(res, { type: 'text_delta', delta: finalOutput });
+      sendSSE(res, { type: 'content_corrected', content: finalOutput });
+      sendSSE(res, { type: 'done', sessionId });
+      res.end();
+      return;
     }
 
     // Run agent with SSE streaming (pass attachments so agent sees file context)
