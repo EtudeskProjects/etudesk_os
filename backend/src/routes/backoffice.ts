@@ -64,7 +64,7 @@ router.get('/stats', async (_req: Request, res: Response) => {
         FROM copilot_sessions cs
         LEFT JOIN copilot_traces ct ON ct.session_id = cs.id
       `),
-      // Billing / Revenue
+      // Billing / Revenue (table may not exist yet)
       pool.query(`
         SELECT
           COUNT(*) AS total_transactions,
@@ -72,7 +72,7 @@ router.get('/stats', async (_req: Request, res: Response) => {
           COALESCE(SUM(CASE WHEN status = 'success' AND created_at >= NOW() - INTERVAL '30 days' THEN amount ELSE 0 END), 0) AS revenue_30d,
           COALESCE(SUM(CASE WHEN status = 'success' AND created_at >= NOW() - INTERVAL '7 days' THEN amount ELSE 0 END), 0) AS revenue_7d
         FROM billing_transactions
-      `),
+      `).catch(() => ({ rows: [{ total_transactions: 0, total_revenue: 0, revenue_30d: 0, revenue_7d: 0 }] })),
       // Signups today
       pool.query("SELECT COUNT(*) AS total FROM users WHERE created_at >= CURRENT_DATE AND deleted_at IS NULL"),
       // Signups this week
@@ -140,12 +140,9 @@ router.get('/users', async (req: Request, res: Response) => {
 
     const result = await pool.query(
       `SELECT u.id, u.email, u.phone, u.created_at, u.last_login_at,
-              t.first_name, t.last_name, t.slug AS talent_slug,
-              o.name AS org_name, o.slug AS org_slug
+              t.first_name, t.last_name, t.slug AS talent_slug
        FROM users u
-       LEFT JOIN talents t ON t.user_id = u.id AND t.deleted_at IS NULL
-       LEFT JOIN organization_members om ON om.user_id = u.id
-       LEFT JOIN organizations o ON o.id = om.organization_id AND o.deleted_at IS NULL
+       LEFT JOIN talents t ON t.id = u.id AND t.deleted_at IS NULL
        WHERE u.deleted_at IS NULL
        ORDER BY u.created_at DESC
        LIMIT $1 OFFSET $2`,
