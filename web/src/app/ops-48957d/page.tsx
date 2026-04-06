@@ -42,6 +42,7 @@ export default function BackofficePage() {
   const [linkForm, setLinkForm] = useState({ slug: '', target_url: '', label: '' });
   const [editingLink, setEditingLink] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ slug: '', target_url: '', label: '' });
+  const [copied, setCopied] = useState(false);
 
   const api = useCallback(async (path: string) => {
     const res = await fetch(`/api/v1/backoffice${path}`, {
@@ -350,6 +351,12 @@ export default function BackofficePage() {
         {/* ── LOGS ── */}
         {page === 'logs' && (
           <div style={S.content}>
+            <div style={S.logHeader}>
+              <span style={S.logLabel}>Erreurs backend (80 dernieres lignes)</span>
+              <button style={S.logCopy} onClick={() => { navigator.clipboard.writeText(logs); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
+                {copied ? 'Copie !' : 'Copier'}
+              </button>
+            </div>
             <pre style={S.logBlock}>{logs || 'Aucun log disponible'}</pre>
           </div>
         )}
@@ -461,5 +468,8 @@ const S: Record<string, React.CSSProperties> = {
 
   // Misc
   empty: { color: '#918A7E', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0' },
-  logBlock: { background: '#1F1C18', color: '#D9D5CF', padding: '1.25rem', borderRadius: 10, fontSize: '0.7rem', lineHeight: 1.6, overflow: 'auto', maxHeight: '70vh', whiteSpace: 'pre-wrap', fontFamily: "'SF Mono', 'Fira Code', monospace" },
+  logHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  logLabel: { fontSize: '0.75rem', fontWeight: 600, color: '#6E675C', textTransform: 'uppercase', letterSpacing: '0.04em' },
+  logCopy: { padding: '4px 12px', background: '#3B2416', color: '#fff', border: 'none', borderRadius: 5, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit', sans-serif" },
+  logBlock: { background: '#1F1C18', color: '#D9D5CF', padding: '1.25rem', borderRadius: 10, fontSize: '0.7rem', lineHeight: 1.6, overflow: 'auto', maxHeight: '70vh', whiteSpace: 'pre-wrap', fontFamily: "'SF Mono', 'Fira Code', monospace", margin: 0 },
 };
