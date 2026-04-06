@@ -1,6 +1,7 @@
 import express, { Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { pool } from '../services/database';
+import { resolveAgendaSchedule } from '../services/agenda-scheduling.service';
 
 import { logger } from '../utils';
 const router = express.Router();
@@ -108,6 +109,7 @@ router.post('/triggers', authMiddleware, async (req: AuthRequest, res: Response)
             return res.status(400).json({ error: 'due_at requis' });
         }
         let dueAt = new Date(due_at);
+        let latestAllowedAt: Date | null = null;
         if (isNaN(dueAt.getTime())) {
             return res.status(400).json({ error: 'due_at invalide' });
         }
@@ -120,6 +122,7 @@ router.post('/triggers', authMiddleware, async (req: AuthRequest, res: Response)
             const startDate = await resolveOpportunityStartDateForFollowUp(metaObj);
             if (startDate) {
                 const cappedDueAt = dayBeforeStartAt0900Utc(startDate);
+                latestAllowedAt = cappedDueAt;
                 if (dueAt > cappedDueAt) {
                     dueAt = cappedDueAt;
                     metaObj = {
@@ -133,6 +136,26 @@ router.post('/triggers', authMiddleware, async (req: AuthRequest, res: Response)
         }
 
         const scope: TriggerScope = organizationId ? 'ORGANIZATION' : 'TALENT';
+        const scheduled = await resolveAgendaSchedule({
+            scope,
+            talentId,
+            organizationId: organizationId ? String(organizationId) : undefined,
+            requestedDueAt: dueAt,
+            latestAllowedAt,
+        });
+        if (!scheduled) {
+            return res.status(400).json({ error: req.t('copilot:toolNoAvailableAgendaSlot') });
+        }
+        dueAt = scheduled.dueAt;
+        metaObj = {
+            ...metaObj,
+            scheduling: {
+                requested_due_at: scheduled.requestedDueAt.toISOString(),
+                final_due_at: scheduled.dueAt.toISOString(),
+                adjusted: scheduled.adjusted,
+                reasons: scheduled.reasons,
+            },
+        };
 
         if (scope === 'ORGANIZATION') {
             const orgId = String(organizationId);
@@ -183,7 +206,7 @@ router.patch('/triggers/:id', authMiddleware, async (req: AuthRequest, res: Resp
 
         const nextStatus: TriggerStatus | null =
             (status === 'PENDING' || status === 'DONE' || status === 'CANCELED') ? status : null;
-        const nextDueAt = due_at ? new Date(due_at) : null;
+        let nextDueAt = due_at ? new Date(due_at) : null;
         const nextTitle = typeof title === 'string' ? title.trim() : null;
         const nextDescription = typeof description === 'string' ? description.trim() : null;
         if (nextDueAt && isNaN(nextDueAt.getTime())) {
@@ -195,7 +218,7 @@ router.patch('/triggers/:id', authMiddleware, async (req: AuthRequest, res: Resp
 
         // Fetch trigger to enforce ownership/membership
         const existing = await pool.query(
-            `SELECT id, scope, talent_id, organization_id FROM agenda_triggers WHERE id = $1::uuid LIMIT 1`,
+            `SELECT id, scope, talent_id, organization_id, code, metadata FROM agenda_triggers WHERE id = $1::uuid LIMIT 1`,
             [id]
         );
         if (existing.rows.length === 0) {
@@ -214,6 +237,35 @@ router.patch('/triggers/:id', authMiddleware, async (req: AuthRequest, res: Resp
             }
         }
 
+        let schedulingMetadataJson: string | null = null;
+        if (nextDueAt) {
+            const metaObj = row.metadata && typeof row.metadata === 'object' ? { ...row.metadata } : {};
+            const latestAllowedAt = row.code === 'FOLLOW_UP' && metaObj.adjusted_due_at
+                ? new Date(String(metaObj.adjusted_due_at))
+                : null;
+            const scheduled = await resolveAgendaSchedule({
+                scope: row.scope,
+                talentId,
+                organizationId: row.organization_id ? String(row.organization_id) : undefined,
+                requestedDueAt: nextDueAt,
+                excludeTriggerId: id,
+                latestAllowedAt: latestAllowedAt && !isNaN(latestAllowedAt.getTime()) ? latestAllowedAt : null,
+            });
+            if (!scheduled) {
+                return res.status(400).json({ error: req.t('copilot:toolNoAvailableAgendaSlot') });
+            }
+            nextDueAt = scheduled.dueAt;
+            schedulingMetadataJson = JSON.stringify({
+                ...metaObj,
+                scheduling: {
+                    requested_due_at: scheduled.requestedDueAt.toISOString(),
+                    final_due_at: scheduled.dueAt.toISOString(),
+                    adjusted: scheduled.adjusted,
+                    reasons: scheduled.reasons,
+                },
+            });
+        }
+
         const result = await pool.query(
             `
             UPDATE agenda_triggers
@@ -222,6 +274,7 @@ router.patch('/triggers/:id', authMiddleware, async (req: AuthRequest, res: Resp
               due_at = COALESCE($3::timestamptz, due_at),
               title = COALESCE($4::text, title),
               description = COALESCE($5::text, description),
+              metadata = CASE WHEN $6::jsonb IS NULL THEN metadata ELSE $6::jsonb END,
               completed_at = CASE WHEN COALESCE($2::text, status) = 'DONE' THEN CURRENT_TIMESTAMP ELSE completed_at END
             WHERE id = $1::uuid
             RETURNING *
@@ -232,6 +285,7 @@ router.patch('/triggers/:id', authMiddleware, async (req: AuthRequest, res: Resp
                 nextDueAt ? nextDueAt.toISOString() : null,
                 nextTitle,
                 nextDescription,
+                schedulingMetadataJson,
             ]
         );
 

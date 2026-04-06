@@ -22,6 +22,7 @@ import {
   validateCreateCommunity,
   validateCreateSpace,
 } from './action.validators';
+import { resolveAgendaSchedule } from '../../agenda-scheduling.service';
 
 export interface ActionRequest {
   action: string;
@@ -34,6 +35,53 @@ export interface ActionResult {
   success: boolean;
   message: string;
   data?: Record<string, any>;
+}
+
+function parseDateOnly(dateOnly: string): Date {
+  return new Date(`${dateOnly}T00:00:00.000Z`);
+}
+
+function dayBeforeStartAt0900Utc(startDateOnly: string): Date {
+  const start = parseDateOnly(startDateOnly);
+  const due = new Date(Date.UTC(
+    start.getUTCFullYear(),
+    start.getUTCMonth(),
+    start.getUTCDate(),
+    9, 0, 0, 0
+  ));
+  due.setUTCDate(due.getUTCDate() - 1);
+  return due;
+}
+
+async function resolveOpportunityStartDateForFollowUp(data: Record<string, any>): Promise<string | null> {
+  const metadata = (data.metadata && typeof data.metadata === 'object') ? data.metadata as Record<string, any> : {};
+  const applicationId = data.applicationId || data.application_id || metadata.applicationId || metadata.application_id || null;
+  const opportunityId = data.opportunityId || data.opportunity_id || metadata.opportunityId || metadata.opportunity_id || null;
+
+  if (applicationId) {
+    const appRes = await pool.query(
+      `SELECT o.start_date
+       FROM opportunity_applications oa
+       JOIN opportunities o ON o.id = oa.opportunity_id
+       WHERE oa.id = $1::uuid
+       LIMIT 1`,
+      [String(applicationId)]
+    );
+    return appRes.rows[0]?.start_date || null;
+  }
+
+  if (opportunityId) {
+    const oppRes = await pool.query(
+      `SELECT start_date
+       FROM opportunities
+       WHERE id = $1::uuid
+       LIMIT 1`,
+      [String(opportunityId)]
+    );
+    return oppRes.rows[0]?.start_date || null;
+  }
+
+  return null;
 }
 
 export async function handleConfirmation(
@@ -480,17 +528,54 @@ export async function handleConfirmation(
           'FOLLOW_UP', 'REMINDER', 'RESEARCH', 'LEARNING', 'APPLICATION',
           'INTERVIEW', 'DEADLINE', 'REVIEW', 'CUSTOM',
         ]);
-        const VALID_PRIORITIES = new Set(['LOW', 'NORMAL', 'HIGH', 'URGENT']);
+        const VALID_PRIORITIES = new Set(['LOW', 'NORMAL', 'HIGH']);
 
         // Accept "code" or "type" (agent sometimes sends "type" instead of "code")
         const rawCode = (data.code || data.type || 'CUSTOM').toUpperCase();
         const triggerCode = VALID_CODES.has(rawCode) ? rawCode : 'CUSTOM';
         const priority = VALID_PRIORITIES.has(data.priority) ? data.priority : 'NORMAL';
         // Default dueAt to 7 days from now if not provided
-        const dueAt = data.dueAt ? new Date(data.dueAt) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        let dueAt = data.dueAt ? new Date(data.dueAt) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         if (isNaN(dueAt.getTime())) {
           return { success: false, message: tr('copilot:actionTriggerInvalidDate') };
         }
+        let metadata = { ...data.metadata, ...(data.keywords ? { keywords: data.keywords } : {}), ...(data.frequency ? { frequency: data.frequency } : {}) };
+        let latestAllowedAt: Date | null = null;
+        if (triggerCode === 'FOLLOW_UP') {
+          const startDate = await resolveOpportunityStartDateForFollowUp(data);
+          if (startDate) {
+            const cappedDueAt = dayBeforeStartAt0900Utc(startDate);
+            latestAllowedAt = cappedDueAt;
+            if (dueAt > cappedDueAt) {
+              dueAt = cappedDueAt;
+              metadata = {
+                ...metadata,
+                adjusted_due_to_start_date: true,
+                opportunity_start_date: startDate,
+                adjusted_due_at: cappedDueAt.toISOString(),
+              };
+            }
+          }
+        }
+        const scheduled = await resolveAgendaSchedule({
+          scope: 'TALENT',
+          talentId,
+          requestedDueAt: dueAt,
+          latestAllowedAt,
+        });
+        if (!scheduled) {
+          return { success: false, message: tr('copilot:actionTriggerNoAvailableSlot') };
+        }
+        dueAt = scheduled.dueAt;
+        metadata = {
+          ...metadata,
+          scheduling: {
+            requested_due_at: scheduled.requestedDueAt.toISOString(),
+            final_due_at: scheduled.dueAt.toISOString(),
+            adjusted: scheduled.adjusted,
+            reasons: scheduled.reasons,
+          },
+        };
 
         const result = await pool.query(
           `INSERT INTO agenda_triggers (scope, talent_id, code, title, description, due_at, status, priority, metadata, created_by)
@@ -503,16 +588,34 @@ export async function handleConfirmation(
             data.description?.slice(0, 500) || null,
             dueAt.toISOString(),
             priority,
-            JSON.stringify({ ...data.metadata, ...(data.keywords ? { keywords: data.keywords } : {}), ...(data.frequency ? { frequency: data.frequency } : {}) }),
+            JSON.stringify(metadata),
           ]
         );
 
         const dateLocale = (language || 'en').startsWith('fr') ? 'fr-FR' : 'en-GB';
-        const message = tr('copilot:actionTriggerCreated', { title: data.title, date: dueAt.toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' }) });
+        const message = tr('copilot:actionTriggerCreated', {
+          title: data.title,
+          date: dueAt.toLocaleString(dateLocale, {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        });
         await saveActionMessage(sessionId, message);
 
         logger.info(`[action.handler] Talent ${talentId} created agenda trigger ${result.rows[0].id}`);
-        return { success: true, message, data: { triggerId: result.rows[0].id } };
+        return {
+          success: true,
+          message,
+          data: {
+            triggerId: result.rows[0].id,
+            dueAt: dueAt.toISOString(),
+            schedulingAdjusted: scheduled.adjusted,
+            schedulingReasons: scheduled.reasons,
+          },
+        };
       }
 
       case 'update_agenda_trigger': {
@@ -522,7 +625,7 @@ export async function handleConfirmation(
 
         // Verify the trigger belongs to this talent
         const existing = await pool.query(
-          `SELECT id, status FROM agenda_triggers WHERE id = $1 AND talent_id = $2`,
+          `SELECT id, status, code, metadata FROM agenda_triggers WHERE id = $1 AND talent_id = $2`,
           [resolvedEntityId, talentId]
         );
         if (existing.rows.length === 0) {
@@ -532,6 +635,7 @@ export async function handleConfirmation(
         const updates: string[] = [];
         const vals: any[] = [];
         let idx = 1;
+        let metadataPatch = data.metadata && typeof data.metadata === 'object' ? { ...data.metadata } : null;
 
         if (data.status && ['PENDING', 'COMPLETED', 'CANCELLED', 'SNOOZED'].includes(data.status)) {
           updates.push(`status = $${idx}`);
@@ -542,16 +646,41 @@ export async function handleConfirmation(
           }
         }
         if (data.dueAt) {
-          const newDue = new Date(data.dueAt);
+          let newDue = new Date(data.dueAt);
           if (!isNaN(newDue.getTime())) {
+            const row = existing.rows[0];
+            const metadata = row.metadata && typeof row.metadata === 'object' ? { ...row.metadata } : {};
+            const latestAllowedAt = row.code === 'FOLLOW_UP' && metadata.adjusted_due_at
+              ? new Date(String(metadata.adjusted_due_at))
+              : null;
+            const scheduled = await resolveAgendaSchedule({
+              scope: 'TALENT',
+              talentId,
+              requestedDueAt: newDue,
+              excludeTriggerId: resolvedEntityId,
+              latestAllowedAt: latestAllowedAt && !isNaN(latestAllowedAt.getTime()) ? latestAllowedAt : null,
+            });
+            if (!scheduled) {
+              return { success: false, message: tr('copilot:actionTriggerNoAvailableSlot') };
+            }
+            newDue = scheduled.dueAt;
             updates.push(`due_at = $${idx}`);
             vals.push(newDue.toISOString());
             idx++;
+            metadataPatch = {
+              ...(metadataPatch || {}),
+              scheduling: {
+                requested_due_at: scheduled.requestedDueAt.toISOString(),
+                final_due_at: scheduled.dueAt.toISOString(),
+                adjusted: scheduled.adjusted,
+                reasons: scheduled.reasons,
+              },
+            };
           }
         }
-        if (data.metadata) {
+        if (metadataPatch) {
           updates.push(`metadata = metadata || $${idx}::jsonb`);
-          vals.push(JSON.stringify(data.metadata));
+          vals.push(JSON.stringify(metadataPatch));
           idx++;
         }
 

@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { pool } from '../../database';
 import { logger } from '../../../utils';
 import { i18next } from '../../../i18n';
+import { resolveAgendaSchedule } from '../../agenda-scheduling.service';
 
 const ACTION_TYPES = [
   'apply_opportunity',
@@ -135,12 +136,14 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
             if (isNaN(dueAt.getTime())) {
               return { success: false, error: tr('copilot:toolDueAtInvalid') };
             }
+            let latestAllowedAt: Date | null = null;
 
             // FOLLOW_UP must account for opportunity start_date when available.
             if (code.toUpperCase() === 'FOLLOW_UP') {
               const startDate = await resolveOpportunityStartDateForFollowUp(data);
               if (startDate) {
                 const cappedDueAt = dayBeforeStartAt0900Utc(startDate);
+                latestAllowedAt = cappedDueAt;
                 if (dueAt > cappedDueAt) {
                   dueAt = cappedDueAt;
                   metadata = {
@@ -152,6 +155,28 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
                 }
               }
             }
+
+            const scope = organizationId ? 'ORGANIZATION' : 'TALENT';
+            const scheduled = await resolveAgendaSchedule({
+              scope,
+              talentId,
+              organizationId: organizationId ? String(organizationId) : undefined,
+              requestedDueAt: dueAt,
+              latestAllowedAt,
+            });
+            if (!scheduled) {
+              return { success: false, error: tr('copilot:toolNoAvailableAgendaSlot') };
+            }
+            dueAt = scheduled.dueAt;
+            metadata = {
+              ...metadata,
+              scheduling: {
+                requested_due_at: scheduled.requestedDueAt.toISOString(),
+                final_due_at: scheduled.dueAt.toISOString(),
+                adjusted: scheduled.adjusted,
+                reasons: scheduled.reasons,
+              },
+            };
 
             if (organizationId) {
               // Must be an active member of the org to create org triggers
@@ -180,7 +205,14 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
               [talentId, code, title, description, dueAt.toISOString(), priority, JSON.stringify(metadata), talentId]
             );
 
-            return { success: true, message: tr('copilot:toolTalentTriggerCreated'), triggerId: result.rows[0].id };
+            return {
+              success: true,
+              message: tr('copilot:toolTalentTriggerCreated'),
+              triggerId: result.rows[0].id,
+              dueAt: dueAt.toISOString(),
+              schedulingAdjusted: scheduled.adjusted,
+              schedulingReasons: scheduled.reasons,
+            };
           }
 
           case 'update_agenda_trigger': {
@@ -196,7 +228,7 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
 
             // Fetch trigger to enforce access control
             const existing = await pool.query(
-              `SELECT id, scope, talent_id, organization_id FROM agenda_triggers WHERE id = $1::uuid LIMIT 1`,
+              `SELECT id, scope, talent_id, organization_id, code, metadata FROM agenda_triggers WHERE id = $1::uuid LIMIT 1`,
               [entityId]
             );
             if (existing.rows.length === 0) {
@@ -217,6 +249,36 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
               }
             }
 
+            let normalizedDueAt = nextDueAt;
+            let normalizedMetadata = metadata ? { ...metadata } : null;
+            if (normalizedDueAt) {
+              const existingMetadata = row.metadata && typeof row.metadata === 'object' ? { ...row.metadata } : {};
+              const latestAllowedAt = row.code === 'FOLLOW_UP' && existingMetadata.adjusted_due_at
+                ? new Date(String(existingMetadata.adjusted_due_at))
+                : null;
+              const scheduled = await resolveAgendaSchedule({
+                scope: row.scope,
+                talentId,
+                organizationId: row.organization_id ? String(row.organization_id) : undefined,
+                requestedDueAt: normalizedDueAt,
+                excludeTriggerId: entityId,
+                latestAllowedAt: latestAllowedAt && !isNaN(latestAllowedAt.getTime()) ? latestAllowedAt : null,
+              });
+              if (!scheduled) {
+                return { success: false, error: tr('copilot:toolNoAvailableAgendaSlot') };
+              }
+              normalizedDueAt = scheduled.dueAt;
+              normalizedMetadata = {
+                ...(normalizedMetadata || {}),
+                scheduling: {
+                  requested_due_at: scheduled.requestedDueAt.toISOString(),
+                  final_due_at: scheduled.dueAt.toISOString(),
+                  adjusted: scheduled.adjusted,
+                  reasons: scheduled.reasons,
+                },
+              };
+            }
+
             const result = await pool.query(
               `
               UPDATE agenda_triggers
@@ -228,7 +290,7 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
               WHERE id = $1::uuid
               RETURNING id, status, due_at
               `,
-              [entityId, nextStatus, nextDueAt ? nextDueAt.toISOString() : null, metadata ? JSON.stringify(metadata) : null]
+              [entityId, nextStatus, normalizedDueAt ? normalizedDueAt.toISOString() : null, normalizedMetadata ? JSON.stringify(normalizedMetadata) : null]
             );
 
             return { success: true, message: tr('copilot:toolTriggerUpdated'), data: result.rows[0] };
