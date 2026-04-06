@@ -255,6 +255,44 @@ async function persistSessionContext(sessionId: string, context: Record<string, 
   );
 }
 
+interface ConfirmationBlockPayload {
+  action?: string;
+  entity_id?: string;
+  title?: string;
+  description?: string;
+  confirm_label?: string;
+  cancel_label?: string;
+  data?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+function normalizeConfirmationPayload(payload: ConfirmationBlockPayload): ConfirmationBlockPayload {
+  const normalized: ConfirmationBlockPayload = {
+    ...payload,
+    entity_id: typeof payload.entity_id === 'string' ? payload.entity_id.trim() : '',
+  };
+
+  if (normalized.action === 'create_agenda_trigger' && !normalized.entity_id) {
+    normalized.entity_id = 'self';
+  }
+
+  return normalized;
+}
+
+function normalizeConfirmationBlocks(content: string): string {
+  if (!content || !content.includes('```confirmation')) return content;
+
+  return content.replace(/```confirmation\s*([\s\S]*?)```/g, (fullMatch, rawBlock: string) => {
+    try {
+      const parsed = JSON.parse(rawBlock.trim()) as ConfirmationBlockPayload;
+      const normalized = normalizeConfirmationPayload(parsed);
+      return `\`\`\`confirmation\n${JSON.stringify(normalized)}\n\`\`\``;
+    } catch {
+      return fullMatch;
+    }
+  });
+}
+
 function extractLastConfirmationBlock(content: string): { rawBlock: string; confirmLabel?: string } | null {
   const regex = /```confirmation\s*([\s\S]*?)```/g;
   let match: RegExpExecArray | null;
@@ -263,9 +301,9 @@ function extractLastConfirmationBlock(content: string): { rawBlock: string; conf
   while ((match = regex.exec(content)) !== null) {
     const raw = match[1].trim();
     try {
-      const parsed = JSON.parse(raw);
+      const parsed = normalizeConfirmationPayload(JSON.parse(raw) as ConfirmationBlockPayload);
       last = {
-        rawBlock: `\`\`\`confirmation\n${raw}\n\`\`\``,
+        rawBlock: `\`\`\`confirmation\n${JSON.stringify(parsed)}\n\`\`\``,
         confirmLabel: typeof parsed?.confirm_label === 'string' ? parsed.confirm_label.trim() : undefined,
       };
     } catch {
@@ -960,13 +998,14 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
 
     // Run agent with SSE streaming (pass attachments so agent sees file context)
     const parsedAttachments = messageAttachments ? JSON.parse(messageAttachments) : undefined;
-    const { finalOutput, toolTrace, segments, traceMetrics } = await runAgentWithSSE(
+    const { finalOutput: rawFinalOutput, toolTrace, segments, traceMetrics } = await runAgentWithSSE(
       agent,
       agentMessage,
       history,
       res,
       parsedAttachments
     );
+    const finalOutput = normalizeConfirmationBlocks(rawFinalOutput);
 
     // --- TTS generation (agent-driven, study mode only) ---
     // The agent embeds ```audio_tts\n{"text":"...","instructions":"..."}\n``` blocks

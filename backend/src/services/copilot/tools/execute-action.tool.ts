@@ -75,7 +75,7 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
       'Execute a user-confirmed action on the platform. ALWAYS show a confirmation block to the user BEFORE calling this tool. Actions: apply to opportunity, join community, book space, accept/decline invitation.',
     parameters: z.object({
       action: z.enum(ACTION_TYPES).describe('The action to execute'),
-      entityId: z.string().optional().default('').describe('The UUID of the target entity (opportunity, community, space, invitation, or trigger). For create_agenda_trigger, pass empty string "".'),
+      entityId: z.string().optional().default('').describe('The UUID of the target entity (opportunity, community, space, invitation, or trigger). For create_agenda_trigger tool execution, empty string "" is accepted, but UI confirmation blocks should use "self".'),
       dataJson: z
         .union([z.string(), z.record(z.string(), z.unknown())])
         .default('')

@@ -501,7 +501,7 @@ Element types: point (id, x, y, label), segment (from, to, dashed?), angle (vert
 Before calling \`execute_action\`, show a confirmation block:
 
 \`\`\`confirmation
-{"action":"create_agenda_trigger","entity_id":"","title":"Creer ce trigger ?","description":"Relance candidature dans 7 jours","confirm_label":"Creer","cancel_label":"Annuler","data":{"code":"FOLLOW_UP","title":"Relancer candidature","dueAt":"2026-02-23T09:00:00.000Z","priority":"NORMAL"}}
+{"action":"create_agenda_trigger","entity_id":"self","title":"Creer ce trigger ?","description":"Relance candidature dans 7 jours","confirm_label":"Creer","cancel_label":"Annuler","data":{"code":"FOLLOW_UP","title":"Relancer candidature","dueAt":"2026-02-23T09:00:00.000Z","priority":"NORMAL"}}
 \`\`\`
 
 Supported actions (mode Étudier):
