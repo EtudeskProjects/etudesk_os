@@ -98,6 +98,19 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
         ? dataJson
         : (typeof dataJson === 'string' && dataJson.trim() ? JSON.parse(dataJson) : {});
 
+      // Sanitize known fields to prevent oversized or extreme values
+      if (data.code) data.code = String(data.code).slice(0, 100);
+      if (data.title) data.title = String(data.title).slice(0, 200);
+      if (data.description) data.description = String(data.description).slice(0, 2000);
+      if (data.dueAt || data.due_at) {
+        const rawDate = data.dueAt || data.due_at;
+        const d = new Date(String(rawDate));
+        if (isNaN(d.getTime()) || d.getFullYear() < 2020 || d.getFullYear() > 2035) {
+          delete data.dueAt;
+          delete data.due_at;
+        }
+      }
+
       try {
         switch (action) {
           case 'create_agenda_trigger': {
@@ -319,39 +332,64 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
               return { success: false, error: tr('copilot:toolBookingDatesRequired') };
             }
 
-            // Check no conflict
-            const conflict = await pool.query(
-              `SELECT id FROM space_bookings
-               WHERE space_id = $1 AND status IN ('PENDING', 'CONFIRMED')
-               AND start_datetime < $3 AND end_datetime > $2`,
-              [entityId, startDatetime, endDatetime]
-            );
-            if (conflict.rows.length > 0) {
-              return { success: false, error: tr('copilot:toolSlotTaken') };
+            // Validate dates are not inverted
+            const durationMs = new Date(endDatetime).getTime() - new Date(startDatetime).getTime();
+            if (durationMs <= 0) {
+              return { success: false, error: 'End date must be after start date' };
             }
 
-            // Calculate duration and total amount
-            const hourlyRate = parseFloat(space.rows[0].hourly_rate) || 0;
-            const durationMs = new Date(endDatetime).getTime() - new Date(startDatetime).getTime();
-            const durationHours = Math.max(durationMs / (1000 * 60 * 60), 1); // minimum 1 hour
-            const totalAmount = Math.round(hourlyRate * durationHours * 100) / 100;
+            // Atomic transaction: conflict check + INSERT to prevent double bookings
+            const client = await pool.connect();
+            try {
+              await client.query('BEGIN');
 
-            // Book
-            const result = await pool.query(
-              `INSERT INTO space_bookings (talent_id, space_id, organization_id, start_datetime, end_datetime,
-               pricing_type, unit_price, units_count, subtotal, total_amount, status, created_at)
-               VALUES ($1, $2, $3, $4, $5, 'HOURLY', $6, $7, $8, $8, 'PENDING', NOW())
-               RETURNING id`,
-              [talentId, entityId, space.rows[0].organization_id, startDatetime, endDatetime,
-               hourlyRate, durationHours, totalAmount]
-            );
+              // Lock the space row to serialize concurrent bookings
+              await client.query(
+                `SELECT id FROM spaces WHERE id = $1 FOR UPDATE`,
+                [entityId]
+              );
 
-            logger.info(`[execute_action] Talent ${talentId} booked space ${entityId}`);
-            return {
-              success: true,
-              message: tr('copilot:toolBookingSuccess', { name: space.rows[0].name, hours: durationHours, amount: totalAmount }),
-              bookingId: result.rows[0].id,
-            };
+              // Check no conflict (within transaction)
+              const conflict = await client.query(
+                `SELECT id FROM space_bookings
+                 WHERE space_id = $1 AND status IN ('PENDING', 'CONFIRMED')
+                 AND start_datetime < $3 AND end_datetime > $2`,
+                [entityId, startDatetime, endDatetime]
+              );
+              if (conflict.rows.length > 0) {
+                await client.query('ROLLBACK');
+                return { success: false, error: tr('copilot:toolSlotTaken') };
+              }
+
+              // Calculate duration and total amount
+              const hourlyRate = parseFloat(space.rows[0].hourly_rate) || 0;
+              const durationHours = Math.max(durationMs / (1000 * 60 * 60), 1); // minimum 1 hour
+              const totalAmount = Math.round(hourlyRate * durationHours * 100) / 100;
+
+              // Book (within transaction)
+              const result = await client.query(
+                `INSERT INTO space_bookings (talent_id, space_id, organization_id, start_datetime, end_datetime,
+                 pricing_type, unit_price, units_count, subtotal, total_amount, status, created_at)
+                 VALUES ($1, $2, $3, $4, $5, 'HOURLY', $6, $7, $8, $8, 'PENDING', NOW())
+                 RETURNING id`,
+                [talentId, entityId, space.rows[0].organization_id, startDatetime, endDatetime,
+                 hourlyRate, durationHours, totalAmount]
+              );
+
+              await client.query('COMMIT');
+
+              logger.info(`[execute_action] Talent ${talentId} booked space ${entityId}`);
+              return {
+                success: true,
+                message: tr('copilot:toolBookingSuccess', { name: space.rows[0].name, hours: durationHours, amount: totalAmount }),
+                bookingId: result.rows[0].id,
+              };
+            } catch (txError) {
+              await client.query('ROLLBACK');
+              throw txError;
+            } finally {
+              client.release();
+            }
           }
 
           case 'accept_invitation':
@@ -380,10 +418,16 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
               return { success: true, message: newStatus === 'ACCEPTED' ? tr('copilot:toolInvitationAccepted') : tr('copilot:toolInvitationDeclined') };
             }
 
-            // Try organization invitations
+            // Try organization invitations (match by email OR invitee_talent_id, LIMIT 1 to prevent double-accept)
             result = await pool.query(
               `UPDATE organization_invitations SET status = $3, updated_at = NOW()
-               WHERE id = $1 AND email = (SELECT email FROM talents WHERE id = $2) AND status = 'PENDING'
+               WHERE id = (
+                 SELECT id FROM organization_invitations
+                 WHERE id = $1 AND status = 'PENDING'
+                   AND (email = (SELECT email FROM talents WHERE id = $2 AND email IS NOT NULL)
+                        OR invitee_talent_id = $2)
+                 LIMIT 1
+               )
                RETURNING id, organization_id, role`,
               [entityId, talentId, newStatus]
             );

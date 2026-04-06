@@ -9,8 +9,9 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Play, Pause, Volume2 } from 'lucide-react-native';
 import { useAudioPlayerHook } from '../../../hooks/useAudioPlayer';
 import { useTheme } from '../../../hooks/useTheme';
-import { SPACING, BORDER } from '../../../constants/theme';
+import { SPACING, BORDER, TYPOGRAPHY, OPACITY, withOpacity } from '../../../constants/theme';
 import { API_CONFIG } from '../../../constants/config';
+import { getLabelDirect } from '../../../utils/labels';
 
 interface AudioBlockProps {
   url: string;
@@ -18,28 +19,58 @@ interface AudioBlockProps {
   autoPlay?: boolean;
 }
 
+function sanitizeText(value: unknown, max = 400): string | undefined {
+  if (value == null) return undefined;
+  const text = String(value).replace(/\s+/g, ' ').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text.length > max ? text.slice(0, max).trimEnd() : text;
+}
+
 function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
+  const safeSeconds = Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
+  const mins = Math.floor(safeSeconds / 60);
+  const secs = Math.floor(safeSeconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 export function AudioBlock({ url, duration: estimatedDuration, autoPlay }: AudioBlockProps) {
   const { colors } = useTheme();
-  const fullUrl = url.startsWith('http') ? url : `${API_CONFIG.BASE_URL}${url}`;
+  const safeUrl = sanitizeText(url);
+  const fullUrl = safeUrl
+    ? safeUrl.startsWith('http')
+      ? safeUrl
+      : `${API_CONFIG.BASE_URL}${safeUrl.startsWith('/') ? '' : '/'}${safeUrl}`
+    : '';
   const { state, play, pause, stop } = useAudioPlayerHook(fullUrl);
   const hasAutoPlayed = useRef(false);
 
   // Auto-play on first render
   useEffect(() => {
-    if (autoPlay && !hasAutoPlayed.current && !state.isLoading) {
+    if (safeUrl && autoPlay && !hasAutoPlayed.current && !state.isLoading) {
       hasAutoPlayed.current = true;
       play();
     }
-  }, [autoPlay, state.isLoading, play]);
+  }, [autoPlay, safeUrl, state.isLoading, play]);
 
-  const displayDuration = state.duration > 0 ? state.duration : (estimatedDuration || 0);
-  const progressWidth = state.progress * 100;
+  useEffect(() => () => {
+    stop();
+  }, [stop]);
+
+  if (!safeUrl) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.surface || colors.background, borderColor: colors.borderColor }]}>
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{getLabelDirect('noData')}</Text>
+      </View>
+    );
+  }
+
+  const safeEstimatedDuration = Number.isFinite(estimatedDuration) && (estimatedDuration || 0) > 0 ? estimatedDuration! : 0;
+  const displayDuration = state.duration > 0 ? state.duration : safeEstimatedDuration;
+  const currentTime = Math.min(
+    Number.isFinite(state.currentTime) && state.currentTime > 0 ? state.currentTime : 0,
+    displayDuration || Number.MAX_SAFE_INTEGER
+  );
+  const progressWidth = Math.max(0, Math.min(100, (Number.isFinite(state.progress) ? state.progress : 0) * 100));
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface || colors.background, borderColor: colors.borderColor }]}>
@@ -55,7 +86,7 @@ export function AudioBlock({ url, duration: estimatedDuration, autoPlay }: Audio
       </Pressable>
 
       <View style={styles.progressContainer}>
-        <View style={styles.progressBarBg}>
+        <View style={[styles.progressBarBg, { backgroundColor: withOpacity(colors.textDisabled, OPACITY[15]) }]}>
           <View
             style={[
               styles.progressBarFill,
@@ -66,9 +97,9 @@ export function AudioBlock({ url, duration: estimatedDuration, autoPlay }: Audio
         <View style={styles.timeRow}>
           <Volume2 size={12} color={colors.textSecondary} />
           <Text style={[styles.timeText, { color: colors.textSecondary }]}>
-            {state.isPlaying || state.currentTime > 0
-              ? formatTime(state.currentTime)
-              : formatTime(displayDuration)}
+            {displayDuration > 0
+              ? `${formatTime(currentTime)} / ${formatTime(displayDuration)}`
+              : formatTime(currentTime)}
           </Text>
         </View>
       </View>
@@ -113,7 +144,13 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   timeText: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: 11,
+  },
+  emptyText: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    flex: 1,
   },
 });
 

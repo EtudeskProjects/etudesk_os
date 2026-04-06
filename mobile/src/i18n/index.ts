@@ -11,11 +11,11 @@ import zh from './zh.json';
 
 const SUPPORTED_LANGUAGES = ['fr', 'en', 'es', 'ar', 'it', 'de', 'zh'] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
-export const DEFAULT_LANGUAGE: Language = 'en';
+export const DEFAULT_LANGUAGE: Language = 'fr';
 
 export const LANGUAGE_OPTIONS: readonly { id: Language; label: string; flag: string }[] = [
-  { id: 'en', label: 'English', flag: 'EN' },
-  { id: 'fr', label: 'Français', flag: 'FR' },
+  { id: 'fr', label: 'Français', flag: '🇫🇷' },
+  { id: 'en', label: 'English', flag: '🇬🇧' },
 ] as const;
 
 const RTL_LANGUAGES: ReadonlySet<string> = new Set(['ar']);
@@ -31,7 +31,7 @@ const i18n = new I18n({
   zh,
 });
 
-// Set default locale (English as fallback for missing translations)
+// Set default locale (French on first launch, with fallbacks for missing translations)
 i18n.defaultLocale = DEFAULT_LANGUAGE;
 i18n.enableFallback = true;
 
@@ -48,7 +48,7 @@ export function getDeviceLanguage(): Language {
       if (isValidLanguage(lang)) return lang;
     }
   } catch {
-    // Fallback to English
+    // Fallback to the app default language
   }
   return DEFAULT_LANGUAGE;
 }

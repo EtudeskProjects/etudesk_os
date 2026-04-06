@@ -14,6 +14,7 @@ import { api } from '../../services/api';
 import { formatNumberNoTrailingZeros } from '../../utils/number';
 import { getLabel } from '../../utils/labels';
 import { ShimmerPlaceholder } from '../ui';
+import { getCurrentLocale } from '../../i18n';
 
 
 interface CopyButtonProps {
@@ -21,18 +22,20 @@ interface CopyButtonProps {
   size?: number;
 }
 
-/** API endpoints for each entity type */
-const ENTITY_ENDPOINTS: Record<string, string> = {
-  opportunity: '/api/opportunities',
-  community: '/api/communities',
-  space: '/api/spaces',
-  organization: '/api/organizations',
-  talent: '/api/talents',
-  document: '/api/documents',
-};
-
 /** Entity type labels (i18n) */
 const getEntityLabel = (type: string): string => getLabel('entityLabels', type);
+
+function formatDateTime(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toLocaleString(getCurrentLocale(), {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 /** Format entity data into readable text */
 function formatEntity(type: string, data: Record<string, any>): string {
@@ -100,6 +103,43 @@ function formatEntity(type: string, data: Record<string, any>): string {
       if (docType) parts.push(docType);
       break;
     }
+    case 'event': {
+      const title = data.title || data.metadata?.title || data.content || '';
+      const community = data.community_name || data.community?.name;
+      const eventDate = formatDateTime(data.startDate || data.start_date || data.metadata?.start_date);
+      const location = data.location || data.metadata?.location;
+      parts.push(title);
+      if (community) parts.push(community);
+      if (eventDate) parts.push(eventDate);
+      if (location) parts.push(location);
+      break;
+    }
+    case 'skill': {
+      const title = data.title || data.canonical_name || data.name || '';
+      const level = data.proficiencyLevel || data.proficiency_level;
+      const skillType = data.skillType || data.type;
+      parts.push(title);
+      if (level) parts.push(getLabel('proficiencyLevels', level));
+      if (skillType) parts.push(getLabel('skillTypes', skillType));
+      break;
+    }
+    case 'notification': {
+      const title = data.title || '';
+      const body = data.body || data.subtitle;
+      parts.push(title);
+      if (body) parts.push(body);
+      break;
+    }
+    case 'maps': {
+      const label = data.title || data.label || data.name || '';
+      const address = data.address || data.location;
+      const lat = data.latitude ?? data.lat ?? data.coordinates?.latitude ?? data.coordinates?.lat;
+      const lng = data.longitude ?? data.lng ?? data.coordinates?.longitude ?? data.coordinates?.lng;
+      parts.push(label);
+      if (address) parts.push(address);
+      if (lat !== undefined && lng !== undefined) parts.push(`${lat}, ${lng}`);
+      break;
+    }
     default: {
       const name = data.title || data.name || data.id || '';
       parts.push(name);
@@ -115,7 +155,7 @@ async function enrichContent(content: string): Promise<string> {
   const entityTypes = ['opportunity', 'community', 'space', 'organization', 'talent', 'event', 'document', 'skill', 'notification', 'maps'];
 
   // Collect all entity blocks
-  const replacements: Array<{ full: string; type: string; id: string }> = [];
+  const replacements: Array<{ full: string; type: string; id?: string; data: Record<string, any> }> = [];
   let match: RegExpExecArray | null;
 
   while ((match = blockRegex.exec(content)) !== null) {
@@ -127,8 +167,8 @@ async function enrichContent(content: string): Promise<string> {
     const entityType = tag.startsWith('entity:') ? tag.replace('entity:', '') : tag;
     try {
       const parsed = JSON.parse(body);
-      if (parsed?.id) {
-        replacements.push({ full: match[0], type: entityType, id: parsed.id });
+      if (parsed?.id || entityType === 'maps') {
+        replacements.push({ full: match[0], type: entityType, id: parsed?.id, data: parsed });
       }
     } catch {
       // Skip malformed JSON
@@ -137,27 +177,26 @@ async function enrichContent(content: string): Promise<string> {
 
   if (replacements.length === 0) return content;
 
-  // Fetch all entities in parallel
-  const fetches = await Promise.allSettled(
-    replacements.map(async (r) => {
-      const endpoint = ENTITY_ENDPOINTS[r.type];
-      if (!endpoint) return { ...r, text: `[${getEntityLabel(r.type) || r.type}]` };
-      try {
-        const response = await api.get<any>(`${endpoint}/${r.id}`);
-        const data = response.data || response;
-        return { ...r, text: formatEntity(r.type, data) };
-      } catch {
-        return { ...r, text: `[${getEntityLabel(r.type) || r.type}]` };
-      }
-    })
-  );
+  const batchKeys = replacements
+    .filter((r) => r.id && r.type !== 'maps')
+    .map((r) => `${r.type}:${r.id}`);
+
+  let batchData: Record<string, any> = {};
+  if (batchKeys.length > 0) {
+    try {
+      const response: any = await api.get(`/entities/batch?items=${encodeURIComponent(batchKeys.join(','))}`);
+      batchData = response?.data || {};
+    } catch {
+      batchData = {};
+    }
+  }
 
   // Replace entity blocks with readable text
   let enriched = content;
-  for (const result of fetches) {
-    if (result.status === 'fulfilled') {
-      enriched = enriched.replace(result.value.full, result.value.text);
-    }
+  for (const replacement of replacements) {
+    const fetched = replacement.id ? batchData[`${replacement.type}:${replacement.id}`] : null;
+    const text = formatEntity(replacement.type, fetched || replacement.data);
+    enriched = enriched.replace(replacement.full, text);
   }
 
   return enriched;

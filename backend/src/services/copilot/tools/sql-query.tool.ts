@@ -102,6 +102,9 @@ export function createSqlQueryTool(
       if (query && !params.query) params.query = query;
       if (country && !params.country) params.country = country;
 
+      // Cap limit to prevent LLM from requesting excessive rows
+      if (params.limit) params.limit = Math.min(Math.max(Number(params.limit) || 20, 1), 50);
+
       // Anti-loop: return cached result on repeat calls (NOT an error — errors cause retry loops)
       const cacheKey = `${intent}:${JSON.stringify(params)}`;
       const count = (callCounts.get(cacheKey) || 0) + 1;

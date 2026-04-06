@@ -64,8 +64,8 @@ export async function getWinningTrajectories(skillId: string, limit = 2): Promis
 
     const examples = result.rows.map((row: any, i: number) => {
       const tools = (row.tool_names || []).join(' → ');
-      const userMsg = (row.user_message || '').slice(0, 150).trim();
-      const output = (row.output_preview || '').slice(0, 200).trim();
+      const userMsg = (row.user_message || '').trim();
+      const output = (row.output_preview || '').trim();
       return `Example ${i + 1}:
   User: "${userMsg}"
   Tools: ${tools || 'none'}

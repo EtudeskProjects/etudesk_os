@@ -300,12 +300,23 @@ export async function detectSkillFromMessage(
     let bestMatch: SkillDefinition | null = null;
     let bestScore = -1;
 
+    const normalizedMsg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
     for (const skill of skills) {
       if (!skill.embedding) continue;
 
       const similarity = cosineSimilarity(messageEmbedding, skill.embedding);
       // Small priority boost for tie-breaking (priority 8 → +0.04)
-      const score = similarity + (skill.priority ?? 0) * 0.005;
+      let score = similarity + (skill.priority ?? 0) * 0.005;
+
+      // Country relevance boost (parity with static matching path)
+      if (country) {
+        const countryCode = country.trim().toUpperCase();
+        const bonusTriggers = COUNTRY_BONUS_TRIGGERS[countryCode];
+        if (bonusTriggers?.some((bt) => normalizedMsg.includes(bt))) {
+          score += 0.05;
+        }
+      }
 
       if (score > bestScore) {
         bestScore = score;

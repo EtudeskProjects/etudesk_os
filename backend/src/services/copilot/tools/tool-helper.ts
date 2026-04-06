@@ -21,6 +21,7 @@ export interface ToolDefinition {
 
 export interface AgentConfig {
   name: string;
+  mode: 'explore' | 'study' | 'org';
   model: string;
   systemPrompt: string;
   tools: ToolDefinition[];

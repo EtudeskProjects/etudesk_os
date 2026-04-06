@@ -122,7 +122,7 @@ If ambiguous, ask: "Quel type d'analyse souhaitez-vous ? Cohortes de talents, en
 2. Render un **stacked_bar** du funnel de recrutement :
 
 ```chart
-{"type":"stacked_bar","title":"Funnel recrutement","data":[{"name":"Dev Frontend","series":[{"label":"Soumises","value":45},{"label":"En revue","value":12},{"label":"Acceptees","value":3},{"label":"Refusees","value":18}]},{"name":"UX Designer","series":[{"label":"Soumises","value":28},{"label":"En revue","value":8},{"label":"Acceptees","value":2},{"label":"Refusees","value":10}]}]}
+{"type":"stacked_bar","title":"Funnel recrutement","data":[{"label":"Dev Frontend","segments":[{"key":"submitted","label":"Soumises","value":45,"color":"primary"},{"key":"in_review","label":"En revue","value":12,"color":"warning"},{"key":"accepted","label":"Acceptees","value":3,"color":"success"},{"key":"rejected","label":"Refusees","value":18,"color":"error"}]},{"label":"UX Designer","segments":[{"key":"submitted","label":"Soumises","value":28,"color":"primary"},{"key":"in_review","label":"En revue","value":8,"color":"warning"},{"key":"accepted","label":"Acceptees","value":2,"color":"success"},{"key":"rejected","label":"Refusees","value":10,"color":"error"}]}]}
 ```
 
 **Thinking flow** : Une barre par opportunite, segments = statuts de candidature. Labels : SUBMITTED→"Soumises", IN_REVIEW→"En revue", ACCEPTED→"Acceptees", REJECTED→"Refusees". Trier par acceptance_rate croissant (les opportunites problematiques en premier). Si ratio refus > 80% → alerter. Exclure les segments a 0.

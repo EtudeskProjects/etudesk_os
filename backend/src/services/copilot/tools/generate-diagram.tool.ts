@@ -166,6 +166,7 @@ export const generateDiagramTool = defineTool({
         diagramType,
         mermaidCode: cleanCode,
         renderHint: 'client-side',
+        renderConfig: { securityLevel: 'strict' },
       };
     } catch (error: any) {
       logger.error(`[generate_diagram] Error: ${error.message}`);

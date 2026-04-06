@@ -32,8 +32,17 @@ import { getCurrentLocale } from '../../../i18n';
 import { Button, ShimmerPlaceholder } from '../../ui';
 
 /** Storage key for persisting confirmation action results */
-function getConfirmationKey(action: string, entityId: string): string {
-  return `confirmation_done_${action}_${entityId}`;
+function hashString(value: string): string {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = ((hash << 5) - hash + value.charCodeAt(index)) | 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+function getConfirmationKey(action: string, entityId: string, title: string, data?: Record<string, any>): string {
+  const fingerprint = hashString(JSON.stringify({ title, data: data || null }));
+  return `confirmation_done_${action}_${entityId}_${fingerprint}`;
 }
 
 
@@ -63,6 +72,28 @@ const getCommunityTypeLabel = (key: string) => getLabel('confirmationLabels.comm
 const getAccessLabel = (key: string) => getLabel('confirmationLabels.joinPolicies', key);
 const getSpaceTypeLabel = (key: string) => getLabel('confirmationLabels.spaceCategories', key);
 
+function sanitizeText(value: unknown, max = 160): string | undefined {
+  if (value == null) return undefined;
+  const text = String(value).replace(/\s+/g, ' ').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
+
+function sanitizeList(values: unknown, maxItems = 5): string[] {
+  if (!Array.isArray(values)) return [];
+  const seen = new Set<string>();
+  return values
+    .map((value) => sanitizeText(value, 48))
+    .filter((value): value is string => {
+      if (!value) return false;
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, maxItems);
+}
+
 function formatCurrency(amount: number): string {
   if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1).replace('.0', '')}M`;
   if (amount >= 1_000) return `${Math.round(amount / 1_000)}k`;
@@ -70,27 +101,30 @@ function formatCurrency(amount: number): string {
 }
 
 // --- Preview Renderers ---
-function OpportunityPreview({ data, colors }: { data: Record<string, any>; colors: any }) {
+function OpportunityPreview({ data, colors, headerTitle }: { data: Record<string, any>; colors: any; headerTitle?: string }) {
   const contract = getContractLabel(data.contract_type) || data.contract_type;
   const rhythm = data.work_rhythm ? getRhythmLabel(data.work_rhythm) : null;
   const locationType = data.location_type ? getLocationLabel(data.location_type) : null;
   const location = data.locations?.[0];
-  const locationStr = location ? `${location.city || ''}${location.country ? ', ' + location.country : ''}`.trim() : null;
+  const locationStr = location ? sanitizeText(`${location.city || ''}${location.country ? ', ' + location.country : ''}`) : null;
   const hasCompensation = data.compensation_min || data.compensation_max;
+  const previewTitle = sanitizeText(data.title, 88);
+  const summary = sanitizeText(data.summary, 220);
+  const requirements = sanitizeText(data.requirements, 220);
+  const niceToHave = sanitizeText(data.nice_to_have, 120);
 
   return (
     <View style={styles.previewBody}>
-      {/* Title */}
-      <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{data.title}</Text>
+      {previewTitle && previewTitle !== headerTitle ? (
+        <Text style={[styles.previewTitle, { color: colors.textPrimary }]} numberOfLines={2}>{previewTitle}</Text>
+      ) : null}
 
-      {/* Chips row */}
       <View style={styles.chipsRow}>
-        <Chip icon={Briefcase} label={contract} colors={colors} />
-        {rhythm && <Chip icon={Clock} label={rhythm} colors={colors} />}
-        {locationType && <Chip icon={MapPin} label={locationType} colors={colors} />}
+        {sanitizeText(contract, 32) && <Chip icon={Briefcase} label={sanitizeText(contract, 32)!} colors={colors} />}
+        {sanitizeText(rhythm, 32) && <Chip icon={Clock} label={sanitizeText(rhythm, 32)!} colors={colors} />}
+        {sanitizeText(locationType, 32) && <Chip icon={MapPin} label={sanitizeText(locationType, 32)!} colors={colors} />}
       </View>
 
-      {/* Details */}
       {locationStr && (
         <DetailRow icon={MapPin} text={locationStr} colors={colors} />
       )}
@@ -105,29 +139,26 @@ function OpportunityPreview({ data, colors }: { data: Record<string, any>; color
         <DetailRow icon={Calendar} text={`${i18n.t('common.deadline')} : ${new Date(data.deadline).toLocaleDateString(getCurrentLocale(), { day: 'numeric', month: 'short', year: 'numeric' })}`} colors={colors} />
       )}
 
-      {/* Summary */}
-      {data.summary && (
+      {summary && (
         <Text style={[styles.previewSummary, { color: colors.textSecondary }]} numberOfLines={3}>
-          {data.summary}
+          {summary}
         </Text>
       )}
 
-      {/* Requirements */}
-      {data.requirements && (
+      {requirements && (
         <View style={[styles.previewSection, { borderTopColor: colors.borderColor }]}>
           <Text style={[styles.previewSectionLabel, { color: colors.textSecondary }]}>{i18n.t('common.soughtProfile')}</Text>
           <Text style={[styles.previewSectionText, { color: colors.textPrimary }]} numberOfLines={3}>
-            {data.requirements}
+            {requirements}
           </Text>
         </View>
       )}
 
-      {/* Nice to have */}
-      {data.nice_to_have && (
+      {niceToHave && (
         <View style={styles.previewInlineSection}>
           <Star size={12} color={colors.warning} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.previewInlineText, { color: colors.textSecondary }]} numberOfLines={2}>
-            {data.nice_to_have}
+            {niceToHave}
           </Text>
         </View>
       )}
@@ -135,23 +166,27 @@ function OpportunityPreview({ data, colors }: { data: Record<string, any>; color
   );
 }
 
-function CommunityPreview({ data, colors }: { data: Record<string, any>; colors: any }) {
+function CommunityPreview({ data, colors, headerTitle }: { data: Record<string, any>; colors: any; headerTitle?: string }) {
   const type = getCommunityTypeLabel(data.type) || data.type;
   const access = getAccessLabel(data.access_type) || data.access_type;
+  const name = sanitizeText(data.name, 88);
+  const sectors = sanitizeList(data.sectors, 4);
+  const description = sanitizeText(data.description, 220);
 
   return (
     <View style={styles.previewBody}>
-      <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{data.name}</Text>
+      {name && name !== headerTitle ? (
+        <Text style={[styles.previewTitle, { color: colors.textPrimary }]} numberOfLines={2}>{name}</Text>
+      ) : null}
 
       <View style={styles.chipsRow}>
-        <Chip icon={Users} label={type} colors={colors} />
-        <Chip icon={Zap} label={access} colors={colors} />
+        {sanitizeText(type, 32) && <Chip icon={Users} label={sanitizeText(type, 32)!} colors={colors} />}
+        {sanitizeText(access, 32) && <Chip icon={Zap} label={sanitizeText(access, 32)!} colors={colors} />}
       </View>
 
-      {/* Sectors */}
-      {data.sectors && data.sectors.length > 0 && (
+      {sectors.length > 0 && (
         <View style={styles.chipsRow}>
-          {data.sectors.slice(0, 4).map((s: string, i: number) => (
+          {sectors.map((s: string, i: number) => (
             <View key={i} style={[styles.sectorChip, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
               <Text style={[styles.sectorChipText, { color: colors.primary }]}>
                 {s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g, ' ')}
@@ -161,25 +196,30 @@ function CommunityPreview({ data, colors }: { data: Record<string, any>; colors:
         </View>
       )}
 
-      {data.description && (
+      {description && (
         <Text style={[styles.previewSummary, { color: colors.textSecondary }]} numberOfLines={3}>
-          {data.description}
+          {description}
         </Text>
       )}
     </View>
   );
 }
 
-function SpacePreview({ data, colors }: { data: Record<string, any>; colors: any }) {
+function SpacePreview({ data, colors, headerTitle }: { data: Record<string, any>; colors: any; headerTitle?: string }) {
   const type = getSpaceTypeLabel(data.type) || data.type;
-  const locationStr = data.city ? `${data.city}${data.country ? ', ' + data.country : ''}` : null;
+  const locationStr = sanitizeText(data.city ? `${data.city}${data.country ? ', ' + data.country : ''}` : null);
+  const name = sanitizeText(data.name, 88);
+  const equipment = sanitizeList(data.equipment, 5);
+  const description = sanitizeText(data.description, 160);
 
   return (
     <View style={styles.previewBody}>
-      <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{data.name}</Text>
+      {name && name !== headerTitle ? (
+        <Text style={[styles.previewTitle, { color: colors.textPrimary }]} numberOfLines={2}>{name}</Text>
+      ) : null}
 
       <View style={styles.chipsRow}>
-        <Chip icon={Briefcase} label={type} colors={colors} />
+        {sanitizeText(type, 32) && <Chip icon={Briefcase} label={sanitizeText(type, 32)!} colors={colors} />}
         {data.surface_m2 && <Chip icon={Maximize2} label={`${formatNumberNoTrailingZeros(data.surface_m2)} m²`} colors={colors} />}
         {data.capacity && <Chip icon={Users} label={`${formatNumberNoTrailingZeros(data.capacity, 0)} pers.`} colors={colors} />}
       </View>
@@ -197,10 +237,9 @@ function SpacePreview({ data, colors }: { data: Record<string, any>; colors: any
         />
       )}
 
-      {/* Equipment */}
-      {data.equipment && data.equipment.length > 0 && (
+      {equipment.length > 0 && (
         <View style={styles.chipsRow}>
-          {data.equipment.slice(0, 5).map((e: string, i: number) => (
+          {equipment.map((e: string, i: number) => (
             <View key={i} style={[styles.sectorChip, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
               <Text style={[styles.sectorChipText, { color: colors.primary }]}>{e}</Text>
             </View>
@@ -208,9 +247,9 @@ function SpacePreview({ data, colors }: { data: Record<string, any>; colors: any
         </View>
       )}
 
-      {data.description && (
+      {description && (
         <Text style={[styles.previewSummary, { color: colors.textSecondary }]} numberOfLines={2}>
-          {data.description}
+          {description}
         </Text>
       )}
     </View>
@@ -253,12 +292,12 @@ function ProfileUpdatePreview({ data, colors }: { data: Record<string, any>; col
   };
 
   const formatValue = (value: any): string => {
-    if (typeof value === 'boolean') return value ? getLabel('common', 'yes') : getLabel('common', 'no');
-    if (Array.isArray(value)) return value.map(v => resolveEnum(v)).join(', ');
-    return String(value);
+    if (typeof value === 'boolean') return value ? i18n.t('common.yes') : i18n.t('common.no');
+    if (Array.isArray(value)) return sanitizeList(value, 5).map(v => resolveEnum(v)).join(', ');
+    return sanitizeText(value, 220) || '';
   };
 
-  const entries = Object.entries(data).filter(([key]) => PROFILE_FIELD_KEYS.includes(key));
+  const entries = Object.entries(data).filter(([key, value]) => PROFILE_FIELD_KEYS.includes(key) && (Array.isArray(value) ? sanitizeList(value).length > 0 : sanitizeText(value)));
 
   return (
     <View style={styles.previewBody}>
@@ -288,17 +327,16 @@ function ProfileUpdatePreview({ data, colors }: { data: Record<string, any>; col
   );
 }
 
-// --- Determine Which Preview To Render ---
-function renderPreview(action: string, data: Record<string, any> | undefined, colors: any) {
+function renderPreviewWithHeader(action: string, data: Record<string, any> | undefined, colors: any, headerTitle?: string) {
   if (!data) return null;
 
   switch (action) {
     case 'publish_opportunity':
-      return data.title ? <OpportunityPreview data={data} colors={colors} /> : null;
+      return data.title ? <OpportunityPreview data={data} colors={colors} headerTitle={headerTitle} /> : null;
     case 'create_community':
-      return data.name ? <CommunityPreview data={data} colors={colors} /> : null;
+      return data.name ? <CommunityPreview data={data} colors={colors} headerTitle={headerTitle} /> : null;
     case 'create_space':
-      return data.name ? <SpacePreview data={data} colors={colors} /> : null;
+      return data.name ? <SpacePreview data={data} colors={colors} headerTitle={headerTitle} /> : null;
     case 'update_profile':
       return <ProfileUpdatePreview data={data} colors={colors} />;
     default:
@@ -313,12 +351,12 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
   interactive = true,
 }) => {
   const { colors } = useTheme();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [state, setState] = useState<BlockState>('idle');
   const [resultMessage, setResultMessage] = useState('');
   const [loaded, setLoaded] = useState(false);
 
-  const storageKey = getConfirmationKey(data.action, data.entity_id);
+  const storageKey = getConfirmationKey(data.action, data.entity_id, data.title, data.data);
 
   // On mount, check if this action was already executed
   useEffect(() => {
@@ -334,9 +372,12 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
     }).catch(() => setLoaded(true));
   }, [storageKey]);
 
-  const confirmLabel = data.confirm_label || t('common.confirm');
-  const cancelLabel = data.cancel_label || t('common.cancel');
-  const hasPreview = renderPreview(data.action, data.data, colors) !== null;
+  const confirmLabel = sanitizeText(data.confirm_label, 32) || t('common.confirm');
+  const cancelLabel = sanitizeText(data.cancel_label, 32) || t('common.cancel');
+  const safeTitle = sanitizeText(data.title, 96);
+  const safeDescription = sanitizeText(data.description, 160);
+  const preview = renderPreviewWithHeader(data.action, data.data, colors, safeTitle);
+  const hasPreview = preview !== null;
 
   /** Persist resolved state so it survives conversation reload */
   const persistState = (newState: BlockState, message: string) => {
@@ -380,7 +421,7 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
     setResultMessage('');
   };
 
-  if (!data.action || !data.entity_id || !data.title) return null;
+  if (!data.action || !data.entity_id || !safeTitle) return null;
   if (!loaded) return null;
 
   return (
@@ -389,17 +430,15 @@ export const ConfirmationBlock: React.FC<ConfirmationBlockProps> = ({
       <View style={styles.header}>
         <Zap size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
         <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={2}>
-          {data.title}
+          {safeTitle}
         </Text>
       </View>
 
-      {/* Structured preview (for creation actions) */}
-      {state === 'idle' && renderPreview(data.action, data.data, colors)}
+      {state === 'idle' && preview}
 
-      {/* Fallback description (for non-creation actions without preview) */}
-      {data.description && state === 'idle' && !hasPreview && (
+      {safeDescription && state === 'idle' && !hasPreview && (
         <Text style={[styles.description, { color: colors.textSecondary }]}>
-          {data.description}
+          {safeDescription}
         </Text>
       )}
 
@@ -484,15 +523,15 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    lineHeight: TYPOGRAPHY.fontSize.lg * TYPOGRAPHY.lineHeight.normal,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    lineHeight: TYPOGRAPHY.fontSize.md * TYPOGRAPHY.lineHeight.normal,
     flex: 1,
   },
   description: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontSize: TYPOGRAPHY.fontSize.md,
-    lineHeight: TYPOGRAPHY.fontSize.md * TYPOGRAPHY.lineHeight.normal,
-    marginBottom: SPACING.lg,
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    lineHeight: TYPOGRAPHY.fontSize.sm * TYPOGRAPHY.lineHeight.normal,
+    marginBottom: SPACING.md,
   },
 
   // --- Preview Styles ---
@@ -502,8 +541,8 @@ const styles = StyleSheet.create({
   },
   previewTitle: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    fontSize: TYPOGRAPHY.fontSize.xl,
-    lineHeight: TYPOGRAPHY.fontSize.xl * TYPOGRAPHY.lineHeight.tight,
+    fontSize: TYPOGRAPHY.fontSize.lg,
+    lineHeight: TYPOGRAPHY.fontSize.lg * TYPOGRAPHY.lineHeight.tight,
   },
   chipsRow: {
     flexDirection: 'row',

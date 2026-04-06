@@ -8,6 +8,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY } from '../../../constants/theme';
+import { getLabelDirect } from '../../../utils/labels';
 
 interface MathBlockProps {
   data: {
@@ -19,6 +20,20 @@ interface MathBlockProps {
 
 const MIN_HEIGHT = 60;
 const MAX_HEIGHT = 300;
+
+function sanitizeText(value: unknown, max = 240): string | undefined {
+  if (value == null) return undefined;
+  const text = String(value).replace(/\s+/g, ' ').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
+
+function sanitizeExpression(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const text = value.replace(/\r\n?/g, '\n').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text;
+}
 
 /** Build KaTeX HTML — reusable for inline math in other blocks */
 export function buildKaTeXHTML(
@@ -98,17 +113,19 @@ export function buildKaTeXHTML(
 export const MathBlock: React.FC<MathBlockProps> = ({ data }) => {
   const { colors } = useTheme();
   const [webViewHeight, setWebViewHeight] = useState(MIN_HEIGHT);
+  const expression = sanitizeExpression(data.expression);
+  const caption = sanitizeText(data.caption, 140);
 
   const displayMode = data.displayMode !== false;
 
   const html = useMemo(
     () =>
-      buildKaTeXHTML(data.expression, {
+      buildKaTeXHTML(expression || '', {
         backgroundColor: colors.surface,
         textColor: colors.textPrimary,
         displayMode,
       }),
-    [data.expression, colors.surface, colors.textPrimary, displayMode]
+    [expression, colors.surface, colors.textPrimary, displayMode]
   );
 
   const onMessage = useCallback((event: WebViewMessageEvent) => {
@@ -120,6 +137,14 @@ export const MathBlock: React.FC<MathBlockProps> = ({ data }) => {
     } catch { /* ignore */ }
   }, []);
 
+  if (!expression) {
+    return (
+      <View style={styles.container}>
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{getLabelDirect('noData')}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={[styles.webviewContainer, { height: webViewHeight }]}>
@@ -129,7 +154,7 @@ export const MathBlock: React.FC<MathBlockProps> = ({ data }) => {
             baseUrl: 'https://cdn.jsdelivr.net',
           }}
           style={styles.webview}
-          scrollEnabled={true}
+          scrollEnabled={webViewHeight >= MAX_HEIGHT}
           javaScriptEnabled
           onMessage={onMessage}
           originWhitelist={['*']}
@@ -137,9 +162,9 @@ export const MathBlock: React.FC<MathBlockProps> = ({ data }) => {
           showsHorizontalScrollIndicator={true}
         />
       </View>
-      {data.caption ? (
+      {caption && caption !== expression ? (
         <Text style={[styles.caption, { color: colors.textSecondary }]}>
-          {data.caption}
+          {caption}
         </Text>
       ) : null}
     </View>
@@ -161,10 +186,14 @@ const styles = StyleSheet.create({
   },
   caption: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontSize: TYPOGRAPHY.fontSize.xs,
     textAlign: 'center',
     marginTop: SPACING.xs,
     fontStyle: 'italic',
+  },
+  emptyText: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.fontSize.xs,
   },
 });
 

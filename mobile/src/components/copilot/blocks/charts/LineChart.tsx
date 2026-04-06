@@ -8,6 +8,7 @@ import Svg, { Path, Circle, Line, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, OPACITY, withOpacity } from '../../../../constants/theme';
 import { getLabelDirect } from '../../../../utils/labels';
+import { getCurrentLocale } from '../../../../i18n';
 
 interface LineChartDataPoint {
   label: string;
@@ -22,8 +23,14 @@ interface LineChartProps {
 export const LineChart: React.FC<LineChartProps> = ({ title, data }) => {
   const { colors, mode } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
+  const locale = getCurrentLocale();
+  const safeData = Array.isArray(data)
+    ? data
+        .filter((item) => item && typeof item.label === 'string' && typeof item.value === 'number' && Number.isFinite(item.value))
+        .map((item) => ({ ...item, label: item.label.trim() || '•' }))
+    : [];
 
-  if (!data || data.length === 0) {
+  if (safeData.length < 2) {
     return (
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
@@ -47,13 +54,13 @@ export const LineChart: React.FC<LineChartProps> = ({ title, data }) => {
   const plotW = chartWidth - paddingLeft - paddingRight;
   const plotH = chartHeight - paddingTop - paddingBottom;
 
-  const values = data.map(d => d.value);
+  const values = safeData.map(d => d.value);
   const minVal = Math.min(...values);
   const maxVal = Math.max(...values);
   const range = maxVal - minVal || 1;
 
-  const points = data.map((d, i) => {
-    const x = paddingLeft + (i / Math.max(data.length - 1, 1)) * plotW;
+  const points = safeData.map((d, i) => {
+    const x = paddingLeft + (i / Math.max(safeData.length - 1, 1)) * plotW;
     const y = paddingTop + plotH - ((d.value - minVal) / range) * plotH;
     return { x, y, ...d };
   });
@@ -71,9 +78,9 @@ export const LineChart: React.FC<LineChartProps> = ({ title, data }) => {
   }));
 
   // X-axis labels (show max 6 evenly spaced)
-  const maxLabels = Math.min(6, data.length);
-  const step = Math.max(1, Math.floor((data.length - 1) / (maxLabels - 1)));
-  const xLabels = points.filter((_, i) => i % step === 0 || i === data.length - 1);
+  const maxLabels = Math.min(6, safeData.length);
+  const step = Math.max(1, Math.floor((safeData.length - 1) / Math.max(maxLabels - 1, 1)));
+  const xLabels = points.filter((_, i) => i % step === 0 || i === safeData.length - 1);
 
   return (
     <View style={styles.container}>
@@ -100,7 +107,7 @@ export const LineChart: React.FC<LineChartProps> = ({ title, data }) => {
             fontFamily={TYPOGRAPHY.fontFamily.regular}
             textAnchor="end"
           >
-            {tick.value.toLocaleString('fr-FR')}
+            {tick.value.toLocaleString(locale)}
           </SvgText>
         ))}
 

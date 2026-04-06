@@ -11,6 +11,7 @@ import { useTheme } from '../../../hooks/useTheme';
 import { useTranslation } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../constants/theme';
 import { getFullImageUrl } from '../../../utils/image';
+import { getLabelDirect } from '../../../utils/labels';
 import { showToastGlobal, LoadingShimmer } from '../../ui';
 
 interface ImageBlockProps {
@@ -22,15 +23,32 @@ interface ImageBlockProps {
   };
 }
 
+function sanitizeText(value: unknown, max = 220): string | undefined {
+  if (value == null) return undefined;
+  const text = String(value).replace(/\s+/g, ' ').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
+
 export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [aspectRatio, setAspectRatio] = useState(16 / 9);
+  const safeAlt = sanitizeText(data.alt, 120) || 'image';
+  const safeCaption = sanitizeText(data.caption, 180) || '';
+  const safeSource = sanitizeText(data.source, 120) || '';
 
   // Resolve relative URLs (e.g. /uploads/...) to full absolute URLs
   const imageUrl = getFullImageUrl(data.url);
+  if (!imageUrl) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+        <Text style={[styles.errorText, { color: colors.textTertiary }]}>{getLabelDirect('noData')}</Text>
+      </View>
+    );
+  }
 
   const handleImageLoad = (event: any) => {
     const { width, height } = event.nativeEvent.source;
@@ -46,10 +64,10 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
   };
 
   const handleSourcePress = async () => {
-    if (!data.source) return;
+    if (!safeSource) return;
 
     try {
-      await WebBrowser.openBrowserAsync(data.source);
+      await WebBrowser.openBrowserAsync(safeSource);
     } catch (err) {
       showToastGlobal({ type: 'error', title: t('common.error'), message: t('copilotImage.openLinkErrorMessage') });
     }
@@ -83,21 +101,21 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
             resizeMode="contain"
             onLoad={handleImageLoad}
             onError={handleImageError}
-            accessibilityLabel={data.alt}
+            accessibilityLabel={safeAlt}
           />
         )}
       </View>
 
       {/* Caption and Source */}
-      {(data.caption || data.source) && (
+      {(safeCaption || safeSource) && (
         <View style={styles.footer}>
-          {data.caption && (
+          {safeCaption && (
             <Text style={[styles.caption, { color: colors.textSecondary }]}>
-              {data.caption}
+              {safeCaption}
             </Text>
           )}
 
-          {data.source && (
+          {safeSource && safeSource !== safeCaption && (
             <Pressable
               style={styles.sourceButton}
               onPress={handleSourcePress}
@@ -110,7 +128,7 @@ export const ImageBlock: React.FC<ImageBlockProps> = ({ data }) => {
                 strokeWidth={ICON.strokeWidth}
               />
               <Text style={[styles.sourceText, { color: colors.primary }]} numberOfLines={1}>
-                {data.source}
+                {safeSource}
               </Text>
             </Pressable>
           )}

@@ -10,6 +10,7 @@ import { getLabelDirect } from '../../../../utils/labels';
 
 interface Segment {
   key: string;
+  label?: string;
   value: number;
   color: string;
 }
@@ -40,7 +41,16 @@ const resolveColor = (colors: any, colorKey: string, mode: string, fallbackIdx: 
 
 export const StackedBarChart: React.FC<StackedBarChartProps> = ({ title, data }) => {
   const { colors, mode } = useTheme();
-  const safeData = Array.isArray(data) ? data.filter(item => item && Array.isArray(item.segments)) : [];
+  const safeData = Array.isArray(data)
+    ? data
+        .map((item) => ({
+          ...item,
+          segments: Array.isArray(item?.segments)
+            ? item.segments.filter((segment) => segment && typeof segment.value === 'number' && segment.value > 0)
+            : [],
+        }))
+        .filter((item) => item && item.label && item.segments.length > 0)
+    : [];
 
   if (safeData.length === 0) {
     return (
@@ -56,9 +66,13 @@ export const StackedBarChart: React.FC<StackedBarChartProps> = ({ title, data })
   const maxTotal = Math.max(...safeData.map(item => item.segments.reduce((s, seg) => s + seg.value, 0)), 1);
 
   const legendKeys = new Map<string, string>();
+  const legendLabels = new Map<string, string>();
   safeData.forEach(item => {
     item.segments.forEach(seg => {
-      if (!legendKeys.has(seg.key)) legendKeys.set(seg.key, seg.color);
+      if (!legendKeys.has(seg.key)) {
+        legendKeys.set(seg.key, seg.color);
+        legendLabels.set(seg.key, seg.label || seg.key);
+      }
     });
   });
 
@@ -98,7 +112,7 @@ export const StackedBarChart: React.FC<StackedBarChartProps> = ({ title, data })
                   })}
                 </View>
                 <Text style={[styles.totalValue, { color: colors.textPrimary }]}>
-                  {total.toLocaleString('fr-FR')}
+                  {total.toLocaleString()}
                 </Text>
               </View>
             </View>
@@ -110,7 +124,9 @@ export const StackedBarChart: React.FC<StackedBarChartProps> = ({ title, data })
         {Array.from(legendKeys.entries()).map(([key, color], idx) => (
           <View key={key} style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: resolveColor(colors, color, mode, idx) }]} />
-            <Text style={[styles.legendText, { color: colors.textTertiary }]}>{key}</Text>
+            <Text style={[styles.legendText, { color: colors.textTertiary }]} numberOfLines={1}>
+              {legendLabels.get(key) || key}
+            </Text>
           </View>
         ))}
       </View>

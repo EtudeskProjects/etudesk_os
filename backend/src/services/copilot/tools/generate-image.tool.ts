@@ -44,6 +44,12 @@ export const generateImageTool = defineTool({
     const size = rawSize.toLowerCase() as '1024x1024' | '1536x1024' | '1024x1536';
     const quality = rawQuality.toLowerCase() as 'low' | 'medium' | 'high';
 
+    // Pre-screen prompt for prohibited content (saves API cost on obvious violations)
+    const BLOCKED_PATTERNS = /\b(nude|naked|nsfw|porn|sex|violence|gore|weapon|drug|kill|murder)\b/i;
+    if (BLOCKED_PATTERNS.test(prompt)) {
+      return { success: false, error: 'Image prompt contains prohibited content.' };
+    }
+
     try {
       const response = await openai.images.generate({
         model: MODEL_IMAGE,

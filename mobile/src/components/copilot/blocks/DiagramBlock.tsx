@@ -10,6 +10,7 @@ import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY } from '../../../constants/theme';
 import i18n from '../../../i18n';
+import { getLabelDirect } from '../../../utils/labels';
 
 interface DiagramBlockProps {
   data: {
@@ -24,14 +25,23 @@ interface DiagramBlockProps {
 const MIN_HEIGHT = 200;
 const MAX_HEIGHT = 600;
 
+function sanitizeText(value: unknown, max = 120): string | undefined {
+  if (value == null) return undefined;
+  const text = String(value).replace(/\s+/g, ' ').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
+
 /** Resolve mermaid code from multiple possible keys */
 function resolveCode(data: DiagramBlockProps['data']): string {
-  return data.code || data.mermaidCode || data.content || '';
+  const raw = data.code || data.mermaidCode || data.content || '';
+  return typeof raw === 'string' ? raw.trim() : '';
 }
 
 /** Sanitize Mermaid code to fix common LLM generation issues */
 function sanitizeMermaidCode(code: string): string {
-  let s = code;
+  let s = code.trim();
+  s = s.replace(/^```(?:mermaid|diagram)?\s*/i, '').replace(/```$/, '').trim();
   // Convert literal \n (two chars: backslash + n) → <br> for Mermaid line breaks in labels
   // Mermaid uses <br> tags (not \n) for line breaks when securityLevel is 'loose'
   s = s.replace(/\\n/g, '<br>');
@@ -285,8 +295,8 @@ const buildMermaidHTML = (
 export const DiagramBlock: React.FC<DiagramBlockProps> = ({ data }) => {
   const { colors, isDark } = useTheme();
   const [webViewHeight, setWebViewHeight] = useState(MIN_HEIGHT);
-
-  const code = resolveCode(data);
+  const code = sanitizeMermaidCode(resolveCode(data));
+  const title = sanitizeText(data.title, 72);
 
   const onMessage = useCallback((event: WebViewMessageEvent) => {
     try {
@@ -298,19 +308,23 @@ export const DiagramBlock: React.FC<DiagramBlockProps> = ({ data }) => {
     } catch { /* ignore */ }
   }, []);
 
-  // No code to render — skip WebView entirely
-  if (!code) return null;
+  if (!code || code.length < 4) {
+    return (
+      <View style={styles.container}>
+        {title ? <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text> : null}
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{getLabelDirect('noData')}</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* Title */}
-      {data.title ? (
+      {title ? (
         <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {data.title}
+          {title}
         </Text>
       ) : null}
 
-      {/* Mermaid Render */}
       <View style={[styles.webviewContainer, { height: webViewHeight }]}>
         <WebView
           source={{
@@ -324,8 +338,8 @@ export const DiagramBlock: React.FC<DiagramBlockProps> = ({ data }) => {
             baseUrl: 'https://cdn.jsdelivr.net',
           }}
           style={styles.webview}
-          scrollEnabled
-          nestedScrollEnabled
+          scrollEnabled={webViewHeight >= MAX_HEIGHT}
+          nestedScrollEnabled={webViewHeight >= MAX_HEIGHT}
           javaScriptEnabled
           onMessage={onMessage}
           originWhitelist={['*']}
@@ -345,6 +359,10 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontSize: TYPOGRAPHY.fontSize.sm,
     marginBottom: SPACING.xs,
+  },
+  emptyText: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.fontSize.xs,
   },
   webviewContainer: {
     width: '100%',

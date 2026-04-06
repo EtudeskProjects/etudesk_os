@@ -34,6 +34,30 @@ interface StepSolverBlockProps {
 const MIN_MATH_HEIGHT = 50;
 const MAX_MATH_HEIGHT = 160;
 
+function sanitizeText(value: unknown, max = 220): string | undefined {
+  if (value == null) return undefined;
+  const text = String(value).replace(/\s+/g, ' ').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
+
+function sanitizeSteps(data: StepSolverBlockProps['data']): { title: string; steps: Step[] } {
+  const title = sanitizeText(data?.title, 80) || '';
+  const steps = Array.isArray(data?.steps)
+    ? data.steps
+        .map<Step | null>((step, index) => {
+          const label = sanitizeText(step?.label, 72) || `Étape ${index + 1}`;
+          const content = sanitizeText(step?.content, 320);
+          const math = sanitizeText(step?.math, 400);
+          if (!content && !math) return null;
+          return math ? { label, content: content || '', math } : { label, content: content || '' };
+        })
+        .filter((step): step is Step => step !== null)
+        .slice(0, 12)
+    : [];
+  return { title, steps };
+}
+
 /** Inline KaTeX WebView for a single math expression within a step */
 const InlineMath: React.FC<{ expression: string; bgColor: string; textColor: string }> = ({
   expression,
@@ -72,15 +96,17 @@ const InlineMath: React.FC<{ expression: string; bgColor: string; textColor: str
 export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const safeSteps = Array.isArray(data?.steps) ? data.steps : [];
+  const sanitized = sanitizeSteps(data);
+  const safeSteps = sanitized.steps;
   const totalSteps = safeSteps.length;
   const [revealedCount, setRevealedCount] = useState(Math.min(1, totalSteps)); // First step always visible
   const allRevealed = totalSteps === 0 || revealedCount >= totalSteps;
+  const isSingleStep = totalSteps <= 1;
 
   if (totalSteps === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{data?.title || t('stepSolver.defaultTitle')}</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{sanitized.title || t('stepSolver.defaultTitle')}</Text>
         <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
           {getLabelDirect('noSteps')}
         </Text>
@@ -100,26 +126,27 @@ export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-      {/* Title */}
-      <Text style={[styles.title, { color: colors.textPrimary }]}>{data.title}</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{sanitized.title || t('stepSolver.defaultTitle')}</Text>
 
-      {/* Progress bar */}
-      <View style={[styles.progressTrack, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
-        <View
-          style={[
-            styles.progressFill,
-            {
-              backgroundColor: colors.primary,
-              width: `${(revealedCount / totalSteps) * 100}%`,
-            },
-          ]}
-        />
-      </View>
-      <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>
-        {t('stepSolver.step', { current: revealedCount, total: totalSteps })}
-      </Text>
+      {!isSingleStep && (
+        <>
+          <View style={[styles.progressTrack, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  backgroundColor: colors.primary,
+                  width: `${(revealedCount / totalSteps) * 100}%`,
+                },
+              ]}
+            />
+          </View>
+          <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>
+            {t('stepSolver.step', { current: revealedCount, total: totalSteps })}
+          </Text>
+        </>
+      )}
 
-      {/* Steps */}
       {safeSteps.map((step, index) => {
         const isRevealed = index < revealedCount;
         const isActive = index === revealedCount - 1;
@@ -132,32 +159,33 @@ export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
             style={[
               styles.step,
               {
-                backgroundColor: isActive
+                backgroundColor: !isSingleStep && isActive
                   ? withOpacity(colors.primary, OPACITY[5])
                   : colors.background,
-                borderColor: isActive ? withOpacity(colors.primary, OPACITY[20]) : colors.borderColor,
+                borderColor: !isSingleStep && isActive ? withOpacity(colors.primary, OPACITY[20]) : colors.borderColor,
               },
             ]}
           >
-            {/* Step number + label */}
             <View style={styles.stepHeader}>
               <View style={[styles.stepNumber, { backgroundColor: isActive ? colors.primary : withOpacity(colors.primary, OPACITY[20]) }]}>
                 <Text style={[styles.stepNumberText, { color: isActive ? colors.white : colors.primary }]}>
                   {index + 1}
                 </Text>
               </View>
-              <Text style={[styles.stepLabel, { color: colors.textPrimary }]}>{step.label}</Text>
-              {isActive ? (
+              <Text style={[styles.stepLabel, { color: colors.textPrimary }]} numberOfLines={2}>
+                {step.label}
+              </Text>
+              {!isSingleStep && isActive ? (
                 <ChevronDown size={ICON.size.sm} color={colors.textSecondary} />
-              ) : (
+              ) : !isSingleStep ? (
                 <ChevronRight size={ICON.size.sm} color={colors.textDisabled} />
-              )}
+              ) : null}
             </View>
 
-            {/* Content */}
-            <Text style={[styles.stepContent, { color: colors.textSecondary }]}>{step.content}</Text>
+            {step.content ? (
+              <Text style={[styles.stepContent, { color: colors.textSecondary }]}>{step.content}</Text>
+            ) : null}
 
-            {/* Math (optional) */}
             {step.math ? (
               <InlineMath
                 expression={step.math}
@@ -169,8 +197,7 @@ export const StepSolverBlock: React.FC<StepSolverBlockProps> = ({ data }) => {
         );
       })}
 
-      {/* Action buttons */}
-      {!allRevealed && (
+      {!allRevealed && !isSingleStep && (
         <View style={styles.actions}>
           <Pressable
             style={[styles.nextButton, { backgroundColor: colors.primary }]}
@@ -199,9 +226,9 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.sm,
   },
   title: {
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    fontWeight: TYPOGRAPHY.fontWeight.medium,
     marginBottom: SPACING.sm,
   },
   progressTrack: {
@@ -244,14 +271,14 @@ const styles = StyleSheet.create({
   },
   stepLabel: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.md,
+    fontSize: TYPOGRAPHY.fontSize.sm,
     flex: 1,
   },
   stepContent: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.fontSize.sm,
     lineHeight: TYPOGRAPHY.fontSize.sm * 1.5,
-    marginLeft: 36, // align with label text
+    marginLeft: 36,
   },
   actions: {
     flexDirection: 'row',

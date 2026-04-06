@@ -879,6 +879,17 @@
     "nextStep": "الخطوة التالية",
     "showAll": "عرض الكل"
   },
+  "codePlayground": {
+    "timeout": "[Timeout: execution exceeded 5s]",
+    "noOutput": "(لا توجد مخرجات)",
+    "running": "جارٍ التنفيذ...",
+    "run": "تشغيل",
+    "reset": "إعادة التعيين",
+    "console": "وحدة التحكم",
+    "jsOnly": "التنفيذ متاح فقط لـ JavaScript.",
+    "expectedOutput": "المخرجات المتوقعة: ",
+    "expected": "المتوقع: "
+  },
   "createOffer": {
     "title": "إنشاء عرض",
     "subtitle": "اختر نوع العرض الذي تريد نشره",
@@ -1086,7 +1097,16 @@
       "viewDetails": "عرض التفاصيل",
       "memberCount": "{{count}} أعضاء",
       "capacityCount": "{{count}} أماكن",
-      "hourlyRate": "{{rate}} FCFA/س"
+      "hourlyRate": "{{rate}} FCFA/س",
+      "event": "فعالية",
+      "skill": "مهارة",
+      "notification": "إشعار",
+      "maps": "خريطة",
+      "onlineEvent": "عبر الإنترنت",
+      "physicalEvent": "حضوري",
+      "privateSkill": "خاصة",
+      "unread": "غير مقروءة",
+      "read": "مقروءة"
     }
   },
   "applicationDetail": {
@@ -1726,7 +1746,11 @@
       "space": "مساحة",
       "organization": "مؤسسة",
       "talent": "موهبة",
-      "document": "مستند"
+      "document": "مستند",
+      "event": "فعالية",
+      "skill": "مهارة",
+      "notification": "إشعار",
+      "maps": "خريطة"
     },
     "documentCategories": {
       "PROFESSIONAL": "مهني",

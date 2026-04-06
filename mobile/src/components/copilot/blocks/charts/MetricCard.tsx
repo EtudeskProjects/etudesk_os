@@ -7,6 +7,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { TrendingUp, TrendingDown } from 'lucide-react-native';
 import { useTheme } from '../../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, ICON } from '../../../../constants/theme';
+import { getCurrentLocale } from '../../../../i18n';
 
 interface Trend {
   direction: 'up' | 'down';
@@ -23,27 +24,31 @@ interface MetricCardProps {
 
 export const MetricCard: React.FC<MetricCardProps> = ({ title, value, unit, trend }) => {
   const { colors } = useTheme();
-  const trendColor = trend?.direction === 'up' ? colors.success : colors.error;
-  const trendBg = trend?.direction === 'up' ? colors.successLight : colors.errorLight;
-  const TrendIcon = trend?.direction === 'up' ? TrendingUp : TrendingDown;
+  const locale = getCurrentLocale();
+  const isTrendUp = trend?.direction === 'up';
+  const trendColor = isTrendUp ? colors.success : colors.error;
+  const trendBg = isTrendUp ? colors.successLight : colors.errorLight;
+  const TrendIcon = isTrendUp ? TrendingUp : TrendingDown;
+  const safeValue = Number.isFinite(value) ? value : 0;
+  const safeTrend = trend && Number.isFinite(trend.delta) ? trend : undefined;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderColor }]}>
       <Text style={[styles.label, { color: colors.textTertiary }]}>{title}</Text>
       <View style={styles.valueRow}>
         <Text style={[styles.value, { color: colors.textPrimary }]}>
-          {typeof value === 'number' ? value.toLocaleString('fr-FR') : value}
+          {safeValue.toLocaleString(locale)}
         </Text>
         {unit && <Text style={[styles.unit, { color: colors.textSecondary }]}>{unit}</Text>}
       </View>
-      {trend && (
+      {safeTrend && (
         <View style={[styles.trendPill, { backgroundColor: trendBg }]}>
           <TrendIcon size={ICON.size.xs} color={trendColor} strokeWidth={ICON.strokeWidth} />
           <Text style={[styles.trendDelta, { color: trendColor }]}>
-            {trend.direction === 'up' ? '+' : '-'}{trend.delta}{unit || ''}
+            {safeTrend.direction === 'up' ? '+' : '-'}{Math.abs(safeTrend.delta).toLocaleString(locale)}{unit || ''}
           </Text>
-          {trend.period && (
-            <Text style={[styles.trendPeriod, { color: colors.textTertiary }]}>{trend.period}</Text>
+          {safeTrend.period && (
+            <Text style={[styles.trendPeriod, { color: colors.textTertiary }]}>{safeTrend.period}</Text>
           )}
         </View>
       )}

@@ -21,7 +21,7 @@ You are now in Application Tracker mode. Your goal: give the user a clear overvi
 
 **If applications span multiple months** → stacked_bar (one bar per month, segments = statuts):
 ```chart
-{"type":"stacked_bar","title":"Mes candidatures par statut","data":[{"name":"Jan 2026","series":[{"label":"Soumises","value":3},{"label":"En revue","value":1},{"label":"Acceptees","value":1}]},{"name":"Fev 2026","series":[{"label":"Soumises","value":2},{"label":"En revue","value":2},{"label":"Acceptees","value":0}]}]}
+{"type":"stacked_bar","title":"Mes candidatures par statut","data":[{"label":"Jan 2026","segments":[{"key":"submitted","label":"Soumises","value":3,"color":"primary"},{"key":"in_review","label":"En revue","value":1,"color":"warning"},{"key":"accepted","label":"Acceptees","value":1,"color":"success"}]},{"label":"Fev 2026","segments":[{"key":"submitted","label":"Soumises","value":2,"color":"primary"},{"key":"in_review","label":"En revue","value":2,"color":"warning"},{"key":"accepted","label":"Acceptees","value":0,"color":"success"}]}]}
 ```
 
 **If all applications are from the same month** → bar simple (one bar per statut):

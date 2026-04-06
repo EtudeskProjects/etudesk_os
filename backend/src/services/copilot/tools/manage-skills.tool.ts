@@ -16,7 +16,7 @@ export function createManageSkillsTool(authenticatedTalentId: string, language?:
       'Add or update skills for the authenticated talent. Use after the user demonstrates mastery (passes quizzes, completes exercises) or when analyzing documents. Always ask for confirmation before modifying skills.',
     parameters: z.object({
       action: z.enum(['add', 'update']).describe('The action to perform: "add" or "update"'),
-      skillName: z.string().describe('The canonical name of the skill (e.g., "React", "Python", "Data Analysis")'),
+      skillName: z.string().min(1).max(100).describe('The canonical name of the skill (e.g., "React", "Python", "Data Analysis")'),
       proficiencyLevel: z
         .enum(['BEGINNER', 'INTERMEDIATE', 'EXPERT', 'MASTER'])
         .describe('Proficiency level: BEGINNER (knows basics), INTERMEDIATE (can apply independently), EXPERT (deep mastery), MASTER (can teach and innovate).'),

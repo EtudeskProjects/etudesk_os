@@ -8,6 +8,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { useTheme } from '../../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY } from '../../../../constants/theme';
 import { getLabelDirect } from '../../../../utils/labels';
+import { getCurrentLocale } from '../../../../i18n';
 
 interface DonutSegment {
   label: string;
@@ -42,6 +43,7 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
 
 export const DonutChart: React.FC<DonutChartProps> = ({ title, data, total_label }) => {
   const { colors, mode } = useTheme();
+  const locale = getCurrentLocale();
   const palette = mode === 'dark' ? CHART_PALETTE_DARK : CHART_PALETTE;
   // Filter out zero-value segments — they add empty legend entries
   const safeData = Array.isArray(data) ? data.filter(d => d && typeof d.value === 'number' && d.value > 0) : [];
@@ -97,7 +99,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({ title, data, total_label
           </Svg>
           <View style={styles.centerLabel}>
             <Text style={[styles.centerValue, { color: colors.textPrimary }]}>
-              {total.toLocaleString('fr-FR')}
+              {total.toLocaleString(locale)}
             </Text>
             {total_label && (
               <Text style={[styles.centerText, { color: colors.textTertiary }]}>{total_label}</Text>

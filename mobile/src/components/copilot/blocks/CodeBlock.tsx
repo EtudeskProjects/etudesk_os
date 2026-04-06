@@ -10,6 +10,7 @@ import { Code, Copy, Check } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { useI18n } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
+import { getLabelDirect } from '../../../utils/labels';
 
 
 const MONO_FONT_FAMILY = Platform.select({
@@ -23,13 +24,30 @@ interface CodeBlockProps {
   code: string;
 }
 
+function sanitizeText(value: unknown, max = 32): string | undefined {
+  if (value == null) return undefined;
+  const text = String(value).replace(/\s+/g, ' ').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
+
+function sanitizeCode(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const text = value.replace(/\r\n?/g, '\n').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text;
+}
+
 export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
   const { colors } = useTheme();
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
+  const safeCode = sanitizeCode(code);
+  const safeLanguage = sanitizeText(language, 24) || 'code';
 
   const handleCopy = async () => {
-    await Clipboard.setStringAsync(code);
+    if (!safeCode) return;
+    await Clipboard.setStringAsync(safeCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -72,6 +90,14 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
     return languageMap[lang.toLowerCase()] || lang.toUpperCase();
   };
 
+  if (!safeCode) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.gray900, borderColor: colors.borderColor }]}>
+        <Text style={[styles.emptyText, { color: colors.gray400 }]}>{getLabelDirect('noData')}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.gray900, borderColor: colors.borderColor }]}>
       {/* Header */}
@@ -84,7 +110,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
           />
           <View style={[styles.languageBadge, { backgroundColor: withOpacity(colors.primary, OPACITY[30]) }]}>
             <Text style={[styles.languageText, { color: colors.primary }]}>
-              {getLanguageLabel(language)}
+              {getLanguageLabel(safeLanguage)}
             </Text>
           </View>
         </View>
@@ -93,9 +119,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
         <Pressable
           style={styles.copyButton}
           onPress={handleCopy}
-          accessibilityRole="button"
-          accessibilityLabel={t('codeBlock.copyCode')}
-        >
+                accessibilityRole="button"
+                accessibilityLabel={t('codeBlock.copyCode')}
+              >
           {copied ? (
             <>
               <Check
@@ -133,7 +159,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, code }) => {
           style={styles.codeVerticalScrollView}
         >
           <View style={styles.codeContainer}>
-            {code.split('\n').map((line, index) => (
+            {safeCode.split('\n').map((line, index) => (
               <View key={index} style={styles.codeLine}>
                 <Text style={[styles.lineNumber, { color: colors.gray600 }]}>
                   {String(index + 1).padStart(2, ' ')}
@@ -218,6 +244,11 @@ const styles = StyleSheet.create({
     fontFamily: MONO_FONT_FAMILY,
     fontSize: TYPOGRAPHY.fontSize.sm,
     lineHeight: TYPOGRAPHY.fontSize.sm * 1.6,
+  },
+  emptyText: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    padding: SPACING.md,
   },
 });
 

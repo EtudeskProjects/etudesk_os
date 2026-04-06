@@ -7,6 +7,7 @@ import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { G, Polygon, Line, Circle, Text as SvgText, TSpan } from 'react-native-svg';
 import { useTheme } from '../../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, OPACITY, withOpacity } from '../../../../constants/theme';
+import { getLabelDirect } from '../../../../utils/labels';
 
 type RadarSeries = {
   name: string;
@@ -68,7 +69,9 @@ export const RadarChart: React.FC<RadarChartProps> = ({ title, axes, series, max
   const { width } = useWindowDimensions();
 
   const safeAxes = Array.isArray(axes) ? axes.filter(Boolean) : [];
-  const safeSeries = Array.isArray(series) ? series : [];
+  const safeSeries = Array.isArray(series)
+    ? series.filter((item) => item && typeof item.name === 'string' && Array.isArray(item.values) && item.values.length > 0)
+    : [];
   const n = safeAxes.length;
   const maxValue = typeof max === 'number' && isFinite(max) && max > 0 ? max : 5;
 
@@ -90,7 +93,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({ title, axes, series, max
       <View style={styles.container}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
         <Text style={[styles.note, { color: colors.textSecondary }]}>
-          Radar indisponible : il faut au moins 3 axes.
+          {getLabelDirect('noData')}
         </Text>
       </View>
     );

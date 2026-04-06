@@ -879,6 +879,17 @@
     "nextStep": "下一步",
     "showAll": "查看全部"
   },
+  "codePlayground": {
+    "timeout": "[Timeout: execution exceeded 5s]",
+    "noOutput": "（无输出）",
+    "running": "运行中...",
+    "run": "运行",
+    "reset": "重置",
+    "console": "控制台",
+    "jsOnly": "仅支持 JavaScript 执行。",
+    "expectedOutput": "预期输出：",
+    "expected": "预期："
+  },
   "createOffer": {
     "title": "创建报价",
     "subtitle": "选择要发布的报价类型",
@@ -1086,7 +1097,16 @@
       "viewDetails": "查看详情",
       "memberCount": "{{count}} 名成员",
       "capacityCount": "{{count}} 个席位",
-      "hourlyRate": "{{rate}} FCFA/小时"
+      "hourlyRate": "{{rate}} FCFA/小时",
+      "event": "活动",
+      "skill": "技能",
+      "notification": "通知",
+      "maps": "地图",
+      "onlineEvent": "在线",
+      "physicalEvent": "线下",
+      "privateSkill": "私密",
+      "unread": "未读",
+      "read": "已读"
     }
   },
   "applicationDetail": {
@@ -1726,7 +1746,11 @@
       "space": "空间",
       "organization": "组织",
       "talent": "人才",
-      "document": "文档"
+      "document": "文档",
+      "event": "活动",
+      "skill": "技能",
+      "notification": "通知",
+      "maps": "地图"
     },
     "documentCategories": {
       "PROFESSIONAL": "职业",

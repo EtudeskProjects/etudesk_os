@@ -186,6 +186,7 @@ export async function runAgentWithSSE(
   let totalOutputTokens = 0;
   let totalCacheReadTokens = 0;
   const sameToolCounts = new Map<string, number>();
+  let consecutiveEmptyResults = 0;
 
   const heartbeatId = setInterval(() => sendHeartbeat(res), HEARTBEAT_INTERVAL_MS);
   logger.info(`[copilot] Start — "${message.slice(0, 100)}" (history: ${history.length} msgs)`);
@@ -506,8 +507,23 @@ export async function runAgentWithSSE(
           },
         });
 
+        // Semantic anti-loop: detect consecutive empty/no-result responses
+        const resultStr = typeof output === 'string' ? output : JSON.stringify(output) ?? '';
+        const isEmpty = !resultStr || resultStr === '[]' || resultStr === '{}' ||
+          (output?.results && Array.isArray(output.results) && output.results.length === 0) ||
+          (output?.totalFound === 0);
+        if (isEmpty) {
+          consecutiveEmptyResults++;
+          if (!limitReached && consecutiveEmptyResults >= 3) {
+            limitReached = true;
+            logger.warn(`[copilot] Semantic anti-loop: ${consecutiveEmptyResults} consecutive empty tool results`);
+          }
+        } else {
+          consecutiveEmptyResults = 0;
+        }
+
         // Add tool result for Anthropic (trimmed only for very large payloads)
-        const rawContent = typeof output === 'string' ? output : JSON.stringify(output) ?? '';
+        const rawContent = resultStr;
         const trimmedContent = (rawContent || '[no output]').length > 8000
           ? rawContent.slice(0, 8000) + '\n... [trimmed — ' + rawContent.length + ' chars total]'
           : rawContent || '[no output]';
@@ -555,9 +571,7 @@ export async function runAgentWithSSE(
   }
 
   // Sanitize output — remove invalid entity cards before sending to client
-  const agentMode = agentConfig.name.includes('study') ? 'study'
-    : agentConfig.name.includes('Organization') ? 'org'
-    : 'explore';
+  const agentMode = agentConfig.mode;
   const sanitized2 = sanitizeOutput(finalOutput, agentMode);
   if (sanitized2 !== finalOutput) {
     finalOutput = sanitized2;

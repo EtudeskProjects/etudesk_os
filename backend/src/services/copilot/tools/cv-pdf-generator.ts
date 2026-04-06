@@ -173,23 +173,39 @@ function addPageWithSidebar(doc: PDFKit.PDFDocument): void {
 // --- Main Cv Generator ---
 
 export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
-  return new Promise(async (resolve, reject) => {
+  // Pre-load avatar before creating the PDF stream (avoids async-in-Promise-constructor antipattern)
+  let avatarBuffer: Buffer | null = null;
+  const ALLOWED_AVATAR_PREFIXES = [process.env.STORAGE_BASE_URL, 'https://storage.googleapis.com/'].filter(Boolean);
+  const isAvatarUrlSafe = cvData.avatarUrl && ALLOWED_AVATAR_PREFIXES.some(p => cvData.avatarUrl!.startsWith(p!));
+  const showPhoto = cvData.includePhoto !== false;
+  if (showPhoto && cvData.avatarUrl && isAvatarUrlSafe) {
     try {
-      const doc = new PDFDocument({
-        size: 'A4',
-        margin: 0,
-        bufferPages: true,
-        info: {
-          Title: `CV - ${cvData.firstName} ${cvData.lastName}`,
-          Author: 'Etudesk',
-          Creator: 'Etudesk Copilot',
-        },
-      });
+      avatarBuffer = await getFileBuffer(cvData.avatarUrl);
+      if (avatarBuffer && avatarBuffer.length === 0) avatarBuffer = null;
+    } catch (err: any) {
+      logger.warn(`[cv-pdf] Could not pre-load avatar: ${err.message}`);
+    }
+  }
 
-      const chunks: Buffer[] = [];
-      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', reject);
+  const doc = new PDFDocument({
+    size: 'A4',
+    margin: 0,
+    bufferPages: true,
+    info: {
+      Title: `CV - ${cvData.firstName} ${cvData.lastName}`,
+      Author: 'Etudesk',
+      Creator: 'Etudesk Copilot',
+    },
+  });
+
+  const chunks: Buffer[] = [];
+  doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+
+  return new Promise<Buffer>((resolve, reject) => {
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+
+    try {
 
       // SIDEBAR BACKGROUND (full page height, left column)
       doc.rect(0, 0, SIDEBAR_WIDTH, PAGE.height).fillColor(C.primary).fill();
@@ -205,25 +221,21 @@ export async function generateCVPDF(cvData: CVData): Promise<Buffer> {
       const avatarY = 30;
 
       let avatarLoaded = false;
-      const showPhoto = cvData.includePhoto !== false; // default true
-      if (showPhoto && cvData.avatarUrl) {
+      if (avatarBuffer) {
         try {
-          const avatarBuffer = await getFileBuffer(cvData.avatarUrl);
-          if (avatarBuffer && avatarBuffer.length > 0) {
-            doc.save();
-            doc.circle(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2).clip();
-            doc.image(avatarBuffer, avatarX, avatarY, {
-              width: avatarSize,
-              height: avatarSize,
-              fit: [avatarSize, avatarSize],
-              align: 'center',
-              valign: 'center',
-            });
-            doc.restore();
-            avatarLoaded = true;
-          }
+          doc.save();
+          doc.circle(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2).clip();
+          doc.image(avatarBuffer, avatarX, avatarY, {
+            width: avatarSize,
+            height: avatarSize,
+            fit: [avatarSize, avatarSize],
+            align: 'center',
+            valign: 'center',
+          });
+          doc.restore();
+          avatarLoaded = true;
         } catch (err: any) {
-          logger.warn(`[cv-pdf] Could not load avatar: ${err.message}`);
+          logger.warn(`[cv-pdf] Could not render avatar: ${err.message}`);
         }
       }
 

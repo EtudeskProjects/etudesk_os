@@ -1837,6 +1837,10 @@
     "timeout": "[Timeout: execution exceeded 5s]",
     "noOutput": "(no output)",
     "running": "Running...",
+    "run": "Run",
+    "reset": "Reset",
+    "console": "Console",
+    "jsOnly": "Execution is available only for JavaScript.",
     "expectedOutput": "Expected output: ",
     "expected": "Expected: "
   },
@@ -2090,7 +2094,16 @@
       "viewDetails": "View details",
       "memberCount": "{{count}} members",
       "capacityCount": "{{count}} seats",
-      "hourlyRate": "{{rate}} FCFA/h"
+      "hourlyRate": "{{rate}} FCFA/h",
+      "event": "Event",
+      "skill": "Skill",
+      "notification": "Notification",
+      "maps": "Map",
+      "onlineEvent": "Online",
+      "physicalEvent": "In person",
+      "privateSkill": "Private",
+      "unread": "Unread",
+      "read": "Read"
     }
   },
   "applicationDetail": {
@@ -3135,7 +3148,11 @@
       "space": "Space",
       "organization": "Organization",
       "talent": "Talent",
-      "document": "Document"
+      "document": "Document",
+      "event": "Event",
+      "skill": "Skill",
+      "notification": "Notification",
+      "maps": "Map"
     },
     "documentCategories": {
       "PROFESSIONAL": "Professional",

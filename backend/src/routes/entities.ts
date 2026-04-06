@@ -196,6 +196,80 @@ router.get('/batch', authMiddleware, async (req: AuthRequest, res: Response) => 
       );
     }
 
+    // Community events
+    if (grouped.event?.length) {
+      queries.push(
+        pool.query(
+          `SELECT ca.id,
+                  ca.community_id,
+                  ca.content,
+                  ca.attachments,
+                  ca.metadata,
+                  c.name as community_name,
+                  COALESCE(ca.metadata->>'title', NULLIF(BTRIM(ca.content), '')) as title,
+                  ca.metadata->>'start_date' as start_date,
+                  ca.metadata->>'end_date' as end_date,
+                  ca.metadata->>'location_type' as location_type,
+                  ca.metadata->>'location' as location,
+                  ca.metadata->>'meeting_url' as meeting_url
+           FROM community_activities ca
+           JOIN communities c ON c.id = ca.community_id
+           WHERE ca.id = ANY($1)
+             AND ca.deleted_at IS NULL
+             AND ca.type = 'EVENT'`,
+          [grouped.event]
+        ).then(r => {
+          for (const row of r.rows) {
+            results[`event:${row.id}`] = {
+              ...row,
+              subtitle: row.community_name,
+              imageUrl: Array.isArray(row.attachments) ? row.attachments[0] : undefined,
+            };
+          }
+        })
+      );
+    }
+
+    // Talent skills
+    if (grouped.skill?.length) {
+      queries.push(
+        pool.query(
+          `SELECT id, canonical_name, proficiency_level, type, context, origin, is_visible, created_at
+           FROM talent_skills
+           WHERE id = ANY($1) AND talent_id = $2`,
+          [grouped.skill, req.talentId]
+        ).then(r => {
+          for (const row of r.rows) {
+            results[`skill:${row.id}`] = {
+              ...row,
+              title: row.canonical_name,
+              subtitle: row.context?.slice(0, 80),
+            };
+          }
+        })
+      );
+    }
+
+    // Notifications
+    if (grouped.notification?.length) {
+      queries.push(
+        pool.query(
+          `SELECT id, type, title, body, data, read_at, created_at
+           FROM notifications
+           WHERE id = ANY($1) AND talent_id = $2`,
+          [grouped.notification, req.talentId]
+        ).then(r => {
+          for (const row of r.rows) {
+            results[`notification:${row.id}`] = {
+              ...row,
+              subtitle: row.body,
+              notificationType: row.type,
+            };
+          }
+        })
+      );
+    }
+
     await Promise.all(queries);
 
     res.json({ success: true, data: results });

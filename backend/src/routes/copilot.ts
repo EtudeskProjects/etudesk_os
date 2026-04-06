@@ -829,7 +829,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
     // The agent embeds ```audio_tts\n{"text":"...","instructions":"..."}\n``` blocks
     // when it wants to produce complementary audio (pronunciation, correction, vocal expression).
     // We extract these, generate TTS, and emit audio_ready SSE events.
-    let audioUrl: string | undefined;
+    const audioSegments: Array<{ type: 'audio'; audioUrl: string; audioDuration: number }> = [];
     if (validMode === COPILOT_MODES.STUDY) {
       const ttsBlockRegex = /```audio_tts\n([\s\S]*?)```/g;
       let ttsMatch: RegExpExecArray | null;
@@ -843,8 +843,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
           const ttsVoice = ttsData.voice || 'coral';
           const ttsBuffer = await generateTTS(ttsText, ttsVoice, ttsInstructions);
           const audioPath = `copilot/tts/${sessionId}/${Date.now()}.mp3`;
-          audioUrl = await uploadFile(ttsBuffer, audioPath, 'audio/mpeg');
+          const audioUrl = await uploadFile(ttsBuffer, audioPath, 'audio/mpeg');
           const estimatedDuration = Math.ceil(ttsText.split(/\s+/).length / 2.5);
+          audioSegments.push({ type: 'audio', audioUrl, audioDuration: estimatedDuration });
           sendSSE(res, { type: 'audio_ready', audioUrl, duration: estimatedDuration });
         } catch (ttsErr: any) {
           logger.error('[copilot] TTS block generation failed:', ttsErr);
@@ -860,7 +861,9 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
         sessionId,
         sanitizeForPg(finalOutput),
         toolTrace.length > 0 ? sanitizeJsonForPg(toolTrace) : null,
-        segments.length > 0 ? sanitizeJsonForPg(audioUrl ? [...segments, { type: 'audio', audioUrl }] : segments) : null,
+        segments.length > 0 || audioSegments.length > 0
+          ? sanitizeJsonForPg([...segments, ...audioSegments])
+          : null,
       ]
     );
 

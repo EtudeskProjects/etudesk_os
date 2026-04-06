@@ -136,7 +136,7 @@ const PG_QUERIES: Record<string, string> = {
            (SELECT json_agg(json_build_object('name', ts.canonical_name, 'level', ts.proficiency_level))
             FROM (SELECT canonical_name, proficiency_level FROM talent_skills WHERE talent_id = t.id ORDER BY canonical_name LIMIT 5) ts) as top_skills
     FROM talents t
-    WHERE t.id = ANY($1::uuid[]) AND t.deleted_at IS NULL`,
+    WHERE t.id = ANY($1::uuid[]) AND t.deleted_at IS NULL AND t.is_visible = TRUE`,
 };
 
 // --- Keyword fallback queries per entity ---
@@ -341,7 +341,8 @@ export const smartSearchTool = defineTool({
     };
   },
   execute: async ({ query, entity, topK, filters: rawFilters }): Promise<any> => {
-    const cacheKey = `${entity}:${query}:${topK}:${JSON.stringify(rawFilters || {})}`;
+    const sortedFilters = rawFilters ? JSON.stringify(rawFilters, Object.keys(rawFilters).sort()) : '{}';
+    const cacheKey = `${entity}:${query}:${topK}:${sortedFilters}`;
 
     // Anti-loop: return cached result on repeat calls
     const cached = getCached(cacheKey);

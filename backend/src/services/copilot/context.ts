@@ -576,8 +576,8 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
 
   const row = result.rows[0];
 
-  // Load skills + freshness
-  const [skillsResult, skillFreshnessResult] = await Promise.all([
+  // Load skills + freshness + languages in parallel
+  const [skillsResult, skillFreshnessResult, languagesResult] = await Promise.all([
     pool.query(
       `SELECT canonical_name as name, proficiency_level
        FROM talent_skills
@@ -589,22 +589,18 @@ async function loadProfile(talentId: string): Promise<TalentProfile> {
       `SELECT MAX(updated_at) as last_update FROM talent_skills WHERE talent_id = $1`,
       [talentId]
     ),
+    pool.query(
+      `SELECT language, proficiency_level
+       FROM talent_languages
+       WHERE talent_id = $1`,
+      [talentId]
+    ),
   ]);
 
   const skills = skillsResult.rows.map((s) => ({
     name: s.name,
     level: mapProficiencyLevel(s.proficiency_level),
   }));
-
-  // Load languages
-  const languagesResult = await pool.query(
-    `
-    SELECT language, proficiency_level
-    FROM talent_languages
-    WHERE talent_id = $1
-    `,
-    [talentId]
-  );
 
   const languages = languagesResult.rows.map((l) => ({
     language: l.language,

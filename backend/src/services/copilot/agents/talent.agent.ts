@@ -74,6 +74,7 @@ export function createTalentAgent(
 
   return {
     name: `Talent Agent (${mode})`,
+    mode: mode as 'explore' | 'study',
     model: MODEL_AGENT,
     systemPrompt: instructions,
     tools,

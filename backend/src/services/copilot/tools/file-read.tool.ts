@@ -107,6 +107,10 @@ async function readDocumentFromDB(
   const mimeType: string = doc.mime_type;
   const buffer = await getFileBuffer(doc.file_url);
 
+  // Anti-injection wrapper for user-uploaded content
+  const wrapContent = (text: string) =>
+    `<uploaded_document source="${(doc.title || doc.original_filename || '').replace(/"/g, "'")}">\n${text}\n</uploaded_document>`;
+
   // Text-based files
   if (
     mimeType.startsWith('text/') ||
@@ -116,7 +120,7 @@ async function readDocumentFromDB(
     return {
       success: true,
       document: { id: doc.id, title: doc.title || doc.original_filename, type: doc.document_type, mimeType },
-      content: buffer.toString('utf-8'),
+      content: wrapContent(buffer.toString('utf-8')),
     };
   }
 
@@ -133,7 +137,7 @@ async function readDocumentFromDB(
         pageCount: pdfData.pageCount,
         extractionMode: pdfData.salvaged ? 'salvaged' : 'parsed',
       },
-      content: pdfData.content,
+      content: wrapContent(pdfData.content),
     };
   }
 

@@ -42,6 +42,83 @@ interface ExerciseBlockProps {
   onAnswer?: (answer: string) => void;
 }
 
+function sanitizeText(value: unknown, max = 220): string | undefined {
+  if (value == null) return undefined;
+  const text = String(value).replace(/\s+/g, ' ').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
+
+function sanitizeExerciseData(data: ExerciseData): ExerciseData | null {
+  switch (data.type) {
+    case 'fill_gap': {
+      const gaps = Array.isArray(data.gaps)
+        ? data.gaps
+            .map((gap, index) => {
+              const answer = sanitizeText(gap?.answer, 80);
+              const options = Array.isArray(gap?.options)
+                ? gap.options.map((option) => sanitizeText(option, 80)).filter((option): option is string => Boolean(option))
+                : [];
+              if (!answer || options.length === 0) return null;
+              const dedupedOptions = Array.from(new Set([answer, ...options]));
+              return {
+                id: sanitizeText(gap?.id, 24) || String(index + 1),
+                answer,
+                options: dedupedOptions.slice(0, 6),
+              };
+            })
+            .filter((gap): gap is FillGapData['gaps'][number] => Boolean(gap))
+        : [];
+      const template = sanitizeText(data.template, 500);
+      if (!template || gaps.length === 0) return null;
+      return {
+        ...data,
+        instruction: sanitizeText(data.instruction, 160) || '',
+        template,
+        gaps,
+        explanation: sanitizeText(data.explanation, 260),
+      };
+    }
+    case 'matching': {
+      const pairs = Array.isArray(data.pairs)
+        ? data.pairs
+            .map((pair) => {
+              const left = sanitizeText(pair?.left, 120);
+              const right = sanitizeText(pair?.right, 120);
+              return left && right ? { left, right } : null;
+            })
+            .filter((pair): pair is MatchingData['pairs'][number] => Boolean(pair))
+            .slice(0, 8)
+        : [];
+      if (pairs.length < 2) return null;
+      return {
+        ...data,
+        instruction: sanitizeText(data.instruction, 160) || '',
+        pairs,
+        explanation: sanitizeText(data.explanation, 260),
+      };
+    }
+    case 'ordering': {
+      const items = Array.isArray(data.items)
+        ? data.items.map((item) => sanitizeText(item, 120)).filter((item): item is string => Boolean(item)).slice(0, 8)
+        : [];
+      const correctOrder = Array.isArray(data.correctOrder)
+        ? data.correctOrder.filter((value): value is number => Number.isInteger(value) && value >= 0 && value < items.length)
+        : [];
+      if (items.length < 2 || correctOrder.length !== items.length) return null;
+      return {
+        ...data,
+        instruction: sanitizeText(data.instruction, 160) || '',
+        items,
+        correctOrder,
+        explanation: sanitizeText(data.explanation, 260),
+      };
+    }
+    default:
+      return null;
+  }
+}
+
 // --- Fill Gap Exercise ---
 
 const FillGapExercise: React.FC<{ data: FillGapData; onAnswer?: (answer: string) => void }> = ({
@@ -570,19 +647,34 @@ const ExplanationBox: React.FC<{ correct: boolean; explanation: string }> = ({
 export const ExerciseBlock: React.FC<ExerciseBlockProps> = ({ data, onAnswer }) => {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const safeData = sanitizeExerciseData(data);
+
+  if (!safeData) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+        <View style={styles.header}>
+          <Shuffle size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+          <Text style={[styles.headerText, { color: colors.primary }]}>{t('exercise.title')}</Text>
+        </View>
+        <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
+          {t('exercise.unsupportedType')}{String((data as any)?.type || 'inconnu')}
+        </Text>
+      </View>
+    );
+  }
 
   const renderExercise = () => {
-    switch (data.type) {
+    switch (safeData.type) {
       case 'fill_gap':
-        return <FillGapExercise data={data} onAnswer={onAnswer} />;
+        return <FillGapExercise data={safeData} onAnswer={onAnswer} />;
       case 'matching':
-        return <MatchingExercise data={data} onAnswer={onAnswer} />;
+        return <MatchingExercise data={safeData} onAnswer={onAnswer} />;
       case 'ordering':
-        return <OrderingExercise data={data} onAnswer={onAnswer} />;
+        return <OrderingExercise data={safeData} onAnswer={onAnswer} />;
       default:
         return (
           <Text style={{ fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.fontSize.xs, color: colors.textDisabled }}>
-            {t('exercise.unsupportedType')}{String((data as any)?.type || 'inconnu')}
+            {t('exercise.unsupportedType')}{String((safeData as any)?.type || 'inconnu')}
           </Text>
         );
     }

@@ -74,7 +74,7 @@ export function createCvGenerationTool(talentId: string, avatarUrl?: string, lan
             try {
                 const anthropic = getAnthropicClient();
 
-                const sqlTool = createSqlQueryTool(talentId, undefined, undefined, language);
+                const sqlTool = createSqlQueryTool(talentId, undefined, ['my_profile', 'my_documents', 'my_skills'], language);
                 const fileReaderTool = createFileReaderTool(talentId);
                 const genDocTool = createGenerateDocumentTool(talentId, avatarUrl, undefined, language);
 

@@ -8,6 +8,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Line, Text as SvgText, Polygon, Path, G } from 'react-native-svg';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../../constants/theme';
+import { getLabelDirect } from '../../../utils/labels';
 
 // --- Types ---
 
@@ -77,6 +78,118 @@ const DEFAULT_HEIGHT = 300;
 const POINT_RADIUS = 4;
 const LABEL_OFFSET = 14;
 
+function sanitizeText(value: unknown, max = 48): string | undefined {
+  if (value == null) return undefined;
+  const text = String(value).replace(/\s+/g, ' ').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function sanitizeCanvasData(data: CanvasBlockProps['data']) {
+  const width = clamp(isFiniteNumber(data?.width) ? data.width : DEFAULT_WIDTH, 180, 640);
+  const height = clamp(isFiniteNumber(data?.height) ? data.height : DEFAULT_HEIGHT, 180, 480);
+  const title = sanitizeText(data?.title, 72);
+  const elements = Array.isArray(data?.elements) ? data.elements : [];
+  const points = new Map<string, PointElement>();
+  const renderable: CanvasElement[] = [];
+
+  elements.forEach((element) => {
+    if (renderable.length >= 80) return;
+
+    if (element?.type === 'point') {
+      const id = sanitizeText((element as PointElement).id, 24);
+      if (!id || points.has(id) || !isFiniteNumber((element as PointElement).x) || !isFiniteNumber((element as PointElement).y)) return;
+      const point: PointElement = {
+        type: 'point',
+        id,
+        x: clamp((element as PointElement).x, 0, width),
+        y: clamp((element as PointElement).y, 0, height),
+        label: sanitizeText((element as PointElement).label, 12),
+      };
+      points.set(id, point);
+      renderable.push(point);
+    }
+  });
+
+  elements.forEach((element) => {
+    if (!element || renderable.length >= 80) return;
+
+    switch (element.type) {
+      case 'segment': {
+        const from = sanitizeText((element as SegmentElement).from, 24);
+        const to = sanitizeText((element as SegmentElement).to, 24);
+        if (!from || !to || from === to || !points.has(from) || !points.has(to)) return;
+        renderable.push({ type: 'segment', from, to, dashed: Boolean((element as SegmentElement).dashed) });
+        return;
+      }
+      case 'angle': {
+        const vertex = sanitizeText((element as AngleElement).vertex, 24);
+        const from = sanitizeText((element as AngleElement).from, 24);
+        const to = sanitizeText((element as AngleElement).to, 24);
+        if (!vertex || !from || !to || !points.has(vertex) || !points.has(from) || !points.has(to)) return;
+        if (new Set([vertex, from, to]).size < 3) return;
+        renderable.push({
+          type: 'angle',
+          vertex,
+          from,
+          to,
+          label: sanitizeText((element as AngleElement).label, 18),
+        });
+        return;
+      }
+      case 'label': {
+        const text = sanitizeText((element as LabelElement).text, 32);
+        if (!text || !isFiniteNumber((element as LabelElement).x) || !isFiniteNumber((element as LabelElement).y)) return;
+        renderable.push({
+          type: 'label',
+          text,
+          x: clamp((element as LabelElement).x, 0, width),
+          y: clamp((element as LabelElement).y, 0, height),
+        });
+        return;
+      }
+      case 'circle': {
+        const center = sanitizeText((element as CircleElement).center, 24);
+        const radius = isFiniteNumber((element as CircleElement).radius) ? (element as CircleElement).radius : NaN;
+        if (!center || !points.has(center) || !Number.isFinite(radius) || radius <= 0) return;
+        renderable.push({
+          type: 'circle',
+          center,
+          radius: clamp(radius, 4, Math.min(width, height)),
+          fill: Boolean((element as CircleElement).fill),
+        });
+        return;
+      }
+      case 'polygon': {
+        const rawPoints = Array.isArray((element as PolygonElement).points) ? (element as PolygonElement).points : [];
+        const polygonPoints = rawPoints
+          .map((id) => sanitizeText(id, 24))
+          .filter((id): id is string => Boolean(id && points.has(id)))
+          .filter((id, index, arr) => arr.indexOf(id) === index);
+        if (polygonPoints.length < 3) return;
+        renderable.push({
+          type: 'polygon',
+          points: polygonPoints,
+          fill: (element as PolygonElement).fill !== false,
+        });
+        return;
+      }
+      default:
+        return;
+    }
+  });
+
+  return { title, width, height, elements: renderable };
+}
+
 /** Look up a point by id */
 function findPoint(elements: CanvasElement[], id: string): { x: number; y: number } | null {
   const pt = elements.find((e) => e.type === 'point' && (e as PointElement).id === id) as
@@ -113,8 +226,8 @@ function buildAngleArc(
 
 export const CanvasBlock: React.FC<CanvasBlockProps> = ({ data }) => {
   const { colors } = useTheme();
-  const width = data.width || DEFAULT_WIDTH;
-  const height = data.height || DEFAULT_HEIGHT;
+  const sanitized = sanitizeCanvasData(data);
+  const { width, height } = sanitized;
 
   const renderElement = (element: CanvasElement, index: number) => {
     switch (element.type) {
@@ -141,8 +254,8 @@ export const CanvasBlock: React.FC<CanvasBlockProps> = ({ data }) => {
 
       case 'segment': {
         const seg = element as SegmentElement;
-        const from = findPoint(data.elements, seg.from);
-        const to = findPoint(data.elements, seg.to);
+        const from = findPoint(sanitized.elements, seg.from);
+        const to = findPoint(sanitized.elements, seg.to);
         if (!from || !to) return null;
         return (
           <Line
@@ -160,9 +273,9 @@ export const CanvasBlock: React.FC<CanvasBlockProps> = ({ data }) => {
 
       case 'angle': {
         const ang = element as AngleElement;
-        const vertex = findPoint(data.elements, ang.vertex);
-        const from = findPoint(data.elements, ang.from);
-        const to = findPoint(data.elements, ang.to);
+        const vertex = findPoint(sanitized.elements, ang.vertex);
+        const from = findPoint(sanitized.elements, ang.from);
+        const to = findPoint(sanitized.elements, ang.to);
         if (!vertex || !from || !to) return null;
 
         const arcPath = buildAngleArc(vertex, from, to, 20);
@@ -215,7 +328,7 @@ export const CanvasBlock: React.FC<CanvasBlockProps> = ({ data }) => {
 
       case 'circle': {
         const circ = element as CircleElement;
-        const center = findPoint(data.elements, circ.center);
+        const center = findPoint(sanitized.elements, circ.center);
         if (!center) return null;
         return (
           <Circle
@@ -233,7 +346,7 @@ export const CanvasBlock: React.FC<CanvasBlockProps> = ({ data }) => {
       case 'polygon': {
         const poly = element as PolygonElement;
         const pts = poly.points
-          .map((id) => findPoint(data.elements, id))
+          .map((id) => findPoint(sanitized.elements, id))
           .filter(Boolean) as { x: number; y: number }[];
         if (pts.length < 3) return null;
         const pointsStr = pts.map((p) => `${p.x},${p.y}`).join(' ');
@@ -253,30 +366,41 @@ export const CanvasBlock: React.FC<CanvasBlockProps> = ({ data }) => {
     }
   };
 
+  if (!sanitized.elements.length) {
+    return (
+      <View style={[styles.container, { borderColor: colors.borderColor }]}>
+        {sanitized.title ? (
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{sanitized.title}</Text>
+        ) : null}
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{getLabelDirect('noData')}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { borderColor: colors.borderColor }]}>
-      {data.title && (
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{data.title}</Text>
+      {sanitized.title && (
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{sanitized.title}</Text>
       )}
       <View style={[styles.svgContainer, { backgroundColor: colors.surface }]}>
         <Svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}>
           {/* Render segments/polygons first, then points/labels on top */}
-          {data.elements
+          {sanitized.elements
             .filter((e) => e.type === 'polygon')
             .map((e, i) => renderElement(e, i))}
-          {data.elements
+          {sanitized.elements
             .filter((e) => e.type === 'segment')
             .map((e, i) => renderElement(e, i + 100))}
-          {data.elements
+          {sanitized.elements
             .filter((e) => e.type === 'circle')
             .map((e, i) => renderElement(e, i + 200))}
-          {data.elements
+          {sanitized.elements
             .filter((e) => e.type === 'angle')
             .map((e, i) => renderElement(e, i + 300))}
-          {data.elements
+          {sanitized.elements
             .filter((e) => e.type === 'point')
             .map((e, i) => renderElement(e, i + 400))}
-          {data.elements
+          {sanitized.elements
             .filter((e) => e.type === 'label')
             .map((e, i) => renderElement(e, i + 500))}
         </Svg>
@@ -294,13 +418,20 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontSize: TYPOGRAPHY.fontSize.xs,
     padding: SPACING.md,
     paddingBottom: 0,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   svgContainer: {
     padding: SPACING.sm,
     alignItems: 'center',
+  },
+  emptyText: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    padding: SPACING.md,
   },
 });
 

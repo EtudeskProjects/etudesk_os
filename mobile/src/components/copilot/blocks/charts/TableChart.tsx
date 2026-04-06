@@ -7,6 +7,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '../../../../hooks/useTheme';
 import { SPACING, TYPOGRAPHY, OPACITY, withOpacity } from '../../../../constants/theme';
 import { getLabelDirect } from '../../../../utils/labels';
+import { getCurrentLocale } from '../../../../i18n';
 
 interface TableChartProps {
   title: string;
@@ -16,13 +17,14 @@ interface TableChartProps {
 
 export const TableChart: React.FC<TableChartProps> = ({ title, columns, rows }) => {
   const { colors } = useTheme();
+  const locale = getCurrentLocale();
   const safeCols = Array.isArray(columns) ? columns : [];
   const safeRows = Array.isArray(rows) ? rows : [];
 
   const formatCell = (value: string | number | null | undefined): string => {
     if (value == null) return '—';
-    if (typeof value === 'number') return value.toLocaleString('fr-FR');
-    return String(value);
+    if (typeof value === 'number') return value.toLocaleString(locale);
+    return String(value).replace(/\s+/g, ' ').trim() || '—';
   };
 
   if (safeCols.length === 0 && safeRows.length === 0) {

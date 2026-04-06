@@ -5,8 +5,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../../../hooks/useTheme';
-import { SPACING, TYPOGRAPHY, BORDER, OPACITY, withOpacity } from '../../../../constants/theme';
+import { SPACING, TYPOGRAPHY, BORDER } from '../../../../constants/theme';
 import { getLabelDirect } from '../../../../utils/labels';
+import { getCurrentLocale } from '../../../../i18n';
 
 interface BarChartData {
   label: string;
@@ -40,6 +41,7 @@ const CHART_PALETTE_DARK = [
 
 export const BarChart: React.FC<BarChartProps> = ({ title, data }) => {
   const { colors, mode } = useTheme();
+  const locale = getCurrentLocale();
   // Filter out items with value 0 or non-numeric — zero bars add visual noise
   const safeData = Array.isArray(data) ? data.filter(item => item && typeof item.value === 'number' && item.value > 0) : [];
   const maxValue = safeData.length > 0 ? Math.max(...safeData.map(item => item.value), 1) : 1;
@@ -79,12 +81,12 @@ export const BarChart: React.FC<BarChartProps> = ({ title, data }) => {
                   </Text>
                 )}
                 <Text style={[styles.innerValue, { color: mode === 'dark' ? '#1A1A1A' : '#FFFFFF' }]}>
-                  {item.value.toLocaleString('fr-FR')}
+                  {item.value.toLocaleString(locale)}
                 </Text>
               </View>
               {!isWide && (
                 <Text style={[styles.outerLabel, { color: colors.textSecondary }]} numberOfLines={1}>
-                  {item.label} · {item.value.toLocaleString('fr-FR')}
+                  {item.label} · {item.value.toLocaleString(locale)}
                 </Text>
               )}
             </View>

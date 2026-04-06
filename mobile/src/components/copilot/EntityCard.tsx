@@ -4,8 +4,8 @@
  * Routes to detail pages on press
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Image, StyleSheet, Pressable, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Image, StyleSheet, Pressable, Alert, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   Briefcase,
@@ -15,6 +15,15 @@ import {
   ChevronRight,
   User,
   FileText,
+  CalendarDays,
+  Bell,
+  Sparkles,
+  Compass,
+  Clock3,
+  EyeOff,
+  Eye,
+  Share2,
+  Video,
 } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { useI18n } from '../../contexts/I18nContext';
@@ -23,7 +32,10 @@ import { fetchEntityBatched } from '../../services/entityBatchFetcher';
 import { API_CONFIG } from '../../constants/config';
 import { formatNumberNoTrailingZeros } from '../../utils/number';
 import { ShimmerPlaceholder } from '../ui';
-import { downloadAndOpenDocument } from '../../utils/documentDownload';
+import { downloadAndOpenDocument, downloadAndShareDocument } from '../../utils/documentDownload';
+import { getCurrentLocale } from '../../i18n';
+import { getLabel } from '../../utils/labels';
+import { getNotificationRoute } from '../../hooks/notifications/notificationNavigation';
 
 
 interface EntityCardProps {
@@ -31,15 +43,80 @@ interface EntityCardProps {
   data: Record<string, any>;
 }
 
-/** API endpoint for each entity type */
-const ENTITY_ENDPOINTS: Record<string, string> = {
-  opportunity: '/api/opportunities',
-  community: '/api/communities',
-  space: '/api/spaces',
-  organization: '/api/organizations',
-  talent: '/api/talents',
-  document: '/api/documents',
-};
+interface MetaItem {
+  icon?: any;
+  text: string;
+  color?: string;
+}
+
+function toNumber(value: unknown): number | null {
+  const num = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
+function sanitizeText(value: unknown, max = 80): string | undefined {
+  if (value == null) return undefined;
+  const text = String(value).replace(/\s+/g, ' ').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
+
+function normalizeTextKey(value: unknown): string {
+  return sanitizeText(value, 200)?.toLowerCase() || '';
+}
+
+function formatDateTime(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toLocaleString(getCurrentLocale(), {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatRelativeTime(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+
+  const diff = Date.now() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (minutes < 1) return undefined;
+  if (minutes < 60) return `${minutes} min`;
+  if (hours < 24) return `${hours} h`;
+  if (days < 7) return `${days} j`;
+  return date.toLocaleDateString(getCurrentLocale(), { day: 'numeric', month: 'short' });
+}
+
+function getMapCoordinates(raw: Record<string, any>): { lat: number; lng: number } | null {
+  const lat = toNumber(raw.latitude ?? raw.lat ?? raw.coordinates?.latitude ?? raw.coordinates?.lat);
+  const lng = toNumber(raw.longitude ?? raw.lng ?? raw.coordinates?.longitude ?? raw.coordinates?.lng);
+  if (lat === null || lng === null) return null;
+  return { lat, lng };
+}
+
+function pushUniqueMetaItem(params: {
+  items: MetaItem[];
+  seen: Set<string>;
+  blocked: Set<string>;
+  item?: MetaItem | null;
+  maxItems?: number;
+}) {
+  const { items, seen, blocked, item, maxItems = 3 } = params;
+  if (!item || items.length >= maxItems) return;
+  const text = sanitizeText(item.text, 48);
+  if (!text) return;
+  const key = normalizeTextKey(text);
+  if (!key || seen.has(key) || blocked.has(key)) return;
+  seen.add(key);
+  items.push({ ...item, text });
+}
 
 /** Normalize API response to display-friendly fields */
 function normalizeEntity(type: string, raw: Record<string, any>): Record<string, any> {
@@ -101,6 +178,41 @@ function normalizeEntity(type: string, raw: Record<string, any>): Record<string,
         subtitle: raw.document_type || raw.category,
         file_url: raw.file_url || raw.downloadUrl,
       };
+    case 'event':
+      return {
+        ...raw,
+        title: raw.title || raw.metadata?.title || raw.name || raw.content,
+        imageUrl: raw.imageUrl || raw.attachments?.[0],
+        subtitle: raw.subtitle || raw.community_name || raw.community?.name,
+        location: raw.location || raw.metadata?.location,
+        startDate: raw.startDate || raw.start_date || raw.metadata?.start_date,
+        endDate: raw.endDate || raw.end_date || raw.metadata?.end_date,
+        locationType: raw.locationType || raw.location_type || raw.metadata?.location_type,
+        meetingUrl: raw.meetingUrl || raw.meeting_url || raw.metadata?.meeting_url,
+      };
+    case 'skill':
+      return {
+        ...raw,
+        title: raw.title || raw.canonical_name || raw.name,
+        subtitle: raw.subtitle || sanitizeText(raw.context),
+        proficiencyLevel: raw.proficiencyLevel || raw.proficiency_level,
+        skillType: raw.skillType || raw.type,
+      };
+    case 'notification':
+      return {
+        ...raw,
+        title: raw.title,
+        subtitle: raw.subtitle || raw.body,
+        notificationType: raw.notificationType || raw.type,
+      };
+    case 'maps':
+      return {
+        ...raw,
+        title: raw.title || raw.label || raw.name || raw.address,
+        subtitle: raw.subtitle || raw.address || raw.description || [raw.city, raw.country].filter(Boolean).join(', '),
+        coordinates: getMapCoordinates(raw),
+        mapUrl: raw.mapUrl || raw.url,
+      };
     default:
       return raw;
   }
@@ -132,6 +244,8 @@ function getImageUrl(type: string, data: Record<string, any>): string | undefine
       return data.logo_url || data.logoUrl;
     case 'talent':
       return data.avatar_url || data.avatarUrl;
+    case 'event':
+      return data.attachments?.[0];
     default:
       return undefined;
   }
@@ -143,7 +257,7 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
   const router = useRouter();
   const [entityData, setEntityData] = useState<Record<string, any>>(initialData);
   const [loading, setLoading] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+  const [documentAction, setDocumentAction] = useState<'view' | 'share' | null>(null);
   const [error, setError] = useState(false);
   const [imgError, setImgError] = useState(false);
 
@@ -177,13 +291,90 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
     return () => { cancelled = true; };
   }, [initialData.id, type]);
 
-  const data = entityData;
+  const data = normalizeEntity(type, entityData);
+  const isDocument = type === 'document';
+  const documentFileUrl = data.file_url || data.downloadUrl;
+  const documentName = data.filename || data.original_filename || data.title || 'document';
+  const documentMimeType = data.mime_type || 'application/pdf';
+
+  const runDocumentAction = async (action: 'view' | 'share') => {
+    if (documentAction) return;
+
+    if (!documentFileUrl) {
+      const id = data.id;
+      if (id && action === 'view') {
+        router.push(`/details/document/${id}` as any);
+      }
+      return;
+    }
+
+    try {
+      setDocumentAction(action);
+      if (action === 'view') {
+        await downloadAndOpenDocument({
+          url: documentFileUrl,
+          filename: documentName,
+          mimeType: documentMimeType,
+        });
+      } else {
+        await downloadAndShareDocument({
+          url: documentFileUrl,
+          filename: documentName,
+          mimeType: documentMimeType,
+        });
+      }
+    } catch (err: any) {
+      const absoluteUrl = documentFileUrl.startsWith('http') ? documentFileUrl : `${API_CONFIG.BASE_URL}${documentFileUrl}`;
+      if (__DEV__) console.error(`[EntityCard] document ${action} error:`, err, 'url:', absoluteUrl);
+      Alert.alert(
+        t('common.error'),
+        __DEV__
+          ? `${action === 'share' ? t('errors.shareDocument') : t('common.downloadFailed')}${err?.message || err}\nURL: ${absoluteUrl}`
+          : action === 'share'
+            ? t('errors.shareDocument')
+            : t('common.downloadError')
+      );
+    } finally {
+      setDocumentAction(null);
+    }
+  };
 
   const handlePress = () => {
-    const id = data.id;
-    if (__DEV__ && type === 'document') {
-      console.log('[EntityCard] document press — data:', JSON.stringify({ id, file_url: data.file_url, downloadUrl: data.downloadUrl }, null, 2));
+    if (type === 'maps') {
+      const coords = getMapCoordinates(data);
+      const mapUrl =
+        data.mapUrl ||
+        data.url ||
+        (coords
+          ? `https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lng}`
+          : data.address || data.location || data.title
+            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([data.address || data.location || data.title, data.city, data.country].filter(Boolean).join(', '))}`
+            : null);
+      if (mapUrl) {
+        void Linking.openURL(mapUrl);
+      }
+      return;
     }
+
+    if (type === 'skill') {
+      router.push('/settings/skills' as any);
+      return;
+    }
+
+    if (type === 'notification') {
+      const route = getNotificationRoute({
+        type: data.notificationType || data.type,
+        ...(typeof data.data === 'object' && data.data ? data.data : {}),
+      });
+      if (route) {
+        router.push(route as any);
+      } else {
+        router.push('/settings/notifications' as any);
+      }
+      return;
+    }
+
+    const id = data.id;
     if (!id || id === 'null' || id === 'undefined') return;
 
     switch (type) {
@@ -202,33 +393,16 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
       case 'talent':
         router.push(`/details/talent/${id}`);
         break;
-      case 'document': {
-        const fileUrl = data.file_url || data.downloadUrl;
-        if (fileUrl) {
-          const rawName = data.filename || data.original_filename || data.title || 'document';
-
-          setDownloading(true);
-          downloadAndOpenDocument({
-            url: fileUrl,
-            filename: rawName,
-            mimeType: data.mime_type || 'application/pdf',
-          })
-            .catch((err) => {
-              const url = fileUrl.startsWith('http') ? fileUrl : `${API_CONFIG.BASE_URL}${fileUrl}`;
-              if (__DEV__) console.error('[EntityCard] download error:', err, 'url:', url);
-              Alert.alert(
-                t('common.error'),
-                __DEV__
-                  ? `${t('common.downloadFailed')}${err?.message || err}\nURL: ${url}`
-                  : t('common.downloadError')
-              );
-            })
-            .finally(() => setDownloading(false));
+      case 'event':
+        router.push(`/details/community/activity/${id}` as any);
+        break;
+      case 'document':
+        if (documentFileUrl) {
+          void runDocumentAction('view');
         } else {
           router.push(`/details/document/${id}` as any);
         }
         break;
-      }
     }
   };
 
@@ -245,33 +419,173 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
     organization: { icon: Building2, color: colors.success, label: t('copilot.entity.organization') },
     talent: { icon: User, color: colors.primary, label: t('copilot.entity.talent') },
     document: { icon: FileText, color: colors.success, label: t('copilot.entity.document') },
+    event: { icon: CalendarDays, color: colors.info, label: t('copilot.entity.event') },
+    skill: { icon: Sparkles, color: colors.warning, label: t('copilot.entity.skill') },
+    notification: { icon: Bell, color: colors.primary, label: t('copilot.entity.notification') },
+    maps: { icon: Compass, color: colors.success, label: t('copilot.entity.maps') },
   }[type] || { icon: Briefcase, color: colors.textSecondary, label: type };
 
   const TypeIcon = typeConfig.icon;
-  const title = data.title || data.name || data.original_filename || data.filename || '';
-  const subtitle = data.subtitle || data.organization?.name || data.organizations?.[0]?.name || data.headline || data.description?.slice(0, 80) || undefined;
+  const rawTitle =
+    data.title ||
+    data.label ||
+    data.name ||
+    data.canonical_name ||
+    data.original_filename ||
+    data.filename ||
+    '';
+  const rawSubtitle =
+    data.subtitle ||
+    data.body ||
+    data.organization?.name ||
+    data.organizations?.[0]?.name ||
+    data.headline ||
+    sanitizeText(data.description) ||
+    undefined;
+  const title = sanitizeText(rawTitle, 72);
+  const subtitle = sanitizeText(rawSubtitle, 88);
+  const blockedMeta = new Set([normalizeTextKey(title), normalizeTextKey(subtitle)].filter(Boolean));
 
   // Build meta items
-  const metaItems: Array<{ icon?: any; text: string; color?: string }> = [];
+  const metaItems: MetaItem[] = [];
+  const seenMeta = new Set<string>();
   if (data.location || data.city) {
-    metaItems.push({ icon: MapPin, text: data.location || data.city });
+    pushUniqueMetaItem({
+      items: metaItems,
+      seen: seenMeta,
+      blocked: blockedMeta,
+      item: { icon: MapPin, text: data.location || data.city },
+    });
   }
   if (data.metaType || data.type) {
-    metaItems.push({ text: data.metaType || data.type });
+    pushUniqueMetaItem({
+      items: metaItems,
+      seen: seenMeta,
+      blocked: blockedMeta,
+      item: { text: data.metaType || data.type },
+    });
   }
   if (data.memberCount !== undefined || data.members_count !== undefined) {
     const count = data.memberCount ?? data.members_count;
-    metaItems.push({ icon: Users, text: t('copilot.entity.memberCount', { count }) });
+    pushUniqueMetaItem({
+      items: metaItems,
+      seen: seenMeta,
+      blocked: blockedMeta,
+      item: { icon: Users, text: t('copilot.entity.memberCount', { count }) },
+    });
   }
   if (data.capacity) {
-    metaItems.push({ text: t('copilot.entity.capacityCount', { count: formatNumberNoTrailingZeros(data.capacity, 0) }) });
+    pushUniqueMetaItem({
+      items: metaItems,
+      seen: seenMeta,
+      blocked: blockedMeta,
+      item: { text: t('copilot.entity.capacityCount', { count: formatNumberNoTrailingZeros(data.capacity, 0) }) },
+    });
   }
   if (data.hourlyRate || data.hourly_rate) {
     const rate = data.hourlyRate || `${formatNumberNoTrailingZeros(data.hourly_rate, 0)} FCFA/h`;
-    metaItems.push({ text: rate, color: colors.primary });
+    pushUniqueMetaItem({
+      items: metaItems,
+      seen: seenMeta,
+      blocked: blockedMeta,
+      item: { text: rate, color: colors.primary },
+    });
   }
   if (data.topSkills?.length) {
-    metaItems.push({ text: data.topSkills.slice(0, 3).join(', ') });
+    pushUniqueMetaItem({
+      items: metaItems,
+      seen: seenMeta,
+      blocked: blockedMeta,
+      item: { text: data.topSkills.slice(0, 3).join(', ') },
+    });
+  }
+  if (type === 'event') {
+    const eventDate = formatDateTime(data.startDate || data.start_date);
+    if (eventDate) {
+      pushUniqueMetaItem({
+        items: metaItems,
+        seen: seenMeta,
+        blocked: blockedMeta,
+        item: { icon: CalendarDays, text: eventDate },
+      });
+    }
+    if ((data.locationType || data.location_type) === 'ONLINE') {
+      pushUniqueMetaItem({
+        items: metaItems,
+        seen: seenMeta,
+        blocked: blockedMeta,
+        item: {
+          icon: data.meetingUrl || data.meeting_url ? Video : CalendarDays,
+          text: t('copilot.entity.onlineEvent'),
+        },
+      });
+    } else if ((data.locationType || data.location_type) === 'PHYSICAL') {
+      pushUniqueMetaItem({
+        items: metaItems,
+        seen: seenMeta,
+        blocked: blockedMeta,
+        item: { icon: MapPin, text: t('copilot.entity.physicalEvent') },
+      });
+    }
+  }
+  if (type === 'skill') {
+    const proficiency = data.proficiencyLevel || data.proficiency_level;
+    const skillType = data.skillType || data.type;
+    if (proficiency) {
+      pushUniqueMetaItem({
+        items: metaItems,
+        seen: seenMeta,
+        blocked: blockedMeta,
+        item: { text: getLabel('proficiencyLevels', proficiency) },
+      });
+    }
+    if (skillType) {
+      pushUniqueMetaItem({
+        items: metaItems,
+        seen: seenMeta,
+        blocked: blockedMeta,
+        item: { text: getLabel('skillTypes', skillType) },
+      });
+    }
+    if (data.is_visible === false) {
+      pushUniqueMetaItem({
+        items: metaItems,
+        seen: seenMeta,
+        blocked: blockedMeta,
+        item: { icon: EyeOff, text: t('copilot.entity.privateSkill') },
+      });
+    }
+  }
+  if (type === 'notification') {
+    const relativeTime = formatRelativeTime(data.created_at);
+    if (relativeTime) {
+      pushUniqueMetaItem({
+        items: metaItems,
+        seen: seenMeta,
+        blocked: blockedMeta,
+        item: { icon: Clock3, text: relativeTime },
+      });
+    }
+    pushUniqueMetaItem({
+      items: metaItems,
+      seen: seenMeta,
+      blocked: blockedMeta,
+      item: {
+        text: data.read_at ? t('copilot.entity.read') : t('copilot.entity.unread'),
+        color: data.read_at ? colors.textSecondary : colors.primary,
+      },
+    });
+  }
+  if (type === 'maps') {
+    const coords = getMapCoordinates(data);
+    if (coords) {
+      pushUniqueMetaItem({
+        items: metaItems,
+        seen: seenMeta,
+        blocked: blockedMeta,
+        item: { text: `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}` },
+      });
+    }
   }
 
   const isRound = type === 'talent' || type === 'organization';
@@ -294,13 +608,56 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
           <View style={[styles.skeletonLine, { backgroundColor: withOpacity(colors.textSecondary, OPACITY[15]) }]} />
           <View style={[styles.skeletonLineShort, { backgroundColor: withOpacity(colors.textSecondary, OPACITY[10]) }]} />
         </View>
-        <ShimmerPlaceholder width={24} height={14} variant="bar" />
+        {isDocument ? (
+          <View style={styles.documentActions}>
+            <ShimmerPlaceholder width={28} height={28} variant="block" />
+            <ShimmerPlaceholder width={28} height={28} variant="block" />
+          </View>
+        ) : (
+          <ShimmerPlaceholder width={24} height={14} variant="bar" />
+        )}
       </View>
     );
   }
 
   // Error state — still tappable to navigate to detail
   if (error && !title) {
+    if (isDocument) {
+      return (
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+          <View
+            style={[
+              styles.imageContainer,
+              isRound ? styles.imageRound : styles.imageSquare,
+              { backgroundColor: withOpacity(typeConfig.color, OPACITY[10]) },
+            ]}
+          >
+            <TypeIcon size={20} color={typeConfig.color} />
+          </View>
+          <View style={styles.content}>
+            <Text style={[styles.cardType, { color: typeConfig.color }]}>{typeConfig.label}</Text>
+            <Text style={[styles.cardTitle, { color: colors.textSecondary }]} numberOfLines={1}>
+              {t('copilot.entity.viewDetails')}
+            </Text>
+          </View>
+          <View style={styles.documentActions}>
+            <Pressable
+              style={[styles.documentActionButton, { borderColor: colors.borderColor, opacity: 0.5 }]}
+              disabled
+            >
+              <Eye size={16} color={colors.textSecondary} />
+            </Pressable>
+            <Pressable
+              style={[styles.documentActionButton, { borderColor: colors.borderColor, opacity: 0.5 }]}
+              disabled
+            >
+              <Share2 size={16} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+        </View>
+      );
+    }
+
     return (
       <Pressable
         style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
@@ -328,14 +685,8 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
     );
   }
 
-  return (
-    <Pressable
-      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
-      onPress={handlePress}
-      accessibilityRole="button"
-      accessibilityLabel={title}
-    >
-      {/* Left: Image or placeholder */}
+  const body = (
+    <>
       <View
         style={[
           styles.imageContainer,
@@ -356,28 +707,23 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
         )}
       </View>
 
-      {/* Right: Content */}
       <View style={styles.content}>
-        {/* Type badge */}
         <View style={styles.cardHeader}>
           <Text style={[styles.cardType, { color: typeConfig.color }]}>{typeConfig.label}</Text>
         </View>
 
-        {/* Title */}
         {title ? (
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={2}>
             {title}
           </Text>
         ) : null}
 
-        {/* Subtitle */}
         {subtitle ? (
           <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
             {subtitle}
           </Text>
         ) : null}
 
-        {/* Meta */}
         {metaItems.length > 0 && (
           <View style={styles.cardMeta}>
             {metaItems.map((item, idx) => {
@@ -394,8 +740,49 @@ export const EntityCard: React.FC<EntityCardProps> = React.memo(({ type, data: i
           </View>
         )}
       </View>
+    </>
+  );
 
-      {/* Chevron */}
+  if (isDocument) {
+    return (
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+        {body}
+        <View style={styles.documentActions}>
+          <Pressable
+            style={[styles.documentActionButton, { borderColor: colors.borderColor, opacity: documentAction === 'share' ? 0.5 : 1 }]}
+            onPress={() => {
+              void runDocumentAction('view');
+            }}
+            disabled={documentAction !== null}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.preview')}
+          >
+            <Eye size={16} color={colors.textSecondary} />
+          </Pressable>
+          <Pressable
+            style={[styles.documentActionButton, { borderColor: colors.borderColor, opacity: documentAction === 'view' ? 0.5 : 1 }]}
+            onPress={() => {
+              void runDocumentAction('share');
+            }}
+            disabled={documentAction !== null}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.share')}
+          >
+            <Share2 size={16} color={colors.textSecondary} />
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <Pressable
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+    >
+      {body}
       <ChevronRight size={16} color={colors.textSecondary} style={styles.chevron} />
     </Pressable>
   );
@@ -469,6 +856,20 @@ const styles = StyleSheet.create({
   },
   chevron: {
     marginLeft: SPACING.xs,
+  },
+  documentActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginLeft: SPACING.xs,
+  },
+  documentActionButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: BORDER.width.thin,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   skeletonLine: {
     height: 12,

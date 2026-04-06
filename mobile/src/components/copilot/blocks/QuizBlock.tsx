@@ -9,6 +9,7 @@ import { BookOpen, CheckCircle2, XCircle } from 'lucide-react-native';
 import { useTheme } from '../../../hooks/useTheme';
 import { useI18n } from '../../../contexts/I18nContext';
 import { SPACING, TYPOGRAPHY, BORDER, ICON, OPACITY, withOpacity } from '../../../constants/theme';
+import { getLabelDirect } from '../../../utils/labels';
 
 
 interface QuizBlockProps {
@@ -31,6 +32,13 @@ interface QuizBlockProps {
 }
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+function sanitizeText(value: unknown, max = 220): string | undefined {
+  if (value == null) return undefined;
+  const text = String(value).replace(/\s+/g, ' ').trim();
+  if (!text || ['null', 'undefined', '[object Object]'].includes(text)) return undefined;
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
 
 export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
   const { colors } = useTheme();
@@ -59,32 +67,57 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
       rawCorrect = q.correctAnswer ?? -1;
       rawExplanation = q.explanation || '';
     } else {
-      return { topic: data.topic || '', question: '', options: [] as string[], correctAnswer: -1, explanation: '' };
+      return { topic: '', question: '', options: [] as string[], correctAnswer: -1, explanation: '' };
     }
 
+    const topic = sanitizeText(rawTopic, 48);
+    const question = sanitizeText(rawQuestion, 220) || '';
+    const explanation = sanitizeText(rawExplanation, 260);
+    const correctOptionText =
+      rawCorrect >= 0 && rawCorrect < rawOptions.length ? sanitizeText(rawOptions[rawCorrect], 120) : undefined;
+
+    const sanitizedOptions = rawOptions
+      .map((option, index) => ({ text: sanitizeText(option, 120), index }))
+      .filter((option): option is { text: string; index: number } => Boolean(option.text))
+      .reduce<{ text: string; index: number }[]>((acc, option) => {
+        if (acc.some((entry) => entry.text.toLowerCase() === option.text.toLowerCase())) return acc;
+        acc.push(option);
+        return acc;
+      }, [])
+      .slice(0, OPTION_LETTERS.length);
+
+    const sanitizedCorrect = sanitizedOptions.findIndex((option) => option.index === rawCorrect);
+    const resolvedCorrect =
+      sanitizedCorrect >= 0
+        ? sanitizedCorrect
+        : correctOptionText
+          ? sanitizedOptions.findIndex((option) => option.text.toLowerCase() === correctOptionText.toLowerCase())
+          : -1;
+
     // Shuffle options with Fisher-Yates and remap correctAnswer
-    const indices = rawOptions.map((_, i) => i);
+    const indices = sanitizedOptions.map((_, i) => i);
     for (let i = indices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
-    const shuffledOptions = indices.map(i => rawOptions[i]);
-    const newCorrect = rawCorrect >= 0 ? indices.indexOf(rawCorrect) : -1;
+    const shuffledOptions = indices.map((i) => sanitizedOptions[i].text);
+    const newCorrect = resolvedCorrect >= 0 ? indices.indexOf(resolvedCorrect) : -1;
 
     return {
-      topic: rawTopic,
-      question: rawQuestion,
+      topic: topic && topic !== question ? topic : '',
+      question,
       options: shuffledOptions,
       correctAnswer: newCorrect,
-      explanation: rawExplanation,
+      explanation: explanation && explanation !== question ? explanation : '',
     };
   }, [data]);
 
   const answered = selectedIndex !== null;
   const hasCorrectAnswer = correctAnswer >= 0 && correctAnswer < options.length;
+  const hasOptions = options.length >= 2;
 
   const handleOptionPress = (option: string, index: number) => {
-    if (answered || !onAnswer) return;
+    if (answered || !onAnswer || !hasOptions) return;
     setSelectedIndex(index);
     onAnswer(`${OPTION_LETTERS[index]}) ${option}`);
   };
@@ -151,70 +184,78 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
     };
   };
 
-  if (!question) return null;
+  if (!question) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{getLabelDirect('noData')}</Text>
+      </View>
+    );
+  }
 
   const isCorrectAnswer = hasCorrectAnswer && selectedIndex === correctAnswer;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.borderColor }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <BookOpen size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
-        <Text style={[styles.topic, { color: colors.primary }]} numberOfLines={1}>
-          {topic}
-        </Text>
-      </View>
+      {topic ? (
+        <View style={styles.header}>
+          <BookOpen size={ICON.size.sm} color={colors.primary} strokeWidth={ICON.strokeWidth} />
+          <Text style={[styles.topic, { color: colors.primary }]} numberOfLines={1}>
+            {topic}
+          </Text>
+        </View>
+      ) : null}
 
-      {/* Question */}
       <Text style={[styles.question, { color: colors.textPrimary }]}>
         {question}
       </Text>
 
-      {/* Options */}
-      <View style={styles.optionsContainer}>
-        {options.map((option, index) => {
-          const optStyle = getOptionStyle(index);
-          const letterStyle = getLetterStyle(index);
-          const isSelected = answered && index === selectedIndex;
-          const isCorrect = answered && index === correctAnswer;
+      {hasOptions ? (
+        <View style={styles.optionsContainer}>
+          {options.map((option, index) => {
+            const optStyle = getOptionStyle(index);
+            const letterStyle = getLetterStyle(index);
+            const isSelected = answered && index === selectedIndex;
+            const isCorrect = answered && index === correctAnswer;
 
-          return (
-            <Pressable
-              key={index}
-              style={[styles.option, optStyle]}
-              onPress={() => handleOptionPress(option, index)}
-              disabled={answered || !onAnswer}
-              accessibilityRole="button"
-              accessibilityLabel={`Option ${OPTION_LETTERS[index]}: ${option}`}
-            >
-              <View style={[styles.optionLetter, { backgroundColor: letterStyle.bg }]}>
-                <Text style={[styles.optionLetterText, { color: letterStyle.text }]}>
-                  {OPTION_LETTERS[index]}
-                </Text>
-              </View>
-              <Text
-                style={[
-                  styles.optionText,
-                  {
-                    color: answered && !isSelected && !isCorrect ? colors.textDisabled : colors.textPrimary,
-                    fontFamily: isSelected || isCorrect ? TYPOGRAPHY.fontFamily.medium : TYPOGRAPHY.fontFamily.regular,
-                  },
-                ]}
+            return (
+              <Pressable
+                key={`${OPTION_LETTERS[index]}-${option}`}
+                style={[styles.option, optStyle]}
+                onPress={() => handleOptionPress(option, index)}
+                disabled={answered || !onAnswer}
+                accessibilityRole="button"
+                accessibilityLabel={`Option ${OPTION_LETTERS[index]}: ${option}`}
               >
-                {option}
-              </Text>
-              {answered && hasCorrectAnswer && isCorrect && (
-                <CheckCircle2 size={ICON.size.sm} color={colors.success} strokeWidth={ICON.strokeWidth} />
-              )}
-              {answered && hasCorrectAnswer && isSelected && !isCorrect && (
-                <XCircle size={ICON.size.sm} color={colors.error} strokeWidth={ICON.strokeWidth} />
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
+                <View style={[styles.optionLetter, { backgroundColor: letterStyle.bg }]}>
+                  <Text style={[styles.optionLetterText, { color: letterStyle.text }]}>
+                    {OPTION_LETTERS[index]}
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.optionText,
+                    {
+                      color: answered && !isSelected && !isCorrect ? colors.textDisabled : colors.textPrimary,
+                      fontFamily: isSelected || isCorrect ? TYPOGRAPHY.fontFamily.medium : TYPOGRAPHY.fontFamily.regular,
+                    },
+                  ]}
+                >
+                  {option}
+                </Text>
+                {answered && hasCorrectAnswer && isCorrect && (
+                  <CheckCircle2 size={ICON.size.sm} color={colors.success} strokeWidth={ICON.strokeWidth} />
+                )}
+                {answered && hasCorrectAnswer && isSelected && !isCorrect && (
+                  <XCircle size={ICON.size.sm} color={colors.error} strokeWidth={ICON.strokeWidth} />
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : (
+        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{getLabelDirect('noData')}</Text>
+      )}
 
-      {/* Explanation */}
       {answered && hasCorrectAnswer && explanation ? (
         <View style={[styles.explanationContainer, { backgroundColor: isCorrectAnswer ? withOpacity(colors.success, OPACITY[5]) : withOpacity(colors.error, OPACITY[5]), borderColor: isCorrectAnswer ? withOpacity(colors.success, OPACITY[20]) : withOpacity(colors.error, OPACITY[20]) }]}>
           <View style={styles.explanationHeader}>
@@ -233,8 +274,7 @@ export const QuizBlock: React.FC<QuizBlockProps> = ({ data, onAnswer }) => {
         </View>
       ) : null}
 
-      {/* Hint when not interactive and not answered locally */}
-      {!onAnswer && !answered && (
+      {!onAnswer && !answered && hasOptions && (
         <Text style={[styles.answeredHint, { color: colors.textDisabled }]}>
           {t('copilot.quiz.alreadyAnswered')}
         </Text>
@@ -258,14 +298,16 @@ const styles = StyleSheet.create({
   },
   topic: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontSize: TYPOGRAPHY.fontSize.xs,
     flex: 1,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   question: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.fontSize.lg,
-    lineHeight: TYPOGRAPHY.fontSize.lg * TYPOGRAPHY.lineHeight.normal,
-    marginBottom: SPACING.lg,
+    fontSize: TYPOGRAPHY.fontSize.md,
+    lineHeight: TYPOGRAPHY.fontSize.md * TYPOGRAPHY.lineHeight.normal,
+    marginBottom: SPACING.md,
   },
   optionsContainer: {
     gap: SPACING.sm,
@@ -321,6 +363,10 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.xs,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginTop: SPACING.sm,
+  },
+  emptyText: {
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
 });
 

@@ -32,7 +32,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 - **Intelligence** : Si 0 candidatures → skip chart, proposer smart_search. Exclure colonnes a 0.
 - **Format** :
 ```json
-{"type":"stacked_bar","title":"Mes candidatures par statut","data":[{"name":"Jan 2026","series":[{"label":"Soumises","value":3},{"label":"En revue","value":1},{"label":"Acceptees","value":1},{"label":"Refusees","value":0}]}]}
+{"type":"stacked_bar","title":"Mes candidatures par statut","data":[{"label":"Jan 2026","segments":[{"key":"submitted","label":"Soumises","value":3,"color":"primary"},{"key":"in_review","label":"En revue","value":1,"color":"warning"},{"key":"accepted","label":"Acceptees","value":1,"color":"success"},{"key":"rejected","label":"Refusees","value":0,"color":"error"}]}]}
 ```
 - **Fallback** : Si toutes les candidatures sont du meme mois → utiliser bar simple par statut au lieu de stacked_bar
 
@@ -128,7 +128,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 - **Intelligence** : Chaque barre = un module. Segments = sous-competences maitrisees/en cours/a faire.
 - **Format** :
 ```json
-{"type":"stacked_bar","title":"Mon parcours — Data Science","data":[{"name":"Statistiques","series":[{"label":"Maitrise","value":3},{"label":"En cours","value":1},{"label":"A faire","value":0}]},{"name":"Python","series":[{"label":"Maitrise","value":2},{"label":"En cours","value":2},{"label":"A faire","value":1}]},{"name":"ML","series":[{"label":"Maitrise","value":0},{"label":"En cours","value":1},{"label":"A faire","value":4}]}]}
+{"type":"stacked_bar","title":"Mon parcours — Data Science","data":[{"label":"Statistiques","segments":[{"key":"mastered","label":"Maitrise","value":3,"color":"success"},{"key":"in_progress","label":"En cours","value":1,"color":"warning"},{"key":"todo","label":"A faire","value":0,"color":"primary"}]},{"label":"Python","segments":[{"key":"mastered","label":"Maitrise","value":2,"color":"success"},{"key":"in_progress","label":"En cours","value":2,"color":"warning"},{"key":"todo","label":"A faire","value":1,"color":"primary"}]},{"label":"ML","segments":[{"key":"mastered","label":"Maitrise","value":0,"color":"success"},{"key":"in_progress","label":"En cours","value":1,"color":"warning"},{"key":"todo","label":"A faire","value":4,"color":"primary"}]}]}
 ```
 
 ### #12 Bilan hebdo — activite apprentissage
@@ -162,7 +162,7 @@ Reference des 20 visualisations metier. L'agent DOIT utiliser ce catalogue pour 
 - **Intelligence** : Trier par acceptance_rate croissant (problemes en premier). Alerter si ratio refus > 80%.
 - **Format** :
 ```json
-{"type":"stacked_bar","title":"Funnel recrutement","data":[{"name":"Dev Frontend","series":[{"label":"Soumises","value":45},{"label":"En revue","value":12},{"label":"Acceptees","value":3},{"label":"Refusees","value":18}]},{"name":"UX Designer","series":[{"label":"Soumises","value":28},{"label":"En revue","value":8},{"label":"Acceptees","value":2},{"label":"Refusees","value":10}]}]}
+{"type":"stacked_bar","title":"Funnel recrutement","data":[{"label":"Dev Frontend","segments":[{"key":"submitted","label":"Soumises","value":45,"color":"primary"},{"key":"in_review","label":"En revue","value":12,"color":"warning"},{"key":"accepted","label":"Acceptees","value":3,"color":"success"},{"key":"rejected","label":"Refusees","value":18,"color":"error"}]},{"label":"UX Designer","segments":[{"key":"submitted","label":"Soumises","value":28,"color":"primary"},{"key":"in_review","label":"En revue","value":8,"color":"warning"},{"key":"accepted","label":"Acceptees","value":2,"color":"success"},{"key":"rejected","label":"Refusees","value":10,"color":"error"}]}]}
 ```
 
 ### #15 Distribution geographique talents

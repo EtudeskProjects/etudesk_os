@@ -10,8 +10,8 @@ import { logger } from '../../utils';
 import { SupportedLanguage } from '../../i18n';
 import { getLanguageDisplayName } from '../language-preference.service';
 
-const SUMMARY_THRESHOLD = 6; // Summarize when history exceeds this count
-const KEEP_RECENT = 3; // Keep last N messages verbatim
+const SUMMARY_THRESHOLD = 12; // Summarize when history exceeds this count
+const KEEP_RECENT = 6; // Keep last N messages verbatim
 
 function buildSystemPrompt(languageName: string): string {
   return `You are a conversation summarizer for a talent/employment platform.

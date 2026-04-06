@@ -1837,6 +1837,10 @@
     "timeout": "[Timeout: execution exceeded 5s]",
     "noOutput": "(no output)",
     "running": "Exécution...",
+    "run": "Exécuter",
+    "reset": "Réinitialiser",
+    "console": "Console",
+    "jsOnly": "Exécution disponible uniquement pour JavaScript.",
     "expectedOutput": "Résultat attendu : ",
     "expected": "Attendu : "
   },
@@ -2090,7 +2094,16 @@
       "viewDetails": "Voir les détails",
       "memberCount": "{{count}} membres",
       "capacityCount": "{{count}} places",
-      "hourlyRate": "{{rate}} FCFA/h"
+      "hourlyRate": "{{rate}} FCFA/h",
+      "event": "Événement",
+      "skill": "Compétence",
+      "notification": "Notification",
+      "maps": "Carte",
+      "onlineEvent": "En ligne",
+      "physicalEvent": "Sur place",
+      "privateSkill": "Privée",
+      "unread": "Non lue",
+      "read": "Lue"
     }
   },
   "applicationDetail": {
@@ -3135,7 +3148,11 @@
       "space": "Espace",
       "organization": "Organisation",
       "talent": "Talent",
-      "document": "Document"
+      "document": "Document",
+      "event": "Événement",
+      "skill": "Compétence",
+      "notification": "Notification",
+      "maps": "Carte"
     },
     "documentCategories": {
       "PROFESSIONAL": "Professionnel",

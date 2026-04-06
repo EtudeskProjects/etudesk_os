@@ -879,6 +879,17 @@
     "nextStep": "Nächster Schritt",
     "showAll": "Alle anzeigen"
   },
+  "codePlayground": {
+    "timeout": "[Timeout: execution exceeded 5s]",
+    "noOutput": "(keine Ausgabe)",
+    "running": "Wird ausgeführt...",
+    "run": "Ausführen",
+    "reset": "Zurücksetzen",
+    "console": "Konsole",
+    "jsOnly": "Die Ausführung ist nur für JavaScript verfügbar.",
+    "expectedOutput": "Erwartete Ausgabe: ",
+    "expected": "Erwartet: "
+  },
   "createOffer": {
     "title": "Angebot erstellen",
     "subtitle": "Wähle die Art des Angebots, das du veröffentlichen möchtest",
@@ -1086,7 +1097,16 @@
       "viewDetails": "Details anzeigen",
       "memberCount": "{{count}} Mitglieder",
       "capacityCount": "{{count}} Plätze",
-      "hourlyRate": "{{rate}} FCFA/h"
+      "hourlyRate": "{{rate}} FCFA/h",
+      "event": "Veranstaltung",
+      "skill": "Fähigkeit",
+      "notification": "Benachrichtigung",
+      "maps": "Karte",
+      "onlineEvent": "Online",
+      "physicalEvent": "Vor Ort",
+      "privateSkill": "Privat",
+      "unread": "Ungelesen",
+      "read": "Gelesen"
     }
   },
   "applicationDetail": {
@@ -1726,7 +1746,11 @@
       "space": "Raum",
       "organization": "Organisation",
       "talent": "Talent",
-      "document": "Dokument"
+      "document": "Dokument",
+      "event": "Veranstaltung",
+      "skill": "Fähigkeit",
+      "notification": "Benachrichtigung",
+      "maps": "Karte"
     },
     "documentCategories": {
       "PROFESSIONAL": "Beruflich",

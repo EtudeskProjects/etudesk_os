@@ -109,7 +109,23 @@ function parseBlocks(content: string): Block[] {
       const entityType = tag.startsWith('entity:') ? tag.replace('entity:', '') : tag;
       const data = tryParseJSON(body);
       // Documents can use file_url as identifier instead of id
-      const hasValidId = data && (data.id || (entityType === 'document' && (data.file_url || data.downloadUrl)));
+      const hasValidId = data && (
+        data.id ||
+        (entityType === 'document' && (data.file_url || data.downloadUrl)) ||
+        (
+          entityType === 'maps' &&
+          (
+            data.url ||
+            data.mapUrl ||
+            data.address ||
+            data.location ||
+            data.latitude ||
+            data.lat ||
+            data.coordinates?.latitude ||
+            data.coordinates?.lat
+          )
+        )
+      );
       if (hasValidId) {
         blocks.push({ type: 'entity', content: body, meta: entityType, data });
       } else {

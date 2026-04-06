@@ -54,11 +54,11 @@ const openRemoteDocument = async (url: string): Promise<boolean> => {
   }
 };
 
-export async function downloadAndOpenDocument({
+async function downloadDocumentToCache({
   url,
   filename,
   mimeType = DEFAULT_MIME_TYPE,
-}: DownloadDocumentInput): Promise<void> {
+}: DownloadDocumentInput): Promise<{ uri: string; absoluteUrl: string; mimeType: string }> {
   const absoluteUrl = ensureAbsoluteUrl(url);
   const accessToken = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
   const inferredFilename = appendExtensionIfMissing(
@@ -68,25 +68,64 @@ export async function downloadAndOpenDocument({
   const cacheDir = FileSystem.cacheDirectory || FileSystem.documentDirectory;
   const localUri = `${cacheDir}${Date.now()}_${inferredFilename}`;
 
+  const { uri } = await FileSystem.downloadAsync(absoluteUrl, localUri, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  });
+
+  return { uri, absoluteUrl, mimeType };
+}
+
+async function openLocalDocument(uri: string): Promise<boolean> {
   try {
-    const { uri } = await FileSystem.downloadAsync(absoluteUrl, localUri, {
-      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-    });
-
-    const canShare = await Sharing.isAvailableAsync();
-    if (canShare) {
-      await Sharing.shareAsync(uri, {
-        mimeType,
-        UTI: mimeType === 'application/pdf' ? 'com.adobe.pdf' : undefined,
-        dialogTitle: i18n.t('errors.shareDocument'),
-      });
-      return;
+    const supported = await Linking.canOpenURL(uri);
+    if (supported) {
+      await Linking.openURL(uri);
+      return true;
     }
+  } catch {
+    // Browser fallback below
+  }
 
-    if (await openRemoteDocument(uri)) return;
+  try {
+    await WebBrowser.openBrowserAsync(uri);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function downloadAndOpenDocument({
+  url,
+  filename,
+  mimeType = DEFAULT_MIME_TYPE,
+}: DownloadDocumentInput): Promise<void> {
+  try {
+    const { uri, absoluteUrl } = await downloadDocumentToCache({ url, filename, mimeType });
+    if (await openLocalDocument(uri)) return;
+    if (await openRemoteDocument(absoluteUrl)) return;
     throw new Error(i18n.t('errors.noAppAvailable'));
   } catch {
-    const opened = await openRemoteDocument(absoluteUrl);
+    const opened = await openRemoteDocument(ensureAbsoluteUrl(url));
     if (!opened) throw new Error(i18n.t('errors.downloadOrOpenFailed'));
+  }
+}
+
+export async function downloadAndShareDocument({
+  url,
+  filename,
+  mimeType = DEFAULT_MIME_TYPE,
+}: DownloadDocumentInput): Promise<void> {
+  const { uri, absoluteUrl } = await downloadDocumentToCache({ url, filename, mimeType });
+  try {
+    const canShare = await Sharing.isAvailableAsync();
+    if (!canShare) throw new Error(i18n.t('errors.shareDocument'));
+    await Sharing.shareAsync(uri, {
+      mimeType,
+      UTI: mimeType === 'application/pdf' ? 'com.adobe.pdf' : undefined,
+      dialogTitle: i18n.t('errors.shareDocument'),
+    });
+  } catch {
+    const opened = await openRemoteDocument(absoluteUrl);
+    if (!opened) throw new Error(i18n.t('errors.shareDocument'));
   }
 }

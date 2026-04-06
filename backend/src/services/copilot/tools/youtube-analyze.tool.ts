@@ -185,7 +185,7 @@ export const analyzeYoutubeVideoTool = defineTool({
         best = analyses[0];
       } else {
         // Sort by quality_score descending, fallback to first
-        best = analyses.sort((a, b) => (b.quality_score || 5) - (a.quality_score || 5))[0];
+        best = analyses.sort((a, b) => (Number(b.quality_score) || 5) - (Number(a.quality_score) || 5))[0];
       }
 
       const selectionReason =
