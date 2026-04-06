@@ -66,9 +66,10 @@ async function ensureWalletExists(
 ): Promise<void> {
   const executor = client ?? pool;
   const { table, ownerColumn } = getWalletConfig(scope);
+  const WELCOME_CREDITS = 20;
   await executor.query(
     `INSERT INTO ${table} (${ownerColumn}, balance_credits, updated_at)
-     VALUES ($1, 0, NOW())
+     VALUES ($1, ${WELCOME_CREDITS}, NOW())
      ON CONFLICT (${ownerColumn}) DO NOTHING`,
     [ownerId]
   );
