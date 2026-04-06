@@ -165,7 +165,7 @@ export default function BackofficePage() {
         </div>
         <nav style={t.nav}>
           {NAV.map(n => (
-            <button key={n.key} onClick={() => setPage(n.key)} style={{ ...t.navItem, ...(page === n.key ? S.navActive : {}) }}>
+            <button key={n.key} onClick={() => setPage(n.key)} style={{ ...t.navItem, ...(page === n.key ? t.navActive : {}) }}>
               <span style={t.navIcon}>{n.icon}</span>
               {sidebarOpen && <span>{n.label}</span>}
             </button>
