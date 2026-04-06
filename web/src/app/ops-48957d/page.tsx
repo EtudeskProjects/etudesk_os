@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 // Non-indexed: tell search engines to skip this page
 export const dynamic = 'force-dynamic';
 
-const VPS_API = 'https://31.207.33.69';
+const VPS_API = '';
 
 interface Stats {
   users: number;
