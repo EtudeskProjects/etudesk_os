@@ -266,7 +266,53 @@ interface ConfirmationBlockPayload {
   [key: string]: unknown;
 }
 
-function normalizeConfirmationPayload(payload: ConfirmationBlockPayload): ConfirmationBlockPayload {
+function formatYmdInAbidjan(value: Date): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Abidjan',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(value);
+}
+
+function userRefersToTomorrow(message?: string): boolean {
+  if (!message) return false;
+  const normalized = normalizeTextForMatch(message);
+  return /\b(demain|tomorrow)\b/.test(normalized);
+}
+
+function normalizeAgendaTriggerDueAtFromUserMessage(
+  payload: ConfirmationBlockPayload,
+  userMessage?: string
+): ConfirmationBlockPayload {
+  if (payload.action !== 'create_agenda_trigger') return payload;
+  if (!payload.data || typeof payload.data !== 'object') return payload;
+  if (!userRefersToTomorrow(userMessage)) return payload;
+
+  const rawDueAt = payload.data.dueAt || payload.data.due_at;
+  if (typeof rawDueAt !== 'string') return payload;
+
+  const dueAt = new Date(rawDueAt);
+  if (Number.isNaN(dueAt.getTime())) return payload;
+
+  const now = new Date();
+  const dueYmd = formatYmdInAbidjan(dueAt);
+  const todayYmd = formatYmdInAbidjan(now);
+  if (dueYmd !== todayYmd) return payload;
+
+  const shifted = new Date(dueAt.getTime());
+  shifted.setUTCDate(shifted.getUTCDate() + 1);
+
+  return {
+    ...payload,
+    data: {
+      ...payload.data,
+      dueAt: shifted.toISOString(),
+    },
+  };
+}
+
+function normalizeConfirmationPayload(payload: ConfirmationBlockPayload, userMessage?: string): ConfirmationBlockPayload {
   const normalized: ConfirmationBlockPayload = {
     ...payload,
     entity_id: typeof payload.entity_id === 'string' ? payload.entity_id.trim() : '',
@@ -276,16 +322,16 @@ function normalizeConfirmationPayload(payload: ConfirmationBlockPayload): Confir
     normalized.entity_id = 'self';
   }
 
-  return normalized;
+  return normalizeAgendaTriggerDueAtFromUserMessage(normalized, userMessage);
 }
 
-function normalizeConfirmationBlocks(content: string): string {
+function normalizeConfirmationBlocks(content: string, userMessage?: string): string {
   if (!content || !content.includes('```confirmation')) return content;
 
   return content.replace(/```confirmation\s*([\s\S]*?)```/g, (fullMatch, rawBlock: string) => {
     try {
       const parsed = JSON.parse(rawBlock.trim()) as ConfirmationBlockPayload;
-      const normalized = normalizeConfirmationPayload(parsed);
+      const normalized = normalizeConfirmationPayload(parsed, userMessage);
       return `\`\`\`confirmation\n${JSON.stringify(normalized)}\n\`\`\``;
     } catch {
       return fullMatch;
@@ -1005,7 +1051,7 @@ router.post('/chat', copilotChatLimiter, authMiddleware, async (req: AuthRequest
       res,
       parsedAttachments
     );
-    const finalOutput = normalizeConfirmationBlocks(rawFinalOutput);
+    const finalOutput = normalizeConfirmationBlocks(rawFinalOutput, safeMessage);
 
     // --- TTS generation (agent-driven, study mode only) ---
     // The agent embeds ```audio_tts\n{"text":"...","instructions":"..."}\n``` blocks

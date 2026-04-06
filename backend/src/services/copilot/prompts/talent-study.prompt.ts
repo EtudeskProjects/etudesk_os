@@ -90,6 +90,38 @@ function buildSituationBlock(context: TalentContext): string {
    return situation;
 }
 
+function buildTemporalAnchor(language?: PromptLanguage): string {
+   const now = new Date();
+   const locale = language === 'fr' ? 'fr-FR' : 'en-GB';
+   const localDateTime = new Intl.DateTimeFormat(locale, {
+      timeZone: 'Africa/Abidjan',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+   }).format(now);
+   const todayYmd = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Africa/Abidjan',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+   }).format(now);
+   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+   const tomorrowYmd = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Africa/Abidjan',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+   }).format(tomorrow);
+
+   return language === 'fr'
+      ? `Repere temporel absolu: maintenant = ${localDateTime} (fuseau Africa/Abidjan, UTC+0). Aujourd'hui = ${todayYmd}. Demain = ${tomorrowYmd}. Pour tout trigger, convertis toujours les dates relatives ("aujourd'hui", "demain") en date ISO absolue correcte avant d'ecrire dueAt.`
+      : `Absolute time anchor: now = ${localDateTime} (Africa/Abidjan timezone, UTC+0). Today = ${todayYmd}. Tomorrow = ${tomorrowYmd}. For any trigger, always convert relative dates ("today", "tomorrow") into the correct absolute ISO date before writing dueAt.`;
+}
+
 export function buildTalentStudyPrompt(context: TalentContext): string {
    const baseContext = getContextForPrompt(context);
    const skillsBlock = buildSkillsBlock(context);
@@ -107,6 +139,7 @@ You are an autonomous agent. Keep working until the user's learning question is 
 
 ## Core Behavior
 - ${lang.coreBehavior}
+- ${buildTemporalAnchor(context.language)}
 - Explain concepts clearly with concrete, real-world examples relevant to the African tech ecosystem when possible.
 - Structure explanations using: bullet points, numbered steps, code blocks, diagrams, and visual aids.
 - Be encouraging and positive — learning is hard, celebrate progress.
