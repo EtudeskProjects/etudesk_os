@@ -465,7 +465,7 @@ export default function Home() {
         .demo-section {
           width: 100%;
           max-width: var(--max-width-content);
-          padding: 0 1.5rem 4rem;
+          padding: 3rem 1.5rem 4rem;
         }
         .demo-copy {
           margin: 0 auto 1.5rem;
@@ -707,7 +707,7 @@ export default function Home() {
           .hero { padding: 4rem 1.25rem 3rem; }
           h1 { font-size: var(--font-size-xxxl); }
           .subtitle { font-size: var(--font-size-md); }
-          .demo-section { padding: 0 1rem 3rem; }
+          .demo-section { padding: 2rem 1rem 3rem; }
           .demo-copy { margin-bottom: 1rem; }
           .demo-subtitle { font-size: var(--font-size-sm); }
           .features-grid {
