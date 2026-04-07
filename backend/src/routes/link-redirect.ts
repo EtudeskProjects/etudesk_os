@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../services/database';
-import { logger } from '../utils';
+import { getClientIp, logger } from '../utils';
 
 const router = Router();
 
@@ -38,7 +38,7 @@ router.get('/:slug', async (req: Request, res: Response) => {
     pool.query('UPDATE short_links SET clicks = clicks + 1 WHERE id = $1', [link.id]).catch(() => {});
 
     // Log click details (non-blocking)
-    const ip = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || null;
+    const ip = getClientIp(req) ?? null;
     const userAgent = req.headers['user-agent'] || null;
     const referer = req.headers['referer'] || null;
 

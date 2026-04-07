@@ -24,7 +24,7 @@ import {
 } from '../services/auth.service';
 import { authMiddleware, AuthRequest } from '../middleware/auth.middleware';
 import { auditLog } from '../middleware/audit.middleware';
-import { logger } from '../utils';
+import { getClientIp, logger } from '../utils';
 import {
   validate,
   requestOtpSchema,
@@ -58,7 +58,7 @@ router.post('/request-otp', validate(requestOtpSchema), async (req: Request, res
     const { email } = req.body; // Already validated and transformed by Zod
 
     // Get client info for security
-    const ipAddress = req.ip || req.socket.remoteAddress;
+    const ipAddress = getClientIp(req);
     const userAgent = req.headers['user-agent'];
 
     // Create OTP
@@ -112,7 +112,7 @@ router.post('/request-otp', validate(requestOtpSchema), async (req: Request, res
 router.post('/request-whatsapp-otp', validate(requestWhatsAppOtpSchema), async (req: Request, res: Response) => {
   try {
     const { phone } = req.body;
-    const ipAddress = req.ip || req.socket.remoteAddress;
+    const ipAddress = getClientIp(req);
     const userAgent = req.headers['user-agent'];
 
     const otpResult = await createWhatsAppOTP(phone, undefined, ipAddress, userAgent);
@@ -181,7 +181,7 @@ router.post('/verify-otp', validate(verifyOtpSchema), auditLog('AUTH_VERIFY_OTP'
     const tokens = generateTokens(verifyResult.userId!, verifyResult.email ?? null);
 
     // Create session
-    const ipAddress = req.ip || req.socket.remoteAddress;
+    const ipAddress = getClientIp(req);
     const userAgent = req.headers['user-agent'];
 
     await createSession(verifyResult.userId!, tokens.refreshToken, {
@@ -238,7 +238,7 @@ router.post('/verify-whatsapp-otp', validate(verifyWhatsAppOtpSchema), auditLog(
 
     const tokens = generateTokens(verifyResult.userId!, verifyResult.email ?? null);
 
-    const ipAddress = req.ip || req.socket.remoteAddress;
+    const ipAddress = getClientIp(req);
     const userAgent = req.headers['user-agent'];
 
     await createSession(verifyResult.userId!, tokens.refreshToken, {
@@ -323,7 +323,7 @@ router.post('/google', validate(googleAuthSchema), auditLog('AUTH_GOOGLE'), asyn
     const tokens = generateTokens(result.userId, result.email);
 
     // Create session
-    const ipAddress = req.ip || req.socket.remoteAddress;
+    const ipAddress = getClientIp(req);
     const userAgent = req.headers['user-agent'];
 
     await createSession(result.userId, tokens.refreshToken, {

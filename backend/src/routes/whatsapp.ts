@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { whatsappWebhookLimiter } from '../middleware/rateLimit.middleware';
 import { handleWhatsAppAssistantMessage } from '../services/whatsapp-assistant.service';
 import { formatPhoneToE164 } from '../services/whatsapp.service';
-import { logger } from '../utils';
+import { getClientIp, logger } from '../utils';
 
 const router = Router();
 const isWhatsAppSupportAssistantEnabled = process.env.WHATSAPP_SUPPORT_AGENT_ENABLED === 'true';
@@ -48,7 +48,7 @@ const handleWebhook = async (req: Request, res: Response) => {
       });
     }
 
-    const ipAddress = req.ip || req.socket.remoteAddress;
+    const ipAddress = getClientIp(req);
     if (!isAllowedIp(ipAddress)) {
       logger.warn('WhatsApp webhook unauthorized IP', { ipAddress });
       return res.status(403).json({ success: false, error: req.t('common:unauthorized') });

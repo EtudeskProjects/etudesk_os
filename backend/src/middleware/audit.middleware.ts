@@ -6,7 +6,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../utils';
+import { getClientIp, logger } from '../utils';
 
 interface AuditContext {
   userId?: string;
@@ -34,7 +34,7 @@ export function auditLog(action: string) {
       const context: AuditContext = {
         userId: (req as any).userId || (req as any).talentId,
         action,
-        ip: req.ip || req.socket.remoteAddress || 'unknown',
+        ip: getClientIp(req) || 'unknown',
         requestId: (req.headers['x-request-id'] as string) || 'none',
         method: req.method,
         path: req.originalUrl,

@@ -3,7 +3,6 @@
     "name": "Etudesk",
     "slug": "etudesk",
     "version": "1.1.0",
-    "orientation": "portrait",
     "scheme": "etudesk",
     "icon": "./assets/etudesk_squared_icon.png",
     "userInterfaceStyle": "automatic",
@@ -23,8 +22,6 @@
         "backgroundColor": "#2F4ABF"
       },
       "package": "com.etudesk.mobile",
-      "navigationBarColor": "#FFFFFF",
-      "navigationBarStyle": "dark",
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "android.permission.RECORD_AUDIO",

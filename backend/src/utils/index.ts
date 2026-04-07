@@ -7,6 +7,7 @@ export * from './pagination.helper';
 export * from './error-handler';
 export * from './query-builder';
 export * from './cache';
+export * from './network';
 
 /**
  * Safely parse JSON string, returns fallback on error
