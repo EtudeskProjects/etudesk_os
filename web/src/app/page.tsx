@@ -11,6 +11,9 @@ const translations = {
     title: 'Ton talent mérite\nune plateforme à sa hauteur',
     subtitle:
       'Etudesk connecte les talents aux opportunités, communautés et espaces de travail en Afrique de l\'Ouest. Un assistant intelligent t\'accompagne au quotidien.',
+    demoEyebrow: 'Démo complète',
+    demoTitle: 'Découvre Etudesk en action',
+    demoSubtitle: 'Une visite guidée claire de l\'expérience talent, du copilote IA et des parcours d\'usage dans l\'app.',
     downloadIOS: 'App Store',
     downloadAndroid: 'Google Play',
     getOnAppStore: 'Télécharger sur',
@@ -51,6 +54,9 @@ const translations = {
     title: 'Your talent deserves\na platform that matches it',
     subtitle:
       'Etudesk connects talents to opportunities, communities and workspaces across West Africa. A smart assistant supports you every step of the way.',
+    demoEyebrow: 'Full demo',
+    demoTitle: 'See Etudesk in action',
+    demoSubtitle: 'A clear guided walkthrough of the talent experience, the AI copilot, and the main flows inside the app.',
     downloadIOS: 'App Store',
     downloadAndroid: 'Google Play',
     getOnAppStore: 'Download on',
@@ -165,6 +171,25 @@ export default function Home() {
               <span className="store-btn-name">{t.downloadAndroid}</span>
             </div>
           </a>
+        </div>
+      </section>
+
+      <section className="demo-section">
+        <div className="demo-shell">
+          <div className="demo-copy">
+            <span className="demo-eyebrow">{t.demoEyebrow}</span>
+            <h2 className="demo-title">{t.demoTitle}</h2>
+            <p className="demo-subtitle">{t.demoSubtitle}</p>
+          </div>
+          <div className="demo-frame">
+            <iframe
+              src="https://www.youtube.com/embed/fsTFYSxsTJM?rel=0"
+              title="Etudesk full demo"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
         </div>
       </section>
 
@@ -436,6 +461,66 @@ export default function Home() {
           margin-bottom: 2.5rem;
         }
 
+        /* ── Demo ── */
+        .demo-section {
+          width: 100%;
+          padding: 0 1.5rem 4rem;
+        }
+        .demo-shell {
+          max-width: 1200px;
+          margin: 0 auto;
+          border: 1px solid var(--border-color);
+          border-radius: 28px;
+          overflow: hidden;
+          background:
+            linear-gradient(135deg, rgba(47, 74, 191, 0.1), rgba(74, 103, 65, 0.06)),
+            var(--surface);
+          box-shadow: var(--shadow-md);
+        }
+        .demo-copy {
+          padding: 2rem 2rem 1rem;
+          text-align: center;
+        }
+        .demo-eyebrow {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.35rem 0.85rem;
+          border-radius: var(--radius-full);
+          background: rgba(47, 74, 191, 0.12);
+          color: var(--primary);
+          font-size: var(--font-size-xs);
+          font-weight: var(--font-weight-semibold);
+          letter-spacing: var(--letter-spacing-wide);
+          text-transform: uppercase;
+        }
+        .demo-title {
+          margin: 1rem 0 0.5rem;
+          font-size: clamp(2rem, 4vw, 3rem);
+          line-height: 1.05;
+          color: var(--text-primary);
+        }
+        .demo-subtitle {
+          margin: 0 auto;
+          max-width: 760px;
+          font-size: var(--font-size-md);
+          line-height: var(--line-height-relaxed);
+          color: var(--text-secondary);
+        }
+        .demo-frame {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          background: #000;
+        }
+        .demo-frame iframe {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          border: 0;
+        }
+
         /* ── Features ── */
         .features {
           width: 100%;
@@ -627,6 +712,11 @@ export default function Home() {
           .hero { padding: 4rem 1.25rem 3rem; }
           h1 { font-size: var(--font-size-xxxl); }
           .subtitle { font-size: var(--font-size-md); }
+          .demo-section { padding: 0 1rem 3rem; }
+          .demo-shell { border-radius: 22px; }
+          .demo-copy { padding: 1.5rem 1.25rem 0.9rem; }
+          .demo-title { font-size: 1.75rem; }
+          .demo-subtitle { font-size: var(--font-size-sm); }
           .features-grid {
             grid-template-columns: 1fr;
             max-width: 420px;

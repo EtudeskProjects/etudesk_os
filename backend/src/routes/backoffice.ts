@@ -80,8 +80,13 @@ router.get('/stats', async (_req: Request, res: Response) => {
       // Short links stats
       pool.query(`
         SELECT COUNT(*) AS total_links,
-               COALESCE(SUM(clicks), 0) AS total_clicks
-        FROM short_links
+               COALESCE(SUM(GREATEST(sl.clicks, COALESCE(click_stats.click_count, 0))), 0) AS total_clicks
+        FROM short_links sl
+        LEFT JOIN (
+          SELECT link_id, COUNT(*) AS click_count
+          FROM short_link_clicks
+          GROUP BY link_id
+        ) click_stats ON click_stats.link_id = sl.id
       `),
     ]);
 
@@ -225,8 +230,13 @@ router.get('/short-links', async (_req: Request, res: Response) => {
   try {
     const result = await pool.query(
       `SELECT sl.*,
-              (SELECT COUNT(*) FROM short_link_clicks WHERE link_id = sl.id) AS total_clicks
+              GREATEST(sl.clicks, COALESCE(click_stats.click_count, 0)) AS total_clicks
        FROM short_links sl
+       LEFT JOIN (
+         SELECT link_id, COUNT(*) AS click_count
+         FROM short_link_clicks
+         GROUP BY link_id
+       ) click_stats ON click_stats.link_id = sl.id
        ORDER BY sl.created_at DESC`,
     );
     res.json({ success: true, data: result.rows });

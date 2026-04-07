@@ -86,8 +86,13 @@ router.get('/', async (_req: Request, res: Response) => {
     const result = await pool.query(
       `SELECT sl.*,
               '${BASE_URL}/link/' || sl.slug AS short_url,
-              (SELECT COUNT(*) FROM short_link_clicks WHERE link_id = sl.id) AS total_clicks
+              GREATEST(sl.clicks, COALESCE(click_stats.click_count, 0)) AS total_clicks
        FROM short_links sl
+       LEFT JOIN (
+         SELECT link_id, COUNT(*) AS click_count
+         FROM short_link_clicks
+         GROUP BY link_id
+       ) click_stats ON click_stats.link_id = sl.id
        ORDER BY sl.created_at DESC`,
     );
 
