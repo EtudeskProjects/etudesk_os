@@ -64,17 +64,15 @@ async function parsePdfContent(buffer: Buffer, documentId: string): Promise<{ co
   } catch (error: any) {
     const message = error?.message || 'Unknown PDF parse error';
     const isRecoverable =
-      /bad xref entry|xref|invalid pdf structure|unexpected server response|formaterror/i.test(message);
+      /bad xref entry|xref|invalid pdf structure|unexpected server response|formaterror|invalid number|charcode|bad dictionary|invalid root reference/i.test(message);
 
-    if (isRecoverable) {
-      const salvaged = salvagePdfText(buffer);
-      if (salvaged) {
-        logger.warn(`[file_reader] PDF salvage mode for ${documentId}: ${message}`);
-        return {
-          content: `${salvaged}\n\n[Extraction partielle: PDF structure corrompue, texte récupéré en mode dégradé.]`,
-          salvaged: true,
-        };
-      }
+    const salvaged = salvagePdfText(buffer);
+    if (salvaged && (isRecoverable || salvaged.length >= 120)) {
+      logger.warn(`[file_reader] PDF salvage mode for ${documentId}: ${message}`);
+      return {
+        content: `${salvaged}\n\n[Extraction partielle: PDF structure corrompue ou texte non standard, contenu récupéré en mode dégradé.]`,
+        salvaged: true,
+      };
     }
 
     throw error;

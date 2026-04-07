@@ -71,6 +71,80 @@ export interface ExtractionResult {
   error?: string;
 }
 
+function cleanupJsonCandidate(value: string): string {
+  return value
+    .replace(/^```(?:json)?\s*\n?/i, '')
+    .replace(/\n?```\s*$/i, '')
+    .replace(/[\u0000-\u0019]+/g, ' ')
+    .replace(/,\s*([}\]])/g, '$1')
+    .trim();
+}
+
+function extractJsonObject(value: string): string {
+  const firstBrace = value.indexOf('{');
+  if (firstBrace === -1) {
+    return value;
+  }
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let endIndex = -1;
+
+  for (let i = firstBrace; i < value.length; i += 1) {
+    const char = value[i];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      escaped = true;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) {
+      continue;
+    }
+
+    if (char === '{') {
+      depth += 1;
+    } else if (char === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        endIndex = i;
+        break;
+      }
+    }
+  }
+
+  return endIndex > firstBrace ? value.slice(firstBrace, endIndex + 1) : value.slice(firstBrace);
+}
+
+function parseExtractionPayload(content: string): Partial<ExtractedDocumentData> {
+  const candidates = [
+    cleanupJsonCandidate(content),
+    cleanupJsonCandidate(extractJsonObject(content)),
+  ];
+
+  let lastError: unknown;
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate) as Partial<ExtractedDocumentData>;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('Invalid JSON extraction payload');
+}
+
 // --- Extraction Functions ---
 
 /**
@@ -148,6 +222,7 @@ export async function extractDocumentMetadata(
         { role: 'system', content: EXTRACTION_SYSTEM_PROMPT },
         { role: 'user', content: contentParts },
       ],
+      response_format: { type: 'json_object' },
     });
 
     // Cleanup: delete uploaded file from OpenAI
@@ -163,20 +238,7 @@ export async function extractDocumentMetadata(
       };
     }
 
-    // Strip markdown fences if present
-    let cleanedContent = content
-      .replace(/^```(?:json)?\s*\n?/i, '')
-      .replace(/\n?```\s*$/i, '')
-      .trim();
-
-    // Robust JSON extraction: find first { and last matching }
-    const firstBrace = cleanedContent.indexOf('{');
-    const lastBrace = cleanedContent.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace > firstBrace) {
-      cleanedContent = cleanedContent.substring(firstBrace, lastBrace + 1);
-    }
-
-    const extractedData = JSON.parse(cleanedContent) as Partial<ExtractedDocumentData>;
+    const extractedData = parseExtractionPayload(content);
 
     // Validate and normalize the detected type
     const detectedType = normalizeDocumentType(extractedData.detected_type);

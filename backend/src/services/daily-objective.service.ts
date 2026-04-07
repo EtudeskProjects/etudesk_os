@@ -35,6 +35,46 @@ interface DailyObjective {
   expiresAt: string;
 }
 
+async function upsertTalentDailyObjective(
+  talentId: string,
+  objective: string,
+  generatedAt: string,
+  expiresAt: string
+): Promise<void> {
+  await pool.query(
+    `
+      INSERT INTO daily_objectives (talent_id, objective, generated_at, expires_at)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (talent_id) WHERE talent_id IS NOT NULL
+      DO UPDATE SET
+        objective = EXCLUDED.objective,
+        generated_at = EXCLUDED.generated_at,
+        expires_at = EXCLUDED.expires_at
+    `,
+    [talentId, objective, generatedAt, expiresAt]
+  );
+}
+
+async function upsertOrganizationDailyObjective(
+  organizationId: string,
+  objective: string,
+  generatedAt: string,
+  expiresAt: string
+): Promise<void> {
+  await pool.query(
+    `
+      INSERT INTO daily_objectives (organization_id, objective, generated_at, expires_at)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (organization_id) WHERE organization_id IS NOT NULL
+      DO UPDATE SET
+        objective = EXCLUDED.objective,
+        generated_at = EXCLUDED.generated_at,
+        expires_at = EXCLUDED.expires_at
+    `,
+    [organizationId, objective, generatedAt, expiresAt]
+  );
+}
+
 interface TalentContext {
   profile: any;
   recentApplications: any[];
@@ -307,12 +347,12 @@ export async function getTalentDailyObjective(
   const now = new Date();
   const expiresAt = new Date(now.getTime() + CACHE_DURATION_MS);
 
-  // Save to cache (delete old then insert)
-  await pool.query(`DELETE FROM daily_objectives WHERE talent_id = $1`, [talentId]);
-  await pool.query(`
-    INSERT INTO daily_objectives (talent_id, objective, generated_at, expires_at)
-    VALUES ($1, $2, $3, $4)
-  `, [talentId, objective, now.toISOString(), expiresAt.toISOString()]);
+  await upsertTalentDailyObjective(
+    talentId,
+    objective,
+    now.toISOString(),
+    expiresAt.toISOString()
+  );
 
   return {
     objective,
@@ -598,12 +638,12 @@ export async function getOrganizationDailyObjective(
   const now = new Date();
   const expiresAt = new Date(now.getTime() + CACHE_DURATION_MS);
 
-  // Save to cache (delete old then insert)
-  await pool.query(`DELETE FROM daily_objectives WHERE organization_id = $1`, [organizationId]);
-  await pool.query(`
-    INSERT INTO daily_objectives (organization_id, objective, generated_at, expires_at)
-    VALUES ($1, $2, $3, $4)
-  `, [organizationId, objective, now.toISOString(), expiresAt.toISOString()]);
+  await upsertOrganizationDailyObjective(
+    organizationId,
+    objective,
+    now.toISOString(),
+    expiresAt.toISOString()
+  );
 
   return {
     objective,
