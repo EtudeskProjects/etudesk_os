@@ -175,12 +175,12 @@ export default function Home() {
       </section>
 
       <section className="demo-section">
+        <div className="demo-copy">
+          <span className="demo-eyebrow">{t.demoEyebrow}</span>
+          <h2 className="section-title demo-title">{t.demoTitle}</h2>
+          <p className="demo-subtitle">{t.demoSubtitle}</p>
+        </div>
         <div className="demo-shell">
-          <div className="demo-copy">
-            <span className="demo-eyebrow">{t.demoEyebrow}</span>
-            <h2 className="demo-title">{t.demoTitle}</h2>
-            <p className="demo-subtitle">{t.demoSubtitle}</p>
-          </div>
           <div className="demo-frame">
             <iframe
               src="https://www.youtube.com/embed/fsTFYSxsTJM?rel=0"
@@ -464,22 +464,16 @@ export default function Home() {
         /* ── Demo ── */
         .demo-section {
           width: 100%;
+          max-width: var(--max-width-content);
           padding: 0 1.5rem 4rem;
         }
-        .demo-shell {
-          max-width: 1200px;
-          margin: 0 auto;
-          border: 1px solid var(--border-color);
-          border-radius: 28px;
-          overflow: hidden;
-          background:
-            linear-gradient(135deg, rgba(47, 74, 191, 0.1), rgba(74, 103, 65, 0.06)),
-            var(--surface);
-          box-shadow: var(--shadow-md);
-        }
         .demo-copy {
-          padding: 2rem 2rem 1rem;
+          margin: 0 auto 1.5rem;
+          max-width: 760px;
           text-align: center;
+        }
+        .demo-shell {
+          width: 100%;
         }
         .demo-eyebrow {
           display: inline-flex;
@@ -495,10 +489,7 @@ export default function Home() {
           text-transform: uppercase;
         }
         .demo-title {
-          margin: 1rem 0 0.5rem;
-          font-size: clamp(2rem, 4vw, 3rem);
-          line-height: 1.05;
-          color: var(--text-primary);
+          margin: 1rem 0 0.75rem;
         }
         .demo-subtitle {
           margin: 0 auto;
@@ -511,7 +502,11 @@ export default function Home() {
           position: relative;
           width: 100%;
           aspect-ratio: 16 / 9;
+          overflow: hidden;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-lg);
           background: #000;
+          box-shadow: var(--shadow-sm);
         }
         .demo-frame iframe {
           position: absolute;
@@ -713,9 +708,7 @@ export default function Home() {
           h1 { font-size: var(--font-size-xxxl); }
           .subtitle { font-size: var(--font-size-md); }
           .demo-section { padding: 0 1rem 3rem; }
-          .demo-shell { border-radius: 22px; }
-          .demo-copy { padding: 1.5rem 1.25rem 0.9rem; }
-          .demo-title { font-size: 1.75rem; }
+          .demo-copy { margin-bottom: 1rem; }
           .demo-subtitle { font-size: var(--font-size-sm); }
           .features-grid {
             grid-template-columns: 1fr;
