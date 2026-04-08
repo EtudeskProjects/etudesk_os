@@ -45,7 +45,7 @@ async function upsertTalentDailyObjective(
     `
       INSERT INTO daily_objectives (talent_id, objective, generated_at, expires_at)
       VALUES ($1, $2, $3, $4)
-      ON CONFLICT (talent_id) WHERE talent_id IS NOT NULL
+      ON CONFLICT (talent_id) WHERE talent_id IS NOT NULL AND organization_id IS NULL
       DO UPDATE SET
         objective = EXCLUDED.objective,
         generated_at = EXCLUDED.generated_at,
@@ -65,7 +65,7 @@ async function upsertOrganizationDailyObjective(
     `
       INSERT INTO daily_objectives (organization_id, objective, generated_at, expires_at)
       VALUES ($1, $2, $3, $4)
-      ON CONFLICT (organization_id) WHERE organization_id IS NOT NULL
+      ON CONFLICT (organization_id) WHERE organization_id IS NOT NULL AND talent_id IS NULL
       DO UPDATE SET
         objective = EXCLUDED.objective,
         generated_at = EXCLUDED.generated_at,
