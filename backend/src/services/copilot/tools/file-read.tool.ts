@@ -30,26 +30,52 @@ function extractDocumentId(rawValue: string): { cleanId: string | null; extracte
   return { cleanId: null, extracted: false };
 }
 
-function salvagePdfText(buffer: Buffer): string | null {
-  const latin1 = buffer.toString('latin1');
-  const chunks = latin1
-    .match(/[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ,.;:!?@%()'"\-_/+\n\r]{5,}/g)
-    ?.map((chunk) => chunk.replace(/\s+/g, ' ').trim())
-    .filter((chunk) => {
-      const lower = chunk.toLowerCase();
+function normalizeExtractedText(text: string): string | null {
+  const cleaned = text
+    .replace(/\u0000/g, ' ')
+    .replace(/[^\S\r\n]+/g, ' ')
+    .replace(/\r/g, '\n')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => {
+      const lower = line.toLowerCase();
       return (
-        chunk.length >= 12 &&
+        line.length >= 8 &&
         !lower.startsWith('obj') &&
         !lower.startsWith('endobj') &&
         !lower.includes('/type') &&
         !lower.includes('/filter') &&
         !lower.includes('xref') &&
-        !lower.includes('stream') &&
         !lower.includes('endstream')
       );
-    }) || [];
+    })
+    .slice(0, 400);
 
-  const uniqueChunks = [...new Set(chunks)];
+  const uniqueLines = [...new Set(cleaned)];
+  const normalized = uniqueLines.join('\n').trim();
+  return normalized.length >= 80 ? normalized.slice(0, 12000) : null;
+}
+
+function salvagePdfText(buffer: Buffer): string | null {
+  const sources = [
+    buffer.toString('utf-8'),
+    buffer.toString('latin1'),
+  ];
+
+  const chunks = sources.flatMap((source) => {
+    const regexChunks = source
+      .match(/[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9 ,.;:!?@%()'"\-_/+\n\r]{5,}/g)
+      ?.map((chunk) => chunk.replace(/\s+/g, ' ').trim())
+      .filter((chunk) => chunk.length >= 12) || [];
+
+    const normalized = normalizeExtractedText(
+      source.replace(/[^\x09\x0A\x0D\x20-\x7EÀ-ÿ]/g, ' ')
+    );
+
+    return normalized ? [...regexChunks, ...normalized.split('\n')] : regexChunks;
+  });
+
+  const uniqueChunks = [...new Set(chunks)].filter(Boolean);
   const text = uniqueChunks.join('\n').trim();
   return text.length >= 80 ? text.slice(0, 12000) : null;
 }
@@ -86,7 +112,7 @@ async function readDocumentFromDB(
   documentId: string,
   query: string,
   params: any[]
-): Promise<{ success: boolean; document?: any; content?: string; error?: string }> {
+): Promise<{ success: boolean; document?: any; content?: string; error?: string; warning?: string }> {
   const { cleanId } = extractDocumentId(documentId);
   if (!cleanId) {
     return {
@@ -124,19 +150,35 @@ async function readDocumentFromDB(
 
   // PDFs
   if (mimeType === 'application/pdf') {
-    const pdfData = await parsePdfContent(buffer, cleanId);
-    return {
-      success: true,
-      document: {
-        id: doc.id,
-        title: doc.title || doc.original_filename,
-        type: doc.document_type,
-        mimeType,
-        pageCount: pdfData.pageCount,
-        extractionMode: pdfData.salvaged ? 'salvaged' : 'parsed',
-      },
-      content: wrapContent(pdfData.content),
-    };
+    try {
+      const pdfData = await parsePdfContent(buffer, cleanId);
+      return {
+        success: true,
+        document: {
+          id: doc.id,
+          title: doc.title || doc.original_filename,
+          type: doc.document_type,
+          mimeType,
+          pageCount: pdfData.pageCount,
+          extractionMode: pdfData.salvaged ? 'salvaged' : 'parsed',
+        },
+        content: wrapContent(pdfData.content),
+      };
+    } catch (error: any) {
+      logger.warn(`[file_reader] PDF unavailable for ${cleanId}: ${error.message}`);
+      return {
+        success: true,
+        document: {
+          id: doc.id,
+          title: doc.title || doc.original_filename,
+          type: doc.document_type,
+          mimeType,
+          extractionMode: 'unavailable',
+        },
+        content: wrapContent('[Extraction indisponible: ce PDF semble scanne, corrompu, ou non lisible automatiquement. Demande au user un autre fichier, une version OCR, ou le texte colle directement.]'),
+        warning: `Automatic PDF extraction unavailable: ${error.message}`,
+      };
+    }
   }
 
   // Images — metadata only

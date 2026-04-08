@@ -129,6 +129,9 @@ export function generateToolSummary(
         return 'Diagramme généré';
 
       case 'web_search':
+        if ((output as any)?.results?.length === 0) {
+          return 'Aucune source fiable trouvée';
+        }
         return 'Recherche web terminée';
 
       case 'file_reader':
@@ -136,6 +139,13 @@ export function generateToolSummary(
         // Try to extract document title from the output (sub-agent result)
         const docTitle = (output as any)?.document?.title
           || (output as any)?.title;
+        const extractionMode = (output as any)?.document?.extractionMode;
+        if (extractionMode === 'unavailable') {
+          return docTitle ? `Extraction indisponible · ${String(docTitle).slice(0, 60)}` : 'Extraction indisponible';
+        }
+        if (extractionMode === 'salvaged') {
+          return docTitle ? `Lu (mode dégradé) · ${String(docTitle).slice(0, 60)}` : 'Document lu (mode dégradé)';
+        }
         if (docTitle) return `Lu · ${String(docTitle).slice(0, 60)}`;
         const name = args?.fileName || args?.name || args?.file;
         return name ? `Lu · ${String(name).slice(0, 60)}` : 'Document lu';

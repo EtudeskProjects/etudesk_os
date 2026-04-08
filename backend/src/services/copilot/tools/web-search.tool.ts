@@ -68,6 +68,17 @@ async function executeWebSearch(query: string): Promise<string> {
   return result.finalOutput?.trim() || 'No relevant results found.';
 }
 
+function buildNoResultsResponse(query: string) {
+  return {
+    success: true,
+    results: [],
+    query,
+    content: `Aucune source fiable trouvee pour "${query}".`,
+    message: 'Aucune source exploitable n a ete trouvee avec cette requete.',
+    suggestion: 'Precise le pays, l organisation, ou la periode recherchee avant de relancer la recherche.',
+  };
+}
+
 /**
  * Web search as a native Anthropic tool.
  * Internally delegates to the OpenAI sub-agent for actual web search.
@@ -85,9 +96,22 @@ export const webSearchAsTool = defineTool({
   }),
   execute: async ({ query }) => {
     try {
-      logger.info(`[web_search] Executing search: "${query.slice(0, 100)}"`);
-      const result = await executeWebSearch(query);
-      return { success: true, content: result };
+      const normalizedQuery = query.trim().replace(/\s+/g, ' ');
+      if (!normalizedQuery) {
+        return {
+          success: false,
+          error: 'Missing query. Provide a concrete search request with topic and region.',
+        };
+      }
+
+      logger.info(`[web_search] Executing search: "${normalizedQuery.slice(0, 100)}"`);
+      const result = await executeWebSearch(normalizedQuery);
+
+      if (/^no relevant results found\.?$/i.test(result)) {
+        return buildNoResultsResponse(normalizedQuery);
+      }
+
+      return { success: true, query: normalizedQuery, content: result };
     } catch (error: any) {
       logger.error(`[web_search] Error: ${error.message}`);
       return { success: false, error: error.message };

@@ -67,6 +67,82 @@ function isOverloadedProviderError(error: any): boolean {
   );
 }
 
+const TOOL_RESULT_TEXT_KEYS = [
+  'content',
+  'message',
+  'error',
+  'warning',
+  'fallback_suggestion',
+  'summary',
+  '_note',
+];
+
+function hasMeaningfulToolText(value: unknown): boolean {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 && trimmed !== '[no output]';
+  }
+
+  if (Array.isArray(value)) {
+    return value.some((item) => hasMeaningfulToolText(item));
+  }
+
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  return TOOL_RESULT_TEXT_KEYS.some((key) =>
+    hasMeaningfulToolText((value as Record<string, unknown>)[key])
+  );
+}
+
+function isToolResultEffectivelyEmpty(output: unknown): boolean {
+  if (output == null) {
+    return true;
+  }
+
+  if (typeof output === 'string') {
+    const trimmed = output.trim();
+    return trimmed.length === 0 || trimmed === '[no output]';
+  }
+
+  if (Array.isArray(output)) {
+    return output.length === 0;
+  }
+
+  if (typeof output !== 'object') {
+    return false;
+  }
+
+  const outputObj = output as Record<string, any>;
+
+  if (hasMeaningfulToolText(outputObj)) {
+    return false;
+  }
+
+  if (outputObj.document || outputObj.mermaidCode || outputObj.renderHint || outputObj.renderConfig) {
+    return false;
+  }
+
+  if (Array.isArray(outputObj.results)) {
+    return outputObj.results.length === 0;
+  }
+
+  if (Array.isArray(outputObj.videos)) {
+    return outputObj.videos.length === 0;
+  }
+
+  if (typeof outputObj.totalFound === 'number') {
+    return outputObj.totalFound === 0;
+  }
+
+  if (outputObj.success === false) {
+    return false;
+  }
+
+  return Object.keys(outputObj).length === 0;
+}
+
 /**
  * Build Anthropic messages array from history + user message + attachments
  */
@@ -509,13 +585,16 @@ export async function runAgentWithSSE(
 
         // Semantic anti-loop: detect consecutive empty/no-result responses
         const resultStr = typeof output === 'string' ? output : JSON.stringify(output) ?? '';
-        const isEmpty = !resultStr || resultStr === '[]' || resultStr === '{}' ||
-          (output?.results && Array.isArray(output.results) && output.results.length === 0) ||
-          (output?.totalFound === 0);
+        const isEmpty = isToolResultEffectivelyEmpty(output);
         if (isEmpty) {
           consecutiveEmptyResults++;
           if (!limitReached && consecutiveEmptyResults >= 3) {
             limitReached = true;
+            hitLoopDetection = true;
+            const limitMsg = 'Plusieurs appels outils successifs n\'ont retourne aucun resultat exploitable. Je stoppe ici pour eviter une boucle inutile.';
+            sendSSE(res, { type: 'limit_reached', reason: 'semantic_empty_results', message: limitMsg });
+            finalOutput += `\n\n${limitMsg}`;
+            sendSSE(res, { type: 'text_delta', delta: `\n\n${limitMsg}` });
             logger.warn(`[copilot] Semantic anti-loop: ${consecutiveEmptyResults} consecutive empty tool results`);
           }
         } else {
