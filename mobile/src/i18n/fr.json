@@ -196,6 +196,29 @@
       "languageSubtitle": "Tu peux démarrer dans la langue qui te convient. Tu pourras la changer plus tard.",
       "getStarted": "C'est parti !",
       "whatYouCanDo": "Ce que tu peux faire",
+      "steps": {
+        "title": "Votre plateforme de carrière - 4 étapes pour commencer",
+        "stepIndicator": "Étape {{current}}/{{total}}",
+        "uploadCv": {
+          "title": "Téléchargez votre CV",
+          "description": "Téléchargez votre CV existant pour que je puisse extraire automatiquement vos compétences, expériences et certifications. C'est le moyen le plus rapide de compléter votre profil"
+        },
+        "profileSetup": {
+          "title": "Configuration du profil",
+          "description": "Votre profil est configuré et prêt - maintenant, faisons-le briller. Voici votre plateforme de lancement personnalisée :"
+        },
+        "explore": {
+          "title": "Explorer",
+          "description": "Découvrez des opportunités adaptées à votre profil"
+        },
+        "launchpad": {
+          "title": "Votre plateforme de carrière",
+          "subtitle": "4 étapes pour commencer"
+        }
+      },
+      "loading": "Chargement de votre profil...",
+      "greatToHaveYou": "Ravi de vous avoir ici",
+      "askQuestion": "Posez une question ou décrivez ce dont vous avez besoin...",
       "features": {
         "explore": {
           "title": "Trouve des opportunités",
