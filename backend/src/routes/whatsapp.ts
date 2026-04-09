@@ -21,7 +21,30 @@ function isAllowedIp(ipAddress?: string): boolean {
   if (!ipAddress) return false;
 
   const normalized = ipAddress.includes('::ffff:') ? ipAddress.replace('::ffff:', '') : ipAddress;
-  return whitelist.includes(normalized);
+
+  for (const entry of whitelist) {
+    if (entry.includes('/')) {
+      // CIDR support
+      const [subnet, bits] = entry.split('/');
+      const mask = ~(2 ** (32 - Number(bits)) - 1) >>> 0;
+      const ipNum = ipToNum(normalized);
+      const subnetNum = ipToNum(subnet);
+      if (ipNum !== null && subnetNum !== null && (ipNum & mask) === (subnetNum & mask)) return true;
+    } else if (entry === normalized) {
+      return true;
+    }
+  }
+
+  logger.warn('WhatsApp webhook: IP not in whitelist', { ipAddress: normalized });
+  return false;
+}
+
+function ipToNum(ip: string): number | null {
+  const parts = ip.split('.');
+  if (parts.length !== 4) return null;
+  const nums = parts.map(Number);
+  if (nums.some((n) => isNaN(n) || n < 0 || n > 255)) return null;
+  return ((nums[0] << 24) | (nums[1] << 16) | (nums[2] << 8) | nums[3]) >>> 0;
 }
 
 function normalizeIncomingPhone(rawPhone?: string): string | null {
@@ -49,12 +72,19 @@ const handleWebhook = async (req: Request, res: Response) => {
     }
 
     const ipAddress = getClientIp(req);
-    if (!isAllowedIp(ipAddress)) {
-      logger.warn('WhatsApp webhook unauthorized IP', { ipAddress });
+    const payload = req.body?.data ?? req.body ?? {};
+
+    // Validate: IP whitelist OR matching UltraMSG token in payload
+    const tokenMatch = payload.token === process.env.ULTRAMSG_TOKEN;
+    if (!isAllowedIp(ipAddress) && !tokenMatch) {
+      logger.warn('WhatsApp webhook unauthorized', { ipAddress, tokenPresent: Boolean(payload.token) });
       return res.status(403).json({ success: false, error: req.t('common:unauthorized') });
     }
 
-    const payload = req.body?.data ?? req.body ?? {};
+    // Log source IP for whitelist tuning
+    if (tokenMatch && !isAllowedIp(ipAddress)) {
+      logger.info('WhatsApp webhook: token-authenticated request from new IP — consider adding to whitelist', { ipAddress });
+    }
     const fromMe = Boolean(payload.fromMe ?? payload.self);
     const messageType = String(payload.type || 'text').toLowerCase();
     const incomingText = payload.body || payload.message || payload.text || '';
