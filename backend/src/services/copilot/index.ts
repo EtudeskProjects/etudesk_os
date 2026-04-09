@@ -16,7 +16,7 @@ export { createSqlQueryTool } from './tools/sql-query.tool';
 export { youtubeSearchTool } from './tools/youtube-search.tool';
 export { analyzeYoutubeVideoTool } from './tools/youtube-analyze.tool';
 export { generateDocumentTool, createGenerateDocumentTool } from './tools/generate-document.tool';
-export { generateImageTool } from './tools/generate-image.tool';
+export { generateImageTool, createGenerateImageTool } from './tools/generate-image.tool';
 export { generateDiagramTool } from './tools/generate-diagram.tool';
 export { createFileReaderTool } from './tools/file-read.tool';
 export { webSearchAgent, webSearchAsTool } from './tools/web-search.tool';

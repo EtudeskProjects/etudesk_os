@@ -23,6 +23,7 @@ import {
 } from '../../utils';
 import { getLocaleForLanguage, normalizeLanguage } from '../../i18n';
 import { rankApplications } from '../../services/matching.service';
+import { debitWalletForAction } from '../../services/billing/credit.service';
 import { getApplicationRecommendation } from '../../services/recommendation.service';
 import * as notificationService from '../../services/notification.service';
 
@@ -107,7 +108,7 @@ router.get('/opportunity/:opportunityId/ranked', authMiddleware, validate(opport
     const talentId = req.talentId;
 
     const accessCheck = await pool.query(`
-      SELECT o.id FROM opportunities o
+      SELECT o.id, op.poster_organization_id FROM opportunities o
       JOIN opportunity_posters op ON o.id = op.opportunity_id
       LEFT JOIN organization_members om ON op.poster_organization_id = om.organization_id
       WHERE o.id = $1 AND o.deleted_at IS NULL
@@ -116,6 +117,29 @@ router.get('/opportunity/:opportunityId/ranked', authMiddleware, validate(opport
 
     if (accessCheck.rows.length === 0) {
       throw createForbiddenError(req.t('applications:notAuthorizedOpportunity'));
+    }
+
+    // Debit credits for application scoring
+    const posterOrgId = accessCheck.rows[0].poster_organization_id;
+    if (posterOrgId) {
+      try {
+        await debitWalletForAction({
+          scope: 'ORGANIZATION',
+          ownerId: posterOrgId,
+          actionCode: 'ORG_APPLICATION_SCORING',
+          idempotencyKey: `app_scoring_${posterOrgId}_${opportunityId}_${Date.now()}`,
+          metadata: { opportunityId, status: status || 'all' },
+          createdBy: talentId,
+        });
+      } catch (debitError: any) {
+        if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
+          return res.status(402).json({
+            error: req.t('billing:insufficientCredits'),
+            code: 'INSUFFICIENT_CREDITS',
+          });
+        }
+        throw debitError;
+      }
     }
 
     const rankedApplications = await rankApplications(opportunityId, status as string | undefined);

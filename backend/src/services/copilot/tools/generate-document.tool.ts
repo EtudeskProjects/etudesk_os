@@ -19,6 +19,7 @@ import { i18next } from '../../../i18n';
 import { generateCVPDF, CVData } from './cv-pdf-generator';
 import { generateOrgDocumentPDF, isOrgDocumentContent, OrgDocumentData, ChartData } from './org-document-pdf-generator';
 import { toTOON } from '../../ai/toon';
+import { debitWalletForAction } from '../../billing/credit.service';
 
 // Content JSON structure types
 interface SectionContent {
@@ -718,6 +719,27 @@ export function createGenerateDocumentTool(talentId: string, avatarUrl?: string,
     execute: async ({ format: rawFormat, title, contentJson, instructions }) => {
       const tr = (key: string, options?: Record<string, any>) => i18next.t(key, { lng: language, ...(options || {}) });
       try {
+        // Debit credits for document generation
+        const isOrgScope = !!organizationId;
+        const debitActionCode = isOrgScope ? 'ORG_DOCUMENT_GENERATION' : 'TALENT_DOCUMENT_GENERATION';
+        const debitOwnerId = isOrgScope ? organizationId! : talentId;
+        const debitIdempotencyKey = `docgen_${debitOwnerId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        try {
+          await debitWalletForAction({
+            scope: isOrgScope ? 'ORGANIZATION' : 'TALENT',
+            ownerId: debitOwnerId,
+            actionCode: debitActionCode,
+            idempotencyKey: debitIdempotencyKey,
+            metadata: { title, format: rawFormat },
+            createdBy: talentId,
+          });
+        } catch (debitError: any) {
+          if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
+            return { success: false, error: tr('billing:insufficientCredits') };
+          }
+          throw debitError;
+        }
+
         // Normalize format to uppercase (Claude native SDK may send lowercase)
         const format = typeof rawFormat === 'string' ? rawFormat.toUpperCase() : 'PDF';
         if (!FORMAT_EXTENSIONS[format]) {

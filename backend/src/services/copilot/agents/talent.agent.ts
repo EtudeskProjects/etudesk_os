@@ -12,7 +12,7 @@ import { createSqlQueryTool } from '../tools/sql-query.tool';
 import { youtubeSearchTool } from '../tools/youtube-search.tool';
 import { analyzeYoutubeVideoTool } from '../tools/youtube-analyze.tool';
 import { createGenerateDocumentTool } from '../tools/generate-document.tool';
-import { generateImageTool } from '../tools/generate-image.tool';
+import { createGenerateImageTool } from '../tools/generate-image.tool';
 import { generateDiagramTool } from '../tools/generate-diagram.tool';
 import { createFileReaderTool } from '../tools/file-read.tool';
 import { webSearchAsTool } from '../tools/web-search.tool';
@@ -51,7 +51,7 @@ export function createTalentAgent(
       studySqlTool,
       youtubeSearchTool,
       analyzeYoutubeVideoTool,
-      generateImageTool,
+      createGenerateImageTool(context.profile.id),
       generateDiagramTool,
       fileReaderTool,
       webSearchAsTool,
