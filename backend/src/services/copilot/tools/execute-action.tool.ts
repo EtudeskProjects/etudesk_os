@@ -10,6 +10,7 @@ import { pool } from '../../database';
 import { logger } from '../../../utils';
 import { i18next } from '../../../i18n';
 import { resolveAgendaSchedule } from '../../agenda-scheduling.service';
+import { debitWalletForAction } from '../../billing/credit.service';
 
 const ACTION_TYPES = [
   'apply_opportunity',
@@ -186,6 +187,24 @@ export function createExecuteActionTool(authenticatedTalentId: string, language?
               );
               if (membership.rows.length === 0) {
                 return { success: false, error: tr('copilot:toolOrgAccessDenied') };
+              }
+
+              // Debit credits for org scheduled task
+              const debitIdempotencyKey = `org_sched_${organizationId}_${code}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+              try {
+                await debitWalletForAction({
+                  scope: 'ORGANIZATION',
+                  ownerId: String(organizationId),
+                  actionCode: 'ORG_SCHEDULED_TASK',
+                  idempotencyKey: debitIdempotencyKey,
+                  metadata: { code, title },
+                  createdBy: talentId,
+                });
+              } catch (debitError: any) {
+                if (String(debitError?.message || '').includes('INSUFFICIENT_CREDITS')) {
+                  return { success: false, error: tr('billing:insufficientCredits') };
+                }
+                throw debitError;
               }
 
               const result = await pool.query(
