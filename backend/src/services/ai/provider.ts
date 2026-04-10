@@ -1,14 +1,13 @@
 /**
  * AI Provider Configuration — Multi-provider (simultaneous)
  *
- * Three providers used simultaneously for their strengths:
- * - Google Gemini Flash Lite: form suggestions (cheapest, fastest)
- * - OpenAI: images, web search, embeddings, STT, matching, vision
+ * Two providers used simultaneously for their strengths:
+ * - OpenAI: suggestions, images, web search, embeddings, STT, matching, vision
  * - Anthropic Claude: main agents (native SDK), summaries/titles/guardrails (Haiku)
  *
- * OPENAI_API_KEY is ALWAYS required (STT, moderation, embeddings, images, vision).
- * GOOGLE_API_KEY required for Gemini suggestions.
+ * OPENAI_API_KEY is ALWAYS required.
  * ANTHROPIC_API_KEY required for Claude agents.
+ * GOOGLE_API_KEY: no longer used (project banned). All Gemini calls migrated to OpenAI.
  */
 
 import dotenv from 'dotenv';
@@ -28,15 +27,11 @@ const openaiClient = new OpenAI({
 });
 
 // ---------------------------------------------------------------------------
-// 2. Gemini Client — OpenAI-compatible endpoint for chat.completions
+// 2. Suggestion Client — uses OpenAI (migrated from Gemini, Google API blocked)
 // ---------------------------------------------------------------------------
 
-const geminiClient = process.env.GOOGLE_API_KEY
-  ? new OpenAI({
-      apiKey: process.env.GOOGLE_API_KEY,
-      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-    })
-  : null;
+// Gemini client kept as null — all callers fall back to OpenAI via getGeminiClient()
+const geminiClient: OpenAI | null = null;
 
 // ---------------------------------------------------------------------------
 // 3. Anthropic Client — Native SDK for agents, guardrails, titles
@@ -63,13 +58,8 @@ export const openaiResponsesProvider = new OpenAIProvider({
   useResponses: true,
 });
 
-/** Gemini provider for agents (suggestions via run()) */
-export const geminiProvider = geminiClient
-  ? new OpenAIProvider({
-      openAIClient: geminiClient as any,
-      useResponses: false,
-    })
-  : openaiProvider; // fallback to OpenAI if no Gemini key
+/** Suggestion provider for agents (migrated from Gemini to OpenAI) */
+export const geminiProvider = openaiProvider;
 
 // ---------------------------------------------------------------------------
 // Log provider status
@@ -85,8 +75,9 @@ if (!process.env.OPENAI_API_KEY) {
   logger.warn('[AI Provider] OPENAI_API_KEY missing — STT, moderation, embeddings, images unavailable');
 }
 
-if (!process.env.GOOGLE_API_KEY) {
-  logger.warn('[AI Provider] GOOGLE_API_KEY missing — suggestions will use OpenAI fallback');
+// GOOGLE_API_KEY no longer required — all suggestions use OpenAI
+if (process.env.GOOGLE_API_KEY) {
+  logger.info('[AI Provider] GOOGLE_API_KEY present but unused — suggestions migrated to OpenAI');
 }
 
 // ---------------------------------------------------------------------------
@@ -96,13 +87,9 @@ if (!process.env.GOOGLE_API_KEY) {
 /** Anthropic client — for main agents, guardrails, titles */
 export function getAnthropicClient(): Anthropic { return anthropicClient; }
 
-/** Gemini client for form suggestions (chat.completions.create) */
+/** Suggestion client — returns OpenAI (migrated from Gemini) */
 export function getGeminiClient(): OpenAI {
-  if (!geminiClient) {
-    logger.warn('[AI Provider] Gemini unavailable, falling back to OpenAI');
-    return openaiClient;
-  }
-  return geminiClient;
+  return openaiClient;
 }
 
 /** OpenAI client — STT (whisper), moderation, vision, files API */

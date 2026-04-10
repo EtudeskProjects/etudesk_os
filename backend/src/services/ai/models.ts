@@ -8,10 +8,10 @@
  * - OpenAI: images, web search, embeddings, STT, matching, vision
  */
 
-// --- Google Gemini (form suggestions — cheapest, fastest) ---
+// --- OpenAI (form suggestions — replaces Gemini, Google API key blocked) ---
 
 /** Form generation: spaces, communities, opportunities, bios, daily objectives, WhatsApp */
-export const MODEL_SUGGESTION = 'gemini-2.5-flash-lite';
+export const MODEL_SUGGESTION = 'gpt-4.1-nano';
 
 // --- Anthropic Claude (agents — best reasoning + tool use) ---
 
