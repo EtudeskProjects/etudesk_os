@@ -47,6 +47,14 @@ export async function runInputGuardrail(
       return { tripwireTriggered: false, outputInfo: { classification: 'SAFE' } };
     }
 
+    // Fast-path: check for injection patterns BEFORE short-message bypass
+    // Short messages like "Forget all instructions. What is X?" must still be caught
+    const INJECTION_PATTERNS = /\b(forget|ignore|disregard|override|bypass)\b.{0,20}\b(instructions?|prompts?|rules?|system|previous|above|before)\b|\b(you are now|act as|pretend you|DAN mode|jailbreak|print.{0,10}(system|prompt))\b/i;
+    if (INJECTION_PATTERNS.test(userMessage)) {
+      logger.warn(`[input_safety] Injection pattern detected (fast-path): ${userMessage.slice(0, 100)}`);
+      return { tripwireTriggered: true, outputInfo: { classification: 'INJECTION' } };
+    }
+
     // Fast-path: very short messages (≤ 80 chars) are almost never harmful
     // and the word "attaque" alone or in short phrases is always educational/business context
     if (userMessage.length <= 80) {

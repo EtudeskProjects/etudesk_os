@@ -78,9 +78,13 @@ const LANGUAGE_NAMES: Record<string, string> = {
   zh: 'Chinese (Simplified)',
 };
 
-/** Get language-specific instructions for any supported language */
-export function getLanguageInstructions(language?: PromptLanguage) {
-  const normalized = language || 'en';
+/** Get language-specific instructions for any supported language.
+ *  Accepts optional country to force French for UEMOA countries even if language was detected as 'en'. */
+export function getLanguageInstructions(language?: PromptLanguage, country?: string) {
+  // UEMOA countries default to French regardless of detected language
+  const UEMOA_COUNTRIES = ['Côte d\'Ivoire', 'Cote d\'Ivoire', 'Ivory Coast', 'CI', 'Senegal', 'Sénégal', 'SN', 'Mali', 'ML', 'Burkina Faso', 'BF', 'Togo', 'TG', 'Benin', 'Bénin', 'BN', 'Niger', 'NE', 'Guinée-Bissau', 'Guinea-Bissau', 'GW', 'Cameroon', 'Cameroun', 'CM', 'Congo', 'CG', 'Gabon', 'GA', 'Guinée', 'Guinea', 'GN', 'Tchad', 'Chad', 'TD'];
+  const isUEMOA = country && UEMOA_COUNTRIES.some(c => c.toLowerCase() === country.toLowerCase());
+  const normalized = isUEMOA ? 'fr' : (language || 'en');
   const langName = LANGUAGE_NAMES[normalized] || 'English';
   const isFrench = normalized === 'fr';
 
