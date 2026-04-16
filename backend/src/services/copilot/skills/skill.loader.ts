@@ -25,6 +25,7 @@ const AVAILABLE_TOOLS: Record<'explore' | 'study' | 'org', readonly string[]> = 
   study: [
     'sql_query',
     'youtube_search',
+    'analyze_youtube_video',
     'generate_image',
     'generate_diagram',
     'file_reader',

@@ -22,16 +22,24 @@ export const youtubeSearchTool = defineTool({
       return { videos: [], message: 'YouTube API non configurée' };
     }
 
+    const sanitizedQuery = (query || '').replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, 200);
+    if (!sanitizedQuery) {
+      return { videos: [], message: 'Query vide' };
+    }
+
     try {
       const url = new URL('https://www.googleapis.com/youtube/v3/search');
       url.searchParams.set('part', 'snippet');
-      url.searchParams.set('q', query);
+      url.searchParams.set('q', sanitizedQuery);
       url.searchParams.set('maxResults', maxResults.toString());
       url.searchParams.set('type', 'video');
+      url.searchParams.set('safeSearch', 'moderate');
       url.searchParams.set('key', YOUTUBE_API_KEY);
 
       const response = await fetch(url.toString());
       if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        logger.error(`YouTube API ${response.status} for query "${sanitizedQuery}": ${body.slice(0, 300)}`);
         throw new Error(`YouTube API error: ${response.status}`);
       }
 

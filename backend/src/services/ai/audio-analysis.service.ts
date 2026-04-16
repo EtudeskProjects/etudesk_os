@@ -58,9 +58,28 @@ export async function analyzeAudio(
   logger.info(`[AudioAnalysis] Analyzing audio (${mimeType}, mode=${mode}) via OpenAI`);
 
   // Step 1: Transcribe with OpenAI STT
+  // Whisper accepts: flac, m4a, mp3, mp4, mpeg, mpga, oga, ogg, wav, webm
   const audioBuffer = Buffer.from(audioBase64, 'base64');
-  const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('webm') ? 'webm' : mimeType.includes('ogg') ? 'ogg' : 'wav';
-  const file = new File([audioBuffer], `audio.${ext}`, { type: mimeType });
+  const normalizedMime = (mimeType || '').toLowerCase();
+  let ext: string;
+  if (normalizedMime.includes('mp4') || normalizedMime.includes('m4a') || normalizedMime.includes('aac')) {
+    ext = 'm4a';
+  } else if (normalizedMime.includes('webm')) {
+    ext = 'webm';
+  } else if (normalizedMime.includes('ogg') || normalizedMime.includes('oga') || normalizedMime.includes('opus')) {
+    ext = 'ogg';
+  } else if (normalizedMime.includes('mpeg') || normalizedMime.includes('mp3')) {
+    ext = 'mp3';
+  } else if (normalizedMime.includes('flac')) {
+    ext = 'flac';
+  } else if (normalizedMime.includes('wav') || normalizedMime.includes('wave') || normalizedMime.includes('x-wav')) {
+    ext = 'wav';
+  } else {
+    logger.warn(`[AudioAnalysis] Unknown mime "${mimeType}", defaulting to m4a`);
+    ext = 'm4a';
+  }
+  const safeMime = ext === 'm4a' ? 'audio/mp4' : ext === 'mp3' ? 'audio/mpeg' : `audio/${ext}`;
+  const file = new File([audioBuffer], `audio.${ext}`, { type: safeMime });
 
   const transcription = await openai.audio.transcriptions.create({
     model: MODEL_STT,

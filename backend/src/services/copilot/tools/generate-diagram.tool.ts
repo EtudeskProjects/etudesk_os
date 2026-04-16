@@ -146,7 +146,7 @@ export const generateDiagramTool = defineTool({
 
       // If mermaidCode is missing, return an instructive error so the LLM retries correctly
       if (!mermaidCode) {
-        logger.warn('[generate_diagram] Missing mermaidCode, generating fallback from title/description');
+        logger.debug('[generate_diagram] Missing mermaidCode, generating fallback from title/description');
         const fallbackCode = buildFallbackMermaidFromDescription(safeTitle, safeDescription, diagramType);
         return {
           success: true,

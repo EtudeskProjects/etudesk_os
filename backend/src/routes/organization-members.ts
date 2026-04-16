@@ -500,6 +500,9 @@ router.get('/invitations/received', authMiddleware, async (req: AuthRequest, res
     }
 
     const userEmail = userResult.rows[0].email;
+    if (!userEmail) {
+      return res.json({ data: [], count: 0 });
+    }
 
     // Get pending invitations for this email
     let result;

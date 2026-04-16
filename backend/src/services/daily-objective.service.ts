@@ -19,14 +19,19 @@ const MAX_OBJECTIVE_LENGTH = 500;
 /** Strip markdown formatting (bold, italic, links, headers) — objective is plain text */
 function stripMarkdown(text: string): string {
   return text
-    .replace(/\*\*(.*?)\*\*/g, '$1')   // **bold** → bold
-    .replace(/\*(.*?)\*/g, '$1')        // *italic* → italic
-    .replace(/__(.*?)__/g, '$1')        // __bold__ → bold
-    .replace(/_(.*?)_/g, '$1')          // _italic_ → italic
-    .replace(/#{1,6}\s?/g, '')          // ### header → header
-    .replace(/\[(.*?)\]\(.*?\)/g, '$1') // [text](url) → text
-    .replace(/`(.*?)`/g, '$1')          // `code` → code
+    .replace(/\*\*(.*?)\*\*/g, '$1')   // **bold** -> bold
+    .replace(/\*(.*?)\*/g, '$1')        // *italic* -> italic
+    .replace(/__(.*?)__/g, '$1')        // __bold__ -> bold
+    .replace(/_(.*?)_/g, '$1')          // _italic_ -> italic
+    .replace(/#{1,6}\s?/g, '')          // ### header -> header
+    .replace(/\[(.*?)\]\(.*?\)/g, '$1') // [text](url) -> text
+    .replace(/`(.*?)`/g, '$1')          // `code` -> code
     .trim();
+}
+
+/** Remove null bytes and invalid control chars that Postgres UTF8 rejects */
+function sanitizeForPg(text: string): string {
+  return text.replace(/\u0000/g, '').replace(/[\x01-\x08\x0B\x0C\x0E-\x1F]/g, '');
 }
 
 interface DailyObjective {
@@ -51,7 +56,7 @@ async function upsertTalentDailyObjective(
         generated_at = EXCLUDED.generated_at,
         expires_at = EXCLUDED.expires_at
     `,
-    [talentId, objective, generatedAt, expiresAt]
+    [talentId, sanitizeForPg(objective), generatedAt, expiresAt]
   );
 }
 
@@ -71,7 +76,7 @@ async function upsertOrganizationDailyObjective(
         generated_at = EXCLUDED.generated_at,
         expires_at = EXCLUDED.expires_at
     `,
-    [organizationId, objective, generatedAt, expiresAt]
+    [organizationId, sanitizeForPg(objective), generatedAt, expiresAt]
   );
 }
 
