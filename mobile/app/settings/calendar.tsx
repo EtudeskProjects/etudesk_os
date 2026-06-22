@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
   // Sheet
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(26, 26, 26, 0.5)',
     justifyContent: 'flex-end',
   },
   sheet: {

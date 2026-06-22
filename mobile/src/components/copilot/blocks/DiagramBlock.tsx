@@ -1,7 +1,7 @@
 /**
  * DiagramBlock Component
  * Renders Mermaid diagrams via WebView + mermaid.js CDN
- * Uses custom Etudesk theme (earth tones, warm browns, Satoshi font)
+ * Uses custom Etudesk theme (earth tones, warm browns, Montserrat font)
  */
 
 import React, { useState, useCallback } from 'react';
@@ -216,7 +216,7 @@ const buildMermaidHTML = (
 <head>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=3,user-scalable=yes">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       background: ${bg};
@@ -226,14 +226,14 @@ const buildMermaidHTML = (
       min-height: 100vh;
       padding: 16px 12px;
       overflow: auto;
-      font-family: 'DM Sans', system-ui, sans-serif;
+      font-family: 'Montserrat', system-ui, sans-serif;
     }
     #diagram { width: 100%; display: flex; justify-content: center; }
     #diagram svg { max-width: 100%; height: auto; }
     /* Override Mermaid default fonts */
     #diagram text, #diagram .nodeLabel, #diagram .edgeLabel,
     #diagram .label, #diagram .actor, #diagram .taskText {
-      font-family: 'DM Sans', system-ui, sans-serif !important;
+      font-family: 'Montserrat', system-ui, sans-serif !important;
     }
     /* Soften node shapes */
     #diagram .node rect, #diagram .node polygon, #diagram .node circle {
@@ -250,7 +250,7 @@ const buildMermaidHTML = (
     }
     #error {
       color: ${errorColor};
-      font-family: 'DM Sans', system-ui, sans-serif;
+      font-family: 'Montserrat', system-ui, sans-serif;
       font-size: 13px;
       padding: 16px;
       text-align: center;
@@ -271,7 +271,7 @@ const buildMermaidHTML = (
       sequence: { mirrorActors: false, messageMargin: 30, boxMargin: 8 },
       gantt: { fontSize: 12, barHeight: 24, barGap: 6 },
       securityLevel: 'loose',
-      fontFamily: '"DM Sans", system-ui, sans-serif',
+      fontFamily: '"Montserrat", system-ui, sans-serif',
     });
     (async () => {
       try {

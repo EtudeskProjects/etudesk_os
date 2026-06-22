@@ -15,6 +15,11 @@ import { ToastProvider } from '../src/components/ui/Toast';
 import { useTheme } from '../src/hooks/useTheme';
 import { LIGHT_COLORS, DARK_COLORS } from '../src/constants/theme';
 import { LoadingShimmerStatic } from '../src/components/ui';
+import { applyDefaultFont } from '../src/lib/applyDefaultFont';
+
+// Enforce the Montserrat brand font on every Text/TextInput, mapping legacy
+// fontWeight-only styles to the right family. Runs once at module load.
+applyDefaultFont();
 
 SplashScreen.preventAutoHideAsync();
 

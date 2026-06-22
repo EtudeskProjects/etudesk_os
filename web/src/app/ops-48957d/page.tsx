@@ -424,7 +424,7 @@ function theme(dark: boolean): Record<string, React.CSSProperties> {
   const accentBtn = dark ? '#5C3D2E' : '#3B2416';
   const rowAlt = dark ? '#151515' : '#FAF9F7';
   const codeBg = dark ? '#222' : '#F5F3F0';
-  const f = "'Outfit', sans-serif";
+  const f = "'Montserrat', sans-serif";
   const mono = "'SF Mono', 'Fira Code', monospace";
 
   return {

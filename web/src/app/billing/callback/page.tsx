@@ -60,7 +60,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     padding: '1.5rem',
     backgroundColor: '#FAF9F7',
-    fontFamily: '"DM Sans", system-ui, sans-serif',
+    fontFamily: '"Montserrat", system-ui, sans-serif',
   },
   card: {
     maxWidth: 400,

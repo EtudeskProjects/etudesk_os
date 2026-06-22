@@ -7,7 +7,7 @@
  * - NO violet/purple colors
  * - NO obvious/popular colors
  *
- * Typography: Satoshi (primary), Grotesques (secondary)
+ * Typography: Montserrat (primary brand font, shared with web)
  * Icons: Lucide React Native only
  *
  * Brand: Warm luxury, African elegance, clarity, engagement, community
@@ -276,24 +276,28 @@ export const SPACING = {
 } as const;
 
 // TYPOGRAPHY
-// Primary: Satoshi | Secondary: Grotesques
+// Brand font: Montserrat (shared between mobile + web).
+// IMPORTANT: with custom fonts, weight is driven by the fontFamily (each weight
+// is a separate file), NOT by `fontWeight`. The global Text patch in
+// src/lib/applyDefaultFont.ts maps any `fontWeight` to the matching Montserrat
+// family automatically, so legacy styles that only set `fontWeight` still render
+// in the correct brand weight. Prefer the fontFamily tokens below for new code.
 export const TYPOGRAPHY = {
   // Font Families
   fontFamily: {
-    // Satoshi - Primary font for UI
-    regular: 'Satoshi-Regular',
-    medium: 'Satoshi-Medium',
-    semibold: 'Satoshi-Bold',      // Satoshi doesn't have semibold
-    bold: 'Satoshi-Black',
+    regular: 'Montserrat_400Regular',
+    medium: 'Montserrat_500Medium',
+    semibold: 'Montserrat_600SemiBold',
+    bold: 'Montserrat_700Bold',
 
     // Alternative names for flexibility
-    primary: 'Satoshi-Regular',
-    primaryMedium: 'Satoshi-Medium',
-    primaryBold: 'Satoshi-Bold',
+    primary: 'Montserrat_400Regular',
+    primaryMedium: 'Montserrat_500Medium',
+    primaryBold: 'Montserrat_700Bold',
 
-    // Grotesques - Secondary/Display font
-    display: 'Grotesques-Regular',
-    displayBold: 'Grotesques-Bold',
+    // Display / headings
+    display: 'Montserrat_600SemiBold',
+    displayBold: 'Montserrat_700Bold',
   },
 
   // Font Sizes - Harmonic scale
