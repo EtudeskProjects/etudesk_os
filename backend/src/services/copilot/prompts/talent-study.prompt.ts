@@ -93,15 +93,17 @@ function buildSituationBlock(context: TalentContext): string {
 function buildTemporalAnchor(language?: PromptLanguage): string {
    const now = new Date();
    const locale = language === 'fr' ? 'fr-FR' : 'en-GB';
+   // NOTE (prompt caching): granularite JOUR uniquement, pas l'heure/minute.
+   // Cet ancrage est interpole dans le system prompt cache (cache_control:
+   // ephemeral). Une granularite minute changeait le prefixe a chaque requete
+   // et invalidait le cache en permanence en mode Etudier. La conversion de
+   // dates relatives (aujourd'hui/demain -> ISO) n'a besoin que du jour.
    const localDateTime = new Intl.DateTimeFormat(locale, {
       timeZone: 'Africa/Abidjan',
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
    }).format(now);
    const todayYmd = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Africa/Abidjan',

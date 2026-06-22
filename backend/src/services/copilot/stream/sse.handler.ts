@@ -446,6 +446,18 @@ export async function runAgentWithSSE(
         throw new Error('Service IA temporairement indisponible. Réessayez dans quelques secondes.');
       }
 
+      // Safety refusal (Claude 4+ peut renvoyer stop_reason: 'refusal' avec un
+      // content vide). Sans ce garde-fou, on renvoyait une reponse vide a
+      // l'utilisateur. On surface un message propre + log.
+      if (response.stop_reason === 'refusal' && !finalOutput.trim()) {
+        const refusalMsg = "Je ne peux pas t'aider sur cette demande. Reformule ou pose une autre question.";
+        finalOutput = refusalMsg;
+        segments.push({ type: 'text', content: refusalMsg });
+        sendSSE(res, { type: 'text_delta', delta: refusalMsg });
+        logger.warn('[copilot] Reponse refusee par le classifieur de securite (stop_reason: refusal)');
+        break;
+      }
+
       // If no tool_use blocks, we're done
       if (toolUseBlocks.length === 0 || response.stop_reason === 'end_turn') {
         break;
