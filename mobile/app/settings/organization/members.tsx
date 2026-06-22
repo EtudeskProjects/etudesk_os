@@ -30,7 +30,7 @@ import {
 import { organizationService } from '../../../src/services';
 import { useAlert } from '../../../src/contexts/AlertContext';
 import { useI18n } from '../../../src/contexts/I18nContext';
-import { Button, Chip, IconButton, SelectCard } from '../../../src/components/ui';
+import { Button, IconButton, SegmentedTabs, SelectCard } from '../../../src/components/ui';
 
 
 type TabType = 'members' | 'invitations';
@@ -143,55 +143,15 @@ export default function MembersScreen() {
       </View>
 
       {/* Tabs */}
-      <View style={[styles.tabsContainer, { backgroundColor: colors.gray100 }]}>
-        <Chip
-          label={t('organization.members.manage.membersTab', { count: members.length })}
-          selected={activeTab === 'members'}
-          onPress={() => setActiveTab('members')}
-          leftIcon={
-            <Users
-              size={ICON.size.sm}
-              color={activeTab === 'members' ? colors.primary : colors.gray500}
-              strokeWidth={ICON.strokeWidth}
-            />
-          }
-          style={[
-            styles.tab,
-            {
-              borderWidth: 0,
-              backgroundColor: activeTab === 'members' ? colors.surface : colors.gray100,
-            },
-          ]}
-          textStyle={[
-            styles.tabText,
-            { color: activeTab === 'members' ? colors.primary : colors.gray500 },
-          ]}
-        />
-
-        <Chip
-          label={t('organization.members.manage.invitationsTab', { count: invitations.length })}
-          selected={activeTab === 'invitations'}
-          onPress={() => setActiveTab('invitations')}
-          leftIcon={
-            <Mail
-              size={ICON.size.sm}
-              color={activeTab === 'invitations' ? colors.primary : colors.gray500}
-              strokeWidth={ICON.strokeWidth}
-            />
-          }
-          style={[
-            styles.tab,
-            {
-              borderWidth: 0,
-              backgroundColor: activeTab === 'invitations' ? colors.surface : colors.gray100,
-            },
-          ]}
-          textStyle={[
-            styles.tabText,
-            { color: activeTab === 'invitations' ? colors.primary : colors.gray500 },
-          ]}
-        />
-      </View>
+      <SegmentedTabs
+        containerStyle={styles.tabsContainer}
+        tabs={[
+          { key: 'members', label: t('organization.members.manage.membersTab', { count: members.length }), icon: Users },
+          { key: 'invitations', label: t('organization.members.manage.invitationsTab', { count: invitations.length }), icon: Mail },
+        ]}
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key as TabType)}
+      />
 
       <ScrollView
         style={styles.scrollView}
@@ -403,21 +363,6 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: BORDER.radius.sm,
     marginBottom: SPACING.md,
-  },
-
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
-  },
-
-  tabText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
   scrollView: {

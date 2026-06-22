@@ -22,6 +22,8 @@ export { PageLayout } from './PageLayout';
 export { KeyboardAwareScrollView } from './KeyboardAwareScrollView';
 export { EmptyState } from './EmptyState';
 export { TabBar } from './TabBar';
+export { SegmentedTabs } from './SegmentedTabs';
+export type { SegmentedTab } from './SegmentedTabs';
 export { SelectCard } from './SelectCard';
 export { RadioRow } from './RadioRow';
 export { CheckboxRow } from './CheckboxRow';

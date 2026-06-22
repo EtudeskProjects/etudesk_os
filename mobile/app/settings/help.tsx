@@ -18,7 +18,7 @@ import {
 import { SPACING, TYPOGRAPHY, ICON, BORDER, OPACITY, withOpacity } from '../../src/constants/theme';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useI18n } from '../../src/contexts/I18nContext';
-import { Button, IconButton, SelectCard } from '../../src/components/ui';
+import { Button, IconButton, SegmentedTabs, SelectCard } from '../../src/components/ui';
 
 
 type TabType = 'talent' | 'organization';
@@ -82,53 +82,15 @@ export default function HelpScreen() {
       </View>
 
       {/* Tabs */}
-      <View style={[styles.tabsContainer, { backgroundColor: colors.gray100 }]}>
-        <SelectCard
-          style={[
-            styles.tab,
-            { borderWidth: 0, borderColor: 'transparent', backgroundColor: 'transparent' },
-            activeTab === 'talent' && { backgroundColor: colors.surface },
-          ]}
-          onPress={() => setActiveTab('talent')}
-          selected={false}
-          accessibilityLabel={t('common.faqTalents')}
-        >
-          <User
-            size={ICON.size.sm}
-            color={activeTab === 'talent' ? colors.primary : colors.gray500}
-            strokeWidth={ICON.strokeWidth}
-          />
-          <Text style={[
-            styles.tabText,
-            { color: activeTab === 'talent' ? colors.primary : colors.gray500 },
-          ]}>
-            Talent
-          </Text>
-        </SelectCard>
-
-        <SelectCard
-          style={[
-            styles.tab,
-            { borderWidth: 0, borderColor: 'transparent', backgroundColor: 'transparent' },
-            activeTab === 'organization' && { backgroundColor: colors.surface },
-          ]}
-          onPress={() => setActiveTab('organization')}
-          selected={false}
-          accessibilityLabel={t('common.faqOrganizations')}
-        >
-          <Building2
-            size={ICON.size.sm}
-            color={activeTab === 'organization' ? colors.primary : colors.gray500}
-            strokeWidth={ICON.strokeWidth}
-          />
-          <Text style={[
-            styles.tabText,
-            { color: activeTab === 'organization' ? colors.primary : colors.gray500 },
-          ]}>
-            Organisation
-          </Text>
-        </SelectCard>
-      </View>
+      <SegmentedTabs
+        containerStyle={styles.tabsContainer}
+        tabs={[
+          { key: 'talent', label: 'Talent', icon: User },
+          { key: 'organization', label: 'Organisation', icon: Building2 },
+        ]}
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key as TabType)}
+      />
 
       {/* Info Banner */}
       <View style={[styles.infoBanner, { backgroundColor: withOpacity(colors.primary, OPACITY[10]) }]}>
@@ -223,21 +185,6 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: BORDER.radius.sm,
     marginBottom: SPACING.md,
-  },
-
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER.radius.xs,
-  },
-
-  tabText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: TYPOGRAPHY.fontWeight.medium,
   },
 
   // Info Banner
